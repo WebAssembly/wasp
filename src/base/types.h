@@ -22,6 +22,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 #include "absl/types/span.h"
+#include "absl/types/variant.h"
 
 namespace wasp {
 
@@ -38,15 +39,12 @@ using f64 = double;
 
 using Index = u32;
 
-template <typename T>
-using Span = absl::Span<T>;
+using absl::optional;
+using absl::Span;
+using absl::string_view;
+using absl::variant;
 
 using SpanU8 = Span<const u8>;
-
-template <typename T>
-using optional = absl::optional<T>;
-
-using string_view = absl::string_view;
 
 }  // namespace wasp
 

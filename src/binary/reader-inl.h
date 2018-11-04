@@ -24,6 +24,11 @@
 namespace wasp {
 namespace binary {
 
+#define WASP_HOOK(call)           \
+  if (call == HookResult::Stop) { \
+    return {};                    \
+  }
+
 #define WASP_READ(var, call)   \
   auto opt_##var = call;  \
   if (!opt_##var) {       \
@@ -38,6 +43,10 @@ namespace binary {
     return {};                             \
   }                                        \
   auto var = *opt_##var /* No semicolon. */
+
+inline HookResult StopOnError(ReadResult result) {
+  return result == ReadResult::Error ? HookResult::Stop : HookResult::Continue;
+}
 
 inline optional<u8> ReadU8(SpanU8* data) {
   if (data->size() < 1) {
@@ -217,7 +226,7 @@ inline optional<GlobalType> ReadGlobalType(SpanU8* data) {
   return GlobalType{type, mut_byte != 0};
 }
 
-template <typename Hooks = ExprHooks>
+template <typename Hooks = ExprHooksNop>
 optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
   const u8* const start = data->data();
   int ends_expected = 1;
@@ -229,7 +238,7 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       // when we've closed all open blocks (and the implicit outer block).
       case encoding::Opcode::End:
         --ends_expected;
-        hooks.OnOpcodeBare(opcode);
+        WASP_HOOK(hooks.OnOpcodeBare(opcode));
         break;
 
       // No immediates:
@@ -362,7 +371,7 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       case encoding::Opcode::I64ReinterpretF64:
       case encoding::Opcode::I32Eqz:
       case encoding::Opcode::I64Eqz:
-        hooks.OnOpcodeBare(opcode);
+        WASP_HOOK(hooks.OnOpcodeBare(opcode));
         break;
 
       // Type immediate.
@@ -370,7 +379,7 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       case encoding::Opcode::Loop:
       case encoding::Opcode::If: {
         WASP_READ_OR_ERROR(type, ReadValType(data), "type index");
-        hooks.OnOpcodeType(opcode, type);
+        WASP_HOOK(hooks.OnOpcodeType(opcode, type));
         // Each of these instructions opens a new block which must be closed by
         // an `End`.
         ++ends_expected;
@@ -387,7 +396,7 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       case encoding::Opcode::Call:
       case encoding::Opcode::TeeLocal: {
         WASP_READ_OR_ERROR(index, ReadIndex(data), "index");
-        hooks.OnOpcodeIndex(opcode, index);
+        WASP_HOOK(hooks.OnOpcodeIndex(opcode, index));
         break;
       }
 
@@ -395,7 +404,7 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       case encoding::Opcode::CallIndirect: {
         WASP_READ_OR_ERROR(index, ReadIndex(data), "index");
         WASP_READ_OR_ERROR(reserved, ReadU8(data), "reserved");
-        hooks.OnOpcodeCallIndirect(opcode, index, reserved);
+        WASP_HOOK(hooks.OnOpcodeCallIndirect(opcode, index, reserved));
         break;
       }
 
@@ -405,7 +414,7 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
                       "br_table targets");
         WASP_READ_OR_ERROR(default_target, ReadIndex(data),
                       "br_table default target");
-        hooks.OnOpcodeBrTable(opcode, targets, default_target);
+        WASP_HOOK(hooks.OnOpcodeBrTable(opcode, targets, default_target));
         break;
       }
 
@@ -435,32 +444,32 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       case encoding::Opcode::F64Store: {
         WASP_READ_OR_ERROR(align_log2, ReadVarU32(data), "alignment");
         WASP_READ_OR_ERROR(offset, ReadVarU32(data), "offset");
-        hooks.OnOpcodeMemarg(opcode, MemArg{align_log2, offset});
+        WASP_HOOK(hooks.OnOpcodeMemarg(opcode, MemArg{align_log2, offset}));
         break;
       }
 
       // Const immediates.
       case encoding::Opcode::I32Const: {
         WASP_READ_OR_ERROR(value, ReadVarS32(data), "i32 constant");
-        hooks.OnOpcodeI32Const(opcode, value);
+        WASP_HOOK(hooks.OnOpcodeI32Const(opcode, value));
         break;
       }
 
       case encoding::Opcode::I64Const: {
         WASP_READ_OR_ERROR(value, ReadVarS64(data), "i64 constant");
-        hooks.OnOpcodeI64Const(opcode, value);
+        WASP_HOOK(hooks.OnOpcodeI64Const(opcode, value));
         break;
       }
 
       case encoding::Opcode::F32Const: {
         WASP_READ_OR_ERROR(value, ReadF32(data), "f32 constant");
-        hooks.OnOpcodeF32Const(opcode, value);
+        WASP_HOOK(hooks.OnOpcodeF32Const(opcode, value));
         break;
       }
 
       case encoding::Opcode::F64Const: {
         WASP_READ_OR_ERROR(value, ReadF64(data), "f64 constant");
-        hooks.OnOpcodeF64Const(opcode, value);
+        WASP_HOOK(hooks.OnOpcodeF64Const(opcode, value));
         break;
       }
 
@@ -475,23 +484,23 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
 }
 
 template <typename Hooks>
-bool ReadSection(SpanU8* data, Hooks&& hooks) {
+ReadResult ReadSection(SpanU8* data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(code, ReadVarU32(data), "section code");
   WASP_READ_OR_ERROR(len, ReadVarU32(data), "section length");
 
   if (len > data->size()) {
     hooks.OnError(absl::StrFormat("Section length is too long: %zd > %zd", len,
                                   data->size()));
-    return false;
+    return ReadResult::Error;
   }
 
-  hooks.OnSection(code, data->subspan(0, len));
+  WASP_HOOK(hooks.OnSection(code, data->subspan(0, len)));
   data->remove_prefix(*opt_len);
-  return true;
+  return ReadResult::Ok;
 }
 
 template <typename Hooks>
-bool ReadModule(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadModule(SpanU8 data, Hooks&& hooks) {
   const SpanU8 kMagic{encoding::Magic};
   const SpanU8 kVersion{encoding::Version};
 
@@ -500,7 +509,7 @@ bool ReadModule(SpanU8 data, Hooks&& hooks) {
     hooks.OnError(absl::StrFormat("Magic mismatch: expected %s, got %s",
                                   wasp::ToString(kMagic),
                                   wasp::ToString(*opt_magic)));
-    return false;
+    return ReadResult::Error;
   }
 
   auto opt_version = ReadBytes(&data, 4);
@@ -508,36 +517,38 @@ bool ReadModule(SpanU8 data, Hooks&& hooks) {
     hooks.OnError(absl::StrFormat("Version mismatch: expected %s, got %s",
                                   wasp::ToString(kVersion),
                                   wasp::ToString(*opt_version)));
-    return false;
+    return ReadResult::Error;
   }
 
   while (!data.empty()) {
-    if (!ReadSection(&data, hooks)) {
-      return false;
+    if (ReadSection(&data, hooks) == ReadResult::Error) {
+      return ReadResult::Error;
     }
   }
 
-  return true;
+  return ReadResult::Ok;
 }
 
 template <typename Hooks>
-void ErrorUnlessAtSectionEnd(SpanU8 data, Hooks&& hooks) {
+ReadResult ErrorUnlessAtSectionEnd(SpanU8 data, Hooks&& hooks) {
   if (data.size() != 0) {
     hooks.OnError("Expected end of section");
+    return ReadResult::Error;
   }
+  return ReadResult::Ok;
 }
 
 template <typename Hooks>
-bool ReadTypeSection(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadTypeSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(count, ReadIndex(&data), "type count");
-  hooks.OnTypeCount(count);
+  WASP_HOOK(hooks.OnTypeCount(count));
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(form, ReadValType(&data), "type form");
 
     if (form != ValType::Func) {
       hooks.OnError(absl::StrFormat("Unknown type form: %d", form));
-      return false;
+      return ReadResult::Error;
     }
 
     FuncType func_type;
@@ -555,16 +566,15 @@ bool ReadTypeSection(SpanU8 data, Hooks&& hooks) {
       func_type.result_types[j] = result_type;
     }
 
-    hooks.OnFuncType(i, func_type);
+    WASP_HOOK(hooks.OnFuncType(i, func_type));
   }
-  ErrorUnlessAtSectionEnd(data, hooks);
-  return true;
+  return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
 template <typename Hooks>
-bool ReadImportSection(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadImportSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(count, ReadIndex(&data), "import count");
-  hooks.OnImportCount(count);
+  WASP_HOOK(hooks.OnImportCount(count));
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(module, ReadStr(&data), "module name");
@@ -574,114 +584,110 @@ bool ReadImportSection(SpanU8 data, Hooks&& hooks) {
     switch (kind) {
       case ExternalKind::Func: {
         WASP_READ_OR_ERROR(type_index, ReadIndex(&data), "func type index");
-        hooks.OnFuncImport(i, FuncImport{module, name, type_index});
+        WASP_HOOK(hooks.OnFuncImport(i, FuncImport{module, name, type_index}));
         break;
       }
 
       case ExternalKind::Table: {
         WASP_READ_OR_ERROR(table_type, ReadTableType(&data), "table type");
-        hooks.OnTableImport(i, TableImport{module, name, table_type});
+        WASP_HOOK(
+            hooks.OnTableImport(i, TableImport{module, name, table_type}));
         break;
       }
 
       case ExternalKind::Memory: {
         WASP_READ_OR_ERROR(memory_type, ReadMemoryType(&data), "memory type");
-        hooks.OnMemoryImport(i, MemoryImport{module, name, memory_type});
+        WASP_HOOK(
+            hooks.OnMemoryImport(i, MemoryImport{module, name, memory_type}));
         break;
       }
 
       case ExternalKind::Global: {
         WASP_READ_OR_ERROR(global_type, ReadGlobalType(&data), "global type");
-        hooks.OnGlobalImport(i, GlobalImport{module, name, global_type});
+        WASP_HOOK(
+            hooks.OnGlobalImport(i, GlobalImport{module, name, global_type}));
         break;
       }
     }
   }
-  ErrorUnlessAtSectionEnd(data, hooks);
-  return true;
+  return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
 template <typename Hooks>
-bool ReadFunctionSection(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadFunctionSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(count, ReadIndex(&data), "func count");
-  hooks.OnFuncCount(count);
+  WASP_HOOK(hooks.OnFuncCount(count));
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(type_index, ReadIndex(&data), "func type index");
-    hooks.OnFunc(i, type_index);
+    WASP_HOOK(hooks.OnFunc(i, type_index));
   }
-  ErrorUnlessAtSectionEnd(data, hooks);
-  return true;
+  return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
 template <typename Hooks>
-bool ReadTableSection(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadTableSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(count, ReadIndex(&data), "table count");
-  hooks.OnTableCount(count);
+  WASP_HOOK(hooks.OnTableCount(count));
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(table_type, ReadTableType(&data), "table type");
-    hooks.OnTable(i, table_type);
+    WASP_HOOK(hooks.OnTable(i, table_type));
   }
-  ErrorUnlessAtSectionEnd(data, hooks);
-  return true;
+  return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
 template <typename Hooks>
-bool ReadMemorySection(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadMemorySection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(count, ReadIndex(&data), "memory count");
-  hooks.OnMemoryCount(count);
+  WASP_HOOK(hooks.OnMemoryCount(count));
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(memory_type, ReadMemoryType(&data), "memory type");
-    hooks.OnMemory(i, memory_type);
+    WASP_HOOK(hooks.OnMemory(i, memory_type));
   }
-  ErrorUnlessAtSectionEnd(data, hooks);
-  return true;
+  return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
 template <typename Hooks>
-bool ReadGlobalSection(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadGlobalSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(count, ReadIndex(&data), "global count");
-  hooks.OnGlobalCount(count);
+  WASP_HOOK(hooks.OnGlobalCount(count));
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(global_type, ReadGlobalType(&data), "global type");
     WASP_READ_OR_ERROR(init_expr, ReadExpr(&data),
                        "global initializer expression");
-    hooks.OnGlobal(i, Global{global_type, init_expr});
+    WASP_HOOK(hooks.OnGlobal(i, Global{global_type, init_expr}));
   }
-  ErrorUnlessAtSectionEnd(data, hooks);
-  return true;
+  return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
 template <typename Hooks>
-bool ReadExportSection(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadExportSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(count, ReadIndex(&data), "export count");
-  hooks.OnExportCount(count);
+  WASP_HOOK(hooks.OnExportCount(count));
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(name, ReadStr(&data), "export name");
     WASP_READ_OR_ERROR(kind, ReadExternalKind(&data), "export kind");
     WASP_READ_OR_ERROR(index, ReadIndex(&data), "export index");
-    hooks.OnExport(i, Export{name, kind, index});
+    WASP_HOOK(hooks.OnExport(i, Export{name, kind, index}));
   }
-  ErrorUnlessAtSectionEnd(data, hooks);
-  return true;
+  return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
 template <typename Hooks>
-bool ReadStartSection(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadStartSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(func_index, ReadIndex(&data), "start function index");
-  hooks.OnStart(func_index);
-  ErrorUnlessAtSectionEnd(data, hooks);
-  return true;
+  WASP_HOOK(hooks.OnStart(func_index));
+  return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
 template <typename Hooks>
-bool ReadElementSection(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadElementSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(count, ReadIndex(&data), "element segment count");
-  hooks.OnElementSegmentCount(count);
+  WASP_HOOK(hooks.OnElementSegmentCount(count));
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(table_index, ReadIndex(&data),
@@ -689,16 +695,16 @@ bool ReadElementSection(SpanU8 data, Hooks&& hooks) {
     WASP_READ_OR_ERROR(offset, ReadExpr(&data), "element segment offset");
     WASP_READ_OR_ERROR(init, ReadVec<Index>(&data, ReadIndex),
                   "element segment initializers");
-    hooks.OnElementSegment(i, ElementSegment{table_index, offset, init});
+    WASP_HOOK(
+        hooks.OnElementSegment(i, ElementSegment{table_index, offset, init}));
   }
-  ErrorUnlessAtSectionEnd(data, hooks);
-  return true;
+  return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
 template <typename Hooks>
-bool ReadCodeSection(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadCodeSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(count, ReadIndex(&data), "code count");
-  hooks.OnCodeCount(count);
+  WASP_HOOK(hooks.OnCodeCount(count));
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(len, ReadIndex(&data), "code length");
@@ -706,14 +712,13 @@ bool ReadCodeSection(SpanU8 data, Hooks&& hooks) {
     if (len > data.size()) {
       hooks.OnError(absl::StrFormat("Code length is too long: %zd > %zd", len,
                                     data.size()));
-      return false;
+      return ReadResult::Error;
     }
 
-    hooks.OnCode(i, data.subspan(0, len));
+    WASP_HOOK(hooks.OnCode(i, data.subspan(0, len)));
     data.remove_prefix(len);
   }
-  ErrorUnlessAtSectionEnd(data, hooks);
-  return true;
+  return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
 inline optional<LocalDecl> ReadLocalDecl(SpanU8* data) {
@@ -723,31 +728,30 @@ inline optional<LocalDecl> ReadLocalDecl(SpanU8* data) {
 }
 
 template <typename Hooks>
-bool ReadCode(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadCode(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(local_decls, ReadVec<LocalDecl>(&data, ReadLocalDecl),
                 "locals");
   WASP_READ_OR_ERROR(body, ReadExpr(&data), "body");
-  hooks.OnCodeContents(local_decls, body);
-  ErrorUnlessAtSectionEnd(data, hooks);
-  return true;
+  WASP_HOOK(hooks.OnCodeContents(local_decls, body));
+  return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
 template <typename Hooks>
-bool ReadDataSection(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadDataSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(count, ReadIndex(&data), "data segment count");
-  hooks.OnDataSegmentCount(count);
+  WASP_HOOK(hooks.OnDataSegmentCount(count));
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(table_index, ReadIndex(&data),
                        "data segment table index");
     WASP_READ_OR_ERROR(offset, ReadExpr(&data), "data segment offset");
     WASP_READ_OR_ERROR(init, ReadVecU8(&data), "data segment initializer");
-    hooks.OnDataSegment(i, DataSegment{table_index, offset, init});
+    WASP_HOOK(hooks.OnDataSegment(i, DataSegment{table_index, offset, init}));
   }
-  ErrorUnlessAtSectionEnd(data, hooks);
-  return true;
+  return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
+#undef WASP_HOOK
 #undef WASP_READ
 #undef WASP_READ_OR_ERROR
 

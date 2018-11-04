@@ -110,19 +110,38 @@ struct GlobalImport : Import {
   GlobalType global_type;
 };
 
+using ImportVariant =
+    variant<FuncImport, TableImport, MemoryImport, GlobalImport>;
+
+struct Expr {
+  Span<const u8> instrs;
+};
+
+struct Func {
+  Index type_index;
+};
+
+struct Table {
+  TableType table_type;
+};
+
+struct Memory {
+  MemoryType memory_type;
+};
+
+struct Global {
+  GlobalType global_type;
+  Expr init_expr;
+};
+
 struct Export {
   string_view name;
   ExternalKind kind;
   Index index;
 };
 
-struct Expr {
-  Span<const u8> instrs;
-};
-
-struct Global {
-  GlobalType global_type;
-  Expr init_expr;
+struct Start {
+  Index func_index;
 };
 
 struct ElementSegment {
@@ -131,10 +150,29 @@ struct ElementSegment {
   std::vector<Index> init;
 };
 
+struct Code {
+  std::vector<LocalDecl> local_decls;
+  Expr body;
+};
+
 struct DataSegment {
   Index memory_index;
   Expr offset;
   Span<const u8> init;
+};
+
+struct Module {
+  std::vector<FuncType> types;
+  std::vector<ImportVariant> imports;
+  std::vector<Func> funcs;
+  std::vector<Table> tables;
+  std::vector<Memory> memories;
+  std::vector<Global> globals;
+  std::vector<Export> exports;
+  optional<Start> start;
+  std::vector<ElementSegment> element_segments;
+  std::vector<Code> codes;
+  std::vector<DataSegment> data_segments;
 };
 
 }  // namespace binary
