@@ -44,6 +44,13 @@ std::string ToString(ExternalKind self) {
   }
 }
 
+std::string ToString(Mutability self) {
+  switch (self) {
+    case Mutability::Const: return "const";
+    case Mutability::Var: return "var";
+  }
+}
+
 std::string ToString(const FuncType& self) {
   return absl::StrFormat("%s -> %s", ToString(self.param_types),
                          ToString(self.result_types));
@@ -75,8 +82,7 @@ std::string ToString(const MemoryType& self) {
 }
 
 std::string ToString(const GlobalType& self) {
-  return absl::StrFormat("%s %s", self.mut ? "var" : "const",
-                         ToString(self.valtype));
+  return absl::StrFormat("%s %s", ToString(self.mut), ToString(self.valtype));
 }
 
 std::string ToString(const Import& self) {

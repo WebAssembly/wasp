@@ -43,11 +43,11 @@ struct ExprHooksNop : BaseHooksNop {
   HookResult OnOpcodeIndex(u8 opcode, Index) { return {}; }
   HookResult OnOpcodeCallIndirect(u8 opcode, Index, u8 reserved) { return {}; }
   HookResult OnOpcodeBrTable(u8 opcode,
-                             const std::vector<Index>& targets,
+                             std::vector<Index>&& targets,
                              Index default_target) {
     return {};
   }
-  HookResult OnOpcodeMemarg(u8 opcode, const MemArg&) { return {}; }
+  HookResult OnOpcodeMemarg(u8 opcode, MemArg&&) { return {}; }
   HookResult OnOpcodeI32Const(u8 opcode, s32) { return {}; }
   HookResult OnOpcodeI64Const(u8 opcode, s64) { return {}; }
   HookResult OnOpcodeF32Const(u8 opcode, f32) { return {}; }
@@ -60,55 +60,55 @@ struct ModuleHooksNop : BaseHooksNop {
 
 struct TypeSectionHooksNop : BaseHooksNop {
   HookResult OnTypeCount(Index count) { return {}; }
-  HookResult OnFuncType(Index type_index, const FuncType&) { return {}; }
+  HookResult OnFuncType(Index type_index, FuncType&&) { return {}; }
 };
 
 struct ImportSectionHooksNop : BaseHooksNop {
   HookResult OnImportCount(Index count) { return {}; }
-  HookResult OnFuncImport(Index import_index, const FuncImport&) { return {}; }
-  HookResult OnTableImport(Index import_index, const TableImport&) {
+  HookResult OnFuncImport(Index import_index, FuncImport&&) { return {}; }
+  HookResult OnTableImport(Index import_index, TableImport&&) {
     return {};
   }
-  HookResult OnMemoryImport(Index import_index, const MemoryImport&) {
+  HookResult OnMemoryImport(Index import_index, MemoryImport&&) {
     return {};
   }
-  HookResult OnGlobalImport(Index import_index, const GlobalImport&) {
+  HookResult OnGlobalImport(Index import_index, GlobalImport&&) {
     return {};
   }
 };
 
 struct FunctionSectionHooksNop : BaseHooksNop {
   HookResult OnFuncCount(Index count) { return {}; }
-  HookResult OnFunc(Index func_index, Index type_index) { return {}; }
+  HookResult OnFunc(Index func_index, Func&&) { return {}; }
 };
 
 struct TableSectionHooksNop : BaseHooksNop {
   HookResult OnTableCount(Index count) { return {}; }
-  HookResult OnTable(Index table_index, const TableType&) { return {}; }
+  HookResult OnTable(Index table_index, Table&&) { return {}; }
 };
 
 struct MemorySectionHooksNop : BaseHooksNop {
   HookResult OnMemoryCount(Index count) { return {}; }
-  HookResult OnMemory(Index memory_index, const MemoryType&) { return {}; }
+  HookResult OnMemory(Index memory_index, Memory&&) { return {}; }
 };
 
 struct GlobalSectionHooksNop : BaseHooksNop {
   HookResult OnGlobalCount(Index count) { return {}; }
-  HookResult OnGlobal(Index global_index, const Global&) { return {}; }
+  HookResult OnGlobal(Index global_index, Global&&) { return {}; }
 };
 
 struct ExportSectionHooksNop : BaseHooksNop {
   HookResult OnExportCount(Index count) { return {}; }
-  HookResult OnExport(Index export_index, const Export&) { return {}; }
+  HookResult OnExport(Index export_index, Export&&) { return {}; }
 };
 
 struct StartSectionHooksNop : BaseHooksNop {
-  HookResult OnStart(Index func_index) { return {}; }
+  HookResult OnStart(Start&&) { return {}; }
 };
 
 struct ElementSectionHooksNop : BaseHooksNop {
   HookResult OnElementSegmentCount(Index count) { return {}; }
-  HookResult OnElementSegment(Index segment_index, const ElementSegment&) {
+  HookResult OnElementSegment(Index segment_index, ElementSegment&&) {
     return {};
   }
 };
@@ -119,15 +119,14 @@ struct CodeSectionHooksNop : BaseHooksNop {
 };
 
 struct CodeHooksNop : BaseHooksNop {
-  HookResult OnCodeContents(const std::vector<LocalDecl>& locals,
-                            const Expr& body) {
+  HookResult OnCodeContents(std::vector<LocalDecl>&& locals, Expr body) {
     return {};
   }
 };
 
 struct DataSectionHooksNop : BaseHooksNop {
   HookResult OnDataSegmentCount(Index count) { return {}; }
-  HookResult OnDataSegment(Index segment_index, const DataSegment&) {
+  HookResult OnDataSegment(Index segment_index, DataSegment&&) {
     return {};
   }
 };

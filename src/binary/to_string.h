@@ -24,6 +24,7 @@ namespace binary {
 
 std::string ToString(ValType);
 std::string ToString(ExternalKind);
+std::string ToString(Mutability);
 std::string ToString(const FuncType&);
 std::string ToString(const MemArg&);
 std::string ToString(const Limits&);

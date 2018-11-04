@@ -43,6 +43,11 @@ struct ExternalKind {
   static constexpr u8 Global = 3;
 };
 
+struct Mutability {
+  static constexpr u8 Const = 0;
+  static constexpr u8 Var = 1;
+};
+
 struct Section {
   static constexpr u32 Custom = 0;
   static constexpr u32 Type = 1;

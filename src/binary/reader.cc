@@ -55,9 +55,9 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnFuncType(Index type_index, const FuncType& func_type) {
+  HookResult OnFuncType(Index type_index, FuncType&& func_type) {
     assert(type_index == module.types.size());
-    module.types.emplace_back(func_type);
+    module.types.emplace_back(std::move(func_type));
     return {};
   }
 
@@ -66,30 +66,28 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnFuncImport(Index import_index, const FuncImport& func_import) {
+  HookResult OnFuncImport(Index import_index, FuncImport&& func_import) {
     assert(import_index == module.imports.size());
-    module.imports.emplace_back(func_import);
+    module.imports.emplace_back(std::move(func_import));
     return {};
   }
 
   HookResult OnTableImport(Index import_index,
-                           const TableImport& table_import) {
+                           TableImport&& table_import) {
     assert(import_index == module.imports.size());
-    module.imports.emplace_back(table_import);
+    module.imports.emplace_back(std::move(table_import));
     return {};
   }
 
-  HookResult OnMemoryImport(Index import_index,
-                            const MemoryImport& memory_import) {
+  HookResult OnMemoryImport(Index import_index, MemoryImport&& memory_import) {
     assert(import_index == module.imports.size());
-    module.imports.emplace_back(memory_import);
+    module.imports.emplace_back(std::move(memory_import));
     return {};
   }
 
-  HookResult OnGlobalImport(Index import_index,
-                            const GlobalImport& global_import) {
+  HookResult OnGlobalImport(Index import_index, GlobalImport&& global_import) {
     assert(import_index == module.imports.size());
-    module.imports.emplace_back(global_import);
+    module.imports.emplace_back(std::move(global_import));
     return {};
   }
 
@@ -98,9 +96,9 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnFunc(Index func_index, Index type_index) {
+  HookResult OnFunc(Index func_index, Func&& func) {
     assert(func_index == module.funcs.size());
-    module.funcs.emplace_back(Func{type_index});
+    module.funcs.emplace_back(std::move(func));
     return {};
   }
 
@@ -109,9 +107,9 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnTable(Index table_index, const TableType& table_type) {
+  HookResult OnTable(Index table_index, Table&& table) {
     assert(table_index == module.tables.size());
-    module.tables.emplace_back(Table{table_type});
+    module.tables.emplace_back(std::move(table));
     return {};
   }
 
@@ -120,9 +118,9 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnMemory(Index memory_index, const MemoryType& memory_type) {
+  HookResult OnMemory(Index memory_index, Memory&& memory) {
     assert(memory_index == module.memories.size());
-    module.memories.emplace_back(Memory{memory_type});
+    module.memories.emplace_back(std::move(memory));
     return {};
   }
 
@@ -131,9 +129,9 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnGlobal(Index global_index, const Global& global) {
+  HookResult OnGlobal(Index global_index, Global&& global) {
     assert(global_index == module.globals.size());
-    module.globals.emplace_back(global);
+    module.globals.emplace_back(std::move(global));
     return {};
   }
 
@@ -142,14 +140,14 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnExport(Index export_index, const Export& export_) {
+  HookResult OnExport(Index export_index, Export&& export_) {
     assert(export_index == module.exports.size());
     module.exports.emplace_back(export_);
     return {};
   }
 
-  HookResult OnStart(Index func_index) {
-    module.start = Start{func_index};
+  HookResult OnStart(Start&& start) {
+    module.start = std::move(start);
     return {};
   }
 
@@ -158,10 +156,9 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnElementSegment(Index segment_index,
-                              const ElementSegment& segment) {
+  HookResult OnElementSegment(Index segment_index, ElementSegment&& segment) {
     assert(segment_index == module.element_segments.size());
-    module.element_segments.emplace_back(segment);
+    module.element_segments.emplace_back(std::move(segment));
     return {};
   }
 
@@ -175,10 +172,10 @@ struct BuildModuleHooks {
     return StopOnError(ReadCode(code, *this));
   }
 
-  HookResult OnCodeContents(const std::vector<LocalDecl>& local_decls,
+  HookResult OnCodeContents(std::vector<LocalDecl>&& local_decls,
                             const Expr& body) {
     assert(code_index == module.codes.size());
-    module.codes.emplace_back(Code{local_decls, body});
+    module.codes.emplace_back(Code{std::move(local_decls), body});
     return {};
   }
 
@@ -187,9 +184,9 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnDataSegment(Index segment_index, const DataSegment& segment) {
+  HookResult OnDataSegment(Index segment_index, DataSegment&& segment) {
     assert(segment_index == module.data_segments.size());
-    module.data_segments.emplace_back(segment);
+    module.data_segments.emplace_back(std::move(segment));
     return {};
   }
 };

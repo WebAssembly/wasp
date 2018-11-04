@@ -29,19 +29,19 @@ namespace binary {
     return {};                    \
   }
 
-#define WASP_READ(var, call)   \
-  auto opt_##var = call;  \
-  if (!opt_##var) {       \
-    return absl::nullopt; \
-  }                       \
+#define WASP_READ(var, call) \
+  auto opt_##var = call;     \
+  if (!opt_##var) {          \
+    return absl::nullopt;    \
+  }                          \
   auto var = *opt_##var /* No semicolon. */
 
-#define WASP_READ_OR_ERROR(var, call, desc)     \
-  auto opt_##var = call;                   \
-  if (!opt_##var) {                        \
-    hooks.OnError("Unable to read " desc); \
-    return {};                             \
-  }                                        \
+#define WASP_READ_OR_ERROR(var, call, desc) \
+  auto opt_##var = call;                    \
+  if (!opt_##var) {                         \
+    hooks.OnError("Unable to read " desc);  \
+    return {};                              \
+  }                                         \
   auto var = *opt_##var /* No semicolon. */
 
 inline HookResult StopOnError(ReadResult result) {
@@ -138,10 +138,10 @@ template <typename T, typename F>
 optional<std::vector<T>> ReadVec(SpanU8* data, F&& read_element) {
   std::vector<T> result;
   WASP_READ(len, ReadVarU32(data));
-  result.resize(len);
+  result.reserve(len);
   for (u32 i = 0; i < len; ++i) {
     WASP_READ(elt, read_element(data));
-    result[i] = std::move(elt);
+    result.emplace_back(std::move(elt));
   }
   return result;
 }
@@ -160,14 +160,14 @@ inline optional<SpanU8> ReadVecU8(SpanU8* data) {
 inline optional<ValType> ReadValType(SpanU8* data) {
   WASP_READ(val_s32, ReadVarS32(data));
   switch (val_s32) {
-    case encoding::ValType::I32: return ValType::I32;
-    case encoding::ValType::I64: return ValType::I64;
-    case encoding::ValType::F32: return ValType::F32;
-    case encoding::ValType::F64: return ValType::F64;
+    case encoding::ValType::I32:     return ValType::I32;
+    case encoding::ValType::I64:     return ValType::I64;
+    case encoding::ValType::F32:     return ValType::F32;
+    case encoding::ValType::F64:     return ValType::F64;
     case encoding::ValType::Anyfunc: return ValType::Anyfunc;
-    case encoding::ValType::Func: return ValType::Func;
-    case encoding::ValType::Void: return ValType::Void;
-    default:    return absl::nullopt;
+    case encoding::ValType::Func:    return ValType::Func;
+    case encoding::ValType::Void:    return ValType::Void;
+    default: return absl::nullopt;
   }
 }
 
@@ -178,6 +178,15 @@ inline optional<ExternalKind> ReadExternalKind(SpanU8* data) {
     case encoding::ExternalKind::Table:  return ExternalKind::Table;
     case encoding::ExternalKind::Memory: return ExternalKind::Memory;
     case encoding::ExternalKind::Global: return ExternalKind::Global;
+    default: return absl::nullopt;
+  }
+}
+
+inline optional<Mutability> ReadMutability(SpanU8* data) {
+  WASP_READ(byte, ReadU8(data));
+  switch (byte) {
+    case encoding::Mutability::Var:   return Mutability::Var;
+    case encoding::Mutability::Const: return Mutability::Const;
     default: return absl::nullopt;
   }
 }
@@ -219,11 +228,8 @@ inline optional<MemoryType> ReadMemoryType(SpanU8* data) {
 
 inline optional<GlobalType> ReadGlobalType(SpanU8* data) {
   WASP_READ(type, ReadValType(data));
-  WASP_READ(mut_byte, ReadU8(data));
-  if (mut_byte > 1) {
-    return absl::nullopt;
-  }
-  return GlobalType{type, mut_byte != 0};
+  WASP_READ(mut, ReadMutability(data));
+  return GlobalType{type, mut};
 }
 
 template <typename Hooks = ExprHooksNop>
@@ -411,10 +417,11 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       // Index* immediates.
       case encoding::Opcode::BrTable: {
         WASP_READ_OR_ERROR(targets, ReadVec<Index>(data, ReadIndex),
-                      "br_table targets");
+                           "br_table targets");
         WASP_READ_OR_ERROR(default_target, ReadIndex(data),
-                      "br_table default target");
-        WASP_HOOK(hooks.OnOpcodeBrTable(opcode, targets, default_target));
+                           "br_table default target");
+        WASP_HOOK(
+            hooks.OnOpcodeBrTable(opcode, std::move(targets), default_target));
         break;
       }
 
@@ -551,22 +558,12 @@ ReadResult ReadTypeSection(SpanU8 data, Hooks&& hooks) {
       return ReadResult::Error;
     }
 
-    FuncType func_type;
-    WASP_READ_OR_ERROR(num_params, ReadIndex(&data), "param count");
-    func_type.param_types.resize(num_params);
-    for (Index j = 0; j < num_params; ++j) {
-      WASP_READ_OR_ERROR(param_type, ReadValType(&data), "param valtype");
-      func_type.param_types[j] = param_type;
-    }
-
-    WASP_READ_OR_ERROR(num_results, ReadIndex(&data), "result count");
-    func_type.result_types.resize(num_results);
-    for (Index j = 0; j < num_results; ++j) {
-      WASP_READ_OR_ERROR(result_type, ReadValType(&data), "result valtype");
-      func_type.result_types[j] = result_type;
-    }
-
-    WASP_HOOK(hooks.OnFuncType(i, func_type));
+    WASP_READ_OR_ERROR(param_types, ReadVec<ValType>(&data, ReadValType),
+                       "param types");
+    WASP_READ_OR_ERROR(result_types, ReadVec<ValType>(&data, ReadValType),
+                       "result types");
+    WASP_HOOK(hooks.OnFuncType(
+        i, FuncType{std::move(param_types), std::move(result_types)}));
   }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
@@ -620,7 +617,7 @@ ReadResult ReadFunctionSection(SpanU8 data, Hooks&& hooks) {
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(type_index, ReadIndex(&data), "func type index");
-    WASP_HOOK(hooks.OnFunc(i, type_index));
+    WASP_HOOK(hooks.OnFunc(i, Func{type_index}));
   }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
@@ -632,7 +629,7 @@ ReadResult ReadTableSection(SpanU8 data, Hooks&& hooks) {
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(table_type, ReadTableType(&data), "table type");
-    WASP_HOOK(hooks.OnTable(i, table_type));
+    WASP_HOOK(hooks.OnTable(i, Table{table_type}));
   }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
@@ -644,7 +641,7 @@ ReadResult ReadMemorySection(SpanU8 data, Hooks&& hooks) {
 
   for (Index i = 0; i < count; ++i) {
     WASP_READ_OR_ERROR(memory_type, ReadMemoryType(&data), "memory type");
-    WASP_HOOK(hooks.OnMemory(i, memory_type));
+    WASP_HOOK(hooks.OnMemory(i, Memory{memory_type}));
   }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
@@ -672,7 +669,7 @@ ReadResult ReadExportSection(SpanU8 data, Hooks&& hooks) {
     WASP_READ_OR_ERROR(name, ReadStr(&data), "export name");
     WASP_READ_OR_ERROR(kind, ReadExternalKind(&data), "export kind");
     WASP_READ_OR_ERROR(index, ReadIndex(&data), "export index");
-    WASP_HOOK(hooks.OnExport(i, Export{name, kind, index}));
+    WASP_HOOK(hooks.OnExport(i, Export{kind, name, index}));
   }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
@@ -680,7 +677,7 @@ ReadResult ReadExportSection(SpanU8 data, Hooks&& hooks) {
 template <typename Hooks>
 ReadResult ReadStartSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(func_index, ReadIndex(&data), "start function index");
-  WASP_HOOK(hooks.OnStart(func_index));
+  WASP_HOOK(hooks.OnStart(Start{func_index}));
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
@@ -694,9 +691,9 @@ ReadResult ReadElementSection(SpanU8 data, Hooks&& hooks) {
                        "element segment table index");
     WASP_READ_OR_ERROR(offset, ReadExpr(&data), "element segment offset");
     WASP_READ_OR_ERROR(init, ReadVec<Index>(&data, ReadIndex),
-                  "element segment initializers");
-    WASP_HOOK(
-        hooks.OnElementSegment(i, ElementSegment{table_index, offset, init}));
+                       "element segment initializers");
+    WASP_HOOK(hooks.OnElementSegment(
+        i, ElementSegment{table_index, offset, std::move(init)}));
   }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
@@ -730,9 +727,9 @@ inline optional<LocalDecl> ReadLocalDecl(SpanU8* data) {
 template <typename Hooks>
 ReadResult ReadCode(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(local_decls, ReadVec<LocalDecl>(&data, ReadLocalDecl),
-                "locals");
+                     "locals");
   WASP_READ_OR_ERROR(body, ReadExpr(&data), "body");
-  WASP_HOOK(hooks.OnCodeContents(local_decls, body));
+  WASP_HOOK(hooks.OnCodeContents(std::move(local_decls), body));
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
