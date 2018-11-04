@@ -23,5 +23,18 @@ add_definitions(-Wall)
 
 add_subdirectory(third_party/abseil)
 
-add_executable(wasp src/main.cc)
-target_link_libraries(wasp absl::base absl::str_format)
+include_directories(${wasp_SOURCE_DIR})
+
+add_executable(
+  wasp
+  src/main.cc
+  src/base/file.cc
+  src/binary/reader.cc
+  src/binary/to_string.cc
+)
+
+target_link_libraries(
+  wasp
+  absl::base
+  absl::str_format
+)
