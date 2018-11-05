@@ -491,7 +491,7 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
 }
 
 template <typename Hooks>
-ReadResult ReadModule(SpanU8 data, Hooks&& hooks) {
+ReadResult ReadModuleWithHooks(SpanU8 data, Hooks&& hooks) {
   const SpanU8 kMagic{encoding::Magic};
   const SpanU8 kVersion{encoding::Version};
 
@@ -523,10 +523,13 @@ ReadResult ReadModule(SpanU8 data, Hooks&& hooks) {
       return ReadResult::Error;
     }
 
+    SpanU8 section_span = data.subspan(0, len);
+    data.remove_prefix(len);
+
     if (id == encoding::Section::Custom) {
-      WASP_READ_OR_ERROR(name, ReadStr(&data), "custom section name");
+      WASP_READ_OR_ERROR(name, ReadStr(&section_span), "custom section name");
       WASP_HOOK(hooks.OnCustomSection(
-          CustomSection{last_known_id, name, data.subspan(0, len)}));
+          CustomSection{last_known_id, name, section_span}));
     } else {
       if (last_known_id && id <= *last_known_id) {
         hooks.OnError(absl::StrFormat("Section id is out of order: %u <= %u",
@@ -534,11 +537,9 @@ ReadResult ReadModule(SpanU8 data, Hooks&& hooks) {
         return ReadResult::Error;
       }
 
-      WASP_HOOK(hooks.OnSection(Section{id, data.subspan(0, len)}));
+      WASP_HOOK(hooks.OnSection(Section{id, section_span}));
       last_known_id = id;
     }
-
-    data.remove_prefix(len);
   }
 
   return ReadResult::Ok;
@@ -759,6 +760,197 @@ ReadResult ReadDataSection(SpanU8 data, Hooks&& hooks) {
 #undef WASP_HOOK
 #undef WASP_READ
 #undef WASP_READ_OR_ERROR
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <typename F>
+struct BuildModuleHooks {
+  BuildModuleHooks(F&& on_error) : on_error(std::move(on_error)) {}
+
+  F&& on_error;
+  Module module;
+  Index code_index;
+
+  HookResult OnError(const std::string& msg) {
+    on_error(msg);
+    return HookResult::Stop;
+  }
+
+  HookResult OnSection(Section&& s) {
+    using ::wasp::binary::encoding::Section;
+
+    ReadResult r = ReadResult::Error;
+    switch (s.id) {
+      case Section::Type:     r = ReadTypeSection(s.data, *this); break;
+      case Section::Import:   r = ReadImportSection(s.data, *this); break;
+      case Section::Function: r = ReadFunctionSection(s.data, *this); break;
+      case Section::Table:    r = ReadTableSection(s.data, *this); break;
+      case Section::Memory:   r = ReadMemorySection(s.data, *this); break;
+      case Section::Global:   r = ReadGlobalSection(s.data, *this); break;
+      case Section::Export:   r = ReadExportSection(s.data, *this); break;
+      case Section::Start:    r = ReadStartSection(s.data, *this); break;
+      case Section::Element:  r = ReadElementSection(s.data, *this); break;
+      case Section::Code:     r = ReadCodeSection(s.data, *this); break;
+      case Section::Data:     r = ReadDataSection(s.data, *this); break;
+      default: break;
+    }
+
+    return StopOnError(r);
+  }
+
+  HookResult OnCustomSection(CustomSection&& custom) {
+    module.custom_sections.emplace_back(std::move(custom));
+    return {};
+  }
+
+  HookResult OnTypeCount(Index count) {
+    module.types.reserve(count);
+    return {};
+  }
+
+  HookResult OnFuncType(Index type_index, FuncType&& func_type) {
+    assert(type_index == module.types.size());
+    module.types.emplace_back(std::move(func_type));
+    return {};
+  }
+
+  HookResult OnImportCount(Index count) {
+    module.imports.reserve(count);
+    return {};
+  }
+
+  HookResult OnFuncImport(Index import_index, FuncImport&& func_import) {
+    assert(import_index == module.imports.size());
+    module.imports.emplace_back(std::move(func_import));
+    return {};
+  }
+
+  HookResult OnTableImport(Index import_index,
+                           TableImport&& table_import) {
+    assert(import_index == module.imports.size());
+    module.imports.emplace_back(std::move(table_import));
+    return {};
+  }
+
+  HookResult OnMemoryImport(Index import_index, MemoryImport&& memory_import) {
+    assert(import_index == module.imports.size());
+    module.imports.emplace_back(std::move(memory_import));
+    return {};
+  }
+
+  HookResult OnGlobalImport(Index import_index, GlobalImport&& global_import) {
+    assert(import_index == module.imports.size());
+    module.imports.emplace_back(std::move(global_import));
+    return {};
+  }
+
+  HookResult OnFuncCount(Index count) {
+    module.funcs.reserve(count);
+    return {};
+  }
+
+  HookResult OnFunc(Index func_index, Func&& func) {
+    assert(func_index == module.funcs.size());
+    module.funcs.emplace_back(std::move(func));
+    return {};
+  }
+
+  HookResult OnTableCount(Index count) {
+    module.tables.reserve(count);
+    return {};
+  }
+
+  HookResult OnTable(Index table_index, Table&& table) {
+    assert(table_index == module.tables.size());
+    module.tables.emplace_back(std::move(table));
+    return {};
+  }
+
+  HookResult OnMemoryCount(Index count) {
+    module.memories.reserve(count);
+    return {};
+  }
+
+  HookResult OnMemory(Index memory_index, Memory&& memory) {
+    assert(memory_index == module.memories.size());
+    module.memories.emplace_back(std::move(memory));
+    return {};
+  }
+
+  HookResult OnGlobalCount(Index count) {
+    module.globals.reserve(count);
+    return {};
+  }
+
+  HookResult OnGlobal(Index global_index, Global&& global) {
+    assert(global_index == module.globals.size());
+    module.globals.emplace_back(std::move(global));
+    return {};
+  }
+
+  HookResult OnExportCount(Index count) {
+    module.exports.reserve(count);
+    return {};
+  }
+
+  HookResult OnExport(Index export_index, Export&& export_) {
+    assert(export_index == module.exports.size());
+    module.exports.emplace_back(export_);
+    return {};
+  }
+
+  HookResult OnStart(Start&& start) {
+    module.start = std::move(start);
+    return {};
+  }
+
+  HookResult OnElementSegmentCount(Index count) {
+    module.element_segments.reserve(count);
+    return {};
+  }
+
+  HookResult OnElementSegment(Index segment_index, ElementSegment&& segment) {
+    assert(segment_index == module.element_segments.size());
+    module.element_segments.emplace_back(std::move(segment));
+    return {};
+  }
+
+  HookResult OnCodeCount(Index count) {
+    module.codes.reserve(count);
+    return {};
+  }
+
+  HookResult OnCode(Index code_index, SpanU8 code) {
+    this->code_index = code_index;
+    return StopOnError(ReadCode(code, *this));
+  }
+
+  HookResult OnCodeContents(std::vector<LocalDecl>&& local_decls, Expr body) {
+    assert(code_index == module.codes.size());
+    module.codes.emplace_back(Code{std::move(local_decls), body});
+    return {};
+  }
+
+  HookResult OnDataSegmentCount(Index count) {
+    module.data_segments.reserve(count);
+    return {};
+  }
+
+  HookResult OnDataSegment(Index segment_index, DataSegment&& segment) {
+    assert(segment_index == module.data_segments.size());
+    module.data_segments.emplace_back(std::move(segment));
+    return {};
+  }
+};
+
+template <typename F>
+optional<Module> ReadModule(SpanU8 data, F&& on_error) {
+  BuildModuleHooks<F> hooks{std::move(on_error)};
+  if (ReadModuleWithHooks(data, hooks) == ReadResult::Ok) {
+    return hooks.module;
+  }
+  return absl::nullopt;
+}
 
 }  // namespace binary
 }  // namespace wasp

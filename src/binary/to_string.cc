@@ -68,18 +68,20 @@ std::string ToString(const LocalDecl& self) {
 }
 
 std::string ToString(const Section& self) {
-  return absl::StrFormat("{id %u, contents (%zu bytes)}", self.id,
-                         self.data.size());
+  return absl::StrFormat("{id %u, contents %s}", self.id, ToString(self.data));
 }
 
 std::string ToString(const CustomSection& self) {
+  std::string result = "{after_id ";
   if (self.after_id) {
-    return absl::StrFormat("{after_id %u, name %s, contents (%zu bytes)}",
-                           *self.after_id, self.name, self.data.size());
+    absl::StrAppendFormat(&result, "%u", *self.after_id);
   } else {
-    return absl::StrFormat("{after_id <none>, name %s, contents (%zu bytes)}",
-                           self.name, self.data.size());
+    absl::StrAppendFormat(&result, "<none>");
   }
+
+  absl::StrAppendFormat(&result, ", name \"%s\", contents %s}", self.name,
+                        ToString(self.data));
+  return result;
 }
 
 std::string ToString(const FuncType& self) {

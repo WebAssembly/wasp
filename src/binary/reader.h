@@ -134,14 +134,19 @@ struct DataSectionHooksNop : BaseHooksNop {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-optional<Module> ReadModule(SpanU8);
+struct OnErrorNop {
+  void operator()(const std::string&) {}
+};
+
+template <typename F = OnErrorNop>
+optional<Module> ReadModule(SpanU8, F&& on_error = F{});
 
 ////////////////////////////////////////////////////////////////////////////////
 
 HookResult StopOnError(ReadResult);
 
 template <typename Hooks = ModuleHooksNop>
-ReadResult ReadModule(SpanU8, Hooks&&);
+ReadResult ReadModuleHook(SpanU8, Hooks&&);
 
 template <typename Hooks = TypeSectionHooksNop>
 ReadResult ReadTypeSection(SpanU8, Hooks&& = Hooks{});
