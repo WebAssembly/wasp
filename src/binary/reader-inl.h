@@ -118,6 +118,20 @@ inline optional<s64> ReadVarS64(SpanU8* data) {
   return ReadVarInt<s64>(data);
 }
 
+template <typename Hooks = BaseHooksNop>
+inline optional<Index> ReadCount(SpanU8* data, Hooks&& hooks = Hooks{}) {
+  WASP_READ(count, ReadIndex(data));
+  // There should be at least one byte per count, so if the data is smaller
+  // than that, the module must be malformed.
+  if (count > data->size()) {
+    hooks.OnError(
+        absl::StrFormat("Count is longer than the data length: %zu > %zu",
+                        count, data->size()));
+    return absl::nullopt;
+  }
+  return count;
+}
+
 inline optional<f32> ReadF32(SpanU8* data) {
   static_assert(sizeof(f32) == 4, "sizeof(f32) != 4");
   WASP_READ(bytes, ReadBytes(data, sizeof(f32)));
@@ -137,7 +151,7 @@ inline optional<f64> ReadF64(SpanU8* data) {
 template <typename T, typename F>
 optional<std::vector<T>> ReadVec(SpanU8* data, F&& read_element) {
   std::vector<T> result;
-  WASP_READ(len, ReadVarU32(data));
+  WASP_READ(len, ReadCount(data));
   result.reserve(len);
   for (u32 i = 0; i < len; ++i) {
     WASP_READ(elt, read_element(data));
@@ -571,7 +585,7 @@ ReadResult ErrorUnlessAtSectionEnd(SpanU8 data, Hooks&& hooks) {
 
 template <typename Hooks>
 ReadResult ReadTypeSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadIndex(&data), "type count");
+  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "type count");
   WASP_HOOK(hooks.OnTypeCount(count));
 
   for (Index i = 0; i < count; ++i) {
@@ -594,7 +608,7 @@ ReadResult ReadTypeSection(SpanU8 data, Hooks&& hooks) {
 
 template <typename Hooks>
 ReadResult ReadImportSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadIndex(&data), "import count");
+  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "import count");
   WASP_HOOK(hooks.OnImportCount(count));
 
   for (Index i = 0; i < count; ++i) {
@@ -633,7 +647,7 @@ ReadResult ReadImportSection(SpanU8 data, Hooks&& hooks) {
 
 template <typename Hooks>
 ReadResult ReadFunctionSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadIndex(&data), "func count");
+  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "func count");
   WASP_HOOK(hooks.OnFuncCount(count));
 
   for (Index i = 0; i < count; ++i) {
@@ -645,7 +659,7 @@ ReadResult ReadFunctionSection(SpanU8 data, Hooks&& hooks) {
 
 template <typename Hooks>
 ReadResult ReadTableSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadIndex(&data), "table count");
+  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "table count");
   WASP_HOOK(hooks.OnTableCount(count));
 
   for (Index i = 0; i < count; ++i) {
@@ -657,7 +671,7 @@ ReadResult ReadTableSection(SpanU8 data, Hooks&& hooks) {
 
 template <typename Hooks>
 ReadResult ReadMemorySection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadIndex(&data), "memory count");
+  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "memory count");
   WASP_HOOK(hooks.OnMemoryCount(count));
 
   for (Index i = 0; i < count; ++i) {
@@ -669,7 +683,7 @@ ReadResult ReadMemorySection(SpanU8 data, Hooks&& hooks) {
 
 template <typename Hooks>
 ReadResult ReadGlobalSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadIndex(&data), "global count");
+  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "global count");
   WASP_HOOK(hooks.OnGlobalCount(count));
 
   for (Index i = 0; i < count; ++i) {
@@ -683,7 +697,7 @@ ReadResult ReadGlobalSection(SpanU8 data, Hooks&& hooks) {
 
 template <typename Hooks>
 ReadResult ReadExportSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadIndex(&data), "export count");
+  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "export count");
   WASP_HOOK(hooks.OnExportCount(count));
 
   for (Index i = 0; i < count; ++i) {
@@ -704,7 +718,7 @@ ReadResult ReadStartSection(SpanU8 data, Hooks&& hooks) {
 
 template <typename Hooks>
 ReadResult ReadElementSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadIndex(&data), "element segment count");
+  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "element segment count");
   WASP_HOOK(hooks.OnElementSegmentCount(count));
 
   for (Index i = 0; i < count; ++i) {
@@ -721,7 +735,7 @@ ReadResult ReadElementSection(SpanU8 data, Hooks&& hooks) {
 
 template <typename Hooks>
 ReadResult ReadCodeSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadIndex(&data), "code count");
+  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "code count");
   WASP_HOOK(hooks.OnCodeCount(count));
 
   for (Index i = 0; i < count; ++i) {
@@ -756,7 +770,7 @@ ReadResult ReadCode(SpanU8 data, Hooks&& hooks) {
 
 template <typename Hooks>
 ReadResult ReadDataSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadIndex(&data), "data segment count");
+  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "data segment count");
   WASP_HOOK(hooks.OnDataSegmentCount(count));
 
   for (Index i = 0; i < count; ++i) {
