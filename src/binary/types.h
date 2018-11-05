@@ -25,6 +25,24 @@
 namespace wasp {
 namespace binary {
 
+struct BorrowedTraits {
+  using Name = string_view;
+  using Buffer = SpanU8;
+
+  static Name ToName(string_view x) { return x; }
+  static Buffer ToBuffer(SpanU8 x) { return x; }
+};
+
+struct OwnedTraits {
+  using Name = std::string;
+  using Buffer = std::vector<u8>;
+
+  static Name ToName(std::string x) { return x; }
+  static Name ToName(string_view x) { return Name{x}; }
+  static Buffer ToBuffer(std::vector<u8> x) { return x; }
+  static Buffer ToBuffer(SpanU8 x) { return Buffer{x.begin(), x.end()}; }
+};
+
 enum class ValType {
   I32,
   I64,
@@ -76,13 +94,16 @@ struct Section {
   SpanU8 data;
 };
 
+template <typename Traits = BorrowedTraits>
 struct CustomSection {
   CustomSection(optional<u32> after_id, string_view name, SpanU8 data)
-      : after_id(after_id), name(name), data(data) {}
+      : after_id(after_id),
+        name(Traits::ToName(name)),
+        data(Traits::ToBuffer(data)) {}
 
   optional<u32> after_id;
-  string_view name;
-  SpanU8 data;
+  typename Traits::Name name;
+  typename Traits::Buffer data;
 };
 
 using ValTypes = std::vector<ValType>;
@@ -117,22 +138,28 @@ struct GlobalType {
   Mutability mut;
 };
 
+template <typename Traits = BorrowedTraits>
 struct Import {
   template <typename T>
   Import(string_view module, string_view name, T&& desc)
-      : module(module), name(name), desc(std::move(desc)) {}
+      : module(Traits::ToName(module)),
+        name(Traits::ToName(name)),
+        desc(std::move(desc)) {}
 
   ExternalKind kind() const { return static_cast<ExternalKind>(desc.index()); }
 
-  string_view module;
-  string_view name;
+  typename Traits::Name module;
+  typename Traits::Name name;
   variant<Index, TableType, MemoryType, GlobalType> desc;
 };
 
+template <typename Traits = BorrowedTraits>
 struct Expr {
-  explicit Expr(SpanU8 data) : data(data) {}
+  explicit Expr(SpanU8 data) : data(Traits::ToBuffer(data)) {}
+  template <typename U>
+  Expr(const Expr<U>& other) : data(Traits::ToBuffer(other.data)) {}
 
-  SpanU8 data;
+  typename Traits::Buffer data;
 };
 
 struct Opcode {
@@ -202,20 +229,22 @@ struct Memory {
   MemoryType memory_type;
 };
 
+template <typename Traits = BorrowedTraits>
 struct Global {
-  Global(GlobalType global_type, Expr init_expr)
+  Global(GlobalType global_type, Expr<> init_expr)
       : global_type(global_type), init_expr(init_expr) {}
 
   GlobalType global_type;
-  Expr init_expr;
+  Expr<Traits> init_expr;
 };
 
+template <typename Traits = BorrowedTraits>
 struct Export {
   Export(ExternalKind kind, string_view name, Index index) :
     kind(kind), name(name), index(index) {}
 
   ExternalKind kind;
-  string_view name;
+  typename Traits::Name name;
   Index index;
 };
 
@@ -225,45 +254,51 @@ struct Start {
   Index func_index;
 };
 
+template <typename Traits = BorrowedTraits>
 struct ElementSegment {
-  ElementSegment(Index table_index, Expr offset, std::vector<Index>&& init)
+  ElementSegment(Index table_index, Expr<> offset, std::vector<Index>&& init)
       : table_index(table_index), offset(offset), init(std::move(init)) {}
 
   Index table_index;
-  Expr offset;
+  Expr<Traits> offset;
   std::vector<Index> init;
 };
 
+template <typename Traits = BorrowedTraits>
 struct Code {
-  Code(std::vector<LocalDecl>&& local_decls, Expr body)
+  Code(std::vector<LocalDecl>&& local_decls, Expr<> body)
       : local_decls(std::move(local_decls)), body(body) {}
 
   std::vector<LocalDecl> local_decls;
-  Expr body;
+  Expr<Traits> body;
 };
 
+template <typename Traits = BorrowedTraits>
 struct DataSegment {
-  DataSegment(Index memory_index, Expr offset, SpanU8 init)
-      : memory_index(memory_index), offset(offset), init(init) {}
+  DataSegment(Index memory_index, Expr<> offset, SpanU8 init)
+      : memory_index(memory_index),
+        offset(offset),
+        init(Traits::ToBuffer(init)) {}
 
   Index memory_index;
-  Expr offset;
-  SpanU8 init;
+  Expr<Traits> offset;
+  typename Traits::Buffer init;
 };
 
+template <typename Traits = BorrowedTraits>
 struct Module {
   std::vector<FuncType> types;
-  std::vector<Import> imports;
+  std::vector<Import<Traits>> imports;
   std::vector<Func> funcs;
   std::vector<Table> tables;
   std::vector<Memory> memories;
-  std::vector<Global> globals;
-  std::vector<Export> exports;
+  std::vector<Global<Traits>> globals;
+  std::vector<Export<Traits>> exports;
   optional<Start> start;
-  std::vector<ElementSegment> element_segments;
-  std::vector<Code> codes;
-  std::vector<DataSegment> data_segments;
-  std::vector<CustomSection> custom_sections;
+  std::vector<ElementSegment<Traits>> element_segments;
+  std::vector<Code<Traits>> codes;
+  std::vector<DataSegment<Traits>> data_segments;
+  std::vector<CustomSection<Traits>> custom_sections;
 };
 
 }  // namespace binary

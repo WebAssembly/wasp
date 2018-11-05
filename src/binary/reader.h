@@ -43,7 +43,7 @@ struct ExprHooksNop : BaseHooksNop {
 
 struct ModuleHooksNop : BaseHooksNop {
   HookResult OnSection(Section&&) { return {}; }
-  HookResult OnCustomSection(CustomSection&&) { return {}; }
+  HookResult OnCustomSection(CustomSection<>&&) { return {}; }
 };
 
 struct TypeSectionHooksNop : BaseHooksNop {
@@ -53,7 +53,9 @@ struct TypeSectionHooksNop : BaseHooksNop {
 
 struct ImportSectionHooksNop : BaseHooksNop {
   HookResult OnImportCount(Index count) { return {}; }
-  HookResult OnImport(Index import_index, Import&&) { return {}; }
+  HookResult OnImport(Index import_index, Import<BorrowedTraits>&&) {
+    return {};
+  }
 };
 
 struct FunctionSectionHooksNop : BaseHooksNop {
@@ -73,12 +75,16 @@ struct MemorySectionHooksNop : BaseHooksNop {
 
 struct GlobalSectionHooksNop : BaseHooksNop {
   HookResult OnGlobalCount(Index count) { return {}; }
-  HookResult OnGlobal(Index global_index, Global&&) { return {}; }
+  HookResult OnGlobal(Index global_index, Global<BorrowedTraits>&&) {
+    return {};
+  }
 };
 
 struct ExportSectionHooksNop : BaseHooksNop {
   HookResult OnExportCount(Index count) { return {}; }
-  HookResult OnExport(Index export_index, Export&&) { return {}; }
+  HookResult OnExport(Index export_index, Export<BorrowedTraits>&&) {
+    return {};
+  }
 };
 
 struct StartSectionHooksNop : BaseHooksNop {
@@ -87,7 +93,8 @@ struct StartSectionHooksNop : BaseHooksNop {
 
 struct ElementSectionHooksNop : BaseHooksNop {
   HookResult OnElementSegmentCount(Index count) { return {}; }
-  HookResult OnElementSegment(Index segment_index, ElementSegment&&) {
+  HookResult OnElementSegment(Index segment_index,
+                              ElementSegment<BorrowedTraits>&&) {
     return {};
   }
 };
@@ -98,14 +105,15 @@ struct CodeSectionHooksNop : BaseHooksNop {
 };
 
 struct CodeHooksNop : BaseHooksNop {
-  HookResult OnCodeContents(std::vector<LocalDecl>&& locals, Expr body) {
+  HookResult OnCodeContents(std::vector<LocalDecl>&& locals,
+                            Expr<BorrowedTraits> body) {
     return {};
   }
 };
 
 struct DataSectionHooksNop : BaseHooksNop {
   HookResult OnDataSegmentCount(Index count) { return {}; }
-  HookResult OnDataSegment(Index segment_index, DataSegment&&) {
+  HookResult OnDataSegment(Index segment_index, DataSegment<BorrowedTraits>&&) {
     return {};
   }
 };
@@ -116,8 +124,8 @@ struct OnErrorNop {
   void operator()(const std::string&) {}
 };
 
-template <typename F = OnErrorNop>
-optional<Module> ReadModule(SpanU8, F&& on_error = F{});
+template <typename Traits, typename F = OnErrorNop>
+optional<Module<Traits>> ReadModule(SpanU8, F&& on_error = F{});
 
 template <typename F = OnErrorNop>
 optional<Instrs> ReadInstrs(SpanU8, F&& on_error = F{});

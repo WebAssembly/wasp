@@ -75,7 +75,8 @@ std::string ToString(const Section& self) {
   return absl::StrFormat("{id %u, contents %s}", self.id, ToString(self.data));
 }
 
-std::string ToString(const CustomSection& self) {
+template <typename Traits>
+std::string ToString(const CustomSection<Traits>& self) {
   std::string result = "{after_id ";
   if (self.after_id) {
     absl::StrAppendFormat(&result, "%u", *self.after_id);
@@ -106,7 +107,8 @@ std::string ToString(const GlobalType& self) {
   return absl::StrFormat("%s %s", ToString(self.mut), ToString(self.valtype));
 }
 
-std::string ToString(const Import& self) {
+template <typename Traits>
+std::string ToString(const Import<Traits>& self) {
   std::string result =
       absl::StrFormat("{module \"%s\", name \"%s\", desc %s", self.module,
                       self.name, ToString(self.kind()));
@@ -127,12 +129,14 @@ std::string ToString(const Import& self) {
   return result;
 }
 
-std::string ToString(const Export& self) {
+template <typename Traits>
+std::string ToString(const Export<Traits>& self) {
   return absl::StrFormat("{name \"%s\", desc %s %u}", self.name,
                          ToString(self.kind), self.index);
 }
 
-std::string ToString(const Expr& self) {
+template <typename Traits>
+std::string ToString(const Expr<Traits>& self) {
   return ToString(self.data);
 }
 
@@ -187,17 +191,20 @@ std::string ToString(const Instr& instr) {
   return result;
 }
 
-std::string ToString(const Global& self) {
+template <typename Traits>
+std::string ToString(const Global<Traits>& self) {
   return absl::StrFormat("{type %s, init %s}", ToString(self.global_type),
                          ToString(self.init_expr));
 }
 
-std::string ToString(const ElementSegment& self) {
+template <typename Traits>
+std::string ToString(const ElementSegment<Traits>& self) {
   return absl::StrFormat("{table %u, offset %s, init %s}", self.table_index,
                          ToString(self.offset), ToString(self.init));
 }
 
-std::string ToString(const DataSegment& self) {
+template <typename Traits>
+std::string ToString(const DataSegment<Traits>& self) {
   return absl::StrFormat("{table %u, offset %s, init %s}", self.memory_index,
                          ToString(self.offset), ToString(self.init));
 }

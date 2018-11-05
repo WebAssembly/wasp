@@ -252,8 +252,8 @@ inline optional<MemArg> ReadMemArg(SpanU8* data) {
   return MemArg{align_log2, offset};
 }
 
-template <typename Hooks = ExprHooksNop>
-optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
+template <typename Traits = BorrowedTraits, typename Hooks = ExprHooksNop>
+optional<Expr<Traits>> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
   const u8* const start = data->data();
   int ends_expected = 1;
 
@@ -516,7 +516,7 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
   }
 
   const size_t len = data->data() - start;
-  return Expr{SpanU8{start, len}};
+  return Expr<Traits>{SpanU8{start, len}};
 }
 
 template <typename Hooks>
@@ -558,7 +558,7 @@ ReadResult ReadModuleWithHooks(SpanU8 data, Hooks&& hooks) {
     if (id == encoding::Section::Custom) {
       WASP_READ_OR_ERROR(name, ReadStr(&section_span), "custom section name");
       WASP_HOOK(hooks.OnCustomSection(
-          CustomSection{last_known_id, name, section_span}));
+          CustomSection<>{last_known_id, name, section_span}));
     } else {
       if (last_known_id && id <= *last_known_id) {
         hooks.OnError(absl::StrFormat("Section id is out of order: %u <= %u",
@@ -619,25 +619,25 @@ ReadResult ReadImportSection(SpanU8 data, Hooks&& hooks) {
     switch (kind) {
       case ExternalKind::Func: {
         WASP_READ_OR_ERROR(type_index, ReadIndex(&data), "func type index");
-        WASP_HOOK(hooks.OnImport(i, Import{module, name, type_index}));
+        WASP_HOOK(hooks.OnImport(i, Import<>{module, name, type_index}));
         break;
       }
 
       case ExternalKind::Table: {
         WASP_READ_OR_ERROR(table_type, ReadTableType(&data), "table type");
-        WASP_HOOK(hooks.OnImport(i, Import{module, name, table_type}));
+        WASP_HOOK(hooks.OnImport(i, Import<>{module, name, table_type}));
         break;
       }
 
       case ExternalKind::Memory: {
         WASP_READ_OR_ERROR(memory_type, ReadMemoryType(&data), "memory type");
-        WASP_HOOK(hooks.OnImport(i, Import{module, name, memory_type}));
+        WASP_HOOK(hooks.OnImport(i, Import<>{module, name, memory_type}));
         break;
       }
 
       case ExternalKind::Global: {
         WASP_READ_OR_ERROR(global_type, ReadGlobalType(&data), "global type");
-        WASP_HOOK(hooks.OnImport(i, Import{module, name, global_type}));
+        WASP_HOOK(hooks.OnImport(i, Import<>{module, name, global_type}));
         break;
       }
     }
@@ -690,7 +690,7 @@ ReadResult ReadGlobalSection(SpanU8 data, Hooks&& hooks) {
     WASP_READ_OR_ERROR(global_type, ReadGlobalType(&data), "global type");
     WASP_READ_OR_ERROR(init_expr, ReadExpr(&data),
                        "global initializer expression");
-    WASP_HOOK(hooks.OnGlobal(i, Global{global_type, init_expr}));
+    WASP_HOOK(hooks.OnGlobal(i, Global<>{global_type, std::move(init_expr)}));
   }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
@@ -704,7 +704,7 @@ ReadResult ReadExportSection(SpanU8 data, Hooks&& hooks) {
     WASP_READ_OR_ERROR(name, ReadStr(&data), "export name");
     WASP_READ_OR_ERROR(kind, ReadExternalKind(&data), "export kind");
     WASP_READ_OR_ERROR(index, ReadIndex(&data), "export index");
-    WASP_HOOK(hooks.OnExport(i, Export{kind, name, index}));
+    WASP_HOOK(hooks.OnExport(i, Export<>{kind, name, index}));
   }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
@@ -728,7 +728,7 @@ ReadResult ReadElementSection(SpanU8 data, Hooks&& hooks) {
     WASP_READ_OR_ERROR(init, ReadVec<Index>(&data, ReadIndex),
                        "element segment initializers");
     WASP_HOOK(hooks.OnElementSegment(
-        i, ElementSegment{table_index, offset, std::move(init)}));
+        i, ElementSegment<>{table_index, std::move(offset), std::move(init)}));
   }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
@@ -778,7 +778,8 @@ ReadResult ReadDataSection(SpanU8 data, Hooks&& hooks) {
                        "data segment table index");
     WASP_READ_OR_ERROR(offset, ReadExpr(&data), "data segment offset");
     WASP_READ_OR_ERROR(init, ReadVecU8(&data), "data segment initializer");
-    WASP_HOOK(hooks.OnDataSegment(i, DataSegment{table_index, offset, init}));
+    WASP_HOOK(hooks.OnDataSegment(
+        i, DataSegment<>{table_index, std::move(offset), std::move(init)}));
   }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
@@ -789,7 +790,7 @@ ReadResult ReadDataSection(SpanU8 data, Hooks&& hooks) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename F>
+template <typename Traits, typename F>
 struct BuildModuleHooks {
   BuildModuleHooks(F&& on_error) : on_error(std::move(on_error)) {}
 
@@ -820,8 +821,9 @@ struct BuildModuleHooks {
     return StopOnError(r);
   }
 
-  HookResult OnCustomSection(CustomSection&& custom) {
-    module.custom_sections.emplace_back(std::move(custom));
+  HookResult OnCustomSection(CustomSection<>&& custom) {
+    module.custom_sections.emplace_back(custom.after_id, custom.name,
+                                        custom.data);
     return {};
   }
 
@@ -841,9 +843,9 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnImport(Index import_index, Import&& import) {
+  HookResult OnImport(Index import_index, Import<>&& import) {
     assert(import_index == module.imports.size());
-    module.imports.emplace_back(std::move(import));
+    module.imports.emplace_back(import.module, import.name, import.desc);
     return {};
   }
 
@@ -885,9 +887,9 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnGlobal(Index global_index, Global&& global) {
+  HookResult OnGlobal(Index global_index, Global<>&& global) {
     assert(global_index == module.globals.size());
-    module.globals.emplace_back(std::move(global));
+    module.globals.emplace_back(global.global_type, global.init_expr);
     return {};
   }
 
@@ -896,9 +898,9 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnExport(Index export_index, Export&& export_) {
+  HookResult OnExport(Index export_index, Export<>&& export_) {
     assert(export_index == module.exports.size());
-    module.exports.emplace_back(export_);
+    module.exports.emplace_back(export_.kind, export_.name, export_.index);
     return {};
   }
 
@@ -912,9 +914,10 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnElementSegment(Index segment_index, ElementSegment&& segment) {
+  HookResult OnElementSegment(Index segment_index, ElementSegment<>&& segment) {
     assert(segment_index == module.element_segments.size());
-    module.element_segments.emplace_back(std::move(segment));
+    module.element_segments.emplace_back(segment.table_index, segment.offset,
+                                         std::move(segment.init));
     return {};
   }
 
@@ -928,9 +931,9 @@ struct BuildModuleHooks {
     return StopOnError(ReadCode(code, *this));
   }
 
-  HookResult OnCodeContents(std::vector<LocalDecl>&& local_decls, Expr body) {
+  HookResult OnCodeContents(std::vector<LocalDecl>&& local_decls, Expr<> body) {
     assert(code_index == module.codes.size());
-    module.codes.emplace_back(Code{std::move(local_decls), body});
+    module.codes.emplace_back(std::move(local_decls), std::move(body));
     return {};
   }
 
@@ -939,20 +942,21 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnDataSegment(Index segment_index, DataSegment&& segment) {
+  HookResult OnDataSegment(Index segment_index, DataSegment<>&& segment) {
     assert(segment_index == module.data_segments.size());
-    module.data_segments.emplace_back(std::move(segment));
+    module.data_segments.emplace_back(segment.memory_index, segment.offset,
+                                      std::move(segment.init));
     return {};
   }
 
   F&& on_error;
-  Module module;
+  Module<Traits> module;
   Index code_index;
 };
 
-template <typename F>
-optional<Module> ReadModule(SpanU8 data, F&& on_error) {
-  BuildModuleHooks<F> hooks{std::move(on_error)};
+template <typename Traits, typename F>
+optional<Module<Traits>> ReadModule(SpanU8 data, F&& on_error) {
+  BuildModuleHooks<Traits, F> hooks{std::move(on_error)};
   if (ReadModuleWithHooks(data, hooks) == ReadResult::Ok) {
     return hooks.module;
   }

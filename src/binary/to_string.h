@@ -29,21 +29,28 @@ std::string ToString(const MemArg&);
 std::string ToString(const Limits&);
 std::string ToString(const LocalDecl&);
 std::string ToString(const Section&);
-std::string ToString(const CustomSection&);
+template <typename Traits>
+std::string ToString(const CustomSection<Traits>&);
 std::string ToString(const FuncType&);
 std::string ToString(const TableType&);
 std::string ToString(const MemoryType&);
 std::string ToString(const GlobalType&);
-std::string ToString(const Import&);
-std::string ToString(const Export&);
-std::string ToString(const Expr&);
+template <typename Traits>
+std::string ToString(const Import<Traits>&);
+template <typename Traits>
+std::string ToString(const Export<Traits>&);
+template <typename Traits>
+std::string ToString(const Expr<Traits>&);
 std::string ToString(const Opcode&);
 std::string ToString(const CallIndirectImmediate&);
 std::string ToString(const BrTableImmediate&);
 std::string ToString(const Instr&);
-std::string ToString(const Global&);
-std::string ToString(const ElementSegment&);
-std::string ToString(const DataSegment&);
+template <typename Traits>
+std::string ToString(const Global<Traits>&);
+template <typename Traits>
+std::string ToString(const ElementSegment<Traits>&);
+template <typename Traits>
+std::string ToString(const DataSegment<Traits>&);
 
 }  // namespace binary
 }  // namespace wasp

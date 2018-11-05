@@ -42,9 +42,9 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  auto module = ReadModule(SpanU8{*optbuf}, [](const std::string& msg) {
-    absl::PrintF("Error: %s\n", msg);
-  });
+  auto module = ReadModule<OwnedTraits>(
+      SpanU8{*optbuf},
+      [](const std::string& msg) { absl::PrintF("Error: %s\n", msg); });
 
   if (!module) {
     absl::PrintF("Unable to read module.\n");
