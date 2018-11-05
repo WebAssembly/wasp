@@ -37,4 +37,5 @@ target_link_libraries(
   wasp
   absl::base
   absl::str_format
+  absl::variant
 )

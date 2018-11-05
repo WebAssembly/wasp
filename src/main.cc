@@ -50,5 +50,15 @@ int main(int argc, char** argv) {
     absl::PrintF("Unable to read module.\n");
   }
 
+  if (!module->codes.empty()) {
+    auto code = module->codes[0];
+    auto opt_instrs = ReadInstrs(code.body.data);
+    if (opt_instrs) {
+      for (auto instr: *opt_instrs) {
+        absl::PrintF("%s\n", ToString(instr));
+      }
+    }
+  }
+
   return 0;
 }

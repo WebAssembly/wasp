@@ -232,6 +232,12 @@ inline optional<GlobalType> ReadGlobalType(SpanU8* data) {
   return GlobalType{type, mut};
 }
 
+inline optional<MemArg> ReadMemArg(SpanU8* data) {
+  WASP_READ(align_log2, ReadVarU32(data));
+  WASP_READ(offset, ReadVarU32(data));
+  return MemArg{align_log2, offset};
+}
+
 template <typename Hooks = ExprHooksNop>
 optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
   const u8* const start = data->data();
@@ -244,7 +250,7 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       // when we've closed all open blocks (and the implicit outer block).
       case encoding::Opcode::End:
         --ends_expected;
-        WASP_HOOK(hooks.OnOpcodeBare(opcode));
+        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}}));
         break;
 
       // No immediates:
@@ -254,50 +260,7 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       case encoding::Opcode::Return:
       case encoding::Opcode::Drop:
       case encoding::Opcode::Select:
-      case encoding::Opcode::I32Add:
-      case encoding::Opcode::I32Sub:
-      case encoding::Opcode::I32Mul:
-      case encoding::Opcode::I32DivS:
-      case encoding::Opcode::I32DivU:
-      case encoding::Opcode::I32RemS:
-      case encoding::Opcode::I32RemU:
-      case encoding::Opcode::I32And:
-      case encoding::Opcode::I32Or:
-      case encoding::Opcode::I32Xor:
-      case encoding::Opcode::I32Shl:
-      case encoding::Opcode::I32ShrU:
-      case encoding::Opcode::I32ShrS:
-      case encoding::Opcode::I32Rotr:
-      case encoding::Opcode::I32Rotl:
-      case encoding::Opcode::I64Add:
-      case encoding::Opcode::I64Sub:
-      case encoding::Opcode::I64Mul:
-      case encoding::Opcode::I64DivS:
-      case encoding::Opcode::I64DivU:
-      case encoding::Opcode::I64RemS:
-      case encoding::Opcode::I64RemU:
-      case encoding::Opcode::I64And:
-      case encoding::Opcode::I64Or:
-      case encoding::Opcode::I64Xor:
-      case encoding::Opcode::I64Shl:
-      case encoding::Opcode::I64ShrU:
-      case encoding::Opcode::I64ShrS:
-      case encoding::Opcode::I64Rotr:
-      case encoding::Opcode::I64Rotl:
-      case encoding::Opcode::F32Add:
-      case encoding::Opcode::F32Sub:
-      case encoding::Opcode::F32Mul:
-      case encoding::Opcode::F32Div:
-      case encoding::Opcode::F32Min:
-      case encoding::Opcode::F32Max:
-      case encoding::Opcode::F32Copysign:
-      case encoding::Opcode::F64Add:
-      case encoding::Opcode::F64Sub:
-      case encoding::Opcode::F64Mul:
-      case encoding::Opcode::F64Div:
-      case encoding::Opcode::F64Min:
-      case encoding::Opcode::F64Max:
-      case encoding::Opcode::F64Copysign:
+      case encoding::Opcode::I32Eqz:
       case encoding::Opcode::I32Eq:
       case encoding::Opcode::I32Ne:
       case encoding::Opcode::I32LtS:
@@ -308,6 +271,7 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       case encoding::Opcode::I32GeS:
       case encoding::Opcode::I32GtU:
       case encoding::Opcode::I32GeU:
+      case encoding::Opcode::I64Eqz:
       case encoding::Opcode::I64Eq:
       case encoding::Opcode::I64Ne:
       case encoding::Opcode::I64LtS:
@@ -333,9 +297,39 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       case encoding::Opcode::I32Clz:
       case encoding::Opcode::I32Ctz:
       case encoding::Opcode::I32Popcnt:
+      case encoding::Opcode::I32Add:
+      case encoding::Opcode::I32Sub:
+      case encoding::Opcode::I32Mul:
+      case encoding::Opcode::I32DivS:
+      case encoding::Opcode::I32DivU:
+      case encoding::Opcode::I32RemS:
+      case encoding::Opcode::I32RemU:
+      case encoding::Opcode::I32And:
+      case encoding::Opcode::I32Or:
+      case encoding::Opcode::I32Xor:
+      case encoding::Opcode::I32Shl:
+      case encoding::Opcode::I32ShrS:
+      case encoding::Opcode::I32ShrU:
+      case encoding::Opcode::I32Rotl:
+      case encoding::Opcode::I32Rotr:
       case encoding::Opcode::I64Clz:
       case encoding::Opcode::I64Ctz:
       case encoding::Opcode::I64Popcnt:
+      case encoding::Opcode::I64Add:
+      case encoding::Opcode::I64Sub:
+      case encoding::Opcode::I64Mul:
+      case encoding::Opcode::I64DivS:
+      case encoding::Opcode::I64DivU:
+      case encoding::Opcode::I64RemS:
+      case encoding::Opcode::I64RemU:
+      case encoding::Opcode::I64And:
+      case encoding::Opcode::I64Or:
+      case encoding::Opcode::I64Xor:
+      case encoding::Opcode::I64Shl:
+      case encoding::Opcode::I64ShrS:
+      case encoding::Opcode::I64ShrU:
+      case encoding::Opcode::I64Rotl:
+      case encoding::Opcode::I64Rotr:
       case encoding::Opcode::F32Abs:
       case encoding::Opcode::F32Neg:
       case encoding::Opcode::F32Ceil:
@@ -343,6 +337,13 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       case encoding::Opcode::F32Trunc:
       case encoding::Opcode::F32Nearest:
       case encoding::Opcode::F32Sqrt:
+      case encoding::Opcode::F32Add:
+      case encoding::Opcode::F32Sub:
+      case encoding::Opcode::F32Mul:
+      case encoding::Opcode::F32Div:
+      case encoding::Opcode::F32Min:
+      case encoding::Opcode::F32Max:
+      case encoding::Opcode::F32Copysign:
       case encoding::Opcode::F64Abs:
       case encoding::Opcode::F64Neg:
       case encoding::Opcode::F64Ceil:
@@ -350,34 +351,39 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       case encoding::Opcode::F64Trunc:
       case encoding::Opcode::F64Nearest:
       case encoding::Opcode::F64Sqrt:
-      case encoding::Opcode::I32TruncSF32:
-      case encoding::Opcode::I32TruncSF64:
-      case encoding::Opcode::I32TruncUF32:
-      case encoding::Opcode::I32TruncUF64:
+      case encoding::Opcode::F64Add:
+      case encoding::Opcode::F64Sub:
+      case encoding::Opcode::F64Mul:
+      case encoding::Opcode::F64Div:
+      case encoding::Opcode::F64Min:
+      case encoding::Opcode::F64Max:
+      case encoding::Opcode::F64Copysign:
       case encoding::Opcode::I32WrapI64:
-      case encoding::Opcode::I64TruncSF32:
-      case encoding::Opcode::I64TruncSF64:
-      case encoding::Opcode::I64TruncUF32:
-      case encoding::Opcode::I64TruncUF64:
+      case encoding::Opcode::I32TruncSF32:
+      case encoding::Opcode::I32TruncUF32:
+      case encoding::Opcode::I32TruncSF64:
+      case encoding::Opcode::I32TruncUF64:
       case encoding::Opcode::I64ExtendSI32:
       case encoding::Opcode::I64ExtendUI32:
+      case encoding::Opcode::I64TruncSF32:
+      case encoding::Opcode::I64TruncUF32:
+      case encoding::Opcode::I64TruncSF64:
+      case encoding::Opcode::I64TruncUF64:
       case encoding::Opcode::F32ConvertSI32:
       case encoding::Opcode::F32ConvertUI32:
       case encoding::Opcode::F32ConvertSI64:
       case encoding::Opcode::F32ConvertUI64:
       case encoding::Opcode::F32DemoteF64:
-      case encoding::Opcode::F32ReinterpretI32:
       case encoding::Opcode::F64ConvertSI32:
       case encoding::Opcode::F64ConvertUI32:
       case encoding::Opcode::F64ConvertSI64:
       case encoding::Opcode::F64ConvertUI64:
       case encoding::Opcode::F64PromoteF32:
-      case encoding::Opcode::F64ReinterpretI64:
       case encoding::Opcode::I32ReinterpretF32:
       case encoding::Opcode::I64ReinterpretF64:
-      case encoding::Opcode::I32Eqz:
-      case encoding::Opcode::I64Eqz:
-        WASP_HOOK(hooks.OnOpcodeBare(opcode));
+      case encoding::Opcode::F32ReinterpretI32:
+      case encoding::Opcode::F64ReinterpretI64:
+        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}}));
         break;
 
       // Type immediate.
@@ -385,7 +391,7 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       case encoding::Opcode::Loop:
       case encoding::Opcode::If: {
         WASP_READ_OR_ERROR(type, ReadValType(data), "type index");
-        WASP_HOOK(hooks.OnOpcodeType(opcode, type));
+        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, type}));
         // Each of these instructions opens a new block which must be closed by
         // an `End`.
         ++ends_expected;
@@ -395,22 +401,14 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       // Index immediate.
       case encoding::Opcode::Br:
       case encoding::Opcode::BrIf:
-      case encoding::Opcode::GetGlobal:
-      case encoding::Opcode::GetLocal:
-      case encoding::Opcode::SetGlobal:
-      case encoding::Opcode::SetLocal:
       case encoding::Opcode::Call:
-      case encoding::Opcode::TeeLocal: {
+      case encoding::Opcode::GetLocal:
+      case encoding::Opcode::SetLocal:
+      case encoding::Opcode::TeeLocal:
+      case encoding::Opcode::GetGlobal:
+      case encoding::Opcode::SetGlobal: {
         WASP_READ_OR_ERROR(index, ReadIndex(data), "index");
-        WASP_HOOK(hooks.OnOpcodeIndex(opcode, index));
-        break;
-      }
-
-      // Index, reserved immediates.
-      case encoding::Opcode::CallIndirect: {
-        WASP_READ_OR_ERROR(index, ReadIndex(data), "index");
-        WASP_READ_OR_ERROR(reserved, ReadU8(data), "reserved");
-        WASP_HOOK(hooks.OnOpcodeCallIndirect(opcode, index, reserved));
+        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, index}));
         break;
       }
 
@@ -420,12 +418,26 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
                            "br_table targets");
         WASP_READ_OR_ERROR(default_target, ReadIndex(data),
                            "br_table default target");
-        WASP_HOOK(
-            hooks.OnOpcodeBrTable(opcode, std::move(targets), default_target));
+        WASP_HOOK(hooks.OnInstr(
+            Instr{Opcode{opcode},
+                  BrTableImmediate{std::move(targets), default_target}}));
+        break;
+      }
+
+      // Index, reserved immediates.
+      case encoding::Opcode::CallIndirect: {
+        WASP_READ_OR_ERROR(index, ReadIndex(data), "index");
+        WASP_READ_OR_ERROR(reserved, ReadU8(data), "reserved");
+        WASP_HOOK(hooks.OnInstr(
+            Instr{Opcode{opcode}, CallIndirectImmediate{index, reserved}}));
         break;
       }
 
       // Memarg (alignment, offset) immediates.
+      case encoding::Opcode::I32Load:
+      case encoding::Opcode::I64Load:
+      case encoding::Opcode::F32Load:
+      case encoding::Opcode::F64Load:
       case encoding::Opcode::I32Load8S:
       case encoding::Opcode::I32Load8U:
       case encoding::Opcode::I32Load16S:
@@ -436,47 +448,50 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
       case encoding::Opcode::I64Load16U:
       case encoding::Opcode::I64Load32S:
       case encoding::Opcode::I64Load32U:
-      case encoding::Opcode::I32Load:
-      case encoding::Opcode::I64Load:
-      case encoding::Opcode::F32Load:
-      case encoding::Opcode::F64Load:
+      case encoding::Opcode::I32Store:
+      case encoding::Opcode::I64Store:
+      case encoding::Opcode::F32Store:
+      case encoding::Opcode::F64Store:
       case encoding::Opcode::I32Store8:
       case encoding::Opcode::I32Store16:
       case encoding::Opcode::I64Store8:
       case encoding::Opcode::I64Store16:
-      case encoding::Opcode::I64Store32:
-      case encoding::Opcode::I32Store:
-      case encoding::Opcode::I64Store:
-      case encoding::Opcode::F32Store:
-      case encoding::Opcode::F64Store: {
-        WASP_READ_OR_ERROR(align_log2, ReadVarU32(data), "alignment");
-        WASP_READ_OR_ERROR(offset, ReadVarU32(data), "offset");
-        WASP_HOOK(hooks.OnOpcodeMemarg(opcode, MemArg{align_log2, offset}));
+      case encoding::Opcode::I64Store32: {
+        WASP_READ_OR_ERROR(memarg, ReadMemArg(data), "memarg");
+        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, memarg}));
+        break;
+      }
+
+      // Reserved immediates.
+      case encoding::Opcode::MemorySize:
+      case encoding::Opcode::MemoryGrow: {
+        WASP_READ_OR_ERROR(reserved, ReadU8(data), "reserved");
+        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, reserved}));
         break;
       }
 
       // Const immediates.
       case encoding::Opcode::I32Const: {
         WASP_READ_OR_ERROR(value, ReadVarS32(data), "i32 constant");
-        WASP_HOOK(hooks.OnOpcodeI32Const(opcode, value));
+        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, value}));
         break;
       }
 
       case encoding::Opcode::I64Const: {
         WASP_READ_OR_ERROR(value, ReadVarS64(data), "i64 constant");
-        WASP_HOOK(hooks.OnOpcodeI64Const(opcode, value));
+        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, value}));
         break;
       }
 
       case encoding::Opcode::F32Const: {
         WASP_READ_OR_ERROR(value, ReadF32(data), "f32 constant");
-        WASP_HOOK(hooks.OnOpcodeF32Const(opcode, value));
+        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, value}));
         break;
       }
 
       case encoding::Opcode::F64Const: {
         WASP_READ_OR_ERROR(value, ReadF64(data), "f64 constant");
-        WASP_HOOK(hooks.OnOpcodeF64Const(opcode, value));
+        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, value}));
         break;
       }
 
@@ -767,10 +782,6 @@ template <typename F>
 struct BuildModuleHooks {
   BuildModuleHooks(F&& on_error) : on_error(std::move(on_error)) {}
 
-  F&& on_error;
-  Module module;
-  Index code_index;
-
   HookResult OnError(const std::string& msg) {
     on_error(msg);
     return HookResult::Stop;
@@ -941,6 +952,10 @@ struct BuildModuleHooks {
     module.data_segments.emplace_back(std::move(segment));
     return {};
   }
+
+  F&& on_error;
+  Module module;
+  Index code_index;
 };
 
 template <typename F>
@@ -948,6 +963,35 @@ optional<Module> ReadModule(SpanU8 data, F&& on_error) {
   BuildModuleHooks<F> hooks{std::move(on_error)};
   if (ReadModuleWithHooks(data, hooks) == ReadResult::Ok) {
     return hooks.module;
+  }
+  return absl::nullopt;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <typename F>
+struct BuildInstrsHooks {
+  BuildInstrsHooks(F&& on_error) : on_error(std::move(on_error)) {}
+
+  HookResult OnError(const std::string& msg) {
+    on_error(msg);
+    return HookResult::Stop;
+  }
+
+  HookResult OnInstr(Instr&& instr) {
+    instrs.emplace_back(std::move(instr));
+    return {};
+  }
+
+  F&& on_error;
+  Instrs instrs;
+};
+
+template <typename F>
+optional<Instrs> ReadInstrs(SpanU8 data, F&& on_error) {
+  BuildInstrsHooks<F> hooks{std::move(on_error)};
+  if (ReadExpr(&data, hooks)) {
+    return hooks.instrs;
   }
   return absl::nullopt;
 }

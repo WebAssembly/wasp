@@ -158,10 +158,59 @@ using ImportVariant =
     variant<FuncImport, TableImport, MemoryImport, GlobalImport>;
 
 struct Expr {
-  explicit Expr(SpanU8 instrs) : instrs(instrs) {}
+  explicit Expr(SpanU8 data) : data(data) {}
 
-  SpanU8 instrs;
+  SpanU8 data;
 };
+
+struct Opcode {
+  explicit Opcode(u8 code) : code(code) {}
+  Opcode(u8 prefix, u32 code) : prefix(prefix), code(code) {}
+
+  optional<u8> prefix;
+  u32 code;
+};
+
+struct EmptyImmediate {};
+
+struct CallIndirectImmediate {
+  CallIndirectImmediate(Index index, u8 reserved)
+      : index(index), reserved(reserved) {}
+
+  Index index;
+  u8 reserved;
+};
+
+struct BrTableImmediate {
+  BrTableImmediate(std::vector<Index>&& targets, Index default_target)
+      : targets(std::move(targets)), default_target(default_target) {}
+
+  std::vector<Index> targets;
+  Index default_target;
+};
+
+struct Instr {
+  explicit Instr(Opcode opcode) : opcode(opcode), immediate(EmptyImmediate{}) {}
+  template <typename T>
+  Instr(Opcode opcode, T&& value)
+      : opcode(opcode), immediate(std::move(value)) {}
+
+  Opcode opcode;
+  variant<EmptyImmediate,
+          ValType,
+          Index,
+          CallIndirectImmediate,
+          BrTableImmediate,
+          u8,
+          MemArg,
+          s32,
+          s64,
+          f32,
+          f64>
+      immediate;
+};
+
+using Instrs = std::vector<Instr>;
 
 struct Func {
   explicit Func(Index type_index) : type_index(type_index) {}

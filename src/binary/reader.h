@@ -38,20 +38,7 @@ struct BaseHooksNop {
 };
 
 struct ExprHooksNop : BaseHooksNop {
-  HookResult OnOpcodeBare(u8 opcode) { return {}; }
-  HookResult OnOpcodeType(u8 opcode, ValType) { return {}; }
-  HookResult OnOpcodeIndex(u8 opcode, Index) { return {}; }
-  HookResult OnOpcodeCallIndirect(u8 opcode, Index, u8 reserved) { return {}; }
-  HookResult OnOpcodeBrTable(u8 opcode,
-                             std::vector<Index>&& targets,
-                             Index default_target) {
-    return {};
-  }
-  HookResult OnOpcodeMemarg(u8 opcode, MemArg&&) { return {}; }
-  HookResult OnOpcodeI32Const(u8 opcode, s32) { return {}; }
-  HookResult OnOpcodeI64Const(u8 opcode, s64) { return {}; }
-  HookResult OnOpcodeF32Const(u8 opcode, f32) { return {}; }
-  HookResult OnOpcodeF64Const(u8 opcode, f64) { return {}; }
+  HookResult OnInstr(Instr&&) { return {}; }
 };
 
 struct ModuleHooksNop : BaseHooksNop {
@@ -140,6 +127,9 @@ struct OnErrorNop {
 
 template <typename F = OnErrorNop>
 optional<Module> ReadModule(SpanU8, F&& on_error = F{});
+
+template <typename F = OnErrorNop>
+optional<Instrs> ReadInstrs(SpanU8, F&& on_error = F{});
 
 ////////////////////////////////////////////////////////////////////////////////
 

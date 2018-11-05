@@ -133,9 +133,58 @@ std::string ToString(const Export& self) {
 }
 
 std::string ToString(const Expr& self) {
-  return absl::StrJoin(self.instrs, "", [](std::string* out, u8 x) {
-    return absl::StrAppendFormat(out, "\\%02x", x);
-  });
+  return ToString(self.data);
+}
+
+std::string ToString(const Opcode& opcode) {
+  if (opcode.prefix) {
+    return absl::StrFormat("%02x %08x", *opcode.prefix, opcode.code);
+  } else {
+    return absl::StrFormat("%02x", opcode.code);
+  }
+}
+
+std::string ToString(const CallIndirectImmediate& imm) {
+  return absl::StrFormat("%u %u", imm.index, imm.reserved);
+}
+
+std::string ToString(const BrTableImmediate& imm) {
+  return absl::StrFormat("%s %u", ToString(imm.targets), imm.default_target);
+}
+
+std::string ToString(const Instr& instr) {
+  std::string result = ToString(instr.opcode);
+
+  if (absl::holds_alternative<EmptyImmediate>(instr.immediate)) {
+    // Nothing.
+  } else if (absl::holds_alternative<ValType>(instr.immediate)) {
+    absl::StrAppendFormat(&result, " %s",
+                          ToString(absl::get<ValType>(instr.immediate)));
+  } else if (absl::holds_alternative<Index>(instr.immediate)) {
+      absl::StrAppendFormat(&result, " %u", absl::get<Index>(instr.immediate));
+  } else if (absl::holds_alternative<CallIndirectImmediate>(instr.immediate)) {
+    absl::StrAppendFormat(
+        &result, " %s",
+        ToString(absl::get<CallIndirectImmediate>(instr.immediate)));
+  } else if (absl::holds_alternative<BrTableImmediate>(instr.immediate)) {
+    absl::StrAppendFormat(
+        &result, " %s", ToString(absl::get<BrTableImmediate>(instr.immediate)));
+  } else if (absl::holds_alternative<u8>(instr.immediate)) {
+    absl::StrAppendFormat(&result, " %u", absl::get<u8>(instr.immediate));
+  } else if (absl::holds_alternative<MemArg>(instr.immediate)) {
+    absl::StrAppendFormat(&result, " %s",
+                          ToString(absl::get<MemArg>(instr.immediate)));
+  } else if (absl::holds_alternative<s32>(instr.immediate)) {
+    absl::StrAppendFormat(&result, " %d", absl::get<s32>(instr.immediate));
+  } else if (absl::holds_alternative<s64>(instr.immediate)) {
+    absl::StrAppendFormat(&result, " %lld", absl::get<s64>(instr.immediate));
+  } else if (absl::holds_alternative<f32>(instr.immediate)) {
+    absl::StrAppendFormat(&result, " %f", absl::get<f32>(instr.immediate));
+  } else if (absl::holds_alternative<f64>(instr.immediate)) {
+    absl::StrAppendFormat(&result, " %f", absl::get<f64>(instr.immediate));
+  }
+
+  return result;
 }
 
 std::string ToString(const Global& self) {
