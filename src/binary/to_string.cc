@@ -16,6 +16,7 @@
 
 #include "src/binary/to_string.h"
 
+#include "src/base/macros.h"
 #include "src/base/to_string.h"
 
 namespace wasp {
@@ -32,6 +33,7 @@ std::string ToString(ValType self) {
     case ValType::Anyfunc: return "anyfunc";
     case ValType::Func: return "func";
     case ValType::Void: return "void";
+    default: WASP_UNREACHABLE();
   }
 }
 
@@ -41,6 +43,7 @@ std::string ToString(ExternalKind self) {
     case ExternalKind::Table: return "table";
     case ExternalKind::Memory: return "memory";
     case ExternalKind::Global: return "global";
+    default: WASP_UNREACHABLE();
   }
 }
 
@@ -48,6 +51,7 @@ std::string ToString(Mutability self) {
   switch (self) {
     case Mutability::Const: return "const";
     case Mutability::Var: return "var";
+    default: WASP_UNREACHABLE();
   }
 }
 
