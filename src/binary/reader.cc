@@ -27,27 +27,31 @@ struct BuildModuleHooks {
 
   HookResult OnError(const std::string&) { return HookResult::Stop; }
 
-  HookResult OnSection(u8 code, SpanU8 data) {
+  HookResult OnSection(Section&& s) {
     using ::wasp::binary::encoding::Section;
 
     ReadResult r = ReadResult::Error;
-    switch (code) {
-      case Section::Custom:   /*TODO*/ break;
-      case Section::Type:     r = ReadTypeSection(data, *this); break;
-      case Section::Import:   r = ReadImportSection(data, *this); break;
-      case Section::Function: r = ReadFunctionSection(data, *this); break;
-      case Section::Table:    r = ReadTableSection(data, *this); break;
-      case Section::Memory:   r = ReadMemorySection(data, *this); break;
-      case Section::Global:   r = ReadGlobalSection(data, *this); break;
-      case Section::Export:   r = ReadExportSection(data, *this); break;
-      case Section::Start:    r = ReadStartSection(data, *this); break;
-      case Section::Element:  r = ReadElementSection(data, *this); break;
-      case Section::Code:     r = ReadCodeSection(data, *this); break;
-      case Section::Data:     r = ReadDataSection(data, *this); break;
+    switch (s.id) {
+      case Section::Type:     r = ReadTypeSection(s.data, *this); break;
+      case Section::Import:   r = ReadImportSection(s.data, *this); break;
+      case Section::Function: r = ReadFunctionSection(s.data, *this); break;
+      case Section::Table:    r = ReadTableSection(s.data, *this); break;
+      case Section::Memory:   r = ReadMemorySection(s.data, *this); break;
+      case Section::Global:   r = ReadGlobalSection(s.data, *this); break;
+      case Section::Export:   r = ReadExportSection(s.data, *this); break;
+      case Section::Start:    r = ReadStartSection(s.data, *this); break;
+      case Section::Element:  r = ReadElementSection(s.data, *this); break;
+      case Section::Code:     r = ReadCodeSection(s.data, *this); break;
+      case Section::Data:     r = ReadDataSection(s.data, *this); break;
       default: break;
     }
 
     return StopOnError(r);
+  }
+
+  HookResult OnCustomSection(CustomSection&& custom) {
+    module.custom_sections.emplace_back(std::move(custom));
+    return {};
   }
 
   HookResult OnTypeCount(Index count) {
@@ -172,8 +176,7 @@ struct BuildModuleHooks {
     return StopOnError(ReadCode(code, *this));
   }
 
-  HookResult OnCodeContents(std::vector<LocalDecl>&& local_decls,
-                            const Expr& body) {
+  HookResult OnCodeContents(std::vector<LocalDecl>&& local_decls, Expr body) {
     assert(code_index == module.codes.size());
     module.codes.emplace_back(Code{std::move(local_decls), body});
     return {};

@@ -69,6 +69,22 @@ struct LocalDecl {
   ValType type;
 };
 
+struct Section {
+  Section(u32 id, SpanU8 data) : id(id), data(data) {}
+
+  u32 id;
+  SpanU8 data;
+};
+
+struct CustomSection {
+  CustomSection(optional<u32> after_id, string_view name, SpanU8 data)
+      : after_id(after_id), name(name), data(data) {}
+
+  optional<u32> after_id;
+  string_view name;
+  SpanU8 data;
+};
+
 using ValTypes = std::vector<ValType>;
 
 struct FuncType {
@@ -226,6 +242,7 @@ struct Module {
   std::vector<ElementSegment> element_segments;
   std::vector<Code> codes;
   std::vector<DataSegment> data_segments;
+  std::vector<CustomSection> custom_sections;
 };
 
 }  // namespace binary

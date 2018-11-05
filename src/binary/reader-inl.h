@@ -491,22 +491,6 @@ optional<Expr> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
 }
 
 template <typename Hooks>
-ReadResult ReadSection(SpanU8* data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(code, ReadVarU32(data), "section code");
-  WASP_READ_OR_ERROR(len, ReadVarU32(data), "section length");
-
-  if (len > data->size()) {
-    hooks.OnError(absl::StrFormat("Section length is too long: %zd > %zd", len,
-                                  data->size()));
-    return ReadResult::Error;
-  }
-
-  WASP_HOOK(hooks.OnSection(code, data->subspan(0, len)));
-  data->remove_prefix(*opt_len);
-  return ReadResult::Ok;
-}
-
-template <typename Hooks>
 ReadResult ReadModule(SpanU8 data, Hooks&& hooks) {
   const SpanU8 kMagic{encoding::Magic};
   const SpanU8 kVersion{encoding::Version};
@@ -527,10 +511,34 @@ ReadResult ReadModule(SpanU8 data, Hooks&& hooks) {
     return ReadResult::Error;
   }
 
+  optional<u32> last_known_id;
+
   while (!data.empty()) {
-    if (ReadSection(&data, hooks) == ReadResult::Error) {
+    WASP_READ_OR_ERROR(id, ReadVarU32(&data), "section id");
+    WASP_READ_OR_ERROR(len, ReadVarU32(&data), "section length");
+
+    if (len > data.size()) {
+      hooks.OnError(absl::StrFormat("Section length is too long: %zu > %zu",
+                                    len, data.size()));
       return ReadResult::Error;
     }
+
+    if (id == encoding::Section::Custom) {
+      WASP_READ_OR_ERROR(name, ReadStr(&data), "custom section name");
+      WASP_HOOK(hooks.OnCustomSection(
+          CustomSection{last_known_id, name, data.subspan(0, len)}));
+    } else {
+      if (last_known_id && id <= *last_known_id) {
+        hooks.OnError(absl::StrFormat("Section id is out of order: %u <= %u",
+                                      id, *last_known_id));
+        return ReadResult::Error;
+      }
+
+      WASP_HOOK(hooks.OnSection(Section{id, data.subspan(0, len)}));
+      last_known_id = id;
+    }
+
+    data.remove_prefix(len);
   }
 
   return ReadResult::Ok;
@@ -707,7 +715,7 @@ ReadResult ReadCodeSection(SpanU8 data, Hooks&& hooks) {
     WASP_READ_OR_ERROR(len, ReadIndex(&data), "code length");
 
     if (len > data.size()) {
-      hooks.OnError(absl::StrFormat("Code length is too long: %zd > %zd", len,
+      hooks.OnError(absl::StrFormat("Code length is too long: %zu > %zu", len,
                                     data.size()));
       return ReadResult::Error;
     }

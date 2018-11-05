@@ -55,7 +55,8 @@ struct ExprHooksNop : BaseHooksNop {
 };
 
 struct ModuleHooksNop : BaseHooksNop {
-  HookResult OnSection(u8 code, SpanU8 data) { return {}; }
+  HookResult OnSection(Section&&) { return {}; }
+  HookResult OnCustomSection(CustomSection&&) { return {}; }
 };
 
 struct TypeSectionHooksNop : BaseHooksNop {

@@ -51,11 +51,6 @@ std::string ToString(Mutability self) {
   }
 }
 
-std::string ToString(const FuncType& self) {
-  return absl::StrFormat("%s -> %s", ToString(self.param_types),
-                         ToString(self.result_types));
-}
-
 std::string ToString(const MemArg& self) {
   return absl::StrFormat("{align %u, offset %u}", self.align_log2, self.offset);
 }
@@ -70,6 +65,26 @@ std::string ToString(const Limits& self) {
 
 std::string ToString(const LocalDecl& self) {
   return absl::StrFormat("%s ** %u", ToString(self.type), self.count);
+}
+
+std::string ToString(const Section& self) {
+  return absl::StrFormat("{id %u, contents (%zu bytes)}", self.id,
+                         self.data.size());
+}
+
+std::string ToString(const CustomSection& self) {
+  if (self.after_id) {
+    return absl::StrFormat("{after_id %u, name %s, contents (%zu bytes)}",
+                           *self.after_id, self.name, self.data.size());
+  } else {
+    return absl::StrFormat("{after_id <none>, name %s, contents (%zu bytes)}",
+                           self.name, self.data.size());
+  }
+}
+
+std::string ToString(const FuncType& self) {
+  return absl::StrFormat("%s -> %s", ToString(self.param_types),
+                         ToString(self.result_types));
 }
 
 std::string ToString(const TableType& self) {
