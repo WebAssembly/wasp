@@ -53,16 +53,7 @@ struct TypeSectionHooksNop : BaseHooksNop {
 
 struct ImportSectionHooksNop : BaseHooksNop {
   HookResult OnImportCount(Index count) { return {}; }
-  HookResult OnFuncImport(Index import_index, FuncImport&&) { return {}; }
-  HookResult OnTableImport(Index import_index, TableImport&&) {
-    return {};
-  }
-  HookResult OnMemoryImport(Index import_index, MemoryImport&&) {
-    return {};
-  }
-  HookResult OnGlobalImport(Index import_index, GlobalImport&&) {
-    return {};
-  }
+  HookResult OnImport(Index import_index, Import&&) { return {}; }
 };
 
 struct FunctionSectionHooksNop : BaseHooksNop {

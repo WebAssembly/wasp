@@ -103,28 +103,24 @@ std::string ToString(const GlobalType& self) {
 }
 
 std::string ToString(const Import& self) {
-  return absl::StrFormat("module \"%s\", name \"%s\", desc %s", self.module,
-                         self.name, ToString(self.kind));
-}
+  std::string result =
+      absl::StrFormat("{module \"%s\", name \"%s\", desc %s", self.module,
+                      self.name, ToString(self.kind()));
 
-std::string ToString(const FuncImport& self) {
-  return absl::StrFormat("{%s %d}", ToString(static_cast<const Import&>(self)),
-                         self.type_index);
-}
+  if (absl::holds_alternative<Index>(self.desc)) {
+    absl::StrAppendFormat(&result, " %d}", absl::get<Index>(self.desc));
+  } else if (absl::holds_alternative<TableType>(self.desc)) {
+    absl::StrAppendFormat(&result, " %s}",
+                          ToString(absl::get<TableType>(self.desc)));
+  } else if (absl::holds_alternative<MemoryType>(self.desc)) {
+    absl::StrAppendFormat(&result, " %s}",
+                          ToString(absl::get<MemoryType>(self.desc)));
+  } else if (absl::holds_alternative<GlobalType>(self.desc)) {
+    absl::StrAppendFormat(&result, " %s}",
+                          ToString(absl::get<GlobalType>(self.desc)));
+  }
 
-std::string ToString(const TableImport& self) {
-  return absl::StrFormat("{%s %s}", ToString(static_cast<const Import&>(self)),
-                         ToString(self.table_type));
-}
-
-std::string ToString(const MemoryImport& self) {
-  return absl::StrFormat("{%s %s}", ToString(static_cast<const Import&>(self)),
-                         ToString(self.memory_type));
-}
-
-std::string ToString(const GlobalImport& self) {
-  return absl::StrFormat("{%s %s}", ToString(static_cast<const Import&>(self)),
-                         ToString(self.global_type));
+  return result;
 }
 
 std::string ToString(const Export& self) {

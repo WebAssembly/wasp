@@ -605,28 +605,25 @@ ReadResult ReadImportSection(SpanU8 data, Hooks&& hooks) {
     switch (kind) {
       case ExternalKind::Func: {
         WASP_READ_OR_ERROR(type_index, ReadIndex(&data), "func type index");
-        WASP_HOOK(hooks.OnFuncImport(i, FuncImport{module, name, type_index}));
+        WASP_HOOK(hooks.OnImport(i, Import{module, name, type_index}));
         break;
       }
 
       case ExternalKind::Table: {
         WASP_READ_OR_ERROR(table_type, ReadTableType(&data), "table type");
-        WASP_HOOK(
-            hooks.OnTableImport(i, TableImport{module, name, table_type}));
+        WASP_HOOK(hooks.OnImport(i, Import{module, name, table_type}));
         break;
       }
 
       case ExternalKind::Memory: {
         WASP_READ_OR_ERROR(memory_type, ReadMemoryType(&data), "memory type");
-        WASP_HOOK(
-            hooks.OnMemoryImport(i, MemoryImport{module, name, memory_type}));
+        WASP_HOOK(hooks.OnImport(i, Import{module, name, memory_type}));
         break;
       }
 
       case ExternalKind::Global: {
         WASP_READ_OR_ERROR(global_type, ReadGlobalType(&data), "global type");
-        WASP_HOOK(
-            hooks.OnGlobalImport(i, GlobalImport{module, name, global_type}));
+        WASP_HOOK(hooks.OnImport(i, Import{module, name, global_type}));
         break;
       }
     }
@@ -830,28 +827,9 @@ struct BuildModuleHooks {
     return {};
   }
 
-  HookResult OnFuncImport(Index import_index, FuncImport&& func_import) {
+  HookResult OnImport(Index import_index, Import&& import) {
     assert(import_index == module.imports.size());
-    module.imports.emplace_back(std::move(func_import));
-    return {};
-  }
-
-  HookResult OnTableImport(Index import_index,
-                           TableImport&& table_import) {
-    assert(import_index == module.imports.size());
-    module.imports.emplace_back(std::move(table_import));
-    return {};
-  }
-
-  HookResult OnMemoryImport(Index import_index, MemoryImport&& memory_import) {
-    assert(import_index == module.imports.size());
-    module.imports.emplace_back(std::move(memory_import));
-    return {};
-  }
-
-  HookResult OnGlobalImport(Index import_index, GlobalImport&& global_import) {
-    assert(import_index == module.imports.size());
-    module.imports.emplace_back(std::move(global_import));
+    module.imports.emplace_back(std::move(import));
     return {};
   }
 

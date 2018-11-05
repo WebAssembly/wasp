@@ -118,44 +118,16 @@ struct GlobalType {
 };
 
 struct Import {
-  Import(ExternalKind kind, string_view module, string_view name)
-      : kind(kind), module(module), name(name) {}
+  template <typename T>
+  Import(string_view module, string_view name, T&& desc)
+      : module(module), name(name), desc(std::move(desc)) {}
 
-  ExternalKind kind;
+  ExternalKind kind() const { return static_cast<ExternalKind>(desc.index()); }
+
   string_view module;
   string_view name;
+  variant<Index, TableType, MemoryType, GlobalType> desc;
 };
-
-struct FuncImport : Import {
-  FuncImport(string_view module, string_view name, Index type_index)
-      : Import{ExternalKind::Func, module, name}, type_index(type_index) {}
-
-  Index type_index;
-};
-
-struct TableImport : Import {
-  TableImport(string_view module, string_view name, TableType table_type)
-      : Import{ExternalKind::Table, module, name}, table_type(table_type) {}
-
-  TableType table_type;
-};
-
-struct MemoryImport : Import {
-  MemoryImport(string_view module, string_view name, MemoryType memory_type)
-      : Import{ExternalKind::Memory, module, name}, memory_type(memory_type) {}
-
-  MemoryType memory_type;
-};
-
-struct GlobalImport : Import {
-  GlobalImport(string_view module, string_view name, GlobalType global_type)
-      : Import{ExternalKind::Global, module, name}, global_type(global_type) {}
-
-  GlobalType global_type;
-};
-
-using ImportVariant =
-    variant<FuncImport, TableImport, MemoryImport, GlobalImport>;
 
 struct Expr {
   explicit Expr(SpanU8 data) : data(data) {}
@@ -281,7 +253,7 @@ struct DataSegment {
 
 struct Module {
   std::vector<FuncType> types;
-  std::vector<ImportVariant> imports;
+  std::vector<Import> imports;
   std::vector<Func> funcs;
   std::vector<Table> tables;
   std::vector<Memory> memories;
