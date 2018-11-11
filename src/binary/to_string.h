@@ -38,21 +38,29 @@ std::string ToString(const GlobalType&);
 template <typename Traits>
 std::string ToString(const Import<Traits>&);
 template <typename Traits>
-std::string ToString(const Export<Traits>&);
-template <typename Traits>
 std::string ToString(const Expr<Traits>&);
 std::string ToString(const Opcode&);
 std::string ToString(const CallIndirectImmediate&);
 std::string ToString(const BrTableImmediate&);
 std::string ToString(const Instr&);
+std::string ToString(const Func&);
+std::string ToString(const Table&);
+std::string ToString(const Memory&);
 template <typename Traits>
 std::string ToString(const Global<Traits>&);
 template <typename Traits>
+std::string ToString(const Export<Traits>&);
+std::string ToString(const Start& start);
+template <typename Traits>
 std::string ToString(const ElementSegment<Traits>&);
+template <typename Traits>
+std::string ToString(const Code<Traits>&);
 template <typename Traits>
 std::string ToString(const DataSegment<Traits>&);
 
 }  // namespace binary
 }  // namespace wasp
+
+#include "src/binary/to_string-inl.h"
 
 #endif  // WASP_BINARY_TO_STRING_H_

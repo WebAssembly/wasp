@@ -75,20 +75,6 @@ std::string ToString(const Section& self) {
   return absl::StrFormat("{id %u, contents %s}", self.id, ToString(self.data));
 }
 
-template <typename Traits>
-std::string ToString(const CustomSection<Traits>& self) {
-  std::string result = "{after_id ";
-  if (self.after_id) {
-    absl::StrAppendFormat(&result, "%u", *self.after_id);
-  } else {
-    absl::StrAppendFormat(&result, "<none>");
-  }
-
-  absl::StrAppendFormat(&result, ", name \"%s\", contents %s}", self.name,
-                        ToString(self.data));
-  return result;
-}
-
 std::string ToString(const FuncType& self) {
   return absl::StrFormat("%s -> %s", ToString(self.param_types),
                          ToString(self.result_types));
@@ -105,39 +91,6 @@ std::string ToString(const MemoryType& self) {
 
 std::string ToString(const GlobalType& self) {
   return absl::StrFormat("%s %s", ToString(self.mut), ToString(self.valtype));
-}
-
-template <typename Traits>
-std::string ToString(const Import<Traits>& self) {
-  std::string result =
-      absl::StrFormat("{module \"%s\", name \"%s\", desc %s", self.module,
-                      self.name, ToString(self.kind()));
-
-  if (absl::holds_alternative<Index>(self.desc)) {
-    absl::StrAppendFormat(&result, " %d}", absl::get<Index>(self.desc));
-  } else if (absl::holds_alternative<TableType>(self.desc)) {
-    absl::StrAppendFormat(&result, " %s}",
-                          ToString(absl::get<TableType>(self.desc)));
-  } else if (absl::holds_alternative<MemoryType>(self.desc)) {
-    absl::StrAppendFormat(&result, " %s}",
-                          ToString(absl::get<MemoryType>(self.desc)));
-  } else if (absl::holds_alternative<GlobalType>(self.desc)) {
-    absl::StrAppendFormat(&result, " %s}",
-                          ToString(absl::get<GlobalType>(self.desc)));
-  }
-
-  return result;
-}
-
-template <typename Traits>
-std::string ToString(const Export<Traits>& self) {
-  return absl::StrFormat("{name \"%s\", desc %s %u}", self.name,
-                         ToString(self.kind), self.index);
-}
-
-template <typename Traits>
-std::string ToString(const Expr<Traits>& self) {
-  return ToString(self.data);
 }
 
 std::string ToString(const Opcode& opcode) {
@@ -191,22 +144,20 @@ std::string ToString(const Instr& instr) {
   return result;
 }
 
-template <typename Traits>
-std::string ToString(const Global<Traits>& self) {
-  return absl::StrFormat("{type %s, init %s}", ToString(self.global_type),
-                         ToString(self.init_expr));
+std::string ToString(const Func& self) {
+  return absl::StrFormat("{type %u}", self.type_index);
 }
 
-template <typename Traits>
-std::string ToString(const ElementSegment<Traits>& self) {
-  return absl::StrFormat("{table %u, offset %s, init %s}", self.table_index,
-                         ToString(self.offset), ToString(self.init));
+std::string ToString(const Table& self) {
+  return absl::StrFormat("{type %s}", ToString(self.table_type));
 }
 
-template <typename Traits>
-std::string ToString(const DataSegment<Traits>& self) {
-  return absl::StrFormat("{table %u, offset %s, init %s}", self.memory_index,
-                         ToString(self.offset), ToString(self.init));
+std::string ToString(const Memory& self) {
+  return absl::StrFormat("{type %s}", ToString(self.memory_type));
+}
+
+std::string ToString(const Start& self) {
+  return absl::StrFormat("{func %u}", self.func_index);
 }
 
 }  // namespace binary

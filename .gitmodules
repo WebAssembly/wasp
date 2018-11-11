@@ -1,3 +1,6 @@
 [submodule "third_party/abseil"]
 	path = third_party/abseil
 	url = https://github.com/abseil/abseil-cpp
+[submodule "third_party/gtest"]
+	path = third_party/gtest
+	url = https://github.com/google/googletest
