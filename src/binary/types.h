@@ -184,6 +184,15 @@ struct Expr {
   typename Traits::Buffer data;
 };
 
+template <typename Traits = BorrowedTraits>
+struct ConstExpr {
+  explicit ConstExpr(SpanU8 data) : data(Traits::ToBuffer(data)) {}
+  template <typename U>
+  ConstExpr(const ConstExpr<U>& other) : data(Traits::ToBuffer(other.data)) {}
+
+  typename Traits::Buffer data;
+};
+
 struct Opcode {
   explicit Opcode(u8 code) : code(code) {}
   Opcode(u8 prefix, u32 code) : prefix(prefix), code(code) {}
@@ -253,11 +262,11 @@ struct Memory {
 
 template <typename Traits = BorrowedTraits>
 struct Global {
-  Global(GlobalType global_type, Expr<> init_expr)
+  Global(GlobalType global_type, ConstExpr<> init_expr)
       : global_type(global_type), init_expr(init_expr) {}
 
   GlobalType global_type;
-  Expr<Traits> init_expr;
+  ConstExpr<Traits> init_expr;
 };
 
 template <typename Traits = BorrowedTraits>
@@ -278,11 +287,13 @@ struct Start {
 
 template <typename Traits = BorrowedTraits>
 struct ElementSegment {
-  ElementSegment(Index table_index, Expr<> offset, std::vector<Index>&& init)
+  ElementSegment(Index table_index,
+                 ConstExpr<> offset,
+                 std::vector<Index>&& init)
       : table_index(table_index), offset(offset), init(std::move(init)) {}
 
   Index table_index;
-  Expr<Traits> offset;
+  ConstExpr<Traits> offset;
   std::vector<Index> init;
 };
 
@@ -297,13 +308,13 @@ struct Code {
 
 template <typename Traits = BorrowedTraits>
 struct DataSegment {
-  DataSegment(Index memory_index, Expr<> offset, SpanU8 init)
+  DataSegment(Index memory_index, ConstExpr<> offset, SpanU8 init)
       : memory_index(memory_index),
         offset(offset),
         init(Traits::ToBuffer(init)) {}
 
   Index memory_index;
-  Expr<Traits> offset;
+  ConstExpr<Traits> offset;
   typename Traits::Buffer init;
 };
 

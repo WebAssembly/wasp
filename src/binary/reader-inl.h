@@ -440,7 +440,7 @@ template <typename Errors>
 optional<Global<>> Read(SpanU8* data, Errors& errors, Tag<Global<>>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "global"};
   WASP_TRY_READ(global_type, Read<GlobalType>(data, errors));
-  WASP_TRY_READ(init_expr, Read<Expr<>>(data, errors));
+  WASP_TRY_READ(init_expr, Read<ConstExpr<>>(data, errors));
   return Global<>{global_type, std::move(init_expr)};
 }
 
@@ -451,6 +451,44 @@ optional<Export<>> Read(SpanU8* data, Errors& errors, Tag<Export<>>) {
   WASP_TRY_READ(kind, Read<ExternalKind>(data, errors));
   WASP_TRY_READ(index, ReadIndex(data, errors));
   return Export<>{kind, name, index};
+}
+
+template <typename Errors>
+optional<ConstExpr<>> Read(SpanU8* data, Errors& errors, Tag<ConstExpr<>>) {
+  LazyInstrs<Errors> instrs{*data, errors};
+  auto iter = instrs.begin(), end = instrs.end();
+
+  // Read instruction.
+  if (iter == end) {
+    errors.OnError(*data, "Unexpected end of const expr");
+    return nullopt;
+  }
+  auto instr = *iter++;
+  switch (instr.opcode.code) {
+    case encoding::Opcode::I32Const:
+    case encoding::Opcode::I64Const:
+    case encoding::Opcode::F32Const:
+    case encoding::Opcode::F64Const:
+    case encoding::Opcode::GetGlobal:
+      // OK.
+      break;
+
+    default:
+      errors.OnError(*data,
+                     format("Illegal instruction in const expr: {}", instr));
+      return nullopt;
+  }
+
+  // Instruction must be followed by end.
+  if (iter == end || iter->opcode.code != encoding::Opcode::End) {
+    errors.OnError(*data, "Expected end instruction");
+    return nullopt;
+  }
+
+  auto len = iter.data().begin() - data->begin();
+  ConstExpr<> expr{data->subspan(0, len)};
+  *data = remove_prefix(*data, len);
+  return expr;
 }
 
 template <typename Errors>
@@ -711,18 +749,16 @@ optional<Instr> Read(SpanU8* data, Errors& errors, Tag<Instr>) {
   }
 }
 
-#if 0
-template <>
-inline optional<ElementSegment<>> Read<ElementSegment<>>(SpanU8* data,
-                                                         Errors& errors) {
-  WASP_TRY_READ(table_index,
-                ReadIndex(data, errors, "element segment table index"));
-  WASP_TRY_READ(offset, ReadExpr(data, errors, "element segment offset"));
-  WASP_TRY_READ(init,
-                ReadVec<Index>(data, errors, "element segment initializers"));
+template <typename Errors>
+optional<ElementSegment<>> Read(SpanU8* data,
+                                Errors& errors,
+                                Tag<ElementSegment<>>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "element segment"};
+  WASP_TRY_READ_CONTEXT(table_index, ReadIndex(data, errors), "table index");
+  WASP_TRY_READ_CONTEXT(offset, Read<ConstExpr<>>(data, errors), "offset");
+  WASP_TRY_READ(init, ReadVec<Index>(data, errors, "initializers"));
   return ElementSegment<>{table_index, std::move(offset), std::move(init)};
 }
-#endif
 
 #if 0
 inline optional<SpanU8> ReadVecU8(SpanU8* data) {

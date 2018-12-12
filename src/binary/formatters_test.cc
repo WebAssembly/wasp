@@ -140,6 +140,11 @@ TEST(FormatTest, Expr) {
   EXPECT_EQ(R"("\00\01\02")", TestFormat(Expr<>{SpanU8{data, 3}}));
 }
 
+TEST(FormatTest, ConstExpr) {
+  const u8 data[] = "\00\01\02";
+  EXPECT_EQ(R"("\00\01\02")", TestFormat(ConstExpr<>{SpanU8{data, 3}}));
+}
+
 TEST(FormatTest, Opcode) {
   EXPECT_EQ(R"(40)", TestFormat(Opcode{0x40}));
   EXPECT_EQ(R"(fe 00000003)", TestFormat(Opcode{0xfe, 0x03}));
@@ -200,7 +205,7 @@ TEST(FormatTest, Global) {
   const u8 expr[] = "\xfa\xce";
   EXPECT_EQ(R"({type const i32, init "\fa\ce"})",
             TestFormat(Global<>{GlobalType{ValType::I32, Mutability::Const},
-                                Expr<>{SpanU8{expr, 2}}}));
+                                ConstExpr<>{SpanU8{expr, 2}}}));
 }
 
 TEST(FormatTest, Start) {
@@ -212,7 +217,7 @@ TEST(FormatTest, ElementSegment) {
   EXPECT_EQ(
       R"({table 1, offset "\0b", init [2 3]})",
       TestFormat(
-          ElementSegment<>{Index{1u}, Expr<>{SpanU8{expr, 1}}, {2u, 3u}}));
+          ElementSegment<>{Index{1u}, ConstExpr<>{SpanU8{expr, 1}}, {2u, 3u}}));
 }
 
 TEST(FormatTest, Code) {
@@ -228,6 +233,6 @@ TEST(FormatTest, DataSegment) {
   const u8 init[] = "\x12\x34";
   EXPECT_EQ(
       R"({memory 0, offset "\0b", init "\12\34"})",
-      TestFormat(
-          DataSegment<>{Index{0u}, Expr<>{SpanU8{expr, 1}}, SpanU8{init, 2}}));
+      TestFormat(DataSegment<>{Index{0u}, ConstExpr<>{SpanU8{expr, 1}},
+                               SpanU8{init, 2}}));
 }

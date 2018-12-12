@@ -154,6 +154,14 @@ struct formatter<::wasp::binary::Expr<Traits>> {
   typename Ctx::iterator format(const ::wasp::binary::Expr<Traits>&, Ctx&);
 };
 
+template <typename Traits>
+struct formatter<::wasp::binary::ConstExpr<Traits>> {
+  template <typename Ctx>
+  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  template <typename Ctx>
+  typename Ctx::iterator format(const ::wasp::binary::ConstExpr<Traits>&, Ctx&);
+};
+
 template <>
 struct formatter<::wasp::binary::Opcode> {
   template <typename Ctx>

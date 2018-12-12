@@ -89,6 +89,10 @@ int main(int argc, char** argv) {
         case encoding::Section::Export:
           PrintSection(ReadExportSection(known, errors), "Export");
           break;
+
+        case encoding::Section::Element:
+          PrintSection(ReadElementSection(known, errors), "Element");
+          break;
       }
     }
   }

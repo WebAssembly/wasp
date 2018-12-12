@@ -201,6 +201,14 @@ typename Ctx::iterator formatter<::wasp::binary::Expr<Traits>>::format(
   return format_to(ctx.begin(), "{}", self.data);
 }
 
+template <typename Traits>
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::ConstExpr<Traits>>::format(
+    const ::wasp::binary::ConstExpr<Traits>& self,
+    Ctx& ctx) {
+  return format_to(ctx.begin(), "{}", self.data);
+}
+
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Opcode>::format(
     const ::wasp::binary::Opcode& self,
