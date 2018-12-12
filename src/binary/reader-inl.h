@@ -348,6 +348,28 @@ optional<LocalDecl> Read(SpanU8* data, Errors& errors, Tag<LocalDecl>) {
 }
 
 template <typename Errors>
+optional<FuncType> Read(SpanU8* data, Errors& errors, Tag<FuncType>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "func type"};
+  WASP_TRY_READ(param_types, ReadVec<ValType>(data, errors, "param types"));
+  WASP_TRY_READ(result_types, ReadVec<ValType>(data, errors, "result types"));
+  return FuncType{std::move(param_types), std::move(result_types)};
+}
+
+template <typename Errors>
+optional<TypeEntry> Read(SpanU8* data, Errors& errors, Tag<TypeEntry>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "type entry"};
+  WASP_TRY_READ_CONTEXT(form, Read<ValType>(data, errors), "form");
+
+  if (form != ValType::Func) {
+    errors.OnError(*data, format("Unknown type form: {}", form));
+    return nullopt;
+  }
+
+  WASP_TRY_READ(func_type, Read<FuncType>(data, errors));
+  return TypeEntry{form, std::move(func_type)};
+}
+
+template <typename Errors>
 optional<TableType> Read(SpanU8* data, Errors& errors, Tag<TableType>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "table type"};
   WASP_TRY_READ_CONTEXT(elemtype, Read<ValType>(data, errors), "element type");
@@ -393,24 +415,6 @@ optional<Section<>> Read(SpanU8* data, Errors& errors, Tag<Section<>>) {
 }
 
 template <typename Errors>
-optional<TypeEntry> Read(SpanU8* data, Errors& errors, Tag<TypeEntry>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "type entry"};
-  WASP_TRY_READ_CONTEXT(form, Read<ValType>(data, errors), "form");
-
-  if (form != ValType::Func) {
-    // TODO ValType formatter
-    errors.OnError(*data,
-                   format("Unknown type form: {}", static_cast<int>(form)));
-    return nullopt;
-  }
-
-  WASP_TRY_READ(param_types, ReadVec<ValType>(data, errors, "param types"));
-  WASP_TRY_READ(result_types, ReadVec<ValType>(data, errors, "result types"));
-  return TypeEntry{form,
-                   FuncType{std::move(param_types), std::move(result_types)}};
-}
-
-template <typename Errors>
 optional<Import<>> Read(SpanU8* data, Errors& errors, Tag<Import<>>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "import"};
   WASP_TRY_READ(module, ReadStr(data, errors, "module name"));
@@ -434,44 +438,6 @@ optional<Import<>> Read(SpanU8* data, Errors& errors, Tag<Import<>>) {
       return Import<>{module, name, global_type};
     }
   }
-}
-
-template <typename Errors>
-optional<Func> Read(SpanU8* data, Errors& errors, Tag<Func>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "func"};
-  WASP_TRY_READ(type_index, ReadIndex(data, errors));
-  return Func{type_index};
-}
-
-template <typename Errors>
-optional<Table> Read(SpanU8* data, Errors& errors, Tag<Table>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "table"};
-  WASP_TRY_READ(table_type, Read<TableType>(data, errors));
-  return Table{table_type};
-}
-
-template <typename Errors>
-optional<Memory> Read(SpanU8* data, Errors& errors, Tag<Memory>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "memory"};
-  WASP_TRY_READ(memory_type, Read<MemoryType>(data, errors));
-  return Memory{memory_type};
-}
-
-template <typename Errors>
-optional<Global<>> Read(SpanU8* data, Errors& errors, Tag<Global<>>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "global"};
-  WASP_TRY_READ(global_type, Read<GlobalType>(data, errors));
-  WASP_TRY_READ(init_expr, Read<ConstExpr<>>(data, errors));
-  return Global<>{global_type, std::move(init_expr)};
-}
-
-template <typename Errors>
-optional<Export<>> Read(SpanU8* data, Errors& errors, Tag<Export<>>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "export"};
-  WASP_TRY_READ(name, ReadStr(data, errors, "name"));
-  WASP_TRY_READ(kind, Read<ExternalKind>(data, errors));
-  WASP_TRY_READ(index, ReadIndex(data, errors));
-  return Export<>{kind, name, index};
 }
 
 template <typename Errors>
@@ -510,13 +476,6 @@ optional<ConstExpr<>> Read(SpanU8* data, Errors& errors, Tag<ConstExpr<>>) {
   ConstExpr<> expr{data->subspan(0, len)};
   *data = remove_prefix(*data, len);
   return expr;
-}
-
-template <typename Errors>
-optional<MemArg> Read(SpanU8* data, Errors& errors, Tag<MemArg>) {
-  WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, errors), "align log2");
-  WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, errors), "offset");
-  return MemArg{align_log2, offset};
 }
 
 template <typename Errors>
@@ -753,6 +712,51 @@ optional<Instr> Read(SpanU8* data, Errors& errors, Tag<Instr>) {
       errors.OnError(*data, format("Unknown opcode {:#02x}", opcode));
       return nullopt;
   }
+}
+
+template <typename Errors>
+optional<Func> Read(SpanU8* data, Errors& errors, Tag<Func>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "func"};
+  WASP_TRY_READ(type_index, ReadIndex(data, errors));
+  return Func{type_index};
+}
+
+template <typename Errors>
+optional<Table> Read(SpanU8* data, Errors& errors, Tag<Table>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "table"};
+  WASP_TRY_READ(table_type, Read<TableType>(data, errors));
+  return Table{table_type};
+}
+
+template <typename Errors>
+optional<Memory> Read(SpanU8* data, Errors& errors, Tag<Memory>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "memory"};
+  WASP_TRY_READ(memory_type, Read<MemoryType>(data, errors));
+  return Memory{memory_type};
+}
+
+template <typename Errors>
+optional<Global<>> Read(SpanU8* data, Errors& errors, Tag<Global<>>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "global"};
+  WASP_TRY_READ(global_type, Read<GlobalType>(data, errors));
+  WASP_TRY_READ(init_expr, Read<ConstExpr<>>(data, errors));
+  return Global<>{global_type, std::move(init_expr)};
+}
+
+template <typename Errors>
+optional<Export<>> Read(SpanU8* data, Errors& errors, Tag<Export<>>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "export"};
+  WASP_TRY_READ(name, ReadStr(data, errors, "name"));
+  WASP_TRY_READ(kind, Read<ExternalKind>(data, errors));
+  WASP_TRY_READ(index, ReadIndex(data, errors));
+  return Export<>{kind, name, index};
+}
+
+template <typename Errors>
+optional<MemArg> Read(SpanU8* data, Errors& errors, Tag<MemArg>) {
+  WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, errors), "align log2");
+  WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, errors), "offset");
+  return MemArg{align_log2, offset};
 }
 
 template <typename Errors>
