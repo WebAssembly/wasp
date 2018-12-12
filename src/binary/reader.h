@@ -17,161 +17,288 @@
 #ifndef WASP_BINARY_READER_H_
 #define WASP_BINARY_READER_H_
 
+#include <iterator>
+#include <vector>
+
 #include "src/base/types.h"
 #include "src/binary/types.h"
 
 namespace wasp {
 namespace binary {
 
-enum class HookResult {
-  Continue,
-  Stop,
+/// ---
+struct Error {
+  explicit Error(SpanU8 pos, std::string&& message)
+      : pos{pos}, message{std::move(message)} {}
+
+  SpanU8 pos;
+  std::string message;
 };
 
-enum class ReadResult {
-  Error,
-  Ok,
+/// ---
+class ErrorsNop {
+ public:
+  void PushContext(SpanU8 pos, string_view desc) {}
+  void PopContext() {}
+  void OnError(SpanU8 pos, string_view message) {}
 };
 
-struct BaseHooksNop {
-  HookResult OnError(const std::string&) { return {}; }
+/// ---
+class ErrorsVector {
+ public:
+  void PushContext(SpanU8 pos, string_view desc);
+  void PopContext();
+  void OnError(SpanU8 pos, string_view message);
 };
 
-struct ExprHooksNop : BaseHooksNop {
-  HookResult OnInstr(Instr&&) { return {}; }
-};
-
-struct ModuleHooksNop : BaseHooksNop {
-  HookResult OnSection(Section&&) { return {}; }
-  HookResult OnCustomSection(CustomSection<>&&) { return {}; }
-};
-
-struct TypeSectionHooksNop : BaseHooksNop {
-  HookResult OnTypeCount(Index count) { return {}; }
-  HookResult OnFuncType(Index type_index, FuncType&&) { return {}; }
-};
-
-struct ImportSectionHooksNop : BaseHooksNop {
-  HookResult OnImportCount(Index count) { return {}; }
-  HookResult OnImport(Index import_index, Import<BorrowedTraits>&&) {
-    return {};
+/// ---
+template <typename Errors>
+class ErrorsContextGuard {
+ public:
+  explicit ErrorsContextGuard(Errors& errors, SpanU8 pos, string_view desc)
+      : errors_{errors} {
+    errors.PushContext(pos, desc);
   }
+  ~ErrorsContextGuard() { errors_.PopContext(); }
+
+ private:
+  Errors& errors_;
 };
 
-struct FunctionSectionHooksNop : BaseHooksNop {
-  HookResult OnFuncCount(Index count) { return {}; }
-  HookResult OnFunc(Index func_index, Func&&) { return {}; }
+template <typename Sequence>
+class LazySequenceIterator;
+
+/// ---
+template <typename T, typename Errors>
+class LazySequence {
+ public:
+  using value_type = T;
+  using pointer = T*;
+  using const_pointer = const T*;
+  using reference = T&;
+  using const_reference = const T&;
+  using size_type = std::size_t;
+  using difference_type = std::ptrdiff_t;
+  using iterator = LazySequenceIterator<LazySequence>;
+  using const_iterator = LazySequenceIterator<LazySequence>;
+
+  explicit LazySequence(SpanU8 data, Errors& errors)
+      : data_{data}, errors_{errors} {}
+
+  iterator begin() { return iterator{this, data_}; }
+  iterator end() { return iterator{this, SpanU8{}}; }
+  const_iterator begin() const { return const_iterator{this, data_}; }
+  const_iterator end() const { return const_iterator{this, SpanU8{}}; }
+  const_iterator cbegin() const { return begin(); }
+  const_iterator cend() const { return end(); }
+
+ private:
+  template <typename Sequence>
+  friend class LazySequenceIteratorBase;
+
+  SpanU8 data_;
+  Errors& errors_;
 };
 
-struct TableSectionHooksNop : BaseHooksNop {
-  HookResult OnTableCount(Index count) { return {}; }
-  HookResult OnTable(Index table_index, Table&&) { return {}; }
-};
+/// ---
+template <typename Sequence>
+class LazySequenceIteratorBase {
+ public:
+  using difference_type = typename Sequence::difference_type;
+  using value_type = typename Sequence::value_type;
+  using pointer = typename Sequence::const_pointer;
+  using reference = typename Sequence::const_reference;
+  using iterator_category = std::forward_iterator_tag;
 
-struct MemorySectionHooksNop : BaseHooksNop {
-  HookResult OnMemoryCount(Index count) { return {}; }
-  HookResult OnMemory(Index memory_index, Memory&&) { return {}; }
-};
+  explicit LazySequenceIteratorBase(Sequence* seq, SpanU8 data)
+      : sequence_(seq), data_(data) {}
 
-struct GlobalSectionHooksNop : BaseHooksNop {
-  HookResult OnGlobalCount(Index count) { return {}; }
-  HookResult OnGlobal(Index global_index, Global<BorrowedTraits>&&) {
-    return {};
+  SpanU8 data() const { return data_; }
+
+  reference operator*() const { return *value_; }
+  pointer operator->() const { return &*value_; }
+
+  friend bool operator==(const LazySequenceIteratorBase& lhs,
+                         const LazySequenceIteratorBase& rhs) {
+    return lhs.data_.begin() == rhs.data_.begin();
   }
-};
 
-struct ExportSectionHooksNop : BaseHooksNop {
-  HookResult OnExportCount(Index count) { return {}; }
-  HookResult OnExport(Index export_index, Export<BorrowedTraits>&&) {
-    return {};
+  friend bool operator!=(const LazySequenceIteratorBase& lhs,
+                         const LazySequenceIteratorBase& rhs) {
+    return !(lhs == rhs);
   }
+
+ protected:
+  bool empty() const { return data_.empty(); }
+  void clear() { data_ = {}; }
+  void Increment();
+
+  Sequence* sequence_;
+  SpanU8 data_;
+  optional<value_type> value_;
 };
 
-struct StartSectionHooksNop : BaseHooksNop {
-  HookResult OnStart(Start&&) { return {}; }
+/// ---
+template <typename Sequence>
+class LazySequenceIterator : public LazySequenceIteratorBase<Sequence> {
+ public:
+  using base = LazySequenceIteratorBase<Sequence>;
+  using difference_type = typename base::difference_type;
+  using value_type = typename base::value_type;
+  using pointer = typename base::pointer;
+  using reference = typename base::reference;
+  using iterator_category = typename base::iterator_category;
+
+  explicit LazySequenceIterator(Sequence*, SpanU8);
+
+  LazySequenceIterator& operator++();
+  LazySequenceIterator operator++(int);
 };
 
-struct ElementSectionHooksNop : BaseHooksNop {
-  HookResult OnElementSegmentCount(Index count) { return {}; }
-  HookResult OnElementSegment(Index segment_index,
-                              ElementSegment<BorrowedTraits>&&) {
-    return {};
-  }
+/// ---
+template <typename Errors>
+class LazyModule {
+ public:
+  explicit LazyModule(SpanU8, Errors&);
+
+  optional<SpanU8> magic;
+  optional<SpanU8> version;
+  LazySequence<Section<>, Errors> sections;
 };
 
-struct CodeSectionHooksNop : BaseHooksNop {
-  HookResult OnCodeCount(Index count) { return {}; }
-  HookResult OnCode(Index code_index, SpanU8 code) { return {}; }
+/// ---
+template <typename T, typename Errors>
+class LazySection {
+ public:
+  explicit LazySection(SpanU8, Errors&);
+  explicit LazySection(KnownSection<>, Errors&);
+
+  optional<Index> count;
+  LazySequence<T, Errors> sequence;
 };
 
-struct CodeHooksNop : BaseHooksNop {
-  HookResult OnCodeContents(std::vector<LocalDecl>&& locals,
-                            Expr<BorrowedTraits> body) {
-    return {};
-  }
+/// ---
+template <typename Errors>
+using LazyTypeSection = LazySection<TypeEntry, Errors>;
+
+/// ---
+template <typename Errors>
+using LazyImportSection = LazySection<Import<>, Errors>;
+
+/// ---
+template <typename Errors>
+using LazyFunctionSection = LazySection<Func, Errors>;
+
+/// ---
+template <typename Errors>
+using LazyTableSection = LazySection<Table, Errors>;
+
+/// ---
+template <typename Errors>
+using LazyMemorySection = LazySection<Memory, Errors>;
+
+/// ---
+template <typename Errors>
+using LazyGlobalSection = LazySection<Global<>, Errors>;
+
+/// ---
+template <typename Errors>
+using LazyExportSection = LazySection<Export<>, Errors>;
+
+/// ---
+template <typename Errors>
+using LazyElementSection = LazySection<ElementSegment<>, Errors>;
+
+/// ---
+template <typename Errors>
+using LazyCodeSection = LazySection<Code<>, Errors>;
+
+/// ---
+template <typename Errors>
+using LazyDataSection = LazySection<DataSegment<>, Errors>;
+
+/// ---
+template <typename Errors>
+struct StartSection {
+  explicit StartSection(SpanU8, Errors&);
+  explicit StartSection(KnownSection<>, Errors&);
+
+  optional<Start> start();
+
+ private:
+  SpanU8 data_;
+  Errors& errors_;
 };
 
-struct DataSectionHooksNop : BaseHooksNop {
-  HookResult OnDataSegmentCount(Index count) { return {}; }
-  HookResult OnDataSegment(Index segment_index, DataSegment<BorrowedTraits>&&) {
-    return {};
-  }
-};
-
+/// ---
+template <typename Errors>
+using LazyInstrs = LazySequence<Instr, Errors>;
 ////////////////////////////////////////////////////////////////////////////////
 
-struct OnErrorNop {
-  void operator()(const std::string&) {}
-};
+template <typename Errors>
+LazyModule<Errors> ReadModule(SpanU8 data, Errors& errors) {
+  return LazyModule<Errors>{data, errors};
+}
 
-template <typename Traits, typename F = OnErrorNop>
-optional<Module<Traits>> ReadModule(SpanU8, F&& on_error = F{});
+template <typename Data, typename Errors>
+LazyTypeSection<Errors> ReadTypeSection(Data&& data, Errors& errors) {
+  return LazyTypeSection<Errors>{std::forward<Data>(data), errors};
+}
 
-template <typename F = OnErrorNop>
-optional<Instrs> ReadInstrs(SpanU8, F&& on_error = F{});
+template <typename Data, typename Errors>
+LazyImportSection<Errors> ReadImportSection(Data&& data, Errors& errors) {
+  return LazyImportSection<Errors>{std::forward<Data>(data), errors};
+}
 
-////////////////////////////////////////////////////////////////////////////////
+template <typename Data, typename Errors>
+LazyFunctionSection<Errors> ReadFunctionSection(Data&& data, Errors& errors) {
+  return LazyFunctionSection<Errors>{std::forward<Data>(data), errors};
+}
 
-HookResult StopOnError(ReadResult);
+template <typename Data, typename Errors>
+LazyTableSection<Errors> ReadTableSection(Data&& data, Errors& errors) {
+  return LazyTableSection<Errors>{std::forward<Data>(data), errors};
+}
 
-template <typename Hooks = ModuleHooksNop>
-ReadResult ReadModuleHook(SpanU8, Hooks&&);
+template <typename Data, typename Errors>
+LazyMemorySection<Errors> ReadMemorySection(Data&& data, Errors& errors) {
+  return LazyMemorySection<Errors>{std::forward<Data>(data), errors};
+}
 
-template <typename Hooks = TypeSectionHooksNop>
-ReadResult ReadTypeSection(SpanU8, Hooks&& = Hooks{});
+template <typename Data, typename Errors>
+LazyGlobalSection<Errors> ReadGlobalSection(Data&& data, Errors& errors) {
+  return LazyGlobalSection<Errors>{std::forward<Data>(data), errors};
+}
 
-template <typename Hooks = ImportSectionHooksNop>
-ReadResult ReadImportSection(SpanU8, Hooks&& = Hooks{});
+template <typename Data, typename Errors>
+LazyExportSection<Errors> ReadExportSection(Data&& data, Errors& errors) {
+  return LazyExportSection<Errors>{std::forward<Data>(data), errors};
+}
 
-template <typename Hooks = FunctionSectionHooksNop>
-ReadResult ReadFunctionSection(SpanU8, Hooks&& = Hooks{});
+template <typename Data, typename Errors>
+LazyElementSection<Errors> ReadElementSection(Data&& data, Errors& errors) {
+  return LazyElementSection<Errors>{std::forward<Data>(data), errors};
+}
 
-template <typename Hooks = TableSectionHooksNop>
-ReadResult ReadTableSection(SpanU8, Hooks&& = Hooks{});
+template <typename Data, typename Errors>
+StartSection<Errors> ReadStartSection(Data&& data, Errors& errors) {
+  return StartSection<Errors>{std::forward<Data>(data), errors};
+}
 
-template <typename Hooks = MemorySectionHooksNop>
-ReadResult ReadMemorySection(SpanU8, Hooks&& = Hooks{});
+template <typename Data, typename Errors>
+LazyCodeSection<Errors> ReadCodeSection(Data&& data, Errors& errors) {
+  return LazyCodeSection<Errors>{std::forward<Data>(data), errors};
+}
 
-template <typename Hooks = GlobalSectionHooksNop>
-ReadResult ReadGlobalSection(SpanU8, Hooks&& = Hooks{});
+template <typename Data, typename Errors>
+LazyDataSection<Errors> ReadDataSection(Data&& data, Errors& errors) {
+  return LazyDataSection<Errors>{std::forward<Data>(data), errors};
+}
 
-template <typename Hooks = ExportSectionHooksNop>
-ReadResult ReadExportSection(SpanU8, Hooks&& = Hooks{});
-
-template <typename Hooks = StartSectionHooksNop>
-ReadResult ReadStartSection(SpanU8, Hooks&& = Hooks{});
-
-template <typename Hooks = ElementSectionHooksNop>
-ReadResult ReadElementSection(SpanU8, Hooks&& = Hooks{});
-
-template <typename Hooks = CodeSectionHooksNop>
-ReadResult ReadCodeSection(SpanU8, Hooks&& = Hooks{});
-
-template <typename Hooks = DataSectionHooksNop>
-ReadResult ReadDataSection(SpanU8, Hooks&& = Hooks{});
-
-template <typename Hooks = CodeHooksNop>
-ReadResult ReadCode(SpanU8, Hooks&& = Hooks{});
+template <typename Errors>
+LazyInstrs<Errors> ReadExpr(SpanU8 data, Errors& errors) {
+  return LazyInstrs<Errors>{data, errors};
+}
 
 }  // namespace binary
 }  // namespace wasp

@@ -28,9 +28,13 @@ std::string ToString(Mutability);
 std::string ToString(const MemArg&);
 std::string ToString(const Limits&);
 std::string ToString(const LocalDecl&);
-std::string ToString(const Section&);
+template <typename Traits>
+std::string ToString(const Section<Traits>&);
 template <typename Traits>
 std::string ToString(const CustomSection<Traits>&);
+template <typename Traits>
+std::string ToString(const KnownSection<Traits>&);
+std::string ToString(const TypeEntry&);
 std::string ToString(const FuncType&);
 std::string ToString(const TableType&);
 std::string ToString(const MemoryType&);

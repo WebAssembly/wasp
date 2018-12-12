@@ -21,35 +21,36 @@
 #include "src/base/to_string.h"
 #include "src/binary/encoding.h"
 
+#define WASP_TRY_READ(var, call) \
+  auto opt_##var = call;         \
+  if (!opt_##var) {              \
+    return absl::nullopt;        \
+  }                              \
+  auto var = *opt_##var /* No semicolon. */
+
+#define WASP_TRY_READ_CONTEXT(var, call, desc) \
+  errors.PushContext(*data, desc);             \
+  WASP_TRY_READ(var, call);                    \
+  errors.PopContext();
+
 namespace wasp {
 namespace binary {
 
-#define WASP_HOOK(call)           \
-  if (call == HookResult::Stop) { \
-    return {};                    \
-  }
+template <typename T>
+struct Tag {};
 
-#define WASP_READ(var, call) \
-  auto opt_##var = call;     \
-  if (!opt_##var) {          \
-    return absl::nullopt;    \
-  }                          \
-  auto var = *opt_##var /* No semicolon. */
+template <typename T, typename Errors>
+optional<T> Read(SpanU8* data, Errors&, Tag<T>);
 
-#define WASP_READ_OR_ERROR(var, call, desc) \
-  auto opt_##var = call;                    \
-  if (!opt_##var) {                         \
-    hooks.OnError("Unable to read " desc);  \
-    return {};                              \
-  }                                         \
-  auto var = *opt_##var /* No semicolon. */
-
-inline HookResult StopOnError(ReadResult result) {
-  return result == ReadResult::Error ? HookResult::Stop : HookResult::Continue;
+template <typename T, typename Errors>
+optional<T> Read(SpanU8* data, Errors& errors) {
+  return Read(data, errors, Tag<T>{});
 }
 
-inline optional<u8> ReadU8(SpanU8* data) {
+template <typename Errors>
+optional<u8> Read(SpanU8* data, Errors& errors, Tag<u8>) {
   if (data->size() < 1) {
+    errors.OnError(*data, "Unable to read u8");
     return absl::nullopt;
   }
 
@@ -58,8 +59,10 @@ inline optional<u8> ReadU8(SpanU8* data) {
   return result;
 }
 
-inline optional<SpanU8> ReadBytes(SpanU8* data, size_t N) {
+template <typename Errors>
+optional<SpanU8> ReadBytes(SpanU8* data, size_t N, Errors& errors) {
   if (data->size() < N) {
+    errors.OnError(*data, absl::StrFormat("Unable to read %zu bytes", N));
     return absl::nullopt;
   }
 
@@ -74,8 +77,8 @@ S SignExtend(typename std::make_unsigned<S>::type x, int N) {
   return static_cast<S>(x << (kNumBits - N - 1)) >> (kNumBits - N - 1);
 }
 
-template <typename T>
-optional<T> ReadVarInt(SpanU8* data) {
+template <typename T, typename Errors>
+optional<T> ReadVarInt(SpanU8* data, Errors& errors, string_view desc) {
   using U = typename std::make_unsigned<T>::type;
   constexpr bool is_signed = std::is_signed<T>::value;
   constexpr int kMaxBytes = (sizeof(T) * 8 + 6) / 7;
@@ -84,9 +87,11 @@ optional<T> ReadVarInt(SpanU8* data) {
   constexpr u8 kMask = ~((1 << kMaskBits) - 1);
   constexpr u8 kOnes = kMask & 0x7f;
 
+  ErrorsContextGuard<Errors> guard{errors, *data, desc};
+
   U result{};
   for (int i = 0;;) {
-    WASP_READ(byte, ReadU8(data));
+    WASP_TRY_READ(byte, Read<u8>(data, errors));
 
     const int shift = i * 7;
     result |= U(byte & 0x7f) << shift;
@@ -95,6 +100,17 @@ optional<T> ReadVarInt(SpanU8* data) {
       if ((byte & kMask) == 0 || (is_signed && (byte & kMask) == kOnes)) {
         return static_cast<T>(result);
       }
+      if (is_signed) {
+        errors.OnError(*data,
+                       absl::StrFormat("Last byte of %s must be sign "
+                                       "extension: expected 0x%x, got 0x%02x",
+                                       desc, kOnes, byte & kMask));
+      } else {
+        errors.OnError(*data,
+                       absl::StrFormat("Last byte of %s must be zero "
+                                       "extension: expected 0, got 0x%02x",
+                                       desc, byte & kMask));
+      }
       return absl::nullopt;
     } else if ((byte & 0x80) == 0) {
       return is_signed ? SignExtend<T>(result, 6 + shift) : result;
@@ -102,64 +118,620 @@ optional<T> ReadVarInt(SpanU8* data) {
   }
 }
 
-inline optional<u32> ReadVarU32(SpanU8* data) {
-  return ReadVarInt<u32>(data);
+template <typename Errors>
+optional<u32> Read(SpanU8* data, Errors& errors, Tag<u32>) {
+  return ReadVarInt<u32>(data, errors, "vu32");
 }
 
-inline optional<Index> ReadIndex(SpanU8* data) {
-  return ReadVarU32(data);
+template <typename Errors>
+optional<Index> ReadIndex(SpanU8* data, Errors& errors) {
+  return ReadVarInt<Index>(data, errors, "index");
 }
 
-inline optional<s32> ReadVarS32(SpanU8* data) {
-  return ReadVarInt<s32>(data);
+template <typename Errors>
+optional<s32> Read(SpanU8* data, Errors& errors, Tag<s32>) {
+  return ReadVarInt<s32>(data, errors, "vs32");
 }
 
-inline optional<s64> ReadVarS64(SpanU8* data) {
-  return ReadVarInt<s64>(data);
+template <typename Errors>
+optional<s64> Read(SpanU8* data, Errors& errors, Tag<s64>) {
+  return ReadVarInt<s64>(data, errors, "vs64");
 }
 
-template <typename Hooks = BaseHooksNop>
-inline optional<Index> ReadCount(SpanU8* data, Hooks&& hooks = Hooks{}) {
-  WASP_READ(count, ReadIndex(data));
-  // There should be at least one byte per count, so if the data is smaller
-  // than that, the module must be malformed.
-  if (count > data->size()) {
-    hooks.OnError(
-        absl::StrFormat("Count is longer than the data length: %zu > %zu",
-                        count, data->size()));
-    return absl::nullopt;
-  }
-  return count;
-}
-
-inline optional<f32> ReadF32(SpanU8* data) {
+template <typename Errors>
+optional<f32> Read(SpanU8* data, Errors& errors, Tag<f32>) {
   static_assert(sizeof(f32) == 4, "sizeof(f32) != 4");
-  WASP_READ(bytes, ReadBytes(data, sizeof(f32)));
+  WASP_TRY_READ(bytes, ReadBytes(data, sizeof(f32), errors));
   f32 result;
   memcpy(&result, bytes.data(), sizeof(f32));
   return result;
 }
 
-inline optional<f64> ReadF64(SpanU8* data) {
+template <typename Errors>
+optional<f64> Read(SpanU8* data, Errors& errors, Tag<f64>) {
   static_assert(sizeof(f64) == 8, "sizeof(f64) != 8");
-  WASP_READ(bytes, ReadBytes(data, sizeof(f64)));
+  WASP_TRY_READ(bytes, ReadBytes(data, sizeof(f64), errors));
   f64 result;
   memcpy(&result, bytes.data(), sizeof(f64));
   return result;
 }
 
-template <typename T, typename F>
-optional<std::vector<T>> ReadVec(SpanU8* data, F&& read_element) {
+template <typename Errors>
+optional<Index> ReadCount(SpanU8* data, Errors& errors) {
+  WASP_TRY_READ(count, ReadIndex(data, errors));
+
+  // There should be at least one byte per count, so if the data is smaller
+  // than that, the module must be malformed.
+  if (count > data->size()) {
+    errors.OnError(*data, absl::StrFormat(
+                              "Count is longer than the data length: %zu > %zu",
+                              count, data->size()));
+    return absl::nullopt;
+  }
+
+  return count;
+}
+
+template <typename Errors>
+optional<string_view> ReadStr(SpanU8* data, Errors& errors, string_view desc) {
+  ErrorsContextGuard<Errors> guard{errors, *data, desc};
+  WASP_TRY_READ(len, ReadCount(data, errors));
+  if (len > data->size()) {
+    errors.OnError(*data,
+                   absl::StrFormat("Unable to read string of length %u", len));
+    return absl::nullopt;
+  }
+
+  string_view result{reinterpret_cast<const char*>(data->data()), len};
+  data->remove_prefix(len);
+  return result;
+}
+
+template <typename T, typename Errors>
+optional<std::vector<T>> ReadVec(SpanU8* data,
+                                 Errors& errors,
+                                 string_view desc) {
+  ErrorsContextGuard<Errors> guard{errors, *data, desc};
   std::vector<T> result;
-  WASP_READ(len, ReadCount(data));
+  WASP_TRY_READ(len, ReadCount(data, errors));
   result.reserve(len);
   for (u32 i = 0; i < len; ++i) {
-    WASP_READ(elt, read_element(data));
+    WASP_TRY_READ(elt, Read<T>(data, errors));
     result.emplace_back(std::move(elt));
   }
   return result;
 }
 
+// -----------------------------------------------------------------------------
+
+template <typename Sequence>
+void LazySequenceIteratorBase<Sequence>::Increment() {
+  if (!empty()) {
+    value_ = Read(&data_, sequence_->errors_, Tag<value_type>{});
+    if (!value_) {
+      clear();
+    }
+  } else {
+    clear();
+  }
+}
+
+template <typename Sequence>
+LazySequenceIterator<Sequence>::LazySequenceIterator(Sequence* seq, SpanU8 data)
+    : base{seq, data} {
+  if (!this->empty()) {
+    operator++();
+  }
+}
+
+template <typename Sequence>
+auto LazySequenceIterator<Sequence>::operator++() -> LazySequenceIterator& {
+  this->Increment();
+  return *this;
+}
+
+template <typename Sequence>
+auto LazySequenceIterator<Sequence>::operator++(int) -> LazySequenceIterator {
+  auto temp = *this;
+  operator++();
+  return temp;
+}
+
+// -----------------------------------------------------------------------------
+
+template <typename Errors>
+LazyModule<Errors>::LazyModule(SpanU8 data, Errors& errors)
+    : magic{ReadBytes(&data, 4, errors)},
+      version{ReadBytes(&data, 4, errors)},
+      sections{data, errors} {
+  const SpanU8 kMagic{encoding::Magic};
+  const SpanU8 kVersion{encoding::Version};
+
+  if (magic != kMagic) {
+    errors.OnError(
+        data, absl::StrFormat("Magic mismatch: expected %s, got %s",
+                              wasp::ToString(kMagic), wasp::ToString(*magic)));
+  }
+
+  if (version != kVersion) {
+    errors.OnError(
+        data,
+        absl::StrFormat("Version mismatch: expected %s, got %s",
+                        wasp::ToString(kVersion), wasp::ToString(*version)));
+  }
+}
+
+// -----------------------------------------------------------------------------
+
+template <typename T, typename Errors>
+LazySection<T, Errors>::LazySection(SpanU8 data, Errors& errors)
+    : count(ReadCount(&data, errors)), sequence(data, errors) {}
+
+template <typename T, typename Errors>
+LazySection<T, Errors>::LazySection(KnownSection<> section, Errors& errors)
+    : LazySection(section.data, errors) {}
+
+// -----------------------------------------------------------------------------
+
+template <typename Errors>
+optional<ValType> Read(SpanU8* data, Errors& errors, Tag<ValType>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "value type"};
+  WASP_TRY_READ(val_s32, Read<s32>(data, errors));
+  switch (val_s32) {
+    case encoding::ValType::I32:     return ValType::I32;
+    case encoding::ValType::I64:     return ValType::I64;
+    case encoding::ValType::F32:     return ValType::F32;
+    case encoding::ValType::F64:     return ValType::F64;
+    case encoding::ValType::Anyfunc: return ValType::Anyfunc;
+    case encoding::ValType::Func:    return ValType::Func;
+    case encoding::ValType::Void:    return ValType::Void;
+    default:
+      errors.OnError(*data, absl::StrFormat("Unknown value type %d", val_s32));
+      return absl::nullopt;
+  }
+}
+
+template <typename Errors>
+optional<ExternalKind> Read(SpanU8* data, Errors& errors, Tag<ExternalKind>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "external kind"};
+  WASP_TRY_READ(byte, Read<u8>(data, errors));
+  switch (byte) {
+    case encoding::ExternalKind::Func:   return ExternalKind::Func;
+    case encoding::ExternalKind::Table:  return ExternalKind::Table;
+    case encoding::ExternalKind::Memory: return ExternalKind::Memory;
+    case encoding::ExternalKind::Global: return ExternalKind::Global;
+    default:
+      errors.OnError(*data, absl::StrFormat("Unknown external kind %u", byte));
+      return absl::nullopt;
+  }
+}
+
+template <typename Errors>
+optional<Mutability> Read(SpanU8* data, Errors& errors, Tag<Mutability>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "mutability"};
+  WASP_TRY_READ(byte, Read<u8>(data, errors));
+  switch (byte) {
+    case encoding::Mutability::Var:   return Mutability::Var;
+    case encoding::Mutability::Const: return Mutability::Const;
+    default:
+      errors.OnError(*data, absl::StrFormat("Unknown mutability %u", byte));
+      return absl::nullopt;
+  }
+}
+
+template <typename Errors>
+optional<Limits> Read(SpanU8* data, Errors& errors, Tag<Limits>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "limits"};
+  const u32 kFlags_HasMax = 1;
+  WASP_TRY_READ_CONTEXT(flags, Read<u32>(data, errors), "flags");
+  WASP_TRY_READ_CONTEXT(min, Read<u32>(data, errors), "min");
+
+  if (flags & kFlags_HasMax) {
+    WASP_TRY_READ_CONTEXT(max, Read<u32>(data, errors), "max");
+    return Limits{min, max};
+  } else {
+    return Limits{min};
+  }
+}
+
+template <typename Errors>
+optional<TableType> Read(SpanU8* data, Errors& errors, Tag<TableType>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "table type"};
+  WASP_TRY_READ_CONTEXT(elemtype, Read<ValType>(data, errors), "element type");
+  WASP_TRY_READ(limits, Read<Limits>(data, errors));
+  return TableType{limits, elemtype};
+}
+
+template <typename Errors>
+optional<MemoryType> Read(SpanU8* data, Errors& errors, Tag<MemoryType>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "memory type"};
+  WASP_TRY_READ(limits, Read<Limits>(data, errors));
+  return MemoryType{limits};
+}
+
+template <typename Errors>
+optional<GlobalType> Read(SpanU8* data, Errors& errors, Tag<GlobalType>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "global type"};
+  WASP_TRY_READ(type, Read<ValType>(data, errors));
+  WASP_TRY_READ(mut, Read<Mutability>(data, errors));
+  return GlobalType{type, mut};
+}
+
+template <typename Errors>
+optional<Section<>> Read(SpanU8* data, Errors& errors, Tag<Section<>>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "section"};
+  WASP_TRY_READ_CONTEXT(id, Read<u32>(data, errors), "id");
+  WASP_TRY_READ_CONTEXT(len, Read<u32>(data, errors), "length");
+  if (len > data->size()) {
+    errors.OnError(*data,
+                   absl::StrFormat("Section length is too long: %zu > %zu", len,
+                                   data->size()));
+    return absl::nullopt;
+  }
+
+  SpanU8 section_span = data->subspan(0, len);
+  data->remove_prefix(len);
+
+  if (id == encoding::Section::Custom) {
+    WASP_TRY_READ(name, ReadStr(&section_span, errors, "custom section name"));
+    return Section<>{CustomSection<>{name, section_span}};
+  } else {
+    return Section<>{KnownSection<>{id, section_span}};
+  }
+}
+
+template <typename Errors>
+optional<TypeEntry> Read(SpanU8* data, Errors& errors, Tag<TypeEntry>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "type entry"};
+  WASP_TRY_READ_CONTEXT(form, Read<ValType>(data, errors), "form");
+
+  if (form != ValType::Func) {
+    errors.OnError(*data, absl::StrFormat("Unknown type form: %d", form));
+    return absl::nullopt;
+  }
+
+  WASP_TRY_READ(param_types, ReadVec<ValType>(data, errors, "param types"));
+  WASP_TRY_READ(result_types, ReadVec<ValType>(data, errors, "result types"));
+  return TypeEntry{form,
+                   FuncType{std::move(param_types), std::move(result_types)}};
+}
+
+template <typename Errors>
+optional<Import<>> Read(SpanU8* data, Errors& errors, Tag<Import<>>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "import"};
+  WASP_TRY_READ(module, ReadStr(data, errors, "module name"));
+  WASP_TRY_READ(name, ReadStr(data, errors, "field name"));
+  WASP_TRY_READ(kind, Read<ExternalKind>(data, errors));
+  switch (kind) {
+    case ExternalKind::Func: {
+      WASP_TRY_READ(type_index, ReadIndex(data, errors));
+      return Import<>{module, name, type_index};
+    }
+    case ExternalKind::Table: {
+      WASP_TRY_READ(table_type, Read<TableType>(data, errors));
+      return Import<>{module, name, table_type};
+    }
+    case ExternalKind::Memory: {
+      WASP_TRY_READ(memory_type, Read<MemoryType>(data, errors));
+      return Import<>{module, name, memory_type};
+    }
+    case ExternalKind::Global: {
+      WASP_TRY_READ(global_type, Read<GlobalType>(data, errors));
+      return Import<>{module, name, global_type};
+    }
+  }
+}
+
+template <typename Errors>
+optional<Func> Read(SpanU8* data, Errors& errors, Tag<Func>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "func"};
+  WASP_TRY_READ(type_index, ReadIndex(data, errors));
+  return Func{type_index};
+}
+
+template <typename Errors>
+optional<Table> Read(SpanU8* data, Errors& errors, Tag<Table>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "table"};
+  WASP_TRY_READ(table_type, Read<TableType>(data, errors));
+  return Table{table_type};
+}
+
+template <typename Errors>
+optional<Memory> Read(SpanU8* data, Errors& errors, Tag<Memory>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "memory"};
+  WASP_TRY_READ(memory_type, Read<MemoryType>(data, errors));
+  return Memory{memory_type};
+}
+
+template <typename Errors>
+optional<Global<>> Read(SpanU8* data, Errors& errors, Tag<Global<>>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "global"};
+  WASP_TRY_READ(global_type, Read<GlobalType>(data, errors));
+  WASP_TRY_READ(init_expr, Read<Expr<>>(data, errors));
+  return Global<>{global_type, std::move(init_expr)};
+}
+
+template <typename Errors>
+optional<Export<>> Read(SpanU8* data, Errors& errors, Tag<Export<>>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "export"};
+  WASP_TRY_READ(name, ReadStr(data, errors, "name"));
+  WASP_TRY_READ(kind, Read<ExternalKind>(data, errors));
+  WASP_TRY_READ(index, ReadIndex(data, errors));
+  return Export<>{kind, name, index};
+}
+
+template <typename Errors>
+optional<Expr<>> Read(SpanU8* data, Errors& errors, Tag<Expr<>>) {
+  LazyInstrs<Errors> instrs{*data, errors};
+  auto iter = instrs.begin(), end = instrs.end();
+  while (true) {
+    auto last = iter++;
+    if (iter == end) {
+      auto len = last.data().begin() - data->begin();
+      Expr<> expr{data->subspan(0, len)};
+      data->remove_prefix(len);
+      return expr;
+    }
+  }
+}
+
+template <typename Errors>
+optional<MemArg> Read(SpanU8* data, Errors& errors, Tag<MemArg>) {
+  WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, errors), "align log2");
+  WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, errors), "offset");
+  return MemArg{align_log2, offset};
+}
+
+template <typename Errors>
+optional<Instr> Read(SpanU8* data, Errors& errors, Tag<Instr>) {
+  WASP_TRY_READ_CONTEXT(opcode, Read<u8>(data, errors), "opcode");
+  switch (opcode) {
+    // No immediates:
+    case encoding::Opcode::End:
+    case encoding::Opcode::Unreachable:
+    case encoding::Opcode::Nop:
+    case encoding::Opcode::Else:
+    case encoding::Opcode::Return:
+    case encoding::Opcode::Drop:
+    case encoding::Opcode::Select:
+    case encoding::Opcode::I32Eqz:
+    case encoding::Opcode::I32Eq:
+    case encoding::Opcode::I32Ne:
+    case encoding::Opcode::I32LtS:
+    case encoding::Opcode::I32LeS:
+    case encoding::Opcode::I32LtU:
+    case encoding::Opcode::I32LeU:
+    case encoding::Opcode::I32GtS:
+    case encoding::Opcode::I32GeS:
+    case encoding::Opcode::I32GtU:
+    case encoding::Opcode::I32GeU:
+    case encoding::Opcode::I64Eqz:
+    case encoding::Opcode::I64Eq:
+    case encoding::Opcode::I64Ne:
+    case encoding::Opcode::I64LtS:
+    case encoding::Opcode::I64LeS:
+    case encoding::Opcode::I64LtU:
+    case encoding::Opcode::I64LeU:
+    case encoding::Opcode::I64GtS:
+    case encoding::Opcode::I64GeS:
+    case encoding::Opcode::I64GtU:
+    case encoding::Opcode::I64GeU:
+    case encoding::Opcode::F32Eq:
+    case encoding::Opcode::F32Ne:
+    case encoding::Opcode::F32Lt:
+    case encoding::Opcode::F32Le:
+    case encoding::Opcode::F32Gt:
+    case encoding::Opcode::F32Ge:
+    case encoding::Opcode::F64Eq:
+    case encoding::Opcode::F64Ne:
+    case encoding::Opcode::F64Lt:
+    case encoding::Opcode::F64Le:
+    case encoding::Opcode::F64Gt:
+    case encoding::Opcode::F64Ge:
+    case encoding::Opcode::I32Clz:
+    case encoding::Opcode::I32Ctz:
+    case encoding::Opcode::I32Popcnt:
+    case encoding::Opcode::I32Add:
+    case encoding::Opcode::I32Sub:
+    case encoding::Opcode::I32Mul:
+    case encoding::Opcode::I32DivS:
+    case encoding::Opcode::I32DivU:
+    case encoding::Opcode::I32RemS:
+    case encoding::Opcode::I32RemU:
+    case encoding::Opcode::I32And:
+    case encoding::Opcode::I32Or:
+    case encoding::Opcode::I32Xor:
+    case encoding::Opcode::I32Shl:
+    case encoding::Opcode::I32ShrS:
+    case encoding::Opcode::I32ShrU:
+    case encoding::Opcode::I32Rotl:
+    case encoding::Opcode::I32Rotr:
+    case encoding::Opcode::I64Clz:
+    case encoding::Opcode::I64Ctz:
+    case encoding::Opcode::I64Popcnt:
+    case encoding::Opcode::I64Add:
+    case encoding::Opcode::I64Sub:
+    case encoding::Opcode::I64Mul:
+    case encoding::Opcode::I64DivS:
+    case encoding::Opcode::I64DivU:
+    case encoding::Opcode::I64RemS:
+    case encoding::Opcode::I64RemU:
+    case encoding::Opcode::I64And:
+    case encoding::Opcode::I64Or:
+    case encoding::Opcode::I64Xor:
+    case encoding::Opcode::I64Shl:
+    case encoding::Opcode::I64ShrS:
+    case encoding::Opcode::I64ShrU:
+    case encoding::Opcode::I64Rotl:
+    case encoding::Opcode::I64Rotr:
+    case encoding::Opcode::F32Abs:
+    case encoding::Opcode::F32Neg:
+    case encoding::Opcode::F32Ceil:
+    case encoding::Opcode::F32Floor:
+    case encoding::Opcode::F32Trunc:
+    case encoding::Opcode::F32Nearest:
+    case encoding::Opcode::F32Sqrt:
+    case encoding::Opcode::F32Add:
+    case encoding::Opcode::F32Sub:
+    case encoding::Opcode::F32Mul:
+    case encoding::Opcode::F32Div:
+    case encoding::Opcode::F32Min:
+    case encoding::Opcode::F32Max:
+    case encoding::Opcode::F32Copysign:
+    case encoding::Opcode::F64Abs:
+    case encoding::Opcode::F64Neg:
+    case encoding::Opcode::F64Ceil:
+    case encoding::Opcode::F64Floor:
+    case encoding::Opcode::F64Trunc:
+    case encoding::Opcode::F64Nearest:
+    case encoding::Opcode::F64Sqrt:
+    case encoding::Opcode::F64Add:
+    case encoding::Opcode::F64Sub:
+    case encoding::Opcode::F64Mul:
+    case encoding::Opcode::F64Div:
+    case encoding::Opcode::F64Min:
+    case encoding::Opcode::F64Max:
+    case encoding::Opcode::F64Copysign:
+    case encoding::Opcode::I32WrapI64:
+    case encoding::Opcode::I32TruncSF32:
+    case encoding::Opcode::I32TruncUF32:
+    case encoding::Opcode::I32TruncSF64:
+    case encoding::Opcode::I32TruncUF64:
+    case encoding::Opcode::I64ExtendSI32:
+    case encoding::Opcode::I64ExtendUI32:
+    case encoding::Opcode::I64TruncSF32:
+    case encoding::Opcode::I64TruncUF32:
+    case encoding::Opcode::I64TruncSF64:
+    case encoding::Opcode::I64TruncUF64:
+    case encoding::Opcode::F32ConvertSI32:
+    case encoding::Opcode::F32ConvertUI32:
+    case encoding::Opcode::F32ConvertSI64:
+    case encoding::Opcode::F32ConvertUI64:
+    case encoding::Opcode::F32DemoteF64:
+    case encoding::Opcode::F64ConvertSI32:
+    case encoding::Opcode::F64ConvertUI32:
+    case encoding::Opcode::F64ConvertSI64:
+    case encoding::Opcode::F64ConvertUI64:
+    case encoding::Opcode::F64PromoteF32:
+    case encoding::Opcode::I32ReinterpretF32:
+    case encoding::Opcode::I64ReinterpretF64:
+    case encoding::Opcode::F32ReinterpretI32:
+    case encoding::Opcode::F64ReinterpretI64:
+      return Instr{Opcode{opcode}};
+
+    // Type immediate.
+    case encoding::Opcode::Block:
+    case encoding::Opcode::Loop:
+    case encoding::Opcode::If: {
+      WASP_TRY_READ_CONTEXT(type, Read<ValType>(data, errors), "block type");
+      return Instr{Opcode{opcode}, type};
+    }
+
+    // Index immediate.
+    case encoding::Opcode::Br:
+    case encoding::Opcode::BrIf:
+    case encoding::Opcode::Call:
+    case encoding::Opcode::GetLocal:
+    case encoding::Opcode::SetLocal:
+    case encoding::Opcode::TeeLocal:
+    case encoding::Opcode::GetGlobal:
+    case encoding::Opcode::SetGlobal: {
+      WASP_TRY_READ(index, ReadIndex(data, errors));
+      return Instr{Opcode{opcode}, index};
+    }
+
+    // Index* immediates.
+    case encoding::Opcode::BrTable: {
+      WASP_TRY_READ(targets, ReadVec<Index>(data, errors, "br_table targets"));
+      WASP_TRY_READ_CONTEXT(default_target, ReadIndex(data, errors),
+                            "br_table default target");
+      return Instr{Opcode{opcode},
+                   BrTableImmediate{std::move(targets), default_target}};
+    }
+
+    // Index, reserved immediates.
+    case encoding::Opcode::CallIndirect: {
+      WASP_TRY_READ(index, ReadIndex(data, errors));
+      WASP_TRY_READ_CONTEXT(reserved, Read<u8>(data, errors), "reserved");
+      return Instr{Opcode{opcode}, CallIndirectImmediate{index, reserved}};
+    }
+
+    // Memarg (alignment, offset) immediates.
+    case encoding::Opcode::I32Load:
+    case encoding::Opcode::I64Load:
+    case encoding::Opcode::F32Load:
+    case encoding::Opcode::F64Load:
+    case encoding::Opcode::I32Load8S:
+    case encoding::Opcode::I32Load8U:
+    case encoding::Opcode::I32Load16S:
+    case encoding::Opcode::I32Load16U:
+    case encoding::Opcode::I64Load8S:
+    case encoding::Opcode::I64Load8U:
+    case encoding::Opcode::I64Load16S:
+    case encoding::Opcode::I64Load16U:
+    case encoding::Opcode::I64Load32S:
+    case encoding::Opcode::I64Load32U:
+    case encoding::Opcode::I32Store:
+    case encoding::Opcode::I64Store:
+    case encoding::Opcode::F32Store:
+    case encoding::Opcode::F64Store:
+    case encoding::Opcode::I32Store8:
+    case encoding::Opcode::I32Store16:
+    case encoding::Opcode::I64Store8:
+    case encoding::Opcode::I64Store16:
+    case encoding::Opcode::I64Store32: {
+      WASP_TRY_READ(memarg, Read<MemArg>(data, errors));
+      return Instr{Opcode{opcode}, memarg};
+    }
+
+    // Reserved immediates.
+    case encoding::Opcode::MemorySize:
+    case encoding::Opcode::MemoryGrow: {
+      WASP_TRY_READ_CONTEXT(reserved, Read<u8>(data, errors), "reserved");
+      return Instr{Opcode{opcode}, reserved};
+    }
+
+    // Const immediates.
+    case encoding::Opcode::I32Const: {
+      WASP_TRY_READ_CONTEXT(value, Read<s32>(data, errors), "i32 constant");
+      return Instr{Opcode{opcode}, value};
+    }
+
+    case encoding::Opcode::I64Const: {
+      WASP_TRY_READ_CONTEXT(value, Read<s64>(data, errors), "i64 constant");
+      return Instr{Opcode{opcode}, value};
+    }
+
+    case encoding::Opcode::F32Const: {
+      WASP_TRY_READ_CONTEXT(value, Read<f32>(data, errors), "f32 constant");
+      return Instr{Opcode{opcode}, value};
+    }
+
+    case encoding::Opcode::F64Const: {
+      WASP_TRY_READ_CONTEXT(value, Read<f64>(data, errors), "f64 constant");
+      return Instr{Opcode{opcode}, value};
+    }
+
+    default:
+      errors.OnError(*data, absl::StrFormat("Unknown opcode 0x%02x", opcode));
+      return absl::nullopt;
+  }
+}
+
+#if 0
+template <>
+inline optional<ElementSegment<>> Read<ElementSegment<>>(SpanU8* data,
+                                                         Errors& errors) {
+  WASP_TRY_READ(table_index,
+                ReadIndex(data, errors, "element segment table index"));
+  WASP_TRY_READ(offset, ReadExpr(data, errors, "element segment offset"));
+  WASP_TRY_READ(init,
+                ReadVec<Index>(data, errors, "element segment initializers"));
+  return ElementSegment<>{table_index, std::move(offset), std::move(init)};
+}
+#endif
+
+#if 0
 inline optional<SpanU8> ReadVecU8(SpanU8* data) {
   WASP_READ(len, ReadVarU32(data));
   if (len > data->size()) {
@@ -171,352 +743,10 @@ inline optional<SpanU8> ReadVecU8(SpanU8* data) {
   return result;
 }
 
-inline optional<ValType> ReadValType(SpanU8* data) {
-  WASP_READ(val_s32, ReadVarS32(data));
-  switch (val_s32) {
-    case encoding::ValType::I32:     return ValType::I32;
-    case encoding::ValType::I64:     return ValType::I64;
-    case encoding::ValType::F32:     return ValType::F32;
-    case encoding::ValType::F64:     return ValType::F64;
-    case encoding::ValType::Anyfunc: return ValType::Anyfunc;
-    case encoding::ValType::Func:    return ValType::Func;
-    case encoding::ValType::Void:    return ValType::Void;
-    default: return absl::nullopt;
-  }
-}
-
-inline optional<ExternalKind> ReadExternalKind(SpanU8* data) {
-  WASP_READ(byte, ReadU8(data));
-  switch (byte) {
-    case encoding::ExternalKind::Func:   return ExternalKind::Func;
-    case encoding::ExternalKind::Table:  return ExternalKind::Table;
-    case encoding::ExternalKind::Memory: return ExternalKind::Memory;
-    case encoding::ExternalKind::Global: return ExternalKind::Global;
-    default: return absl::nullopt;
-  }
-}
-
-inline optional<Mutability> ReadMutability(SpanU8* data) {
-  WASP_READ(byte, ReadU8(data));
-  switch (byte) {
-    case encoding::Mutability::Var:   return Mutability::Var;
-    case encoding::Mutability::Const: return Mutability::Const;
-    default: return absl::nullopt;
-  }
-}
-
-inline optional<string_view> ReadStr(SpanU8* data) {
-  WASP_READ(len, ReadVarU32(data));
-  if (len > data->size()) {
-    return absl::nullopt;
-  }
-
-  string_view result{reinterpret_cast<const char*>(data->data()), len};
-  data->remove_prefix(len);
-  return result;
-}
-
-inline optional<Limits> ReadLimits(SpanU8* data) {
-  const u32 kFlags_HasMax = 1;
-  WASP_READ(flags, ReadVarU32(data));
-  WASP_READ(min, ReadVarU32(data));
-
-  if (flags & kFlags_HasMax) {
-    WASP_READ(max, ReadVarU32(data));
-    return Limits{min, max};
-  } else {
-    return Limits{min};
-  }
-}
-
-inline optional<TableType> ReadTableType(SpanU8* data) {
-  WASP_READ(elemtype, ReadValType(data));
-  WASP_READ(limits, ReadLimits(data));
-  return TableType{limits, elemtype};
-}
-
-inline optional<MemoryType> ReadMemoryType(SpanU8* data) {
-  WASP_READ(limits, ReadLimits(data));
-  return MemoryType{limits};
-}
-
-inline optional<GlobalType> ReadGlobalType(SpanU8* data) {
-  WASP_READ(type, ReadValType(data));
-  WASP_READ(mut, ReadMutability(data));
-  return GlobalType{type, mut};
-}
-
 inline optional<MemArg> ReadMemArg(SpanU8* data) {
   WASP_READ(align_log2, ReadVarU32(data));
   WASP_READ(offset, ReadVarU32(data));
   return MemArg{align_log2, offset};
-}
-
-template <typename Traits = BorrowedTraits, typename Hooks = ExprHooksNop>
-optional<Expr<Traits>> ReadExpr(SpanU8* data, Hooks&& hooks = Hooks{}) {
-  const u8* const start = data->data();
-  int ends_expected = 1;
-
-  while (ends_expected != 0) {
-    WASP_READ_OR_ERROR(opcode, ReadU8(data), "opcode");
-    switch (opcode) {
-      // End has no immediates, but is handled specially; we exit from the loop
-      // when we've closed all open blocks (and the implicit outer block).
-      case encoding::Opcode::End:
-        --ends_expected;
-        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}}));
-        break;
-
-      // No immediates:
-      case encoding::Opcode::Unreachable:
-      case encoding::Opcode::Nop:
-      case encoding::Opcode::Else:
-      case encoding::Opcode::Return:
-      case encoding::Opcode::Drop:
-      case encoding::Opcode::Select:
-      case encoding::Opcode::I32Eqz:
-      case encoding::Opcode::I32Eq:
-      case encoding::Opcode::I32Ne:
-      case encoding::Opcode::I32LtS:
-      case encoding::Opcode::I32LeS:
-      case encoding::Opcode::I32LtU:
-      case encoding::Opcode::I32LeU:
-      case encoding::Opcode::I32GtS:
-      case encoding::Opcode::I32GeS:
-      case encoding::Opcode::I32GtU:
-      case encoding::Opcode::I32GeU:
-      case encoding::Opcode::I64Eqz:
-      case encoding::Opcode::I64Eq:
-      case encoding::Opcode::I64Ne:
-      case encoding::Opcode::I64LtS:
-      case encoding::Opcode::I64LeS:
-      case encoding::Opcode::I64LtU:
-      case encoding::Opcode::I64LeU:
-      case encoding::Opcode::I64GtS:
-      case encoding::Opcode::I64GeS:
-      case encoding::Opcode::I64GtU:
-      case encoding::Opcode::I64GeU:
-      case encoding::Opcode::F32Eq:
-      case encoding::Opcode::F32Ne:
-      case encoding::Opcode::F32Lt:
-      case encoding::Opcode::F32Le:
-      case encoding::Opcode::F32Gt:
-      case encoding::Opcode::F32Ge:
-      case encoding::Opcode::F64Eq:
-      case encoding::Opcode::F64Ne:
-      case encoding::Opcode::F64Lt:
-      case encoding::Opcode::F64Le:
-      case encoding::Opcode::F64Gt:
-      case encoding::Opcode::F64Ge:
-      case encoding::Opcode::I32Clz:
-      case encoding::Opcode::I32Ctz:
-      case encoding::Opcode::I32Popcnt:
-      case encoding::Opcode::I32Add:
-      case encoding::Opcode::I32Sub:
-      case encoding::Opcode::I32Mul:
-      case encoding::Opcode::I32DivS:
-      case encoding::Opcode::I32DivU:
-      case encoding::Opcode::I32RemS:
-      case encoding::Opcode::I32RemU:
-      case encoding::Opcode::I32And:
-      case encoding::Opcode::I32Or:
-      case encoding::Opcode::I32Xor:
-      case encoding::Opcode::I32Shl:
-      case encoding::Opcode::I32ShrS:
-      case encoding::Opcode::I32ShrU:
-      case encoding::Opcode::I32Rotl:
-      case encoding::Opcode::I32Rotr:
-      case encoding::Opcode::I64Clz:
-      case encoding::Opcode::I64Ctz:
-      case encoding::Opcode::I64Popcnt:
-      case encoding::Opcode::I64Add:
-      case encoding::Opcode::I64Sub:
-      case encoding::Opcode::I64Mul:
-      case encoding::Opcode::I64DivS:
-      case encoding::Opcode::I64DivU:
-      case encoding::Opcode::I64RemS:
-      case encoding::Opcode::I64RemU:
-      case encoding::Opcode::I64And:
-      case encoding::Opcode::I64Or:
-      case encoding::Opcode::I64Xor:
-      case encoding::Opcode::I64Shl:
-      case encoding::Opcode::I64ShrS:
-      case encoding::Opcode::I64ShrU:
-      case encoding::Opcode::I64Rotl:
-      case encoding::Opcode::I64Rotr:
-      case encoding::Opcode::F32Abs:
-      case encoding::Opcode::F32Neg:
-      case encoding::Opcode::F32Ceil:
-      case encoding::Opcode::F32Floor:
-      case encoding::Opcode::F32Trunc:
-      case encoding::Opcode::F32Nearest:
-      case encoding::Opcode::F32Sqrt:
-      case encoding::Opcode::F32Add:
-      case encoding::Opcode::F32Sub:
-      case encoding::Opcode::F32Mul:
-      case encoding::Opcode::F32Div:
-      case encoding::Opcode::F32Min:
-      case encoding::Opcode::F32Max:
-      case encoding::Opcode::F32Copysign:
-      case encoding::Opcode::F64Abs:
-      case encoding::Opcode::F64Neg:
-      case encoding::Opcode::F64Ceil:
-      case encoding::Opcode::F64Floor:
-      case encoding::Opcode::F64Trunc:
-      case encoding::Opcode::F64Nearest:
-      case encoding::Opcode::F64Sqrt:
-      case encoding::Opcode::F64Add:
-      case encoding::Opcode::F64Sub:
-      case encoding::Opcode::F64Mul:
-      case encoding::Opcode::F64Div:
-      case encoding::Opcode::F64Min:
-      case encoding::Opcode::F64Max:
-      case encoding::Opcode::F64Copysign:
-      case encoding::Opcode::I32WrapI64:
-      case encoding::Opcode::I32TruncSF32:
-      case encoding::Opcode::I32TruncUF32:
-      case encoding::Opcode::I32TruncSF64:
-      case encoding::Opcode::I32TruncUF64:
-      case encoding::Opcode::I64ExtendSI32:
-      case encoding::Opcode::I64ExtendUI32:
-      case encoding::Opcode::I64TruncSF32:
-      case encoding::Opcode::I64TruncUF32:
-      case encoding::Opcode::I64TruncSF64:
-      case encoding::Opcode::I64TruncUF64:
-      case encoding::Opcode::F32ConvertSI32:
-      case encoding::Opcode::F32ConvertUI32:
-      case encoding::Opcode::F32ConvertSI64:
-      case encoding::Opcode::F32ConvertUI64:
-      case encoding::Opcode::F32DemoteF64:
-      case encoding::Opcode::F64ConvertSI32:
-      case encoding::Opcode::F64ConvertUI32:
-      case encoding::Opcode::F64ConvertSI64:
-      case encoding::Opcode::F64ConvertUI64:
-      case encoding::Opcode::F64PromoteF32:
-      case encoding::Opcode::I32ReinterpretF32:
-      case encoding::Opcode::I64ReinterpretF64:
-      case encoding::Opcode::F32ReinterpretI32:
-      case encoding::Opcode::F64ReinterpretI64:
-        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}}));
-        break;
-
-      // Type immediate.
-      case encoding::Opcode::Block:
-      case encoding::Opcode::Loop:
-      case encoding::Opcode::If: {
-        WASP_READ_OR_ERROR(type, ReadValType(data), "type index");
-        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, type}));
-        // Each of these instructions opens a new block which must be closed by
-        // an `End`.
-        ++ends_expected;
-        break;
-      }
-
-      // Index immediate.
-      case encoding::Opcode::Br:
-      case encoding::Opcode::BrIf:
-      case encoding::Opcode::Call:
-      case encoding::Opcode::GetLocal:
-      case encoding::Opcode::SetLocal:
-      case encoding::Opcode::TeeLocal:
-      case encoding::Opcode::GetGlobal:
-      case encoding::Opcode::SetGlobal: {
-        WASP_READ_OR_ERROR(index, ReadIndex(data), "index");
-        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, index}));
-        break;
-      }
-
-      // Index* immediates.
-      case encoding::Opcode::BrTable: {
-        WASP_READ_OR_ERROR(targets, ReadVec<Index>(data, ReadIndex),
-                           "br_table targets");
-        WASP_READ_OR_ERROR(default_target, ReadIndex(data),
-                           "br_table default target");
-        WASP_HOOK(hooks.OnInstr(
-            Instr{Opcode{opcode},
-                  BrTableImmediate{std::move(targets), default_target}}));
-        break;
-      }
-
-      // Index, reserved immediates.
-      case encoding::Opcode::CallIndirect: {
-        WASP_READ_OR_ERROR(index, ReadIndex(data), "index");
-        WASP_READ_OR_ERROR(reserved, ReadU8(data), "reserved");
-        WASP_HOOK(hooks.OnInstr(
-            Instr{Opcode{opcode}, CallIndirectImmediate{index, reserved}}));
-        break;
-      }
-
-      // Memarg (alignment, offset) immediates.
-      case encoding::Opcode::I32Load:
-      case encoding::Opcode::I64Load:
-      case encoding::Opcode::F32Load:
-      case encoding::Opcode::F64Load:
-      case encoding::Opcode::I32Load8S:
-      case encoding::Opcode::I32Load8U:
-      case encoding::Opcode::I32Load16S:
-      case encoding::Opcode::I32Load16U:
-      case encoding::Opcode::I64Load8S:
-      case encoding::Opcode::I64Load8U:
-      case encoding::Opcode::I64Load16S:
-      case encoding::Opcode::I64Load16U:
-      case encoding::Opcode::I64Load32S:
-      case encoding::Opcode::I64Load32U:
-      case encoding::Opcode::I32Store:
-      case encoding::Opcode::I64Store:
-      case encoding::Opcode::F32Store:
-      case encoding::Opcode::F64Store:
-      case encoding::Opcode::I32Store8:
-      case encoding::Opcode::I32Store16:
-      case encoding::Opcode::I64Store8:
-      case encoding::Opcode::I64Store16:
-      case encoding::Opcode::I64Store32: {
-        WASP_READ_OR_ERROR(memarg, ReadMemArg(data), "memarg");
-        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, memarg}));
-        break;
-      }
-
-      // Reserved immediates.
-      case encoding::Opcode::MemorySize:
-      case encoding::Opcode::MemoryGrow: {
-        WASP_READ_OR_ERROR(reserved, ReadU8(data), "reserved");
-        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, reserved}));
-        break;
-      }
-
-      // Const immediates.
-      case encoding::Opcode::I32Const: {
-        WASP_READ_OR_ERROR(value, ReadVarS32(data), "i32 constant");
-        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, value}));
-        break;
-      }
-
-      case encoding::Opcode::I64Const: {
-        WASP_READ_OR_ERROR(value, ReadVarS64(data), "i64 constant");
-        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, value}));
-        break;
-      }
-
-      case encoding::Opcode::F32Const: {
-        WASP_READ_OR_ERROR(value, ReadF32(data), "f32 constant");
-        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, value}));
-        break;
-      }
-
-      case encoding::Opcode::F64Const: {
-        WASP_READ_OR_ERROR(value, ReadF64(data), "f64 constant");
-        WASP_HOOK(hooks.OnInstr(Instr{Opcode{opcode}, value}));
-        break;
-      }
-
-      default:
-        hooks.OnError(absl::StrFormat("Unknown opcode 0x%02x", opcode));
-        return absl::nullopt;
-    }
-  }
-
-  const size_t len = data->data() - start;
-  return Expr<Traits>{SpanU8{start, len}};
 }
 
 template <typename Hooks>
@@ -584,104 +814,6 @@ ReadResult ErrorUnlessAtSectionEnd(SpanU8 data, Hooks&& hooks) {
 }
 
 template <typename Hooks>
-ReadResult ReadTypeSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "type count");
-  WASP_HOOK(hooks.OnTypeCount(count));
-
-  for (Index i = 0; i < count; ++i) {
-    WASP_READ_OR_ERROR(form, ReadValType(&data), "type form");
-
-    if (form != ValType::Func) {
-      hooks.OnError(absl::StrFormat("Unknown type form: %d", form));
-      return ReadResult::Error;
-    }
-
-    WASP_READ_OR_ERROR(param_types, ReadVec<ValType>(&data, ReadValType),
-                       "param types");
-    WASP_READ_OR_ERROR(result_types, ReadVec<ValType>(&data, ReadValType),
-                       "result types");
-    WASP_HOOK(hooks.OnFuncType(
-        i, FuncType{std::move(param_types), std::move(result_types)}));
-  }
-  return ErrorUnlessAtSectionEnd(data, hooks);
-}
-
-template <typename Hooks>
-ReadResult ReadImportSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "import count");
-  WASP_HOOK(hooks.OnImportCount(count));
-
-  for (Index i = 0; i < count; ++i) {
-    WASP_READ_OR_ERROR(module, ReadStr(&data), "module name");
-    WASP_READ_OR_ERROR(name, ReadStr(&data), "field name");
-    WASP_READ_OR_ERROR(kind, ReadExternalKind(&data), "import kind");
-
-    switch (kind) {
-      case ExternalKind::Func: {
-        WASP_READ_OR_ERROR(type_index, ReadIndex(&data), "func type index");
-        WASP_HOOK(hooks.OnImport(i, Import<>{module, name, type_index}));
-        break;
-      }
-
-      case ExternalKind::Table: {
-        WASP_READ_OR_ERROR(table_type, ReadTableType(&data), "table type");
-        WASP_HOOK(hooks.OnImport(i, Import<>{module, name, table_type}));
-        break;
-      }
-
-      case ExternalKind::Memory: {
-        WASP_READ_OR_ERROR(memory_type, ReadMemoryType(&data), "memory type");
-        WASP_HOOK(hooks.OnImport(i, Import<>{module, name, memory_type}));
-        break;
-      }
-
-      case ExternalKind::Global: {
-        WASP_READ_OR_ERROR(global_type, ReadGlobalType(&data), "global type");
-        WASP_HOOK(hooks.OnImport(i, Import<>{module, name, global_type}));
-        break;
-      }
-    }
-  }
-  return ErrorUnlessAtSectionEnd(data, hooks);
-}
-
-template <typename Hooks>
-ReadResult ReadFunctionSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "func count");
-  WASP_HOOK(hooks.OnFuncCount(count));
-
-  for (Index i = 0; i < count; ++i) {
-    WASP_READ_OR_ERROR(type_index, ReadIndex(&data), "func type index");
-    WASP_HOOK(hooks.OnFunc(i, Func{type_index}));
-  }
-  return ErrorUnlessAtSectionEnd(data, hooks);
-}
-
-template <typename Hooks>
-ReadResult ReadTableSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "table count");
-  WASP_HOOK(hooks.OnTableCount(count));
-
-  for (Index i = 0; i < count; ++i) {
-    WASP_READ_OR_ERROR(table_type, ReadTableType(&data), "table type");
-    WASP_HOOK(hooks.OnTable(i, Table{table_type}));
-  }
-  return ErrorUnlessAtSectionEnd(data, hooks);
-}
-
-template <typename Hooks>
-ReadResult ReadMemorySection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "memory count");
-  WASP_HOOK(hooks.OnMemoryCount(count));
-
-  for (Index i = 0; i < count; ++i) {
-    WASP_READ_OR_ERROR(memory_type, ReadMemoryType(&data), "memory type");
-    WASP_HOOK(hooks.OnMemory(i, Memory{memory_type}));
-  }
-  return ErrorUnlessAtSectionEnd(data, hooks);
-}
-
-template <typename Hooks>
 ReadResult ReadGlobalSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "global count");
   WASP_HOOK(hooks.OnGlobalCount(count));
@@ -691,20 +823,6 @@ ReadResult ReadGlobalSection(SpanU8 data, Hooks&& hooks) {
     WASP_READ_OR_ERROR(init_expr, ReadExpr(&data),
                        "global initializer expression");
     WASP_HOOK(hooks.OnGlobal(i, Global<>{global_type, std::move(init_expr)}));
-  }
-  return ErrorUnlessAtSectionEnd(data, hooks);
-}
-
-template <typename Hooks>
-ReadResult ReadExportSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "export count");
-  WASP_HOOK(hooks.OnExportCount(count));
-
-  for (Index i = 0; i < count; ++i) {
-    WASP_READ_OR_ERROR(name, ReadStr(&data), "export name");
-    WASP_READ_OR_ERROR(kind, ReadExternalKind(&data), "export kind");
-    WASP_READ_OR_ERROR(index, ReadIndex(&data), "export index");
-    WASP_HOOK(hooks.OnExport(i, Export<>{kind, name, index}));
   }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
@@ -755,7 +873,7 @@ ReadResult ReadCodeSection(SpanU8 data, Hooks&& hooks) {
 
 inline optional<LocalDecl> ReadLocalDecl(SpanU8* data) {
   WASP_READ(count, ReadIndex(data));
-  WASP_READ(type, ReadValType(data));
+  WASP_READ(type, Read<ValType>(data));
   return LocalDecl{count, type};
 }
 
@@ -784,213 +902,7 @@ ReadResult ReadDataSection(SpanU8 data, Hooks&& hooks) {
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
 
-#undef WASP_HOOK
-#undef WASP_READ
-#undef WASP_READ_OR_ERROR
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <typename Traits, typename F>
-struct BuildModuleHooks {
-  BuildModuleHooks(F&& on_error) : on_error(std::move(on_error)) {}
-
-  HookResult OnError(const std::string& msg) {
-    on_error(msg);
-    return HookResult::Stop;
-  }
-
-  HookResult OnSection(Section&& s) {
-    using ::wasp::binary::encoding::Section;
-
-    ReadResult r = ReadResult::Error;
-    switch (s.id) {
-      case Section::Type:     r = ReadTypeSection(s.data, *this); break;
-      case Section::Import:   r = ReadImportSection(s.data, *this); break;
-      case Section::Function: r = ReadFunctionSection(s.data, *this); break;
-      case Section::Table:    r = ReadTableSection(s.data, *this); break;
-      case Section::Memory:   r = ReadMemorySection(s.data, *this); break;
-      case Section::Global:   r = ReadGlobalSection(s.data, *this); break;
-      case Section::Export:   r = ReadExportSection(s.data, *this); break;
-      case Section::Start:    r = ReadStartSection(s.data, *this); break;
-      case Section::Element:  r = ReadElementSection(s.data, *this); break;
-      case Section::Code:     r = ReadCodeSection(s.data, *this); break;
-      case Section::Data:     r = ReadDataSection(s.data, *this); break;
-      default: break;
-    }
-
-    return StopOnError(r);
-  }
-
-  HookResult OnCustomSection(CustomSection<>&& custom) {
-    module.custom_sections.emplace_back(custom.after_id, custom.name,
-                                        custom.data);
-    return {};
-  }
-
-  HookResult OnTypeCount(Index count) {
-    module.types.reserve(count);
-    return {};
-  }
-
-  HookResult OnFuncType(Index type_index, FuncType&& func_type) {
-    assert(type_index == module.types.size());
-    module.types.emplace_back(std::move(func_type));
-    return {};
-  }
-
-  HookResult OnImportCount(Index count) {
-    module.imports.reserve(count);
-    return {};
-  }
-
-  HookResult OnImport(Index import_index, Import<>&& import) {
-    assert(import_index == module.imports.size());
-    module.imports.emplace_back(import.module, import.name, import.desc);
-    return {};
-  }
-
-  HookResult OnFuncCount(Index count) {
-    module.funcs.reserve(count);
-    return {};
-  }
-
-  HookResult OnFunc(Index func_index, Func&& func) {
-    assert(func_index == module.funcs.size());
-    module.funcs.emplace_back(std::move(func));
-    return {};
-  }
-
-  HookResult OnTableCount(Index count) {
-    module.tables.reserve(count);
-    return {};
-  }
-
-  HookResult OnTable(Index table_index, Table&& table) {
-    assert(table_index == module.tables.size());
-    module.tables.emplace_back(std::move(table));
-    return {};
-  }
-
-  HookResult OnMemoryCount(Index count) {
-    module.memories.reserve(count);
-    return {};
-  }
-
-  HookResult OnMemory(Index memory_index, Memory&& memory) {
-    assert(memory_index == module.memories.size());
-    module.memories.emplace_back(std::move(memory));
-    return {};
-  }
-
-  HookResult OnGlobalCount(Index count) {
-    module.globals.reserve(count);
-    return {};
-  }
-
-  HookResult OnGlobal(Index global_index, Global<>&& global) {
-    assert(global_index == module.globals.size());
-    module.globals.emplace_back(global.global_type, global.init_expr);
-    return {};
-  }
-
-  HookResult OnExportCount(Index count) {
-    module.exports.reserve(count);
-    return {};
-  }
-
-  HookResult OnExport(Index export_index, Export<>&& export_) {
-    assert(export_index == module.exports.size());
-    module.exports.emplace_back(export_.kind, export_.name, export_.index);
-    return {};
-  }
-
-  HookResult OnStart(Start&& start) {
-    module.start = std::move(start);
-    return {};
-  }
-
-  HookResult OnElementSegmentCount(Index count) {
-    module.element_segments.reserve(count);
-    return {};
-  }
-
-  HookResult OnElementSegment(Index segment_index, ElementSegment<>&& segment) {
-    assert(segment_index == module.element_segments.size());
-    module.element_segments.emplace_back(segment.table_index, segment.offset,
-                                         std::move(segment.init));
-    return {};
-  }
-
-  HookResult OnCodeCount(Index count) {
-    module.codes.reserve(count);
-    return {};
-  }
-
-  HookResult OnCode(Index code_index, SpanU8 code) {
-    this->code_index = code_index;
-    return StopOnError(ReadCode(code, *this));
-  }
-
-  HookResult OnCodeContents(std::vector<LocalDecl>&& local_decls, Expr<> body) {
-    assert(code_index == module.codes.size());
-    module.codes.emplace_back(std::move(local_decls), std::move(body));
-    return {};
-  }
-
-  HookResult OnDataSegmentCount(Index count) {
-    module.data_segments.reserve(count);
-    return {};
-  }
-
-  HookResult OnDataSegment(Index segment_index, DataSegment<>&& segment) {
-    assert(segment_index == module.data_segments.size());
-    module.data_segments.emplace_back(segment.memory_index, segment.offset,
-                                      std::move(segment.init));
-    return {};
-  }
-
-  F&& on_error;
-  Module<Traits> module;
-  Index code_index;
-};
-
-template <typename Traits, typename F>
-optional<Module<Traits>> ReadModule(SpanU8 data, F&& on_error) {
-  BuildModuleHooks<Traits, F> hooks{std::move(on_error)};
-  if (ReadModuleWithHooks(data, hooks) == ReadResult::Ok) {
-    return hooks.module;
-  }
-  return absl::nullopt;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <typename F>
-struct BuildInstrsHooks {
-  BuildInstrsHooks(F&& on_error) : on_error(std::move(on_error)) {}
-
-  HookResult OnError(const std::string& msg) {
-    on_error(msg);
-    return HookResult::Stop;
-  }
-
-  HookResult OnInstr(Instr&& instr) {
-    instrs.emplace_back(std::move(instr));
-    return {};
-  }
-
-  F&& on_error;
-  Instrs instrs;
-};
-
-template <typename F>
-optional<Instrs> ReadInstrs(SpanU8 data, F&& on_error) {
-  BuildInstrsHooks<F> hooks{std::move(on_error)};
-  if (ReadExpr(&data, hooks)) {
-    return hooks.instrs;
-  }
-  return absl::nullopt;
-}
+#endif
 
 }  // namespace binary
 }  // namespace wasp

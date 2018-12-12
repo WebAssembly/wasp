@@ -46,21 +46,27 @@ TEST(ToStringTest, LocalDecl) {
   EXPECT_EQ(R"(i32 ** 3)", ToString(LocalDecl{3, ValType::I32}));
 }
 
-TEST(ToStringTest, Section) {
+TEST(ToStringTest, KnownSection) {
   const u8 data[] = "\x00\x01\x02";
   EXPECT_EQ(R"({id 1, contents "\00\01\02"})",
-            ToString(Section{1, SpanU8{data, 3}}));
+            ToString(KnownSection<>{1u, SpanU8{data, 3}}));
 }
 
 TEST(ToStringTest, CustomSection) {
   const u8 data[] = "\x00\x01\x02";
   EXPECT_EQ(
-      R"({after_id <none>, name "custom", contents "\00\01\02"})",
-      ToString(CustomSection<>{absl::nullopt, "custom", SpanU8{data, 3}}));
+      R"({name "custom", contents "\00\01\02"})",
+      ToString(CustomSection<>{"custom", SpanU8{data, 3}}));
+}
+
+TEST(ToStringTest, Section) {
+  const u8 data[] = "\x00\x01\x02";
+  EXPECT_EQ(R"({id 1, contents "\00\01\02"})",
+            ToString(Section<>{KnownSection<>{1u, SpanU8{data, 3}}}));
 
   EXPECT_EQ(
-      R"({after_id 10, name "foo", contents "\00"})",
-      ToString(CustomSection<>{10u, "foo", SpanU8{data, 1}}));
+      R"({name "custom", contents "\00\01\02"})",
+      ToString(Section<>{CustomSection<>{"custom", SpanU8{data, 3}}}));
 }
 
 TEST(ToStringTest, FuncType) {

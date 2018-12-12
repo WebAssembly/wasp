@@ -17,3 +17,25 @@
 #include "src/binary/reader.h"
 
 #include <cassert>
+#include <type_traits>
+
+#include "absl/strings/str_format.h"
+
+#include "src/binary/encoding.h"
+#include "src/binary/to_string.h"
+
+namespace wasp {
+namespace binary {
+
+void ErrorsVector::PushContext(SpanU8 pos, string_view desc) {
+}
+
+void ErrorsVector::PopContext() {
+}
+
+void ErrorsVector::OnError(SpanU8 pos, string_view message) {
+  absl::PrintF("error: %s\n", message);
+}
+
+}  // namespace binary
+}  // namespace wasp

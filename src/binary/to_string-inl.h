@@ -18,6 +18,7 @@
 
 #include "absl/strings/str_format.h"
 
+#include "src/base/macros.h"
 #include "src/base/to_string.h"
 
 namespace wasp {
@@ -26,17 +27,25 @@ namespace binary {
 using wasp::ToString;
 
 template <typename Traits>
-std::string ToString(const CustomSection<Traits>& self) {
-  std::string result = "{after_id ";
-  if (self.after_id) {
-    absl::StrAppendFormat(&result, "%u", *self.after_id);
-  } else {
-    absl::StrAppendFormat(&result, "<none>");
-  }
+std::string ToString(const KnownSection<Traits>& self) {
+  return absl::StrFormat("{id %u, contents %s}", self.id, ToString(self.data));
+}
 
-  absl::StrAppendFormat(&result, ", name \"%s\", contents %s}", self.name,
-                        ToString(self.data));
-  return result;
+template <typename Traits>
+std::string ToString(const CustomSection<Traits>& self) {
+  return absl::StrFormat("{name \"%s\", contents %s}", self.name,
+                         ToString(self.data));
+}
+
+template <typename Traits>
+std::string ToString(const Section<Traits>& self) {
+  if (self.is_known()) {
+    return ToString(self.known());
+  } else if (self.is_custom()) {
+    return ToString(self.custom());
+  } else {
+    WASP_UNREACHABLE();
+  }
 }
 
 template <typename Traits>

@@ -27,6 +27,17 @@
 using namespace ::wasp;
 using namespace ::wasp::binary;
 
+template <typename T>
+void PrintSection(T section, string_view name) {
+  if (section.count) {
+    absl::PrintF("  %s[%u]\n", name, *section.count);
+    Index count = 0;
+    for (auto item : section.sequence) {
+      absl::PrintF("    [%u]: %s\n", count++, ToString(item));
+    }
+  }
+}
+
 int main(int argc, char** argv) {
   argc--;
   argv++;
@@ -42,20 +53,43 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  auto module = ReadModule<OwnedTraits>(
-      SpanU8{*optbuf},
-      [](const std::string& msg) { absl::PrintF("Error: %s\n", msg); });
+  SpanU8 data{*optbuf};
 
-  if (!module) {
-    absl::PrintF("Unable to read module.\n");
-  }
+  ErrorsVector errors;
+  auto module = ReadModule(data, errors);
+  for (auto section : module.sections) {
+    if (section.is_known()) {
+      auto known = section.known();
+      absl::PrintF("section %u: %zu bytes\n", known.id, known.data.size());
+      switch (known.id) {
+        case encoding::Section::Type:
+          PrintSection(ReadTypeSection(known, errors), "Type");
+          break;
 
-  if (!module->codes.empty()) {
-    auto code = module->codes[0];
-    auto opt_instrs = ReadInstrs(code.body.data);
-    if (opt_instrs) {
-      for (auto instr: *opt_instrs) {
-        absl::PrintF("%s\n", ToString(instr));
+        case encoding::Section::Import:
+          PrintSection(ReadImportSection(known, errors), "Import");
+          break;
+
+        case encoding::Section::Function:
+          PrintSection(ReadFunctionSection(known, errors), "Func");
+          break;
+
+        case encoding::Section::Table:
+          PrintSection(ReadTableSection(known, errors), "Table");
+          break;
+
+        case encoding::Section::Memory:
+          PrintSection(ReadMemorySection(known, errors), "Memory");
+          break;
+
+        case encoding::Section::Global:
+          PrintSection(ReadGlobalSection(known, errors), "Global");
+          break;
+
+        case encoding::Section::Export:
+          PrintSection(ReadExportSection(known, errors), "Export");
+          break;
+
       }
     }
   }

@@ -71,13 +71,13 @@ std::string ToString(const LocalDecl& self) {
   return absl::StrFormat("%s ** %u", ToString(self.type), self.count);
 }
 
-std::string ToString(const Section& self) {
-  return absl::StrFormat("{id %u, contents %s}", self.id, ToString(self.data));
-}
-
 std::string ToString(const FuncType& self) {
   return absl::StrFormat("%s -> %s", ToString(self.param_types),
                          ToString(self.result_types));
+}
+
+std::string ToString(const TypeEntry& self) {
+  return absl::StrFormat("%s %s", ToString(self.form), ToString(self.type));
 }
 
 std::string ToString(const TableType& self) {

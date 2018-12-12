@@ -87,23 +87,37 @@ struct LocalDecl {
   ValType type;
 };
 
-struct Section {
-  Section(u32 id, SpanU8 data) : id(id), data(data) {}
+template <typename Traits = BorrowedTraits>
+struct KnownSection {
+  KnownSection(u32 id, SpanU8 data) : id(id), data(Traits::ToBuffer(data)) {}
 
   u32 id;
-  SpanU8 data;
+  typename Traits::Buffer data;
 };
 
 template <typename Traits = BorrowedTraits>
 struct CustomSection {
-  CustomSection(optional<u32> after_id, string_view name, SpanU8 data)
-      : after_id(after_id),
-        name(Traits::ToName(name)),
-        data(Traits::ToBuffer(data)) {}
+  CustomSection(string_view name, SpanU8 data)
+      : name(Traits::ToName(name)), data(Traits::ToBuffer(data)) {}
 
-  optional<u32> after_id;
   typename Traits::Name name;
   typename Traits::Buffer data;
+};
+
+template <typename Traits = BorrowedTraits>
+struct Section {
+  template <typename T>
+  explicit Section(T&& contents) : contents(std::move(contents)) {}
+
+  bool is_known() const { return contents.index() == 0; }
+  bool is_custom() const { return contents.index() == 1; }
+
+  KnownSection<Traits>& known() { return absl::get<0>(contents); }
+  const KnownSection<Traits>& known() const { return absl::get<0>(contents); }
+  CustomSection<Traits>& custom() { return absl::get<1>(contents); }
+  const CustomSection<Traits>& custom() const { return absl::get<1>(contents); }
+
+  variant<KnownSection<Traits>, CustomSection<Traits>> contents;
 };
 
 using ValTypes = std::vector<ValType>;
@@ -115,6 +129,14 @@ struct FuncType {
 
   ValTypes param_types;
   ValTypes result_types;
+};
+
+struct TypeEntry {
+  TypeEntry(ValType form, FuncType&& type)
+      : form(form), type(std::move(type)) {}
+
+  ValType form;
+  FuncType type;
 };
 
 struct TableType {
