@@ -226,8 +226,8 @@ struct StartSection {
   optional<Start> start();
 
  private:
-  SpanU8 data_;
   Errors& errors_;
+  optional<Start> start_;
 };
 
 /// ---

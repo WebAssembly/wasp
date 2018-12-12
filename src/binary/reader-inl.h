@@ -263,6 +263,19 @@ template <typename T, typename Errors>
 LazySection<T, Errors>::LazySection(KnownSection<> section, Errors& errors)
     : LazySection(section.data, errors) {}
 
+template <typename Errors>
+StartSection<Errors>::StartSection(SpanU8 data, Errors& errors)
+    : errors_(errors), start_(Read<Start>(&data, errors)) {}
+
+template <typename Errors>
+StartSection<Errors>::StartSection(KnownSection<> section, Errors& errors)
+    : errors_(errors), start_(Read<Start>(&section.data, errors)) {}
+
+template <typename Errors>
+optional<Start> StartSection<Errors>::start() {
+  return start_;
+}
+
 // -----------------------------------------------------------------------------
 
 template <typename Errors>
@@ -750,6 +763,13 @@ optional<Instr> Read(SpanU8* data, Errors& errors, Tag<Instr>) {
 }
 
 template <typename Errors>
+optional<Start> Read(SpanU8* data, Errors& errors, Tag<Start>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "start"};
+  WASP_TRY_READ(index, ReadIndex(data, errors));
+  return Start{index};
+}
+
+template <typename Errors>
 optional<ElementSegment<>> Read(SpanU8* data,
                                 Errors& errors,
                                 Tag<ElementSegment<>>) {
@@ -760,126 +780,17 @@ optional<ElementSegment<>> Read(SpanU8* data,
   return ElementSegment<>{table_index, std::move(offset), std::move(init)};
 }
 
+template <typename Errors>
+optional<DataSegment<>> Read(SpanU8* data, Errors& errors, Tag<DataSegment<>>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "data segment"};
+  WASP_TRY_READ_CONTEXT(memory_index, ReadIndex(data, errors), "memory index");
+  WASP_TRY_READ_CONTEXT(offset, Read<ConstExpr<>>(data, errors), "offset");
+  WASP_TRY_READ(len, ReadCount(data, errors));
+  WASP_TRY_READ(init, ReadBytes(data, len, errors));
+  return DataSegment<>{memory_index, std::move(offset), init};
+}
+
 #if 0
-inline optional<SpanU8> ReadVecU8(SpanU8* data) {
-  WASP_READ(len, ReadVarU32(data));
-  if (len > data->size()) {
-    return nullopt;
-  }
-
-  SpanU8 result{data->data(), len};
-  *data = remove_prefix(*data, len);
-  return result;
-}
-
-inline optional<MemArg> ReadMemArg(SpanU8* data) {
-  WASP_READ(align_log2, ReadVarU32(data));
-  WASP_READ(offset, ReadVarU32(data));
-  return MemArg{align_log2, offset};
-}
-
-template <typename Hooks>
-ReadResult ReadModuleWithHooks(SpanU8 data, Hooks&& hooks) {
-  const SpanU8 kMagic{encoding::Magic};
-  const SpanU8 kVersion{encoding::Version};
-
-  auto opt_magic = ReadBytes(&data, 4);
-  if (opt_magic != kMagic) {
-    hooks.OnError(format("Magic mismatch: expected {}, got {}",
-                                  kMagic,
-                                  *opt_magic));
-    return ReadResult::Error;
-  }
-
-  auto opt_version = ReadBytes(&data, 4);
-  if (opt_version != kVersion) {
-    hooks.OnError(format("Version mismatch: expected {}, got {}",
-                                  kVersion,
-                                  *opt_version));
-    return ReadResult::Error;
-  }
-
-  optional<u32> last_known_id;
-
-  while (!data.empty()) {
-    WASP_READ_OR_ERROR(id, ReadVarU32(&data), "section id");
-    WASP_READ_OR_ERROR(len, ReadVarU32(&data), "section length");
-
-    if (len > data.size()) {
-      hooks.OnError(format("Section length is too long: {} > {}",
-                                    len, data.size()));
-      return ReadResult::Error;
-    }
-
-    SpanU8 section_span = data.subspan(0, len);
-    *data = remove_prefix(*data, len);
-
-    if (id == encoding::Section::Custom) {
-      WASP_READ_OR_ERROR(name, ReadStr(&section_span), "custom section name");
-      WASP_HOOK(hooks.OnCustomSection(
-          CustomSection<>{last_known_id, name, section_span}));
-    } else {
-      if (last_known_id && id <= *last_known_id) {
-        hooks.OnError(format("Section id is out of order: {} <= {}",
-                                      id, *last_known_id));
-        return ReadResult::Error;
-      }
-
-      WASP_HOOK(hooks.OnSection(Section{id, section_span}));
-      last_known_id = id;
-    }
-  }
-
-  return ReadResult::Ok;
-}
-
-template <typename Hooks>
-ReadResult ErrorUnlessAtSectionEnd(SpanU8 data, Hooks&& hooks) {
-  if (data.size() != 0) {
-    hooks.OnError("Expected end of section");
-    return ReadResult::Error;
-  }
-  return ReadResult::Ok;
-}
-
-template <typename Hooks>
-ReadResult ReadGlobalSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "global count");
-  WASP_HOOK(hooks.OnGlobalCount(count));
-
-  for (Index i = 0; i < count; ++i) {
-    WASP_READ_OR_ERROR(global_type, ReadGlobalType(&data), "global type");
-    WASP_READ_OR_ERROR(init_expr, ReadExpr(&data),
-                       "global initializer expression");
-    WASP_HOOK(hooks.OnGlobal(i, Global<>{global_type, std::move(init_expr)}));
-  }
-  return ErrorUnlessAtSectionEnd(data, hooks);
-}
-
-template <typename Hooks>
-ReadResult ReadStartSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(func_index, ReadIndex(&data), "start function index");
-  WASP_HOOK(hooks.OnStart(Start{func_index}));
-  return ErrorUnlessAtSectionEnd(data, hooks);
-}
-
-template <typename Hooks>
-ReadResult ReadElementSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "element segment count");
-  WASP_HOOK(hooks.OnElementSegmentCount(count));
-
-  for (Index i = 0; i < count; ++i) {
-    WASP_READ_OR_ERROR(table_index, ReadIndex(&data),
-                       "element segment table index");
-    WASP_READ_OR_ERROR(offset, ReadExpr(&data), "element segment offset");
-    WASP_READ_OR_ERROR(init, ReadVec<Index>(&data, ReadIndex),
-                       "element segment initializers");
-    WASP_HOOK(hooks.OnElementSegment(
-        i, ElementSegment<>{table_index, std::move(offset), std::move(init)}));
-  }
-  return ErrorUnlessAtSectionEnd(data, hooks);
-}
-
 template <typename Hooks>
 ReadResult ReadCodeSection(SpanU8 data, Hooks&& hooks) {
   WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "code count");
@@ -912,22 +823,6 @@ ReadResult ReadCode(SpanU8 data, Hooks&& hooks) {
                      "locals");
   WASP_READ_OR_ERROR(body, ReadExpr(&data), "body");
   WASP_HOOK(hooks.OnCodeContents(std::move(local_decls), body));
-  return ErrorUnlessAtSectionEnd(data, hooks);
-}
-
-template <typename Hooks>
-ReadResult ReadDataSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "data segment count");
-  WASP_HOOK(hooks.OnDataSegmentCount(count));
-
-  for (Index i = 0; i < count; ++i) {
-    WASP_READ_OR_ERROR(table_index, ReadIndex(&data),
-                       "data segment table index");
-    WASP_READ_OR_ERROR(offset, ReadExpr(&data), "data segment offset");
-    WASP_READ_OR_ERROR(init, ReadVecU8(&data), "data segment initializer");
-    WASP_HOOK(hooks.OnDataSegment(
-        i, DataSegment<>{table_index, std::move(offset), std::move(init)}));
-  }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }
 

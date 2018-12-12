@@ -90,8 +90,22 @@ int main(int argc, char** argv) {
           PrintSection(ReadExportSection(known, errors), "Export");
           break;
 
+        case encoding::Section::Start: {
+          auto section = ReadStartSection(known, errors);
+          size_t count = section.start() ? 1 : 0;
+          print("  Start[{}]\n", count);
+          if (count > 0) {
+            print("    [0]: {}\n", *section.start());
+          }
+          break;
+        }
+
         case encoding::Section::Element:
           PrintSection(ReadElementSection(known, errors), "Element");
+          break;
+
+        case encoding::Section::Data:
+          PrintSection(ReadDataSection(known, errors), "Data");
           break;
       }
     }
