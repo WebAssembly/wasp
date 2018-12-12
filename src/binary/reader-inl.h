@@ -340,6 +340,14 @@ optional<Limits> Read(SpanU8* data, Errors& errors, Tag<Limits>) {
 }
 
 template <typename Errors>
+optional<LocalDecl> Read(SpanU8* data, Errors& errors, Tag<LocalDecl>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "local decl"};
+  WASP_TRY_READ_CONTEXT(count, ReadIndex(data, errors), "count");
+  WASP_TRY_READ_CONTEXT(type, Read<ValType>(data, errors), "type");
+  return LocalDecl{count, type};
+}
+
+template <typename Errors>
 optional<TableType> Read(SpanU8* data, Errors& errors, Tag<TableType>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "table type"};
   WASP_TRY_READ_CONTEXT(elemtype, Read<ValType>(data, errors), "element type");
@@ -502,21 +510,6 @@ optional<ConstExpr<>> Read(SpanU8* data, Errors& errors, Tag<ConstExpr<>>) {
   ConstExpr<> expr{data->subspan(0, len)};
   *data = remove_prefix(*data, len);
   return expr;
-}
-
-template <typename Errors>
-optional<Expr<>> Read(SpanU8* data, Errors& errors, Tag<Expr<>>) {
-  LazyInstrs<Errors> instrs{*data, errors};
-  auto iter = instrs.begin(), end = instrs.end();
-  while (true) {
-    auto last = iter++;
-    if (iter == end) {
-      auto len = last.data().begin() - data->begin();
-      Expr<> expr{data->subspan(0, len)};
-      *data = remove_prefix(*data, len);
-      return expr;
-    }
-  }
 }
 
 template <typename Errors>
@@ -781,6 +774,15 @@ optional<ElementSegment<>> Read(SpanU8* data,
 }
 
 template <typename Errors>
+optional<Code<>> Read(SpanU8* data, Errors& errors, Tag<Code<>>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "code"};
+  WASP_TRY_READ(body_size, ReadCount(data, errors));
+  WASP_TRY_READ(body, ReadBytes(data, body_size, errors));
+  WASP_TRY_READ(local_decls, ReadVec<LocalDecl>(&body, errors, "local decls"));
+  return Code<>{std::move(local_decls), Expr<>{std::move(body)}};
+}
+
+template <typename Errors>
 optional<DataSegment<>> Read(SpanU8* data, Errors& errors, Tag<DataSegment<>>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "data segment"};
   WASP_TRY_READ_CONTEXT(memory_index, ReadIndex(data, errors), "memory index");
@@ -789,44 +791,6 @@ optional<DataSegment<>> Read(SpanU8* data, Errors& errors, Tag<DataSegment<>>) {
   WASP_TRY_READ(init, ReadBytes(data, len, errors));
   return DataSegment<>{memory_index, std::move(offset), init};
 }
-
-#if 0
-template <typename Hooks>
-ReadResult ReadCodeSection(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(count, ReadCount(&data, hooks), "code count");
-  WASP_HOOK(hooks.OnCodeCount(count));
-
-  for (Index i = 0; i < count; ++i) {
-    WASP_READ_OR_ERROR(len, ReadIndex(&data), "code length");
-
-    if (len > data.size()) {
-      hooks.OnError(format("Code length is too long: {} > {}", len,
-                                    data.size()));
-      return ReadResult::Error;
-    }
-
-    WASP_HOOK(hooks.OnCode(i, data.subspan(0, len)));
-    *data = remove_prefix(*data, len);
-  }
-  return ErrorUnlessAtSectionEnd(data, hooks);
-}
-
-inline optional<LocalDecl> ReadLocalDecl(SpanU8* data) {
-  WASP_READ(count, ReadIndex(data));
-  WASP_READ(type, Read<ValType>(data));
-  return LocalDecl{count, type};
-}
-
-template <typename Hooks>
-ReadResult ReadCode(SpanU8 data, Hooks&& hooks) {
-  WASP_READ_OR_ERROR(local_decls, ReadVec<LocalDecl>(&data, ReadLocalDecl),
-                     "locals");
-  WASP_READ_OR_ERROR(body, ReadExpr(&data), "body");
-  WASP_HOOK(hooks.OnCodeContents(std::move(local_decls), body));
-  return ErrorUnlessAtSectionEnd(data, hooks);
-}
-
-#endif
 
 }  // namespace binary
 }  // namespace wasp

@@ -104,6 +104,10 @@ int main(int argc, char** argv) {
           PrintSection(ReadElementSection(known, errors), "Element");
           break;
 
+        case encoding::Section::Code:
+          PrintSection(ReadCodeSection(known, errors), "Code");
+          break;
+
         case encoding::Section::Data:
           PrintSection(ReadDataSection(known, errors), "Data");
           break;
