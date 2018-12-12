@@ -17,10 +17,10 @@
 #include <string>
 
 #include "src/base/file.h"
-#include "src/base/to_string.h"
+#include "src/base/formatters.h"
 #include "src/base/types.h"
 #include "src/binary/encoding.h"
-#include "src/binary/to_string.h"
+#include "src/binary/formatters.h"
 #include "src/binary/types.h"
 #include "src/binary/reader.h"
 
@@ -30,10 +30,10 @@ using namespace ::wasp::binary;
 template <typename T>
 void PrintSection(T section, string_view name) {
   if (section.count) {
-    print("  {}[{}]\n", name.to_string(), *section.count);
+    print("  {}[{}]\n", name, *section.count);
     Index count = 0;
     for (auto item : section.sequence) {
-      print("    [{}]: {}\n", count++, ToString(item));
+      print("    [{}]: {}\n", count++, item);
     }
   }
 }
@@ -89,7 +89,6 @@ int main(int argc, char** argv) {
         case encoding::Section::Export:
           PrintSection(ReadExportSection(known, errors), "Export");
           break;
-
       }
     }
   }

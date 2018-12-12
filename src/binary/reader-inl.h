@@ -16,7 +16,7 @@
 
 #include <type_traits>
 
-#include "src/base/to_string.h"
+#include "src/base/formatters.h"
 #include "src/binary/encoding.h"
 
 #define WASP_TRY_READ(var, call) \
@@ -101,11 +101,11 @@ optional<T> ReadVarInt(SpanU8* data, Errors& errors, string_view desc) {
       if (is_signed) {
         errors.OnError(*data, format("Last byte of {} must be sign "
                                      "extension: expected {:#x}, got {:#02x}",
-                                     desc.to_string(), kOnes, byte & kMask));
+                                     desc, kOnes, byte & kMask));
       } else {
         errors.OnError(*data, format("Last byte of %s must be zero "
                                      "extension: expected 0, got {:02x}",
-                                     desc.to_string(), byte & kMask));
+                                     desc, byte & kMask));
       }
       return nullopt;
     } else if ((byte & 0x80) == 0) {
@@ -243,15 +243,13 @@ LazyModule<Errors>::LazyModule(SpanU8 data, Errors& errors)
   const SpanU8 kVersion{encoding::Version};
 
   if (magic != kMagic) {
-    errors.OnError(data,
-                   format("Magic mismatch: expected {}, got {}",
-                          wasp::ToString(kMagic), wasp::ToString(*magic)));
+    errors.OnError(
+        data, format("Magic mismatch: expected {}, got {}", kMagic, *magic));
   }
 
   if (version != kVersion) {
-    errors.OnError(data,
-                   format("Version mismatch: expected {}, got {}",
-                          wasp::ToString(kVersion), wasp::ToString(*version)));
+    errors.OnError(data, format("Version mismatch: expected {}, got {}",
+                                kVersion, *version));
   }
 }
 
@@ -752,16 +750,16 @@ ReadResult ReadModuleWithHooks(SpanU8 data, Hooks&& hooks) {
   auto opt_magic = ReadBytes(&data, 4);
   if (opt_magic != kMagic) {
     hooks.OnError(format("Magic mismatch: expected {}, got {}",
-                                  wasp::ToString(kMagic),
-                                  wasp::ToString(*opt_magic)));
+                                  kMagic,
+                                  *opt_magic));
     return ReadResult::Error;
   }
 
   auto opt_version = ReadBytes(&data, 4);
   if (opt_version != kVersion) {
     hooks.OnError(format("Version mismatch: expected {}, got {}",
-                                  wasp::ToString(kVersion),
-                                  wasp::ToString(*opt_version)));
+                                  kVersion,
+                                  *opt_version));
     return ReadResult::Error;
   }
 

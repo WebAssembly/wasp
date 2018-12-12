@@ -14,27 +14,4 @@
 // limitations under the License.
 //
 
-#include "src/binary/reader.h"
-
-#include <cassert>
-#include <type_traits>
-
-#include "src/base/format.h"
-#include "src/binary/encoding.h"
 #include "src/binary/formatters.h"
-
-namespace wasp {
-namespace binary {
-
-void ErrorsVector::PushContext(SpanU8 pos, string_view desc) {
-}
-
-void ErrorsVector::PopContext() {
-}
-
-void ErrorsVector::OnError(SpanU8 pos, string_view message) {
-  print("error: {}\n", message);
-}
-
-}  // namespace binary
-}  // namespace wasp

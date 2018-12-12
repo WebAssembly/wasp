@@ -36,7 +36,7 @@ add_library(
   wasp
   src/base/file.cc
   src/binary/reader.cc
-  src/binary/to_string.cc
+  src/binary/formatters.cc
 
   third_party/fmt/src/format.cc
 )
@@ -57,8 +57,8 @@ target_link_libraries(
 
 add_executable(
   wasp_unittests
-  src/base/to_string_test.cc
-  src/binary/to_string_test.cc
+  src/base/formatters_test.cc
+  src/binary/formatters_test.cc
 )
 
 target_link_libraries(
