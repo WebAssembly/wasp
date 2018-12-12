@@ -30,10 +30,10 @@ using namespace ::wasp::binary;
 template <typename T>
 void PrintSection(T section, string_view name) {
   if (section.count) {
-    absl::PrintF("  %s[%u]\n", name, *section.count);
+    print("  {}[{}]\n", name.to_string(), *section.count);
     Index count = 0;
     for (auto item : section.sequence) {
-      absl::PrintF("    [%u]: %s\n", count++, ToString(item));
+      print("    [{}]: {}\n", count++, ToString(item));
     }
   }
 }
@@ -42,14 +42,14 @@ int main(int argc, char** argv) {
   argc--;
   argv++;
   if (argc == 0) {
-    absl::PrintF("No files.\n");
+    print("No files.\n");
     return 1;
   }
 
   std::string filename{argv[0]};
   auto optbuf = ReadFile(filename);
   if (!optbuf) {
-    absl::PrintF("Error reading file.\n");
+    print("Error reading file.\n");
     return 1;
   }
 
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
   for (auto section : module.sections) {
     if (section.is_known()) {
       auto known = section.known();
-      absl::PrintF("section %u: %zu bytes\n", known.id, known.data.size());
+      print("section {}: {} bytes\n", known.id, known.data.size());
       switch (known.id) {
         case encoding::Section::Type:
           PrintSection(ReadTypeSection(known, errors), "Type");

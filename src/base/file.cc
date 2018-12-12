@@ -21,7 +21,7 @@ namespace wasp {
 optional<std::vector<u8>> ReadFile(const std::string& filename) {
   std::ifstream stream{filename, std::ios::in | std::ios::binary};
   if (!stream) {
-    return absl::nullopt;
+    return nullopt;
   }
 
   std::vector<u8> buffer;
@@ -30,7 +30,7 @@ optional<std::vector<u8>> ReadFile(const std::string& filename) {
   stream.seekg(0, std::ios::beg);
   stream.read(reinterpret_cast<char*>(&buffer[0]), buffer.size());
   if (stream.fail()) {
-    return absl::nullopt;
+    return nullopt;
   }
 
   return buffer;

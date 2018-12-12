@@ -20,32 +20,36 @@
 #include <string>
 #include <vector>
 
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
-
+#include "src/base/format.h"
 #include "src/base/types.h"
 
 namespace wasp {
 
 inline std::string ToString(u32 x) {
-  return absl::StrFormat("%u", x);
+  return format("{}", x);
 }
 
 inline std::string ToString(const SpanU8& self) {
   std::string result = "\"";
-  result += absl::StrJoin(self, "", [](std::string* out, u8 x) {
-    absl::StrAppendFormat(out, "\\%02x", x);
-  });
-  absl::StrAppend(&result, "\"");
+  for (auto x : self) {
+    result += format("\\{:02x}", x);
+  }
+  result += '\"';
   return result;
 }
 
 template <typename T>
 std::string ToString(const std::vector<T>& self) {
+  bool first = true;
   std::string result = "[";
-  result += absl::StrJoin(
-      self, " ", [](std::string* out, T x) { return *out += ToString(x); });
-  absl::StrAppend(&result, "]");
+  for (const auto& x : self) {
+    if (!first) {
+      result += ' ';
+    }
+    result += ToString(x);
+    first = false;
+  }
+  result += ']';
   return result;
 }
 

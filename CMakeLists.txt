@@ -21,23 +21,28 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 add_definitions(-Wall)
 
-add_subdirectory(third_party/abseil)
 add_subdirectory(third_party/gtest)
 
-include_directories(${wasp_SOURCE_DIR})
+include_directories(
+  ${wasp_SOURCE_DIR}
+  ${wasp_SOURCE_DIR}/third_party/fmt/include
+  ${wasp_SOURCE_DIR}/third_party/optional-lite/include
+  ${wasp_SOURCE_DIR}/third_party/span-lite/include
+  ${wasp_SOURCE_DIR}/third_party/string-view-lite/include
+  ${wasp_SOURCE_DIR}/third_party/variant-lite/include
+)
 
 add_library(
   wasp
   src/base/file.cc
   src/binary/reader.cc
   src/binary/to_string.cc
+
+  third_party/fmt/src/format.cc
 )
 
 target_link_libraries(
   wasp
-  absl::base
-  absl::str_format
-  absl::variant
 )
 
 add_executable(
@@ -59,8 +64,6 @@ add_executable(
 target_link_libraries(
   wasp_unittests
   wasp
-  absl::base
-  absl::str_format
   gtest_main
   gtest
 )

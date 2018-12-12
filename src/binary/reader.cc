@@ -19,8 +19,7 @@
 #include <cassert>
 #include <type_traits>
 
-#include "absl/strings/str_format.h"
-
+#include "src/base/format.h"
 #include "src/binary/encoding.h"
 #include "src/binary/to_string.h"
 
@@ -34,7 +33,7 @@ void ErrorsVector::PopContext() {
 }
 
 void ErrorsVector::OnError(SpanU8 pos, string_view message) {
-  absl::PrintF("error: %s\n", message);
+  print("error: {}\n", message.to_string());
 }
 
 }  // namespace binary

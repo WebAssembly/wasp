@@ -1,6 +1,18 @@
-[submodule "third_party/abseil"]
-	path = third_party/abseil
-	url = https://github.com/abseil/abseil-cpp
 [submodule "third_party/gtest"]
 	path = third_party/gtest
 	url = https://github.com/google/googletest
+[submodule "third_party/fmt"]
+	path = third_party/fmt
+	url = https://github.com/fmtlib/fmt
+[submodule "third_party/string-view-lite"]
+	path = third_party/string-view-lite
+	url = https://github.com/martinmoene/string-view-lite
+[submodule "third_party/optional-lite"]
+	path = third_party/optional-lite
+	url = https://github.com/martinmoene/optional-lite
+[submodule "third_party/variant-lite"]
+	path = third_party/variant-lite
+	url = https://github.com/martinmoene/variant-lite
+[submodule "third_party/span-lite"]
+	path = third_party/span-lite
+	url = https://github.com/martinmoene/span-lite

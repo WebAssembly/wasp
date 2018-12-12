@@ -112,10 +112,10 @@ struct Section {
   bool is_known() const { return contents.index() == 0; }
   bool is_custom() const { return contents.index() == 1; }
 
-  KnownSection<Traits>& known() { return absl::get<0>(contents); }
-  const KnownSection<Traits>& known() const { return absl::get<0>(contents); }
-  CustomSection<Traits>& custom() { return absl::get<1>(contents); }
-  const CustomSection<Traits>& custom() const { return absl::get<1>(contents); }
+  KnownSection<Traits>& known() { return get<0>(contents); }
+  const KnownSection<Traits>& known() const { return get<0>(contents); }
+  CustomSection<Traits>& custom() { return get<1>(contents); }
+  const CustomSection<Traits>& custom() const { return get<1>(contents); }
 
   variant<KnownSection<Traits>, CustomSection<Traits>> contents;
 };

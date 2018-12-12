@@ -14,33 +14,30 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BASE_H_
-#define WASP_BASE_H_
+#ifndef WASP_BASE_STRING_VIEW_H_
+#define WASP_BASE_STRING_VIEW_H_
 
-#include <cstdint>
-
-#include "src/base/optional.h"
-#include "src/base/span.h"
-#include "src/base/string_view.h"
-#include "src/base/variant.h"
+#include "nonstd/string_view.hpp"
 
 namespace wasp {
 
-using s8 = int8_t;
-using u8 = uint8_t;
-using s16 = int16_t;
-using u16 = uint16_t;
-using s32 = int32_t;
-using u32 = uint32_t;
-using s64 = int64_t;
-using u64 = int64_t;
-using f32 = float;
-using f64 = double;
+using nonstd::string_view;
 
-using Index = u32;
+using nonstd::string_view;
+using nonstd::wstring_view;
+using nonstd::u16string_view;
+using nonstd::u32string_view;
+using nonstd::basic_string_view;
 
-using SpanU8 = span<const u8>;
+using nonstd::operator==;
+using nonstd::operator!=;
+using nonstd::operator<;
+using nonstd::operator<=;
+using nonstd::operator>;
+using nonstd::operator>=;
+
+using nonstd::operator<<;
 
 }  // namespace wasp
 
-#endif  // WASP_BASE_H_
+#endif  // WASP_BASE_STRING_VIEW_H_

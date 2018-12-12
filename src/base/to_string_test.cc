@@ -16,8 +16,6 @@
 
 #include "src/base/to_string.h"
 
-#include "absl/strings/str_format.h"
-
 #include "gtest/gtest.h"
 
 using namespace ::wasp;
@@ -31,7 +29,7 @@ struct Point {
 };
 
 std::string ToString(const Point& p) {
-  return absl::StrFormat("{x:%d, y:%d}", p.x, p.y);
+  return format("{{x:{}, y:{}}}", p.x, p.y);
 }
 
 }

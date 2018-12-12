@@ -14,33 +14,26 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BASE_H_
-#define WASP_BASE_H_
+#ifndef WASP_BASE_FORMAT_H_
+#define WASP_BASE_FORMAT_H_
 
-#include <cstdint>
-
-#include "src/base/optional.h"
-#include "src/base/span.h"
-#include "src/base/string_view.h"
-#include "src/base/variant.h"
+#include "fmt/format.h"
 
 namespace wasp {
 
-using s8 = int8_t;
-using u8 = uint8_t;
-using s16 = int16_t;
-using u16 = uint16_t;
-using s32 = int32_t;
-using u32 = uint32_t;
-using s64 = int64_t;
-using u64 = int64_t;
-using f32 = float;
-using f64 = double;
+// see http://fmtlib.net/latest/api.html.
 
-using Index = u32;
-
-using SpanU8 = span<const u8>;
+using fmt::format;
+using fmt::print;
+using fmt::vprint;
+using fmt::make_format_args;
+using fmt::format_arg_store;
+using fmt::basic_format_args;
+using fmt::format_args;
+using fmt::format_to;
+using fmt::formatter;
 
 }  // namespace wasp
 
-#endif  // WASP_BASE_H_
+#endif  // WASP_BASE_FORMAT_H_
+

@@ -16,15 +16,13 @@
 
 #include <type_traits>
 
-#include "absl/strings/str_format.h"
-
 #include "src/base/to_string.h"
 #include "src/binary/encoding.h"
 
 #define WASP_TRY_READ(var, call) \
   auto opt_##var = call;         \
   if (!opt_##var) {              \
-    return absl::nullopt;        \
+    return nullopt;              \
   }                              \
   auto var = *opt_##var /* No semicolon. */
 
@@ -51,23 +49,23 @@ template <typename Errors>
 optional<u8> Read(SpanU8* data, Errors& errors, Tag<u8>) {
   if (data->size() < 1) {
     errors.OnError(*data, "Unable to read u8");
-    return absl::nullopt;
+    return nullopt;
   }
 
   u8 result{(*data)[0]};
-  data->remove_prefix(1);
+  *data = remove_prefix(*data, 1);
   return result;
 }
 
 template <typename Errors>
-optional<SpanU8> ReadBytes(SpanU8* data, size_t N, Errors& errors) {
+optional<SpanU8> ReadBytes(SpanU8* data, SpanU8::index_type N, Errors& errors) {
   if (data->size() < N) {
-    errors.OnError(*data, absl::StrFormat("Unable to read %zu bytes", N));
-    return absl::nullopt;
+    errors.OnError(*data, format("Unable to read {} bytes", N));
+    return nullopt;
   }
 
   SpanU8 result{data->begin(), N};
-  data->remove_prefix(N);
+  *data = remove_prefix(*data, N);
   return result;
 }
 
@@ -101,17 +99,15 @@ optional<T> ReadVarInt(SpanU8* data, Errors& errors, string_view desc) {
         return static_cast<T>(result);
       }
       if (is_signed) {
-        errors.OnError(*data,
-                       absl::StrFormat("Last byte of %s must be sign "
-                                       "extension: expected 0x%x, got 0x%02x",
-                                       desc, kOnes, byte & kMask));
+        errors.OnError(*data, format("Last byte of {} must be sign "
+                                     "extension: expected {:#x}, got {:#02x}",
+                                     desc.to_string(), kOnes, byte & kMask));
       } else {
-        errors.OnError(*data,
-                       absl::StrFormat("Last byte of %s must be zero "
-                                       "extension: expected 0, got 0x%02x",
-                                       desc, byte & kMask));
+        errors.OnError(*data, format("Last byte of %s must be zero "
+                                     "extension: expected 0, got {:02x}",
+                                     desc.to_string(), byte & kMask));
       }
-      return absl::nullopt;
+      return nullopt;
     } else if ((byte & 0x80) == 0) {
       return is_signed ? SignExtend<T>(result, 6 + shift) : result;
     }
@@ -163,10 +159,10 @@ optional<Index> ReadCount(SpanU8* data, Errors& errors) {
   // There should be at least one byte per count, so if the data is smaller
   // than that, the module must be malformed.
   if (count > data->size()) {
-    errors.OnError(*data, absl::StrFormat(
-                              "Count is longer than the data length: %zu > %zu",
-                              count, data->size()));
-    return absl::nullopt;
+    errors.OnError(
+        *data, format("Count is longer than the data length: {} > {}", count,
+                      data->size()));
+    return nullopt;
   }
 
   return count;
@@ -177,13 +173,12 @@ optional<string_view> ReadStr(SpanU8* data, Errors& errors, string_view desc) {
   ErrorsContextGuard<Errors> guard{errors, *data, desc};
   WASP_TRY_READ(len, ReadCount(data, errors));
   if (len > data->size()) {
-    errors.OnError(*data,
-                   absl::StrFormat("Unable to read string of length %u", len));
-    return absl::nullopt;
+    errors.OnError(*data, format("Unable to read string of length {}", len));
+    return nullopt;
   }
 
   string_view result{reinterpret_cast<const char*>(data->data()), len};
-  data->remove_prefix(len);
+  *data = remove_prefix(*data, len);
   return result;
 }
 
@@ -248,16 +243,15 @@ LazyModule<Errors>::LazyModule(SpanU8 data, Errors& errors)
   const SpanU8 kVersion{encoding::Version};
 
   if (magic != kMagic) {
-    errors.OnError(
-        data, absl::StrFormat("Magic mismatch: expected %s, got %s",
-                              wasp::ToString(kMagic), wasp::ToString(*magic)));
+    errors.OnError(data,
+                   format("Magic mismatch: expected {}, got {}",
+                          wasp::ToString(kMagic), wasp::ToString(*magic)));
   }
 
   if (version != kVersion) {
-    errors.OnError(
-        data,
-        absl::StrFormat("Version mismatch: expected %s, got %s",
-                        wasp::ToString(kVersion), wasp::ToString(*version)));
+    errors.OnError(data,
+                   format("Version mismatch: expected {}, got {}",
+                          wasp::ToString(kVersion), wasp::ToString(*version)));
   }
 }
 
@@ -286,8 +280,8 @@ optional<ValType> Read(SpanU8* data, Errors& errors, Tag<ValType>) {
     case encoding::ValType::Func:    return ValType::Func;
     case encoding::ValType::Void:    return ValType::Void;
     default:
-      errors.OnError(*data, absl::StrFormat("Unknown value type %d", val_s32));
-      return absl::nullopt;
+      errors.OnError(*data, format("Unknown value type {}", val_s32));
+      return nullopt;
   }
 }
 
@@ -301,8 +295,8 @@ optional<ExternalKind> Read(SpanU8* data, Errors& errors, Tag<ExternalKind>) {
     case encoding::ExternalKind::Memory: return ExternalKind::Memory;
     case encoding::ExternalKind::Global: return ExternalKind::Global;
     default:
-      errors.OnError(*data, absl::StrFormat("Unknown external kind %u", byte));
-      return absl::nullopt;
+      errors.OnError(*data, format("Unknown external kind {}", byte));
+      return nullopt;
   }
 }
 
@@ -314,8 +308,8 @@ optional<Mutability> Read(SpanU8* data, Errors& errors, Tag<Mutability>) {
     case encoding::Mutability::Var:   return Mutability::Var;
     case encoding::Mutability::Const: return Mutability::Const;
     default:
-      errors.OnError(*data, absl::StrFormat("Unknown mutability %u", byte));
-      return absl::nullopt;
+      errors.OnError(*data, format("Unknown mutability {}", byte));
+      return nullopt;
   }
 }
 
@@ -363,14 +357,13 @@ optional<Section<>> Read(SpanU8* data, Errors& errors, Tag<Section<>>) {
   WASP_TRY_READ_CONTEXT(id, Read<u32>(data, errors), "id");
   WASP_TRY_READ_CONTEXT(len, Read<u32>(data, errors), "length");
   if (len > data->size()) {
-    errors.OnError(*data,
-                   absl::StrFormat("Section length is too long: %zu > %zu", len,
-                                   data->size()));
-    return absl::nullopt;
+    errors.OnError(*data, format("Section length is too long: {} > {}", len,
+                                 data->size()));
+    return nullopt;
   }
 
   SpanU8 section_span = data->subspan(0, len);
-  data->remove_prefix(len);
+  *data = remove_prefix(*data, len);
 
   if (id == encoding::Section::Custom) {
     WASP_TRY_READ(name, ReadStr(&section_span, errors, "custom section name"));
@@ -386,8 +379,10 @@ optional<TypeEntry> Read(SpanU8* data, Errors& errors, Tag<TypeEntry>) {
   WASP_TRY_READ_CONTEXT(form, Read<ValType>(data, errors), "form");
 
   if (form != ValType::Func) {
-    errors.OnError(*data, absl::StrFormat("Unknown type form: %d", form));
-    return absl::nullopt;
+    // TODO ValType formatter
+    errors.OnError(*data,
+                   format("Unknown type form: {}", static_cast<int>(form)));
+    return nullopt;
   }
 
   WASP_TRY_READ(param_types, ReadVec<ValType>(data, errors, "param types"));
@@ -469,7 +464,7 @@ optional<Expr<>> Read(SpanU8* data, Errors& errors, Tag<Expr<>>) {
     if (iter == end) {
       auto len = last.data().begin() - data->begin();
       Expr<> expr{data->subspan(0, len)};
-      data->remove_prefix(len);
+      *data = remove_prefix(*data, len);
       return expr;
     }
   }
@@ -713,8 +708,8 @@ optional<Instr> Read(SpanU8* data, Errors& errors, Tag<Instr>) {
     }
 
     default:
-      errors.OnError(*data, absl::StrFormat("Unknown opcode 0x%02x", opcode));
-      return absl::nullopt;
+      errors.OnError(*data, format("Unknown opcode {:#02x}", opcode));
+      return nullopt;
   }
 }
 
@@ -735,11 +730,11 @@ inline optional<ElementSegment<>> Read<ElementSegment<>>(SpanU8* data,
 inline optional<SpanU8> ReadVecU8(SpanU8* data) {
   WASP_READ(len, ReadVarU32(data));
   if (len > data->size()) {
-    return absl::nullopt;
+    return nullopt;
   }
 
   SpanU8 result{data->data(), len};
-  data->remove_prefix(len);
+  *data = remove_prefix(*data, len);
   return result;
 }
 
@@ -756,7 +751,7 @@ ReadResult ReadModuleWithHooks(SpanU8 data, Hooks&& hooks) {
 
   auto opt_magic = ReadBytes(&data, 4);
   if (opt_magic != kMagic) {
-    hooks.OnError(absl::StrFormat("Magic mismatch: expected %s, got %s",
+    hooks.OnError(format("Magic mismatch: expected {}, got {}",
                                   wasp::ToString(kMagic),
                                   wasp::ToString(*opt_magic)));
     return ReadResult::Error;
@@ -764,7 +759,7 @@ ReadResult ReadModuleWithHooks(SpanU8 data, Hooks&& hooks) {
 
   auto opt_version = ReadBytes(&data, 4);
   if (opt_version != kVersion) {
-    hooks.OnError(absl::StrFormat("Version mismatch: expected %s, got %s",
+    hooks.OnError(format("Version mismatch: expected {}, got {}",
                                   wasp::ToString(kVersion),
                                   wasp::ToString(*opt_version)));
     return ReadResult::Error;
@@ -777,13 +772,13 @@ ReadResult ReadModuleWithHooks(SpanU8 data, Hooks&& hooks) {
     WASP_READ_OR_ERROR(len, ReadVarU32(&data), "section length");
 
     if (len > data.size()) {
-      hooks.OnError(absl::StrFormat("Section length is too long: %zu > %zu",
+      hooks.OnError(format("Section length is too long: {} > {}",
                                     len, data.size()));
       return ReadResult::Error;
     }
 
     SpanU8 section_span = data.subspan(0, len);
-    data.remove_prefix(len);
+    *data = remove_prefix(*data, len);
 
     if (id == encoding::Section::Custom) {
       WASP_READ_OR_ERROR(name, ReadStr(&section_span), "custom section name");
@@ -791,7 +786,7 @@ ReadResult ReadModuleWithHooks(SpanU8 data, Hooks&& hooks) {
           CustomSection<>{last_known_id, name, section_span}));
     } else {
       if (last_known_id && id <= *last_known_id) {
-        hooks.OnError(absl::StrFormat("Section id is out of order: %u <= %u",
+        hooks.OnError(format("Section id is out of order: {} <= {}",
                                       id, *last_known_id));
         return ReadResult::Error;
       }
@@ -860,13 +855,13 @@ ReadResult ReadCodeSection(SpanU8 data, Hooks&& hooks) {
     WASP_READ_OR_ERROR(len, ReadIndex(&data), "code length");
 
     if (len > data.size()) {
-      hooks.OnError(absl::StrFormat("Code length is too long: %zu > %zu", len,
+      hooks.OnError(format("Code length is too long: {} > {}", len,
                                     data.size()));
       return ReadResult::Error;
     }
 
     WASP_HOOK(hooks.OnCode(i, data.subspan(0, len)));
-    data.remove_prefix(len);
+    *data = remove_prefix(*data, len);
   }
   return ErrorUnlessAtSectionEnd(data, hooks);
 }

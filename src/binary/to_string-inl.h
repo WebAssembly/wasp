@@ -16,8 +16,7 @@
 
 #include "src/binary/to_string.h"
 
-#include "absl/strings/str_format.h"
-
+#include "src/base/format.h"
 #include "src/base/macros.h"
 #include "src/base/to_string.h"
 
@@ -28,13 +27,13 @@ using wasp::ToString;
 
 template <typename Traits>
 std::string ToString(const KnownSection<Traits>& self) {
-  return absl::StrFormat("{id %u, contents %s}", self.id, ToString(self.data));
+  return format("{{id {}, contents {}}}", self.id, ToString(self.data));
 }
 
 template <typename Traits>
 std::string ToString(const CustomSection<Traits>& self) {
-  return absl::StrFormat("{name \"%s\", contents %s}", self.name,
-                         ToString(self.data));
+  return format("{{name \"{}\", contents {}}}", self.name.to_string(),
+                ToString(self.data));
 }
 
 template <typename Traits>
@@ -51,20 +50,17 @@ std::string ToString(const Section<Traits>& self) {
 template <typename Traits>
 std::string ToString(const Import<Traits>& self) {
   std::string result =
-      absl::StrFormat("{module \"%s\", name \"%s\", desc %s", self.module,
-                      self.name, ToString(self.kind()));
+      format("{{module \"{}\", name \"{}\", desc {}", self.module.to_string(),
+             self.name.to_string(), ToString(self.kind()));
 
-  if (absl::holds_alternative<Index>(self.desc)) {
-    absl::StrAppendFormat(&result, " %d}", absl::get<Index>(self.desc));
-  } else if (absl::holds_alternative<TableType>(self.desc)) {
-    absl::StrAppendFormat(&result, " %s}",
-                          ToString(absl::get<TableType>(self.desc)));
-  } else if (absl::holds_alternative<MemoryType>(self.desc)) {
-    absl::StrAppendFormat(&result, " %s}",
-                          ToString(absl::get<MemoryType>(self.desc)));
-  } else if (absl::holds_alternative<GlobalType>(self.desc)) {
-    absl::StrAppendFormat(&result, " %s}",
-                          ToString(absl::get<GlobalType>(self.desc)));
+  if (holds_alternative<Index>(self.desc)) {
+    result += format(" {}}}", get<Index>(self.desc));
+  } else if (holds_alternative<TableType>(self.desc)) {
+    result += format(" {}}}", ToString(get<TableType>(self.desc)));
+  } else if (holds_alternative<MemoryType>(self.desc)) {
+    result += format(" {}}}", ToString(get<MemoryType>(self.desc)));
+  } else if (holds_alternative<GlobalType>(self.desc)) {
+    result += format(" {}}}", ToString(get<GlobalType>(self.desc)));
   }
 
   return result;
@@ -72,8 +68,8 @@ std::string ToString(const Import<Traits>& self) {
 
 template <typename Traits>
 std::string ToString(const Export<Traits>& self) {
-  return absl::StrFormat("{name \"%s\", desc %s %u}", self.name,
-                         ToString(self.kind), self.index);
+  return format("{{name \"{}\", desc {} {}}}", self.name.to_string(),
+                ToString(self.kind), self.index);
 }
 
 template <typename Traits>
@@ -83,26 +79,26 @@ std::string ToString(const Expr<Traits>& self) {
 
 template <typename Traits>
 std::string ToString(const Global<Traits>& self) {
-  return absl::StrFormat("{type %s, init %s}", ToString(self.global_type),
-                         ToString(self.init_expr));
+  return format("{{type {}, init {}}}", ToString(self.global_type),
+                ToString(self.init_expr));
 }
 
 template <typename Traits>
 std::string ToString(const ElementSegment<Traits>& self) {
-  return absl::StrFormat("{table %u, offset %s, init %s}", self.table_index,
-                         ToString(self.offset), ToString(self.init));
+  return format("{{table {}, offset {}, init {}}}", self.table_index,
+                ToString(self.offset), ToString(self.init));
 }
 
 template <typename Traits>
 std::string ToString(const DataSegment<Traits>& self) {
-  return absl::StrFormat("{memory %u, offset %s, init %s}", self.memory_index,
-                         ToString(self.offset), ToString(self.init));
+  return format("{{memory {}, offset {}, init {}}}", self.memory_index,
+                ToString(self.offset), ToString(self.init));
 }
 
 template <typename Traits>
 std::string ToString(const Code<Traits>& self) {
-  return absl::StrFormat("{locals %s, body %s}", ToString(self.local_decls),
-                         ToString(self.body));
+  return format("{{locals {}, body {}}}", ToString(self.local_decls),
+                ToString(self.body));
 }
 
 }  // namespace binary
