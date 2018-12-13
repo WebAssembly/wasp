@@ -98,14 +98,17 @@ optional<T> ReadVarInt(SpanU8* data, Errors& errors, string_view desc) {
       if ((byte & kMask) == 0 || (is_signed && (byte & kMask) == kOnes)) {
         return static_cast<T>(result);
       }
+      const u8 zero_ext = byte & ~kMask & 0x7f;
+      const u8 one_ext = (byte | kOnes) & 0x7f;
       if (is_signed) {
-        errors.OnError(*data, format("Last byte of {} must be sign "
-                                     "extension: expected {:#x}, got {:#02x}",
-                                     desc, kOnes, byte & kMask));
+        errors.OnError(
+            *data, format("Last byte of {} must be sign "
+                          "extension: expected {:#2x} or {:#2x}, got {:#2x}",
+                          desc, zero_ext, one_ext, byte));
       } else {
-        errors.OnError(*data, format("Last byte of %s must be zero "
-                                     "extension: expected 0, got {:02x}",
-                                     desc, byte & kMask));
+        errors.OnError(*data, format("Last byte of {} must be zero "
+                                     "extension: expected {:#2x}, got {:#2x}",
+                                     desc, zero_ext, byte));
       }
       return nullopt;
     } else if ((byte & 0x80) == 0) {

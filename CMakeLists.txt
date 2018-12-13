@@ -59,6 +59,7 @@ add_executable(
   wasp_unittests
   src/base/formatters_test.cc
   src/binary/formatters_test.cc
+  src/binary/reader_test.cc
 )
 
 target_link_libraries(
