@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "src/base/types.h"
+#include "src/binary/defs.h"
 
 namespace wasp {
 namespace binary {
@@ -43,26 +44,34 @@ struct OwnedTraits {
   static Buffer ToBuffer(SpanU8 x) { return Buffer{x.begin(), x.end()}; }
 };
 
-enum class ValType {
-  I32,
-  I64,
-  F32,
-  F64,
-  Anyfunc,
-  Func,
-  Void,
+enum class ValType : s32 {
+#define WASP_V(val, Name, str) Name,
+  WASP_FOREACH_VALTYPE(WASP_V)
+#undef WASP_V
 };
 
-enum class ExternalKind {
-  Func,
-  Table,
-  Memory,
-  Global,
+enum class ExternalKind : u8 {
+#define WASP_V(val, Name, str) Name,
+  WASP_FOREACH_EXTERNAL_KIND(WASP_V)
+#undef WASP_V
 };
 
-enum class Mutability {
-  Const,
-  Var,
+enum class Mutability : u8 {
+#define WASP_V(val, Name, str) Name,
+  WASP_FOREACH_MUTABILITY(WASP_V)
+#undef WASP_V
+};
+
+enum class SectionId : u32 {
+#define WASP_V(val, Name, str) Name,
+  WASP_FOREACH_SECTION(WASP_V)
+#undef WASP_V
+};
+
+enum class Opcode : u32 {
+#define WASP_V(prefix, val, Name, str) Name,
+  WASP_FOREACH_OPCODE(WASP_V)
+#undef WASP_V
 };
 
 struct MemArg {
@@ -89,9 +98,10 @@ struct LocalDecl {
 
 template <typename Traits = BorrowedTraits>
 struct KnownSection {
-  KnownSection(u32 id, SpanU8 data) : id(id), data(Traits::ToBuffer(data)) {}
+  KnownSection(SectionId id, SpanU8 data)
+      : id(id), data(Traits::ToBuffer(data)) {}
 
-  u32 id;
+  SectionId id;
   typename Traits::Buffer data;
 };
 
@@ -191,14 +201,6 @@ struct ConstExpr {
   ConstExpr(const ConstExpr<U>& other) : data(Traits::ToBuffer(other.data)) {}
 
   typename Traits::Buffer data;
-};
-
-struct Opcode {
-  explicit Opcode(u8 code) : code(code) {}
-  Opcode(u8 prefix, u32 code) : prefix(prefix), code(code) {}
-
-  optional<u8> prefix;
-  u32 code;
 };
 
 struct EmptyImmediate {};

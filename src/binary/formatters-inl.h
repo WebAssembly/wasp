@@ -18,6 +18,7 @@
 
 #include "src/base/macros.h"
 #include "src/base/formatters.h"
+#include "src/binary/defs.h"
 
 namespace fmt {
 
@@ -27,13 +28,12 @@ typename Ctx::iterator formatter<::wasp::binary::ValType>::format(
     Ctx& ctx) {
   string_view result;
   switch (self) {
-    case ::wasp::binary::ValType::I32: result = "i32"; break;
-    case ::wasp::binary::ValType::I64: result = "i64"; break;
-    case ::wasp::binary::ValType::F32: result = "f32"; break;
-    case ::wasp::binary::ValType::F64: result = "f64"; break;
-    case ::wasp::binary::ValType::Anyfunc: result = "anyfunc"; break;
-    case ::wasp::binary::ValType::Func: result = "func"; break;
-    case ::wasp::binary::ValType::Void: result = "void"; break;
+#define WASP_V(val, Name, str)        \
+  case ::wasp::binary::ValType::Name: \
+    result = str;                     \
+    break;
+    WASP_FOREACH_VALTYPE(WASP_V)
+#undef WASP_V
     default: WASP_UNREACHABLE();
   }
   return formatter<string_view>::format(result, ctx);
@@ -45,10 +45,12 @@ typename Ctx::iterator formatter<::wasp::binary::ExternalKind>::format(
     Ctx& ctx) {
   string_view result;
   switch (self) {
-    case ::wasp::binary::ExternalKind::Func: result = "func"; break;
-    case ::wasp::binary::ExternalKind::Table: result = "table"; break;
-    case ::wasp::binary::ExternalKind::Memory: result = "memory"; break;
-    case ::wasp::binary::ExternalKind::Global: result = "global"; break;
+#define WASP_V(val, Name, str)             \
+  case ::wasp::binary::ExternalKind::Name: \
+    result = str;                          \
+    break;
+    WASP_FOREACH_EXTERNAL_KIND(WASP_V)
+#undef WASP_V
     default: WASP_UNREACHABLE();
   }
   return formatter<string_view>::format(result, ctx);
@@ -60,11 +62,30 @@ typename Ctx::iterator formatter<::wasp::binary::Mutability>::format(
     Ctx& ctx) {
   string_view result;
   switch (self) {
-    case ::wasp::binary::Mutability::Const: result = "const"; break;
-    case ::wasp::binary::Mutability::Var: result = "var"; break;
+#define WASP_V(val, Name, str)           \
+  case ::wasp::binary::Mutability::Name: \
+    result = str;                        \
+    break;
+    WASP_FOREACH_MUTABILITY(WASP_V)
+#undef WASP_V
     default: WASP_UNREACHABLE();
   }
   return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::SectionId>::format(
+    ::wasp::binary::SectionId self,
+    Ctx& ctx) {
+  switch (self) {
+#define WASP_V(val, Name, str)          \
+  case ::wasp::binary::SectionId::Name: \
+    return format_to(ctx.begin(), "{}", str);
+    WASP_FOREACH_SECTION(WASP_V)
+#undef WASP_V
+    default:
+      return format_to(ctx.begin(), "{}", static_cast<::wasp::u32>(self));
+  }
 }
 
 template <typename Ctx>
@@ -213,10 +234,14 @@ template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Opcode>::format(
     const ::wasp::binary::Opcode& self,
     Ctx& ctx) {
-  if (self.prefix) {
-    return format_to(ctx.begin(), "{:02x} {:08x}", *self.prefix, self.code);
-  } else {
-    return format_to(ctx.begin(), "{:02x}", self.code);
+  switch (self) {
+#define WASP_V(prefix, val, Name, str) \
+  case ::wasp::binary::Opcode::Name:   \
+    return format_to(ctx.begin(), "{}", str);
+    WASP_FOREACH_OPCODE(WASP_V)
+#undef WASP_V
+    default:
+      return format_to(ctx.begin(), "<unknown:{}>", self);
   }
 }
 

@@ -41,6 +41,14 @@ struct formatter<::wasp::binary::Mutability> : formatter<string_view> {
 };
 
 template <>
+struct formatter<::wasp::binary::SectionId> {
+  template <typename Ctx>
+  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  template <typename Ctx>
+  typename Ctx::iterator format(::wasp::binary::SectionId, Ctx&);
+};
+
+template <>
 struct formatter<::wasp::binary::MemArg> {
   template <typename Ctx>
   typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }

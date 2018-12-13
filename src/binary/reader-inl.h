@@ -278,51 +278,54 @@ optional<Start> StartSection<Errors>::start() {
 
 // -----------------------------------------------------------------------------
 
+#define WASP_TRY_DECODE(out_var, in_var, Type, name)            \
+  auto out_var = encoding::Type::Decode(in_var);                \
+  if (!out_var) {                                               \
+    errors.OnError(*data, format("Unknown" name "{}", in_var)); \
+    return nullopt;                                             \
+  }
+
 template <typename Errors>
 optional<ValType> Read(SpanU8* data, Errors& errors, Tag<ValType>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "value type"};
-  WASP_TRY_READ(val_s32, Read<s32>(data, errors));
-  switch (val_s32) {
-    case encoding::ValType::I32:     return ValType::I32;
-    case encoding::ValType::I64:     return ValType::I64;
-    case encoding::ValType::F32:     return ValType::F32;
-    case encoding::ValType::F64:     return ValType::F64;
-    case encoding::ValType::Anyfunc: return ValType::Anyfunc;
-    case encoding::ValType::Func:    return ValType::Func;
-    case encoding::ValType::Void:    return ValType::Void;
-    default:
-      errors.OnError(*data, format("Unknown value type {}", val_s32));
-      return nullopt;
-  }
+  WASP_TRY_READ(val, Read<s32>(data, errors));
+  WASP_TRY_DECODE(decoded, val, ValType, "value type");
+  return decoded;
 }
 
 template <typename Errors>
 optional<ExternalKind> Read(SpanU8* data, Errors& errors, Tag<ExternalKind>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "external kind"};
-  WASP_TRY_READ(byte, Read<u8>(data, errors));
-  switch (byte) {
-    case encoding::ExternalKind::Func:   return ExternalKind::Func;
-    case encoding::ExternalKind::Table:  return ExternalKind::Table;
-    case encoding::ExternalKind::Memory: return ExternalKind::Memory;
-    case encoding::ExternalKind::Global: return ExternalKind::Global;
-    default:
-      errors.OnError(*data, format("Unknown external kind {}", byte));
-      return nullopt;
-  }
+  WASP_TRY_READ(val, Read<u8>(data, errors));
+  WASP_TRY_DECODE(decoded, val, ExternalKind, "external kind");
+  return decoded;
 }
 
 template <typename Errors>
 optional<Mutability> Read(SpanU8* data, Errors& errors, Tag<Mutability>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "mutability"};
-  WASP_TRY_READ(byte, Read<u8>(data, errors));
-  switch (byte) {
-    case encoding::Mutability::Var:   return Mutability::Var;
-    case encoding::Mutability::Const: return Mutability::Const;
-    default:
-      errors.OnError(*data, format("Unknown mutability {}", byte));
-      return nullopt;
-  }
+  WASP_TRY_READ(val, Read<u8>(data, errors));
+  WASP_TRY_DECODE(decoded, val, Mutability, "mutability");
+  return decoded;
 }
+
+template <typename Errors>
+optional<SectionId> Read(SpanU8* data, Errors& errors, Tag<SectionId>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "section"};
+  WASP_TRY_READ(val, Read<u32>(data, errors));
+  WASP_TRY_DECODE(decoded, val, Section, "section");
+  return decoded;
+}
+
+template <typename Errors>
+optional<Opcode> Read(SpanU8* data, Errors& errors, Tag<Opcode>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "opcode"};
+  WASP_TRY_READ(val, Read<u8>(data, errors));
+  WASP_TRY_DECODE(decoded, val, Opcode, "opcode");
+  return decoded;
+}
+
+#undef WASP_TRY_DECODE
 
 template <typename Errors>
 optional<Limits> Read(SpanU8* data, Errors& errors, Tag<Limits>) {
@@ -395,7 +398,7 @@ optional<GlobalType> Read(SpanU8* data, Errors& errors, Tag<GlobalType>) {
 template <typename Errors>
 optional<Section<>> Read(SpanU8* data, Errors& errors, Tag<Section<>>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "section"};
-  WASP_TRY_READ_CONTEXT(id, Read<u32>(data, errors), "id");
+  WASP_TRY_READ_CONTEXT(id, Read<SectionId>(data, errors), "id");
   WASP_TRY_READ_CONTEXT(len, Read<u32>(data, errors), "length");
   if (len > data->size()) {
     errors.OnError(*data, format("Section length is too long: {} > {}", len,
@@ -406,7 +409,7 @@ optional<Section<>> Read(SpanU8* data, Errors& errors, Tag<Section<>>) {
   SpanU8 section_span = data->subspan(0, len);
   *data = remove_prefix(*data, len);
 
-  if (id == encoding::Section::Custom) {
+  if (id == SectionId::Custom) {
     WASP_TRY_READ(name, ReadStr(&section_span, errors, "custom section name"));
     return Section<>{CustomSection<>{name, section_span}};
   } else {
@@ -451,12 +454,12 @@ optional<ConstExpr<>> Read(SpanU8* data, Errors& errors, Tag<ConstExpr<>>) {
     return nullopt;
   }
   auto instr = *iter++;
-  switch (instr.opcode.code) {
-    case encoding::Opcode::I32Const:
-    case encoding::Opcode::I64Const:
-    case encoding::Opcode::F32Const:
-    case encoding::Opcode::F64Const:
-    case encoding::Opcode::GetGlobal:
+  switch (instr.opcode) {
+    case Opcode::I32Const:
+    case Opcode::I64Const:
+    case Opcode::F32Const:
+    case Opcode::F64Const:
+    case Opcode::GetGlobal:
       // OK.
       break;
 
@@ -467,7 +470,7 @@ optional<ConstExpr<>> Read(SpanU8* data, Errors& errors, Tag<ConstExpr<>>) {
   }
 
   // Instruction must be followed by end.
-  if (iter == end || iter->opcode.code != encoding::Opcode::End) {
+  if (iter == end || iter->opcode != Opcode::End) {
     errors.OnError(*data, "Expected end instruction");
     return nullopt;
   }
@@ -480,164 +483,164 @@ optional<ConstExpr<>> Read(SpanU8* data, Errors& errors, Tag<ConstExpr<>>) {
 
 template <typename Errors>
 optional<Instr> Read(SpanU8* data, Errors& errors, Tag<Instr>) {
-  WASP_TRY_READ_CONTEXT(opcode, Read<u8>(data, errors), "opcode");
+  WASP_TRY_READ_CONTEXT(opcode, Read<Opcode>(data, errors), "opcode");
   switch (opcode) {
     // No immediates:
-    case encoding::Opcode::End:
-    case encoding::Opcode::Unreachable:
-    case encoding::Opcode::Nop:
-    case encoding::Opcode::Else:
-    case encoding::Opcode::Return:
-    case encoding::Opcode::Drop:
-    case encoding::Opcode::Select:
-    case encoding::Opcode::I32Eqz:
-    case encoding::Opcode::I32Eq:
-    case encoding::Opcode::I32Ne:
-    case encoding::Opcode::I32LtS:
-    case encoding::Opcode::I32LeS:
-    case encoding::Opcode::I32LtU:
-    case encoding::Opcode::I32LeU:
-    case encoding::Opcode::I32GtS:
-    case encoding::Opcode::I32GeS:
-    case encoding::Opcode::I32GtU:
-    case encoding::Opcode::I32GeU:
-    case encoding::Opcode::I64Eqz:
-    case encoding::Opcode::I64Eq:
-    case encoding::Opcode::I64Ne:
-    case encoding::Opcode::I64LtS:
-    case encoding::Opcode::I64LeS:
-    case encoding::Opcode::I64LtU:
-    case encoding::Opcode::I64LeU:
-    case encoding::Opcode::I64GtS:
-    case encoding::Opcode::I64GeS:
-    case encoding::Opcode::I64GtU:
-    case encoding::Opcode::I64GeU:
-    case encoding::Opcode::F32Eq:
-    case encoding::Opcode::F32Ne:
-    case encoding::Opcode::F32Lt:
-    case encoding::Opcode::F32Le:
-    case encoding::Opcode::F32Gt:
-    case encoding::Opcode::F32Ge:
-    case encoding::Opcode::F64Eq:
-    case encoding::Opcode::F64Ne:
-    case encoding::Opcode::F64Lt:
-    case encoding::Opcode::F64Le:
-    case encoding::Opcode::F64Gt:
-    case encoding::Opcode::F64Ge:
-    case encoding::Opcode::I32Clz:
-    case encoding::Opcode::I32Ctz:
-    case encoding::Opcode::I32Popcnt:
-    case encoding::Opcode::I32Add:
-    case encoding::Opcode::I32Sub:
-    case encoding::Opcode::I32Mul:
-    case encoding::Opcode::I32DivS:
-    case encoding::Opcode::I32DivU:
-    case encoding::Opcode::I32RemS:
-    case encoding::Opcode::I32RemU:
-    case encoding::Opcode::I32And:
-    case encoding::Opcode::I32Or:
-    case encoding::Opcode::I32Xor:
-    case encoding::Opcode::I32Shl:
-    case encoding::Opcode::I32ShrS:
-    case encoding::Opcode::I32ShrU:
-    case encoding::Opcode::I32Rotl:
-    case encoding::Opcode::I32Rotr:
-    case encoding::Opcode::I64Clz:
-    case encoding::Opcode::I64Ctz:
-    case encoding::Opcode::I64Popcnt:
-    case encoding::Opcode::I64Add:
-    case encoding::Opcode::I64Sub:
-    case encoding::Opcode::I64Mul:
-    case encoding::Opcode::I64DivS:
-    case encoding::Opcode::I64DivU:
-    case encoding::Opcode::I64RemS:
-    case encoding::Opcode::I64RemU:
-    case encoding::Opcode::I64And:
-    case encoding::Opcode::I64Or:
-    case encoding::Opcode::I64Xor:
-    case encoding::Opcode::I64Shl:
-    case encoding::Opcode::I64ShrS:
-    case encoding::Opcode::I64ShrU:
-    case encoding::Opcode::I64Rotl:
-    case encoding::Opcode::I64Rotr:
-    case encoding::Opcode::F32Abs:
-    case encoding::Opcode::F32Neg:
-    case encoding::Opcode::F32Ceil:
-    case encoding::Opcode::F32Floor:
-    case encoding::Opcode::F32Trunc:
-    case encoding::Opcode::F32Nearest:
-    case encoding::Opcode::F32Sqrt:
-    case encoding::Opcode::F32Add:
-    case encoding::Opcode::F32Sub:
-    case encoding::Opcode::F32Mul:
-    case encoding::Opcode::F32Div:
-    case encoding::Opcode::F32Min:
-    case encoding::Opcode::F32Max:
-    case encoding::Opcode::F32Copysign:
-    case encoding::Opcode::F64Abs:
-    case encoding::Opcode::F64Neg:
-    case encoding::Opcode::F64Ceil:
-    case encoding::Opcode::F64Floor:
-    case encoding::Opcode::F64Trunc:
-    case encoding::Opcode::F64Nearest:
-    case encoding::Opcode::F64Sqrt:
-    case encoding::Opcode::F64Add:
-    case encoding::Opcode::F64Sub:
-    case encoding::Opcode::F64Mul:
-    case encoding::Opcode::F64Div:
-    case encoding::Opcode::F64Min:
-    case encoding::Opcode::F64Max:
-    case encoding::Opcode::F64Copysign:
-    case encoding::Opcode::I32WrapI64:
-    case encoding::Opcode::I32TruncSF32:
-    case encoding::Opcode::I32TruncUF32:
-    case encoding::Opcode::I32TruncSF64:
-    case encoding::Opcode::I32TruncUF64:
-    case encoding::Opcode::I64ExtendSI32:
-    case encoding::Opcode::I64ExtendUI32:
-    case encoding::Opcode::I64TruncSF32:
-    case encoding::Opcode::I64TruncUF32:
-    case encoding::Opcode::I64TruncSF64:
-    case encoding::Opcode::I64TruncUF64:
-    case encoding::Opcode::F32ConvertSI32:
-    case encoding::Opcode::F32ConvertUI32:
-    case encoding::Opcode::F32ConvertSI64:
-    case encoding::Opcode::F32ConvertUI64:
-    case encoding::Opcode::F32DemoteF64:
-    case encoding::Opcode::F64ConvertSI32:
-    case encoding::Opcode::F64ConvertUI32:
-    case encoding::Opcode::F64ConvertSI64:
-    case encoding::Opcode::F64ConvertUI64:
-    case encoding::Opcode::F64PromoteF32:
-    case encoding::Opcode::I32ReinterpretF32:
-    case encoding::Opcode::I64ReinterpretF64:
-    case encoding::Opcode::F32ReinterpretI32:
-    case encoding::Opcode::F64ReinterpretI64:
+    case Opcode::End:
+    case Opcode::Unreachable:
+    case Opcode::Nop:
+    case Opcode::Else:
+    case Opcode::Return:
+    case Opcode::Drop:
+    case Opcode::Select:
+    case Opcode::I32Eqz:
+    case Opcode::I32Eq:
+    case Opcode::I32Ne:
+    case Opcode::I32LtS:
+    case Opcode::I32LeS:
+    case Opcode::I32LtU:
+    case Opcode::I32LeU:
+    case Opcode::I32GtS:
+    case Opcode::I32GeS:
+    case Opcode::I32GtU:
+    case Opcode::I32GeU:
+    case Opcode::I64Eqz:
+    case Opcode::I64Eq:
+    case Opcode::I64Ne:
+    case Opcode::I64LtS:
+    case Opcode::I64LeS:
+    case Opcode::I64LtU:
+    case Opcode::I64LeU:
+    case Opcode::I64GtS:
+    case Opcode::I64GeS:
+    case Opcode::I64GtU:
+    case Opcode::I64GeU:
+    case Opcode::F32Eq:
+    case Opcode::F32Ne:
+    case Opcode::F32Lt:
+    case Opcode::F32Le:
+    case Opcode::F32Gt:
+    case Opcode::F32Ge:
+    case Opcode::F64Eq:
+    case Opcode::F64Ne:
+    case Opcode::F64Lt:
+    case Opcode::F64Le:
+    case Opcode::F64Gt:
+    case Opcode::F64Ge:
+    case Opcode::I32Clz:
+    case Opcode::I32Ctz:
+    case Opcode::I32Popcnt:
+    case Opcode::I32Add:
+    case Opcode::I32Sub:
+    case Opcode::I32Mul:
+    case Opcode::I32DivS:
+    case Opcode::I32DivU:
+    case Opcode::I32RemS:
+    case Opcode::I32RemU:
+    case Opcode::I32And:
+    case Opcode::I32Or:
+    case Opcode::I32Xor:
+    case Opcode::I32Shl:
+    case Opcode::I32ShrS:
+    case Opcode::I32ShrU:
+    case Opcode::I32Rotl:
+    case Opcode::I32Rotr:
+    case Opcode::I64Clz:
+    case Opcode::I64Ctz:
+    case Opcode::I64Popcnt:
+    case Opcode::I64Add:
+    case Opcode::I64Sub:
+    case Opcode::I64Mul:
+    case Opcode::I64DivS:
+    case Opcode::I64DivU:
+    case Opcode::I64RemS:
+    case Opcode::I64RemU:
+    case Opcode::I64And:
+    case Opcode::I64Or:
+    case Opcode::I64Xor:
+    case Opcode::I64Shl:
+    case Opcode::I64ShrS:
+    case Opcode::I64ShrU:
+    case Opcode::I64Rotl:
+    case Opcode::I64Rotr:
+    case Opcode::F32Abs:
+    case Opcode::F32Neg:
+    case Opcode::F32Ceil:
+    case Opcode::F32Floor:
+    case Opcode::F32Trunc:
+    case Opcode::F32Nearest:
+    case Opcode::F32Sqrt:
+    case Opcode::F32Add:
+    case Opcode::F32Sub:
+    case Opcode::F32Mul:
+    case Opcode::F32Div:
+    case Opcode::F32Min:
+    case Opcode::F32Max:
+    case Opcode::F32Copysign:
+    case Opcode::F64Abs:
+    case Opcode::F64Neg:
+    case Opcode::F64Ceil:
+    case Opcode::F64Floor:
+    case Opcode::F64Trunc:
+    case Opcode::F64Nearest:
+    case Opcode::F64Sqrt:
+    case Opcode::F64Add:
+    case Opcode::F64Sub:
+    case Opcode::F64Mul:
+    case Opcode::F64Div:
+    case Opcode::F64Min:
+    case Opcode::F64Max:
+    case Opcode::F64Copysign:
+    case Opcode::I32WrapI64:
+    case Opcode::I32TruncSF32:
+    case Opcode::I32TruncUF32:
+    case Opcode::I32TruncSF64:
+    case Opcode::I32TruncUF64:
+    case Opcode::I64ExtendSI32:
+    case Opcode::I64ExtendUI32:
+    case Opcode::I64TruncSF32:
+    case Opcode::I64TruncUF32:
+    case Opcode::I64TruncSF64:
+    case Opcode::I64TruncUF64:
+    case Opcode::F32ConvertSI32:
+    case Opcode::F32ConvertUI32:
+    case Opcode::F32ConvertSI64:
+    case Opcode::F32ConvertUI64:
+    case Opcode::F32DemoteF64:
+    case Opcode::F64ConvertSI32:
+    case Opcode::F64ConvertUI32:
+    case Opcode::F64ConvertSI64:
+    case Opcode::F64ConvertUI64:
+    case Opcode::F64PromoteF32:
+    case Opcode::I32ReinterpretF32:
+    case Opcode::I64ReinterpretF64:
+    case Opcode::F32ReinterpretI32:
+    case Opcode::F64ReinterpretI64:
       return Instr{Opcode{opcode}};
 
     // Type immediate.
-    case encoding::Opcode::Block:
-    case encoding::Opcode::Loop:
-    case encoding::Opcode::If: {
+    case Opcode::Block:
+    case Opcode::Loop:
+    case Opcode::If: {
       WASP_TRY_READ_CONTEXT(type, Read<ValType>(data, errors), "block type");
       return Instr{Opcode{opcode}, type};
     }
 
     // Index immediate.
-    case encoding::Opcode::Br:
-    case encoding::Opcode::BrIf:
-    case encoding::Opcode::Call:
-    case encoding::Opcode::GetLocal:
-    case encoding::Opcode::SetLocal:
-    case encoding::Opcode::TeeLocal:
-    case encoding::Opcode::GetGlobal:
-    case encoding::Opcode::SetGlobal: {
+    case Opcode::Br:
+    case Opcode::BrIf:
+    case Opcode::Call:
+    case Opcode::GetLocal:
+    case Opcode::SetLocal:
+    case Opcode::TeeLocal:
+    case Opcode::GetGlobal:
+    case Opcode::SetGlobal: {
       WASP_TRY_READ(index, ReadIndex(data, errors));
       return Instr{Opcode{opcode}, index};
     }
 
     // Index* immediates.
-    case encoding::Opcode::BrTable: {
+    case Opcode::BrTable: {
       WASP_TRY_READ(targets, ReadVec<Index>(data, errors, "br_table targets"));
       WASP_TRY_READ_CONTEXT(default_target, ReadIndex(data, errors),
                             "br_table default target");
@@ -646,64 +649,64 @@ optional<Instr> Read(SpanU8* data, Errors& errors, Tag<Instr>) {
     }
 
     // Index, reserved immediates.
-    case encoding::Opcode::CallIndirect: {
+    case Opcode::CallIndirect: {
       WASP_TRY_READ(index, ReadIndex(data, errors));
       WASP_TRY_READ_CONTEXT(reserved, Read<u8>(data, errors), "reserved");
       return Instr{Opcode{opcode}, CallIndirectImmediate{index, reserved}};
     }
 
     // Memarg (alignment, offset) immediates.
-    case encoding::Opcode::I32Load:
-    case encoding::Opcode::I64Load:
-    case encoding::Opcode::F32Load:
-    case encoding::Opcode::F64Load:
-    case encoding::Opcode::I32Load8S:
-    case encoding::Opcode::I32Load8U:
-    case encoding::Opcode::I32Load16S:
-    case encoding::Opcode::I32Load16U:
-    case encoding::Opcode::I64Load8S:
-    case encoding::Opcode::I64Load8U:
-    case encoding::Opcode::I64Load16S:
-    case encoding::Opcode::I64Load16U:
-    case encoding::Opcode::I64Load32S:
-    case encoding::Opcode::I64Load32U:
-    case encoding::Opcode::I32Store:
-    case encoding::Opcode::I64Store:
-    case encoding::Opcode::F32Store:
-    case encoding::Opcode::F64Store:
-    case encoding::Opcode::I32Store8:
-    case encoding::Opcode::I32Store16:
-    case encoding::Opcode::I64Store8:
-    case encoding::Opcode::I64Store16:
-    case encoding::Opcode::I64Store32: {
+    case Opcode::I32Load:
+    case Opcode::I64Load:
+    case Opcode::F32Load:
+    case Opcode::F64Load:
+    case Opcode::I32Load8S:
+    case Opcode::I32Load8U:
+    case Opcode::I32Load16S:
+    case Opcode::I32Load16U:
+    case Opcode::I64Load8S:
+    case Opcode::I64Load8U:
+    case Opcode::I64Load16S:
+    case Opcode::I64Load16U:
+    case Opcode::I64Load32S:
+    case Opcode::I64Load32U:
+    case Opcode::I32Store:
+    case Opcode::I64Store:
+    case Opcode::F32Store:
+    case Opcode::F64Store:
+    case Opcode::I32Store8:
+    case Opcode::I32Store16:
+    case Opcode::I64Store8:
+    case Opcode::I64Store16:
+    case Opcode::I64Store32: {
       WASP_TRY_READ(memarg, Read<MemArg>(data, errors));
       return Instr{Opcode{opcode}, memarg};
     }
 
     // Reserved immediates.
-    case encoding::Opcode::MemorySize:
-    case encoding::Opcode::MemoryGrow: {
+    case Opcode::MemorySize:
+    case Opcode::MemoryGrow: {
       WASP_TRY_READ_CONTEXT(reserved, Read<u8>(data, errors), "reserved");
       return Instr{Opcode{opcode}, reserved};
     }
 
     // Const immediates.
-    case encoding::Opcode::I32Const: {
+    case Opcode::I32Const: {
       WASP_TRY_READ_CONTEXT(value, Read<s32>(data, errors), "i32 constant");
       return Instr{Opcode{opcode}, value};
     }
 
-    case encoding::Opcode::I64Const: {
+    case Opcode::I64Const: {
       WASP_TRY_READ_CONTEXT(value, Read<s64>(data, errors), "i64 constant");
       return Instr{Opcode{opcode}, value};
     }
 
-    case encoding::Opcode::F32Const: {
+    case Opcode::F32Const: {
       WASP_TRY_READ_CONTEXT(value, Read<f32>(data, errors), "f32 constant");
       return Instr{Opcode{opcode}, value};
     }
 
-    case encoding::Opcode::F64Const: {
+    case Opcode::F64Const: {
       WASP_TRY_READ_CONTEXT(value, Read<f64>(data, errors), "f64 constant");
       return Instr{Opcode{opcode}, value};
     }
@@ -795,6 +798,9 @@ optional<DataSegment<>> Read(SpanU8* data, Errors& errors, Tag<DataSegment<>>) {
   WASP_TRY_READ(init, ReadBytes(data, len, errors));
   return DataSegment<>{memory_index, std::move(offset), init};
 }
+
+#undef WASP_TRY_READ
+#undef WASP_TRY_READ_CONTEXT
 
 }  // namespace binary
 }  // namespace wasp

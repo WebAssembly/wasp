@@ -19,7 +19,6 @@
 #include "src/base/file.h"
 #include "src/base/formatters.h"
 #include "src/base/types.h"
-#include "src/binary/encoding.h"
 #include "src/binary/formatters.h"
 #include "src/binary/types.h"
 #include "src/binary/reader.h"
@@ -62,35 +61,39 @@ int main(int argc, char** argv) {
       auto known = section.known();
       print("section {}: {} bytes\n", known.id, known.data.size());
       switch (known.id) {
-        case encoding::Section::Type:
+        case SectionId::Custom:
+          // TODO
+          break;
+
+        case SectionId::Type:
           PrintSection(ReadTypeSection(known, errors), "Type");
           break;
 
-        case encoding::Section::Import:
+        case SectionId::Import:
           PrintSection(ReadImportSection(known, errors), "Import");
           break;
 
-        case encoding::Section::Function:
+        case SectionId::Function:
           PrintSection(ReadFunctionSection(known, errors), "Func");
           break;
 
-        case encoding::Section::Table:
+        case SectionId::Table:
           PrintSection(ReadTableSection(known, errors), "Table");
           break;
 
-        case encoding::Section::Memory:
+        case SectionId::Memory:
           PrintSection(ReadMemorySection(known, errors), "Memory");
           break;
 
-        case encoding::Section::Global:
+        case SectionId::Global:
           PrintSection(ReadGlobalSection(known, errors), "Global");
           break;
 
-        case encoding::Section::Export:
+        case SectionId::Export:
           PrintSection(ReadExportSection(known, errors), "Export");
           break;
 
-        case encoding::Section::Start: {
+        case SectionId::Start: {
           auto section = ReadStartSection(known, errors);
           size_t count = section.start() ? 1 : 0;
           print("  Start[{}]\n", count);
@@ -100,15 +103,15 @@ int main(int argc, char** argv) {
           break;
         }
 
-        case encoding::Section::Element:
+        case SectionId::Element:
           PrintSection(ReadElementSection(known, errors), "Element");
           break;
 
-        case encoding::Section::Code:
+        case SectionId::Code:
           PrintSection(ReadCodeSection(known, errors), "Code");
           break;
 
-        case encoding::Section::Data:
+        case SectionId::Data:
           PrintSection(ReadDataSection(known, errors), "Data");
           break;
       }

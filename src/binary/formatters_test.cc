@@ -57,8 +57,8 @@ TEST(FormatTest, LocalDecl) {
 
 TEST(FormatTest, KnownSection) {
   const u8 data[] = "\x00\x01\x02";
-  EXPECT_EQ(R"({id 1, contents "\00\01\02"})",
-            TestFormat(KnownSection<>{1u, SpanU8{data, 3}}));
+  EXPECT_EQ(R"({id type, contents "\00\01\02"})",
+            TestFormat(KnownSection<>{SectionId::Type, SpanU8{data, 3}}));
 }
 
 TEST(FormatTest, CustomSection) {
@@ -70,12 +70,18 @@ TEST(FormatTest, CustomSection) {
 
 TEST(FormatTest, Section) {
   const u8 data[] = "\x00\x01\x02";
-  EXPECT_EQ(R"({id 1, contents "\00\01\02"})",
-            TestFormat(Section<>{KnownSection<>{1u, SpanU8{data, 3}}}));
+  EXPECT_EQ(
+      R"({id type, contents "\00\01\02"})",
+      TestFormat(Section<>{KnownSection<>{SectionId::Type, SpanU8{data, 3}}}));
 
   EXPECT_EQ(
       R"({name "custom", contents "\00\01\02"})",
       TestFormat(Section<>{CustomSection<>{"custom", SpanU8{data, 3}}}));
+
+  EXPECT_EQ(
+      R"({id 100, contents "\00"})",
+      TestFormat(Section<>{
+          KnownSection<>{static_cast<SectionId>(100), SpanU8{data, 1}}}));
 }
 
 TEST(FormatTest, FuncType) {
@@ -146,8 +152,7 @@ TEST(FormatTest, ConstExpr) {
 }
 
 TEST(FormatTest, Opcode) {
-  EXPECT_EQ(R"(40)", TestFormat(Opcode{0x40}));
-  EXPECT_EQ(R"(fe 00000003)", TestFormat(Opcode{0xfe, 0x03}));
+  EXPECT_EQ(R"(memory.grow)", TestFormat(Opcode::MemoryGrow));
 }
 
 TEST(FormatTest, CallIndirectImmediate) {
@@ -161,30 +166,34 @@ TEST(FormatTest, BrTableImmediate) {
 
 TEST(FormatTest, Instr) {
   // nop
-  EXPECT_EQ(R"(01)", TestFormat(Instr{Opcode{0x01}}));
+  EXPECT_EQ(R"(nop)", TestFormat(Instr{Opcode::Nop}));
   // block i32
-  EXPECT_EQ(R"(02 i32)", TestFormat(Instr{Opcode{0x02}, ValType::I32}));
+  EXPECT_EQ(R"(block i32)", TestFormat(Instr{Opcode::Block, ValType::I32}));
   // br 3
-  EXPECT_EQ(R"(0c 3)", TestFormat(Instr{Opcode{0x0c}, Index{3u}}));
+  EXPECT_EQ(R"(br 3)", TestFormat(Instr{Opcode::Br, Index{3u}}));
   // br_table 0 1 4
-  EXPECT_EQ(R"(0e [0 1] 4)",
-            TestFormat(Instr{Opcode{0x0e}, BrTableImmediate{{0, 1}, 4}}));
+  EXPECT_EQ(R"(br_table [0 1] 4)",
+            TestFormat(Instr{Opcode::BrTable, BrTableImmediate{{0, 1}, 4}}));
   // call_indirect 1 (w/ a reserved value of 0)
-  EXPECT_EQ(R"(11 1 0)",
-            TestFormat(Instr{Opcode{0x11}, CallIndirectImmediate{1, 0}}));
+  EXPECT_EQ(
+      R"(call_indirect 1 0)",
+      TestFormat(Instr{Opcode::CallIndirect, CallIndirectImmediate{1, 0}}));
   // memory.size (w/ a reserved value of 0)
-  EXPECT_EQ(R"(3f 0)", TestFormat(Instr{Opcode{0x3f}, u8{0}}));
+  EXPECT_EQ(R"(memory.size 0)", TestFormat(Instr{Opcode::MemorySize, u8{0}}));
   // i32.load offset=10 align=4 (alignment is stored as power-of-two)
-  EXPECT_EQ(R"(28 {align 2, offset 10})",
-            TestFormat(Instr{Opcode{0x28}, MemArg{2, 10}}));
+  EXPECT_EQ(R"(i32.load {align 2, offset 10})",
+            TestFormat(Instr{Opcode::I32Load, MemArg{2, 10}}));
   // i32.const 100
-  EXPECT_EQ(R"(41 100)", TestFormat(Instr{Opcode{0x41}, s32{100}}));
+  EXPECT_EQ(R"(i32.const 100)", TestFormat(Instr{Opcode::I32Const, s32{100}}));
   // i64.const 1000
-  EXPECT_EQ(R"(42 1000)", TestFormat(Instr{Opcode{0x42}, s64{1000}}));
+  EXPECT_EQ(R"(i64.const 1000)",
+            TestFormat(Instr{Opcode::I64Const, s64{1000}}));
   // f32.const 1.5
-  EXPECT_EQ(R"(43 1.500000)", TestFormat(Instr{Opcode{0x43}, f32{1.5}}));
+  EXPECT_EQ(R"(f32.const 1.500000)",
+            TestFormat(Instr{Opcode::F32Const, f32{1.5}}));
   // f64.const 6.25
-  EXPECT_EQ(R"(44 6.250000)", TestFormat(Instr{Opcode{0x44}, f64{6.25}}));
+  EXPECT_EQ(R"(f64.const 6.250000)",
+            TestFormat(Instr{Opcode::F64Const, f64{6.25}}));
 }
 
 TEST(FormatTest, Func) {
