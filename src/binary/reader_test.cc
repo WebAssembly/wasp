@@ -16,6 +16,7 @@
 
 #include "src/binary/reader.h"
 
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -125,7 +126,7 @@ TEST(ReaderTest, ReadU8) {
   ExpectReadFailure<u8>({{0, "Unable to read u8"}}, MakeSpanU8(""));
 }
 
-TEST(ReaderTest, ReadBytes_Ok) {
+TEST(ReaderTest, ReadBytes) {
   TestErrors errors;
   const SpanU8 data = MakeSpanU8("\x12\x34\x56");
   SpanU8 copy = data;
@@ -154,7 +155,7 @@ TEST(ReaderTest, ReadBytes_Fail) {
   ExpectError({{0, "Unable to read 4 bytes"}}, errors, data);
 }
 
-TEST(ReaderTest, ReadU32_Ok) {
+TEST(ReaderTest, ReadU32) {
   ExpectRead<u32>(32u, MakeSpanU8("\x20"));
   ExpectRead<u32>(448u, MakeSpanU8("\xc0\x03"));
   ExpectRead<u32>(33360u, MakeSpanU8("\xd0\x84\x02"));
@@ -182,7 +183,7 @@ TEST(ReaderTest, ReadU32_PastEnd) {
                          MakeSpanU8("\xf0\xf0\xf0\xf0"));
 }
 
-TEST(ReaderTest, ReadS32_Ok) {
+TEST(ReaderTest, ReadS32) {
   ExpectRead<s32>(32, MakeSpanU8("\x20"));
   ExpectRead<s32>(-16, MakeSpanU8("\x70"));
   ExpectRead<s32>(448, MakeSpanU8("\xc0\x03"));
@@ -221,7 +222,7 @@ TEST(ReaderTest, ReadS32_PastEnd) {
                          MakeSpanU8("\xf0\xf0\xf0\xf0"));
 }
 
-TEST(ReaderTest, ReadS64_Ok) {
+TEST(ReaderTest, ReadS64) {
   ExpectRead<s64>(32, MakeSpanU8("\x20"));
   ExpectRead<s64>(-16, MakeSpanU8("\x70"));
   ExpectRead<s64>(448, MakeSpanU8("\xc0\x03"));
@@ -284,4 +285,197 @@ TEST(ReaderTest, ReadS64_PastEnd) {
                          MakeSpanU8("\xaa\xaa\xaa\xaa\xaa\xa0\xb0\xc0"));
   ExpectReadFailure<s64>({{0, "vs64"}, {9, "Unable to read u8"}},
                          MakeSpanU8("\xfe\xed\xfe\xed\xfe\xed\xfe\xed\xfe"));
+}
+
+TEST(ReaderTest, ReadF32) {
+  ExpectRead<f32>(0.0f, MakeSpanU8("\x00\x00\x00\x00"));
+  ExpectRead<f32>(-1.0f, MakeSpanU8("\x00\x00\x80\xbf"));
+  ExpectRead<f32>(1234567.0f, MakeSpanU8("\x38\xb4\x96\x49"));
+  ExpectRead<f32>(INFINITY, MakeSpanU8("\x00\x00\x80\x7f"));
+  ExpectRead<f32>(-INFINITY, MakeSpanU8("\x00\x00\x80\xff"));
+
+  // NaN
+  {
+    auto data = MakeSpanU8("\x00\x00\xc0\x7f");
+    TestErrors errors;
+    auto result = Read<f32>(&data, errors);
+    ExpectNoErrors(errors);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_TRUE(std::isnan(*result));
+    EXPECT_EQ(0u, data.size());
+  }
+}
+
+TEST(ReaderTest, ReadF32_PastEnd) {
+  ExpectReadFailure<f32>({{0, "Unable to read 4 bytes"}},
+                         MakeSpanU8("\x00\x00\x00"));
+}
+
+TEST(ReaderTest, ReadF64) {
+  ExpectRead<f64>(0.0, MakeSpanU8("\x00\x00\x00\x00\x00\x00\x00\x00"));
+  ExpectRead<f64>(-1.0, MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf0\xbf"));
+  ExpectRead<f64>(111111111111111,
+                  MakeSpanU8("\xc0\x71\xbc\x93\x84\x43\xd9\x42"));
+  ExpectRead<f64>(INFINITY, MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf0\x7f"));
+  ExpectRead<f64>(-INFINITY, MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf0\xff"));
+
+  // NaN
+  {
+    auto data = MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf8\x7f");
+    TestErrors errors;
+    auto result = Read<f64>(&data, errors);
+    ExpectNoErrors(errors);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_TRUE(std::isnan(*result));
+    EXPECT_EQ(0u, data.size());
+  }
+}
+
+TEST(ReaderTest, ReadF64_PastEnd) {
+  ExpectReadFailure<f64>({{0, "Unable to read 8 bytes"}},
+                         MakeSpanU8("\x00\x00\x00\x00\x00\x00\x00"));
+}
+
+TEST(ReaderTest, ReadCount) {
+  TestErrors errors;
+  const SpanU8 data = MakeSpanU8("\x01\x00\x00\x00");
+  SpanU8 copy = data;
+  auto result = ReadCount(&copy, errors);
+  ExpectNoErrors(errors);
+  ExpectOptional(1u, result);
+  EXPECT_EQ(3u, copy.size());
+}
+
+TEST(ReaderTest, ReadCount_PastEnd) {
+  TestErrors errors;
+  const SpanU8 data = MakeSpanU8("\x05\x00\x00\x00");
+  SpanU8 copy = data;
+  auto result = ReadCount(&copy, errors);
+  ExpectError({{1, "Count is longer than the data length: 5 > 3"}}, errors,
+              data);
+  ExpectEmptyOptional(result);
+  EXPECT_EQ(3u, copy.size());
+}
+
+TEST(ReaderTest, ReadStr) {
+  TestErrors errors;
+  const SpanU8 data = MakeSpanU8("\x05hello");
+  SpanU8 copy = data;
+  auto result = ReadStr(&copy, errors, "test");
+  ExpectNoErrors(errors);
+  ExpectOptional(string_view{"hello"}, result);
+  EXPECT_EQ(0u, copy.size());
+}
+
+TEST(ReaderTest, ReadStr_Leftovers) {
+  TestErrors errors;
+  const SpanU8 data = MakeSpanU8("\x01more");
+  SpanU8 copy = data;
+  auto result = ReadStr(&copy, errors, "test");
+  ExpectNoErrors(errors);
+  ExpectOptional(string_view{"m"}, result);
+  EXPECT_EQ(3u, copy.size());
+}
+
+TEST(ReaderTest, ReadStr_FailLength) {
+  {
+    TestErrors errors;
+    const SpanU8 data = MakeSpanU8("");
+    SpanU8 copy = data;
+    auto result = ReadStr(&copy, errors, "test");
+    ExpectError({{0, "test"}, {0, "index"}, {0, "Unable to read u8"}}, errors,
+                data);
+    ExpectEmptyOptional(result);
+    EXPECT_EQ(0u, copy.size());
+  }
+
+  {
+    TestErrors errors;
+    const SpanU8 data = MakeSpanU8("\xc0");
+    SpanU8 copy = data;
+    auto result = ReadStr(&copy, errors, "test");
+    ExpectError({{0, "test"}, {0, "index"}, {1, "Unable to read u8"}}, errors,
+                data);
+    ExpectEmptyOptional(result);
+    EXPECT_EQ(0u, copy.size());
+  }
+}
+
+TEST(ReaderTest, ReadStr_Fail) {
+  TestErrors errors;
+  const SpanU8 data = MakeSpanU8("\x06small");
+  SpanU8 copy = data;
+  auto result = ReadStr(&copy, errors, "test");
+  ExpectError({{0, "test"}, {1, "Count is longer than the data length: 6 > 5"}},
+              errors, data);
+  ExpectEmptyOptional(result);
+  EXPECT_EQ(5u, copy.size());
+}
+
+TEST(ReaderTest, ReadVec_u8) {
+  TestErrors errors;
+  const SpanU8 data = MakeSpanU8("\x05hello");
+  SpanU8 copy = data;
+  auto result = ReadVec<u8>(&copy, errors, "test");
+  ExpectNoErrors(errors);
+  ExpectOptional(std::vector<u8>{'h', 'e', 'l', 'l', 'o'}, result);
+  EXPECT_EQ(0u, copy.size());
+}
+
+TEST(ReaderTest, ReadVec_u32) {
+  TestErrors errors;
+  const SpanU8 data = MakeSpanU8(
+      "\x03"  // Count.
+      "\x05"
+      "\x80\x01"
+      "\xcc\xcc\x0c");
+  SpanU8 copy = data;
+  auto result = ReadVec<u32>(&copy, errors, "test");
+  ExpectNoErrors(errors);
+  ExpectOptional(std::vector<u32>{5, 128, 206412}, result);
+  EXPECT_EQ(0u, copy.size());
+}
+
+TEST(ReaderTest, ReadVec_FailLength) {
+  TestErrors errors;
+  const SpanU8 data = MakeSpanU8(
+      "\x02"  // Count.
+      "\x05");
+  SpanU8 copy = data;
+  auto result = ReadVec<u32>(&copy, errors, "test");
+  ExpectError({{0, "test"}, {1, "Count is longer than the data length: 2 > 1"}},
+              errors, data);
+  ExpectEmptyOptional(result);
+  EXPECT_EQ(1u, copy.size());
+}
+
+TEST(ReaderTest, ReadVec_PastEnd) {
+  TestErrors errors;
+  const SpanU8 data = MakeSpanU8(
+      "\x02"  // Count.
+      "\x05"
+      "\x80");
+  SpanU8 copy = data;
+  auto result = ReadVec<u32>(&copy, errors, "test");
+  ExpectError({{0, "test"},
+               {2, "vu32"},
+               {3, "Unable to read u8"}},
+              errors, data);
+  ExpectEmptyOptional(result);
+  EXPECT_EQ(0u, copy.size());
+}
+
+TEST(ReaderTest, ReadValType) {
+  ExpectRead<ValType>(ValType::I32, MakeSpanU8("\x7f"));
+  ExpectRead<ValType>(ValType::I64, MakeSpanU8("\x7e"));
+  ExpectRead<ValType>(ValType::F32, MakeSpanU8("\x7d"));
+  ExpectRead<ValType>(ValType::F64, MakeSpanU8("\x7c"));
+  ExpectRead<ValType>(ValType::Anyfunc, MakeSpanU8("\x70"));
+  ExpectRead<ValType>(ValType::Func, MakeSpanU8("\x60"));
+  ExpectRead<ValType>(ValType::Void, MakeSpanU8("\x40"));
+}
+
+TEST(ReaderTest, ReadValType_Unknown) {
+  ExpectReadFailure<ValType>({{0, "value type"}, {1, "Unknown value type 16"}},
+                             MakeSpanU8("\x10"));
 }

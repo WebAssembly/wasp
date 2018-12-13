@@ -284,7 +284,7 @@ optional<Start> StartSection<Errors>::start() {
 #define WASP_TRY_DECODE(out_var, in_var, Type, name)            \
   auto out_var = encoding::Type::Decode(in_var);                \
   if (!out_var) {                                               \
-    errors.OnError(*data, format("Unknown" name "{}", in_var)); \
+    errors.OnError(*data, format("Unknown " name " {}", in_var)); \
     return nullopt;                                             \
   }
 
