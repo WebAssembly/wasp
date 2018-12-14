@@ -130,7 +130,7 @@ void ExpectReadFailure(const ExpectedError& expected, SpanU8 data) {
 
 }  // namespace
 
-TEST(ReaderTest, ReadU8) {
+TEST(ReaderTest, U8) {
   ExpectRead<u8>(32, MakeSpanU8("\x20"));
   ExpectReadFailure<u8>({{0, "Unable to read u8"}}, MakeSpanU8(""));
 }
@@ -164,7 +164,7 @@ TEST(ReaderTest, ReadBytes_Fail) {
   ExpectError({{0, "Unable to read 4 bytes"}}, errors, data);
 }
 
-TEST(ReaderTest, ReadU32) {
+TEST(ReaderTest, U32) {
   ExpectRead<u32>(32u, MakeSpanU8("\x20"));
   ExpectRead<u32>(448u, MakeSpanU8("\xc0\x03"));
   ExpectRead<u32>(33360u, MakeSpanU8("\xd0\x84\x02"));
@@ -172,14 +172,14 @@ TEST(ReaderTest, ReadU32) {
   ExpectRead<u32>(1042036848u, MakeSpanU8("\xf0\xf0\xf0\xf0\x03"));
 }
 
-TEST(ReaderTest, ReadU32_TooLong) {
+TEST(ReaderTest, U32_TooLong) {
   ExpectReadFailure<u32>(
       {{0, "u32"},
        {5, "Last byte of u32 must be zero extension: expected 0x2, got 0x12"}},
       MakeSpanU8("\xf0\xf0\xf0\xf0\x12"));
 }
 
-TEST(ReaderTest, ReadU32_PastEnd) {
+TEST(ReaderTest, U32_PastEnd) {
   ExpectReadFailure<u32>({{0, "u32"}, {0, "Unable to read u8"}},
                          MakeSpanU8(""));
   ExpectReadFailure<u32>({{0, "u32"}, {1, "Unable to read u8"}},
@@ -192,7 +192,7 @@ TEST(ReaderTest, ReadU32_PastEnd) {
                          MakeSpanU8("\xf0\xf0\xf0\xf0"));
 }
 
-TEST(ReaderTest, ReadS32) {
+TEST(ReaderTest, S32) {
   ExpectRead<s32>(32, MakeSpanU8("\x20"));
   ExpectRead<s32>(-16, MakeSpanU8("\x70"));
   ExpectRead<s32>(448, MakeSpanU8("\xc0\x03"));
@@ -205,7 +205,7 @@ TEST(ReaderTest, ReadS32) {
   ExpectRead<s32>(-837011344, MakeSpanU8("\xf0\xf0\xf0\xf0\x7c"));
 }
 
-TEST(ReaderTest, ReadS32_TooLong) {
+TEST(ReaderTest, S32_TooLong) {
   ExpectReadFailure<s32>({{0, "s32"},
                           {5,
                            "Last byte of s32 must be sign extension: expected "
@@ -218,7 +218,7 @@ TEST(ReaderTest, ReadS32_TooLong) {
                          MakeSpanU8("\xff\xff\xff\xff\x73"));
 }
 
-TEST(ReaderTest, ReadS32_PastEnd) {
+TEST(ReaderTest, S32_PastEnd) {
   ExpectReadFailure<s32>({{0, "s32"}, {0, "Unable to read u8"}},
                          MakeSpanU8(""));
   ExpectReadFailure<s32>({{0, "s32"}, {1, "Unable to read u8"}},
@@ -231,7 +231,7 @@ TEST(ReaderTest, ReadS32_PastEnd) {
                          MakeSpanU8("\xf0\xf0\xf0\xf0"));
 }
 
-TEST(ReaderTest, ReadS64) {
+TEST(ReaderTest, S64) {
   ExpectRead<s64>(32, MakeSpanU8("\x20"));
   ExpectRead<s64>(-16, MakeSpanU8("\x70"));
   ExpectRead<s64>(448, MakeSpanU8("\xc0\x03"));
@@ -258,7 +258,7 @@ TEST(ReaderTest, ReadS64) {
                   MakeSpanU8("\xfe\xed\xfe\xed\xfe\xed\xfe\xed\x4e"));
 }
 
-TEST(ReaderTest, ReadS64_TooLong) {
+TEST(ReaderTest, S64_TooLong) {
   ExpectReadFailure<s64>(
       {{0, "s64"},
        {10,
@@ -273,7 +273,7 @@ TEST(ReaderTest, ReadS64_TooLong) {
       MakeSpanU8("\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"));
 }
 
-TEST(ReaderTest, ReadS64_PastEnd) {
+TEST(ReaderTest, S64_PastEnd) {
   ExpectReadFailure<s64>({{0, "s64"}, {0, "Unable to read u8"}},
                          MakeSpanU8(""));
   ExpectReadFailure<s64>({{0, "s64"}, {1, "Unable to read u8"}},
@@ -296,7 +296,7 @@ TEST(ReaderTest, ReadS64_PastEnd) {
                          MakeSpanU8("\xfe\xed\xfe\xed\xfe\xed\xfe\xed\xfe"));
 }
 
-TEST(ReaderTest, ReadF32) {
+TEST(ReaderTest, F32) {
   ExpectRead<f32>(0.0f, MakeSpanU8("\x00\x00\x00\x00"));
   ExpectRead<f32>(-1.0f, MakeSpanU8("\x00\x00\x80\xbf"));
   ExpectRead<f32>(1234567.0f, MakeSpanU8("\x38\xb4\x96\x49"));
@@ -315,12 +315,12 @@ TEST(ReaderTest, ReadF32) {
   }
 }
 
-TEST(ReaderTest, ReadF32_PastEnd) {
+TEST(ReaderTest, F32_PastEnd) {
   ExpectReadFailure<f32>({{0, "f32"}, {0, "Unable to read 4 bytes"}},
                          MakeSpanU8("\x00\x00\x00"));
 }
 
-TEST(ReaderTest, ReadF64) {
+TEST(ReaderTest, F64) {
   ExpectRead<f64>(0.0, MakeSpanU8("\x00\x00\x00\x00\x00\x00\x00\x00"));
   ExpectRead<f64>(-1.0, MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf0\xbf"));
   ExpectRead<f64>(111111111111111,
@@ -340,7 +340,7 @@ TEST(ReaderTest, ReadF64) {
   }
 }
 
-TEST(ReaderTest, ReadF64_PastEnd) {
+TEST(ReaderTest, F64_PastEnd) {
   ExpectReadFailure<f64>({{0, "f64"}, {0, "Unable to read 8 bytes"}},
                          MakeSpanU8("\x00\x00\x00\x00\x00\x00\x00"));
 }
@@ -472,14 +472,14 @@ TEST(ReaderTest, ReadVector_PastEnd) {
   EXPECT_EQ(0u, copy.size());
 }
 
-TEST(ReaderTest, ReadValueType) {
+TEST(ReaderTest, ValueType) {
   ExpectRead<ValueType>(ValueType::I32, MakeSpanU8("\x7f"));
   ExpectRead<ValueType>(ValueType::I64, MakeSpanU8("\x7e"));
   ExpectRead<ValueType>(ValueType::F32, MakeSpanU8("\x7d"));
   ExpectRead<ValueType>(ValueType::F64, MakeSpanU8("\x7c"));
 }
 
-TEST(ReaderTest, ReadValueType_Unknown) {
+TEST(ReaderTest, ValueType_Unknown) {
   ExpectReadFailure<ValueType>(
       {{0, "value type"}, {1, "Unknown value type: 16"}}, MakeSpanU8("\x10"));
 
@@ -489,7 +489,7 @@ TEST(ReaderTest, ReadValueType_Unknown) {
       MakeSpanU8("\xff\x7f"));
 }
 
-TEST(ReaderTest, ReadBlockType) {
+TEST(ReaderTest, BlockType) {
   ExpectRead<BlockType>(BlockType::I32, MakeSpanU8("\x7f"));
   ExpectRead<BlockType>(BlockType::I64, MakeSpanU8("\x7e"));
   ExpectRead<BlockType>(BlockType::F32, MakeSpanU8("\x7d"));
@@ -497,7 +497,7 @@ TEST(ReaderTest, ReadBlockType) {
   ExpectRead<BlockType>(BlockType::Void, MakeSpanU8("\x40"));
 }
 
-TEST(ReaderTest, ReadBlockType_Unknown) {
+TEST(ReaderTest, BlockType_Unknown) {
   ExpectReadFailure<BlockType>(
       {{0, "block type"}, {1, "Unknown block type: 0"}}, MakeSpanU8("\x00"));
 
@@ -507,11 +507,11 @@ TEST(ReaderTest, ReadBlockType_Unknown) {
       MakeSpanU8("\xff\x7f"));
 }
 
-TEST(ReaderTest, ReadElementType) {
+TEST(ReaderTest, ElementType) {
   ExpectRead<ElementType>(ElementType::Funcref, MakeSpanU8("\x70"));
 }
 
-TEST(ReaderTest, ReadElementType_Unknown) {
+TEST(ReaderTest, ElementType_Unknown) {
   ExpectReadFailure<ElementType>(
       {{0, "element type"}, {1, "Unknown element type: 0"}},
       MakeSpanU8("\x00"));
@@ -522,14 +522,14 @@ TEST(ReaderTest, ReadElementType_Unknown) {
       MakeSpanU8("\xf0\x7f"));
 }
 
-TEST(ReaderTest, ReadExternalKind) {
+TEST(ReaderTest, ExternalKind) {
   ExpectRead<ExternalKind>(ExternalKind::Function, MakeSpanU8("\x00"));
   ExpectRead<ExternalKind>(ExternalKind::Table, MakeSpanU8("\x01"));
   ExpectRead<ExternalKind>(ExternalKind::Memory, MakeSpanU8("\x02"));
   ExpectRead<ExternalKind>(ExternalKind::Global, MakeSpanU8("\x03"));
 }
 
-TEST(ReaderTest, ReadExternalKind_Unknown) {
+TEST(ReaderTest, ExternalKind_Unknown) {
   ExpectReadFailure<ExternalKind>(
       {{0, "external kind"}, {1, "Unknown external kind: 4"}},
       MakeSpanU8("\x04"));
@@ -540,12 +540,12 @@ TEST(ReaderTest, ReadExternalKind_Unknown) {
       MakeSpanU8("\x84\x00"));
 }
 
-TEST(ReaderTest, ReadMutability) {
+TEST(ReaderTest, Mutability) {
   ExpectRead<Mutability>(Mutability::Const, MakeSpanU8("\x00"));
   ExpectRead<Mutability>(Mutability::Var, MakeSpanU8("\x01"));
 }
 
-TEST(ReaderTest, ReadMutability_Unknown) {
+TEST(ReaderTest, Mutability_Unknown) {
   ExpectReadFailure<Mutability>(
       {{0, "mutability"}, {1, "Unknown mutability: 4"}}, MakeSpanU8("\x04"));
 
@@ -555,7 +555,7 @@ TEST(ReaderTest, ReadMutability_Unknown) {
       MakeSpanU8("\x84\x00"));
 }
 
-TEST(ReaderTest, ReadSectionId) {
+TEST(ReaderTest, SectionId) {
   ExpectRead<SectionId>(SectionId::Custom, MakeSpanU8("\x00"));
   ExpectRead<SectionId>(SectionId::Type, MakeSpanU8("\x01"));
   ExpectRead<SectionId>(SectionId::Import, MakeSpanU8("\x02"));
@@ -573,12 +573,12 @@ TEST(ReaderTest, ReadSectionId) {
   ExpectRead<SectionId>(SectionId::Custom, MakeSpanU8("\x80\x00"));
 }
 
-TEST(ReaderTest, ReadSectionId_Unknown) {
+TEST(ReaderTest, SectionId_Unknown) {
   ExpectReadFailure<SectionId>({{0, "section"}, {1, "Unknown section: 12"}},
                                MakeSpanU8("\x0c"));
 }
 
-TEST(ReaderTest, ReadOpcode) {
+TEST(ReaderTest, Opcode) {
   ExpectRead<Opcode>(Opcode::Unreachable, MakeSpanU8("\x00"));
   ExpectRead<Opcode>(Opcode::Nop, MakeSpanU8("\x01"));
   ExpectRead<Opcode>(Opcode::Block, MakeSpanU8("\x02"));
@@ -753,29 +753,29 @@ TEST(ReaderTest, ReadOpcode) {
   ExpectRead<Opcode>(Opcode::F64ReinterpretI64, MakeSpanU8("\xbf"));
 }
 
-TEST(ReaderTest, ReadOpcode_Unknown) {
+TEST(ReaderTest, Opcode_Unknown) {
   ExpectReadFailure<Opcode>({{0, "opcode"}, {1, "Unknown opcode: 6"}},
                             MakeSpanU8("\x06"));
   ExpectReadFailure<Opcode>({{0, "opcode"}, {1, "Unknown opcode: 255"}},
                             MakeSpanU8("\xff"));
 }
 
-TEST(ReaderTest, ReadMemArg) {
+TEST(ReaderTest, MemArg) {
   ExpectRead<MemArg>(MemArg{0, 0}, MakeSpanU8("\x00\x00"));
   ExpectRead<MemArg>(MemArg{1, 256}, MakeSpanU8("\x01\x80\x02"));
 }
 
-TEST(ReaderTest, ReadLimits) {
+TEST(ReaderTest, Limits) {
   ExpectRead<Limits>(Limits{129}, MakeSpanU8("\x00\x81\x01"));
   ExpectRead<Limits>(Limits{2, 1000}, MakeSpanU8("\x01\x02\xe8\x07"));
 }
 
-TEST(ReaderTest, ReadLimits_BadFlags) {
+TEST(ReaderTest, Limits_BadFlags) {
   ExpectReadFailure<Limits>({{0, "limits"}, {1, "Invalid flags value: 2"}},
                             MakeSpanU8("\x02\x01"));
 }
 
-TEST(ReaderTest, ReadLimits_PastEnd) {
+TEST(ReaderTest, Limits_PastEnd) {
   ExpectReadFailure<Limits>(
       {{0, "limits"}, {1, "min"}, {1, "u32"}, {1, "Unable to read u8"}},
       MakeSpanU8("\x00"));
@@ -784,12 +784,12 @@ TEST(ReaderTest, ReadLimits_PastEnd) {
       MakeSpanU8("\x01\x00"));
 }
 
-TEST(ReaderTest, ReadLocals) {
+TEST(ReaderTest, Locals) {
   ExpectRead<Locals>(Locals{2, ValueType::I32}, MakeSpanU8("\x02\x7f"));
   ExpectRead<Locals>(Locals{320, ValueType::F64}, MakeSpanU8("\xc0\x02\x7c"));
 }
 
-TEST(ReaderTest, ReadLocals_PastEnd) {
+TEST(ReaderTest, Locals_PastEnd) {
   ExpectReadFailure<Locals>(
       {{0, "locals"}, {0, "count"}, {0, "index"}, {0, "Unable to read u8"}},
       MakeSpanU8(""));
@@ -798,14 +798,14 @@ TEST(ReaderTest, ReadLocals_PastEnd) {
       MakeSpanU8("\xc0\x02"));
 }
 
-TEST(ReaderTest, ReadFunctionType) {
+TEST(ReaderTest, FunctionType) {
   ExpectRead<FunctionType>(FunctionType{{}, {}}, MakeSpanU8("\x00\x00"));
   ExpectRead<FunctionType>(
       FunctionType{{ValueType::I32, ValueType::I64}, {ValueType::F64}},
       MakeSpanU8("\x02\x7f\x7e\x01\x7c"));
 }
 
-TEST(ReaderTest, ReadFunctionType_PastEnd) {
+TEST(ReaderTest, FunctionType_PastEnd) {
   ExpectReadFailure<FunctionType>({{0, "function type"},
                                    {0, "param types"},
                                    {0, "index"},
@@ -831,30 +831,30 @@ TEST(ReaderTest, ReadFunctionType_PastEnd) {
       MakeSpanU8("\x00\x01"));
 }
 
-TEST(ReaderTest, ReadTypeEntry) {
+TEST(ReaderTest, TypeEntry) {
   ExpectRead<TypeEntry>(TypeEntry{FunctionType{{}, {ValueType::I32}}},
                         MakeSpanU8("\x60\x00\x01\x7f"));
 }
 
-TEST(ReaderTest, ReadTypeEntry_BadForm) {
+TEST(ReaderTest, TypeEntry_BadForm) {
   ExpectReadFailure<TypeEntry>(
       {{0, "type entry"}, {1, "Unknown type form: 64"}}, MakeSpanU8("\x40"));
 }
 
-TEST(ReaderTest, ReadTableType) {
+TEST(ReaderTest, TableType) {
   ExpectRead<TableType>(TableType{Limits{1}, ElementType::Funcref},
                         MakeSpanU8("\x70\x00\x01"));
   ExpectRead<TableType>(TableType{Limits{1, 2}, ElementType::Funcref},
                         MakeSpanU8("\x70\x01\x01\x02"));
 }
 
-TEST(ReaderTest, ReadTableType_BadElementType) {
+TEST(ReaderTest, TableType_BadElementType) {
   ExpectReadFailure<TableType>(
       {{0, "table type"}, {0, "element type"}, {1, "Unknown element type: 0"}},
       MakeSpanU8("\x00"));
 }
 
-TEST(ReaderTest, ReadTableType_PastEnd) {
+TEST(ReaderTest, TableType_PastEnd) {
   ExpectReadFailure<TableType>(
       {{0, "table type"}, {0, "element type"}, {0, "Unable to read u8"}},
       MakeSpanU8(""));
@@ -866,13 +866,13 @@ TEST(ReaderTest, ReadTableType_PastEnd) {
                                MakeSpanU8("\x70"));
 }
 
-TEST(ReaderTest, ReadMemoryType) {
+TEST(ReaderTest, MemoryType) {
   ExpectRead<MemoryType>(MemoryType{Limits{1}}, MakeSpanU8("\x00\x01"));
   ExpectRead<MemoryType>(MemoryType{Limits{0, 128}},
                          MakeSpanU8("\x01\x00\x80\x01"));
 }
 
-TEST(ReaderTest, ReadMemoryType_PastEnd) {
+TEST(ReaderTest, MemoryType_PastEnd) {
   ExpectReadFailure<MemoryType>({{0, "memory type"},
                                  {0, "limits"},
                                  {0, "flags"},
@@ -880,14 +880,14 @@ TEST(ReaderTest, ReadMemoryType_PastEnd) {
                                 MakeSpanU8(""));
 }
 
-TEST(ReaderTest, ReadGlobalType) {
+TEST(ReaderTest, GlobalType) {
   ExpectRead<GlobalType>(GlobalType{ValueType::I32, Mutability::Const},
                          MakeSpanU8("\x7f\x00"));
   ExpectRead<GlobalType>(GlobalType{ValueType::F32, Mutability::Var},
                          MakeSpanU8("\x7d\x01"));
 }
 
-TEST(ReaderTest, ReadGlobalType_PastEnd) {
+TEST(ReaderTest, GlobalType_PastEnd) {
   ExpectReadFailure<GlobalType>(
       {{0, "global type"}, {0, "value type"}, {0, "Unable to read u8"}},
       MakeSpanU8(""));
@@ -897,13 +897,13 @@ TEST(ReaderTest, ReadGlobalType_PastEnd) {
       MakeSpanU8("\x7f"));
 }
 
-TEST(ReaderTest, ReadBrTableImmediate) {
+TEST(ReaderTest, BrTableImmediate) {
   ExpectRead<BrTableImmediate>(BrTableImmediate{{}, 0}, MakeSpanU8("\x00\x00"));
   ExpectRead<BrTableImmediate>(BrTableImmediate{{1, 2}, 3},
                                MakeSpanU8("\x02\x01\x02\x03"));
 }
 
-TEST(ReaderTest, ReadBrTableImmediate_PastEnd) {
+TEST(ReaderTest, BrTableImmediate_PastEnd) {
   ExpectReadFailure<BrTableImmediate>(
       {{0, "br_table"}, {0, "targets"}, {0, "index"}, {0, "Unable to read u8"}},
       MakeSpanU8(""));
@@ -915,14 +915,14 @@ TEST(ReaderTest, ReadBrTableImmediate_PastEnd) {
                                       MakeSpanU8("\x00"));
 }
 
-TEST(ReaderTest, ReadCallIndirectImmediate) {
+TEST(ReaderTest, CallIndirectImmediate) {
   ExpectRead<CallIndirectImmediate>(CallIndirectImmediate{1, 0},
                                     MakeSpanU8("\x01\x00"));
   ExpectRead<CallIndirectImmediate>(CallIndirectImmediate{128, 0},
                                     MakeSpanU8("\x80\x01\x00"));
 }
 
-TEST(ReaderTest, ReadCallIndirectImmediate_BadReserved) {
+TEST(ReaderTest, CallIndirectImmediate_BadReserved) {
   ExpectReadFailure<CallIndirectImmediate>(
       {{0, "call_indirect"},
        {1, "reserved"},
@@ -930,7 +930,7 @@ TEST(ReaderTest, ReadCallIndirectImmediate_BadReserved) {
       MakeSpanU8("\x00\x01"));
 }
 
-TEST(ReaderTest, ReadCallIndirectImmediate_PastEnd) {
+TEST(ReaderTest, CallIndirectImmediate_PastEnd) {
   ExpectReadFailure<CallIndirectImmediate>(
       {{0, "call_indirect"}, {0, "index"}, {0, "Unable to read u8"}},
       MakeSpanU8(""));
@@ -940,7 +940,7 @@ TEST(ReaderTest, ReadCallIndirectImmediate_PastEnd) {
       MakeSpanU8("\x00"));
 }
 
-TEST(ReaderTest, ReadImport) {
+TEST(ReaderTest, Import) {
   ExpectRead<Import<>>(Import<>{"a", "func", 11u},
                        MakeSpanU8("\x01\x61\x04\x66unc\x00\x0b"));
 
@@ -956,7 +956,7 @@ TEST(ReaderTest, ReadImport) {
       MakeSpanU8("\x01\x64\x06global\x03\x7f\x00"));
 }
 
-TEST(ReaderTest, ReadImportType_PastEnd) {
+TEST(ReaderTest, ImportType_PastEnd) {
   ExpectReadFailure<Import<>>({{0, "import"},
                                {0, "module name"},
                                {0, "index"},
@@ -997,7 +997,7 @@ TEST(ReaderTest, ReadImportType_PastEnd) {
                               MakeSpanU8("\x00\x00\x03"));
 }
 
-TEST(ReaderTest, ReadConstantExpression) {
+TEST(ReaderTest, ConstantExpression) {
   // i32.const
   {
     const auto data = MakeSpanU8("\x41\x00\x0b");
@@ -1029,7 +1029,7 @@ TEST(ReaderTest, ReadConstantExpression) {
   }
 }
 
-TEST(ReaderTest, ReadConstantExpression_NoEnd) {
+TEST(ReaderTest, ConstantExpression_NoEnd) {
   // i32.const
   ExpectReadFailure<ConstantExpression<>>({{0, "Expected end instruction"}},
                                           MakeSpanU8("\x41\x00"));
@@ -1053,12 +1053,12 @@ TEST(ReaderTest, ReadConstantExpression_NoEnd) {
                                           MakeSpanU8("\x23\x00"));
 }
 
-TEST(ReaderTest, ReadConstantExpression_TooLong) {
+TEST(ReaderTest, ConstantExpression_TooLong) {
   ExpectReadFailure<ConstantExpression<>>({{0, "Expected end instruction"}},
                                           MakeSpanU8("\x41\x00\x01\x0b"));
 }
 
-TEST(ReaderTest, ReadConstantExpression_InvalidInstruction) {
+TEST(ReaderTest, ConstantExpression_InvalidInstruction) {
   TestErrors errors;
   auto data = MakeSpanU8("\x06");
   const SpanU8 orig_data = data;
@@ -1069,18 +1069,18 @@ TEST(ReaderTest, ReadConstantExpression_InvalidInstruction) {
   ExpectEmptyOptional(result);
 }
 
-TEST(ReaderTest, ReadConstantExpression_IllegalInstruction) {
+TEST(ReaderTest, ConstantExpression_IllegalInstruction) {
   ExpectReadFailure<ConstantExpression<>>(
       {{0, "Illegal instruction in constant expression: unreachable"}},
       MakeSpanU8("\x00"));
 }
 
-TEST(ReaderTest, ReadConstantExpression_PastEnd) {
+TEST(ReaderTest, ConstantExpression_PastEnd) {
   ExpectReadFailure<ConstantExpression<>>(
       {{0, "Unexpected end of constant expression"}}, MakeSpanU8(""));
 }
 
-TEST(ReaderTest, ReadInstruction) {
+TEST(ReaderTest, Instruction) {
   using I = Instruction;
   using O = Opcode;
 
@@ -1261,7 +1261,7 @@ TEST(ReaderTest, ReadInstruction) {
   ExpectRead<I>(I{O::F64ReinterpretI64}, MakeSpanU8("\xbf"));
 }
 
-TEST(ReaderTest, ReadInstruction_BadMemoryReserved) {
+TEST(ReaderTest, Instruction_BadMemoryReserved) {
   ExpectReadFailure<Instruction>(
       {{1, "reserved"}, {2, "Expected reserved byte 0, got 1"}},
       MakeSpanU8("\x3f\x01"));
@@ -1270,22 +1270,22 @@ TEST(ReaderTest, ReadInstruction_BadMemoryReserved) {
       MakeSpanU8("\x40\x01"));
 }
 
-TEST(ReaderTest, ReadFunc) {
+TEST(ReaderTest, Function) {
   ExpectRead<Function>(Function{1}, MakeSpanU8("\x01"));
 }
 
-TEST(ReaderTest, ReadFunc_PastEnd) {
+TEST(ReaderTest, Function_PastEnd) {
   ExpectReadFailure<Function>(
       {{0, "function"}, {0, "index"}, {0, "Unable to read u8"}},
       MakeSpanU8(""));
 }
 
-TEST(ReaderTest, ReadTable) {
+TEST(ReaderTest, Table) {
   ExpectRead<Table>(Table{TableType{Limits{1}, ElementType::Funcref}},
                     MakeSpanU8("\x70\x00\x01"));
 }
 
-TEST(ReaderTest, ReadTable_PastEnd) {
+TEST(ReaderTest, Table_PastEnd) {
   ExpectReadFailure<Table>({{0, "table"},
                             {0, "table type"},
                             {0, "element type"},
@@ -1293,12 +1293,12 @@ TEST(ReaderTest, ReadTable_PastEnd) {
                            MakeSpanU8(""));
 }
 
-TEST(ReaderTest, ReadMemory) {
+TEST(ReaderTest, Memory) {
   ExpectRead<Memory>(Memory{MemoryType{Limits{1, 2}}},
                      MakeSpanU8("\x01\x01\x02"));
 }
 
-TEST(ReaderTest, ReadMemory_PastEnd) {
+TEST(ReaderTest, Memory_PastEnd) {
   ExpectReadFailure<Memory>({{0, "memory"},
                              {0, "memory type"},
                              {0, "limits"},
@@ -1307,7 +1307,7 @@ TEST(ReaderTest, ReadMemory_PastEnd) {
                             MakeSpanU8(""));
 }
 
-TEST(ReaderTest, ReadGlobal) {
+TEST(ReaderTest, Global) {
   // i32 global with i64.const constant expression. This will fail validation
   // but still can be successfully parsed.
   ExpectRead<Global<>>(
@@ -1316,7 +1316,7 @@ TEST(ReaderTest, ReadGlobal) {
       MakeSpanU8("\x7f\x01\x42\x00\x0b"));
 }
 
-TEST(ReaderTest, ReadGlobal_PastEnd) {
+TEST(ReaderTest, Global_PastEnd) {
   ExpectReadFailure<Global<>>({{0, "global"},
                                {0, "global type"},
                                {0, "value type"},
@@ -1328,7 +1328,7 @@ TEST(ReaderTest, ReadGlobal_PastEnd) {
                               MakeSpanU8("\x7f\x00"));
 }
 
-TEST(ReaderTest, ReadExport) {
+TEST(ReaderTest, Export) {
   ExpectRead<Export<>>(Export<>{ExternalKind::Function, "hi", 3},
                        MakeSpanU8("\x02hi\x00\x03"));
   ExpectRead<Export<>>(Export<>{ExternalKind::Table, "", 1000},
@@ -1339,7 +1339,7 @@ TEST(ReaderTest, ReadExport) {
                        MakeSpanU8("\x01g\x03\x01"));
 }
 
-TEST(ReaderTest, ReadExport_PastEnd) {
+TEST(ReaderTest, Export_PastEnd) {
   ExpectReadFailure<Export<>>(
       {{0, "export"}, {0, "name"}, {0, "index"}, {0, "Unable to read u8"}},
       MakeSpanU8(""));
@@ -1353,6 +1353,6 @@ TEST(ReaderTest, ReadExport_PastEnd) {
       MakeSpanU8("\x00\x00"));
 }
 
-TEST(ReaderTest, ReadStart) {
+TEST(ReaderTest, Start) {
   ExpectRead<Start>(Start{256}, MakeSpanU8("\x80\x02"));
 }
