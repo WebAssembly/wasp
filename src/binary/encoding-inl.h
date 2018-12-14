@@ -19,10 +19,38 @@ namespace binary {
 namespace encoding {
 
 // static
-inline optional<::wasp::binary::ValType> ValType::Decode(s32 val) {
+inline optional<::wasp::binary::ValType> ValType::Decode(u8 val) {
   switch (val) {
-#define WASP_V(val, Name, str) case Name: return ::wasp::binary::ValType::Name;
-    WASP_FOREACH_VALTYPE(WASP_V)
+#define WASP_V(val, Name, str) \
+  case Name:                   \
+    return ::wasp::binary::ValType::Name;
+    WASP_FOREACH_VAL_TYPE(WASP_V)
+#undef WASP_V
+    default:
+      return nullopt;
+  }
+}
+
+// static
+inline optional<::wasp::binary::BlockType> BlockType::Decode(u8 val) {
+  switch (val) {
+#define WASP_V(val, Name, str) \
+  case Name:                   \
+    return ::wasp::binary::BlockType::Name;
+    WASP_FOREACH_BLOCK_TYPE(WASP_V)
+#undef WASP_V
+    default:
+      return nullopt;
+  }
+}
+
+// static
+inline optional<::wasp::binary::ElemType> ElemType::Decode(u8 val) {
+  switch (val) {
+#define WASP_V(val, Name, str) \
+  case Name:                   \
+    return ::wasp::binary::ElemType::Name;
+    WASP_FOREACH_ELEM_TYPE(WASP_V)
 #undef WASP_V
     default:
       return nullopt;

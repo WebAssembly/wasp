@@ -290,9 +290,25 @@ optional<Start> StartSection<Errors>::start() {
 
 template <typename Errors>
 optional<ValType> Read(SpanU8* data, Errors& errors, Tag<ValType>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "value type"};
-  WASP_TRY_READ(val, Read<s32>(data, errors));
-  WASP_TRY_DECODE(decoded, val, ValType, "value type");
+  ErrorsContextGuard<Errors> guard{errors, *data, "valtype"};
+  WASP_TRY_READ(val, Read<u8>(data, errors));
+  WASP_TRY_DECODE(decoded, val, ValType, "valtype");
+  return decoded;
+}
+
+template <typename Errors>
+optional<BlockType> Read(SpanU8* data, Errors& errors, Tag<BlockType>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "blocktype"};
+  WASP_TRY_READ(val, Read<u8>(data, errors));
+  WASP_TRY_DECODE(decoded, val, BlockType, "blocktype");
+  return decoded;
+}
+
+template <typename Errors>
+optional<ElemType> Read(SpanU8* data, Errors& errors, Tag<ElemType>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "elemtype"};
+  WASP_TRY_READ(val, Read<u8>(data, errors));
+  WASP_TRY_DECODE(decoded, val, ElemType, "elemtype");
   return decoded;
 }
 
@@ -364,9 +380,9 @@ optional<FuncType> Read(SpanU8* data, Errors& errors, Tag<FuncType>) {
 template <typename Errors>
 optional<TypeEntry> Read(SpanU8* data, Errors& errors, Tag<TypeEntry>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "type entry"};
-  WASP_TRY_READ_CONTEXT(form, Read<ValType>(data, errors), "form");
+  WASP_TRY_READ_CONTEXT(form, Read<u8>(data, errors), "form");
 
-  if (form != ValType::Func) {
+  if (form != encoding::Type::Func) {
     errors.OnError(*data, format("Unknown type form: {}", form));
     return nullopt;
   }
@@ -378,7 +394,7 @@ optional<TypeEntry> Read(SpanU8* data, Errors& errors, Tag<TypeEntry>) {
 template <typename Errors>
 optional<TableType> Read(SpanU8* data, Errors& errors, Tag<TableType>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "table type"};
-  WASP_TRY_READ_CONTEXT(elemtype, Read<ValType>(data, errors), "element type");
+  WASP_TRY_READ(elemtype, Read<ElemType>(data, errors));
   WASP_TRY_READ(limits, Read<Limits>(data, errors));
   return TableType{limits, elemtype};
 }
@@ -625,7 +641,7 @@ optional<Instr> Read(SpanU8* data, Errors& errors, Tag<Instr>) {
     case Opcode::Block:
     case Opcode::Loop:
     case Opcode::If: {
-      WASP_TRY_READ_CONTEXT(type, Read<ValType>(data, errors), "block type");
+      WASP_TRY_READ(type, Read<BlockType>(data, errors));
       return Instr{Opcode{opcode}, type};
     }
 

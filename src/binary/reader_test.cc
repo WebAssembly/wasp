@@ -470,12 +470,43 @@ TEST(ReaderTest, ReadValType) {
   ExpectRead<ValType>(ValType::I64, MakeSpanU8("\x7e"));
   ExpectRead<ValType>(ValType::F32, MakeSpanU8("\x7d"));
   ExpectRead<ValType>(ValType::F64, MakeSpanU8("\x7c"));
-  ExpectRead<ValType>(ValType::Anyfunc, MakeSpanU8("\x70"));
-  ExpectRead<ValType>(ValType::Func, MakeSpanU8("\x60"));
-  ExpectRead<ValType>(ValType::Void, MakeSpanU8("\x40"));
 }
 
 TEST(ReaderTest, ReadValType_Unknown) {
-  ExpectReadFailure<ValType>({{0, "value type"}, {1, "Unknown value type 16"}},
+  ExpectReadFailure<ValType>({{0, "valtype"}, {1, "Unknown valtype 16"}},
                              MakeSpanU8("\x10"));
+
+  // Overlong encoding of -0x01 == 0x7f is not allowed.
+  ExpectReadFailure<ValType>({{0, "valtype"}, {1, "Unknown valtype 255"}},
+                             MakeSpanU8("\xff\x7f"));
+}
+
+TEST(ReaderTest, ReadBlockType) {
+  ExpectRead<BlockType>(BlockType::I32, MakeSpanU8("\x7f"));
+  ExpectRead<BlockType>(BlockType::I64, MakeSpanU8("\x7e"));
+  ExpectRead<BlockType>(BlockType::F32, MakeSpanU8("\x7d"));
+  ExpectRead<BlockType>(BlockType::F64, MakeSpanU8("\x7c"));
+  ExpectRead<BlockType>(BlockType::Void, MakeSpanU8("\x40"));
+}
+
+TEST(ReaderTest, ReadBlockType_Unknown) {
+  ExpectReadFailure<BlockType>({{0, "blocktype"}, {1, "Unknown blocktype 0"}},
+                               MakeSpanU8("\x00"));
+
+  // Overlong encoding of -0x01 == 0x7f is not allowed.
+  ExpectReadFailure<BlockType>({{0, "blocktype"}, {1, "Unknown blocktype 255"}},
+                               MakeSpanU8("\xff\x7f"));
+}
+
+TEST(ReaderTest, ReadElemType) {
+  ExpectRead<ElemType>(ElemType::Funcref, MakeSpanU8("\x70"));
+}
+
+TEST(ReaderTest, ReadElemType_Unknown) {
+  ExpectReadFailure<ElemType>({{0, "elemtype"}, {1, "Unknown elemtype 0"}},
+                              MakeSpanU8("\x00"));
+
+  // Overlong encoding of -0x10 == 0x70 is not allowed.
+  ExpectReadFailure<ElemType>({{0, "elemtype"}, {1, "Unknown elemtype 240"}},
+                              MakeSpanU8("\xf0\x7f"));
 }

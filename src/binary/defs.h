@@ -17,14 +17,18 @@
 #ifndef WASP_BINARY_DEFS_H_
 #define WASP_BINARY_DEFS_H_
 
-#define WASP_FOREACH_VALTYPE(V) \
-  V(-0x01, I32, "i32")          \
-  V(-0x02, I64, "i64")          \
-  V(-0x03, F32, "f32")          \
-  V(-0x04, F64, "f64")          \
-  V(-0x10, Anyfunc, "anyfunc")  \
-  V(-0x20, Func, "func")        \
-  V(-0x40, Void, "void")
+#define WASP_FOREACH_VAL_TYPE(V) \
+  V(0x7f, I32, "i32")            \
+  V(0x7e, I64, "i64")            \
+  V(0x7d, F32, "f32")            \
+  V(0x7c, F64, "f64")
+
+#define WASP_FOREACH_BLOCK_TYPE(V) \
+  WASP_FOREACH_VAL_TYPE(V)         \
+  V(0x40, Void, "")
+
+#define WASP_FOREACH_ELEM_TYPE(V) \
+  V(0x70, Funcref, "funcref")
 
 #define WASP_FOREACH_EXTERNAL_KIND(V) \
   V(0, Func, "func")                  \

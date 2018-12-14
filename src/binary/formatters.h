@@ -29,6 +29,20 @@ struct formatter<::wasp::binary::ValType> : formatter<string_view> {
 };
 
 template <>
+struct formatter<::wasp::binary::BlockType> {
+  template <typename Ctx>
+  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  template <typename Ctx>
+  typename Ctx::iterator format(::wasp::binary::BlockType, Ctx&);
+};
+
+template <>
+struct formatter<::wasp::binary::ElemType> : formatter<string_view> {
+  template <typename Ctx>
+  typename Ctx::iterator format(::wasp::binary::ElemType, Ctx&);
+};
+
+template <>
 struct formatter<::wasp::binary::ExternalKind> : formatter<string_view> {
   template <typename Ctx>
   typename Ctx::iterator format(::wasp::binary::ExternalKind, Ctx&);

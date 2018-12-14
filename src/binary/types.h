@@ -46,7 +46,19 @@ struct OwnedTraits {
 
 enum class ValType : s32 {
 #define WASP_V(val, Name, str) Name,
-  WASP_FOREACH_VALTYPE(WASP_V)
+  WASP_FOREACH_VAL_TYPE(WASP_V)
+#undef WASP_V
+};
+
+enum class BlockType : s32 {
+#define WASP_V(val, Name, str) Name,
+  WASP_FOREACH_BLOCK_TYPE(WASP_V)
+#undef WASP_V
+};
+
+enum class ElemType : s32 {
+#define WASP_V(val, Name, str) Name,
+  WASP_FOREACH_ELEM_TYPE(WASP_V)
 #undef WASP_V
 };
 
@@ -150,11 +162,11 @@ struct TypeEntry {
 };
 
 struct TableType {
-  TableType(Limits limits, ValType elemtype)
+  TableType(Limits limits, ElemType elemtype)
       : limits(limits), elemtype(elemtype) {}
 
   Limits limits;
-  ValType elemtype;
+  ElemType elemtype;
 };
 
 struct MemoryType {
@@ -229,7 +241,7 @@ struct Instr {
 
   Opcode opcode;
   variant<EmptyImmediate,
-          ValType,
+          BlockType,
           Index,
           CallIndirectImmediate,
           BrTableImmediate,

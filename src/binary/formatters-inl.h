@@ -32,9 +32,43 @@ typename Ctx::iterator formatter<::wasp::binary::ValType>::format(
   case ::wasp::binary::ValType::Name: \
     result = str;                     \
     break;
-    WASP_FOREACH_VALTYPE(WASP_V)
+    WASP_FOREACH_VAL_TYPE(WASP_V)
 #undef WASP_V
-    default: WASP_UNREACHABLE();
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::BlockType>::format(
+    ::wasp::binary::BlockType self,
+    Ctx& ctx) {
+  switch (self) {
+#define WASP_V(val, Name, str)          \
+  case ::wasp::binary::BlockType::Name: \
+    return format_to(ctx.begin(), "[{}]", str);
+    WASP_FOREACH_BLOCK_TYPE(WASP_V)
+#undef WASP_V
+    default:
+      WASP_UNREACHABLE();
+  }
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::ElemType>::format(
+    ::wasp::binary::ElemType self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+#define WASP_V(val, Name, str)         \
+  case ::wasp::binary::ElemType::Name: \
+    result = str;                      \
+    break;
+    WASP_FOREACH_ELEM_TYPE(WASP_V)
+#undef WASP_V
+    default:
+      WASP_UNREACHABLE();
   }
   return formatter<string_view>::format(result, ctx);
 }
@@ -271,8 +305,8 @@ typename Ctx::iterator formatter<::wasp::binary::Instr>::format(
 
   if (holds_alternative<::wasp::binary::EmptyImmediate>(self.immediate)) {
     // Nothing.
-  } else if (holds_alternative<::wasp::binary::ValType>(self.immediate)) {
-    it = format_to(it, " {}", get<::wasp::binary::ValType>(self.immediate));
+  } else if (holds_alternative<::wasp::binary::BlockType>(self.immediate)) {
+    it = format_to(it, " {}", get<::wasp::binary::BlockType>(self.immediate));
   } else if (holds_alternative<::wasp::Index>(self.immediate)) {
     it = format_to(it, " {}", get<::wasp::Index>(self.immediate));
   } else if (holds_alternative<::wasp::binary::CallIndirectImmediate>(

@@ -34,6 +34,15 @@ TEST(FormatTest, ValType) {
   EXPECT_EQ(R"(i32)", TestFormat(ValType::I32));
 }
 
+TEST(FormatTest, BlockType) {
+  EXPECT_EQ(R"([i32])", TestFormat(BlockType::I32));
+  EXPECT_EQ(R"([])", TestFormat(BlockType::Void));
+}
+
+TEST(FormatTest, ElemType) {
+  EXPECT_EQ(R"(funcref)", TestFormat(ElemType::Funcref));
+}
+
 TEST(FormatTest, ExternalKind) {
   EXPECT_EQ(R"(func)", TestFormat(ExternalKind::Func));
 }
@@ -93,8 +102,8 @@ TEST(FormatTest, FuncType) {
 }
 
 TEST(FormatTest, TableType) {
-  EXPECT_EQ(R"({min 1, max 2} anyfunc)",
-            TestFormat(TableType{Limits{1, 2}, ValType::Anyfunc}));
+  EXPECT_EQ(R"({min 1, max 2} funcref)",
+            TestFormat(TableType{Limits{1, 2}, ElemType::Funcref}));
 }
 
 TEST(FormatTest, MemoryType) {
@@ -115,8 +124,8 @@ TEST(FormatTest, Import) {
 
   // Table
   EXPECT_EQ(
-      R"({module "c", name "d", desc table {min 1} anyfunc})",
-      TestFormat(Import<>{"c", "d", TableType{Limits{1}, ValType::Anyfunc}}));
+      R"({module "c", name "d", desc table {min 1} funcref})",
+      TestFormat(Import<>{"c", "d", TableType{Limits{1}, ElemType::Funcref}}));
 
   // Memory
   EXPECT_EQ(
@@ -167,8 +176,8 @@ TEST(FormatTest, BrTableImmediate) {
 TEST(FormatTest, Instr) {
   // nop
   EXPECT_EQ(R"(nop)", TestFormat(Instr{Opcode::Nop}));
-  // block i32
-  EXPECT_EQ(R"(block i32)", TestFormat(Instr{Opcode::Block, ValType::I32}));
+  // block (result i32)
+  EXPECT_EQ(R"(block [i32])", TestFormat(Instr{Opcode::Block, BlockType::I32}));
   // br 3
   EXPECT_EQ(R"(br 3)", TestFormat(Instr{Opcode::Br, Index{3u}}));
   // br_table 0 1 4
@@ -201,8 +210,8 @@ TEST(FormatTest, Func) {
 }
 
 TEST(FormatTest, Table) {
-  EXPECT_EQ(R"({type {min 1} anyfunc})",
-            TestFormat(Table{TableType{Limits{1}, ValType::Anyfunc}}));
+  EXPECT_EQ(R"({type {min 1} funcref})",
+            TestFormat(Table{TableType{Limits{1}, ElemType::Funcref}}));
 }
 
 TEST(FormatTest, Memory) {

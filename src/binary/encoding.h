@@ -28,12 +28,32 @@ namespace encoding {
 constexpr u8 Magic[] = {0, 'a', 's', 'm'};
 constexpr u8 Version[] = {1, 0, 0, 0};
 
+struct Type {
+  static constexpr u8 Func = 0x60;
+};
+
 struct ValType {
-#define WASP_V(val, Name, str) static constexpr s32 Name = val;
-  WASP_FOREACH_VALTYPE(WASP_V)
+#define WASP_V(val, Name, str) static constexpr u8 Name = val;
+  WASP_FOREACH_VAL_TYPE(WASP_V)
 #undef WASP_V
 
-  static optional<::wasp::binary::ValType> Decode(s32);
+  static optional<::wasp::binary::ValType> Decode(u8);
+};
+
+struct BlockType {
+#define WASP_V(val, Name, str) static constexpr u8 Name = val;
+  WASP_FOREACH_BLOCK_TYPE(WASP_V)
+#undef WASP_V
+
+  static optional<::wasp::binary::BlockType> Decode(u8);
+};
+
+struct ElemType {
+#define WASP_V(val, Name, str) static constexpr u8 Name = val;
+  WASP_FOREACH_ELEM_TYPE(WASP_V)
+#undef WASP_V
+
+  static optional<::wasp::binary::ElemType> Decode(u8);
 };
 
 struct ExternalKind {
