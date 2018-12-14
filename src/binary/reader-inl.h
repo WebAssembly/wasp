@@ -19,6 +19,7 @@
 #include "src/base/formatters.h"
 #include "src/base/macros.h"
 #include "src/binary/encoding.h"
+#include "src/binary/errors_context_guard.h"
 #include "src/binary/formatters.h"
 
 #define WASP_TRY_READ(var, call) \
@@ -204,82 +205,6 @@ optional<std::vector<T>> ReadVector(SpanU8* data,
     result.emplace_back(std::move(elt));
   }
   return result;
-}
-
-// -----------------------------------------------------------------------------
-
-template <typename Sequence>
-LazySequenceIterator<Sequence>::LazySequenceIterator(Sequence* seq, SpanU8 data)
-    : sequence_(seq), data_(data) {
-  if (empty()) {
-    clear();
-  } else {
-    operator++();
-  }
-}
-
-template <typename Sequence>
-auto LazySequenceIterator<Sequence>::operator++() -> LazySequenceIterator& {
-  if (empty()) {
-    clear();
-  } else {
-    value_ = Read(&data_, sequence_->errors_, Tag<value_type>{});
-    if (!value_) {
-      clear();
-    }
-  }
-  return *this;
-}
-
-template <typename Sequence>
-auto LazySequenceIterator<Sequence>::operator++(int) -> LazySequenceIterator {
-  auto temp = *this;
-  operator++();
-  return temp;
-}
-
-// -----------------------------------------------------------------------------
-
-template <typename Errors>
-LazyModule<Errors>::LazyModule(SpanU8 data, Errors& errors)
-    : magic{ReadBytes(&data, 4, errors)},
-      version{ReadBytes(&data, 4, errors)},
-      sections{data, errors} {
-  const SpanU8 kMagic{encoding::Magic};
-  const SpanU8 kVersion{encoding::Version};
-
-  if (magic != kMagic) {
-    errors.OnError(
-        data, format("Magic mismatch: expected {}, got {}", kMagic, *magic));
-  }
-
-  if (version != kVersion) {
-    errors.OnError(data, format("Version mismatch: expected {}, got {}",
-                                kVersion, *version));
-  }
-}
-
-// -----------------------------------------------------------------------------
-
-template <typename T, typename Errors>
-LazySection<T, Errors>::LazySection(SpanU8 data, Errors& errors)
-    : count(ReadCount(&data, errors)), sequence(data, errors) {}
-
-template <typename T, typename Errors>
-LazySection<T, Errors>::LazySection(KnownSection<> section, Errors& errors)
-    : LazySection(section.data, errors) {}
-
-template <typename Errors>
-StartSection<Errors>::StartSection(SpanU8 data, Errors& errors)
-    : errors_(errors), start_(Read<Start>(&data, errors)) {}
-
-template <typename Errors>
-StartSection<Errors>::StartSection(KnownSection<> section, Errors& errors)
-    : errors_(errors), start_(Read<Start>(&section.data, errors)) {}
-
-template <typename Errors>
-optional<Start> StartSection<Errors>::start() {
-  return start_;
 }
 
 // -----------------------------------------------------------------------------
@@ -517,15 +442,9 @@ template <typename Errors>
 optional<ConstantExpression<>> Read(SpanU8* data,
                                     Errors& errors,
                                     Tag<ConstantExpression<>>) {
-  LazyInstructions<Errors> instrs{*data, errors};
-  auto iter = instrs.begin(), end = instrs.end();
-
-  // Read instruction.
-  if (iter == end) {
-    errors.OnError(*data, "Unexpected end of constant expression");
-    return nullopt;
-  }
-  auto instr = *iter++;
+  SpanU8 orig_data = *data;
+  ErrorsContextGuard<Errors> guard{errors, *data, "constant expression"};
+  WASP_TRY_READ(instr, Read<Instruction>(data, errors));
   switch (instr.opcode) {
     case Opcode::I32Const:
     case Opcode::I64Const:
@@ -542,16 +461,13 @@ optional<ConstantExpression<>> Read(SpanU8* data,
       return nullopt;
   }
 
-  // Instruction must be followed by end.
-  if (iter == end || iter->opcode != Opcode::End) {
+  WASP_TRY_READ(end, Read<Instruction>(data, errors));
+  if (end.opcode != Opcode::End) {
     errors.OnError(*data, "Expected end instruction");
     return nullopt;
   }
-
-  auto len = iter.data().begin() - data->begin();
-  ConstantExpression<> expr{data->subspan(0, len)};
-  *data = remove_prefix(*data, len);
-  return expr;
+  return ConstantExpression<>{
+      orig_data.subspan(0, data->begin() - orig_data.begin())};
 }
 
 template <typename Errors>

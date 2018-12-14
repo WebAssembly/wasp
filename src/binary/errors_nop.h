@@ -14,4 +14,23 @@
 // limitations under the License.
 //
 
-#include "src/binary/reader.h"
+#ifndef WASP_BINARY_ERRORS_NOP_H_
+#define WASP_BINARY_ERRORS_NOP_H_
+
+#include "src/base/types.h"
+
+namespace wasp {
+namespace binary {
+
+/// ---
+class ErrorsNop {
+ public:
+  void PushContext(SpanU8 pos, string_view desc) {}
+  void PopContext() {}
+  void OnError(SpanU8 pos, string_view message) {}
+};
+
+}  // namespace binary
+}  // namespace wasp
+
+#endif // WASP_BINARY_ERRORS_NOP_H_

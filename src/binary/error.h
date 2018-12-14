@@ -14,4 +14,24 @@
 // limitations under the License.
 //
 
-#include "src/binary/reader.h"
+#ifndef WASP_BINARY_ERROR_H_
+#define WASP_BINARY_ERROR_H_
+
+#include "src/base/types.h"
+
+namespace wasp {
+namespace binary {
+
+/// ---
+struct Error {
+  explicit Error(SpanU8 pos, std::string&& message)
+      : pos{pos}, message{std::move(message)} {}
+
+  SpanU8 pos;
+  std::string message;
+};
+
+}  // namespace binary
+}  // namespace wasp
+
+#endif  // WASP_BINARY_ERROR_H_

@@ -14,4 +14,28 @@
 // limitations under the License.
 //
 
-#include "src/binary/reader.h"
+#ifndef WASP_BINARY_ERRORS_VECTOR_H_
+#define WASP_BINARY_ERRORS_VECTOR_H_
+
+#include <cstdio>
+
+#include "src/base/types.h"
+
+namespace wasp {
+namespace binary {
+
+/// ---
+class ErrorsVector {
+ public:
+  // TODO
+  void PushContext(SpanU8 pos, string_view desc) {}
+  void PopContext() {}
+  void OnError(SpanU8 pos, string_view message) {
+    print("error: {}\n", message);
+  }
+};
+
+}  // namespace binary
+}  // namespace wasp
+
+#endif // WASP_BINARY_ERRORS_VECTOR_H_

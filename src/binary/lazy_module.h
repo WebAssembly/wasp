@@ -14,39 +14,33 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_READER_H_
-#define WASP_BINARY_READER_H_
+#ifndef WASP_BINARY_LAZY_MODULE_H
+#define WASP_BINARY_LAZY_MODULE_H
 
 #include "src/base/types.h"
 #include "src/binary/types.h"
+#include "src/binary/lazy_sequence.h"
 
 namespace wasp {
 namespace binary {
 
-template <typename T, typename Errors>
-optional<T> Read(SpanU8* data, Errors&);
+/// ---
+template <typename Errors>
+class LazyModule {
+ public:
+  explicit LazyModule(SpanU8, Errors&);
+
+  optional<SpanU8> magic;
+  optional<SpanU8> version;
+  LazySequence<Section<>, Errors> sections;
+};
 
 template <typename Errors>
-optional<SpanU8> ReadBytes(SpanU8* data, SpanU8::index_type N, Errors&);
-
-template <typename T, typename Errors>
-optional<T> ReadVarInt(SpanU8* data, Errors&, string_view desc);
-
-template <typename Errors>
-optional<Index> ReadIndex(SpanU8* data, Errors&, string_view desc);
-
-template <typename Errors>
-optional<Index> ReadCount(SpanU8* data, Errors&);
-
-template <typename Errors>
-optional<string_view> ReadString(SpanU8* data, Errors&, string_view desc);
-
-template <typename T, typename Errors>
-optional<std::vector<T>> ReadVector(SpanU8* data, Errors&, string_view desc);
+LazyModule<Errors> ReadModule(SpanU8 data, Errors&);
 
 }  // namespace binary
 }  // namespace wasp
 
-#include "src/binary/reader-inl.h"
+#include "src/binary/lazy_module-inl.h"
 
-#endif  // WASP_BINARY_READER_H_
+#endif // WASP_BINARY_LAZY_MODULE_H

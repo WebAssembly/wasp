@@ -19,9 +19,11 @@
 #include "src/base/file.h"
 #include "src/base/formatters.h"
 #include "src/base/types.h"
+#include "src/binary/errors_vector.h"
 #include "src/binary/formatters.h"
+#include "src/binary/lazy_module.h"
+#include "src/binary/lazy_section.h"
 #include "src/binary/types.h"
-#include "src/binary/reader.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

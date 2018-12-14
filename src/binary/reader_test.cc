@@ -1029,53 +1029,54 @@ TEST(ReaderTest, ConstantExpression) {
 
 TEST(ReaderTest, ConstantExpression_NoEnd) {
   // i32.const
-  ExpectReadFailure<ConstantExpression<>>({{0, "Expected end instruction"}},
-                                          MakeSpanU8("\x41\x00"));
+  ExpectReadFailure<ConstantExpression<>>(
+      {{0, "constant expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
+      MakeSpanU8("\x41\x00"));
 
   // i64.const
   ExpectReadFailure<ConstantExpression<>>(
-      {{0, "Expected end instruction"}},
+      {{0, "constant expression"}, {7, "opcode"}, {7, "Unable to read u8"}},
       MakeSpanU8("\x42\x80\x80\x80\x80\x80\x01"));
 
   // f32.const
-  ExpectReadFailure<ConstantExpression<>>({{0, "Expected end instruction"}},
-                                          MakeSpanU8("\x43\x00\x00\x00\x00"));
+  ExpectReadFailure<ConstantExpression<>>(
+      {{0, "constant expression"}, {5, "opcode"}, {5, "Unable to read u8"}},
+      MakeSpanU8("\x43\x00\x00\x00\x00"));
 
   // f64.const
   ExpectReadFailure<ConstantExpression<>>(
-      {{0, "Expected end instruction"}},
+      {{0, "constant expression"}, {9, "opcode"}, {9, "Unable to read u8"}},
       MakeSpanU8("\x44\x00\x00\x00\x00\x00\x00\x00\x00"));
 
   // get_global
-  ExpectReadFailure<ConstantExpression<>>({{0, "Expected end instruction"}},
-                                          MakeSpanU8("\x23\x00"));
+  ExpectReadFailure<ConstantExpression<>>(
+      {{0, "constant expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
+      MakeSpanU8("\x23\x00"));
 }
 
 TEST(ReaderTest, ConstantExpression_TooLong) {
-  ExpectReadFailure<ConstantExpression<>>({{0, "Expected end instruction"}},
-                                          MakeSpanU8("\x41\x00\x01\x0b"));
+  ExpectReadFailure<ConstantExpression<>>(
+      {{0, "constant expression"}, {3, "Expected end instruction"}},
+      MakeSpanU8("\x41\x00\x01\x0b"));
 }
 
 TEST(ReaderTest, ConstantExpression_InvalidInstruction) {
-  TestErrors errors;
-  auto data = MakeSpanU8("\x06");
-  const SpanU8 orig_data = data;
-  auto result = Read<ConstantExpression<>>(&data, errors);
-  ExpectErrors({{{0, "opcode"}, {1, "Unknown opcode: 6"}},
-                {{0, "Unexpected end of constant expression"}}},
-               errors, orig_data);
-  ExpectEmptyOptional(result);
+  ExpectReadFailure<ConstantExpression<>>(
+      {{0, "constant expression"}, {0, "opcode"}, {1, "Unknown opcode: 6"}},
+      MakeSpanU8("\x06"));
 }
 
 TEST(ReaderTest, ConstantExpression_IllegalInstruction) {
   ExpectReadFailure<ConstantExpression<>>(
-      {{0, "Illegal instruction in constant expression: unreachable"}},
+      {{0, "constant expression"},
+       {1, "Illegal instruction in constant expression: unreachable"}},
       MakeSpanU8("\x00"));
 }
 
 TEST(ReaderTest, ConstantExpression_PastEnd) {
   ExpectReadFailure<ConstantExpression<>>(
-      {{0, "Unexpected end of constant expression"}}, MakeSpanU8(""));
+      {{0, "constant expression"}, {0, "opcode"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""));
 }
 
 TEST(ReaderTest, Instruction) {
@@ -1322,7 +1323,9 @@ TEST(ReaderTest, Global_PastEnd) {
                               MakeSpanU8(""));
 
   ExpectReadFailure<Global<>>({{0, "global"},
-                               {2, "Unexpected end of constant expression"}},
+                               {2, "constant expression"},
+                               {2, "opcode"},
+                               {2, "Unable to read u8"}},
                               MakeSpanU8("\x7f\x00"));
 }
 
@@ -1368,11 +1371,12 @@ TEST(ReaderTest, ElementSegment_PastEnd) {
                                        {0, "Unable to read u8"}},
                                       MakeSpanU8(""));
 
-  ExpectReadFailure<ElementSegment<>>(
-      {{0, "element segment"},
-       {1, "offset"},
-       {1, "Unexpected end of constant expression"}},
-      MakeSpanU8("\x00"));
+  ExpectReadFailure<ElementSegment<>>({{0, "element segment"},
+                                       {1, "offset"},
+                                       {1, "constant expression"},
+                                       {1, "opcode"},
+                                       {1, "Unable to read u8"}},
+                                      MakeSpanU8("\x00"));
 
   ExpectReadFailure<ElementSegment<>>({{0, "element segment"},
                                        {4, "initializers"},
@@ -1427,11 +1431,12 @@ TEST(ReaderTest, DataSegment_PastEnd) {
                                     {0, "Unable to read u8"}},
                                    MakeSpanU8(""));
 
-  ExpectReadFailure<DataSegment<>>(
-      {{0, "data segment"},
-       {1, "offset"},
-       {1, "Unexpected end of constant expression"}},
-      MakeSpanU8("\x00"));
+  ExpectReadFailure<DataSegment<>>({{0, "data segment"},
+                                    {1, "offset"},
+                                    {1, "constant expression"},
+                                    {1, "opcode"},
+                                    {1, "Unable to read u8"}},
+                                   MakeSpanU8("\x00"));
 
   ExpectReadFailure<DataSegment<>>(
       {{0, "data segment"}, {4, "count"}, {4, "Unable to read u8"}},

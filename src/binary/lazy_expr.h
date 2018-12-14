@@ -14,39 +14,26 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_READER_H_
-#define WASP_BINARY_READER_H_
+#ifndef WASP_BINARY_LAZY_EXPR_H
+#define WASP_BINARY_LAZY_EXPR_H
 
 #include "src/base/types.h"
 #include "src/binary/types.h"
+#include "src/binary/lazy-sequence.h"
 
 namespace wasp {
 namespace binary {
 
-template <typename T, typename Errors>
-optional<T> Read(SpanU8* data, Errors&);
+/// ---
+template <typename Errors>
+using LazyExpr = LazySequence<Instruction, Errors>;
 
 template <typename Errors>
-optional<SpanU8> ReadBytes(SpanU8* data, SpanU8::index_type N, Errors&);
-
-template <typename T, typename Errors>
-optional<T> ReadVarInt(SpanU8* data, Errors&, string_view desc);
-
-template <typename Errors>
-optional<Index> ReadIndex(SpanU8* data, Errors&, string_view desc);
-
-template <typename Errors>
-optional<Index> ReadCount(SpanU8* data, Errors&);
-
-template <typename Errors>
-optional<string_view> ReadString(SpanU8* data, Errors&, string_view desc);
-
-template <typename T, typename Errors>
-optional<std::vector<T>> ReadVector(SpanU8* data, Errors&, string_view desc);
+LazyExpr<Errors> ReadExpr(SpanU8 data, Errors& errors) {
+  return LazyExpr<Errors>{data, errors};
+}
 
 }  // namespace binary
 }  // namespace wasp
 
-#include "src/binary/reader-inl.h"
-
-#endif  // WASP_BINARY_READER_H_
+#endif  // WASP_BINARY_LAZY_EXPR_H
