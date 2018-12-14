@@ -486,6 +486,31 @@ optional<Import<>> Read(SpanU8* data, Errors& errors, Tag<Import<>>) {
 }
 
 template <typename Errors>
+optional<BrTableImmediate> Read(SpanU8* data,
+                                Errors& errors,
+                                Tag<BrTableImmediate>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "br_table"};
+  WASP_TRY_READ(targets, ReadVector<Index>(data, errors, "targets"));
+  WASP_TRY_READ_CONTEXT(default_target, ReadIndex(data, errors),
+                        "default target");
+  return BrTableImmediate{std::move(targets), default_target};
+}
+
+template <typename Errors>
+optional<CallIndirectImmediate> Read(SpanU8* data,
+                                     Errors& errors,
+                                     Tag<CallIndirectImmediate>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "call_indirect"};
+  WASP_TRY_READ(index, ReadIndex(data, errors));
+  WASP_TRY_READ_CONTEXT(reserved, Read<u8>(data, errors), "reserved");
+  if (reserved != 0) {
+    errors.OnError(*data, format("Reserved byte must be 0, got {}", reserved));
+    return nullopt;
+  }
+  return CallIndirectImmediate{index, reserved};
+}
+
+template <typename Errors>
 optional<ConstantExpression<>> Read(SpanU8* data,
                                     Errors& errors,
                                     Tag<ConstantExpression<>>) {
@@ -686,20 +711,14 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
 
     // Index* immediates.
     case Opcode::BrTable: {
-      WASP_TRY_READ(targets,
-                    ReadVector<Index>(data, errors, "br_table targets"));
-      WASP_TRY_READ_CONTEXT(default_target, ReadIndex(data, errors),
-                            "br_table default target");
-      return Instruction{Opcode{opcode},
-                         BrTableImmediate{std::move(targets), default_target}};
+      WASP_TRY_READ(immediate, Read<BrTableImmediate>(data, errors));
+      return Instruction{Opcode{opcode}, std::move(immediate)};
     }
 
     // Index, reserved immediates.
     case Opcode::CallIndirect: {
-      WASP_TRY_READ(index, ReadIndex(data, errors));
-      WASP_TRY_READ_CONTEXT(reserved, Read<u8>(data, errors), "reserved");
-      return Instruction{Opcode{opcode},
-                         CallIndirectImmediate{index, reserved}};
+      WASP_TRY_READ(immediate, Read<CallIndirectImmediate>(data, errors));
+      return Instruction{Opcode{opcode}, immediate};
     }
 
     // Memarg (alignment, offset) immediates.

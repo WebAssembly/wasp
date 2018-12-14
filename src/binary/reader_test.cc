@@ -897,6 +897,48 @@ TEST(ReaderTest, ReadGlobalType_PastEnd) {
       MakeSpanU8("\x7f"));
 }
 
+TEST(ReaderTest, ReadBrTableImmediate) {
+  ExpectRead<BrTableImmediate>(BrTableImmediate{{}, 0}, MakeSpanU8("\x00\x00"));
+  ExpectRead<BrTableImmediate>(BrTableImmediate{{1, 2}, 3},
+                               MakeSpanU8("\x02\x01\x02\x03"));
+}
+
+TEST(ReaderTest, ReadBrTableImmediate_PastEnd) {
+  ExpectReadFailure<BrTableImmediate>(
+      {{0, "br_table"}, {0, "targets"}, {0, "index"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""));
+
+  ExpectReadFailure<BrTableImmediate>({{0, "br_table"},
+                                       {1, "default target"},
+                                       {1, "index"},
+                                       {1, "Unable to read u8"}},
+                                      MakeSpanU8("\x00"));
+}
+
+TEST(ReaderTest, ReadCallIndirectImmediate) {
+  ExpectRead<CallIndirectImmediate>(CallIndirectImmediate{1, 0},
+                                    MakeSpanU8("\x01\x00"));
+  ExpectRead<CallIndirectImmediate>(CallIndirectImmediate{128, 0},
+                                    MakeSpanU8("\x80\x01\x00"));
+}
+
+TEST(ReaderTest, ReadCallIndirectImmediate_BadReserved) {
+  ExpectReadFailure<CallIndirectImmediate>(
+      {{0, "call_indirect"},
+       {2, "Reserved byte must be 0, got 1"}},
+      MakeSpanU8("\x00\x01"));
+}
+
+TEST(ReaderTest, ReadCallIndirectImmediate_PastEnd) {
+  ExpectReadFailure<CallIndirectImmediate>(
+      {{0, "call_indirect"}, {0, "index"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""));
+
+  ExpectReadFailure<CallIndirectImmediate>(
+      {{0, "call_indirect"}, {1, "reserved"}, {1, "Unable to read u8"}},
+      MakeSpanU8("\x00"));
+}
+
 TEST(ReaderTest, ReadImport) {
   ExpectRead<Import<>>(Import<>{"a", "func", 11u},
                        MakeSpanU8("\x01\x61\x04\x66unc\x00\x0b"));
