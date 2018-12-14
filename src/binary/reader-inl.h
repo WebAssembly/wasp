@@ -26,10 +26,10 @@
   }                              \
   auto var = *opt_##var /* No semicolon. */
 
-#define WASP_TRY_READ_CONTEXT(var, call, desc) \
-  errors.PushContext(*data, desc);             \
-  WASP_TRY_READ(var, call);                    \
-  errors.PopContext();
+#define WASP_TRY_READ_CONTEXT(var, call, desc)                 \
+  ErrorsContextGuard<Errors> guard_##var(errors, *data, desc); \
+  WASP_TRY_READ(var, call);                                    \
+  guard_##var.PopContext() /* No semicolon. */
 
 namespace wasp {
 namespace binary {
@@ -285,11 +285,11 @@ optional<Start> StartSection<Errors>::start() {
 
 // -----------------------------------------------------------------------------
 
-#define WASP_TRY_DECODE(out_var, in_var, Type, name)            \
-  auto out_var = encoding::Type::Decode(in_var);                \
-  if (!out_var) {                                               \
-    errors.OnError(*data, format("Unknown " name " {}", in_var)); \
-    return nullopt;                                             \
+#define WASP_TRY_DECODE(out_var, in_var, Type, name)               \
+  auto out_var = encoding::Type::Decode(in_var);                   \
+  if (!out_var) {                                                  \
+    errors.OnError(*data, format("Unknown " name ": {}", in_var)); \
+    return nullopt;                                                \
   }
 
 template <typename Errors>
@@ -353,15 +353,22 @@ optional<Opcode> Read(SpanU8* data, Errors& errors, Tag<Opcode>) {
 template <typename Errors>
 optional<Limits> Read(SpanU8* data, Errors& errors, Tag<Limits>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "limits"};
-  const u32 kFlags_HasMax = 1;
-  WASP_TRY_READ_CONTEXT(flags, Read<u32>(data, errors), "flags");
-  WASP_TRY_READ_CONTEXT(min, Read<u32>(data, errors), "min");
+  WASP_TRY_READ_CONTEXT(flags, Read<u8>(data, errors), "flags");
+  switch (flags) {
+    case encoding::Limits::Flags_NoMax: {
+      WASP_TRY_READ_CONTEXT(min, Read<u32>(data, errors), "min");
+      return Limits{min};
+    }
 
-  if (flags & kFlags_HasMax) {
-    WASP_TRY_READ_CONTEXT(max, Read<u32>(data, errors), "max");
-    return Limits{min, max};
-  } else {
-    return Limits{min};
+    case encoding::Limits::Flags_HasMax: {
+      WASP_TRY_READ_CONTEXT(min, Read<u32>(data, errors), "min");
+      WASP_TRY_READ_CONTEXT(max, Read<u32>(data, errors), "max");
+      return Limits{min, max};
+    }
+
+    default:
+      errors.OnError(*data, format("Invalid flags value: {}", flags));
+      return nullopt;
   }
 }
 
@@ -375,7 +382,7 @@ optional<Locals> Read(SpanU8* data, Errors& errors, Tag<Locals>) {
 
 template <typename Errors>
 optional<FunctionType> Read(SpanU8* data, Errors& errors, Tag<FunctionType>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "func type"};
+  ErrorsContextGuard<Errors> guard{errors, *data, "function type"};
   WASP_TRY_READ(param_types,
                 ReadVector<ValueType>(data, errors, "param types"));
   WASP_TRY_READ(result_types,
@@ -394,7 +401,7 @@ optional<TypeEntry> Read(SpanU8* data, Errors& errors, Tag<TypeEntry>) {
   }
 
   WASP_TRY_READ(function_type, Read<FunctionType>(data, errors));
-  return TypeEntry{form, std::move(function_type)};
+  return TypeEntry{std::move(function_type)};
 }
 
 template <typename Errors>
@@ -743,7 +750,7 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
     }
 
     default:
-      errors.OnError(*data, format("Unknown opcode {:#02x}", opcode));
+      errors.OnError(*data, format("Unknown opcode: {:#02x}", opcode));
       return nullopt;
   }
 }

@@ -88,6 +88,11 @@ struct Opcode {
   static optional<::wasp::binary::Opcode> Decode(u8);
 };
 
+struct Limits {
+  static constexpr u8 Flags_NoMax = 0;
+  static constexpr u8 Flags_HasMax = 1;
+};
+
 }  // namespace encoding
 }  // namespace binary
 }  // namespace wasp

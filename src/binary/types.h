@@ -101,12 +101,18 @@ struct Limits {
   optional<u32> max;
 };
 
+bool operator==(const Limits&, const Limits&);
+bool operator!=(const Limits&, const Limits&);
+
 struct Locals {
   Locals(Index count, ValueType type) : count(count), type(type) {}
 
   Index count;
   ValueType type;
 };
+
+bool operator==(const Locals&, const Locals&);
+bool operator!=(const Locals&, const Locals&);
 
 template <typename Traits = BorrowedTraits>
 struct KnownSection {
@@ -153,11 +159,17 @@ struct FunctionType {
   ValueTypes result_types;
 };
 
+bool operator==(const FunctionType&, const FunctionType&);
+bool operator!=(const FunctionType&, const FunctionType&);
+
 struct TypeEntry {
   TypeEntry(FunctionType&& type) : type(std::move(type)) {}
 
   FunctionType type;
 };
+
+bool operator==(const TypeEntry&, const TypeEntry&);
+bool operator!=(const TypeEntry&, const TypeEntry&);
 
 struct TableType {
   TableType(Limits limits, ElementType elemtype)
@@ -167,11 +179,17 @@ struct TableType {
   ElementType elemtype;
 };
 
+bool operator==(const TableType&, const TableType&);
+bool operator!=(const TableType&, const TableType&);
+
 struct MemoryType {
   explicit MemoryType(Limits limits) : limits(limits) {}
 
   Limits limits;
 };
+
+bool operator==(const MemoryType&, const MemoryType&);
+bool operator!=(const MemoryType&, const MemoryType&);
 
 struct GlobalType {
   GlobalType(ValueType valtype, Mutability mut) : valtype(valtype), mut(mut) {}
@@ -179,6 +197,9 @@ struct GlobalType {
   ValueType valtype;
   Mutability mut;
 };
+
+bool operator==(const GlobalType&, const GlobalType&);
+bool operator!=(const GlobalType&, const GlobalType&);
 
 template <typename Traits = BorrowedTraits>
 struct Import {
@@ -194,6 +215,11 @@ struct Import {
   typename Traits::Name name;
   variant<Index, TableType, MemoryType, GlobalType> desc;
 };
+
+template <typename Traits = BorrowedTraits>
+bool operator==(const Import<Traits>&, const Import<Traits>&);
+template <typename Traits = BorrowedTraits>
+bool operator!=(const Import<Traits>&, const Import<Traits>&);
 
 template <typename Traits = BorrowedTraits>
 struct Expression {
@@ -350,5 +376,7 @@ struct Module {
 
 }  // namespace binary
 }  // namespace wasp
+
+#include "src/binary/types-inl.h"
 
 #endif  // WASP_BINARY_TYPES_H_

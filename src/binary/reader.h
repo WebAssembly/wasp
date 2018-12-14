@@ -59,10 +59,18 @@ class ErrorsContextGuard {
       : errors_{errors} {
     errors.PushContext(pos, desc);
   }
-  ~ErrorsContextGuard() { errors_.PopContext(); }
+  ~ErrorsContextGuard() { PopContext(); }
+
+  void PopContext() {
+    if (!popped_context_) {
+      errors_.PopContext();
+      popped_context_ = true;
+    }
+  }
 
  private:
   Errors& errors_;
+  bool popped_context_ = false;
 };
 
 template <typename Sequence>
