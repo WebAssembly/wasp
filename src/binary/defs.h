@@ -70,11 +70,11 @@
   V(0x00, 0x11, CallIndirect, "call_indirect")            \
   V(0x00, 0x1a, Drop, "drop")                             \
   V(0x00, 0x1b, Select, "select")                         \
-  V(0x00, 0x20, GetLocal, "get_local")                    \
-  V(0x00, 0x21, SetLocal, "set_local")                    \
-  V(0x00, 0x22, TeeLocal, "tee_local")                    \
-  V(0x00, 0x23, GetGlobal, "get_global")                  \
-  V(0x00, 0x24, SetGlobal, "set_global")                  \
+  V(0x00, 0x20, LocalGet, "local.get")                    \
+  V(0x00, 0x21, LocalSet, "local.set")                    \
+  V(0x00, 0x22, LocalTee, "local.tee")                    \
+  V(0x00, 0x23, GlobalGet, "global.get")                  \
+  V(0x00, 0x24, GlobalSet, "global.set")                  \
   V(0x00, 0x28, I32Load, "i32.load")                      \
   V(0x00, 0x29, I64Load, "i64.load")                      \
   V(0x00, 0x2a, F32Load, "f32.load")                      \
@@ -203,29 +203,29 @@
   V(0x00, 0xa5, F64Max, "f64.max")                        \
   V(0x00, 0xa6, F64Copysign, "f64.copysign")              \
   V(0x00, 0xa7, I32WrapI64, "i32.wrap_i64")               \
-  V(0x00, 0xa8, I32TruncSF32, "i32.trunc_s/f32")          \
-  V(0x00, 0xa9, I32TruncUF32, "i32.trunc_u/f32")          \
-  V(0x00, 0xaa, I32TruncSF64, "i32.trunc_s/f64")          \
-  V(0x00, 0xab, I32TruncUF64, "i32.trunc_u/f64")          \
-  V(0x00, 0xac, I64ExtendSI32, "i64.extend_s/i32")        \
-  V(0x00, 0xad, I64ExtendUI32, "i64.extend_u/i32")        \
-  V(0x00, 0xae, I64TruncSF32, "i64.trunc_s/f32")          \
-  V(0x00, 0xaf, I64TruncUF32, "i64.trunc_u/f32")          \
-  V(0x00, 0xb0, I64TruncSF64, "i64.trunc_s/f64")          \
-  V(0x00, 0xb1, I64TruncUF64, "i64.trunc_u/f64")          \
-  V(0x00, 0xb2, F32ConvertSI32, "f32.convert_s/i32")      \
-  V(0x00, 0xb3, F32ConvertUI32, "f32.convert_u/i32")      \
-  V(0x00, 0xb4, F32ConvertSI64, "f32.convert_s/i64")      \
-  V(0x00, 0xb5, F32ConvertUI64, "f32.convert_u/i64")      \
-  V(0x00, 0xb6, F32DemoteF64, "f32.demote/f64")           \
-  V(0x00, 0xb7, F64ConvertSI32, "f64.convert_s/i32")      \
-  V(0x00, 0xb8, F64ConvertUI32, "f64.convert_u/i32")      \
-  V(0x00, 0xb9, F64ConvertSI64, "f64.convert_s/i64")      \
-  V(0x00, 0xba, F64ConvertUI64, "f64.convert_u/i64")      \
-  V(0x00, 0xbb, F64PromoteF32, "f64.promote/f32")         \
-  V(0x00, 0xbc, I32ReinterpretF32, "i32.reinterpret/f32") \
-  V(0x00, 0xbd, I64ReinterpretF64, "i64.reinterpret/f64") \
-  V(0x00, 0xbe, F32ReinterpretI32, "f32.reinterpret/i32") \
-  V(0x00, 0xbf, F64ReinterpretI64, "f64.reinterpret/i64")
+  V(0x00, 0xa8, I32TruncF32S, "i32.trunc_f32_s")          \
+  V(0x00, 0xa9, I32TruncF32U, "i32.trunc_f32_u")          \
+  V(0x00, 0xaa, I32TruncF64S, "i32.trunc_f64_s")          \
+  V(0x00, 0xab, I32TruncF64U, "i32.trunc_f64_u")          \
+  V(0x00, 0xac, I64ExtendI32S, "i64.extend_i32_s")        \
+  V(0x00, 0xad, I64ExtendI32U, "i64.extend_i32_u")        \
+  V(0x00, 0xae, I64TruncF32S, "i64.trunc_f32_s")          \
+  V(0x00, 0xaf, I64TruncF32U, "i64.trunc_f32_u")          \
+  V(0x00, 0xb0, I64TruncF64S, "i64.trunc_f64_s")          \
+  V(0x00, 0xb1, I64TruncF64U, "i64.trunc_f64_u")          \
+  V(0x00, 0xb2, F32ConvertI32S, "f32.convert_i32_s")      \
+  V(0x00, 0xb3, F32ConvertI32U, "f32.convert_i32_u")      \
+  V(0x00, 0xb4, F32ConvertI64S, "f32.convert_i64_s")      \
+  V(0x00, 0xb5, F32ConvertI64U, "f32.convert_i64_u")      \
+  V(0x00, 0xb6, F32DemoteF64, "f32.demote_f64")           \
+  V(0x00, 0xb7, F64ConvertI32S, "f64.convert_i32_s")      \
+  V(0x00, 0xb8, F64ConvertI32U, "f64.convert_i32_u")      \
+  V(0x00, 0xb9, F64ConvertI64S, "f64.convert_i64_s")      \
+  V(0x00, 0xba, F64ConvertI64U, "f64.convert_i64_u")      \
+  V(0x00, 0xbb, F64PromoteF32, "f64.promote_f32")         \
+  V(0x00, 0xbc, I32ReinterpretF32, "i32.reinterpret_f32") \
+  V(0x00, 0xbd, I64ReinterpretF64, "i64.reinterpret_f64") \
+  V(0x00, 0xbe, F32ReinterpretI32, "f32.reinterpret_i32") \
+  V(0x00, 0xbf, F64ReinterpretI64, "f64.reinterpret_i64")
 
 #endif  // WASP_BINARY_DEFS_H_

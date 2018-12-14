@@ -450,7 +450,7 @@ optional<ConstantExpression<>> Read(SpanU8* data,
     case Opcode::I64Const:
     case Opcode::F32Const:
     case Opcode::F64Const:
-    case Opcode::GetGlobal:
+    case Opcode::GlobalGet:
       // OK.
       break;
 
@@ -581,25 +581,25 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
     case Opcode::F64Max:
     case Opcode::F64Copysign:
     case Opcode::I32WrapI64:
-    case Opcode::I32TruncSF32:
-    case Opcode::I32TruncUF32:
-    case Opcode::I32TruncSF64:
-    case Opcode::I32TruncUF64:
-    case Opcode::I64ExtendSI32:
-    case Opcode::I64ExtendUI32:
-    case Opcode::I64TruncSF32:
-    case Opcode::I64TruncUF32:
-    case Opcode::I64TruncSF64:
-    case Opcode::I64TruncUF64:
-    case Opcode::F32ConvertSI32:
-    case Opcode::F32ConvertUI32:
-    case Opcode::F32ConvertSI64:
-    case Opcode::F32ConvertUI64:
+    case Opcode::I32TruncF32S:
+    case Opcode::I32TruncF32U:
+    case Opcode::I32TruncF64S:
+    case Opcode::I32TruncF64U:
+    case Opcode::I64ExtendI32S:
+    case Opcode::I64ExtendI32U:
+    case Opcode::I64TruncF32S:
+    case Opcode::I64TruncF32U:
+    case Opcode::I64TruncF64S:
+    case Opcode::I64TruncF64U:
+    case Opcode::F32ConvertI32S:
+    case Opcode::F32ConvertI32U:
+    case Opcode::F32ConvertI64S:
+    case Opcode::F32ConvertI64U:
     case Opcode::F32DemoteF64:
-    case Opcode::F64ConvertSI32:
-    case Opcode::F64ConvertUI32:
-    case Opcode::F64ConvertSI64:
-    case Opcode::F64ConvertUI64:
+    case Opcode::F64ConvertI32S:
+    case Opcode::F64ConvertI32U:
+    case Opcode::F64ConvertI64S:
+    case Opcode::F64ConvertI64U:
     case Opcode::F64PromoteF32:
     case Opcode::I32ReinterpretF32:
     case Opcode::I64ReinterpretF64:
@@ -619,11 +619,11 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
     case Opcode::Br:
     case Opcode::BrIf:
     case Opcode::Call:
-    case Opcode::GetLocal:
-    case Opcode::SetLocal:
-    case Opcode::TeeLocal:
-    case Opcode::GetGlobal:
-    case Opcode::SetGlobal: {
+    case Opcode::LocalGet:
+    case Opcode::LocalSet:
+    case Opcode::LocalTee:
+    case Opcode::GlobalGet:
+    case Opcode::GlobalSet: {
       WASP_TRY_READ(index, ReadIndex(data, errors, "index"));
       return Instruction{Opcode{opcode}, index};
     }
