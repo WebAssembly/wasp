@@ -28,5 +28,17 @@ bool operator!=(const Import<Traits>& lhs, const Import<Traits>& rhs) {
   return !(lhs == rhs);
 }
 
+template <typename Traits>
+bool operator==(const ConstantExpression<Traits>& lhs,
+                const ConstantExpression<Traits>& rhs) {
+  return lhs.data == rhs.data;
+}
+
+template <typename Traits>
+bool operator!=(const ConstantExpression<Traits>& lhs,
+                const ConstantExpression<Traits>& rhs) {
+  return !(lhs == rhs);
+}
+
 }  // namespace binary
 }  // namespace wasp

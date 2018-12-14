@@ -276,7 +276,8 @@ typename Ctx::iterator formatter<::wasp::binary::Opcode>::format(
     WASP_FOREACH_OPCODE(WASP_V)
 #undef WASP_V
     default:
-      return format_to(ctx.begin(), "<unknown:{}>", self);
+      return format_to(ctx.begin(), "<unknown:{}>",
+                       static_cast<::wasp::u32>(self));
   }
 }
 

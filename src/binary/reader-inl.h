@@ -17,7 +17,9 @@
 #include <type_traits>
 
 #include "src/base/formatters.h"
+#include "src/base/macros.h"
 #include "src/binary/encoding.h"
+#include "src/binary/formatters.h"
 
 #define WASP_TRY_READ(var, call) \
   auto opt_##var = call;         \
@@ -519,7 +521,7 @@ optional<ConstantExpression<>> Read(SpanU8* data,
 
 template <typename Errors>
 optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
-  WASP_TRY_READ_CONTEXT(opcode, Read<Opcode>(data, errors), "opcode");
+  WASP_TRY_READ(opcode, Read<Opcode>(data, errors));
   switch (opcode) {
     // No immediates:
     case Opcode::End:
@@ -750,8 +752,7 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
     }
 
     default:
-      errors.OnError(*data, format("Unknown opcode: {:#02x}", opcode));
-      return nullopt;
+      WASP_UNREACHABLE();
   }
 }
 

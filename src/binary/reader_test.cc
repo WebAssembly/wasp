@@ -77,17 +77,26 @@ void ExpectNoErrors(const TestErrors& errors) {
   EXPECT_TRUE(errors.context_stack.empty());
 }
 
+void ExpectErrors(const std::vector<ExpectedError>& expected_errors,
+                  const TestErrors& errors,
+                  SpanU8 orig_data) {
+  EXPECT_TRUE(errors.context_stack.empty());
+  ASSERT_EQ(expected_errors.size(), errors.errors.size());
+  for (size_t j = 0; j < expected_errors.size(); ++j) {
+    const ExpectedError& expected = expected_errors[j];
+    const Error& actual = errors.errors[j];
+    ASSERT_EQ(expected.size(), actual.size());
+    for (size_t i = 0; i < actual.size(); ++i) {
+      EXPECT_EQ(expected[i].pos, actual[i].pos.data() - orig_data.data());
+      EXPECT_EQ(expected[i].desc, actual[i].desc);
+    }
+  }
+}
+
 void ExpectError(const ExpectedError& expected,
                  const TestErrors& errors,
                  SpanU8 orig_data) {
-  EXPECT_TRUE(errors.context_stack.empty());
-  ASSERT_EQ(1u, errors.errors.size());
-  const Error& actual = errors.errors[0];
-  ASSERT_EQ(actual.size(), expected.size());
-  for (size_t i = 0; i < actual.size(); ++i) {
-    EXPECT_EQ(expected[i].pos, actual[i].pos.data() - orig_data.data());
-    EXPECT_EQ(expected[i].desc, actual[i].desc);
-  }
+  ExpectErrors({expected}, errors, orig_data);
 }
 
 template <typename T>
@@ -113,7 +122,7 @@ void ExpectRead(const T& expected, SpanU8 data) {
 template <typename T>
 void ExpectReadFailure(const ExpectedError& expected, SpanU8 data) {
   TestErrors errors;
-  SpanU8 orig_data = data;
+  const SpanU8 orig_data = data;
   auto result = Read<T>(&data, errors);
   ExpectError(expected, errors, orig_data);
   ExpectEmptyOptional(result);
@@ -938,4 +947,77 @@ TEST(ReaderTest, ReadImportType_PastEnd) {
                                {3, "value type"},
                                {3, "Unable to read u8"}},
                               MakeSpanU8("\x00\x00\x03"));
+}
+
+TEST(ReaderTest, ReadConstantExpression) {
+  // i32.const
+  {
+    const auto data = MakeSpanU8("\x41\x00\x0b");
+    ExpectRead<ConstantExpression<>>(ConstantExpression<>{data}, data);
+  }
+
+  // i64.const
+  {
+    const auto data = MakeSpanU8("\x42\x80\x80\x80\x80\x80\x01\x0b");
+    ExpectRead<ConstantExpression<>>(ConstantExpression<>{data}, data);
+  }
+
+  // f32.const
+  {
+    const auto data = MakeSpanU8("\x43\x00\x00\x00\x00\x0b");
+    ExpectRead<ConstantExpression<>>(ConstantExpression<>{data}, data);
+  }
+
+  // f64.const
+  {
+    const auto data = MakeSpanU8("\x44\x00\x00\x00\x00\x00\x00\x00\x00\x0b");
+    ExpectRead<ConstantExpression<>>(ConstantExpression<>{data}, data);
+  }
+
+  // get_global
+  {
+    const auto data = MakeSpanU8("\x23\x00\x0b");
+    ExpectRead<ConstantExpression<>>(ConstantExpression<>{data}, data);
+  }
+}
+
+TEST(ReaderTest, ReadConstantExpression_NoEnd) {
+  // i32.const
+  ExpectReadFailure<ConstantExpression<>>({{0, "Expected end instruction"}},
+                                          MakeSpanU8("\x41\x00"));
+
+  // i64.const
+  ExpectReadFailure<ConstantExpression<>>(
+      {{0, "Expected end instruction"}},
+      MakeSpanU8("\x42\x80\x80\x80\x80\x80\x01"));
+
+  // f32.const
+  ExpectReadFailure<ConstantExpression<>>({{0, "Expected end instruction"}},
+                                          MakeSpanU8("\x43\x00\x00\x00\x00"));
+
+  // f64.const
+  ExpectReadFailure<ConstantExpression<>>(
+      {{0, "Expected end instruction"}},
+      MakeSpanU8("\x44\x00\x00\x00\x00\x00\x00\x00\x00"));
+
+  // get_global
+  ExpectReadFailure<ConstantExpression<>>({{0, "Expected end instruction"}},
+                                          MakeSpanU8("\x23\x00"));
+}
+
+TEST(ReaderTest, ReadConstantExpression_InvalidInstruction) {
+  TestErrors errors;
+  auto data = MakeSpanU8("\x06");
+  const SpanU8 orig_data = data;
+  auto result = Read<ConstantExpression<>>(&data, errors);
+  ExpectErrors({{{0, "opcode"}, {1, "Unknown opcode: 6"}},
+                {{0, "Unexpected end of constant expression"}}},
+               errors, orig_data);
+  ExpectEmptyOptional(result);
+}
+
+TEST(ReaderTest, ReadConstantExpression_IllegalInstruction) {
+  ExpectReadFailure<ConstantExpression<>>(
+      {{0, "Illegal instruction in constant expression: unreachable"}},
+      MakeSpanU8("\x00"));
 }

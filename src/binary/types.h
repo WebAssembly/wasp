@@ -240,6 +240,13 @@ struct ConstantExpression {
   typename Traits::Buffer data;
 };
 
+template <typename Traits = BorrowedTraits>
+bool operator==(const ConstantExpression<Traits>&,
+                const ConstantExpression<Traits>&);
+template <typename Traits = BorrowedTraits>
+bool operator!=(const ConstantExpression<Traits>&,
+                const ConstantExpression<Traits>&);
+
 struct EmptyImmediate {};
 
 struct CallIndirectImmediate {
