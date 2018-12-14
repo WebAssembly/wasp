@@ -79,11 +79,11 @@ struct formatter<::wasp::binary::Limits> {
 };
 
 template <>
-struct formatter<::wasp::binary::LocalDecl> {
+struct formatter<::wasp::binary::Locals> {
   template <typename Ctx>
   typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::LocalDecl&, Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::Locals&, Ctx&);
 };
 
 template <typename Traits>
@@ -169,19 +169,22 @@ struct formatter<::wasp::binary::Export<Traits>> {
 };
 
 template <typename Traits>
-struct formatter<::wasp::binary::Expr<Traits>> {
+struct formatter<::wasp::binary::Expression<Traits>> {
   template <typename Ctx>
   typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::Expr<Traits>&, Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::Expression<Traits>&,
+                                Ctx&);
 };
 
 template <typename Traits>
-struct formatter<::wasp::binary::ConstExpr<Traits>> {
+struct formatter<::wasp::binary::ConstantExpression<Traits>> {
   template <typename Ctx>
   typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::ConstExpr<Traits>&, Ctx&);
+  typename Ctx::iterator format(
+      const ::wasp::binary::ConstantExpression<Traits>&,
+      Ctx&);
 };
 
 template <>
@@ -210,11 +213,11 @@ struct formatter<::wasp::binary::BrTableImmediate> {
 };
 
 template <>
-struct formatter<::wasp::binary::Instr> {
+struct formatter<::wasp::binary::Instruction> {
   template <typename Ctx>
   typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::Instr&, Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::Instruction&, Ctx&);
 };
 
 template <>

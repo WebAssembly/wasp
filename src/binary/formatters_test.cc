@@ -60,8 +60,8 @@ TEST(FormatTest, Limits) {
   EXPECT_EQ(R"({min 1, max 2})", TestFormat(Limits{1, 2}));
 }
 
-TEST(FormatTest, LocalDecl) {
-  EXPECT_EQ(R"(i32 ** 3)", TestFormat(LocalDecl{3, ValueType::I32}));
+TEST(FormatTest, Locals) {
+  EXPECT_EQ(R"(i32 ** 3)", TestFormat(Locals{3, ValueType::I32}));
 }
 
 TEST(FormatTest, KnownSection) {
@@ -157,14 +157,15 @@ TEST(FormatTest, Export) {
             TestFormat(Export<>{ExternalKind::Global, "g", Index{3}}));
 }
 
-TEST(FormatTest, Expr) {
+TEST(FormatTest, Expression) {
   const u8 data[] = "\00\01\02";
-  EXPECT_EQ(R"("\00\01\02")", TestFormat(Expr<>{SpanU8{data, 3}}));
+  EXPECT_EQ(R"("\00\01\02")", TestFormat(Expression<>{SpanU8{data, 3}}));
 }
 
-TEST(FormatTest, ConstExpr) {
+TEST(FormatTest, ConstantExpression) {
   const u8 data[] = "\00\01\02";
-  EXPECT_EQ(R"("\00\01\02")", TestFormat(ConstExpr<>{SpanU8{data, 3}}));
+  EXPECT_EQ(R"("\00\01\02")",
+            TestFormat(ConstantExpression<>{SpanU8{data, 3}}));
 }
 
 TEST(FormatTest, Opcode) {
@@ -180,36 +181,41 @@ TEST(FormatTest, BrTableImmediate) {
   EXPECT_EQ(R"([1 2] 3)", TestFormat(BrTableImmediate{{1, 2}, 3}));
 }
 
-TEST(FormatTest, Instr) {
+TEST(FormatTest, Instruction) {
   // nop
-  EXPECT_EQ(R"(nop)", TestFormat(Instr{Opcode::Nop}));
+  EXPECT_EQ(R"(nop)", TestFormat(Instruction{Opcode::Nop}));
   // block (result i32)
-  EXPECT_EQ(R"(block [i32])", TestFormat(Instr{Opcode::Block, BlockType::I32}));
+  EXPECT_EQ(R"(block [i32])",
+            TestFormat(Instruction{Opcode::Block, BlockType::I32}));
   // br 3
-  EXPECT_EQ(R"(br 3)", TestFormat(Instr{Opcode::Br, Index{3u}}));
+  EXPECT_EQ(R"(br 3)", TestFormat(Instruction{Opcode::Br, Index{3u}}));
   // br_table 0 1 4
-  EXPECT_EQ(R"(br_table [0 1] 4)",
-            TestFormat(Instr{Opcode::BrTable, BrTableImmediate{{0, 1}, 4}}));
+  EXPECT_EQ(
+      R"(br_table [0 1] 4)",
+      TestFormat(Instruction{Opcode::BrTable, BrTableImmediate{{0, 1}, 4}}));
   // call_indirect 1 (w/ a reserved value of 0)
   EXPECT_EQ(
       R"(call_indirect 1 0)",
-      TestFormat(Instr{Opcode::CallIndirect, CallIndirectImmediate{1, 0}}));
+      TestFormat(
+          Instruction{Opcode::CallIndirect, CallIndirectImmediate{1, 0}}));
   // memory.size (w/ a reserved value of 0)
-  EXPECT_EQ(R"(memory.size 0)", TestFormat(Instr{Opcode::MemorySize, u8{0}}));
+  EXPECT_EQ(R"(memory.size 0)",
+            TestFormat(Instruction{Opcode::MemorySize, u8{0}}));
   // i32.load offset=10 align=4 (alignment is stored as power-of-two)
   EXPECT_EQ(R"(i32.load {align 2, offset 10})",
-            TestFormat(Instr{Opcode::I32Load, MemArg{2, 10}}));
+            TestFormat(Instruction{Opcode::I32Load, MemArg{2, 10}}));
   // i32.const 100
-  EXPECT_EQ(R"(i32.const 100)", TestFormat(Instr{Opcode::I32Const, s32{100}}));
+  EXPECT_EQ(R"(i32.const 100)",
+            TestFormat(Instruction{Opcode::I32Const, s32{100}}));
   // i64.const 1000
   EXPECT_EQ(R"(i64.const 1000)",
-            TestFormat(Instr{Opcode::I64Const, s64{1000}}));
+            TestFormat(Instruction{Opcode::I64Const, s64{1000}}));
   // f32.const 1.5
   EXPECT_EQ(R"(f32.const 1.500000)",
-            TestFormat(Instr{Opcode::F32Const, f32{1.5}}));
+            TestFormat(Instruction{Opcode::F32Const, f32{1.5}}));
   // f64.const 6.25
   EXPECT_EQ(R"(f64.const 6.250000)",
-            TestFormat(Instr{Opcode::F64Const, f64{6.25}}));
+            TestFormat(Instruction{Opcode::F64Const, f64{6.25}}));
 }
 
 TEST(FormatTest, Func) {
@@ -230,7 +236,7 @@ TEST(FormatTest, Global) {
   const u8 expr[] = "\xfa\xce";
   EXPECT_EQ(R"({type const i32, init "\fa\ce"})",
             TestFormat(Global<>{GlobalType{ValueType::I32, Mutability::Const},
-                                ConstExpr<>{SpanU8{expr, 2}}}));
+                                ConstantExpression<>{SpanU8{expr, 2}}}));
 }
 
 TEST(FormatTest, Start) {
@@ -241,8 +247,8 @@ TEST(FormatTest, ElementSegment) {
   const u8 expr[] = "\x0b";
   EXPECT_EQ(
       R"({table 1, offset "\0b", init [2 3]})",
-      TestFormat(
-          ElementSegment<>{Index{1u}, ConstExpr<>{SpanU8{expr, 1}}, {2u, 3u}}));
+      TestFormat(ElementSegment<>{
+          Index{1u}, ConstantExpression<>{SpanU8{expr, 1}}, {2u, 3u}}));
 }
 
 TEST(FormatTest, Code) {
@@ -250,7 +256,7 @@ TEST(FormatTest, Code) {
   EXPECT_EQ(
       R"({locals [i32 ** 1], body "\0b"})",
       TestFormat(
-          Code<>{{LocalDecl{1, ValueType::I32}}, Expr<>{SpanU8{expr, 1}}}));
+          Code<>{{Locals{1, ValueType::I32}}, Expression<>{SpanU8{expr, 1}}}));
 }
 
 TEST(FormatTest, DataSegment) {
@@ -258,6 +264,6 @@ TEST(FormatTest, DataSegment) {
   const u8 init[] = "\x12\x34";
   EXPECT_EQ(
       R"({memory 0, offset "\0b", init "\12\34"})",
-      TestFormat(DataSegment<>{Index{0u}, ConstExpr<>{SpanU8{expr, 1}},
+      TestFormat(DataSegment<>{Index{0u}, ConstantExpression<>{SpanU8{expr, 1}},
                                SpanU8{init, 2}}));
 }

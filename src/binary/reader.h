@@ -232,7 +232,7 @@ struct StartSection {
 
 /// ---
 template <typename Errors>
-using LazyInstrs = LazySequence<Instr, Errors>;
+using LazyInstructions = LazySequence<Instruction, Errors>;
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename Errors>
@@ -296,8 +296,8 @@ LazyDataSection<Errors> ReadDataSection(Data&& data, Errors& errors) {
 }
 
 template <typename Errors>
-LazyInstrs<Errors> ReadExpr(SpanU8 data, Errors& errors) {
-  return LazyInstrs<Errors>{data, errors};
+LazyInstructions<Errors> ReadExpr(SpanU8 data, Errors& errors) {
+  return LazyInstructions<Errors>{data, errors};
 }
 
 }  // namespace binary

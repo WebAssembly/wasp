@@ -142,8 +142,8 @@ typename Ctx::iterator formatter<::wasp::binary::Limits>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::LocalDecl>::format(
-    const ::wasp::binary::LocalDecl& self,
+typename Ctx::iterator formatter<::wasp::binary::Locals>::format(
+    const ::wasp::binary::Locals& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{} ** {}", self.type, self.count);
 }
@@ -250,16 +250,17 @@ typename Ctx::iterator formatter<::wasp::binary::Export<Traits>>::format(
 
 template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Expr<Traits>>::format(
-    const ::wasp::binary::Expr<Traits>& self,
+typename Ctx::iterator formatter<::wasp::binary::Expression<Traits>>::format(
+    const ::wasp::binary::Expression<Traits>& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{}", self.data);
 }
 
 template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::ConstExpr<Traits>>::format(
-    const ::wasp::binary::ConstExpr<Traits>& self,
+typename Ctx::iterator
+formatter<::wasp::binary::ConstantExpression<Traits>>::format(
+    const ::wasp::binary::ConstantExpression<Traits>& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{}", self.data);
 }
@@ -294,8 +295,8 @@ typename Ctx::iterator formatter<::wasp::binary::BrTableImmediate>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Instr>::format(
-    const ::wasp::binary::Instr& self,
+typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
+    const ::wasp::binary::Instruction& self,
     Ctx& ctx) {
   using ::wasp::get;
   using ::wasp::holds_alternative;
@@ -360,7 +361,7 @@ typename Ctx::iterator formatter<::wasp::binary::Global<Traits>>::format(
     const ::wasp::binary::Global<Traits>& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{{type {}, init {}}}", self.global_type,
-                   self.init_expr);
+                   self.init);
 }
 
 template <typename Ctx>
@@ -385,7 +386,7 @@ template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Code<Traits>>::format(
     const ::wasp::binary::Code<Traits>& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{locals {}, body {}}}", self.local_decls,
+  return format_to(ctx.begin(), "{{locals {}, body {}}}", self.locals,
                    self.body);
 }
 

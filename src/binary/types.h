@@ -101,8 +101,8 @@ struct Limits {
   optional<u32> max;
 };
 
-struct LocalDecl {
-  LocalDecl(Index count, ValueType type) : count(count), type(type) {}
+struct Locals {
+  Locals(Index count, ValueType type) : count(count), type(type) {}
 
   Index count;
   ValueType type;
@@ -196,19 +196,20 @@ struct Import {
 };
 
 template <typename Traits = BorrowedTraits>
-struct Expr {
-  explicit Expr(SpanU8 data) : data(Traits::ToBuffer(data)) {}
+struct Expression {
+  explicit Expression(SpanU8 data) : data(Traits::ToBuffer(data)) {}
   template <typename U>
-  Expr(const Expr<U>& other) : data(Traits::ToBuffer(other.data)) {}
+  Expression(const Expression<U>& other) : data(Traits::ToBuffer(other.data)) {}
 
   typename Traits::Buffer data;
 };
 
 template <typename Traits = BorrowedTraits>
-struct ConstExpr {
-  explicit ConstExpr(SpanU8 data) : data(Traits::ToBuffer(data)) {}
+struct ConstantExpression {
+  explicit ConstantExpression(SpanU8 data) : data(Traits::ToBuffer(data)) {}
   template <typename U>
-  ConstExpr(const ConstExpr<U>& other) : data(Traits::ToBuffer(other.data)) {}
+  ConstantExpression(const ConstantExpression<U>& other)
+      : data(Traits::ToBuffer(other.data)) {}
 
   typename Traits::Buffer data;
 };
@@ -231,10 +232,11 @@ struct BrTableImmediate {
   Index default_target;
 };
 
-struct Instr {
-  explicit Instr(Opcode opcode) : opcode(opcode), immediate(EmptyImmediate{}) {}
+struct Instruction {
+  explicit Instruction(Opcode opcode)
+      : opcode(opcode), immediate(EmptyImmediate{}) {}
   template <typename T>
-  Instr(Opcode opcode, T&& value)
+  Instruction(Opcode opcode, T&& value)
       : opcode(opcode), immediate(std::move(value)) {}
 
   Opcode opcode;
@@ -252,7 +254,7 @@ struct Instr {
       immediate;
 };
 
-using Instrs = std::vector<Instr>;
+using Instrs = std::vector<Instruction>;
 
 struct Func {
   explicit Func(Index type_index) : type_index(type_index) {}
@@ -274,11 +276,11 @@ struct Memory {
 
 template <typename Traits = BorrowedTraits>
 struct Global {
-  Global(GlobalType global_type, ConstExpr<> init_expr)
-      : global_type(global_type), init_expr(init_expr) {}
+  Global(GlobalType global_type, ConstantExpression<> init)
+      : global_type(global_type), init(init) {}
 
   GlobalType global_type;
-  ConstExpr<Traits> init_expr;
+  ConstantExpression<Traits> init;
 };
 
 template <typename Traits = BorrowedTraits>
@@ -300,33 +302,33 @@ struct Start {
 template <typename Traits = BorrowedTraits>
 struct ElementSegment {
   ElementSegment(Index table_index,
-                 ConstExpr<> offset,
+                 ConstantExpression<> offset,
                  std::vector<Index>&& init)
       : table_index(table_index), offset(offset), init(std::move(init)) {}
 
   Index table_index;
-  ConstExpr<Traits> offset;
+  ConstantExpression<Traits> offset;
   std::vector<Index> init;
 };
 
 template <typename Traits = BorrowedTraits>
 struct Code {
-  Code(std::vector<LocalDecl>&& local_decls, Expr<> body)
-      : local_decls(std::move(local_decls)), body(body) {}
+  Code(std::vector<Locals>&& locals, Expression<> body)
+      : locals(std::move(locals)), body(body) {}
 
-  std::vector<LocalDecl> local_decls;
-  Expr<Traits> body;
+  std::vector<Locals> locals;
+  Expression<Traits> body;
 };
 
 template <typename Traits = BorrowedTraits>
 struct DataSegment {
-  DataSegment(Index memory_index, ConstExpr<> offset, SpanU8 init)
+  DataSegment(Index memory_index, ConstantExpression<> offset, SpanU8 init)
       : memory_index(memory_index),
         offset(offset),
         init(Traits::ToBuffer(init)) {}
 
   Index memory_index;
-  ConstExpr<Traits> offset;
+  ConstantExpression<Traits> offset;
   typename Traits::Buffer init;
 };
 
