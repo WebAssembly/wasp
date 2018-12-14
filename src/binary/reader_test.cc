@@ -1327,3 +1327,32 @@ TEST(ReaderTest, ReadGlobal_PastEnd) {
                                {2, "Unexpected end of constant expression"}},
                               MakeSpanU8("\x7f\x00"));
 }
+
+TEST(ReaderTest, ReadExport) {
+  ExpectRead<Export<>>(Export<>{ExternalKind::Function, "hi", 3},
+                       MakeSpanU8("\x02hi\x00\x03"));
+  ExpectRead<Export<>>(Export<>{ExternalKind::Table, "", 1000},
+                       MakeSpanU8("\x00\x01\xe8\x07"));
+  ExpectRead<Export<>>(Export<>{ExternalKind::Memory, "mem", 0},
+                       MakeSpanU8("\x03mem\x02\x00"));
+  ExpectRead<Export<>>(Export<>{ExternalKind::Global, "g", 1},
+                       MakeSpanU8("\x01g\x03\x01"));
+}
+
+TEST(ReaderTest, ReadExport_PastEnd) {
+  ExpectReadFailure<Export<>>(
+      {{0, "export"}, {0, "name"}, {0, "index"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""));
+
+  ExpectReadFailure<Export<>>(
+      {{0, "export"}, {1, "external kind"}, {1, "Unable to read u8"}},
+      MakeSpanU8("\x00"));
+
+  ExpectReadFailure<Export<>>(
+      {{0, "export"}, {2, "index"}, {2, "Unable to read u8"}},
+      MakeSpanU8("\x00\x00"));
+}
+
+TEST(ReaderTest, ReadStart) {
+  ExpectRead<Start>(Start{256}, MakeSpanU8("\x80\x02"));
+}

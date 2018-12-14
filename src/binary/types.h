@@ -355,11 +355,19 @@ struct Export {
   Index index;
 };
 
+template <typename Traits>
+bool operator==(const Export<Traits>&, const Export<Traits>&);
+template <typename Traits>
+bool operator!=(const Export<Traits>&, const Export<Traits>&);
+
 struct Start {
   explicit Start(Index func_index) : func_index(func_index) {}
 
   Index func_index;
 };
+
+bool operator==(const Start&, const Start&);
+bool operator!=(const Start&, const Start&);
 
 template <typename Traits = BorrowedTraits>
 struct ElementSegment {

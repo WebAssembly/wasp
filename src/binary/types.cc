@@ -142,5 +142,13 @@ bool operator!=(const Memory& lhs, const Memory& rhs) {
   return !(lhs == rhs);
 }
 
+bool operator==(const Start& lhs, const Start& rhs) {
+  return lhs.func_index == rhs.func_index;
+}
+
+bool operator!=(const Start& lhs, const Start& rhs) {
+  return !(lhs == rhs);
+}
+
 }  // namespace binary
 }  // namespace wasp

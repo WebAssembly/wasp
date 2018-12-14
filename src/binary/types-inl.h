@@ -50,5 +50,15 @@ bool operator!=(const Global<Traits>& lhs, const Global<Traits>& rhs) {
   return !(lhs == rhs);
 }
 
+template <typename Traits>
+bool operator==(const Export<Traits>& lhs, const Export<Traits>& rhs) {
+  return lhs.kind == rhs.kind && lhs.name == rhs.name && lhs.index == rhs.index;
+}
+
+template <typename Traits>
+bool operator!=(const Export<Traits>& lhs, const Export<Traits>& rhs) {
+  return !(lhs == rhs);
+}
+
 }  // namespace binary
 }  // namespace wasp
