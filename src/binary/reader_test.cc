@@ -925,7 +925,8 @@ TEST(ReaderTest, ReadCallIndirectImmediate) {
 TEST(ReaderTest, ReadCallIndirectImmediate_BadReserved) {
   ExpectReadFailure<CallIndirectImmediate>(
       {{0, "call_indirect"},
-       {2, "Reserved byte must be 0, got 1"}},
+       {1, "reserved"},
+       {2, "Expected reserved byte 0, got 1"}},
       MakeSpanU8("\x00\x01"));
 }
 
@@ -1253,4 +1254,13 @@ TEST(ReaderTest, ReadInstruction) {
   ExpectRead<I>(I{O::I64ReinterpretF64}, MakeSpanU8("\xbd"));
   ExpectRead<I>(I{O::F32ReinterpretI32}, MakeSpanU8("\xbe"));
   ExpectRead<I>(I{O::F64ReinterpretI64}, MakeSpanU8("\xbf"));
+}
+
+TEST(ReaderTest, ReadInstruction_BadMemoryReserved) {
+  ExpectReadFailure<Instruction>(
+      {{1, "reserved"}, {2, "Expected reserved byte 0, got 1"}},
+      MakeSpanU8("\x3f\x01"));
+  ExpectReadFailure<Instruction>(
+      {{1, "reserved"}, {2, "Expected reserved byte 0, got 1"}},
+      MakeSpanU8("\x40\x01"));
 }

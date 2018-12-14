@@ -353,6 +353,17 @@ optional<Opcode> Read(SpanU8* data, Errors& errors, Tag<Opcode>) {
 #undef WASP_TRY_DECODE
 
 template <typename Errors>
+optional<u8> ReadReserved(SpanU8* data, Errors& errors) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "reserved"};
+  WASP_TRY_READ(reserved, Read<u8>(data, errors));
+  if (reserved != 0) {
+    errors.OnError(*data, format("Expected reserved byte 0, got {}", reserved));
+    return nullopt;
+  }
+  return 0;
+}
+
+template <typename Errors>
 optional<MemArg> Read(SpanU8* data, Errors& errors, Tag<MemArg>) {
   WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, errors), "align log2");
   WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, errors), "offset");
@@ -502,11 +513,7 @@ optional<CallIndirectImmediate> Read(SpanU8* data,
                                      Tag<CallIndirectImmediate>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "call_indirect"};
   WASP_TRY_READ(index, ReadIndex(data, errors));
-  WASP_TRY_READ_CONTEXT(reserved, Read<u8>(data, errors), "reserved");
-  if (reserved != 0) {
-    errors.OnError(*data, format("Reserved byte must be 0, got {}", reserved));
-    return nullopt;
-  }
+  WASP_TRY_READ(reserved, ReadReserved(data, errors));
   return CallIndirectImmediate{index, reserved};
 }
 
@@ -752,7 +759,7 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
     // Reserved immediates.
     case Opcode::MemorySize:
     case Opcode::MemoryGrow: {
-      WASP_TRY_READ_CONTEXT(reserved, Read<u8>(data, errors), "reserved");
+      WASP_TRY_READ(reserved, ReadReserved(data, errors));
       return Instruction{Opcode{opcode}, reserved};
     }
 
