@@ -353,6 +353,13 @@ optional<Opcode> Read(SpanU8* data, Errors& errors, Tag<Opcode>) {
 #undef WASP_TRY_DECODE
 
 template <typename Errors>
+optional<MemArg> Read(SpanU8* data, Errors& errors, Tag<MemArg>) {
+  WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, errors), "align log2");
+  WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, errors), "offset");
+  return MemArg{align_log2, offset};
+}
+
+template <typename Errors>
 optional<Limits> Read(SpanU8* data, Errors& errors, Tag<Limits>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "limits"};
   WASP_TRY_READ_CONTEXT(flags, Read<u8>(data, errors), "flags");
@@ -380,6 +387,29 @@ optional<Locals> Read(SpanU8* data, Errors& errors, Tag<Locals>) {
   WASP_TRY_READ_CONTEXT(count, ReadIndex(data, errors), "count");
   WASP_TRY_READ_CONTEXT(type, Read<ValueType>(data, errors), "type");
   return Locals{count, type};
+}
+
+template <typename Errors>
+optional<Section<>> Read(SpanU8* data, Errors& errors, Tag<Section<>>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "section"};
+  WASP_TRY_READ_CONTEXT(id, Read<SectionId>(data, errors), "id");
+  WASP_TRY_READ_CONTEXT(len, Read<u32>(data, errors), "length");
+  if (len > data->size()) {
+    errors.OnError(*data, format("Section length is too long: {} > {}", len,
+                                 data->size()));
+    return nullopt;
+  }
+
+  SpanU8 section_span = data->subspan(0, len);
+  *data = remove_prefix(*data, len);
+
+  if (id == SectionId::Custom) {
+    WASP_TRY_READ(name,
+                  ReadString(&section_span, errors, "custom section name"));
+    return Section<>{CustomSection<>{name, section_span}};
+  } else {
+    return Section<>{KnownSection<>{id, section_span}};
+  }
 }
 
 template <typename Errors>
@@ -427,29 +457,6 @@ optional<GlobalType> Read(SpanU8* data, Errors& errors, Tag<GlobalType>) {
   WASP_TRY_READ(type, Read<ValueType>(data, errors));
   WASP_TRY_READ(mut, Read<Mutability>(data, errors));
   return GlobalType{type, mut};
-}
-
-template <typename Errors>
-optional<Section<>> Read(SpanU8* data, Errors& errors, Tag<Section<>>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "section"};
-  WASP_TRY_READ_CONTEXT(id, Read<SectionId>(data, errors), "id");
-  WASP_TRY_READ_CONTEXT(len, Read<u32>(data, errors), "length");
-  if (len > data->size()) {
-    errors.OnError(*data, format("Section length is too long: {} > {}", len,
-                                 data->size()));
-    return nullopt;
-  }
-
-  SpanU8 section_span = data->subspan(0, len);
-  *data = remove_prefix(*data, len);
-
-  if (id == SectionId::Custom) {
-    WASP_TRY_READ(name,
-                  ReadString(&section_span, errors, "custom section name"));
-    return Section<>{CustomSection<>{name, section_span}};
-  } else {
-    return Section<>{KnownSection<>{id, section_span}};
-  }
 }
 
 template <typename Errors>
@@ -792,13 +799,6 @@ optional<Export<>> Read(SpanU8* data, Errors& errors, Tag<Export<>>) {
   WASP_TRY_READ(kind, Read<ExternalKind>(data, errors));
   WASP_TRY_READ(index, ReadIndex(data, errors));
   return Export<>{kind, name, index};
-}
-
-template <typename Errors>
-optional<MemArg> Read(SpanU8* data, Errors& errors, Tag<MemArg>) {
-  WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, errors), "align log2");
-  WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, errors), "offset");
-  return MemArg{align_log2, offset};
 }
 
 template <typename Errors>
