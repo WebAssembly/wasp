@@ -307,7 +307,7 @@ TEST(ReaderTest, ReadF32) {
 }
 
 TEST(ReaderTest, ReadF32_PastEnd) {
-  ExpectReadFailure<f32>({{0, "Unable to read 4 bytes"}},
+  ExpectReadFailure<f32>({{0, "f32"}, {0, "Unable to read 4 bytes"}},
                          MakeSpanU8("\x00\x00\x00"));
 }
 
@@ -332,7 +332,7 @@ TEST(ReaderTest, ReadF64) {
 }
 
 TEST(ReaderTest, ReadF64_PastEnd) {
-  ExpectReadFailure<f64>({{0, "Unable to read 8 bytes"}},
+  ExpectReadFailure<f64>({{0, "f64"}, {0, "Unable to read 8 bytes"}},
                          MakeSpanU8("\x00\x00\x00\x00\x00\x00\x00"));
 }
 

@@ -140,6 +140,7 @@ optional<s64> Read(SpanU8* data, Errors& errors, Tag<s64>) {
 template <typename Errors>
 optional<f32> Read(SpanU8* data, Errors& errors, Tag<f32>) {
   static_assert(sizeof(f32) == 4, "sizeof(f32) != 4");
+  ErrorsContextGuard<Errors> guard{errors, *data, "f32"};
   WASP_TRY_READ(bytes, ReadBytes(data, sizeof(f32), errors));
   f32 result;
   memcpy(&result, bytes.data(), sizeof(f32));
@@ -149,6 +150,7 @@ optional<f32> Read(SpanU8* data, Errors& errors, Tag<f32>) {
 template <typename Errors>
 optional<f64> Read(SpanU8* data, Errors& errors, Tag<f64>) {
   static_assert(sizeof(f64) == 8, "sizeof(f64) != 8");
+  ErrorsContextGuard<Errors> guard{errors, *data, "f64"};
   WASP_TRY_READ(bytes, ReadBytes(data, sizeof(f64), errors));
   f64 result;
   memcpy(&result, bytes.data(), sizeof(f64));
