@@ -154,10 +154,8 @@ struct FunctionType {
 };
 
 struct TypeEntry {
-  TypeEntry(ValueType form, FunctionType&& type)
-      : form(form), type(std::move(type)) {}
+  TypeEntry(FunctionType&& type) : type(std::move(type)) {}
 
-  ValueType form;
   FunctionType type;
 };
 

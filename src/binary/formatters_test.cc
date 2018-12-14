@@ -93,6 +93,12 @@ TEST(FormatTest, Section) {
           KnownSection<>{static_cast<SectionId>(100), SpanU8{data, 1}}}));
 }
 
+TEST(FormatTest, TypeEntry) {
+  EXPECT_EQ(R"([] -> [])", TestFormat(TypeEntry{FunctionType{{}, {}}}));
+  EXPECT_EQ(R"([i32] -> [])",
+            TestFormat(TypeEntry{FunctionType{{ValueType::I32}, {}}}));
+}
+
 TEST(FormatTest, FunctionType) {
   EXPECT_EQ(R"([] -> [])", TestFormat(FunctionType{{}, {}}));
   EXPECT_EQ(R"([i32] -> [])", TestFormat(FunctionType{{ValueType::I32}, {}}));

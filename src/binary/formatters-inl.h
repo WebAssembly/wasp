@@ -183,7 +183,7 @@ template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::TypeEntry>::format(
     const ::wasp::binary::TypeEntry& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{} {}", self.form, self.type);
+  return format_to(ctx.begin(), "{}", self.type);
 }
 
 template <typename Ctx>
