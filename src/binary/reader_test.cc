@@ -36,7 +36,7 @@ void ExpectRead(const T& expected, SpanU8 data) {
   TestErrors errors;
   auto result = Read<T>(&data, errors);
   ExpectNoErrors(errors);
-  ExpectOptional(expected, result);
+  EXPECT_EQ(expected, result);
   EXPECT_EQ(0u, data.size());
 }
 
@@ -46,7 +46,7 @@ void ExpectReadFailure(const ExpectedError& expected, SpanU8 data) {
   const SpanU8 orig_data = data;
   auto result = Read<T>(&data, errors);
   ExpectError(expected, errors, orig_data);
-  ExpectEmptyOptional(result);
+  EXPECT_EQ(nullopt, result);
 }
 
 }  // namespace
@@ -62,7 +62,7 @@ TEST(ReaderTest, ReadBytes) {
   SpanU8 copy = data;
   auto result = ReadBytes(&copy, 3, errors);
   ExpectNoErrors(errors);
-  ExpectOptional(data, result);
+  EXPECT_EQ(data, result);
   EXPECT_EQ(0u, copy.size());
 }
 
@@ -72,7 +72,7 @@ TEST(ReaderTest, ReadBytes_Leftovers) {
   SpanU8 copy = data;
   auto result = ReadBytes(&copy, 2, errors);
   ExpectNoErrors(errors);
-  ExpectOptional(data.subspan(0, 2), result);
+  EXPECT_EQ(data.subspan(0, 2), result);
   EXPECT_EQ(1u, copy.size());
 }
 
@@ -81,7 +81,7 @@ TEST(ReaderTest, ReadBytes_Fail) {
   const SpanU8 data = MakeSpanU8("\x12\x34\x56");
   SpanU8 copy = data;
   auto result = ReadBytes(&copy, 4, errors);
-  ExpectEmptyOptional(result);
+  EXPECT_EQ(nullopt, result);
   ExpectError({{0, "Unable to read 4 bytes"}}, errors, data);
 }
 
@@ -272,7 +272,7 @@ TEST(ReaderTest, ReadCount) {
   SpanU8 copy = data;
   auto result = ReadCount(&copy, errors);
   ExpectNoErrors(errors);
-  ExpectOptional(1u, result);
+  EXPECT_EQ(1u, result);
   EXPECT_EQ(3u, copy.size());
 }
 
@@ -283,7 +283,7 @@ TEST(ReaderTest, ReadCount_PastEnd) {
   auto result = ReadCount(&copy, errors);
   ExpectError({{1, "Count is longer than the data length: 5 > 3"}}, errors,
               data);
-  ExpectEmptyOptional(result);
+  EXPECT_EQ(nullopt, result);
   EXPECT_EQ(3u, copy.size());
 }
 
@@ -293,7 +293,7 @@ TEST(ReaderTest, ReadString) {
   SpanU8 copy = data;
   auto result = ReadString(&copy, errors, "test");
   ExpectNoErrors(errors);
-  ExpectOptional(string_view{"hello"}, result);
+  EXPECT_EQ(string_view{"hello"}, result);
   EXPECT_EQ(0u, copy.size());
 }
 
@@ -303,7 +303,7 @@ TEST(ReaderTest, ReadString_Leftovers) {
   SpanU8 copy = data;
   auto result = ReadString(&copy, errors, "test");
   ExpectNoErrors(errors);
-  ExpectOptional(string_view{"m"}, result);
+  EXPECT_EQ(string_view{"m"}, result);
   EXPECT_EQ(3u, copy.size());
 }
 
@@ -315,7 +315,7 @@ TEST(ReaderTest, ReadString_BadLength) {
     auto result = ReadString(&copy, errors, "test");
     ExpectError({{0, "test"}, {0, "count"}, {0, "Unable to read u8"}}, errors,
                 data);
-    ExpectEmptyOptional(result);
+    EXPECT_EQ(nullopt, result);
     EXPECT_EQ(0u, copy.size());
   }
 
@@ -326,7 +326,7 @@ TEST(ReaderTest, ReadString_BadLength) {
     auto result = ReadString(&copy, errors, "test");
     ExpectError({{0, "test"}, {0, "count"}, {1, "Unable to read u8"}}, errors,
                 data);
-    ExpectEmptyOptional(result);
+    EXPECT_EQ(nullopt, result);
     EXPECT_EQ(0u, copy.size());
   }
 }
@@ -338,7 +338,7 @@ TEST(ReaderTest, ReadString_Fail) {
   auto result = ReadString(&copy, errors, "test");
   ExpectError({{0, "test"}, {1, "Count is longer than the data length: 6 > 5"}},
               errors, data);
-  ExpectEmptyOptional(result);
+  EXPECT_EQ(nullopt, result);
   EXPECT_EQ(5u, copy.size());
 }
 
@@ -348,7 +348,7 @@ TEST(ReaderTest, ReadVector_u8) {
   SpanU8 copy = data;
   auto result = ReadVector<u8>(&copy, errors, "test");
   ExpectNoErrors(errors);
-  ExpectOptional(std::vector<u8>{'h', 'e', 'l', 'l', 'o'}, result);
+  EXPECT_EQ((std::vector<u8>{'h', 'e', 'l', 'l', 'o'}), result);
   EXPECT_EQ(0u, copy.size());
 }
 
@@ -362,7 +362,7 @@ TEST(ReaderTest, ReadVector_u32) {
   SpanU8 copy = data;
   auto result = ReadVector<u32>(&copy, errors, "test");
   ExpectNoErrors(errors);
-  ExpectOptional(std::vector<u32>{5, 128, 206412}, result);
+  EXPECT_EQ((std::vector<u32>{5, 128, 206412}), result);
   EXPECT_EQ(0u, copy.size());
 }
 
@@ -375,7 +375,7 @@ TEST(ReaderTest, ReadVector_FailLength) {
   auto result = ReadVector<u32>(&copy, errors, "test");
   ExpectError({{0, "test"}, {1, "Count is longer than the data length: 2 > 1"}},
               errors, data);
-  ExpectEmptyOptional(result);
+  EXPECT_EQ(nullopt, result);
   EXPECT_EQ(1u, copy.size());
 }
 
@@ -389,7 +389,7 @@ TEST(ReaderTest, ReadVector_PastEnd) {
   auto result = ReadVector<u32>(&copy, errors, "test");
   ExpectError({{0, "test"}, {2, "u32"}, {3, "Unable to read u8"}}, errors,
               data);
-  ExpectEmptyOptional(result);
+  EXPECT_EQ(nullopt, result);
   EXPECT_EQ(0u, copy.size());
 }
 

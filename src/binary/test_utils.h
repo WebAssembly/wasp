@@ -60,12 +60,6 @@ void ExpectErrors(const std::vector<ExpectedError>&,
                   SpanU8 orig_data);
 void ExpectError(const ExpectedError&, const TestErrors&, SpanU8 orig_data);
 
-template <typename T>
-void ExpectEmptyOptional(const optional<T>& actual);
-
-template <typename T>
-void ExpectOptional(const T& expected, const optional<T>& actual);
-
 }  // namespace test
 }  // namespace binary
 }  // namespace wasp

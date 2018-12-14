@@ -25,17 +25,6 @@ SpanU8 MakeSpanU8(const char (&str)[N]) {
       static_cast<SpanU8::index_type>(N - 1)};  // -1 to remove \0 at end.
 }
 
-template <typename T>
-void ExpectEmptyOptional(const optional<T>& actual) {
-  EXPECT_FALSE(actual.has_value());
-}
-
-template <typename T>
-void ExpectOptional(const T& expected, const optional<T>& actual) {
-  ASSERT_TRUE(actual.has_value());
-  EXPECT_EQ(expected, *actual);
-}
-
 }  // namespace test
 }  // namespace binary
 }  // namespace wasp
