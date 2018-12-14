@@ -29,6 +29,16 @@ bool operator!=(const Import<Traits>& lhs, const Import<Traits>& rhs) {
 }
 
 template <typename Traits>
+bool operator==(const Expression<Traits>& lhs, const Expression<Traits>& rhs) {
+  return lhs.data == rhs.data;
+}
+
+template <typename Traits>
+bool operator!=(const Expression<Traits>& lhs, const Expression<Traits>& rhs) {
+  return !(lhs == rhs);
+}
+
+template <typename Traits>
 bool operator==(const ConstantExpression<Traits>& lhs,
                 const ConstantExpression<Traits>& rhs) {
   return lhs.data == rhs.data;
@@ -70,6 +80,16 @@ bool operator==(const ElementSegment<Traits>& lhs,
 template <typename Traits>
 bool operator!=(const ElementSegment<Traits>& lhs,
                 const ElementSegment<Traits>& rhs) {
+  return !(lhs == rhs);
+}
+
+template <typename Traits>
+bool operator==(const Code<Traits>& lhs, const Code<Traits>& rhs) {
+  return lhs.locals == rhs.locals && lhs.body == rhs.body;
+}
+
+template <typename Traits>
+bool operator!=(const Code<Traits>& lhs, const Code<Traits>& rhs) {
   return !(lhs == rhs);
 }
 

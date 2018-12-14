@@ -233,6 +233,11 @@ struct Expression {
   typename Traits::Buffer data;
 };
 
+template <typename Traits>
+bool operator==(const Expression<Traits>&, const Expression<Traits>&);
+template <typename Traits>
+bool operator!=(const Expression<Traits>&, const Expression<Traits>&);
+
 template <typename Traits = BorrowedTraits>
 struct ConstantExpression {
   explicit ConstantExpression(SpanU8 data) : data(Traits::ToBuffer(data)) {}
@@ -394,6 +399,11 @@ struct Code {
   std::vector<Locals> locals;
   Expression<Traits> body;
 };
+
+template <typename Traits>
+bool operator==(const Code<Traits>&, const Code<Traits>&);
+template <typename Traits>
+bool operator!=(const Code<Traits>&, const Code<Traits>&);
 
 template <typename Traits = BorrowedTraits>
 struct DataSegment {

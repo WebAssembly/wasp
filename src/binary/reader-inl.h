@@ -847,9 +847,8 @@ optional<Code<>> Read(SpanU8* data, Errors& errors, Tag<Code<>>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "code"};
   WASP_TRY_READ(body_size, ReadCount(data, errors));
   WASP_TRY_READ(body, ReadBytes(data, body_size, errors));
-  WASP_TRY_READ(local_decls,
-                ReadVector<Locals>(&body, errors, "locals vector"));
-  return Code<>{std::move(local_decls), Expression<>{std::move(body)}};
+  WASP_TRY_READ(locals, ReadVector<Locals>(&body, errors, "locals vector"));
+  return Code<>{std::move(locals), Expression<>{std::move(body)}};
 }
 
 template <typename Errors>
