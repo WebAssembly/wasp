@@ -209,7 +209,15 @@ optional<std::vector<T>> ReadVector(SpanU8* data,
 // -----------------------------------------------------------------------------
 
 template <typename Sequence>
-void LazySequenceIteratorBase<Sequence>::Increment() {
+LazySequenceIterator<Sequence>::LazySequenceIterator(Sequence* seq, SpanU8 data)
+    : sequence_(seq), data_(data) {
+  if (!empty()) {
+    operator++();
+  }
+}
+
+template <typename Sequence>
+auto LazySequenceIterator<Sequence>::operator++() -> LazySequenceIterator& {
   if (!empty()) {
     value_ = Read(&data_, sequence_->errors_, Tag<value_type>{});
     if (!value_) {
@@ -218,19 +226,6 @@ void LazySequenceIteratorBase<Sequence>::Increment() {
   } else {
     clear();
   }
-}
-
-template <typename Sequence>
-LazySequenceIterator<Sequence>::LazySequenceIterator(Sequence* seq, SpanU8 data)
-    : base{seq, data} {
-  if (!this->empty()) {
-    operator++();
-  }
-}
-
-template <typename Sequence>
-auto LazySequenceIterator<Sequence>::operator++() -> LazySequenceIterator& {
-  this->Increment();
   return *this;
 }
 

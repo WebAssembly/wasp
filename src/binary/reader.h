@@ -102,7 +102,7 @@ class LazySequence {
 
  private:
   template <typename Sequence>
-  friend class LazySequenceIteratorBase;
+  friend class LazySequenceIterator;
 
   SpanU8 data_;
   Errors& errors_;
@@ -110,7 +110,7 @@ class LazySequence {
 
 /// ---
 template <typename Sequence>
-class LazySequenceIteratorBase {
+class LazySequenceIterator {
  public:
   using difference_type = typename Sequence::difference_type;
   using value_type = typename Sequence::value_type;
@@ -118,49 +118,33 @@ class LazySequenceIteratorBase {
   using reference = typename Sequence::const_reference;
   using iterator_category = std::forward_iterator_tag;
 
-  explicit LazySequenceIteratorBase(Sequence* seq, SpanU8 data)
-      : sequence_(seq), data_(data) {}
+  explicit LazySequenceIterator(Sequence* seq, SpanU8 data);
 
   SpanU8 data() const { return data_; }
 
   reference operator*() const { return *value_; }
   pointer operator->() const { return &*value_; }
 
-  friend bool operator==(const LazySequenceIteratorBase& lhs,
-                         const LazySequenceIteratorBase& rhs) {
+  LazySequenceIterator& operator++();
+  LazySequenceIterator operator++(int);
+
+  friend bool operator==(const LazySequenceIterator& lhs,
+                         const LazySequenceIterator& rhs) {
     return lhs.data_.begin() == rhs.data_.begin();
   }
 
-  friend bool operator!=(const LazySequenceIteratorBase& lhs,
-                         const LazySequenceIteratorBase& rhs) {
+  friend bool operator!=(const LazySequenceIterator& lhs,
+                         const LazySequenceIterator& rhs) {
     return !(lhs == rhs);
   }
 
  protected:
   bool empty() const { return data_.empty(); }
   void clear() { data_ = {}; }
-  void Increment();
 
   Sequence* sequence_;
   SpanU8 data_;
   optional<value_type> value_;
-};
-
-/// ---
-template <typename Sequence>
-class LazySequenceIterator : public LazySequenceIteratorBase<Sequence> {
- public:
-  using base = LazySequenceIteratorBase<Sequence>;
-  using difference_type = typename base::difference_type;
-  using value_type = typename base::value_type;
-  using pointer = typename base::pointer;
-  using reference = typename base::reference;
-  using iterator_category = typename base::iterator_category;
-
-  explicit LazySequenceIterator(Sequence*, SpanU8);
-
-  LazySequenceIterator& operator++();
-  LazySequenceIterator operator++(int);
 };
 
 /// ---
