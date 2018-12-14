@@ -37,7 +37,7 @@ class LazySection {
 
 /// ---
 template <typename Errors>
-using LazyTypeSection = LazySection<FunctionType, Errors>;
+using LazyTypeSection = LazySection<TypeEntry, Errors>;
 
 template <typename Data, typename Errors>
 LazyTypeSection<Errors> ReadTypeSection(Data&& data, Errors& errors);
