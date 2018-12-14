@@ -23,9 +23,9 @@
 namespace fmt {
 
 template <>
-struct formatter<::wasp::binary::ValType> : formatter<string_view> {
+struct formatter<::wasp::binary::ValueType> : formatter<string_view> {
   template <typename Ctx>
-  typename Ctx::iterator format(::wasp::binary::ValType, Ctx&);
+  typename Ctx::iterator format(::wasp::binary::ValueType, Ctx&);
 };
 
 template <>
@@ -37,9 +37,9 @@ struct formatter<::wasp::binary::BlockType> {
 };
 
 template <>
-struct formatter<::wasp::binary::ElemType> : formatter<string_view> {
+struct formatter<::wasp::binary::ElementType> : formatter<string_view> {
   template <typename Ctx>
-  typename Ctx::iterator format(::wasp::binary::ElemType, Ctx&);
+  typename Ctx::iterator format(::wasp::binary::ElementType, Ctx&);
 };
 
 template <>
@@ -121,11 +121,11 @@ struct formatter<::wasp::binary::TypeEntry> {
 };
 
 template <>
-struct formatter<::wasp::binary::FuncType> {
+struct formatter<::wasp::binary::FunctionType> {
   template <typename Ctx>
   typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::FuncType&, Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::FunctionType&, Ctx&);
 };
 
 template <>

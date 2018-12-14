@@ -179,7 +179,7 @@ class LazySection {
 
 /// ---
 template <typename Errors>
-using LazyTypeSection = LazySection<FuncType, Errors>;
+using LazyTypeSection = LazySection<FunctionType, Errors>;
 
 /// ---
 template <typename Errors>

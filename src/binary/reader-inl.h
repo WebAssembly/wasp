@@ -289,26 +289,26 @@ optional<Start> StartSection<Errors>::start() {
   }
 
 template <typename Errors>
-optional<ValType> Read(SpanU8* data, Errors& errors, Tag<ValType>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "valtype"};
+optional<ValueType> Read(SpanU8* data, Errors& errors, Tag<ValueType>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "value type"};
   WASP_TRY_READ(val, Read<u8>(data, errors));
-  WASP_TRY_DECODE(decoded, val, ValType, "valtype");
+  WASP_TRY_DECODE(decoded, val, ValueType, "value type");
   return decoded;
 }
 
 template <typename Errors>
 optional<BlockType> Read(SpanU8* data, Errors& errors, Tag<BlockType>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "blocktype"};
+  ErrorsContextGuard<Errors> guard{errors, *data, "block type"};
   WASP_TRY_READ(val, Read<u8>(data, errors));
-  WASP_TRY_DECODE(decoded, val, BlockType, "blocktype");
+  WASP_TRY_DECODE(decoded, val, BlockType, "block type");
   return decoded;
 }
 
 template <typename Errors>
-optional<ElemType> Read(SpanU8* data, Errors& errors, Tag<ElemType>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "elemtype"};
+optional<ElementType> Read(SpanU8* data, Errors& errors, Tag<ElementType>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "element type"};
   WASP_TRY_READ(val, Read<u8>(data, errors));
-  WASP_TRY_DECODE(decoded, val, ElemType, "elemtype");
+  WASP_TRY_DECODE(decoded, val, ElementType, "element type");
   return decoded;
 }
 
@@ -365,16 +365,16 @@ template <typename Errors>
 optional<LocalDecl> Read(SpanU8* data, Errors& errors, Tag<LocalDecl>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "local decl"};
   WASP_TRY_READ_CONTEXT(count, ReadIndex(data, errors), "count");
-  WASP_TRY_READ_CONTEXT(type, Read<ValType>(data, errors), "type");
+  WASP_TRY_READ_CONTEXT(type, Read<ValueType>(data, errors), "type");
   return LocalDecl{count, type};
 }
 
 template <typename Errors>
-optional<FuncType> Read(SpanU8* data, Errors& errors, Tag<FuncType>) {
+optional<FunctionType> Read(SpanU8* data, Errors& errors, Tag<FunctionType>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "func type"};
-  WASP_TRY_READ(param_types, ReadVec<ValType>(data, errors, "param types"));
-  WASP_TRY_READ(result_types, ReadVec<ValType>(data, errors, "result types"));
-  return FuncType{std::move(param_types), std::move(result_types)};
+  WASP_TRY_READ(param_types, ReadVec<ValueType>(data, errors, "param types"));
+  WASP_TRY_READ(result_types, ReadVec<ValueType>(data, errors, "result types"));
+  return FunctionType{std::move(param_types), std::move(result_types)};
 }
 
 template <typename Errors>
@@ -387,14 +387,14 @@ optional<TypeEntry> Read(SpanU8* data, Errors& errors, Tag<TypeEntry>) {
     return nullopt;
   }
 
-  WASP_TRY_READ(func_type, Read<FuncType>(data, errors));
-  return TypeEntry{form, std::move(func_type)};
+  WASP_TRY_READ(function_type, Read<FunctionType>(data, errors));
+  return TypeEntry{form, std::move(function_type)};
 }
 
 template <typename Errors>
 optional<TableType> Read(SpanU8* data, Errors& errors, Tag<TableType>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "table type"};
-  WASP_TRY_READ(elemtype, Read<ElemType>(data, errors));
+  WASP_TRY_READ(elemtype, Read<ElementType>(data, errors));
   WASP_TRY_READ(limits, Read<Limits>(data, errors));
   return TableType{limits, elemtype};
 }
@@ -409,7 +409,7 @@ optional<MemoryType> Read(SpanU8* data, Errors& errors, Tag<MemoryType>) {
 template <typename Errors>
 optional<GlobalType> Read(SpanU8* data, Errors& errors, Tag<GlobalType>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "global type"};
-  WASP_TRY_READ(type, Read<ValType>(data, errors));
+  WASP_TRY_READ(type, Read<ValueType>(data, errors));
   WASP_TRY_READ(mut, Read<Mutability>(data, errors));
   return GlobalType{type, mut};
 }

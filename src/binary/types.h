@@ -44,9 +44,9 @@ struct OwnedTraits {
   static Buffer ToBuffer(SpanU8 x) { return Buffer{x.begin(), x.end()}; }
 };
 
-enum class ValType : s32 {
+enum class ValueType : s32 {
 #define WASP_V(val, Name, str) Name,
-  WASP_FOREACH_VAL_TYPE(WASP_V)
+  WASP_FOREACH_VALUE_TYPE(WASP_V)
 #undef WASP_V
 };
 
@@ -56,9 +56,9 @@ enum class BlockType : s32 {
 #undef WASP_V
 };
 
-enum class ElemType : s32 {
+enum class ElementType : s32 {
 #define WASP_V(val, Name, str) Name,
-  WASP_FOREACH_ELEM_TYPE(WASP_V)
+  WASP_FOREACH_ELEMENT_TYPE(WASP_V)
 #undef WASP_V
 };
 
@@ -102,10 +102,10 @@ struct Limits {
 };
 
 struct LocalDecl {
-  LocalDecl(Index count, ValType type) : count(count), type(type) {}
+  LocalDecl(Index count, ValueType type) : count(count), type(type) {}
 
   Index count;
-  ValType type;
+  ValueType type;
 };
 
 template <typename Traits = BorrowedTraits>
@@ -142,31 +142,31 @@ struct Section {
   variant<KnownSection<Traits>, CustomSection<Traits>> contents;
 };
 
-using ValTypes = std::vector<ValType>;
+using ValueTypes = std::vector<ValueType>;
 
-struct FuncType {
-  FuncType(ValTypes&& param_types, ValTypes&& result_types)
+struct FunctionType {
+  FunctionType(ValueTypes&& param_types, ValueTypes&& result_types)
       : param_types(std::move(param_types)),
         result_types(std::move(result_types)) {}
 
-  ValTypes param_types;
-  ValTypes result_types;
+  ValueTypes param_types;
+  ValueTypes result_types;
 };
 
 struct TypeEntry {
-  TypeEntry(ValType form, FuncType&& type)
+  TypeEntry(ValueType form, FunctionType&& type)
       : form(form), type(std::move(type)) {}
 
-  ValType form;
-  FuncType type;
+  ValueType form;
+  FunctionType type;
 };
 
 struct TableType {
-  TableType(Limits limits, ElemType elemtype)
+  TableType(Limits limits, ElementType elemtype)
       : limits(limits), elemtype(elemtype) {}
 
   Limits limits;
-  ElemType elemtype;
+  ElementType elemtype;
 };
 
 struct MemoryType {
@@ -176,9 +176,9 @@ struct MemoryType {
 };
 
 struct GlobalType {
-  GlobalType(ValType valtype, Mutability mut) : valtype(valtype), mut(mut) {}
+  GlobalType(ValueType valtype, Mutability mut) : valtype(valtype), mut(mut) {}
 
-  ValType valtype;
+  ValueType valtype;
   Mutability mut;
 };
 
@@ -334,7 +334,7 @@ struct DataSegment {
 
 template <typename Traits = BorrowedTraits>
 struct Module {
-  std::vector<FuncType> types;
+  std::vector<FunctionType> types;
   std::vector<Import<Traits>> imports;
   std::vector<Func> funcs;
   std::vector<Table> tables;

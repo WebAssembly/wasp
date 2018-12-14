@@ -23,16 +23,16 @@
 namespace fmt {
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::ValType>::format(
-    ::wasp::binary::ValType self,
+typename Ctx::iterator formatter<::wasp::binary::ValueType>::format(
+    ::wasp::binary::ValueType self,
     Ctx& ctx) {
   string_view result;
   switch (self) {
 #define WASP_V(val, Name, str)        \
-  case ::wasp::binary::ValType::Name: \
+  case ::wasp::binary::ValueType::Name: \
     result = str;                     \
     break;
-    WASP_FOREACH_VAL_TYPE(WASP_V)
+    WASP_FOREACH_VALUE_TYPE(WASP_V)
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -56,16 +56,16 @@ typename Ctx::iterator formatter<::wasp::binary::BlockType>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::ElemType>::format(
-    ::wasp::binary::ElemType self,
+typename Ctx::iterator formatter<::wasp::binary::ElementType>::format(
+    ::wasp::binary::ElementType self,
     Ctx& ctx) {
   string_view result;
   switch (self) {
 #define WASP_V(val, Name, str)         \
-  case ::wasp::binary::ElemType::Name: \
+  case ::wasp::binary::ElementType::Name: \
     result = str;                      \
     break;
-    WASP_FOREACH_ELEM_TYPE(WASP_V)
+    WASP_FOREACH_ELEMENT_TYPE(WASP_V)
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -187,8 +187,8 @@ typename Ctx::iterator formatter<::wasp::binary::TypeEntry>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::FuncType>::format(
-    const ::wasp::binary::FuncType& self,
+typename Ctx::iterator formatter<::wasp::binary::FunctionType>::format(
+    const ::wasp::binary::FunctionType& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{} -> {}", self.param_types,
                    self.result_types);

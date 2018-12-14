@@ -30,8 +30,8 @@ std::string TestFormat(const T& t) {
 
 }  // namespace
 
-TEST(FormatTest, ValType) {
-  EXPECT_EQ(R"(i32)", TestFormat(ValType::I32));
+TEST(FormatTest, ValueType) {
+  EXPECT_EQ(R"(i32)", TestFormat(ValueType::I32));
 }
 
 TEST(FormatTest, BlockType) {
@@ -39,8 +39,8 @@ TEST(FormatTest, BlockType) {
   EXPECT_EQ(R"([])", TestFormat(BlockType::Void));
 }
 
-TEST(FormatTest, ElemType) {
-  EXPECT_EQ(R"(funcref)", TestFormat(ElemType::Funcref));
+TEST(FormatTest, ElementType) {
+  EXPECT_EQ(R"(funcref)", TestFormat(ElementType::Funcref));
 }
 
 TEST(FormatTest, ExternalKind) {
@@ -61,7 +61,7 @@ TEST(FormatTest, Limits) {
 }
 
 TEST(FormatTest, LocalDecl) {
-  EXPECT_EQ(R"(i32 ** 3)", TestFormat(LocalDecl{3, ValType::I32}));
+  EXPECT_EQ(R"(i32 ** 3)", TestFormat(LocalDecl{3, ValueType::I32}));
 }
 
 TEST(FormatTest, KnownSection) {
@@ -93,17 +93,17 @@ TEST(FormatTest, Section) {
           KnownSection<>{static_cast<SectionId>(100), SpanU8{data, 1}}}));
 }
 
-TEST(FormatTest, FuncType) {
-  EXPECT_EQ(R"([] -> [])", TestFormat(FuncType{{}, {}}));
-  EXPECT_EQ(R"([i32] -> [])", TestFormat(FuncType{{ValType::I32}, {}}));
+TEST(FormatTest, FunctionType) {
+  EXPECT_EQ(R"([] -> [])", TestFormat(FunctionType{{}, {}}));
+  EXPECT_EQ(R"([i32] -> [])", TestFormat(FunctionType{{ValueType::I32}, {}}));
   EXPECT_EQ(R"([i32 f32] -> [i64 f64])",
-            TestFormat(FuncType{{ValType::I32, ValType::F32},
-                                {ValType::I64, ValType::F64}}));
+            TestFormat(FunctionType{{ValueType::I32, ValueType::F32},
+                                    {ValueType::I64, ValueType::F64}}));
 }
 
 TEST(FormatTest, TableType) {
   EXPECT_EQ(R"({min 1, max 2} funcref)",
-            TestFormat(TableType{Limits{1, 2}, ElemType::Funcref}));
+            TestFormat(TableType{Limits{1, 2}, ElementType::Funcref}));
 }
 
 TEST(FormatTest, MemoryType) {
@@ -112,9 +112,9 @@ TEST(FormatTest, MemoryType) {
 
 TEST(FormatTest, GlobalType) {
   EXPECT_EQ(R"(const f32)",
-            TestFormat(GlobalType{ValType::F32, Mutability::Const}));
+            TestFormat(GlobalType{ValueType::F32, Mutability::Const}));
   EXPECT_EQ(R"(var i32)",
-            TestFormat(GlobalType{ValType::I32, Mutability::Var}));
+            TestFormat(GlobalType{ValueType::I32, Mutability::Var}));
 }
 
 TEST(FormatTest, Import) {
@@ -125,7 +125,8 @@ TEST(FormatTest, Import) {
   // Table
   EXPECT_EQ(
       R"({module "c", name "d", desc table {min 1} funcref})",
-      TestFormat(Import<>{"c", "d", TableType{Limits{1}, ElemType::Funcref}}));
+      TestFormat(
+          Import<>{"c", "d", TableType{Limits{1}, ElementType::Funcref}}));
 
   // Memory
   EXPECT_EQ(
@@ -136,7 +137,7 @@ TEST(FormatTest, Import) {
   EXPECT_EQ(
       R"({module "g", name "h", desc global var i32})",
       TestFormat(
-          Import<>{"g", "h", GlobalType{ValType::I32, Mutability::Var}}));
+          Import<>{"g", "h", GlobalType{ValueType::I32, Mutability::Var}}));
 }
 
 TEST(FormatTest, Export) {
@@ -211,7 +212,7 @@ TEST(FormatTest, Func) {
 
 TEST(FormatTest, Table) {
   EXPECT_EQ(R"({type {min 1} funcref})",
-            TestFormat(Table{TableType{Limits{1}, ElemType::Funcref}}));
+            TestFormat(Table{TableType{Limits{1}, ElementType::Funcref}}));
 }
 
 TEST(FormatTest, Memory) {
@@ -222,7 +223,7 @@ TEST(FormatTest, Memory) {
 TEST(FormatTest, Global) {
   const u8 expr[] = "\xfa\xce";
   EXPECT_EQ(R"({type const i32, init "\fa\ce"})",
-            TestFormat(Global<>{GlobalType{ValType::I32, Mutability::Const},
+            TestFormat(Global<>{GlobalType{ValueType::I32, Mutability::Const},
                                 ConstExpr<>{SpanU8{expr, 2}}}));
 }
 
@@ -243,7 +244,7 @@ TEST(FormatTest, Code) {
   EXPECT_EQ(
       R"({locals [i32 ** 1], body "\0b"})",
       TestFormat(
-          Code<>{{LocalDecl{1, ValType::I32}}, Expr<>{SpanU8{expr, 1}}}));
+          Code<>{{LocalDecl{1, ValueType::I32}}, Expr<>{SpanU8{expr, 1}}}));
 }
 
 TEST(FormatTest, DataSegment) {

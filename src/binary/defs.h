@@ -17,17 +17,17 @@
 #ifndef WASP_BINARY_DEFS_H_
 #define WASP_BINARY_DEFS_H_
 
-#define WASP_FOREACH_VAL_TYPE(V) \
-  V(0x7f, I32, "i32")            \
-  V(0x7e, I64, "i64")            \
-  V(0x7d, F32, "f32")            \
+#define WASP_FOREACH_VALUE_TYPE(V) \
+  V(0x7f, I32, "i32")              \
+  V(0x7e, I64, "i64")              \
+  V(0x7d, F32, "f32")              \
   V(0x7c, F64, "f64")
 
 #define WASP_FOREACH_BLOCK_TYPE(V) \
-  WASP_FOREACH_VAL_TYPE(V)         \
+  WASP_FOREACH_VALUE_TYPE(V)       \
   V(0x40, Void, "")
 
-#define WASP_FOREACH_ELEM_TYPE(V) \
+#define WASP_FOREACH_ELEMENT_TYPE(V) \
   V(0x70, Funcref, "funcref")
 
 #define WASP_FOREACH_EXTERNAL_KIND(V) \

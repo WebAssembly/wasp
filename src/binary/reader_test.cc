@@ -465,20 +465,21 @@ TEST(ReaderTest, ReadVec_PastEnd) {
   EXPECT_EQ(0u, copy.size());
 }
 
-TEST(ReaderTest, ReadValType) {
-  ExpectRead<ValType>(ValType::I32, MakeSpanU8("\x7f"));
-  ExpectRead<ValType>(ValType::I64, MakeSpanU8("\x7e"));
-  ExpectRead<ValType>(ValType::F32, MakeSpanU8("\x7d"));
-  ExpectRead<ValType>(ValType::F64, MakeSpanU8("\x7c"));
+TEST(ReaderTest, ReadValueType) {
+  ExpectRead<ValueType>(ValueType::I32, MakeSpanU8("\x7f"));
+  ExpectRead<ValueType>(ValueType::I64, MakeSpanU8("\x7e"));
+  ExpectRead<ValueType>(ValueType::F32, MakeSpanU8("\x7d"));
+  ExpectRead<ValueType>(ValueType::F64, MakeSpanU8("\x7c"));
 }
 
-TEST(ReaderTest, ReadValType_Unknown) {
-  ExpectReadFailure<ValType>({{0, "valtype"}, {1, "Unknown valtype 16"}},
-                             MakeSpanU8("\x10"));
+TEST(ReaderTest, ReadValueType_Unknown) {
+  ExpectReadFailure<ValueType>(
+      {{0, "value type"}, {1, "Unknown value type 16"}}, MakeSpanU8("\x10"));
 
   // Overlong encoding of -0x01 == 0x7f is not allowed.
-  ExpectReadFailure<ValType>({{0, "valtype"}, {1, "Unknown valtype 255"}},
-                             MakeSpanU8("\xff\x7f"));
+  ExpectReadFailure<ValueType>(
+      {{0, "value type"}, {1, "Unknown value type 255"}},
+      MakeSpanU8("\xff\x7f"));
 }
 
 TEST(ReaderTest, ReadBlockType) {
@@ -490,23 +491,25 @@ TEST(ReaderTest, ReadBlockType) {
 }
 
 TEST(ReaderTest, ReadBlockType_Unknown) {
-  ExpectReadFailure<BlockType>({{0, "blocktype"}, {1, "Unknown blocktype 0"}},
+  ExpectReadFailure<BlockType>({{0, "block type"}, {1, "Unknown block type 0"}},
                                MakeSpanU8("\x00"));
 
   // Overlong encoding of -0x01 == 0x7f is not allowed.
-  ExpectReadFailure<BlockType>({{0, "blocktype"}, {1, "Unknown blocktype 255"}},
-                               MakeSpanU8("\xff\x7f"));
+  ExpectReadFailure<BlockType>(
+      {{0, "block type"}, {1, "Unknown block type 255"}},
+      MakeSpanU8("\xff\x7f"));
 }
 
-TEST(ReaderTest, ReadElemType) {
-  ExpectRead<ElemType>(ElemType::Funcref, MakeSpanU8("\x70"));
+TEST(ReaderTest, ReadElementType) {
+  ExpectRead<ElementType>(ElementType::Funcref, MakeSpanU8("\x70"));
 }
 
-TEST(ReaderTest, ReadElemType_Unknown) {
-  ExpectReadFailure<ElemType>({{0, "elemtype"}, {1, "Unknown elemtype 0"}},
-                              MakeSpanU8("\x00"));
+TEST(ReaderTest, ReadElementType_Unknown) {
+  ExpectReadFailure<ElementType>(
+      {{0, "element type"}, {1, "Unknown element type 0"}}, MakeSpanU8("\x00"));
 
   // Overlong encoding of -0x10 == 0x70 is not allowed.
-  ExpectReadFailure<ElemType>({{0, "elemtype"}, {1, "Unknown elemtype 240"}},
-                              MakeSpanU8("\xf0\x7f"));
+  ExpectReadFailure<ElementType>(
+      {{0, "element type"}, {1, "Unknown element type 240"}},
+      MakeSpanU8("\xf0\x7f"));
 }

@@ -32,12 +32,12 @@ struct Type {
   static constexpr u8 Func = 0x60;
 };
 
-struct ValType {
+struct ValueType {
 #define WASP_V(val, Name, str) static constexpr u8 Name = val;
-  WASP_FOREACH_VAL_TYPE(WASP_V)
+  WASP_FOREACH_VALUE_TYPE(WASP_V)
 #undef WASP_V
 
-  static optional<::wasp::binary::ValType> Decode(u8);
+  static optional<::wasp::binary::ValueType> Decode(u8);
 };
 
 struct BlockType {
@@ -48,12 +48,12 @@ struct BlockType {
   static optional<::wasp::binary::BlockType> Decode(u8);
 };
 
-struct ElemType {
+struct ElementType {
 #define WASP_V(val, Name, str) static constexpr u8 Name = val;
-  WASP_FOREACH_ELEM_TYPE(WASP_V)
+  WASP_FOREACH_ELEMENT_TYPE(WASP_V)
 #undef WASP_V
 
-  static optional<::wasp::binary::ElemType> Decode(u8);
+  static optional<::wasp::binary::ElementType> Decode(u8);
 };
 
 struct ExternalKind {
