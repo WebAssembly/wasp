@@ -523,7 +523,7 @@ TEST(ReaderTest, ReadElementType_Unknown) {
 }
 
 TEST(ReaderTest, ReadExternalKind) {
-  ExpectRead<ExternalKind>(ExternalKind::Func, MakeSpanU8("\x00"));
+  ExpectRead<ExternalKind>(ExternalKind::Function, MakeSpanU8("\x00"));
   ExpectRead<ExternalKind>(ExternalKind::Table, MakeSpanU8("\x01"));
   ExpectRead<ExternalKind>(ExternalKind::Memory, MakeSpanU8("\x02"));
   ExpectRead<ExternalKind>(ExternalKind::Global, MakeSpanU8("\x03"));
@@ -1075,6 +1075,10 @@ TEST(ReaderTest, ReadConstantExpression_IllegalInstruction) {
       MakeSpanU8("\x00"));
 }
 
+TEST(ReaderTest, ReadConstantExpression_PastEnd) {
+  ExpectReadFailure<ConstantExpression<>>({{0, "foo"}}, MakeSpanU8(""));
+}
+
 TEST(ReaderTest, ReadInstruction) {
   using I = Instruction;
   using O = Opcode;
@@ -1264,3 +1268,66 @@ TEST(ReaderTest, ReadInstruction_BadMemoryReserved) {
       {{1, "reserved"}, {2, "Expected reserved byte 0, got 1"}},
       MakeSpanU8("\x40\x01"));
 }
+
+TEST(ReaderTest, ReadFunc) {
+  ExpectRead<Function>(Function{1}, MakeSpanU8("\x01"));
+}
+
+TEST(ReaderTest, ReadFunc_PastEnd) {
+  ExpectReadFailure<Function>(
+      {{0, "function"}, {0, "index"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""));
+}
+
+TEST(ReaderTest, ReadTable) {
+  ExpectRead<Table>(Table{TableType{Limits{1}, ElementType::Funcref}},
+                    MakeSpanU8("\x70\x00\x01"));
+}
+
+TEST(ReaderTest, ReadTable_PastEnd) {
+  ExpectReadFailure<Table>({{0, "table"},
+                            {0, "table type"},
+                            {0, "element type"},
+                            {0, "Unable to read u8"}},
+                           MakeSpanU8(""));
+}
+
+TEST(ReaderTest, ReadMemory) {
+  ExpectRead<Memory>(Memory{MemoryType{Limits{1, 2}}},
+                     MakeSpanU8("\x01\x01\x02"));
+}
+
+TEST(ReaderTest, ReadMemory_PastEnd) {
+  ExpectReadFailure<Memory>({{0, "memory"},
+                             {0, "memory type"},
+                             {0, "limits"},
+                             {0, "flags"},
+                             {0, "Unable to read u8"}},
+                            MakeSpanU8(""));
+}
+
+TEST(ReaderTest, ReadGlobal) {
+  // i32 global with i64.const constant expression. This will fail validation
+  // but still can be successfully parsed.
+  ExpectRead<Global<>>(
+      Global<>{GlobalType{ValueType::I32, Mutability::Var},
+               ConstantExpression<>{MakeSpanU8("\x42\x00\x0b")}},
+      MakeSpanU8("\x7f\x01\x42\x00\x0b"));
+}
+
+TEST(ReaderTest, ReadGlobal_PastEnd) {
+  ExpectReadFailure<Global<>>({{0, "global"},
+                               {0, "global type"},
+                               {0, "value type"},
+                               {0, "Unable to read u8"}},
+                              MakeSpanU8(""));
+
+#if 0
+  ExpectReadFailure<Global<>>({{0, "global"},
+                               {0, "constant expression"},
+                               {0, "value type"},
+                               {0, "Unable to read u8"}},
+                              MakeSpanU8("\x7f\x00"));
+#endif
+}
+

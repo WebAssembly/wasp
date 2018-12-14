@@ -118,5 +118,29 @@ bool operator!=(const Instruction& lhs, const Instruction& rhs) {
   return !(lhs == rhs);
 }
 
+bool operator==(const Function& lhs, const Function& rhs) {
+  return lhs.type_index == rhs.type_index;
+}
+
+bool operator!=(const Function& lhs, const Function& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const Table& lhs, const Table& rhs) {
+  return lhs.table_type == rhs.table_type;
+}
+
+bool operator!=(const Table& lhs, const Table& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const Memory& lhs, const Memory& rhs) {
+  return lhs.memory_type == rhs.memory_type;
+}
+
+bool operator!=(const Memory& lhs, const Memory& rhs) {
+  return !(lhs == rhs);
+}
+
 }  // namespace binary
 }  // namespace wasp

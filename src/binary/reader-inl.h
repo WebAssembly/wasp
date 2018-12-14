@@ -438,7 +438,7 @@ optional<TypeEntry> Read(SpanU8* data, Errors& errors, Tag<TypeEntry>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "type entry"};
   WASP_TRY_READ_CONTEXT(form, Read<u8>(data, errors), "form");
 
-  if (form != encoding::Type::Func) {
+  if (form != encoding::Type::Function) {
     errors.OnError(*data, format("Unknown type form: {}", form));
     return nullopt;
   }
@@ -477,7 +477,7 @@ optional<Import<>> Read(SpanU8* data, Errors& errors, Tag<Import<>>) {
   WASP_TRY_READ(name, ReadString(data, errors, "field name"));
   WASP_TRY_READ(kind, Read<ExternalKind>(data, errors));
   switch (kind) {
-    case ExternalKind::Func: {
+    case ExternalKind::Function: {
       WASP_TRY_READ(type_index, ReadIndex(data, errors));
       return Import<>{module, name, type_index};
     }
@@ -790,10 +790,10 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
 }
 
 template <typename Errors>
-optional<Func> Read(SpanU8* data, Errors& errors, Tag<Func>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "func"};
+optional<Function> Read(SpanU8* data, Errors& errors, Tag<Function>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "function"};
   WASP_TRY_READ(type_index, ReadIndex(data, errors));
-  return Func{type_index};
+  return Function{type_index};
 }
 
 template <typename Errors>

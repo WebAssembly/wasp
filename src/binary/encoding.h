@@ -29,7 +29,7 @@ constexpr u8 Magic[] = {0, 'a', 's', 'm'};
 constexpr u8 Version[] = {1, 0, 0, 0};
 
 struct Type {
-  static constexpr u8 Func = 0x60;
+  static constexpr u8 Function = 0x60;
 };
 
 struct ValueType {

@@ -221,11 +221,11 @@ struct formatter<::wasp::binary::Instruction> {
 };
 
 template <>
-struct formatter<::wasp::binary::Func> {
+struct formatter<::wasp::binary::Function> {
   template <typename Ctx>
   typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::Func&, Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::Function&, Ctx&);
 };
 
 template <>

@@ -336,8 +336,8 @@ typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Func>::format(
-    const ::wasp::binary::Func& self,
+typename Ctx::iterator formatter<::wasp::binary::Function>::format(
+    const ::wasp::binary::Function& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{{type {}}}", self.type_index);
 }

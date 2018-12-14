@@ -40,5 +40,15 @@ bool operator!=(const ConstantExpression<Traits>& lhs,
   return !(lhs == rhs);
 }
 
+template <typename Traits>
+bool operator==(const Global<Traits>& lhs, const Global<Traits>& rhs) {
+  return lhs.global_type == rhs.global_type && lhs.init == rhs.init;
+}
+
+template <typename Traits>
+bool operator!=(const Global<Traits>& lhs, const Global<Traits>& rhs) {
+  return !(lhs == rhs);
+}
+
 }  // namespace binary
 }  // namespace wasp

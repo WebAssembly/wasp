@@ -44,7 +44,7 @@ TEST(FormatTest, ElementType) {
 }
 
 TEST(FormatTest, ExternalKind) {
-  EXPECT_EQ(R"(func)", TestFormat(ExternalKind::Func));
+  EXPECT_EQ(R"(func)", TestFormat(ExternalKind::Function));
 }
 
 TEST(FormatTest, Mutability) {
@@ -124,7 +124,7 @@ TEST(FormatTest, GlobalType) {
 }
 
 TEST(FormatTest, Import) {
-  // Func
+  // Function
   EXPECT_EQ(R"({module "a", name "b", desc func 3})",
             TestFormat(Import<>{"a", "b", Index{3}}));
 
@@ -136,7 +136,7 @@ TEST(FormatTest, Import) {
 
   // Memory
   EXPECT_EQ(
-      R"({module "e", name "f", desc memory {min 0, max 4}})",
+      R"({module "e", name "f", desc mem {min 0, max 4}})",
       TestFormat(Import<>{"e", "f", MemoryType{Limits{0, 4}}}));
 
   // Global
@@ -148,10 +148,10 @@ TEST(FormatTest, Import) {
 
 TEST(FormatTest, Export) {
   EXPECT_EQ(R"({name "f", desc func 0})",
-            TestFormat(Export<>{ExternalKind::Func, "f", Index{0}}));
+            TestFormat(Export<>{ExternalKind::Function, "f", Index{0}}));
   EXPECT_EQ(R"({name "t", desc table 1})",
             TestFormat(Export<>{ExternalKind::Table, "t", Index{1}}));
-  EXPECT_EQ(R"({name "m", desc memory 2})",
+  EXPECT_EQ(R"({name "m", desc mem 2})",
             TestFormat(Export<>{ExternalKind::Memory, "m", Index{2}}));
   EXPECT_EQ(R"({name "g", desc global 3})",
             TestFormat(Export<>{ExternalKind::Global, "g", Index{3}}));
@@ -218,8 +218,8 @@ TEST(FormatTest, Instruction) {
             TestFormat(Instruction{Opcode::F64Const, f64{6.25}}));
 }
 
-TEST(FormatTest, Func) {
-  EXPECT_EQ(R"({type 1})", TestFormat(Func{Index{1u}}));
+TEST(FormatTest, Function) {
+  EXPECT_EQ(R"({type 1})", TestFormat(Function{Index{1u}}));
 }
 
 TEST(FormatTest, Table) {

@@ -219,9 +219,9 @@ struct Import {
   variant<Index, TableType, MemoryType, GlobalType> desc;
 };
 
-template <typename Traits = BorrowedTraits>
+template <typename Traits>
 bool operator==(const Import<Traits>&, const Import<Traits>&);
-template <typename Traits = BorrowedTraits>
+template <typename Traits>
 bool operator!=(const Import<Traits>&, const Import<Traits>&);
 
 template <typename Traits = BorrowedTraits>
@@ -243,10 +243,10 @@ struct ConstantExpression {
   typename Traits::Buffer data;
 };
 
-template <typename Traits = BorrowedTraits>
+template <typename Traits>
 bool operator==(const ConstantExpression<Traits>&,
                 const ConstantExpression<Traits>&);
-template <typename Traits = BorrowedTraits>
+template <typename Traits>
 bool operator!=(const ConstantExpression<Traits>&,
                 const ConstantExpression<Traits>&);
 
@@ -304,11 +304,14 @@ bool operator!=(const Instruction&, const Instruction&);
 
 using Instrs = std::vector<Instruction>;
 
-struct Func {
-  explicit Func(Index type_index) : type_index(type_index) {}
+struct Function {
+  explicit Function(Index type_index) : type_index(type_index) {}
 
   Index type_index;
 };
+
+bool operator==(const Function&, const Function&);
+bool operator!=(const Function&, const Function&);
 
 struct Table {
   explicit Table(TableType table_type) : table_type(table_type) {}
@@ -316,11 +319,17 @@ struct Table {
   TableType table_type;
 };
 
+bool operator==(const Table&, const Table&);
+bool operator!=(const Table&, const Table&);
+
 struct Memory {
   explicit Memory(MemoryType memory_type) : memory_type(memory_type) {}
 
   MemoryType memory_type;
 };
+
+bool operator==(const Memory&, const Memory&);
+bool operator!=(const Memory&, const Memory&);
 
 template <typename Traits = BorrowedTraits>
 struct Global {
@@ -330,6 +339,11 @@ struct Global {
   GlobalType global_type;
   ConstantExpression<Traits> init;
 };
+
+template <typename Traits>
+bool operator==(const Global<Traits>&, const Global<Traits>&);
+template <typename Traits>
+bool operator!=(const Global<Traits>&, const Global<Traits>&);
 
 template <typename Traits = BorrowedTraits>
 struct Export {
@@ -384,7 +398,7 @@ template <typename Traits = BorrowedTraits>
 struct Module {
   std::vector<FunctionType> types;
   std::vector<Import<Traits>> imports;
-  std::vector<Func> funcs;
+  std::vector<Function> functions;
   std::vector<Table> tables;
   std::vector<Memory> memories;
   std::vector<Global<Traits>> globals;

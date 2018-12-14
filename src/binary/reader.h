@@ -195,7 +195,7 @@ using LazyImportSection = LazySection<Import<>, Errors>;
 
 /// ---
 template <typename Errors>
-using LazyFunctionSection = LazySection<Func, Errors>;
+using LazyFunctionSection = LazySection<Function, Errors>;
 
 /// ---
 template <typename Errors>

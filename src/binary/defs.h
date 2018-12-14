@@ -31,9 +31,9 @@
   V(0x70, Funcref, "funcref")
 
 #define WASP_FOREACH_EXTERNAL_KIND(V) \
-  V(0, Func, "func")                  \
+  V(0, Function, "func")              \
   V(1, Table, "table")                \
-  V(2, Memory, "memory")              \
+  V(2, Memory, "mem")                 \
   V(3, Global, "global")
 
 #define WASP_FOREACH_MUTABILITY(V) \
