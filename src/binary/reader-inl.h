@@ -211,20 +211,22 @@ optional<std::vector<T>> ReadVector(SpanU8* data,
 template <typename Sequence>
 LazySequenceIterator<Sequence>::LazySequenceIterator(Sequence* seq, SpanU8 data)
     : sequence_(seq), data_(data) {
-  if (!empty()) {
+  if (empty()) {
+    clear();
+  } else {
     operator++();
   }
 }
 
 template <typename Sequence>
 auto LazySequenceIterator<Sequence>::operator++() -> LazySequenceIterator& {
-  if (!empty()) {
+  if (empty()) {
+    clear();
+  } else {
     value_ = Read(&data_, sequence_->errors_, Tag<value_type>{});
     if (!value_) {
       clear();
     }
-  } else {
-    clear();
   }
   return *this;
 }

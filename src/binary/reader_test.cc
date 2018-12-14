@@ -1076,7 +1076,8 @@ TEST(ReaderTest, ReadConstantExpression_IllegalInstruction) {
 }
 
 TEST(ReaderTest, ReadConstantExpression_PastEnd) {
-  ExpectReadFailure<ConstantExpression<>>({{0, "foo"}}, MakeSpanU8(""));
+  ExpectReadFailure<ConstantExpression<>>(
+      {{0, "Unexpected end of constant expression"}}, MakeSpanU8(""));
 }
 
 TEST(ReaderTest, ReadInstruction) {
@@ -1322,12 +1323,7 @@ TEST(ReaderTest, ReadGlobal_PastEnd) {
                                {0, "Unable to read u8"}},
                               MakeSpanU8(""));
 
-#if 0
   ExpectReadFailure<Global<>>({{0, "global"},
-                               {0, "constant expression"},
-                               {0, "value type"},
-                               {0, "Unable to read u8"}},
+                               {2, "Unexpected end of constant expression"}},
                               MakeSpanU8("\x7f\x00"));
-#endif
 }
-

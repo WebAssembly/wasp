@@ -138,7 +138,7 @@ class LazySequenceIterator {
     return !(lhs == rhs);
   }
 
- protected:
+ private:
   bool empty() const { return data_.empty(); }
   void clear() { data_ = {}; }
 
