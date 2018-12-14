@@ -381,6 +381,11 @@ struct ElementSegment {
   std::vector<Index> init;
 };
 
+template <typename Traits>
+bool operator==(const ElementSegment<Traits>&, const ElementSegment<Traits>&);
+template <typename Traits>
+bool operator!=(const ElementSegment<Traits>&, const ElementSegment<Traits>&);
+
 template <typename Traits = BorrowedTraits>
 struct Code {
   Code(std::vector<Locals>&& locals, Expression<> body)
@@ -401,6 +406,11 @@ struct DataSegment {
   ConstantExpression<Traits> offset;
   typename Traits::Buffer init;
 };
+
+template <typename Traits>
+bool operator==(const DataSegment<Traits>&, const DataSegment<Traits>&);
+template <typename Traits>
+bool operator!=(const DataSegment<Traits>&, const DataSegment<Traits>&);
 
 template <typename Traits = BorrowedTraits>
 struct Module {

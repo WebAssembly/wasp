@@ -60,5 +60,31 @@ bool operator!=(const Export<Traits>& lhs, const Export<Traits>& rhs) {
   return !(lhs == rhs);
 }
 
+template <typename Traits>
+bool operator==(const ElementSegment<Traits>& lhs,
+                const ElementSegment<Traits>& rhs) {
+  return lhs.table_index == rhs.table_index && lhs.offset == rhs.offset &&
+         lhs.init == rhs.init;
+}
+
+template <typename Traits>
+bool operator!=(const ElementSegment<Traits>& lhs,
+                const ElementSegment<Traits>& rhs) {
+  return !(lhs == rhs);
+}
+
+template <typename Traits>
+bool operator==(const DataSegment<Traits>& lhs,
+                const DataSegment<Traits>& rhs) {
+  return lhs.memory_index == rhs.memory_index && lhs.offset == rhs.offset &&
+         lhs.init == rhs.init;
+}
+
+template <typename Traits>
+bool operator!=(const DataSegment<Traits>& lhs,
+                const DataSegment<Traits>& rhs) {
+  return !(lhs == rhs);
+}
+
 }  // namespace binary
 }  // namespace wasp

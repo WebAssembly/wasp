@@ -1356,3 +1356,65 @@ TEST(ReaderTest, Export_PastEnd) {
 TEST(ReaderTest, Start) {
   ExpectRead<Start>(Start{256}, MakeSpanU8("\x80\x02"));
 }
+
+TEST(ReaderTest, ElementSegment) {
+  ExpectRead<ElementSegment<>>(
+      ElementSegment<>{
+          0, ConstantExpression<>{MakeSpanU8("\x41\x01\x0b")}, {1, 2, 3}},
+      MakeSpanU8("\x00\x41\x01\x0b\x03\x01\x02\x03"));
+}
+
+TEST(ReaderTest, ElementSegment_PastEnd) {
+  ExpectReadFailure<ElementSegment<>>({{0, "element segment"},
+                                       {0, "table index"},
+                                       {0, "index"},
+                                       {0, "Unable to read u8"}},
+                                      MakeSpanU8(""));
+
+  ExpectReadFailure<ElementSegment<>>(
+      {{0, "element segment"},
+       {1, "offset"},
+       {1, "Unexpected end of constant expression"}},
+      MakeSpanU8("\x00"));
+
+  ExpectReadFailure<ElementSegment<>>({{0, "element segment"},
+                                       {4, "initializers"},
+                                       {4, "index"},
+                                       {4, "Unable to read u8"}},
+                                      MakeSpanU8("\x00\x23\x00\x0b"));
+}
+
+TEST(ReaderTest, DataSegment) {
+  ExpectRead<DataSegment<>>(
+      DataSegment<>{1, ConstantExpression<>{MakeSpanU8("\x42\x01\x0b")},
+                    MakeSpanU8("wxyz")},
+      MakeSpanU8("\x01\x42\x01\x0b\x04wxyz"));
+}
+
+TEST(ReaderTest, DataSegment_PastEnd) {
+  ExpectReadFailure<DataSegment<>>({{0, "data segment"},
+                                    {0, "memory index"},
+                                    {0, "index"},
+                                    {0, "Unable to read u8"}},
+                                   MakeSpanU8(""));
+
+  ExpectReadFailure<DataSegment<>>(
+      {{0, "data segment"},
+       {1, "offset"},
+       {1, "Unexpected end of constant expression"}},
+      MakeSpanU8("\x00"));
+
+  ExpectReadFailure<DataSegment<>>({{0, "data segment"},
+                                    {4, "index"},
+                                    {4, "Unable to read u8"}},
+                                   MakeSpanU8("\x00\x41\x00\x0b"));
+
+  ExpectReadFailure<DataSegment<>>({{0, "data segment"},
+                                    {4, "index"},
+                                    {4, "Unable to read u8"}},
+                                   MakeSpanU8("\x00\x41\x00\x0b"));
+
+  ExpectReadFailure<DataSegment<>>(
+      {{0, "data segment"}, {5, "Count is longer than the data length: 2 > 0"}},
+      MakeSpanU8("\x00\x41\x00\x0b\x02"));
+}
