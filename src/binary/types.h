@@ -126,6 +126,11 @@ struct KnownSection {
   typename Traits::Buffer data;
 };
 
+template <typename Traits>
+bool operator==(const KnownSection<Traits>&, const KnownSection<Traits>&);
+template <typename Traits>
+bool operator!=(const KnownSection<Traits>&, const KnownSection<Traits>&);
+
 template <typename Traits = BorrowedTraits>
 struct CustomSection {
   CustomSection(string_view name, SpanU8 data)
@@ -134,6 +139,11 @@ struct CustomSection {
   typename Traits::Name name;
   typename Traits::Buffer data;
 };
+
+template <typename Traits>
+bool operator==(const CustomSection<Traits>&, const CustomSection<Traits>&);
+template <typename Traits>
+bool operator!=(const CustomSection<Traits>&, const CustomSection<Traits>&);
 
 template <typename Traits = BorrowedTraits>
 struct Section {
@@ -150,6 +160,11 @@ struct Section {
 
   variant<KnownSection<Traits>, CustomSection<Traits>> contents;
 };
+
+template <typename Traits>
+bool operator==(const Section<Traits>&, const Section<Traits>&);
+template <typename Traits>
+bool operator!=(const Section<Traits>&, const Section<Traits>&);
 
 using ValueTypes = std::vector<ValueType>;
 

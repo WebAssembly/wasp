@@ -18,6 +18,40 @@ namespace wasp {
 namespace binary {
 
 template <typename Traits>
+bool operator==(const KnownSection<Traits>& lhs,
+                const KnownSection<Traits>& rhs) {
+  return lhs.id == rhs.id && lhs.data == rhs.data;
+}
+
+template <typename Traits>
+bool operator!=(const KnownSection<Traits>& lhs,
+                const KnownSection<Traits>& rhs) {
+  return !(lhs == rhs);
+}
+
+template <typename Traits>
+bool operator==(const CustomSection<Traits>& lhs,
+                const CustomSection<Traits>& rhs) {
+  return lhs.name == rhs.name && lhs.data == rhs.data;
+}
+
+template <typename Traits>
+bool operator!=(const CustomSection<Traits>& lhs,
+                const CustomSection<Traits>& rhs) {
+  return !(lhs == rhs);
+}
+
+template <typename Traits>
+bool operator==(const Section<Traits>& lhs, const Section<Traits>& rhs) {
+  return lhs.contents == rhs.contents;
+}
+
+template <typename Traits>
+bool operator!=(const Section<Traits>& lhs, const Section<Traits>& rhs) {
+  return !(lhs == rhs);
+}
+
+template <typename Traits>
 bool operator==(const Import<Traits>& lhs, const Import<Traits>& rhs) {
   return lhs.module == rhs.module && lhs.name == rhs.name &&
          lhs.desc == rhs.desc;
