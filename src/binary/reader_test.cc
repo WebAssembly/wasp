@@ -1230,10 +1230,9 @@ TEST(ReaderTest, Memory_PastEnd) {
 TEST(ReaderTest, Global) {
   // i32 global with i64.const constant expression. This will fail validation
   // but still can be successfully parsed.
-  ExpectRead<Global<>>(
-      Global<>{GlobalType{ValueType::I32, Mutability::Var},
-               ConstantExpression<>{MakeSpanU8("\x42\x00\x0b")}},
-      MakeSpanU8("\x7f\x01\x42\x00\x0b"));
+  ExpectRead<Global<>>(Global<>{GlobalType{ValueType::I32, Mutability::Var},
+                                MakeConstantExpression("\x42\x00\x0b")},
+                       MakeSpanU8("\x7f\x01\x42\x00\x0b"));
 }
 
 TEST(ReaderTest, Global_PastEnd) {
@@ -1281,8 +1280,7 @@ TEST(ReaderTest, Start) {
 
 TEST(ReaderTest, ElementSegment) {
   ExpectRead<ElementSegment<>>(
-      ElementSegment<>{
-          0, ConstantExpression<>{MakeSpanU8("\x41\x01\x0b")}, {1, 2, 3}},
+      ElementSegment<>{0, MakeConstantExpression("\x41\x01\x0b"), {1, 2, 3}},
       MakeSpanU8("\x00\x41\x01\x0b\x03\x01\x02\x03"));
 }
 
@@ -1308,11 +1306,10 @@ TEST(ReaderTest, ElementSegment_PastEnd) {
 
 TEST(ReaderTest, Code) {
   // Empty body. This will fail validation, but can still be read.
-  ExpectRead<Code<>>(Code<>{{}, Expression<>{MakeSpanU8("")}},
-                     MakeSpanU8("\x01\x00"));
+  ExpectRead<Code<>>(Code<>{{}, MakeExpression("")}, MakeSpanU8("\x01\x00"));
 
   // Smallest valid empty body.
-  ExpectRead<Code<>>(Code<>{{}, Expression<>{MakeSpanU8("\x0b")}},
+  ExpectRead<Code<>>(Code<>{{}, MakeExpression("\x0b")},
                      MakeSpanU8("\x02\x00\x0b"));
 
   // (func
@@ -1320,7 +1317,7 @@ TEST(ReaderTest, Code) {
   //   (nop))
   ExpectRead<Code<>>(
       Code<>{{Locals{2, ValueType::I32}, Locals{3, ValueType::I64}},
-             Expression<>{MakeSpanU8("\x01\x0b")}},
+             MakeExpression("\x01\x0b")},
       MakeSpanU8("\x07\x02\x02\x7f\x03\x7e\x01\x0b"));
 }
 
@@ -1341,7 +1338,7 @@ TEST(ReaderTest, Code_PastEnd) {
 
 TEST(ReaderTest, DataSegment) {
   ExpectRead<DataSegment<>>(
-      DataSegment<>{1, ConstantExpression<>{MakeSpanU8("\x42\x01\x0b")},
+      DataSegment<>{1, MakeConstantExpression("\x42\x01\x0b"),
                     MakeSpanU8("wxyz")},
       MakeSpanU8("\x01\x42\x01\x0b\x04wxyz"));
 }
