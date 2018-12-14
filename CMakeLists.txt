@@ -32,8 +32,7 @@ include_directories(
   ${wasp_SOURCE_DIR}/third_party/variant-lite/include
 )
 
-add_library(
-  wasp
+add_library(wasp
   src/base/file.cc
   src/binary/formatters.cc
   src/binary/reader.cc
@@ -42,29 +41,23 @@ add_library(
   third_party/fmt/src/format.cc
 )
 
-target_link_libraries(
-  wasp
-)
-
-add_executable(
-  wasp_demo
+add_executable(wasp_demo
   src/main.cc
 )
 
-target_link_libraries(
-  wasp_demo
+target_link_libraries(wasp_demo
   wasp
 )
 
-add_executable(
-  wasp_unittests
+add_executable(wasp_unittests
   src/base/formatters_test.cc
   src/binary/formatters_test.cc
+  src/binary/lazy_sequence_test.cc
   src/binary/reader_test.cc
+  src/binary/test_utils.cc
 )
 
-target_link_libraries(
-  wasp_unittests
+target_link_libraries(wasp_unittests
   wasp
   gtest_main
   gtest

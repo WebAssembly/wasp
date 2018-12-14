@@ -23,92 +23,13 @@
 #include "gtest/gtest.h"
 
 #include "src/base/types.h"
+#include "src/binary/test_utils.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
+using namespace ::wasp::binary::test;
 
 namespace {
-
-struct ErrorContext {
-  SpanU8 pos;
-  std::string desc;
-};
-
-struct ErrorContextLoc {
-  SpanU8::index_type pos;
-  std::string desc;
-};
-
-using Error = std::vector<ErrorContext>;
-using ExpectedError = std::vector<ErrorContextLoc>;
-
-class TestErrors {
- public:
-  void PushContext(SpanU8 pos, string_view desc) {
-    context_stack.push_back(ErrorContext{pos, desc.to_string()});
-  }
-
-  void PopContext() {
-    context_stack.pop_back();
-  }
-
-  void OnError(SpanU8 pos, string_view message) {
-    errors.emplace_back();
-    auto& error = errors.back();
-    for (const auto& ctx: context_stack) {
-      error.push_back(ctx);
-    }
-    error.push_back(ErrorContext{pos, message.to_string()});
-  }
-
-  std::vector<ErrorContext> context_stack;
-  std::vector<Error> errors;
-};
-
-template <size_t N>
-SpanU8 MakeSpanU8(const char (&str)[N]) {
-  return SpanU8{
-      reinterpret_cast<const u8*>(str),
-      static_cast<SpanU8::index_type>(N - 1)};  // -1 to remove \0 at end.
-}
-
-void ExpectNoErrors(const TestErrors& errors) {
-  EXPECT_TRUE(errors.errors.empty());
-  EXPECT_TRUE(errors.context_stack.empty());
-}
-
-void ExpectErrors(const std::vector<ExpectedError>& expected_errors,
-                  const TestErrors& errors,
-                  SpanU8 orig_data) {
-  EXPECT_TRUE(errors.context_stack.empty());
-  ASSERT_EQ(expected_errors.size(), errors.errors.size());
-  for (size_t j = 0; j < expected_errors.size(); ++j) {
-    const ExpectedError& expected = expected_errors[j];
-    const Error& actual = errors.errors[j];
-    ASSERT_EQ(expected.size(), actual.size());
-    for (size_t i = 0; i < actual.size(); ++i) {
-      EXPECT_EQ(expected[i].pos, actual[i].pos.data() - orig_data.data());
-      EXPECT_EQ(expected[i].desc, actual[i].desc);
-    }
-  }
-}
-
-void ExpectError(const ExpectedError& expected,
-                 const TestErrors& errors,
-                 SpanU8 orig_data) {
-  ExpectErrors({expected}, errors, orig_data);
-}
-
-template <typename T>
-void ExpectEmptyOptional(const optional<T>& actual) {
-  EXPECT_FALSE(actual.has_value());
-}
-
-template <typename T>
-void ExpectOptional(const T& expected, const optional<T>& actual) {
-  ASSERT_TRUE(actual.has_value());
-  EXPECT_EQ(expected, *actual);
-}
 
 template <typename T>
 void ExpectRead(const T& expected, SpanU8 data) {
