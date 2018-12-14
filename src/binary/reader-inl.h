@@ -125,8 +125,8 @@ optional<u32> Read(SpanU8* data, Errors& errors, Tag<u32>) {
 }
 
 template <typename Errors>
-optional<Index> ReadIndex(SpanU8* data, Errors& errors) {
-  return ReadVarInt<Index>(data, errors, "index");
+optional<Index> ReadIndex(SpanU8* data, Errors& errors, string_view desc) {
+  return ReadVarInt<Index>(data, errors, desc);
 }
 
 template <typename Errors>
@@ -161,7 +161,7 @@ optional<f64> Read(SpanU8* data, Errors& errors, Tag<f64>) {
 
 template <typename Errors>
 optional<Index> ReadCount(SpanU8* data, Errors& errors) {
-  WASP_TRY_READ(count, ReadIndex(data, errors));
+  WASP_TRY_READ(count, ReadIndex(data, errors, "count"));
 
   // There should be at least one byte per count, so if the data is smaller
   // than that, the module must be malformed.
@@ -392,7 +392,7 @@ optional<Limits> Read(SpanU8* data, Errors& errors, Tag<Limits>) {
 template <typename Errors>
 optional<Locals> Read(SpanU8* data, Errors& errors, Tag<Locals>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "locals"};
-  WASP_TRY_READ_CONTEXT(count, ReadIndex(data, errors), "count");
+  WASP_TRY_READ(count, ReadIndex(data, errors, "count"));
   WASP_TRY_READ_CONTEXT(type, Read<ValueType>(data, errors), "type");
   return Locals{count, type};
 }
@@ -475,7 +475,7 @@ optional<Import<>> Read(SpanU8* data, Errors& errors, Tag<Import<>>) {
   WASP_TRY_READ(kind, Read<ExternalKind>(data, errors));
   switch (kind) {
     case ExternalKind::Function: {
-      WASP_TRY_READ(type_index, ReadIndex(data, errors));
+      WASP_TRY_READ(type_index, ReadIndex(data, errors, "function index"));
       return Import<>{module, name, type_index};
     }
     case ExternalKind::Table: {
@@ -499,8 +499,7 @@ optional<BrTableImmediate> Read(SpanU8* data,
                                 Tag<BrTableImmediate>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "br_table"};
   WASP_TRY_READ(targets, ReadVector<Index>(data, errors, "targets"));
-  WASP_TRY_READ_CONTEXT(default_target, ReadIndex(data, errors),
-                        "default target");
+  WASP_TRY_READ(default_target, ReadIndex(data, errors, "default target"));
   return BrTableImmediate{std::move(targets), default_target};
 }
 
@@ -509,7 +508,7 @@ optional<CallIndirectImmediate> Read(SpanU8* data,
                                      Errors& errors,
                                      Tag<CallIndirectImmediate>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "call_indirect"};
-  WASP_TRY_READ(index, ReadIndex(data, errors));
+  WASP_TRY_READ(index, ReadIndex(data, errors, "type index"));
   WASP_TRY_READ(reserved, ReadReserved(data, errors));
   return CallIndirectImmediate{index, reserved};
 }
@@ -709,7 +708,7 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
     case Opcode::TeeLocal:
     case Opcode::GetGlobal:
     case Opcode::SetGlobal: {
-      WASP_TRY_READ(index, ReadIndex(data, errors));
+      WASP_TRY_READ(index, ReadIndex(data, errors, "index"));
       return Instruction{Opcode{opcode}, index};
     }
 
@@ -789,7 +788,7 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
 template <typename Errors>
 optional<Function> Read(SpanU8* data, Errors& errors, Tag<Function>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "function"};
-  WASP_TRY_READ(type_index, ReadIndex(data, errors));
+  WASP_TRY_READ(type_index, ReadIndex(data, errors, "type index"));
   return Function{type_index};
 }
 
@@ -820,14 +819,14 @@ optional<Export<>> Read(SpanU8* data, Errors& errors, Tag<Export<>>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "export"};
   WASP_TRY_READ(name, ReadString(data, errors, "name"));
   WASP_TRY_READ(kind, Read<ExternalKind>(data, errors));
-  WASP_TRY_READ(index, ReadIndex(data, errors));
+  WASP_TRY_READ(index, ReadIndex(data, errors, "index"));
   return Export<>{kind, name, index};
 }
 
 template <typename Errors>
 optional<Start> Read(SpanU8* data, Errors& errors, Tag<Start>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "start"};
-  WASP_TRY_READ(index, ReadIndex(data, errors));
+  WASP_TRY_READ(index, ReadIndex(data, errors, "function index"));
   return Start{index};
 }
 
@@ -836,7 +835,7 @@ optional<ElementSegment<>> Read(SpanU8* data,
                                 Errors& errors,
                                 Tag<ElementSegment<>>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "element segment"};
-  WASP_TRY_READ_CONTEXT(table_index, ReadIndex(data, errors), "table index");
+  WASP_TRY_READ(table_index, ReadIndex(data, errors, "table index"));
   WASP_TRY_READ_CONTEXT(offset, Read<ConstantExpression<>>(data, errors),
                         "offset");
   WASP_TRY_READ(init, ReadVector<Index>(data, errors, "initializers"));
@@ -856,7 +855,7 @@ optional<Code<>> Read(SpanU8* data, Errors& errors, Tag<Code<>>) {
 template <typename Errors>
 optional<DataSegment<>> Read(SpanU8* data, Errors& errors, Tag<DataSegment<>>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "data segment"};
-  WASP_TRY_READ_CONTEXT(memory_index, ReadIndex(data, errors), "memory index");
+  WASP_TRY_READ(memory_index, ReadIndex(data, errors, "memory index"));
   WASP_TRY_READ_CONTEXT(offset, Read<ConstantExpression<>>(data, errors),
                         "offset");
   WASP_TRY_READ(len, ReadCount(data, errors));
