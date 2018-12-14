@@ -19,6 +19,14 @@
 namespace wasp {
 namespace binary {
 
+bool operator==(const MemArg& lhs, const MemArg& rhs) {
+  return lhs.align_log2 == rhs.align_log2 && lhs.offset == rhs.offset;
+}
+
+bool operator!=(const MemArg& lhs, const MemArg& rhs) {
+  return !(lhs == rhs);
+}
+
 bool operator==(const Limits& lhs, const Limits& rhs) {
   return lhs.min == rhs.min && lhs.max == rhs.max;
 }
@@ -73,6 +81,40 @@ bool operator==(const GlobalType& lhs, const GlobalType& rhs) {
 }
 
 bool operator!=(const GlobalType& lhs, const GlobalType& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const EmptyImmediate& lhs, const EmptyImmediate& rhs) {
+  return true;
+}
+
+bool operator!=(const EmptyImmediate& lhs, const EmptyImmediate& rhs) {
+  return false;
+}
+
+bool operator==(const CallIndirectImmediate& lhs,
+                const CallIndirectImmediate& rhs) {
+  return lhs.index == rhs.index && lhs.reserved == rhs.reserved;
+}
+
+bool operator!=(const CallIndirectImmediate& lhs,
+                const CallIndirectImmediate& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const BrTableImmediate& lhs, const BrTableImmediate& rhs) {
+  return lhs.targets == rhs.targets && lhs.default_target == rhs.default_target;
+}
+
+bool operator!=(const BrTableImmediate& lhs, const BrTableImmediate& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const Instruction& lhs, const Instruction& rhs) {
+  return lhs.opcode == rhs.opcode && lhs.immediate == rhs.immediate;
+}
+
+bool operator!=(const Instruction& lhs, const Instruction& rhs) {
   return !(lhs == rhs);
 }
 

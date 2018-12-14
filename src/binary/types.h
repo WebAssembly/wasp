@@ -93,6 +93,9 @@ struct MemArg {
   u32 offset;
 };
 
+bool operator==(const MemArg&, const MemArg&);
+bool operator!=(const MemArg&, const MemArg&);
+
 struct Limits {
   explicit Limits(u32 min) : min(min) {}
   Limits(u32 min, u32 max) : min(min), max(max) {}
@@ -249,6 +252,9 @@ bool operator!=(const ConstantExpression<Traits>&,
 
 struct EmptyImmediate {};
 
+bool operator==(const EmptyImmediate&, const EmptyImmediate&);
+bool operator!=(const EmptyImmediate&, const EmptyImmediate&);
+
 struct CallIndirectImmediate {
   CallIndirectImmediate(Index index, u8 reserved)
       : index(index), reserved(reserved) {}
@@ -257,6 +263,9 @@ struct CallIndirectImmediate {
   u8 reserved;
 };
 
+bool operator==(const CallIndirectImmediate&, const CallIndirectImmediate&);
+bool operator!=(const CallIndirectImmediate&, const CallIndirectImmediate&);
+
 struct BrTableImmediate {
   BrTableImmediate(std::vector<Index>&& targets, Index default_target)
       : targets(std::move(targets)), default_target(default_target) {}
@@ -264,6 +273,9 @@ struct BrTableImmediate {
   std::vector<Index> targets;
   Index default_target;
 };
+
+bool operator==(const BrTableImmediate&, const BrTableImmediate&);
+bool operator!=(const BrTableImmediate&, const BrTableImmediate&);
 
 struct Instruction {
   explicit Instruction(Opcode opcode)
@@ -286,6 +298,9 @@ struct Instruction {
           f64>
       immediate;
 };
+
+bool operator==(const Instruction&, const Instruction&);
+bool operator!=(const Instruction&, const Instruction&);
 
 using Instrs = std::vector<Instruction>;
 
