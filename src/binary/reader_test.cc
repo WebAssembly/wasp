@@ -165,21 +165,21 @@ TEST(ReaderTest, ReadU32) {
 
 TEST(ReaderTest, ReadU32_TooLong) {
   ExpectReadFailure<u32>(
-      {{0, "vu32"},
-       {5, "Last byte of vu32 must be zero extension: expected 0x2, got 0x12"}},
+      {{0, "u32"},
+       {5, "Last byte of u32 must be zero extension: expected 0x2, got 0x12"}},
       MakeSpanU8("\xf0\xf0\xf0\xf0\x12"));
 }
 
 TEST(ReaderTest, ReadU32_PastEnd) {
-  ExpectReadFailure<u32>({{0, "vu32"}, {0, "Unable to read u8"}},
+  ExpectReadFailure<u32>({{0, "u32"}, {0, "Unable to read u8"}},
                          MakeSpanU8(""));
-  ExpectReadFailure<u32>({{0, "vu32"}, {1, "Unable to read u8"}},
+  ExpectReadFailure<u32>({{0, "u32"}, {1, "Unable to read u8"}},
                          MakeSpanU8("\xc0"));
-  ExpectReadFailure<u32>({{0, "vu32"}, {2, "Unable to read u8"}},
+  ExpectReadFailure<u32>({{0, "u32"}, {2, "Unable to read u8"}},
                          MakeSpanU8("\xd0\x84"));
-  ExpectReadFailure<u32>({{0, "vu32"}, {3, "Unable to read u8"}},
+  ExpectReadFailure<u32>({{0, "u32"}, {3, "Unable to read u8"}},
                          MakeSpanU8("\xa0\xb0\xc0"));
-  ExpectReadFailure<u32>({{0, "vu32"}, {4, "Unable to read u8"}},
+  ExpectReadFailure<u32>({{0, "u32"}, {4, "Unable to read u8"}},
                          MakeSpanU8("\xf0\xf0\xf0\xf0"));
 }
 
@@ -197,28 +197,28 @@ TEST(ReaderTest, ReadS32) {
 }
 
 TEST(ReaderTest, ReadS32_TooLong) {
-  ExpectReadFailure<s32>({{0, "vs32"},
+  ExpectReadFailure<s32>({{0, "s32"},
                           {5,
-                           "Last byte of vs32 must be sign extension: expected "
+                           "Last byte of s32 must be sign extension: expected "
                            "0x5 or 0x7d, got 0x15"}},
                          MakeSpanU8("\xf0\xf0\xf0\xf0\x15"));
-  ExpectReadFailure<s32>({{0, "vs32"},
+  ExpectReadFailure<s32>({{0, "s32"},
                           {5,
-                           "Last byte of vs32 must be sign extension: expected "
+                           "Last byte of s32 must be sign extension: expected "
                            "0x3 or 0x7b, got 0x73"}},
                          MakeSpanU8("\xff\xff\xff\xff\x73"));
 }
 
 TEST(ReaderTest, ReadS32_PastEnd) {
-  ExpectReadFailure<s32>({{0, "vs32"}, {0, "Unable to read u8"}},
+  ExpectReadFailure<s32>({{0, "s32"}, {0, "Unable to read u8"}},
                          MakeSpanU8(""));
-  ExpectReadFailure<s32>({{0, "vs32"}, {1, "Unable to read u8"}},
+  ExpectReadFailure<s32>({{0, "s32"}, {1, "Unable to read u8"}},
                          MakeSpanU8("\xc0"));
-  ExpectReadFailure<s32>({{0, "vs32"}, {2, "Unable to read u8"}},
+  ExpectReadFailure<s32>({{0, "s32"}, {2, "Unable to read u8"}},
                          MakeSpanU8("\xd0\x84"));
-  ExpectReadFailure<s32>({{0, "vs32"}, {3, "Unable to read u8"}},
+  ExpectReadFailure<s32>({{0, "s32"}, {3, "Unable to read u8"}},
                          MakeSpanU8("\xa0\xb0\xc0"));
-  ExpectReadFailure<s32>({{0, "vs32"}, {4, "Unable to read u8"}},
+  ExpectReadFailure<s32>({{0, "s32"}, {4, "Unable to read u8"}},
                          MakeSpanU8("\xf0\xf0\xf0\xf0"));
 }
 
@@ -251,39 +251,39 @@ TEST(ReaderTest, ReadS64) {
 
 TEST(ReaderTest, ReadS64_TooLong) {
   ExpectReadFailure<s64>(
-      {{0, "vs64"},
+      {{0, "s64"},
        {10,
-        "Last byte of vs64 must be sign extension: expected 0x0 or 0x7f, got "
+        "Last byte of s64 must be sign extension: expected 0x0 or 0x7f, got "
         "0xf0"}},
       MakeSpanU8("\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0"));
   ExpectReadFailure<s64>(
-      {{0, "vs64"},
+      {{0, "s64"},
        {10,
-        "Last byte of vs64 must be sign extension: expected 0x0 or 0x7f, got "
+        "Last byte of s64 must be sign extension: expected 0x0 or 0x7f, got "
         "0xff"}},
       MakeSpanU8("\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"));
 }
 
 TEST(ReaderTest, ReadS64_PastEnd) {
-  ExpectReadFailure<s64>({{0, "vs64"}, {0, "Unable to read u8"}},
+  ExpectReadFailure<s64>({{0, "s64"}, {0, "Unable to read u8"}},
                          MakeSpanU8(""));
-  ExpectReadFailure<s64>({{0, "vs64"}, {1, "Unable to read u8"}},
+  ExpectReadFailure<s64>({{0, "s64"}, {1, "Unable to read u8"}},
                          MakeSpanU8("\xc0"));
-  ExpectReadFailure<s64>({{0, "vs64"}, {2, "Unable to read u8"}},
+  ExpectReadFailure<s64>({{0, "s64"}, {2, "Unable to read u8"}},
                          MakeSpanU8("\xd0\x84"));
-  ExpectReadFailure<s64>({{0, "vs64"}, {3, "Unable to read u8"}},
+  ExpectReadFailure<s64>({{0, "s64"}, {3, "Unable to read u8"}},
                          MakeSpanU8("\xa0\xb0\xc0"));
-  ExpectReadFailure<s64>({{0, "vs64"}, {4, "Unable to read u8"}},
+  ExpectReadFailure<s64>({{0, "s64"}, {4, "Unable to read u8"}},
                          MakeSpanU8("\xf0\xf0\xf0\xf0"));
-  ExpectReadFailure<s64>({{0, "vs64"}, {5, "Unable to read u8"}},
+  ExpectReadFailure<s64>({{0, "s64"}, {5, "Unable to read u8"}},
                          MakeSpanU8("\xe0\xe0\xe0\xe0\xe0"));
-  ExpectReadFailure<s64>({{0, "vs64"}, {6, "Unable to read u8"}},
+  ExpectReadFailure<s64>({{0, "s64"}, {6, "Unable to read u8"}},
                          MakeSpanU8("\xd0\xd0\xd0\xd0\xd0\xc0"));
-  ExpectReadFailure<s64>({{0, "vs64"}, {7, "Unable to read u8"}},
+  ExpectReadFailure<s64>({{0, "s64"}, {7, "Unable to read u8"}},
                          MakeSpanU8("\xc0\xc0\xc0\xc0\xc0\xd0\x84"));
-  ExpectReadFailure<s64>({{0, "vs64"}, {8, "Unable to read u8"}},
+  ExpectReadFailure<s64>({{0, "s64"}, {8, "Unable to read u8"}},
                          MakeSpanU8("\xaa\xaa\xaa\xaa\xaa\xa0\xb0\xc0"));
-  ExpectReadFailure<s64>({{0, "vs64"}, {9, "Unable to read u8"}},
+  ExpectReadFailure<s64>({{0, "s64"}, {9, "Unable to read u8"}},
                          MakeSpanU8("\xfe\xed\xfe\xed\xfe\xed\xfe\xed\xfe"));
 }
 
@@ -457,10 +457,8 @@ TEST(ReaderTest, ReadVector_PastEnd) {
       "\x80");
   SpanU8 copy = data;
   auto result = ReadVector<u32>(&copy, errors, "test");
-  ExpectError({{0, "test"},
-               {2, "vu32"},
-               {3, "Unable to read u8"}},
-              errors, data);
+  ExpectError({{0, "test"}, {2, "u32"}, {3, "Unable to read u8"}}, errors,
+              data);
   ExpectEmptyOptional(result);
   EXPECT_EQ(0u, copy.size());
 }

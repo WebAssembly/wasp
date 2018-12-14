@@ -119,7 +119,7 @@ optional<T> ReadVarInt(SpanU8* data, Errors& errors, string_view desc) {
 
 template <typename Errors>
 optional<u32> Read(SpanU8* data, Errors& errors, Tag<u32>) {
-  return ReadVarInt<u32>(data, errors, "vu32");
+  return ReadVarInt<u32>(data, errors, "u32");
 }
 
 template <typename Errors>
@@ -129,12 +129,12 @@ optional<Index> ReadIndex(SpanU8* data, Errors& errors) {
 
 template <typename Errors>
 optional<s32> Read(SpanU8* data, Errors& errors, Tag<s32>) {
-  return ReadVarInt<s32>(data, errors, "vs32");
+  return ReadVarInt<s32>(data, errors, "s32");
 }
 
 template <typename Errors>
 optional<s64> Read(SpanU8* data, Errors& errors, Tag<s64>) {
-  return ReadVarInt<s64>(data, errors, "vs64");
+  return ReadVarInt<s64>(data, errors, "s64");
 }
 
 template <typename Errors>
