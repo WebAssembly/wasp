@@ -281,8 +281,7 @@ TEST(ReaderTest, ReadCount_PastEnd) {
   const SpanU8 data = MakeSpanU8("\x05\x00\x00\x00");
   SpanU8 copy = data;
   auto result = ReadCount(&copy, errors);
-  ExpectError({{1, "Count is longer than the data length: 5 > 3"}}, errors,
-              data);
+  ExpectError({{1, "Count extends past end: 5 > 3"}}, errors, data);
   EXPECT_EQ(nullopt, result);
   EXPECT_EQ(3u, copy.size());
 }
@@ -313,7 +312,7 @@ TEST(ReaderTest, ReadString_BadLength) {
     const SpanU8 data = MakeSpanU8("");
     SpanU8 copy = data;
     auto result = ReadString(&copy, errors, "test");
-    ExpectError({{0, "test"}, {0, "count"}, {0, "Unable to read u8"}}, errors,
+    ExpectError({{0, "test"}, {0, "length"}, {0, "Unable to read u8"}}, errors,
                 data);
     EXPECT_EQ(nullopt, result);
     EXPECT_EQ(0u, copy.size());
@@ -324,7 +323,7 @@ TEST(ReaderTest, ReadString_BadLength) {
     const SpanU8 data = MakeSpanU8("\xc0");
     SpanU8 copy = data;
     auto result = ReadString(&copy, errors, "test");
-    ExpectError({{0, "test"}, {0, "count"}, {1, "Unable to read u8"}}, errors,
+    ExpectError({{0, "test"}, {0, "length"}, {1, "Unable to read u8"}}, errors,
                 data);
     EXPECT_EQ(nullopt, result);
     EXPECT_EQ(0u, copy.size());
@@ -336,8 +335,8 @@ TEST(ReaderTest, ReadString_Fail) {
   const SpanU8 data = MakeSpanU8("\x06small");
   SpanU8 copy = data;
   auto result = ReadString(&copy, errors, "test");
-  ExpectError({{0, "test"}, {1, "Count is longer than the data length: 6 > 5"}},
-              errors, data);
+  ExpectError({{0, "test"}, {1, "Length extends past end: 6 > 5"}}, errors,
+              data);
   EXPECT_EQ(nullopt, result);
   EXPECT_EQ(5u, copy.size());
 }
@@ -373,8 +372,8 @@ TEST(ReaderTest, ReadVector_FailLength) {
       "\x05");
   SpanU8 copy = data;
   auto result = ReadVector<u32>(&copy, errors, "test");
-  ExpectError({{0, "test"}, {1, "Count is longer than the data length: 2 > 1"}},
-              errors, data);
+  ExpectError({{0, "test"}, {1, "Count extends past end: 2 > 1"}}, errors,
+              data);
   EXPECT_EQ(nullopt, result);
   EXPECT_EQ(1u, copy.size());
 }
@@ -495,8 +494,8 @@ TEST(ReaderTest, SectionId) {
 }
 
 TEST(ReaderTest, SectionId_Unknown) {
-  ExpectReadFailure<SectionId>({{0, "section"}, {1, "Unknown section: 12"}},
-                               MakeSpanU8("\x0c"));
+  ExpectReadFailure<SectionId>(
+      {{0, "section id"}, {1, "Unknown section id: 12"}}, MakeSpanU8("\x0c"));
 }
 
 TEST(ReaderTest, Opcode) {
@@ -719,6 +718,30 @@ TEST(ReaderTest, Locals_PastEnd) {
       MakeSpanU8("\xc0\x02"));
 }
 
+TEST(ReaderTest, Section) {
+  ExpectRead<Section<>>(
+      Section<>{KnownSection<>{SectionId::Type, MakeSpanU8("\x01\x02\x03")}},
+      MakeSpanU8("\x01\x03\x01\x02\x03"));
+
+  ExpectRead<Section<>>(
+      Section<>{CustomSection<>{"name", MakeSpanU8("\x04\x05\x06")}},
+      MakeSpanU8("\x00\x08\x04name\x04\x05\x06"));
+}
+
+TEST(ReaderTest, Section_PastEnd) {
+  ExpectReadFailure<Section<>>(
+      {{0, "section"}, {0, "section id"}, {0, "u32"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""));
+
+  ExpectReadFailure<Section<>>(
+      {{0, "section"}, {1, "length"}, {1, "Unable to read u8"}},
+      MakeSpanU8("\x01"));
+
+  ExpectReadFailure<Section<>>(
+      {{0, "section"}, {2, "Length extends past end: 1 > 0"}},
+      MakeSpanU8("\x01\x01"));
+}
+
 TEST(ReaderTest, FunctionType) {
   ExpectRead<FunctionType>(FunctionType{{}, {}}, MakeSpanU8("\x00\x00"));
   ExpectRead<FunctionType>(
@@ -733,11 +756,10 @@ TEST(ReaderTest, FunctionType_PastEnd) {
                                    {0, "Unable to read u8"}},
                                   MakeSpanU8(""));
 
-  ExpectReadFailure<FunctionType>(
-      {{0, "function type"},
-       {0, "param types"},
-       {1, "Count is longer than the data length: 1 > 0"}},
-      MakeSpanU8("\x01"));
+  ExpectReadFailure<FunctionType>({{0, "function type"},
+                                   {0, "param types"},
+                                   {1, "Count extends past end: 1 > 0"}},
+                                  MakeSpanU8("\x01"));
 
   ExpectReadFailure<FunctionType>({{0, "function type"},
                                    {1, "result types"},
@@ -745,11 +767,10 @@ TEST(ReaderTest, FunctionType_PastEnd) {
                                    {1, "Unable to read u8"}},
                                   MakeSpanU8("\x00"));
 
-  ExpectReadFailure<FunctionType>(
-      {{0, "function type"},
-       {1, "result types"},
-       {2, "Count is longer than the data length: 1 > 0"}},
-      MakeSpanU8("\x00\x01"));
+  ExpectReadFailure<FunctionType>({{0, "function type"},
+                                   {1, "result types"},
+                                   {2, "Count extends past end: 1 > 0"}},
+                                  MakeSpanU8("\x00\x01"));
 }
 
 TEST(ReaderTest, TypeEntry) {
@@ -878,13 +899,13 @@ TEST(ReaderTest, Import) {
 TEST(ReaderTest, ImportType_PastEnd) {
   ExpectReadFailure<Import<>>({{0, "import"},
                                {0, "module name"},
-                               {0, "count"},
+                               {0, "length"},
                                {0, "Unable to read u8"}},
                               MakeSpanU8(""));
 
   ExpectReadFailure<Import<>>({{0, "import"},
                                {1, "field name"},
-                               {1, "count"},
+                               {1, "length"},
                                {1, "Unable to read u8"}},
                               MakeSpanU8("\x00"));
 
@@ -1262,7 +1283,7 @@ TEST(ReaderTest, Export) {
 
 TEST(ReaderTest, Export_PastEnd) {
   ExpectReadFailure<Export<>>(
-      {{0, "export"}, {0, "name"}, {0, "count"}, {0, "Unable to read u8"}},
+      {{0, "export"}, {0, "name"}, {0, "length"}, {0, "Unable to read u8"}},
       MakeSpanU8(""));
 
   ExpectReadFailure<Export<>>(
@@ -1323,16 +1344,13 @@ TEST(ReaderTest, Code) {
 
 TEST(ReaderTest, Code_PastEnd) {
   ExpectReadFailure<Code<>>(
-      {{0, "code"}, {0, "count"}, {0, "Unable to read u8"}}, MakeSpanU8(""));
+      {{0, "code"}, {0, "length"}, {0, "Unable to read u8"}}, MakeSpanU8(""));
 
   ExpectReadFailure<Code<>>(
-      {{0, "code"}, {1, "Count is longer than the data length: 1 > 0"}},
-      MakeSpanU8("\x01"));
+      {{0, "code"}, {1, "Length extends past end: 1 > 0"}}, MakeSpanU8("\x01"));
 
   ExpectReadFailure<Code<>>(
-      {{0, "code"},
-       {1, "locals vector"},
-       {2, "Count is longer than the data length: 1 > 0"}},
+      {{0, "code"}, {1, "locals vector"}, {2, "Count extends past end: 1 > 0"}},
       MakeSpanU8("\x01\x01"));
 }
 
@@ -1357,10 +1375,10 @@ TEST(ReaderTest, DataSegment_PastEnd) {
                                    MakeSpanU8("\x00"));
 
   ExpectReadFailure<DataSegment<>>(
-      {{0, "data segment"}, {4, "count"}, {4, "Unable to read u8"}},
+      {{0, "data segment"}, {4, "length"}, {4, "Unable to read u8"}},
       MakeSpanU8("\x00\x41\x00\x0b"));
 
   ExpectReadFailure<DataSegment<>>(
-      {{0, "data segment"}, {5, "Count is longer than the data length: 2 > 0"}},
+      {{0, "data segment"}, {5, "Length extends past end: 2 > 0"}},
       MakeSpanU8("\x00\x41\x00\x0b\x02"));
 }

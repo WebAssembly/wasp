@@ -161,15 +161,17 @@ optional<f64> Read(SpanU8* data, Errors& errors, Tag<f64>) {
 }
 
 template <typename Errors>
-optional<Index> ReadCount(SpanU8* data, Errors& errors) {
-  WASP_TRY_READ(count, ReadIndex(data, errors, "count"));
+optional<Index> ReadCheckLength(SpanU8* data,
+                                Errors& errors,
+                                string_view context_name,
+                                string_view error_name) {
+  WASP_TRY_READ(count, ReadIndex(data, errors, context_name));
 
   // There should be at least one byte per count, so if the data is smaller
   // than that, the module must be malformed.
   if (count > data->size()) {
-    errors.OnError(
-        *data, format("Count is longer than the data length: {} > {}", count,
-                      data->size()));
+    errors.OnError(*data, format("{} extends past end: {} > {}", error_name,
+                                 count, data->size()));
     return nullopt;
   }
 
@@ -177,16 +179,21 @@ optional<Index> ReadCount(SpanU8* data, Errors& errors) {
 }
 
 template <typename Errors>
+optional<Index> ReadCount(SpanU8* data, Errors& errors) {
+  return ReadCheckLength(data, errors, "count", "Count");
+}
+
+template <typename Errors>
+optional<Index> ReadLength(SpanU8* data, Errors& errors) {
+  return ReadCheckLength(data, errors, "length", "Length");
+}
+
+template <typename Errors>
 optional<string_view> ReadString(SpanU8* data,
                                  Errors& errors,
                                  string_view desc) {
   ErrorsContextGuard<Errors> guard{errors, *data, desc};
-  WASP_TRY_READ(len, ReadCount(data, errors));
-  if (len > data->size()) {
-    errors.OnError(*data, format("Unable to read string of length {}", len));
-    return nullopt;
-  }
-
+  WASP_TRY_READ(len, ReadLength(data, errors));
   string_view result{reinterpret_cast<const char*>(data->data()), len};
   *data = remove_prefix(*data, len);
   return result;
@@ -258,9 +265,9 @@ optional<Mutability> Read(SpanU8* data, Errors& errors, Tag<Mutability>) {
 
 template <typename Errors>
 optional<SectionId> Read(SpanU8* data, Errors& errors, Tag<SectionId>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "section"};
+  ErrorsContextGuard<Errors> guard{errors, *data, "section id"};
   WASP_TRY_READ(val, Read<u32>(data, errors));
-  WASP_TRY_DECODE(decoded, val, Section, "section");
+  WASP_TRY_DECODE(decoded, val, Section, "section id");
   return decoded;
 }
 
@@ -325,23 +332,15 @@ optional<Locals> Read(SpanU8* data, Errors& errors, Tag<Locals>) {
 template <typename Errors>
 optional<Section<>> Read(SpanU8* data, Errors& errors, Tag<Section<>>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "section"};
-  WASP_TRY_READ_CONTEXT(id, Read<SectionId>(data, errors), "id");
-  WASP_TRY_READ_CONTEXT(len, Read<u32>(data, errors), "length");
-  if (len > data->size()) {
-    errors.OnError(*data, format("Section length is too long: {} > {}", len,
-                                 data->size()));
-    return nullopt;
-  }
-
-  SpanU8 section_span = data->subspan(0, len);
-  *data = remove_prefix(*data, len);
+  WASP_TRY_READ(id, Read<SectionId>(data, errors));
+  WASP_TRY_READ(length, ReadLength(data, errors));
+  auto bytes = *ReadBytes(data, length, errors);
 
   if (id == SectionId::Custom) {
-    WASP_TRY_READ(name,
-                  ReadString(&section_span, errors, "custom section name"));
-    return Section<>{CustomSection<>{name, section_span}};
+    WASP_TRY_READ(name, ReadString(&bytes, errors, "custom section name"));
+    return Section<>{CustomSection<>{name, bytes}};
   } else {
-    return Section<>{KnownSection<>{id, section_span}};
+    return Section<>{KnownSection<>{id, bytes}};
   }
 }
 
@@ -761,7 +760,7 @@ optional<ElementSegment<>> Read(SpanU8* data,
 template <typename Errors>
 optional<Code<>> Read(SpanU8* data, Errors& errors, Tag<Code<>>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "code"};
-  WASP_TRY_READ(body_size, ReadCount(data, errors));
+  WASP_TRY_READ(body_size, ReadLength(data, errors));
   WASP_TRY_READ(body, ReadBytes(data, body_size, errors));
   WASP_TRY_READ(locals, ReadVector<Locals>(&body, errors, "locals vector"));
   return Code<>{std::move(locals), Expression<>{std::move(body)}};
@@ -773,7 +772,7 @@ optional<DataSegment<>> Read(SpanU8* data, Errors& errors, Tag<DataSegment<>>) {
   WASP_TRY_READ(memory_index, ReadIndex(data, errors, "memory index"));
   WASP_TRY_READ_CONTEXT(offset, Read<ConstantExpression<>>(data, errors),
                         "offset");
-  WASP_TRY_READ(len, ReadCount(data, errors));
+  WASP_TRY_READ(len, ReadLength(data, errors));
   WASP_TRY_READ(init, ReadBytes(data, len, errors));
   return DataSegment<>{memory_index, std::move(offset), init};
 }
