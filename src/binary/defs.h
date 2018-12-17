@@ -228,4 +228,9 @@
   V(0x00, 0xbe, F32ReinterpretI32, "f32.reinterpret_i32") \
   V(0x00, 0xbf, F64ReinterpretI64, "f64.reinterpret_i64")
 
+#define WASP_FOREACH_NAME_SUBSECTION_ID(V) \
+  V(0, ModuleName, "module")               \
+  V(1, FunctionNames, "functions")         \
+  V(2, LocalNames, "locals")
+
 #endif  // WASP_BINARY_DEFS_H_

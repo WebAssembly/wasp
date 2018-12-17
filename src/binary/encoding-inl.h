@@ -109,6 +109,20 @@ inline optional<::wasp::binary::Opcode> Opcode::Decode(u8 val) {
   }
 }
 
+// static
+inline optional<::wasp::binary::NameSubsectionId> NameSubsectionId::Decode(
+    u8 val) {
+  switch (val) {
+#define WASP_V(val, Name, str) \
+  case Name:                   \
+    return ::wasp::binary::NameSubsectionId::Name;
+    WASP_FOREACH_NAME_SUBSECTION_ID(WASP_V)
+#undef WASP_V
+    default:
+      return nullopt;
+  }
+}
+
 }  // namespace encoding
 }  // namespace binary
 }  // namespace wasp

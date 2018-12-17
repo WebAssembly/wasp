@@ -93,6 +93,14 @@ struct Limits {
   static constexpr u8 Flags_HasMax = 1;
 };
 
+struct NameSubsectionId {
+#define WASP_V(val, Name, str) static constexpr u8 Name = val;
+  WASP_FOREACH_NAME_SUBSECTION_ID(WASP_V)
+#undef WASP_V
+
+  static optional<::wasp::binary::NameSubsectionId> Decode(u8);
+};
+
 }  // namespace encoding
 }  // namespace binary
 }  // namespace wasp

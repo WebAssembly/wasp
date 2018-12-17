@@ -54,6 +54,7 @@ add_executable(wasp_unittests
   src/binary/formatters_test.cc
   src/binary/lazy_expr_test.cc
   src/binary/lazy_module_test.cc
+  src/binary/lazy_name_section_test.cc
   src/binary/lazy_section_test.cc
   src/binary/lazy_sequence_test.cc
   src/binary/reader_test.cc

@@ -68,6 +68,12 @@ enum class Opcode : u32 {
 #undef WASP_V
 };
 
+enum class NameSubsectionId : u8 {
+#define WASP_V(val, Name, str) Name,
+  WASP_FOREACH_NAME_SUBSECTION_ID(WASP_V)
+#undef WASP_V
+};
+
 struct MemArg {
   MemArg(u32 align_log2, u32 offset) : align_log2(align_log2), offset(offset) {}
 
@@ -374,6 +380,34 @@ struct DataSegment {
 
 bool operator==(const DataSegment&, const DataSegment&);
 bool operator!=(const DataSegment&, const DataSegment&);
+
+struct NameAssoc {
+  Index index;
+  string_view name;
+};
+
+bool operator==(const NameAssoc&, const NameAssoc&);
+bool operator!=(const NameAssoc&, const NameAssoc&);
+
+using NameMap = std::vector<NameAssoc>;
+
+struct IndirectNameAssoc {
+  Index index;
+  NameMap name_map;
+};
+
+bool operator==(const IndirectNameAssoc&, const IndirectNameAssoc&);
+bool operator!=(const IndirectNameAssoc&, const IndirectNameAssoc&);
+
+struct NameSubsection {
+  NameSubsection(NameSubsectionId id, SpanU8 data) : id(id), data(data) {}
+
+  NameSubsectionId id;
+  SpanU8 data;
+};
+
+bool operator==(const NameSubsection&, const NameSubsection&);
+bool operator!=(const NameSubsection&, const NameSubsection&);
 
 }  // namespace binary
 }  // namespace wasp

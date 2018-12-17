@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_LAZY_SECTION_H
-#define WASP_BINARY_LAZY_SECTION_H
+#ifndef WASP_BINARY_LAZY_SECTION_H_
+#define WASP_BINARY_LAZY_SECTION_H_
 
 #include "src/base/types.h"
 #include "src/binary/types.h"
@@ -30,6 +30,7 @@ class LazySection {
  public:
   explicit LazySection(SpanU8, Errors&);
   explicit LazySection(KnownSection, Errors&);
+  explicit LazySection(CustomSection, Errors&);
 
   optional<Index> count;
   LazySequence<T, Errors> sequence;
@@ -126,4 +127,4 @@ LazyDataSection<Errors> ReadDataSection(Data&& data, Errors& errors);
 
 #include "src/binary/lazy_section-inl.h"
 
-#endif // WASP_BINARY_LAZY_SECTION_H
+#endif // WASP_BINARY_LAZY_SECTION_H_

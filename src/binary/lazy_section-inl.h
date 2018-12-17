@@ -27,6 +27,10 @@ template <typename T, typename Errors>
 LazySection<T, Errors>::LazySection(KnownSection section, Errors& errors)
     : LazySection(section.data, errors) {}
 
+template <typename T, typename Errors>
+LazySection<T, Errors>::LazySection(CustomSection section, Errors& errors)
+    : LazySection(section.data, errors) {}
+
 template <typename Data, typename Errors>
 LazyTypeSection<Errors> ReadTypeSection(Data&& data, Errors& errors) {
   return LazyTypeSection<Errors>{std::forward<Data>(data), errors};

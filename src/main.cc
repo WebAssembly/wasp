@@ -18,10 +18,12 @@
 
 #include "src/base/file.h"
 #include "src/base/formatters.h"
+#include "src/base/macros.h"
 #include "src/base/types.h"
 #include "src/binary/errors_vector.h"
 #include "src/binary/formatters.h"
 #include "src/binary/lazy_module.h"
+#include "src/binary/lazy_name_section.h"
 #include "src/binary/lazy_section.h"
 #include "src/binary/types.h"
 
@@ -64,8 +66,7 @@ int main(int argc, char** argv) {
       print("section {}: {} bytes\n", known.id, known.data.size());
       switch (known.id) {
         case SectionId::Custom:
-          // TODO
-          break;
+          WASP_UNREACHABLE();
 
         case SectionId::Type:
           PrintSection(ReadTypeSection(known, errors), "Type");
@@ -116,6 +117,37 @@ int main(int argc, char** argv) {
         case SectionId::Data:
           PrintSection(ReadDataSection(known, errors), "Data");
           break;
+      }
+    } else if (section.is_custom()) {
+      auto custom = section.custom();
+      print("section \"{}\": {} bytes\n", custom.name, custom.data.size());
+      if (custom.name == "name") {
+        auto section = ReadNameSection(custom, errors);
+        for (auto subsection : section) {
+          switch (subsection.id) {
+            case NameSubsectionId::ModuleName: {
+              print("  ModuleName\n");
+              auto opt_name = ReadModuleNameSubsection(subsection.data, errors);
+              if (opt_name) {
+                print("    \"{}\"\n", *opt_name);
+              }
+              break;
+            }
+
+            case NameSubsectionId::FunctionNames:
+              PrintSection(ReadFunctionNamesSubsection(subsection, errors),
+                           "FunctionNames");
+              break;
+
+            case NameSubsectionId::LocalNames:
+              PrintSection(ReadLocalNamesSubsection(subsection, errors),
+                           "LocalNames");
+              break;
+          }
+        }
+      } else {
+        // Unknown custom section; print raw.
+        print("  {}", custom);
       }
     }
   }

@@ -24,7 +24,7 @@ namespace fmt {
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::ValueType>::format(
-    ::wasp::binary::ValueType self,
+    const ::wasp::binary::ValueType& self,
     Ctx& ctx) {
   string_view result;
   switch (self) {
@@ -42,7 +42,7 @@ typename Ctx::iterator formatter<::wasp::binary::ValueType>::format(
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::BlockType>::format(
-    ::wasp::binary::BlockType self,
+    const ::wasp::binary::BlockType& self,
     Ctx& ctx) {
   switch (self) {
 #define WASP_V(val, Name, str)          \
@@ -57,7 +57,7 @@ typename Ctx::iterator formatter<::wasp::binary::BlockType>::format(
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::ElementType>::format(
-    ::wasp::binary::ElementType self,
+    const ::wasp::binary::ElementType& self,
     Ctx& ctx) {
   string_view result;
   switch (self) {
@@ -75,7 +75,7 @@ typename Ctx::iterator formatter<::wasp::binary::ElementType>::format(
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::ExternalKind>::format(
-    ::wasp::binary::ExternalKind self,
+    const ::wasp::binary::ExternalKind& self,
     Ctx& ctx) {
   string_view result;
   switch (self) {
@@ -93,7 +93,7 @@ typename Ctx::iterator formatter<::wasp::binary::ExternalKind>::format(
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Mutability>::format(
-    ::wasp::binary::Mutability self,
+    const ::wasp::binary::Mutability& self,
     Ctx& ctx) {
   string_view result;
   switch (self) {
@@ -111,7 +111,7 @@ typename Ctx::iterator formatter<::wasp::binary::Mutability>::format(
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::SectionId>::format(
-    ::wasp::binary::SectionId self,
+    const ::wasp::binary::SectionId& self,
     Ctx& ctx) {
   switch (self) {
 #define WASP_V(val, Name, str)          \
@@ -122,6 +122,24 @@ typename Ctx::iterator formatter<::wasp::binary::SectionId>::format(
     default:
       return format_to(ctx.begin(), "{}", static_cast<::wasp::u32>(self));
   }
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::NameSubsectionId>::format(
+    const ::wasp::binary::NameSubsectionId& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+#define WASP_V(val, Name, str)                 \
+  case ::wasp::binary::NameSubsectionId::Name: \
+    result = str;                              \
+    break;
+    WASP_FOREACH_NAME_SUBSECTION_ID(WASP_V)
+#undef WASP_V
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
 }
 
 template <typename Ctx>
@@ -387,6 +405,27 @@ typename Ctx::iterator formatter<::wasp::binary::DataSegment>::format(
     Ctx& ctx) {
   return format_to(ctx.begin(), "{{memory {}, offset {}, init {}}}",
                    self.memory_index, self.offset, self.init);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::NameAssoc>::format(
+    const ::wasp::binary::NameAssoc& self,
+    Ctx& ctx) {
+  return format_to(ctx.begin(), "{} \"{}\"", self.index, self.name);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::IndirectNameAssoc>::format(
+    const ::wasp::binary::IndirectNameAssoc& self,
+    Ctx& ctx) {
+  return format_to(ctx.begin(), "{} {}", self.index, self.name_map);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::NameSubsection>::format(
+    const ::wasp::binary::NameSubsection& self,
+    Ctx& ctx) {
+  return format_to(ctx.begin(), "{} {}", self.id, self.data);
 }
 
 }  // namespace fmt

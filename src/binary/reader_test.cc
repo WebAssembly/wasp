@@ -680,6 +680,24 @@ TEST(ReaderTest, Opcode_Unknown) {
                             MakeSpanU8("\xff"));
 }
 
+TEST(ReaderTest, NameSubsectionId) {
+  ExpectRead<NameSubsectionId>(NameSubsectionId::ModuleName,
+                               MakeSpanU8("\x00"));
+  ExpectRead<NameSubsectionId>(NameSubsectionId::FunctionNames,
+                               MakeSpanU8("\x01"));
+  ExpectRead<NameSubsectionId>(NameSubsectionId::LocalNames,
+                               MakeSpanU8("\x02"));
+}
+
+TEST(ReaderTest, NameSubsectionId_Unknown) {
+  ExpectReadFailure<NameSubsectionId>(
+      {{0, "name subsection id"}, {1, "Unknown name subsection id: 3"}},
+      MakeSpanU8("\x03"));
+  ExpectReadFailure<NameSubsectionId>(
+      {{0, "name subsection id"}, {1, "Unknown name subsection id: 255"}},
+      MakeSpanU8("\xff"));
+}
+
 TEST(ReaderTest, MemArg) {
   ExpectRead<MemArg>(MemArg{0, 0}, MakeSpanU8("\x00\x00"));
   ExpectRead<MemArg>(MemArg{1, 256}, MakeSpanU8("\x01\x80\x02"));
@@ -1376,4 +1394,78 @@ TEST(ReaderTest, DataSegment_PastEnd) {
   ExpectReadFailure<DataSegment>(
       {{0, "data segment"}, {5, "Length extends past end: 2 > 0"}},
       MakeSpanU8("\x00\x41\x00\x0b\x02"));
+}
+
+TEST(ReaderTest, NameAssoc) {
+  ExpectRead<NameAssoc>(NameAssoc{2u, "hi"}, MakeSpanU8("\x02\x02hi"));
+}
+
+TEST(ReaderTest, NameAssoc_PastEnd) {
+  ExpectReadFailure<NameAssoc>(
+      {{0, "name assoc"}, {0, "index"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""));
+
+  ExpectReadFailure<NameAssoc>(
+      {{0, "name assoc"}, {1, "name"}, {1, "length"}, {1, "Unable to read u8"}},
+      MakeSpanU8("\x00"));
+}
+
+TEST(ReaderTest, IndirectNameAssoc) {
+  ExpectRead<IndirectNameAssoc>(
+      IndirectNameAssoc{100u, {{0u, "zero"}, {1u, "one"}}},
+      MakeSpanU8("\x64"          // Index.
+                 "\x02"          // Count.
+                 "\x00\x04zero"  // 0 "zero"
+                 "\x01\x03one"   // 1 "one"
+                 ));
+}
+
+TEST(ReaderTest, IndirectNameAssoc_PastEnd) {
+  ExpectReadFailure<IndirectNameAssoc>(
+      {{0, "indirect name assoc"}, {0, "index"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""));
+
+  ExpectReadFailure<IndirectNameAssoc>({{0, "indirect name assoc"},
+                                        {1, "name map"},
+                                        {1, "count"},
+                                        {1, "Unable to read u8"}},
+                                       MakeSpanU8("\x00"));
+
+  ExpectReadFailure<IndirectNameAssoc>({{0, "indirect name assoc"},
+                                        {1, "name map"},
+                                        {2, "Count extends past end: 1 > 0"}},
+                                       MakeSpanU8("\x00\x01"));
+}
+
+TEST(ReaderTest, NameSubsection) {
+  ExpectRead<NameSubsection>(
+      NameSubsection{NameSubsectionId::ModuleName, MakeSpanU8("\0")},
+      MakeSpanU8("\x00\x01\0"));
+
+  ExpectRead<NameSubsection>(
+      NameSubsection{NameSubsectionId::FunctionNames, MakeSpanU8("\0\0")},
+      MakeSpanU8("\x01\x02\0\0"));
+
+  ExpectRead<NameSubsection>(
+      NameSubsection{NameSubsectionId::LocalNames, MakeSpanU8("\0\0\0")},
+      MakeSpanU8("\x02\x03\0\0\0"));
+}
+
+TEST(ReaderTest, NameSubsection_BadSubsectionId) {
+  ExpectReadFailure<NameSubsection>({{0, "name subsection"},
+                                     {0, "name subsection id"},
+                                     {1, "Unknown name subsection id: 3"}},
+                                    MakeSpanU8("\x03"));
+}
+
+TEST(ReaderTest, NameSubsection_PastEnd) {
+  ExpectReadFailure<NameSubsection>({{0, "name subsection"},
+                                     {0, "name subsection id"},
+                                     {0, "Unable to read u8"}},
+                                    MakeSpanU8(""));
+
+  ExpectReadFailure<NameSubsection>({{0, "name subsection"},
+                                     {1, "length"},
+                                     {1, "Unable to read u8"}},
+                                    MakeSpanU8("\x00"));
 }

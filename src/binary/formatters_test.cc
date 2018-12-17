@@ -18,8 +18,11 @@
 
 #include "gtest/gtest.h"
 
+#include "src/binary/test_utils.h"
+
 using namespace ::wasp;
 using namespace ::wasp::binary;
+using namespace ::wasp::binary::test;
 
 namespace {
 
@@ -49,6 +52,10 @@ TEST(FormatTest, ExternalKind) {
 
 TEST(FormatTest, Mutability) {
   EXPECT_EQ(R"(const)", TestFormat(Mutability::Const));
+}
+
+TEST(FormatTest, NameSubsectionKind) {
+  EXPECT_EQ(R"(locals)", TestFormat(NameSubsectionId::LocalNames));
 }
 
 TEST(FormatTest, MemArg) {
@@ -264,4 +271,27 @@ TEST(FormatTest, DataSegment) {
       R"({memory 0, offset "\0b", init "\12\34"})",
       TestFormat(DataSegment{Index{0u}, ConstantExpression{SpanU8{expr, 1}},
                              SpanU8{init, 2}}));
+}
+
+TEST(FormatTest, NameAssoc) {
+  EXPECT_EQ(R"(3 "hi")", TestFormat(NameAssoc{3u, "hi"}));
+}
+
+TEST(FormatTest, IndirectNameAssoc) {
+  EXPECT_EQ(R"(0 [1 "first" 2 "second"])",
+            TestFormat(IndirectNameAssoc{0u, {{1u, "first"}, {2u, "second"}}}));
+}
+
+TEST(FormatTest, NameSubsection) {
+  EXPECT_EQ(R"(module "\00\00\00")",
+            TestFormat(NameSubsection{NameSubsectionId::ModuleName,
+                                      MakeSpanU8("\0\0\0")}));
+
+  EXPECT_EQ(R"(functions "\00\00\00")",
+            TestFormat(NameSubsection{NameSubsectionId::FunctionNames,
+                                      MakeSpanU8("\0\0\0")}));
+
+  EXPECT_EQ(R"(locals "\00\00\00")",
+            TestFormat(NameSubsection{NameSubsectionId::LocalNames,
+                                      MakeSpanU8("\0\0\0")}));
 }

@@ -279,6 +279,16 @@ optional<Opcode> Read(SpanU8* data, Errors& errors, Tag<Opcode>) {
   return decoded;
 }
 
+template <typename Errors>
+optional<NameSubsectionId> Read(SpanU8* data,
+                                Errors& errors,
+                                Tag<NameSubsectionId>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "name subsection id"};
+  WASP_TRY_READ(val, Read<u8>(data, errors));
+  WASP_TRY_DECODE(decoded, val, NameSubsectionId, "name subsection id");
+  return decoded;
+}
+
 #undef WASP_TRY_DECODE
 
 template <typename Errors>
@@ -775,6 +785,35 @@ optional<DataSegment> Read(SpanU8* data, Errors& errors, Tag<DataSegment>) {
   WASP_TRY_READ(len, ReadLength(data, errors));
   WASP_TRY_READ(init, ReadBytes(data, len, errors));
   return DataSegment{memory_index, std::move(offset), init};
+}
+
+template <typename Errors>
+optional<NameAssoc> Read(SpanU8* data, Errors& errors, Tag<NameAssoc>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "name assoc"};
+  WASP_TRY_READ(index, ReadIndex(data, errors, "index"));
+  WASP_TRY_READ(name, ReadString(data, errors, "name"));
+  return NameAssoc{index, name};
+}
+
+template <typename Errors>
+optional<IndirectNameAssoc> Read(SpanU8* data,
+                                 Errors& errors,
+                                 Tag<IndirectNameAssoc>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "indirect name assoc"};
+  WASP_TRY_READ(index, ReadIndex(data, errors, "index"));
+  WASP_TRY_READ(name_map, ReadVector<NameAssoc>(data, errors, "name map"));
+  return IndirectNameAssoc{index, std::move(name_map)};
+}
+
+template <typename Errors>
+optional<NameSubsection> Read(SpanU8* data,
+                              Errors& errors,
+                              Tag<NameSubsection>) {
+  ErrorsContextGuard<Errors> guard{errors, *data, "name subsection"};
+  WASP_TRY_READ(id, Read<NameSubsectionId>(data, errors));
+  WASP_TRY_READ(length, ReadLength(data, errors));
+  auto bytes = *ReadBytes(data, length, errors);
+  return NameSubsection{id, bytes};
 }
 
 #undef WASP_TRY_READ
