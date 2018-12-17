@@ -129,7 +129,7 @@ target_include_directories(wasm_view
 )
 
 target_link_libraries(wasm_view
-  wasp
+  wasplib
   GL
   GLEW
   SDL2

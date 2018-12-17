@@ -29,10 +29,12 @@ namespace binary {
 template <typename T, typename Errors>
 class LazySection {
  public:
+  using sequence_type = LazySequence<T, Errors>;
+
   explicit LazySection(SpanU8, const Features&, Errors&);
 
   optional<Index> count;
-  LazySequence<T, Errors> sequence;
+  sequence_type sequence;
 };
 
 template <typename T, typename Errors>

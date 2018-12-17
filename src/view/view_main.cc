@@ -21,13 +21,26 @@
 
 #include "imgui.h"
 
-#include "src/base/file.h"
-#include "src/binary/errors_nop.h"
-#include "src/binary/errors_vector.h"
-#include "src/binary/lazy_expr.h"
-#include "src/binary/lazy_module.h"
-#include "src/binary/lazy_section.h"
-#include "src/binary/types.h"
+#include "wasp/base/file.h"
+#include "wasp/binary/errors_nop.h"
+#include "wasp/binary/external_kind.h"
+#include "wasp/binary/function.h"
+#include "wasp/binary/global.h"
+#include "wasp/binary/lazy_code_section.h"
+#include "wasp/binary/lazy_data_section.h"
+#include "wasp/binary/lazy_element_section.h"
+#include "wasp/binary/lazy_export_section.h"
+#include "wasp/binary/lazy_expression.h"
+#include "wasp/binary/lazy_function_section.h"
+#include "wasp/binary/lazy_global_section.h"
+#include "wasp/binary/lazy_import_section.h"
+#include "wasp/binary/lazy_memory_section.h"
+#include "wasp/binary/lazy_module.h"
+#include "wasp/binary/lazy_table_section.h"
+#include "wasp/binary/lazy_type_section.h"
+#include "wasp/binary/memory.h"
+#include "wasp/binary/start_section.h"
+#include "wasp/binary/table.h"
 
 namespace wasp {
 namespace view {
@@ -38,101 +51,94 @@ static std::string s_filename;
 static std::vector<u8> s_buffer;
 
 // TODO This should be a named value, external kind count.
-static u32 s_import_count[4];
+static Index s_import_count[4];
+static std::vector<Index> s_instr_count;
+
+static Features s_features;
+
+Index ImportCount(ExternalKind kind) {
+  return s_import_count[static_cast<size_t>(kind)];
+}
+
+template <typename T>
+Index InitialCount() { return 0; }
+
+template <>
+Index InitialCount<Function>() {
+  return ImportCount(ExternalKind::Function);
+}
+
+template <>
+Index InitialCount<Table>() {
+  return ImportCount(ExternalKind::Table);
+}
+
+template <>
+Index InitialCount<Memory>() {
+  return ImportCount(ExternalKind::Memory);
+}
+
+template <>
+Index InitialCount<Global>() {
+  return ImportCount(ExternalKind::Global);
+}
 
 template <typename T>
 void DumpSection(T section, string_view name) {
   if (section.count) {
     ImGui::Text("%s", format("  {}[{}]\n", name, *section.count).c_str());
-    Index count = 0;
-    for (auto item : section.sequence) {
-      ImGui::Text("%s", format("    [{}]: {}\n", count++, item).c_str());
+    Index initial_count = InitialCount<typename T::sequence_type::value_type>();
+    ImGuiListClipper clipper(*section.count);
+    while (clipper.Step()) {
+      auto it = section.sequence.begin(), end = section.sequence.end();
+      std::advance(it, clipper.DisplayStart);
+      for (int i = clipper.DisplayStart; i < clipper.DisplayEnd && it != end;
+           ++it, ++i) {
+        ImGui::Text("%s",
+                    format("    [{}]: {}\n", initial_count + i, *it).c_str());
+      }
     }
   }
 }
-
-template <>
-void DumpSection<LazyFunctionSection<ErrorsNop>>(
-    LazyFunctionSection<ErrorsNop> section,
-    string_view name) {
-  if (section.count) {
-    ImGui::Text("%s", format("  {}[{}]\n", name, *section.count).c_str());
-    Index count = s_import_count[static_cast<size_t>(ExternalKind::Function)];
-    for (auto item : section.sequence) {
-      ImGui::Text("%s", format("    [{}]: {}\n", count++, item).c_str());
-    }
-  }
-}
-
-template <>
-void DumpSection<LazyTableSection<ErrorsNop>>(
-    LazyTableSection<ErrorsNop> section,
-    string_view name) {
-  if (section.count) {
-    ImGui::Text("%s", format("  {}[{}]\n", name, *section.count).c_str());
-    Index count = s_import_count[static_cast<size_t>(ExternalKind::Table)];
-    for (auto item : section.sequence) {
-      ImGui::Text("%s", format("    [{}]: {}\n", count++, item).c_str());
-    }
-  }
-}
-
-template <>
-void DumpSection<LazyMemorySection<ErrorsNop>>(
-    LazyMemorySection<ErrorsNop> section,
-    string_view name) {
-  if (section.count) {
-    ImGui::Text("%s", format("  {}[{}]\n", name, *section.count).c_str());
-    Index count = s_import_count[static_cast<size_t>(ExternalKind::Memory)];
-    for (auto item : section.sequence) {
-      ImGui::Text("%s", format("    [{}]: {}\n", count++, item).c_str());
-    }
-  }
-}
-
-template <>
-void DumpSection<LazyGlobalSection<ErrorsNop>>(
-    LazyGlobalSection<ErrorsNop> section,
-    string_view name) {
-  if (section.count) {
-    ImGui::Text("%s", format("  {}[{}]\n", name, *section.count).c_str());
-    Index count = s_import_count[static_cast<size_t>(ExternalKind::Global)];
-    for (auto item : section.sequence) {
-      ImGui::Text("%s", format("    [{}]: {}\n", count++, item).c_str());
-    }
-  }
-}
-
 
 template <>
 void DumpSection<LazyCodeSection<ErrorsNop>>(LazyCodeSection<ErrorsNop> section,
                                              string_view name) {
   if (section.count) {
     ImGui::Text("%s", format("  {}[{}]\n", name, *section.count).c_str());
-    Index count = s_import_count[static_cast<size_t>(ExternalKind::Function)];
+    Index initial_count = ImportCount(ExternalKind::Function);
+    Index i = 0;
     for (auto item : section.sequence) {
-      if (ImGui::TreeNode(
-              reinterpret_cast<void*>(count), "%s",
-              format("    [{}]: {} bytes\n", count, item.body.data.size())
-                  .c_str())) {
+      if (ImGui::TreeNode(reinterpret_cast<void*>(i), "%s",
+                          format("    [{}]: {} bytes\n", initial_count + i,
+                                 item.body.data.size())
+                              .c_str())) {
         ErrorsNop errors;
-        auto expr = ReadExpr(item.body.data, errors);
+        auto expr = ReadExpression(item.body.data, s_features, errors);
         int indent = 0;
-        for (auto instr : expr) {
-          if (instr.opcode == Opcode::End || instr.opcode == Opcode::Else) {
-            indent -= 2;
-          }
+        ImGuiListClipper clipper(s_instr_count[i]);
+        auto it = expr.begin(), end = expr.end();
+        while (clipper.Step()) {
+          for (int i = 0; i < clipper.DisplayEnd && it != end; ++it, ++i) {
+            auto instr = *it;
+            if (instr.opcode == Opcode::End || instr.opcode == Opcode::Else) {
+              indent -= 2;
+            }
 
-          ImGui::Text("%*.s%s", indent, "", format("    {}\n", instr).c_str());
+            if (i >= clipper.DisplayStart) {
+              ImGui::Text("%*.s%s", indent, "",
+                          format("    {}\n", instr).c_str());
+            }
 
-          if (instr.opcode == Opcode::Block || instr.opcode == Opcode::Loop ||
-              instr.opcode == Opcode::If || instr.opcode == Opcode::Else) {
-            indent += 2;
+            if (instr.opcode == Opcode::Block || instr.opcode == Opcode::Loop ||
+                instr.opcode == Opcode::If || instr.opcode == Opcode::Else) {
+              indent += 2;
+            }
           }
         }
         ImGui::TreePop();
       }
-      ++count;
+      ++i;
     }
   }
 }
@@ -156,21 +162,28 @@ void ViewInit(int argc, char** argv) {
   SpanU8 data{s_buffer};
 
   ErrorsNop errors;
-  auto module = ReadModule(data, errors);
+  auto module = ReadModule(data, s_features, errors);
   for (auto section : module.sections) {
     if (section.is_known()) {
       auto known = section.known();
       if (known.id == SectionId::Import) {
-        auto sec = ReadImportSection(known, errors);
+        auto sec = ReadImportSection(known, s_features, errors);
         for (auto import : sec.sequence) {
           s_import_count[static_cast<size_t>(import.kind())]++;
+        }
+      } else if (known.id == SectionId::Code) {
+        auto sec = ReadCodeSection(known, s_features, errors);
+        for (auto code : sec.sequence) {
+          auto expr = ReadExpression(code.body.data, s_features, errors);
+          auto size = std::distance(expr.begin(), expr.end());
+          s_instr_count.push_back(size);
         }
       }
     }
   }
 }
 
-void ViewSection(KnownSection<> known, ErrorsNop& errors) {
+void ViewSection(KnownSection known, ErrorsNop& errors) {
   if (ImGui::Begin(format("{}", known.id).c_str())) {
     switch (known.id) {
       case SectionId::Custom:
@@ -178,53 +191,53 @@ void ViewSection(KnownSection<> known, ErrorsNop& errors) {
         break;
 
       case SectionId::Type:
-        DumpSection(ReadTypeSection(known, errors), "Type");
+        DumpSection(ReadTypeSection(known, s_features, errors), "Type");
         break;
 
       case SectionId::Import:
-        DumpSection(ReadImportSection(known, errors), "Import");
+        DumpSection(ReadImportSection(known, s_features, errors), "Import");
         break;
 
       case SectionId::Function:
-        DumpSection(ReadFunctionSection(known, errors), "Func");
+        DumpSection(ReadFunctionSection(known, s_features, errors), "Func");
         break;
 
       case SectionId::Table:
-        DumpSection(ReadTableSection(known, errors), "Table");
+        DumpSection(ReadTableSection(known, s_features, errors), "Table");
         break;
 
       case SectionId::Memory:
-        DumpSection(ReadMemorySection(known, errors), "Memory");
+        DumpSection(ReadMemorySection(known, s_features, errors), "Memory");
         break;
 
       case SectionId::Global:
-        DumpSection(ReadGlobalSection(known, errors), "Global");
+        DumpSection(ReadGlobalSection(known, s_features, errors), "Global");
         break;
 
       case SectionId::Export:
-        DumpSection(ReadExportSection(known, errors), "Export");
+        DumpSection(ReadExportSection(known, s_features, errors), "Export");
         break;
 
       case SectionId::Start: {
-        auto section = ReadStartSection(known, errors);
-        size_t count = section.start() ? 1 : 0;
+        auto section = ReadStartSection(known, s_features, errors);
+        size_t count = section ? 1 : 0;
         print("  Start[{}]\n", count);
         if (count > 0) {
-          print("    [0]: {}\n", *section.start());
+          print("    [0]: {}\n", *section);
         }
         break;
       }
 
       case SectionId::Element:
-        DumpSection(ReadElementSection(known, errors), "Element");
+        DumpSection(ReadElementSection(known, s_features, errors), "Element");
         break;
 
       case SectionId::Code:
-        DumpSection(ReadCodeSection(known, errors), "Code");
+        DumpSection(ReadCodeSection(known, s_features, errors), "Code");
         break;
 
       case SectionId::Data:
-        DumpSection(ReadDataSection(known, errors), "Data");
+        DumpSection(ReadDataSection(known, s_features, errors), "Data");
         break;
     }
   }
@@ -234,7 +247,8 @@ void ViewSection(KnownSection<> known, ErrorsNop& errors) {
 void ViewMain() {
   SpanU8 data{s_buffer};
   ErrorsNop errors;
-  auto module = ReadModule(data, errors);
+  s_features.EnableAll();
+  auto module = ReadModule(data, s_features, errors);
 
   for (auto section : module.sections) {
     if (section.is_known()) {

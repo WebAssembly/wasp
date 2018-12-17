@@ -142,6 +142,10 @@ int main(int argc, char** argv)
 
         wasp::view::ViewMain();
 
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                    1000.0f / ImGui::GetIO().Framerate,
+                    ImGui::GetIO().Framerate);
+
         // Rendering
         ImGui::Render();
         SDL_GL_MakeCurrent(window, gl_context);
