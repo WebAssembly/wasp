@@ -106,6 +106,7 @@ target_link_libraries(wasp_unittests
 
 add_executable(wasm_view
   src/view/main.cc
+  src/view/view_main.cc
 
   src/view/imgui_impl_sdl.cpp
   src/view/imgui_impl_opengl3.cpp
