@@ -101,44 +101,52 @@ void DumpSection(T section, string_view name) {
   }
 }
 
+void DumpCode(Index i, Code code) {
+  ErrorsNop errors;
+  auto expr = ReadExpression(code.body.data, s_features, errors);
+  int indent = 0;
+  ImGuiListClipper clipper(s_instr_count[i]);
+  auto it = expr.begin(), end = expr.end();
+  while (clipper.Step()) {
+    for (int i = 0; i < clipper.DisplayEnd && it != end; ++it, ++i) {
+      auto instr = *it;
+      if (instr.opcode == Opcode::End || instr.opcode == Opcode::Else) {
+        indent -= 2;
+      }
+
+      if (i >= clipper.DisplayStart) {
+        ImGui::Text("%*.s%s", indent, "", format("    {}\n", instr).c_str());
+      }
+
+      if (instr.opcode == Opcode::Block || instr.opcode == Opcode::Loop ||
+          instr.opcode == Opcode::If || instr.opcode == Opcode::Else) {
+        indent += 2;
+      }
+    }
+  }
+}
+
 template <>
 void DumpSection<LazyCodeSection<ErrorsNop>>(LazyCodeSection<ErrorsNop> section,
                                              string_view name) {
   if (section.count) {
     ImGui::Text("%s", format("  {}[{}]\n", name, *section.count).c_str());
     Index initial_count = ImportCount(ExternalKind::Function);
-    Index i = 0;
-    for (auto item : section.sequence) {
-      if (ImGui::TreeNode(reinterpret_cast<void*>(i), "%s",
-                          format("    [{}]: {} bytes\n", initial_count + i,
-                                 item.body.data.size())
-                              .c_str())) {
-        ErrorsNop errors;
-        auto expr = ReadExpression(item.body.data, s_features, errors);
-        int indent = 0;
-        ImGuiListClipper clipper(s_instr_count[i]);
-        auto it = expr.begin(), end = expr.end();
-        while (clipper.Step()) {
-          for (int i = 0; i < clipper.DisplayEnd && it != end; ++it, ++i) {
-            auto instr = *it;
-            if (instr.opcode == Opcode::End || instr.opcode == Opcode::Else) {
-              indent -= 2;
-            }
-
-            if (i >= clipper.DisplayStart) {
-              ImGui::Text("%*.s%s", indent, "",
-                          format("    {}\n", instr).c_str());
-            }
-
-            if (instr.opcode == Opcode::Block || instr.opcode == Opcode::Loop ||
-                instr.opcode == Opcode::If || instr.opcode == Opcode::Else) {
-              indent += 2;
-            }
-          }
+    ImGuiListClipper clipper(*section.count);
+    while (clipper.Step()) {
+      auto it = section.sequence.begin(), end = section.sequence.end();
+      std::advance(it, clipper.DisplayStart);
+      for (int i = clipper.DisplayStart; i < clipper.DisplayEnd && it != end;
+           ++it, ++i) {
+        auto code = *it;
+        if (ImGui::TreeNode(reinterpret_cast<void*>(i), "%s",
+                            format("    [{}]: {} bytes\n", initial_count + i,
+                                   code.body.data.size())
+                                .c_str())) {
+          DumpCode(i, code);
+          ImGui::TreePop();
         }
-        ImGui::TreePop();
       }
-      ++i;
     }
   }
 }
