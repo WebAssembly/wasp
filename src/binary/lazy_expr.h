@@ -19,7 +19,7 @@
 
 #include "src/base/types.h"
 #include "src/binary/types.h"
-#include "src/binary/lazy-sequence.h"
+#include "src/binary/lazy_sequence.h"
 
 namespace wasp {
 namespace binary {
