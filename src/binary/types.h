@@ -375,21 +375,6 @@ struct DataSegment {
 bool operator==(const DataSegment&, const DataSegment&);
 bool operator!=(const DataSegment&, const DataSegment&);
 
-struct Module {
-  std::vector<FunctionType> types;
-  std::vector<Import> imports;
-  std::vector<Function> functions;
-  std::vector<Table> tables;
-  std::vector<Memory> memories;
-  std::vector<Global> globals;
-  std::vector<Export> exports;
-  optional<Start> start;
-  std::vector<ElementSegment> element_segments;
-  std::vector<Code> codes;
-  std::vector<DataSegment> data_segments;
-  std::vector<CustomSection> custom_sections;
-};
-
 }  // namespace binary
 }  // namespace wasp
 
