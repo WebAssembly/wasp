@@ -150,5 +150,96 @@ bool operator!=(const Start& lhs, const Start& rhs) {
   return !(lhs == rhs);
 }
 
+bool operator==(const KnownSection& lhs, const KnownSection& rhs) {
+  return lhs.id == rhs.id && lhs.data == rhs.data;
+}
+
+bool operator!=(const KnownSection& lhs, const KnownSection& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const CustomSection& lhs, const CustomSection& rhs) {
+  return lhs.name == rhs.name && lhs.data == rhs.data;
+}
+
+bool operator!=(const CustomSection& lhs, const CustomSection& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const Section& lhs, const Section& rhs) {
+  return lhs.contents == rhs.contents;
+}
+
+bool operator!=(const Section& lhs, const Section& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const Import& lhs, const Import& rhs) {
+  return lhs.module == rhs.module && lhs.name == rhs.name &&
+         lhs.desc == rhs.desc;
+}
+
+bool operator!=(const Import& lhs, const Import& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const Expression& lhs, const Expression& rhs) {
+  return lhs.data == rhs.data;
+}
+
+bool operator!=(const Expression& lhs, const Expression& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const ConstantExpression& lhs, const ConstantExpression& rhs) {
+  return lhs.data == rhs.data;
+}
+
+bool operator!=(const ConstantExpression& lhs, const ConstantExpression& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const Global& lhs, const Global& rhs) {
+  return lhs.global_type == rhs.global_type && lhs.init == rhs.init;
+}
+
+bool operator!=(const Global& lhs, const Global& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const Export& lhs, const Export& rhs) {
+  return lhs.kind == rhs.kind && lhs.name == rhs.name && lhs.index == rhs.index;
+}
+
+bool operator!=(const Export& lhs, const Export& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const ElementSegment& lhs, const ElementSegment& rhs) {
+  return lhs.table_index == rhs.table_index && lhs.offset == rhs.offset &&
+         lhs.init == rhs.init;
+}
+
+bool operator!=(const ElementSegment& lhs, const ElementSegment& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const Code& lhs, const Code& rhs) {
+  return lhs.locals == rhs.locals && lhs.body == rhs.body;
+}
+
+bool operator!=(const Code& lhs, const Code& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const DataSegment& lhs, const DataSegment& rhs) {
+  return lhs.memory_index == rhs.memory_index && lhs.offset == rhs.offset &&
+         lhs.init == rhs.init;
+}
+
+bool operator!=(const DataSegment& lhs, const DataSegment& rhs) {
+  return !(lhs == rhs);
+}
+
 }  // namespace binary
 }  // namespace wasp

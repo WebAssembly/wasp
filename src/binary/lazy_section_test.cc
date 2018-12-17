@@ -32,7 +32,7 @@ void ExpectSection(const std::vector<T>& expected,
                    LazySection<T, Errors>& sec) {
   EXPECT_EQ(expected.size(), sec.count);
   size_t i = 0;
-  for (const auto& item: sec.sequence) {
+  for (const auto& item : sec.sequence) {
     ASSERT_LT(i, expected.size());
     EXPECT_EQ(expected[i++], item);
   }
@@ -70,8 +70,8 @@ TEST(LazySectionTest, Import) {
 
   ExpectSection(
       {
-          Import<>{"w", "x", 2},
-          Import<>{"y", "z", MemoryType{Limits{1, 2}}},
+          Import{"w", "x", 2},
+          Import{"y", "z", MemoryType{Limits{1, 2}}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -134,10 +134,10 @@ TEST(LazySectionTest, Global) {
 
   ExpectSection(
       {
-          Global<>{GlobalType{ValueType::I32, Mutability::Var},
-                   MakeConstantExpression("\x41\x00\x0b")},
-          Global<>{GlobalType{ValueType::I64, Mutability::Const},
-                   MakeConstantExpression("\x42\x01\x0b")},
+          Global{GlobalType{ValueType::I32, Mutability::Var},
+                 MakeConstantExpression("\x41\x00\x0b")},
+          Global{GlobalType{ValueType::I64, Mutability::Const},
+                 MakeConstantExpression("\x42\x01\x0b")},
       },
       sec);
   ExpectNoErrors(errors);
@@ -154,9 +154,9 @@ TEST(LazySectionTest, Export) {
 
   ExpectSection(
       {
-          Export<>{ExternalKind::Function, "one", 1},
-          Export<>{ExternalKind::Memory, "two", 2},
-          Export<>{ExternalKind::Global, "three", 2},
+          Export{ExternalKind::Function, "one", 1},
+          Export{ExternalKind::Memory, "two", 2},
+          Export{ExternalKind::Global, "three", 2},
       },
       sec);
   ExpectNoErrors(errors);
@@ -181,8 +181,8 @@ TEST(LazySectionTest, Element) {
 
   ExpectSection(
       {
-          ElementSegment<>{0, MakeConstantExpression("\x41\x00\x0b"), {0, 1}},
-          ElementSegment<>{0, MakeConstantExpression("\x41\x02\x0b"), {3}},
+          ElementSegment{0, MakeConstantExpression("\x41\x00\x0b"), {0, 1}},
+          ElementSegment{0, MakeConstantExpression("\x41\x02\x0b"), {3}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -198,8 +198,8 @@ TEST(LazySectionTest, Code) {
 
   ExpectSection(
       {
-          Code<>{{}, MakeExpression("\x0b")},
-          Code<>{{Locals{1, ValueType::I32}}, MakeExpression("\x6a\x0b")},
+          Code{{}, MakeExpression("\x0b")},
+          Code{{Locals{1, ValueType::I32}}, MakeExpression("\x6a\x0b")},
       },
       sec);
   ExpectNoErrors(errors);
@@ -217,12 +217,12 @@ TEST(LazySectionTest, Data) {
 
   ExpectSection(
       {
-          DataSegment<>{0, MakeConstantExpression("\x41\x00\x0b"),
-                        MakeSpanU8("hi")},
-          DataSegment<>{0, MakeConstantExpression("\x41\x02\x0b"),
-                        MakeSpanU8("see")},
-          DataSegment<>{0, MakeConstantExpression("\x41\x05\x0b"),
-                        MakeSpanU8("you")},
+          DataSegment{0, MakeConstantExpression("\x41\x00\x0b"),
+                      MakeSpanU8("hi")},
+          DataSegment{0, MakeConstantExpression("\x41\x02\x0b"),
+                      MakeSpanU8("see")},
+          DataSegment{0, MakeConstantExpression("\x41\x05\x0b"),
+                      MakeSpanU8("you")},
       },
       sec);
   ExpectNoErrors(errors);

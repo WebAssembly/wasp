@@ -32,7 +32,7 @@ class LazyModule {
 
   optional<SpanU8> magic;
   optional<SpanU8> version;
-  LazySequence<Section<>, Errors> sections;
+  LazySequence<Section, Errors> sections;
 };
 
 template <typename Errors>

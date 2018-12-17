@@ -29,7 +29,7 @@ template <typename T, typename Errors>
 class LazySection {
  public:
   explicit LazySection(SpanU8, Errors&);
-  explicit LazySection(KnownSection<>, Errors&);
+  explicit LazySection(KnownSection, Errors&);
 
   optional<Index> count;
   LazySequence<T, Errors> sequence;
@@ -44,7 +44,7 @@ LazyTypeSection<Errors> ReadTypeSection(Data&& data, Errors& errors);
 
 /// ---
 template <typename Errors>
-using LazyImportSection = LazySection<Import<>, Errors>;
+using LazyImportSection = LazySection<Import, Errors>;
 
 template <typename Data, typename Errors>
 LazyImportSection<Errors> ReadImportSection(Data&& data, Errors& errors);
@@ -72,14 +72,14 @@ LazyMemorySection<Errors> ReadMemorySection(Data&& data, Errors& errors);
 
 /// ---
 template <typename Errors>
-using LazyGlobalSection = LazySection<Global<>, Errors>;
+using LazyGlobalSection = LazySection<Global, Errors>;
 
 template <typename Data, typename Errors>
 LazyGlobalSection<Errors> ReadGlobalSection(Data&& data, Errors& errors);
 
 /// ---
 template <typename Errors>
-using LazyExportSection = LazySection<Export<>, Errors>;
+using LazyExportSection = LazySection<Export, Errors>;
 
 template <typename Data, typename Errors>
 LazyExportSection<Errors> ReadExportSection(Data&& data, Errors& errors);
@@ -88,7 +88,7 @@ LazyExportSection<Errors> ReadExportSection(Data&& data, Errors& errors);
 template <typename Errors>
 struct StartSection {
   explicit StartSection(SpanU8, Errors&);
-  explicit StartSection(KnownSection<>, Errors&);
+  explicit StartSection(KnownSection, Errors&);
 
   optional<Start> start();
 
@@ -102,21 +102,21 @@ StartSection<Errors> ReadStartSection(Data&& data, Errors& errors);
 
 /// ---
 template <typename Errors>
-using LazyElementSection = LazySection<ElementSegment<>, Errors>;
+using LazyElementSection = LazySection<ElementSegment, Errors>;
 
 template <typename Data, typename Errors>
 LazyElementSection<Errors> ReadElementSection(Data&& data, Errors& errors);
 
 /// ---
 template <typename Errors>
-using LazyCodeSection = LazySection<Code<>, Errors>;
+using LazyCodeSection = LazySection<Code, Errors>;
 
 template <typename Data, typename Errors>
 LazyCodeSection<Errors> ReadCodeSection(Data&& data, Errors& errors);
 
 /// ---
 template <typename Errors>
-using LazyDataSection = LazySection<DataSegment<>, Errors>;
+using LazyDataSection = LazySection<DataSegment, Errors>;
 
 template <typename Data, typename Errors>
 LazyDataSection<Errors> ReadDataSection(Data&& data, Errors& errors);

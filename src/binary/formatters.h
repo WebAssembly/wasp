@@ -31,7 +31,9 @@ struct formatter<::wasp::binary::ValueType> : formatter<string_view> {
 template <>
 struct formatter<::wasp::binary::BlockType> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(::wasp::binary::BlockType, Ctx&);
 };
@@ -57,7 +59,9 @@ struct formatter<::wasp::binary::Mutability> : formatter<string_view> {
 template <>
 struct formatter<::wasp::binary::SectionId> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(::wasp::binary::SectionId, Ctx&);
 };
@@ -65,7 +69,9 @@ struct formatter<::wasp::binary::SectionId> {
 template <>
 struct formatter<::wasp::binary::MemArg> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::MemArg&, Ctx&);
 };
@@ -73,7 +79,9 @@ struct formatter<::wasp::binary::MemArg> {
 template <>
 struct formatter<::wasp::binary::Limits> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::Limits&, Ctx&);
 };
@@ -81,41 +89,49 @@ struct formatter<::wasp::binary::Limits> {
 template <>
 struct formatter<::wasp::binary::Locals> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::Locals&, Ctx&);
 };
 
-template <typename Traits>
-struct formatter<::wasp::binary::Section<Traits>> {
+template <>
+struct formatter<::wasp::binary::Section> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::Section<Traits>&, Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::Section&, Ctx&);
 };
 
-template <typename Traits>
-struct formatter<::wasp::binary::KnownSection<Traits>> {
+template <>
+struct formatter<::wasp::binary::KnownSection> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::KnownSection<Traits>&,
-                                Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::KnownSection&, Ctx&);
 };
 
-template <typename Traits>
-struct formatter<::wasp::binary::CustomSection<Traits>> {
+template <>
+struct formatter<::wasp::binary::CustomSection> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::CustomSection<Traits>&,
-                                Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::CustomSection&, Ctx&);
 };
 
 template <>
 struct formatter<::wasp::binary::TypeEntry> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::TypeEntry&, Ctx&);
 };
@@ -123,7 +139,9 @@ struct formatter<::wasp::binary::TypeEntry> {
 template <>
 struct formatter<::wasp::binary::FunctionType> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::FunctionType&, Ctx&);
 };
@@ -131,7 +149,9 @@ struct formatter<::wasp::binary::FunctionType> {
 template <>
 struct formatter<::wasp::binary::TableType> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::TableType&, Ctx&);
 };
@@ -139,7 +159,9 @@ struct formatter<::wasp::binary::TableType> {
 template <>
 struct formatter<::wasp::binary::MemoryType> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::MemoryType&, Ctx&);
 };
@@ -147,50 +169,60 @@ struct formatter<::wasp::binary::MemoryType> {
 template <>
 struct formatter<::wasp::binary::GlobalType> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::GlobalType&, Ctx&);
 };
 
-template <typename Traits>
-struct formatter<::wasp::binary::Import<Traits>> {
+template <>
+struct formatter<::wasp::binary::Import> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::Import<Traits>&, Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::Import&, Ctx&);
 };
 
-template <typename Traits>
-struct formatter<::wasp::binary::Export<Traits>> {
+template <>
+struct formatter<::wasp::binary::Export> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::Export<Traits>&, Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::Export&, Ctx&);
 };
 
-template <typename Traits>
-struct formatter<::wasp::binary::Expression<Traits>> {
+template <>
+struct formatter<::wasp::binary::Expression> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::Expression<Traits>&,
+  typename Ctx::iterator format(const ::wasp::binary::Expression&, Ctx&);
+};
+
+template <>
+struct formatter<::wasp::binary::ConstantExpression> {
+  template <typename Ctx>
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
+  template <typename Ctx>
+  typename Ctx::iterator format(const ::wasp::binary::ConstantExpression&,
                                 Ctx&);
-};
-
-template <typename Traits>
-struct formatter<::wasp::binary::ConstantExpression<Traits>> {
-  template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
-  template <typename Ctx>
-  typename Ctx::iterator format(
-      const ::wasp::binary::ConstantExpression<Traits>&,
-      Ctx&);
 };
 
 template <>
 struct formatter<::wasp::binary::Opcode> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::Opcode&, Ctx&);
 };
@@ -198,7 +230,9 @@ struct formatter<::wasp::binary::Opcode> {
 template <>
 struct formatter<::wasp::binary::CallIndirectImmediate> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::CallIndirectImmediate&,
                                 Ctx&);
@@ -207,7 +241,9 @@ struct formatter<::wasp::binary::CallIndirectImmediate> {
 template <>
 struct formatter<::wasp::binary::BrTableImmediate> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::BrTableImmediate&, Ctx&);
 };
@@ -215,7 +251,9 @@ struct formatter<::wasp::binary::BrTableImmediate> {
 template <>
 struct formatter<::wasp::binary::Instruction> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::Instruction&, Ctx&);
 };
@@ -223,7 +261,9 @@ struct formatter<::wasp::binary::Instruction> {
 template <>
 struct formatter<::wasp::binary::Function> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::Function&, Ctx&);
 };
@@ -231,7 +271,9 @@ struct formatter<::wasp::binary::Function> {
 template <>
 struct formatter<::wasp::binary::Table> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::Table&, Ctx&);
 };
@@ -239,52 +281,61 @@ struct formatter<::wasp::binary::Table> {
 template <>
 struct formatter<::wasp::binary::Memory> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::Memory&, Ctx&);
 };
 
-template <typename Traits>
-struct formatter<::wasp::binary::Global<Traits>> {
+template <>
+struct formatter<::wasp::binary::Global> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::Global<Traits>&, Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::Global&, Ctx&);
 };
-
 
 template <>
 struct formatter<::wasp::binary::Start> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::binary::Start&, Ctx&);
 };
 
-template <typename Traits>
-struct formatter<::wasp::binary::ElementSegment<Traits>> {
+template <>
+struct formatter<::wasp::binary::ElementSegment> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::ElementSegment<Traits>&,
-                                Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::ElementSegment&, Ctx&);
 };
 
-template <typename Traits>
-struct formatter<::wasp::binary::Code<Traits>> {
+template <>
+struct formatter<::wasp::binary::Code> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::Code<Traits>&, Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::Code&, Ctx&);
 };
 
-template <typename Traits>
-struct formatter<::wasp::binary::DataSegment<Traits>> {
+template <>
+struct formatter<::wasp::binary::DataSegment> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+  typename Ctx::iterator parse(Ctx& ctx) {
+    return ctx.begin();
+  }
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::binary::DataSegment<Traits>&,
-                                Ctx&);
+  typename Ctx::iterator format(const ::wasp::binary::DataSegment&, Ctx&);
 };
 
 }  // namespace fmt

@@ -56,10 +56,10 @@ template <size_t N>
 SpanU8 MakeSpanU8(const char (&str)[N]);
 
 template <size_t N>
-Expression<> MakeExpression(const char (&str)[N]);
+Expression MakeExpression(const char (&str)[N]);
 
 template <size_t N>
-ConstantExpression<> MakeConstantExpression(const char (&str)[N]);
+ConstantExpression MakeConstantExpression(const char (&str)[N]);
 
 void ExpectNoErrors(const TestErrors&);
 void ExpectErrors(const std::vector<ExpectedError>&,

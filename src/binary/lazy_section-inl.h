@@ -24,7 +24,7 @@ LazySection<T, Errors>::LazySection(SpanU8 data, Errors& errors)
     : count(ReadCount(&data, errors)), sequence(data, errors) {}
 
 template <typename T, typename Errors>
-LazySection<T, Errors>::LazySection(KnownSection<> section, Errors& errors)
+LazySection<T, Errors>::LazySection(KnownSection section, Errors& errors)
     : LazySection(section.data, errors) {}
 
 template <typename Data, typename Errors>
@@ -72,7 +72,7 @@ StartSection<Errors>::StartSection(SpanU8 data, Errors& errors)
     : errors_(errors), start_(Read<Start>(&data, errors)) {}
 
 template <typename Errors>
-StartSection<Errors>::StartSection(KnownSection<> section, Errors& errors)
+StartSection<Errors>::StartSection(KnownSection section, Errors& errors)
     : errors_(errors), start_(Read<Start>(&section.data, errors)) {}
 
 template <typename Errors>

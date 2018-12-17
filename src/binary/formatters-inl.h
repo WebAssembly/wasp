@@ -28,9 +28,9 @@ typename Ctx::iterator formatter<::wasp::binary::ValueType>::format(
     Ctx& ctx) {
   string_view result;
   switch (self) {
-#define WASP_V(val, Name, str)        \
+#define WASP_V(val, Name, str)          \
   case ::wasp::binary::ValueType::Name: \
-    result = str;                     \
+    result = str;                       \
     break;
     WASP_FOREACH_VALUE_TYPE(WASP_V)
 #undef WASP_V
@@ -61,9 +61,9 @@ typename Ctx::iterator formatter<::wasp::binary::ElementType>::format(
     Ctx& ctx) {
   string_view result;
   switch (self) {
-#define WASP_V(val, Name, str)         \
+#define WASP_V(val, Name, str)            \
   case ::wasp::binary::ElementType::Name: \
-    result = str;                      \
+    result = str;                         \
     break;
     WASP_FOREACH_ELEMENT_TYPE(WASP_V)
 #undef WASP_V
@@ -85,7 +85,8 @@ typename Ctx::iterator formatter<::wasp::binary::ExternalKind>::format(
     break;
     WASP_FOREACH_EXTERNAL_KIND(WASP_V)
 #undef WASP_V
-    default: WASP_UNREACHABLE();
+    default:
+      WASP_UNREACHABLE();
   }
   return formatter<string_view>::format(result, ctx);
 }
@@ -102,7 +103,8 @@ typename Ctx::iterator formatter<::wasp::binary::Mutability>::format(
     break;
     WASP_FOREACH_MUTABILITY(WASP_V)
 #undef WASP_V
-    default: WASP_UNREACHABLE();
+    default:
+      WASP_UNREACHABLE();
   }
   return formatter<string_view>::format(result, ctx);
 }
@@ -148,10 +150,9 @@ typename Ctx::iterator formatter<::wasp::binary::Locals>::format(
   return format_to(ctx.begin(), "{} ** {}", self.type, self.count);
 }
 
-template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Section<Traits>>::format(
-    const ::wasp::binary::Section<Traits>& self,
+typename Ctx::iterator formatter<::wasp::binary::Section>::format(
+    const ::wasp::binary::Section& self,
     Ctx& ctx) {
   if (self.is_known()) {
     return format_to(ctx.begin(), "{}", self.known());
@@ -162,18 +163,16 @@ typename Ctx::iterator formatter<::wasp::binary::Section<Traits>>::format(
   }
 }
 
-template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::KnownSection<Traits>>::format(
-    const ::wasp::binary::KnownSection<Traits>& self,
+typename Ctx::iterator formatter<::wasp::binary::KnownSection>::format(
+    const ::wasp::binary::KnownSection& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{{id {}, contents {}}}", self.id, self.data);
 }
 
-template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::CustomSection<Traits>>::format(
-    const ::wasp::binary::CustomSection<Traits>& self,
+typename Ctx::iterator formatter<::wasp::binary::CustomSection>::format(
+    const ::wasp::binary::CustomSection& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{{name \"{}\", contents {}}}", self.name,
                    self.data);
@@ -215,10 +214,9 @@ typename Ctx::iterator formatter<::wasp::binary::GlobalType>::format(
   return format_to(ctx.begin(), "{} {}", self.mut, self.valtype);
 }
 
-template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Import<Traits>>::format(
-    const ::wasp::binary::Import<Traits>& self,
+typename Ctx::iterator formatter<::wasp::binary::Import>::format(
+    const ::wasp::binary::Import& self,
     Ctx& ctx) {
   using ::wasp::get;
   using ::wasp::holds_alternative;
@@ -239,28 +237,24 @@ typename Ctx::iterator formatter<::wasp::binary::Import<Traits>>::format(
   return it;
 }
 
-template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Export<Traits>>::format(
-    const ::wasp::binary::Export<Traits>& self,
+typename Ctx::iterator formatter<::wasp::binary::Export>::format(
+    const ::wasp::binary::Export& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{{name \"{}\", desc {} {}}}", self.name,
                    self.kind, self.index);
 }
 
-template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Expression<Traits>>::format(
-    const ::wasp::binary::Expression<Traits>& self,
+typename Ctx::iterator formatter<::wasp::binary::Expression>::format(
+    const ::wasp::binary::Expression& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{}", self.data);
 }
 
-template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator
-formatter<::wasp::binary::ConstantExpression<Traits>>::format(
-    const ::wasp::binary::ConstantExpression<Traits>& self,
+typename Ctx::iterator formatter<::wasp::binary::ConstantExpression>::format(
+    const ::wasp::binary::ConstantExpression& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{}", self.data);
 }
@@ -314,11 +308,11 @@ typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
   } else if (holds_alternative<::wasp::binary::CallIndirectImmediate>(
                  self.immediate)) {
     it = format_to(it, " {}",
-                get<::wasp::binary::CallIndirectImmediate>(self.immediate));
+                   get<::wasp::binary::CallIndirectImmediate>(self.immediate));
   } else if (holds_alternative<::wasp::binary::BrTableImmediate>(
                  self.immediate)) {
     it = format_to(it, " {}",
-                get<::wasp::binary::BrTableImmediate>(self.immediate));
+                   get<::wasp::binary::BrTableImmediate>(self.immediate));
   } else if (holds_alternative<::wasp::u8>(self.immediate)) {
     it = format_to(it, " {}", get<::wasp::u8>(self.immediate));
   } else if (holds_alternative<::wasp::binary::MemArg>(self.immediate)) {
@@ -356,10 +350,9 @@ typename Ctx::iterator formatter<::wasp::binary::Memory>::format(
   return format_to(ctx.begin(), "{{type {}}}", self.memory_type);
 }
 
-template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Global<Traits>>::format(
-    const ::wasp::binary::Global<Traits>& self,
+typename Ctx::iterator formatter<::wasp::binary::Global>::format(
+    const ::wasp::binary::Global& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{{type {}, init {}}}", self.global_type,
                    self.init);
@@ -372,29 +365,25 @@ typename Ctx::iterator formatter<::wasp::binary::Start>::format(
   return format_to(ctx.begin(), "{{func {}}}", self.func_index);
 }
 
-template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator
-formatter<::wasp::binary::ElementSegment<Traits>>::format(
-    const ::wasp::binary::ElementSegment<Traits>& self,
+typename Ctx::iterator formatter<::wasp::binary::ElementSegment>::format(
+    const ::wasp::binary::ElementSegment& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{{table {}, offset {}, init {}}}",
                    self.table_index, self.offset, self.init);
 }
 
-template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Code<Traits>>::format(
-    const ::wasp::binary::Code<Traits>& self,
+typename Ctx::iterator formatter<::wasp::binary::Code>::format(
+    const ::wasp::binary::Code& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{{locals {}, body {}}}", self.locals,
                    self.body);
 }
 
-template <typename Traits>
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::DataSegment<Traits>>::format(
-    const ::wasp::binary::DataSegment<Traits>& self,
+typename Ctx::iterator formatter<::wasp::binary::DataSegment>::format(
+    const ::wasp::binary::DataSegment& self,
     Ctx& ctx) {
   return format_to(ctx.begin(), "{{memory {}, offset {}, init {}}}",
                    self.memory_index, self.offset, self.init);

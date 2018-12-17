@@ -67,30 +67,30 @@ TEST(FormatTest, Locals) {
 TEST(FormatTest, KnownSection) {
   const u8 data[] = "\x00\x01\x02";
   EXPECT_EQ(R"({id type, contents "\00\01\02"})",
-            TestFormat(KnownSection<>{SectionId::Type, SpanU8{data, 3}}));
+            TestFormat(KnownSection{SectionId::Type, SpanU8{data, 3}}));
 }
 
 TEST(FormatTest, CustomSection) {
   const u8 data[] = "\x00\x01\x02";
   EXPECT_EQ(
       R"({name "custom", contents "\00\01\02"})",
-      TestFormat(CustomSection<>{"custom", SpanU8{data, 3}}));
+      TestFormat(CustomSection{"custom", SpanU8{data, 3}}));
 }
 
 TEST(FormatTest, Section) {
   const u8 data[] = "\x00\x01\x02";
   EXPECT_EQ(
       R"({id type, contents "\00\01\02"})",
-      TestFormat(Section<>{KnownSection<>{SectionId::Type, SpanU8{data, 3}}}));
+      TestFormat(Section{KnownSection{SectionId::Type, SpanU8{data, 3}}}));
 
   EXPECT_EQ(
       R"({name "custom", contents "\00\01\02"})",
-      TestFormat(Section<>{CustomSection<>{"custom", SpanU8{data, 3}}}));
+      TestFormat(Section{CustomSection{"custom", SpanU8{data, 3}}}));
 
   EXPECT_EQ(
       R"({id 100, contents "\00"})",
-      TestFormat(Section<>{
-          KnownSection<>{static_cast<SectionId>(100), SpanU8{data, 1}}}));
+      TestFormat(
+          Section{KnownSection{static_cast<SectionId>(100), SpanU8{data, 1}}}));
 }
 
 TEST(FormatTest, TypeEntry) {
@@ -126,46 +126,44 @@ TEST(FormatTest, GlobalType) {
 TEST(FormatTest, Import) {
   // Function
   EXPECT_EQ(R"({module "a", name "b", desc func 3})",
-            TestFormat(Import<>{"a", "b", Index{3}}));
+            TestFormat(Import{"a", "b", Index{3}}));
 
   // Table
   EXPECT_EQ(
       R"({module "c", name "d", desc table {min 1} funcref})",
-      TestFormat(
-          Import<>{"c", "d", TableType{Limits{1}, ElementType::Funcref}}));
+      TestFormat(Import{"c", "d", TableType{Limits{1}, ElementType::Funcref}}));
 
   // Memory
   EXPECT_EQ(
       R"({module "e", name "f", desc mem {min 0, max 4}})",
-      TestFormat(Import<>{"e", "f", MemoryType{Limits{0, 4}}}));
+      TestFormat(Import{"e", "f", MemoryType{Limits{0, 4}}}));
 
   // Global
   EXPECT_EQ(
       R"({module "g", name "h", desc global var i32})",
       TestFormat(
-          Import<>{"g", "h", GlobalType{ValueType::I32, Mutability::Var}}));
+          Import{"g", "h", GlobalType{ValueType::I32, Mutability::Var}}));
 }
 
 TEST(FormatTest, Export) {
   EXPECT_EQ(R"({name "f", desc func 0})",
-            TestFormat(Export<>{ExternalKind::Function, "f", Index{0}}));
+            TestFormat(Export{ExternalKind::Function, "f", Index{0}}));
   EXPECT_EQ(R"({name "t", desc table 1})",
-            TestFormat(Export<>{ExternalKind::Table, "t", Index{1}}));
+            TestFormat(Export{ExternalKind::Table, "t", Index{1}}));
   EXPECT_EQ(R"({name "m", desc mem 2})",
-            TestFormat(Export<>{ExternalKind::Memory, "m", Index{2}}));
+            TestFormat(Export{ExternalKind::Memory, "m", Index{2}}));
   EXPECT_EQ(R"({name "g", desc global 3})",
-            TestFormat(Export<>{ExternalKind::Global, "g", Index{3}}));
+            TestFormat(Export{ExternalKind::Global, "g", Index{3}}));
 }
 
 TEST(FormatTest, Expression) {
   const u8 data[] = "\00\01\02";
-  EXPECT_EQ(R"("\00\01\02")", TestFormat(Expression<>{SpanU8{data, 3}}));
+  EXPECT_EQ(R"("\00\01\02")", TestFormat(Expression{SpanU8{data, 3}}));
 }
 
 TEST(FormatTest, ConstantExpression) {
   const u8 data[] = "\00\01\02";
-  EXPECT_EQ(R"("\00\01\02")",
-            TestFormat(ConstantExpression<>{SpanU8{data, 3}}));
+  EXPECT_EQ(R"("\00\01\02")", TestFormat(ConstantExpression{SpanU8{data, 3}}));
 }
 
 TEST(FormatTest, Opcode) {
@@ -235,8 +233,8 @@ TEST(FormatTest, Memory) {
 TEST(FormatTest, Global) {
   const u8 expr[] = "\xfa\xce";
   EXPECT_EQ(R"({type const i32, init "\fa\ce"})",
-            TestFormat(Global<>{GlobalType{ValueType::I32, Mutability::Const},
-                                ConstantExpression<>{SpanU8{expr, 2}}}));
+            TestFormat(Global{GlobalType{ValueType::I32, Mutability::Const},
+                              ConstantExpression{SpanU8{expr, 2}}}));
 }
 
 TEST(FormatTest, Start) {
@@ -247,8 +245,8 @@ TEST(FormatTest, ElementSegment) {
   const u8 expr[] = "\x0b";
   EXPECT_EQ(
       R"({table 1, offset "\0b", init [2 3]})",
-      TestFormat(ElementSegment<>{
-          Index{1u}, ConstantExpression<>{SpanU8{expr, 1}}, {2u, 3u}}));
+      TestFormat(ElementSegment{
+          Index{1u}, ConstantExpression{SpanU8{expr, 1}}, {2u, 3u}}));
 }
 
 TEST(FormatTest, Code) {
@@ -256,7 +254,7 @@ TEST(FormatTest, Code) {
   EXPECT_EQ(
       R"({locals [i32 ** 1], body "\0b"})",
       TestFormat(
-          Code<>{{Locals{1, ValueType::I32}}, Expression<>{SpanU8{expr, 1}}}));
+          Code{{Locals{1, ValueType::I32}}, Expression{SpanU8{expr, 1}}}));
 }
 
 TEST(FormatTest, DataSegment) {
@@ -264,6 +262,6 @@ TEST(FormatTest, DataSegment) {
   const u8 init[] = "\x12\x34";
   EXPECT_EQ(
       R"({memory 0, offset "\0b", init "\12\34"})",
-      TestFormat(DataSegment<>{Index{0u}, ConstantExpression<>{SpanU8{expr, 1}},
-                               SpanU8{init, 2}}));
+      TestFormat(DataSegment{Index{0u}, ConstantExpression{SpanU8{expr, 1}},
+                             SpanU8{init, 2}}));
 }

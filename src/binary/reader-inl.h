@@ -330,7 +330,7 @@ optional<Locals> Read(SpanU8* data, Errors& errors, Tag<Locals>) {
 }
 
 template <typename Errors>
-optional<Section<>> Read(SpanU8* data, Errors& errors, Tag<Section<>>) {
+optional<Section> Read(SpanU8* data, Errors& errors, Tag<Section>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "section"};
   WASP_TRY_READ(id, Read<SectionId>(data, errors));
   WASP_TRY_READ(length, ReadLength(data, errors));
@@ -338,9 +338,9 @@ optional<Section<>> Read(SpanU8* data, Errors& errors, Tag<Section<>>) {
 
   if (id == SectionId::Custom) {
     WASP_TRY_READ(name, ReadString(&bytes, errors, "custom section name"));
-    return Section<>{CustomSection<>{name, bytes}};
+    return Section{CustomSection{name, bytes}};
   } else {
-    return Section<>{KnownSection<>{id, bytes}};
+    return Section{KnownSection{id, bytes}};
   }
 }
 
@@ -392,7 +392,7 @@ optional<GlobalType> Read(SpanU8* data, Errors& errors, Tag<GlobalType>) {
 }
 
 template <typename Errors>
-optional<Import<>> Read(SpanU8* data, Errors& errors, Tag<Import<>>) {
+optional<Import> Read(SpanU8* data, Errors& errors, Tag<Import>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "import"};
   WASP_TRY_READ(module, ReadString(data, errors, "module name"));
   WASP_TRY_READ(name, ReadString(data, errors, "field name"));
@@ -400,19 +400,19 @@ optional<Import<>> Read(SpanU8* data, Errors& errors, Tag<Import<>>) {
   switch (kind) {
     case ExternalKind::Function: {
       WASP_TRY_READ(type_index, ReadIndex(data, errors, "function index"));
-      return Import<>{module, name, type_index};
+      return Import{module, name, type_index};
     }
     case ExternalKind::Table: {
       WASP_TRY_READ(table_type, Read<TableType>(data, errors));
-      return Import<>{module, name, table_type};
+      return Import{module, name, table_type};
     }
     case ExternalKind::Memory: {
       WASP_TRY_READ(memory_type, Read<MemoryType>(data, errors));
-      return Import<>{module, name, memory_type};
+      return Import{module, name, memory_type};
     }
     case ExternalKind::Global: {
       WASP_TRY_READ(global_type, Read<GlobalType>(data, errors));
-      return Import<>{module, name, global_type};
+      return Import{module, name, global_type};
     }
   }
 }
@@ -438,9 +438,9 @@ optional<CallIndirectImmediate> Read(SpanU8* data,
 }
 
 template <typename Errors>
-optional<ConstantExpression<>> Read(SpanU8* data,
-                                    Errors& errors,
-                                    Tag<ConstantExpression<>>) {
+optional<ConstantExpression> Read(SpanU8* data,
+                                  Errors& errors,
+                                  Tag<ConstantExpression>) {
   SpanU8 orig_data = *data;
   ErrorsContextGuard<Errors> guard{errors, *data, "constant expression"};
   WASP_TRY_READ(instr, Read<Instruction>(data, errors));
@@ -465,7 +465,7 @@ optional<ConstantExpression<>> Read(SpanU8* data,
     errors.OnError(*data, "Expected end instruction");
     return nullopt;
   }
-  return ConstantExpression<>{
+  return ConstantExpression{
       orig_data.subspan(0, data->begin() - orig_data.begin())};
 }
 
@@ -722,20 +722,20 @@ optional<Memory> Read(SpanU8* data, Errors& errors, Tag<Memory>) {
 }
 
 template <typename Errors>
-optional<Global<>> Read(SpanU8* data, Errors& errors, Tag<Global<>>) {
+optional<Global> Read(SpanU8* data, Errors& errors, Tag<Global>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "global"};
   WASP_TRY_READ(global_type, Read<GlobalType>(data, errors));
-  WASP_TRY_READ(init_expr, Read<ConstantExpression<>>(data, errors));
-  return Global<>{global_type, std::move(init_expr)};
+  WASP_TRY_READ(init_expr, Read<ConstantExpression>(data, errors));
+  return Global{global_type, std::move(init_expr)};
 }
 
 template <typename Errors>
-optional<Export<>> Read(SpanU8* data, Errors& errors, Tag<Export<>>) {
+optional<Export> Read(SpanU8* data, Errors& errors, Tag<Export>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "export"};
   WASP_TRY_READ(name, ReadString(data, errors, "name"));
   WASP_TRY_READ(kind, Read<ExternalKind>(data, errors));
   WASP_TRY_READ(index, ReadIndex(data, errors, "index"));
-  return Export<>{kind, name, index};
+  return Export{kind, name, index};
 }
 
 template <typename Errors>
@@ -746,35 +746,35 @@ optional<Start> Read(SpanU8* data, Errors& errors, Tag<Start>) {
 }
 
 template <typename Errors>
-optional<ElementSegment<>> Read(SpanU8* data,
-                                Errors& errors,
-                                Tag<ElementSegment<>>) {
+optional<ElementSegment> Read(SpanU8* data,
+                              Errors& errors,
+                              Tag<ElementSegment>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "element segment"};
   WASP_TRY_READ(table_index, ReadIndex(data, errors, "table index"));
-  WASP_TRY_READ_CONTEXT(offset, Read<ConstantExpression<>>(data, errors),
+  WASP_TRY_READ_CONTEXT(offset, Read<ConstantExpression>(data, errors),
                         "offset");
   WASP_TRY_READ(init, ReadVector<Index>(data, errors, "initializers"));
-  return ElementSegment<>{table_index, std::move(offset), std::move(init)};
+  return ElementSegment{table_index, std::move(offset), std::move(init)};
 }
 
 template <typename Errors>
-optional<Code<>> Read(SpanU8* data, Errors& errors, Tag<Code<>>) {
+optional<Code> Read(SpanU8* data, Errors& errors, Tag<Code>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "code"};
   WASP_TRY_READ(body_size, ReadLength(data, errors));
   WASP_TRY_READ(body, ReadBytes(data, body_size, errors));
   WASP_TRY_READ(locals, ReadVector<Locals>(&body, errors, "locals vector"));
-  return Code<>{std::move(locals), Expression<>{std::move(body)}};
+  return Code{std::move(locals), Expression{std::move(body)}};
 }
 
 template <typename Errors>
-optional<DataSegment<>> Read(SpanU8* data, Errors& errors, Tag<DataSegment<>>) {
+optional<DataSegment> Read(SpanU8* data, Errors& errors, Tag<DataSegment>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "data segment"};
   WASP_TRY_READ(memory_index, ReadIndex(data, errors, "memory index"));
-  WASP_TRY_READ_CONTEXT(offset, Read<ConstantExpression<>>(data, errors),
+  WASP_TRY_READ_CONTEXT(offset, Read<ConstantExpression>(data, errors),
                         "offset");
   WASP_TRY_READ(len, ReadLength(data, errors));
   WASP_TRY_READ(init, ReadBytes(data, len, errors));
-  return DataSegment<>{memory_index, std::move(offset), init};
+  return DataSegment{memory_index, std::move(offset), init};
 }
 
 #undef WASP_TRY_READ

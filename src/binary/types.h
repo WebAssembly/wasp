@@ -26,24 +26,6 @@
 namespace wasp {
 namespace binary {
 
-struct BorrowedTraits {
-  using Name = string_view;
-  using Buffer = SpanU8;
-
-  static Name ToName(string_view x) { return x; }
-  static Buffer ToBuffer(SpanU8 x) { return x; }
-};
-
-struct OwnedTraits {
-  using Name = std::string;
-  using Buffer = std::vector<u8>;
-
-  static Name ToName(std::string x) { return x; }
-  static Name ToName(string_view x) { return Name{x}; }
-  static Buffer ToBuffer(std::vector<u8> x) { return x; }
-  static Buffer ToBuffer(SpanU8 x) { return Buffer{x.begin(), x.end()}; }
-};
-
 enum class ValueType : s32 {
 #define WASP_V(val, Name, str) Name,
   WASP_FOREACH_VALUE_TYPE(WASP_V)
@@ -117,35 +99,26 @@ struct Locals {
 bool operator==(const Locals&, const Locals&);
 bool operator!=(const Locals&, const Locals&);
 
-template <typename Traits = BorrowedTraits>
 struct KnownSection {
-  KnownSection(SectionId id, SpanU8 data)
-      : id(id), data(Traits::ToBuffer(data)) {}
+  KnownSection(SectionId id, SpanU8 data) : id(id), data(data) {}
 
   SectionId id;
-  typename Traits::Buffer data;
+  SpanU8 data;
 };
 
-template <typename Traits>
-bool operator==(const KnownSection<Traits>&, const KnownSection<Traits>&);
-template <typename Traits>
-bool operator!=(const KnownSection<Traits>&, const KnownSection<Traits>&);
+bool operator==(const KnownSection&, const KnownSection&);
+bool operator!=(const KnownSection&, const KnownSection&);
 
-template <typename Traits = BorrowedTraits>
 struct CustomSection {
-  CustomSection(string_view name, SpanU8 data)
-      : name(Traits::ToName(name)), data(Traits::ToBuffer(data)) {}
+  CustomSection(string_view name, SpanU8 data) : name(name), data(data) {}
 
-  typename Traits::Name name;
-  typename Traits::Buffer data;
+  string_view name;
+  SpanU8 data;
 };
 
-template <typename Traits>
-bool operator==(const CustomSection<Traits>&, const CustomSection<Traits>&);
-template <typename Traits>
-bool operator!=(const CustomSection<Traits>&, const CustomSection<Traits>&);
+bool operator==(const CustomSection&, const CustomSection&);
+bool operator!=(const CustomSection&, const CustomSection&);
 
-template <typename Traits = BorrowedTraits>
 struct Section {
   template <typename T>
   explicit Section(T&& contents) : contents(std::move(contents)) {}
@@ -153,18 +126,16 @@ struct Section {
   bool is_known() const { return contents.index() == 0; }
   bool is_custom() const { return contents.index() == 1; }
 
-  KnownSection<Traits>& known() { return get<0>(contents); }
-  const KnownSection<Traits>& known() const { return get<0>(contents); }
-  CustomSection<Traits>& custom() { return get<1>(contents); }
-  const CustomSection<Traits>& custom() const { return get<1>(contents); }
+  KnownSection& known() { return get<0>(contents); }
+  const KnownSection& known() const { return get<0>(contents); }
+  CustomSection& custom() { return get<1>(contents); }
+  const CustomSection& custom() const { return get<1>(contents); }
 
-  variant<KnownSection<Traits>, CustomSection<Traits>> contents;
+  variant<KnownSection, CustomSection> contents;
 };
 
-template <typename Traits>
-bool operator==(const Section<Traits>&, const Section<Traits>&);
-template <typename Traits>
-bool operator!=(const Section<Traits>&, const Section<Traits>&);
+bool operator==(const Section&, const Section&);
+bool operator!=(const Section&, const Section&);
 
 using ValueTypes = std::vector<ValueType>;
 
@@ -219,56 +190,40 @@ struct GlobalType {
 bool operator==(const GlobalType&, const GlobalType&);
 bool operator!=(const GlobalType&, const GlobalType&);
 
-template <typename Traits = BorrowedTraits>
 struct Import {
   template <typename T>
   Import(string_view module, string_view name, T&& desc)
-      : module(Traits::ToName(module)),
-        name(Traits::ToName(name)),
+      : module(module),
+        name(name),
         desc(std::move(desc)) {}
 
   ExternalKind kind() const { return static_cast<ExternalKind>(desc.index()); }
 
-  typename Traits::Name module;
-  typename Traits::Name name;
+  string_view module;
+  string_view name;
   variant<Index, TableType, MemoryType, GlobalType> desc;
 };
 
-template <typename Traits>
-bool operator==(const Import<Traits>&, const Import<Traits>&);
-template <typename Traits>
-bool operator!=(const Import<Traits>&, const Import<Traits>&);
+bool operator==(const Import&, const Import&);
+bool operator!=(const Import&, const Import&);
 
-template <typename Traits = BorrowedTraits>
 struct Expression {
-  explicit Expression(SpanU8 data) : data(Traits::ToBuffer(data)) {}
-  template <typename U>
-  Expression(const Expression<U>& other) : data(Traits::ToBuffer(other.data)) {}
+  explicit Expression(SpanU8 data) : data(data) {}
 
-  typename Traits::Buffer data;
+  SpanU8 data;
 };
 
-template <typename Traits>
-bool operator==(const Expression<Traits>&, const Expression<Traits>&);
-template <typename Traits>
-bool operator!=(const Expression<Traits>&, const Expression<Traits>&);
+bool operator==(const Expression&, const Expression&);
+bool operator!=(const Expression&, const Expression&);
 
-template <typename Traits = BorrowedTraits>
 struct ConstantExpression {
-  explicit ConstantExpression(SpanU8 data) : data(Traits::ToBuffer(data)) {}
-  template <typename U>
-  ConstantExpression(const ConstantExpression<U>& other)
-      : data(Traits::ToBuffer(other.data)) {}
+  explicit ConstantExpression(SpanU8 data) : data(data) {}
 
-  typename Traits::Buffer data;
+  SpanU8 data;
 };
 
-template <typename Traits>
-bool operator==(const ConstantExpression<Traits>&,
-                const ConstantExpression<Traits>&);
-template <typename Traits>
-bool operator!=(const ConstantExpression<Traits>&,
-                const ConstantExpression<Traits>&);
+bool operator==(const ConstantExpression&, const ConstantExpression&);
+bool operator!=(const ConstantExpression&, const ConstantExpression&);
 
 struct EmptyImmediate {};
 
@@ -351,34 +306,28 @@ struct Memory {
 bool operator==(const Memory&, const Memory&);
 bool operator!=(const Memory&, const Memory&);
 
-template <typename Traits = BorrowedTraits>
 struct Global {
-  Global(GlobalType global_type, ConstantExpression<> init)
+  Global(GlobalType global_type, ConstantExpression init)
       : global_type(global_type), init(init) {}
 
   GlobalType global_type;
-  ConstantExpression<Traits> init;
+  ConstantExpression init;
 };
 
-template <typename Traits>
-bool operator==(const Global<Traits>&, const Global<Traits>&);
-template <typename Traits>
-bool operator!=(const Global<Traits>&, const Global<Traits>&);
+bool operator==(const Global&, const Global&);
+bool operator!=(const Global&, const Global&);
 
-template <typename Traits = BorrowedTraits>
 struct Export {
   Export(ExternalKind kind, string_view name, Index index) :
     kind(kind), name(name), index(index) {}
 
   ExternalKind kind;
-  typename Traits::Name name;
+  string_view name;
   Index index;
 };
 
-template <typename Traits>
-bool operator==(const Export<Traits>&, const Export<Traits>&);
-template <typename Traits>
-bool operator!=(const Export<Traits>&, const Export<Traits>&);
+bool operator==(const Export&, const Export&);
+bool operator!=(const Export&, const Export&);
 
 struct Start {
   explicit Start(Index func_index) : func_index(func_index) {}
@@ -389,73 +338,59 @@ struct Start {
 bool operator==(const Start&, const Start&);
 bool operator!=(const Start&, const Start&);
 
-template <typename Traits = BorrowedTraits>
 struct ElementSegment {
   ElementSegment(Index table_index,
-                 ConstantExpression<> offset,
+                 ConstantExpression offset,
                  std::vector<Index>&& init)
       : table_index(table_index), offset(offset), init(std::move(init)) {}
 
   Index table_index;
-  ConstantExpression<Traits> offset;
+  ConstantExpression offset;
   std::vector<Index> init;
 };
 
-template <typename Traits>
-bool operator==(const ElementSegment<Traits>&, const ElementSegment<Traits>&);
-template <typename Traits>
-bool operator!=(const ElementSegment<Traits>&, const ElementSegment<Traits>&);
+bool operator==(const ElementSegment&, const ElementSegment&);
+bool operator!=(const ElementSegment&, const ElementSegment&);
 
-template <typename Traits = BorrowedTraits>
 struct Code {
-  Code(std::vector<Locals>&& locals, Expression<> body)
+  Code(std::vector<Locals>&& locals, Expression body)
       : locals(std::move(locals)), body(body) {}
 
   std::vector<Locals> locals;
-  Expression<Traits> body;
+  Expression body;
 };
 
-template <typename Traits>
-bool operator==(const Code<Traits>&, const Code<Traits>&);
-template <typename Traits>
-bool operator!=(const Code<Traits>&, const Code<Traits>&);
+bool operator==(const Code&, const Code&);
+bool operator!=(const Code&, const Code&);
 
-template <typename Traits = BorrowedTraits>
 struct DataSegment {
-  DataSegment(Index memory_index, ConstantExpression<> offset, SpanU8 init)
-      : memory_index(memory_index),
-        offset(offset),
-        init(Traits::ToBuffer(init)) {}
+  DataSegment(Index memory_index, ConstantExpression offset, SpanU8 init)
+      : memory_index(memory_index), offset(offset), init(init) {}
 
   Index memory_index;
-  ConstantExpression<Traits> offset;
-  typename Traits::Buffer init;
+  ConstantExpression offset;
+  SpanU8 init;
 };
 
-template <typename Traits>
-bool operator==(const DataSegment<Traits>&, const DataSegment<Traits>&);
-template <typename Traits>
-bool operator!=(const DataSegment<Traits>&, const DataSegment<Traits>&);
+bool operator==(const DataSegment&, const DataSegment&);
+bool operator!=(const DataSegment&, const DataSegment&);
 
-template <typename Traits = BorrowedTraits>
 struct Module {
   std::vector<FunctionType> types;
-  std::vector<Import<Traits>> imports;
+  std::vector<Import> imports;
   std::vector<Function> functions;
   std::vector<Table> tables;
   std::vector<Memory> memories;
-  std::vector<Global<Traits>> globals;
-  std::vector<Export<Traits>> exports;
+  std::vector<Global> globals;
+  std::vector<Export> exports;
   optional<Start> start;
-  std::vector<ElementSegment<Traits>> element_segments;
-  std::vector<Code<Traits>> codes;
-  std::vector<DataSegment<Traits>> data_segments;
-  std::vector<CustomSection<Traits>> custom_sections;
+  std::vector<ElementSegment> element_segments;
+  std::vector<Code> codes;
+  std::vector<DataSegment> data_segments;
+  std::vector<CustomSection> custom_sections;
 };
 
 }  // namespace binary
 }  // namespace wasp
-
-#include "src/binary/types-inl.h"
 
 #endif  // WASP_BINARY_TYPES_H_

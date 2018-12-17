@@ -40,20 +40,18 @@ TEST(LazyModuleTest, Basic) {
 
   auto it = module.sections.begin(), end = module.sections.end();
 
-  EXPECT_EQ((Section<>{KnownSection<>{SectionId::Type, MakeSpanU8("\0\0\0")}}),
+  EXPECT_EQ((Section{KnownSection{SectionId::Type, MakeSpanU8("\0\0\0")}}),
             *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ(
-      (Section<>{KnownSection<>{SectionId::Type, MakeSpanU8("\0\0\0\0\0")}}),
-      *it++);
-  ASSERT_NE(end, it);
-
-  EXPECT_EQ((Section<>{KnownSection<>{SectionId::Code, MakeSpanU8("\0")}}),
+  EXPECT_EQ((Section{KnownSection{SectionId::Type, MakeSpanU8("\0\0\0\0\0")}}),
             *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ((Section<>{CustomSection<>{"yup", MakeSpanU8("\0\0")}}), *it++);
+  EXPECT_EQ((Section{KnownSection{SectionId::Code, MakeSpanU8("\0")}}), *it++);
+  ASSERT_NE(end, it);
+
+  EXPECT_EQ((Section{CustomSection{"yup", MakeSpanU8("\0\0")}}), *it++);
   ASSERT_EQ(end, it);
 
   ExpectNoErrors(errors);
