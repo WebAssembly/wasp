@@ -103,3 +103,33 @@ target_link_libraries(wasp_unittests
   gtest_main
   gtest
 )
+
+add_executable(wasm_view
+  src/view/main.cc
+
+  src/view/imgui_impl_sdl.cpp
+  src/view/imgui_impl_opengl3.cpp
+
+  third_party/imgui/imgui.cpp
+  third_party/imgui/imgui_demo.cpp
+  third_party/imgui/imgui_draw.cpp
+  third_party/imgui/imgui_widgets.cpp
+)
+
+target_compile_definitions(wasm_view
+  PUBLIC
+  IMGUI_IMPL_OPENGL_LOADER_GLEW
+)
+
+target_include_directories(wasm_view
+  PUBLIC
+  third_party/imgui/
+  third_party/imgui/examples/
+)
+
+target_link_libraries(wasm_view
+  wasp
+  GL
+  GLEW
+  SDL2
+)
