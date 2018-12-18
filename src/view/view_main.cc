@@ -34,11 +34,15 @@
 #include "wasp/binary/lazy_element_section.h"
 #include "wasp/binary/lazy_export_section.h"
 #include "wasp/binary/lazy_expression.h"
+#include "wasp/binary/lazy_function_names_subsection.h"
 #include "wasp/binary/lazy_function_section.h"
 #include "wasp/binary/lazy_global_section.h"
 #include "wasp/binary/lazy_import_section.h"
+#include "wasp/binary/lazy_local_names_subsection.h"
 #include "wasp/binary/lazy_memory_section.h"
 #include "wasp/binary/lazy_module.h"
+#include "wasp/binary/lazy_module_name_subsection.h"
+#include "wasp/binary/lazy_name_section.h"
 #include "wasp/binary/lazy_table_section.h"
 #include "wasp/binary/lazy_type_section.h"
 #include "wasp/binary/memory.h"
@@ -60,20 +64,25 @@ static std::map<Index, Index> s_instr_count;
 static Features s_features;
 static std::vector<Section> s_sections;
 static std::vector<Code> s_codes;
+static size_t s_section_selected;
 static Index s_code_selected;
 
 template <typename Sequence>
 typename Sequence::const_iterator FindSection(const Sequence&, SectionId);
 
-void SectionWindow(KnownSection known);
+void ModuleWindow();
+
+void SectionWindow(const std::string& title, size_t section_index);
 
 template <typename T>
-void DumpSection(T section, string_view name);
+void SectionContents(T section, string_view name);
 template <>
-void DumpSection<LazyCodeSection<ErrorsNop>>(LazyCodeSection<ErrorsNop>,
-                                             string_view name);
+void SectionContents<LazyCodeSection<ErrorsNop>>(LazyCodeSection<ErrorsNop>,
+                                                 string_view name);
+template <>
+void SectionContents<optional<string_view>>(optional<string_view> section,
+                                            string_view name);
 
-void CodeWindow(Index declared_index);
 void CodeWindow(const std::string& title, Index declared_index);
 
 void ViewInit(int argc, char** argv) {
@@ -118,75 +127,9 @@ void ViewInit(int argc, char** argv) {
 }
 
 void ViewMain() {
-  for (auto section : s_sections) {
-    if (section.is_known()) {
-      SectionWindow(section.known());
-    }
-  }
-
+  ModuleWindow();
+  SectionWindow("Section preview", s_section_selected);
   CodeWindow("Code preview", s_code_selected);
-}
-
-void SectionWindow(KnownSection known) {
-  ErrorsNop errors;
-  if (ImGui::Begin(format("{}", known.id).c_str())) {
-    switch (known.id) {
-      case SectionId::Custom:
-        WASP_UNREACHABLE();
-        break;
-
-      case SectionId::Type:
-        DumpSection(ReadTypeSection(known, s_features, errors), "Type");
-        break;
-
-      case SectionId::Import:
-        DumpSection(ReadImportSection(known, s_features, errors), "Import");
-        break;
-
-      case SectionId::Function:
-        DumpSection(ReadFunctionSection(known, s_features, errors), "Func");
-        break;
-
-      case SectionId::Table:
-        DumpSection(ReadTableSection(known, s_features, errors), "Table");
-        break;
-
-      case SectionId::Memory:
-        DumpSection(ReadMemorySection(known, s_features, errors), "Memory");
-        break;
-
-      case SectionId::Global:
-        DumpSection(ReadGlobalSection(known, s_features, errors), "Global");
-        break;
-
-      case SectionId::Export:
-        DumpSection(ReadExportSection(known, s_features, errors), "Export");
-        break;
-
-      case SectionId::Start: {
-        auto section = ReadStartSection(known, s_features, errors);
-        size_t count = section ? 1 : 0;
-        print("  Start[{}]\n", count);
-        if (count > 0) {
-          print("    [0]: {}\n", *section);
-        }
-        break;
-      }
-
-      case SectionId::Element:
-        DumpSection(ReadElementSection(known, s_features, errors), "Element");
-        break;
-
-      case SectionId::Code:
-        DumpSection(ReadCodeSection(known, s_features, errors), "Code");
-        break;
-
-      case SectionId::Data:
-        DumpSection(ReadDataSection(known, s_features, errors), "Data");
-        break;
-    }
-  }
-  ImGui::End();
 }
 
 Index ImportCount(ExternalKind kind) {
@@ -225,8 +168,134 @@ typename Sequence::const_iterator FindSection(const Sequence& seq,
                       });
 }
 
+void ModuleWindow() {
+  if (ImGui::Begin("Module")) {
+    size_t count = 0;
+    for (auto section : s_sections) {
+      std::string text;
+      if (section.is_known()) {
+        auto known = section.known();
+        text = format("[{}] {}: {} bytes", count, known.id, known.data.size());
+      } else if (section.is_custom()) {
+        auto custom = section.custom();
+        text = format("[{}] \"{}\": {} bytes", count, custom.name,
+                      custom.data.size());
+      }
+
+      if (ImGui::Selectable(text.c_str(), count == s_section_selected)) {
+        s_section_selected = count;
+      }
+
+      ++count;
+    }
+  }
+  ImGui::End();
+}
+
+void SectionWindow(const std::string& title, size_t section_index) {
+  auto section = s_sections[section_index];
+  auto window_flags = ImGuiWindowFlags_HorizontalScrollbar;
+
+  ErrorsNop errors;
+  if (ImGui::Begin(title.c_str(), nullptr, window_flags)) {
+    if (section.is_known()) {
+      auto known = section.known();
+      switch (known.id) {
+        case SectionId::Custom:
+          WASP_UNREACHABLE();
+          break;
+
+        case SectionId::Type:
+          SectionContents(ReadTypeSection(known, s_features, errors), "Type");
+          break;
+
+        case SectionId::Import:
+          SectionContents(ReadImportSection(known, s_features, errors),
+                          "Import");
+          break;
+
+        case SectionId::Function:
+          SectionContents(ReadFunctionSection(known, s_features, errors),
+                          "Func");
+          break;
+
+        case SectionId::Table:
+          SectionContents(ReadTableSection(known, s_features, errors), "Table");
+          break;
+
+        case SectionId::Memory:
+          SectionContents(ReadMemorySection(known, s_features, errors),
+                          "Memory");
+          break;
+
+        case SectionId::Global:
+          SectionContents(ReadGlobalSection(known, s_features, errors),
+                          "Global");
+          break;
+
+        case SectionId::Export:
+          SectionContents(ReadExportSection(known, s_features, errors),
+                          "Export");
+          break;
+
+        case SectionId::Start: {
+          auto section = ReadStartSection(known, s_features, errors);
+          size_t count = section ? 1 : 0;
+          print("  Start[{}]\n", count);
+          if (count > 0) {
+            print("    [0]: {}\n", *section);
+          }
+          break;
+        }
+
+        case SectionId::Element:
+          SectionContents(ReadElementSection(known, s_features, errors),
+                          "Element");
+          break;
+
+        case SectionId::Code:
+          SectionContents(ReadCodeSection(known, s_features, errors), "Code");
+          break;
+
+        case SectionId::Data:
+          SectionContents(ReadDataSection(known, s_features, errors), "Data");
+          break;
+      }
+    } else if (section.is_custom()) {
+      auto custom = section.custom();
+      if (custom.name == "name") {
+        auto name_section = ReadNameSection(custom.data, s_features, errors);
+        for (auto subsection : name_section) {
+          switch (subsection.id) {
+            case NameSubsectionId::ModuleName:
+              SectionContents(
+                  ReadModuleNameSubsection(subsection.data, s_features, errors),
+                  "ModuleName");
+              break;
+
+            case NameSubsectionId::FunctionNames:
+              SectionContents(ReadFunctionNamesSubsection(subsection.data,
+                                                          s_features, errors),
+                              "FunctionNames");
+              break;
+
+            case NameSubsectionId::LocalNames:
+              SectionContents(
+                  ReadLocalNamesSubsection(subsection.data, s_features, errors),
+                  "LocalNames");
+              break;
+          }
+        }
+      } else {
+        // TODO
+      }
+    }
+  }
+  ImGui::End();
+}
+
 template <typename T>
-void DumpSection(T section, string_view name) {
+void SectionContents(T section, string_view name) {
   if (section.count) {
     ImGui::Text("%s", format("{}[{}]\n", name, *section.count).c_str());
     Index initial_count = InitialCount<typename T::sequence_type::value_type>();
@@ -244,8 +313,9 @@ void DumpSection(T section, string_view name) {
 }
 
 template <>
-void DumpSection<LazyCodeSection<ErrorsNop>>(LazyCodeSection<ErrorsNop> section,
-                                             string_view name) {
+void SectionContents<LazyCodeSection<ErrorsNop>>(
+    LazyCodeSection<ErrorsNop> section,
+    string_view name) {
   if (section.count) {
     ImGui::Text("%s", format("{}[{}]\n", name, *section.count).c_str());
     Index initial_count = ImportCount(ExternalKind::Function);
@@ -273,6 +343,15 @@ void DumpSection<LazyCodeSection<ErrorsNop>>(LazyCodeSection<ErrorsNop> section,
   }
 }
 
+template <>
+void SectionContents<optional<string_view>>(optional<string_view> section,
+                                            string_view name) {
+  ImGui::Text("%s", format("{}\n", name).c_str());
+  if (section) {
+    ImGui::Text("%s", format("  [0]: {}\n", 0, *section).c_str());
+  }
+}
+
 template <typename Errors>
 Index GetInstrCount(Index code_index, const LazyExpression<Errors>& expr) {
   auto iter = s_instr_count.find(code_index);
@@ -291,8 +370,9 @@ void CodeWindow(Index declared_index) {
 }
 
 void CodeWindow(const std::string& title, Index declared_index) {
+  auto window_flags = ImGuiWindowFlags_HorizontalScrollbar;
   bool is_open = true;
-  if (ImGui::Begin(title.c_str(), &is_open)) {
+  if (ImGui::Begin(title.c_str(), &is_open, window_flags)) {
     ErrorsNop errors;
     auto expr =
         ReadExpression(s_codes[declared_index].body.data, s_features, errors);
