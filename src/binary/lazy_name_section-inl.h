@@ -35,7 +35,7 @@ ModuleNameSubsection ReadModuleNameSubsection(SpanU8 data, Errors& errors) {
 }
 
 template <typename Errors>
-ModuleNameSubsection ReadModuleNameSubsection(CustomSection sec,
+ModuleNameSubsection ReadModuleNameSubsection(NameSubsection sec,
                                               Errors& errors) {
   return ReadModuleNameSubsection(sec.data, errors);
 }

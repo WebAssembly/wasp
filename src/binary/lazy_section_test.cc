@@ -166,7 +166,7 @@ TEST(LazySectionTest, Start) {
   TestErrors errors;
   auto sec = ReadStartSection(MakeSpanU8("\x03"), errors);
 
-  EXPECT_EQ(Start{3}, sec.start());
+  EXPECT_EQ(Start{3}, sec);
   ExpectNoErrors(errors);
 }
 

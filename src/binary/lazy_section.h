@@ -41,86 +41,78 @@ template <typename Errors>
 using LazyTypeSection = LazySection<TypeEntry, Errors>;
 
 template <typename Data, typename Errors>
-LazyTypeSection<Errors> ReadTypeSection(Data&& data, Errors& errors);
+LazyTypeSection<Errors> ReadTypeSection(Data&&, Errors&);
 
 /// ---
 template <typename Errors>
 using LazyImportSection = LazySection<Import, Errors>;
 
 template <typename Data, typename Errors>
-LazyImportSection<Errors> ReadImportSection(Data&& data, Errors& errors);
+LazyImportSection<Errors> ReadImportSection(Data&&, Errors&);
 
 /// ---
 template <typename Errors>
 using LazyFunctionSection = LazySection<Function, Errors>;
 
 template <typename Data, typename Errors>
-LazyFunctionSection<Errors> ReadFunctionSection(Data&& data, Errors& errors);
+LazyFunctionSection<Errors> ReadFunctionSection(Data&&, Errors&);
 
 /// ---
 template <typename Errors>
 using LazyTableSection = LazySection<Table, Errors>;
 
 template <typename Data, typename Errors>
-LazyTableSection<Errors> ReadTableSection(Data&& data, Errors& errors);
+LazyTableSection<Errors> ReadTableSection(Data&&, Errors&);
 
 /// ---
 template <typename Errors>
 using LazyMemorySection = LazySection<Memory, Errors>;
 
 template <typename Data, typename Errors>
-LazyMemorySection<Errors> ReadMemorySection(Data&& data, Errors& errors);
+LazyMemorySection<Errors> ReadMemorySection(Data&&, Errors&);
 
 /// ---
 template <typename Errors>
 using LazyGlobalSection = LazySection<Global, Errors>;
 
 template <typename Data, typename Errors>
-LazyGlobalSection<Errors> ReadGlobalSection(Data&& data, Errors& errors);
+LazyGlobalSection<Errors> ReadGlobalSection(Data&&, Errors&);
 
 /// ---
 template <typename Errors>
 using LazyExportSection = LazySection<Export, Errors>;
 
 template <typename Data, typename Errors>
-LazyExportSection<Errors> ReadExportSection(Data&& data, Errors& errors);
+LazyExportSection<Errors> ReadExportSection(Data&&, Errors&);
 
 /// ---
+using StartSection = optional<Start>;
+
 template <typename Errors>
-struct StartSection {
-  explicit StartSection(SpanU8, Errors&);
-  explicit StartSection(KnownSection, Errors&);
-
-  optional<Start> start();
-
- private:
-  Errors& errors_;
-  optional<Start> start_;
-};
-
-template <typename Data, typename Errors>
-StartSection<Errors> ReadStartSection(Data&& data, Errors& errors);
+StartSection ReadStartSection(SpanU8, Errors&);
+template <typename Errors>
+StartSection ReadStartSection(KnownSection, Errors&);
 
 /// ---
 template <typename Errors>
 using LazyElementSection = LazySection<ElementSegment, Errors>;
 
 template <typename Data, typename Errors>
-LazyElementSection<Errors> ReadElementSection(Data&& data, Errors& errors);
+LazyElementSection<Errors> ReadElementSection(Data&&, Errors&);
 
 /// ---
 template <typename Errors>
 using LazyCodeSection = LazySection<Code, Errors>;
 
 template <typename Data, typename Errors>
-LazyCodeSection<Errors> ReadCodeSection(Data&& data, Errors& errors);
+LazyCodeSection<Errors> ReadCodeSection(Data&&, Errors&);
 
 /// ---
 template <typename Errors>
 using LazyDataSection = LazySection<DataSegment, Errors>;
 
 template <typename Data, typename Errors>
-LazyDataSection<Errors> ReadDataSection(Data&& data, Errors& errors);
+LazyDataSection<Errors> ReadDataSection(Data&&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

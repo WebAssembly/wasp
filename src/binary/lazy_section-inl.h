@@ -72,21 +72,15 @@ LazyElementSection<Errors> ReadElementSection(Data&& data, Errors& errors) {
 }
 
 template <typename Errors>
-StartSection<Errors>::StartSection(SpanU8 data, Errors& errors)
-    : errors_(errors), start_(Read<Start>(&data, errors)) {}
-
-template <typename Errors>
-StartSection<Errors>::StartSection(KnownSection section, Errors& errors)
-    : errors_(errors), start_(Read<Start>(&section.data, errors)) {}
-
-template <typename Errors>
-optional<Start> StartSection<Errors>::start() {
-  return start_;
+StartSection ReadStartSection(SpanU8 data, Errors& errors) {
+  SpanU8 copy = data;
+  return Read<Start>(&copy, errors);
 }
 
-template <typename Data, typename Errors>
-StartSection<Errors> ReadStartSection(Data&& data, Errors& errors) {
-  return StartSection<Errors>{std::forward<Data>(data), errors};
+template <typename Errors>
+StartSection ReadStartSection(KnownSection known, Errors& errors) {
+  SpanU8 copy = known.data;
+  return Read<Start>(&copy, errors);
 }
 
 template <typename Data, typename Errors>

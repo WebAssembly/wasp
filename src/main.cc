@@ -30,6 +30,14 @@
 using namespace ::wasp;
 using namespace ::wasp::binary;
 
+// Dummy function defined so we can use the macro below. The return value must
+// have the same structure as a lazy section.
+template <typename Errors>
+LazyTypeSection<Errors> ReadCustomSection(KnownSection section,
+                                          Errors& errors) {
+  WASP_UNREACHABLE();
+}
+
 template <typename T>
 void PrintSection(T section, string_view name) {
   if (section.count) {
@@ -38,6 +46,25 @@ void PrintSection(T section, string_view name) {
     for (auto item : section.sequence) {
       print("    [{}]: {}\n", count++, item);
     }
+  }
+}
+
+template <>
+void PrintSection<StartSection>(StartSection section, string_view name) {
+  size_t count = section ? 1 : 0;
+  print("  {}[{}]\n", name, count);
+  if (count > 0) {
+    print("    [0]: {}\n", *section);
+  }
+}
+
+template <>
+void PrintSection<ModuleNameSubsection>(ModuleNameSubsection section,
+                                        string_view name) {
+  size_t count = section ? 1 : 0;
+  print("  {}[{}]\n", name, count);
+  if (count > 0) {
+    print("    [0]: \"{}\"\n", *section);
   }
 }
 
@@ -65,58 +92,12 @@ int main(int argc, char** argv) {
       auto known = section.known();
       print("section {}: {} bytes\n", known.id, known.data.size());
       switch (known.id) {
-        case SectionId::Custom:
-          WASP_UNREACHABLE();
-
-        case SectionId::Type:
-          PrintSection(ReadTypeSection(known, errors), "Type");
-          break;
-
-        case SectionId::Import:
-          PrintSection(ReadImportSection(known, errors), "Import");
-          break;
-
-        case SectionId::Function:
-          PrintSection(ReadFunctionSection(known, errors), "Func");
-          break;
-
-        case SectionId::Table:
-          PrintSection(ReadTableSection(known, errors), "Table");
-          break;
-
-        case SectionId::Memory:
-          PrintSection(ReadMemorySection(known, errors), "Memory");
-          break;
-
-        case SectionId::Global:
-          PrintSection(ReadGlobalSection(known, errors), "Global");
-          break;
-
-        case SectionId::Export:
-          PrintSection(ReadExportSection(known, errors), "Export");
-          break;
-
-        case SectionId::Start: {
-          auto section = ReadStartSection(known, errors);
-          size_t count = section.start() ? 1 : 0;
-          print("  Start[{}]\n", count);
-          if (count > 0) {
-            print("    [0]: {}\n", *section.start());
-          }
-          break;
-        }
-
-        case SectionId::Element:
-          PrintSection(ReadElementSection(known, errors), "Element");
-          break;
-
-        case SectionId::Code:
-          PrintSection(ReadCodeSection(known, errors), "Code");
-          break;
-
-        case SectionId::Data:
-          PrintSection(ReadDataSection(known, errors), "Data");
-          break;
+#define WASP_V(id, Name, str)                                \
+  case SectionId::Name:                                      \
+    PrintSection(Read##Name##Section(known, errors), #Name); \
+    break;
+        WASP_FOREACH_SECTION(WASP_V)
+#undef WASP_V
       }
     } else if (section.is_custom()) {
       auto custom = section.custom();
@@ -125,24 +106,12 @@ int main(int argc, char** argv) {
         auto section = ReadNameSection(custom, errors);
         for (auto subsection : section) {
           switch (subsection.id) {
-            case NameSubsectionId::ModuleName: {
-              print("  ModuleName\n");
-              auto opt_name = ReadModuleNameSubsection(subsection.data, errors);
-              if (opt_name) {
-                print("    \"{}\"\n", *opt_name);
-              }
-              break;
-            }
-
-            case NameSubsectionId::FunctionNames:
-              PrintSection(ReadFunctionNamesSubsection(subsection, errors),
-                           "FunctionNames");
-              break;
-
-            case NameSubsectionId::LocalNames:
-              PrintSection(ReadLocalNamesSubsection(subsection, errors),
-                           "LocalNames");
-              break;
+#define WASP_V(id, Name, str)                                        \
+  case NameSubsectionId::Name:                                       \
+    PrintSection(Read##Name##Subsection(subsection, errors), #Name); \
+    break;
+            WASP_FOREACH_NAME_SUBSECTION_ID(WASP_V)
+#undef WASP_V
           }
         }
       } else {
