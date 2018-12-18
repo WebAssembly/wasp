@@ -20,7 +20,8 @@ namespace wasp {
 namespace binary {
 
 template <typename Sequence>
-LazySequenceIterator<Sequence>::LazySequenceIterator(Sequence* seq, SpanU8 data)
+LazySequenceIterator<Sequence>::LazySequenceIterator(const Sequence* seq,
+                                                     SpanU8 data)
     : sequence_(seq), data_(data) {
   if (empty()) {
     clear();

@@ -16,6 +16,9 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <iterator>
+#include <map>
+#include <set>
 
 #include "src/view/view_main.h"
 
@@ -52,104 +55,26 @@ static std::vector<u8> s_buffer;
 
 // TODO This should be a named value, external kind count.
 static Index s_import_count[4];
-static std::vector<Index> s_instr_count;
+static std::map<Index, Index> s_instr_count;
 
 static Features s_features;
+static std::vector<Section> s_sections;
+static std::vector<Code> s_codes;
+static Index s_code_selected;
 
-Index ImportCount(ExternalKind kind) {
-  return s_import_count[static_cast<size_t>(kind)];
-}
+template <typename Sequence>
+typename Sequence::const_iterator FindSection(const Sequence&, SectionId);
 
-template <typename T>
-Index InitialCount() { return 0; }
-
-template <>
-Index InitialCount<Function>() {
-  return ImportCount(ExternalKind::Function);
-}
-
-template <>
-Index InitialCount<Table>() {
-  return ImportCount(ExternalKind::Table);
-}
-
-template <>
-Index InitialCount<Memory>() {
-  return ImportCount(ExternalKind::Memory);
-}
-
-template <>
-Index InitialCount<Global>() {
-  return ImportCount(ExternalKind::Global);
-}
+void SectionWindow(KnownSection known);
 
 template <typename T>
-void DumpSection(T section, string_view name) {
-  if (section.count) {
-    ImGui::Text("%s", format("  {}[{}]\n", name, *section.count).c_str());
-    Index initial_count = InitialCount<typename T::sequence_type::value_type>();
-    ImGuiListClipper clipper(*section.count);
-    while (clipper.Step()) {
-      auto it = section.sequence.begin(), end = section.sequence.end();
-      std::advance(it, clipper.DisplayStart);
-      for (int i = clipper.DisplayStart; i < clipper.DisplayEnd && it != end;
-           ++it, ++i) {
-        ImGui::Text("%s",
-                    format("    [{}]: {}\n", initial_count + i, *it).c_str());
-      }
-    }
-  }
-}
-
-void DumpCode(Index i, Code code) {
-  ErrorsNop errors;
-  auto expr = ReadExpression(code.body.data, s_features, errors);
-  int indent = 0;
-  ImGuiListClipper clipper(s_instr_count[i]);
-  auto it = expr.begin(), end = expr.end();
-  while (clipper.Step()) {
-    for (int i = 0; i < clipper.DisplayEnd && it != end; ++it, ++i) {
-      auto instr = *it;
-      if (instr.opcode == Opcode::End || instr.opcode == Opcode::Else) {
-        indent -= 2;
-      }
-
-      if (i >= clipper.DisplayStart) {
-        ImGui::Text("%*.s%s", indent, "", format("    {}\n", instr).c_str());
-      }
-
-      if (instr.opcode == Opcode::Block || instr.opcode == Opcode::Loop ||
-          instr.opcode == Opcode::If || instr.opcode == Opcode::Else) {
-        indent += 2;
-      }
-    }
-  }
-}
-
+void DumpSection(T section, string_view name);
 template <>
-void DumpSection<LazyCodeSection<ErrorsNop>>(LazyCodeSection<ErrorsNop> section,
-                                             string_view name) {
-  if (section.count) {
-    ImGui::Text("%s", format("  {}[{}]\n", name, *section.count).c_str());
-    Index initial_count = ImportCount(ExternalKind::Function);
-    ImGuiListClipper clipper(*section.count);
-    while (clipper.Step()) {
-      auto it = section.sequence.begin(), end = section.sequence.end();
-      std::advance(it, clipper.DisplayStart);
-      for (int i = clipper.DisplayStart; i < clipper.DisplayEnd && it != end;
-           ++it, ++i) {
-        auto code = *it;
-        if (ImGui::TreeNode(reinterpret_cast<void*>(i), "%s",
-                            format("    [{}]: {} bytes\n", initial_count + i,
-                                   code.body.data.size())
-                                .c_str())) {
-          DumpCode(i, code);
-          ImGui::TreePop();
-        }
-      }
-    }
-  }
-}
+void DumpSection<LazyCodeSection<ErrorsNop>>(LazyCodeSection<ErrorsNop>,
+                                             string_view name);
+
+void CodeWindow(Index declared_index);
+void CodeWindow(const std::string& title, Index declared_index);
 
 void ViewInit(int argc, char** argv) {
   argc--;
@@ -171,27 +96,39 @@ void ViewInit(int argc, char** argv) {
 
   ErrorsNop errors;
   auto module = ReadModule(data, s_features, errors);
-  for (auto section : module.sections) {
-    if (section.is_known()) {
-      auto known = section.known();
-      if (known.id == SectionId::Import) {
-        auto sec = ReadImportSection(known, s_features, errors);
-        for (auto import : sec.sequence) {
-          s_import_count[static_cast<size_t>(import.kind())]++;
-        }
-      } else if (known.id == SectionId::Code) {
-        auto sec = ReadCodeSection(known, s_features, errors);
-        for (auto code : sec.sequence) {
-          auto expr = ReadExpression(code.body.data, s_features, errors);
-          auto size = std::distance(expr.begin(), expr.end());
-          s_instr_count.push_back(size);
-        }
-      }
+  std::copy(module.sections.begin(), module.sections.end(),
+            std::back_inserter(s_sections));
+
+  auto code_section = FindSection(s_sections, SectionId::Code);
+  if (code_section != s_sections.end()) {
+    const auto& sec =
+        ReadCodeSection(code_section->known().data, s_features, errors);
+    std::copy(sec.sequence.begin(), sec.sequence.end(),
+              std::back_inserter(s_codes));
+  }
+
+  auto import_section = FindSection(s_sections, SectionId::Import);
+  if (import_section != s_sections.end()) {
+    const auto& sec =
+        ReadImportSection(import_section->known().data, s_features, errors);
+    for (auto import : sec.sequence) {
+      s_import_count[static_cast<size_t>(import.kind())]++;
     }
   }
 }
 
-void ViewSection(KnownSection known, ErrorsNop& errors) {
+void ViewMain() {
+  for (auto section : s_sections) {
+    if (section.is_known()) {
+      SectionWindow(section.known());
+    }
+  }
+
+  CodeWindow("Code preview", s_code_selected);
+}
+
+void SectionWindow(KnownSection known) {
+  ErrorsNop errors;
   if (ImGui::Begin(format("{}", known.id).c_str())) {
     switch (known.id) {
       case SectionId::Custom:
@@ -252,18 +189,137 @@ void ViewSection(KnownSection known, ErrorsNop& errors) {
   ImGui::End();
 }
 
-void ViewMain() {
-  SpanU8 data{s_buffer};
-  ErrorsNop errors;
-  s_features.EnableAll();
-  auto module = ReadModule(data, s_features, errors);
+Index ImportCount(ExternalKind kind) {
+  return s_import_count[static_cast<size_t>(kind)];
+}
 
-  for (auto section : module.sections) {
-    if (section.is_known()) {
-      auto known = section.known();
-      ViewSection(known, errors);
+template <typename T>
+Index InitialCount() { return 0; }
+
+template <>
+Index InitialCount<Function>() {
+  return ImportCount(ExternalKind::Function);
+}
+
+template <>
+Index InitialCount<Table>() {
+  return ImportCount(ExternalKind::Table);
+}
+
+template <>
+Index InitialCount<Memory>() {
+  return ImportCount(ExternalKind::Memory);
+}
+
+template <>
+Index InitialCount<Global>() {
+  return ImportCount(ExternalKind::Global);
+}
+
+template <typename Sequence>
+typename Sequence::const_iterator FindSection(const Sequence& seq,
+                                              SectionId id) {
+  return std::find_if(s_sections.begin(), s_sections.end(),
+                      [&](const Section& sec) {
+                        return sec.is_known() && sec.known().id == id;
+                      });
+}
+
+template <typename T>
+void DumpSection(T section, string_view name) {
+  if (section.count) {
+    ImGui::Text("%s", format("{}[{}]\n", name, *section.count).c_str());
+    Index initial_count = InitialCount<typename T::sequence_type::value_type>();
+    ImGuiListClipper clipper(*section.count);
+    while (clipper.Step()) {
+      auto it = section.sequence.begin(), end = section.sequence.end();
+      std::advance(it, clipper.DisplayStart);
+      for (int i = clipper.DisplayStart; i < clipper.DisplayEnd && it != end;
+           ++it, ++i) {
+        ImGui::Text("%s",
+                    format("  [{}]: {}\n", initial_count + i, *it).c_str());
+      }
     }
   }
+}
+
+template <>
+void DumpSection<LazyCodeSection<ErrorsNop>>(LazyCodeSection<ErrorsNop> section,
+                                             string_view name) {
+  if (section.count) {
+    ImGui::Text("%s", format("{}[{}]\n", name, *section.count).c_str());
+    Index initial_count = ImportCount(ExternalKind::Function);
+    ImGuiListClipper clipper(*section.count);
+    while (clipper.Step()) {
+      auto it = section.sequence.begin(), end = section.sequence.end();
+      std::advance(it, clipper.DisplayStart);
+      for (int i = clipper.DisplayStart; i < clipper.DisplayEnd && it != end;
+           ++it, ++i) {
+        Index declared_index = i;
+        Index code_index = initial_count + i;
+        auto code = *it;
+
+        ImGui::PushID(i);
+        if (ImGui::Selectable(
+                format("  [{}]: {} bytes", code_index, code.body.data.size())
+                    .c_str(),
+                declared_index == s_code_selected)) {
+          s_code_selected = declared_index;
+        }
+        ImGui::PopID();
+
+      }
+    }
+  }
+}
+
+template <typename Errors>
+Index GetInstrCount(Index code_index, const LazyExpression<Errors>& expr) {
+  auto iter = s_instr_count.find(code_index);
+  if (iter == s_instr_count.end()) {
+    auto count = std::distance(expr.begin(), expr.end());
+    s_instr_count[code_index] = count;
+    return count;
+  } else {
+    return iter->second;
+  }
+}
+
+void CodeWindow(Index declared_index) {
+  Index code_index = InitialCount<Function>() + declared_index;
+  CodeWindow(format("Code {}", code_index), declared_index);
+}
+
+void CodeWindow(const std::string& title, Index declared_index) {
+  bool is_open = true;
+  if (ImGui::Begin(title.c_str(), &is_open)) {
+    ErrorsNop errors;
+    auto expr =
+        ReadExpression(s_codes[declared_index].body.data, s_features, errors);
+    Index instr_count = GetInstrCount(declared_index, expr);
+
+    ImGuiListClipper clipper(instr_count);
+    while (clipper.Step()) {
+      auto it = expr.begin(), end = expr.end();
+      int indent = 0;
+      for (int i = 0; i < clipper.DisplayEnd && it != end; ++it, ++i) {
+        auto instr = *it;
+        if (instr.opcode == Opcode::End || instr.opcode == Opcode::Else) {
+          indent = std::max(0, indent - 2);
+        }
+
+        if (i >= clipper.DisplayStart) {
+          ImGui::Text("%*.s%s", indent, "", format("{}\n", instr).c_str());
+        }
+
+        if (instr.opcode == Opcode::Block || instr.opcode == Opcode::Loop ||
+            instr.opcode == Opcode::If || instr.opcode == Opcode::Else) {
+          indent += 2;
+        }
+      }
+    }
+  }
+  ImGui::End();
 }
 
 }  // namespace view

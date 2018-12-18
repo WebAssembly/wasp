@@ -72,7 +72,7 @@ class LazySequenceIterator {
   using reference = typename Sequence::const_reference;
   using iterator_category = std::forward_iterator_tag;
 
-  explicit LazySequenceIterator(Sequence* seq, SpanU8 data);
+  explicit LazySequenceIterator(const Sequence* seq, SpanU8 data);
 
   SpanU8 data() const { return data_; }
 
@@ -96,7 +96,7 @@ class LazySequenceIterator {
   bool empty() const { return data_.empty(); }
   void clear() { data_ = {}; }
 
-  Sequence* sequence_;
+  const Sequence* sequence_;
   SpanU8 data_;
   optional<value_type> value_;
 };
