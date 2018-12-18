@@ -80,8 +80,10 @@ template <>
 void SectionContents<LazyCodeSection<ErrorsNop>>(LazyCodeSection<ErrorsNop>,
                                                  string_view name);
 template <>
-void SectionContents<optional<string_view>>(optional<string_view> section,
-                                            string_view name);
+void SectionContents<StartSection>(StartSection section, string_view name);
+template <>
+void SectionContents<ModuleNameSubsection>(ModuleNameSubsection section,
+                                           string_view name);
 
 void CodeWindow(const std::string& title, Index declared_index);
 
@@ -238,15 +240,9 @@ void SectionWindow(const std::string& title, size_t section_index) {
                           "Export");
           break;
 
-        case SectionId::Start: {
-          auto section = ReadStartSection(known, s_features, errors);
-          size_t count = section ? 1 : 0;
-          print("  Start[{}]\n", count);
-          if (count > 0) {
-            print("    [0]: {}\n", *section);
-          }
+        case SectionId::Start:
+          SectionContents(ReadStartSection(known, s_features, errors), "Start");
           break;
-        }
 
         case SectionId::Element:
           SectionContents(ReadElementSection(known, s_features, errors),
@@ -344,8 +340,17 @@ void SectionContents<LazyCodeSection<ErrorsNop>>(
 }
 
 template <>
-void SectionContents<optional<string_view>>(optional<string_view> section,
-                                            string_view name) {
+void SectionContents<StartSection>(StartSection section, string_view name) {
+  size_t count = section ? 1 : 0;
+  ImGui::Text("%s", format("{}[{}]\n", name, count).c_str());
+  if (count > 0) {
+    ImGui::Text("%s", format("  [0]: {}\n", 0, *section).c_str());
+  }
+}
+
+template <>
+void SectionContents<ModuleNameSubsection>(ModuleNameSubsection section,
+                                           string_view name) {
   ImGui::Text("%s", format("{}\n", name).c_str());
   if (section) {
     ImGui::Text("%s", format("  [0]: {}\n", 0, *section).c_str());
