@@ -22,7 +22,8 @@ namespace binary {
 
 template <typename Errors>
 LazyModule<Errors>::LazyModule(SpanU8 data, Errors& errors)
-    : magic{ReadBytes(&data, 4, errors)},
+    : data{data},
+      magic{ReadBytes(&data, 4, errors)},
       version{ReadBytes(&data, 4, errors)},
       sections{data, errors} {
   const SpanU8 kMagic{encoding::Magic};

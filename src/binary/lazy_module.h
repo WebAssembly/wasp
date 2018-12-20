@@ -30,6 +30,7 @@ class LazyModule {
  public:
   explicit LazyModule(SpanU8, Errors&);
 
+  SpanU8 data;
   optional<SpanU8> magic;
   optional<SpanU8> version;
   LazySequence<Section, Errors> sections;
