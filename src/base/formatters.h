@@ -25,57 +25,32 @@
 
 namespace fmt {
 
-template <>
-struct formatter<::wasp::SpanU8> {
-  template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
+// Convert from a fmt::basic_memory_buffer to a fmt::string_view. Not sure why
+// this conversion was omitted from the fmt library.
+template <typename T, std::size_t SIZE, typename Allocator>
+string_view to_string_view(const basic_memory_buffer<T, SIZE, Allocator>&);
 
+template <>
+struct formatter<::wasp::SpanU8> : formatter<string_view> {
   template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::SpanU8& self, Ctx& ctx) {
-    auto it = ctx.begin();
-    it = format_to(it, "\"");
-    for (auto x: self) {
-      it = format_to(it, "\\{:02x}", x);
-    }
-    return format_to(it, "\"");
-  }
+  typename Ctx::iterator format(const ::wasp::SpanU8&, Ctx&);
 };
 
 template <typename T>
-struct formatter<std::vector<T>> {
+struct formatter<std::vector<T>> : formatter<string_view> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
-
-  template <typename Ctx>
-  typename Ctx::iterator format(const std::vector<T>& self, Ctx& ctx) {
-    bool first = true;
-    auto it = ctx.begin();
-    it = format_to(it, "[");
-    for (const auto& x: self) {
-      if (!first) {
-        it = format_to(it, " ");
-      }
-      it = format_to(it, "{}", x);
-      first = false;
-    }
-    return format_to(it, "]");
-  }
+  typename Ctx::iterator format(const std::vector<T>&, Ctx&);
 };
 
 template <typename CharT, typename Traits>
 struct formatter<::wasp::basic_string_view<CharT, Traits>>
     : formatter<string_view> {
   template <typename Ctx>
-  typename Ctx::iterator parse(Ctx& ctx) { return ctx.begin(); }
-
-  template <typename Ctx>
-  typename Ctx::iterator format(::wasp::basic_string_view<CharT, Traits> self,
-                                Ctx& ctx) {
-    return formatter<string_view>::format(string_view{self.data(), self.size()},
-                                          ctx);
-  }
+  typename Ctx::iterator format(::wasp::basic_string_view<CharT, Traits>, Ctx&);
 };
 
 }  // namespace fmt
+
+#include "src/base/formatters-inl.h"
 
 #endif // WASP_BASE_FORMATTERS_H_

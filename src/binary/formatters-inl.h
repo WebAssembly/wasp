@@ -44,15 +44,18 @@ template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::BlockType>::format(
     const ::wasp::binary::BlockType& self,
     Ctx& ctx) {
+  string_view result;
   switch (self) {
 #define WASP_V(val, Name, str)          \
   case ::wasp::binary::BlockType::Name: \
-    return format_to(ctx.begin(), "[{}]", str);
+    result = "[" str "]";               \
+    break;
     WASP_FOREACH_BLOCK_TYPE(WASP_V)
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
   }
+  return formatter<string_view>::format(result, ctx);
 }
 
 template <typename Ctx>
@@ -113,15 +116,22 @@ template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::SectionId>::format(
     const ::wasp::binary::SectionId& self,
     Ctx& ctx) {
+  string_view result;
   switch (self) {
 #define WASP_V(val, Name, str)          \
   case ::wasp::binary::SectionId::Name: \
-    return format_to(ctx.begin(), "{}", str);
+    result = str;                       \
+    break;
     WASP_FOREACH_SECTION(WASP_V)
 #undef WASP_V
-    default:
-      return format_to(ctx.begin(), "{}", static_cast<::wasp::u32>(self));
+    default: {
+      // Special case for sections with unknown ids.
+      memory_buffer buf;
+      format_to(buf, "{}", static_cast<::wasp::u32>(self));
+      return formatter<string_view>::format(to_string_view(buf), ctx);
+    }
   }
+  return formatter<string_view>::format(result, ctx);
 }
 
 template <typename Ctx>
@@ -146,90 +156,109 @@ template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::MemArg>::format(
     const ::wasp::binary::MemArg& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{align {}, offset {}}}", self.align_log2,
-                   self.offset);
+  memory_buffer buf;
+  format_to(buf, "{{align {}, offset {}}}", self.align_log2, self.offset);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Limits>::format(
     const ::wasp::binary::Limits& self,
     Ctx& ctx) {
+  memory_buffer buf;
   if (self.max) {
-    return format_to(ctx.begin(), "{{min {}, max {}}}", self.min, *self.max);
+    format_to(buf, "{{min {}, max {}}}", self.min, *self.max);
   } else {
-    return format_to(ctx.begin(), "{{min {}}}", self.min);
+    format_to(buf, "{{min {}}}", self.min);
   }
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Locals>::format(
     const ::wasp::binary::Locals& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{} ** {}", self.type, self.count);
+  memory_buffer buf;
+  format_to(buf, "{} ** {}", self.type, self.count);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Section>::format(
     const ::wasp::binary::Section& self,
     Ctx& ctx) {
+  memory_buffer buf;
   if (self.is_known()) {
-    return format_to(ctx.begin(), "{}", self.known());
+    format_to(buf, "{}", self.known());
   } else if (self.is_custom()) {
-    return format_to(ctx.begin(), "{}", self.custom());
+    format_to(buf, "{}", self.custom());
   } else {
     WASP_UNREACHABLE();
   }
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::KnownSection>::format(
     const ::wasp::binary::KnownSection& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{id {}, contents {}}}", self.id, self.data);
+  memory_buffer buf;
+  format_to(buf, "{{id {}, contents {}}}", self.id, self.data);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::CustomSection>::format(
     const ::wasp::binary::CustomSection& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{name \"{}\", contents {}}}", self.name,
-                   self.data);
+  memory_buffer buf;
+  format_to(buf, "{{name \"{}\", contents {}}}", self.name, self.data);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::TypeEntry>::format(
     const ::wasp::binary::TypeEntry& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{}", self.type);
+  memory_buffer buf;
+  format_to(buf, "{}", self.type);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::FunctionType>::format(
     const ::wasp::binary::FunctionType& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{} -> {}", self.param_types,
-                   self.result_types);
+  memory_buffer buf;
+  format_to(buf, "{} -> {}", self.param_types, self.result_types);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::TableType>::format(
     const ::wasp::binary::TableType& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{} {}", self.limits, self.elemtype);
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.limits, self.elemtype);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::MemoryType>::format(
     const ::wasp::binary::MemoryType& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{}", self.limits);
+  memory_buffer buf;
+  format_to(buf, "{}", self.limits);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::GlobalType>::format(
     const ::wasp::binary::GlobalType& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{} {}", self.mut, self.valtype);
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.mut, self.valtype);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
@@ -239,72 +268,88 @@ typename Ctx::iterator formatter<::wasp::binary::Import>::format(
   using ::wasp::get;
   using ::wasp::holds_alternative;
 
-  auto it = ctx.begin();
-  it = format_to(it, "{{module \"{}\", name \"{}\", desc {}", self.module,
-                 self.name, self.kind());
+  memory_buffer buf;
+  format_to(buf, "{{module \"{}\", name \"{}\", desc {}", self.module,
+            self.name, self.kind());
 
   if (holds_alternative<::wasp::Index>(self.desc)) {
-    it = format_to(it, " {}}}", get<::wasp::Index>(self.desc));
+    format_to(buf, " {}}}", get<::wasp::Index>(self.desc));
   } else if (holds_alternative<::wasp::binary::TableType>(self.desc)) {
-    it = format_to(it, " {}}}", get<::wasp::binary::TableType>(self.desc));
+    format_to(buf, " {}}}", get<::wasp::binary::TableType>(self.desc));
   } else if (holds_alternative<::wasp::binary::MemoryType>(self.desc)) {
-    it = format_to(it, " {}}}", get<::wasp::binary::MemoryType>(self.desc));
+    format_to(buf, " {}}}", get<::wasp::binary::MemoryType>(self.desc));
   } else if (holds_alternative<::wasp::binary::GlobalType>(self.desc)) {
-    it = format_to(it, " {}}}", get<::wasp::binary::GlobalType>(self.desc));
+    format_to(buf, " {}}}", get<::wasp::binary::GlobalType>(self.desc));
   }
-  return it;
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Export>::format(
     const ::wasp::binary::Export& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{name \"{}\", desc {} {}}}", self.name,
-                   self.kind, self.index);
+  memory_buffer buf;
+  format_to(buf, "{{name \"{}\", desc {} {}}}", self.name, self.kind,
+            self.index);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Expression>::format(
     const ::wasp::binary::Expression& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{}", self.data);
+  memory_buffer buf;
+  format_to(buf, "{}", self.data);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::ConstantExpression>::format(
     const ::wasp::binary::ConstantExpression& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{}", self.data);
+  memory_buffer buf;
+  format_to(buf, "{}", self.data);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Opcode>::format(
     const ::wasp::binary::Opcode& self,
     Ctx& ctx) {
+  string_view result;
   switch (self) {
 #define WASP_V(prefix, val, Name, str) \
   case ::wasp::binary::Opcode::Name:   \
-    return format_to(ctx.begin(), "{}", str);
+    result = str;                      \
+    break;
     WASP_FOREACH_OPCODE(WASP_V)
 #undef WASP_V
-    default:
-      return format_to(ctx.begin(), "<unknown:{}>",
-                       static_cast<::wasp::u32>(self));
+    default: {
+      // Special case for sections with unknown ids.
+      memory_buffer buf;
+      format_to(buf, "<unknown:{}>", static_cast<::wasp::u32>(self));
+      return formatter<string_view>::format(to_string_view(buf), ctx);
+    }
   }
+  return formatter<string_view>::format(result, ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::CallIndirectImmediate>::format(
     const ::wasp::binary::CallIndirectImmediate& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{} {}", self.index, self.reserved);
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.index, self.reserved);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::BrTableImmediate>::format(
     const ::wasp::binary::BrTableImmediate& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{} {}", self.targets, self.default_target);
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.targets, self.default_target);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
@@ -314,118 +359,138 @@ typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
   using ::wasp::get;
   using ::wasp::holds_alternative;
 
-  auto it = ctx.begin();
-  it = format_to(it, "{}", self.opcode);
+  memory_buffer buf;
+  format_to(buf, "{}", self.opcode);
 
   if (holds_alternative<::wasp::binary::EmptyImmediate>(self.immediate)) {
     // Nothing.
   } else if (holds_alternative<::wasp::binary::BlockType>(self.immediate)) {
-    it = format_to(it, " {}", get<::wasp::binary::BlockType>(self.immediate));
+    format_to(buf, " {}", get<::wasp::binary::BlockType>(self.immediate));
   } else if (holds_alternative<::wasp::Index>(self.immediate)) {
-    it = format_to(it, " {}", get<::wasp::Index>(self.immediate));
+    format_to(buf, " {}", get<::wasp::Index>(self.immediate));
   } else if (holds_alternative<::wasp::binary::CallIndirectImmediate>(
                  self.immediate)) {
-    it = format_to(it, " {}",
-                   get<::wasp::binary::CallIndirectImmediate>(self.immediate));
+    format_to(buf, " {}",
+              get<::wasp::binary::CallIndirectImmediate>(self.immediate));
   } else if (holds_alternative<::wasp::binary::BrTableImmediate>(
                  self.immediate)) {
-    it = format_to(it, " {}",
-                   get<::wasp::binary::BrTableImmediate>(self.immediate));
+    format_to(buf, " {}",
+              get<::wasp::binary::BrTableImmediate>(self.immediate));
   } else if (holds_alternative<::wasp::u8>(self.immediate)) {
-    it = format_to(it, " {}", get<::wasp::u8>(self.immediate));
+    format_to(buf, " {}", get<::wasp::u8>(self.immediate));
   } else if (holds_alternative<::wasp::binary::MemArg>(self.immediate)) {
-    it = format_to(it, " {}", get<::wasp::binary::MemArg>(self.immediate));
+    format_to(buf, " {}", get<::wasp::binary::MemArg>(self.immediate));
   } else if (holds_alternative<::wasp::s32>(self.immediate)) {
-    it = format_to(it, " {}", get<::wasp::s32>(self.immediate));
+    format_to(buf, " {}", get<::wasp::s32>(self.immediate));
   } else if (holds_alternative<::wasp::s64>(self.immediate)) {
-    it = format_to(it, " {}", get<::wasp::s64>(self.immediate));
+    format_to(buf, " {}", get<::wasp::s64>(self.immediate));
   } else if (holds_alternative<::wasp::f32>(self.immediate)) {
-    it = format_to(it, " {:f}", get<::wasp::f32>(self.immediate));
+    format_to(buf, " {:f}", get<::wasp::f32>(self.immediate));
   } else if (holds_alternative<::wasp::f64>(self.immediate)) {
-    it = format_to(it, " {:f}", get<::wasp::f64>(self.immediate));
+    format_to(buf, " {:f}", get<::wasp::f64>(self.immediate));
   }
-  return it;
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Function>::format(
     const ::wasp::binary::Function& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{type {}}}", self.type_index);
+  memory_buffer buf;
+  format_to(buf, "{{type {}}}", self.type_index);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Table>::format(
     const ::wasp::binary::Table& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{type {}}}", self.table_type);
+  memory_buffer buf;
+  format_to(buf, "{{type {}}}", self.table_type);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Memory>::format(
     const ::wasp::binary::Memory& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{type {}}}", self.memory_type);
+  memory_buffer buf;
+  format_to(buf, "{{type {}}}", self.memory_type);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Global>::format(
     const ::wasp::binary::Global& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{type {}, init {}}}", self.global_type,
-                   self.init);
+  memory_buffer buf;
+  format_to(buf, "{{type {}, init {}}}", self.global_type, self.init);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Start>::format(
     const ::wasp::binary::Start& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{func {}}}", self.func_index);
+  memory_buffer buf;
+  format_to(buf, "{{func {}}}", self.func_index);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::ElementSegment>::format(
     const ::wasp::binary::ElementSegment& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{table {}, offset {}, init {}}}",
-                   self.table_index, self.offset, self.init);
+  memory_buffer buf;
+  format_to(buf, "{{table {}, offset {}, init {}}}", self.table_index,
+            self.offset, self.init);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Code>::format(
     const ::wasp::binary::Code& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{locals {}, body {}}}", self.locals,
-                   self.body);
+  memory_buffer buf;
+  format_to(buf, "{{locals {}, body {}}}", self.locals, self.body);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::DataSegment>::format(
     const ::wasp::binary::DataSegment& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{{memory {}, offset {}, init {}}}",
-                   self.memory_index, self.offset, self.init);
+  memory_buffer buf;
+  format_to(buf, "{{memory {}, offset {}, init {}}}", self.memory_index,
+            self.offset, self.init);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::NameAssoc>::format(
     const ::wasp::binary::NameAssoc& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{} \"{}\"", self.index, self.name);
+  memory_buffer buf;
+  format_to(buf, "{} \"{}\"", self.index, self.name);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::IndirectNameAssoc>::format(
     const ::wasp::binary::IndirectNameAssoc& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{} {}", self.index, self.name_map);
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.index, self.name_map);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::NameSubsection>::format(
     const ::wasp::binary::NameSubsection& self,
     Ctx& ctx) {
-  return format_to(ctx.begin(), "{} {}", self.id, self.data);
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.id, self.data);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 }  // namespace fmt

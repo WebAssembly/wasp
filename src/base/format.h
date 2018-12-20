@@ -33,6 +33,7 @@ using fmt::format_args;
 using fmt::format_to;
 using fmt::formatter;
 using fmt::to_string;
+using fmt::memory_buffer;
 
 }  // namespace wasp
 

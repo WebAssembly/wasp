@@ -28,11 +28,6 @@ struct Point {
   int y;
 };
 
-template <typename T>
-std::string TestFormat(const T& t) {
-  return format("{}", t);
-}
-
 }  // namespace
 
 namespace fmt {
@@ -51,23 +46,28 @@ struct formatter<Point> {
 }  // namespace fmt
 
 TEST(FormatTest, U32) {
-  EXPECT_EQ("100", TestFormat(u32{100u}));
+  EXPECT_EQ("100", format("{}", u32{100u}));
 }
 
 TEST(FormatTest, SpanU8) {
-  EXPECT_EQ(R"("")", TestFormat(SpanU8{}));
+  EXPECT_EQ(R"("")", format("{}", SpanU8{}));
 
   const u8 buffer[] = "Hello, World!";
-  EXPECT_EQ(R"("\48\65\6c")", TestFormat(SpanU8{buffer, 3}));
+  EXPECT_EQ(R"("\48\65\6c")", format("{}", SpanU8{buffer, 3}));
+
+  EXPECT_EQ(R"(  "\48"  )", format("{:^9s}", SpanU8{buffer, 1}));
 }
 
 TEST(FormatTest, VectorU32) {
-  EXPECT_EQ(R"([])", TestFormat(std::vector<u32>{}));
-  EXPECT_EQ(R"([1 2 3])", TestFormat(std::vector<u32>{{1u, 2u, 3u}}));
+  EXPECT_EQ(R"([])", format("{}", std::vector<u32>{}));
+  EXPECT_EQ(R"([1 2 3])", format("{}", std::vector<u32>{{1u, 2u, 3u}}));
+  EXPECT_EQ(R"(   [0 0])", format("{:>8s}", std::vector<u32>{{0u, 0u}}));
 }
 
 TEST(FormatTest, VectorPoint) {
-  EXPECT_EQ(R"([])", TestFormat(std::vector<Point>{}));
+  EXPECT_EQ(R"([])", format("{}", std::vector<Point>{}));
   EXPECT_EQ(R"([{x:1, y:1} {x:2, y:3}])",
-            TestFormat(std::vector<Point>{{Point{1, 1}, Point{2, 3}}}));
+            format("{}", std::vector<Point>{{Point{1, 1}, Point{2, 3}}}));
+  EXPECT_EQ(R"(  [{x:0, y:0}]  )",
+            format("{:^16s}", std::vector<Point>{{Point{0, 0}}}));
 }

@@ -24,29 +24,18 @@ namespace fmt {
 
 #define WASP_DEFINE_FORMATTER(Name)                                   \
   template <>                                                         \
-  struct formatter<::wasp::binary::Name> {                            \
-    template <typename Ctx>                                           \
-    typename Ctx::iterator parse(Ctx& ctx) {                          \
-      return ctx.begin();                                             \
-    }                                                                 \
-    template <typename Ctx>                                           \
-    typename Ctx::iterator format(const ::wasp::binary::Name&, Ctx&); \
-  } /* No semicolon. */
-
-#define WASP_DEFINE_STRING_VIEW_FORMATTER(Name)                       \
-  template <>                                                         \
   struct formatter<::wasp::binary::Name> : formatter<string_view> {   \
     template <typename Ctx>                                           \
     typename Ctx::iterator format(const ::wasp::binary::Name&, Ctx&); \
   } /* No semicolon. */
 
-WASP_DEFINE_STRING_VIEW_FORMATTER(ValueType);
+WASP_DEFINE_FORMATTER(ValueType);
 WASP_DEFINE_FORMATTER(BlockType);
-WASP_DEFINE_STRING_VIEW_FORMATTER(ElementType);
-WASP_DEFINE_STRING_VIEW_FORMATTER(ExternalKind);
-WASP_DEFINE_STRING_VIEW_FORMATTER(Mutability);
+WASP_DEFINE_FORMATTER(ElementType);
+WASP_DEFINE_FORMATTER(ExternalKind);
+WASP_DEFINE_FORMATTER(Mutability);
 WASP_DEFINE_FORMATTER(SectionId);
-WASP_DEFINE_STRING_VIEW_FORMATTER(NameSubsectionId);
+WASP_DEFINE_FORMATTER(NameSubsectionId);
 WASP_DEFINE_FORMATTER(MemArg);
 WASP_DEFINE_FORMATTER(Limits);
 WASP_DEFINE_FORMATTER(Locals);
@@ -79,7 +68,6 @@ WASP_DEFINE_FORMATTER(IndirectNameAssoc);
 WASP_DEFINE_FORMATTER(NameSubsection);
 
 #undef WASP_DEFINE_FORMATTER
-#undef WASP_DEFINE_STRING_VIEW_FORMATTER
 
 }  // namespace fmt
 
