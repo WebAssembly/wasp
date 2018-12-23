@@ -24,7 +24,7 @@
 #include "src/base/types.h"
 #include "src/binary/errors_nop.h"
 #include "src/binary/formatters.h"
-#include "src/binary/lazy_expr.h"
+#include "src/binary/lazy_expression.h"
 #include "src/binary/lazy_module.h"
 #include "src/binary/lazy_name_section.h"
 #include "src/binary/lazy_section.h"
@@ -389,7 +389,7 @@ namespace {
 
 template <typename Errors>
 void PrintConstantExpression(const ConstantExpression& expr, Errors& errors) {
-  auto instrs = ReadExpr(expr.data, errors);
+  auto instrs = ReadExpression(expr.data, errors);
   string_view space;
   for (auto instr : instrs) {
     if (instr.opcode != Opcode::End) {
@@ -449,7 +449,7 @@ namespace {
 
 optional<Index> GetI32Value(const ConstantExpression& expr) {
   ErrorsNop errors;
-  auto instrs = ReadExpr(expr.data, errors);
+  auto instrs = ReadExpression(expr.data, errors);
   auto it = instrs.begin();
   if (it == instrs.end()) {
     return nullopt;

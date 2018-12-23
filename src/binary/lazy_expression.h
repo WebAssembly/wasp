@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_LAZY_EXPR_H
-#define WASP_BINARY_LAZY_EXPR_H
+#ifndef WASP_BINARY_LAZY_EXPRESSION_H
+#define WASP_BINARY_LAZY_EXPRESSION_H
 
 #include "src/base/types.h"
 #include "src/binary/types.h"
@@ -26,14 +26,14 @@ namespace binary {
 
 /// ---
 template <typename Errors>
-using LazyExpr = LazySequence<Instruction, Errors>;
+using LazyExpression = LazySequence<Instruction, Errors>;
 
 template <typename Errors>
-LazyExpr<Errors> ReadExpr(SpanU8 data, Errors& errors) {
-  return LazyExpr<Errors>{data, errors};
+LazyExpression<Errors> ReadExpression(SpanU8 data, Errors& errors) {
+  return LazyExpression<Errors>{data, errors};
 }
 
 }  // namespace binary
 }  // namespace wasp
 
-#endif  // WASP_BINARY_LAZY_EXPR_H
+#endif  // WASP_BINARY_LAZY_EXPRESSION_H

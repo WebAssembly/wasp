@@ -52,7 +52,7 @@ target_link_libraries(wasp_demo
 add_executable(wasp_unittests
   src/base/formatters_test.cc
   src/binary/formatters_test.cc
-  src/binary/lazy_expr_test.cc
+  src/binary/lazy_expression_test.cc
   src/binary/lazy_module_test.cc
   src/binary/lazy_name_section_test.cc
   src/binary/lazy_section_test.cc

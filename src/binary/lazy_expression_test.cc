@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "src/binary/lazy_expr.h"
+#include "src/binary/lazy_expression.h"
 
 #include "gtest/gtest.h"
 #include "src/binary/test_utils.h"
@@ -25,7 +25,7 @@ using namespace ::wasp::binary::test;
 
 TEST(LazyExprTest, Basic) {
   TestErrors errors;
-  auto expr = ReadExpr(MakeSpanU8("\x00"), errors);
+  auto expr = ReadExpression(MakeSpanU8("\x00"), errors);
   auto it = expr.begin(), end = expr.end();
   EXPECT_EQ((Instruction{Opcode::Unreachable}), *it++);
   ASSERT_EQ(end, it);
@@ -33,7 +33,7 @@ TEST(LazyExprTest, Basic) {
 
 TEST(LazyExprTest, Multiple) {
   TestErrors errors;
-  auto expr = ReadExpr(MakeSpanU8("\x01\x01"), errors);
+  auto expr = ReadExpression(MakeSpanU8("\x01\x01"), errors);
   auto it = expr.begin(), end = expr.end();
   EXPECT_EQ((Instruction{Opcode::Nop}), *it++);
   ASSERT_NE(end, it);
@@ -46,7 +46,7 @@ TEST(LazyExprTest, SimpleFunction) {
   // local.get 0
   // local.get 1
   // i32.add
-  auto expr = ReadExpr(MakeSpanU8("\x20\x00\x20\x01\x6a"), errors);
+  auto expr = ReadExpression(MakeSpanU8("\x20\x00\x20\x01\x6a"), errors);
   auto it = expr.begin(), end = expr.end();
   EXPECT_EQ((Instruction{Opcode::LocalGet, Index{0}}), *it++);
   ASSERT_NE(end, it);
