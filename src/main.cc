@@ -14,9 +14,11 @@
 // limitations under the License.
 //
 
+#include <algorithm>
 #include <cctype>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "src/base/file.h"
 #include "src/base/formatters.h"
@@ -36,6 +38,7 @@ using namespace ::wasp::binary;
 enum class Pass {
   Headers,
   Details,
+  Disassemble,
 };
 
 template <typename Errors>
@@ -62,12 +65,15 @@ struct Dumper {
 
   void DoCount(Pass, optional<Index> count);
 
+  void Disassemble(Index func_index, Code);
+
   void InsertFunctionName(Index, string_view name);
   void InsertGlobalName(Index, string_view name);
+  optional<FunctionType> GetFunctionType(Index) const;
   optional<string_view> GetFunctionName(Index) const;
   optional<string_view> GetGlobalName(Index) const;
 
-  bool ShouldPrintDetails(Pass pass) const {
+  bool ShouldPrintDetails(Pass pass) {
     return pass == Pass::Details && should_print_details;
   }
 
@@ -83,10 +89,15 @@ struct Dumper {
                    int octets_per_line = 16,
                    int octets_per_group = 2);
 
+  size_t file_offset(SpanU8 data);
+  void PrintFileOffset(SpanU8);
+
   Errors errors;
   std::string filename;
   SpanU8 data;
   LazyModule<Errors> module;
+  std::vector<TypeEntry> type_entries;
+  std::vector<Function> functions;
   std::map<Index, string_view> function_names;
   std::map<Index, string_view> global_names;
   bool should_print_details = true;
@@ -116,6 +127,7 @@ int main(int argc, char** argv) {
   dumper.DoPrepass();
   dumper.DoPass(Pass::Headers);
   dumper.DoPass(Pass::Details);
+  dumper.DoPass(Pass::Disassemble);
   return 0;
 }
 
@@ -130,23 +142,44 @@ void Dumper<Errors>::DoPrepass() {
     if (section.is_known()) {
       auto known = section.known();
       switch (known.id) {
+        case SectionId::Type: {
+          auto seq = ReadTypeSection(known, errors).sequence;
+          std::copy(seq.begin(), seq.end(), std::back_inserter(type_entries));
+          break;
+        }
+
         case SectionId::Import: {
-          Index function_count = 0;
-          Index global_count = 0;
           for (auto import : ReadImportSection(known, errors).sequence) {
             switch (import.kind()) {
-              case ExternalKind::Function:
-                InsertFunctionName(function_count++, import.name);
+              case ExternalKind::Function: {
+                Index type_index = get<Index>(import.desc);
+                functions.push_back(Function{type_index});
+                InsertFunctionName(imported_function_count++, import.name);
+                break;
+              }
+
+              case ExternalKind::Table:
+                imported_table_count++;
+                break;
+
+              case ExternalKind::Memory:
+                imported_memory_count++;
                 break;
 
               case ExternalKind::Global:
-                InsertGlobalName(global_count++, import.name);
+                InsertGlobalName(imported_global_count++, import.name);
                 break;
 
               default:
                 break;
             }
           }
+          break;
+        }
+
+        case SectionId::Function: {
+          auto seq = ReadFunctionSection(known, errors).sequence;
+          std::copy(seq.begin(), seq.end(), std::back_inserter(functions));
           break;
         }
 
@@ -199,7 +232,7 @@ void Dumper<Errors>::DoPass(Pass pass) {
       print("Section Details:\n\n");
       break;
 
-    default:
+    case Pass::Disassemble:
       break;
   }
 
@@ -289,11 +322,15 @@ void Dumper<Errors>::DoSectionHeader(Pass pass, string_view name, SpanU8 data) {
     case Pass::Details:
       print("{}", name);
       break;
+
+    case Pass::Disassemble:
+      break;
   }
 }
 
 template <typename Errors>
-void Dumper<Errors>::DoTypeSection(Pass pass, LazyTypeSection<Errors> section) {
+void Dumper<Errors>::DoTypeSection(Pass pass,
+                                   LazyTypeSection<Errors> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -308,34 +345,38 @@ void Dumper<Errors>::DoImportSection(Pass pass,
                                      LazyImportSection<Errors> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
+    Index function_count = 0;
+    Index table_count = 0;
+    Index memory_count = 0;
+    Index global_count = 0;
     for (auto import : section.sequence) {
       switch (import.kind()) {
         case ExternalKind::Function: {
-          auto sig_index = get<Index>(import.desc);
-          print(" - func[{}] sig={}", imported_function_count, sig_index);
-          PrintFunctionName(imported_function_count);
-          ++imported_function_count;
+          auto type_index = get<Index>(import.desc);
+          print(" - func[{}] sig={}", function_count, type_index);
+          PrintFunctionName(function_count);
+          ++function_count;
           break;
         }
 
         case ExternalKind::Table: {
           auto table_type = get<TableType>(import.desc);
-          print(" - table[{}] {}", imported_table_count, table_type);
-          ++imported_table_count;
+          print(" - table[{}] {}", table_count, table_type);
+          ++table_count;
           break;
         }
 
         case ExternalKind::Memory: {
           auto memory_type = get<MemoryType>(import.desc);
-          print(" - memory[{}] {}", imported_memory_count, memory_type);
-          ++imported_memory_count;
+          print(" - memory[{}] {}", memory_count, memory_type);
+          ++memory_count;
           break;
         }
 
         case ExternalKind::Global: {
           auto global_type = get<GlobalType>(import.desc);
-          print(" - global[{}] {}", imported_global_count, global_type);
-          ++imported_global_count;
+          print(" - global[{}] {}", global_count, global_type);
+          ++global_count;
           break;
         }
       }
@@ -494,16 +535,23 @@ template <typename Errors>
 void Dumper<Errors>::DoCodeSection(Pass pass, LazyCodeSection<Errors> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
-    Index count = 0;
+    Index count = imported_function_count;
     for (auto code : section.sequence) {
-      PrintDetails(pass, " - func[{}] size={}\n", count, code.body.data.size());
+      print(" - func[{}] size={}\n", count, code.body.data.size());
+      ++count;
+    }
+  } else if (pass == Pass::Disassemble) {
+    Index count = imported_function_count;
+    for (auto code : section.sequence) {
+      Disassemble(count, code);
       ++count;
     }
   }
 }
 
 template <typename Errors>
-void Dumper<Errors>::DoDataSection(Pass pass, LazyDataSection<Errors> section) {
+void Dumper<Errors>::DoDataSection(Pass pass,
+                                   LazyDataSection<Errors> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -529,6 +577,60 @@ void Dumper<Errors>::DoCount(Pass pass, optional<Index> count) {
 }
 
 template <typename Errors>
+void Dumper<Errors>::Disassemble(Index func_index, Code code) {
+  constexpr int max_octets_per_line = 9;
+  auto func_type = GetFunctionType(func_index);
+  int param_count = 0;
+  print("func[{}]", func_index);
+  PrintFunctionName(func_index);
+  print(":");
+  if (func_type) {
+    print(" {}\n", *func_type);
+    param_count = func_type->param_types.size();
+  } else {
+    print("\n");
+  }
+  int local_count = param_count;
+  for (auto locals : code.locals) {
+    print(" {:{}s} | locals[{}", "", 7 + max_octets_per_line * 3, local_count);
+    if (locals.count != 1) {
+      print("..{}", local_count + locals.count - 1);
+    }
+    print("] type={}\n", locals.type);
+    local_count += locals.count;
+  }
+  int indent = 0;
+  auto last_data = code.body.data;
+  auto instrs = ReadExpression(code.body.data, errors);
+  for (auto it = instrs.begin(), end = instrs.end(); it != end; ++it) {
+    auto instr = *it;
+    if (instr.opcode == Opcode::Else || instr.opcode == Opcode::End) {
+      indent = std::max(indent - 2, 0);
+    }
+    bool first_line = true;
+    while (last_data.begin() < it.data().begin()) {
+      print(" {:06x}:", file_offset(last_data));
+      int line_octets = std::min<int>(max_octets_per_line,
+                                      it.data().begin() - last_data.begin());
+      for (int i = 0; i < line_octets; ++i) {
+        print(" {:02x}", last_data[i]);
+      }
+      last_data = remove_prefix(last_data, line_octets);
+      print("{:{}s} |", "", (max_octets_per_line - line_octets) * 3);
+      if (first_line) {
+        first_line = false;
+        print(" {:{}s}{}", "", indent, instr);
+      }
+      print("\n");
+    }
+    if (instr.opcode == Opcode::Block || instr.opcode == Opcode::If ||
+        instr.opcode == Opcode::Loop || instr.opcode == Opcode::Else) {
+      indent += 2;
+    }
+  }
+}
+
+template <typename Errors>
 void Dumper<Errors>::InsertFunctionName(Index index, string_view name) {
   function_names.insert(std::make_pair(index, name));
 }
@@ -536,6 +638,15 @@ void Dumper<Errors>::InsertFunctionName(Index index, string_view name) {
 template <typename Errors>
 void Dumper<Errors>::InsertGlobalName(Index index, string_view name) {
   global_names.insert(std::make_pair(index, name));
+}
+
+template <typename Errors>
+optional<FunctionType> Dumper<Errors>::GetFunctionType(Index func_index) const {
+  if (func_index >= functions.size() ||
+      functions[func_index].type_index >= type_entries.size()) {
+    return nullopt;
+  }
+  return type_entries[functions[func_index].type_index].type;
 }
 
 template <typename Errors>
@@ -608,4 +719,9 @@ void Dumper<Errors>::PrintMemory(SpanU8 start,
     print("\n");
     data = remove_prefix(data, line_size);
   }
+}
+
+template <typename Errors>
+size_t Dumper<Errors>::file_offset(SpanU8 data) {
+  return data.begin() - module.data.begin();
 }
