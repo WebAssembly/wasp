@@ -41,11 +41,11 @@ add_library(wasp
   third_party/fmt/src/format.cc
 )
 
-add_executable(wasp_demo
-  src/main.cc
+add_executable(wasp_objdump
+  src/example/objdump.cc
 )
 
-target_link_libraries(wasp_demo
+target_link_libraries(wasp_objdump
   wasp
 )
 
