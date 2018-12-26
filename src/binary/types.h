@@ -75,7 +75,7 @@ enum class NameSubsectionId : u8 {
 };
 
 struct MemArg {
-  MemArg(u32 align_log2, u32 offset) : align_log2(align_log2), offset(offset) {}
+  explicit MemArg(u32 align_log2, u32 offset);
 
   u32 align_log2;
   u32 offset;
@@ -85,8 +85,8 @@ bool operator==(const MemArg&, const MemArg&);
 bool operator!=(const MemArg&, const MemArg&);
 
 struct Limits {
-  explicit Limits(u32 min) : min(min) {}
-  Limits(u32 min, u32 max) : min(min), max(max) {}
+  explicit Limits(u32 min);
+  explicit Limits(u32 min, u32 max);
 
   u32 min;
   optional<u32> max;
@@ -96,7 +96,7 @@ bool operator==(const Limits&, const Limits&);
 bool operator!=(const Limits&, const Limits&);
 
 struct Locals {
-  Locals(Index count, ValueType type) : count(count), type(type) {}
+  explicit Locals(Index count, ValueType type);
 
   Index count;
   ValueType type;
@@ -106,7 +106,7 @@ bool operator==(const Locals&, const Locals&);
 bool operator!=(const Locals&, const Locals&);
 
 struct KnownSection {
-  KnownSection(SectionId id, SpanU8 data) : id(id), data(data) {}
+  explicit KnownSection(SectionId id, SpanU8 data);
 
   SectionId id;
   SpanU8 data;
@@ -116,7 +116,7 @@ bool operator==(const KnownSection&, const KnownSection&);
 bool operator!=(const KnownSection&, const KnownSection&);
 
 struct CustomSection {
-  CustomSection(string_view name, SpanU8 data) : name(name), data(data) {}
+  explicit CustomSection(string_view name, SpanU8 data);
 
   string_view name;
   SpanU8 data;
@@ -127,15 +127,15 @@ bool operator!=(const CustomSection&, const CustomSection&);
 
 struct Section {
   template <typename T>
-  explicit Section(T&& contents) : contents(std::move(contents)) {}
+  explicit Section(T&& contents);
 
-  bool is_known() const { return contents.index() == 0; }
-  bool is_custom() const { return contents.index() == 1; }
+  bool is_known() const;
+  bool is_custom() const;
 
-  KnownSection& known() { return get<0>(contents); }
-  const KnownSection& known() const { return get<0>(contents); }
-  CustomSection& custom() { return get<1>(contents); }
-  const CustomSection& custom() const { return get<1>(contents); }
+  KnownSection& known();
+  const KnownSection& known() const;
+  CustomSection& custom();
+  const CustomSection& custom() const;
 
   variant<KnownSection, CustomSection> contents;
 };
@@ -146,9 +146,7 @@ bool operator!=(const Section&, const Section&);
 using ValueTypes = std::vector<ValueType>;
 
 struct FunctionType {
-  FunctionType(ValueTypes&& param_types, ValueTypes&& result_types)
-      : param_types(std::move(param_types)),
-        result_types(std::move(result_types)) {}
+  explicit FunctionType(ValueTypes&& param_types, ValueTypes&& result_types);
 
   ValueTypes param_types;
   ValueTypes result_types;
@@ -158,7 +156,7 @@ bool operator==(const FunctionType&, const FunctionType&);
 bool operator!=(const FunctionType&, const FunctionType&);
 
 struct TypeEntry {
-  TypeEntry(FunctionType&& type) : type(std::move(type)) {}
+  explicit TypeEntry(FunctionType&&);
 
   FunctionType type;
 };
@@ -167,8 +165,7 @@ bool operator==(const TypeEntry&, const TypeEntry&);
 bool operator!=(const TypeEntry&, const TypeEntry&);
 
 struct TableType {
-  TableType(Limits limits, ElementType elemtype)
-      : limits(limits), elemtype(elemtype) {}
+  explicit TableType(Limits limits, ElementType elemtype);
 
   Limits limits;
   ElementType elemtype;
@@ -178,7 +175,7 @@ bool operator==(const TableType&, const TableType&);
 bool operator!=(const TableType&, const TableType&);
 
 struct MemoryType {
-  explicit MemoryType(Limits limits) : limits(limits) {}
+  explicit MemoryType(Limits limits);
 
   Limits limits;
 };
@@ -187,7 +184,7 @@ bool operator==(const MemoryType&, const MemoryType&);
 bool operator!=(const MemoryType&, const MemoryType&);
 
 struct GlobalType {
-  GlobalType(ValueType valtype, Mutability mut) : valtype(valtype), mut(mut) {}
+  GlobalType(ValueType valtype, Mutability mut);
 
   ValueType valtype;
   Mutability mut;
@@ -198,12 +195,22 @@ bool operator!=(const GlobalType&, const GlobalType&);
 
 struct Import {
   template <typename T>
-  Import(string_view module, string_view name, T&& desc)
-      : module(module),
-        name(name),
-        desc(std::move(desc)) {}
+  explicit Import(string_view module, string_view name, T&& desc);
 
-  ExternalKind kind() const { return static_cast<ExternalKind>(desc.index()); }
+  ExternalKind kind() const;
+  bool is_function() const;
+  bool is_table() const;
+  bool is_memory() const;
+  bool is_global() const;
+
+  Index& index();
+  const Index& index() const;
+  TableType& table_type();
+  const TableType& table_type() const;
+  MemoryType& memory_type();
+  const MemoryType& memory_type() const;
+  GlobalType& global_type();
+  const GlobalType& global_type() const;
 
   string_view module;
   string_view name;
@@ -214,7 +221,7 @@ bool operator==(const Import&, const Import&);
 bool operator!=(const Import&, const Import&);
 
 struct Expression {
-  explicit Expression(SpanU8 data) : data(data) {}
+  explicit Expression(SpanU8 data);
 
   SpanU8 data;
 };
@@ -223,7 +230,7 @@ bool operator==(const Expression&, const Expression&);
 bool operator!=(const Expression&, const Expression&);
 
 struct ConstantExpression {
-  explicit ConstantExpression(SpanU8 data) : data(data) {}
+  explicit ConstantExpression(SpanU8 data);
 
   SpanU8 data;
 };
@@ -237,8 +244,7 @@ bool operator==(const EmptyImmediate&, const EmptyImmediate&);
 bool operator!=(const EmptyImmediate&, const EmptyImmediate&);
 
 struct CallIndirectImmediate {
-  CallIndirectImmediate(Index index, u8 reserved)
-      : index(index), reserved(reserved) {}
+  explicit CallIndirectImmediate(Index index, u8 reserved);
 
   Index index;
   u8 reserved;
@@ -248,8 +254,7 @@ bool operator==(const CallIndirectImmediate&, const CallIndirectImmediate&);
 bool operator!=(const CallIndirectImmediate&, const CallIndirectImmediate&);
 
 struct BrTableImmediate {
-  BrTableImmediate(std::vector<Index>&& targets, Index default_target)
-      : targets(std::move(targets)), default_target(default_target) {}
+  explicit BrTableImmediate(std::vector<Index>&& targets, Index default_target);
 
   std::vector<Index> targets;
   Index default_target;
@@ -259,11 +264,44 @@ bool operator==(const BrTableImmediate&, const BrTableImmediate&);
 bool operator!=(const BrTableImmediate&, const BrTableImmediate&);
 
 struct Instruction {
-  explicit Instruction(Opcode opcode)
-      : opcode(opcode), immediate(EmptyImmediate{}) {}
+  explicit Instruction(Opcode opcode);
   template <typename T>
-  Instruction(Opcode opcode, T&& value)
-      : opcode(opcode), immediate(std::move(value)) {}
+  explicit Instruction(Opcode opcode, T&& value);
+
+  bool has_empty_immediate() const;
+  bool has_block_type_immediate() const;
+  bool has_index_immediate() const;
+  bool has_call_indirect_immediate() const;
+  bool has_br_table_immediate() const;
+  bool has_u8_immediate() const;
+  bool has_mem_arg_immediate() const;
+  bool has_s32_immediate() const;
+  bool has_s64_immediate() const;
+  bool has_f32_immediate() const;
+  bool has_f64_immediate() const;
+
+  EmptyImmediate& empty_immediate();
+  const EmptyImmediate& empty_immediate() const;
+  BlockType& block_type_immediate();
+  const BlockType& block_type_immediate() const;
+  Index& index_immediate();
+  const Index& index_immediate() const;
+  CallIndirectImmediate& call_indirect_immediate();
+  const CallIndirectImmediate& call_indirect_immediate() const;
+  BrTableImmediate& br_table_immediate();
+  const BrTableImmediate& br_table_immediate() const;
+  u8& u8_immediate();
+  const u8& u8_immediate() const;
+  MemArg& mem_arg_immediate();
+  const MemArg& mem_arg_immediate() const;
+  s32& s32_immediate();
+  const s32& s32_immediate() const;
+  s64& s64_immediate();
+  const s64& s64_immediate() const;
+  f32& f32_immediate();
+  const f32& f32_immediate() const;
+  f64& f64_immediate();
+  const f64& f64_immediate() const;
 
   Opcode opcode;
   variant<EmptyImmediate,
@@ -286,7 +324,7 @@ bool operator!=(const Instruction&, const Instruction&);
 using Instrs = std::vector<Instruction>;
 
 struct Function {
-  explicit Function(Index type_index) : type_index(type_index) {}
+  explicit Function(Index type_index);
 
   Index type_index;
 };
@@ -295,7 +333,7 @@ bool operator==(const Function&, const Function&);
 bool operator!=(const Function&, const Function&);
 
 struct Table {
-  explicit Table(TableType table_type) : table_type(table_type) {}
+  explicit Table(TableType table_type);
 
   TableType table_type;
 };
@@ -304,7 +342,7 @@ bool operator==(const Table&, const Table&);
 bool operator!=(const Table&, const Table&);
 
 struct Memory {
-  explicit Memory(MemoryType memory_type) : memory_type(memory_type) {}
+  explicit Memory(MemoryType memory_type);
 
   MemoryType memory_type;
 };
@@ -313,8 +351,7 @@ bool operator==(const Memory&, const Memory&);
 bool operator!=(const Memory&, const Memory&);
 
 struct Global {
-  Global(GlobalType global_type, ConstantExpression init)
-      : global_type(global_type), init(init) {}
+  explicit Global(GlobalType global_type, ConstantExpression init);
 
   GlobalType global_type;
   ConstantExpression init;
@@ -324,8 +361,7 @@ bool operator==(const Global&, const Global&);
 bool operator!=(const Global&, const Global&);
 
 struct Export {
-  Export(ExternalKind kind, string_view name, Index index) :
-    kind(kind), name(name), index(index) {}
+  explicit Export(ExternalKind kind, string_view name, Index index);
 
   ExternalKind kind;
   string_view name;
@@ -336,7 +372,7 @@ bool operator==(const Export&, const Export&);
 bool operator!=(const Export&, const Export&);
 
 struct Start {
-  explicit Start(Index func_index) : func_index(func_index) {}
+  explicit Start(Index func_index);
 
   Index func_index;
 };
@@ -345,10 +381,9 @@ bool operator==(const Start&, const Start&);
 bool operator!=(const Start&, const Start&);
 
 struct ElementSegment {
-  ElementSegment(Index table_index,
-                 ConstantExpression offset,
-                 std::vector<Index>&& init)
-      : table_index(table_index), offset(offset), init(std::move(init)) {}
+  explicit ElementSegment(Index table_index,
+                          ConstantExpression offset,
+                          std::vector<Index>&& init);
 
   Index table_index;
   ConstantExpression offset;
@@ -359,8 +394,7 @@ bool operator==(const ElementSegment&, const ElementSegment&);
 bool operator!=(const ElementSegment&, const ElementSegment&);
 
 struct Code {
-  Code(std::vector<Locals>&& locals, Expression body)
-      : locals(std::move(locals)), body(body) {}
+  explicit Code(std::vector<Locals>&& locals, Expression body);
 
   std::vector<Locals> locals;
   Expression body;
@@ -370,8 +404,9 @@ bool operator==(const Code&, const Code&);
 bool operator!=(const Code&, const Code&);
 
 struct DataSegment {
-  DataSegment(Index memory_index, ConstantExpression offset, SpanU8 init)
-      : memory_index(memory_index), offset(offset), init(init) {}
+  explicit DataSegment(Index memory_index,
+                       ConstantExpression offset,
+                       SpanU8 init);
 
   Index memory_index;
   ConstantExpression offset;
@@ -382,6 +417,8 @@ bool operator==(const DataSegment&, const DataSegment&);
 bool operator!=(const DataSegment&, const DataSegment&);
 
 struct NameAssoc {
+  NameAssoc(Index, string_view name);
+
   Index index;
   string_view name;
 };
@@ -392,6 +429,8 @@ bool operator!=(const NameAssoc&, const NameAssoc&);
 using NameMap = std::vector<NameAssoc>;
 
 struct IndirectNameAssoc {
+  explicit IndirectNameAssoc(Index, NameMap&&);
+
   Index index;
   NameMap name_map;
 };
@@ -400,7 +439,7 @@ bool operator==(const IndirectNameAssoc&, const IndirectNameAssoc&);
 bool operator!=(const IndirectNameAssoc&, const IndirectNameAssoc&);
 
 struct NameSubsection {
-  NameSubsection(NameSubsectionId id, SpanU8 data) : id(id), data(data) {}
+  explicit NameSubsection(NameSubsectionId, SpanU8 data);
 
   NameSubsectionId id;
   SpanU8 data;
@@ -411,5 +450,7 @@ bool operator!=(const NameSubsection&, const NameSubsection&);
 
 }  // namespace binary
 }  // namespace wasp
+
+#include "src/binary/types-inl.h"
 
 #endif  // WASP_BINARY_TYPES_H_

@@ -265,22 +265,31 @@ template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Import>::format(
     const ::wasp::binary::Import& self,
     Ctx& ctx) {
-  using ::wasp::get;
-  using ::wasp::holds_alternative;
-
   memory_buffer buf;
   format_to(buf, "{{module \"{}\", name \"{}\", desc {}", self.module,
             self.name, self.kind());
 
-  if (holds_alternative<::wasp::Index>(self.desc)) {
-    format_to(buf, " {}}}", get<::wasp::Index>(self.desc));
-  } else if (holds_alternative<::wasp::binary::TableType>(self.desc)) {
-    format_to(buf, " {}}}", get<::wasp::binary::TableType>(self.desc));
-  } else if (holds_alternative<::wasp::binary::MemoryType>(self.desc)) {
-    format_to(buf, " {}}}", get<::wasp::binary::MemoryType>(self.desc));
-  } else if (holds_alternative<::wasp::binary::GlobalType>(self.desc)) {
-    format_to(buf, " {}}}", get<::wasp::binary::GlobalType>(self.desc));
+  switch (self.kind()) {
+    case ::wasp::binary::ExternalKind::Function:
+      format_to(buf, " {}}}", self.index());
+      break;
+
+    case ::wasp::binary::ExternalKind::Table:
+      format_to(buf, " {}}}", self.table_type());
+      break;
+
+    case ::wasp::binary::ExternalKind::Memory:
+      format_to(buf, " {}}}", self.memory_type());
+      break;
+
+    case ::wasp::binary::ExternalKind::Global:
+      format_to(buf, " {}}}", self.global_type());
+      break;
+
+    default:
+      break;
   }
+
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
@@ -356,38 +365,31 @@ template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
     const ::wasp::binary::Instruction& self,
     Ctx& ctx) {
-  using ::wasp::get;
-  using ::wasp::holds_alternative;
-
   memory_buffer buf;
   format_to(buf, "{}", self.opcode);
 
-  if (holds_alternative<::wasp::binary::EmptyImmediate>(self.immediate)) {
+  if (self.has_empty_immediate()) {
     // Nothing.
-  } else if (holds_alternative<::wasp::binary::BlockType>(self.immediate)) {
-    format_to(buf, " {}", get<::wasp::binary::BlockType>(self.immediate));
-  } else if (holds_alternative<::wasp::Index>(self.immediate)) {
-    format_to(buf, " {}", get<::wasp::Index>(self.immediate));
-  } else if (holds_alternative<::wasp::binary::CallIndirectImmediate>(
-                 self.immediate)) {
-    format_to(buf, " {}",
-              get<::wasp::binary::CallIndirectImmediate>(self.immediate));
-  } else if (holds_alternative<::wasp::binary::BrTableImmediate>(
-                 self.immediate)) {
-    format_to(buf, " {}",
-              get<::wasp::binary::BrTableImmediate>(self.immediate));
-  } else if (holds_alternative<::wasp::u8>(self.immediate)) {
-    format_to(buf, " {}", get<::wasp::u8>(self.immediate));
-  } else if (holds_alternative<::wasp::binary::MemArg>(self.immediate)) {
-    format_to(buf, " {}", get<::wasp::binary::MemArg>(self.immediate));
-  } else if (holds_alternative<::wasp::s32>(self.immediate)) {
-    format_to(buf, " {}", get<::wasp::s32>(self.immediate));
-  } else if (holds_alternative<::wasp::s64>(self.immediate)) {
-    format_to(buf, " {}", get<::wasp::s64>(self.immediate));
-  } else if (holds_alternative<::wasp::f32>(self.immediate)) {
-    format_to(buf, " {:f}", get<::wasp::f32>(self.immediate));
-  } else if (holds_alternative<::wasp::f64>(self.immediate)) {
-    format_to(buf, " {:f}", get<::wasp::f64>(self.immediate));
+  } else if (self.has_block_type_immediate()) {
+    format_to(buf, " {}", self.block_type_immediate());
+  } else if (self.has_index_immediate()) {
+    format_to(buf, " {}", self.index_immediate());
+  } else if (self.has_call_indirect_immediate()) {
+    format_to(buf, " {}", self.call_indirect_immediate());
+  } else if (self.has_br_table_immediate()) {
+    format_to(buf, " {}", self.br_table_immediate());
+  } else if (self.has_u8_immediate()) {
+    format_to(buf, " {}", self.u8_immediate());
+  } else if (self.has_mem_arg_immediate()) {
+    format_to(buf, " {}", self.mem_arg_immediate());
+  } else if (self.has_s32_immediate()) {
+    format_to(buf, " {}", self.s32_immediate());
+  } else if (self.has_s64_immediate()) {
+    format_to(buf, " {}", self.s64_immediate());
+  } else if (self.has_f32_immediate()) {
+    format_to(buf, " {:f}", self.f32_immediate());
+  } else if (self.has_f64_immediate()) {
+    format_to(buf, " {:f}", self.f64_immediate());
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }

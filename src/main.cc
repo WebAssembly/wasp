@@ -151,12 +151,10 @@ void Dumper<Errors>::DoPrepass() {
         case SectionId::Import: {
           for (auto import : ReadImportSection(known, errors).sequence) {
             switch (import.kind()) {
-              case ExternalKind::Function: {
-                Index type_index = get<Index>(import.desc);
-                functions.push_back(Function{type_index});
+              case ExternalKind::Function:
+                functions.push_back(Function{import.index()});
                 InsertFunctionName(imported_function_count++, import.name);
                 break;
-              }
 
               case ExternalKind::Table:
                 imported_table_count++;
@@ -352,30 +350,26 @@ void Dumper<Errors>::DoImportSection(Pass pass,
     for (auto import : section.sequence) {
       switch (import.kind()) {
         case ExternalKind::Function: {
-          auto type_index = get<Index>(import.desc);
-          print(" - func[{}] sig={}", function_count, type_index);
+          print(" - func[{}] sig={}", function_count, import.index());
           PrintFunctionName(function_count);
           ++function_count;
           break;
         }
 
         case ExternalKind::Table: {
-          auto table_type = get<TableType>(import.desc);
-          print(" - table[{}] {}", table_count, table_type);
+          print(" - table[{}] {}", table_count, import.table_type());
           ++table_count;
           break;
         }
 
         case ExternalKind::Memory: {
-          auto memory_type = get<MemoryType>(import.desc);
-          print(" - memory[{}] {}", memory_count, memory_type);
+          print(" - memory[{}] {}", memory_count, import.memory_type());
           ++memory_count;
           break;
         }
 
         case ExternalKind::Global: {
-          auto global_type = get<GlobalType>(import.desc);
-          print(" - global[{}] {}", global_count, global_type);
+          print(" - global[{}] {}", global_count, import.global_type());
           ++global_count;
           break;
         }
@@ -498,7 +492,7 @@ optional<Index> GetI32Value(const ConstantExpression& expr) {
   auto instr = *it;
   switch (instr.opcode) {
     case Opcode::I32Const:
-      return get<s32>(instr.immediate);
+      return instr.s32_immediate();
 
     default:
       return nullopt;
