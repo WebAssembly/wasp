@@ -42,12 +42,22 @@ enum class Pass {
   RawData,
 };
 
+struct Options {
+  bool print_headers = false;
+  bool print_details = false;
+  bool print_disassembly = false;
+  bool print_raw_data = false;
+  string_view section_name;
+};
+
 template <typename Errors>
 struct Dumper {
-  explicit Dumper(string_view filename, SpanU8 data);
+  explicit Dumper(string_view filename, SpanU8 data, Options);
 
+  void Dump();
   void DoPrepass();
   void DoPass(Pass);
+  bool SectionMatches(Section) const;
   void DoKnownSection(Pass, KnownSection);
   void DoCustomSection(Pass, CustomSection);
   void DoSectionHeader(Pass, string_view name, SpanU8 data);
@@ -96,6 +106,7 @@ struct Dumper {
 
   Errors errors;
   std::string filename;
+  Options options;
   SpanU8 data;
   LazyModule<Errors> module;
   std::vector<TypeEntry> type_entries;
@@ -110,37 +121,99 @@ struct Dumper {
 };
 
 int main(int argc, char** argv) {
-  argc--;
-  argv++;
-  if (argc == 0) {
-    print("No files.\n");
+  std::vector<string_view> filenames;
+  Options options;
+
+  for (int i = 1; i < argc; ++i) {
+    string_view arg = argv[i];
+    if (arg[0] == '-') {
+      switch (arg[1]) {
+        case 'h': options.print_headers = true; break;
+        case 'd': options.print_disassembly = true; break;
+        case 'x': options.print_details = true; break;
+        case 's': options.print_raw_data = true; break;
+        case 'j': options.section_name = argv[++i]; break;
+        case '-':
+          if (arg == "--headers") {
+            options.print_headers = true;
+          } else if (arg == "--disassemble") {
+            options.print_disassembly = true;
+          } else if (arg == "--details") {
+            options.print_details = true;
+          } else if (arg == "--full-contents") {
+            options.print_raw_data = true;
+          } else if (arg == "--section") {
+            options.section_name = argv[++i];
+          } else {
+            print("Unknown long argument {}\n", arg);
+          }
+          break;
+        default:
+          print("Unknown short argument {}\n", arg[0]);
+          break;
+      }
+    } else {
+      filenames.push_back(arg);
+    }
+  }
+
+  if (filenames.empty()) {
+    print("No filenames given.\n");
     return 1;
   }
 
-  std::string filename = argv[0];
-  auto optbuf = ReadFile(filename);
-  if (!optbuf) {
-    print("Error reading file.\n");
+  if (!(options.print_headers || options.print_disassembly ||
+        options.print_details || options.print_raw_data)) {
+    print("At least one of the following switches must be given:\n");
+    print(" -d/--disassemble\n");
+    print(" -h/--headers\n");
+    print(" -x/--details\n");
+    print(" -s/--full-contents\n");
     return 1;
   }
 
-  SpanU8 data{*optbuf};
-  Dumper<ErrorsNop> dumper{filename, data};
-  dumper.DoPrepass();
-  // dumper.DoPass(Pass::Headers);
-  // dumper.DoPass(Pass::Details);
-  // dumper.DoPass(Pass::Disassemble);
-  dumper.DoPass(Pass::RawData);
+  for (auto filename : filenames) {
+    auto optbuf = ReadFile(filename);
+    if (!optbuf) {
+      print("Error reading file {}.\n", filename);
+      continue;
+    }
+
+    SpanU8 data{*optbuf};
+    Dumper<ErrorsNop> dumper{filename, data, options};
+    dumper.Dump();
+  }
+
   return 0;
 }
 
 template <typename Errors>
-Dumper<Errors>::Dumper(string_view filename, SpanU8 data)
-    : filename{filename}, data{data}, module{ReadModule(data, errors)} {}
+Dumper<Errors>::Dumper(string_view filename, SpanU8 data, Options options)
+    : filename(filename),
+      options{options},
+      data{data},
+      module{ReadModule(data, errors)} {}
+
+template <typename Errors>
+void Dumper<Errors>::Dump() {
+  print("\n{}:\tfile format wasm {}\n", filename, *module.version);
+  DoPrepass();
+  if (options.print_headers) {
+    DoPass(Pass::Headers);
+  }
+  if (options.print_details) {
+    DoPass(Pass::Details);
+  }
+  if (options.print_disassembly) {
+    DoPass(Pass::Disassemble);
+  }
+  if (options.print_raw_data) {
+    DoPass(Pass::RawData);
+  }
+}
 
 template <typename Errors>
 void Dumper<Errors>::DoPrepass() {
-  print("{}:\tfile format wasm {}\n", filename, *module.version);
   for (auto section : module.sections) {
     if (section.is_known()) {
       auto known = section.known();
@@ -237,12 +310,46 @@ void Dumper<Errors>::DoPass(Pass pass) {
   }
 
   for (auto section : module.sections) {
+    if (!SectionMatches(section)) {
+      continue;
+    }
     if (section.is_known()) {
       DoKnownSection(pass, section.known());
     } else if (section.is_custom()) {
       DoCustomSection(pass, section.custom());
     }
   }
+}
+
+namespace {
+
+template <typename S1, typename S2>
+bool StringsAreEqualCaseInsensitive(const S1& s1, const S2& s2) {
+  auto it1 = s1.begin(), end1 = s1.end();
+  auto it2 = s2.begin(), end2 = s2.end();
+  for (; it1 != end1 && it2 != end2; ++it1, ++it2) {
+    if (std::tolower(*it1) != std::tolower(*it2)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+}  // namespace
+
+template <typename Errors>
+bool Dumper<Errors>::SectionMatches(Section section) const {
+  if (options.section_name.empty()) {
+    return true;
+  }
+
+  std::string name;
+  if (section.is_known()) {
+    name = format("{}", section.known().id);
+  } else if (section.is_custom()) {
+    name = section.custom().name.to_string();
+  }
+  return StringsAreEqualCaseInsensitive(name, options.section_name);
 }
 
 template <typename Errors>

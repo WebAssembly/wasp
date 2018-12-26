@@ -25,7 +25,7 @@
 
 namespace wasp {
 
-optional<std::vector<u8>> ReadFile(const std::string& filename);
+optional<std::vector<u8>> ReadFile(string_view filename);
 
 }  // namespace wasp
 
