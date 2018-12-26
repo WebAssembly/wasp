@@ -39,6 +39,7 @@ enum class Pass {
   Headers,
   Details,
   Disassemble,
+  RawData,
 };
 
 template <typename Errors>
@@ -126,9 +127,10 @@ int main(int argc, char** argv) {
   SpanU8 data{*optbuf};
   Dumper<ErrorsNop> dumper{filename, data};
   dumper.DoPrepass();
-  dumper.DoPass(Pass::Headers);
-  dumper.DoPass(Pass::Details);
-  dumper.DoPass(Pass::Disassemble);
+  // dumper.DoPass(Pass::Headers);
+  // dumper.DoPass(Pass::Details);
+  // dumper.DoPass(Pass::Disassemble);
+  dumper.DoPass(Pass::RawData);
   return 0;
 }
 
@@ -222,16 +224,15 @@ template <typename Errors>
 void Dumper<Errors>::DoPass(Pass pass) {
   switch (pass) {
     case Pass::Headers:
-      print("\n");
-      print("Sections:\n\n");
+      print("\nSections:\n\n");
       break;
 
     case Pass::Details:
-      print("\n");
-      print("Section Details:\n\n");
+      print("\nSection Details:\n\n");
       break;
 
     case Pass::Disassemble:
+    case Pass::RawData:
       break;
   }
 
@@ -309,10 +310,10 @@ void Dumper<Errors>::DoCustomSection(Pass pass, CustomSection custom) {
 
 template <typename Errors>
 void Dumper<Errors>::DoSectionHeader(Pass pass, string_view name, SpanU8 data) {
+  auto offset = data.begin() - module.data.begin();
+  auto size = data.size();
   switch (pass) {
     case Pass::Headers: {
-      auto offset = data.begin() - module.data.begin();
-      auto size = data.size();
       print("{:>9} start={:#010x} end={:#010x} (size={:#010x}) ", name, offset,
             offset + size, size);
       break;
@@ -324,6 +325,12 @@ void Dumper<Errors>::DoSectionHeader(Pass pass, string_view name, SpanU8 data) {
 
     case Pass::Disassemble:
       break;
+
+    case Pass::RawData: {
+      print("\nContents of section {}:\n", name);
+      PrintMemory(data, offset, PrintChars::Yes);
+      break;
+    }
   }
 }
 
