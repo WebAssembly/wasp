@@ -82,6 +82,7 @@ struct Dumper {
   template <typename... Args>
   void PrintDetails(Pass, const char* format, const Args&...);
   void PrintFunctionName(Index func_index);
+  void PrintGlobalName(Index global_index);
   void PrintMemory(SpanU8 data,
                    Index offset,
                    PrintChars print_chars = PrintChars::Yes,
@@ -614,6 +615,12 @@ void Dumper<Errors>::Disassemble(Index func_index, Code code) {
       if (first_line) {
         first_line = false;
         print(" {:{}s}{}", "", indent, instr);
+        if (instr.opcode == Opcode::Call) {
+          PrintFunctionName(instr.index_immediate());
+        } else if (instr.opcode == Opcode::GlobalGet ||
+                   instr.opcode == Opcode::GlobalSet) {
+          PrintGlobalName(instr.index_immediate());
+        }
       }
       print("\n");
     }
@@ -676,6 +683,13 @@ void Dumper<Errors>::PrintDetails(Pass pass,
 template <typename Errors>
 void Dumper<Errors>::PrintFunctionName(Index func_index) {
   if (auto name = GetFunctionName(func_index)) {
+    print(" <{}>", *name);
+  }
+}
+
+template <typename Errors>
+void Dumper<Errors>::PrintGlobalName(Index func_index) {
+  if (auto name = GetGlobalName(func_index)) {
     print(" <{}>", *name);
   }
 }
