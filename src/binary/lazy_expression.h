@@ -33,6 +33,16 @@ LazyExpression<Errors> ReadExpression(SpanU8 data, Errors& errors) {
   return LazyExpression<Errors>{data, errors};
 }
 
+template <typename Errors>
+LazyExpression<Errors> ReadExpression(Expression expr, Errors& errors) {
+  return ReadExpression(expr.data, errors);
+}
+
+template <typename Errors>
+LazyExpression<Errors> ReadExpression(ConstantExpression expr, Errors& errors) {
+  return ReadExpression(expr.data, errors);
+}
+
 }  // namespace binary
 }  // namespace wasp
 

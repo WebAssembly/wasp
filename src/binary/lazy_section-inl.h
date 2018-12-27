@@ -23,53 +23,28 @@ template <typename T, typename Errors>
 LazySection<T, Errors>::LazySection(SpanU8 data, Errors& errors)
     : count(ReadCount(&data, errors)), sequence(data, errors) {}
 
-template <typename T, typename Errors>
-LazySection<T, Errors>::LazySection(KnownSection section, Errors& errors)
-    : LazySection(section.data, errors) {}
+#define WASP_DEFINE_LAZY_READ_FUNC(SectionType, ReadFunc)          \
+  template <typename Errors>                                       \
+  SectionType<Errors> ReadFunc(SpanU8 data, Errors& errors) {      \
+    return SectionType<Errors>{data, errors};                      \
+  }                                                                \
+  template <typename Errors>                                       \
+  SectionType<Errors> ReadFunc(KnownSection sec, Errors& errors) { \
+    return ReadFunc(sec.data, errors);                             \
+  }
 
-template <typename T, typename Errors>
-LazySection<T, Errors>::LazySection(CustomSection section, Errors& errors)
-    : LazySection(section.data, errors) {}
+WASP_DEFINE_LAZY_READ_FUNC(LazyTypeSection, ReadTypeSection)
+WASP_DEFINE_LAZY_READ_FUNC(LazyImportSection, ReadImportSection)
+WASP_DEFINE_LAZY_READ_FUNC(LazyFunctionSection, ReadFunctionSection)
+WASP_DEFINE_LAZY_READ_FUNC(LazyTableSection, ReadTableSection)
+WASP_DEFINE_LAZY_READ_FUNC(LazyMemorySection, ReadMemorySection)
+WASP_DEFINE_LAZY_READ_FUNC(LazyGlobalSection, ReadGlobalSection)
+WASP_DEFINE_LAZY_READ_FUNC(LazyExportSection, ReadExportSection)
+WASP_DEFINE_LAZY_READ_FUNC(LazyElementSection, ReadElementSection)
+WASP_DEFINE_LAZY_READ_FUNC(LazyCodeSection, ReadCodeSection)
+WASP_DEFINE_LAZY_READ_FUNC(LazyDataSection, ReadDataSection)
 
-template <typename Data, typename Errors>
-LazyTypeSection<Errors> ReadTypeSection(Data&& data, Errors& errors) {
-  return LazyTypeSection<Errors>{std::forward<Data>(data), errors};
-}
-
-template <typename Data, typename Errors>
-LazyImportSection<Errors> ReadImportSection(Data&& data, Errors& errors) {
-  return LazyImportSection<Errors>{std::forward<Data>(data), errors};
-}
-
-template <typename Data, typename Errors>
-LazyFunctionSection<Errors> ReadFunctionSection(Data&& data, Errors& errors) {
-  return LazyFunctionSection<Errors>{std::forward<Data>(data), errors};
-}
-
-template <typename Data, typename Errors>
-LazyTableSection<Errors> ReadTableSection(Data&& data, Errors& errors) {
-  return LazyTableSection<Errors>{std::forward<Data>(data), errors};
-}
-
-template <typename Data, typename Errors>
-LazyMemorySection<Errors> ReadMemorySection(Data&& data, Errors& errors) {
-  return LazyMemorySection<Errors>{std::forward<Data>(data), errors};
-}
-
-template <typename Data, typename Errors>
-LazyGlobalSection<Errors> ReadGlobalSection(Data&& data, Errors& errors) {
-  return LazyGlobalSection<Errors>{std::forward<Data>(data), errors};
-}
-
-template <typename Data, typename Errors>
-LazyExportSection<Errors> ReadExportSection(Data&& data, Errors& errors) {
-  return LazyExportSection<Errors>{std::forward<Data>(data), errors};
-}
-
-template <typename Data, typename Errors>
-LazyElementSection<Errors> ReadElementSection(Data&& data, Errors& errors) {
-  return LazyElementSection<Errors>{std::forward<Data>(data), errors};
-}
+#undef WASP_DEFINE_LAZY_READ_FUNC
 
 template <typename Errors>
 StartSection ReadStartSection(SpanU8 data, Errors& errors) {
@@ -78,19 +53,8 @@ StartSection ReadStartSection(SpanU8 data, Errors& errors) {
 }
 
 template <typename Errors>
-StartSection ReadStartSection(KnownSection known, Errors& errors) {
-  SpanU8 copy = known.data;
-  return Read<Start>(&copy, errors);
-}
-
-template <typename Data, typename Errors>
-LazyCodeSection<Errors> ReadCodeSection(Data&& data, Errors& errors) {
-  return LazyCodeSection<Errors>{std::forward<Data>(data), errors};
-}
-
-template <typename Data, typename Errors>
-LazyDataSection<Errors> ReadDataSection(Data&& data, Errors& errors) {
-  return LazyDataSection<Errors>{std::forward<Data>(data), errors};
+StartSection ReadStartSection(KnownSection sec, Errors& errors) {
+  return ReadStartSection(sec.data, errors);
 }
 
 }  // namespace binary

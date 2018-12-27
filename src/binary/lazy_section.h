@@ -29,61 +29,36 @@ template <typename T, typename Errors>
 class LazySection {
  public:
   explicit LazySection(SpanU8, Errors&);
-  explicit LazySection(KnownSection, Errors&);
-  explicit LazySection(CustomSection, Errors&);
 
   optional<Index> count;
   LazySequence<T, Errors> sequence;
 };
 
-/// ---
-template <typename Errors>
-using LazyTypeSection = LazySection<TypeEntry, Errors>;
+#define WASP_DECLARE_LAZY_KNOWN_SECTION(SectionType, ElementType, ReadFunc) \
+  template <typename Errors>                                                \
+  using SectionType = LazySection<ElementType, Errors>;                     \
+                                                                            \
+  template <typename Errors>                                                \
+  SectionType<Errors> ReadFunc(SpanU8, Errors&);                            \
+  template <typename Errors>                                                \
+  SectionType<Errors> ReadFunc(KnownSection, Errors&);
 
-template <typename Data, typename Errors>
-LazyTypeSection<Errors> ReadTypeSection(Data&&, Errors&);
+WASP_DECLARE_LAZY_KNOWN_SECTION(LazyTypeSection, TypeEntry, ReadTypeSection)
+WASP_DECLARE_LAZY_KNOWN_SECTION(LazyImportSection, Import, ReadImportSection)
+WASP_DECLARE_LAZY_KNOWN_SECTION(LazyFunctionSection,
+                                Function,
+                                ReadFunctionSection)
+WASP_DECLARE_LAZY_KNOWN_SECTION(LazyTableSection, Table, ReadTableSection)
+WASP_DECLARE_LAZY_KNOWN_SECTION(LazyMemorySection, Memory, ReadMemorySection)
+WASP_DECLARE_LAZY_KNOWN_SECTION(LazyGlobalSection, Global, ReadGlobalSection)
+WASP_DECLARE_LAZY_KNOWN_SECTION(LazyExportSection, Export, ReadExportSection)
+WASP_DECLARE_LAZY_KNOWN_SECTION(LazyElementSection,
+                                ElementSegment,
+                                ReadElementSection)
+WASP_DECLARE_LAZY_KNOWN_SECTION(LazyCodeSection, Code, ReadCodeSection)
+WASP_DECLARE_LAZY_KNOWN_SECTION(LazyDataSection, DataSegment, ReadDataSection)
 
-/// ---
-template <typename Errors>
-using LazyImportSection = LazySection<Import, Errors>;
-
-template <typename Data, typename Errors>
-LazyImportSection<Errors> ReadImportSection(Data&&, Errors&);
-
-/// ---
-template <typename Errors>
-using LazyFunctionSection = LazySection<Function, Errors>;
-
-template <typename Data, typename Errors>
-LazyFunctionSection<Errors> ReadFunctionSection(Data&&, Errors&);
-
-/// ---
-template <typename Errors>
-using LazyTableSection = LazySection<Table, Errors>;
-
-template <typename Data, typename Errors>
-LazyTableSection<Errors> ReadTableSection(Data&&, Errors&);
-
-/// ---
-template <typename Errors>
-using LazyMemorySection = LazySection<Memory, Errors>;
-
-template <typename Data, typename Errors>
-LazyMemorySection<Errors> ReadMemorySection(Data&&, Errors&);
-
-/// ---
-template <typename Errors>
-using LazyGlobalSection = LazySection<Global, Errors>;
-
-template <typename Data, typename Errors>
-LazyGlobalSection<Errors> ReadGlobalSection(Data&&, Errors&);
-
-/// ---
-template <typename Errors>
-using LazyExportSection = LazySection<Export, Errors>;
-
-template <typename Data, typename Errors>
-LazyExportSection<Errors> ReadExportSection(Data&&, Errors&);
+#undef WASP_DECLARE_LAZY_KNOWN_SECTION
 
 /// ---
 using StartSection = optional<Start>;
@@ -93,26 +68,6 @@ StartSection ReadStartSection(SpanU8, Errors&);
 template <typename Errors>
 StartSection ReadStartSection(KnownSection, Errors&);
 
-/// ---
-template <typename Errors>
-using LazyElementSection = LazySection<ElementSegment, Errors>;
-
-template <typename Data, typename Errors>
-LazyElementSection<Errors> ReadElementSection(Data&&, Errors&);
-
-/// ---
-template <typename Errors>
-using LazyCodeSection = LazySection<Code, Errors>;
-
-template <typename Data, typename Errors>
-LazyCodeSection<Errors> ReadCodeSection(Data&&, Errors&);
-
-/// ---
-template <typename Errors>
-using LazyDataSection = LazySection<DataSegment, Errors>;
-
-template <typename Data, typename Errors>
-LazyDataSection<Errors> ReadDataSection(Data&&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

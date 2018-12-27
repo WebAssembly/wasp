@@ -277,7 +277,8 @@ void Dumper::DoPrepass() {
         for (auto subsection : ReadNameSection(custom, errors)) {
           if (subsection.id == NameSubsectionId::FunctionNames) {
             for (auto name_assoc :
-                 ReadFunctionNamesSubsection(subsection, errors).sequence) {
+                 ReadFunctionNamesSubsection(subsection, errors)
+                     .sequence) {
               InsertFunctionName(name_assoc.index, name_assoc.name);
             }
           }
@@ -352,47 +353,47 @@ void Dumper::DoKnownSection(Pass pass, KnownSection known) {
       break;
 
     case SectionId::Type:
-      DoTypeSection(pass, ReadTypeSection(known.data, errors));
+      DoTypeSection(pass, ReadTypeSection(known, errors));
       break;
 
     case SectionId::Import:
-      DoImportSection(pass, ReadImportSection(known.data, errors));
+      DoImportSection(pass, ReadImportSection(known, errors));
       break;
 
     case SectionId::Function:
-      DoFunctionSection(pass, ReadFunctionSection(known.data, errors));
+      DoFunctionSection(pass, ReadFunctionSection(known, errors));
       break;
 
     case SectionId::Table:
-      DoTableSection(pass, ReadTableSection(known.data, errors));
+      DoTableSection(pass, ReadTableSection(known, errors));
       break;
 
     case SectionId::Memory:
-      DoMemorySection(pass, ReadMemorySection(known.data, errors));
+      DoMemorySection(pass, ReadMemorySection(known, errors));
       break;
 
     case SectionId::Global:
-      DoGlobalSection(pass, ReadGlobalSection(known.data, errors));
+      DoGlobalSection(pass, ReadGlobalSection(known, errors));
       break;
 
     case SectionId::Export:
-      DoExportSection(pass, ReadExportSection(known.data, errors));
+      DoExportSection(pass, ReadExportSection(known, errors));
       break;
 
     case SectionId::Start:
-      DoStartSection(pass, ReadStartSection(known.data, errors));
+      DoStartSection(pass, ReadStartSection(known, errors));
       break;
 
     case SectionId::Element:
-      DoElementSection(pass, ReadElementSection(known.data, errors));
+      DoElementSection(pass, ReadElementSection(known, errors));
       break;
 
     case SectionId::Code:
-      DoCodeSection(pass, ReadCodeSection(known.data, errors));
+      DoCodeSection(pass, ReadCodeSection(known, errors));
       break;
 
     case SectionId::Data:
-      DoDataSection(pass, ReadDataSection(known.data, errors));
+      DoDataSection(pass, ReadDataSection(known, errors));
       break;
   }
 }
@@ -519,7 +520,7 @@ namespace {
 
 void PrintConstantExpression(const ConstantExpression& expr,
                              ErrorsType& errors) {
-  auto instrs = ReadExpression(expr.data, errors);
+  auto instrs = ReadExpression(expr, errors);
   string_view space;
   for (auto instr : instrs) {
     if (instr.opcode != Opcode::End) {
@@ -574,7 +575,7 @@ namespace {
 
 optional<Index> GetI32Value(const ConstantExpression& expr) {
   ErrorsNop errors;
-  auto instrs = ReadExpression(expr.data, errors);
+  auto instrs = ReadExpression(expr, errors);
   auto it = instrs.begin();
   if (it == instrs.end()) {
     return nullopt;
@@ -679,7 +680,7 @@ void Dumper::Disassemble(Index func_index, Code code) {
   }
   int indent = 0;
   auto last_data = code.body.data;
-  auto instrs = ReadExpression(code.body.data, errors);
+  auto instrs = ReadExpression(code.body, errors);
   for (auto it = instrs.begin(), end = instrs.end(); it != end; ++it) {
     auto instr = *it;
     if (instr.opcode == Opcode::Else || instr.opcode == Opcode::End) {
