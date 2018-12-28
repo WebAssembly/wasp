@@ -75,8 +75,6 @@ enum class NameSubsectionId : u8 {
 };
 
 struct MemArg {
-  explicit MemArg(u32 align_log2, u32 offset);
-
   u32 align_log2;
   u32 offset;
 };
@@ -96,8 +94,6 @@ bool operator==(const Limits&, const Limits&);
 bool operator!=(const Limits&, const Limits&);
 
 struct Locals {
-  explicit Locals(Index count, ValueType type);
-
   Index count;
   ValueType type;
 };
@@ -106,8 +102,6 @@ bool operator==(const Locals&, const Locals&);
 bool operator!=(const Locals&, const Locals&);
 
 struct KnownSection {
-  explicit KnownSection(SectionId id, SpanU8 data);
-
   SectionId id;
   SpanU8 data;
 };
@@ -116,8 +110,6 @@ bool operator==(const KnownSection&, const KnownSection&);
 bool operator!=(const KnownSection&, const KnownSection&);
 
 struct CustomSection {
-  explicit CustomSection(string_view name, SpanU8 data);
-
   string_view name;
   SpanU8 data;
 };
@@ -126,9 +118,6 @@ bool operator==(const CustomSection&, const CustomSection&);
 bool operator!=(const CustomSection&, const CustomSection&);
 
 struct Section {
-  template <typename T>
-  explicit Section(T&& contents);
-
   bool is_known() const;
   bool is_custom() const;
 
@@ -146,8 +135,6 @@ bool operator!=(const Section&, const Section&);
 using ValueTypes = std::vector<ValueType>;
 
 struct FunctionType {
-  explicit FunctionType(ValueTypes&& param_types, ValueTypes&& result_types);
-
   ValueTypes param_types;
   ValueTypes result_types;
 };
@@ -156,8 +143,6 @@ bool operator==(const FunctionType&, const FunctionType&);
 bool operator!=(const FunctionType&, const FunctionType&);
 
 struct TypeEntry {
-  explicit TypeEntry(FunctionType&&);
-
   FunctionType type;
 };
 
@@ -165,8 +150,6 @@ bool operator==(const TypeEntry&, const TypeEntry&);
 bool operator!=(const TypeEntry&, const TypeEntry&);
 
 struct TableType {
-  explicit TableType(Limits limits, ElementType elemtype);
-
   Limits limits;
   ElementType elemtype;
 };
@@ -175,8 +158,6 @@ bool operator==(const TableType&, const TableType&);
 bool operator!=(const TableType&, const TableType&);
 
 struct MemoryType {
-  explicit MemoryType(Limits limits);
-
   Limits limits;
 };
 
@@ -184,8 +165,6 @@ bool operator==(const MemoryType&, const MemoryType&);
 bool operator!=(const MemoryType&, const MemoryType&);
 
 struct GlobalType {
-  GlobalType(ValueType valtype, Mutability mut);
-
   ValueType valtype;
   Mutability mut;
 };
@@ -194,9 +173,6 @@ bool operator==(const GlobalType&, const GlobalType&);
 bool operator!=(const GlobalType&, const GlobalType&);
 
 struct Import {
-  template <typename T>
-  explicit Import(string_view module, string_view name, T&& desc);
-
   ExternalKind kind() const;
   bool is_function() const;
   bool is_table() const;
@@ -221,8 +197,6 @@ bool operator==(const Import&, const Import&);
 bool operator!=(const Import&, const Import&);
 
 struct Expression {
-  explicit Expression(SpanU8 data);
-
   SpanU8 data;
 };
 
@@ -230,8 +204,6 @@ bool operator==(const Expression&, const Expression&);
 bool operator!=(const Expression&, const Expression&);
 
 struct ConstantExpression {
-  explicit ConstantExpression(SpanU8 data);
-
   SpanU8 data;
 };
 
@@ -244,8 +216,6 @@ bool operator==(const EmptyImmediate&, const EmptyImmediate&);
 bool operator!=(const EmptyImmediate&, const EmptyImmediate&);
 
 struct CallIndirectImmediate {
-  explicit CallIndirectImmediate(Index index, u8 reserved);
-
   Index index;
   u8 reserved;
 };
@@ -254,8 +224,6 @@ bool operator==(const CallIndirectImmediate&, const CallIndirectImmediate&);
 bool operator!=(const CallIndirectImmediate&, const CallIndirectImmediate&);
 
 struct BrTableImmediate {
-  explicit BrTableImmediate(std::vector<Index>&& targets, Index default_target);
-
   std::vector<Index> targets;
   Index default_target;
 };
@@ -324,8 +292,6 @@ bool operator!=(const Instruction&, const Instruction&);
 using Instrs = std::vector<Instruction>;
 
 struct Function {
-  explicit Function(Index type_index);
-
   Index type_index;
 };
 
@@ -333,8 +299,6 @@ bool operator==(const Function&, const Function&);
 bool operator!=(const Function&, const Function&);
 
 struct Table {
-  explicit Table(TableType table_type);
-
   TableType table_type;
 };
 
@@ -342,8 +306,6 @@ bool operator==(const Table&, const Table&);
 bool operator!=(const Table&, const Table&);
 
 struct Memory {
-  explicit Memory(MemoryType memory_type);
-
   MemoryType memory_type;
 };
 
@@ -351,8 +313,6 @@ bool operator==(const Memory&, const Memory&);
 bool operator!=(const Memory&, const Memory&);
 
 struct Global {
-  explicit Global(GlobalType global_type, ConstantExpression init);
-
   GlobalType global_type;
   ConstantExpression init;
 };
@@ -361,8 +321,6 @@ bool operator==(const Global&, const Global&);
 bool operator!=(const Global&, const Global&);
 
 struct Export {
-  explicit Export(ExternalKind kind, string_view name, Index index);
-
   ExternalKind kind;
   string_view name;
   Index index;
@@ -372,8 +330,6 @@ bool operator==(const Export&, const Export&);
 bool operator!=(const Export&, const Export&);
 
 struct Start {
-  explicit Start(Index func_index);
-
   Index func_index;
 };
 
@@ -381,10 +337,6 @@ bool operator==(const Start&, const Start&);
 bool operator!=(const Start&, const Start&);
 
 struct ElementSegment {
-  explicit ElementSegment(Index table_index,
-                          ConstantExpression offset,
-                          std::vector<Index>&& init);
-
   Index table_index;
   ConstantExpression offset;
   std::vector<Index> init;
@@ -394,8 +346,6 @@ bool operator==(const ElementSegment&, const ElementSegment&);
 bool operator!=(const ElementSegment&, const ElementSegment&);
 
 struct Code {
-  explicit Code(std::vector<Locals>&& locals, Expression body);
-
   std::vector<Locals> locals;
   Expression body;
 };
@@ -404,10 +354,6 @@ bool operator==(const Code&, const Code&);
 bool operator!=(const Code&, const Code&);
 
 struct DataSegment {
-  explicit DataSegment(Index memory_index,
-                       ConstantExpression offset,
-                       SpanU8 init);
-
   Index memory_index;
   ConstantExpression offset;
   SpanU8 init;
@@ -417,8 +363,6 @@ bool operator==(const DataSegment&, const DataSegment&);
 bool operator!=(const DataSegment&, const DataSegment&);
 
 struct NameAssoc {
-  NameAssoc(Index, string_view name);
-
   Index index;
   string_view name;
 };
@@ -429,8 +373,6 @@ bool operator!=(const NameAssoc&, const NameAssoc&);
 using NameMap = std::vector<NameAssoc>;
 
 struct IndirectNameAssoc {
-  explicit IndirectNameAssoc(Index, NameMap&&);
-
   Index index;
   NameMap name_map;
 };
@@ -439,8 +381,6 @@ bool operator==(const IndirectNameAssoc&, const IndirectNameAssoc&);
 bool operator!=(const IndirectNameAssoc&, const IndirectNameAssoc&);
 
 struct NameSubsection {
-  explicit NameSubsection(NameSubsectionId, SpanU8 data);
-
   NameSubsectionId id;
   SpanU8 data;
 };
