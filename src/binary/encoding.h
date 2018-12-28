@@ -19,6 +19,8 @@
 
 #include "src/base/types.h"
 #include "src/binary/defs.h"
+#include "src/binary/name_section.h"
+#include "src/binary/section.h"
 #include "src/binary/types.h"
 
 namespace wasp {

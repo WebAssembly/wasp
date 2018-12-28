@@ -17,30 +17,6 @@
 namespace wasp {
 namespace binary {
 
-inline bool Section::is_known() const {
-  return contents.index() == 0;
-}
-
-inline bool Section::is_custom() const {
-  return contents.index() == 1;
-}
-
-inline KnownSection& Section::known() {
-  return get<KnownSection>(contents);
-}
-
-inline const KnownSection& Section::known() const {
-  return get<KnownSection>(contents);
-}
-
-inline CustomSection& Section::custom() {
-  return get<CustomSection>(contents);
-}
-
-inline const CustomSection& Section::custom() const {
-  return get<CustomSection>(contents);
-}
-
 inline ExternalKind Import::kind() const {
   return static_cast<ExternalKind>(desc.index());
 }

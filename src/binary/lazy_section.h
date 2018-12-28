@@ -20,6 +20,7 @@
 #include "src/base/optional.h"
 #include "src/base/span.h"
 #include "src/binary/lazy_sequence.h"
+#include "src/binary/section.h"
 #include "src/binary/types.h"
 
 namespace wasp {

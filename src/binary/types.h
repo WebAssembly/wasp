@@ -60,21 +60,9 @@ enum class Mutability : u8 {
 #undef WASP_V
 };
 
-enum class SectionId : u32 {
-#define WASP_V(val, Name, str) Name,
-  WASP_FOREACH_SECTION(WASP_V)
-#undef WASP_V
-};
-
 enum class Opcode : u32 {
 #define WASP_V(prefix, val, Name, str) Name,
   WASP_FOREACH_OPCODE(WASP_V)
-#undef WASP_V
-};
-
-enum class NameSubsectionId : u8 {
-#define WASP_V(val, Name, str) Name,
-  WASP_FOREACH_NAME_SUBSECTION_ID(WASP_V)
 #undef WASP_V
 };
 
@@ -104,37 +92,6 @@ struct Locals {
 
 bool operator==(const Locals&, const Locals&);
 bool operator!=(const Locals&, const Locals&);
-
-struct KnownSection {
-  SectionId id;
-  SpanU8 data;
-};
-
-bool operator==(const KnownSection&, const KnownSection&);
-bool operator!=(const KnownSection&, const KnownSection&);
-
-struct CustomSection {
-  string_view name;
-  SpanU8 data;
-};
-
-bool operator==(const CustomSection&, const CustomSection&);
-bool operator!=(const CustomSection&, const CustomSection&);
-
-struct Section {
-  bool is_known() const;
-  bool is_custom() const;
-
-  KnownSection& known();
-  const KnownSection& known() const;
-  CustomSection& custom();
-  const CustomSection& custom() const;
-
-  variant<KnownSection, CustomSection> contents;
-};
-
-bool operator==(const Section&, const Section&);
-bool operator!=(const Section&, const Section&);
 
 using ValueTypes = std::vector<ValueType>;
 
@@ -374,32 +331,6 @@ struct DataSegment {
 
 bool operator==(const DataSegment&, const DataSegment&);
 bool operator!=(const DataSegment&, const DataSegment&);
-
-struct NameAssoc {
-  Index index;
-  string_view name;
-};
-
-bool operator==(const NameAssoc&, const NameAssoc&);
-bool operator!=(const NameAssoc&, const NameAssoc&);
-
-using NameMap = std::vector<NameAssoc>;
-
-struct IndirectNameAssoc {
-  Index index;
-  NameMap name_map;
-};
-
-bool operator==(const IndirectNameAssoc&, const IndirectNameAssoc&);
-bool operator!=(const IndirectNameAssoc&, const IndirectNameAssoc&);
-
-struct NameSubsection {
-  NameSubsectionId id;
-  SpanU8 data;
-};
-
-bool operator==(const NameSubsection&, const NameSubsection&);
-bool operator!=(const NameSubsection&, const NameSubsection&);
 
 }  // namespace binary
 }  // namespace wasp

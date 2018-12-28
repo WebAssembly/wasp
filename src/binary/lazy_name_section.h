@@ -22,6 +22,8 @@
 #include "src/base/string_view.h"
 #include "src/binary/lazy_section.h"
 #include "src/binary/lazy_sequence.h"
+#include "src/binary/name_section.h"
+#include "src/binary/section.h"
 #include "src/binary/types.h"
 
 namespace wasp {

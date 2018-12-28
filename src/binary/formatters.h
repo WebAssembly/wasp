@@ -18,6 +18,8 @@
 #define WASP_BINARY_FORMATTERS_H_
 
 #include "src/base/format.h"
+#include "src/binary/name_section.h"
+#include "src/binary/section.h"
 #include "src/binary/types.h"
 
 namespace fmt {
