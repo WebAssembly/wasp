@@ -19,11 +19,6 @@
 
 #include <cstdint>
 
-#include "src/base/optional.h"
-#include "src/base/span.h"
-#include "src/base/string_view.h"
-#include "src/base/variant.h"
-
 namespace wasp {
 
 using s8 = int8_t;
@@ -38,8 +33,6 @@ using f32 = float;
 using f64 = double;
 
 using Index = u32;
-
-using SpanU8 = span<const u8>;
 
 }  // namespace wasp
 

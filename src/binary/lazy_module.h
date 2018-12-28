@@ -17,9 +17,10 @@
 #ifndef WASP_BINARY_LAZY_MODULE_H
 #define WASP_BINARY_LAZY_MODULE_H
 
-#include "src/base/types.h"
-#include "src/binary/types.h"
+#include "src/base/optional.h"
+#include "src/base/span.h"
 #include "src/binary/lazy_sequence.h"
+#include "src/binary/types.h"
 
 namespace wasp {
 namespace binary {

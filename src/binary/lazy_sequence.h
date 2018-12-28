@@ -19,7 +19,8 @@
 
 #include <iterator>
 
-#include "src/base/types.h"
+#include "src/base/optional.h"
+#include "src/base/span.h"
 
 namespace wasp {
 namespace binary {

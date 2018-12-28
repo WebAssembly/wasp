@@ -19,6 +19,8 @@
 
 #include "nonstd/span.hpp"
 
+#include "src/base/types.h"
+
 namespace wasp {
 
 using nonstd::span;
@@ -38,6 +40,8 @@ template <class T, span_index_t Extent>
 span<T, dynamic_extent> remove_prefix(span<T, Extent> s, span_index_t offset) {
   return s.subspan(offset);
 }
+
+using SpanU8 = span<const u8>;
 
 }  // namespace wasp
 

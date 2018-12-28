@@ -21,6 +21,7 @@
 #include "src/binary/encoding.h"
 #include "src/binary/errors_context_guard.h"
 #include "src/binary/formatters.h"
+#include "src/binary/types.h"
 
 #define WASP_TRY_READ(var, call) \
   auto opt_##var = call;         \

@@ -20,8 +20,8 @@
 #include <vector>
 
 #include "src/base/format.h"
+#include "src/base/span.h"
 #include "src/base/string_view.h"
-#include "src/base/types.h"
 
 namespace fmt {
 

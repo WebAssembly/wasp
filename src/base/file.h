@@ -17,10 +17,10 @@
 #ifndef WASP_BASE_FILE_H_
 #define WASP_BASE_FILE_H_
 
-#include <fstream>
-#include <string>
 #include <vector>
 
+#include "src/base/optional.h"
+#include "src/base/string_view.h"
 #include "src/base/types.h"
 
 namespace wasp {

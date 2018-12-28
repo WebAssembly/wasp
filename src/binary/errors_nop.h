@@ -17,7 +17,8 @@
 #ifndef WASP_BINARY_ERRORS_NOP_H_
 #define WASP_BINARY_ERRORS_NOP_H_
 
-#include "src/base/types.h"
+#include "src/base/span.h"
+#include "src/base/string_view.h"
 
 namespace wasp {
 namespace binary {

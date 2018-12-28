@@ -16,6 +16,9 @@
 
 #include "src/base/file.h"
 
+#include <fstream>
+#include <string>
+
 namespace wasp {
 
 optional<std::vector<u8>> ReadFile(string_view filename) {

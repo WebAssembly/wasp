@@ -17,8 +17,12 @@
 #ifndef WASP_BINARY_READER_H_
 #define WASP_BINARY_READER_H_
 
+#include <vector>
+
+#include "src/base/optional.h"
+#include "src/base/span.h"
+#include "src/base/string_view.h"
 #include "src/base/types.h"
-#include "src/binary/types.h"
 
 namespace wasp {
 namespace binary {

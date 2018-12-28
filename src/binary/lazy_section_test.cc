@@ -18,7 +18,6 @@
 
 #include "gtest/gtest.h"
 
-#include "src/binary/errors_nop.h"
 #include "src/binary/test_utils.h"
 
 using namespace ::wasp;

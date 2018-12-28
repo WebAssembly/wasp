@@ -22,7 +22,6 @@
 
 #include "gtest/gtest.h"
 
-#include "src/base/types.h"
 #include "src/binary/test_utils.h"
 
 using namespace ::wasp;

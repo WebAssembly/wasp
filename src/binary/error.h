@@ -17,16 +17,15 @@
 #ifndef WASP_BINARY_ERROR_H_
 #define WASP_BINARY_ERROR_H_
 
-#include "src/base/types.h"
+#include <string>
+
+#include "src/base/span.h"
 
 namespace wasp {
 namespace binary {
 
 /// ---
 struct Error {
-  explicit Error(SpanU8 pos, std::string&& message)
-      : pos{pos}, message{std::move(message)} {}
-
   SpanU8 pos;
   std::string message;
 };
