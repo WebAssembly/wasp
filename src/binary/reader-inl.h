@@ -57,7 +57,7 @@ optional<u8> Read(SpanU8* data, Errors& errors, Tag<u8>) {
   }
 
   u8 result{(*data)[0]};
-  *data = remove_prefix(*data, 1);
+  remove_prefix(data, 1);
   return result;
 }
 
@@ -69,7 +69,7 @@ optional<SpanU8> ReadBytes(SpanU8* data, SpanU8::index_type N, Errors& errors) {
   }
 
   SpanU8 result{data->begin(), N};
-  *data = remove_prefix(*data, N);
+  remove_prefix(data, N);
   return result;
 }
 
@@ -196,7 +196,7 @@ optional<string_view> ReadString(SpanU8* data,
   ErrorsContextGuard<Errors> guard{errors, *data, desc};
   WASP_TRY_READ(len, ReadLength(data, errors));
   string_view result{reinterpret_cast<const char*>(data->data()), len};
-  *data = remove_prefix(*data, len);
+  remove_prefix(data, len);
   return result;
 }
 

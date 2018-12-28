@@ -37,8 +37,8 @@ using span_index_t = nonstd::span_lite::index_t;
 constexpr span_index_t dynamic_extent = -1;
 
 template <class T, span_index_t Extent>
-span<T, dynamic_extent> remove_prefix(span<T, Extent> s, span_index_t offset) {
-  return s.subspan(offset);
+void remove_prefix(span<T, Extent>* s, span_index_t offset) {
+  *s = s->subspan(offset);
 }
 
 using SpanU8 = span<const u8>;

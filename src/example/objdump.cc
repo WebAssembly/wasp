@@ -694,7 +694,7 @@ void Dumper::Disassemble(Index func_index, Code code) {
       for (int i = 0; i < line_octets; ++i) {
         print(" {:02x}", last_data[i]);
       }
-      last_data = remove_prefix(last_data, line_octets);
+      remove_prefix(&last_data, line_octets);
       print("{:{}s} |", "", (max_octets_per_line - line_octets) * 3);
       if (first_line) {
         first_line = false;
@@ -802,7 +802,7 @@ void Dumper::PrintMemory(SpanU8 start,
       }
     }
     print("\n");
-    data = remove_prefix(data, line_size);
+    remove_prefix(&data, line_size);
   }
 }
 
