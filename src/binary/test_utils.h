@@ -20,8 +20,6 @@
 #include <string>
 #include <vector>
 
-#include "gtest/gtest.h"
-
 #include "src/base/types.h"
 #include "src/binary/types.h"
 

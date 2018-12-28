@@ -19,6 +19,46 @@
 namespace wasp {
 namespace binary {
 
+Limits::Limits(u32 min) : min(min) {}
+
+Limits::Limits(u32 min, u32 max) : min(min), max(max) {}
+
+Instruction::Instruction(Opcode opcode)
+    : opcode(opcode), immediate(EmptyImmediate{}) {}
+
+Instruction::Instruction(Opcode opcode, EmptyImmediate immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(Opcode opcode, BlockType immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(Opcode opcode, Index immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(Opcode opcode, CallIndirectImmediate immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(Opcode opcode, BrTableImmediate immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(Opcode opcode, u8 immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(Opcode opcode, MemArg immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(Opcode opcode, s32 immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(Opcode opcode, s64 immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(Opcode opcode, f32 immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(Opcode opcode, f64 immediate)
+    : opcode(opcode), immediate(immediate) {}
+
 #define WASP_OPERATOR_EQ_NE_0(Name)                                  \
   bool operator==(const Name& lhs, const Name& rhs) { return true; } \
   bool operator!=(const Name& lhs, const Name& rhs) { return false; }

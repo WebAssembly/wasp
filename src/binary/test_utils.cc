@@ -16,6 +16,8 @@
 
 #include "src/binary/test_utils.h"
 
+#include "gtest/gtest.h"
+
 namespace wasp {
 namespace binary {
 namespace test {

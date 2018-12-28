@@ -233,8 +233,17 @@ bool operator!=(const BrTableImmediate&, const BrTableImmediate&);
 
 struct Instruction {
   explicit Instruction(Opcode opcode);
-  template <typename T>
-  explicit Instruction(Opcode opcode, T&& value);
+  explicit Instruction(Opcode opcode, EmptyImmediate);
+  explicit Instruction(Opcode opcode, BlockType);
+  explicit Instruction(Opcode opcode, Index);
+  explicit Instruction(Opcode opcode, CallIndirectImmediate);
+  explicit Instruction(Opcode opcode, BrTableImmediate);
+  explicit Instruction(Opcode opcode, u8);
+  explicit Instruction(Opcode opcode, MemArg);
+  explicit Instruction(Opcode opcode, s32);
+  explicit Instruction(Opcode opcode, s64);
+  explicit Instruction(Opcode opcode, f32);
+  explicit Instruction(Opcode opcode, f64);
 
   bool has_empty_immediate() const;
   bool has_block_type_immediate() const;

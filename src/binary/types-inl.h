@@ -17,10 +17,6 @@
 namespace wasp {
 namespace binary {
 
-inline Limits::Limits(u32 min) : min(min) {}
-
-inline Limits::Limits(u32 min, u32 max) : min(min), max(max) {}
-
 inline bool Section::is_known() const {
   return contents.index() == 0;
 }
@@ -96,13 +92,6 @@ inline GlobalType& Import::global_type() {
 inline const GlobalType& Import::global_type() const {
   return get<GlobalType>(desc);
 }
-
-inline Instruction::Instruction(Opcode opcode)
-    : opcode(opcode), immediate(EmptyImmediate{}) {}
-
-template <typename T>
-Instruction::Instruction(Opcode opcode, T&& value)
-    : opcode(opcode), immediate(std::move(value)) {}
 
 inline bool Instruction::has_empty_immediate() const {
   return holds_alternative<EmptyImmediate>(immediate);
