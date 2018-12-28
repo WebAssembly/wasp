@@ -426,6 +426,7 @@ optional<Import> Read(SpanU8* data, Errors& errors, Tag<Import>) {
       return Import{module, name, global_type};
     }
   }
+  WASP_UNREACHABLE();
 }
 
 template <typename Errors>
@@ -705,10 +706,8 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
       WASP_TRY_READ_CONTEXT(value, Read<f64>(data, errors), "f64 constant");
       return Instruction{Opcode{opcode}, value};
     }
-
-    default:
-      WASP_UNREACHABLE();
   }
+  WASP_UNREACHABLE();
 }
 
 template <typename Errors>
