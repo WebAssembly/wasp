@@ -698,8 +698,9 @@ TEST(ReaderTest, NameSubsectionId_Unknown) {
 }
 
 TEST(ReaderTest, MemArg) {
-  ExpectRead<MemArg>(MemArg{0, 0}, MakeSpanU8("\x00\x00"));
-  ExpectRead<MemArg>(MemArg{1, 256}, MakeSpanU8("\x01\x80\x02"));
+  ExpectRead<MemArgImmediate>(MemArgImmediate{0, 0}, MakeSpanU8("\x00\x00"));
+  ExpectRead<MemArgImmediate>(MemArgImmediate{1, 256},
+                              MakeSpanU8("\x01\x80\x02"));
 }
 
 TEST(ReaderTest, Limits) {
@@ -1040,6 +1041,7 @@ TEST(ReaderTest, ConstantExpression_PastEnd) {
 TEST(ReaderTest, Instruction) {
   using I = Instruction;
   using O = Opcode;
+  using MemArg = MemArgImmediate;
 
   ExpectRead<I>(I{O::Unreachable}, MakeSpanU8("\x00"));
   ExpectRead<I>(I{O::Nop}, MakeSpanU8("\x01"));

@@ -35,6 +35,7 @@ include_directories(
 add_library(wasp
   src/base/file.cc
   src/binary/formatters.cc
+  src/binary/instruction.cc
   src/binary/name_section.cc
   src/binary/reader.cc
   src/binary/section.cc

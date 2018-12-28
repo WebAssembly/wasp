@@ -153,8 +153,8 @@ typename Ctx::iterator formatter<::wasp::binary::NameSubsectionId>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::MemArg>::format(
-    const ::wasp::binary::MemArg& self,
+typename Ctx::iterator formatter<::wasp::binary::MemArgImmediate>::format(
+    const ::wasp::binary::MemArgImmediate& self,
     Ctx& ctx) {
   memory_buffer buf;
   format_to(buf, "{{align {}, offset {}}}", self.align_log2, self.offset);

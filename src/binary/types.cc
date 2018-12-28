@@ -23,46 +23,6 @@ Limits::Limits(u32 min) : min(min) {}
 
 Limits::Limits(u32 min, u32 max) : min(min), max(max) {}
 
-Instruction::Instruction(Opcode opcode)
-    : opcode(opcode), immediate(EmptyImmediate{}) {}
-
-Instruction::Instruction(Opcode opcode, EmptyImmediate immediate)
-    : opcode(opcode), immediate(immediate) {}
-
-Instruction::Instruction(Opcode opcode, BlockType immediate)
-    : opcode(opcode), immediate(immediate) {}
-
-Instruction::Instruction(Opcode opcode, Index immediate)
-    : opcode(opcode), immediate(immediate) {}
-
-Instruction::Instruction(Opcode opcode, CallIndirectImmediate immediate)
-    : opcode(opcode), immediate(immediate) {}
-
-Instruction::Instruction(Opcode opcode, BrTableImmediate immediate)
-    : opcode(opcode), immediate(immediate) {}
-
-Instruction::Instruction(Opcode opcode, u8 immediate)
-    : opcode(opcode), immediate(immediate) {}
-
-Instruction::Instruction(Opcode opcode, MemArg immediate)
-    : opcode(opcode), immediate(immediate) {}
-
-Instruction::Instruction(Opcode opcode, s32 immediate)
-    : opcode(opcode), immediate(immediate) {}
-
-Instruction::Instruction(Opcode opcode, s64 immediate)
-    : opcode(opcode), immediate(immediate) {}
-
-Instruction::Instruction(Opcode opcode, f32 immediate)
-    : opcode(opcode), immediate(immediate) {}
-
-Instruction::Instruction(Opcode opcode, f64 immediate)
-    : opcode(opcode), immediate(immediate) {}
-
-#define WASP_OPERATOR_EQ_NE_0(Name)                                  \
-  bool operator==(const Name& lhs, const Name& rhs) { return true; } \
-  bool operator!=(const Name& lhs, const Name& rhs) { return false; }
-
 #define WASP_OPERATOR_EQ_NE_1(Name, f1)               \
   bool operator==(const Name& lhs, const Name& rhs) { \
     return lhs.f1 == rhs.f1;                          \
@@ -81,7 +41,6 @@ Instruction::Instruction(Opcode opcode, f64 immediate)
   }                                                                  \
   bool operator!=(const Name& lhs, const Name& rhs) { return !(lhs == rhs); }
 
-WASP_OPERATOR_EQ_NE_2(MemArg, align_log2, offset)
 WASP_OPERATOR_EQ_NE_2(Limits, min, max)
 WASP_OPERATOR_EQ_NE_2(Locals, count, type)
 WASP_OPERATOR_EQ_NE_2(FunctionType, param_types, result_types)
@@ -92,10 +51,6 @@ WASP_OPERATOR_EQ_NE_2(GlobalType, valtype, mut)
 WASP_OPERATOR_EQ_NE_3(Import, module, name, desc)
 WASP_OPERATOR_EQ_NE_1(Expression, data)
 WASP_OPERATOR_EQ_NE_1(ConstantExpression, data)
-WASP_OPERATOR_EQ_NE_2(Instruction, opcode, immediate)
-WASP_OPERATOR_EQ_NE_0(EmptyImmediate)
-WASP_OPERATOR_EQ_NE_2(CallIndirectImmediate, index, reserved)
-WASP_OPERATOR_EQ_NE_2(BrTableImmediate, targets, default_target)
 WASP_OPERATOR_EQ_NE_1(Function, type_index)
 WASP_OPERATOR_EQ_NE_1(Table, table_type)
 WASP_OPERATOR_EQ_NE_1(Memory, memory_type)

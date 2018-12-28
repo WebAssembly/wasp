@@ -55,9 +55,9 @@ TEST(FormatTest, NameSubsectionKind) {
   EXPECT_EQ(R"(  module)", format("{:>8s}", NameSubsectionId::ModuleName));
 }
 
-TEST(FormatTest, MemArg) {
-  EXPECT_EQ(R"({align 1, offset 2})", format("{}", MemArg{1, 2}));
-  EXPECT_EQ(R"({align 0, offset 0} )", format("{:20s}", MemArg{0, 0}));
+TEST(FormatTest, MemArgImmediate) {
+  EXPECT_EQ(R"({align 1, offset 2})", format("{}", MemArgImmediate{1, 2}));
+  EXPECT_EQ(R"({align 0, offset 0} )", format("{:20s}", MemArgImmediate{0, 0}));
 }
 
 TEST(FormatTest, Limits) {
@@ -239,7 +239,7 @@ TEST(FormatTest, Instruction) {
             format("{}", Instruction{Opcode::MemorySize, u8{0}}));
   // i32.load offset=10 align=4 (alignment is stored as power-of-two)
   EXPECT_EQ(R"(i32.load {align 2, offset 10})",
-            format("{}", Instruction{Opcode::I32Load, MemArg{2, 10}}));
+            format("{}", Instruction{Opcode::I32Load, MemArgImmediate{2, 10}}));
   // i32.const 100
   EXPECT_EQ(R"(i32.const 100)",
             format("{}", Instruction{Opcode::I32Const, s32{100}}));

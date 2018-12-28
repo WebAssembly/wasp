@@ -304,10 +304,12 @@ optional<u8> ReadReserved(SpanU8* data, Errors& errors) {
 }
 
 template <typename Errors>
-optional<MemArg> Read(SpanU8* data, Errors& errors, Tag<MemArg>) {
+optional<MemArgImmediate> Read(SpanU8* data,
+                               Errors& errors,
+                               Tag<MemArgImmediate>) {
   WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, errors), "align log2");
   WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, errors), "offset");
-  return MemArg{align_log2, offset};
+  return MemArgImmediate{align_log2, offset};
 }
 
 template <typename Errors>
@@ -675,7 +677,7 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
     case Opcode::I64Store8:
     case Opcode::I64Store16:
     case Opcode::I64Store32: {
-      WASP_TRY_READ(memarg, Read<MemArg>(data, errors));
+      WASP_TRY_READ(memarg, Read<MemArgImmediate>(data, errors));
       return Instruction{Opcode{opcode}, memarg};
     }
 

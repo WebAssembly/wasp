@@ -18,6 +18,7 @@
 #define WASP_BINARY_FORMATTERS_H_
 
 #include "src/base/format.h"
+#include "src/binary/instruction.h"
 #include "src/binary/name_section.h"
 #include "src/binary/section.h"
 #include "src/binary/types.h"
@@ -38,7 +39,7 @@ WASP_DEFINE_FORMATTER(ExternalKind);
 WASP_DEFINE_FORMATTER(Mutability);
 WASP_DEFINE_FORMATTER(SectionId);
 WASP_DEFINE_FORMATTER(NameSubsectionId);
-WASP_DEFINE_FORMATTER(MemArg);
+WASP_DEFINE_FORMATTER(MemArgImmediate);
 WASP_DEFINE_FORMATTER(Limits);
 WASP_DEFINE_FORMATTER(Locals);
 WASP_DEFINE_FORMATTER(Section);
