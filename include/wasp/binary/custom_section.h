@@ -14,14 +14,24 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/section.h"
+#ifndef WASP_BINARY_CUSTOM_SECTION_H_
+#define WASP_BINARY_CUSTOM_SECTION_H_
 
-#include "src/base/operator_eq_ne_macros.h"
+#include "wasp/base/span.h"
+#include "wasp/base/string_view.h"
 
 namespace wasp {
 namespace binary {
 
-WASP_OPERATOR_EQ_NE_1(Section, contents)
+struct CustomSection {
+  string_view name;
+  SpanU8 data;
+};
+
+bool operator==(const CustomSection&, const CustomSection&);
+bool operator!=(const CustomSection&, const CustomSection&);
 
 }  // namespace binary
 }  // namespace wasp
+
+#endif  // WASP_BINARY_CUSTOM_SECTION_H_

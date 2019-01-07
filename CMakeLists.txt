@@ -35,12 +35,32 @@ include_directories(
 
 add_library(wasp
   src/base/file.cc
+  src/binary/code.cc
+  src/binary/constant_expression.cc
+  src/binary/custom_section.cc
+  src/binary/data_segment.cc
+  src/binary/element_segment.cc
+  src/binary/export.cc
+  src/binary/expression.cc
   src/binary/formatters.cc
+  src/binary/function.cc
+  src/binary/function_type.cc
+  src/binary/global.cc
+  src/binary/global_type.cc
+  src/binary/import.cc
   src/binary/instruction.cc
+  src/binary/known_section.cc
+  src/binary/limits.cc
+  src/binary/locals.cc
+  src/binary/memory.cc
+  src/binary/memory_type.cc
   src/binary/name_section.cc
   src/binary/reader.cc
   src/binary/section.cc
-  src/binary/types.cc
+  src/binary/start.cc
+  src/binary/table.cc
+  src/binary/table_type.cc
+  src/binary/type_entry.cc
 
   third_party/fmt/src/format.cc
 )

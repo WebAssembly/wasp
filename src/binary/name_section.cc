@@ -16,20 +16,14 @@
 
 #include "wasp/binary/name_section.h"
 
+#include "src/base/operator_eq_ne_macros.h"
+
 namespace wasp {
 namespace binary {
-
-#define WASP_OPERATOR_EQ_NE_2(Name, f1, f2)           \
-  bool operator==(const Name& lhs, const Name& rhs) { \
-    return lhs.f1 == rhs.f1 && lhs.f2 == rhs.f2;      \
-  }                                                   \
-  bool operator!=(const Name& lhs, const Name& rhs) { return !(lhs == rhs); }
 
 WASP_OPERATOR_EQ_NE_2(NameAssoc, index, name)
 WASP_OPERATOR_EQ_NE_2(IndirectNameAssoc, index, name_map)
 WASP_OPERATOR_EQ_NE_2(NameSubsection, id, data)
-
-#undef WASP_OPERATOR_EQ_NE_2
 
 }  // namespace binary
 }  // namespace wasp

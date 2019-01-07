@@ -16,6 +16,8 @@
 
 #include "wasp/binary/instruction.h"
 
+#include "src/base/operator_eq_ne_macros.h"
+
 namespace wasp {
 namespace binary {
 
@@ -55,24 +57,11 @@ Instruction::Instruction(Opcode opcode, f32 immediate)
 Instruction::Instruction(Opcode opcode, f64 immediate)
     : opcode(opcode), immediate(immediate) {}
 
-#define WASP_OPERATOR_EQ_NE_0(Name)                                  \
-  bool operator==(const Name& lhs, const Name& rhs) { return true; } \
-  bool operator!=(const Name& lhs, const Name& rhs) { return false; }
-
-#define WASP_OPERATOR_EQ_NE_2(Name, f1, f2)           \
-  bool operator==(const Name& lhs, const Name& rhs) { \
-    return lhs.f1 == rhs.f1 && lhs.f2 == rhs.f2;      \
-  }                                                   \
-  bool operator!=(const Name& lhs, const Name& rhs) { return !(lhs == rhs); }
-
 WASP_OPERATOR_EQ_NE_2(MemArgImmediate, align_log2, offset)
 WASP_OPERATOR_EQ_NE_0(EmptyImmediate)
 WASP_OPERATOR_EQ_NE_2(CallIndirectImmediate, index, reserved)
 WASP_OPERATOR_EQ_NE_2(BrTableImmediate, targets, default_target)
 WASP_OPERATOR_EQ_NE_2(Instruction, opcode, immediate)
-
-#undef WASP_OPERATOR_EQ_NE_0
-#undef WASP_OPERATOR_EQ_NE_2
 
 }  // namespace binary
 }  // namespace wasp

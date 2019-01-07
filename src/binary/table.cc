@@ -1,5 +1,5 @@
 //
-// Copyright 2018 WebAssembly Community Group participants
+// Copyright 2019 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/section.h"
+#include "wasp/binary/table.h"
 
 #include "src/base/operator_eq_ne_macros.h"
 
 namespace wasp {
 namespace binary {
 
-WASP_OPERATOR_EQ_NE_1(Section, contents)
+WASP_OPERATOR_EQ_NE_1(Table, table_type)
 
 }  // namespace binary
 }  // namespace wasp

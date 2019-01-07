@@ -17,29 +17,12 @@
 #ifndef WASP_BINARY_SECTION_H_
 #define WASP_BINARY_SECTION_H_
 
-#include "wasp/base/span.h"
-#include "wasp/base/string_view.h"
 #include "wasp/base/variant.h"
-#include "wasp/binary/section_id.h"
+#include "wasp/binary/custom_section.h"
+#include "wasp/binary/known_section.h"
 
 namespace wasp {
 namespace binary {
-
-struct KnownSection {
-  SectionId id;
-  SpanU8 data;
-};
-
-bool operator==(const KnownSection&, const KnownSection&);
-bool operator!=(const KnownSection&, const KnownSection&);
-
-struct CustomSection {
-  string_view name;
-  SpanU8 data;
-};
-
-bool operator==(const CustomSection&, const CustomSection&);
-bool operator!=(const CustomSection&, const CustomSection&);
 
 struct Section {
   bool is_known() const;
