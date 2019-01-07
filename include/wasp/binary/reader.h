@@ -19,10 +19,10 @@
 
 #include <vector>
 
-#include "src/base/optional.h"
-#include "src/base/span.h"
-#include "src/base/string_view.h"
-#include "src/base/types.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
+#include "wasp/base/string_view.h"
+#include "wasp/base/types.h"
 
 namespace wasp {
 namespace binary {
@@ -51,6 +51,6 @@ optional<std::vector<T>> ReadVector(SpanU8* data, Errors&, string_view desc);
 }  // namespace binary
 }  // namespace wasp
 
-#include "src/binary/reader-inl.h"
+#include "wasp/binary/reader-inl.h"
 
 #endif  // WASP_BINARY_READER_H_

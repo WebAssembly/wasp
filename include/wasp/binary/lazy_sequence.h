@@ -19,8 +19,8 @@
 
 #include <iterator>
 
-#include "src/base/optional.h"
-#include "src/base/span.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 
 namespace wasp {
 namespace binary {
@@ -102,6 +102,6 @@ class LazySequenceIterator {
 }  // namespace binary
 }  // namespace wasp
 
-#include "src/binary/lazy_sequence-inl.h"
+#include "wasp/binary/lazy_sequence-inl.h"
 
 #endif // WASP_BINARY_LAZY_SEQUENCE_H_

@@ -14,24 +14,23 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_ERRORS_NOP_H_
-#define WASP_BINARY_ERRORS_NOP_H_
+#ifndef WASP_BINARY_ERROR_H_
+#define WASP_BINARY_ERROR_H_
 
-#include "src/base/span.h"
-#include "src/base/string_view.h"
+#include <string>
+
+#include "wasp/base/span.h"
 
 namespace wasp {
 namespace binary {
 
 /// ---
-class ErrorsNop {
- public:
-  void PushContext(SpanU8 pos, string_view desc) {}
-  void PopContext() {}
-  void OnError(SpanU8 pos, string_view message) {}
+struct Error {
+  SpanU8 pos;
+  std::string message;
 };
 
 }  // namespace binary
 }  // namespace wasp
 
-#endif // WASP_BINARY_ERRORS_NOP_H_
+#endif  // WASP_BINARY_ERROR_H_

@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-#include "src/binary/lazy_sequence.h"
+#include "wasp/binary/lazy_sequence.h"
 
 #include "gtest/gtest.h"
 
-#include "src/binary/errors_nop.h"
+#include "wasp/binary/errors_nop.h"
 #include "src/binary/test_utils.h"
 
 using namespace ::wasp;

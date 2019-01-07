@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "src/base/formatters.h"
+#include "wasp/base/formatters.h"
 
 #include "gtest/gtest.h"
 

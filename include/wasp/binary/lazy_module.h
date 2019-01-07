@@ -14,36 +14,35 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_LAZY_EXPRESSION_H
-#define WASP_BINARY_LAZY_EXPRESSION_H
+#ifndef WASP_BINARY_LAZY_MODULE_H
+#define WASP_BINARY_LAZY_MODULE_H
 
-#include "src/base/span.h"
-#include "src/binary/lazy_sequence.h"
-#include "src/binary/types.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
+#include "wasp/binary/lazy_sequence.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {
 
 /// ---
 template <typename Errors>
-using LazyExpression = LazySequence<Instruction, Errors>;
+class LazyModule {
+ public:
+  explicit LazyModule(SpanU8, Errors&);
+
+  SpanU8 data;
+  optional<SpanU8> magic;
+  optional<SpanU8> version;
+  LazySequence<Section, Errors> sections;
+};
 
 template <typename Errors>
-LazyExpression<Errors> ReadExpression(SpanU8 data, Errors& errors) {
-  return LazyExpression<Errors>{data, errors};
-}
-
-template <typename Errors>
-LazyExpression<Errors> ReadExpression(Expression expr, Errors& errors) {
-  return ReadExpression(expr.data, errors);
-}
-
-template <typename Errors>
-LazyExpression<Errors> ReadExpression(ConstantExpression expr, Errors& errors) {
-  return ReadExpression(expr.data, errors);
-}
+LazyModule<Errors> ReadModule(SpanU8 data, Errors&);
 
 }  // namespace binary
 }  // namespace wasp
 
-#endif  // WASP_BINARY_LAZY_EXPRESSION_H
+#include "wasp/binary/lazy_module-inl.h"
+
+#endif // WASP_BINARY_LAZY_MODULE_H

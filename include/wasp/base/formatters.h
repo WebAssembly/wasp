@@ -19,9 +19,9 @@
 
 #include <vector>
 
-#include "src/base/format.h"
-#include "src/base/span.h"
-#include "src/base/string_view.h"
+#include "wasp/base/format.h"
+#include "wasp/base/span.h"
+#include "wasp/base/string_view.h"
 
 namespace fmt {
 
@@ -51,6 +51,6 @@ struct formatter<::wasp::basic_string_view<CharT, Traits>>
 
 }  // namespace fmt
 
-#include "src/base/formatters-inl.h"
+#include "wasp/base/formatters-inl.h"
 
 #endif // WASP_BASE_FORMATTERS_H_

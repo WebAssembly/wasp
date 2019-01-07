@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "src/binary/instruction.h"
+#include "wasp/binary/instruction.h"
 
 namespace wasp {
 namespace binary {

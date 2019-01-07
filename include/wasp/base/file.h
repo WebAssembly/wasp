@@ -14,35 +14,19 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BASE_SPAN_H_
-#define WASP_BASE_SPAN_H_
+#ifndef WASP_BASE_FILE_H_
+#define WASP_BASE_FILE_H_
 
-#include "nonstd/span.hpp"
+#include <vector>
 
-#include "src/base/types.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/string_view.h"
+#include "wasp/base/types.h"
 
 namespace wasp {
 
-using nonstd::span;
-
-using nonstd::operator==;
-using nonstd::operator!=;
-using nonstd::operator<;
-using nonstd::operator<=;
-using nonstd::operator>;
-using nonstd::operator>=;
-
-using span_index_t = nonstd::span_lite::index_t;
-
-constexpr span_index_t dynamic_extent = -1;
-
-template <class T, span_index_t Extent>
-void remove_prefix(span<T, Extent>* s, span_index_t offset) {
-  *s = s->subspan(offset);
-}
-
-using SpanU8 = span<const u8>;
+optional<std::vector<u8>> ReadFile(string_view filename);
 
 }  // namespace wasp
 
-#endif  // WASP_BASE_SPAN_H_
+#endif  // WASP_BASE_FILE_H_

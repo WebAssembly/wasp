@@ -19,9 +19,9 @@
 
 #include <vector>
 
-#include "src/base/types.h"
-#include "src/base/variant.h"
-#include "src/binary/defs.h"
+#include "wasp/base/types.h"
+#include "wasp/base/variant.h"
+#include "wasp/binary/defs.h"
 
 namespace wasp {
 namespace binary {
@@ -137,6 +137,6 @@ bool operator!=(const Instruction&, const Instruction&);
 }  // namespace binary
 }  // namespace wasp
 
-#include "src/binary/instruction-inl.h"
+#include "wasp/binary/instruction-inl.h"
 
 #endif  // WASP_BINARY_INSTRUCTION_H_

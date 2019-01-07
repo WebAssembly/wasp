@@ -14,40 +14,24 @@
 // limitations under the License.
 //
 
-#include "src/binary/reader.h"
+#ifndef WASP_BINARY_ERRORS_NOP_H_
+#define WASP_BINARY_ERRORS_NOP_H_
+
+#include "wasp/base/span.h"
+#include "wasp/base/string_view.h"
 
 namespace wasp {
 namespace binary {
 
-template <typename Sequence>
-LazySequenceIterator<Sequence>::LazySequenceIterator(Sequence* seq, SpanU8 data)
-    : sequence_(seq), data_(data) {
-  if (empty()) {
-    clear();
-  } else {
-    operator++();
-  }
-}
-
-template <typename Sequence>
-auto LazySequenceIterator<Sequence>::operator++() -> LazySequenceIterator& {
-  if (empty()) {
-    clear();
-  } else {
-    value_ = Read<value_type>(&data_, sequence_->errors_);
-    if (!value_) {
-      clear();
-    }
-  }
-  return *this;
-}
-
-template <typename Sequence>
-auto LazySequenceIterator<Sequence>::operator++(int) -> LazySequenceIterator {
-  auto temp = *this;
-  operator++();
-  return temp;
-}
+/// ---
+class ErrorsNop {
+ public:
+  void PushContext(SpanU8 pos, string_view desc) {}
+  void PopContext() {}
+  void OnError(SpanU8 pos, string_view message) {}
+};
 
 }  // namespace binary
 }  // namespace wasp
+
+#endif // WASP_BINARY_ERRORS_NOP_H_

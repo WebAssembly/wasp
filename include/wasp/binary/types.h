@@ -20,12 +20,12 @@
 #include <string>
 #include <vector>
 
-#include "src/base/optional.h"
-#include "src/base/span.h"
-#include "src/base/string_view.h"
-#include "src/base/types.h"
-#include "src/base/variant.h"
-#include "src/binary/defs.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
+#include "wasp/base/string_view.h"
+#include "wasp/base/types.h"
+#include "wasp/base/variant.h"
+#include "wasp/binary/defs.h"
 
 namespace wasp {
 namespace binary {
@@ -225,6 +225,6 @@ bool operator!=(const DataSegment&, const DataSegment&);
 }  // namespace binary
 }  // namespace wasp
 
-#include "src/binary/types-inl.h"
+#include "wasp/binary/types-inl.h"
 
 #endif  // WASP_BINARY_TYPES_H_

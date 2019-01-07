@@ -20,8 +20,8 @@
 #include <string>
 #include <vector>
 
-#include "src/base/types.h"
-#include "src/binary/types.h"
+#include "wasp/base/types.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {

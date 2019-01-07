@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "src/binary/lazy_module.h"
+#include "wasp/binary/lazy_module.h"
 
 #include "gtest/gtest.h"
 

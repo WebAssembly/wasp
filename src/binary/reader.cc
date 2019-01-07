@@ -14,4 +14,4 @@
 // limitations under the License.
 //
 
-#include "src/binary/reader.h"
+#include "wasp/binary/reader.h"

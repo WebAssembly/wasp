@@ -19,10 +19,10 @@
 
 #include <vector>
 
-#include "src/base/span.h"
-#include "src/base/string_view.h"
-#include "src/base/types.h"
-#include "src/binary/defs.h"
+#include "wasp/base/span.h"
+#include "wasp/base/string_view.h"
+#include "wasp/base/types.h"
+#include "wasp/binary/defs.h"
 
 namespace wasp {
 namespace binary {

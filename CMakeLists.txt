@@ -25,6 +25,7 @@ add_subdirectory(third_party/gtest)
 
 include_directories(
   ${wasp_SOURCE_DIR}
+  ${wasp_SOURCE_DIR}/include
   ${wasp_SOURCE_DIR}/third_party/fmt/include
   ${wasp_SOURCE_DIR}/third_party/optional-lite/include
   ${wasp_SOURCE_DIR}/third_party/span-lite/include

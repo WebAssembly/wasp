@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#include "src/base/formatters.h"
-#include "src/binary/reader.h"
+#include "wasp/base/formatters.h"
+#include "wasp/binary/reader.h"
 
 namespace wasp {
 namespace binary {

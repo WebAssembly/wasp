@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "src/binary/name_section.h"
+#include "wasp/binary/name_section.h"
 
 namespace wasp {
 namespace binary {

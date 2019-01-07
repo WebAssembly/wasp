@@ -14,38 +14,36 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_ERRORS_CONTEXT_GUARD_H_
-#define WASP_BINARY_ERRORS_CONTEXT_GUARD_H_
+#ifndef WASP_BINARY_LAZY_EXPRESSION_H
+#define WASP_BINARY_LAZY_EXPRESSION_H
 
-#include "src/base/span.h"
-#include "src/base/string_view.h"
+#include "wasp/base/span.h"
+#include "wasp/binary/lazy_sequence.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {
 
 /// ---
 template <typename Errors>
-class ErrorsContextGuard {
- public:
-  explicit ErrorsContextGuard(Errors& errors, SpanU8 pos, string_view desc)
-      : errors_{errors} {
-    errors.PushContext(pos, desc);
-  }
-  ~ErrorsContextGuard() { PopContext(); }
+using LazyExpression = LazySequence<Instruction, Errors>;
 
-  void PopContext() {
-    if (!popped_context_) {
-      errors_.PopContext();
-      popped_context_ = true;
-    }
-  }
+template <typename Errors>
+LazyExpression<Errors> ReadExpression(SpanU8 data, Errors& errors) {
+  return LazyExpression<Errors>{data, errors};
+}
 
- private:
-  Errors& errors_;
-  bool popped_context_ = false;
-};
+template <typename Errors>
+LazyExpression<Errors> ReadExpression(Expression expr, Errors& errors) {
+  return ReadExpression(expr.data, errors);
+}
+
+template <typename Errors>
+LazyExpression<Errors> ReadExpression(ConstantExpression expr, Errors& errors) {
+  return ReadExpression(expr.data, errors);
+}
 
 }  // namespace binary
 }  // namespace wasp
 
-#endif // WASP_BINARY_ERRORS_CONTEXT_GUARD_H_
+#endif  // WASP_BINARY_LAZY_EXPRESSION_H

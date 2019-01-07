@@ -14,30 +14,38 @@
 // limitations under the License.
 //
 
-#include "wasp/base/file.h"
+#ifndef WASP_BINARY_ERRORS_CONTEXT_GUARD_H_
+#define WASP_BINARY_ERRORS_CONTEXT_GUARD_H_
 
-#include <fstream>
-#include <string>
+#include "wasp/base/span.h"
+#include "wasp/base/string_view.h"
 
 namespace wasp {
+namespace binary {
 
-optional<std::vector<u8>> ReadFile(string_view filename) {
-  std::string filename_str = filename.to_string();
-  std::ifstream stream{filename_str.c_str(), std::ios::in | std::ios::binary};
-  if (!stream) {
-    return nullopt;
+/// ---
+template <typename Errors>
+class ErrorsContextGuard {
+ public:
+  explicit ErrorsContextGuard(Errors& errors, SpanU8 pos, string_view desc)
+      : errors_{errors} {
+    errors.PushContext(pos, desc);
+  }
+  ~ErrorsContextGuard() { PopContext(); }
+
+  void PopContext() {
+    if (!popped_context_) {
+      errors_.PopContext();
+      popped_context_ = true;
+    }
   }
 
-  std::vector<u8> buffer;
-  stream.seekg(0, std::ios::end);
-  buffer.resize(stream.tellg());
-  stream.seekg(0, std::ios::beg);
-  stream.read(reinterpret_cast<char*>(&buffer[0]), buffer.size());
-  if (stream.fail()) {
-    return nullopt;
-  }
+ private:
+  Errors& errors_;
+  bool popped_context_ = false;
+};
 
-  return buffer;
-}
-
+}  // namespace binary
 }  // namespace wasp
+
+#endif // WASP_BINARY_ERRORS_CONTEXT_GUARD_H_

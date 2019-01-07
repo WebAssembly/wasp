@@ -17,11 +17,11 @@
 #ifndef WASP_BINARY_LAZY_SECTION_H_
 #define WASP_BINARY_LAZY_SECTION_H_
 
-#include "src/base/optional.h"
-#include "src/base/span.h"
-#include "src/binary/lazy_sequence.h"
-#include "src/binary/section.h"
-#include "src/binary/types.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
+#include "wasp/binary/lazy_sequence.h"
+#include "wasp/binary/section.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {
@@ -74,6 +74,6 @@ StartSection ReadStartSection(KnownSection, Errors&);
 }  // namespace binary
 }  // namespace wasp
 
-#include "src/binary/lazy_section-inl.h"
+#include "wasp/binary/lazy_section-inl.h"
 
 #endif // WASP_BINARY_LAZY_SECTION_H_

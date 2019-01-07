@@ -20,17 +20,17 @@
 #include <string>
 #include <vector>
 
-#include "src/base/file.h"
-#include "src/base/formatters.h"
-#include "src/base/macros.h"
-#include "src/base/types.h"
-#include "src/binary/errors_nop.h"
-#include "src/binary/formatters.h"
-#include "src/binary/lazy_expression.h"
-#include "src/binary/lazy_module.h"
-#include "src/binary/lazy_name_section.h"
-#include "src/binary/lazy_section.h"
-#include "src/binary/types.h"
+#include "wasp/base/file.h"
+#include "wasp/base/formatters.h"
+#include "wasp/base/macros.h"
+#include "wasp/base/types.h"
+#include "wasp/binary/errors_nop.h"
+#include "wasp/binary/formatters.h"
+#include "wasp/binary/lazy_expression.h"
+#include "wasp/binary/lazy_module.h"
+#include "wasp/binary/lazy_name_section.h"
+#include "wasp/binary/lazy_section.h"
+#include "wasp/binary/types.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

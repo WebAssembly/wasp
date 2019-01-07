@@ -17,10 +17,10 @@
 #ifndef WASP_BINARY_SECTION_H_
 #define WASP_BINARY_SECTION_H_
 
-#include "src/base/span.h"
-#include "src/base/string_view.h"
-#include "src/base/variant.h"
-#include "src/binary/defs.h"
+#include "wasp/base/span.h"
+#include "wasp/base/string_view.h"
+#include "wasp/base/variant.h"
+#include "wasp/binary/defs.h"
 
 namespace wasp {
 namespace binary {
@@ -65,6 +65,6 @@ bool operator!=(const Section&, const Section&);
 }  // namespace binary
 }  // namespace wasp
 
-#include "src/binary/section-inl.h"
+#include "wasp/binary/section-inl.h"
 
 #endif  // WASP_BINARY_SECTION_H_

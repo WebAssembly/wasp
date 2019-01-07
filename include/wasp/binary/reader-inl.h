@@ -16,12 +16,12 @@
 
 #include <type_traits>
 
-#include "src/base/formatters.h"
-#include "src/base/macros.h"
-#include "src/binary/encoding.h"
-#include "src/binary/errors_context_guard.h"
-#include "src/binary/formatters.h"
-#include "src/binary/types.h"
+#include "wasp/base/formatters.h"
+#include "wasp/base/macros.h"
+#include "wasp/binary/encoding.h"
+#include "wasp/binary/errors_context_guard.h"
+#include "wasp/binary/formatters.h"
+#include "wasp/binary/types.h"
 
 #define WASP_TRY_READ(var, call) \
   auto opt_##var = call;         \

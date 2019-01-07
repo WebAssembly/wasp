@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "src/binary/types.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {

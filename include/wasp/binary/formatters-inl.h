@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-#include "src/binary/formatters.h"
+#include "wasp/binary/formatters.h"
 
-#include "src/base/macros.h"
-#include "src/base/formatters.h"
-#include "src/binary/defs.h"
+#include "wasp/base/macros.h"
+#include "wasp/base/formatters.h"
+#include "wasp/binary/defs.h"
 
 namespace fmt {
 

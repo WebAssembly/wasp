@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "src/binary/lazy_section.h"
+#include "wasp/binary/lazy_section.h"
 
 #include "gtest/gtest.h"
 

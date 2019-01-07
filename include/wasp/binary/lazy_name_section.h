@@ -17,14 +17,14 @@
 #ifndef WASP_BINARY_LAZY_NAME_SECTION_H_
 #define WASP_BINARY_LAZY_NAME_SECTION_H_
 
-#include "src/base/optional.h"
-#include "src/base/span.h"
-#include "src/base/string_view.h"
-#include "src/binary/lazy_section.h"
-#include "src/binary/lazy_sequence.h"
-#include "src/binary/name_section.h"
-#include "src/binary/section.h"
-#include "src/binary/types.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
+#include "wasp/base/string_view.h"
+#include "wasp/binary/lazy_section.h"
+#include "wasp/binary/lazy_sequence.h"
+#include "wasp/binary/name_section.h"
+#include "wasp/binary/section.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {
@@ -70,6 +70,6 @@ LazyLocalNamesSubsection<Errors> ReadLocalNamesSubsection(NameSubsection,
 }  // namespace binary
 }  // namespace wasp
 
-#include "src/binary/lazy_name_section-inl.h"
+#include "wasp/binary/lazy_name_section-inl.h"
 
 #endif // WASP_BINARY_LAZY_NAME_SECTION_H_

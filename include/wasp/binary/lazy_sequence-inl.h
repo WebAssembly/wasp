@@ -14,35 +14,40 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_LAZY_MODULE_H
-#define WASP_BINARY_LAZY_MODULE_H
-
-#include "src/base/optional.h"
-#include "src/base/span.h"
-#include "src/binary/lazy_sequence.h"
-#include "src/binary/types.h"
+#include "wasp/binary/reader.h"
 
 namespace wasp {
 namespace binary {
 
-/// ---
-template <typename Errors>
-class LazyModule {
- public:
-  explicit LazyModule(SpanU8, Errors&);
+template <typename Sequence>
+LazySequenceIterator<Sequence>::LazySequenceIterator(Sequence* seq, SpanU8 data)
+    : sequence_(seq), data_(data) {
+  if (empty()) {
+    clear();
+  } else {
+    operator++();
+  }
+}
 
-  SpanU8 data;
-  optional<SpanU8> magic;
-  optional<SpanU8> version;
-  LazySequence<Section, Errors> sections;
-};
+template <typename Sequence>
+auto LazySequenceIterator<Sequence>::operator++() -> LazySequenceIterator& {
+  if (empty()) {
+    clear();
+  } else {
+    value_ = Read<value_type>(&data_, sequence_->errors_);
+    if (!value_) {
+      clear();
+    }
+  }
+  return *this;
+}
 
-template <typename Errors>
-LazyModule<Errors> ReadModule(SpanU8 data, Errors&);
+template <typename Sequence>
+auto LazySequenceIterator<Sequence>::operator++(int) -> LazySequenceIterator {
+  auto temp = *this;
+  operator++();
+  return temp;
+}
 
 }  // namespace binary
 }  // namespace wasp
-
-#include "src/binary/lazy_module-inl.h"
-
-#endif // WASP_BINARY_LAZY_MODULE_H

@@ -17,12 +17,12 @@
 #ifndef WASP_BINARY_ENCODING_H
 #define WASP_BINARY_ENCODING_H
 
-#include "src/base/types.h"
-#include "src/binary/defs.h"
-#include "src/binary/instruction.h"
-#include "src/binary/name_section.h"
-#include "src/binary/section.h"
-#include "src/binary/types.h"
+#include "wasp/base/types.h"
+#include "wasp/binary/defs.h"
+#include "wasp/binary/instruction.h"
+#include "wasp/binary/name_section.h"
+#include "wasp/binary/section.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {
@@ -108,6 +108,6 @@ struct NameSubsectionId {
 }  // namespace binary
 }  // namespace wasp
 
-#include "src/binary/encoding-inl.h"
+#include "wasp/binary/encoding-inl.h"
 
 #endif // WASP_BINARY_ENCODING_H

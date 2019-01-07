@@ -17,11 +17,11 @@
 #ifndef WASP_BINARY_FORMATTERS_H_
 #define WASP_BINARY_FORMATTERS_H_
 
-#include "src/base/format.h"
-#include "src/binary/instruction.h"
-#include "src/binary/name_section.h"
-#include "src/binary/section.h"
-#include "src/binary/types.h"
+#include "wasp/base/format.h"
+#include "wasp/binary/instruction.h"
+#include "wasp/binary/name_section.h"
+#include "wasp/binary/section.h"
+#include "wasp/binary/types.h"
 
 namespace fmt {
 
@@ -74,6 +74,6 @@ WASP_DEFINE_FORMATTER(NameSubsection);
 
 }  // namespace fmt
 
-#include "src/binary/formatters-inl.h"
+#include "wasp/binary/formatters-inl.h"
 
 #endif  // WASP_BINARY_FORMATTERS_H_
