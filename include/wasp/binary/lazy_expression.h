@@ -19,7 +19,6 @@
 
 #include "wasp/base/span.h"
 #include "wasp/binary/lazy_sequence.h"
-#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {

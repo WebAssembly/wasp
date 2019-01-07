@@ -24,7 +24,6 @@
 #include "wasp/binary/lazy_sequence.h"
 #include "wasp/binary/name_section.h"
 #include "wasp/binary/section.h"
-#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {

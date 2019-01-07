@@ -20,11 +20,16 @@
 #include <string>
 #include <vector>
 
+#include "wasp/base/span.h"
+#include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {
+
+struct ConstantExpression;
+struct Expression;
+
 namespace test {
 
 struct ErrorContext {

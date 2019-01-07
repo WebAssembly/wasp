@@ -14,7 +14,24 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/types.h"
+#include "wasp/binary/code.h"
+#include "wasp/binary/constant_expression.h"
+#include "wasp/binary/data_segment.h"
+#include "wasp/binary/element_segment.h"
+#include "wasp/binary/export.h"
+#include "wasp/binary/expression.h"
+#include "wasp/binary/function.h"
+#include "wasp/binary/function_type.h"
+#include "wasp/binary/global.h"
+#include "wasp/binary/global_type.h"
+#include "wasp/binary/import.h"
+#include "wasp/binary/locals.h"
+#include "wasp/binary/memory.h"
+#include "wasp/binary/memory_type.h"
+#include "wasp/binary/start.h"
+#include "wasp/binary/table.h"
+#include "wasp/binary/table_type.h"
+#include "wasp/binary/type_entry.h"
 
 namespace wasp {
 namespace binary {

@@ -16,9 +16,9 @@
 
 #include "wasp/binary/formatters.h"
 
-#include "wasp/base/macros.h"
 #include "wasp/base/formatters.h"
-#include "wasp/binary/defs.h"
+#include "wasp/base/macros.h"
+#include "wasp/binary/value_type.h"
 
 namespace fmt {
 
@@ -32,7 +32,7 @@ typename Ctx::iterator formatter<::wasp::binary::ValueType>::format(
   case ::wasp::binary::ValueType::Name: \
     result = str;                       \
     break;
-    WASP_FOREACH_VALUE_TYPE(WASP_V)
+#include "wasp/binary/value_type.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -50,7 +50,7 @@ typename Ctx::iterator formatter<::wasp::binary::BlockType>::format(
   case ::wasp::binary::BlockType::Name: \
     result = "[" str "]";               \
     break;
-    WASP_FOREACH_BLOCK_TYPE(WASP_V)
+#include "wasp/binary/block_type.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -68,7 +68,7 @@ typename Ctx::iterator formatter<::wasp::binary::ElementType>::format(
   case ::wasp::binary::ElementType::Name: \
     result = str;                         \
     break;
-    WASP_FOREACH_ELEMENT_TYPE(WASP_V)
+#include "wasp/binary/element_type.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -86,7 +86,7 @@ typename Ctx::iterator formatter<::wasp::binary::ExternalKind>::format(
   case ::wasp::binary::ExternalKind::Name: \
     result = str;                          \
     break;
-    WASP_FOREACH_EXTERNAL_KIND(WASP_V)
+#include "wasp/binary/external_kind.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -104,7 +104,7 @@ typename Ctx::iterator formatter<::wasp::binary::Mutability>::format(
   case ::wasp::binary::Mutability::Name: \
     result = str;                        \
     break;
-    WASP_FOREACH_MUTABILITY(WASP_V)
+#include "wasp/binary/mutability.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -122,7 +122,7 @@ typename Ctx::iterator formatter<::wasp::binary::SectionId>::format(
   case ::wasp::binary::SectionId::Name: \
     result = str;                       \
     break;
-    WASP_FOREACH_SECTION(WASP_V)
+#include "wasp/binary/section_id.def"
 #undef WASP_V
     default: {
       // Special case for sections with unknown ids.
@@ -144,7 +144,7 @@ typename Ctx::iterator formatter<::wasp::binary::NameSubsectionId>::format(
   case ::wasp::binary::NameSubsectionId::Name: \
     result = str;                              \
     break;
-    WASP_FOREACH_NAME_SUBSECTION_ID(WASP_V)
+#include "wasp/binary/name_subsection_id.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -331,7 +331,7 @@ typename Ctx::iterator formatter<::wasp::binary::Opcode>::format(
   case ::wasp::binary::Opcode::Name:   \
     result = str;                      \
     break;
-    WASP_FOREACH_OPCODE(WASP_V)
+#include "wasp/binary/opcode.def"
 #undef WASP_V
     default: {
       // Special case for sections with unknown ids.

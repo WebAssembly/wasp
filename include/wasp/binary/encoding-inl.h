@@ -24,7 +24,7 @@ inline optional<::wasp::binary::ValueType> ValueType::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case Name:                   \
     return ::wasp::binary::ValueType::Name;
-    WASP_FOREACH_VALUE_TYPE(WASP_V)
+#include "wasp/binary/value_type.def"
 #undef WASP_V
     default:
       return nullopt;
@@ -37,7 +37,7 @@ inline optional<::wasp::binary::BlockType> BlockType::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case Name:                   \
     return ::wasp::binary::BlockType::Name;
-    WASP_FOREACH_BLOCK_TYPE(WASP_V)
+#include "wasp/binary/block_type.def"
 #undef WASP_V
     default:
       return nullopt;
@@ -50,7 +50,7 @@ inline optional<::wasp::binary::ElementType> ElementType::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case Name:                   \
     return ::wasp::binary::ElementType::Name;
-    WASP_FOREACH_ELEMENT_TYPE(WASP_V)
+#include "wasp/binary/element_type.def"
 #undef WASP_V
     default:
       return nullopt;
@@ -63,7 +63,7 @@ inline optional<::wasp::binary::ExternalKind> ExternalKind::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case Name:                   \
     return ::wasp::binary::ExternalKind::Name;
-    WASP_FOREACH_EXTERNAL_KIND(WASP_V)
+#include "wasp/binary/external_kind.def"
 #undef WASP_V
     default:
       return nullopt;
@@ -76,7 +76,7 @@ inline optional<::wasp::binary::Mutability> Mutability::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case Name:                   \
     return ::wasp::binary::Mutability::Name;
-    WASP_FOREACH_MUTABILITY(WASP_V)
+#include "wasp/binary/mutability.def"
 #undef WASP_V
     default:
       return nullopt;
@@ -89,7 +89,7 @@ inline optional<::wasp::binary::SectionId> Section::Decode(u32 val) {
 #define WASP_V(val, Name, str) \
   case Name:                   \
     return ::wasp::binary::SectionId::Name;
-    WASP_FOREACH_SECTION(WASP_V)
+#include "wasp/binary/section_id.def"
 #undef WASP_V
     default:
       return nullopt;
@@ -100,9 +100,9 @@ inline optional<::wasp::binary::SectionId> Section::Decode(u32 val) {
 inline optional<::wasp::binary::Opcode> Opcode::Decode(u8 val) {
   switch (val) {
 #define WASP_V(prefix, val, Name, str) \
-  case Name:                   \
+  case Name:                           \
     return ::wasp::binary::Opcode::Name;
-    WASP_FOREACH_OPCODE(WASP_V)
+#include "wasp/binary/opcode.def"
 #undef WASP_V
     default:
       return nullopt;
@@ -116,7 +116,7 @@ inline optional<::wasp::binary::NameSubsectionId> NameSubsectionId::Decode(
 #define WASP_V(val, Name, str) \
   case Name:                   \
     return ::wasp::binary::NameSubsectionId::Name;
-    WASP_FOREACH_NAME_SUBSECTION_ID(WASP_V)
+#include "wasp/binary/name_subsection_id.def"
 #undef WASP_V
     default:
       return nullopt;

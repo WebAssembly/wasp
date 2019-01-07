@@ -20,16 +20,10 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/variant.h"
-#include "wasp/binary/defs.h"
+#include "wasp/binary/section_id.h"
 
 namespace wasp {
 namespace binary {
-
-enum class SectionId : u32 {
-#define WASP_V(val, Name, str) Name,
-  WASP_FOREACH_SECTION(WASP_V)
-#undef WASP_V
-};
 
 struct KnownSection {
   SectionId id;

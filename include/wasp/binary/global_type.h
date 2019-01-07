@@ -1,5 +1,5 @@
 //
-// Copyright 2018 WebAssembly Community Group participants
+// Copyright 2019 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,34 +14,24 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_LAZY_MODULE_H
-#define WASP_BINARY_LAZY_MODULE_H
+#ifndef WASP_BINARY_GLOBAL_TYPE_H_
+#define WASP_BINARY_GLOBAL_TYPE_H_
 
-#include "wasp/base/optional.h"
-#include "wasp/base/span.h"
-#include "wasp/binary/lazy_sequence.h"
+#include "wasp/binary/mutability.h"
+#include "wasp/binary/value_type.h"
 
 namespace wasp {
 namespace binary {
 
-/// ---
-template <typename Errors>
-class LazyModule {
- public:
-  explicit LazyModule(SpanU8, Errors&);
-
-  SpanU8 data;
-  optional<SpanU8> magic;
-  optional<SpanU8> version;
-  LazySequence<Section, Errors> sections;
+struct GlobalType {
+  ValueType valtype;
+  Mutability mut;
 };
 
-template <typename Errors>
-LazyModule<Errors> ReadModule(SpanU8 data, Errors&);
+bool operator==(const GlobalType&, const GlobalType&);
+bool operator!=(const GlobalType&, const GlobalType&);
 
 }  // namespace binary
 }  // namespace wasp
 
-#include "wasp/binary/lazy_module-inl.h"
-
-#endif // WASP_BINARY_LAZY_MODULE_H
+#endif // WASP_BINARY_GLOBAL_TYPE_H_

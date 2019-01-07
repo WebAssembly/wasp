@@ -30,7 +30,6 @@
 #include "wasp/binary/lazy_module.h"
 #include "wasp/binary/lazy_name_section.h"
 #include "wasp/binary/lazy_section.h"
-#include "wasp/binary/types.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

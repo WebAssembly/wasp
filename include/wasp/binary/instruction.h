@@ -21,20 +21,14 @@
 
 #include "wasp/base/types.h"
 #include "wasp/base/variant.h"
-#include "wasp/binary/defs.h"
+#include "wasp/binary/block_type.h"
 
 namespace wasp {
 namespace binary {
 
-enum class BlockType : s32 {
-#define WASP_V(val, Name, str) Name,
-  WASP_FOREACH_BLOCK_TYPE(WASP_V)
-#undef WASP_V
-};
-
 enum class Opcode : u32 {
 #define WASP_V(prefix, val, Name, str) Name,
-  WASP_FOREACH_OPCODE(WASP_V)
+#include "wasp/binary/opcode.def"
 #undef WASP_V
 };
 

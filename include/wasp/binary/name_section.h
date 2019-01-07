@@ -22,16 +22,10 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/defs.h"
+#include "wasp/binary/name_subsection_id.h"
 
 namespace wasp {
 namespace binary {
-
-enum class NameSubsectionId : u8 {
-#define WASP_V(val, Name, str) Name,
-  WASP_FOREACH_NAME_SUBSECTION_ID(WASP_V)
-#undef WASP_V
-};
 
 struct NameAssoc {
   Index index;
