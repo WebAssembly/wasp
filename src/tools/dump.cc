@@ -31,7 +31,9 @@
 #include "wasp/binary/lazy_name_section.h"
 #include "wasp/binary/lazy_section.h"
 
-using namespace ::wasp;
+namespace wasp {
+namespace tools {
+
 using namespace ::wasp::binary;
 
 using ErrorsType = ErrorsNop;
@@ -116,11 +118,11 @@ struct Dumper {
   Index imported_global_count = 0;
 };
 
-int main(int argc, char** argv) {
+int DumpMain(int argc, char** argv) {
   std::vector<string_view> filenames;
   Options options;
 
-  for (int i = 1; i < argc; ++i) {
+  for (int i = 0; i < argc; ++i) {
     string_view arg = argv[i];
     if (arg[0] == '-') {
       switch (arg[1]) {
@@ -808,3 +810,6 @@ void Dumper::PrintMemory(SpanU8 start,
 size_t Dumper::file_offset(SpanU8 data) {
   return data.begin() - module.data.begin();
 }
+
+}  // namespace tools
+}  // namespace wasp

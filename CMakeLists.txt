@@ -33,7 +33,7 @@ include_directories(
   ${wasp_SOURCE_DIR}/third_party/variant-lite/include
 )
 
-add_library(wasp
+add_library(wasplib
   src/base/file.cc
   src/binary/code.cc
   src/binary/constant_expression.cc
@@ -65,12 +65,13 @@ add_library(wasp
   third_party/fmt/src/format.cc
 )
 
-add_executable(wasp_objdump
-  src/example/objdump.cc
+add_executable(wasp
+  src/tools/wasp.cc
+  src/tools/dump.cc
 )
 
-target_link_libraries(wasp_objdump
-  wasp
+target_link_libraries(wasp
+  wasplib
 )
 
 add_executable(wasp_unittests
@@ -129,7 +130,7 @@ add_executable(wasp_unittests
 )
 
 target_link_libraries(wasp_unittests
-  wasp
+  wasplib
   gtest_main
   gtest
 )
