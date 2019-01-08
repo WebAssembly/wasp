@@ -301,6 +301,9 @@ void Dumper::DoPass(Pass pass) {
       break;
 
     case Pass::Disassemble:
+      print("\nCode Disassembly:\n\n");
+      break;
+
     case Pass::RawData:
       break;
   }
