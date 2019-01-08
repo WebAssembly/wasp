@@ -19,8 +19,21 @@
 
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
+
+// XXX
+#include "wasp/binary/code.h"
+#include "wasp/binary/data_segment.h"
+#include "wasp/binary/element_segment.h"
+#include "wasp/binary/export.h"
+#include "wasp/binary/function.h"
+#include "wasp/binary/global.h"
+#include "wasp/binary/import.h"
 #include "wasp/binary/lazy_sequence.h"
+#include "wasp/binary/memory.h"
 #include "wasp/binary/section.h"
+#include "wasp/binary/start.h"
+#include "wasp/binary/table.h"
+#include "wasp/binary/type_entry.h"
 
 namespace wasp {
 namespace binary {

@@ -14,7 +14,11 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/reader.h"
+#include "wasp/binary/read/read.h"
+#include "wasp/binary/read/read_indirect_name_assoc.h"
+#include "wasp/binary/read/read_name_assoc.h"
+#include "wasp/binary/read/read_name_subsection.h"
+#include "wasp/binary/read/read_string.h"
 
 namespace wasp {
 namespace binary {

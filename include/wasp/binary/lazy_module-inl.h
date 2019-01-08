@@ -15,7 +15,10 @@
 //
 
 #include "wasp/base/formatters.h"
-#include "wasp/binary/reader.h"
+#include "wasp/binary/encoding.h"  // XXX
+#include "wasp/binary/read/read.h"
+#include "wasp/binary/read/read_bytes.h"
+#include "wasp/binary/read/read_section.h"
 
 namespace wasp {
 namespace binary {

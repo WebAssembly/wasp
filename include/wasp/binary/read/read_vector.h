@@ -1,5 +1,5 @@
 //
-// Copyright 2018 WebAssembly Community Group participants
+// Copyright 2019 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_READER_H_
-#define WASP_BINARY_READER_H_
+#ifndef WASP_BINARY_READ_READ_VECTOR_H_
+#define WASP_BINARY_READ_READ_VECTOR_H_
 
 #include <vector>
 
@@ -23,34 +23,30 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
+#include "wasp/binary/errors_context_guard.h"
+#include "wasp/binary/read/macros.h"
+#include "wasp/binary/read/read.h"
+#include "wasp/binary/read/read_count.h"
 
 namespace wasp {
 namespace binary {
 
 template <typename T, typename Errors>
-optional<T> Read(SpanU8* data, Errors&);
-
-template <typename Errors>
-optional<SpanU8> ReadBytes(SpanU8* data, SpanU8::index_type N, Errors&);
-
-template <typename T, typename Errors>
-optional<T> ReadVarInt(SpanU8* data, Errors&, string_view desc);
-
-template <typename Errors>
-optional<Index> ReadIndex(SpanU8* data, Errors&, string_view desc);
-
-template <typename Errors>
-optional<Index> ReadCount(SpanU8* data, Errors&);
-
-template <typename Errors>
-optional<string_view> ReadString(SpanU8* data, Errors&, string_view desc);
-
-template <typename T, typename Errors>
-optional<std::vector<T>> ReadVector(SpanU8* data, Errors&, string_view desc);
+optional<std::vector<T>> ReadVector(SpanU8* data,
+                                    Errors& errors,
+                                    string_view desc) {
+  ErrorsContextGuard<Errors> guard{errors, *data, desc};
+  std::vector<T> result;
+  WASP_TRY_READ(len, ReadCount(data, errors));
+  result.reserve(len);
+  for (u32 i = 0; i < len; ++i) {
+    WASP_TRY_READ(elt, Read<T>(data, errors));
+    result.emplace_back(std::move(elt));
+  }
+  return result;
+}
 
 }  // namespace binary
 }  // namespace wasp
 
-#include "wasp/binary/reader-inl.h"
-
-#endif  // WASP_BINARY_READER_H_
+#endif  // WASP_BINARY_READ_READ_VECTOR_H_

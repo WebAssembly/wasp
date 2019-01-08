@@ -14,7 +14,19 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/reader.h"
+#include "wasp/binary/read/read.h"
+#include "wasp/binary/read/read_code.h"
+#include "wasp/binary/read/read_count.h"
+#include "wasp/binary/read/read_data_segment.h"
+#include "wasp/binary/read/read_element_segment.h"
+#include "wasp/binary/read/read_export.h"
+#include "wasp/binary/read/read_function.h"
+#include "wasp/binary/read/read_global.h"
+#include "wasp/binary/read/read_import.h"
+#include "wasp/binary/read/read_memory.h"
+#include "wasp/binary/read/read_start.h"
+#include "wasp/binary/read/read_table.h"
+#include "wasp/binary/read/read_type_entry.h"
 
 namespace wasp {
 namespace binary {

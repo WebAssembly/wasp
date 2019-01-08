@@ -18,8 +18,11 @@
 
 #include "gtest/gtest.h"
 
-#include "wasp/binary/errors_nop.h"
 #include "src/binary/test_utils.h"
+#include "wasp/binary/errors_nop.h"
+#include "wasp/binary/read/read_s32.h"
+#include "wasp/binary/read/read_u32.h"
+#include "wasp/binary/read/read_u8.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

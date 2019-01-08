@@ -22,15 +22,10 @@
 #include "wasp/base/types.h"
 #include "wasp/base/variant.h"
 #include "wasp/binary/block_type.h"
+#include "wasp/binary/opcode.h"
 
 namespace wasp {
 namespace binary {
-
-enum class Opcode : u32 {
-#define WASP_V(prefix, val, Name, str) Name,
-#include "wasp/binary/opcode.def"
-#undef WASP_V
-};
 
 struct EmptyImmediate {};
 
