@@ -75,6 +75,7 @@ struct Dumper {
   void DoElementSection(Pass, LazyElementSection<ErrorsType>);
   void DoCodeSection(Pass, LazyCodeSection<ErrorsType>);
   void DoDataSection(Pass, LazyDataSection<ErrorsType>);
+  void DoNameSection(Pass, LazyNameSection<ErrorsType>);
 
   void DoCount(Pass, optional<Index> count);
 
@@ -400,10 +401,21 @@ void Dumper::DoKnownSection(Pass pass, KnownSection known) {
 }
 
 void Dumper::DoCustomSection(Pass pass, CustomSection custom) {
-  DoSectionHeader(pass, "custom", custom.data);
-  PrintDetails(pass, " - name: \"{}\"\n", custom.name);
-  if (pass == Pass::Headers) {
-    print("\"{}\"\n", custom.name);
+  DoSectionHeader(pass, format("custom \"{}\"", custom.name), custom.data);
+  switch (pass) {
+    case Pass::Headers:
+      print("\"{}\"\n", custom.name);
+      break;
+
+    case Pass::Details:
+      print("\n");
+      if (custom.name == "name") {
+        DoNameSection(pass, ReadNameSection(custom, errors));
+      }
+      break;
+
+    default:
+      break;
   }
 }
 
@@ -645,6 +657,49 @@ void Dumper::DoDataSection(Pass pass, LazyDataSection<ErrorsType> section) {
       Index offset = GetI32Value(data.offset).value_or(0);
       PrintMemory(data.init, offset, PrintChars::Yes, "  - ");
       ++count;
+    }
+  }
+}
+
+void Dumper::DoNameSection(Pass pass, LazyNameSection<ErrorsType> section) {
+  for (auto subsection : section) {
+    switch (subsection.id) {
+      case NameSubsectionId::ModuleName: {
+        auto module_name =
+            ReadModuleNameSubsection(subsection.data, errors);
+        print("  module name: {}\n", module_name.value_or(""));
+        break;
+      }
+
+      case NameSubsectionId::FunctionNames: {
+        auto function_names_subsection =
+            ReadFunctionNamesSubsection(subsection.data, errors);
+        print("  function names[{}]:\n",
+              function_names_subsection.count.value_or(0));
+        Index count = 0;
+        for (auto name_assoc : function_names_subsection.sequence) {
+          print("   - [{}]: func[{}] name=\"{}\"\n", count++, name_assoc.index,
+                name_assoc.name);
+        }
+        break;
+      }
+
+      case NameSubsectionId::LocalNames: {
+        auto local_names_subsection =
+            ReadLocalNamesSubsection(subsection.data, errors);
+        print("  local names[{}]:\n", local_names_subsection.count.value_or(0));
+        Index func_count = 0;
+        for (auto indirect_name_assoc : local_names_subsection.sequence) {
+          print("   - [{}]: func[{}] count={}\n", func_count++,
+                indirect_name_assoc.index, indirect_name_assoc.name_map.size());
+          Index local_count = 0;
+          for (auto name_assoc : indirect_name_assoc.name_map) {
+            print("     - [{}]: local[{}] name=\"{}\"\n", local_count++,
+                  name_assoc.index, name_assoc.name);
+          }
+        }
+        break;
+      }
     }
   }
 }
