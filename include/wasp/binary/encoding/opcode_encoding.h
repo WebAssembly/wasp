@@ -40,7 +40,8 @@ struct Opcode {
 inline bool Opcode::IsPrefixByte(u8 code, const Features& features) {
   switch (code) {
     case MiscPrefix:
-      return features.saturating_float_to_int_enabled();
+      return features.saturating_float_to_int_enabled() ||
+             features.bulk_memory_enabled();
 
     default:
       return false;
@@ -59,7 +60,8 @@ inline optional<::wasp::binary::Opcode> Opcode::Decode(
   case code:                                             \
     if (features.feature##_enabled()) {                  \
       return ::wasp::binary::Opcode::Name;               \
-    }
+    }                                                    \
+    break;
 #define WASP_PREFIX_V(...) /* Invalid. */
 #include "wasp/binary/opcode.def"
 #undef WASP_V
@@ -91,7 +93,8 @@ inline optional<::wasp::binary::Opcode> Opcode::Decode(
   case MakePrefixCode(prefix, code):                    \
     if (features.feature##_enabled()) {                 \
       return ::wasp::binary::Opcode::Name;              \
-    }
+    }                                                   \
+    break;
 #include "wasp/binary/opcode.def"
 #undef WASP_V
 #undef WASP_FEATURE_V

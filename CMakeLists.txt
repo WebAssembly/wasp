@@ -102,6 +102,7 @@ add_executable(wasp_unittests
   src/binary/read_global_type_test.cc
   src/binary/read_import_test.cc
   src/binary/read_indirect_name_assoc_test.cc
+  src/binary/read_init_immediate_test.cc
   src/binary/read_instruction_test.cc
   src/binary/read_limits_test.cc
   src/binary/read_locals_test.cc

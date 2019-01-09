@@ -56,6 +56,14 @@ struct MemArgImmediate {
 bool operator==(const MemArgImmediate&, const MemArgImmediate&);
 bool operator!=(const MemArgImmediate&, const MemArgImmediate&);
 
+struct InitImmediate {
+  u8 reserved;
+  Index segment_index;
+};
+
+bool operator==(const InitImmediate&, const InitImmediate&);
+bool operator!=(const InitImmediate&, const InitImmediate&);
+
 struct Instruction {
   explicit Instruction(Opcode opcode);
   explicit Instruction(Opcode opcode, EmptyImmediate);
@@ -69,6 +77,7 @@ struct Instruction {
   explicit Instruction(Opcode opcode, s64);
   explicit Instruction(Opcode opcode, f32);
   explicit Instruction(Opcode opcode, f64);
+  explicit Instruction(Opcode opcode, InitImmediate);
 
   bool has_empty_immediate() const;
   bool has_block_type_immediate() const;
@@ -81,6 +90,7 @@ struct Instruction {
   bool has_s64_immediate() const;
   bool has_f32_immediate() const;
   bool has_f64_immediate() const;
+  bool has_init_immediate() const;
 
   EmptyImmediate& empty_immediate();
   const EmptyImmediate& empty_immediate() const;
@@ -104,6 +114,8 @@ struct Instruction {
   const f32& f32_immediate() const;
   f64& f64_immediate();
   const f64& f64_immediate() const;
+  InitImmediate& init_immediate();
+  const InitImmediate& init_immediate() const;
 
   Opcode opcode;
   variant<EmptyImmediate,
@@ -116,7 +128,8 @@ struct Instruction {
           s32,
           s64,
           f32,
-          f64>
+          f64,
+          InitImmediate>
       immediate;
 };
 

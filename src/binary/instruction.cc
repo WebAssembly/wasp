@@ -57,10 +57,14 @@ Instruction::Instruction(Opcode opcode, f32 immediate)
 Instruction::Instruction(Opcode opcode, f64 immediate)
     : opcode(opcode), immediate(immediate) {}
 
+Instruction::Instruction(Opcode opcode, InitImmediate immediate)
+    : opcode(opcode), immediate(immediate) {}
+
 WASP_OPERATOR_EQ_NE_2(MemArgImmediate, align_log2, offset)
 WASP_OPERATOR_EQ_NE_0(EmptyImmediate)
 WASP_OPERATOR_EQ_NE_2(CallIndirectImmediate, index, reserved)
 WASP_OPERATOR_EQ_NE_2(BrTableImmediate, targets, default_target)
+WASP_OPERATOR_EQ_NE_2(InitImmediate, segment_index, reserved)
 WASP_OPERATOR_EQ_NE_2(Instruction, opcode, immediate)
 
 }  // namespace binary

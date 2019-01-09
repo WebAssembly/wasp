@@ -203,3 +203,12 @@ WASP_PREFIX_V(0xfc, 0x04, I64TruncSatF32S, "i64.trunc_sat_f32_s", saturating_flo
 WASP_PREFIX_V(0xfc, 0x05, I64TruncSatF32U, "i64.trunc_sat_f32_u", saturating_float_to_int)
 WASP_PREFIX_V(0xfc, 0x06, I64TruncSatF64S, "i64.trunc_sat_f64_s", saturating_float_to_int)
 WASP_PREFIX_V(0xfc, 0x07, I64TruncSatF64U, "i64.trunc_sat_f64_u", saturating_float_to_int)
+
+// Bulk memory opcodes
+WASP_PREFIX_V(0xfc, 0x08, MemoryInit, "memory.init", bulk_memory)
+WASP_PREFIX_V(0xfc, 0x09, MemoryDrop, "memory.drop", bulk_memory)
+WASP_PREFIX_V(0xfc, 0x0a, MemoryCopy, "memory.copy", bulk_memory)
+WASP_PREFIX_V(0xfc, 0x0b, MemoryFill, "memory.fill", bulk_memory)
+WASP_PREFIX_V(0xfc, 0x0c, TableInit, "table.init", bulk_memory)
+WASP_PREFIX_V(0xfc, 0x0d, TableDrop, "table.drop", bulk_memory)
+WASP_PREFIX_V(0xfc, 0x0e, TableCopy, "table.copy", bulk_memory)

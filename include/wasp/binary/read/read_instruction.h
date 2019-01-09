@@ -29,6 +29,7 @@
 #include "wasp/binary/read/read_f32.h"
 #include "wasp/binary/read/read_f64.h"
 #include "wasp/binary/read/read_index.h"
+#include "wasp/binary/read/read_init_immediate.h"
 #include "wasp/binary/read/read_mem_arg_immediate.h"
 #include "wasp/binary/read/read_opcode.h"
 #include "wasp/binary/read/read_reserved.h"
@@ -207,7 +208,9 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::LocalSet:
     case Opcode::LocalTee:
     case Opcode::GlobalGet:
-    case Opcode::GlobalSet: {
+    case Opcode::GlobalSet:
+    case Opcode::MemoryDrop:
+    case Opcode::TableDrop: {
       WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
       return Instruction{Opcode{opcode}, index};
     }
@@ -255,7 +258,10 @@ optional<Instruction> Read(SpanU8* data,
 
     // Reserved immediates.
     case Opcode::MemorySize:
-    case Opcode::MemoryGrow: {
+    case Opcode::MemoryGrow:
+    case Opcode::MemoryCopy:
+    case Opcode::MemoryFill:
+    case Opcode::TableCopy: {
       WASP_TRY_READ(reserved, ReadReserved(data, features, errors));
       return Instruction{Opcode{opcode}, reserved};
     }
@@ -283,6 +289,13 @@ optional<Instruction> Read(SpanU8* data,
       WASP_TRY_READ_CONTEXT(value, Read<f64>(data, features, errors),
                             "f64 constant");
       return Instruction{Opcode{opcode}, value};
+    }
+
+    // Reserved, Index immediates.
+    case Opcode::MemoryInit:
+    case Opcode::TableInit: {
+      WASP_TRY_READ(immediate, Read<InitImmediate>(data, features, errors));
+      return Instruction{Opcode{opcode}, immediate};
     }
   }
   WASP_UNREACHABLE();

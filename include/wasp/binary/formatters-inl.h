@@ -338,7 +338,7 @@ typename Ctx::iterator formatter<::wasp::binary::Opcode>::format(
 #undef WASP_FEATURE_V
 #undef WASP_PREFIX_V
     default: {
-      // Special case for sections with unknown ids.
+      // Special case for opcodes with unknown ids.
       memory_buffer buf;
       format_to(buf, "<unknown:{}>", static_cast<::wasp::u32>(self));
       return formatter<string_view>::format(to_string_view(buf), ctx);
@@ -362,6 +362,15 @@ typename Ctx::iterator formatter<::wasp::binary::BrTableImmediate>::format(
     Ctx& ctx) {
   memory_buffer buf;
   format_to(buf, "{} {}", self.targets, self.default_target);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::InitImmediate>::format(
+    const ::wasp::binary::InitImmediate& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.segment_index, self.reserved);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 

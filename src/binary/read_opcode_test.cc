@@ -208,6 +208,16 @@ void ExpectUnknownOpcode(u8 code) {
   ExpectReadFailure<Opcode>({{0, "opcode"}, {1, msg}}, SpanU8{span_buffer, 1});
 }
 
+void ExpectUnknownOpcode(u8 prefix,
+                         u32 code,
+                         SpanU8 span,
+                         const Features& features) {
+  ExpectReadFailure<Opcode>(
+      {{0, "opcode"},
+       {span.size(), format("Unknown opcode: {} {}", prefix, code)}},
+      span, features);
+}
+
 }  // namespace
 
 TEST(ReaderTest, Opcode_Unknown) {
@@ -250,11 +260,53 @@ TEST(ReaderTest, Opcode_saturating_float_to_int) {
   ExpectRead<Opcode>(Opcode::I64TruncSatF64U, MakeSpanU8("\xfc\x07"), features);
 }
 
+TEST(ReaderTest, Opcode_bulk_memory) {
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectRead<Opcode>(Opcode::MemoryInit, MakeSpanU8("\xfc\x08"), features);
+  ExpectRead<Opcode>(Opcode::MemoryDrop, MakeSpanU8("\xfc\x09"), features);
+  ExpectRead<Opcode>(Opcode::MemoryCopy, MakeSpanU8("\xfc\x0a"), features);
+  ExpectRead<Opcode>(Opcode::MemoryFill, MakeSpanU8("\xfc\x0b"), features);
+  ExpectRead<Opcode>(Opcode::TableInit, MakeSpanU8("\xfc\x0c"), features);
+  ExpectRead<Opcode>(Opcode::TableDrop, MakeSpanU8("\xfc\x0d"), features);
+  ExpectRead<Opcode>(Opcode::TableCopy, MakeSpanU8("\xfc\x0e"), features);
+}
+
+TEST(ReaderTest, Opcode_disabled_misc_prefix) {
+  {
+    Features features;
+    features.enable_saturating_float_to_int();
+    ExpectUnknownOpcode(0xfc, 8, MakeSpanU8("\xfc\x08"), features);
+    ExpectUnknownOpcode(0xfc, 9, MakeSpanU8("\xfc\x09"), features);
+    ExpectUnknownOpcode(0xfc, 10, MakeSpanU8("\xfc\x0a"), features);
+    ExpectUnknownOpcode(0xfc, 11, MakeSpanU8("\xfc\x0b"), features);
+    ExpectUnknownOpcode(0xfc, 12, MakeSpanU8("\xfc\x0c"), features);
+    ExpectUnknownOpcode(0xfc, 13, MakeSpanU8("\xfc\x0d"), features);
+    ExpectUnknownOpcode(0xfc, 14, MakeSpanU8("\xfc\x0e"), features);
+  }
+
+  {
+    Features features;
+    features.enable_bulk_memory();
+    ExpectUnknownOpcode(0xfc, 0, MakeSpanU8("\xfc\x00"), features);
+    ExpectUnknownOpcode(0xfc, 1, MakeSpanU8("\xfc\x01"), features);
+    ExpectUnknownOpcode(0xfc, 2, MakeSpanU8("\xfc\x02"), features);
+    ExpectUnknownOpcode(0xfc, 3, MakeSpanU8("\xfc\x03"), features);
+    ExpectUnknownOpcode(0xfc, 4, MakeSpanU8("\xfc\x04"), features);
+    ExpectUnknownOpcode(0xfc, 5, MakeSpanU8("\xfc\x05"), features);
+    ExpectUnknownOpcode(0xfc, 6, MakeSpanU8("\xfc\x06"), features);
+    ExpectUnknownOpcode(0xfc, 7, MakeSpanU8("\xfc\x07"), features);
+  }
+}
+
+
 TEST(ReaderTest, Opcode_Unknown_misc_prefix) {
   Features features;
   features.enable_saturating_float_to_int();
+  features.enable_bulk_memory();
 
-  for (u8 code = 0x08; code < 0x7f; ++code) {
+  for (u8 code = 0x0f; code < 0x7f; ++code) {
     const u8 span_buffer[] = {0xfc, code};
     auto msg = format("Unknown opcode: 252 {}", code);
     ExpectReadFailure<Opcode>({{0, "opcode"}, {2, msg}}, SpanU8{span_buffer, 2},
@@ -262,14 +314,10 @@ TEST(ReaderTest, Opcode_Unknown_misc_prefix) {
   }
 
   // Test some longer codes too.
-  ExpectReadFailure<Opcode>({{0, "opcode"}, {3, "Unknown opcode: 252 128"}},
-                            MakeSpanU8("\xfc\x80\x01"), features);
-  ExpectReadFailure<Opcode>({{0, "opcode"}, {4, "Unknown opcode: 252 16384"}},
-                            MakeSpanU8("\xfc\x80\x80\x01"), features);
-  ExpectReadFailure<Opcode>({{0, "opcode"}, {5, "Unknown opcode: 252 2097152"}},
-                            MakeSpanU8("\xfc\x80\x80\x80\x01"), features);
-  ExpectReadFailure<Opcode>(
-      {{0, "opcode"}, {6, "Unknown opcode: 252 268435456"}},
-      MakeSpanU8("\xfc\x80\x80\x80\x80\x01"), features);
+  ExpectUnknownOpcode(0xfc, 128, MakeSpanU8("\xfc\x80\x01"), features);
+  ExpectUnknownOpcode(0xfc, 16384, MakeSpanU8("\xfc\x80\x80\x01"), features);
+  ExpectUnknownOpcode(0xfc, 2097152, MakeSpanU8("\xfc\x80\x80\x80\x01"),
+                      features);
+  ExpectUnknownOpcode(0xfc, 268435456, MakeSpanU8("\xfc\x80\x80\x80\x80\x01"),
+                      features);
 }
-

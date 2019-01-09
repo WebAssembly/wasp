@@ -61,6 +61,10 @@ inline bool Instruction::has_f64_immediate() const {
   return holds_alternative<f64>(immediate);
 }
 
+inline bool Instruction::has_init_immediate() const {
+  return holds_alternative<InitImmediate>(immediate);
+}
+
 inline EmptyImmediate& Instruction::empty_immediate() {
   return get<EmptyImmediate>(immediate);
 }
@@ -148,6 +152,14 @@ inline f64& Instruction::f64_immediate() {
 
 inline const f64& Instruction::f64_immediate() const {
   return get<f64>(immediate);
+}
+
+inline InitImmediate& Instruction::init_immediate() {
+  return get<InitImmediate>(immediate);
+}
+
+inline const InitImmediate& Instruction::init_immediate() const {
+  return get<InitImmediate>(immediate);
 }
 
 }  // namespace binary
