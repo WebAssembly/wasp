@@ -229,3 +229,20 @@ TEST(ReaderTest, Instruction_sign_extension) {
   ExpectRead<I>(I{O::I64Extend16S}, MakeSpanU8("\xc3"), features);
   ExpectRead<I>(I{O::I64Extend32S}, MakeSpanU8("\xc4"), features);
 }
+
+TEST(ReaderTest, Instruction_saturating_float_to_int) {
+  using I = Instruction;
+  using O = Opcode;
+
+  Features features;
+  features.enable_saturating_float_to_int();
+
+  ExpectRead<I>(I{O::I32TruncSatF32S}, MakeSpanU8("\xfc\x00"), features);
+  ExpectRead<I>(I{O::I32TruncSatF32U}, MakeSpanU8("\xfc\x01"), features);
+  ExpectRead<I>(I{O::I32TruncSatF64S}, MakeSpanU8("\xfc\x02"), features);
+  ExpectRead<I>(I{O::I32TruncSatF64U}, MakeSpanU8("\xfc\x03"), features);
+  ExpectRead<I>(I{O::I64TruncSatF32S}, MakeSpanU8("\xfc\x04"), features);
+  ExpectRead<I>(I{O::I64TruncSatF32U}, MakeSpanU8("\xfc\x05"), features);
+  ExpectRead<I>(I{O::I64TruncSatF64S}, MakeSpanU8("\xfc\x06"), features);
+  ExpectRead<I>(I{O::I64TruncSatF64U}, MakeSpanU8("\xfc\x07"), features);
+}

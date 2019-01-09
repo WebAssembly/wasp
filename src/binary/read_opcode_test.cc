@@ -203,7 +203,7 @@ TEST(ReaderTest, Opcode) {
 namespace {
 
 void ExpectUnknownOpcode(u8 code) {
-  u8 span_buffer[1] = {code};
+  const u8 span_buffer[] = {code};
   auto msg = format("Unknown opcode: {}", code);
   ExpectReadFailure<Opcode>({{0, "opcode"}, {1, msg}}, SpanU8{span_buffer, 1});
 }
@@ -235,3 +235,41 @@ TEST(ReaderTest, Opcode_sign_extension) {
   ExpectRead<Opcode>(Opcode::I64Extend16S, MakeSpanU8("\xc3"), features);
   ExpectRead<Opcode>(Opcode::I64Extend32S, MakeSpanU8("\xc4"), features);
 }
+
+TEST(ReaderTest, Opcode_saturating_float_to_int) {
+  Features features;
+  features.enable_saturating_float_to_int();
+
+  ExpectRead<Opcode>(Opcode::I32TruncSatF32S, MakeSpanU8("\xfc\x00"), features);
+  ExpectRead<Opcode>(Opcode::I32TruncSatF32U, MakeSpanU8("\xfc\x01"), features);
+  ExpectRead<Opcode>(Opcode::I32TruncSatF64S, MakeSpanU8("\xfc\x02"), features);
+  ExpectRead<Opcode>(Opcode::I32TruncSatF64U, MakeSpanU8("\xfc\x03"), features);
+  ExpectRead<Opcode>(Opcode::I64TruncSatF32S, MakeSpanU8("\xfc\x04"), features);
+  ExpectRead<Opcode>(Opcode::I64TruncSatF32U, MakeSpanU8("\xfc\x05"), features);
+  ExpectRead<Opcode>(Opcode::I64TruncSatF64S, MakeSpanU8("\xfc\x06"), features);
+  ExpectRead<Opcode>(Opcode::I64TruncSatF64U, MakeSpanU8("\xfc\x07"), features);
+}
+
+TEST(ReaderTest, Opcode_Unknown_misc_prefix) {
+  Features features;
+  features.enable_saturating_float_to_int();
+
+  for (u8 code = 0x08; code < 0x7f; ++code) {
+    const u8 span_buffer[] = {0xfc, code};
+    auto msg = format("Unknown opcode: 252 {}", code);
+    ExpectReadFailure<Opcode>({{0, "opcode"}, {2, msg}}, SpanU8{span_buffer, 2},
+                              features);
+  }
+
+  // Test some longer codes too.
+  ExpectReadFailure<Opcode>({{0, "opcode"}, {3, "Unknown opcode: 252 128"}},
+                            MakeSpanU8("\xfc\x80\x01"), features);
+  ExpectReadFailure<Opcode>({{0, "opcode"}, {4, "Unknown opcode: 252 16384"}},
+                            MakeSpanU8("\xfc\x80\x80\x01"), features);
+  ExpectReadFailure<Opcode>({{0, "opcode"}, {5, "Unknown opcode: 252 2097152"}},
+                            MakeSpanU8("\xfc\x80\x80\x80\x01"), features);
+  ExpectReadFailure<Opcode>(
+      {{0, "opcode"}, {6, "Unknown opcode: 252 268435456"}},
+      MakeSpanU8("\xfc\x80\x80\x80\x80\x01"), features);
+}
+

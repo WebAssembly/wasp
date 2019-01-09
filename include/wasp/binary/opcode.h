@@ -25,9 +25,11 @@ namespace binary {
 enum class Opcode : u32 {
 #define WASP_V(prefix, val, Name, str, ...) Name,
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
+#define WASP_PREFIX_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/opcode.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
+#undef WASP_PREFIX_V
 };
 
 }  // namespace binary

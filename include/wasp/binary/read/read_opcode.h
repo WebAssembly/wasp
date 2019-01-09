@@ -24,6 +24,7 @@
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_u8.h"
+#include "wasp/binary/read/read_u32.h"
 
 namespace wasp {
 namespace binary {
@@ -35,8 +36,23 @@ optional<Opcode> Read(SpanU8* data,
                       Tag<Opcode>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "opcode"};
   WASP_TRY_READ(val, Read<u8>(data, features, errors));
-  WASP_TRY_DECODE_WITH_FEATURES(decoded, val, Opcode, "opcode", features);
-  return decoded;
+
+  if (encoding::Opcode::IsPrefixByte(val, features)) {
+    WASP_TRY_READ(code, Read<u32>(data, features, errors));
+    auto decoded = encoding::Opcode::Decode(val, code, features);
+    if (!decoded) {
+      errors.OnError(*data, format("Unknown opcode: {} {}", val, code));
+      return nullopt;
+    }
+    return decoded;
+  } else {
+    auto decoded = encoding::Opcode::Decode(val, features);
+    if (!decoded) {
+      errors.OnError(*data, format("Unknown opcode: {}", val));
+      return nullopt;
+    }
+    return decoded;
+  }
 }
 
 }  // namespace binary

@@ -27,31 +27,75 @@ namespace binary {
 namespace encoding {
 
 struct Opcode {
-#define WASP_V(prefix, val, Name, str, ...) static constexpr u8 Name = val;
-#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/opcode.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
+  static constexpr u8 MiscPrefix = 0xfc;
 
-  static optional<::wasp::binary::Opcode> Decode(u8, const Features&);
+  static bool IsPrefixByte(u8, const Features&);
+  static optional<::wasp::binary::Opcode> Decode(u8 code, const Features&);
+  static optional<::wasp::binary::Opcode> Decode(u8 prefix,
+                                                 u32 code,
+                                                 const Features&);
 };
 
 // static
+inline bool Opcode::IsPrefixByte(u8 code, const Features& features) {
+  switch (code) {
+    case MiscPrefix:
+      return features.saturating_float_to_int_enabled();
+
+    default:
+      return false;
+  }
+}
+
+// static
 inline optional<::wasp::binary::Opcode> Opcode::Decode(
-    u8 val,
+    u8 code,
     const Features& features) {
-  switch (val) {
-#define WASP_V(prefix, val, Name, str) \
-  case Name:                           \
+  switch (code) {
+#define WASP_V(prefix, code, Name, str) \
+  case code:                            \
     return ::wasp::binary::Opcode::Name;
-#define WASP_FEATURE_V(prefix, val, Name, str, feature) \
-  case Name:                                            \
+#define WASP_FEATURE_V(prefix, code, Name, str, feature) \
+  case code:                                             \
+    if (features.feature##_enabled()) {                  \
+      return ::wasp::binary::Opcode::Name;               \
+    }
+#define WASP_PREFIX_V(...) /* Invalid. */
+#include "wasp/binary/opcode.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+#undef WASP_PREFIX_V
+    default:
+      break;
+  }
+  return nullopt;
+}
+
+namespace {
+
+constexpr u64 MakePrefixCode(u8 prefix, u32 code) {
+  return (u64{prefix} << 32) | code;
+}
+
+}  // namespace
+
+// static
+inline optional<::wasp::binary::Opcode> Opcode::Decode(
+    u8 prefix,
+    u32 code,
+    const Features& features) {
+  switch (MakePrefixCode(prefix, code)) {
+#define WASP_V(...) /* Invalid. */
+#define WASP_FEATURE_V(...) /* Invalid. */
+#define WASP_PREFIX_V(prefix, code, Name, str, feature) \
+  case MakePrefixCode(prefix, code):                    \
     if (features.feature##_enabled()) {                 \
       return ::wasp::binary::Opcode::Name;              \
     }
 #include "wasp/binary/opcode.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
+#undef WASP_PREFIX_V
     default:
       break;
   }

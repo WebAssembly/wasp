@@ -181,6 +181,14 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::I64Extend8S:
     case Opcode::I64Extend16S:
     case Opcode::I64Extend32S:
+    case Opcode::I32TruncSatF32S:
+    case Opcode::I32TruncSatF32U:
+    case Opcode::I32TruncSatF64S:
+    case Opcode::I32TruncSatF64U:
+    case Opcode::I64TruncSatF32S:
+    case Opcode::I64TruncSatF32U:
+    case Opcode::I64TruncSatF64S:
+    case Opcode::I64TruncSatF64U:
       return Instruction{Opcode{opcode}};
 
     // Type immediate.
