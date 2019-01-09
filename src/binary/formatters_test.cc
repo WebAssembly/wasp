@@ -217,6 +217,11 @@ TEST(FormatTest, BrTableImmediate) {
   EXPECT_EQ(R"(  [42] 0)", format("{:>8s}", BrTableImmediate{{42}, 0}));
 }
 
+TEST(FormatTest, InitImmediate) {
+  EXPECT_EQ(R"(0 1)", format("{}", InitImmediate{0, 1u}));
+  EXPECT_EQ(R"(  0 10)", format("{:>6s}", InitImmediate{0, 10u}));
+}
+
 TEST(FormatTest, Instruction) {
   // nop
   EXPECT_EQ(R"(nop)", format("{}", Instruction{Opcode::Nop}));
@@ -252,6 +257,10 @@ TEST(FormatTest, Instruction) {
   // f64.const 6.25
   EXPECT_EQ(R"(f64.const 6.250000)",
             format("{}", Instruction{Opcode::F64Const, f64{6.25}}));
+  // memory.init 0 10
+  EXPECT_EQ(
+      R"(memory.init 0 10)",
+      format("{}", Instruction{Opcode::MemoryInit, InitImmediate{0, 10}}));
 
   EXPECT_EQ(R"(   i32.add)", format("{:>10s}", Instruction{Opcode::I32Add}));
 }
