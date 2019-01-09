@@ -14,36 +14,14 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_NAME_SECTION_H_
-#define WASP_BINARY_NAME_SECTION_H_
-
-#include <vector>
+#ifndef WASP_BINARY_NAME_SUBSECTION_H_
+#define WASP_BINARY_NAME_SUBSECTION_H_
 
 #include "wasp/base/span.h"
-#include "wasp/base/string_view.h"
-#include "wasp/base/types.h"
 #include "wasp/binary/name_subsection_id.h"
 
 namespace wasp {
 namespace binary {
-
-struct NameAssoc {
-  Index index;
-  string_view name;
-};
-
-bool operator==(const NameAssoc&, const NameAssoc&);
-bool operator!=(const NameAssoc&, const NameAssoc&);
-
-using NameMap = std::vector<NameAssoc>;
-
-struct IndirectNameAssoc {
-  Index index;
-  NameMap name_map;
-};
-
-bool operator==(const IndirectNameAssoc&, const IndirectNameAssoc&);
-bool operator!=(const IndirectNameAssoc&, const IndirectNameAssoc&);
 
 struct NameSubsection {
   NameSubsectionId id;
@@ -56,4 +34,4 @@ bool operator!=(const NameSubsection&, const NameSubsection&);
 }  // namespace binary
 }  // namespace wasp
 
-#endif  // WASP_BINARY_NAME_SECTION_H_
+#endif  // WASP_BINARY_NAME_SUBSECTION_H_

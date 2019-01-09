@@ -19,7 +19,7 @@
 
 #include "wasp/base/features.h"
 #include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/name_section.h"  /// XXX
+#include "wasp/binary/indirect_name_assoc.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_index.h"

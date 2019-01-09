@@ -53,6 +53,7 @@ add_library(wasplib
   src/binary/global.cc
   src/binary/global_type.cc
   src/binary/import.cc
+  src/binary/indirect_name_assoc.cc
   src/binary/init_immediate.cc
   src/binary/instruction.cc
   src/binary/known_section.cc
@@ -61,7 +62,8 @@ add_library(wasplib
   src/binary/mem_arg_immediate.cc
   src/binary/memory.cc
   src/binary/memory_type.cc
-  src/binary/name_section.cc
+  src/binary/name_assoc.cc
+  src/binary/name_subsection.cc
   src/binary/section.cc
   src/binary/start.cc
   src/binary/table.cc

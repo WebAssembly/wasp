@@ -17,70 +17,35 @@
 #ifndef WASP_BINARY_LAZY_NAME_SECTION_H_
 #define WASP_BINARY_LAZY_NAME_SECTION_H_
 
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
-#include "wasp/base/string_view.h"
 #include "wasp/binary/custom_section.h"
-#include "wasp/binary/lazy_section.h"
 #include "wasp/binary/lazy_sequence.h"
-#include "wasp/binary/name_section.h"
+#include "wasp/binary/name_subsection.h"
+#include "wasp/binary/read/read_name_subsection.h"
 
 namespace wasp {
-
-class Features;
-
 namespace binary {
 
-/// ---
 template <typename Errors>
 using LazyNameSection = LazySequence<NameSubsection, Errors>;
 
 template <typename Errors>
-LazyNameSection<Errors> ReadNameSection(SpanU8, const Features&, Errors&);
-template <typename Errors>
-LazyNameSection<Errors> ReadNameSection(CustomSection,
-                                        const Features&,
-                                        Errors&);
-
-/// ---
-using ModuleNameSubsection = optional<string_view>;
+LazyNameSection<Errors> ReadNameSection(SpanU8 data,
+                                        const Features& features,
+                                        Errors& errors) {
+  return LazyNameSection<Errors>{data, features, errors};
+}
 
 template <typename Errors>
-ModuleNameSubsection ReadModuleNameSubsection(SpanU8, const Features&, Errors&);
-template <typename Errors>
-ModuleNameSubsection ReadModuleNameSubsection(NameSubsection,
-                                              const Features&,
-                                              Errors&);
-
-/// ---
-template <typename Errors>
-using LazyFunctionNamesSubsection = LazySection<NameAssoc, Errors>;
-
-template <typename Errors>
-LazyFunctionNamesSubsection<Errors> ReadFunctionNamesSubsection(SpanU8,
-                                                                const Features&,
-                                                                Errors&);
-template <typename Errors>
-LazyFunctionNamesSubsection<Errors> ReadFunctionNamesSubsection(NameSubsection,
-                                                                const Features&,
-                                                                Errors&);
-
-/// ---
-template <typename Errors>
-using LazyLocalNamesSubsection = LazySection<IndirectNameAssoc, Errors>;
-
-template <typename Errors>
-LazyLocalNamesSubsection<Errors> ReadLocalNamesSubsection(SpanU8,
-                                                          const Features&,
-                                                          Errors&);
-template <typename Errors>
-LazyLocalNamesSubsection<Errors> ReadLocalNamesSubsection(NameSubsection,
-                                                          const Features&,
-                                                          Errors&);
+LazyNameSection<Errors> ReadNameSection(CustomSection sec,
+                                        const Features& features,
+                                        Errors& errors) {
+  return LazyNameSection<Errors>{sec.data, features, errors};
+}
 
 }  // namespace binary
 }  // namespace wasp
-
-#include "wasp/binary/lazy_name_section-inl.h"
 
 #endif // WASP_BINARY_LAZY_NAME_SECTION_H_
