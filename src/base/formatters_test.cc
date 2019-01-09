@@ -45,11 +45,11 @@ struct formatter<Point> {
 
 }  // namespace fmt
 
-TEST(FormatTest, U32) {
+TEST(FormattersTest, U32) {
   EXPECT_EQ("100", format("{}", u32{100u}));
 }
 
-TEST(FormatTest, SpanU8) {
+TEST(FormattersTest, SpanU8) {
   EXPECT_EQ(R"("")", format("{}", SpanU8{}));
 
   const u8 buffer[] = "Hello, World!";
@@ -58,13 +58,13 @@ TEST(FormatTest, SpanU8) {
   EXPECT_EQ(R"(  "\48"  )", format("{:^9s}", SpanU8{buffer, 1}));
 }
 
-TEST(FormatTest, VectorU32) {
+TEST(FormattersTest, VectorU32) {
   EXPECT_EQ(R"([])", format("{}", std::vector<u32>{}));
   EXPECT_EQ(R"([1 2 3])", format("{}", std::vector<u32>{{1u, 2u, 3u}}));
   EXPECT_EQ(R"(   [0 0])", format("{:>8s}", std::vector<u32>{{0u, 0u}}));
 }
 
-TEST(FormatTest, VectorPoint) {
+TEST(FormattersTest, VectorPoint) {
   EXPECT_EQ(R"([])", format("{}", std::vector<Point>{}));
   EXPECT_EQ(R"([{x:1, y:1} {x:2, y:3}])",
             format("{}", std::vector<Point>{{Point{1, 1}, Point{2, 3}}}));

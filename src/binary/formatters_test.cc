@@ -24,54 +24,54 @@ using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
-TEST(FormatTest, ValueType) {
+TEST(FormattersTest, ValueType) {
   EXPECT_EQ(R"(i32)", format("{}", ValueType::I32));
   EXPECT_EQ(R"(  f32)", format("{:>5s}", ValueType::F32));
 }
 
-TEST(FormatTest, BlockType) {
+TEST(FormattersTest, BlockType) {
   EXPECT_EQ(R"([i32])", format("{}", BlockType::I32));
   EXPECT_EQ(R"([])", format("{}", BlockType::Void));
   EXPECT_EQ(R"(   [f64])", format("{:>8s}", BlockType::F64));
 }
 
-TEST(FormatTest, ElementType) {
+TEST(FormattersTest, ElementType) {
   EXPECT_EQ(R"(funcref)", format("{}", ElementType::Funcref));
   EXPECT_EQ(R"(   funcref)", format("{:>10s}", ElementType::Funcref));
 }
 
-TEST(FormatTest, ExternalKind) {
+TEST(FormattersTest, ExternalKind) {
   EXPECT_EQ(R"(func)", format("{}", ExternalKind::Function));
   EXPECT_EQ(R"(  global)", format("{:>8s}", ExternalKind::Global));
 }
 
-TEST(FormatTest, Mutability) {
+TEST(FormattersTest, Mutability) {
   EXPECT_EQ(R"(const)", format("{}", Mutability::Const));
   EXPECT_EQ(R"(   var)", format("{:>6s}", Mutability::Var));
 }
 
-TEST(FormatTest, NameSubsectionKind) {
+TEST(FormattersTest, NameSubsectionKind) {
   EXPECT_EQ(R"(locals)", format("{}", NameSubsectionId::LocalNames));
   EXPECT_EQ(R"(  module)", format("{:>8s}", NameSubsectionId::ModuleName));
 }
 
-TEST(FormatTest, MemArgImmediate) {
+TEST(FormattersTest, MemArgImmediate) {
   EXPECT_EQ(R"({align 1, offset 2})", format("{}", MemArgImmediate{1, 2}));
   EXPECT_EQ(R"({align 0, offset 0} )", format("{:20s}", MemArgImmediate{0, 0}));
 }
 
-TEST(FormatTest, Limits) {
+TEST(FormattersTest, Limits) {
   EXPECT_EQ(R"({min 1})", format("{}", Limits{1}));
   EXPECT_EQ(R"({min 1, max 2})", format("{}", Limits{1, 2}));
   EXPECT_EQ(R"(  {min 0})", format("{:>9s}", Limits{0}));
 }
 
-TEST(FormatTest, Locals) {
+TEST(FormattersTest, Locals) {
   EXPECT_EQ(R"(i32 ** 3)", format("{}", Locals{3, ValueType::I32}));
   EXPECT_EQ(R"(  i32 ** 3)", format("{:>10s}", Locals{3, ValueType::I32}));
 }
 
-TEST(FormatTest, KnownSection) {
+TEST(FormattersTest, KnownSection) {
   EXPECT_EQ(
       R"({id type, contents "\00\01\02"})",
       format("{}", KnownSection{SectionId::Type, MakeSpanU8("\x00\x01\x02")}));
@@ -81,7 +81,7 @@ TEST(FormatTest, KnownSection) {
       format("{:>25s}", KnownSection{SectionId::Code, MakeSpanU8("")}));
 }
 
-TEST(FormatTest, CustomSection) {
+TEST(FormattersTest, CustomSection) {
   EXPECT_EQ(
       R"({name "custom", contents "\00\01\02"})",
       format("{}", CustomSection{"custom", MakeSpanU8("\x00\x01\x02")}));
@@ -91,7 +91,7 @@ TEST(FormatTest, CustomSection) {
       format("{:>25s}", CustomSection{"", MakeSpanU8("")}));
 }
 
-TEST(FormatTest, Section) {
+TEST(FormattersTest, Section) {
   auto span = MakeSpanU8("\x00\x01\x02");
   EXPECT_EQ(
       R"({id type, contents "\00\01\02"})",
@@ -111,7 +111,7 @@ TEST(FormatTest, Section) {
              Section{KnownSection{SectionId::Data, MakeSpanU8("")}}));
 }
 
-TEST(FormatTest, TypeEntry) {
+TEST(FormattersTest, TypeEntry) {
   EXPECT_EQ(R"([] -> [])", format("{}", TypeEntry{FunctionType{{}, {}}}));
   EXPECT_EQ(R"([i32] -> [])",
             format("{}", TypeEntry{FunctionType{{ValueType::I32}, {}}}));
@@ -119,7 +119,7 @@ TEST(FormatTest, TypeEntry) {
             format("{:>10s}", TypeEntry{FunctionType{{}, {}}}));
 }
 
-TEST(FormatTest, FunctionType) {
+TEST(FormattersTest, FunctionType) {
   EXPECT_EQ(R"([] -> [])", format("{}", FunctionType{{}, {}}));
   EXPECT_EQ(R"([i32] -> [])", format("{}", FunctionType{{ValueType::I32}, {}}));
   EXPECT_EQ(R"([i32 f32] -> [i64 f64])",
@@ -128,19 +128,19 @@ TEST(FormatTest, FunctionType) {
   EXPECT_EQ(R"(  [] -> [])", format("{:>10s}", FunctionType{{}, {}}));
 }
 
-TEST(FormatTest, TableType) {
+TEST(FormattersTest, TableType) {
   EXPECT_EQ(R"({min 1, max 2} funcref)",
             format("{}", TableType{Limits{1, 2}, ElementType::Funcref}));
   EXPECT_EQ(R"(  {min 0} funcref)",
             format("{:>17s}", TableType{Limits{0}, ElementType::Funcref}));
 }
 
-TEST(FormatTest, MemoryType) {
+TEST(FormattersTest, MemoryType) {
   EXPECT_EQ(R"({min 1, max 2})", format("{}", MemoryType{Limits{1, 2}}));
   EXPECT_EQ(R"(   {min 0})", format("{:>10s}", MemoryType{Limits{0}}));
 }
 
-TEST(FormatTest, GlobalType) {
+TEST(FormattersTest, GlobalType) {
   EXPECT_EQ(R"(const f32)",
             format("{}", GlobalType{ValueType::F32, Mutability::Const}));
   EXPECT_EQ(R"(var i32)",
@@ -149,7 +149,7 @@ TEST(FormatTest, GlobalType) {
             format("{:>10s}", GlobalType{ValueType::F64, Mutability::Var}));
 }
 
-TEST(FormatTest, Import) {
+TEST(FormattersTest, Import) {
   // Function
   EXPECT_EQ(R"({module "a", name "b", desc func 3})",
             format("{}", Import{"a", "b", Index{3}}));
@@ -175,7 +175,7 @@ TEST(FormatTest, Import) {
             format("{:>35s}", Import{"", "", Index{0}}));
 }
 
-TEST(FormatTest, Export) {
+TEST(FormattersTest, Export) {
   EXPECT_EQ(R"({name "f", desc func 0})",
             format("{}", Export{ExternalKind::Function, "f", Index{0}}));
   EXPECT_EQ(R"({name "t", desc table 1})",
@@ -188,46 +188,46 @@ TEST(FormatTest, Export) {
             format("{:>25s}", Export{ExternalKind::Memory, "", Index{0}}));
 }
 
-TEST(FormatTest, Expression) {
+TEST(FormattersTest, Expression) {
   EXPECT_EQ(R"("\00\01\02")",
             format("{}", Expression{MakeSpanU8("\00\01\02")}));
   EXPECT_EQ(R"(   "\00")", format("{:>8s}", Expression{MakeSpanU8("\00")}));
 }
 
-TEST(FormatTest, ConstantExpression) {
+TEST(FormattersTest, ConstantExpression) {
   EXPECT_EQ(R"("\00\01\02")",
             format("{}", ConstantExpression{MakeSpanU8("\00\01\02")}));
   EXPECT_EQ(R"(   "\00")",
             format("{:>8s}", ConstantExpression{MakeSpanU8("\00")}));
 }
 
-TEST(FormatTest, Opcode) {
+TEST(FormattersTest, Opcode) {
   EXPECT_EQ(R"(memory.grow)", format("{}", Opcode::MemoryGrow));
   EXPECT_EQ(R"(   nop)", format("{:>6s}", Opcode::Nop));
 }
 
-TEST(FormatTest, CallIndirectImmediate) {
+TEST(FormattersTest, CallIndirectImmediate) {
   EXPECT_EQ(R"(1 0)", format("{}", CallIndirectImmediate{1u, 0}));
   EXPECT_EQ(R"(  10 0)", format("{:>6s}", CallIndirectImmediate{10u, 0}));
 }
 
-TEST(FormatTest, BrTableImmediate) {
+TEST(FormattersTest, BrTableImmediate) {
   EXPECT_EQ(R"([] 100)", format("{}", BrTableImmediate{{}, 100}));
   EXPECT_EQ(R"([1 2] 3)", format("{}", BrTableImmediate{{1, 2}, 3}));
   EXPECT_EQ(R"(  [42] 0)", format("{:>8s}", BrTableImmediate{{42}, 0}));
 }
 
-TEST(FormatTest, InitImmediate) {
+TEST(FormattersTest, InitImmediate) {
   EXPECT_EQ(R"(1 0)", format("{}", InitImmediate{1u, 0}));
   EXPECT_EQ(R"(  10 0)", format("{:>6s}", InitImmediate{10u, 0}));
 }
 
-TEST(FormatTest, CopyImmediate) {
+TEST(FormattersTest, CopyImmediate) {
   EXPECT_EQ(R"(0 0)", format("{}", CopyImmediate{0, 0}));
   EXPECT_EQ(R"(   0 0)", format("{:>6s}", CopyImmediate{0, 0}));
 }
 
-TEST(FormatTest, Instruction) {
+TEST(FormattersTest, Instruction) {
   // nop
   EXPECT_EQ(R"(nop)", format("{}", Instruction{Opcode::Nop}));
   // block (result i32)
@@ -270,12 +270,12 @@ TEST(FormatTest, Instruction) {
   EXPECT_EQ(R"(   i32.add)", format("{:>10s}", Instruction{Opcode::I32Add}));
 }
 
-TEST(FormatTest, Function) {
+TEST(FormattersTest, Function) {
   EXPECT_EQ(R"({type 1})", format("{}", Function{Index{1u}}));
   EXPECT_EQ(R"(  {type 1})", format("{:>10s}", Function{Index{1u}}));
 }
 
-TEST(FormatTest, Table) {
+TEST(FormattersTest, Table) {
   EXPECT_EQ(R"({type {min 1} funcref})",
             format("{}", Table{TableType{Limits{1}, ElementType::Funcref}}));
   EXPECT_EQ(
@@ -283,14 +283,14 @@ TEST(FormatTest, Table) {
       format("{:>25s}", Table{TableType{Limits{1}, ElementType::Funcref}}));
 }
 
-TEST(FormatTest, Memory) {
+TEST(FormattersTest, Memory) {
   EXPECT_EQ(R"({type {min 2, max 3}})",
             format("{}", Memory{MemoryType{Limits{2, 3}}}));
   EXPECT_EQ(R"( {type {min 0}})",
             format("{:>15s}", Memory{MemoryType{Limits{0}}}));
 }
 
-TEST(FormatTest, Global) {
+TEST(FormattersTest, Global) {
   EXPECT_EQ(R"({type const i32, init "\fa\ce"})",
             format("{}", Global{GlobalType{ValueType::I32, Mutability::Const},
                                 ConstantExpression{MakeSpanU8("\xfa\xce")}}));
@@ -300,12 +300,12 @@ TEST(FormatTest, Global) {
                                ConstantExpression{MakeSpanU8("")}}));
 }
 
-TEST(FormatTest, Start) {
+TEST(FormattersTest, Start) {
   EXPECT_EQ(R"({func 1})", format("{}", Start{Index{1u}}));
   EXPECT_EQ(R"(  {func 1})", format("{:>10s}", Start{Index{1u}}));
 }
 
-TEST(FormatTest, ElementSegment) {
+TEST(FormattersTest, ElementSegment) {
   EXPECT_EQ(
       R"({table 1, offset "\0b", init [2 3]})",
       format("{}",
@@ -319,7 +319,7 @@ TEST(FormatTest, ElementSegment) {
           ElementSegment{Index{0u}, ConstantExpression{MakeSpanU8("")}, {}}));
 }
 
-TEST(FormatTest, Code) {
+TEST(FormattersTest, Code) {
   EXPECT_EQ(
       R"({locals [i32 ** 1], body "\0b"})",
       format("{}", Code{{Locals{1, ValueType::I32}},
@@ -330,7 +330,7 @@ TEST(FormatTest, Code) {
       format("{:>25s}", Code{{}, Expression{MakeSpanU8("")}}));
 }
 
-TEST(FormatTest, DataSegment) {
+TEST(FormattersTest, DataSegment) {
   EXPECT_EQ(
       R"({memory 0, offset "\0b", init "\12\34"})",
       format("{}",
@@ -344,12 +344,12 @@ TEST(FormatTest, DataSegment) {
                          MakeSpanU8("")}));
 }
 
-TEST(FormatTest, NameAssoc) {
+TEST(FormattersTest, NameAssoc) {
   EXPECT_EQ(R"(3 "hi")", format("{}", NameAssoc{3u, "hi"}));
   EXPECT_EQ(R"(  0 "")", format("{:>6s}", NameAssoc{0u, ""}));
 }
 
-TEST(FormatTest, IndirectNameAssoc) {
+TEST(FormattersTest, IndirectNameAssoc) {
   EXPECT_EQ(
       R"(0 [1 "first" 2 "second"])",
       format("{}", IndirectNameAssoc{0u, {{1u, "first"}, {2u, "second"}}}));
@@ -358,7 +358,7 @@ TEST(FormatTest, IndirectNameAssoc) {
       format("{:>20s}", IndirectNameAssoc{1u, {{10u, "a"}, {100u, "b"}}}));
 }
 
-TEST(FormatTest, NameSubsection) {
+TEST(FormattersTest, NameSubsection) {
   EXPECT_EQ(R"(module "\00\00\00")",
             format("{}", NameSubsection{NameSubsectionId::ModuleName,
                                         MakeSpanU8("\0\0\0")}));
