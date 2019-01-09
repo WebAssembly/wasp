@@ -218,8 +218,8 @@ TEST(FormatTest, BrTableImmediate) {
 }
 
 TEST(FormatTest, InitImmediate) {
-  EXPECT_EQ(R"(0 1)", format("{}", InitImmediate{0, 1u}));
-  EXPECT_EQ(R"(  0 10)", format("{:>6s}", InitImmediate{0, 10u}));
+  EXPECT_EQ(R"(1 0)", format("{}", InitImmediate{1u, 0}));
+  EXPECT_EQ(R"(  10 0)", format("{:>6s}", InitImmediate{10u, 0}));
 }
 
 TEST(FormatTest, Instruction) {

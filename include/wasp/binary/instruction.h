@@ -57,8 +57,8 @@ bool operator==(const MemArgImmediate&, const MemArgImmediate&);
 bool operator!=(const MemArgImmediate&, const MemArgImmediate&);
 
 struct InitImmediate {
-  u8 reserved;
   Index segment_index;
+  u8 reserved;
 };
 
 bool operator==(const InitImmediate&, const InitImmediate&);

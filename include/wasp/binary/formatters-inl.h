@@ -370,7 +370,7 @@ typename Ctx::iterator formatter<::wasp::binary::InitImmediate>::format(
     const ::wasp::binary::InitImmediate& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{} {}", self.reserved, self.segment_index);
+  format_to(buf, "{} {}", self.segment_index, self.reserved);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 

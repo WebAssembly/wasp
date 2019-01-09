@@ -33,10 +33,10 @@ optional<InitImmediate> Read(SpanU8* data,
                              Errors& errors,
                              Tag<InitImmediate>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "init immediate"};
-  WASP_TRY_READ(reserved, ReadReserved(data, features, errors));
   WASP_TRY_READ(segment_index,
                 ReadIndex(data, features, errors, "segment index"));
-  return InitImmediate{reserved, segment_index};
+  WASP_TRY_READ(reserved, ReadReserved(data, features, errors));
+  return InitImmediate{segment_index, reserved};
 }
 
 }  // namespace binary

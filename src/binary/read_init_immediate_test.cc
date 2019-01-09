@@ -26,23 +26,23 @@ using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
 TEST(ReaderTest, InitImmediate) {
-  ExpectRead<InitImmediate>(InitImmediate{0, 1}, MakeSpanU8("\x00\x01"));
-  ExpectRead<InitImmediate>(InitImmediate{0, 128}, MakeSpanU8("\x00\x80\x01"));
+  ExpectRead<InitImmediate>(InitImmediate{1, 0}, MakeSpanU8("\x01\x00"));
+  ExpectRead<InitImmediate>(InitImmediate{128, 0}, MakeSpanU8("\x80\x01\x00"));
 }
 
 TEST(ReaderTest, InitImmediate_BadReserved) {
   ExpectReadFailure<InitImmediate>({{0, "init immediate"},
-                                    {0, "reserved"},
-                                    {1, "Expected reserved byte 0, got 1"}},
-                                   MakeSpanU8("\x01"));
+                                    {1, "reserved"},
+                                    {2, "Expected reserved byte 0, got 1"}},
+                                   MakeSpanU8("\x00\x01"));
 }
 
 TEST(ReaderTest, InitImmediate_PastEnd) {
   ExpectReadFailure<InitImmediate>(
-      {{0, "init immediate"}, {0, "reserved"}, {0, "Unable to read u8"}},
+      {{0, "init immediate"}, {0, "segment index"}, {0, "Unable to read u8"}},
       MakeSpanU8(""));
 
   ExpectReadFailure<InitImmediate>(
-      {{0, "init immediate"}, {1, "segment index"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x00"));
+      {{0, "init immediate"}, {1, "reserved"}, {1, "Unable to read u8"}},
+      MakeSpanU8("\x01"));
 }
