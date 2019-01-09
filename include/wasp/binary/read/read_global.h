@@ -17,8 +17,8 @@
 #ifndef WASP_BINARY_READ_READ_GLOBAL_H_
 #define WASP_BINARY_READ_READ_GLOBAL_H_
 
+#include "wasp/base/features.h"
 #include "wasp/binary/global.h"
-
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
@@ -29,10 +29,13 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<Global> Read(SpanU8* data, Errors& errors, Tag<Global>) {
+optional<Global> Read(SpanU8* data,
+                      const Features& features,
+                      Errors& errors,
+                      Tag<Global>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "global"};
-  WASP_TRY_READ(global_type, Read<GlobalType>(data, errors));
-  WASP_TRY_READ(init_expr, Read<ConstantExpression>(data, errors));
+  WASP_TRY_READ(global_type, Read<GlobalType>(data, features, errors));
+  WASP_TRY_READ(init_expr, Read<ConstantExpression>(data, features, errors));
   return Global{global_type, std::move(init_expr)};
 }
 

@@ -27,8 +27,10 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<Index> ReadLength(SpanU8* data, Errors& errors) {
-  return ReadCheckLength(data, errors, "length", "Length");
+optional<Index> ReadLength(SpanU8* data,
+                           const Features& features,
+                           Errors& errors) {
+  return ReadCheckLength(data, features, errors, "length", "Length");
 }
 
 }  // namespace binary

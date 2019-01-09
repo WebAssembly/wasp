@@ -17,10 +17,10 @@
 #ifndef WASP_BINARY_READ_READ_INSTRUCTION_H_
 #define WASP_BINARY_READ_READ_INSTRUCTION_H_
 
-#include "wasp/binary/instruction.h"
-
+#include "wasp/base/features.h"
 #include "wasp/base/macros.h"
 #include "wasp/binary/errors_context_guard.h"
+#include "wasp/binary/instruction.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_block_type.h"
@@ -39,8 +39,11 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
-  WASP_TRY_READ(opcode, Read<Opcode>(data, errors));
+optional<Instruction> Read(SpanU8* data,
+                           const Features& features,
+                           Errors& errors,
+                           Tag<Instruction>) {
+  WASP_TRY_READ(opcode, Read<Opcode>(data, features, errors));
   switch (opcode) {
     // No immediates:
     case Opcode::End:
@@ -179,7 +182,7 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
     case Opcode::Block:
     case Opcode::Loop:
     case Opcode::If: {
-      WASP_TRY_READ(type, Read<BlockType>(data, errors));
+      WASP_TRY_READ(type, Read<BlockType>(data, features, errors));
       return Instruction{Opcode{opcode}, type};
     }
 
@@ -192,19 +195,20 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
     case Opcode::LocalTee:
     case Opcode::GlobalGet:
     case Opcode::GlobalSet: {
-      WASP_TRY_READ(index, ReadIndex(data, errors, "index"));
+      WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
       return Instruction{Opcode{opcode}, index};
     }
 
     // Index* immediates.
     case Opcode::BrTable: {
-      WASP_TRY_READ(immediate, Read<BrTableImmediate>(data, errors));
+      WASP_TRY_READ(immediate, Read<BrTableImmediate>(data, features, errors));
       return Instruction{Opcode{opcode}, std::move(immediate)};
     }
 
     // Index, reserved immediates.
     case Opcode::CallIndirect: {
-      WASP_TRY_READ(immediate, Read<CallIndirectImmediate>(data, errors));
+      WASP_TRY_READ(immediate,
+                    Read<CallIndirectImmediate>(data, features, errors));
       return Instruction{Opcode{opcode}, immediate};
     }
 
@@ -232,35 +236,39 @@ optional<Instruction> Read(SpanU8* data, Errors& errors, Tag<Instruction>) {
     case Opcode::I64Store8:
     case Opcode::I64Store16:
     case Opcode::I64Store32: {
-      WASP_TRY_READ(memarg, Read<MemArgImmediate>(data, errors));
+      WASP_TRY_READ(memarg, Read<MemArgImmediate>(data, features, errors));
       return Instruction{Opcode{opcode}, memarg};
     }
 
     // Reserved immediates.
     case Opcode::MemorySize:
     case Opcode::MemoryGrow: {
-      WASP_TRY_READ(reserved, ReadReserved(data, errors));
+      WASP_TRY_READ(reserved, ReadReserved(data, features, errors));
       return Instruction{Opcode{opcode}, reserved};
     }
 
     // Const immediates.
     case Opcode::I32Const: {
-      WASP_TRY_READ_CONTEXT(value, Read<s32>(data, errors), "i32 constant");
+      WASP_TRY_READ_CONTEXT(value, Read<s32>(data, features, errors),
+                            "i32 constant");
       return Instruction{Opcode{opcode}, value};
     }
 
     case Opcode::I64Const: {
-      WASP_TRY_READ_CONTEXT(value, Read<s64>(data, errors), "i64 constant");
+      WASP_TRY_READ_CONTEXT(value, Read<s64>(data, features, errors),
+                            "i64 constant");
       return Instruction{Opcode{opcode}, value};
     }
 
     case Opcode::F32Const: {
-      WASP_TRY_READ_CONTEXT(value, Read<f32>(data, errors), "f32 constant");
+      WASP_TRY_READ_CONTEXT(value, Read<f32>(data, features, errors),
+                            "f32 constant");
       return Instruction{Opcode{opcode}, value};
     }
 
     case Opcode::F64Const: {
-      WASP_TRY_READ_CONTEXT(value, Read<f64>(data, errors), "f64 constant");
+      WASP_TRY_READ_CONTEXT(value, Read<f64>(data, features, errors),
+                            "f64 constant");
       return Instruction{Opcode{opcode}, value};
     }
   }

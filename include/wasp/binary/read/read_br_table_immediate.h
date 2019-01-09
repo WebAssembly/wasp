@@ -17,9 +17,9 @@
 #ifndef WASP_BINARY_READ_READ_BR_TABLE_IMMEDIATE_H_
 #define WASP_BINARY_READ_READ_BR_TABLE_IMMEDIATE_H_
 
-#include "wasp/binary/instruction.h"  // XXX
-
+#include "wasp/base/features.h"
 #include "wasp/binary/errors_context_guard.h"
+#include "wasp/binary/instruction.h"  // XXX
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read_index.h"
 #include "wasp/binary/read/read_u32.h"
@@ -30,11 +30,13 @@ namespace binary {
 
 template <typename Errors>
 optional<BrTableImmediate> Read(SpanU8* data,
+                                const Features& features,
                                 Errors& errors,
                                 Tag<BrTableImmediate>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "br_table"};
-  WASP_TRY_READ(targets, ReadVector<Index>(data, errors, "targets"));
-  WASP_TRY_READ(default_target, ReadIndex(data, errors, "default target"));
+  WASP_TRY_READ(targets, ReadVector<Index>(data, features, errors, "targets"));
+  WASP_TRY_READ(default_target,
+                ReadIndex(data, features, errors, "default target"));
   return BrTableImmediate{std::move(targets), default_target};
 }
 

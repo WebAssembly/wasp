@@ -17,8 +17,8 @@
 #ifndef WASP_BINARY_READ_READ_CONSTANT_EXPRESSION_H_
 #define WASP_BINARY_READ_READ_CONSTANT_EXPRESSION_H_
 
+#include "wasp/base/features.h"
 #include "wasp/binary/constant_expression.h"
-
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/read/macros.h"
@@ -30,11 +30,12 @@ namespace binary {
 
 template <typename Errors>
 optional<ConstantExpression> Read(SpanU8* data,
+                                  const Features& features,
                                   Errors& errors,
                                   Tag<ConstantExpression>) {
   SpanU8 orig_data = *data;
   ErrorsContextGuard<Errors> guard{errors, *data, "constant expression"};
-  WASP_TRY_READ(instr, Read<Instruction>(data, errors));
+  WASP_TRY_READ(instr, Read<Instruction>(data, features, errors));
   switch (instr.opcode) {
     case Opcode::I32Const:
     case Opcode::I64Const:
@@ -51,7 +52,7 @@ optional<ConstantExpression> Read(SpanU8* data,
       return nullopt;
   }
 
-  WASP_TRY_READ(end, Read<Instruction>(data, errors));
+  WASP_TRY_READ(end, Read<Instruction>(data, features, errors));
   if (end.opcode != Opcode::End) {
     errors.OnError(*data, "Expected end instruction");
     return nullopt;

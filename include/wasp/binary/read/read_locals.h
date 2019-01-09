@@ -17,8 +17,8 @@
 #ifndef WASP_BINARY_READ_READ_LOCALS_H_
 #define WASP_BINARY_READ_READ_LOCALS_H_
 
+#include "wasp/base/features.h"
 #include "wasp/binary/locals.h"
-
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
@@ -29,10 +29,13 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<Locals> Read(SpanU8* data, Errors& errors, Tag<Locals>) {
+optional<Locals> Read(SpanU8* data,
+                      const Features& features,
+                      Errors& errors,
+                      Tag<Locals>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "locals"};
-  WASP_TRY_READ(count, ReadIndex(data, errors, "count"));
-  WASP_TRY_READ_CONTEXT(type, Read<ValueType>(data, errors), "type");
+  WASP_TRY_READ(count, ReadIndex(data, features, errors, "count"));
+  WASP_TRY_READ_CONTEXT(type, Read<ValueType>(data, features, errors), "type");
   return Locals{count, type};
 }
 

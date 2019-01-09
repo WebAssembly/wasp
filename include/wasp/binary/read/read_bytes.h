@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_READ_READ_BYTES_H_
 #define WASP_BINARY_READ_READ_BYTES_H_
 
+#include "wasp/base/features.h"
 #include "wasp/base/format.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
@@ -25,7 +26,10 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<SpanU8> ReadBytes(SpanU8* data, SpanU8::index_type N, Errors& errors) {
+optional<SpanU8> ReadBytes(SpanU8* data,
+                           SpanU8::index_type N,
+                           const Features& features,
+                           Errors& errors) {
   if (data->size() < N) {
     errors.OnError(*data, format("Unable to read {} bytes", N));
     return nullopt;

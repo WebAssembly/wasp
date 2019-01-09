@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_READ_READ_S64_H_
 #define WASP_BINARY_READ_READ_S64_H_
 
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/types.h"
@@ -27,8 +28,11 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<s64> Read(SpanU8* data, Errors& errors, Tag<s64>) {
-  return ReadVarInt<s64>(data, errors, "s64");
+optional<s64> Read(SpanU8* data,
+                   const Features& features,
+                   Errors& errors,
+                   Tag<s64>) {
+  return ReadVarInt<s64>(data, features, errors, "s64");
 }
 
 }  // namespace binary

@@ -36,13 +36,16 @@
 #include "wasp/binary/type_entry.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
 /// ---
 template <typename T, typename Errors>
 class LazySection {
  public:
-  explicit LazySection(SpanU8, Errors&);
+  explicit LazySection(SpanU8, const Features&, Errors&);
 
   optional<Index> count;
   LazySequence<T, Errors> sequence;
@@ -53,9 +56,9 @@ class LazySection {
   using SectionType = LazySection<ElementType, Errors>;                     \
                                                                             \
   template <typename Errors>                                                \
-  SectionType<Errors> ReadFunc(SpanU8, Errors&);                            \
+  SectionType<Errors> ReadFunc(SpanU8, const Features&, Errors&);           \
   template <typename Errors>                                                \
-  SectionType<Errors> ReadFunc(KnownSection, Errors&);
+  SectionType<Errors> ReadFunc(KnownSection, const Features&, Errors&);
 
 WASP_DECLARE_LAZY_KNOWN_SECTION(LazyTypeSection, TypeEntry, ReadTypeSection)
 WASP_DECLARE_LAZY_KNOWN_SECTION(LazyImportSection, Import, ReadImportSection)
@@ -78,9 +81,9 @@ WASP_DECLARE_LAZY_KNOWN_SECTION(LazyDataSection, DataSegment, ReadDataSection)
 using StartSection = optional<Start>;
 
 template <typename Errors>
-StartSection ReadStartSection(SpanU8, Errors&);
+StartSection ReadStartSection(SpanU8, const Features&, Errors&);
 template <typename Errors>
-StartSection ReadStartSection(KnownSection, Errors&);
+StartSection ReadStartSection(KnownSection, const Features&, Errors&);
 
 
 }  // namespace binary

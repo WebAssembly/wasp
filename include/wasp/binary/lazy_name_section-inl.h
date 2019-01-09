@@ -24,50 +24,63 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-LazyNameSection<Errors> ReadNameSection(SpanU8 data, Errors& errors) {
-  return LazyNameSection<Errors>{data, errors};
+LazyNameSection<Errors> ReadNameSection(SpanU8 data,
+                                        const Features& features,
+                                        Errors& errors) {
+  return LazyNameSection<Errors>{data, features, errors};
 }
 
 template <typename Errors>
-LazyNameSection<Errors> ReadNameSection(CustomSection sec, Errors& errors) {
-  return LazyNameSection<Errors>{sec.data, errors};
+LazyNameSection<Errors> ReadNameSection(CustomSection sec,
+                                        const Features& features,
+                                        Errors& errors) {
+  return LazyNameSection<Errors>{sec.data, features, errors};
 }
 
 template <typename Errors>
-ModuleNameSubsection ReadModuleNameSubsection(SpanU8 data, Errors& errors) {
-  return ReadString(&data, errors, "module name");
+ModuleNameSubsection ReadModuleNameSubsection(SpanU8 data,
+                                              const Features& features,
+                                              Errors& errors) {
+  return ReadString(&data, features, errors, "module name");
 }
 
 template <typename Errors>
 ModuleNameSubsection ReadModuleNameSubsection(NameSubsection sec,
+                                              const Features& features,
                                               Errors& errors) {
-  return ReadModuleNameSubsection(sec.data, errors);
+  return ReadModuleNameSubsection(sec.data, features, errors);
 }
 
 template <typename Errors>
 LazyFunctionNamesSubsection<Errors> ReadFunctionNamesSubsection(
     SpanU8 data,
+    const Features& features,
     Errors& errors) {
-  return LazyFunctionNamesSubsection<Errors>{data, errors};
+  return LazyFunctionNamesSubsection<Errors>{data, features, errors};
 }
 
 template <typename Errors>
 LazyFunctionNamesSubsection<Errors> ReadFunctionNamesSubsection(
     NameSubsection sec,
+    const Features& features,
     Errors& errors) {
-  return ReadFunctionNamesSubsection(sec.data, errors);
+  return ReadFunctionNamesSubsection(sec.data, features, errors);
 }
 
 template <typename Errors>
-LazyLocalNamesSubsection<Errors> ReadLocalNamesSubsection(SpanU8 data,
-                                                          Errors& errors) {
-  return LazyLocalNamesSubsection<Errors>{data, errors};
+LazyLocalNamesSubsection<Errors> ReadLocalNamesSubsection(
+    SpanU8 data,
+    const Features& features,
+    Errors& errors) {
+  return LazyLocalNamesSubsection<Errors>{data, features, errors};
 }
 
 template <typename Errors>
-LazyLocalNamesSubsection<Errors> ReadLocalNamesSubsection(NameSubsection sec,
-                                                          Errors& errors) {
-  return ReadLocalNamesSubsection(sec.data, errors);
+LazyLocalNamesSubsection<Errors> ReadLocalNamesSubsection(
+    NameSubsection sec,
+    const Features& features,
+    Errors& errors) {
+  return ReadLocalNamesSubsection(sec.data, features, errors);
 }
 
 }  // namespace binary

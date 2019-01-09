@@ -17,9 +17,9 @@
 #ifndef WASP_BINARY_READ_READ_FUNCTION_TYPE_H_
 #define WASP_BINARY_READ_READ_FUNCTION_TYPE_H_
 
-#include "wasp/binary/function_type.h"
-
+#include "wasp/base/features.h"
 #include "wasp/binary/errors_context_guard.h"
+#include "wasp/binary/function_type.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_value_type.h"
@@ -29,12 +29,15 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<FunctionType> Read(SpanU8* data, Errors& errors, Tag<FunctionType>) {
+optional<FunctionType> Read(SpanU8* data,
+                            const Features& features,
+                            Errors& errors,
+                            Tag<FunctionType>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "function type"};
   WASP_TRY_READ(param_types,
-                ReadVector<ValueType>(data, errors, "param types"));
+                ReadVector<ValueType>(data, features, errors, "param types"));
   WASP_TRY_READ(result_types,
-                ReadVector<ValueType>(data, errors, "result types"));
+                ReadVector<ValueType>(data, features, errors, "result types"));
   return FunctionType{std::move(param_types), std::move(result_types)};
 }
 

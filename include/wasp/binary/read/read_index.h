@@ -17,11 +17,11 @@
 #ifndef WASP_BINARY_READ_READ_INDEX_H_
 #define WASP_BINARY_READ_READ_INDEX_H_
 
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_var_int.h"
 
@@ -29,8 +29,11 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<Index> ReadIndex(SpanU8* data, Errors& errors, string_view desc) {
-  return ReadVarInt<Index>(data, errors, desc);
+optional<Index> ReadIndex(SpanU8* data,
+                          const Features& features,
+                          Errors& errors,
+                          string_view desc) {
+  return ReadVarInt<Index>(data, features, errors, desc);
 }
 
 }  // namespace binary

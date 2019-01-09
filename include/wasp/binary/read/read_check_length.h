@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_READ_READ_CHECK_LENGTH_H_
 #define WASP_BINARY_READ_READ_CHECK_LENGTH_H_
 
+#include "wasp/base/features.h"
 #include "wasp/base/format.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
@@ -31,10 +32,11 @@ namespace binary {
 
 template <typename Errors>
 optional<Index> ReadCheckLength(SpanU8* data,
+                                const Features& features,
                                 Errors& errors,
                                 string_view context_name,
                                 string_view error_name) {
-  WASP_TRY_READ(count, ReadIndex(data, errors, context_name));
+  WASP_TRY_READ(count, ReadIndex(data, features, errors, context_name));
 
   // There should be at least one byte per count, so if the data is smaller
   // than that, the module must be malformed.

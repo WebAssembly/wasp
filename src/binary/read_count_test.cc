@@ -26,20 +26,22 @@ using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
 TEST(ReaderTest, ReadCount) {
+  Features features;
   TestErrors errors;
   const SpanU8 data = MakeSpanU8("\x01\x00\x00\x00");
   SpanU8 copy = data;
-  auto result = ReadCount(&copy, errors);
+  auto result = ReadCount(&copy, features, errors);
   ExpectNoErrors(errors);
   EXPECT_EQ(1u, result);
   EXPECT_EQ(3u, copy.size());
 }
 
 TEST(ReaderTest, ReadCount_PastEnd) {
+  Features features;
   TestErrors errors;
   const SpanU8 data = MakeSpanU8("\x05\x00\x00\x00");
   SpanU8 copy = data;
-  auto result = ReadCount(&copy, errors);
+  auto result = ReadCount(&copy, features, errors);
   ExpectError({{1, "Count extends past end: 5 > 3"}}, errors, data);
   EXPECT_EQ(nullopt, result);
   EXPECT_EQ(3u, copy.size());

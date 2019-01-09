@@ -17,8 +17,8 @@
 #ifndef WASP_BINARY_READ_READ_OPCODE_H_
 #define WASP_BINARY_READ_READ_OPCODE_H_
 
+#include "wasp/base/features.h"
 #include "wasp/binary/opcode.h"
-
 #include "wasp/binary/encoding/opcode_encoding.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
@@ -29,9 +29,12 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<Opcode> Read(SpanU8* data, Errors& errors, Tag<Opcode>) {
+optional<Opcode> Read(SpanU8* data,
+                      const Features& features,
+                      Errors& errors,
+                      Tag<Opcode>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "opcode"};
-  WASP_TRY_READ(val, Read<u8>(data, errors));
+  WASP_TRY_READ(val, Read<u8>(data, features, errors));
   WASP_TRY_DECODE(decoded, val, Opcode, "opcode");
   return decoded;
 }

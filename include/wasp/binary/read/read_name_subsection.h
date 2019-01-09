@@ -17,9 +17,9 @@
 #ifndef WASP_BINARY_READ_READ_NAME_SUBSECTION_H_
 #define WASP_BINARY_READ_READ_NAME_SUBSECTION_H_
 
-#include "wasp/binary/name_section.h"  // XXX
-
+#include "wasp/base/features.h"
 #include "wasp/binary/errors_context_guard.h"
+#include "wasp/binary/name_section.h"  // XXX
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_bytes.h"
@@ -31,12 +31,13 @@ namespace binary {
 
 template <typename Errors>
 optional<NameSubsection> Read(SpanU8* data,
+                              const Features& features,
                               Errors& errors,
                               Tag<NameSubsection>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "name subsection"};
-  WASP_TRY_READ(id, Read<NameSubsectionId>(data, errors));
-  WASP_TRY_READ(length, ReadLength(data, errors));
-  auto bytes = *ReadBytes(data, length, errors);
+  WASP_TRY_READ(id, Read<NameSubsectionId>(data, features, errors));
+  WASP_TRY_READ(length, ReadLength(data, features, errors));
+  auto bytes = *ReadBytes(data, length, features, errors);
   return NameSubsection{id, bytes};
 }
 

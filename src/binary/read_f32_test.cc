@@ -37,8 +37,9 @@ TEST(ReaderTest, F32) {
   // NaN
   {
     auto data = MakeSpanU8("\x00\x00\xc0\x7f");
+    Features features;
     TestErrors errors;
-    auto result = Read<f32>(&data, errors);
+    auto result = Read<f32>(&data, features, errors);
     ExpectNoErrors(errors);
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(std::isnan(*result));

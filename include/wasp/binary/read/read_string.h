@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_READ_READ_STRING_H_
 #define WASP_BINARY_READ_READ_STRING_H_
 
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
@@ -31,10 +32,11 @@ namespace binary {
 
 template <typename Errors>
 optional<string_view> ReadString(SpanU8* data,
+                                 const Features& features,
                                  Errors& errors,
                                  string_view desc) {
   ErrorsContextGuard<Errors> guard{errors, *data, desc};
-  WASP_TRY_READ(len, ReadLength(data, errors));
+  WASP_TRY_READ(len, ReadLength(data, features, errors));
   string_view result{reinterpret_cast<const char*>(data->data()), len};
   remove_prefix(data, len);
   return result;

@@ -25,6 +25,7 @@ using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
 TEST(LazyModuleTest, Basic) {
+  Features features;
   TestErrors errors;
   auto module = ReadModule(
       MakeSpanU8("\0asm\x01\0\0\0"
@@ -32,6 +33,7 @@ TEST(LazyModuleTest, Basic) {
                  "\x01\x05\0\0\0\0\0"     // Another invalid type section.
                  "\x0a\x01\0"             // Code section.
                  "\x00\x06\x03yup\0\0"),  // Custom section "yup"
+      features,
       errors);
 
   EXPECT_EQ(MakeSpanU8("\0asm"), module.magic);

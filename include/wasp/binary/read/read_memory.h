@@ -17,8 +17,8 @@
 #ifndef WASP_BINARY_READ_READ_MEMORY_H_
 #define WASP_BINARY_READ_READ_MEMORY_H_
 
+#include "wasp/base/features.h"
 #include "wasp/binary/memory.h"
-
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
@@ -28,9 +28,12 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<Memory> Read(SpanU8* data, Errors& errors, Tag<Memory>) {
+optional<Memory> Read(SpanU8* data,
+                      const Features& features,
+                      Errors& errors,
+                      Tag<Memory>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "memory"};
-  WASP_TRY_READ(memory_type, Read<MemoryType>(data, errors));
+  WASP_TRY_READ(memory_type, Read<MemoryType>(data, features, errors));
   return Memory{memory_type};
 }
 

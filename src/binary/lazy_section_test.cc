@@ -41,12 +41,13 @@ void ExpectSection(const std::vector<T>& expected,
 }  // namespace
 
 TEST(LazySectionTest, Type) {
+  Features features;
   TestErrors errors;
   auto sec = ReadTypeSection(
       MakeSpanU8("\x02"                        // Count.
                  "\x60\x00\x00"                // (param) (result)
                  "\x60\x02\x7f\x7f\x01\x7f"),  // (param i32 i32) (result i32)
-      errors);
+      features, errors);
 
   ExpectSection(
       {
@@ -59,13 +60,14 @@ TEST(LazySectionTest, Type) {
 }
 
 TEST(LazySectionTest, Import) {
+  Features features;
   TestErrors errors;
   auto sec = ReadImportSection(
       MakeSpanU8(
           "\x02"                          // Count.
           "\x01w\x01x\x00\x02"            // (import "w" "x" (func 2))
           "\x01y\x01z\x02\x01\x01\x02"),  // (import "y" "z" (memory 1 2))
-      errors);
+      features, errors);
 
   ExpectSection(
       {
@@ -77,23 +79,25 @@ TEST(LazySectionTest, Import) {
 }
 
 TEST(LazySectionTest, Function) {
+  Features features;
   TestErrors errors;
   auto sec = ReadFunctionSection(MakeSpanU8("\x03"                // Count.
                                             "\x02\x80\x01\x02"),  // 2, 128, 2
-                                 errors);
+                                 features, errors);
 
   ExpectSection({Function{2}, Function{128}, Function{2}}, sec);
   ExpectNoErrors(errors);
 }
 
 TEST(LazySectionTest, Table) {
+  Features features;
   TestErrors errors;
   auto sec = ReadTableSection(
       MakeSpanU8("\x03"                  // Count.
                  "\x70\x00\x01"          // (table 1 funcref)
                  "\x70\x01\x00\x80\x01"  // (table 1 128 funcref)
                  "\x70\x00\x00"),        // (table 0 funcref)
-      errors);
+      features, errors);
 
   ExpectSection(
       {
@@ -106,12 +110,13 @@ TEST(LazySectionTest, Table) {
 }
 
 TEST(LazySectionTest, Memory) {
+  Features features;
   TestErrors errors;
   auto sec = ReadMemorySection(MakeSpanU8("\x03"              // Count.
                                           "\x00\x01"          // (memory 1)
                                           "\x01\x00\x80\x01"  // (memory 1 128)
                                           "\x00\x00"),        // (memory 0)
-                               errors);
+                               features, errors);
 
   ExpectSection(
       {
@@ -124,12 +129,13 @@ TEST(LazySectionTest, Memory) {
 }
 
 TEST(LazySectionTest, Global) {
+  Features features;
   TestErrors errors;
   auto sec = ReadGlobalSection(
       MakeSpanU8("\x02"                    // Count.
                  "\x7f\x01\x41\x00\x0b"    // (global (mut i32) (i32.const 0))
                  "\x7e\x00\x42\x01\x0b"),  // (global i64 (i64.const 1))
-      errors);
+      features, errors);
 
   ExpectSection(
       {
@@ -143,13 +149,14 @@ TEST(LazySectionTest, Global) {
 }
 
 TEST(LazySectionTest, Export) {
+  Features features;
   TestErrors errors;
   auto sec = ReadExportSection(
       MakeSpanU8("\x03"                 // Count.
                  "\x03one\x00\x01"      // (export "one" (func 1))
                  "\x03two\x02\x02"      // (export "two" (memory 2))
                  "\x05three\x03\x02"),  // (export "three" (global 2))
-      errors);
+      features, errors);
 
   ExpectSection(
       {
@@ -162,21 +169,23 @@ TEST(LazySectionTest, Export) {
 }
 
 TEST(LazySectionTest, Start) {
+  Features features;
   TestErrors errors;
-  auto sec = ReadStartSection(MakeSpanU8("\x03"), errors);
+  auto sec = ReadStartSection(MakeSpanU8("\x03"), features, errors);
 
   EXPECT_EQ(Start{3}, sec);
   ExpectNoErrors(errors);
 }
 
 TEST(LazySectionTest, Element) {
+  Features features;
   TestErrors errors;
   auto sec = ReadElementSection(
       MakeSpanU8(
           "\x02"                          // Count.
           "\x00\x41\x00\x0b\x02\x00\x01"  // (elem (offset i32.const 0) 0 1)
           "\x00\x41\x02\x0b\x01\x03"),    // (elem (offset i32.const 2) 3)
-      errors);
+      features, errors);
 
   ExpectSection(
       {
@@ -188,12 +197,13 @@ TEST(LazySectionTest, Element) {
 }
 
 TEST(LazySectionTest, Code) {
+  Features features;
   TestErrors errors;
   auto sec = ReadCodeSection(
       MakeSpanU8("\x02"                        // Count.
                  "\x02\x00\x0b"                // (func)
                  "\x05\x01\x01\x7f\x6a\x0b"),  // (func (local i32) i32.add)
-      errors);
+      features, errors);
 
   ExpectSection(
       {
@@ -205,6 +215,7 @@ TEST(LazySectionTest, Code) {
 }
 
 TEST(LazySectionTest, Data) {
+  Features features;
   TestErrors errors;
   auto sec = ReadDataSection(
       MakeSpanU8(
@@ -212,7 +223,7 @@ TEST(LazySectionTest, Data) {
           "\x00\x41\x00\x0b\x02hi"     // (data (offset i32.const 0) "hi")
           "\x00\x41\x02\x0b\x03see"    // (data (offset i32.const 2) "see")
           "\x00\x41\x05\x0b\x03you"),  // (data (offset i32.const 5) "you")
-      errors);
+      features, errors);
 
   ExpectSection(
       {

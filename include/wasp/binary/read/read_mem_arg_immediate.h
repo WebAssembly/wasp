@@ -17,8 +17,8 @@
 #ifndef WASP_BINARY_READ_READ_MEM_ARG_IMMEDIATE_H_
 #define WASP_BINARY_READ_READ_MEM_ARG_IMMEDIATE_H_
 
+#include "wasp/base/features.h"
 #include "wasp/binary/instruction.h"  // XXX
-
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_u32.h"
 
@@ -27,10 +27,12 @@ namespace binary {
 
 template <typename Errors>
 optional<MemArgImmediate> Read(SpanU8* data,
+                               const Features& features,
                                Errors& errors,
                                Tag<MemArgImmediate>) {
-  WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, errors), "align log2");
-  WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, errors), "offset");
+  WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, features, errors),
+                        "align log2");
+  WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, features, errors), "offset");
   return MemArgImmediate{align_log2, offset};
 }
 

@@ -26,30 +26,33 @@ using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
 TEST(ReaderTest, ReadBytes) {
+  Features features;
   TestErrors errors;
   const SpanU8 data = MakeSpanU8("\x12\x34\x56");
   SpanU8 copy = data;
-  auto result = ReadBytes(&copy, 3, errors);
+  auto result = ReadBytes(&copy, 3, features, errors);
   ExpectNoErrors(errors);
   EXPECT_EQ(data, result);
   EXPECT_EQ(0u, copy.size());
 }
 
 TEST(ReaderTest, ReadBytes_Leftovers) {
+  Features features;
   TestErrors errors;
   const SpanU8 data = MakeSpanU8("\x12\x34\x56");
   SpanU8 copy = data;
-  auto result = ReadBytes(&copy, 2, errors);
+  auto result = ReadBytes(&copy, 2, features, errors);
   ExpectNoErrors(errors);
   EXPECT_EQ(data.subspan(0, 2), result);
   EXPECT_EQ(1u, copy.size());
 }
 
 TEST(ReaderTest, ReadBytes_Fail) {
+  Features features;
   TestErrors errors;
   const SpanU8 data = MakeSpanU8("\x12\x34\x56");
   SpanU8 copy = data;
-  auto result = ReadBytes(&copy, 4, errors);
+  auto result = ReadBytes(&copy, 4, features, errors);
   EXPECT_EQ(nullopt, result);
   ExpectError({{0, "Unable to read 4 bytes"}}, errors, data);
 }

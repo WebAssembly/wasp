@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_READ_H_
 #define WASP_BINARY_READ_H_
 
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 
@@ -27,11 +28,14 @@ template <typename T>
 struct Tag {};
 
 template <typename T, typename Errors>
-optional<T> Read(SpanU8* data, Errors&);
+optional<T> Read(SpanU8* data,
+                 const Features& features,
+                 Errors& errors,
+                 Tag<T>);
 
 template <typename T, typename Errors>
-optional<T> Read(SpanU8* data, Errors& errors) {
-  return Read(data, errors, Tag<T>{});
+optional<T> Read(SpanU8* data, const Features& features, Errors& errors) {
+  return Read(data, features, errors, Tag<T>{});
 }
 
 }  // namespace binary

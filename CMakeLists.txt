@@ -55,7 +55,6 @@ add_library(wasplib
   src/binary/memory.cc
   src/binary/memory_type.cc
   src/binary/name_section.cc
-  src/binary/reader.cc
   src/binary/section.cc
   src/binary/start.cc
   src/binary/table.cc

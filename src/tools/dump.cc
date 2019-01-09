@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/macros.h"
@@ -46,6 +47,7 @@ enum class Pass {
 };
 
 struct Options {
+  Features features;
   bool print_headers = false;
   bool print_details = false;
   bool print_disassembly = false;
@@ -86,6 +88,7 @@ struct Dumper {
   optional<FunctionType> GetFunctionType(Index) const;
   optional<string_view> GetFunctionName(Index) const;
   optional<string_view> GetGlobalName(Index) const;
+  optional<Index> GetI32Value(const ConstantExpression&);
 
   enum class PrintChars { No, Yes };
 
@@ -100,6 +103,7 @@ struct Dumper {
                    string_view prefix = "",
                    int octets_per_line = 16,
                    int octets_per_group = 2);
+  void PrintConstantExpression(const ConstantExpression&);
 
   size_t file_offset(SpanU8 data);
 
@@ -190,7 +194,7 @@ Dumper::Dumper(string_view filename, SpanU8 data, Options options)
     : filename(filename),
       options{options},
       data{data},
-      module{ReadModule(data, errors)} {}
+      module{ReadModule(data, options.features, errors)} {}
 
 void Dumper::Dump() {
   print("\n{}:\tfile format wasm {}\n", filename, *module.version);
@@ -210,18 +214,20 @@ void Dumper::Dump() {
 }
 
 void Dumper::DoPrepass() {
+  const Features& features = options.features;
   for (auto section : module.sections) {
     if (section.is_known()) {
       auto known = section.known();
       switch (known.id) {
         case SectionId::Type: {
-          auto seq = ReadTypeSection(known, errors).sequence;
+          auto seq = ReadTypeSection(known, features, errors).sequence;
           std::copy(seq.begin(), seq.end(), std::back_inserter(type_entries));
           break;
         }
 
         case SectionId::Import: {
-          for (auto import : ReadImportSection(known, errors).sequence) {
+          for (auto import :
+               ReadImportSection(known, features, errors).sequence) {
             switch (import.kind()) {
               case ExternalKind::Function:
                 functions.push_back(Function{import.index()});
@@ -248,13 +254,14 @@ void Dumper::DoPrepass() {
         }
 
         case SectionId::Function: {
-          auto seq = ReadFunctionSection(known, errors).sequence;
+          auto seq = ReadFunctionSection(known, features, errors).sequence;
           std::copy(seq.begin(), seq.end(), std::back_inserter(functions));
           break;
         }
 
         case SectionId::Export: {
-          for (auto export_ : ReadExportSection(known, errors).sequence) {
+          for (auto export_ :
+               ReadExportSection(known, features, errors).sequence) {
             switch (export_.kind) {
               case ExternalKind::Function:
                 InsertFunctionName(export_.index, export_.name);
@@ -276,10 +283,10 @@ void Dumper::DoPrepass() {
     } else if (section.is_custom()) {
       auto custom = section.custom();
       if (custom.name == "name") {
-        for (auto subsection : ReadNameSection(custom, errors)) {
+        for (auto subsection : ReadNameSection(custom, features, errors)) {
           if (subsection.id == NameSubsectionId::FunctionNames) {
             for (auto name_assoc :
-                 ReadFunctionNamesSubsection(subsection, errors)
+                 ReadFunctionNamesSubsection(subsection, features, errors)
                      .sequence) {
               InsertFunctionName(name_assoc.index, name_assoc.name);
             }
@@ -351,6 +358,7 @@ bool Dumper::SectionMatches(Section section) const {
 }
 
 void Dumper::DoKnownSection(Pass pass, KnownSection known) {
+  const Features& features = options.features;
   DoSectionHeader(pass, format("{}", known.id), known.data);
   switch (known.id) {
     case SectionId::Custom:
@@ -358,52 +366,53 @@ void Dumper::DoKnownSection(Pass pass, KnownSection known) {
       break;
 
     case SectionId::Type:
-      DoTypeSection(pass, ReadTypeSection(known, errors));
+      DoTypeSection(pass, ReadTypeSection(known, features, errors));
       break;
 
     case SectionId::Import:
-      DoImportSection(pass, ReadImportSection(known, errors));
+      DoImportSection(pass, ReadImportSection(known, features, errors));
       break;
 
     case SectionId::Function:
-      DoFunctionSection(pass, ReadFunctionSection(known, errors));
+      DoFunctionSection(pass, ReadFunctionSection(known, features, errors));
       break;
 
     case SectionId::Table:
-      DoTableSection(pass, ReadTableSection(known, errors));
+      DoTableSection(pass, ReadTableSection(known, features, errors));
       break;
 
     case SectionId::Memory:
-      DoMemorySection(pass, ReadMemorySection(known, errors));
+      DoMemorySection(pass, ReadMemorySection(known, features, errors));
       break;
 
     case SectionId::Global:
-      DoGlobalSection(pass, ReadGlobalSection(known, errors));
+      DoGlobalSection(pass, ReadGlobalSection(known, features, errors));
       break;
 
     case SectionId::Export:
-      DoExportSection(pass, ReadExportSection(known, errors));
+      DoExportSection(pass, ReadExportSection(known, features, errors));
       break;
 
     case SectionId::Start:
-      DoStartSection(pass, ReadStartSection(known, errors));
+      DoStartSection(pass, ReadStartSection(known, features, errors));
       break;
 
     case SectionId::Element:
-      DoElementSection(pass, ReadElementSection(known, errors));
+      DoElementSection(pass, ReadElementSection(known, features, errors));
       break;
 
     case SectionId::Code:
-      DoCodeSection(pass, ReadCodeSection(known, errors));
+      DoCodeSection(pass, ReadCodeSection(known, features, errors));
       break;
 
     case SectionId::Data:
-      DoDataSection(pass, ReadDataSection(known, errors));
+      DoDataSection(pass, ReadDataSection(known, features, errors));
       break;
   }
 }
 
 void Dumper::DoCustomSection(Pass pass, CustomSection custom) {
+  const Features& features = options.features;
   DoSectionHeader(pass, format("custom \"{}\"", custom.name), custom.data);
   switch (pass) {
     case Pass::Headers:
@@ -413,7 +422,7 @@ void Dumper::DoCustomSection(Pass pass, CustomSection custom) {
     case Pass::Details:
       print("\n");
       if (custom.name == "name") {
-        DoNameSection(pass, ReadNameSection(custom, errors));
+        DoNameSection(pass, ReadNameSection(custom, features, errors));
       }
       break;
 
@@ -532,29 +541,13 @@ void Dumper::DoMemorySection(Pass pass, LazyMemorySection<ErrorsType> section) {
   }
 }
 
-namespace {
-
-void PrintConstantExpression(const ConstantExpression& expr,
-                             ErrorsType& errors) {
-  auto instrs = ReadExpression(expr, errors);
-  string_view space;
-  for (auto instr : instrs) {
-    if (instr.opcode != Opcode::End) {
-      print("{}{}", space, instr);
-      space = " ";
-    }
-  }
-}
-
-}  // namespace
-
 void Dumper::DoGlobalSection(Pass pass, LazyGlobalSection<ErrorsType> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_global_count;
     for (auto global : section.sequence) {
       print(" - global[{}] {} - ", count, global.global_type);
-      PrintConstantExpression(global.init, errors);
+      PrintConstantExpression(global.init);
       print("\n");
       ++count;
     }
@@ -587,27 +580,6 @@ void Dumper::DoStartSection(Pass pass, StartSection section) {
   }
 }
 
-namespace {
-
-optional<Index> GetI32Value(const ConstantExpression& expr) {
-  ErrorsNop errors;
-  auto instrs = ReadExpression(expr, errors);
-  auto it = instrs.begin();
-  if (it == instrs.end()) {
-    return nullopt;
-  }
-  auto instr = *it;
-  switch (instr.opcode) {
-    case Opcode::I32Const:
-      return instr.s32_immediate();
-
-    default:
-      return nullopt;
-  }
-}
-
-}  // namespace
-
 void Dumper::DoElementSection(Pass pass,
                               LazyElementSection<ErrorsType> section) {
   DoCount(pass, section.count);
@@ -616,7 +588,7 @@ void Dumper::DoElementSection(Pass pass,
     for (auto element : section.sequence) {
       print(" - segment[{}] table={} count={} - init ", count,
             element.table_index, element.init.size());
-      PrintConstantExpression(element.offset, errors);
+      PrintConstantExpression(element.offset);
       print("\n");
       Index offset = GetI32Value(element.offset).value_or(0);
       Index elem_count = 0;
@@ -655,7 +627,7 @@ void Dumper::DoDataSection(Pass pass, LazyDataSection<ErrorsType> section) {
     for (auto data : section.sequence) {
       print(" - segment[{}] memory={} size={} - init ", count,
             data.memory_index, data.init.size());
-      PrintConstantExpression(data.offset, errors);
+      PrintConstantExpression(data.offset);
       print("\n");
       Index offset = GetI32Value(data.offset).value_or(0);
       PrintMemory(data.init, offset, PrintChars::Yes, "  - ");
@@ -665,18 +637,19 @@ void Dumper::DoDataSection(Pass pass, LazyDataSection<ErrorsType> section) {
 }
 
 void Dumper::DoNameSection(Pass pass, LazyNameSection<ErrorsType> section) {
+  const Features& features=  options.features;
   for (auto subsection : section) {
     switch (subsection.id) {
       case NameSubsectionId::ModuleName: {
         auto module_name =
-            ReadModuleNameSubsection(subsection.data, errors);
+            ReadModuleNameSubsection(subsection.data, features, errors);
         print("  module name: {}\n", module_name.value_or(""));
         break;
       }
 
       case NameSubsectionId::FunctionNames: {
         auto function_names_subsection =
-            ReadFunctionNamesSubsection(subsection.data, errors);
+            ReadFunctionNamesSubsection(subsection.data, features, errors);
         print("  function names[{}]:\n",
               function_names_subsection.count.value_or(0));
         Index count = 0;
@@ -689,7 +662,7 @@ void Dumper::DoNameSection(Pass pass, LazyNameSection<ErrorsType> section) {
 
       case NameSubsectionId::LocalNames: {
         auto local_names_subsection =
-            ReadLocalNamesSubsection(subsection.data, errors);
+            ReadLocalNamesSubsection(subsection.data, features, errors);
         print("  local names[{}]:\n", local_names_subsection.count.value_or(0));
         Index func_count = 0;
         for (auto indirect_name_assoc : local_names_subsection.sequence) {
@@ -739,7 +712,7 @@ void Dumper::Disassemble(Index func_index, Code code) {
   }
   int indent = 0;
   auto last_data = code.body.data;
-  auto instrs = ReadExpression(code.body, errors);
+  auto instrs = ReadExpression(code.body, options.features, errors);
   for (auto it = instrs.begin(), end = instrs.end(); it != end; ++it) {
     auto instr = *it;
     if (instr.opcode == Opcode::Else || instr.opcode == Opcode::End) {
@@ -808,6 +781,23 @@ optional<string_view> Dumper::GetGlobalName(Index index) const {
   }
 }
 
+optional<Index> Dumper::GetI32Value(const ConstantExpression& expr) {
+  ErrorsNop errors;
+  auto instrs = ReadExpression(expr, options.features, errors);
+  auto it = instrs.begin();
+  if (it == instrs.end()) {
+    return nullopt;
+  }
+  auto instr = *it;
+  switch (instr.opcode) {
+    case Opcode::I32Const:
+      return instr.s32_immediate();
+
+    default:
+      return nullopt;
+  }
+}
+
 bool Dumper::ShouldPrintDetails(Pass pass) const {
   return pass == Pass::Details && should_print_details;
 }
@@ -862,6 +852,17 @@ void Dumper::PrintMemory(SpanU8 start,
     }
     print("\n");
     remove_prefix(&data, line_size);
+  }
+}
+
+void Dumper::PrintConstantExpression(const ConstantExpression& expr) {
+  auto instrs = ReadExpression(expr, options.features, errors);
+  string_view space;
+  for (auto instr : instrs) {
+    if (instr.opcode != Opcode::End) {
+      print("{}{}", space, instr);
+      space = " ";
+    }
   }
 }
 

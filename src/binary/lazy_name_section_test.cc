@@ -41,6 +41,7 @@ void ExpectSubsection(const std::vector<T>& expected,
 }  // namespace
 
 TEST(LazyNameSectionTest, NameSection) {
+  Features features;
   TestErrors errors;
   auto sec = ReadNameSection(
       MakeSpanU8(
@@ -48,7 +49,7 @@ TEST(LazyNameSectionTest, NameSection) {
           "\x01\x03\x02\x01g"                       // Function names: 2 => "g"
           "\x02\x0a\x03\x02\x04\x02g4\x05\x02g5"),  // Local names: function 3
                                                     //   4 => "g4", 5 => "g5"
-      errors);
+      features, errors);
 
   auto it = sec.begin();
 
@@ -70,17 +71,20 @@ TEST(LazyNameSectionTest, NameSection) {
 }
 
 TEST(LazyNameSectionTest, ModuleNameSubsection) {
+  Features features;
   TestErrors errors;
-  auto name = ReadModuleNameSubsection(MakeSpanU8("\x04name"), errors);
+  auto name =
+      ReadModuleNameSubsection(MakeSpanU8("\x04name"), features, errors);
   EXPECT_EQ("name", name);
   ExpectNoErrors(errors);
 }
 
 TEST(LazyNameSectionTest, FunctionNamesSubsection) {
+  Features features;
   TestErrors errors;
   auto sec = ReadFunctionNamesSubsection(MakeSpanU8("\x02\x03\x05three\x05\x04"
                                                     "five"),
-                                         errors);
+                                         features, errors);
 
   ExpectSubsection(
       {
@@ -92,13 +96,14 @@ TEST(LazyNameSectionTest, FunctionNamesSubsection) {
 }
 
 TEST(LazyNameSectionTest, LocalNamesSubsection) {
+  Features features;
   TestErrors errors;
   auto sec =
       ReadLocalNamesSubsection(MakeSpanU8("\x02"
                                           "\x02\x02\x01\x04ichi\x03\x03san"
                                           "\x04\x01\x05\x05"
                                           "cinco"),
-                               errors);
+                               features, errors);
 
   ExpectSubsection(
       {

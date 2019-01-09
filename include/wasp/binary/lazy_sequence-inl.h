@@ -34,7 +34,7 @@ auto LazySequenceIterator<Sequence>::operator++() -> LazySequenceIterator& {
   if (empty()) {
     clear();
   } else {
-    value_ = Read<value_type>(&data_, sequence_->errors_);
+    value_ = Read<value_type>(&data_, sequence_->features_, sequence_->errors_);
     if (!value_) {
       clear();
     }

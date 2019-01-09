@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_READ_READ_RESERVED_H_
 #define WASP_BINARY_READ_READ_RESERVED_H_
 
+#include "wasp/base/features.h"
 #include "wasp/base/format.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
@@ -30,9 +31,11 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<u8> ReadReserved(SpanU8* data, Errors& errors) {
+optional<u8> ReadReserved(SpanU8* data,
+                          const Features& features,
+                          Errors& errors) {
   ErrorsContextGuard<Errors> guard{errors, *data, "reserved"};
-  WASP_TRY_READ(reserved, Read<u8>(data, errors));
+  WASP_TRY_READ(reserved, Read<u8>(data, features, errors));
   if (reserved != 0) {
     errors.OnError(*data, format("Expected reserved byte 0, got {}", reserved));
     return nullopt;

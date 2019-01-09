@@ -31,14 +31,18 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<Section> Read(SpanU8* data, Errors& errors, Tag<Section>) {
+optional<Section> Read(SpanU8* data,
+                       const Features& features,
+                       Errors& errors,
+                       Tag<Section>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "section"};
-  WASP_TRY_READ(id, Read<SectionId>(data, errors));
-  WASP_TRY_READ(length, ReadLength(data, errors));
-  auto bytes = *ReadBytes(data, length, errors);
+  WASP_TRY_READ(id, Read<SectionId>(data, features, errors));
+  WASP_TRY_READ(length, ReadLength(data, features, errors));
+  auto bytes = *ReadBytes(data, length, features, errors);
 
   if (id == SectionId::Custom) {
-    WASP_TRY_READ(name, ReadString(&bytes, errors, "custom section name"));
+    WASP_TRY_READ(name,
+                  ReadString(&bytes, features, errors, "custom section name"));
     return Section{CustomSection{name, bytes}};
   } else {
     return Section{KnownSection{id, bytes}};

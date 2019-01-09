@@ -26,20 +26,22 @@ using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
 TEST(ReaderTest, ReadString) {
+  Features features;
   TestErrors errors;
   const SpanU8 data = MakeSpanU8("\x05hello");
   SpanU8 copy = data;
-  auto result = ReadString(&copy, errors, "test");
+  auto result = ReadString(&copy, features, errors, "test");
   ExpectNoErrors(errors);
   EXPECT_EQ(string_view{"hello"}, result);
   EXPECT_EQ(0u, copy.size());
 }
 
 TEST(ReaderTest, ReadString_Leftovers) {
+  Features features;
   TestErrors errors;
   const SpanU8 data = MakeSpanU8("\x01more");
   SpanU8 copy = data;
-  auto result = ReadString(&copy, errors, "test");
+  auto result = ReadString(&copy, features, errors, "test");
   ExpectNoErrors(errors);
   EXPECT_EQ(string_view{"m"}, result);
   EXPECT_EQ(3u, copy.size());
@@ -47,10 +49,11 @@ TEST(ReaderTest, ReadString_Leftovers) {
 
 TEST(ReaderTest, ReadString_BadLength) {
   {
+    Features features;
     TestErrors errors;
     const SpanU8 data = MakeSpanU8("");
     SpanU8 copy = data;
-    auto result = ReadString(&copy, errors, "test");
+    auto result = ReadString(&copy, features, errors, "test");
     ExpectError({{0, "test"}, {0, "length"}, {0, "Unable to read u8"}}, errors,
                 data);
     EXPECT_EQ(nullopt, result);
@@ -58,10 +61,11 @@ TEST(ReaderTest, ReadString_BadLength) {
   }
 
   {
+    Features features;
     TestErrors errors;
     const SpanU8 data = MakeSpanU8("\xc0");
     SpanU8 copy = data;
-    auto result = ReadString(&copy, errors, "test");
+    auto result = ReadString(&copy, features, errors, "test");
     ExpectError({{0, "test"}, {0, "length"}, {1, "Unable to read u8"}}, errors,
                 data);
     EXPECT_EQ(nullopt, result);
@@ -70,10 +74,11 @@ TEST(ReaderTest, ReadString_BadLength) {
 }
 
 TEST(ReaderTest, ReadString_Fail) {
+  Features features;
   TestErrors errors;
   const SpanU8 data = MakeSpanU8("\x06small");
   SpanU8 copy = data;
-  auto result = ReadString(&copy, errors, "test");
+  auto result = ReadString(&copy, features, errors, "test");
   ExpectError({{0, "test"}, {1, "Length extends past end: 6 > 5"}}, errors,
               data);
   EXPECT_EQ(nullopt, result);

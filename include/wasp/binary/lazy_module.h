@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_LAZY_MODULE_H
 #define WASP_BINARY_LAZY_MODULE_H
 
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/lazy_sequence.h"
@@ -29,7 +30,7 @@ namespace binary {
 template <typename Errors>
 class LazyModule {
  public:
-  explicit LazyModule(SpanU8, Errors&);
+  explicit LazyModule(SpanU8, const Features&, Errors&);
 
   SpanU8 data;
   optional<SpanU8> magic;
@@ -38,7 +39,7 @@ class LazyModule {
 };
 
 template <typename Errors>
-LazyModule<Errors> ReadModule(SpanU8 data, Errors&);
+LazyModule<Errors> ReadModule(SpanU8 data, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

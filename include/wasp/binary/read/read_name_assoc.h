@@ -17,9 +17,9 @@
 #ifndef WASP_BINARY_READ_READ_NAME_ASSOC_H_
 #define WASP_BINARY_READ_READ_NAME_ASSOC_H_
 
-#include "wasp/binary/name_section.h"  /// XXX
-
+#include "wasp/base/features.h"
 #include "wasp/binary/errors_context_guard.h"
+#include "wasp/binary/name_section.h"  /// XXX
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_index.h"
@@ -29,10 +29,13 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<NameAssoc> Read(SpanU8* data, Errors& errors, Tag<NameAssoc>) {
+optional<NameAssoc> Read(SpanU8* data,
+                         const Features& features,
+                         Errors& errors,
+                         Tag<NameAssoc>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "name assoc"};
-  WASP_TRY_READ(index, ReadIndex(data, errors, "index"));
-  WASP_TRY_READ(name, ReadString(data, errors, "name"));
+  WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
+  WASP_TRY_READ(name, ReadString(data, features, errors, "name"));
   return NameAssoc{index, name};
 }
 

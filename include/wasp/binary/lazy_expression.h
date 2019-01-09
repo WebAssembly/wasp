@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_LAZY_EXPRESSION_H
 #define WASP_BINARY_LAZY_EXPRESSION_H
 
+#include "wasp/base/features.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/constant_expression.h"
 #include "wasp/binary/expression.h"
@@ -31,18 +32,24 @@ template <typename Errors>
 using LazyExpression = LazySequence<Instruction, Errors>;
 
 template <typename Errors>
-LazyExpression<Errors> ReadExpression(SpanU8 data, Errors& errors) {
-  return LazyExpression<Errors>{data, errors};
+LazyExpression<Errors> ReadExpression(SpanU8 data,
+                                      const Features& features,
+                                      Errors& errors) {
+  return LazyExpression<Errors>{data, features, errors};
 }
 
 template <typename Errors>
-LazyExpression<Errors> ReadExpression(Expression expr, Errors& errors) {
-  return ReadExpression(expr.data, errors);
+LazyExpression<Errors> ReadExpression(Expression expr,
+                                      const Features& features,
+                                      Errors& errors) {
+  return ReadExpression(expr.data, features, errors);
 }
 
 template <typename Errors>
-LazyExpression<Errors> ReadExpression(ConstantExpression expr, Errors& errors) {
-  return ReadExpression(expr.data, errors);
+LazyExpression<Errors> ReadExpression(ConstantExpression expr,
+                                      const Features& features,
+                                      Errors& errors) {
+  return ReadExpression(expr.data, features, errors);
 }
 
 }  // namespace binary

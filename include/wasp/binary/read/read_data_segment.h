@@ -17,8 +17,8 @@
 #ifndef WASP_BINARY_READ_READ_DATA_SEGMENT_H_
 #define WASP_BINARY_READ_READ_DATA_SEGMENT_H_
 
+#include "wasp/base/features.h"
 #include "wasp/binary/data_segment.h"
-
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
@@ -31,13 +31,17 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<DataSegment> Read(SpanU8* data, Errors& errors, Tag<DataSegment>) {
+optional<DataSegment> Read(SpanU8* data,
+                           const Features& features,
+                           Errors& errors,
+                           Tag<DataSegment>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "data segment"};
-  WASP_TRY_READ(memory_index, ReadIndex(data, errors, "memory index"));
-  WASP_TRY_READ_CONTEXT(offset, Read<ConstantExpression>(data, errors),
-                        "offset");
-  WASP_TRY_READ(len, ReadLength(data, errors));
-  WASP_TRY_READ(init, ReadBytes(data, len, errors));
+  WASP_TRY_READ(memory_index,
+                ReadIndex(data, features, errors, "memory index"));
+  WASP_TRY_READ_CONTEXT(
+      offset, Read<ConstantExpression>(data, features, errors), "offset");
+  WASP_TRY_READ(len, ReadLength(data, features, errors));
+  WASP_TRY_READ(init, ReadBytes(data, len, features, errors));
   return DataSegment{memory_index, std::move(offset), init};
 }
 

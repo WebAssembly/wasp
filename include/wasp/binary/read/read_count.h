@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_READ_READ_COUNT_H_
 #define WASP_BINARY_READ_READ_COUNT_H_
 
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/types.h"
@@ -26,8 +27,10 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<Index> ReadCount(SpanU8* data, Errors& errors) {
-  return ReadCheckLength(data, errors, "count", "Count");
+optional<Index> ReadCount(SpanU8* data,
+                          const Features& features,
+                          Errors& errors) {
+  return ReadCheckLength(data, features, errors, "count", "Count");
 }
 
 }  // namespace binary

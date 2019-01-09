@@ -17,10 +17,10 @@
 #ifndef WASP_BINARY_READ_READ_IMPORT_H_
 #define WASP_BINARY_READ_READ_IMPORT_H_
 
-#include "wasp/binary/import.h"
-
+#include "wasp/base/features.h"
 #include "wasp/base/macros.h"
 #include "wasp/binary/errors_context_guard.h"
+#include "wasp/binary/import.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_external_kind.h"
@@ -34,26 +34,30 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<Import> Read(SpanU8* data, Errors& errors, Tag<Import>) {
+optional<Import> Read(SpanU8* data,
+                      const Features& features,
+                      Errors& errors,
+                      Tag<Import>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "import"};
-  WASP_TRY_READ(module, ReadString(data, errors, "module name"));
-  WASP_TRY_READ(name, ReadString(data, errors, "field name"));
-  WASP_TRY_READ(kind, Read<ExternalKind>(data, errors));
+  WASP_TRY_READ(module, ReadString(data, features, errors, "module name"));
+  WASP_TRY_READ(name, ReadString(data, features, errors, "field name"));
+  WASP_TRY_READ(kind, Read<ExternalKind>(data, features, errors));
   switch (kind) {
     case ExternalKind::Function: {
-      WASP_TRY_READ(type_index, ReadIndex(data, errors, "function index"));
+      WASP_TRY_READ(type_index,
+                    ReadIndex(data, features, errors, "function index"));
       return Import{module, name, type_index};
     }
     case ExternalKind::Table: {
-      WASP_TRY_READ(table_type, Read<TableType>(data, errors));
+      WASP_TRY_READ(table_type, Read<TableType>(data, features, errors));
       return Import{module, name, table_type};
     }
     case ExternalKind::Memory: {
-      WASP_TRY_READ(memory_type, Read<MemoryType>(data, errors));
+      WASP_TRY_READ(memory_type, Read<MemoryType>(data, features, errors));
       return Import{module, name, memory_type};
     }
     case ExternalKind::Global: {
-      WASP_TRY_READ(global_type, Read<GlobalType>(data, errors));
+      WASP_TRY_READ(global_type, Read<GlobalType>(data, features, errors));
       return Import{module, name, global_type};
     }
   }

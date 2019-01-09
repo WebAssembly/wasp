@@ -14,17 +14,19 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/read/read.h"
-
 #include "src/binary/test_utils.h"
+#include "wasp/base/features.h"
 #include "wasp/base/span.h"
+#include "wasp/binary/read/read.h"
 
 #include "gtest/gtest.h"
 
 template <typename T>
-void ExpectRead(const T& expected, wasp::SpanU8 data) {
+void ExpectRead(const T& expected,
+                wasp::SpanU8 data,
+                const wasp::Features& features = wasp::Features{}) {
   wasp::binary::test::TestErrors errors;
-  auto result = wasp::binary::Read<T>(&data, errors);
+  auto result = wasp::binary::Read<T>(&data, features, errors);
   wasp::binary::test::ExpectNoErrors(errors);
   EXPECT_EQ(expected, result);
   EXPECT_EQ(0u, data.size());
@@ -32,10 +34,11 @@ void ExpectRead(const T& expected, wasp::SpanU8 data) {
 
 template <typename T>
 void ExpectReadFailure(const wasp::binary::test::ExpectedError& expected,
-                       wasp::SpanU8 data) {
+                       wasp::SpanU8 data,
+                       const wasp::Features& features = wasp::Features{}) {
   wasp::binary::test::TestErrors errors;
   const wasp::SpanU8 orig_data = data;
-  auto result = wasp::binary::Read<T>(&data, errors);
+  auto result = wasp::binary::Read<T>(&data, features, errors);
   wasp::binary::test::ExpectError(expected, errors, orig_data);
   EXPECT_EQ(wasp::nullopt, result);
 }

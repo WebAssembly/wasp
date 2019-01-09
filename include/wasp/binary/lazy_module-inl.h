@@ -24,11 +24,13 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-LazyModule<Errors>::LazyModule(SpanU8 data, Errors& errors)
+LazyModule<Errors>::LazyModule(SpanU8 data,
+                               const Features& features,
+                               Errors& errors)
     : data{data},
-      magic{ReadBytes(&data, 4, errors)},
-      version{ReadBytes(&data, 4, errors)},
-      sections{data, errors} {
+      magic{ReadBytes(&data, 4, features, errors)},
+      version{ReadBytes(&data, 4, features, errors)},
+      sections{data, features, errors} {
   const SpanU8 kMagic{encoding::Magic};
   const SpanU8 kVersion{encoding::Version};
 
@@ -44,8 +46,10 @@ LazyModule<Errors>::LazyModule(SpanU8 data, Errors& errors)
 }
 
 template <typename Errors>
-LazyModule<Errors> ReadModule(SpanU8 data, Errors& errors) {
-  return LazyModule<Errors>{data, errors};
+LazyModule<Errors> ReadModule(SpanU8 data,
+                              const Features& features,
+                              Errors& errors) {
+  return LazyModule<Errors>{data, features, errors};
 }
 
 }  // namespace binary

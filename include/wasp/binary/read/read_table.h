@@ -17,8 +17,8 @@
 #ifndef WASP_BINARY_READ_READ_TABLE_H_
 #define WASP_BINARY_READ_READ_TABLE_H_
 
+#include "wasp/base/features.h"
 #include "wasp/binary/table.h"
-
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
@@ -28,9 +28,12 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<Table> Read(SpanU8* data, Errors& errors, Tag<Table>) {
+optional<Table> Read(SpanU8* data,
+                     const Features& features,
+                     Errors& errors,
+                     Tag<Table>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "table"};
-  WASP_TRY_READ(table_type, Read<TableType>(data, errors));
+  WASP_TRY_READ(table_type, Read<TableType>(data, features, errors));
   return Table{table_type};
 }
 

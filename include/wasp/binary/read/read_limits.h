@@ -17,8 +17,8 @@
 #ifndef WASP_BINARY_READ_READ_LIMITS_H_
 #define WASP_BINARY_READ_READ_LIMITS_H_
 
+#include "wasp/base/features.h"
 #include "wasp/binary/limits.h"
-
 #include "wasp/binary/encoding/limits_encoding.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
@@ -30,18 +30,21 @@ namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<Limits> Read(SpanU8* data, Errors& errors, Tag<Limits>) {
+optional<Limits> Read(SpanU8* data,
+                      const Features& features,
+                      Errors& errors,
+                      Tag<Limits>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "limits"};
-  WASP_TRY_READ_CONTEXT(flags, Read<u8>(data, errors), "flags");
+  WASP_TRY_READ_CONTEXT(flags, Read<u8>(data, features, errors), "flags");
   switch (flags) {
     case encoding::Limits::Flags_NoMax: {
-      WASP_TRY_READ_CONTEXT(min, Read<u32>(data, errors), "min");
+      WASP_TRY_READ_CONTEXT(min, Read<u32>(data, features, errors), "min");
       return Limits{min};
     }
 
     case encoding::Limits::Flags_HasMax: {
-      WASP_TRY_READ_CONTEXT(min, Read<u32>(data, errors), "min");
-      WASP_TRY_READ_CONTEXT(max, Read<u32>(data, errors), "max");
+      WASP_TRY_READ_CONTEXT(min, Read<u32>(data, features, errors), "min");
+      WASP_TRY_READ_CONTEXT(max, Read<u32>(data, features, errors), "max");
       return Limits{min, max};
     }
 

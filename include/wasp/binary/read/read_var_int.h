@@ -19,6 +19,7 @@
 
 #include <type_traits>
 
+#include "wasp/base/features.h"
 #include "wasp/base/format.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/optional.h"
@@ -40,7 +41,10 @@ S SignExtend(typename std::make_unsigned<S>::type x, int N) {
 }
 
 template <typename T, typename Errors>
-optional<T> ReadVarInt(SpanU8* data, Errors& errors, string_view desc) {
+optional<T> ReadVarInt(SpanU8* data,
+                       const Features& features,
+                       Errors& errors,
+                       string_view desc) {
   using U = typename std::make_unsigned<T>::type;
   constexpr bool is_signed = std::is_signed<T>::value;
   constexpr int kMaxBytes = (sizeof(T) * 8 + 6) / 7;
@@ -53,7 +57,7 @@ optional<T> ReadVarInt(SpanU8* data, Errors& errors, string_view desc) {
 
   U result{};
   for (int i = 0;;) {
-    WASP_TRY_READ(byte, Read<u8>(data, errors));
+    WASP_TRY_READ(byte, Read<u8>(data, features, errors));
 
     const int shift = i * 7;
     result |= U(byte & 0x7f) << shift;

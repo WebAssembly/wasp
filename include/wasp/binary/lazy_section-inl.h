@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include "wasp/base/features.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_code.h"
 #include "wasp/binary/read/read_count.h"
@@ -32,17 +33,22 @@ namespace wasp {
 namespace binary {
 
 template <typename T, typename Errors>
-LazySection<T, Errors>::LazySection(SpanU8 data, Errors& errors)
-    : count(ReadCount(&data, errors)), sequence(data, errors) {}
+LazySection<T, Errors>::LazySection(SpanU8 data,
+                                    const Features& features,
+                                    Errors& errors)
+    : count{ReadCount(&data, features, errors)},
+      sequence{data, features, errors} {}
 
-#define WASP_DEFINE_LAZY_READ_FUNC(SectionType, ReadFunc)          \
-  template <typename Errors>                                       \
-  SectionType<Errors> ReadFunc(SpanU8 data, Errors& errors) {      \
-    return SectionType<Errors>{data, errors};                      \
-  }                                                                \
-  template <typename Errors>                                       \
-  SectionType<Errors> ReadFunc(KnownSection sec, Errors& errors) { \
-    return ReadFunc(sec.data, errors);                             \
+#define WASP_DEFINE_LAZY_READ_FUNC(SectionType, ReadFunc)                  \
+  template <typename Errors>                                               \
+  SectionType<Errors> ReadFunc(SpanU8 data, const Features& features,      \
+                               Errors& errors) {                           \
+    return SectionType<Errors>{data, features, errors};                    \
+  }                                                                        \
+  template <typename Errors>                                               \
+  SectionType<Errors> ReadFunc(KnownSection sec, const Features& features, \
+                               Errors& errors) {                           \
+    return ReadFunc(sec.data, features, errors);                           \
   }
 
 WASP_DEFINE_LAZY_READ_FUNC(LazyTypeSection, ReadTypeSection)
@@ -59,14 +65,18 @@ WASP_DEFINE_LAZY_READ_FUNC(LazyDataSection, ReadDataSection)
 #undef WASP_DEFINE_LAZY_READ_FUNC
 
 template <typename Errors>
-StartSection ReadStartSection(SpanU8 data, Errors& errors) {
+StartSection ReadStartSection(SpanU8 data,
+                              const Features& features,
+                              Errors& errors) {
   SpanU8 copy = data;
-  return Read<Start>(&copy, errors);
+  return Read<Start>(&copy, features, errors);
 }
 
 template <typename Errors>
-StartSection ReadStartSection(KnownSection sec, Errors& errors) {
-  return ReadStartSection(sec.data, errors);
+StartSection ReadStartSection(KnownSection sec,
+                              const Features& features,
+                              Errors& errors) {
+  return ReadStartSection(sec.data, features, errors);
 }
 
 }  // namespace binary

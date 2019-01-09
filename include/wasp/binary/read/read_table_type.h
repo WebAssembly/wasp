@@ -17,22 +17,25 @@
 #ifndef WASP_BINARY_READ_READ_TABLE_TYPE_H_
 #define WASP_BINARY_READ_READ_TABLE_TYPE_H_
 
-#include "wasp/binary/table_type.h"
-
+#include "wasp/base/features.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_element_type.h"
 #include "wasp/binary/read/read_limits.h"
+#include "wasp/binary/table_type.h"
 
 namespace wasp {
 namespace binary {
 
 template <typename Errors>
-optional<TableType> Read(SpanU8* data, Errors& errors, Tag<TableType>) {
+optional<TableType> Read(SpanU8* data,
+                         const Features& features,
+                         Errors& errors,
+                         Tag<TableType>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "table type"};
-  WASP_TRY_READ(elemtype, Read<ElementType>(data, errors));
-  WASP_TRY_READ(limits, Read<Limits>(data, errors));
+  WASP_TRY_READ(elemtype, Read<ElementType>(data, features, errors));
+  WASP_TRY_READ(limits, Read<Limits>(data, features, errors));
   return TableType{limits, elemtype};
 }
 

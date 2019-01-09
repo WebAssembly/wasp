@@ -19,6 +19,7 @@
 
 #include <iterator>
 
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 
@@ -42,8 +43,8 @@ class LazySequence {
   using iterator = LazySequenceIterator<LazySequence>;
   using const_iterator = LazySequenceIterator<LazySequence>;
 
-  explicit LazySequence(SpanU8 data, Errors& errors)
-      : data_{data}, errors_{errors} {}
+  explicit LazySequence(SpanU8 data, const Features& features, Errors& errors)
+      : data_{data}, features_{features}, errors_{errors} {}
 
   iterator begin() { return iterator{this, data_}; }
   iterator end() { return iterator{this, SpanU8{}}; }
@@ -57,6 +58,7 @@ class LazySequence {
   friend class LazySequenceIterator;
 
   SpanU8 data_;
+  const Features& features_;
   Errors& errors_;
 };
 

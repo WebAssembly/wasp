@@ -17,8 +17,8 @@
 #ifndef WASP_BINARY_READ_READ_ELEMENT_SEGMENT_H_
 #define WASP_BINARY_READ_READ_ELEMENT_SEGMENT_H_
 
+#include "wasp/base/features.h"
 #include "wasp/binary/element_segment.h"
-
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
@@ -32,13 +32,15 @@ namespace binary {
 
 template <typename Errors>
 optional<ElementSegment> Read(SpanU8* data,
+                              const Features& features,
                               Errors& errors,
                               Tag<ElementSegment>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "element segment"};
-  WASP_TRY_READ(table_index, ReadIndex(data, errors, "table index"));
-  WASP_TRY_READ_CONTEXT(offset, Read<ConstantExpression>(data, errors),
-                        "offset");
-  WASP_TRY_READ(init, ReadVector<Index>(data, errors, "initializers"));
+  WASP_TRY_READ(table_index, ReadIndex(data, features, errors, "table index"));
+  WASP_TRY_READ_CONTEXT(
+      offset, Read<ConstantExpression>(data, features, errors), "offset");
+  WASP_TRY_READ(init,
+                ReadVector<Index>(data, features, errors, "initializers"));
   return ElementSegment{table_index, std::move(offset), std::move(init)};
 }
 
