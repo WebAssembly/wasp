@@ -20,7 +20,7 @@
 
 #include "gtest/gtest.h"
 
-#include "src/binary/reader_test_helpers.h"
+#include "src/binary/read_test_utils.h"
 #include "src/binary/test_utils.h"
 #include "wasp/binary/read/read_u32.h"
 #include "wasp/binary/read/read_u8.h"
