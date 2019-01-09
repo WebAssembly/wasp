@@ -20,10 +20,10 @@
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
+#include "wasp/binary/custom_section.h"
 #include "wasp/binary/lazy_section.h"
 #include "wasp/binary/lazy_sequence.h"
 #include "wasp/binary/name_section.h"
-#include "wasp/binary/section.h"
 
 namespace wasp {
 

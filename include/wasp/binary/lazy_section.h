@@ -17,31 +17,15 @@
 #ifndef WASP_BINARY_LAZY_SECTION_H_
 #define WASP_BINARY_LAZY_SECTION_H_
 
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
-
-// XXX
-#include "wasp/binary/code.h"
-#include "wasp/binary/data_segment.h"
-#include "wasp/binary/element_segment.h"
-#include "wasp/binary/export.h"
-#include "wasp/binary/function.h"
-#include "wasp/binary/global.h"
-#include "wasp/binary/import.h"
 #include "wasp/binary/lazy_sequence.h"
-#include "wasp/binary/memory.h"
-#include "wasp/binary/section.h"
-#include "wasp/binary/start.h"
-#include "wasp/binary/table.h"
-#include "wasp/binary/type_entry.h"
+#include "wasp/binary/read/read_count.h"
 
 namespace wasp {
-
-class Features;
-
 namespace binary {
 
-/// ---
 template <typename T, typename Errors>
 class LazySection {
  public:
@@ -51,44 +35,14 @@ class LazySection {
   LazySequence<T, Errors> sequence;
 };
 
-#define WASP_DECLARE_LAZY_KNOWN_SECTION(SectionType, ElementType, ReadFunc) \
-  template <typename Errors>                                                \
-  using SectionType = LazySection<ElementType, Errors>;                     \
-                                                                            \
-  template <typename Errors>                                                \
-  SectionType<Errors> ReadFunc(SpanU8, const Features&, Errors&);           \
-  template <typename Errors>                                                \
-  SectionType<Errors> ReadFunc(KnownSection, const Features&, Errors&);
-
-WASP_DECLARE_LAZY_KNOWN_SECTION(LazyTypeSection, TypeEntry, ReadTypeSection)
-WASP_DECLARE_LAZY_KNOWN_SECTION(LazyImportSection, Import, ReadImportSection)
-WASP_DECLARE_LAZY_KNOWN_SECTION(LazyFunctionSection,
-                                Function,
-                                ReadFunctionSection)
-WASP_DECLARE_LAZY_KNOWN_SECTION(LazyTableSection, Table, ReadTableSection)
-WASP_DECLARE_LAZY_KNOWN_SECTION(LazyMemorySection, Memory, ReadMemorySection)
-WASP_DECLARE_LAZY_KNOWN_SECTION(LazyGlobalSection, Global, ReadGlobalSection)
-WASP_DECLARE_LAZY_KNOWN_SECTION(LazyExportSection, Export, ReadExportSection)
-WASP_DECLARE_LAZY_KNOWN_SECTION(LazyElementSection,
-                                ElementSegment,
-                                ReadElementSection)
-WASP_DECLARE_LAZY_KNOWN_SECTION(LazyCodeSection, Code, ReadCodeSection)
-WASP_DECLARE_LAZY_KNOWN_SECTION(LazyDataSection, DataSegment, ReadDataSection)
-
-#undef WASP_DECLARE_LAZY_KNOWN_SECTION
-
-/// ---
-using StartSection = optional<Start>;
-
-template <typename Errors>
-StartSection ReadStartSection(SpanU8, const Features&, Errors&);
-template <typename Errors>
-StartSection ReadStartSection(KnownSection, const Features&, Errors&);
-
+template <typename T, typename Errors>
+LazySection<T, Errors>::LazySection(SpanU8 data,
+                                    const Features& features,
+                                    Errors& errors)
+    : count{ReadCount(&data, features, errors)},
+      sequence{data, features, errors} {}
 
 }  // namespace binary
 }  // namespace wasp
-
-#include "wasp/binary/lazy_section-inl.h"
 
 #endif // WASP_BINARY_LAZY_SECTION_H_
