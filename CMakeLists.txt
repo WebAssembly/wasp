@@ -88,52 +88,7 @@ add_executable(wasp_unittests
   src/binary/lazy_name_section_test.cc
   src/binary/lazy_section_test.cc
   src/binary/lazy_sequence_test.cc
-  src/binary/read_block_type_test.cc
-  src/binary/read_br_table_immediate_test.cc
-  src/binary/read_bytes_test.cc
-  src/binary/read_call_indirect_immediate_test.cc
-  src/binary/read_code_test.cc
-  src/binary/read_constant_expression_test.cc
-  src/binary/read_copy_immediate_test.cc
-  src/binary/read_count_test.cc
-  src/binary/read_data_segment_test.cc
-  src/binary/read_element_segment_test.cc
-  src/binary/read_element_type_test.cc
-  src/binary/read_export_test.cc
-  src/binary/read_external_kind_test.cc
-  src/binary/read_f32_test.cc
-  src/binary/read_f64_test.cc
-  src/binary/read_function_test.cc
-  src/binary/read_function_type_test.cc
-  src/binary/read_global_test.cc
-  src/binary/read_global_type_test.cc
-  src/binary/read_import_test.cc
-  src/binary/read_indirect_name_assoc_test.cc
-  src/binary/read_init_immediate_test.cc
-  src/binary/read_instruction_test.cc
-  src/binary/read_limits_test.cc
-  src/binary/read_locals_test.cc
-  src/binary/read_mem_arg_immediate_test.cc
-  src/binary/read_memory_test.cc
-  src/binary/read_memory_type_test.cc
-  src/binary/read_mutability_test.cc
-  src/binary/read_name_assoc_test.cc
-  src/binary/read_name_subsection_id_test.cc
-  src/binary/read_name_subsection_test.cc
-  src/binary/read_opcode_test.cc
-  src/binary/read_s32_test.cc
-  src/binary/read_s64_test.cc
-  src/binary/read_section_id_test.cc
-  src/binary/read_section_test.cc
-  src/binary/read_start_test.cc
-  src/binary/read_string_test.cc
-  src/binary/read_table_test.cc
-  src/binary/read_table_type_test.cc
-  src/binary/read_type_entry_test.cc
-  src/binary/read_u32_test.cc
-  src/binary/read_u8_test.cc
-  src/binary/read_value_type_test.cc
-  src/binary/read_vector_test.cc
+  src/binary/read_test.cc
   src/binary/test_utils.cc
 )
 
