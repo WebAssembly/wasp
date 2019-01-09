@@ -14,29 +14,14 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_READ_READ_MEM_ARG_IMMEDIATE_H_
-#define WASP_BINARY_READ_READ_MEM_ARG_IMMEDIATE_H_
-
-#include "wasp/base/features.h"
 #include "wasp/binary/mem_arg_immediate.h"
-#include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_u32.h"
+
+#include "src/base/operator_eq_ne_macros.h"
 
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<MemArgImmediate> Read(SpanU8* data,
-                               const Features& features,
-                               Errors& errors,
-                               Tag<MemArgImmediate>) {
-  WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, features, errors),
-                        "align log2");
-  WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, features, errors), "offset");
-  return MemArgImmediate{align_log2, offset};
-}
+WASP_OPERATOR_EQ_NE_2(MemArgImmediate, align_log2, offset)
 
 }  // namespace binary
 }  // namespace wasp
-
-#endif  // WASP_BINARY_READ_READ_MEM_ARG_IMMEDIATE_H_

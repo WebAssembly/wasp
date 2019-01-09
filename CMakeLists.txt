@@ -36,11 +36,15 @@ include_directories(
 add_library(wasplib
   src/base/features.cc
   src/base/file.cc
+  src/binary/br_table_immediate.cc
+  src/binary/call_indirect_immediate.cc
   src/binary/code.cc
   src/binary/constant_expression.cc
+  src/binary/copy_immediate.cc
   src/binary/custom_section.cc
   src/binary/data_segment.cc
   src/binary/element_segment.cc
+  src/binary/empty_immediate.cc
   src/binary/export.cc
   src/binary/expression.cc
   src/binary/formatters.cc
@@ -49,10 +53,12 @@ add_library(wasplib
   src/binary/global.cc
   src/binary/global_type.cc
   src/binary/import.cc
+  src/binary/init_immediate.cc
   src/binary/instruction.cc
   src/binary/known_section.cc
   src/binary/limits.cc
   src/binary/locals.cc
+  src/binary/mem_arg_immediate.cc
   src/binary/memory.cc
   src/binary/memory_type.cc
   src/binary/name_section.cc

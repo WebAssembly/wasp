@@ -17,60 +17,19 @@
 #ifndef WASP_BINARY_INSTRUCTION_H_
 #define WASP_BINARY_INSTRUCTION_H_
 
-#include <vector>
-
 #include "wasp/base/types.h"
 #include "wasp/base/variant.h"
 #include "wasp/binary/block_type.h"
+#include "wasp/binary/br_table_immediate.h"
+#include "wasp/binary/call_indirect_immediate.h"
+#include "wasp/binary/copy_immediate.h"
+#include "wasp/binary/empty_immediate.h"
+#include "wasp/binary/init_immediate.h"
+#include "wasp/binary/mem_arg_immediate.h"
 #include "wasp/binary/opcode.h"
 
 namespace wasp {
 namespace binary {
-
-struct EmptyImmediate {};
-
-bool operator==(const EmptyImmediate&, const EmptyImmediate&);
-bool operator!=(const EmptyImmediate&, const EmptyImmediate&);
-
-struct CallIndirectImmediate {
-  Index index;
-  u8 reserved;
-};
-
-bool operator==(const CallIndirectImmediate&, const CallIndirectImmediate&);
-bool operator!=(const CallIndirectImmediate&, const CallIndirectImmediate&);
-
-struct BrTableImmediate {
-  std::vector<Index> targets;
-  Index default_target;
-};
-
-bool operator==(const BrTableImmediate&, const BrTableImmediate&);
-bool operator!=(const BrTableImmediate&, const BrTableImmediate&);
-
-struct MemArgImmediate {
-  u32 align_log2;
-  u32 offset;
-};
-
-bool operator==(const MemArgImmediate&, const MemArgImmediate&);
-bool operator!=(const MemArgImmediate&, const MemArgImmediate&);
-
-struct InitImmediate {
-  Index segment_index;
-  u8 reserved;
-};
-
-bool operator==(const InitImmediate&, const InitImmediate&);
-bool operator!=(const InitImmediate&, const InitImmediate&);
-
-struct CopyImmediate {
-  u8 src_reserved;
-  u8 dst_reserved;
-};
-
-bool operator==(const CopyImmediate&, const CopyImmediate&);
-bool operator!=(const CopyImmediate&, const CopyImmediate&);
 
 struct Instruction {
   explicit Instruction(Opcode opcode);

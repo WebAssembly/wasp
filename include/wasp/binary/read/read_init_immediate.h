@@ -19,7 +19,7 @@
 
 #include "wasp/base/features.h"
 #include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/instruction.h"  // XXX
+#include "wasp/binary/init_immediate.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read_index.h"
 #include "wasp/binary/read/read_reserved.h"

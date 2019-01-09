@@ -18,8 +18,8 @@
 #define WASP_BINARY_READ_READ_CALL_INDIRECT_IMMEDIATE_H_
 
 #include "wasp/base/features.h"
+#include "wasp/binary/call_indirect_immediate.h"
 #include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/instruction.h"  // XXX
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read_index.h"
 #include "wasp/binary/read/read_reserved.h"

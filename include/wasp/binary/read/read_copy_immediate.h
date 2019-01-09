@@ -18,8 +18,8 @@
 #define WASP_BINARY_READ_READ_COPY_IMMEDIATE_H_
 
 #include "wasp/base/features.h"
+#include "wasp/binary/copy_immediate.h"
 #include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/instruction.h"  // XXX
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read_reserved.h"
 
