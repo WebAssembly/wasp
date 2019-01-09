@@ -258,11 +258,13 @@ TEST(ReaderTest, Instruction_bulk_memory) {
                 MakeSpanU8("\xfc\x08\x01\x00"), features);
   ExpectRead<I>(I{O::MemoryDrop, Index{2}}, MakeSpanU8("\xfc\x09\x02"),
                 features);
-  ExpectRead<I>(I{O::MemoryCopy, u8{0}}, MakeSpanU8("\xfc\x0a\x00"), features);
+  ExpectRead<I>(I{O::MemoryCopy, CopyImmediate{0, 0}},
+                MakeSpanU8("\xfc\x0a\x00\x00"), features);
   ExpectRead<I>(I{O::MemoryFill, u8{0}}, MakeSpanU8("\xfc\x0b\x00"), features);
   ExpectRead<I>(I{O::TableInit, InitImmediate{3, 0}},
                 MakeSpanU8("\xfc\x0c\x03\x00"), features);
   ExpectRead<I>(I{O::TableDrop, Index{4}}, MakeSpanU8("\xfc\x0d\x04"),
                 features);
-  ExpectRead<I>(I{O::TableCopy, u8{0}}, MakeSpanU8("\xfc\x0e\x00"), features);
+  ExpectRead<I>(I{O::TableCopy, CopyImmediate{0, 0}},
+                MakeSpanU8("\xfc\x0e\x00\x00"), features);
 }

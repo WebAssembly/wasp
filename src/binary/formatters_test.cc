@@ -222,6 +222,11 @@ TEST(FormatTest, InitImmediate) {
   EXPECT_EQ(R"(  10 0)", format("{:>6s}", InitImmediate{10u, 0}));
 }
 
+TEST(FormatTest, CopyImmediate) {
+  EXPECT_EQ(R"(0 0)", format("{}", CopyImmediate{0, 0}));
+  EXPECT_EQ(R"(   0 0)", format("{:>6s}", CopyImmediate{0, 0}));
+}
+
 TEST(FormatTest, Instruction) {
   // nop
   EXPECT_EQ(R"(nop)", format("{}", Instruction{Opcode::Nop}));

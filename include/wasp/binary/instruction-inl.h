@@ -65,6 +65,10 @@ inline bool Instruction::has_init_immediate() const {
   return holds_alternative<InitImmediate>(immediate);
 }
 
+inline bool Instruction::has_copy_immediate() const {
+  return holds_alternative<CopyImmediate>(immediate);
+}
+
 inline EmptyImmediate& Instruction::empty_immediate() {
   return get<EmptyImmediate>(immediate);
 }
@@ -160,6 +164,14 @@ inline InitImmediate& Instruction::init_immediate() {
 
 inline const InitImmediate& Instruction::init_immediate() const {
   return get<InitImmediate>(immediate);
+}
+
+inline CopyImmediate& Instruction::copy_immediate() {
+  return get<CopyImmediate>(immediate);
+}
+
+inline const CopyImmediate& Instruction::copy_immediate() const {
+  return get<CopyImmediate>(immediate);
 }
 
 }  // namespace binary

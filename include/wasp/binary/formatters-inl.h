@@ -375,6 +375,15 @@ typename Ctx::iterator formatter<::wasp::binary::InitImmediate>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::CopyImmediate>::format(
+    const ::wasp::binary::CopyImmediate& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.src_reserved, self.dst_reserved);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
     const ::wasp::binary::Instruction& self,
     Ctx& ctx) {
@@ -405,6 +414,8 @@ typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
     format_to(buf, " {:f}", self.f64_immediate());
   } else if (self.has_init_immediate()) {
     format_to(buf, " {}", self.init_immediate());
+  } else if (self.has_copy_immediate()) {
+    format_to(buf, " {}", self.copy_immediate());
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }

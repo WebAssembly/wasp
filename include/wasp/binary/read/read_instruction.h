@@ -26,6 +26,7 @@
 #include "wasp/binary/read/read_block_type.h"
 #include "wasp/binary/read/read_br_table_immediate.h"
 #include "wasp/binary/read/read_call_indirect_immediate.h"
+#include "wasp/binary/read/read_copy_immediate.h"
 #include "wasp/binary/read/read_f32.h"
 #include "wasp/binary/read/read_f64.h"
 #include "wasp/binary/read/read_index.h"
@@ -259,9 +260,7 @@ optional<Instruction> Read(SpanU8* data,
     // Reserved immediates.
     case Opcode::MemorySize:
     case Opcode::MemoryGrow:
-    case Opcode::MemoryCopy:
-    case Opcode::MemoryFill:
-    case Opcode::TableCopy: {
+    case Opcode::MemoryFill: {
       WASP_TRY_READ(reserved, ReadReserved(data, features, errors));
       return Instruction{Opcode{opcode}, reserved};
     }
@@ -295,6 +294,13 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::MemoryInit:
     case Opcode::TableInit: {
       WASP_TRY_READ(immediate, Read<InitImmediate>(data, features, errors));
+      return Instruction{Opcode{opcode}, immediate};
+    }
+
+    // Reserved, reserved immediates.
+    case Opcode::MemoryCopy:
+    case Opcode::TableCopy: {
+      WASP_TRY_READ(immediate, Read<CopyImmediate>(data, features, errors));
       return Instruction{Opcode{opcode}, immediate};
     }
   }

@@ -64,6 +64,14 @@ struct InitImmediate {
 bool operator==(const InitImmediate&, const InitImmediate&);
 bool operator!=(const InitImmediate&, const InitImmediate&);
 
+struct CopyImmediate {
+  u8 src_reserved;
+  u8 dst_reserved;
+};
+
+bool operator==(const CopyImmediate&, const CopyImmediate&);
+bool operator!=(const CopyImmediate&, const CopyImmediate&);
+
 struct Instruction {
   explicit Instruction(Opcode opcode);
   explicit Instruction(Opcode opcode, EmptyImmediate);
@@ -78,6 +86,7 @@ struct Instruction {
   explicit Instruction(Opcode opcode, f32);
   explicit Instruction(Opcode opcode, f64);
   explicit Instruction(Opcode opcode, InitImmediate);
+  explicit Instruction(Opcode opcode, CopyImmediate);
 
   bool has_empty_immediate() const;
   bool has_block_type_immediate() const;
@@ -91,6 +100,7 @@ struct Instruction {
   bool has_f32_immediate() const;
   bool has_f64_immediate() const;
   bool has_init_immediate() const;
+  bool has_copy_immediate() const;
 
   EmptyImmediate& empty_immediate();
   const EmptyImmediate& empty_immediate() const;
@@ -116,6 +126,8 @@ struct Instruction {
   const f64& f64_immediate() const;
   InitImmediate& init_immediate();
   const InitImmediate& init_immediate() const;
+  CopyImmediate& copy_immediate();
+  const CopyImmediate& copy_immediate() const;
 
   Opcode opcode;
   variant<EmptyImmediate,
@@ -129,7 +141,8 @@ struct Instruction {
           s64,
           f32,
           f64,
-          InitImmediate>
+          InitImmediate,
+          CopyImmediate>
       immediate;
 };
 

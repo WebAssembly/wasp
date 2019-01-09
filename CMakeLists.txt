@@ -88,6 +88,7 @@ add_executable(wasp_unittests
   src/binary/read_call_indirect_immediate_test.cc
   src/binary/read_code_test.cc
   src/binary/read_constant_expression_test.cc
+  src/binary/read_copy_immediate_test.cc
   src/binary/read_count_test.cc
   src/binary/read_data_segment_test.cc
   src/binary/read_element_segment_test.cc
