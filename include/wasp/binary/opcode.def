@@ -186,3 +186,10 @@ WASP_V(0x00, 0xbc, I32ReinterpretF32, "i32.reinterpret_f32")
 WASP_V(0x00, 0xbd, I64ReinterpretF64, "i64.reinterpret_f64")
 WASP_V(0x00, 0xbe, F32ReinterpretI32, "f32.reinterpret_i32")
 WASP_V(0x00, 0xbf, F64ReinterpretI64, "f64.reinterpret_i64")
+
+// Sign-extension opcodes
+WASP_FEATURE_V(0x00, 0xc0, I32Extend8S, "i32.extend8_s", sign_extension)
+WASP_FEATURE_V(0x00, 0xc1, I32Extend16S, "i32.extend16_s", sign_extension)
+WASP_FEATURE_V(0x00, 0xc2, I64Extend8S, "i64.extend8_s", sign_extension)
+WASP_FEATURE_V(0x00, 0xc3, I64Extend16S, "i64.extend16_s", sign_extension)
+WASP_FEATURE_V(0x00, 0xc4, I64Extend32S, "i64.extend32_s", sign_extension)

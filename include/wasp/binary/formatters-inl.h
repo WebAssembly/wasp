@@ -327,12 +327,14 @@ typename Ctx::iterator formatter<::wasp::binary::Opcode>::format(
     Ctx& ctx) {
   string_view result;
   switch (self) {
-#define WASP_V(prefix, val, Name, str) \
-  case ::wasp::binary::Opcode::Name:   \
-    result = str;                      \
+#define WASP_V(prefix, val, Name, str, ...) \
+  case ::wasp::binary::Opcode::Name:        \
+    result = str;                           \
     break;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/opcode.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
     default: {
       // Special case for sections with unknown ids.
       memory_buffer buf;

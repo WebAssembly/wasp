@@ -35,7 +35,7 @@ optional<Opcode> Read(SpanU8* data,
                       Tag<Opcode>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "opcode"};
   WASP_TRY_READ(val, Read<u8>(data, features, errors));
-  WASP_TRY_DECODE(decoded, val, Opcode, "opcode");
+  WASP_TRY_DECODE_WITH_FEATURES(decoded, val, Opcode, "opcode", features);
   return decoded;
 }
 

@@ -14,23 +14,14 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_OPCODE_H_
-#define WASP_BINARY_OPCODE_H_
-
-#include "wasp/base/types.h"
+#include "wasp/base/features.h"
 
 namespace wasp {
-namespace binary {
 
-enum class Opcode : u32 {
-#define WASP_V(prefix, val, Name, str, ...) Name,
-#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/opcode.def"
+void Features::EnableAll() {
+#define WASP_V(variable, flag, default_) enable_##variable();
+#include "wasp/base/features.def"
 #undef WASP_V
-#undef WASP_FEATURE_V
-};
+}
 
-}  // namespace binary
 }  // namespace wasp
-
-#endif // WASP_BINARY_OPCODE_H_

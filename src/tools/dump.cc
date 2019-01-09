@@ -126,6 +126,7 @@ struct Dumper {
 int DumpMain(int argc, char** argv) {
   std::vector<string_view> filenames;
   Options options;
+  options.features.EnableAll();
 
   for (int i = 0; i < argc; ++i) {
     string_view arg = argv[i];

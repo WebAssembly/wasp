@@ -215,3 +215,17 @@ TEST(ReaderTest, Instruction_BadMemoryReserved) {
       {{1, "reserved"}, {2, "Expected reserved byte 0, got 1"}},
       MakeSpanU8("\x40\x01"));
 }
+
+TEST(ReaderTest, Instruction_sign_extension) {
+  using I = Instruction;
+  using O = Opcode;
+
+  Features features;
+  features.enable_sign_extension();
+
+  ExpectRead<I>(I{O::I32Extend8S}, MakeSpanU8("\xc0"), features);
+  ExpectRead<I>(I{O::I32Extend16S}, MakeSpanU8("\xc1"), features);
+  ExpectRead<I>(I{O::I64Extend8S}, MakeSpanU8("\xc2"), features);
+  ExpectRead<I>(I{O::I64Extend16S}, MakeSpanU8("\xc3"), features);
+  ExpectRead<I>(I{O::I64Extend32S}, MakeSpanU8("\xc4"), features);
+}

@@ -34,6 +34,7 @@ include_directories(
 )
 
 add_library(wasplib
+  src/base/features.cc
   src/base/file.cc
   src/binary/code.cc
   src/binary/constant_expression.cc

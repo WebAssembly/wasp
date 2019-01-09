@@ -40,4 +40,11 @@
     return nullopt;                                                \
   }
 
+#define WASP_TRY_DECODE_WITH_FEATURES(out_var, in_var, Type, name, features) \
+  auto out_var = encoding::Type::Decode(in_var, features);                   \
+  if (!out_var) {                                                            \
+    errors.OnError(*data, format("Unknown " name ": {}", in_var));           \
+    return nullopt;                                                          \
+  }
+
 #endif  // WASP_BINARY_MACROS_H_

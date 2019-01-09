@@ -18,6 +18,7 @@
 #define WASP_BINARY_OPCODE_ENCODING_H
 
 #include "wasp/base/types.h"
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/binary/opcode.h"
 
@@ -26,24 +27,35 @@ namespace binary {
 namespace encoding {
 
 struct Opcode {
-#define WASP_V(prefix, val, Name, str) static constexpr u8 Name = val;
+#define WASP_V(prefix, val, Name, str, ...) static constexpr u8 Name = val;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/opcode.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
 
-  static optional<::wasp::binary::Opcode> Decode(u8);
+  static optional<::wasp::binary::Opcode> Decode(u8, const Features&);
 };
 
 // static
-inline optional<::wasp::binary::Opcode> Opcode::Decode(u8 val) {
+inline optional<::wasp::binary::Opcode> Opcode::Decode(
+    u8 val,
+    const Features& features) {
   switch (val) {
 #define WASP_V(prefix, val, Name, str) \
   case Name:                           \
     return ::wasp::binary::Opcode::Name;
+#define WASP_FEATURE_V(prefix, val, Name, str, feature) \
+  case Name:                                            \
+    if (features.feature##_enabled()) {                 \
+      return ::wasp::binary::Opcode::Name;              \
+    }
 #include "wasp/binary/opcode.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
     default:
-      return nullopt;
+      break;
   }
+  return nullopt;
 }
 
 }  // namespace encoding

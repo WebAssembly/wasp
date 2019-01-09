@@ -176,6 +176,11 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::I64ReinterpretF64:
     case Opcode::F32ReinterpretI32:
     case Opcode::F64ReinterpretI64:
+    case Opcode::I32Extend8S:
+    case Opcode::I32Extend16S:
+    case Opcode::I64Extend8S:
+    case Opcode::I64Extend16S:
+    case Opcode::I64Extend32S:
       return Instruction{Opcode{opcode}};
 
     // Type immediate.
