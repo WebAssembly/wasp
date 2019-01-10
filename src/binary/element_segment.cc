@@ -21,7 +21,18 @@
 namespace wasp {
 namespace binary {
 
-WASP_OPERATOR_EQ_NE_3(ElementSegment, table_index, offset, init)
+ElementSegment::ElementSegment(Index table_index,
+                               ConstantExpression offset,
+                               const std::vector<Index>& init)
+    : init{init}, desc{Active{table_index, offset}} {}
+
+ElementSegment::ElementSegment(ElementType element_type,
+                               const std::vector<Index>& init)
+    : init{init}, desc{Passive{element_type}} {}
+
+WASP_OPERATOR_EQ_NE_2(ElementSegment, init, desc)
+WASP_OPERATOR_EQ_NE_2(ElementSegment::Active, table_index, offset)
+WASP_OPERATOR_EQ_NE_1(ElementSegment::Passive, element_type)
 
 }  // namespace binary
 }  // namespace wasp

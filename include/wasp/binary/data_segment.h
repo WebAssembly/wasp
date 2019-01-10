@@ -19,21 +19,54 @@
 
 #include "wasp/base/span.h"
 #include "wasp/base/types.h"
+#include "wasp/base/variant.h"
 #include "wasp/binary/constant_expression.h"
+#include "wasp/binary/segment_type.h"
 
 namespace wasp {
 namespace binary {
 
 struct DataSegment {
-  Index memory_index;
-  ConstantExpression offset;
+  struct Active {
+    Index memory_index;
+    ConstantExpression offset;
+  };
+
+  struct Passive {};
+
+  // Active.
+  explicit DataSegment(Index memory_index,
+                       ConstantExpression offset,
+                       SpanU8 init);
+
+  // Passive.
+  explicit DataSegment(SpanU8 init);
+
+  SegmentType segment_type() const;
+  bool is_active() const;
+  bool is_passive() const;
+
+  Active& active();
+  const Active& active() const;
+  Passive& passive();
+  const Passive& passive() const;
+
   SpanU8 init;
+  variant<Active, Passive> desc;
 };
 
 bool operator==(const DataSegment&, const DataSegment&);
 bool operator!=(const DataSegment&, const DataSegment&);
 
+bool operator==(const DataSegment::Active&, const DataSegment::Active&);
+bool operator!=(const DataSegment::Active&, const DataSegment::Active&);
+
+bool operator==(const DataSegment::Passive&, const DataSegment::Passive&);
+bool operator!=(const DataSegment::Passive&, const DataSegment::Passive&);
+
 }  // namespace binary
 }  // namespace wasp
+
+#include "wasp/binary/data_segment-inl.h"
 
 #endif // WASP_BINARY_DATA_SEGMENT_H_

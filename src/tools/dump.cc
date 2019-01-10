@@ -600,11 +600,18 @@ void Dumper::DoElementSection(Pass pass,
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
     for (auto element : section.sequence) {
-      print(" - segment[{}] table={} count={} - init ", count,
-            element.table_index, element.init.size());
-      PrintConstantExpression(element.offset);
-      print("\n");
-      Index offset = GetI32Value(element.offset).value_or(0);
+      Index offset = 0;
+      if (element.is_active()) {
+        print(" - segment[{}] table={} count={} - init ", count,
+              element.active().table_index, element.init.size());
+        PrintConstantExpression(element.active().offset);
+        print("\n");
+        offset = GetI32Value(element.active().offset).value_or(0);
+      } else {
+        print(" - segment[{}] count={} element_type={} passive\n", count,
+              element.passive().element_type, element.init.size());
+      }
+
       Index elem_count = 0;
       for (auto func_index : element.init) {
         print("  - elem[{}] = func[{}]", offset + elem_count, func_index);
@@ -639,11 +646,16 @@ void Dumper::DoDataSection(Pass pass, LazyDataSection<ErrorsType> section) {
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
     for (auto data : section.sequence) {
-      print(" - segment[{}] memory={} size={} - init ", count,
-            data.memory_index, data.init.size());
-      PrintConstantExpression(data.offset);
-      print("\n");
-      Index offset = GetI32Value(data.offset).value_or(0);
+      Index offset = 0;
+      if (data.is_active()) {
+        print(" - segment[{}] memory={} size={} - init ", count,
+              data.active().memory_index, data.init.size());
+        PrintConstantExpression(data.active().offset);
+        print("\n");
+        offset = GetI32Value(data.active().offset).value_or(0);
+      } else {
+        print(" - segment[{}] size={} passive\n", count, data.init.size());
+      }
       PrintMemory(data.init, offset, PrintChars::Yes, "  - ");
       ++count;
     }

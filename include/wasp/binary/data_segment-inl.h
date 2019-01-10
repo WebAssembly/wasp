@@ -16,21 +16,40 @@
 
 #include "wasp/binary/data_segment.h"
 
-#include "src/base/operator_eq_ne_macros.h"
-
 namespace wasp {
 namespace binary {
 
-DataSegment::DataSegment(Index memory_index,
-                         ConstantExpression offset,
-                         SpanU8 init)
-    : init{init}, desc{Active{memory_index, offset}} {}
+inline SegmentType DataSegment::segment_type() const {
+  if (desc.index() == 0) {
+    return SegmentType::Active;
+  } else {
+    return SegmentType::Passive;
+  }
+}
 
-DataSegment::DataSegment(SpanU8 init) : init{init}, desc{Passive{}} {}
+inline bool DataSegment::is_active() const {
+  return segment_type() == SegmentType::Active;
+}
 
-WASP_OPERATOR_EQ_NE_2(DataSegment, init, desc)
-WASP_OPERATOR_EQ_NE_2(DataSegment::Active, memory_index, offset)
-WASP_OPERATOR_EQ_NE_0(DataSegment::Passive)
+inline bool DataSegment::is_passive() const {
+  return segment_type() == SegmentType::Passive;
+}
+
+inline DataSegment::Active& DataSegment::active() {
+  return get<Active>(desc);
+}
+
+inline const DataSegment::Active& DataSegment::active() const {
+  return get<Active>(desc);
+}
+
+inline DataSegment::Passive& DataSegment::passive() {
+  return get<Passive>(desc);
+}
+
+inline const DataSegment::Passive& DataSegment::passive() const {
+  return get<Passive>(desc);
+}
 
 }  // namespace binary
 }  // namespace wasp

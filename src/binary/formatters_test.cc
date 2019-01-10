@@ -50,6 +50,13 @@ TEST(FormattersTest, Mutability) {
   EXPECT_EQ(R"(   var)", format("{:>6s}", Mutability::Var));
 }
 
+TEST(FormattersTest, SegmentType) {
+  EXPECT_EQ(R"(active)", format("{}", SegmentType::Active));
+  EXPECT_EQ(R"(passive)", format("{}", SegmentType::Passive));
+  EXPECT_EQ(R"(  active)", format("{:>8s}", SegmentType::Active));
+  EXPECT_EQ(R"(  passive)", format("{:>9s}", SegmentType::Passive));
+}
+
 TEST(FormattersTest, NameSubsectionKind) {
   EXPECT_EQ(R"(locals)", format("{}", NameSubsectionId::LocalNames));
   EXPECT_EQ(R"(  module)", format("{:>8s}", NameSubsectionId::ModuleName));
@@ -305,7 +312,7 @@ TEST(FormattersTest, Start) {
   EXPECT_EQ(R"(  {func 1})", format("{:>10s}", Start{Index{1u}}));
 }
 
-TEST(FormattersTest, ElementSegment) {
+TEST(FormattersTest, ElementSegment_Active) {
   EXPECT_EQ(
       R"({table 1, offset "\0b", init [2 3]})",
       format("{}",
@@ -319,6 +326,16 @@ TEST(FormattersTest, ElementSegment) {
           ElementSegment{Index{0u}, ConstantExpression{MakeSpanU8("")}, {}}));
 }
 
+TEST(FormattersTest, ElementSegment_Passive) {
+  EXPECT_EQ(
+      R"({element_type funcref, init [2 3]})",
+      format("{}", ElementSegment{ElementType::Funcref, {2u, 3u}}));
+
+  EXPECT_EQ(
+      R"( {element_type funcref, init []})",
+      format("{:>32s}", ElementSegment{ElementType::Funcref, {}}));
+}
+
 TEST(FormattersTest, Code) {
   EXPECT_EQ(
       R"({locals [i32 ** 1], body "\0b"})",
@@ -330,7 +347,7 @@ TEST(FormattersTest, Code) {
       format("{:>25s}", Code{{}, Expression{MakeSpanU8("")}}));
 }
 
-TEST(FormattersTest, DataSegment) {
+TEST(FormattersTest, DataSegment_Active) {
   EXPECT_EQ(
       R"({memory 0, offset "\0b", init "\12\34"})",
       format("{}",
@@ -342,6 +359,14 @@ TEST(FormattersTest, DataSegment) {
       format("{:>32s}",
              DataSegment{Index{0u}, ConstantExpression{MakeSpanU8("")},
                          MakeSpanU8("")}));
+}
+
+TEST(FormattersTest, DataSegment_Passive) {
+  EXPECT_EQ(
+      R"({init "\12\34"})", format("{}", DataSegment{MakeSpanU8("\x12\x34")}));
+
+  EXPECT_EQ(
+      R"(  {init ""})", format("{:>11}", DataSegment{MakeSpanU8("")}));
 }
 
 TEST(FormattersTest, NameAssoc) {

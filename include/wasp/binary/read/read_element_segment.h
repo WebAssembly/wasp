@@ -19,10 +19,12 @@
 
 #include "wasp/base/features.h"
 #include "wasp/binary/element_segment.h"
+#include "wasp/binary/encoding/segment_flags_encoding.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_constant_expression.h"
+#include "wasp/binary/read/read_element_type.h"
 #include "wasp/binary/read/read_index.h"
 #include "wasp/binary/read/read_u32.h"
 #include "wasp/binary/read/read_vector.h"
@@ -36,12 +38,36 @@ optional<ElementSegment> Read(SpanU8* data,
                               Errors& errors,
                               Tag<ElementSegment>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "element segment"};
-  WASP_TRY_READ(table_index, ReadIndex(data, features, errors, "table index"));
-  WASP_TRY_READ_CONTEXT(
-      offset, Read<ConstantExpression>(data, features, errors), "offset");
-  WASP_TRY_READ(init,
-                ReadVector<Index>(data, features, errors, "initializers"));
-  return ElementSegment{table_index, std::move(offset), std::move(init)};
+  auto decoded = encoding::DecodedSegmentFlags::MVP();
+  if (features.bulk_memory_enabled()) {
+    WASP_TRY_READ(flags, ReadIndex(data, features, errors, "flags"));
+    WASP_TRY_DECODE(decoded_opt, flags, SegmentFlags, "flags");
+    decoded = *decoded_opt;
+  }
+
+  Index table_index = 0;
+  if (decoded.has_index == encoding::HasIndex::Yes) {
+    WASP_TRY_READ(table_index_,
+                  ReadIndex(data, features, errors, "table index"));
+    table_index = table_index_;
+  }
+
+  if (decoded.segment_type == SegmentType::Active) {
+    WASP_TRY_READ_CONTEXT(
+        offset, Read<ConstantExpression>(data, features, errors), "offset");
+    WASP_TRY_READ(init,
+                  ReadVector<Index>(data, features, errors, "initializers"));
+    return ElementSegment{table_index, offset, init};
+  } else {
+    WASP_TRY_READ(element_type, Read<ElementType>(data, features, errors));
+    // TODO(binji): This should be read as an ElementExpression instead:
+    //
+    // * 0xd0 0x0b           => ref.null end
+    // * 0xd2 varuint32 0xb  => ref.func $funcidx end
+    WASP_TRY_READ(init,
+                  ReadVector<Index>(data, features, errors, "initializers"));
+    return ElementSegment{element_type, init};
+  }
 }
 
 }  // namespace binary

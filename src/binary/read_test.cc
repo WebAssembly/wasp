@@ -323,13 +323,13 @@ TEST(ReadTest, ReadCount_PastEnd) {
   EXPECT_EQ(3u, copy.size());
 }
 
-TEST(ReadTest, DataSegment) {
+TEST(ReadTest, DataSegment_MVP) {
   ExpectRead<DataSegment>(DataSegment{1, MakeConstantExpression("\x42\x01\x0b"),
                                       MakeSpanU8("wxyz")},
                           MakeSpanU8("\x01\x42\x01\x0b\x04wxyz"));
 }
 
-TEST(ReadTest, DataSegment_PastEnd) {
+TEST(ReadTest, DataSegment_MVP_PastEnd) {
   ExpectReadFailure<DataSegment>(
       {{0, "data segment"}, {0, "memory index"}, {0, "Unable to read u8"}},
       MakeSpanU8(""));
@@ -350,13 +350,72 @@ TEST(ReadTest, DataSegment_PastEnd) {
       MakeSpanU8("\x00\x41\x00\x0b\x02"));
 }
 
-TEST(ReadTest, ElementSegment) {
+TEST(ReadTest, DataSegment_BulkMemory) {
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectRead<DataSegment>(DataSegment{MakeSpanU8("wxyz")},
+                          MakeSpanU8("\x01\x04wxyz"), features);
+
+  ExpectRead<DataSegment>(
+      DataSegment{1u, MakeConstantExpression("\x41\x02\x0b"),
+                  MakeSpanU8("xyz")},
+      MakeSpanU8("\x02\x01\x41\x02\x0b\x03xyz"), features);
+}
+
+TEST(ReadTest, DataSegment_BulkMemory_BadFlags) {
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectReadFailure<DataSegment>({{0, "data segment"}, {1, "Unknown flags: 3"}},
+                                 MakeSpanU8("\x03"), features);
+}
+
+TEST(ReadTest, DataSegment_BulkMemory_PastEnd) {
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectReadFailure<DataSegment>(
+      {{0, "data segment"}, {0, "flags"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""), features);
+
+  // Passive.
+  ExpectReadFailure<DataSegment>(
+      {{0, "data segment"}, {1, "length"}, {1, "Unable to read u8"}},
+      MakeSpanU8("\x01"), features);
+
+  ExpectReadFailure<DataSegment>(
+      {{0, "data segment"}, {2, "Length extends past end: 1 > 0"}},
+      MakeSpanU8("\x01\x01"), features);
+
+  // Active w/ memory index.
+  ExpectReadFailure<DataSegment>(
+      {{0, "data segment"}, {1, "memory index"}, {1, "Unable to read u8"}},
+      MakeSpanU8("\x02"), features);
+
+  ExpectReadFailure<DataSegment>({{0, "data segment"},
+                                  {2, "offset"},
+                                  {2, "constant expression"},
+                                  {2, "opcode"},
+                                  {2, "Unable to read u8"}},
+                                 MakeSpanU8("\x02\x00"), features);
+
+  ExpectReadFailure<DataSegment>(
+      {{0, "data segment"}, {5, "length"}, {5, "Unable to read u8"}},
+      MakeSpanU8("\x02\x00\x41\x00\x0b"), features);
+
+  ExpectReadFailure<DataSegment>(
+      {{0, "data segment"}, {6, "Length extends past end: 1 > 0"}},
+      MakeSpanU8("\x02\x00\x41\x00\x0b\x01"), features);
+}
+
+TEST(ReadTest, ElementSegment_MVP) {
   ExpectRead<ElementSegment>(
       ElementSegment{0, MakeConstantExpression("\x41\x01\x0b"), {1, 2, 3}},
       MakeSpanU8("\x00\x41\x01\x0b\x03\x01\x02\x03"));
 }
 
-TEST(ReadTest, ElementSegment_PastEnd) {
+TEST(ReadTest, ElementSegment_MVP_PastEnd) {
   ExpectReadFailure<ElementSegment>(
       {{0, "element segment"}, {0, "table index"}, {0, "Unable to read u8"}},
       MakeSpanU8(""));
@@ -373,6 +432,77 @@ TEST(ReadTest, ElementSegment_PastEnd) {
                                      {4, "count"},
                                      {4, "Unable to read u8"}},
                                     MakeSpanU8("\x00\x23\x00\x0b"));
+}
+
+TEST(ReadTest, ElementSegment_BulkMemory) {
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectRead<ElementSegment>(ElementSegment{ElementType::Funcref, {1, 2, 3}},
+                             MakeSpanU8("\x01\x70\x03\x01\x02\x03"), features);
+
+  ExpectRead<ElementSegment>(
+      ElementSegment{1u, MakeConstantExpression("\x41\x02\x0b"), {3, 4}},
+      MakeSpanU8("\x02\x01\x41\x02\x0b\x02\x03\x04"), features);
+}
+
+TEST(ReadTest, ElementSegment_BulkMemory_BadFlags) {
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectReadFailure<ElementSegment>(
+      {{0, "element segment"}, {1, "Unknown flags: 3"}}, MakeSpanU8("\x03"),
+      features);
+}
+
+TEST(ReadTest, ElementSegment_BulkMemory_PastEnd) {
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectReadFailure<ElementSegment>(
+      {{0, "element segment"}, {0, "flags"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""), features);
+
+  // Passive.
+  ExpectReadFailure<ElementSegment>(
+      {{0, "element segment"}, {1, "element type"}, {1, "Unable to read u8"}},
+      MakeSpanU8("\x01"), features);
+
+  ExpectReadFailure<ElementSegment>({{0, "element segment"},
+                                     {2, "initializers"},
+                                     {2, "count"},
+                                     {2, "Unable to read u8"}},
+                                    MakeSpanU8("\x01\x70"), features);
+
+  ExpectReadFailure<ElementSegment>({{0, "element segment"},
+                                     {2, "initializers"},
+                                     {3, "Count extends past end: 1 > 0"}},
+                                    MakeSpanU8("\x01\x70\x01"), features);
+
+  // Active w/ table index.
+  ExpectReadFailure<ElementSegment>(
+      {{0, "element segment"}, {1, "table index"}, {1, "Unable to read u8"}},
+      MakeSpanU8("\x02"), features);
+
+  ExpectReadFailure<ElementSegment>({{0, "element segment"},
+                                  {2, "offset"},
+                                  {2, "constant expression"},
+                                  {2, "opcode"},
+                                  {2, "Unable to read u8"}},
+                                 MakeSpanU8("\x02\x00"), features);
+
+  ExpectReadFailure<ElementSegment>({{0, "element segment"},
+                                     {5, "initializers"},
+                                     {5, "count"},
+                                     {5, "Unable to read u8"}},
+                                    MakeSpanU8("\x02\x00\x41\x00\x0b"),
+                                    features);
+
+  ExpectReadFailure<ElementSegment>({{0, "element segment"},
+                                     {5, "initializers"},
+                                     {6, "Count extends past end: 1 > 0"}},
+                                    MakeSpanU8("\x02\x00\x41\x00\x0b\x01"),
+                                    features);
 }
 
 TEST(ReadTest, ElementType) {

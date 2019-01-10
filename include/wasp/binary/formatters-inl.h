@@ -113,6 +113,24 @@ typename Ctx::iterator formatter<::wasp::binary::Mutability>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::SegmentType>::format(
+    const ::wasp::binary::SegmentType& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+    case ::wasp::binary::SegmentType::Active:
+      result = "active";
+      break;
+    case ::wasp::binary::SegmentType::Passive:
+      result = "passive";
+      break;
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::SectionId>::format(
     const ::wasp::binary::SectionId& self,
     Ctx& ctx) {
@@ -470,8 +488,13 @@ typename Ctx::iterator formatter<::wasp::binary::ElementSegment>::format(
     const ::wasp::binary::ElementSegment& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{{table {}, offset {}, init {}}}", self.table_index,
-            self.offset, self.init);
+  if (self.is_active()) {
+    format_to(buf, "{{table {}, offset {}, init {}}}",
+              self.active().table_index, self.active().offset, self.init);
+  } else if (self.is_passive()) {
+    format_to(buf, "{{element_type {}, init {}}}", self.passive().element_type,
+              self.init);
+  }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
@@ -489,8 +512,12 @@ typename Ctx::iterator formatter<::wasp::binary::DataSegment>::format(
     const ::wasp::binary::DataSegment& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{{memory {}, offset {}, init {}}}", self.memory_index,
-            self.offset, self.init);
+  if (self.is_active()) {
+    format_to(buf, "{{memory {}, offset {}, init {}}}",
+              self.active().memory_index, self.active().offset, self.init);
+  } else if (self.is_passive()) {
+    format_to(buf, "{{init {}}}", self.init);
+  }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 

@@ -14,22 +14,18 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_LIMITS_ENCODING_H
-#define WASP_BINARY_LIMITS_ENCODING_H
-
-#include "wasp/base/types.h"
+#ifndef WASP_BINARY_SEGMENT_TYPE_H_
+#define WASP_BINARY_SEGMENT_TYPE_H_
 
 namespace wasp {
 namespace binary {
-namespace encoding {
 
-struct Limits {
-  static constexpr u8 Flags_NoMax = 0;
-  static constexpr u8 Flags_HasMax = 1;
+enum class SegmentType {
+  Active,
+  Passive,
 };
 
-}  // namespace encoding
 }  // namespace binary
 }  // namespace wasp
 
-#endif // WASP_BINARY_LIMITS_ENCODING_H
+#endif // WASP_BINARY_SEGMENT_TYPE_H_
