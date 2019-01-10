@@ -28,6 +28,7 @@ namespace encoding {
 
 struct Opcode {
   static constexpr u8 MiscPrefix = 0xfc;
+  static constexpr u8 SimdPrefix = 0xfd;
 
   static bool IsPrefixByte(u8, const Features&);
   static optional<::wasp::binary::Opcode> Decode(u8 code, const Features&);
@@ -42,6 +43,9 @@ inline bool Opcode::IsPrefixByte(u8 code, const Features& features) {
     case MiscPrefix:
       return features.saturating_float_to_int_enabled() ||
              features.bulk_memory_enabled();
+
+    case SimdPrefix:
+      return features.simd_enabled();
 
     default:
       return false;

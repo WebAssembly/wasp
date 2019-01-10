@@ -36,6 +36,7 @@
 #include "wasp/binary/read/read_reserved.h"
 #include "wasp/binary/read/read_s32.h"
 #include "wasp/binary/read/read_s64.h"
+#include "wasp/binary/read/read_shuffle_immediate.h"
 
 namespace wasp {
 namespace binary {
@@ -191,6 +192,128 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::I64TruncSatF32U:
     case Opcode::I64TruncSatF64S:
     case Opcode::I64TruncSatF64U:
+    case Opcode::I8X16Add:
+    case Opcode::I16X8Add:
+    case Opcode::I32X4Add:
+    case Opcode::I64X2Add:
+    case Opcode::I8X16Sub:
+    case Opcode::I16X8Sub:
+    case Opcode::I32X4Sub:
+    case Opcode::I64X2Sub:
+    case Opcode::I8X16Mul:
+    case Opcode::I16X8Mul:
+    case Opcode::I32X4Mul:
+    case Opcode::I8X16AddSaturateS:
+    case Opcode::I8X16AddSaturateU:
+    case Opcode::I16X8AddSaturateS:
+    case Opcode::I16X8AddSaturateU:
+    case Opcode::I8X16SubSaturateS:
+    case Opcode::I8X16SubSaturateU:
+    case Opcode::I16X8SubSaturateS:
+    case Opcode::I16X8SubSaturateU:
+    case Opcode::I8X16Shl:
+    case Opcode::I16X8Shl:
+    case Opcode::I32X4Shl:
+    case Opcode::I64X2Shl:
+    case Opcode::I8X16ShrS:
+    case Opcode::I8X16ShrU:
+    case Opcode::I16X8ShrS:
+    case Opcode::I16X8ShrU:
+    case Opcode::I32X4ShrS:
+    case Opcode::I32X4ShrU:
+    case Opcode::I64X2ShrS:
+    case Opcode::I64X2ShrU:
+    case Opcode::V128And:
+    case Opcode::V128Or:
+    case Opcode::V128Xor:
+    case Opcode::F32X4Min:
+    case Opcode::F64X2Min:
+    case Opcode::F32X4Max:
+    case Opcode::F64X2Max:
+    case Opcode::F32X4Add:
+    case Opcode::F64X2Add:
+    case Opcode::F32X4Sub:
+    case Opcode::F64X2Sub:
+    case Opcode::F32X4Div:
+    case Opcode::F64X2Div:
+    case Opcode::F32X4Mul:
+    case Opcode::F64X2Mul:
+    case Opcode::I8X16Eq:
+    case Opcode::I16X8Eq:
+    case Opcode::I32X4Eq:
+    case Opcode::F32X4Eq:
+    case Opcode::F64X2Eq:
+    case Opcode::I8X16Ne:
+    case Opcode::I16X8Ne:
+    case Opcode::I32X4Ne:
+    case Opcode::F32X4Ne:
+    case Opcode::F64X2Ne:
+    case Opcode::I8X16LtS:
+    case Opcode::I8X16LtU:
+    case Opcode::I16X8LtS:
+    case Opcode::I16X8LtU:
+    case Opcode::I32X4LtS:
+    case Opcode::I32X4LtU:
+    case Opcode::F32X4Lt:
+    case Opcode::F64X2Lt:
+    case Opcode::I8X16LeS:
+    case Opcode::I8X16LeU:
+    case Opcode::I16X8LeS:
+    case Opcode::I16X8LeU:
+    case Opcode::I32X4LeS:
+    case Opcode::I32X4LeU:
+    case Opcode::F32X4Le:
+    case Opcode::F64X2Le:
+    case Opcode::I8X16GtS:
+    case Opcode::I8X16GtU:
+    case Opcode::I16X8GtS:
+    case Opcode::I16X8GtU:
+    case Opcode::I32X4GtS:
+    case Opcode::I32X4GtU:
+    case Opcode::F32X4Gt:
+    case Opcode::F64X2Gt:
+    case Opcode::I8X16GeS:
+    case Opcode::I8X16GeU:
+    case Opcode::I16X8GeS:
+    case Opcode::I16X8GeU:
+    case Opcode::I32X4GeS:
+    case Opcode::I32X4GeU:
+    case Opcode::F32X4Ge:
+    case Opcode::F64X2Ge:
+    case Opcode::I8X16Splat:
+    case Opcode::I16X8Splat:
+    case Opcode::I32X4Splat:
+    case Opcode::I64X2Splat:
+    case Opcode::F32X4Splat:
+    case Opcode::F64X2Splat:
+    case Opcode::I8X16Neg:
+    case Opcode::I16X8Neg:
+    case Opcode::I32X4Neg:
+    case Opcode::I64X2Neg:
+    case Opcode::V128Not:
+    case Opcode::I8X16AnyTrue:
+    case Opcode::I16X8AnyTrue:
+    case Opcode::I32X4AnyTrue:
+    case Opcode::I64X2AnyTrue:
+    case Opcode::I8X16AllTrue:
+    case Opcode::I16X8AllTrue:
+    case Opcode::I32X4AllTrue:
+    case Opcode::I64X2AllTrue:
+    case Opcode::F32X4Neg:
+    case Opcode::F64X2Neg:
+    case Opcode::F32X4Abs:
+    case Opcode::F64X2Abs:
+    case Opcode::F32X4Sqrt:
+    case Opcode::F64X2Sqrt:
+    case Opcode::V128BitSelect:
+    case Opcode::F32X4ConvertI32X4S:
+    case Opcode::F32X4ConvertI32X4U:
+    case Opcode::F64X2ConvertI64X2S:
+    case Opcode::F64X2ConvertI64X2U:
+    case Opcode::I32X4TruncSatF32X4S:
+    case Opcode::I32X4TruncSatF32X4U:
+    case Opcode::I64X2TruncSatF64X2S:
+    case Opcode::I64X2TruncSatF64X2U:
       return Instruction{Opcode{opcode}};
 
     // Type immediate.
@@ -246,6 +369,7 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::I64Load16U:
     case Opcode::I64Load32S:
     case Opcode::I64Load32U:
+    case Opcode::V128Load:
     case Opcode::I32Store:
     case Opcode::I64Store:
     case Opcode::F32Store:
@@ -254,7 +378,8 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::I32Store16:
     case Opcode::I64Store8:
     case Opcode::I64Store16:
-    case Opcode::I64Store32: {
+    case Opcode::I64Store32:
+    case Opcode::V128Store: {
       WASP_TRY_READ(memarg, Read<MemArgImmediate>(data, features, errors));
       return Instruction{Opcode{opcode}, memarg};
     }
@@ -292,6 +417,11 @@ optional<Instruction> Read(SpanU8* data,
       return Instruction{Opcode{opcode}, value};
     }
 
+    case Opcode::V128Const: {
+      // TODO(binji): Use v128 type here.
+      return Instruction{Opcode{opcode}};
+    }
+
     // Reserved, Index immediates.
     case Opcode::MemoryInit:
     case Opcode::TableInit: {
@@ -304,6 +434,31 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::TableCopy: {
       WASP_TRY_READ(immediate, Read<CopyImmediate>(data, features, errors));
       return Instruction{Opcode{opcode}, immediate};
+    }
+
+    // Shuffle immediate.
+    case Opcode::V8X16Shuffle: {
+      WASP_TRY_READ(immediate, Read<ShuffleImmediate>(data, features, errors));
+      return Instruction{Opcode{opcode}, immediate};
+    }
+
+    // u8 immediate.
+    case Opcode::I8X16ExtractLaneS:
+    case Opcode::I8X16ExtractLaneU:
+    case Opcode::I16X8ExtractLaneS:
+    case Opcode::I16X8ExtractLaneU:
+    case Opcode::I32X4ExtractLane:
+    case Opcode::I64X2ExtractLane:
+    case Opcode::F32X4ExtractLane:
+    case Opcode::F64X2ExtractLane:
+    case Opcode::I8X16ReplaceLane:
+    case Opcode::I16X8ReplaceLane:
+    case Opcode::I32X4ReplaceLane:
+    case Opcode::I64X2ReplaceLane:
+    case Opcode::F32X4ReplaceLane:
+    case Opcode::F64X2ReplaceLane: {
+      WASP_TRY_READ(lane, Read<u8>(data, features, errors));
+      return Instruction{Opcode{opcode}, u8{lane}};
     }
   }
   WASP_UNREACHABLE();

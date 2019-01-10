@@ -27,6 +27,7 @@
 #include "wasp/binary/init_immediate.h"
 #include "wasp/binary/mem_arg_immediate.h"
 #include "wasp/binary/opcode.h"
+#include "wasp/binary/shuffle_immediate.h"
 
 namespace wasp {
 namespace binary {
@@ -46,6 +47,7 @@ struct Instruction {
   explicit Instruction(Opcode opcode, f64);
   explicit Instruction(Opcode opcode, InitImmediate);
   explicit Instruction(Opcode opcode, CopyImmediate);
+  explicit Instruction(Opcode opcode, ShuffleImmediate);
 
   bool has_empty_immediate() const;
   bool has_block_type_immediate() const;
@@ -60,6 +62,7 @@ struct Instruction {
   bool has_f64_immediate() const;
   bool has_init_immediate() const;
   bool has_copy_immediate() const;
+  bool has_shuffle_immediate() const;
 
   EmptyImmediate& empty_immediate();
   const EmptyImmediate& empty_immediate() const;
@@ -87,6 +90,8 @@ struct Instruction {
   const InitImmediate& init_immediate() const;
   CopyImmediate& copy_immediate();
   const CopyImmediate& copy_immediate() const;
+  ShuffleImmediate& shuffle_immediate();
+  const ShuffleImmediate& shuffle_immediate() const;
 
   Opcode opcode;
   variant<EmptyImmediate,
@@ -101,7 +106,8 @@ struct Instruction {
           f32,
           f64,
           InitImmediate,
-          CopyImmediate>
+          CopyImmediate,
+          ShuffleImmediate>
       immediate;
 };
 

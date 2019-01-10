@@ -301,6 +301,24 @@ TEST(ReadTest, CopyImmediate_PastEnd) {
       MakeSpanU8("\x00"));
 }
 
+TEST(ReadTest, ShuffleImmediate) {
+  ExpectRead<ShuffleImmediate>(
+      ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+      MakeSpanU8(
+          "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"));
+}
+
+TEST(ReadTest, ShuffleImmediate_PastEnd) {
+  ExpectReadFailure<ShuffleImmediate>(
+      {{0, "shuffle immediate"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""));
+
+  ExpectReadFailure<ShuffleImmediate>(
+      {{0, "shuffle immediate"}, {15, "Unable to read u8"}},
+      MakeSpanU8(
+          "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"));
+}
+
 TEST(ReadTest, ReadCount) {
   Features features;
   TestErrors errors;
@@ -1056,6 +1074,163 @@ TEST(ReadTest, Instruction_bulk_memory) {
                 MakeSpanU8("\xfc\x0e\x00\x00"), features);
 }
 
+TEST(ReadTest, Instruction_simd) {
+  using I = Instruction;
+  using O = Opcode;
+
+  Features f;
+  f.enable_simd();
+
+  ExpectRead<I>(I{O::V128Load, MemArgImmediate{1, 2}},
+                MakeSpanU8("\xfd\x00\x01\x02"), f);
+  ExpectRead<I>(I{O::V128Store, MemArgImmediate{3, 4}},
+                MakeSpanU8("\xfd\x01\x03\x04"), f);
+  // TODO(binji): This immediate should be v128, not empty.
+  ExpectRead<I>(I{O::V128Const}, MakeSpanU8("\xfd\x02"), f);
+  ExpectRead<I>(
+      I{O::V8X16Shuffle,
+        ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}},
+      MakeSpanU8("\xfd\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                 "\x00\x00\x00\x00"),
+      f);
+  ExpectRead<I>(I{O::I8X16Splat}, MakeSpanU8("\xfd\x04"), f);
+  ExpectRead<I>(I{O::I8X16ExtractLaneS, u8{0}}, MakeSpanU8("\xfd\x05\x00"), f);
+  ExpectRead<I>(I{O::I8X16ExtractLaneU, u8{0}}, MakeSpanU8("\xfd\x06\x00"), f);
+  ExpectRead<I>(I{O::I8X16ReplaceLane, u8{0}}, MakeSpanU8("\xfd\x07\x00"), f);
+  ExpectRead<I>(I{O::I16X8Splat}, MakeSpanU8("\xfd\x08"), f);
+  ExpectRead<I>(I{O::I16X8ExtractLaneS, u8{0}}, MakeSpanU8("\xfd\x09\x00"), f);
+  ExpectRead<I>(I{O::I16X8ExtractLaneU, u8{0}}, MakeSpanU8("\xfd\x0a\x00"), f);
+  ExpectRead<I>(I{O::I16X8ReplaceLane, u8{0}}, MakeSpanU8("\xfd\x0b\x00"), f);
+  ExpectRead<I>(I{O::I32X4Splat}, MakeSpanU8("\xfd\x0c"), f);
+  ExpectRead<I>(I{O::I32X4ExtractLane, u8{0}}, MakeSpanU8("\xfd\x0d\x00"), f);
+  ExpectRead<I>(I{O::I32X4ReplaceLane, u8{0}}, MakeSpanU8("\xfd\x0e\x00"), f);
+  ExpectRead<I>(I{O::I64X2Splat}, MakeSpanU8("\xfd\x0f"), f);
+  ExpectRead<I>(I{O::I64X2ExtractLane, u8{0}}, MakeSpanU8("\xfd\x10\x00"), f);
+  ExpectRead<I>(I{O::I64X2ReplaceLane, u8{0}}, MakeSpanU8("\xfd\x11\x00"), f);
+  ExpectRead<I>(I{O::F32X4Splat}, MakeSpanU8("\xfd\x12"), f);
+  ExpectRead<I>(I{O::F32X4ExtractLane, u8{0}}, MakeSpanU8("\xfd\x13\x00"), f);
+  ExpectRead<I>(I{O::F32X4ReplaceLane, u8{0}}, MakeSpanU8("\xfd\x14\x00"), f);
+  ExpectRead<I>(I{O::F64X2Splat}, MakeSpanU8("\xfd\x15"), f);
+  ExpectRead<I>(I{O::F64X2ExtractLane, u8{0}}, MakeSpanU8("\xfd\x16\x00"), f);
+  ExpectRead<I>(I{O::F64X2ReplaceLane, u8{0}}, MakeSpanU8("\xfd\x17\x00"), f);
+  ExpectRead<I>(I{O::I8X16Eq}, MakeSpanU8("\xfd\x18"), f);
+  ExpectRead<I>(I{O::I8X16Ne}, MakeSpanU8("\xfd\x19"), f);
+  ExpectRead<I>(I{O::I8X16LtS}, MakeSpanU8("\xfd\x1a"), f);
+  ExpectRead<I>(I{O::I8X16LtU}, MakeSpanU8("\xfd\x1b"), f);
+  ExpectRead<I>(I{O::I8X16GtS}, MakeSpanU8("\xfd\x1c"), f);
+  ExpectRead<I>(I{O::I8X16GtU}, MakeSpanU8("\xfd\x1d"), f);
+  ExpectRead<I>(I{O::I8X16LeS}, MakeSpanU8("\xfd\x1e"), f);
+  ExpectRead<I>(I{O::I8X16LeU}, MakeSpanU8("\xfd\x1f"), f);
+  ExpectRead<I>(I{O::I8X16GeS}, MakeSpanU8("\xfd\x20"), f);
+  ExpectRead<I>(I{O::I8X16GeU}, MakeSpanU8("\xfd\x21"), f);
+  ExpectRead<I>(I{O::I16X8Eq}, MakeSpanU8("\xfd\x22"), f);
+  ExpectRead<I>(I{O::I16X8Ne}, MakeSpanU8("\xfd\x23"), f);
+  ExpectRead<I>(I{O::I16X8LtS}, MakeSpanU8("\xfd\x24"), f);
+  ExpectRead<I>(I{O::I16X8LtU}, MakeSpanU8("\xfd\x25"), f);
+  ExpectRead<I>(I{O::I16X8GtS}, MakeSpanU8("\xfd\x26"), f);
+  ExpectRead<I>(I{O::I16X8GtU}, MakeSpanU8("\xfd\x27"), f);
+  ExpectRead<I>(I{O::I16X8LeS}, MakeSpanU8("\xfd\x28"), f);
+  ExpectRead<I>(I{O::I16X8LeU}, MakeSpanU8("\xfd\x29"), f);
+  ExpectRead<I>(I{O::I16X8GeS}, MakeSpanU8("\xfd\x2a"), f);
+  ExpectRead<I>(I{O::I16X8GeU}, MakeSpanU8("\xfd\x2b"), f);
+  ExpectRead<I>(I{O::I32X4Eq}, MakeSpanU8("\xfd\x2c"), f);
+  ExpectRead<I>(I{O::I32X4Ne}, MakeSpanU8("\xfd\x2d"), f);
+  ExpectRead<I>(I{O::I32X4LtS}, MakeSpanU8("\xfd\x2e"), f);
+  ExpectRead<I>(I{O::I32X4LtU}, MakeSpanU8("\xfd\x2f"), f);
+  ExpectRead<I>(I{O::I32X4GtS}, MakeSpanU8("\xfd\x30"), f);
+  ExpectRead<I>(I{O::I32X4GtU}, MakeSpanU8("\xfd\x31"), f);
+  ExpectRead<I>(I{O::I32X4LeS}, MakeSpanU8("\xfd\x32"), f);
+  ExpectRead<I>(I{O::I32X4LeU}, MakeSpanU8("\xfd\x33"), f);
+  ExpectRead<I>(I{O::I32X4GeS}, MakeSpanU8("\xfd\x34"), f);
+  ExpectRead<I>(I{O::I32X4GeU}, MakeSpanU8("\xfd\x35"), f);
+  ExpectRead<I>(I{O::F32X4Eq}, MakeSpanU8("\xfd\x40"), f);
+  ExpectRead<I>(I{O::F32X4Ne}, MakeSpanU8("\xfd\x41"), f);
+  ExpectRead<I>(I{O::F32X4Lt}, MakeSpanU8("\xfd\x42"), f);
+  ExpectRead<I>(I{O::F32X4Gt}, MakeSpanU8("\xfd\x43"), f);
+  ExpectRead<I>(I{O::F32X4Le}, MakeSpanU8("\xfd\x44"), f);
+  ExpectRead<I>(I{O::F32X4Ge}, MakeSpanU8("\xfd\x45"), f);
+  ExpectRead<I>(I{O::F64X2Eq}, MakeSpanU8("\xfd\x46"), f);
+  ExpectRead<I>(I{O::F64X2Ne}, MakeSpanU8("\xfd\x47"), f);
+  ExpectRead<I>(I{O::F64X2Lt}, MakeSpanU8("\xfd\x48"), f);
+  ExpectRead<I>(I{O::F64X2Gt}, MakeSpanU8("\xfd\x49"), f);
+  ExpectRead<I>(I{O::F64X2Le}, MakeSpanU8("\xfd\x4a"), f);
+  ExpectRead<I>(I{O::F64X2Ge}, MakeSpanU8("\xfd\x4b"), f);
+  ExpectRead<I>(I{O::V128Not}, MakeSpanU8("\xfd\x4c"), f);
+  ExpectRead<I>(I{O::V128And}, MakeSpanU8("\xfd\x4d"), f);
+  ExpectRead<I>(I{O::V128Or}, MakeSpanU8("\xfd\x4e"), f);
+  ExpectRead<I>(I{O::V128Xor}, MakeSpanU8("\xfd\x4f"), f);
+  ExpectRead<I>(I{O::V128BitSelect}, MakeSpanU8("\xfd\x50"), f);
+  ExpectRead<I>(I{O::I8X16Neg}, MakeSpanU8("\xfd\x51"), f);
+  ExpectRead<I>(I{O::I8X16AnyTrue}, MakeSpanU8("\xfd\x52"), f);
+  ExpectRead<I>(I{O::I8X16AllTrue}, MakeSpanU8("\xfd\x53"), f);
+  ExpectRead<I>(I{O::I8X16Shl}, MakeSpanU8("\xfd\x54"), f);
+  ExpectRead<I>(I{O::I8X16ShrS}, MakeSpanU8("\xfd\x55"), f);
+  ExpectRead<I>(I{O::I8X16ShrU}, MakeSpanU8("\xfd\x56"), f);
+  ExpectRead<I>(I{O::I8X16Add}, MakeSpanU8("\xfd\x57"), f);
+  ExpectRead<I>(I{O::I8X16AddSaturateS}, MakeSpanU8("\xfd\x58"), f);
+  ExpectRead<I>(I{O::I8X16AddSaturateU}, MakeSpanU8("\xfd\x59"), f);
+  ExpectRead<I>(I{O::I8X16Sub}, MakeSpanU8("\xfd\x5a"), f);
+  ExpectRead<I>(I{O::I8X16SubSaturateS}, MakeSpanU8("\xfd\x5b"), f);
+  ExpectRead<I>(I{O::I8X16SubSaturateU}, MakeSpanU8("\xfd\x5c"), f);
+  ExpectRead<I>(I{O::I8X16Mul}, MakeSpanU8("\xfd\x5d"), f);
+  ExpectRead<I>(I{O::I16X8Neg}, MakeSpanU8("\xfd\x62"), f);
+  ExpectRead<I>(I{O::I16X8AnyTrue}, MakeSpanU8("\xfd\x63"), f);
+  ExpectRead<I>(I{O::I16X8AllTrue}, MakeSpanU8("\xfd\x64"), f);
+  ExpectRead<I>(I{O::I16X8Shl}, MakeSpanU8("\xfd\x65"), f);
+  ExpectRead<I>(I{O::I16X8ShrS}, MakeSpanU8("\xfd\x66"), f);
+  ExpectRead<I>(I{O::I16X8ShrU}, MakeSpanU8("\xfd\x67"), f);
+  ExpectRead<I>(I{O::I16X8Add}, MakeSpanU8("\xfd\x68"), f);
+  ExpectRead<I>(I{O::I16X8AddSaturateS}, MakeSpanU8("\xfd\x69"), f);
+  ExpectRead<I>(I{O::I16X8AddSaturateU}, MakeSpanU8("\xfd\x6a"), f);
+  ExpectRead<I>(I{O::I16X8Sub}, MakeSpanU8("\xfd\x6b"), f);
+  ExpectRead<I>(I{O::I16X8SubSaturateS}, MakeSpanU8("\xfd\x6c"), f);
+  ExpectRead<I>(I{O::I16X8SubSaturateU}, MakeSpanU8("\xfd\x6d"), f);
+  ExpectRead<I>(I{O::I16X8Mul}, MakeSpanU8("\xfd\x6e"), f);
+  ExpectRead<I>(I{O::I32X4Neg}, MakeSpanU8("\xfd\x73"), f);
+  ExpectRead<I>(I{O::I32X4AnyTrue}, MakeSpanU8("\xfd\x74"), f);
+  ExpectRead<I>(I{O::I32X4AllTrue}, MakeSpanU8("\xfd\x75"), f);
+  ExpectRead<I>(I{O::I32X4Shl}, MakeSpanU8("\xfd\x76"), f);
+  ExpectRead<I>(I{O::I32X4ShrS}, MakeSpanU8("\xfd\x77"), f);
+  ExpectRead<I>(I{O::I32X4ShrU}, MakeSpanU8("\xfd\x78"), f);
+  ExpectRead<I>(I{O::I32X4Add}, MakeSpanU8("\xfd\x79"), f);
+  ExpectRead<I>(I{O::I32X4Sub}, MakeSpanU8("\xfd\x7c"), f);
+  ExpectRead<I>(I{O::I32X4Mul}, MakeSpanU8("\xfd\x7f"), f);
+  ExpectRead<I>(I{O::I64X2Neg}, MakeSpanU8("\xfd\x84\x01"), f);
+  ExpectRead<I>(I{O::I64X2AnyTrue}, MakeSpanU8("\xfd\x85\x01"), f);
+  ExpectRead<I>(I{O::I64X2AllTrue}, MakeSpanU8("\xfd\x86\x01"), f);
+  ExpectRead<I>(I{O::I64X2Shl}, MakeSpanU8("\xfd\x87\x01"), f);
+  ExpectRead<I>(I{O::I64X2ShrS}, MakeSpanU8("\xfd\x88\x01"), f);
+  ExpectRead<I>(I{O::I64X2ShrU}, MakeSpanU8("\xfd\x89\x01"), f);
+  ExpectRead<I>(I{O::I64X2Add}, MakeSpanU8("\xfd\x8a\x01"), f);
+  ExpectRead<I>(I{O::I64X2Sub}, MakeSpanU8("\xfd\x8d\x01"), f);
+  ExpectRead<I>(I{O::F32X4Abs}, MakeSpanU8("\xfd\x95\x01"), f);
+  ExpectRead<I>(I{O::F32X4Neg}, MakeSpanU8("\xfd\x96\x01"), f);
+  ExpectRead<I>(I{O::F32X4Sqrt}, MakeSpanU8("\xfd\x97\x01"), f);
+  ExpectRead<I>(I{O::F32X4Add}, MakeSpanU8("\xfd\x9a\x01"), f);
+  ExpectRead<I>(I{O::F32X4Sub}, MakeSpanU8("\xfd\x9b\x01"), f);
+  ExpectRead<I>(I{O::F32X4Mul}, MakeSpanU8("\xfd\x9c\x01"), f);
+  ExpectRead<I>(I{O::F32X4Div}, MakeSpanU8("\xfd\x9d\x01"), f);
+  ExpectRead<I>(I{O::F32X4Min}, MakeSpanU8("\xfd\x9e\x01"), f);
+  ExpectRead<I>(I{O::F32X4Max}, MakeSpanU8("\xfd\x9f\x01"), f);
+  ExpectRead<I>(I{O::F64X2Abs}, MakeSpanU8("\xfd\xa0\x01"), f);
+  ExpectRead<I>(I{O::F64X2Neg}, MakeSpanU8("\xfd\xa1\x01"), f);
+  ExpectRead<I>(I{O::F64X2Sqrt}, MakeSpanU8("\xfd\xa2\x01"), f);
+  ExpectRead<I>(I{O::F64X2Add}, MakeSpanU8("\xfd\xa5\x01"), f);
+  ExpectRead<I>(I{O::F64X2Sub}, MakeSpanU8("\xfd\xa6\x01"), f);
+  ExpectRead<I>(I{O::F64X2Mul}, MakeSpanU8("\xfd\xa7\x01"), f);
+  ExpectRead<I>(I{O::F64X2Div}, MakeSpanU8("\xfd\xa8\x01"), f);
+  ExpectRead<I>(I{O::F64X2Min}, MakeSpanU8("\xfd\xa9\x01"), f);
+  ExpectRead<I>(I{O::F64X2Max}, MakeSpanU8("\xfd\xaa\x01"), f);
+  ExpectRead<I>(I{O::I32X4TruncSatF32X4S}, MakeSpanU8("\xfd\xab\x01"), f);
+  ExpectRead<I>(I{O::I32X4TruncSatF32X4U}, MakeSpanU8("\xfd\xac\x01"), f);
+  ExpectRead<I>(I{O::I64X2TruncSatF64X2S}, MakeSpanU8("\xfd\xad\x01"), f);
+  ExpectRead<I>(I{O::I64X2TruncSatF64X2U}, MakeSpanU8("\xfd\xae\x01"), f);
+  ExpectRead<I>(I{O::F32X4ConvertI32X4S}, MakeSpanU8("\xfd\xaf\x01"), f);
+  ExpectRead<I>(I{O::F32X4ConvertI32X4U}, MakeSpanU8("\xfd\xb0\x01"), f);
+  ExpectRead<I>(I{O::F64X2ConvertI64X2S}, MakeSpanU8("\xfd\xb1\x01"), f);
+  ExpectRead<I>(I{O::F64X2ConvertI64X2U}, MakeSpanU8("\xfd\xb2\x01"), f);
+}
+
 TEST(ReadTest, Limits) {
   ExpectRead<Limits>(Limits{129}, MakeSpanU8("\x00\x81\x01"));
   ExpectRead<Limits>(Limits{2, 1000}, MakeSpanU8("\x01\x02\xe8\x07"));
@@ -1384,14 +1559,19 @@ void ExpectUnknownOpcode(u8 code) {
   ExpectReadFailure<Opcode>({{0, "opcode"}, {1, msg}}, SpanU8{span_buffer, 1});
 }
 
-void ExpectUnknownOpcode(u8 prefix,
-                         u32 code,
-                         SpanU8 span,
-                         const Features& features) {
+void ExpectUnknownOpcode(u8 prefix, u32 orig_code, const Features& features) {
+  u8 data[] = {prefix, 0, 0, 0, 0, 0};
+  u32 code = orig_code;
+  int length = 1;
+  do {
+    data[length++] = (code & 0x7f) | (code >= 0x80 ? 0x80 : 0);
+    code >>= 7;
+  } while (code > 0);
+
   ExpectReadFailure<Opcode>(
       {{0, "opcode"},
-       {span.size(), format("Unknown opcode: {} {}", prefix, code)}},
-      span, features);
+       {length, format("Unknown opcode: {} {}", prefix, orig_code)}},
+      SpanU8{data, length}, features);
 }
 
 }  // namespace
@@ -1461,26 +1641,26 @@ TEST(ReadTest, Opcode_disabled_misc_prefix) {
   {
     Features features;
     features.enable_saturating_float_to_int();
-    ExpectUnknownOpcode(0xfc, 8, MakeSpanU8("\xfc\x08"), features);
-    ExpectUnknownOpcode(0xfc, 9, MakeSpanU8("\xfc\x09"), features);
-    ExpectUnknownOpcode(0xfc, 10, MakeSpanU8("\xfc\x0a"), features);
-    ExpectUnknownOpcode(0xfc, 11, MakeSpanU8("\xfc\x0b"), features);
-    ExpectUnknownOpcode(0xfc, 12, MakeSpanU8("\xfc\x0c"), features);
-    ExpectUnknownOpcode(0xfc, 13, MakeSpanU8("\xfc\x0d"), features);
-    ExpectUnknownOpcode(0xfc, 14, MakeSpanU8("\xfc\x0e"), features);
+    ExpectUnknownOpcode(0xfc, 8, features);
+    ExpectUnknownOpcode(0xfc, 9, features);
+    ExpectUnknownOpcode(0xfc, 10, features);
+    ExpectUnknownOpcode(0xfc, 11, features);
+    ExpectUnknownOpcode(0xfc, 12, features);
+    ExpectUnknownOpcode(0xfc, 13, features);
+    ExpectUnknownOpcode(0xfc, 14, features);
   }
 
   {
     Features features;
     features.enable_bulk_memory();
-    ExpectUnknownOpcode(0xfc, 0, MakeSpanU8("\xfc\x00"), features);
-    ExpectUnknownOpcode(0xfc, 1, MakeSpanU8("\xfc\x01"), features);
-    ExpectUnknownOpcode(0xfc, 2, MakeSpanU8("\xfc\x02"), features);
-    ExpectUnknownOpcode(0xfc, 3, MakeSpanU8("\xfc\x03"), features);
-    ExpectUnknownOpcode(0xfc, 4, MakeSpanU8("\xfc\x04"), features);
-    ExpectUnknownOpcode(0xfc, 5, MakeSpanU8("\xfc\x05"), features);
-    ExpectUnknownOpcode(0xfc, 6, MakeSpanU8("\xfc\x06"), features);
-    ExpectUnknownOpcode(0xfc, 7, MakeSpanU8("\xfc\x07"), features);
+    ExpectUnknownOpcode(0xfc, 0, features);
+    ExpectUnknownOpcode(0xfc, 1, features);
+    ExpectUnknownOpcode(0xfc, 2, features);
+    ExpectUnknownOpcode(0xfc, 3, features);
+    ExpectUnknownOpcode(0xfc, 4, features);
+    ExpectUnknownOpcode(0xfc, 5, features);
+    ExpectUnknownOpcode(0xfc, 6, features);
+    ExpectUnknownOpcode(0xfc, 7, features);
   }
 }
 
@@ -1490,19 +1670,182 @@ TEST(ReadTest, Opcode_Unknown_misc_prefix) {
   features.enable_bulk_memory();
 
   for (u8 code = 0x0f; code < 0x7f; ++code) {
-    const u8 span_buffer[] = {0xfc, code};
-    auto msg = format("Unknown opcode: 252 {}", code);
-    ExpectReadFailure<Opcode>({{0, "opcode"}, {2, msg}}, SpanU8{span_buffer, 2},
-                              features);
+    ExpectUnknownOpcode(0xfc, code, features);
   }
 
   // Test some longer codes too.
-  ExpectUnknownOpcode(0xfc, 128, MakeSpanU8("\xfc\x80\x01"), features);
-  ExpectUnknownOpcode(0xfc, 16384, MakeSpanU8("\xfc\x80\x80\x01"), features);
-  ExpectUnknownOpcode(0xfc, 2097152, MakeSpanU8("\xfc\x80\x80\x80\x01"),
-                      features);
-  ExpectUnknownOpcode(0xfc, 268435456, MakeSpanU8("\xfc\x80\x80\x80\x80\x01"),
-                      features);
+  ExpectUnknownOpcode(0xfc, 128, features);
+  ExpectUnknownOpcode(0xfc, 16384, features);
+  ExpectUnknownOpcode(0xfc, 2097152, features);
+  ExpectUnknownOpcode(0xfc, 268435456, features);
+}
+
+TEST(ReadTest, Opcode_simd) {
+  using O = Opcode;
+
+  Features features;
+  features.enable_simd();
+
+  ExpectRead<O>(O::V128Load, MakeSpanU8("\xfd\x00"), features);
+  ExpectRead<O>(O::V128Store, MakeSpanU8("\xfd\x01"), features);
+  ExpectRead<O>(O::V128Const, MakeSpanU8("\xfd\x02"), features);
+  ExpectRead<O>(O::V8X16Shuffle, MakeSpanU8("\xfd\x03"), features);
+  ExpectRead<O>(O::I8X16Splat, MakeSpanU8("\xfd\x04"), features);
+  ExpectRead<O>(O::I8X16ExtractLaneS, MakeSpanU8("\xfd\x05"), features);
+  ExpectRead<O>(O::I8X16ExtractLaneU, MakeSpanU8("\xfd\x06"), features);
+  ExpectRead<O>(O::I8X16ReplaceLane, MakeSpanU8("\xfd\x07"), features);
+  ExpectRead<O>(O::I16X8Splat, MakeSpanU8("\xfd\x08"), features);
+  ExpectRead<O>(O::I16X8ExtractLaneS, MakeSpanU8("\xfd\x09"), features);
+  ExpectRead<O>(O::I16X8ExtractLaneU, MakeSpanU8("\xfd\x0a"), features);
+  ExpectRead<O>(O::I16X8ReplaceLane, MakeSpanU8("\xfd\x0b"), features);
+  ExpectRead<O>(O::I32X4Splat, MakeSpanU8("\xfd\x0c"), features);
+  ExpectRead<O>(O::I32X4ExtractLane, MakeSpanU8("\xfd\x0d"), features);
+  ExpectRead<O>(O::I32X4ReplaceLane, MakeSpanU8("\xfd\x0e"), features);
+  ExpectRead<O>(O::I64X2Splat, MakeSpanU8("\xfd\x0f"), features);
+  ExpectRead<O>(O::I64X2ExtractLane, MakeSpanU8("\xfd\x10"), features);
+  ExpectRead<O>(O::I64X2ReplaceLane, MakeSpanU8("\xfd\x11"), features);
+  ExpectRead<O>(O::F32X4Splat, MakeSpanU8("\xfd\x12"), features);
+  ExpectRead<O>(O::F32X4ExtractLane, MakeSpanU8("\xfd\x13"), features);
+  ExpectRead<O>(O::F32X4ReplaceLane, MakeSpanU8("\xfd\x14"), features);
+  ExpectRead<O>(O::F64X2Splat, MakeSpanU8("\xfd\x15"), features);
+  ExpectRead<O>(O::F64X2ExtractLane, MakeSpanU8("\xfd\x16"), features);
+  ExpectRead<O>(O::F64X2ReplaceLane, MakeSpanU8("\xfd\x17"), features);
+  ExpectRead<O>(O::I8X16Eq, MakeSpanU8("\xfd\x18"), features);
+  ExpectRead<O>(O::I8X16Ne, MakeSpanU8("\xfd\x19"), features);
+  ExpectRead<O>(O::I8X16LtS, MakeSpanU8("\xfd\x1a"), features);
+  ExpectRead<O>(O::I8X16LtU, MakeSpanU8("\xfd\x1b"), features);
+  ExpectRead<O>(O::I8X16GtS, MakeSpanU8("\xfd\x1c"), features);
+  ExpectRead<O>(O::I8X16GtU, MakeSpanU8("\xfd\x1d"), features);
+  ExpectRead<O>(O::I8X16LeS, MakeSpanU8("\xfd\x1e"), features);
+  ExpectRead<O>(O::I8X16LeU, MakeSpanU8("\xfd\x1f"), features);
+  ExpectRead<O>(O::I8X16GeS, MakeSpanU8("\xfd\x20"), features);
+  ExpectRead<O>(O::I8X16GeU, MakeSpanU8("\xfd\x21"), features);
+  ExpectRead<O>(O::I16X8Eq, MakeSpanU8("\xfd\x22"), features);
+  ExpectRead<O>(O::I16X8Ne, MakeSpanU8("\xfd\x23"), features);
+  ExpectRead<O>(O::I16X8LtS, MakeSpanU8("\xfd\x24"), features);
+  ExpectRead<O>(O::I16X8LtU, MakeSpanU8("\xfd\x25"), features);
+  ExpectRead<O>(O::I16X8GtS, MakeSpanU8("\xfd\x26"), features);
+  ExpectRead<O>(O::I16X8GtU, MakeSpanU8("\xfd\x27"), features);
+  ExpectRead<O>(O::I16X8LeS, MakeSpanU8("\xfd\x28"), features);
+  ExpectRead<O>(O::I16X8LeU, MakeSpanU8("\xfd\x29"), features);
+  ExpectRead<O>(O::I16X8GeS, MakeSpanU8("\xfd\x2a"), features);
+  ExpectRead<O>(O::I16X8GeU, MakeSpanU8("\xfd\x2b"), features);
+  ExpectRead<O>(O::I32X4Eq, MakeSpanU8("\xfd\x2c"), features);
+  ExpectRead<O>(O::I32X4Ne, MakeSpanU8("\xfd\x2d"), features);
+  ExpectRead<O>(O::I32X4LtS, MakeSpanU8("\xfd\x2e"), features);
+  ExpectRead<O>(O::I32X4LtU, MakeSpanU8("\xfd\x2f"), features);
+  ExpectRead<O>(O::I32X4GtS, MakeSpanU8("\xfd\x30"), features);
+  ExpectRead<O>(O::I32X4GtU, MakeSpanU8("\xfd\x31"), features);
+  ExpectRead<O>(O::I32X4LeS, MakeSpanU8("\xfd\x32"), features);
+  ExpectRead<O>(O::I32X4LeU, MakeSpanU8("\xfd\x33"), features);
+  ExpectRead<O>(O::I32X4GeS, MakeSpanU8("\xfd\x34"), features);
+  ExpectRead<O>(O::I32X4GeU, MakeSpanU8("\xfd\x35"), features);
+  ExpectRead<O>(O::F32X4Eq, MakeSpanU8("\xfd\x40"), features);
+  ExpectRead<O>(O::F32X4Ne, MakeSpanU8("\xfd\x41"), features);
+  ExpectRead<O>(O::F32X4Lt, MakeSpanU8("\xfd\x42"), features);
+  ExpectRead<O>(O::F32X4Gt, MakeSpanU8("\xfd\x43"), features);
+  ExpectRead<O>(O::F32X4Le, MakeSpanU8("\xfd\x44"), features);
+  ExpectRead<O>(O::F32X4Ge, MakeSpanU8("\xfd\x45"), features);
+  ExpectRead<O>(O::F64X2Eq, MakeSpanU8("\xfd\x46"), features);
+  ExpectRead<O>(O::F64X2Ne, MakeSpanU8("\xfd\x47"), features);
+  ExpectRead<O>(O::F64X2Lt, MakeSpanU8("\xfd\x48"), features);
+  ExpectRead<O>(O::F64X2Gt, MakeSpanU8("\xfd\x49"), features);
+  ExpectRead<O>(O::F64X2Le, MakeSpanU8("\xfd\x4a"), features);
+  ExpectRead<O>(O::F64X2Ge, MakeSpanU8("\xfd\x4b"), features);
+  ExpectRead<O>(O::V128Not, MakeSpanU8("\xfd\x4c"), features);
+  ExpectRead<O>(O::V128And, MakeSpanU8("\xfd\x4d"), features);
+  ExpectRead<O>(O::V128Or, MakeSpanU8("\xfd\x4e"), features);
+  ExpectRead<O>(O::V128Xor, MakeSpanU8("\xfd\x4f"), features);
+  ExpectRead<O>(O::V128BitSelect, MakeSpanU8("\xfd\x50"), features);
+  ExpectRead<O>(O::I8X16Neg, MakeSpanU8("\xfd\x51"), features);
+  ExpectRead<O>(O::I8X16AnyTrue, MakeSpanU8("\xfd\x52"), features);
+  ExpectRead<O>(O::I8X16AllTrue, MakeSpanU8("\xfd\x53"), features);
+  ExpectRead<O>(O::I8X16Shl, MakeSpanU8("\xfd\x54"), features);
+  ExpectRead<O>(O::I8X16ShrS, MakeSpanU8("\xfd\x55"), features);
+  ExpectRead<O>(O::I8X16ShrU, MakeSpanU8("\xfd\x56"), features);
+  ExpectRead<O>(O::I8X16Add, MakeSpanU8("\xfd\x57"), features);
+  ExpectRead<O>(O::I8X16AddSaturateS, MakeSpanU8("\xfd\x58"), features);
+  ExpectRead<O>(O::I8X16AddSaturateU, MakeSpanU8("\xfd\x59"), features);
+  ExpectRead<O>(O::I8X16Sub, MakeSpanU8("\xfd\x5a"), features);
+  ExpectRead<O>(O::I8X16SubSaturateS, MakeSpanU8("\xfd\x5b"), features);
+  ExpectRead<O>(O::I8X16SubSaturateU, MakeSpanU8("\xfd\x5c"), features);
+  ExpectRead<O>(O::I8X16Mul, MakeSpanU8("\xfd\x5d"), features);
+  ExpectRead<O>(O::I16X8Neg, MakeSpanU8("\xfd\x62"), features);
+  ExpectRead<O>(O::I16X8AnyTrue, MakeSpanU8("\xfd\x63"), features);
+  ExpectRead<O>(O::I16X8AllTrue, MakeSpanU8("\xfd\x64"), features);
+  ExpectRead<O>(O::I16X8Shl, MakeSpanU8("\xfd\x65"), features);
+  ExpectRead<O>(O::I16X8ShrS, MakeSpanU8("\xfd\x66"), features);
+  ExpectRead<O>(O::I16X8ShrU, MakeSpanU8("\xfd\x67"), features);
+  ExpectRead<O>(O::I16X8Add, MakeSpanU8("\xfd\x68"), features);
+  ExpectRead<O>(O::I16X8AddSaturateS, MakeSpanU8("\xfd\x69"), features);
+  ExpectRead<O>(O::I16X8AddSaturateU, MakeSpanU8("\xfd\x6a"), features);
+  ExpectRead<O>(O::I16X8Sub, MakeSpanU8("\xfd\x6b"), features);
+  ExpectRead<O>(O::I16X8SubSaturateS, MakeSpanU8("\xfd\x6c"), features);
+  ExpectRead<O>(O::I16X8SubSaturateU, MakeSpanU8("\xfd\x6d"), features);
+  ExpectRead<O>(O::I16X8Mul, MakeSpanU8("\xfd\x6e"), features);
+  ExpectRead<O>(O::I32X4Neg, MakeSpanU8("\xfd\x73"), features);
+  ExpectRead<O>(O::I32X4AnyTrue, MakeSpanU8("\xfd\x74"), features);
+  ExpectRead<O>(O::I32X4AllTrue, MakeSpanU8("\xfd\x75"), features);
+  ExpectRead<O>(O::I32X4Shl, MakeSpanU8("\xfd\x76"), features);
+  ExpectRead<O>(O::I32X4ShrS, MakeSpanU8("\xfd\x77"), features);
+  ExpectRead<O>(O::I32X4ShrU, MakeSpanU8("\xfd\x78"), features);
+  ExpectRead<O>(O::I32X4Add, MakeSpanU8("\xfd\x79"), features);
+  ExpectRead<O>(O::I32X4Sub, MakeSpanU8("\xfd\x7c"), features);
+  ExpectRead<O>(O::I32X4Mul, MakeSpanU8("\xfd\x7f"), features);
+  ExpectRead<O>(O::I64X2Neg, MakeSpanU8("\xfd\x84\x01"), features);
+  ExpectRead<O>(O::I64X2AnyTrue, MakeSpanU8("\xfd\x85\x01"), features);
+  ExpectRead<O>(O::I64X2AllTrue, MakeSpanU8("\xfd\x86\x01"), features);
+  ExpectRead<O>(O::I64X2Shl, MakeSpanU8("\xfd\x87\x01"), features);
+  ExpectRead<O>(O::I64X2ShrS, MakeSpanU8("\xfd\x88\x01"), features);
+  ExpectRead<O>(O::I64X2ShrU, MakeSpanU8("\xfd\x89\x01"), features);
+  ExpectRead<O>(O::I64X2Add, MakeSpanU8("\xfd\x8a\x01"), features);
+  ExpectRead<O>(O::I64X2Sub, MakeSpanU8("\xfd\x8d\x01"), features);
+  ExpectRead<O>(O::F32X4Abs, MakeSpanU8("\xfd\x95\x01"), features);
+  ExpectRead<O>(O::F32X4Neg, MakeSpanU8("\xfd\x96\x01"), features);
+  ExpectRead<O>(O::F32X4Sqrt, MakeSpanU8("\xfd\x97\x01"), features);
+  ExpectRead<O>(O::F32X4Add, MakeSpanU8("\xfd\x9a\x01"), features);
+  ExpectRead<O>(O::F32X4Sub, MakeSpanU8("\xfd\x9b\x01"), features);
+  ExpectRead<O>(O::F32X4Mul, MakeSpanU8("\xfd\x9c\x01"), features);
+  ExpectRead<O>(O::F32X4Div, MakeSpanU8("\xfd\x9d\x01"), features);
+  ExpectRead<O>(O::F32X4Min, MakeSpanU8("\xfd\x9e\x01"), features);
+  ExpectRead<O>(O::F32X4Max, MakeSpanU8("\xfd\x9f\x01"), features);
+  ExpectRead<O>(O::F64X2Abs, MakeSpanU8("\xfd\xa0\x01"), features);
+  ExpectRead<O>(O::F64X2Neg, MakeSpanU8("\xfd\xa1\x01"), features);
+  ExpectRead<O>(O::F64X2Sqrt, MakeSpanU8("\xfd\xa2\x01"), features);
+  ExpectRead<O>(O::F64X2Add, MakeSpanU8("\xfd\xa5\x01"), features);
+  ExpectRead<O>(O::F64X2Sub, MakeSpanU8("\xfd\xa6\x01"), features);
+  ExpectRead<O>(O::F64X2Mul, MakeSpanU8("\xfd\xa7\x01"), features);
+  ExpectRead<O>(O::F64X2Div, MakeSpanU8("\xfd\xa8\x01"), features);
+  ExpectRead<O>(O::F64X2Min, MakeSpanU8("\xfd\xa9\x01"), features);
+  ExpectRead<O>(O::F64X2Max, MakeSpanU8("\xfd\xaa\x01"), features);
+  ExpectRead<O>(O::I32X4TruncSatF32X4S, MakeSpanU8("\xfd\xab\x01"), features);
+  ExpectRead<O>(O::I32X4TruncSatF32X4U, MakeSpanU8("\xfd\xac\x01"), features);
+  ExpectRead<O>(O::I64X2TruncSatF64X2S, MakeSpanU8("\xfd\xad\x01"), features);
+  ExpectRead<O>(O::I64X2TruncSatF64X2U, MakeSpanU8("\xfd\xae\x01"), features);
+  ExpectRead<O>(O::F32X4ConvertI32X4S, MakeSpanU8("\xfd\xaf\x01"), features);
+  ExpectRead<O>(O::F32X4ConvertI32X4U, MakeSpanU8("\xfd\xb0\x01"), features);
+  ExpectRead<O>(O::F64X2ConvertI64X2S, MakeSpanU8("\xfd\xb1\x01"), features);
+  ExpectRead<O>(O::F64X2ConvertI64X2U, MakeSpanU8("\xfd\xb2\x01"), features);
+}
+
+TEST(ReadTest, Opcode_Unknown_simd_prefix) {
+  Features features;
+  features.enable_simd();
+
+  const u8 kInvalidOpcodes[] = {
+      0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
+      0x5e, 0x5f, 0x60, 0x61, 0x6f, 0x70, 0x71, 0x72, 0x7a, 0x7b,
+      0x7d, 0x7e, 0x80, 0x81, 0x82, 0x83, 0x8b, 0x8c, 0x8e, 0x8f,
+      0x90, 0x91, 0x92, 0x93, 0x94, 0xa3, 0xa4, 0xb3,
+  };
+  for (auto code : SpanU8{kInvalidOpcodes, sizeof(kInvalidOpcodes)}) {
+    ExpectUnknownOpcode(0xfd, code, features);
+  }
+
+  // Test some longer codes too.
+  ExpectUnknownOpcode(0xfd, 16384, features);
+  ExpectUnknownOpcode(0xfd, 2097152, features);
+  ExpectUnknownOpcode(0xfd, 268435456, features);
 }
 
 TEST(ReadTest, S32) {

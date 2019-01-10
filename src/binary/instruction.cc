@@ -63,6 +63,9 @@ Instruction::Instruction(Opcode opcode, InitImmediate immediate)
 Instruction::Instruction(Opcode opcode, CopyImmediate immediate)
     : opcode(opcode), immediate(immediate) {}
 
+Instruction::Instruction(Opcode opcode, ShuffleImmediate immediate)
+    : opcode(opcode), immediate(immediate) {}
+
 WASP_OPERATOR_EQ_NE_2(Instruction, opcode, immediate)
 
 }  // namespace binary

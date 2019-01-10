@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-//     variable         flag                               default
+//     variable                 flag                       default
 
 WASP_V(bulk_memory,             "bulk-memory",             false)
 WASP_V(exceptions,              "exceptions",              false)
