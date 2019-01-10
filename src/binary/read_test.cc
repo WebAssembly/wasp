@@ -991,6 +991,18 @@ TEST(ReadTest, Instruction_BadMemoryReserved) {
       MakeSpanU8("\x40\x01"));
 }
 
+TEST(ReadTest, Instruction_tail_call) {
+  using I = Instruction;
+  using O = Opcode;
+
+  Features features;
+  features.enable_tail_call();
+
+  ExpectRead<I>(I{O::ReturnCall, Index{0}}, MakeSpanU8("\x12\x00"), features);
+  ExpectRead<I>(I{O::ReturnCallIndirect, CallIndirectImmediate{8, 0}},
+                MakeSpanU8("\x13\x08\x00"), features);
+}
+
 TEST(ReadTest, Instruction_sign_extension) {
   using I = Instruction;
   using O = Opcode;
@@ -1397,6 +1409,14 @@ TEST(ReadTest, Opcode_Unknown) {
   for (auto code : SpanU8{kInvalidOpcodes, sizeof(kInvalidOpcodes)}) {
     ExpectUnknownOpcode(code);
   }
+}
+
+TEST(ReadTest, Opcode_tail_call) {
+  Features features;
+  features.enable_tail_call();
+
+  ExpectRead<Opcode>(Opcode::ReturnCall, MakeSpanU8("\x12"), features);
+  ExpectRead<Opcode>(Opcode::ReturnCallIndirect, MakeSpanU8("\x13"), features);
 }
 
 TEST(ReadTest, Opcode_sign_extension) {

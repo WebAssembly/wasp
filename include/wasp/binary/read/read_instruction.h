@@ -205,6 +205,7 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::Br:
     case Opcode::BrIf:
     case Opcode::Call:
+    case Opcode::ReturnCall:
     case Opcode::LocalGet:
     case Opcode::LocalSet:
     case Opcode::LocalTee:
@@ -223,7 +224,8 @@ optional<Instruction> Read(SpanU8* data,
     }
 
     // Index, reserved immediates.
-    case Opcode::CallIndirect: {
+    case Opcode::CallIndirect:
+    case Opcode::ReturnCallIndirect: {
       WASP_TRY_READ(immediate,
                     Read<CallIndirectImmediate>(data, features, errors));
       return Instruction{Opcode{opcode}, immediate};

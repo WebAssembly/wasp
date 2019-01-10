@@ -187,6 +187,10 @@ WASP_V(0x00, 0xbd, I64ReinterpretF64, "i64.reinterpret_f64")
 WASP_V(0x00, 0xbe, F32ReinterpretI32, "f32.reinterpret_i32")
 WASP_V(0x00, 0xbf, F64ReinterpretI64, "f64.reinterpret_i64")
 
+// Tail call opcodes
+WASP_FEATURE_V(0x00, 0x12, ReturnCall, "return_call", tail_call)
+WASP_FEATURE_V(0x00, 0x13, ReturnCallIndirect, "return_call_indirect", tail_call)
+
 // Sign-extension opcodes
 WASP_FEATURE_V(0x00, 0xc0, I32Extend8S, "i32.extend8_s", sign_extension)
 WASP_FEATURE_V(0x00, 0xc1, I32Extend16S, "i32.extend16_s", sign_extension)
