@@ -19,7 +19,7 @@
 
 #include "wasp/base/features.h"
 #include "wasp/binary/limits.h"
-#include "wasp/binary/encoding/limits_encoding.h"
+#include "wasp/binary/encoding/limits_flags_encoding.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
@@ -36,21 +36,19 @@ optional<Limits> Read(SpanU8* data,
                       Tag<Limits>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "limits"};
   WASP_TRY_READ_CONTEXT(flags, Read<u8>(data, features, errors), "flags");
-  switch (flags) {
-    case encoding::Limits::Flags_NoMax: {
-      WASP_TRY_READ_CONTEXT(min, Read<u32>(data, features, errors), "min");
-      return Limits{min};
-    }
+  auto decoded = encoding::LimitsFlags::Decode(flags, features);
+  if (!decoded) {
+    errors.OnError(*data, format("Invalid flags value: {}", flags));
+    return nullopt;
+  }
 
-    case encoding::Limits::Flags_HasMax: {
-      WASP_TRY_READ_CONTEXT(min, Read<u32>(data, features, errors), "min");
-      WASP_TRY_READ_CONTEXT(max, Read<u32>(data, features, errors), "max");
-      return Limits{min, max};
-    }
+  WASP_TRY_READ_CONTEXT(min, Read<u32>(data, features, errors), "min");
 
-    default:
-      errors.OnError(*data, format("Invalid flags value: {}", flags));
-      return nullopt;
+  if (decoded->has_max == encoding::HasMax::No) {
+    return Limits{min};
+  } else {
+    WASP_TRY_READ_CONTEXT(max, Read<u32>(data, features, errors), "max");
+    return Limits{min, max, decoded->shared};
   }
 }
 

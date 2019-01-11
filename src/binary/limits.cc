@@ -21,11 +21,14 @@
 namespace wasp {
 namespace binary {
 
-Limits::Limits(u32 min) : min(min) {}
+Limits::Limits(u32 min) : min{min}, shared{Shared::No} {}
 
-Limits::Limits(u32 min, u32 max) : min(min), max(max) {}
+Limits::Limits(u32 min, u32 max) : min{min}, max{max}, shared{Shared::No} {}
 
-WASP_OPERATOR_EQ_NE_2(Limits, min, max)
+Limits::Limits(u32 min, u32 max, Shared shared)
+    : min{min}, max{max}, shared{shared} {}
+
+WASP_OPERATOR_EQ_NE_3(Limits, min, max, shared)
 
 }  // namespace binary
 }  // namespace wasp

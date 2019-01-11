@@ -57,6 +57,13 @@ TEST(FormattersTest, SegmentType) {
   EXPECT_EQ(R"(  passive)", format("{:>9s}", SegmentType::Passive));
 }
 
+TEST(FormattersTest, Shared) {
+  EXPECT_EQ(R"(unshared)", format("{}", Shared::No));
+  EXPECT_EQ(R"(shared)", format("{}", Shared::Yes));
+  EXPECT_EQ(R"(  unshared)", format("{:>10s}", Shared::No));
+  EXPECT_EQ(R"(  shared)", format("{:>8s}", Shared::Yes));
+}
+
 TEST(FormattersTest, NameSubsectionKind) {
   EXPECT_EQ(R"(locals)", format("{}", NameSubsectionId::LocalNames));
   EXPECT_EQ(R"(  module)", format("{:>8s}", NameSubsectionId::ModuleName));
@@ -70,6 +77,8 @@ TEST(FormattersTest, MemArgImmediate) {
 TEST(FormattersTest, Limits) {
   EXPECT_EQ(R"({min 1})", format("{}", Limits{1}));
   EXPECT_EQ(R"({min 1, max 2})", format("{}", Limits{1, 2}));
+  EXPECT_EQ(R"({min 1, max 2, shared})",
+            format("{}", Limits{1, 2, Shared::Yes}));
   EXPECT_EQ(R"(  {min 0})", format("{:>9s}", Limits{0}));
 }
 

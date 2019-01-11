@@ -131,6 +131,24 @@ typename Ctx::iterator formatter<::wasp::binary::SegmentType>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::Shared>::format(
+    const ::wasp::binary::Shared& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+    case ::wasp::binary::Shared::No:
+      result = "unshared";
+      break;
+    case ::wasp::binary::Shared::Yes:
+      result = "shared";
+      break;
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::SectionId>::format(
     const ::wasp::binary::SectionId& self,
     Ctx& ctx) {
@@ -185,7 +203,12 @@ typename Ctx::iterator formatter<::wasp::binary::Limits>::format(
     Ctx& ctx) {
   memory_buffer buf;
   if (self.max) {
-    format_to(buf, "{{min {}, max {}}}", self.min, *self.max);
+    if (self.shared == ::wasp::binary::Shared::Yes) {
+      format_to(buf, "{{min {}, max {}, {}}}", self.min, *self.max,
+                self.shared);
+    } else {
+      format_to(buf, "{{min {}, max {}}}", self.min, *self.max);
+    }
   } else {
     format_to(buf, "{{min {}}}", self.min);
   }

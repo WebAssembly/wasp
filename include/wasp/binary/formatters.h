@@ -35,6 +35,7 @@
 #include "wasp/binary/name_subsection.h"
 #include "wasp/binary/name_subsection_id.h"
 #include "wasp/binary/section.h"
+#include "wasp/binary/shared.h"
 #include "wasp/binary/start.h"
 #include "wasp/binary/table.h"
 #include "wasp/binary/type_entry.h"
@@ -54,6 +55,7 @@ WASP_DEFINE_FORMATTER(ElementType);
 WASP_DEFINE_FORMATTER(ExternalKind);
 WASP_DEFINE_FORMATTER(Mutability);
 WASP_DEFINE_FORMATTER(SegmentType);
+WASP_DEFINE_FORMATTER(Shared);
 WASP_DEFINE_FORMATTER(SectionId);
 WASP_DEFINE_FORMATTER(NameSubsectionId);
 WASP_DEFINE_FORMATTER(MemArgImmediate);

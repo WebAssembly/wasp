@@ -19,6 +19,7 @@
 
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
+#include "wasp/binary/shared.h"
 
 namespace wasp {
 namespace binary {
@@ -26,9 +27,11 @@ namespace binary {
 struct Limits {
   explicit Limits(u32 min);
   explicit Limits(u32 min, u32 max);
+  explicit Limits(u32 min, u32 max, Shared);
 
   u32 min;
   optional<u32> max;
+  Shared shared;
 };
 
 bool operator==(const Limits&, const Limits&);

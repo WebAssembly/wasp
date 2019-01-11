@@ -68,6 +68,7 @@
 #include "wasp/binary/read/read_value_type.h"
 #include "wasp/binary/read/read_vector.h"
 
+
 using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
@@ -1328,6 +1329,16 @@ TEST(ReadTest, Limits) {
 TEST(ReadTest, Limits_BadFlags) {
   ExpectReadFailure<Limits>({{0, "limits"}, {1, "Invalid flags value: 2"}},
                             MakeSpanU8("\x02\x01"));
+  ExpectReadFailure<Limits>({{0, "limits"}, {1, "Invalid flags value: 3"}},
+                            MakeSpanU8("\x03\x01"));
+}
+
+TEST(ReadTest, Limits_threads) {
+  Features features;
+  features.enable_threads();
+
+  ExpectRead<Limits>(Limits{2, 1000, Shared::Yes},
+                     MakeSpanU8("\x03\x02\xe8\x07"), features);
 }
 
 TEST(ReadTest, Limits_PastEnd) {
