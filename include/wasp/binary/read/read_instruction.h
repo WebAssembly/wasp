@@ -380,7 +380,73 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::I64Store8:
     case Opcode::I64Store16:
     case Opcode::I64Store32:
-    case Opcode::V128Store: {
+    case Opcode::V128Store:
+    case Opcode::AtomicNotify:
+    case Opcode::I32AtomicWait:
+    case Opcode::I64AtomicWait:
+    case Opcode::I32AtomicLoad:
+    case Opcode::I64AtomicLoad:
+    case Opcode::I32AtomicLoad8U:
+    case Opcode::I32AtomicLoad16U:
+    case Opcode::I64AtomicLoad8U:
+    case Opcode::I64AtomicLoad16U:
+    case Opcode::I64AtomicLoad32U:
+    case Opcode::I32AtomicStore:
+    case Opcode::I64AtomicStore:
+    case Opcode::I32AtomicStore8:
+    case Opcode::I32AtomicStore16:
+    case Opcode::I64AtomicStore8:
+    case Opcode::I64AtomicStore16:
+    case Opcode::I64AtomicStore32:
+    case Opcode::I32AtomicRmwAdd:
+    case Opcode::I64AtomicRmwAdd:
+    case Opcode::I32AtomicRmw8AddU:
+    case Opcode::I32AtomicRmw16AddU:
+    case Opcode::I64AtomicRmw8AddU:
+    case Opcode::I64AtomicRmw16AddU:
+    case Opcode::I64AtomicRmw32AddU:
+    case Opcode::I32AtomicRmwSub:
+    case Opcode::I64AtomicRmwSub:
+    case Opcode::I32AtomicRmw8SubU:
+    case Opcode::I32AtomicRmw16SubU:
+    case Opcode::I64AtomicRmw8SubU:
+    case Opcode::I64AtomicRmw16SubU:
+    case Opcode::I64AtomicRmw32SubU:
+    case Opcode::I32AtomicRmwAnd:
+    case Opcode::I64AtomicRmwAnd:
+    case Opcode::I32AtomicRmw8AndU:
+    case Opcode::I32AtomicRmw16AndU:
+    case Opcode::I64AtomicRmw8AndU:
+    case Opcode::I64AtomicRmw16AndU:
+    case Opcode::I64AtomicRmw32AndU:
+    case Opcode::I32AtomicRmwOr:
+    case Opcode::I64AtomicRmwOr:
+    case Opcode::I32AtomicRmw8OrU:
+    case Opcode::I32AtomicRmw16OrU:
+    case Opcode::I64AtomicRmw8OrU:
+    case Opcode::I64AtomicRmw16OrU:
+    case Opcode::I64AtomicRmw32OrU:
+    case Opcode::I32AtomicRmwXor:
+    case Opcode::I64AtomicRmwXor:
+    case Opcode::I32AtomicRmw8XorU:
+    case Opcode::I32AtomicRmw16XorU:
+    case Opcode::I64AtomicRmw8XorU:
+    case Opcode::I64AtomicRmw16XorU:
+    case Opcode::I64AtomicRmw32XorU:
+    case Opcode::I32AtomicRmwXchg:
+    case Opcode::I64AtomicRmwXchg:
+    case Opcode::I32AtomicRmw8XchgU:
+    case Opcode::I32AtomicRmw16XchgU:
+    case Opcode::I64AtomicRmw8XchgU:
+    case Opcode::I64AtomicRmw16XchgU:
+    case Opcode::I64AtomicRmw32XchgU:
+    case Opcode::I32AtomicRmwCmpxchg:
+    case Opcode::I64AtomicRmwCmpxchg:
+    case Opcode::I32AtomicRmw8CmpxchgU:
+    case Opcode::I32AtomicRmw16CmpxchgU:
+    case Opcode::I64AtomicRmw8CmpxchgU:
+    case Opcode::I64AtomicRmw16CmpxchgU:
+    case Opcode::I64AtomicRmw32CmpxchgU: {
       WASP_TRY_READ(memarg, Read<MemArgImmediate>(data, features, errors));
       return Instruction{Opcode{opcode}, memarg};
     }

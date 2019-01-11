@@ -1233,6 +1233,93 @@ TEST(ReadTest, Instruction_simd) {
   ExpectRead<I>(I{O::F64X2ConvertI64X2U}, MakeSpanU8("\xfd\xb2\x01"), f);
 }
 
+TEST(ReadTest, Instruction_threads) {
+  using I = Instruction;
+  using O = Opcode;
+
+  const MemArgImmediate m{0, 0};
+
+  Features f;
+  f.enable_threads();
+
+  ExpectRead<I>(I{O::AtomicNotify, m}, MakeSpanU8("\xfe\x00\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicWait, m}, MakeSpanU8("\xfe\x01\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicWait, m}, MakeSpanU8("\xfe\x02\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicLoad, m}, MakeSpanU8("\xfe\x10\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicLoad, m}, MakeSpanU8("\xfe\x11\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicLoad8U, m}, MakeSpanU8("\xfe\x12\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicLoad16U, m}, MakeSpanU8("\xfe\x13\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicLoad8U, m}, MakeSpanU8("\xfe\x14\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicLoad16U, m}, MakeSpanU8("\xfe\x15\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicLoad32U, m}, MakeSpanU8("\xfe\x16\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicStore, m}, MakeSpanU8("\xfe\x17\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicStore, m}, MakeSpanU8("\xfe\x18\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicStore8, m}, MakeSpanU8("\xfe\x19\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicStore16, m}, MakeSpanU8("\xfe\x1a\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicStore8, m}, MakeSpanU8("\xfe\x1b\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicStore16, m}, MakeSpanU8("\xfe\x1c\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicStore32, m}, MakeSpanU8("\xfe\x1d\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmwAdd, m}, MakeSpanU8("\xfe\x1e\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmwAdd, m}, MakeSpanU8("\xfe\x1f\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmw8AddU, m}, MakeSpanU8("\xfe\x20\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmw16AddU, m}, MakeSpanU8("\xfe\x21\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw8AddU, m}, MakeSpanU8("\xfe\x22\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw16AddU, m}, MakeSpanU8("\xfe\x23\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw32AddU, m}, MakeSpanU8("\xfe\x24\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmwSub, m}, MakeSpanU8("\xfe\x25\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmwSub, m}, MakeSpanU8("\xfe\x26\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmw8SubU, m}, MakeSpanU8("\xfe\x27\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmw16SubU, m}, MakeSpanU8("\xfe\x28\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw8SubU, m}, MakeSpanU8("\xfe\x29\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw16SubU, m}, MakeSpanU8("\xfe\x2a\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw32SubU, m}, MakeSpanU8("\xfe\x2b\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmwAnd, m}, MakeSpanU8("\xfe\x2c\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmwAnd, m}, MakeSpanU8("\xfe\x2d\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmw8AndU, m}, MakeSpanU8("\xfe\x2e\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmw16AndU, m}, MakeSpanU8("\xfe\x2f\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw8AndU, m}, MakeSpanU8("\xfe\x30\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw16AndU, m}, MakeSpanU8("\xfe\x31\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw32AndU, m}, MakeSpanU8("\xfe\x32\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmwOr, m}, MakeSpanU8("\xfe\x33\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmwOr, m}, MakeSpanU8("\xfe\x34\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmw8OrU, m}, MakeSpanU8("\xfe\x35\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmw16OrU, m}, MakeSpanU8("\xfe\x36\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw8OrU, m}, MakeSpanU8("\xfe\x37\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw16OrU, m}, MakeSpanU8("\xfe\x38\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw32OrU, m}, MakeSpanU8("\xfe\x39\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmwXor, m}, MakeSpanU8("\xfe\x3a\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmwXor, m}, MakeSpanU8("\xfe\x3b\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmw8XorU, m}, MakeSpanU8("\xfe\x3c\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmw16XorU, m}, MakeSpanU8("\xfe\x3d\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw8XorU, m}, MakeSpanU8("\xfe\x3e\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw16XorU, m}, MakeSpanU8("\xfe\x3f\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw32XorU, m}, MakeSpanU8("\xfe\x40\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmwXchg, m}, MakeSpanU8("\xfe\x41\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmwXchg, m}, MakeSpanU8("\xfe\x42\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmw8XchgU, m}, MakeSpanU8("\xfe\x43\x00\x00"), f);
+  ExpectRead<I>(I{O::I32AtomicRmw16XchgU, m}, MakeSpanU8("\xfe\x44\x00\x00"),
+                f);
+  ExpectRead<I>(I{O::I64AtomicRmw8XchgU, m}, MakeSpanU8("\xfe\x45\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw16XchgU, m}, MakeSpanU8("\xfe\x46\x00\x00"),
+                f);
+  ExpectRead<I>(I{O::I64AtomicRmw32XchgU, m}, MakeSpanU8("\xfe\x47\x00\x00"),
+                f);
+  ExpectRead<I>(I{O::I32AtomicRmwCmpxchg, m}, MakeSpanU8("\xfe\x48\x00\x00"),
+                f);
+  ExpectRead<I>(I{O::I64AtomicRmwCmpxchg, m}, MakeSpanU8("\xfe\x49\x00\x00"),
+                f);
+  ExpectRead<I>(I{O::I32AtomicRmw8CmpxchgU, m}, MakeSpanU8("\xfe\x4a\x00\x00"),
+                f);
+  ExpectRead<I>(I{O::I32AtomicRmw16CmpxchgU, m},
+                MakeSpanU8("\xfe\x4b\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw8CmpxchgU, m}, MakeSpanU8("\xfe\x4c\x00\x00"),
+                f);
+  ExpectRead<I>(I{O::I64AtomicRmw16CmpxchgU, m},
+                MakeSpanU8("\xfe\x4d\x00\x00"), f);
+  ExpectRead<I>(I{O::I64AtomicRmw32CmpxchgU, m},
+                MakeSpanU8("\xfe\x4e\x00\x00"), f);
+}
+
 TEST(ReadTest, Limits) {
   ExpectRead<Limits>(Limits{129}, MakeSpanU8("\x00\x81\x01"));
   ExpectRead<Limits>(Limits{2, 1000}, MakeSpanU8("\x01\x02\xe8\x07"));
@@ -1848,6 +1935,99 @@ TEST(ReadTest, Opcode_Unknown_simd_prefix) {
   ExpectUnknownOpcode(0xfd, 16384, features);
   ExpectUnknownOpcode(0xfd, 2097152, features);
   ExpectUnknownOpcode(0xfd, 268435456, features);
+}
+
+TEST(ReadTest, Opcode_threads) {
+  using O = Opcode;
+
+  Features features;
+  features.enable_threads();
+
+  ExpectRead<O>(O::AtomicNotify, MakeSpanU8("\xfe\x00"), features);
+  ExpectRead<O>(O::I32AtomicWait, MakeSpanU8("\xfe\x01"), features);
+  ExpectRead<O>(O::I64AtomicWait, MakeSpanU8("\xfe\x02"), features);
+  ExpectRead<O>(O::I32AtomicLoad, MakeSpanU8("\xfe\x10"), features);
+  ExpectRead<O>(O::I64AtomicLoad, MakeSpanU8("\xfe\x11"), features);
+  ExpectRead<O>(O::I32AtomicLoad8U, MakeSpanU8("\xfe\x12"), features);
+  ExpectRead<O>(O::I32AtomicLoad16U, MakeSpanU8("\xfe\x13"), features);
+  ExpectRead<O>(O::I64AtomicLoad8U, MakeSpanU8("\xfe\x14"), features);
+  ExpectRead<O>(O::I64AtomicLoad16U, MakeSpanU8("\xfe\x15"), features);
+  ExpectRead<O>(O::I64AtomicLoad32U, MakeSpanU8("\xfe\x16"), features);
+  ExpectRead<O>(O::I32AtomicStore, MakeSpanU8("\xfe\x17"), features);
+  ExpectRead<O>(O::I64AtomicStore, MakeSpanU8("\xfe\x18"), features);
+  ExpectRead<O>(O::I32AtomicStore8, MakeSpanU8("\xfe\x19"), features);
+  ExpectRead<O>(O::I32AtomicStore16, MakeSpanU8("\xfe\x1a"), features);
+  ExpectRead<O>(O::I64AtomicStore8, MakeSpanU8("\xfe\x1b"), features);
+  ExpectRead<O>(O::I64AtomicStore16, MakeSpanU8("\xfe\x1c"), features);
+  ExpectRead<O>(O::I64AtomicStore32, MakeSpanU8("\xfe\x1d"), features);
+  ExpectRead<O>(O::I32AtomicRmwAdd, MakeSpanU8("\xfe\x1e"), features);
+  ExpectRead<O>(O::I64AtomicRmwAdd, MakeSpanU8("\xfe\x1f"), features);
+  ExpectRead<O>(O::I32AtomicRmw8AddU, MakeSpanU8("\xfe\x20"), features);
+  ExpectRead<O>(O::I32AtomicRmw16AddU, MakeSpanU8("\xfe\x21"), features);
+  ExpectRead<O>(O::I64AtomicRmw8AddU, MakeSpanU8("\xfe\x22"), features);
+  ExpectRead<O>(O::I64AtomicRmw16AddU, MakeSpanU8("\xfe\x23"), features);
+  ExpectRead<O>(O::I64AtomicRmw32AddU, MakeSpanU8("\xfe\x24"), features);
+  ExpectRead<O>(O::I32AtomicRmwSub, MakeSpanU8("\xfe\x25"), features);
+  ExpectRead<O>(O::I64AtomicRmwSub, MakeSpanU8("\xfe\x26"), features);
+  ExpectRead<O>(O::I32AtomicRmw8SubU, MakeSpanU8("\xfe\x27"), features);
+  ExpectRead<O>(O::I32AtomicRmw16SubU, MakeSpanU8("\xfe\x28"), features);
+  ExpectRead<O>(O::I64AtomicRmw8SubU, MakeSpanU8("\xfe\x29"), features);
+  ExpectRead<O>(O::I64AtomicRmw16SubU, MakeSpanU8("\xfe\x2a"), features);
+  ExpectRead<O>(O::I64AtomicRmw32SubU, MakeSpanU8("\xfe\x2b"), features);
+  ExpectRead<O>(O::I32AtomicRmwAnd, MakeSpanU8("\xfe\x2c"), features);
+  ExpectRead<O>(O::I64AtomicRmwAnd, MakeSpanU8("\xfe\x2d"), features);
+  ExpectRead<O>(O::I32AtomicRmw8AndU, MakeSpanU8("\xfe\x2e"), features);
+  ExpectRead<O>(O::I32AtomicRmw16AndU, MakeSpanU8("\xfe\x2f"), features);
+  ExpectRead<O>(O::I64AtomicRmw8AndU, MakeSpanU8("\xfe\x30"), features);
+  ExpectRead<O>(O::I64AtomicRmw16AndU, MakeSpanU8("\xfe\x31"), features);
+  ExpectRead<O>(O::I64AtomicRmw32AndU, MakeSpanU8("\xfe\x32"), features);
+  ExpectRead<O>(O::I32AtomicRmwOr, MakeSpanU8("\xfe\x33"), features);
+  ExpectRead<O>(O::I64AtomicRmwOr, MakeSpanU8("\xfe\x34"), features);
+  ExpectRead<O>(O::I32AtomicRmw8OrU, MakeSpanU8("\xfe\x35"), features);
+  ExpectRead<O>(O::I32AtomicRmw16OrU, MakeSpanU8("\xfe\x36"), features);
+  ExpectRead<O>(O::I64AtomicRmw8OrU, MakeSpanU8("\xfe\x37"), features);
+  ExpectRead<O>(O::I64AtomicRmw16OrU, MakeSpanU8("\xfe\x38"), features);
+  ExpectRead<O>(O::I64AtomicRmw32OrU, MakeSpanU8("\xfe\x39"), features);
+  ExpectRead<O>(O::I32AtomicRmwXor, MakeSpanU8("\xfe\x3a"), features);
+  ExpectRead<O>(O::I64AtomicRmwXor, MakeSpanU8("\xfe\x3b"), features);
+  ExpectRead<O>(O::I32AtomicRmw8XorU, MakeSpanU8("\xfe\x3c"), features);
+  ExpectRead<O>(O::I32AtomicRmw16XorU, MakeSpanU8("\xfe\x3d"), features);
+  ExpectRead<O>(O::I64AtomicRmw8XorU, MakeSpanU8("\xfe\x3e"), features);
+  ExpectRead<O>(O::I64AtomicRmw16XorU, MakeSpanU8("\xfe\x3f"), features);
+  ExpectRead<O>(O::I64AtomicRmw32XorU, MakeSpanU8("\xfe\x40"), features);
+  ExpectRead<O>(O::I32AtomicRmwXchg, MakeSpanU8("\xfe\x41"), features);
+  ExpectRead<O>(O::I64AtomicRmwXchg, MakeSpanU8("\xfe\x42"), features);
+  ExpectRead<O>(O::I32AtomicRmw8XchgU, MakeSpanU8("\xfe\x43"), features);
+  ExpectRead<O>(O::I32AtomicRmw16XchgU, MakeSpanU8("\xfe\x44"), features);
+  ExpectRead<O>(O::I64AtomicRmw8XchgU, MakeSpanU8("\xfe\x45"), features);
+  ExpectRead<O>(O::I64AtomicRmw16XchgU, MakeSpanU8("\xfe\x46"), features);
+  ExpectRead<O>(O::I64AtomicRmw32XchgU, MakeSpanU8("\xfe\x47"), features);
+  ExpectRead<O>(O::I32AtomicRmwCmpxchg, MakeSpanU8("\xfe\x48"), features);
+  ExpectRead<O>(O::I64AtomicRmwCmpxchg, MakeSpanU8("\xfe\x49"), features);
+  ExpectRead<O>(O::I32AtomicRmw8CmpxchgU, MakeSpanU8("\xfe\x4a"), features);
+  ExpectRead<O>(O::I32AtomicRmw16CmpxchgU, MakeSpanU8("\xfe\x4b"), features);
+  ExpectRead<O>(O::I64AtomicRmw8CmpxchgU, MakeSpanU8("\xfe\x4c"), features);
+  ExpectRead<O>(O::I64AtomicRmw16CmpxchgU, MakeSpanU8("\xfe\x4d"), features);
+  ExpectRead<O>(O::I64AtomicRmw32CmpxchgU, MakeSpanU8("\xfe\x4e"), features);
+}
+
+TEST(ReadTest, Opcode_Unknown_threads_prefix) {
+  Features features;
+  features.enable_threads();
+
+  const u8 kInvalidOpcodes[] = {
+      0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+      0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x4f, 0x50,
+  };
+  for (auto code : SpanU8{kInvalidOpcodes, sizeof(kInvalidOpcodes)}) {
+    ExpectUnknownOpcode(0xfe, code, features);
+  }
+
+  // Test some longer codes too.
+  ExpectUnknownOpcode(0xfe, 128, features);
+  ExpectUnknownOpcode(0xfe, 16384, features);
+  ExpectUnknownOpcode(0xfe, 2097152, features);
+  ExpectUnknownOpcode(0xfe, 268435456, features);
 }
 
 TEST(ReadTest, S32) {
