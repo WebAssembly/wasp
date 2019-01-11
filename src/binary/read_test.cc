@@ -2151,6 +2151,7 @@ TEST(ReadTest, ValueType) {
   ExpectRead<ValueType>(ValueType::I64, MakeSpanU8("\x7e"));
   ExpectRead<ValueType>(ValueType::F32, MakeSpanU8("\x7d"));
   ExpectRead<ValueType>(ValueType::F64, MakeSpanU8("\x7c"));
+  ExpectRead<ValueType>(ValueType::V128, MakeSpanU8("\x7b"));
 }
 
 TEST(ReadTest, ValueType_Unknown) {
