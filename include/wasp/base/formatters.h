@@ -22,6 +22,7 @@
 #include "wasp/base/format.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
+#include "wasp/base/v128.h"
 
 namespace fmt {
 
@@ -47,6 +48,12 @@ struct formatter<::wasp::basic_string_view<CharT, Traits>>
     : formatter<string_view> {
   template <typename Ctx>
   typename Ctx::iterator format(::wasp::basic_string_view<CharT, Traits>, Ctx&);
+};
+
+template <>
+struct formatter<::wasp::v128> : formatter<string_view> {
+  template <typename Ctx>
+  typename Ctx::iterator format(::wasp::v128, Ctx&);
 };
 
 }  // namespace fmt

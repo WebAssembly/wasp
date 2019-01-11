@@ -1,5 +1,5 @@
 //
-// Copyright 2018 WebAssembly Community Group participants
+// Copyright 2019 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,26 +14,16 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BASE_TYPES_H_
-#define WASP_BASE_TYPES_H_
-
-#include <cstdint>
+#include <cstring>
 
 namespace wasp {
 
-using s8 = int8_t;
-using u8 = uint8_t;
-using s16 = int16_t;
-using u16 = uint16_t;
-using s32 = int32_t;
-using u32 = uint32_t;
-using s64 = int64_t;
-using u64 = uint64_t;
-using f32 = float;
-using f64 = double;
-
-using Index = u32;
+template <typename T>
+GetV128Type<T> v128::as() const {
+  // TODO(binji): This is not correct in big-endian environments.
+  T result;
+  memcpy(result.data(), data_.data(), sizeof(result));
+  return result;
+}
 
 }  // namespace wasp
-
-#endif  // WASP_BASE_TYPES_H_

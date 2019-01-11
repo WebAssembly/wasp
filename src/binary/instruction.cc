@@ -57,6 +57,9 @@ Instruction::Instruction(Opcode opcode, f32 immediate)
 Instruction::Instruction(Opcode opcode, f64 immediate)
     : opcode(opcode), immediate(immediate) {}
 
+Instruction::Instruction(Opcode opcode, v128 immediate)
+    : opcode(opcode), immediate(immediate) {}
+
 Instruction::Instruction(Opcode opcode, InitImmediate immediate)
     : opcode(opcode), immediate(immediate) {}
 

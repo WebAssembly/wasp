@@ -36,6 +36,7 @@ include_directories(
 add_library(wasplib
   src/base/features.cc
   src/base/file.cc
+  src/base/v128.cc
   src/binary/br_table_immediate.cc
   src/binary/call_indirect_immediate.cc
   src/binary/code.cc
@@ -84,6 +85,7 @@ target_link_libraries(wasp
 
 add_executable(wasp_unittests
   src/base/formatters_test.cc
+  src/base/v128_test.cc
   src/binary/formatters_test.cc
   src/binary/lazy_expression_test.cc
   src/binary/lazy_module_test.cc

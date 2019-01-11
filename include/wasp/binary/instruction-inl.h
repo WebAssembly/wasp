@@ -61,6 +61,10 @@ inline bool Instruction::has_f64_immediate() const {
   return holds_alternative<f64>(immediate);
 }
 
+inline bool Instruction::has_v128_immediate() const {
+  return holds_alternative<v128>(immediate);
+}
+
 inline bool Instruction::has_init_immediate() const {
   return holds_alternative<InitImmediate>(immediate);
 }

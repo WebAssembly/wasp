@@ -60,4 +60,16 @@ formatter<::wasp::basic_string_view<CharT, Traits>>::format(
                                         ctx);
 }
 
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::v128>::format(::wasp::v128 self,
+                                                       Ctx& ctx) {
+  memory_buffer buf;
+  string_view space = "";
+  for (const auto& x : self.as<::wasp::u32x4>()) {
+    format_to(buf, "{}{:#x}", space, x);
+    space = " ";
+  }
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
 }  // namespace fmt

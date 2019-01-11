@@ -71,3 +71,8 @@ TEST(FormattersTest, VectorPoint) {
   EXPECT_EQ(R"(  [{x:0, y:0}]  )",
             format("{:^16s}", std::vector<Point>{{Point{0, 0}}}));
 }
+
+TEST(FormattersTest, V128) {
+  EXPECT_EQ(R"(0x1 0x0 0x2 0x0)", format("{}", v128{u64{1}, u64{2}}));
+  EXPECT_EQ(R"(  0x0 0x0 0x0 0x0)", format("{:>17}", v128{}));
+}

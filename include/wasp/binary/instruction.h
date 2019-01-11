@@ -18,6 +18,7 @@
 #define WASP_BINARY_INSTRUCTION_H_
 
 #include "wasp/base/types.h"
+#include "wasp/base/v128.h"
 #include "wasp/base/variant.h"
 #include "wasp/binary/block_type.h"
 #include "wasp/binary/br_table_immediate.h"
@@ -45,6 +46,7 @@ struct Instruction {
   explicit Instruction(Opcode opcode, s64);
   explicit Instruction(Opcode opcode, f32);
   explicit Instruction(Opcode opcode, f64);
+  explicit Instruction(Opcode opcode, v128);
   explicit Instruction(Opcode opcode, InitImmediate);
   explicit Instruction(Opcode opcode, CopyImmediate);
   explicit Instruction(Opcode opcode, ShuffleImmediate);
@@ -60,6 +62,7 @@ struct Instruction {
   bool has_s64_immediate() const;
   bool has_f32_immediate() const;
   bool has_f64_immediate() const;
+  bool has_v128_immediate() const;
   bool has_init_immediate() const;
   bool has_copy_immediate() const;
   bool has_shuffle_immediate() const;
@@ -86,6 +89,8 @@ struct Instruction {
   const f32& f32_immediate() const;
   f64& f64_immediate();
   const f64& f64_immediate() const;
+  v128& v128_immediate();
+  const v128& v128_immediate() const;
   InitImmediate& init_immediate();
   const InitImmediate& init_immediate() const;
   CopyImmediate& copy_immediate();
@@ -105,6 +110,7 @@ struct Instruction {
           s64,
           f32,
           f64,
+          v128,
           InitImmediate,
           CopyImmediate,
           ShuffleImmediate>

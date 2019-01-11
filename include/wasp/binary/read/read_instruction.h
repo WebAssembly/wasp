@@ -29,6 +29,7 @@
 #include "wasp/binary/read/read_copy_immediate.h"
 #include "wasp/binary/read/read_f32.h"
 #include "wasp/binary/read/read_f64.h"
+#include "wasp/binary/read/read_v128.h"
 #include "wasp/binary/read/read_index.h"
 #include "wasp/binary/read/read_init_immediate.h"
 #include "wasp/binary/read/read_mem_arg_immediate.h"
@@ -418,8 +419,9 @@ optional<Instruction> Read(SpanU8* data,
     }
 
     case Opcode::V128Const: {
-      // TODO(binji): Use v128 type here.
-      return Instruction{Opcode{opcode}};
+      WASP_TRY_READ_CONTEXT(value, Read<v128>(data, features, errors),
+                            "v128 constant");
+      return Instruction{Opcode{opcode}, value};
     }
 
     // Reserved, Index immediates.

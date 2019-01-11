@@ -1085,8 +1085,10 @@ TEST(ReadTest, Instruction_simd) {
                 MakeSpanU8("\xfd\x00\x01\x02"), f);
   ExpectRead<I>(I{O::V128Store, MemArgImmediate{3, 4}},
                 MakeSpanU8("\xfd\x01\x03\x04"), f);
-  // TODO(binji): This immediate should be v128, not empty.
-  ExpectRead<I>(I{O::V128Const}, MakeSpanU8("\xfd\x02"), f);
+  ExpectRead<I>(I{O::V128Const, v128{u64{5}, u64{6}}},
+                MakeSpanU8("\xfd\x02\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00"
+                           "\x00\x00\x00\x00\x00\x00"),
+                f);
   ExpectRead<I>(
       I{O::V8X16Shuffle,
         ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}},
