@@ -22,8 +22,7 @@
 namespace wasp {
 
 optional<std::vector<u8>> ReadFile(string_view filename) {
-  std::string filename_str = filename.to_string();
-  std::ifstream stream{filename_str.c_str(), std::ios::in | std::ios::binary};
+  std::ifstream stream{filename.to_string(), std::ios::in | std::ios::binary};
   if (!stream) {
     return nullopt;
   }

@@ -50,16 +50,6 @@ typename Ctx::iterator formatter<std::vector<T>>::format(
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
-template <typename CharT, typename Traits>
-template <typename Ctx>
-typename Ctx::iterator
-formatter<::wasp::basic_string_view<CharT, Traits>>::format(
-    ::wasp::basic_string_view<CharT, Traits> self,
-    Ctx& ctx) {
-  return formatter<string_view>::format(string_view{self.data(), self.size()},
-                                        ctx);
-}
-
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::v128>::format(::wasp::v128 self,
                                                        Ctx& ctx) {

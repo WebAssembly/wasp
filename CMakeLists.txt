@@ -76,6 +76,7 @@ add_library(wasplib
 
 add_executable(wasp
   src/tools/wasp.cc
+  src/tools/callgraph.cc
   src/tools/dump.cc
 )
 

@@ -14,17 +14,17 @@
 // limitations under the License.
 //
 
-#ifndef WASP_TOOLS_DUMP_H_
-#define WASP_TOOLS_DUMP_H_
+#ifndef WASP_TOOLS_CALLGRAPH_H_
+#define WASP_TOOLS_CALLGRAPH_H_
 
 namespace wasp {
 namespace tools {
-namespace dump {
+namespace callgraph {
 
 int Main(int argc, char** argv);
 
-}  // namespace dump
+}  // namespace callgraph
 }  // namespace tools
 }  // namespace wasp
 
-#endif  // WASP_TOOLS_DUMP_H_
+#endif  // WASP_TOOLS_CALLGRAPH_H_

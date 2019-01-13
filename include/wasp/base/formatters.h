@@ -43,13 +43,6 @@ struct formatter<std::vector<T>> : formatter<string_view> {
   typename Ctx::iterator format(const std::vector<T>&, Ctx&);
 };
 
-template <typename CharT, typename Traits>
-struct formatter<::wasp::basic_string_view<CharT, Traits>>
-    : formatter<string_view> {
-  template <typename Ctx>
-  typename Ctx::iterator format(::wasp::basic_string_view<CharT, Traits>, Ctx&);
-};
-
 template <>
 struct formatter<::wasp::v128> : formatter<string_view> {
   template <typename Ctx>

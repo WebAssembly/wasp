@@ -24,6 +24,7 @@
 #include "wasp/base/file.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/macros.h"
+#include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/errors_nop.h"
 #include "wasp/binary/formatters.h"
@@ -47,6 +48,7 @@
 
 namespace wasp {
 namespace tools {
+namespace dump {
 
 using namespace ::wasp::binary;
 
@@ -136,7 +138,7 @@ struct Dumper {
   Index imported_global_count = 0;
 };
 
-int DumpMain(int argc, char** argv) {
+int Main(int argc, char** argv) {
   std::vector<string_view> filenames;
   Options options;
   options.features.EnableAll();
@@ -896,5 +898,6 @@ size_t Dumper::file_offset(SpanU8 data) {
   return data.begin() - module.data.begin();
 }
 
+}  // namespace dump
 }  // namespace tools
 }  // namespace wasp

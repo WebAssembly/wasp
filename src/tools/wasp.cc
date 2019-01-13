@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include "src/tools/callgraph.h"
 #include "src/tools/dump.h"
 
 #include "wasp/base/format.h"
@@ -42,7 +43,9 @@ int main(int argc, char** argv) {
       Command command = nullptr;
 
       if (arg == "dump") {
-        command = wasp::tools::DumpMain;
+        command = wasp::tools::dump::Main;
+      } else if (arg == "callgraph") {
+        command = wasp::tools::callgraph::Main;
       } else {
         print("Unknown command \"{}\"\n", arg);
         return 1;
@@ -60,5 +63,6 @@ void PrintHelp() {
   print("usage: wasp <command> [<options>]\n");
   print("\n");
   print("commands:\n");
-  print("  dump      Dump the contents of a WebAssembly file.\n");
+  print("  dump        Dump the contents of a WebAssembly file.\n");
+  print("  callgraph   Generate DOT file for the function call graph.\n");
 }

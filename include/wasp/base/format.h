@@ -18,6 +18,7 @@
 #define WASP_BASE_FORMAT_H_
 
 #include "fmt/format.h"
+#include "fmt/ostream.h"
 
 namespace wasp {
 
