@@ -15,6 +15,7 @@
 //
 
 #include "src/tools/callgraph.h"
+#include "src/tools/cfg.h"
 #include "src/tools/dump.h"
 
 #include "wasp/base/format.h"
@@ -46,6 +47,8 @@ int main(int argc, char** argv) {
         command = wasp::tools::dump::Main;
       } else if (arg == "callgraph") {
         command = wasp::tools::callgraph::Main;
+      } else if (arg == "cfg") {
+        command = wasp::tools::cfg::Main;
       } else {
         print("Unknown command \"{}\"\n", arg);
         return 1;
@@ -65,4 +68,5 @@ void PrintHelp() {
   print("commands:\n");
   print("  dump        Dump the contents of a WebAssembly file.\n");
   print("  callgraph   Generate DOT file for the function call graph.\n");
+  print("  cfg         Generate DOT file of a function's control flow graph.\n");
 }
