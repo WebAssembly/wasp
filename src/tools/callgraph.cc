@@ -50,8 +50,8 @@ struct Options {
   string_view output_filename;
 };
 
-struct CallGrapher {
-  explicit CallGrapher(SpanU8 data, Options);
+struct Tool {
+  explicit Tool(SpanU8 data, Options);
 
   void Run();
   void DoPrepass();
@@ -111,22 +111,22 @@ int Main(int argc, char** argv) {
   }
 
   SpanU8 data{*optbuf};
-  CallGrapher grapher{data, options};
-  grapher.Run();
+  Tool tool{data, options};
+  tool.Run();
 
   return 0;
 }
 
-CallGrapher::CallGrapher(SpanU8 data, Options options)
+Tool::Tool(SpanU8 data, Options options)
     : options{options}, module{ReadModule(data, options.features, errors)} {}
 
-void CallGrapher::Run() {
+void Tool::Run() {
   DoPrepass();
   CalculateCallGraph();
   WriteDotFile();
 }
 
-void CallGrapher::DoPrepass() {
+void Tool::DoPrepass() {
   const Features& features = options.features;
   for (auto section : module.sections) {
     if (section.is_known()) {
@@ -170,7 +170,7 @@ void CallGrapher::DoPrepass() {
   }
 }
 
-void CallGrapher::CalculateCallGraph() {
+void Tool::CalculateCallGraph() {
   for (auto section : module.sections) {
     if (section.is_known()) {
       auto known = section.known();
@@ -193,7 +193,7 @@ void CallGrapher::CalculateCallGraph() {
   }
 }
 
-void CallGrapher::WriteDotFile() {
+void Tool::WriteDotFile() {
   std::ofstream fstream;
   std::ostream* stream = &std::cout;
   if (!options.output_filename.empty()) {
@@ -235,11 +235,11 @@ void CallGrapher::WriteDotFile() {
   stream->flush();
 }
 
-void CallGrapher::InsertFunctionName(Index index, string_view name) {
+void Tool::InsertFunctionName(Index index, string_view name) {
   function_names.insert(std::make_pair(index, name));
 }
 
-optional<string_view> CallGrapher::GetFunctionName(Index index) const {
+optional<string_view> Tool::GetFunctionName(Index index) const {
   auto it = function_names.find(index);
   if (it != function_names.end()) {
     return it->second;

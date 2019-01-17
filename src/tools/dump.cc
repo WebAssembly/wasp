@@ -70,10 +70,10 @@ struct Options {
   string_view section_name;
 };
 
-struct Dumper {
-  explicit Dumper(string_view filename, SpanU8 data, Options);
+struct Tool {
+  explicit Tool(string_view filename, SpanU8 data, Options);
 
-  void Dump();
+  void Run();
   void DoPrepass();
   void DoPass(Pass);
   bool SectionMatches(Section) const;
@@ -199,20 +199,20 @@ int Main(int argc, char** argv) {
     }
 
     SpanU8 data{*optbuf};
-    Dumper dumper{filename, data, options};
-    dumper.Dump();
+    Tool tool{filename, data, options};
+    tool.Run();
   }
 
   return 0;
 }
 
-Dumper::Dumper(string_view filename, SpanU8 data, Options options)
+Tool::Tool(string_view filename, SpanU8 data, Options options)
     : filename(filename),
       options{options},
       data{data},
       module{ReadModule(data, options.features, errors)} {}
 
-void Dumper::Dump() {
+void Tool::Run() {
   print("\n{}:\tfile format wasm {}\n", filename, *module.version);
   DoPrepass();
   if (options.print_headers) {
@@ -229,7 +229,7 @@ void Dumper::Dump() {
   }
 }
 
-void Dumper::DoPrepass() {
+void Tool::DoPrepass() {
   const Features& features = options.features;
   for (auto section : module.sections) {
     if (section.is_known()) {
@@ -313,7 +313,7 @@ void Dumper::DoPrepass() {
   }
 }
 
-void Dumper::DoPass(Pass pass) {
+void Tool::DoPass(Pass pass) {
   switch (pass) {
     case Pass::Headers:
       print("\nSections:\n\n");
@@ -359,7 +359,7 @@ bool StringsAreEqualCaseInsensitive(const S1& s1, const S2& s2) {
 
 }  // namespace
 
-bool Dumper::SectionMatches(Section section) const {
+bool Tool::SectionMatches(Section section) const {
   if (options.section_name.empty()) {
     return true;
   }
@@ -373,7 +373,7 @@ bool Dumper::SectionMatches(Section section) const {
   return StringsAreEqualCaseInsensitive(name, options.section_name);
 }
 
-void Dumper::DoKnownSection(Pass pass, KnownSection known) {
+void Tool::DoKnownSection(Pass pass, KnownSection known) {
   const Features& features = options.features;
   DoSectionHeader(pass, format("{}", known.id), known.data);
   switch (known.id) {
@@ -427,7 +427,7 @@ void Dumper::DoKnownSection(Pass pass, KnownSection known) {
   }
 }
 
-void Dumper::DoCustomSection(Pass pass, CustomSection custom) {
+void Tool::DoCustomSection(Pass pass, CustomSection custom) {
   const Features& features = options.features;
   DoSectionHeader(pass, format("custom \"{}\"", custom.name), custom.data);
   switch (pass) {
@@ -447,7 +447,7 @@ void Dumper::DoCustomSection(Pass pass, CustomSection custom) {
   }
 }
 
-void Dumper::DoSectionHeader(Pass pass, string_view name, SpanU8 data) {
+void Tool::DoSectionHeader(Pass pass, string_view name, SpanU8 data) {
   auto offset = data.begin() - module.data.begin();
   auto size = data.size();
   switch (pass) {
@@ -472,7 +472,7 @@ void Dumper::DoSectionHeader(Pass pass, string_view name, SpanU8 data) {
   }
 }
 
-void Dumper::DoTypeSection(Pass pass, LazyTypeSection<ErrorsType> section) {
+void Tool::DoTypeSection(Pass pass, LazyTypeSection<ErrorsType> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -482,7 +482,7 @@ void Dumper::DoTypeSection(Pass pass, LazyTypeSection<ErrorsType> section) {
   }
 }
 
-void Dumper::DoImportSection(Pass pass, LazyImportSection<ErrorsType> section) {
+void Tool::DoImportSection(Pass pass, LazyImportSection<ErrorsType> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index function_count = 0;
@@ -521,8 +521,8 @@ void Dumper::DoImportSection(Pass pass, LazyImportSection<ErrorsType> section) {
   }
 }
 
-void Dumper::DoFunctionSection(Pass pass,
-                               LazyFunctionSection<ErrorsType> section) {
+void Tool::DoFunctionSection(Pass pass,
+                             LazyFunctionSection<ErrorsType> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_function_count;
@@ -535,7 +535,7 @@ void Dumper::DoFunctionSection(Pass pass,
   }
 }
 
-void Dumper::DoTableSection(Pass pass, LazyTableSection<ErrorsType> section) {
+void Tool::DoTableSection(Pass pass, LazyTableSection<ErrorsType> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_table_count;
@@ -546,7 +546,7 @@ void Dumper::DoTableSection(Pass pass, LazyTableSection<ErrorsType> section) {
   }
 }
 
-void Dumper::DoMemorySection(Pass pass, LazyMemorySection<ErrorsType> section) {
+void Tool::DoMemorySection(Pass pass, LazyMemorySection<ErrorsType> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_memory_count;
@@ -557,7 +557,7 @@ void Dumper::DoMemorySection(Pass pass, LazyMemorySection<ErrorsType> section) {
   }
 }
 
-void Dumper::DoGlobalSection(Pass pass, LazyGlobalSection<ErrorsType> section) {
+void Tool::DoGlobalSection(Pass pass, LazyGlobalSection<ErrorsType> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_global_count;
@@ -570,7 +570,7 @@ void Dumper::DoGlobalSection(Pass pass, LazyGlobalSection<ErrorsType> section) {
   }
 }
 
-void Dumper::DoExportSection(Pass pass, LazyExportSection<ErrorsType> section) {
+void Tool::DoExportSection(Pass pass, LazyExportSection<ErrorsType> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -585,7 +585,7 @@ void Dumper::DoExportSection(Pass pass, LazyExportSection<ErrorsType> section) {
   }
 }
 
-void Dumper::DoStartSection(Pass pass, StartSection section) {
+void Tool::DoStartSection(Pass pass, StartSection section) {
   if (section) {
     auto start = *section;
     if (pass == Pass::Headers) {
@@ -596,8 +596,7 @@ void Dumper::DoStartSection(Pass pass, StartSection section) {
   }
 }
 
-void Dumper::DoElementSection(Pass pass,
-                              LazyElementSection<ErrorsType> section) {
+void Tool::DoElementSection(Pass pass, LazyElementSection<ErrorsType> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -626,7 +625,7 @@ void Dumper::DoElementSection(Pass pass,
   }
 }
 
-void Dumper::DoCodeSection(Pass pass, LazyCodeSection<ErrorsType> section) {
+void Tool::DoCodeSection(Pass pass, LazyCodeSection<ErrorsType> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_function_count;
@@ -643,7 +642,7 @@ void Dumper::DoCodeSection(Pass pass, LazyCodeSection<ErrorsType> section) {
   }
 }
 
-void Dumper::DoDataSection(Pass pass, LazyDataSection<ErrorsType> section) {
+void Tool::DoDataSection(Pass pass, LazyDataSection<ErrorsType> section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -664,7 +663,7 @@ void Dumper::DoDataSection(Pass pass, LazyDataSection<ErrorsType> section) {
   }
 }
 
-void Dumper::DoNameSection(Pass pass, LazyNameSection<ErrorsType> section) {
+void Tool::DoNameSection(Pass pass, LazyNameSection<ErrorsType> section) {
   const Features& features=  options.features;
   for (auto subsection : section) {
     switch (subsection.id) {
@@ -708,7 +707,7 @@ void Dumper::DoNameSection(Pass pass, LazyNameSection<ErrorsType> section) {
   }
 }
 
-void Dumper::DoCount(Pass pass, optional<Index> count) {
+void Tool::DoCount(Pass pass, optional<Index> count) {
   if (pass == Pass::Headers) {
     print("count: {}\n", count.value_or(0));
   } else {
@@ -716,7 +715,7 @@ void Dumper::DoCount(Pass pass, optional<Index> count) {
   }
 }
 
-void Dumper::Disassemble(Index func_index, Code code) {
+void Tool::Disassemble(Index func_index, Code code) {
   constexpr int max_octets_per_line = 9;
   auto func_type = GetFunctionType(func_index);
   int param_count = 0;
@@ -775,15 +774,15 @@ void Dumper::Disassemble(Index func_index, Code code) {
   }
 }
 
-void Dumper::InsertFunctionName(Index index, string_view name) {
+void Tool::InsertFunctionName(Index index, string_view name) {
   function_names.insert(std::make_pair(index, name));
 }
 
-void Dumper::InsertGlobalName(Index index, string_view name) {
+void Tool::InsertGlobalName(Index index, string_view name) {
   global_names.insert(std::make_pair(index, name));
 }
 
-optional<FunctionType> Dumper::GetFunctionType(Index func_index) const {
+optional<FunctionType> Tool::GetFunctionType(Index func_index) const {
   if (func_index >= functions.size() ||
       functions[func_index].type_index >= type_entries.size()) {
     return nullopt;
@@ -791,7 +790,7 @@ optional<FunctionType> Dumper::GetFunctionType(Index func_index) const {
   return type_entries[functions[func_index].type_index].type;
 }
 
-optional<string_view> Dumper::GetFunctionName(Index index) const {
+optional<string_view> Tool::GetFunctionName(Index index) const {
   auto it = function_names.find(index);
   if (it != function_names.end()) {
     return it->second;
@@ -800,7 +799,7 @@ optional<string_view> Dumper::GetFunctionName(Index index) const {
   }
 }
 
-optional<string_view> Dumper::GetGlobalName(Index index) const {
+optional<string_view> Tool::GetGlobalName(Index index) const {
   auto it = global_names.find(index);
   if (it != global_names.end()) {
     return it->second;
@@ -809,7 +808,7 @@ optional<string_view> Dumper::GetGlobalName(Index index) const {
   }
 }
 
-optional<Index> Dumper::GetI32Value(const ConstantExpression& expr) {
+optional<Index> Tool::GetI32Value(const ConstantExpression& expr) {
   ErrorsNop errors;
   auto instrs = ReadExpression(expr, options.features, errors);
   auto it = instrs.begin();
@@ -826,35 +825,35 @@ optional<Index> Dumper::GetI32Value(const ConstantExpression& expr) {
   }
 }
 
-bool Dumper::ShouldPrintDetails(Pass pass) const {
+bool Tool::ShouldPrintDetails(Pass pass) const {
   return pass == Pass::Details && should_print_details;
 }
 
 template <typename... Args>
-void Dumper::PrintDetails(Pass pass, const char* format, const Args&... args) {
+void Tool::PrintDetails(Pass pass, const char* format, const Args&... args) {
   if (ShouldPrintDetails(pass)) {
     vprint(format, make_format_args(args...));
   }
 }
 
-void Dumper::PrintFunctionName(Index func_index) {
+void Tool::PrintFunctionName(Index func_index) {
   if (auto name = GetFunctionName(func_index)) {
     print(" <{}>", *name);
   }
 }
 
-void Dumper::PrintGlobalName(Index func_index) {
+void Tool::PrintGlobalName(Index func_index) {
   if (auto name = GetGlobalName(func_index)) {
     print(" <{}>", *name);
   }
 }
 
-void Dumper::PrintMemory(SpanU8 start,
-                         Index offset,
-                         PrintChars print_chars,
-                         string_view prefix,
-                         int octets_per_line,
-                         int octets_per_group) {
+void Tool::PrintMemory(SpanU8 start,
+                       Index offset,
+                       PrintChars print_chars,
+                       string_view prefix,
+                       int octets_per_line,
+                       int octets_per_group) {
   SpanU8 data = start;
   while (!data.empty()) {
     auto line_size = std::min<size_t>(data.size(), octets_per_line);
@@ -883,7 +882,7 @@ void Dumper::PrintMemory(SpanU8 start,
   }
 }
 
-void Dumper::PrintConstantExpression(const ConstantExpression& expr) {
+void Tool::PrintConstantExpression(const ConstantExpression& expr) {
   auto instrs = ReadExpression(expr, options.features, errors);
   string_view space;
   for (auto instr : instrs) {
@@ -894,7 +893,7 @@ void Dumper::PrintConstantExpression(const ConstantExpression& expr) {
   }
 }
 
-size_t Dumper::file_offset(SpanU8 data) {
+size_t Tool::file_offset(SpanU8 data) {
   return data.begin() - module.data.begin();
 }
 
