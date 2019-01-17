@@ -14,16 +14,14 @@
 // limitations under the License.
 //
 
-WASP_V(0, Custom, "custom")
-WASP_V(1, Type, "type")
-WASP_V(2, Import, "import")
-WASP_V(3, Function, "function")
-WASP_V(4, Table, "table")
-WASP_V(5, Memory, "memory")
-WASP_V(6, Global, "global")
-WASP_V(7, Export, "export")
-WASP_V(8, Start, "start")
-WASP_V(9, Element, "element")
-WASP_V(10, Code, "code")
-WASP_V(11, Data, "data")
-WASP_V(12, DataCount, "datacount")
+#include "wasp/binary/data_count.h"
+
+#include "src/base/operator_eq_ne_macros.h"
+
+namespace wasp {
+namespace binary {
+
+WASP_OPERATOR_EQ_NE_1(DataCount, count)
+
+}  // namespace binary
+}  // namespace wasp

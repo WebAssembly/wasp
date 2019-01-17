@@ -43,6 +43,7 @@ add_library(wasplib
   src/binary/constant_expression.cc
   src/binary/copy_immediate.cc
   src/binary/custom_section.cc
+  src/binary/data_count.cc
   src/binary/data_segment.cc
   src/binary/element_segment.cc
   src/binary/empty_immediate.cc

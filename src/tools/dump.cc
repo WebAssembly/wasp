@@ -26,6 +26,7 @@
 #include "wasp/base/macros.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
+#include "wasp/binary/data_count_section.h"
 #include "wasp/binary/errors_nop.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/lazy_code_section.h"
@@ -92,6 +93,7 @@ struct Tool {
   void DoElementSection(Pass, LazyElementSection<ErrorsType>);
   void DoCodeSection(Pass, LazyCodeSection<ErrorsType>);
   void DoDataSection(Pass, LazyDataSection<ErrorsType>);
+  void DoDataCountSection(Pass, DataCountSection);
   void DoNameSection(Pass, LazyNameSection<ErrorsType>);
 
   void DoCount(Pass, optional<Index> count);
@@ -424,6 +426,10 @@ void Tool::DoKnownSection(Pass pass, KnownSection known) {
     case SectionId::Data:
       DoDataSection(pass, ReadDataSection(known, features, errors));
       break;
+
+    case SectionId::DataCount:
+      DoDataCountSection(pass, ReadDataCountSection(known, features, errors));
+      break;
   }
 }
 
@@ -659,6 +665,17 @@ void Tool::DoDataSection(Pass pass, LazyDataSection<ErrorsType> section) {
       }
       PrintMemory(data.init, offset, PrintChars::Yes, "  - ");
       ++count;
+    }
+  }
+}
+
+void Tool::DoDataCountSection(Pass pass, DataCountSection section) {
+  if (section) {
+    auto data_count = *section;
+    if (pass == Pass::Headers) {
+      print("count: {}\n", data_count.count);
+    } else {
+      PrintDetails(pass, " - data count: {}\n", data_count.count);
     }
   }
 }

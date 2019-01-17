@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "src/binary/test_utils.h"
+#include "wasp/binary/data_count_section.h"
 #include "wasp/binary/lazy_code_section.h"
 #include "wasp/binary/lazy_data_section.h"
 #include "wasp/binary/lazy_element_section.h"
@@ -247,5 +248,14 @@ TEST(LazySectionTest, Data) {
                       MakeSpanU8("you")},
       },
       sec);
+  ExpectNoErrors(errors);
+}
+
+TEST(LazySectionTest, DataCount) {
+  Features features;
+  TestErrors errors;
+  auto sec = ReadDataCountSection(MakeSpanU8("\x03"), features, errors);
+
+  EXPECT_EQ(DataCount{3}, sec);
   ExpectNoErrors(errors);
 }

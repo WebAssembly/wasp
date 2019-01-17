@@ -2158,6 +2158,7 @@ TEST(ReadTest, SectionId) {
   ExpectRead<SectionId>(SectionId::Element, MakeSpanU8("\x09"));
   ExpectRead<SectionId>(SectionId::Code, MakeSpanU8("\x0a"));
   ExpectRead<SectionId>(SectionId::Data, MakeSpanU8("\x0b"));
+  ExpectRead<SectionId>(SectionId::DataCount, MakeSpanU8("\x0c"));
 
   // Overlong encoding.
   ExpectRead<SectionId>(SectionId::Custom, MakeSpanU8("\x80\x00"));
@@ -2165,7 +2166,7 @@ TEST(ReadTest, SectionId) {
 
 TEST(ReadTest, SectionId_Unknown) {
   ExpectReadFailure<SectionId>(
-      {{0, "section id"}, {1, "Unknown section id: 12"}}, MakeSpanU8("\x0c"));
+      {{0, "section id"}, {1, "Unknown section id: 13"}}, MakeSpanU8("\x0d"));
 }
 
 TEST(ReadTest, Section) {

@@ -560,6 +560,15 @@ typename Ctx::iterator formatter<::wasp::binary::DataSegment>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::DataCount>::format(
+    const ::wasp::binary::DataCount& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{count {}}}", self.count);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::NameAssoc>::format(
     const ::wasp::binary::NameAssoc& self,
     Ctx& ctx) {

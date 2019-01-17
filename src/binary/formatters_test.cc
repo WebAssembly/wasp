@@ -387,6 +387,11 @@ TEST(FormattersTest, DataSegment_Passive) {
       R"(  {init ""})", format("{:>11}", DataSegment{MakeSpanU8("")}));
 }
 
+TEST(FormattersTest, DataCount) {
+  EXPECT_EQ(R"({count 1})", format("{}", DataCount{1u}));
+  EXPECT_EQ(R"( {count 1})", format("{:>10s}", DataCount{1u}));
+}
+
 TEST(FormattersTest, NameAssoc) {
   EXPECT_EQ(R"(3 "hi")", format("{}", NameAssoc{3u, "hi"}));
   EXPECT_EQ(R"(  0 "")", format("{:>6s}", NameAssoc{0u, ""}));

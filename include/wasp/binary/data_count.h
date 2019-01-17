@@ -14,16 +14,22 @@
 // limitations under the License.
 //
 
-WASP_V(0, Custom, "custom")
-WASP_V(1, Type, "type")
-WASP_V(2, Import, "import")
-WASP_V(3, Function, "function")
-WASP_V(4, Table, "table")
-WASP_V(5, Memory, "memory")
-WASP_V(6, Global, "global")
-WASP_V(7, Export, "export")
-WASP_V(8, Start, "start")
-WASP_V(9, Element, "element")
-WASP_V(10, Code, "code")
-WASP_V(11, Data, "data")
-WASP_V(12, DataCount, "datacount")
+#ifndef WASP_BINARY_DATA_COUNT_H_
+#define WASP_BINARY_DATA_COUNT_H_
+
+#include "wasp/base/types.h"
+
+namespace wasp {
+namespace binary {
+
+struct DataCount {
+  Index count;
+};
+
+bool operator==(const DataCount&, const DataCount&);
+bool operator!=(const DataCount&, const DataCount&);
+
+}  // namespace binary
+}  // namespace wasp
+
+#endif // WASP_BINARY_DATA_COUNT_H_

@@ -20,6 +20,7 @@
 #include "wasp/base/format.h"
 #include "wasp/binary/code.h"
 #include "wasp/binary/constant_expression.h"
+#include "wasp/binary/data_count.h"
 #include "wasp/binary/data_segment.h"
 #include "wasp/binary/element_segment.h"
 #include "wasp/binary/export.h"
@@ -88,6 +89,7 @@ WASP_DEFINE_FORMATTER(Start);
 WASP_DEFINE_FORMATTER(ElementSegment);
 WASP_DEFINE_FORMATTER(Code);
 WASP_DEFINE_FORMATTER(DataSegment);
+WASP_DEFINE_FORMATTER(DataCount);
 WASP_DEFINE_FORMATTER(NameAssoc);
 WASP_DEFINE_FORMATTER(IndirectNameAssoc);
 WASP_DEFINE_FORMATTER(NameSubsection);
