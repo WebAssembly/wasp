@@ -51,7 +51,7 @@ struct Options {
 };
 
 struct CallGrapher {
-  explicit CallGrapher(string_view filename, SpanU8 data, Options);
+  explicit CallGrapher(SpanU8 data, Options);
 
   void Run();
   void DoPrepass();
@@ -62,9 +62,7 @@ struct CallGrapher {
   optional<string_view> GetFunctionName(Index) const;
 
   ErrorsType errors;
-  std::string filename;
   Options options;
-  SpanU8 data;
   LazyModule<ErrorsType> module;
   std::map<Index, string_view> function_names;
   Index imported_function_count = 0;
@@ -113,17 +111,14 @@ int Main(int argc, char** argv) {
   }
 
   SpanU8 data{*optbuf};
-  CallGrapher grapher{filename, data, options};
+  CallGrapher grapher{data, options};
   grapher.Run();
 
   return 0;
 }
 
-CallGrapher::CallGrapher(string_view filename, SpanU8 data, Options options)
-    : filename(filename),
-      options{options},
-      data{data},
-      module{ReadModule(data, options.features, errors)} {}
+CallGrapher::CallGrapher(SpanU8 data, Options options)
+    : options{options}, module{ReadModule(data, options.features, errors)} {}
 
 void CallGrapher::Run() {
   DoPrepass();
@@ -184,8 +179,7 @@ void CallGrapher::CalculateCallGraph() {
         Index caller_index = imported_function_count;
         for (auto code : section.sequence) {
           auto instrs = ReadExpression(code.body, options.features, errors);
-          for (auto it = instrs.begin(), end = instrs.end(); it != end; ++it) {
-            auto instr = *it;
+          for (const auto& instr : instrs) {
             if (instr.opcode == Opcode::Call) {
               assert(instr.has_index_immediate());
               auto callee_index = instr.index_immediate();
@@ -238,8 +232,7 @@ void CallGrapher::WriteDotFile() {
   }
 
   print(*stream, "}}\n");
-
-  std::cout.flush();
+  stream->flush();
 }
 
 void CallGrapher::InsertFunctionName(Index index, string_view name) {
