@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_WRITE_WRITE_ELEMENT_TYPE_H_
 #define WASP_BINARY_WRITE_WRITE_ELEMENT_TYPE_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/element_type.h"
 #include "wasp/binary/encoding/element_type_encoding.h"
 #include "wasp/binary/write/write_u8.h"
@@ -26,8 +25,8 @@ namespace wasp {
 namespace binary {
 
 template <typename Iterator>
-Iterator Write(ElementType value, Iterator out, const Features& features) {
-  return Write(encoding::ElementType::Encode(value), out, features);
+Iterator Write(ElementType value, Iterator out) {
+  return Write(encoding::ElementType::Encode(value), out);
 }
 
 }  // namespace binary

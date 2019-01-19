@@ -19,14 +19,13 @@
 
 #include <algorithm>
 
-#include "wasp/base/features.h"
 #include "wasp/base/span.h"
 
 namespace wasp {
 namespace binary {
 
 template <typename Iterator>
-Iterator WriteBytes(SpanU8 value, Iterator out, const Features& features) {
+Iterator WriteBytes(SpanU8 value, Iterator out) {
   return std::copy(value.begin(), value.end(), out);
 }
 

@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_WRITE_WRITE_U32_H_
 #define WASP_BINARY_WRITE_WRITE_U32_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/write/write_var_int.h"
 
@@ -25,8 +24,8 @@ namespace wasp {
 namespace binary {
 
 template <typename Iterator>
-Iterator Write(u32 value, Iterator out, const Features& features) {
-  return WriteVarInt(value, out, features);
+Iterator Write(u32 value, Iterator out) {
+  return WriteVarInt(value, out);
 }
 
 }  // namespace binary

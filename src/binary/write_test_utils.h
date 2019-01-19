@@ -17,7 +17,6 @@
 #include <iterator>
 #include <vector>
 
-#include "wasp/base/features.h"
 #include "wasp/base/span.h"
 
 #include "gtest/gtest.h"
@@ -78,12 +77,10 @@ ClampedIterator<Iterator> MakeClampedIterator(Iterator begin, Iterator end) {
 }
 
 template <typename T>
-void ExpectWrite(wasp::SpanU8 expected,
-                 const T& value,
-                 const wasp::Features& features = wasp::Features{}) {
+void ExpectWrite(wasp::SpanU8 expected, const T& value) {
   std::vector<wasp::u8> result(expected.size());
   auto iter = wasp::binary::Write(
-      value, MakeClampedIterator(result.begin(), result.end()), features);
+      value, MakeClampedIterator(result.begin(), result.end()));
   EXPECT_FALSE(iter.overflow());
   EXPECT_EQ(iter.base(), result.end());
   EXPECT_EQ(expected, wasp::SpanU8{result});

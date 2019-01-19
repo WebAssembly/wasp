@@ -17,14 +17,13 @@
 #ifndef WASP_BINARY_WRITE_WRITE_U8_H_
 #define WASP_BINARY_WRITE_WRITE_U8_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/types.h"
 
 namespace wasp {
 namespace binary {
 
 template <typename Iterator>
-Iterator Write(u8 value, Iterator out, const Features& features) {
+Iterator Write(u8 value, Iterator out) {
   *out++ = value;
   return out;
 }

@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_WRITE_WRITE_OPCODE_H_
 #define WASP_BINARY_WRITE_WRITE_OPCODE_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/encoding/opcode_encoding.h"
 #include "wasp/binary/opcode.h"
 #include "wasp/binary/write/write_u32.h"
@@ -27,11 +26,11 @@ namespace wasp {
 namespace binary {
 
 template <typename Iterator>
-Iterator Write(Opcode value, Iterator out, const Features& features) {
+Iterator Write(Opcode value, Iterator out) {
   auto encoded = encoding::Opcode::Encode(value);
-  out = Write(encoded.u8_code, out, features);
+  out = Write(encoded.u8_code, out);
   if (encoded.u32_code) {
-    out = Write(*encoded.u32_code, out, features);
+    out = Write(*encoded.u32_code, out);
   }
   return out;
 }

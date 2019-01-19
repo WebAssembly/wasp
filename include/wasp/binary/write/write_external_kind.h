@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_WRITE_WRITE_EXTERNAL_KIND_H_
 #define WASP_BINARY_WRITE_WRITE_EXTERNAL_KIND_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/external_kind.h"
 #include "wasp/binary/encoding/external_kind_encoding.h"
 #include "wasp/binary/write/write_u8.h"
@@ -26,8 +25,8 @@ namespace wasp {
 namespace binary {
 
 template <typename Iterator>
-Iterator Write(ExternalKind value, Iterator out, const Features& features) {
-  return Write(encoding::ExternalKind::Encode(value), out, features);
+Iterator Write(ExternalKind value, Iterator out) {
+  return Write(encoding::ExternalKind::Encode(value), out);
 }
 
 }  // namespace binary

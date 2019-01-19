@@ -19,7 +19,6 @@
 
 #include <type_traits>
 
-#include "wasp/base/features.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/write/write_u8.h"
 
@@ -27,18 +26,15 @@ namespace wasp {
 namespace binary {
 
 template <typename T, typename Iterator, typename Cond>
-Iterator WriteVarIntLoop(T value,
-                         Iterator out,
-                         const Features& features,
-                         Cond&& end_cond) {
+Iterator WriteVarIntLoop(T value, Iterator out, Cond&& end_cond) {
   do {
     const u8 byte = value & 0x7f;
     value >>= 7;
     if (end_cond(value, byte)) {
-      out = Write(byte, out, features);
+      out = Write(byte, out);
       break;
     } else {
-      out = Write(byte | 0x80, out, features);
+      out = Write(byte | 0x80, out);
     }
   } while (true);
   return out;
@@ -46,22 +42,24 @@ Iterator WriteVarIntLoop(T value,
 
 // Unsigned integers.
 template <typename T, typename Iterator>
-typename std::enable_if<!std::is_signed<T>::value, Iterator>::type
-WriteVarInt(T value, Iterator out, const Features& features) {
-  return WriteVarIntLoop(value, out, features,
+typename std::enable_if<!std::is_signed<T>::value, Iterator>::type WriteVarInt(
+    T value,
+    Iterator out) {
+  return WriteVarIntLoop(value, out,
                          [](T value, u8 byte) { return value == 0; });
 }
 
 // Signed integers.
 template <typename T, typename Iterator>
-typename std::enable_if<std::is_signed<T>::value, Iterator>::type
-WriteVarInt(T value, Iterator out, const Features& features) {
+typename std::enable_if<std::is_signed<T>::value, Iterator>::type WriteVarInt(
+    T value,
+    Iterator out) {
   if (value < 0) {
-    return WriteVarIntLoop(value, out, features, [](T value, u8 byte) {
+    return WriteVarIntLoop(value, out, [](T value, u8 byte) {
       return value == -1 && (byte & 0x40) != 0;
     });
   } else {
-    return WriteVarIntLoop(value, out, features, [](T value, u8 byte) {
+    return WriteVarIntLoop(value, out, [](T value, u8 byte) {
       return value == 0 && (byte & 0x40) == 0;
     });
   }

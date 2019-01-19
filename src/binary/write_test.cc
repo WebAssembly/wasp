@@ -56,7 +56,7 @@ TEST(WriteTest, BlockType) {
 TEST(WriteTest, Bytes) {
   const std::vector<u8> input{{0x12, 0x34, 0x56}};
   std::vector<u8> output;
-  WriteBytes(input, std::back_inserter(output), Features{});
+  WriteBytes(input, std::back_inserter(output));
   EXPECT_EQ(input, output);
 }
 
@@ -597,8 +597,7 @@ TEST(WriteTest, WriteVector_u8) {
   const std::vector<u8> input{{'h', 'e', 'l', 'l', 'o'}};
   std::vector<u8> output(expected.size());
   auto iter = WriteVector(input.begin(), input.end(),
-                          MakeClampedIterator(output.begin(), output.end()),
-                          Features{});
+                          MakeClampedIterator(output.begin(), output.end()));
   EXPECT_FALSE(iter.overflow());
   EXPECT_EQ(iter.base(), output.end());
   EXPECT_EQ(expected, wasp::SpanU8{output});
@@ -613,8 +612,7 @@ TEST(WriteTest, WriteVector_u32) {
   const std::vector<u32> input{5, 128, 206412};
   std::vector<u8> output(expected.size());
   auto iter = WriteVector(input.begin(), input.end(),
-                          MakeClampedIterator(output.begin(), output.end()),
-                          Features{});
+                          MakeClampedIterator(output.begin(), output.end()));
   EXPECT_FALSE(iter.overflow());
   EXPECT_EQ(iter.base(), output.end());
   EXPECT_EQ(expected, wasp::SpanU8{output});

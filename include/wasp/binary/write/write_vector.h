@@ -19,7 +19,6 @@
 
 #include <iterator>
 
-#include "wasp/base/features.h"
 #include "wasp/binary/write/write_u32.h"
 
 namespace wasp {
@@ -28,13 +27,12 @@ namespace binary {
 template <typename InputIterator, typename OutputIterator>
 OutputIterator WriteVector(InputIterator in_begin,
                            InputIterator in_end,
-                           OutputIterator out,
-                           const Features& features) {
+                           OutputIterator out) {
   size_t count = std::distance(in_begin, in_end);
   assert(count < std::numeric_limits<u32>::max());
-  out = Write(static_cast<u32>(count), out, features);
+  out = Write(static_cast<u32>(count), out);
   for (auto it = in_begin; it != in_end; ++it) {
-    out = Write(*it, out, features);
+    out = Write(*it, out);
   }
   return out;
 }

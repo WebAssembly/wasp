@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_WRITE_WRITE_MUTABILITY_H_
 #define WASP_BINARY_WRITE_WRITE_MUTABILITY_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/encoding/mutability_encoding.h"
 #include "wasp/binary/mutability.h"
 #include "wasp/binary/write/write_u8.h"
@@ -26,8 +25,8 @@ namespace wasp {
 namespace binary {
 
 template <typename Iterator>
-Iterator Write(Mutability value, Iterator out, const Features& features) {
-  return Write(encoding::Mutability::Encode(value), out, features);
+Iterator Write(Mutability value, Iterator out) {
+  return Write(encoding::Mutability::Encode(value), out);
 }
 
 }  // namespace binary

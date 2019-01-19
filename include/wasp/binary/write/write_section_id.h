@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_WRITE_WRITE_SECTION_ID_H_
 #define WASP_BINARY_WRITE_WRITE_SECTION_ID_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/section_id.h"
 #include "wasp/binary/encoding/section_id_encoding.h"
 #include "wasp/binary/write/write_u32.h"
@@ -26,8 +25,8 @@ namespace wasp {
 namespace binary {
 
 template <typename Iterator>
-Iterator Write(SectionId value, Iterator out, const Features& features) {
-  return Write(encoding::SectionId::Encode(value), out, features);
+Iterator Write(SectionId value, Iterator out) {
+  return Write(encoding::SectionId::Encode(value), out);
 }
 
 }  // namespace binary

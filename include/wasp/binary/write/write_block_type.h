@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_WRITE_WRITE_BLOCK_TYPE_H_
 #define WASP_BINARY_WRITE_WRITE_BLOCK_TYPE_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/block_type.h"
 #include "wasp/binary/encoding/block_type_encoding.h"
 #include "wasp/binary/write/write_u8.h"
@@ -26,8 +25,8 @@ namespace wasp {
 namespace binary {
 
 template <typename Iterator>
-Iterator Write(BlockType value, Iterator out, const Features& features) {
-  return Write(encoding::BlockType::Encode(value), out, features);
+Iterator Write(BlockType value, Iterator out) {
+  return Write(encoding::BlockType::Encode(value), out);
 }
 
 }  // namespace binary

@@ -19,7 +19,6 @@
 
 #include <limits>
 
-#include "wasp/base/features.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
@@ -29,13 +28,12 @@ namespace wasp {
 namespace binary {
 
 template <typename Iterator>
-Iterator Write(string_view value, Iterator out, const Features& features) {
+Iterator Write(string_view value, Iterator out) {
   assert(value.size() < std::numeric_limits<u32>::max());
   u32 value_size = value.size();
-  out = Write(value_size, out, features);
+  out = Write(value_size, out);
   return WriteBytes(
-      SpanU8{reinterpret_cast<const u8*>(value.data()), value_size}, out,
-      features);
+      SpanU8{reinterpret_cast<const u8*>(value.data()), value_size}, out);
 }
 
 }  // namespace binary
