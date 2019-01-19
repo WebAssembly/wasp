@@ -20,6 +20,7 @@
 #include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
+#include "wasp/binary/limits.h"
 
 namespace wasp {
 namespace binary {
@@ -37,8 +38,30 @@ struct LimitsFlags {
   static constexpr u8 HasMax = 1;
   static constexpr u8 HasMaxAndShared = 3;
 
+  static u8 Encode(const DecodedLimitsFlags&);
+  static u8 Encode(const Limits&);
   static optional<DecodedLimitsFlags> Decode(u8, const Features&);
 };
+
+// static
+inline u8 LimitsFlags::Encode(const DecodedLimitsFlags& decoded) {
+  if (decoded.shared == Shared::No) {
+    if (decoded.has_max == HasMax::No) {
+      return NoMax;
+    } else {
+      return HasMax;
+    }
+  } else {
+    assert(decoded.has_max == HasMax::Yes);
+    return HasMaxAndShared;
+  }
+}
+
+// static
+inline u8 LimitsFlags::Encode(const Limits& limits) {
+  return Encode(
+      DecodedLimitsFlags{limits.max ? HasMax::Yes : HasMax::No, limits.shared});
+}
 
 // static
 inline optional<DecodedLimitsFlags> LimitsFlags::Decode(

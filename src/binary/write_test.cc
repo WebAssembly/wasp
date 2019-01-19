@@ -25,14 +25,25 @@
 #include "wasp/binary/write/write_block_type.h"
 #include "wasp/binary/write/write_bytes.h"
 #include "wasp/binary/write/write_element_type.h"
+#include "wasp/binary/write/write_export.h"
 #include "wasp/binary/write/write_external_kind.h"
+#include "wasp/binary/write/write_function.h"
+#include "wasp/binary/write/write_function_type.h"
+#include "wasp/binary/write/write_global_type.h"
+#include "wasp/binary/write/write_import.h"
+#include "wasp/binary/write/write_memory.h"
+#include "wasp/binary/write/write_memory_type.h"
 #include "wasp/binary/write/write_mutability.h"
 #include "wasp/binary/write/write_name_subsection_id.h"
 #include "wasp/binary/write/write_opcode.h"
 #include "wasp/binary/write/write_s32.h"
 #include "wasp/binary/write/write_s64.h"
 #include "wasp/binary/write/write_section_id.h"
+#include "wasp/binary/write/write_start.h"
 #include "wasp/binary/write/write_string.h"
+#include "wasp/binary/write/write_table.h"
+#include "wasp/binary/write/write_table_type.h"
+#include "wasp/binary/write/write_type_entry.h"
 #include "wasp/binary/write/write_u32.h"
 #include "wasp/binary/write/write_u8.h"
 #include "wasp/binary/write/write_value_type.h"
@@ -64,11 +75,72 @@ TEST(WriteTest, ElementType) {
   ExpectWrite<ElementType>( MakeSpanU8("\x70"), ElementType::Funcref);
 }
 
+TEST(WriteTest, Export) {
+  ExpectWrite<Export>(MakeSpanU8("\x02hi\x00\x03"),
+                      Export{ExternalKind::Function, "hi", 3});
+  ExpectWrite<Export>(MakeSpanU8("\x00\x01\xe8\x07"),
+                      Export{ExternalKind::Table, "", 1000});
+  ExpectWrite<Export>(MakeSpanU8("\x03mem\x02\x00"),
+                      Export{ExternalKind::Memory, "mem", 0});
+  ExpectWrite<Export>(MakeSpanU8("\x01g\x03\x01"),
+                      Export{ExternalKind::Global, "g", 1});
+}
+
 TEST(WriteTest, ExternalKind) {
   ExpectWrite<ExternalKind>(MakeSpanU8("\x00"), ExternalKind::Function);
   ExpectWrite<ExternalKind>(MakeSpanU8("\x01"), ExternalKind::Table);
   ExpectWrite<ExternalKind>(MakeSpanU8("\x02"), ExternalKind::Memory);
   ExpectWrite<ExternalKind>(MakeSpanU8("\x03"), ExternalKind::Global);
+}
+
+TEST(WriteTest, Function) {
+  ExpectWrite<Function>(MakeSpanU8("\x01"), Function{1});
+}
+
+TEST(WriteTest, FunctionType) {
+  ExpectWrite<FunctionType>(MakeSpanU8("\x00\x00"), FunctionType{{}, {}});
+  ExpectWrite<FunctionType>(
+      MakeSpanU8("\x02\x7f\x7e\x01\x7c"),
+      FunctionType{{ValueType::I32, ValueType::I64}, {ValueType::F64}});
+}
+
+TEST(WriteTest, GlobalType) {
+  ExpectWrite<GlobalType>(MakeSpanU8("\x7f\x00"),
+                          GlobalType{ValueType::I32, Mutability::Const});
+  ExpectWrite<GlobalType>(MakeSpanU8("\x7d\x01"),
+                          GlobalType{ValueType::F32, Mutability::Var});
+}
+
+TEST(WriteTest, Import) {
+  ExpectWrite<Import>(MakeSpanU8("\x01\x61\x04\x66unc\x00\x0b"),
+                      Import{"a", "func", 11u});
+
+  ExpectWrite<Import>(
+      MakeSpanU8("\x01\x62\x05table\x01\x70\x00\x01"),
+      Import{"b", "table", TableType{Limits{1}, ElementType::Funcref}});
+
+  ExpectWrite<Import>(MakeSpanU8("\x01\x63\x06memory\x02\x01\x00\x02"),
+                      Import{"c", "memory", MemoryType{Limits{0, 2}}});
+
+  ExpectWrite<Import>(
+      MakeSpanU8("\x01\x64\x06global\x03\x7f\x00"),
+      Import{"d", "global", GlobalType{ValueType::I32, Mutability::Const}});
+}
+
+TEST(WriteTest, Limits) {
+  ExpectWrite<Limits>(MakeSpanU8("\x00\x81\x01"), Limits{129});
+  ExpectWrite<Limits>(MakeSpanU8("\x01\x02\xe8\x07"), Limits{2, 1000});
+}
+
+TEST(WriteTest, Memory) {
+  ExpectWrite<Memory>(MakeSpanU8("\x01\x01\x02"),
+                      Memory{MemoryType{Limits{1, 2}}});
+}
+
+TEST(WriteTest, MemoryType) {
+  ExpectWrite<MemoryType>(MakeSpanU8("\x00\x01"), MemoryType{Limits{1}});
+  ExpectWrite<MemoryType>(MakeSpanU8("\x01\x00\x80\x01"),
+                          MemoryType{Limits{0, 128}});
 }
 
 TEST(WriteTest, Mutability) {
@@ -567,9 +639,30 @@ TEST(WriteTest, SectionId) {
   ExpectWrite<SectionId>(MakeSpanU8("\x0c"), SectionId::DataCount);
 }
 
+TEST(WriteTest, Start) {
+  ExpectWrite<Start>(MakeSpanU8("\x80\x02"), Start{256});
+}
+
 TEST(WriteTest, String) {
   ExpectWrite<string_view>(MakeSpanU8("\x05hello"), "hello");
   ExpectWrite<string_view>(MakeSpanU8("\x02hi"), std::string{"hi"});
+}
+
+TEST(WriteTest, Table) {
+  ExpectWrite<Table>(MakeSpanU8("\x70\x00\x01"),
+                     Table{TableType{Limits{1}, ElementType::Funcref}});
+}
+
+TEST(WriteTest, TableType) {
+  ExpectWrite<TableType>(MakeSpanU8("\x70\x00\x01"),
+                         TableType{Limits{1}, ElementType::Funcref});
+  ExpectWrite<TableType>(MakeSpanU8("\x70\x01\x01\x02"),
+                         TableType{Limits{1, 2}, ElementType::Funcref});
+}
+
+TEST(WriteTest, TypeEntry) {
+  ExpectWrite<TypeEntry>(MakeSpanU8("\x60\x00\x01\x7f"),
+                         TypeEntry{FunctionType{{}, {ValueType::I32}}});
 }
 
 TEST(WriteTest, U8) {
