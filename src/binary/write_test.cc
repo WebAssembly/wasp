@@ -28,6 +28,7 @@
 #include "wasp/binary/write/write_string.h"
 #include "wasp/binary/write/write_u32.h"
 #include "wasp/binary/write/write_u8.h"
+#include "wasp/binary/write/write_vector.h"
 
 #include "src/binary/test_utils.h"
 #include "src/binary/write_test_utils.h"
@@ -99,4 +100,32 @@ TEST(WriteTest, U32) {
   ExpectWrite<u32>(MakeSpanU8("\xd0\x84\x02"), 33360u);
   ExpectWrite<u32>(MakeSpanU8("\xa0\xb0\xc0\x30"), 101718048u);
   ExpectWrite<u32>(MakeSpanU8("\xf0\xf0\xf0\xf0\x03"), 1042036848u);
+}
+
+TEST(WriteTest, WriteVector_u8) {
+  const auto expected = MakeSpanU8("\x05hello");
+  const std::vector<u8> input{{'h', 'e', 'l', 'l', 'o'}};
+  std::vector<u8> output(expected.size());
+  auto iter = WriteVector(input.begin(), input.end(),
+                          MakeClampedIterator(output.begin(), output.end()),
+                          Features{});
+  EXPECT_FALSE(iter.overflow());
+  EXPECT_EQ(iter.base(), output.end());
+  EXPECT_EQ(expected, wasp::SpanU8{output});
+}
+
+TEST(WriteTest, WriteVector_u32) {
+  const auto expected = MakeSpanU8(
+      "\x03"  // Count.
+      "\x05"
+      "\x80\x01"
+      "\xcc\xcc\x0c");
+  const std::vector<u32> input{5, 128, 206412};
+  std::vector<u8> output(expected.size());
+  auto iter = WriteVector(input.begin(), input.end(),
+                          MakeClampedIterator(output.begin(), output.end()),
+                          Features{});
+  EXPECT_FALSE(iter.overflow());
+  EXPECT_EQ(iter.base(), output.end());
+  EXPECT_EQ(expected, wasp::SpanU8{output});
 }
