@@ -22,11 +22,69 @@
 
 #include "gtest/gtest.h"
 
+template <typename Iterator>
+class ClampedIterator {
+ public:
+  using difference_type = typename Iterator::difference_type;
+  using value_type = typename Iterator::value_type;
+  using pointer = typename Iterator::pointer;
+  using reference = typename Iterator::reference;
+  using iterator_category = typename Iterator::iterator_category;
+
+  explicit ClampedIterator(Iterator begin, Iterator end)
+      : iter_{begin}, end_{end} {}
+
+  bool overflow() const { return overflow_; }
+
+  reference operator*() { return iter_ != end_ ? *iter_ : dummy_; };
+  pointer operator->() { return &(*this); };
+
+  Iterator base() { return iter_; }
+
+  ClampedIterator& operator++() {
+    if (iter_ != end_) {
+      ++iter_;
+    } else {
+      overflow_ = true;
+    }
+    return *this;
+  }
+
+  ClampedIterator operator++(int) {
+    auto temp = *this;
+    operator++();
+    return temp;
+  }
+
+  friend bool operator==(const ClampedIterator& lhs,
+                         const ClampedIterator& rhs) {
+    return lhs.iter_ == rhs.iter_;
+  }
+
+  friend bool operator!=(const ClampedIterator& lhs,
+                         const ClampedIterator& rhs) {
+    return !(lhs == rhs);
+  }
+
+ private:
+  Iterator iter_, end_;
+  value_type dummy_{};
+  bool overflow_ = false;
+};
+
+template <typename Iterator>
+ClampedIterator<Iterator> MakeClampedIterator(Iterator begin, Iterator end) {
+  return ClampedIterator<Iterator>{begin, end};
+}
+
 template <typename T>
 void ExpectWrite(wasp::SpanU8 expected,
                  const T& value,
                  const wasp::Features& features = wasp::Features{}) {
-  std::vector<wasp::u8> result;
-  wasp::binary::Write(value, std::back_inserter(result), features);
+  std::vector<wasp::u8> result(expected.size());
+  auto iter = wasp::binary::Write(
+      value, MakeClampedIterator(result.begin(), result.end()), features);
+  EXPECT_FALSE(iter.overflow());
+  EXPECT_EQ(iter.base(), result.end());
   EXPECT_EQ(expected, wasp::SpanU8{result});
 }
