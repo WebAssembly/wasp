@@ -15,16 +15,19 @@
 //
 
 #include <iterator>
+#include <string>
 #include <vector>
 
 #include "gtest/gtest.h"
 
 // Write() functions must be declared here before they can be used by
 // ExpectWrite (defined in write_test_utils.h below).
-#include "wasp/binary/write/write_u8.h"
-#include "wasp/binary/write/write_u32.h"
+#include "wasp/binary/write/write_bytes.h"
 #include "wasp/binary/write/write_s32.h"
 #include "wasp/binary/write/write_s64.h"
+#include "wasp/binary/write/write_string.h"
+#include "wasp/binary/write/write_u32.h"
+#include "wasp/binary/write/write_u8.h"
 
 #include "src/binary/test_utils.h"
 #include "src/binary/write_test_utils.h"
@@ -32,6 +35,13 @@
 using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
+
+TEST(WriteTest, Bytes) {
+  const std::vector<u8> input{{0x12, 0x34, 0x56}};
+  std::vector<u8> output;
+  WriteBytes(input, std::back_inserter(output), Features{});
+  EXPECT_EQ(input, output);
+}
 
 TEST(WriteTest, S32) {
   ExpectWrite<s32>(MakeSpanU8("\x20"), 32);
@@ -72,6 +82,11 @@ TEST(WriteTest, S64) {
                    1070725794579330814);
   ExpectWrite<s64>(MakeSpanU8("\xfe\xed\xfe\xed\xfe\xed\xfe\xed\x4e"),
                    -3540960223848057090);
+}
+
+TEST(WriteTest, String) {
+  ExpectWrite<string_view>(MakeSpanU8("\x05hello"), "hello");
+  ExpectWrite<string_view>(MakeSpanU8("\x02hi"), std::string{"hi"});
 }
 
 TEST(WriteTest, U8) {
