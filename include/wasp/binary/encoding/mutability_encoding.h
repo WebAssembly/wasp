@@ -17,8 +17,9 @@
 #ifndef WASP_BINARY_MUTABILITY_ENCODING_H
 #define WASP_BINARY_MUTABILITY_ENCODING_H
 
-#include "wasp/base/types.h"
+#include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
+#include "wasp/base/types.h"
 #include "wasp/binary/mutability.h"
 
 namespace wasp {
@@ -30,8 +31,22 @@ struct Mutability {
 #include "wasp/binary/mutability.def"
 #undef WASP_V
 
+  static u8 Encode(::wasp::binary::Mutability);
   static optional<::wasp::binary::Mutability> Decode(u8);
 };
+
+// static
+inline u8 Mutability::Encode(::wasp::binary::Mutability decoded) {
+  switch (decoded) {
+#define WASP_V(val, Name, str)           \
+  case ::wasp::binary::Mutability::Name: \
+    return val;
+#include "wasp/binary/mutability.def"
+#undef WASP_V
+    default:
+      WASP_UNREACHABLE();
+  }
+}
 
 // static
 inline optional<::wasp::binary::Mutability> Mutability::Decode(u8 val) {

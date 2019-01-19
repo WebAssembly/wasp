@@ -17,8 +17,9 @@
 #ifndef WASP_BINARY_EXTERNAL_KIND_ENCODING_H
 #define WASP_BINARY_EXTERNAL_KIND_ENCODING_H
 
-#include "wasp/base/types.h"
+#include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
+#include "wasp/base/types.h"
 #include "wasp/binary/external_kind.h"
 
 namespace wasp {
@@ -30,8 +31,22 @@ struct ExternalKind {
 #include "wasp/binary/external_kind.def"
 #undef WASP_V
 
+  static u8 Encode(::wasp::binary::ExternalKind);
   static optional<::wasp::binary::ExternalKind> Decode(u8);
 };
+
+// static
+inline u8 ExternalKind::Encode(::wasp::binary::ExternalKind decoded) {
+  switch (decoded) {
+#define WASP_V(val, Name, str)             \
+  case ::wasp::binary::ExternalKind::Name: \
+    return val;
+#include "wasp/binary/external_kind.def"
+#undef WASP_V
+    default:
+      WASP_UNREACHABLE();
+  }
+}
 
 // static
 inline optional<::wasp::binary::ExternalKind> ExternalKind::Decode(u8 val) {

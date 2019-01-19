@@ -17,8 +17,9 @@
 #ifndef WASP_BINARY_ELEMENT_TYPE_ENCODING_H
 #define WASP_BINARY_ELEMENT_TYPE_ENCODING_H
 
-#include "wasp/base/types.h"
+#include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
+#include "wasp/base/types.h"
 #include "wasp/binary/element_type.h"
 
 namespace wasp {
@@ -30,8 +31,22 @@ struct ElementType {
 #include "wasp/binary/element_type.def"
 #undef WASP_V
 
+  static u8 Encode(::wasp::binary::ElementType);
   static optional<::wasp::binary::ElementType> Decode(u8);
 };
+
+// static
+inline u8 ElementType::Encode(::wasp::binary::ElementType decoded) {
+  switch (decoded) {
+#define WASP_V(val, Name, str)            \
+  case ::wasp::binary::ElementType::Name: \
+    return val;
+#include "wasp/binary/element_type.def"
+#undef WASP_V
+    default:
+      WASP_UNREACHABLE();
+  }
+}
 
 // static
 inline optional<::wasp::binary::ElementType> ElementType::Decode(u8 val) {

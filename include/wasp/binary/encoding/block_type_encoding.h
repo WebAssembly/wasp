@@ -17,8 +17,9 @@
 #ifndef WASP_BINARY_BLOCK_TYPE_ENCODING_H
 #define WASP_BINARY_BLOCK_TYPE_ENCODING_H
 
-#include "wasp/base/types.h"
+#include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
+#include "wasp/base/types.h"
 #include "wasp/binary/block_type.h"
 
 namespace wasp {
@@ -30,8 +31,22 @@ struct BlockType {
 #include "wasp/binary/block_type.def"
 #undef WASP_V
 
+  static u8 Encode(::wasp::binary::BlockType);
   static optional<::wasp::binary::BlockType> Decode(u8);
 };
+
+// static
+inline u8 BlockType::Encode(::wasp::binary::BlockType decoded) {
+  switch (decoded) {
+#define WASP_V(val, Name, str)          \
+  case ::wasp::binary::BlockType::Name: \
+    return val;
+#include "wasp/binary/block_type.def"
+#undef WASP_V
+  default:
+    WASP_UNREACHABLE();
+  }
+}
 
 // static
 inline optional<::wasp::binary::BlockType> BlockType::Decode(u8 val) {

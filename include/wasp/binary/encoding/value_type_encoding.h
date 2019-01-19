@@ -17,8 +17,9 @@
 #ifndef WASP_BINARY_VALUE_TYPE_ENCODING_H
 #define WASP_BINARY_VALUE_TYPE_ENCODING_H
 
-#include "wasp/base/types.h"
+#include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
+#include "wasp/base/types.h"
 #include "wasp/binary/value_type.h"
 
 namespace wasp {
@@ -30,8 +31,22 @@ struct ValueType {
 #include "wasp/binary/value_type.def"
 #undef WASP_V
 
+  static u8 Encode(::wasp::binary::ValueType);
   static optional<::wasp::binary::ValueType> Decode(u8);
 };
+
+// static
+inline u8 ValueType::Encode(::wasp::binary::ValueType decoded) {
+  switch (decoded) {
+#define WASP_V(val, Name, str)          \
+  case ::wasp::binary::ValueType::Name: \
+    return val;
+#include "wasp/binary/value_type.def"
+#undef WASP_V
+    default:
+      WASP_UNREACHABLE();
+  }
+}
 
 // static
 inline optional<::wasp::binary::ValueType> ValueType::Decode(u8 val) {

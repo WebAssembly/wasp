@@ -17,14 +17,20 @@
 #ifndef WASP_BINARY_OPCODE_ENCODING_H
 #define WASP_BINARY_OPCODE_ENCODING_H
 
-#include "wasp/base/types.h"
 #include "wasp/base/features.h"
+#include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
+#include "wasp/base/types.h"
 #include "wasp/binary/opcode.h"
 
 namespace wasp {
 namespace binary {
 namespace encoding {
+
+struct EncodedOpcode {
+  u8 u8_code;
+  optional<u32> u32_code;
+};
 
 struct Opcode {
   static constexpr u8 MiscPrefix = 0xfc;
@@ -32,6 +38,7 @@ struct Opcode {
   static constexpr u8 ThreadsPrefix = 0xfe;
 
   static bool IsPrefixByte(u8, const Features&);
+  static EncodedOpcode Encode(::wasp::binary::Opcode);
   static optional<::wasp::binary::Opcode> Decode(u8 code, const Features&);
   static optional<::wasp::binary::Opcode> Decode(u8 prefix,
                                                  u32 code,
@@ -53,6 +60,27 @@ inline bool Opcode::IsPrefixByte(u8 code, const Features& features) {
 
     default:
       return false;
+  }
+}
+
+// static
+inline EncodedOpcode Opcode::Encode(::wasp::binary::Opcode decoded) {
+  switch (decoded) {
+#define WASP_V(prefix, code, Name, str) \
+  case ::wasp::binary::Opcode::Name:    \
+    return {code, {}};
+#define WASP_FEATURE_V(prefix, code, Name, str, feature) \
+  case ::wasp::binary::Opcode::Name:                     \
+    return {code, {}};
+#define WASP_PREFIX_V(prefix, code, Name, str, feature) \
+  case ::wasp::binary::Opcode::Name:                    \
+    return {prefix, code};
+#include "wasp/binary/opcode.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+#undef WASP_PREFIX_V
+    default:
+      WASP_UNREACHABLE();
   }
 }
 

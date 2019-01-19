@@ -17,8 +17,9 @@
 #ifndef WASP_BINARY_SECTION_ID_ENCODING_H
 #define WASP_BINARY_SECTION_ID_ENCODING_H
 
-#include "wasp/base/types.h"
+#include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
+#include "wasp/base/types.h"
 #include "wasp/binary/section_id.h"
 
 namespace wasp {
@@ -30,8 +31,22 @@ struct SectionId {
 #include "wasp/binary/section_id.def"
 #undef WASP_V
 
+  static u32 Encode(::wasp::binary::SectionId);
   static optional<::wasp::binary::SectionId> Decode(u32);
 };
+
+// static
+inline u32 SectionId::Encode(::wasp::binary::SectionId decoded) {
+  switch (decoded) {
+#define WASP_V(val, Name, str)          \
+  case ::wasp::binary::SectionId::Name: \
+    return val;
+#include "wasp/binary/section_id.def"
+#undef WASP_V
+    default:
+      WASP_UNREACHABLE();
+  }
+}
 
 // static
 inline optional<::wasp::binary::SectionId> SectionId::Decode(u32 val) {
