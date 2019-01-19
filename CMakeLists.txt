@@ -19,7 +19,7 @@ project(wasp)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
-add_definitions(-Wall)
+add_definitions(-Wall -Wextra -Wno-unused-parameter)
 
 add_subdirectory(third_party/gtest)
 
@@ -97,6 +97,7 @@ add_executable(wasp_unittests
   src/binary/lazy_sequence_test.cc
   src/binary/read_test.cc
   src/binary/test_utils.cc
+  src/binary/write_test.cc
 )
 
 target_link_libraries(wasp_unittests
