@@ -57,3 +57,42 @@ TEST(LazyModuleTest, Basic) {
 
   ExpectNoErrors(errors);
 }
+
+TEST(LazyModuleTest, BadMagic) {
+  TestErrors errors;
+  auto data = MakeSpanU8("wasm\x01\0\0\0");
+  auto module = ReadModule(data, Features{}, errors);
+
+  ExpectError({{0, "magic"},
+               {4, R"(Mismatch: expected "\00\61\73\6d", got "\77\61\73\6d")"}},
+              errors, data);
+}
+
+TEST(LazyModuleTest, Magic_PastEnd) {
+  TestErrors errors;
+  auto data = MakeSpanU8("\0as");
+  auto module = ReadModule(data, Features{}, errors);
+
+  // TODO(binji): This should produce better errors.
+  ExpectErrors({{{0, "magic"}, {0, "Unable to read 4 bytes"}},
+                {{0, "version"}, {0, "Unable to read 4 bytes"}}},
+               errors, data);
+}
+
+TEST(LazyModuleTest, BadVersion) {
+  TestErrors errors;
+  auto data = MakeSpanU8("\0asm\x02\0\0\0");
+  auto module = ReadModule(data, Features{}, errors);
+
+  ExpectError({{4, "version"},
+               {8, R"(Mismatch: expected "\01\00\00\00", got "\02\00\00\00")"}},
+              errors, data);
+}
+
+TEST(LazyModuleTest, Version_PastEnd) {
+  TestErrors errors;
+  auto data = MakeSpanU8("\0asm\x01");
+  auto module = ReadModule(data, Features{}, errors);
+
+  ExpectError({{4, "version"}, {4, "Unable to read 4 bytes"}}, errors, data);
+}

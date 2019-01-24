@@ -17,33 +17,28 @@
 #include "wasp/base/formatters.h"
 #include "wasp/binary/encoding.h"  // XXX
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_bytes.h"
+#include "wasp/binary/read/read_bytes_expected.h"
 #include "wasp/binary/read/read_section.h"
 
 namespace wasp {
 namespace binary {
+
+namespace {
+
+constexpr SpanU8 kMagicSpan{encoding::Magic};
+constexpr SpanU8 kVersionSpan{encoding::Version};
+
+}  // namespace
 
 template <typename Errors>
 LazyModule<Errors>::LazyModule(SpanU8 data,
                                const Features& features,
                                Errors& errors)
     : data{data},
-      magic{ReadBytes(&data, 4, features, errors)},
-      version{ReadBytes(&data, 4, features, errors)},
-      sections{data, features, errors} {
-  const SpanU8 kMagic{encoding::Magic};
-  const SpanU8 kVersion{encoding::Version};
-
-  if (magic != kMagic) {
-    errors.OnError(
-        data, format("Magic mismatch: expected {}, got {}", kMagic, *magic));
-  }
-
-  if (version != kVersion) {
-    errors.OnError(data, format("Version mismatch: expected {}, got {}",
-                                kVersion, *version));
-  }
-}
+      magic{ReadBytesExpected(&data, kMagicSpan, features, errors, "magic")},
+      version{
+          ReadBytesExpected(&data, kVersionSpan, features, errors, "version")},
+      sections{data, features, errors} {}
 
 template <typename Errors>
 LazyModule<Errors> ReadModule(SpanU8 data,
