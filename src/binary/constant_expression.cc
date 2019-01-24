@@ -21,7 +21,7 @@
 namespace wasp {
 namespace binary {
 
-WASP_OPERATOR_EQ_NE_1(ConstantExpression, data)
+WASP_OPERATOR_EQ_NE_1(ConstantExpression, instruction)
 
 }  // namespace binary
 }  // namespace wasp

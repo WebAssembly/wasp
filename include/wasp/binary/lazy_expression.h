@@ -19,7 +19,6 @@
 
 #include "wasp/base/features.h"
 #include "wasp/base/span.h"
-#include "wasp/binary/constant_expression.h"
 #include "wasp/binary/expression.h"
 #include "wasp/binary/lazy_sequence.h"
 #include "wasp/binary/read/read_instruction.h"
@@ -40,13 +39,6 @@ LazyExpression<Errors> ReadExpression(SpanU8 data,
 
 template <typename Errors>
 LazyExpression<Errors> ReadExpression(Expression expr,
-                                      const Features& features,
-                                      Errors& errors) {
-  return ReadExpression(expr.data, features, errors);
-}
-
-template <typename Errors>
-LazyExpression<Errors> ReadExpression(ConstantExpression expr,
                                       const Features& features,
                                       Errors& errors) {
   return ReadExpression(expr.data, features, errors);

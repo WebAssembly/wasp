@@ -120,7 +120,6 @@ struct Tool {
                    string_view prefix = "",
                    int octets_per_line = 16,
                    int octets_per_group = 2);
-  void PrintConstantExpression(const ConstantExpression&);
 
   size_t file_offset(SpanU8 data);
 
@@ -568,9 +567,7 @@ void Tool::DoGlobalSection(Pass pass, LazyGlobalSection<ErrorsType> section) {
   if (ShouldPrintDetails(pass)) {
     Index count = imported_global_count;
     for (auto global : section.sequence) {
-      print(" - global[{}] {} - ", count, global.global_type);
-      PrintConstantExpression(global.init);
-      print("\n");
+      print(" - global[{}] {} - {}\n", count, global.global_type, global.init);
       ++count;
     }
   }
@@ -609,10 +606,9 @@ void Tool::DoElementSection(Pass pass, LazyElementSection<ErrorsType> section) {
     for (auto element : section.sequence) {
       Index offset = 0;
       if (element.is_active()) {
-        print(" - segment[{}] table={} count={} - init ", count,
-              element.active().table_index, element.init.size());
-        PrintConstantExpression(element.active().offset);
-        print("\n");
+        print(" - segment[{}] table={} count={} - init {}\n", count,
+              element.active().table_index, element.init.size(),
+              element.active().offset);
         offset = GetI32Value(element.active().offset).value_or(0);
       } else {
         print(" - segment[{}] count={} element_type={} passive\n", count,
@@ -655,10 +651,9 @@ void Tool::DoDataSection(Pass pass, LazyDataSection<ErrorsType> section) {
     for (auto data : section.sequence) {
       Index offset = 0;
       if (data.is_active()) {
-        print(" - segment[{}] memory={} size={} - init ", count,
-              data.active().memory_index, data.init.size());
-        PrintConstantExpression(data.active().offset);
-        print("\n");
+        print(" - segment[{}] memory={} size={} - init {}\n", count,
+              data.active().memory_index, data.init.size(),
+              data.active().offset);
         offset = GetI32Value(data.active().offset).value_or(0);
       } else {
         print(" - segment[{}] size={} passive\n", count, data.init.size());
@@ -826,16 +821,9 @@ optional<string_view> Tool::GetGlobalName(Index index) const {
 }
 
 optional<Index> Tool::GetI32Value(const ConstantExpression& expr) {
-  ErrorsNop errors;
-  auto instrs = ReadExpression(expr, options.features, errors);
-  auto it = instrs.begin();
-  if (it == instrs.end()) {
-    return nullopt;
-  }
-  auto instr = *it;
-  switch (instr.opcode) {
+  switch (expr.instruction.opcode) {
     case Opcode::I32Const:
-      return instr.s32_immediate();
+      return expr.instruction.s32_immediate();
 
     default:
       return nullopt;
@@ -896,17 +884,6 @@ void Tool::PrintMemory(SpanU8 start,
     }
     print("\n");
     remove_prefix(&data, line_size);
-  }
-}
-
-void Tool::PrintConstantExpression(const ConstantExpression& expr) {
-  auto instrs = ReadExpression(expr, options.features, errors);
-  string_view space;
-  for (auto instr : instrs) {
-    if (instr.opcode != Opcode::End) {
-      print("{}{}", space, instr);
-      space = " ";
-    }
   }
 }
 

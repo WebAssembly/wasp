@@ -358,7 +358,7 @@ typename Ctx::iterator formatter<::wasp::binary::ConstantExpression>::format(
     const ::wasp::binary::ConstantExpression& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{}", self.data);
+  format_to(buf, "{} end", self.instruction);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 

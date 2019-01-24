@@ -153,9 +153,9 @@ TEST(LazySectionTest, Global) {
   ExpectSection(
       {
           Global{GlobalType{ValueType::I32, Mutability::Var},
-                 MakeConstantExpression("\x41\x00\x0b")},
+                 ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}},
           Global{GlobalType{ValueType::I64, Mutability::Const},
-                 MakeConstantExpression("\x42\x01\x0b")},
+                 ConstantExpression{Instruction{Opcode::I64Const, s64{1}}}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -202,8 +202,14 @@ TEST(LazySectionTest, Element) {
 
   ExpectSection(
       {
-          ElementSegment{0, MakeConstantExpression("\x41\x00\x0b"), {0, 1}},
-          ElementSegment{0, MakeConstantExpression("\x41\x02\x0b"), {3}},
+          ElementSegment{
+              0,
+              ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
+              {0, 1}},
+          ElementSegment{
+              0,
+              ConstantExpression{Instruction{Opcode::I32Const, s32{2}}},
+              {3}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -240,11 +246,14 @@ TEST(LazySectionTest, Data) {
 
   ExpectSection(
       {
-          DataSegment{0, MakeConstantExpression("\x41\x00\x0b"),
+          DataSegment{0,
+                      ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
                       MakeSpanU8("hi")},
-          DataSegment{0, MakeConstantExpression("\x41\x02\x0b"),
+          DataSegment{0,
+                      ConstantExpression{Instruction{Opcode::I32Const, s32{2}}},
                       MakeSpanU8("see")},
-          DataSegment{0, MakeConstantExpression("\x41\x05\x0b"),
+          DataSegment{0,
+                      ConstantExpression{Instruction{Opcode::I32Const, s32{5}}},
                       MakeSpanU8("you")},
       },
       sec);

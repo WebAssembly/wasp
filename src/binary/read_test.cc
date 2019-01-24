@@ -194,34 +194,29 @@ TEST(ReadTest, Code_PastEnd) {
 
 TEST(ReadTest, ConstantExpression) {
   // i32.const
-  {
-    const auto data = MakeSpanU8("\x41\x00\x0b");
-    ExpectRead<ConstantExpression>(ConstantExpression{data}, data);
-  }
+  ExpectRead<ConstantExpression>(
+      ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
+      MakeSpanU8("\x41\x00\x0b"));
 
   // i64.const
-  {
-    const auto data = MakeSpanU8("\x42\x80\x80\x80\x80\x80\x01\x0b");
-    ExpectRead<ConstantExpression>(ConstantExpression{data}, data);
-  }
+  ExpectRead<ConstantExpression>(
+      ConstantExpression{Instruction{Opcode::I64Const, s64{34359738368}}},
+      MakeSpanU8("\x42\x80\x80\x80\x80\x80\x01\x0b"));
 
   // f32.const
-  {
-    const auto data = MakeSpanU8("\x43\x00\x00\x00\x00\x0b");
-    ExpectRead<ConstantExpression>(ConstantExpression{data}, data);
-  }
+  ExpectRead<ConstantExpression>(
+      ConstantExpression{Instruction{Opcode::F32Const, f32{0}}},
+      MakeSpanU8("\x43\x00\x00\x00\x00\x0b"));
 
   // f64.const
-  {
-    const auto data = MakeSpanU8("\x44\x00\x00\x00\x00\x00\x00\x00\x00\x0b");
-    ExpectRead<ConstantExpression>(ConstantExpression{data}, data);
-  }
+  ExpectRead<ConstantExpression>(
+      ConstantExpression{Instruction{Opcode::F64Const, f64{0}}},
+      MakeSpanU8("\x44\x00\x00\x00\x00\x00\x00\x00\x00\x0b"));
 
-  // get_global
-  {
-    const auto data = MakeSpanU8("\x23\x00\x0b");
-    ExpectRead<ConstantExpression>(ConstantExpression{data}, data);
-  }
+  // global.get
+  ExpectRead<ConstantExpression>(
+      ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
+      MakeSpanU8("\x23\x00\x0b"));
 }
 
 TEST(ReadTest, ConstantExpression_NoEnd) {
@@ -343,9 +338,10 @@ TEST(ReadTest, ReadCount_PastEnd) {
 }
 
 TEST(ReadTest, DataSegment_MVP) {
-  ExpectRead<DataSegment>(DataSegment{1, MakeConstantExpression("\x42\x01\x0b"),
-                                      MakeSpanU8("wxyz")},
-                          MakeSpanU8("\x01\x42\x01\x0b\x04wxyz"));
+  ExpectRead<DataSegment>(
+      DataSegment{1, ConstantExpression{Instruction{Opcode::I64Const, s64{1}}},
+                  MakeSpanU8("wxyz")},
+      MakeSpanU8("\x01\x42\x01\x0b\x04wxyz"));
 }
 
 TEST(ReadTest, DataSegment_MVP_PastEnd) {
@@ -377,7 +373,7 @@ TEST(ReadTest, DataSegment_BulkMemory) {
                           MakeSpanU8("\x01\x04wxyz"), features);
 
   ExpectRead<DataSegment>(
-      DataSegment{1u, MakeConstantExpression("\x41\x02\x0b"),
+      DataSegment{1u, ConstantExpression{Instruction{Opcode::I32Const, s32{2}}},
                   MakeSpanU8("xyz")},
       MakeSpanU8("\x02\x01\x41\x02\x0b\x03xyz"), features);
 }
@@ -430,7 +426,9 @@ TEST(ReadTest, DataSegment_BulkMemory_PastEnd) {
 
 TEST(ReadTest, ElementSegment_MVP) {
   ExpectRead<ElementSegment>(
-      ElementSegment{0, MakeConstantExpression("\x41\x01\x0b"), {1, 2, 3}},
+      ElementSegment{0,
+                     ConstantExpression{Instruction{Opcode::I32Const, s32{1}}},
+                     {1, 2, 3}},
       MakeSpanU8("\x00\x41\x01\x0b\x03\x01\x02\x03"));
 }
 
@@ -461,7 +459,9 @@ TEST(ReadTest, ElementSegment_BulkMemory) {
                              MakeSpanU8("\x01\x70\x03\x01\x02\x03"), features);
 
   ExpectRead<ElementSegment>(
-      ElementSegment{1u, MakeConstantExpression("\x41\x02\x0b"), {3, 4}},
+      ElementSegment{1u,
+                     ConstantExpression{Instruction{Opcode::I32Const, s32{2}}},
+                     {3, 4}},
       MakeSpanU8("\x02\x01\x41\x02\x0b\x02\x03\x04"), features);
 }
 
@@ -677,9 +677,10 @@ TEST(ReadTest, FunctionType_PastEnd) {
 TEST(ReadTest, Global) {
   // i32 global with i64.const constant expression. This will fail validation
   // but still can be successfully parsed.
-  ExpectRead<Global>(Global{GlobalType{ValueType::I32, Mutability::Var},
-                            MakeConstantExpression("\x42\x00\x0b")},
-                     MakeSpanU8("\x7f\x01\x42\x00\x0b"));
+  ExpectRead<Global>(
+      Global{GlobalType{ValueType::I32, Mutability::Var},
+             ConstantExpression{Instruction{Opcode::I64Const, s64{0}}}},
+      MakeSpanU8("\x7f\x01\x42\x00\x0b"));
 }
 
 TEST(ReadTest, Global_PastEnd) {

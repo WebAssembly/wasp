@@ -33,11 +33,6 @@ Expression MakeExpression(const char (&str)[N]) {
   return Expression{MakeSpanU8<N>(str)};
 }
 
-template <size_t N>
-ConstantExpression MakeConstantExpression(const char (&str)[N]) {
-  return ConstantExpression{MakeSpanU8<N>(str)};
-}
-
 }  // namespace test
 }  // namespace binary
 }  // namespace wasp

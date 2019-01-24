@@ -33,7 +33,6 @@ optional<ConstantExpression> Read(SpanU8* data,
                                   const Features& features,
                                   Errors& errors,
                                   Tag<ConstantExpression>) {
-  SpanU8 orig_data = *data;
   ErrorsContextGuard<Errors> guard{errors, *data, "constant expression"};
   WASP_TRY_READ(instr, Read<Instruction>(data, features, errors));
   switch (instr.opcode) {
@@ -57,8 +56,7 @@ optional<ConstantExpression> Read(SpanU8* data,
     errors.OnError(*data, "Expected end instruction");
     return nullopt;
   }
-  return ConstantExpression{
-      orig_data.subspan(0, data->begin() - orig_data.begin())};
+  return ConstantExpression{instr};
 }
 
 }  // namespace binary

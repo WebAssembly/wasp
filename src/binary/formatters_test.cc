@@ -211,10 +211,10 @@ TEST(FormattersTest, Expression) {
 }
 
 TEST(FormattersTest, ConstantExpression) {
-  EXPECT_EQ(R"("\00\01\02")",
-            format("{}", ConstantExpression{MakeSpanU8("\00\01\02")}));
-  EXPECT_EQ(R"(   "\00")",
-            format("{:>8s}", ConstantExpression{MakeSpanU8("\00")}));
+  EXPECT_EQ(R"(i32.add end)",
+            format("{}", ConstantExpression{Instruction{Opcode::I32Add}}));
+  EXPECT_EQ(R"(   nop end)",
+            format("{:>10s}", ConstantExpression{Instruction{Opcode::Nop}}));
 }
 
 TEST(FormattersTest, Opcode) {
@@ -316,13 +316,15 @@ TEST(FormattersTest, Memory) {
 }
 
 TEST(FormattersTest, Global) {
-  EXPECT_EQ(R"({type const i32, init "\fa\ce"})",
-            format("{}", Global{GlobalType{ValueType::I32, Mutability::Const},
-                                ConstantExpression{MakeSpanU8("\xfa\xce")}}));
   EXPECT_EQ(
-      R"(  {type var f32, init ""})",
-      format("{:>25s}", Global{GlobalType{ValueType::F32, Mutability::Var},
-                               ConstantExpression{MakeSpanU8("")}}));
+      R"({type const i32, init i32.const 0 end})",
+      format("{}",
+             Global{GlobalType{ValueType::I32, Mutability::Const},
+                    ConstantExpression{Instruction{Opcode::I32Const, 0U}}}));
+  EXPECT_EQ(
+      R"(  {type var f32, init nop end})",
+      format("{:>30s}", Global{GlobalType{ValueType::F32, Mutability::Var},
+                               ConstantExpression{Instruction{Opcode::Nop}}}));
 }
 
 TEST(FormattersTest, Start) {
@@ -332,16 +334,16 @@ TEST(FormattersTest, Start) {
 
 TEST(FormattersTest, ElementSegment_Active) {
   EXPECT_EQ(
-      R"({table 1, offset "\0b", init [2 3]})",
-      format("{}",
-             ElementSegment{
-                 Index{1u}, ConstantExpression{MakeSpanU8("\x0b")}, {2u, 3u}}));
+      R"({table 1, offset nop end, init [2 3]})",
+      format("{}", ElementSegment{Index{1u},
+                                  ConstantExpression{Instruction{Opcode::Nop}},
+                                  {2u, 3u}}));
 
   EXPECT_EQ(
-      R"( {table 0, offset "", init []})",
-      format(
-          "{:>30s}",
-          ElementSegment{Index{0u}, ConstantExpression{MakeSpanU8("")}, {}}));
+      R"( {table 0, offset nop end, init []})",
+      format("{:>35s}",
+             ElementSegment{
+                 Index{0u}, ConstantExpression{Instruction{Opcode::Nop}}, {}}));
 }
 
 TEST(FormattersTest, ElementSegment_Passive) {
@@ -367,16 +369,18 @@ TEST(FormattersTest, Code) {
 
 TEST(FormattersTest, DataSegment_Active) {
   EXPECT_EQ(
-      R"({memory 0, offset "\0b", init "\12\34"})",
+      R"({memory 0, offset i32.const 0 end, init "\12\34"})",
       format("{}",
-             DataSegment{Index{0u}, ConstantExpression{MakeSpanU8("\x0b")},
+             DataSegment{Index{0u},
+                         ConstantExpression{Instruction{Opcode::I32Const, 0u}},
                          MakeSpanU8("\x12\x34")}));
 
   EXPECT_EQ(
-      R"(  {memory 0, offset "", init ""})",
-      format("{:>32s}",
-             DataSegment{Index{0u}, ConstantExpression{MakeSpanU8("")},
-                         MakeSpanU8("")}));
+      R"(  {memory 0, offset nop end, init ""})",
+      format(
+          "{:>37s}",
+          DataSegment{Index{0u}, ConstantExpression{Instruction{Opcode::Nop}},
+                      MakeSpanU8("")}));
 }
 
 TEST(FormattersTest, DataSegment_Passive) {

@@ -17,13 +17,13 @@
 #ifndef WASP_BINARY_CONSTANT_EXPRESSION_H_
 #define WASP_BINARY_CONSTANT_EXPRESSION_H_
 
-#include "wasp/base/span.h"
+#include "wasp/binary/instruction.h"
 
 namespace wasp {
 namespace binary {
 
 struct ConstantExpression {
-  SpanU8 data;
+  Instruction instruction;
 };
 
 bool operator==(const ConstantExpression&, const ConstantExpression&);
