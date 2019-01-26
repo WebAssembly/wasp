@@ -15,8 +15,9 @@
 //
 
 #include <fstream>
-#include <map>
 #include <iostream>
+#include <iterator>
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -35,6 +36,7 @@
 #include "wasp/binary/lazy_function_section.h"
 #include "wasp/binary/lazy_import_section.h"
 #include "wasp/binary/lazy_module.h"
+#include "wasp/binary/lazy_module_utils.h"
 #include "wasp/binary/lazy_name_section.h"
 
 namespace wasp {
@@ -58,7 +60,6 @@ struct Tool {
   void CalculateCallGraph();
   void WriteDotFile();
 
-  void InsertFunctionName(Index, string_view name);
   optional<string_view> GetFunctionName(Index) const;
 
   ErrorsType errors;
@@ -127,47 +128,10 @@ void Tool::Run() {
 }
 
 void Tool::DoPrepass() {
-  const Features& features = options.features;
-  for (auto section : module.sections) {
-    if (section.is_known()) {
-      auto known = section.known();
-      switch (known.id) {
-        case SectionId::Import:
-          for (auto import :
-               ReadImportSection(known, features, errors).sequence) {
-            if (import.kind() == ExternalKind::Function) {
-              InsertFunctionName(imported_function_count++, import.name);
-            }
-          }
-          break;
-
-        case SectionId::Export:
-          for (auto export_ :
-               ReadExportSection(known, features, errors).sequence) {
-            if (export_.kind == ExternalKind::Function) {
-              InsertFunctionName(export_.index, export_.name);
-            }
-          }
-          break;
-
-        default:
-          break;
-      }
-    } else if (section.is_custom()) {
-      auto custom = section.custom();
-      if (custom.name == "name") {
-        for (auto subsection : ReadNameSection(custom, features, errors)) {
-          if (subsection.id == NameSubsectionId::FunctionNames) {
-            for (auto name_assoc :
-                 ReadFunctionNamesSubsection(subsection, features, errors)
-                     .sequence) {
-              InsertFunctionName(name_assoc.index, name_assoc.name);
-            }
-          }
-        }
-      }
-    }
-  }
+  CopyFunctionNames(module, std::inserter(function_names, function_names.end()),
+                    options.features, errors);
+  imported_function_count =
+      GetImportCount(module, ExternalKind::Function, options.features, errors);
 }
 
 void Tool::CalculateCallGraph() {
@@ -233,10 +197,6 @@ void Tool::WriteDotFile() {
 
   print(*stream, "}}\n");
   stream->flush();
-}
-
-void Tool::InsertFunctionName(Index index, string_view name) {
-  function_names.insert(std::make_pair(index, name));
 }
 
 optional<string_view> Tool::GetFunctionName(Index index) const {
