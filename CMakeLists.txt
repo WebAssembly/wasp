@@ -79,6 +79,7 @@ add_executable(wasp
   src/tools/wasp.cc
   src/tools/callgraph.cc
   src/tools/cfg.cc
+  src/tools/dfg.cc
   src/tools/dump.cc
 )
 
