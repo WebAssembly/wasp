@@ -106,7 +106,6 @@ struct Tool {
   std::vector<BasicBlock> cfg;
   BBID start_bbid = InvalidBBID;
   BBID current_bbid = InvalidBBID;
-  BBID next_bbid = 0;
 };
 
 int Main(int argc, char** argv) {
@@ -502,13 +501,12 @@ Label Tool::PopLabel() {
 }
 
 BBID Tool::NewBasicBlock() {
-  return next_bbid++;
+  cfg.emplace_back();
+  return static_cast<BBID>(cfg.size() - 1);
 }
 
 BasicBlock& Tool::GetBasicBlock(BBID bbid) {
-  if (bbid >= cfg.size()) {
-    cfg.resize(bbid + 1);
-  }
+  assert(bbid < cfg.size());
   return cfg[bbid];
 }
 
