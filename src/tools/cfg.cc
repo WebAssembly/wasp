@@ -125,35 +125,35 @@ int Main(int argc, char** argv) {
           } else if (arg == "--function") {
             options.function = argv[++i];
           } else {
-            print("Unknown long argument {}\n", arg);
+            print(stderr, "Unknown long argument {}\n", arg);
           }
           break;
         default:
-          print("Unknown short argument {}\n", arg[0]);
+          print(stderr, "Unknown short argument {}\n", arg[0]);
           break;
       }
     } else {
       if (filename.empty()) {
         filename = arg;
       } else {
-        print("Filename already given\n");
+        print(stderr, "Filename already given\n");
       }
     }
   }
 
   if (filename.empty()) {
-    print("No filenames given.\n");
+    print(stderr, "No filenames given.\n");
     return 1;
   }
 
   if (options.function.empty()) {
-    print("No function given.\n");
+    print(stderr, "No function given.\n");
     return 1;
   }
 
   auto optbuf = ReadFile(filename);
   if (!optbuf) {
-    print("Error reading file {}.\n", filename);
+    print(stderr, "Error reading file {}.\n", filename);
     return 1;
   }
 
@@ -169,12 +169,12 @@ int Tool::Run() {
   DoPrepass();
   auto index_opt = GetFunctionIndex();
   if (!index_opt) {
-    print("Unknown function {}\n", options.function);
+    print(stderr, "Unknown function {}\n", options.function);
     return 1;
   }
   auto code_opt = GetCode(*index_opt);
   if (!code_opt) {
-    print("Invalid function index {}\n", *index_opt);
+    print(stderr, "Invalid function index {}\n", *index_opt);
     return 1;
   }
   CalculateCFG(*code_opt);
@@ -376,32 +376,11 @@ void Tool::RemoveEmptyBasicBlocks() {
   }
 }
 
-namespace {
-
-std::string EscapeString(string_view s) {
-  std::string result;
-  for (char c: s) {
-    switch (c) {
-      case '{':
-      case '}':
-        result += '\\';
-        // Fallthrough.
-
-      default:
-        result += c;
-        break;
-    }
-  }
-  return result;
-}
-
 bool IsExtraneousInstruction(const Instruction& instr) {
   auto opcode = instr.opcode;
   return opcode == Opcode::Block || opcode == Opcode::Else ||
          opcode == Opcode::End || opcode == Opcode::Br;
 }
-
-}  // namespace
 
 void Tool::WriteDotFile() {
   const int kMaxSuccessors = 64;
@@ -421,36 +400,45 @@ void Tool::WriteDotFile() {
   BBID bbid = 0;
   for (const auto& bb: cfg) {
     if (!bb.empty()) {
-      print(*stream, "  {} [shape=record;label=\"{{", bbid);
+      auto colspan =
+          std::max<int>(1, std::min<int>(bb.successors.size(), kMaxSuccessors));
+      print(*stream,
+            "  {} [shape=none;margin=0;label=<"
+            "<TABLE BORDER=\"1\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR>"
+            "<TD BORDER=\"0\" ALIGN=\"LEFT\" COLSPAN=\"{}\">",
+            bbid, colspan);
       auto instrs = ReadExpression(bb.code, options.features, errors);
       for (const auto& instr: instrs) {
         if (IsExtraneousInstruction(instr)) {
           continue;
         } else if (instr.opcode == Opcode::BrTable) {
-          print(*stream, "{}...\\l", EscapeString(format("{}", instr.opcode)));
+          print(*stream, "{}...", instr.opcode);
         } else {
-          print(*stream, "{}\\l", EscapeString(format("{}", instr)));
+          print(*stream, "{}", instr);
         }
+        print(*stream, "<BR ALIGN=\"LEFT\"/>");
       }
+      print(*stream, "</TD></TR>");
       // Add ports.
       if (bb.successors.size() > 1) {
-        print(*stream, "|{{");
-        string_view sep = "";
+        print(*stream, "<TR>");
         int count = 0;
+        string_view sides = "T";
         for (const auto& succ: bb.successors) {
           if (count < kMaxSuccessors) {
             assert(!succ.name.empty());
-            print(*stream, "{}<{}>{}", sep, succ.name, succ.name);
+            print(*stream, "<TD PORT=\"{}\" SIDES=\"{}\">{}</TD>", succ.name,
+                  sides, succ.name);
           } else {
-            print(*stream, "{}<trunc> ...", sep);
+            print(*stream, "<TD PORT=\"trunc\" SIDES=\"TL\">...</TD>");
             break;
           }
-          sep = "|";
+          sides = "TL";
           ++count;
         }
-        print(*stream, "}}");
+        print(*stream, "</TR>");
       }
-      print(*stream, "}}\"]\n");
+      print(*stream, "</TABLE>>]\n");
     }
     ++bbid;
   }
@@ -547,7 +535,7 @@ void Tool::Br(Index index, const std::string& name) {
   if (index < labels.size()) {
     AddSuccessor(labels[labels.size() - index - 1].br, name);
   } else {
-    print("Invalid branch depth: {}\n", index);
+    print(stderr, "Invalid branch depth: {}\n", index);
   }
 }
 

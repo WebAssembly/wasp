@@ -84,30 +84,30 @@ int Main(int argc, char** argv) {
           if (arg == "--output") {
             options.output_filename = argv[++i];
           } else {
-            print("Unknown long argument {}\n", arg);
+            print(stderr, "Unknown long argument {}\n", arg);
           }
           break;
         default:
-          print("Unknown short argument {}\n", arg[0]);
+          print(stderr, "Unknown short argument {}\n", arg[0]);
           break;
       }
     } else {
       if (filename.empty()) {
         filename = arg;
       } else {
-        print("Filename already given\n");
+        print(stderr, "Filename already given\n");
       }
     }
   }
 
   if (filename.empty()) {
-    print("No filenames given.\n");
+    print(stderr, "No filenames given.\n");
     return 1;
   }
 
   auto optbuf = ReadFile(filename);
   if (!optbuf) {
-    print("Error reading file {}.\n", filename);
+    print(stderr, "Error reading file {}.\n", filename);
     return 1;
   }
 
