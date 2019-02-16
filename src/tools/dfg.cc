@@ -67,7 +67,6 @@ struct Value {
   BBID block;
   optional<Instruction> instr;
   ValueIDs operands;
-  ValueIDs users;
 };
 
 struct Block {
@@ -97,6 +96,8 @@ struct Tool {
   optional<Code> GetCode(Index);
   void CalculateDFG(const FunctionType&, Code);
   void DoInstruction(const Instruction&);
+  optional<ValueID> GetTrivialPhiOperand(ValueID);
+  void RemoveTrivialPhis();
   void WriteDotFile();
 
   static size_t BlockTypeToValueCount(BlockType);
@@ -133,7 +134,6 @@ struct Tool {
   ValueID ReadVariable(VarID, BBID);
   ValueID ReadVariableRecurse(VarID, BBID);
   ValueID AddPhiOperands(VarID, ValueID);
-  ValueID TryRemoveTrivialPhi(ValueID);
   void SealBlock(BBID);
 
   ErrorsType errors;
@@ -147,7 +147,6 @@ struct Tool {
   std::vector<Block> bbs;
   std::vector<Value> values;
   std::map<std::pair<VarID, BBID>, ValueID> current_def;
-  std::map<ValueID, ValueID> remapped_phis;
   size_t value_stack_size = 0;
   BBID start_bbid = InvalidBBID;
   BBID current_bbid = InvalidBBID;
@@ -225,6 +224,7 @@ int Tool::Run() {
     return 1;
   }
   CalculateDFG(*ft_opt, *code_opt);
+  RemoveTrivialPhis();
   WriteDotFile();
   return 0;
 }
@@ -991,19 +991,16 @@ void Tool::Return() {
 }
 
 ValueID Tool::NewValue(const Instruction& instr, size_t operand_count) {
-  values.push_back(Value{current_bbid, instr, {}, {}});
+  values.push_back(Value{current_bbid, instr, {}});
   auto value = static_cast<ValueID>(values.size() - 1);
   ValueIDs operands;
   CopyValues(operand_count, operands);
-  for (auto op: operands) {
-    GetValue(op).users.push_back(value);
-  }
   GetValue(value).operands = std::move(operands);
   return value;
 }
 
 ValueID Tool::NewPhi(BBID bbid) {
-  values.push_back(Value{bbid, nullopt, {}, {}});
+  values.push_back(Value{bbid, nullopt, {}});
   auto value = static_cast<ValueID>(values.size() - 1);
   return value;
 }
@@ -1137,67 +1134,8 @@ ValueID Tool::AddPhiOperands(VarID var, ValueID phi) {
   for (BBID pred: preds) {
     auto value = ReadVariable(var, pred);
     GetValue(phi).operands.push_back(value);
-    GetValue(value).users.push_back(phi);
   }
-  return TryRemoveTrivialPhi(phi);
-}
-
-ValueID Tool::TryRemoveTrivialPhi(ValueID phi) {
-  ValueID same = InvalidValueID;
-  for (auto op: GetValue(phi).operands) {
-    if (op == same || op == phi || (undef != InvalidValueID && op == undef)) {
-      continue;  // Unique value or self-reference.
-    }
-    if (same != InvalidValueID) {
-      return phi;  // The phi merges at least two values: not trivial.
-    }
-    same = op;
-  }
-
-  if (same == InvalidValueID) {
-    same = Undef();
-  }
-
-  // Remember all users except the phi itself.
-  auto users = GetValue(phi).users;
-  users.erase(std::remove(users.begin(), users.end(), phi), users.end());
-
-  // Reroute all uses of phi to same and remove phi.
-  for (auto use: users) {
-    assert(use != phi);
-    auto& operands = GetValue(use).operands;
-    std::replace(operands.begin(), operands.end(), phi, same);
-  }
-  for (auto& pair: current_def) {
-    if (pair.second == phi) {
-      pair.second = same;
-    }
-  }
-
-  auto& same_value = GetValue(same);
-  same_value.users.insert(same_value.users.end(), users.begin(), users.end());
-  GetValue(phi).users.clear();
-  GetValue(phi).operands.clear();
-  remapped_phis[phi] = same;
-
-  // Try to recursively remove all phi users, which might have become trivial.
-  for (auto use: users) {
-    assert(use != phi);
-    if (GetValue(use).is_phi()) {
-      TryRemoveTrivialPhi(use);
-    }
-  }
-
-  // Same may have been removed and remapped. TODO seems like there should be a
-  // better way to do this.
-  {
-    auto iter = remapped_phis.find(same);
-    if (iter != remapped_phis.end()) {
-      same = iter->second;
-    }
-  }
-
-  return same;
+  return phi;
 }
 
 void Tool::SealBlock(BBID bbid) {
@@ -1208,6 +1146,91 @@ void Tool::SealBlock(BBID bbid) {
   }
   block.incomplete_phis.clear();
   block.sealed = true;
+}
+
+optional<ValueID> Tool::GetTrivialPhiOperand(ValueID vid) {
+  auto& value = GetValue(vid);
+  if (value.is_phi()) {
+    optional<ValueID> same;
+    for (auto op : value.operands) {
+      if (op == same || op == vid) {
+        continue;  // Unique value of self-reference.
+      }
+      if (same) {
+        return nullopt;  // The phi merges at least two values: not trivial.
+      }
+      same = op;
+    }
+    // This phi is trivial and can be replaced by same.
+    return same;
+  }
+  return nullopt;
+}
+
+void Tool::RemoveTrivialPhis() {
+  using UserMap = std::multimap<ValueID, ValueID>;
+  std::set<ValueID> trivial_phis;
+  UserMap users;
+  ValueIDs phis;
+  ValueID vid = 0;
+  for (const auto& value : values) {
+    if (value.is_phi()) {
+      phis.emplace_back(vid);
+    }
+    for (auto op : value.operands) {
+      users.emplace(op, vid);
+    }
+    ++vid;
+  }
+
+  while (!phis.empty()) {
+    ValueIDs new_phis;
+    for (auto phi : phis) {
+      auto same = GetTrivialPhiOperand(phi);
+      if (same) {
+        auto& phi_value = GetValue(phi);
+        // For all operands of this phi: replace any users that point to this
+        // phi with same.
+        for (auto op : phi_value.operands) {
+          auto range = users.equal_range(op);
+          for (auto it = range.first; it != range.second; ++it) {
+            if (it->second == phi) {
+              it->second = *same;
+            }
+          }
+        }
+        phi_value.operands.clear();
+
+        // For all users of this phi: replace any operands that point to this
+        // phi with same.
+        std::vector<UserMap::value_type> new_user_pairs;
+        auto range = users.equal_range(phi);
+        for (auto it = range.first; it != range.second; ++it) {
+          auto user = it->second;
+          if (user != phi) {
+            auto& operands = GetValue(user).operands;
+            std::replace(operands.begin(), operands.end(), phi, *same);
+            new_user_pairs.emplace_back(*same, user);
+            if (GetValue(user).is_phi()) {
+              // Perform another pass with any users that may have become
+              // trivial by the removal of phi.
+              new_phis.push_back(user);
+            }
+          }
+        }
+        users.erase(range.first, range.second);
+        users.insert(new_user_pairs.begin(), new_user_pairs.end());
+
+        trivial_phis.insert(phi);
+      }
+    }
+    auto&& is_trivial = [&](ValueID x) { return trivial_phis.count(x) != 0; };
+    auto new_end = std::remove_if(new_phis.begin(), new_phis.end(), is_trivial);
+    std::sort(new_phis.begin(), new_end);
+    new_end = std::unique(new_phis.begin(), new_end);
+    new_phis.erase(new_end, new_phis.end());
+    std::swap(phis, new_phis);
+  }
 }
 
 namespace {
@@ -1241,12 +1264,22 @@ void Tool::WriteDotFile() {
     }
   }
 
-  // Collect values for each basic block.
+  // Collect values for each basic block, and users of each value.
+  std::multimap<ValueID, ValueID> users;
   std::map<BBID, std::vector<ValueID>> blocks;
   ValueID vid = 0;
   for (const auto& value : values) {
-    blocks[value.block].push_back(vid++);
+    blocks[value.block].push_back(vid);
+    for (auto op : value.operands) {
+      users.emplace(op, vid);
+    }
+    vid++;
   }
+
+  auto&& should_display = [&](ValueID vid) {
+    auto& value = GetValue(vid);
+    return !value.operands.empty() || users.count(vid) != 0;
+  };
 
   std::vector<std::pair<ValueID, ValueID>> interblock_edges;
 
@@ -1261,8 +1294,8 @@ void Tool::WriteDotFile() {
 
     // Write nodes.
     for (const auto& vid : block_vids) {
-      const auto& value = GetValue(vid);
-      if (!(value.operands.empty() && value.users.empty())) {
+      if (should_display(vid)) {
+        const auto& value = GetValue(vid);
         print(*stream, "    {} [shape=box;label=\"", vid);
         if (value.is_phi()) {
           print(*stream, "phi");
