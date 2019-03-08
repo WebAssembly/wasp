@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include <cmath>
 #include <iterator>
 #include <string>
 #include <vector>
@@ -23,14 +24,22 @@
 // Write() functions must be declared here before they can be used by
 // ExpectWrite (defined in write_test_utils.h below).
 #include "wasp/binary/write/write_block_type.h"
+#include "wasp/binary/write/write_br_table_immediate.h"
 #include "wasp/binary/write/write_bytes.h"
+#include "wasp/binary/write/write_call_indirect_immediate.h"
+#include "wasp/binary/write/write_copy_immediate.h"
 #include "wasp/binary/write/write_element_type.h"
 #include "wasp/binary/write/write_export.h"
 #include "wasp/binary/write/write_external_kind.h"
+#include "wasp/binary/write/write_f32.h"
+#include "wasp/binary/write/write_f64.h"
 #include "wasp/binary/write/write_function.h"
 #include "wasp/binary/write/write_function_type.h"
 #include "wasp/binary/write/write_global_type.h"
 #include "wasp/binary/write/write_import.h"
+#include "wasp/binary/write/write_init_immediate.h"
+#include "wasp/binary/write/write_instruction.h"
+#include "wasp/binary/write/write_mem_arg_immediate.h"
 #include "wasp/binary/write/write_memory.h"
 #include "wasp/binary/write/write_memory_type.h"
 #include "wasp/binary/write/write_mutability.h"
@@ -39,6 +48,7 @@
 #include "wasp/binary/write/write_s32.h"
 #include "wasp/binary/write/write_s64.h"
 #include "wasp/binary/write/write_section_id.h"
+#include "wasp/binary/write/write_shuffle_immediate.h"
 #include "wasp/binary/write/write_start.h"
 #include "wasp/binary/write/write_string.h"
 #include "wasp/binary/write/write_table.h"
@@ -64,11 +74,29 @@ TEST(WriteTest, BlockType) {
   ExpectWrite<BlockType>(MakeSpanU8("\x40"), BlockType::Void);
 }
 
+TEST(WriteTest, BrTableImmediate) {
+  ExpectWrite<BrTableImmediate>(MakeSpanU8("\x00\x00"),
+                                BrTableImmediate{{}, 0});
+  ExpectWrite<BrTableImmediate>(MakeSpanU8("\x02\x01\x02\x03"),
+                                BrTableImmediate{{1, 2}, 3});
+}
+
 TEST(WriteTest, Bytes) {
   const std::vector<u8> input{{0x12, 0x34, 0x56}};
   std::vector<u8> output;
   WriteBytes(input, std::back_inserter(output));
   EXPECT_EQ(input, output);
+}
+
+TEST(WriteTest, CallIndirectImmediate) {
+  ExpectWrite<CallIndirectImmediate>(MakeSpanU8("\x01\x00"),
+                                     CallIndirectImmediate{1, 0});
+  ExpectWrite<CallIndirectImmediate>(MakeSpanU8("\x80\x01\x00"),
+                                     CallIndirectImmediate{128, 0});
+}
+
+TEST(WriteTest, CopyImmediate) {
+  ExpectWrite<CopyImmediate>(MakeSpanU8("\x00\x00"), CopyImmediate{0, 0});
 }
 
 TEST(WriteTest, ElementType) {
@@ -91,6 +119,25 @@ TEST(WriteTest, ExternalKind) {
   ExpectWrite<ExternalKind>(MakeSpanU8("\x01"), ExternalKind::Table);
   ExpectWrite<ExternalKind>(MakeSpanU8("\x02"), ExternalKind::Memory);
   ExpectWrite<ExternalKind>(MakeSpanU8("\x03"), ExternalKind::Global);
+}
+
+TEST(WriteTest, F32) {
+  ExpectWrite<f32>(MakeSpanU8("\x00\x00\x00\x00"), 0.0f);
+  ExpectWrite<f32>(MakeSpanU8("\x00\x00\x80\xbf"), -1.0f);
+  ExpectWrite<f32>(MakeSpanU8("\x38\xb4\x96\x49"), 1234567.0f);
+  ExpectWrite<f32>(MakeSpanU8("\x00\x00\x80\x7f"), INFINITY);
+  ExpectWrite<f32>(MakeSpanU8("\x00\x00\x80\xff"), -INFINITY);
+  // TODO: NaN
+}
+
+TEST(WriteTest, F64) {
+  ExpectWrite<f64>(MakeSpanU8("\x00\x00\x00\x00\x00\x00\x00\x00"), 0.0);
+  ExpectWrite<f64>(MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf0\xbf"), -1.0);
+  ExpectWrite<f64>(MakeSpanU8("\xc0\x71\xbc\x93\x84\x43\xd9\x42"),
+                   111111111111111);
+  ExpectWrite<f64>(MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf0\x7f"), INFINITY);
+  ExpectWrite<f64>(MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf0\xff"), -INFINITY);
+  // TODO: NaN
 }
 
 TEST(WriteTest, Function) {
@@ -127,9 +174,486 @@ TEST(WriteTest, Import) {
       Import{"d", "global", GlobalType{ValueType::I32, Mutability::Const}});
 }
 
+TEST(WriteTest, InitImmediate) {
+  ExpectWrite<InitImmediate>(MakeSpanU8("\x01\x00"), InitImmediate{1, 0});
+  ExpectWrite<InitImmediate>(MakeSpanU8("\x80\x01\x00"), InitImmediate{128, 0});
+}
+
+TEST(WriteTest, Instruction) {
+  using I = Instruction;
+  using O = Opcode;
+  using MemArg = MemArgImmediate;
+
+  ExpectWrite<I>(MakeSpanU8("\x00"), I{O::Unreachable});
+  ExpectWrite<I>(MakeSpanU8("\x01"), I{O::Nop});
+  ExpectWrite<I>(MakeSpanU8("\x02\x7f"), I{O::Block, BlockType::I32});
+  ExpectWrite<I>(MakeSpanU8("\x03\x40"), I{O::Loop, BlockType::Void});
+  ExpectWrite<I>(MakeSpanU8("\x04\x7c"), I{O::If, BlockType::F64});
+  ExpectWrite<I>(MakeSpanU8("\x05"), I{O::Else});
+  ExpectWrite<I>(MakeSpanU8("\x0b"), I{O::End});
+  ExpectWrite<I>(MakeSpanU8("\x0c\x01"), I{O::Br, Index{1}});
+  ExpectWrite<I>(MakeSpanU8("\x0d\x02"), I{O::BrIf, Index{2}});
+  ExpectWrite<I>(MakeSpanU8("\x0e\x03\x03\x04\x05\x06"),
+                 I{O::BrTable, BrTableImmediate{{3, 4, 5}, 6}});
+  ExpectWrite<I>(MakeSpanU8("\x0f"), I{O::Return});
+  ExpectWrite<I>(MakeSpanU8("\x10\x07"), I{O::Call, Index{7}});
+  ExpectWrite<I>(MakeSpanU8("\x11\x08\x00"),
+                 I{O::CallIndirect, CallIndirectImmediate{8, 0}});
+  ExpectWrite<I>(MakeSpanU8("\x1a"), I{O::Drop});
+  ExpectWrite<I>(MakeSpanU8("\x1b"), I{O::Select});
+  ExpectWrite<I>(MakeSpanU8("\x20\x05"), I{O::LocalGet, Index{5}});
+  ExpectWrite<I>(MakeSpanU8("\x21\x06"), I{O::LocalSet, Index{6}});
+  ExpectWrite<I>(MakeSpanU8("\x22\x07"), I{O::LocalTee, Index{7}});
+  ExpectWrite<I>(MakeSpanU8("\x23\x08"), I{O::GlobalGet, Index{8}});
+  ExpectWrite<I>(MakeSpanU8("\x24\x09"), I{O::GlobalSet, Index{9}});
+  ExpectWrite<I>(MakeSpanU8("\x28\x0a\x0b"), I{O::I32Load, MemArg{10, 11}});
+  ExpectWrite<I>(MakeSpanU8("\x29\x0c\x0d"), I{O::I64Load, MemArg{12, 13}});
+  ExpectWrite<I>(MakeSpanU8("\x2a\x0e\x0f"), I{O::F32Load, MemArg{14, 15}});
+  ExpectWrite<I>(MakeSpanU8("\x2b\x10\x11"), I{O::F64Load, MemArg{16, 17}});
+  ExpectWrite<I>(MakeSpanU8("\x2c\x12\x13"), I{O::I32Load8S, MemArg{18, 19}});
+  ExpectWrite<I>(MakeSpanU8("\x2d\x14\x15"), I{O::I32Load8U, MemArg{20, 21}});
+  ExpectWrite<I>(MakeSpanU8("\x2e\x16\x17"), I{O::I32Load16S, MemArg{22, 23}});
+  ExpectWrite<I>(MakeSpanU8("\x2f\x18\x19"), I{O::I32Load16U, MemArg{24, 25}});
+  ExpectWrite<I>(MakeSpanU8("\x30\x1a\x1b"), I{O::I64Load8S, MemArg{26, 27}});
+  ExpectWrite<I>(MakeSpanU8("\x31\x1c\x1d"), I{O::I64Load8U, MemArg{28, 29}});
+  ExpectWrite<I>(MakeSpanU8("\x32\x1e\x1f"), I{O::I64Load16S, MemArg{30, 31}});
+  ExpectWrite<I>(MakeSpanU8("\x33\x20\x21"), I{O::I64Load16U, MemArg{32, 33}});
+  ExpectWrite<I>(MakeSpanU8("\x34\x22\x23"), I{O::I64Load32S, MemArg{34, 35}});
+  ExpectWrite<I>(MakeSpanU8("\x35\x24\x25"), I{O::I64Load32U, MemArg{36, 37}});
+  ExpectWrite<I>(MakeSpanU8("\x36\x26\x27"), I{O::I32Store, MemArg{38, 39}});
+  ExpectWrite<I>(MakeSpanU8("\x37\x28\x29"), I{O::I64Store, MemArg{40, 41}});
+  ExpectWrite<I>(MakeSpanU8("\x38\x2a\x2b"), I{O::F32Store, MemArg{42, 43}});
+  ExpectWrite<I>(MakeSpanU8("\x39\x2c\x2d"), I{O::F64Store, MemArg{44, 45}});
+  ExpectWrite<I>(MakeSpanU8("\x3a\x2e\x2f"), I{O::I32Store8, MemArg{46, 47}});
+  ExpectWrite<I>(MakeSpanU8("\x3b\x30\x31"), I{O::I32Store16, MemArg{48, 49}});
+  ExpectWrite<I>(MakeSpanU8("\x3c\x32\x33"), I{O::I64Store8, MemArg{50, 51}});
+  ExpectWrite<I>(MakeSpanU8("\x3d\x34\x35"), I{O::I64Store16, MemArg{52, 53}});
+  ExpectWrite<I>(MakeSpanU8("\x3e\x36\x37"), I{O::I64Store32, MemArg{54, 55}});
+  ExpectWrite<I>(MakeSpanU8("\x3f\x00"), I{O::MemorySize, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\x40\x00"), I{O::MemoryGrow, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\x41\x00"), I{O::I32Const, s32{0}});
+  ExpectWrite<I>(MakeSpanU8("\x42\x00"), I{O::I64Const, s64{0}});
+  ExpectWrite<I>(MakeSpanU8("\x43\x00\x00\x00\x00"), I{O::F32Const, f32{0}});
+  ExpectWrite<I>(MakeSpanU8("\x44\x00\x00\x00\x00\x00\x00\x00\x00"),
+                 I{O::F64Const, f64{0}});
+  ExpectWrite<I>(MakeSpanU8("\x45"), I{O::I32Eqz});
+  ExpectWrite<I>(MakeSpanU8("\x46"), I{O::I32Eq});
+  ExpectWrite<I>(MakeSpanU8("\x47"), I{O::I32Ne});
+  ExpectWrite<I>(MakeSpanU8("\x48"), I{O::I32LtS});
+  ExpectWrite<I>(MakeSpanU8("\x49"), I{O::I32LtU});
+  ExpectWrite<I>(MakeSpanU8("\x4a"), I{O::I32GtS});
+  ExpectWrite<I>(MakeSpanU8("\x4b"), I{O::I32GtU});
+  ExpectWrite<I>(MakeSpanU8("\x4c"), I{O::I32LeS});
+  ExpectWrite<I>(MakeSpanU8("\x4d"), I{O::I32LeU});
+  ExpectWrite<I>(MakeSpanU8("\x4e"), I{O::I32GeS});
+  ExpectWrite<I>(MakeSpanU8("\x4f"), I{O::I32GeU});
+  ExpectWrite<I>(MakeSpanU8("\x50"), I{O::I64Eqz});
+  ExpectWrite<I>(MakeSpanU8("\x51"), I{O::I64Eq});
+  ExpectWrite<I>(MakeSpanU8("\x52"), I{O::I64Ne});
+  ExpectWrite<I>(MakeSpanU8("\x53"), I{O::I64LtS});
+  ExpectWrite<I>(MakeSpanU8("\x54"), I{O::I64LtU});
+  ExpectWrite<I>(MakeSpanU8("\x55"), I{O::I64GtS});
+  ExpectWrite<I>(MakeSpanU8("\x56"), I{O::I64GtU});
+  ExpectWrite<I>(MakeSpanU8("\x57"), I{O::I64LeS});
+  ExpectWrite<I>(MakeSpanU8("\x58"), I{O::I64LeU});
+  ExpectWrite<I>(MakeSpanU8("\x59"), I{O::I64GeS});
+  ExpectWrite<I>(MakeSpanU8("\x5a"), I{O::I64GeU});
+  ExpectWrite<I>(MakeSpanU8("\x5b"), I{O::F32Eq});
+  ExpectWrite<I>(MakeSpanU8("\x5c"), I{O::F32Ne});
+  ExpectWrite<I>(MakeSpanU8("\x5d"), I{O::F32Lt});
+  ExpectWrite<I>(MakeSpanU8("\x5e"), I{O::F32Gt});
+  ExpectWrite<I>(MakeSpanU8("\x5f"), I{O::F32Le});
+  ExpectWrite<I>(MakeSpanU8("\x60"), I{O::F32Ge});
+  ExpectWrite<I>(MakeSpanU8("\x61"), I{O::F64Eq});
+  ExpectWrite<I>(MakeSpanU8("\x62"), I{O::F64Ne});
+  ExpectWrite<I>(MakeSpanU8("\x63"), I{O::F64Lt});
+  ExpectWrite<I>(MakeSpanU8("\x64"), I{O::F64Gt});
+  ExpectWrite<I>(MakeSpanU8("\x65"), I{O::F64Le});
+  ExpectWrite<I>(MakeSpanU8("\x66"), I{O::F64Ge});
+  ExpectWrite<I>(MakeSpanU8("\x67"), I{O::I32Clz});
+  ExpectWrite<I>(MakeSpanU8("\x68"), I{O::I32Ctz});
+  ExpectWrite<I>(MakeSpanU8("\x69"), I{O::I32Popcnt});
+  ExpectWrite<I>(MakeSpanU8("\x6a"), I{O::I32Add});
+  ExpectWrite<I>(MakeSpanU8("\x6b"), I{O::I32Sub});
+  ExpectWrite<I>(MakeSpanU8("\x6c"), I{O::I32Mul});
+  ExpectWrite<I>(MakeSpanU8("\x6d"), I{O::I32DivS});
+  ExpectWrite<I>(MakeSpanU8("\x6e"), I{O::I32DivU});
+  ExpectWrite<I>(MakeSpanU8("\x6f"), I{O::I32RemS});
+  ExpectWrite<I>(MakeSpanU8("\x70"), I{O::I32RemU});
+  ExpectWrite<I>(MakeSpanU8("\x71"), I{O::I32And});
+  ExpectWrite<I>(MakeSpanU8("\x72"), I{O::I32Or});
+  ExpectWrite<I>(MakeSpanU8("\x73"), I{O::I32Xor});
+  ExpectWrite<I>(MakeSpanU8("\x74"), I{O::I32Shl});
+  ExpectWrite<I>(MakeSpanU8("\x75"), I{O::I32ShrS});
+  ExpectWrite<I>(MakeSpanU8("\x76"), I{O::I32ShrU});
+  ExpectWrite<I>(MakeSpanU8("\x77"), I{O::I32Rotl});
+  ExpectWrite<I>(MakeSpanU8("\x78"), I{O::I32Rotr});
+  ExpectWrite<I>(MakeSpanU8("\x79"), I{O::I64Clz});
+  ExpectWrite<I>(MakeSpanU8("\x7a"), I{O::I64Ctz});
+  ExpectWrite<I>(MakeSpanU8("\x7b"), I{O::I64Popcnt});
+  ExpectWrite<I>(MakeSpanU8("\x7c"), I{O::I64Add});
+  ExpectWrite<I>(MakeSpanU8("\x7d"), I{O::I64Sub});
+  ExpectWrite<I>(MakeSpanU8("\x7e"), I{O::I64Mul});
+  ExpectWrite<I>(MakeSpanU8("\x7f"), I{O::I64DivS});
+  ExpectWrite<I>(MakeSpanU8("\x80"), I{O::I64DivU});
+  ExpectWrite<I>(MakeSpanU8("\x81"), I{O::I64RemS});
+  ExpectWrite<I>(MakeSpanU8("\x82"), I{O::I64RemU});
+  ExpectWrite<I>(MakeSpanU8("\x83"), I{O::I64And});
+  ExpectWrite<I>(MakeSpanU8("\x84"), I{O::I64Or});
+  ExpectWrite<I>(MakeSpanU8("\x85"), I{O::I64Xor});
+  ExpectWrite<I>(MakeSpanU8("\x86"), I{O::I64Shl});
+  ExpectWrite<I>(MakeSpanU8("\x87"), I{O::I64ShrS});
+  ExpectWrite<I>(MakeSpanU8("\x88"), I{O::I64ShrU});
+  ExpectWrite<I>(MakeSpanU8("\x89"), I{O::I64Rotl});
+  ExpectWrite<I>(MakeSpanU8("\x8a"), I{O::I64Rotr});
+  ExpectWrite<I>(MakeSpanU8("\x8b"), I{O::F32Abs});
+  ExpectWrite<I>(MakeSpanU8("\x8c"), I{O::F32Neg});
+  ExpectWrite<I>(MakeSpanU8("\x8d"), I{O::F32Ceil});
+  ExpectWrite<I>(MakeSpanU8("\x8e"), I{O::F32Floor});
+  ExpectWrite<I>(MakeSpanU8("\x8f"), I{O::F32Trunc});
+  ExpectWrite<I>(MakeSpanU8("\x90"), I{O::F32Nearest});
+  ExpectWrite<I>(MakeSpanU8("\x91"), I{O::F32Sqrt});
+  ExpectWrite<I>(MakeSpanU8("\x92"), I{O::F32Add});
+  ExpectWrite<I>(MakeSpanU8("\x93"), I{O::F32Sub});
+  ExpectWrite<I>(MakeSpanU8("\x94"), I{O::F32Mul});
+  ExpectWrite<I>(MakeSpanU8("\x95"), I{O::F32Div});
+  ExpectWrite<I>(MakeSpanU8("\x96"), I{O::F32Min});
+  ExpectWrite<I>(MakeSpanU8("\x97"), I{O::F32Max});
+  ExpectWrite<I>(MakeSpanU8("\x98"), I{O::F32Copysign});
+  ExpectWrite<I>(MakeSpanU8("\x99"), I{O::F64Abs});
+  ExpectWrite<I>(MakeSpanU8("\x9a"), I{O::F64Neg});
+  ExpectWrite<I>(MakeSpanU8("\x9b"), I{O::F64Ceil});
+  ExpectWrite<I>(MakeSpanU8("\x9c"), I{O::F64Floor});
+  ExpectWrite<I>(MakeSpanU8("\x9d"), I{O::F64Trunc});
+  ExpectWrite<I>(MakeSpanU8("\x9e"), I{O::F64Nearest});
+  ExpectWrite<I>(MakeSpanU8("\x9f"), I{O::F64Sqrt});
+  ExpectWrite<I>(MakeSpanU8("\xa0"), I{O::F64Add});
+  ExpectWrite<I>(MakeSpanU8("\xa1"), I{O::F64Sub});
+  ExpectWrite<I>(MakeSpanU8("\xa2"), I{O::F64Mul});
+  ExpectWrite<I>(MakeSpanU8("\xa3"), I{O::F64Div});
+  ExpectWrite<I>(MakeSpanU8("\xa4"), I{O::F64Min});
+  ExpectWrite<I>(MakeSpanU8("\xa5"), I{O::F64Max});
+  ExpectWrite<I>(MakeSpanU8("\xa6"), I{O::F64Copysign});
+  ExpectWrite<I>(MakeSpanU8("\xa7"), I{O::I32WrapI64});
+  ExpectWrite<I>(MakeSpanU8("\xa8"), I{O::I32TruncF32S});
+  ExpectWrite<I>(MakeSpanU8("\xa9"), I{O::I32TruncF32U});
+  ExpectWrite<I>(MakeSpanU8("\xaa"), I{O::I32TruncF64S});
+  ExpectWrite<I>(MakeSpanU8("\xab"), I{O::I32TruncF64U});
+  ExpectWrite<I>(MakeSpanU8("\xac"), I{O::I64ExtendI32S});
+  ExpectWrite<I>(MakeSpanU8("\xad"), I{O::I64ExtendI32U});
+  ExpectWrite<I>(MakeSpanU8("\xae"), I{O::I64TruncF32S});
+  ExpectWrite<I>(MakeSpanU8("\xaf"), I{O::I64TruncF32U});
+  ExpectWrite<I>(MakeSpanU8("\xb0"), I{O::I64TruncF64S});
+  ExpectWrite<I>(MakeSpanU8("\xb1"), I{O::I64TruncF64U});
+  ExpectWrite<I>(MakeSpanU8("\xb2"), I{O::F32ConvertI32S});
+  ExpectWrite<I>(MakeSpanU8("\xb3"), I{O::F32ConvertI32U});
+  ExpectWrite<I>(MakeSpanU8("\xb4"), I{O::F32ConvertI64S});
+  ExpectWrite<I>(MakeSpanU8("\xb5"), I{O::F32ConvertI64U});
+  ExpectWrite<I>(MakeSpanU8("\xb6"), I{O::F32DemoteF64});
+  ExpectWrite<I>(MakeSpanU8("\xb7"), I{O::F64ConvertI32S});
+  ExpectWrite<I>(MakeSpanU8("\xb8"), I{O::F64ConvertI32U});
+  ExpectWrite<I>(MakeSpanU8("\xb9"), I{O::F64ConvertI64S});
+  ExpectWrite<I>(MakeSpanU8("\xba"), I{O::F64ConvertI64U});
+  ExpectWrite<I>(MakeSpanU8("\xbb"), I{O::F64PromoteF32});
+  ExpectWrite<I>(MakeSpanU8("\xbc"), I{O::I32ReinterpretF32});
+  ExpectWrite<I>(MakeSpanU8("\xbd"), I{O::I64ReinterpretF64});
+  ExpectWrite<I>(MakeSpanU8("\xbe"), I{O::F32ReinterpretI32});
+  ExpectWrite<I>(MakeSpanU8("\xbf"), I{O::F64ReinterpretI64});
+}
+
+TEST(WriteTest, Instruction_tail_call) {
+  using I = Instruction;
+  using O = Opcode;
+
+  ExpectWrite<I>(MakeSpanU8("\x12\x00"), I{O::ReturnCall, Index{0}});
+  ExpectWrite<I>(MakeSpanU8("\x13\x08\x00"),
+                 I{O::ReturnCallIndirect, CallIndirectImmediate{8, 0}});
+}
+
+TEST(WriteTest, Instruction_sign_extension) {
+  using I = Instruction;
+  using O = Opcode;
+
+  ExpectWrite<I>(MakeSpanU8("\xc0"), I{O::I32Extend8S});
+  ExpectWrite<I>(MakeSpanU8("\xc1"), I{O::I32Extend16S});
+  ExpectWrite<I>(MakeSpanU8("\xc2"), I{O::I64Extend8S});
+  ExpectWrite<I>(MakeSpanU8("\xc3"), I{O::I64Extend16S});
+  ExpectWrite<I>(MakeSpanU8("\xc4"), I{O::I64Extend32S});
+}
+
+TEST(WriteTest, Instruction_saturating_float_to_int) {
+  using I = Instruction;
+  using O = Opcode;
+
+  ExpectWrite<I>(MakeSpanU8("\xfc\x00"), I{O::I32TruncSatF32S});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x01"), I{O::I32TruncSatF32U});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x02"), I{O::I32TruncSatF64S});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x03"), I{O::I32TruncSatF64U});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x04"), I{O::I64TruncSatF32S});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x05"), I{O::I64TruncSatF32U});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x06"), I{O::I64TruncSatF64S});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x07"), I{O::I64TruncSatF64U});
+}
+
+TEST(WriteTest, Instruction_bulk_memory) {
+  using I = Instruction;
+  using O = Opcode;
+
+  ExpectWrite<I>(MakeSpanU8("\xfc\x08\x01\x00"),
+                 I{O::MemoryInit, InitImmediate{1, 0}});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x09\x02"), I{O::MemoryDrop, Index{2}});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x0a\x00\x00"),
+                 I{O::MemoryCopy, CopyImmediate{0, 0}});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x0b\x00"), I{O::MemoryFill, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x0c\x03\x00"),
+                 I{O::TableInit, InitImmediate{3, 0}});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x0d\x04"), I{O::TableDrop, Index{4}});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x0e\x00\x00"),
+                 I{O::TableCopy, CopyImmediate{0, 0}});
+}
+
+TEST(WriteTest, Instruction_simd) {
+  using I = Instruction;
+  using O = Opcode;
+
+  ExpectWrite<I>(MakeSpanU8("\xfd\x00\x01\x02"),
+                 I{O::V128Load, MemArgImmediate{1, 2}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x01\x03\x04"),
+                 I{O::V128Store, MemArgImmediate{3, 4}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x02\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00"
+                            "\x00\x00\x00\x00\x00\x00"),
+                 I{O::V128Const, v128{u64{5}, u64{6}}});
+  ExpectWrite<I>(
+      MakeSpanU8("\xfd\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                 "\x00\x00\x00\x00"),
+      I{O::V8X16Shuffle,
+        ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x04"), I{O::I8X16Splat});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x05\x00"), I{O::I8X16ExtractLaneS, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x06\x00"), I{O::I8X16ExtractLaneU, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x07\x00"), I{O::I8X16ReplaceLane, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x08"), I{O::I16X8Splat});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x09\x00"), I{O::I16X8ExtractLaneS, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x0a\x00"), I{O::I16X8ExtractLaneU, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x0b\x00"), I{O::I16X8ReplaceLane, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x0c"), I{O::I32X4Splat});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x0d\x00"), I{O::I32X4ExtractLane, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x0e\x00"), I{O::I32X4ReplaceLane, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x0f"), I{O::I64X2Splat});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x10\x00"), I{O::I64X2ExtractLane, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x11\x00"), I{O::I64X2ReplaceLane, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x12"), I{O::F32X4Splat});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x13\x00"), I{O::F32X4ExtractLane, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x14\x00"), I{O::F32X4ReplaceLane, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x15"), I{O::F64X2Splat});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x16\x00"), I{O::F64X2ExtractLane, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x17\x00"), I{O::F64X2ReplaceLane, u8{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x18"), I{O::I8X16Eq});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x19"), I{O::I8X16Ne});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x1a"), I{O::I8X16LtS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x1b"), I{O::I8X16LtU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x1c"), I{O::I8X16GtS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x1d"), I{O::I8X16GtU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x1e"), I{O::I8X16LeS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x1f"), I{O::I8X16LeU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x20"), I{O::I8X16GeS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x21"), I{O::I8X16GeU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x22"), I{O::I16X8Eq});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x23"), I{O::I16X8Ne});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x24"), I{O::I16X8LtS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x25"), I{O::I16X8LtU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x26"), I{O::I16X8GtS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x27"), I{O::I16X8GtU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x28"), I{O::I16X8LeS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x29"), I{O::I16X8LeU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x2a"), I{O::I16X8GeS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x2b"), I{O::I16X8GeU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x2c"), I{O::I32X4Eq});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x2d"), I{O::I32X4Ne});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x2e"), I{O::I32X4LtS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x2f"), I{O::I32X4LtU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x30"), I{O::I32X4GtS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x31"), I{O::I32X4GtU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x32"), I{O::I32X4LeS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x33"), I{O::I32X4LeU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x34"), I{O::I32X4GeS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x35"), I{O::I32X4GeU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x40"), I{O::F32X4Eq});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x41"), I{O::F32X4Ne});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x42"), I{O::F32X4Lt});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x43"), I{O::F32X4Gt});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x44"), I{O::F32X4Le});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x45"), I{O::F32X4Ge});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x46"), I{O::F64X2Eq});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x47"), I{O::F64X2Ne});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x48"), I{O::F64X2Lt});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x49"), I{O::F64X2Gt});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x4a"), I{O::F64X2Le});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x4b"), I{O::F64X2Ge});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x4c"), I{O::V128Not});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x4d"), I{O::V128And});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x4e"), I{O::V128Or});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x4f"), I{O::V128Xor});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x50"), I{O::V128BitSelect});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x51"), I{O::I8X16Neg});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x52"), I{O::I8X16AnyTrue});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x53"), I{O::I8X16AllTrue});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x54"), I{O::I8X16Shl});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x55"), I{O::I8X16ShrS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x56"), I{O::I8X16ShrU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x57"), I{O::I8X16Add});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x58"), I{O::I8X16AddSaturateS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x59"), I{O::I8X16AddSaturateU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x5a"), I{O::I8X16Sub});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x5b"), I{O::I8X16SubSaturateS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x5c"), I{O::I8X16SubSaturateU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x5d"), I{O::I8X16Mul});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x62"), I{O::I16X8Neg});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x63"), I{O::I16X8AnyTrue});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x64"), I{O::I16X8AllTrue});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x65"), I{O::I16X8Shl});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x66"), I{O::I16X8ShrS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x67"), I{O::I16X8ShrU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x68"), I{O::I16X8Add});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x69"), I{O::I16X8AddSaturateS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x6a"), I{O::I16X8AddSaturateU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x6b"), I{O::I16X8Sub});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x6c"), I{O::I16X8SubSaturateS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x6d"), I{O::I16X8SubSaturateU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x6e"), I{O::I16X8Mul});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x73"), I{O::I32X4Neg});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x74"), I{O::I32X4AnyTrue});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x75"), I{O::I32X4AllTrue});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x76"), I{O::I32X4Shl});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x77"), I{O::I32X4ShrS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x78"), I{O::I32X4ShrU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x79"), I{O::I32X4Add});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x7c"), I{O::I32X4Sub});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x7f"), I{O::I32X4Mul});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x84\x01"), I{O::I64X2Neg});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x85\x01"), I{O::I64X2AnyTrue});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x86\x01"), I{O::I64X2AllTrue});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x87\x01"), I{O::I64X2Shl});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x88\x01"), I{O::I64X2ShrS});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x89\x01"), I{O::I64X2ShrU});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x8a\x01"), I{O::I64X2Add});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x8d\x01"), I{O::I64X2Sub});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x95\x01"), I{O::F32X4Abs});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x96\x01"), I{O::F32X4Neg});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x97\x01"), I{O::F32X4Sqrt});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x9a\x01"), I{O::F32X4Add});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x9b\x01"), I{O::F32X4Sub});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x9c\x01"), I{O::F32X4Mul});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x9d\x01"), I{O::F32X4Div});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x9e\x01"), I{O::F32X4Min});
+  ExpectWrite<I>(MakeSpanU8("\xfd\x9f\x01"), I{O::F32X4Max});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xa0\x01"), I{O::F64X2Abs});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xa1\x01"), I{O::F64X2Neg});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xa2\x01"), I{O::F64X2Sqrt});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xa5\x01"), I{O::F64X2Add});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xa6\x01"), I{O::F64X2Sub});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xa7\x01"), I{O::F64X2Mul});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xa8\x01"), I{O::F64X2Div});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xa9\x01"), I{O::F64X2Min});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xaa\x01"), I{O::F64X2Max});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xab\x01"), I{O::I32X4TruncSatF32X4S});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xac\x01"), I{O::I32X4TruncSatF32X4U});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xad\x01"), I{O::I64X2TruncSatF64X2S});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xae\x01"), I{O::I64X2TruncSatF64X2U});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xaf\x01"), I{O::F32X4ConvertI32X4S});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xb0\x01"), I{O::F32X4ConvertI32X4U});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xb1\x01"), I{O::F64X2ConvertI64X2S});
+  ExpectWrite<I>(MakeSpanU8("\xfd\xb2\x01"), I{O::F64X2ConvertI64X2U});
+}
+
+TEST(WriteTest, Instruction_threads) {
+  using I = Instruction;
+  using O = Opcode;
+
+  const MemArgImmediate m{0, 0};
+
+  ExpectWrite<I>(MakeSpanU8("\xfe\x00\x00\x00"), I{O::AtomicNotify, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x01\x00\x00"), I{O::I32AtomicWait, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x02\x00\x00"), I{O::I64AtomicWait, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x10\x00\x00"), I{O::I32AtomicLoad, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x11\x00\x00"), I{O::I64AtomicLoad, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x12\x00\x00"), I{O::I32AtomicLoad8U, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x13\x00\x00"), I{O::I32AtomicLoad16U, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x14\x00\x00"), I{O::I64AtomicLoad8U, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x15\x00\x00"), I{O::I64AtomicLoad16U, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x16\x00\x00"), I{O::I64AtomicLoad32U, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x17\x00\x00"), I{O::I32AtomicStore, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x18\x00\x00"), I{O::I64AtomicStore, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x19\x00\x00"), I{O::I32AtomicStore8, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x1a\x00\x00"), I{O::I32AtomicStore16, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x1b\x00\x00"), I{O::I64AtomicStore8, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x1c\x00\x00"), I{O::I64AtomicStore16, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x1d\x00\x00"), I{O::I64AtomicStore32, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x1e\x00\x00"), I{O::I32AtomicRmwAdd, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x1f\x00\x00"), I{O::I64AtomicRmwAdd, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x20\x00\x00"), I{O::I32AtomicRmw8AddU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x21\x00\x00"), I{O::I32AtomicRmw16AddU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x22\x00\x00"), I{O::I64AtomicRmw8AddU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x23\x00\x00"), I{O::I64AtomicRmw16AddU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x24\x00\x00"), I{O::I64AtomicRmw32AddU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x25\x00\x00"), I{O::I32AtomicRmwSub, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x26\x00\x00"), I{O::I64AtomicRmwSub, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x27\x00\x00"), I{O::I32AtomicRmw8SubU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x28\x00\x00"), I{O::I32AtomicRmw16SubU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x29\x00\x00"), I{O::I64AtomicRmw8SubU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x2a\x00\x00"), I{O::I64AtomicRmw16SubU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x2b\x00\x00"), I{O::I64AtomicRmw32SubU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x2c\x00\x00"), I{O::I32AtomicRmwAnd, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x2d\x00\x00"), I{O::I64AtomicRmwAnd, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x2e\x00\x00"), I{O::I32AtomicRmw8AndU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x2f\x00\x00"), I{O::I32AtomicRmw16AndU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x30\x00\x00"), I{O::I64AtomicRmw8AndU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x31\x00\x00"), I{O::I64AtomicRmw16AndU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x32\x00\x00"), I{O::I64AtomicRmw32AndU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x33\x00\x00"), I{O::I32AtomicRmwOr, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x34\x00\x00"), I{O::I64AtomicRmwOr, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x35\x00\x00"), I{O::I32AtomicRmw8OrU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x36\x00\x00"), I{O::I32AtomicRmw16OrU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x37\x00\x00"), I{O::I64AtomicRmw8OrU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x38\x00\x00"), I{O::I64AtomicRmw16OrU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x39\x00\x00"), I{O::I64AtomicRmw32OrU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x3a\x00\x00"), I{O::I32AtomicRmwXor, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x3b\x00\x00"), I{O::I64AtomicRmwXor, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x3c\x00\x00"), I{O::I32AtomicRmw8XorU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x3d\x00\x00"), I{O::I32AtomicRmw16XorU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x3e\x00\x00"), I{O::I64AtomicRmw8XorU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x3f\x00\x00"), I{O::I64AtomicRmw16XorU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x40\x00\x00"), I{O::I64AtomicRmw32XorU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x41\x00\x00"), I{O::I32AtomicRmwXchg, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x42\x00\x00"), I{O::I64AtomicRmwXchg, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x43\x00\x00"), I{O::I32AtomicRmw8XchgU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x44\x00\x00"), I{O::I32AtomicRmw16XchgU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x45\x00\x00"), I{O::I64AtomicRmw8XchgU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x46\x00\x00"), I{O::I64AtomicRmw16XchgU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x47\x00\x00"), I{O::I64AtomicRmw32XchgU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x48\x00\x00"), I{O::I32AtomicRmwCmpxchg, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x49\x00\x00"), I{O::I64AtomicRmwCmpxchg, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x4a\x00\x00"),
+                 I{O::I32AtomicRmw8CmpxchgU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x4b\x00\x00"),
+                 I{O::I32AtomicRmw16CmpxchgU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x4c\x00\x00"),
+                 I{O::I64AtomicRmw8CmpxchgU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x4d\x00\x00"),
+                 I{O::I64AtomicRmw16CmpxchgU, m});
+  ExpectWrite<I>(MakeSpanU8("\xfe\x4e\x00\x00"),
+                 I{O::I64AtomicRmw32CmpxchgU, m});
+}
+
 TEST(WriteTest, Limits) {
   ExpectWrite<Limits>(MakeSpanU8("\x00\x81\x01"), Limits{129});
   ExpectWrite<Limits>(MakeSpanU8("\x01\x02\xe8\x07"), Limits{2, 1000});
+}
+
+TEST(WriteTest, MemArgImmediate) {
+  ExpectWrite<MemArgImmediate>(MakeSpanU8("\x00\x00"), MemArgImmediate{0, 0});
+  ExpectWrite<MemArgImmediate>(MakeSpanU8("\x01\x80\x02"),
+                               MemArgImmediate{1, 256});
 }
 
 TEST(WriteTest, Memory) {
@@ -637,6 +1161,13 @@ TEST(WriteTest, SectionId) {
   ExpectWrite<SectionId>(MakeSpanU8("\x0a"), SectionId::Code);
   ExpectWrite<SectionId>(MakeSpanU8("\x0b"), SectionId::Data);
   ExpectWrite<SectionId>(MakeSpanU8("\x0c"), SectionId::DataCount);
+}
+
+TEST(WriteTest, ShuffleImmediate) {
+  ExpectWrite<ShuffleImmediate>(
+      MakeSpanU8(
+          "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"),
+      ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}});
 }
 
 TEST(WriteTest, Start) {

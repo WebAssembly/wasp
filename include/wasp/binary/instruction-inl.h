@@ -166,6 +166,14 @@ inline const f64& Instruction::f64_immediate() const {
   return get<f64>(immediate);
 }
 
+inline v128& Instruction::v128_immediate() {
+  return get<v128>(immediate);
+}
+
+inline const v128& Instruction::v128_immediate() const {
+  return get<v128>(immediate);
+}
+
 inline InitImmediate& Instruction::init_immediate() {
   return get<InitImmediate>(immediate);
 }
