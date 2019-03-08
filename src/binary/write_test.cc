@@ -27,6 +27,7 @@
 #include "wasp/binary/write/write_br_table_immediate.h"
 #include "wasp/binary/write/write_bytes.h"
 #include "wasp/binary/write/write_call_indirect_immediate.h"
+#include "wasp/binary/write/write_constant_expression.h"
 #include "wasp/binary/write/write_copy_immediate.h"
 #include "wasp/binary/write/write_element_type.h"
 #include "wasp/binary/write/write_export.h"
@@ -35,6 +36,7 @@
 #include "wasp/binary/write/write_f64.h"
 #include "wasp/binary/write/write_function.h"
 #include "wasp/binary/write/write_function_type.h"
+#include "wasp/binary/write/write_global.h"
 #include "wasp/binary/write/write_global_type.h"
 #include "wasp/binary/write/write_import.h"
 #include "wasp/binary/write/write_init_immediate.h"
@@ -95,6 +97,33 @@ TEST(WriteTest, CallIndirectImmediate) {
                                      CallIndirectImmediate{128, 0});
 }
 
+TEST(WriteTest, ConstantExpression) {
+  // i32.const
+  ExpectWrite<ConstantExpression>(
+      MakeSpanU8("\x41\x00\x0b"),
+      ConstantExpression{Instruction{Opcode::I32Const, s32{0}}});
+
+  // i64.const
+  ExpectWrite<ConstantExpression>(
+      MakeSpanU8("\x42\x80\x80\x80\x80\x80\x01\x0b"),
+      ConstantExpression{Instruction{Opcode::I64Const, s64{34359738368}}});
+
+  // f32.const
+  ExpectWrite<ConstantExpression>(
+      MakeSpanU8("\x43\x00\x00\x00\x00\x0b"),
+      ConstantExpression{Instruction{Opcode::F32Const, f32{0}}});
+
+  // f64.const
+  ExpectWrite<ConstantExpression>(
+      MakeSpanU8("\x44\x00\x00\x00\x00\x00\x00\x00\x00\x0b"),
+      ConstantExpression{Instruction{Opcode::F64Const, f64{0}}});
+
+  // global.get
+  ExpectWrite<ConstantExpression>(
+      MakeSpanU8("\x23\x00\x0b"),
+      ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}});
+}
+
 TEST(WriteTest, CopyImmediate) {
   ExpectWrite<CopyImmediate>(MakeSpanU8("\x00\x00"), CopyImmediate{0, 0});
 }
@@ -149,6 +178,13 @@ TEST(WriteTest, FunctionType) {
   ExpectWrite<FunctionType>(
       MakeSpanU8("\x02\x7f\x7e\x01\x7c"),
       FunctionType{{ValueType::I32, ValueType::I64}, {ValueType::F64}});
+}
+
+TEST(WriteTest, Global) {
+  ExpectWrite<Global>(
+      MakeSpanU8("\x7f\x01\x41\x00\x0b"),
+      Global{GlobalType{ValueType::I32, Mutability::Var},
+             ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}});
 }
 
 TEST(WriteTest, GlobalType) {
