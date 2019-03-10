@@ -510,13 +510,13 @@ TEST(WriteTest, Instruction_bulk_memory) {
 
   ExpectWrite<I>(MakeSpanU8("\xfc\x08\x01\x00"),
                  I{O::MemoryInit, InitImmediate{1, 0}});
-  ExpectWrite<I>(MakeSpanU8("\xfc\x09\x02"), I{O::MemoryDrop, Index{2}});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x09\x02"), I{O::DataDrop, Index{2}});
   ExpectWrite<I>(MakeSpanU8("\xfc\x0a\x00\x00"),
                  I{O::MemoryCopy, CopyImmediate{0, 0}});
   ExpectWrite<I>(MakeSpanU8("\xfc\x0b\x00"), I{O::MemoryFill, u8{0}});
   ExpectWrite<I>(MakeSpanU8("\xfc\x0c\x03\x00"),
                  I{O::TableInit, InitImmediate{3, 0}});
-  ExpectWrite<I>(MakeSpanU8("\xfc\x0d\x04"), I{O::TableDrop, Index{4}});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x0d\x04"), I{O::ElemDrop, Index{4}});
   ExpectWrite<I>(MakeSpanU8("\xfc\x0e\x00\x00"),
                  I{O::TableCopy, CopyImmediate{0, 0}});
 }
@@ -1000,11 +1000,11 @@ TEST(WriteTest, Opcode_saturating_float_to_int) {
 
 TEST(WriteTest, Opcode_bulk_memory) {
   ExpectWrite<Opcode>(MakeSpanU8("\xfc\x08"), Opcode::MemoryInit);
-  ExpectWrite<Opcode>(MakeSpanU8("\xfc\x09"), Opcode::MemoryDrop);
+  ExpectWrite<Opcode>(MakeSpanU8("\xfc\x09"), Opcode::DataDrop);
   ExpectWrite<Opcode>(MakeSpanU8("\xfc\x0a"), Opcode::MemoryCopy);
   ExpectWrite<Opcode>(MakeSpanU8("\xfc\x0b"), Opcode::MemoryFill);
   ExpectWrite<Opcode>(MakeSpanU8("\xfc\x0c"), Opcode::TableInit);
-  ExpectWrite<Opcode>(MakeSpanU8("\xfc\x0d"), Opcode::TableDrop);
+  ExpectWrite<Opcode>(MakeSpanU8("\xfc\x0d"), Opcode::ElemDrop);
   ExpectWrite<Opcode>(MakeSpanU8("\xfc\x0e"), Opcode::TableCopy);
 }
 

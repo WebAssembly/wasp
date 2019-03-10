@@ -1157,15 +1157,13 @@ TEST(ReadTest, Instruction_bulk_memory) {
 
   ExpectRead<I>(I{O::MemoryInit, InitImmediate{1, 0}},
                 MakeSpanU8("\xfc\x08\x01\x00"), features);
-  ExpectRead<I>(I{O::MemoryDrop, Index{2}}, MakeSpanU8("\xfc\x09\x02"),
-                features);
+  ExpectRead<I>(I{O::DataDrop, Index{2}}, MakeSpanU8("\xfc\x09\x02"), features);
   ExpectRead<I>(I{O::MemoryCopy, CopyImmediate{0, 0}},
                 MakeSpanU8("\xfc\x0a\x00\x00"), features);
   ExpectRead<I>(I{O::MemoryFill, u8{0}}, MakeSpanU8("\xfc\x0b\x00"), features);
   ExpectRead<I>(I{O::TableInit, InitImmediate{3, 0}},
                 MakeSpanU8("\xfc\x0c\x03\x00"), features);
-  ExpectRead<I>(I{O::TableDrop, Index{4}}, MakeSpanU8("\xfc\x0d\x04"),
-                features);
+  ExpectRead<I>(I{O::ElemDrop, Index{4}}, MakeSpanU8("\xfc\x0d\x04"), features);
   ExpectRead<I>(I{O::TableCopy, CopyImmediate{0, 0}},
                 MakeSpanU8("\xfc\x0e\x00\x00"), features);
 }
@@ -1839,11 +1837,11 @@ TEST(ReadTest, Opcode_bulk_memory) {
   features.enable_bulk_memory();
 
   ExpectRead<Opcode>(Opcode::MemoryInit, MakeSpanU8("\xfc\x08"), features);
-  ExpectRead<Opcode>(Opcode::MemoryDrop, MakeSpanU8("\xfc\x09"), features);
+  ExpectRead<Opcode>(Opcode::DataDrop, MakeSpanU8("\xfc\x09"), features);
   ExpectRead<Opcode>(Opcode::MemoryCopy, MakeSpanU8("\xfc\x0a"), features);
   ExpectRead<Opcode>(Opcode::MemoryFill, MakeSpanU8("\xfc\x0b"), features);
   ExpectRead<Opcode>(Opcode::TableInit, MakeSpanU8("\xfc\x0c"), features);
-  ExpectRead<Opcode>(Opcode::TableDrop, MakeSpanU8("\xfc\x0d"), features);
+  ExpectRead<Opcode>(Opcode::ElemDrop, MakeSpanU8("\xfc\x0d"), features);
   ExpectRead<Opcode>(Opcode::TableCopy, MakeSpanU8("\xfc\x0e"), features);
 }
 

@@ -338,8 +338,8 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::GlobalGet:
     case Opcode::GlobalSet:
     case Opcode::RefFunc:
-    case Opcode::MemoryDrop:
-    case Opcode::TableDrop: {
+    case Opcode::DataDrop:
+    case Opcode::ElemDrop: {
       WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
       return Instruction{Opcode{opcode}, index};
     }

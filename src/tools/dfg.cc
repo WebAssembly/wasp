@@ -500,8 +500,8 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
       }
 
       case Opcode::Nop:
-      case Opcode::MemoryDrop:
-      case Opcode::TableDrop:
+      case Opcode::DataDrop:
+      case Opcode::ElemDrop:
         break;
 
       case Opcode::Drop:

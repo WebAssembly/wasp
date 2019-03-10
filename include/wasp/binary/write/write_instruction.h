@@ -328,8 +328,8 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::GlobalGet:
     case Opcode::GlobalSet:
     case Opcode::RefFunc:
-    case Opcode::MemoryDrop:
-    case Opcode::TableDrop:
+    case Opcode::DataDrop:
+    case Opcode::ElemDrop:
       return Write(instr.index_immediate(), out);
 
     // Index* immediates.

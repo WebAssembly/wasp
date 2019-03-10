@@ -215,11 +215,11 @@ WASP_PREFIX_V(0xfc, 0x07, I64TruncSatF64U, "i64.trunc_sat_f64_u", saturating_flo
 
 // Bulk memory opcodes
 WASP_PREFIX_V(0xfc, 0x08, MemoryInit, "memory.init", bulk_memory)
-WASP_PREFIX_V(0xfc, 0x09, MemoryDrop, "memory.drop", bulk_memory)
+WASP_PREFIX_V(0xfc, 0x09, DataDrop, "data.drop", bulk_memory)
 WASP_PREFIX_V(0xfc, 0x0a, MemoryCopy, "memory.copy", bulk_memory)
 WASP_PREFIX_V(0xfc, 0x0b, MemoryFill, "memory.fill", bulk_memory)
 WASP_PREFIX_V(0xfc, 0x0c, TableInit, "table.init", bulk_memory)
-WASP_PREFIX_V(0xfc, 0x0d, TableDrop, "table.drop", bulk_memory)
+WASP_PREFIX_V(0xfc, 0x0d, ElemDrop, "elem.drop", bulk_memory)
 WASP_PREFIX_V(0xfc, 0x0e, TableCopy, "table.copy", bulk_memory)
 
 // Simd opcodes
