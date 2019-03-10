@@ -24,6 +24,7 @@
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_constant_expression.h"
+#include "wasp/binary/read/read_element_expression.h"
 #include "wasp/binary/read/read_element_type.h"
 #include "wasp/binary/read/read_index.h"
 #include "wasp/binary/read/read_u32.h"
@@ -60,12 +61,8 @@ optional<ElementSegment> Read(SpanU8* data,
     return ElementSegment{table_index, offset, init};
   } else {
     WASP_TRY_READ(element_type, Read<ElementType>(data, features, errors));
-    // TODO(binji): This should be read as an ElementExpression instead:
-    //
-    // * 0xd0 0x0b           => ref.null end
-    // * 0xd2 varuint32 0xb  => ref.func $funcidx end
-    WASP_TRY_READ(init,
-                  ReadVector<Index>(data, features, errors, "initializers"));
+    WASP_TRY_READ(init, ReadVector<ElementExpression>(data, features, errors,
+                                                      "initializers"));
     return ElementSegment{element_type, init};
   }
 }

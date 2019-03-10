@@ -14,25 +14,24 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/element_segment.h"
+#ifndef WASP_BINARY_WRITE_WRITE_ELEMENT_EXPRESSION_H_
+#define WASP_BINARY_WRITE_WRITE_ELEMENT_EXPRESSION_H_
 
-#include "src/base/operator_eq_ne_macros.h"
+#include "wasp/binary/element_expression.h"
+#include "wasp/binary/write/write_instruction.h"
+#include "wasp/binary/write/write_opcode.h"
 
 namespace wasp {
 namespace binary {
 
-ElementSegment::ElementSegment(Index table_index,
-                               ConstantExpression offset,
-                               const std::vector<Index>& init)
-    : desc{Active{table_index, offset, init}} {}
-
-ElementSegment::ElementSegment(ElementType element_type,
-                               const std::vector<ElementExpression>& init)
-    : desc{Passive{element_type, init}} {}
-
-WASP_OPERATOR_EQ_NE_1(ElementSegment, desc)
-WASP_OPERATOR_EQ_NE_3(ElementSegment::Active, table_index, offset, init)
-WASP_OPERATOR_EQ_NE_2(ElementSegment::Passive, element_type, init)
+template <typename Iterator>
+Iterator Write(const ElementExpression& value, Iterator out) {
+  out = Write(value.instruction, out);
+  out = Write(Opcode::End, out);
+  return out;
+}
 
 }  // namespace binary
 }  // namespace wasp
+
+#endif  // WASP_BINARY_WRITE_WRITE_ELEMENT_EXPRESSION_H_

@@ -217,6 +217,14 @@ TEST(FormattersTest, ConstantExpression) {
             format("{:>10s}", ConstantExpression{Instruction{Opcode::Nop}}));
 }
 
+TEST(FormattersTest, ElementExpression) {
+  EXPECT_EQ(R"(ref.null end)",
+            format("{}", ElementExpression{Instruction{Opcode::RefNull}}));
+  EXPECT_EQ(R"(   ref.func 0 end)",
+            format("{:>17s}",
+                   ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}));
+}
+
 TEST(FormattersTest, Opcode) {
   EXPECT_EQ(R"(memory.grow)", format("{}", Opcode::MemoryGrow));
   EXPECT_EQ(R"(   nop)", format("{:>6s}", Opcode::Nop));
@@ -348,8 +356,12 @@ TEST(FormattersTest, ElementSegment_Active) {
 
 TEST(FormattersTest, ElementSegment_Passive) {
   EXPECT_EQ(
-      R"({element_type funcref, init [2 3]})",
-      format("{}", ElementSegment{ElementType::Funcref, {2u, 3u}}));
+      R"({element_type funcref, init [ref.func 2 end ref.null end]})",
+      format("{}",
+             ElementSegment{
+                 ElementType::Funcref,
+                 {ElementExpression{Instruction{Opcode::RefFunc, Index{2u}}},
+                  ElementExpression{Instruction{Opcode::RefNull}}}}));
 
   EXPECT_EQ(
       R"( {element_type funcref, init []})",

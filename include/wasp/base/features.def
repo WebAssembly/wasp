@@ -18,6 +18,7 @@
 
 WASP_V(bulk_memory,             "bulk-memory",             false)
 WASP_V(exceptions,              "exceptions",              false)
+WASP_V(function_references,     "function-references",     false)
 WASP_V(multi_value,             "multi-value",             false)
 WASP_V(mutable_globals,         "mutable-globals",         true )
 WASP_V(reference_types,         "reference-types",         false)

@@ -22,6 +22,7 @@
 #include "wasp/binary/constant_expression.h"
 #include "wasp/binary/data_count.h"
 #include "wasp/binary/data_segment.h"
+#include "wasp/binary/element_expression.h"
 #include "wasp/binary/element_segment.h"
 #include "wasp/binary/export.h"
 #include "wasp/binary/expression.h"
@@ -74,6 +75,7 @@ WASP_DEFINE_FORMATTER(Import);
 WASP_DEFINE_FORMATTER(Export);
 WASP_DEFINE_FORMATTER(Expression);
 WASP_DEFINE_FORMATTER(ConstantExpression);
+WASP_DEFINE_FORMATTER(ElementExpression);
 WASP_DEFINE_FORMATTER(Opcode);
 WASP_DEFINE_FORMATTER(CallIndirectImmediate);
 WASP_DEFINE_FORMATTER(BrTableImmediate);

@@ -177,6 +177,8 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::I64Extend8S:
     case Opcode::I64Extend16S:
     case Opcode::I64Extend32S:
+    case Opcode::RefNull:
+    case Opcode::RefIsNull:
     case Opcode::I32TruncSatF32S:
     case Opcode::I32TruncSatF32U:
     case Opcode::I32TruncSatF64S:
@@ -325,6 +327,7 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::LocalTee:
     case Opcode::GlobalGet:
     case Opcode::GlobalSet:
+    case Opcode::RefFunc:
     case Opcode::MemoryDrop:
     case Opcode::TableDrop:
       return Write(instr.index_immediate(), out);

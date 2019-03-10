@@ -363,6 +363,15 @@ typename Ctx::iterator formatter<::wasp::binary::ConstantExpression>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::ElementExpression>::format(
+    const ::wasp::binary::ElementExpression& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{} end", self.instruction);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Opcode>::format(
     const ::wasp::binary::Opcode& self,
     Ctx& ctx) {
@@ -527,11 +536,13 @@ typename Ctx::iterator formatter<::wasp::binary::ElementSegment>::format(
     Ctx& ctx) {
   memory_buffer buf;
   if (self.is_active()) {
-    format_to(buf, "{{table {}, offset {}, init {}}}",
-              self.active().table_index, self.active().offset, self.init);
+    const auto& active = self.active();
+    format_to(buf, "{{table {}, offset {}, init {}}}", active.table_index,
+              active.offset, active.init);
   } else if (self.is_passive()) {
-    format_to(buf, "{{element_type {}, init {}}}", self.passive().element_type,
-              self.init);
+    const auto& passive = self.passive();
+    format_to(buf, "{{element_type {}, init {}}}", passive.element_type,
+              passive.init);
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }

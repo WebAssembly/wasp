@@ -1,5 +1,5 @@
 //
-// Copyright 2018 WebAssembly Community Group participants
+// Copyright 2019 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,23 +14,14 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BASE_MACROS_H_
-#define WASP_BASE_MACROS_H_
+#include "wasp/binary/element_expression.h"
 
-#if defined(__GNUC__) || defined(__clang__)
+#include "src/base/operator_eq_ne_macros.h"
 
-#define WASP_UNREACHABLE() __builtin_unreachable()
+namespace wasp {
+namespace binary {
 
-#elif defined(_MSC_VER)
+WASP_OPERATOR_EQ_NE_1(ElementExpression, instruction)
 
-#define WASP_UNREACHABLE() __assume(0)
-
-#else
-
-#error Unknown compiler!
-
-#endif
-
-#define WASP_USE(x) static_cast<void>(x)
-
-#endif  // WASP_BASE_MACROS_H_
+}  // namespace binary
+}  // namespace wasp

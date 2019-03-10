@@ -45,6 +45,7 @@ add_library(wasplib
   src/binary/custom_section.cc
   src/binary/data_count.cc
   src/binary/data_segment.cc
+  src/binary/element_expression.cc
   src/binary/element_segment.cc
   src/binary/empty_immediate.cc
   src/binary/export.cc

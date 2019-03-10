@@ -44,19 +44,28 @@ struct SegmentFlags {
   static constexpr u8 Passive = 1;
   static constexpr u8 ActiveWithIndex = 2;
 
+  static u8 Encode(DecodedSegmentFlags);
   static optional<DecodedSegmentFlags> Decode(Index);
 };
 
 // static
+inline u8 SegmentFlags::Encode(DecodedSegmentFlags flags) {
+  if (flags.segment_type == SegmentType::Active) {
+    return flags.has_index == HasIndex::Yes ? ActiveWithIndex : ActiveIndex0;
+  }
+  return Passive;
+}
+
+// static
 inline optional<DecodedSegmentFlags> SegmentFlags::Decode(Index flags) {
   switch (flags) {
-    case SegmentFlags::ActiveIndex0:
+    case ActiveIndex0:
       return {{SegmentType::Active, HasIndex::No}};
 
-    case SegmentFlags::Passive:
+    case Passive:
       return {{SegmentType::Passive, HasIndex::No}};
 
-    case SegmentFlags::ActiveWithIndex:
+    case ActiveWithIndex:
       return {{SegmentType::Active, HasIndex::Yes}};
 
     default:

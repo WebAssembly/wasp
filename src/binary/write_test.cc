@@ -29,6 +29,9 @@
 #include "wasp/binary/write/write_call_indirect_immediate.h"
 #include "wasp/binary/write/write_constant_expression.h"
 #include "wasp/binary/write/write_copy_immediate.h"
+#include "wasp/binary/write/write_data_segment.h"
+#include "wasp/binary/write/write_element_expression.h"
+#include "wasp/binary/write/write_element_segment.h"
 #include "wasp/binary/write/write_element_type.h"
 #include "wasp/binary/write/write_export.h"
 #include "wasp/binary/write/write_external_kind.h"
@@ -126,6 +129,61 @@ TEST(WriteTest, ConstantExpression) {
 
 TEST(WriteTest, CopyImmediate) {
   ExpectWrite<CopyImmediate>(MakeSpanU8("\x00\x00"), CopyImmediate{0, 0});
+}
+
+TEST(WriteTest, DataSegment) {
+  ExpectWrite<DataSegment>(
+      MakeSpanU8("\x00\x42\x01\x0b\x04wxyz"),
+      DataSegment{0, ConstantExpression{Instruction{Opcode::I64Const, s64{1}}},
+                  MakeSpanU8("wxyz")});
+}
+
+TEST(WriteTest, DataSegment_BulkMemory) {
+  // Active data segment with non-zero memory index.
+  ExpectWrite<DataSegment>(
+      MakeSpanU8("\x02\x01\x42\x01\x0b\x04wxyz"),
+      DataSegment{1, ConstantExpression{Instruction{Opcode::I64Const, s64{1}}},
+                  MakeSpanU8("wxyz")});
+
+  // Passive data segment.
+  ExpectWrite<DataSegment>(MakeSpanU8("\x01\x04wxyz"),
+                           DataSegment{MakeSpanU8("wxyz")});
+}
+
+TEST(WriteTest, ElementExpression) {
+  // ref.null
+  ExpectWrite<ElementExpression>(
+      MakeSpanU8("\xd0\x0b"), ElementExpression{Instruction{Opcode::RefNull}});
+
+  // ref.func 2
+  ExpectWrite<ElementExpression>(
+      MakeSpanU8("\xd2\x02\x0b"),
+      ElementExpression{Instruction{Opcode::RefFunc, Index{2u}}});
+}
+
+TEST(WriteTest, ElementSegment) {
+  ExpectWrite<ElementSegment>(
+      MakeSpanU8("\x00\x41\x01\x0b\x03\x01\x02\x03"),
+      ElementSegment{0,
+                     ConstantExpression{Instruction{Opcode::I32Const, s32{1}}},
+                     {1, 2, 3}});
+}
+
+TEST(WriteTest, ElementSegment_BulkMemory) {
+  // Active element segment with non-zero table index.
+  ExpectWrite<ElementSegment>(
+      MakeSpanU8("\x02\x01\x41\x01\x0b\x03\x01\x02\x03"),
+      ElementSegment{1,
+                     ConstantExpression{Instruction{Opcode::I32Const, s32{1}}},
+                     {1, 2, 3}});
+
+  // Passive element segment.
+  ExpectWrite<ElementSegment>(
+      MakeSpanU8("\x01\x70\x02\xd2\x01\x0b\xd0\x0b"),
+      ElementSegment{
+          ElementType::Funcref,
+          {ElementExpression{Instruction{Opcode::RefFunc, Index{1u}}},
+           ElementExpression{Instruction{Opcode::RefNull}}}});
 }
 
 TEST(WriteTest, ElementType) {
@@ -415,6 +473,21 @@ TEST(WriteTest, Instruction_sign_extension) {
   ExpectWrite<I>(MakeSpanU8("\xc2"), I{O::I64Extend8S});
   ExpectWrite<I>(MakeSpanU8("\xc3"), I{O::I64Extend16S});
   ExpectWrite<I>(MakeSpanU8("\xc4"), I{O::I64Extend32S});
+}
+
+TEST(WriteTest, Instruction_reference_types) {
+  using I = Instruction;
+  using O = Opcode;
+
+  ExpectWrite<I>(MakeSpanU8("\xd0"), I{O::RefNull});
+  ExpectWrite<I>(MakeSpanU8("\xd1"), I{O::RefIsNull});
+}
+
+TEST(WriteTest, Instruction_function_references) {
+  using I = Instruction;
+  using O = Opcode;
+
+  ExpectWrite<I>(MakeSpanU8("\xd2\x00"), I{O::RefFunc, Index{0}});
 }
 
 TEST(WriteTest, Instruction_saturating_float_to_int) {
@@ -903,6 +976,15 @@ TEST(WriteTest, Opcode_sign_extension) {
   ExpectWrite<Opcode>(MakeSpanU8("\xc2"), Opcode::I64Extend8S);
   ExpectWrite<Opcode>(MakeSpanU8("\xc3"), Opcode::I64Extend16S);
   ExpectWrite<Opcode>(MakeSpanU8("\xc4"), Opcode::I64Extend32S);
+}
+
+TEST(WriteTest, Opcode_reference_types) {
+  ExpectWrite<Opcode>(MakeSpanU8("\xd0"), Opcode::RefNull);
+  ExpectWrite<Opcode>(MakeSpanU8("\xd1"), Opcode::RefIsNull);
+}
+
+TEST(WriteTest, Opcode_function_references) {
+  ExpectWrite<Opcode>(MakeSpanU8("\xd2"), Opcode::RefFunc);
 }
 
 TEST(WriteTest, Opcode_saturating_float_to_int) {

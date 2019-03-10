@@ -22,6 +22,7 @@
 #include "wasp/base/types.h"
 #include "wasp/base/variant.h"
 #include "wasp/binary/constant_expression.h"
+#include "wasp/binary/element_expression.h"
 #include "wasp/binary/element_type.h"
 #include "wasp/binary/segment_type.h"
 
@@ -32,10 +33,12 @@ struct ElementSegment {
   struct Active {
     Index table_index;
     ConstantExpression offset;
+    std::vector<Index> init;
   };
 
   struct Passive {
     ElementType element_type;
+    std::vector<ElementExpression> init;
   };
 
   // Active.
@@ -45,7 +48,7 @@ struct ElementSegment {
 
   // Passive.
   explicit ElementSegment(ElementType element_type,
-                          const std::vector<Index>& init);
+                          const std::vector<ElementExpression>& init);
 
   SegmentType segment_type() const;
   bool is_active() const;
@@ -56,7 +59,6 @@ struct ElementSegment {
   Passive& passive();
   const Passive& passive() const;
 
-  std::vector<Index> init;
   variant<Active, Passive> desc;
 };
 

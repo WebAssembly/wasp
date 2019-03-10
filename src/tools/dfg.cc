@@ -529,6 +529,8 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
       case Opcode::I64Const:
       case Opcode::F32Const:
       case Opcode::F64Const:
+      case Opcode::RefNull:
+      case Opcode::RefFunc:
       case Opcode::V128Const:
         BasicInstruction(instr, 0, 1);
         break;
@@ -600,6 +602,7 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
       case Opcode::I64Extend8S:
       case Opcode::I64Extend16S:
       case Opcode::I64Extend32S:
+      case Opcode::RefIsNull:
       case Opcode::I32TruncSatF32S:
       case Opcode::I32TruncSatF32U:
       case Opcode::I32TruncSatF64S:

@@ -606,22 +606,28 @@ void Tool::DoElementSection(Pass pass, LazyElementSection<ErrorsType> section) {
     for (auto element : section.sequence) {
       Index offset = 0;
       if (element.is_active()) {
+        const auto& active = element.active();
         print(" - segment[{}] table={} count={} - init {}\n", count,
-              element.active().table_index, element.init.size(),
-              element.active().offset);
+              active.table_index, active.init.size(), active.offset);
         offset = GetI32Value(element.active().offset).value_or(0);
+        Index elem_count = 0;
+        for (auto func_index : active.init) {
+          print("  - elem[{}] = func[{}]", offset + elem_count, func_index);
+          PrintFunctionName(func_index);
+          print("\n");
+          ++elem_count;
+        }
       } else {
+        const auto& passive = element.passive();
         print(" - segment[{}] count={} element_type={} passive\n", count,
-              element.passive().element_type, element.init.size());
+              passive.element_type, passive.init.size());
+        Index elem_count = 0;
+        for (auto element : passive.init) {
+          print("  - elem[{}] = {}\n", offset + elem_count, element);
+          ++elem_count;
+        }
       }
 
-      Index elem_count = 0;
-      for (auto func_index : element.init) {
-        print("  - elem[{}] = func[{}]", offset + elem_count, func_index);
-        PrintFunctionName(func_index);
-        print("\n");
-        ++elem_count;
-      }
       ++count;
     }
   }

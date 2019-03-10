@@ -1,5 +1,5 @@
 //
-// Copyright 2018 WebAssembly Community Group participants
+// Copyright 2019 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,23 +14,22 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BASE_MACROS_H_
-#define WASP_BASE_MACROS_H_
+#ifndef WASP_BINARY_ELEMENT_EXPRESSION_H_
+#define WASP_BINARY_ELEMENT_EXPRESSION_H_
 
-#if defined(__GNUC__) || defined(__clang__)
+#include "wasp/binary/instruction.h"
 
-#define WASP_UNREACHABLE() __builtin_unreachable()
+namespace wasp {
+namespace binary {
 
-#elif defined(_MSC_VER)
+struct ElementExpression {
+  Instruction instruction;
+};
 
-#define WASP_UNREACHABLE() __assume(0)
+bool operator==(const ElementExpression&, const ElementExpression&);
+bool operator!=(const ElementExpression&, const ElementExpression&);
 
-#else
+}  // namespace binary
+}  // namespace wasp
 
-#error Unknown compiler!
-
-#endif
-
-#define WASP_USE(x) static_cast<void>(x)
-
-#endif  // WASP_BASE_MACROS_H_
+#endif // WASP_BINARY_ELEMENT_EXPRESSION_H_

@@ -30,6 +30,7 @@
 #include "wasp/binary/read/read_copy_immediate.h"
 #include "wasp/binary/read/read_count.h"
 #include "wasp/binary/read/read_data_segment.h"
+#include "wasp/binary/read/read_element_expression.h"
 #include "wasp/binary/read/read_element_segment.h"
 #include "wasp/binary/read/read_element_type.h"
 #include "wasp/binary/read/read_export.h"
@@ -240,7 +241,7 @@ TEST(ReadTest, ConstantExpression_NoEnd) {
       {{0, "constant expression"}, {9, "opcode"}, {9, "Unable to read u8"}},
       MakeSpanU8("\x44\x00\x00\x00\x00\x00\x00\x00\x00"));
 
-  // get_global
+  // global.get
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
       MakeSpanU8("\x23\x00"));
@@ -424,6 +425,72 @@ TEST(ReadTest, DataSegment_BulkMemory_PastEnd) {
       MakeSpanU8("\x02\x00\x41\x00\x0b\x01"), features);
 }
 
+TEST(ReadTest, ElementExpression) {
+  Features features;
+  features.enable_bulk_memory();
+
+  // ref.null
+  ExpectRead<ElementExpression>(ElementExpression{Instruction{Opcode::RefNull}},
+                                MakeSpanU8("\xd0\x0b"), features);
+
+  // ref.func 2
+  ExpectRead<ElementExpression>(
+      ElementExpression{Instruction{Opcode::RefFunc, Index{2u}}},
+      MakeSpanU8("\xd2\x02\x0b"), features);
+}
+
+TEST(ReadTest, ElementExpression_NoEnd) {
+  Features features;
+  features.enable_bulk_memory();
+
+  // ref.null
+  ExpectReadFailure<ElementExpression>(
+      {{0, "element expression"}, {1, "opcode"}, {1, "Unable to read u8"}},
+      MakeSpanU8("\xd0"), features);
+
+  // ref.func
+  ExpectReadFailure<ElementExpression>(
+      {{0, "element expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
+      MakeSpanU8("\xd2\x00"), features);
+}
+
+TEST(ReadTest, ElementExpression_TooLong) {
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectReadFailure<ElementExpression>(
+      {{0, "element expression"}, {2, "Expected end instruction"}},
+      MakeSpanU8("\xd0\x00"), features);
+}
+
+TEST(ReadTest, ElementExpression_InvalidInstruction) {
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectReadFailure<ElementExpression>(
+      {{0, "element expression"}, {0, "opcode"}, {1, "Unknown opcode: 6"}},
+      MakeSpanU8("\x06"), features);
+}
+
+TEST(ReadTest, ElementExpression_IllegalInstruction) {
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectReadFailure<ElementExpression>(
+      {{0, "element expression"},
+       {1, "Illegal instruction in element expression: ref.is_null"}},
+      MakeSpanU8("\xd1"), features);
+}
+
+TEST(ReadTest, ElementExpression_PastEnd) {
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectReadFailure<ElementExpression>(
+      {{0, "element expression"}, {0, "opcode"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""), features);
+}
+
 TEST(ReadTest, ElementSegment_MVP) {
   ExpectRead<ElementSegment>(
       ElementSegment{0,
@@ -455,14 +522,20 @@ TEST(ReadTest, ElementSegment_BulkMemory) {
   Features features;
   features.enable_bulk_memory();
 
-  ExpectRead<ElementSegment>(ElementSegment{ElementType::Funcref, {1, 2, 3}},
-                             MakeSpanU8("\x01\x70\x03\x01\x02\x03"), features);
-
+  // Active element segment with non-zero table index.
   ExpectRead<ElementSegment>(
       ElementSegment{1u,
                      ConstantExpression{Instruction{Opcode::I32Const, s32{2}}},
                      {3, 4}},
       MakeSpanU8("\x02\x01\x41\x02\x0b\x02\x03\x04"), features);
+
+  // Passive element segment.
+  ExpectRead<ElementSegment>(
+      ElementSegment{
+          ElementType::Funcref,
+          {ElementExpression{Instruction{Opcode::RefFunc, Index{1u}}},
+           ElementExpression{Instruction{Opcode::RefNull}}}},
+      MakeSpanU8("\x01\x70\x02\xd2\x01\x0b\xd0\x0b"), features);
 }
 
 TEST(ReadTest, ElementSegment_BulkMemory_BadFlags) {
@@ -1035,6 +1108,27 @@ TEST(ReadTest, Instruction_sign_extension) {
   ExpectRead<I>(I{O::I64Extend8S}, MakeSpanU8("\xc2"), features);
   ExpectRead<I>(I{O::I64Extend16S}, MakeSpanU8("\xc3"), features);
   ExpectRead<I>(I{O::I64Extend32S}, MakeSpanU8("\xc4"), features);
+}
+
+TEST(ReadTest, Instruction_reference_types) {
+  using I = Instruction;
+  using O = Opcode;
+
+  Features features;
+  features.enable_reference_types();
+
+  ExpectRead<I>(I{O::RefNull}, MakeSpanU8("\xd0"), features);
+  ExpectRead<I>(I{O::RefIsNull}, MakeSpanU8("\xd1"), features);
+}
+
+TEST(ReadTest, Instruction_function_references) {
+  using I = Instruction;
+  using O = Opcode;
+
+  Features features;
+  features.enable_function_references();
+
+  ExpectRead<I>(I{O::RefFunc, Index{0}}, MakeSpanU8("\xd2\x00"), features);
 }
 
 TEST(ReadTest, Instruction_saturating_float_to_int) {
@@ -1709,6 +1803,21 @@ TEST(ReadTest, Opcode_sign_extension) {
   ExpectRead<Opcode>(Opcode::I64Extend8S, MakeSpanU8("\xc2"), features);
   ExpectRead<Opcode>(Opcode::I64Extend16S, MakeSpanU8("\xc3"), features);
   ExpectRead<Opcode>(Opcode::I64Extend32S, MakeSpanU8("\xc4"), features);
+}
+
+TEST(ReadTest, Opcode_reference_types) {
+  Features features;
+  features.enable_reference_types();
+
+  ExpectRead<Opcode>(Opcode::RefNull, MakeSpanU8("\xd0"), features);
+  ExpectRead<Opcode>(Opcode::RefIsNull, MakeSpanU8("\xd1"), features);
+}
+
+TEST(ReadTest, Opcode_function_references) {
+  Features features;
+  features.enable_function_references();
+
+  ExpectRead<Opcode>(Opcode::RefFunc, MakeSpanU8("\xd2"), features);
 }
 
 TEST(ReadTest, Opcode_saturating_float_to_int) {
