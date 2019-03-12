@@ -37,6 +37,7 @@
 #include "wasp/binary/write/write_external_kind.h"
 #include "wasp/binary/write/write_f32.h"
 #include "wasp/binary/write/write_f64.h"
+#include "wasp/binary/write/write_fixed_var_int.h"
 #include "wasp/binary/write/write_function.h"
 #include "wasp/binary/write/write_function_type.h"
 #include "wasp/binary/write/write_global.h"
@@ -225,6 +226,103 @@ TEST(WriteTest, F64) {
   ExpectWrite<f64>(MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf0\x7f"), INFINITY);
   ExpectWrite<f64>(MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf0\xff"), -INFINITY);
   // TODO: NaN
+}
+
+namespace {
+
+template <typename T>
+void ExpectWriteFixedVarInt(SpanU8 expected, T value, size_t length) {
+  std::vector<wasp::u8> result(expected.size());
+  auto iter = wasp::binary::WriteFixedVarInt(
+      value, MakeClampedIterator(result.begin(), result.end()), length);
+  EXPECT_FALSE(iter.overflow());
+  EXPECT_EQ(iter.base(), result.end());
+  EXPECT_EQ(expected, SpanU8{result});
+}
+
+}  // namespace
+
+TEST(WriteTest, FixedVarInt_u32) {
+  // Naturally 1 byte.
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x11"), 0x11, 1);
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\x00"), 0x11, 2);
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\x80\x00"), 0x11, 3);
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\x80\x80\x00"), 0x11, 4);
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\x80\x80\x80\x00"), 0x11, 5);
+
+  // Naturally 2 bytes.
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\x02"), 0x111, 2);
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\x82\x00"), 0x111, 3);
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\x82\x80\x00"), 0x111, 4);
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\x82\x80\x80\x00"), 0x111, 5);
+
+  // Naturally 3 bytes.
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\xa2\x04"), 0x11111, 3);
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\xa2\x84\x00"), 0x11111, 4);
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\xa2\x84\x80\x00"), 0x11111, 5);
+
+  // Naturally 4 bytes.
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\xa2\xc4\x08"), 0x1111111, 4);
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\xa2\xc4\x88\x00"), 0x1111111, 5);
+
+  // Naturally 5 bytes.
+  ExpectWriteFixedVarInt<u32>(MakeSpanU8("\x91\xa2\xc4\x88\x01"), 0x11111111,
+                              5);
+}
+
+TEST(WriteTest, FixedVarInt_s32) {
+  // Naturally 1 byte, positive.
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x11"), 0x11, 1);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\x00"), 0x11, 2);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\x80\x00"), 0x11, 3);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\x80\x80\x00"), 0x11, 4);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\x80\x80\x80\x00"), 0x11, 5);
+
+  // Naturally 2 bytes, positive.
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\x02"), 0x111, 2);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\x82\x00"), 0x111, 3);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\x82\x80\x00"), 0x111, 4);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\x82\x80\x80\x00"), 0x111, 5);
+
+  // Naturally 3 bytes, positive.
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\xa2\x04"), 0x11111, 3);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\xa2\x84\x00"), 0x11111, 4);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\xa2\x84\x80\x00"), 0x11111, 5);
+
+  // Naturally 4 bytes, positive.
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\xa2\xc4\x08"), 0x1111111, 4);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\xa2\xc4\x88\x00"), 0x1111111, 5);
+
+  // Naturally 5 bytes, positive.
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x91\xa2\xc4\x88\x01"), 0x11111111,
+                              5);
+
+  // Naturally 1 byte, negative.
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\x6f"), -0x11, 1);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\x7f"), -0x11, 2);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\xff\x7f"), -0x11, 3);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\xff\xff\x7f"), -0x11, 4);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\xff\xff\xff\x7f"), -0x11, 5);
+
+  // Naturally 2 bytes, negative.
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\x7d"), -0x111, 2);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\xfd\x7f"), -0x111, 3);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\xfd\xff\x7f"), -0x111, 4);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\xfd\xff\xff\x7f"), -0x111, 5);
+
+  // Naturally 3 bytes, negative.
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\xdd\x7b"), -0x11111, 3);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\xdd\xfb\x7f"), -0x11111, 4);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\xdd\xfb\xff\x7f"), -0x11111, 5);
+
+  // Naturally 4 bytes, negative.
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\xdd\xbb\x77"), -0x1111111, 4);
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\xdd\xbb\xf7\x7f"), -0x1111111,
+                              5);
+
+  // Naturally 5 bytes, negative.
+  ExpectWriteFixedVarInt<s32>(MakeSpanU8("\xef\xdd\xbb\xf7\x7e"), -0x11111111,
+                              5);
 }
 
 TEST(WriteTest, Function) {

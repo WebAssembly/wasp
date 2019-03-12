@@ -30,6 +30,7 @@
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_u8.h"
+#include "wasp/binary/var_int.h"
 
 namespace wasp {
 namespace binary {
@@ -47,11 +48,11 @@ optional<T> ReadVarInt(SpanU8* data,
                        string_view desc) {
   using U = typename std::make_unsigned<T>::type;
   constexpr bool is_signed = std::is_signed<T>::value;
-  constexpr int kMaxBytes = (sizeof(T) * 8 + 6) / 7;
-  constexpr int kUsedBitsInLastByte = sizeof(T) * 8 - 7 * (kMaxBytes - 1);
-  constexpr int kMaskBits = kUsedBitsInLastByte - (is_signed ? 1 : 0);
-  constexpr u8 kMask = ~((1 << kMaskBits) - 1);
-  constexpr u8 kOnes = kMask & 0x7f;
+  constexpr int kByteMask = VarInt<T>::kByteMask;
+  constexpr int kLastByteMaskBits =
+      VarInt<T>::kUsedBitsInLastByte - (is_signed ? 1 : 0);
+  constexpr u8 kLastByteMask = ~((1 << kLastByteMaskBits) - 1);
+  constexpr u8 kLastByteOnes = kLastByteMask & kByteMask;
 
   ErrorsContextGuard<Errors> guard{errors, *data, desc};
 
@@ -60,14 +61,15 @@ optional<T> ReadVarInt(SpanU8* data,
     WASP_TRY_READ(byte, Read<u8>(data, features, errors));
 
     const int shift = i * 7;
-    result |= U(byte & 0x7f) << shift;
+    result |= U(byte & kByteMask) << shift;
 
-    if (++i == kMaxBytes) {
-      if ((byte & kMask) == 0 || (is_signed && (byte & kMask) == kOnes)) {
+    if (++i == VarInt<T>::kMaxBytes) {
+      if ((byte & kLastByteMask) == 0 ||
+          (is_signed && (byte & kLastByteMask) == kLastByteOnes)) {
         return static_cast<T>(result);
       }
-      const u8 zero_ext = byte & ~kMask & 0x7f;
-      const u8 one_ext = (byte | kOnes) & 0x7f;
+      const u8 zero_ext = byte & ~kLastByteMask & kByteMask;
+      const u8 one_ext = (byte | kLastByteOnes) & kByteMask;
       if (is_signed) {
         errors.OnError(
             *data, format("Last byte of {} must be sign "
@@ -79,7 +81,7 @@ optional<T> ReadVarInt(SpanU8* data,
                                      desc, zero_ext, byte));
       }
       return nullopt;
-    } else if ((byte & 0x80) == 0) {
+    } else if ((byte & VarInt<T>::kExtendBit) == 0) {
       return is_signed ? SignExtend<T>(result, 6 + shift) : result;
     }
   }

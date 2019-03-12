@@ -20,6 +20,7 @@
 #include <type_traits>
 
 #include "wasp/base/types.h"
+#include "wasp/binary/var_int.h"
 #include "wasp/binary/write/write_u8.h"
 
 namespace wasp {
@@ -28,13 +29,13 @@ namespace binary {
 template <typename T, typename Iterator, typename Cond>
 Iterator WriteVarIntLoop(T value, Iterator out, Cond&& end_cond) {
   do {
-    const u8 byte = value & 0x7f;
+    const u8 byte = value & VarInt<T>::kByteMask;
     value >>= 7;
     if (end_cond(value, byte)) {
       out = Write(byte, out);
       break;
     } else {
-      out = Write(byte | 0x80, out);
+      out = Write(byte | VarInt<T>::kExtendBit, out);
     }
   } while (true);
   return out;
@@ -56,11 +57,11 @@ typename std::enable_if<std::is_signed<T>::value, Iterator>::type WriteVarInt(
     Iterator out) {
   if (value < 0) {
     return WriteVarIntLoop(value, out, [](T value, u8 byte) {
-      return value == -1 && (byte & 0x40) != 0;
+      return value == -1 && (byte & VarInt<T>::kSignBit) != 0;
     });
   } else {
     return WriteVarIntLoop(value, out, [](T value, u8 byte) {
-      return value == 0 && (byte & 0x40) == 0;
+      return value == 0 && (byte & VarInt<T>::kSignBit) == 0;
     });
   }
 }
