@@ -18,6 +18,8 @@
 #define WASP_BINARY_FORMATTERS_H_
 
 #include "wasp/base/format.h"
+#include "wasp/binary/br_on_exn_immediate.h"
+#include "wasp/binary/br_table_immediate.h"
 #include "wasp/binary/code.h"
 #include "wasp/binary/constant_expression.h"
 #include "wasp/binary/data_count.h"
@@ -79,6 +81,7 @@ WASP_DEFINE_FORMATTER(ElementExpression);
 WASP_DEFINE_FORMATTER(Opcode);
 WASP_DEFINE_FORMATTER(CallIndirectImmediate);
 WASP_DEFINE_FORMATTER(BrTableImmediate);
+WASP_DEFINE_FORMATTER(BrOnExnImmediate);
 WASP_DEFINE_FORMATTER(InitImmediate);
 WASP_DEFINE_FORMATTER(CopyImmediate);
 WASP_DEFINE_FORMATTER(ShuffleImmediate);

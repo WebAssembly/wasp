@@ -22,6 +22,7 @@
 #include "src/binary/read_test_utils.h"
 #include "src/binary/test_utils.h"
 #include "wasp/binary/read/read_block_type.h"
+#include "wasp/binary/read/read_br_on_exn_immediate.h"
 #include "wasp/binary/read/read_br_table_immediate.h"
 #include "wasp/binary/read/read_bytes.h"
 #include "wasp/binary/read/read_call_indirect_immediate.h"
@@ -69,7 +70,6 @@
 #include "wasp/binary/read/read_value_type.h"
 #include "wasp/binary/read/read_vector.h"
 
-
 using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
@@ -90,6 +90,20 @@ TEST(ReadTest, BlockType_Unknown) {
   ExpectReadFailure<BlockType>(
       {{0, "block type"}, {1, "Unknown block type: 255"}},
       MakeSpanU8("\xff\x7f"));
+}
+
+TEST(ReadTest, BrOnExnImmediate) {
+  ExpectRead<BrOnExnImmediate>(BrOnExnImmediate{0, 0}, MakeSpanU8("\x00\x00"));
+}
+
+TEST(ReadTest, BrOnExnImmediate_PastEnd) {
+  ExpectReadFailure<BrOnExnImmediate>(
+      {{0, "br_on_exn"}, {0, "target"}, {0, "Unable to read u8"}},
+      MakeSpanU8(""));
+
+  ExpectReadFailure<BrOnExnImmediate>(
+      {{0, "br_on_exn"}, {1, "exception index"}, {1, "Unable to read u8"}},
+      MakeSpanU8("\x00"));
 }
 
 TEST(ReadTest, BrTableImmediate) {
@@ -1084,6 +1098,21 @@ TEST(ReadTest, Instruction_BadMemoryReserved) {
       MakeSpanU8("\x40\x01"));
 }
 
+TEST(ReadTest, Instruction_exceptions) {
+  using I = Instruction;
+  using O = Opcode;
+
+  Features features;
+  features.enable_exceptions();
+
+  ExpectRead<I>(I{O::Try, BlockType::Void}, MakeSpanU8("\x06\x40"), features);
+  ExpectRead<I>(I{O::Catch}, MakeSpanU8("\x07"), features);
+  ExpectRead<I>(I{O::Throw, Index{0}}, MakeSpanU8("\x08\x00"), features);
+  ExpectRead<I>(I{O::Rethrow}, MakeSpanU8("\x09"), features);
+  ExpectRead<I>(I{O::BrOnExn, BrOnExnImmediate{1, 2}},
+                MakeSpanU8("\x0a\x01\x02"), features);
+}
+
 TEST(ReadTest, Instruction_tail_call) {
   using I = Instruction;
   using O = Opcode;
@@ -1117,6 +1146,12 @@ TEST(ReadTest, Instruction_reference_types) {
   Features features;
   features.enable_reference_types();
 
+  ExpectRead<I>(I{O::TableGet, Index{0}}, MakeSpanU8("\x25\x00"), features);
+  ExpectRead<I>(I{O::TableSet, Index{0}}, MakeSpanU8("\x26\x00"), features);
+  ExpectRead<I>(I{O::TableGrow, Index{0}}, MakeSpanU8("\xfc\x0f\x00"),
+                features);
+  ExpectRead<I>(I{O::TableSize, Index{0}}, MakeSpanU8("\xfc\x10\x00"),
+                features);
   ExpectRead<I>(I{O::RefNull}, MakeSpanU8("\xd0"), features);
   ExpectRead<I>(I{O::RefIsNull}, MakeSpanU8("\xd1"), features);
 }
@@ -1784,6 +1819,17 @@ TEST(ReadTest, Opcode_Unknown) {
   }
 }
 
+TEST(ReadTest, Opcode_exceptions) {
+  Features features;
+  features.enable_exceptions();
+
+  ExpectRead<Opcode>(Opcode::Try, MakeSpanU8("\x06"), features);
+  ExpectRead<Opcode>(Opcode::Catch, MakeSpanU8("\x07"), features);
+  ExpectRead<Opcode>(Opcode::Throw, MakeSpanU8("\x08"), features);
+  ExpectRead<Opcode>(Opcode::Rethrow, MakeSpanU8("\x09"), features);
+  ExpectRead<Opcode>(Opcode::BrOnExn, MakeSpanU8("\x0a"), features);
+}
+
 TEST(ReadTest, Opcode_tail_call) {
   Features features;
   features.enable_tail_call();
@@ -1807,6 +1853,10 @@ TEST(ReadTest, Opcode_reference_types) {
   Features features;
   features.enable_reference_types();
 
+  ExpectRead<Opcode>(Opcode::TableGet, MakeSpanU8("\x25"), features);
+  ExpectRead<Opcode>(Opcode::TableSet, MakeSpanU8("\x26"), features);
+  ExpectRead<Opcode>(Opcode::TableGrow, MakeSpanU8("\xfc\x0f"), features);
+  ExpectRead<Opcode>(Opcode::TableSize, MakeSpanU8("\xfc\x10"), features);
   ExpectRead<Opcode>(Opcode::RefNull, MakeSpanU8("\xd0"), features);
   ExpectRead<Opcode>(Opcode::RefIsNull, MakeSpanU8("\xd1"), features);
 }

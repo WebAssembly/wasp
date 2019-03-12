@@ -24,12 +24,12 @@
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_block_type.h"
+#include "wasp/binary/read/read_br_on_exn_immediate.h"
 #include "wasp/binary/read/read_br_table_immediate.h"
 #include "wasp/binary/read/read_call_indirect_immediate.h"
 #include "wasp/binary/read/read_copy_immediate.h"
 #include "wasp/binary/read/read_f32.h"
 #include "wasp/binary/read/read_f64.h"
-#include "wasp/binary/read/read_v128.h"
 #include "wasp/binary/read/read_index.h"
 #include "wasp/binary/read/read_init_immediate.h"
 #include "wasp/binary/read/read_mem_arg_immediate.h"
@@ -38,6 +38,7 @@
 #include "wasp/binary/read/read_s32.h"
 #include "wasp/binary/read/read_s64.h"
 #include "wasp/binary/read/read_shuffle_immediate.h"
+#include "wasp/binary/read/read_v128.h"
 
 namespace wasp {
 namespace binary {
@@ -50,10 +51,12 @@ optional<Instruction> Read(SpanU8* data,
   WASP_TRY_READ(opcode, Read<Opcode>(data, features, errors));
   switch (opcode) {
     // No immediates:
-    case Opcode::End:
     case Opcode::Unreachable:
     case Opcode::Nop:
     case Opcode::Else:
+    case Opcode::Catch:
+    case Opcode::Rethrow:
+    case Opcode::End:
     case Opcode::Return:
     case Opcode::Drop:
     case Opcode::Select:
@@ -322,12 +325,14 @@ optional<Instruction> Read(SpanU8* data,
     // Type immediate.
     case Opcode::Block:
     case Opcode::Loop:
-    case Opcode::If: {
+    case Opcode::If:
+    case Opcode::Try: {
       WASP_TRY_READ(type, Read<BlockType>(data, features, errors));
       return Instruction{Opcode{opcode}, type};
     }
 
     // Index immediate.
+    case Opcode::Throw:
     case Opcode::Br:
     case Opcode::BrIf:
     case Opcode::Call:
@@ -337,11 +342,21 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::LocalTee:
     case Opcode::GlobalGet:
     case Opcode::GlobalSet:
+    case Opcode::TableGet:
+    case Opcode::TableSet:
     case Opcode::RefFunc:
     case Opcode::DataDrop:
-    case Opcode::ElemDrop: {
+    case Opcode::ElemDrop:
+    case Opcode::TableGrow:
+    case Opcode::TableSize: {
       WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
       return Instruction{Opcode{opcode}, index};
+    }
+
+    // Index, Index immediates.
+    case Opcode::BrOnExn: {
+      WASP_TRY_READ(immediate, Read<BrOnExnImmediate>(data, features, errors));
+      return Instruction{Opcode{opcode}, immediate};
     }
 
     // Index* immediates.

@@ -37,6 +37,7 @@ add_library(wasplib
   src/base/features.cc
   src/base/file.cc
   src/base/v128.cc
+  src/binary/br_on_exn_immediate.cc
   src/binary/br_table_immediate.cc
   src/binary/call_indirect_immediate.cc
   src/binary/code.cc

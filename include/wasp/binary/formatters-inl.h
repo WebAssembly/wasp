@@ -416,6 +416,15 @@ typename Ctx::iterator formatter<::wasp::binary::BrTableImmediate>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::BrOnExnImmediate>::format(
+    const ::wasp::binary::BrOnExnImmediate& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.target, self.exception_index);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::InitImmediate>::format(
     const ::wasp::binary::InitImmediate& self,
     Ctx& ctx) {

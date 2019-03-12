@@ -39,6 +39,9 @@ Instruction::Instruction(Opcode opcode, CallIndirectImmediate immediate)
 Instruction::Instruction(Opcode opcode, BrTableImmediate immediate)
     : opcode(opcode), immediate(immediate) {}
 
+Instruction::Instruction(Opcode opcode, BrOnExnImmediate immediate)
+    : opcode(opcode), immediate(immediate) {}
+
 Instruction::Instruction(Opcode opcode, u8 immediate)
     : opcode(opcode), immediate(immediate) {}
 

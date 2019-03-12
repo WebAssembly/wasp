@@ -50,7 +50,8 @@ inline bool Opcode::IsPrefixByte(u8 code, const Features& features) {
   switch (code) {
     case MiscPrefix:
       return features.saturating_float_to_int_enabled() ||
-             features.bulk_memory_enabled();
+             features.bulk_memory_enabled() ||
+             features.reference_types_enabled();
 
     case SimdPrefix:
       return features.simd_enabled();

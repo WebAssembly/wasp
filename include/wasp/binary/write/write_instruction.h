@@ -19,6 +19,7 @@
 
 #include "wasp/binary/instruction.h"
 #include "wasp/binary/write/write_block_type.h"
+#include "wasp/binary/write/write_br_on_exn_immediate.h"
 #include "wasp/binary/write/write_br_table_immediate.h"
 #include "wasp/binary/write/write_call_indirect_immediate.h"
 #include "wasp/binary/write/write_copy_immediate.h"
@@ -46,6 +47,8 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::Unreachable:
     case Opcode::Nop:
     case Opcode::Else:
+    case Opcode::Catch:
+    case Opcode::Rethrow:
     case Opcode::Return:
     case Opcode::Drop:
     case Opcode::Select:
@@ -315,9 +318,11 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::Block:
     case Opcode::Loop:
     case Opcode::If:
+    case Opcode::Try:
       return Write(instr.block_type_immediate(), out);
 
     // Index immediate.
+    case Opcode::Throw:
     case Opcode::Br:
     case Opcode::BrIf:
     case Opcode::Call:
@@ -327,10 +332,18 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::LocalTee:
     case Opcode::GlobalGet:
     case Opcode::GlobalSet:
+    case Opcode::TableGet:
+    case Opcode::TableSet:
     case Opcode::RefFunc:
     case Opcode::DataDrop:
     case Opcode::ElemDrop:
+    case Opcode::TableGrow:
+    case Opcode::TableSize:
       return Write(instr.index_immediate(), out);
+
+    // Index, Index immediates.
+    case Opcode::BrOnExn:
+      return Write(instr.br_on_exn_immediate(), out);
 
     // Index* immediates.
     case Opcode::BrTable:

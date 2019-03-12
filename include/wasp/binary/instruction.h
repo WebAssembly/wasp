@@ -22,6 +22,7 @@
 #include "wasp/base/variant.h"
 #include "wasp/binary/block_type.h"
 #include "wasp/binary/br_table_immediate.h"
+#include "wasp/binary/br_on_exn_immediate.h"
 #include "wasp/binary/call_indirect_immediate.h"
 #include "wasp/binary/copy_immediate.h"
 #include "wasp/binary/empty_immediate.h"
@@ -39,6 +40,7 @@ struct Instruction {
   explicit Instruction(Opcode opcode, BlockType);
   explicit Instruction(Opcode opcode, Index);
   explicit Instruction(Opcode opcode, CallIndirectImmediate);
+  explicit Instruction(Opcode opcode, BrOnExnImmediate);
   explicit Instruction(Opcode opcode, BrTableImmediate);
   explicit Instruction(Opcode opcode, u8);
   explicit Instruction(Opcode opcode, MemArgImmediate);
@@ -56,6 +58,7 @@ struct Instruction {
   bool has_index_immediate() const;
   bool has_call_indirect_immediate() const;
   bool has_br_table_immediate() const;
+  bool has_br_on_exn_immediate() const;
   bool has_u8_immediate() const;
   bool has_mem_arg_immediate() const;
   bool has_s32_immediate() const;
@@ -77,6 +80,8 @@ struct Instruction {
   const CallIndirectImmediate& call_indirect_immediate() const;
   BrTableImmediate& br_table_immediate();
   const BrTableImmediate& br_table_immediate() const;
+  BrOnExnImmediate& br_on_exn_immediate();
+  const BrOnExnImmediate& br_on_exn_immediate() const;
   u8& u8_immediate();
   const u8& u8_immediate() const;
   MemArgImmediate& mem_arg_immediate();
@@ -104,6 +109,7 @@ struct Instruction {
           Index,
           CallIndirectImmediate,
           BrTableImmediate,
+          BrOnExnImmediate,
           u8,
           MemArgImmediate,
           s32,

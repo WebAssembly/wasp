@@ -241,6 +241,11 @@ TEST(FormattersTest, BrTableImmediate) {
   EXPECT_EQ(R"(  [42] 0)", format("{:>8s}", BrTableImmediate{{42}, 0}));
 }
 
+TEST(FormattersTest, BrOnExnImmediate) {
+  EXPECT_EQ(R"(0 100)", format("{}", BrOnExnImmediate{0, 100}));
+  EXPECT_EQ(R"(  42 0)", format("{:>6s}", BrOnExnImmediate{42, 0}));
+}
+
 TEST(FormattersTest, InitImmediate) {
   EXPECT_EQ(R"(1 0)", format("{}", InitImmediate{1u, 0}));
   EXPECT_EQ(R"(  10 0)", format("{:>6s}", InitImmediate{10u, 0}));

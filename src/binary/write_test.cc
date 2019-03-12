@@ -80,6 +80,10 @@ TEST(WriteTest, BlockType) {
   ExpectWrite<BlockType>(MakeSpanU8("\x40"), BlockType::Void);
 }
 
+TEST(WriteTest, BrOnExnImmediate) {
+  ExpectWrite<BrOnExnImmediate>(MakeSpanU8("\x00\x00"), BrOnExnImmediate{0, 0});
+}
+
 TEST(WriteTest, BrTableImmediate) {
   ExpectWrite<BrTableImmediate>(MakeSpanU8("\x00\x00"),
                                 BrTableImmediate{{}, 0});
@@ -553,6 +557,18 @@ TEST(WriteTest, Instruction) {
   ExpectWrite<I>(MakeSpanU8("\xbf"), I{O::F64ReinterpretI64});
 }
 
+TEST(WriteTest, Instruction_exceptions) {
+  using I = Instruction;
+  using O = Opcode;
+
+  ExpectWrite<I>(MakeSpanU8("\x06\x40"), I{O::Try, BlockType::Void});
+  ExpectWrite<I>(MakeSpanU8("\x07"), I{O::Catch});
+  ExpectWrite<I>(MakeSpanU8("\x08\x00"), I{O::Throw, Index{0}});
+  ExpectWrite<I>(MakeSpanU8("\x09"), I{O::Rethrow});
+  ExpectWrite<I>(MakeSpanU8("\x0a\x01\x02"),
+                 I{O::BrOnExn, BrOnExnImmediate{1, 2}});
+}
+
 TEST(WriteTest, Instruction_tail_call) {
   using I = Instruction;
   using O = Opcode;
@@ -577,6 +593,10 @@ TEST(WriteTest, Instruction_reference_types) {
   using I = Instruction;
   using O = Opcode;
 
+  ExpectWrite<I>(MakeSpanU8("\x25\x00"), I{O::TableGet, Index{0}});
+  ExpectWrite<I>(MakeSpanU8("\x26\x00"), I{O::TableSet, Index{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x0f\x00"), I{O::TableGrow, Index{0}});
+  ExpectWrite<I>(MakeSpanU8("\xfc\x10\x00"), I{O::TableSize, Index{0}});
   ExpectWrite<I>(MakeSpanU8("\xd0"), I{O::RefNull});
   ExpectWrite<I>(MakeSpanU8("\xd1"), I{O::RefIsNull});
 }
@@ -1063,6 +1083,14 @@ TEST(WriteTest, Opcode) {
   ExpectWrite<Opcode>(MakeSpanU8("\xbf"), Opcode::F64ReinterpretI64);
 }
 
+TEST(WriteTest, Opcode_exceptions) {
+  ExpectWrite<Opcode>(MakeSpanU8("\x06"), Opcode::Try);
+  ExpectWrite<Opcode>(MakeSpanU8("\x07"), Opcode::Catch);
+  ExpectWrite<Opcode>(MakeSpanU8("\x08"), Opcode::Throw);
+  ExpectWrite<Opcode>(MakeSpanU8("\x09"), Opcode::Rethrow);
+  ExpectWrite<Opcode>(MakeSpanU8("\x0a"), Opcode::BrOnExn);
+}
+
 TEST(WriteTest, Opcode_tail_call) {
   ExpectWrite<Opcode>(MakeSpanU8("\x12"), Opcode::ReturnCall);
   ExpectWrite<Opcode>(MakeSpanU8("\x13"), Opcode::ReturnCallIndirect);
@@ -1077,6 +1105,10 @@ TEST(WriteTest, Opcode_sign_extension) {
 }
 
 TEST(WriteTest, Opcode_reference_types) {
+  ExpectWrite<Opcode>(MakeSpanU8("\x25"), Opcode::TableGet);
+  ExpectWrite<Opcode>(MakeSpanU8("\x26"), Opcode::TableSet);
+  ExpectWrite<Opcode>(MakeSpanU8("\xfc\x0f"), Opcode::TableGrow);
+  ExpectWrite<Opcode>(MakeSpanU8("\xfc\x10"), Opcode::TableSize);
   ExpectWrite<Opcode>(MakeSpanU8("\xd0"), Opcode::RefNull);
   ExpectWrite<Opcode>(MakeSpanU8("\xd1"), Opcode::RefIsNull);
 }

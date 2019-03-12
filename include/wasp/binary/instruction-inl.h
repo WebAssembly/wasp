@@ -37,6 +37,10 @@ inline bool Instruction::has_br_table_immediate() const {
   return holds_alternative<BrTableImmediate>(immediate);
 }
 
+inline bool Instruction::has_br_on_exn_immediate() const {
+  return holds_alternative<BrOnExnImmediate>(immediate);
+}
+
 inline bool Instruction::has_u8_immediate() const {
   return holds_alternative<u8>(immediate);
 }
@@ -116,6 +120,14 @@ inline BrTableImmediate& Instruction::br_table_immediate() {
 
 inline const BrTableImmediate& Instruction::br_table_immediate() const {
   return get<BrTableImmediate>(immediate);
+}
+
+inline BrOnExnImmediate& Instruction::br_on_exn_immediate() {
+  return get<BrOnExnImmediate>(immediate);
+}
+
+inline const BrOnExnImmediate& Instruction::br_on_exn_immediate() const {
+  return get<BrOnExnImmediate>(immediate);
 }
 
 inline u8& Instruction::u8_immediate() {

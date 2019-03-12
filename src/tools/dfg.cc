@@ -915,6 +915,23 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::TableCopy:
       BasicInstruction(instr, 3, 0);
       break;
+
+    case Opcode::Try:
+    case Opcode::Catch:
+    case Opcode::Throw:
+    case Opcode::Rethrow:
+    case Opcode::BrOnExn:
+      // TODO
+      assert(false);
+      break;
+
+    case Opcode::TableGet:
+    case Opcode::TableSet:
+    case Opcode::TableGrow:
+    case Opcode::TableSize:
+      // TODO
+      assert(false);
+      break;
   }
 }
 
