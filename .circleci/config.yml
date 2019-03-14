@@ -1,6 +1,15 @@
 version: 2.1
 
 commands:
+  git:
+    description: install git and checkout
+    steps:
+      - run: |
+          apt-get update -q
+          apt-get install -q -y git
+      - checkout
+      - run: git submodule update --init
+
   install:
     description: install the compiler
     parameters:
@@ -8,7 +17,6 @@ commands:
         type: string
     steps:
       - run: |
-          apt-get update -q
           apt-get install -q -y build-essential cmake << parameters.packages >>
 
   compile:
@@ -29,7 +37,7 @@ jobs:
     docker:
       - image: debian:buster
     steps:
-      - checkout
+      - git
       - install:
           packages: gcc g++
       - compile:
@@ -41,7 +49,7 @@ jobs:
     docker:
       - image: debian:buster
     steps:
-      - checkout
+      - git
       - install:
           packages: clang
       - compile:
