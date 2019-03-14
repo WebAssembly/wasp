@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"
 
-#include "src/binary/test_utils.h"
+#include "test/binary/test_utils.h"
 
 using namespace ::wasp;
 

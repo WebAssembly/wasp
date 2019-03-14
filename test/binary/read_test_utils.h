@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "src/binary/test_utils.h"
+#include "test/binary/test_utils.h"
 #include "wasp/base/features.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/read/read.h"

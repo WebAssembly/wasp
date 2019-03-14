@@ -71,6 +71,6 @@ void ExpectError(const ExpectedError&, const TestErrors&, SpanU8 orig_data);
 }  // namespace binary
 }  // namespace wasp
 
-#include "src/binary/test_utils-inl.h"
+#include "test/binary/test_utils-inl.h"
 
 #endif // WASP_BINARY_TEST_UTILS_H_

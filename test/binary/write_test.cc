@@ -66,8 +66,8 @@
 #include "wasp/binary/write/write_value_type.h"
 #include "wasp/binary/write/write_vector.h"
 
-#include "src/binary/test_utils.h"
-#include "src/binary/write_test_utils.h"
+#include "test/binary/test_utils.h"
+#include "test/binary/write_test_utils.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

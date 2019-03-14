@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"
 
-#include "src/binary/test_utils.h"
+#include "test/binary/test_utils.h"
 #include "wasp/binary/lazy_function_names_subsection.h"
 #include "wasp/binary/lazy_local_names_subsection.h"
 #include "wasp/binary/lazy_module_name_subsection.h"

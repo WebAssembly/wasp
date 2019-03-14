@@ -19,8 +19,8 @@
 
 #include "gtest/gtest.h"
 
-#include "src/binary/read_test_utils.h"
-#include "src/binary/test_utils.h"
+#include "test/binary/read_test_utils.h"
+#include "test/binary/test_utils.h"
 #include "wasp/binary/read/read_block_type.h"
 #include "wasp/binary/read/read_br_on_exn_immediate.h"
 #include "wasp/binary/read/read_br_table_immediate.h"

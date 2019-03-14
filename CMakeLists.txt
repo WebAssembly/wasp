@@ -91,19 +91,19 @@ target_link_libraries(wasp
 )
 
 add_executable(wasp_unittests
-  src/base/formatters_test.cc
-  src/base/str_to_u32_test.cc
-  src/base/v128_test.cc
-  src/binary/formatters_test.cc
-  src/binary/lazy_expression_test.cc
-  src/binary/lazy_module_test.cc
-  src/binary/lazy_module_utils_test.cc
-  src/binary/lazy_name_section_test.cc
-  src/binary/lazy_section_test.cc
-  src/binary/lazy_sequence_test.cc
-  src/binary/read_test.cc
-  src/binary/test_utils.cc
-  src/binary/write_test.cc
+  test/base/formatters_test.cc
+  test/base/str_to_u32_test.cc
+  test/base/v128_test.cc
+  test/binary/formatters_test.cc
+  test/binary/lazy_expression_test.cc
+  test/binary/lazy_module_test.cc
+  test/binary/lazy_module_utils_test.cc
+  test/binary/lazy_name_section_test.cc
+  test/binary/lazy_section_test.cc
+  test/binary/lazy_sequence_test.cc
+  test/binary/read_test.cc
+  test/binary/test_utils.cc
+  test/binary/write_test.cc
 )
 
 target_link_libraries(wasp_unittests

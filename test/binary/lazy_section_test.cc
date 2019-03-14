@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"
 
-#include "src/binary/test_utils.h"
+#include "test/binary/test_utils.h"
 #include "wasp/binary/data_count_section.h"
 #include "wasp/binary/lazy_code_section.h"
 #include "wasp/binary/lazy_data_section.h"
