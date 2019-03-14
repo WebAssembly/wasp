@@ -57,9 +57,22 @@ jobs:
           outdir: out/clang/Debug
       - run: ./wasp_unittests
 
+  build-clang-release:
+    docker:
+      - image: debian:buster
+    steps:
+      - git
+      - install:
+          packages: clang
+      - compile:
+          target: clang-release
+          outdir: out/clang/Release
+      - run: ./wasp_unittests
+
 workflows:
   version: 2
   build:
     jobs:
       - build-gcc-debug
       - build-clang-debug
+      - build-clang-release
