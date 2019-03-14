@@ -25,7 +25,7 @@ commands:
           cp << parameters.outdir >>/wasp_unittests .
 
 jobs:
-  build:
+  build-gcc-debug:
     docker:
       - image: debian:buster
     steps:
@@ -37,7 +37,7 @@ jobs:
           out_dir: out/gcc/Debug
       - run: ./wasp_unittests
 
-  build:
+  build-clang-debug:
     docker:
       - image: debian:buster
     steps:
