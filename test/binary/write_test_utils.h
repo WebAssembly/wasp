@@ -14,12 +14,19 @@
 // limitations under the License.
 //
 
+#ifndef WASP_BINARY_WRITE_TEST_UTILS_H_
+#define WASP_BINARY_WRITE_TEST_UTILS_H_
+
 #include <iterator>
 #include <vector>
 
 #include "wasp/base/span.h"
 
 #include "gtest/gtest.h"
+
+namespace wasp {
+namespace binary {
+namespace test {
 
 template <typename Iterator>
 class ClampedIterator {
@@ -85,3 +92,9 @@ void ExpectWrite(wasp::SpanU8 expected, const T& value) {
   EXPECT_EQ(iter.base(), result.end());
   EXPECT_EQ(expected, wasp::SpanU8{result});
 }
+
+}  // namespace test
+}  // namespace binary
+}  // namespace wasp
+
+#endif  // WASP_BINARY_WRITE_TEST_UTILS_H_

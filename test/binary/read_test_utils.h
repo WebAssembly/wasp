@@ -14,12 +14,19 @@
 // limitations under the License.
 //
 
+#ifndef WASP_BINARY_READ_TEST_UTILS_H_
+#define WASP_BINARY_READ_TEST_UTILS_H_
+
 #include "test/binary/test_utils.h"
 #include "wasp/base/features.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/read/read.h"
 
 #include "gtest/gtest.h"
+
+namespace wasp {
+namespace binary {
+namespace test {
 
 template <typename T>
 void ExpectRead(const T& expected,
@@ -42,3 +49,9 @@ void ExpectReadFailure(const wasp::binary::test::ExpectedError& expected,
   wasp::binary::test::ExpectError(expected, errors, orig_data);
   EXPECT_EQ(wasp::nullopt, result);
 }
+
+}  // namespace test
+}  // namespace binary
+}  // namespace wasp
+
+#endif  // WASP_BINARY_READ_TEST_UTILS_H_
