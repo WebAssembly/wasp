@@ -45,6 +45,7 @@
 #include "wasp/binary/write/write_import.h"
 #include "wasp/binary/write/write_init_immediate.h"
 #include "wasp/binary/write/write_instruction.h"
+#include "wasp/binary/write/write_locals.h"
 #include "wasp/binary/write/write_mem_arg_immediate.h"
 #include "wasp/binary/write/write_memory.h"
 #include "wasp/binary/write/write_memory_type.h"
@@ -875,6 +876,11 @@ TEST(WriteTest, Instruction_threads) {
 TEST(WriteTest, Limits) {
   ExpectWrite<Limits>(MakeSpanU8("\x00\x81\x01"), Limits{129});
   ExpectWrite<Limits>(MakeSpanU8("\x01\x02\xe8\x07"), Limits{2, 1000});
+}
+
+TEST(WriteTest, Locals) {
+  ExpectWrite<Locals>(MakeSpanU8("\x02\x7f"), Locals{2, ValueType::I32});
+  ExpectWrite<Locals>(MakeSpanU8("\xc0\x02\x7c"), Locals{320, ValueType::F64});
 }
 
 TEST(WriteTest, MemArgImmediate) {
