@@ -33,9 +33,7 @@ void TestErrors::PopContext() {
 void TestErrors::OnError(SpanU8 pos, string_view message) {
   errors.emplace_back();
   auto& error = errors.back();
-  for (const auto& ctx: context_stack) {
-    error.push_back(ctx);
-  }
+  error = context_stack;
   error.push_back(ErrorContext{pos, message.to_string()});
 }
 
