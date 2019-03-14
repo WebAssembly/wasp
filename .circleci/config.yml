@@ -1,0 +1,38 @@
+version: 2.1
+
+commands:
+  install:
+    description: install the compiler
+    parameters:
+      packages:
+        type: string
+    steps:
+      - run: |
+          apt-get update -q
+          apt-get install -q -y build-essential cmake << parameters.packages >>
+
+  compile:
+    description: build the project
+    parameters:
+      target:
+        type: string
+      out_dir:
+        type: string
+    steps:
+      - run: |
+          make << parameters.target >>
+          cp << parameters.outdir >>/wasp .
+          cp << parameters.outdir >>/wasp_unittests .
+
+jobs:
+  build:
+    docker:
+      - image: debian:buster
+    steps:
+      - checkout
+      - install:
+          packages: gcc g++
+      - compile:
+          target: gcc-debug
+          out_dir: out/gcc/Debug
+      - run: ./wasp_unittests
