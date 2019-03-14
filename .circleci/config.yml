@@ -16,7 +16,7 @@ commands:
     parameters:
       target:
         type: string
-      out_dir:
+      outdir:
         type: string
     steps:
       - run: |
@@ -34,7 +34,7 @@ jobs:
           packages: gcc g++
       - compile:
           target: gcc-debug
-          out_dir: out/gcc/Debug
+          outdir: out/gcc/Debug
       - run: ./wasp_unittests
 
   build-clang-debug:
@@ -46,7 +46,7 @@ jobs:
           packages: clang
       - compile:
           target: clang-debug
-          out_dir: out/clang/Debug
+          outdir: out/clang/Debug
       - run: ./wasp_unittests
 
 workflows:
