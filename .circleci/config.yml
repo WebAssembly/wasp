@@ -36,3 +36,15 @@ jobs:
           target: gcc-debug
           out_dir: out/gcc/Debug
       - run: ./wasp_unittests
+
+  build:
+    docker:
+      - image: debian:buster
+    steps:
+      - checkout
+      - install:
+          packages: clang
+      - compile:
+          target: clang-debug
+          out_dir: out/clang/Debug
+      - run: ./wasp_unittests
