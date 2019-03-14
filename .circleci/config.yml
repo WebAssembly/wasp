@@ -48,3 +48,10 @@ jobs:
           target: clang-debug
           out_dir: out/clang/Debug
       - run: ./wasp_unittests
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build-gcc-debug
+      - build-clang-debug
