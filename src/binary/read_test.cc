@@ -74,12 +74,30 @@ using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
-TEST(ReadTest, BlockType) {
+TEST(ReadTest, BlockType_MVP) {
   ExpectRead<BlockType>(BlockType::I32, MakeSpanU8("\x7f"));
   ExpectRead<BlockType>(BlockType::I64, MakeSpanU8("\x7e"));
   ExpectRead<BlockType>(BlockType::F32, MakeSpanU8("\x7d"));
   ExpectRead<BlockType>(BlockType::F64, MakeSpanU8("\x7c"));
   ExpectRead<BlockType>(BlockType::Void, MakeSpanU8("\x40"));
+}
+
+TEST(ReadTest, BlockType_simd) {
+  ExpectReadFailure<BlockType>(
+      {{0, "block type"}, {1, "Unknown block type: 123"}}, MakeSpanU8("\x7b"));
+
+  Features features;
+  features.enable_simd();
+  ExpectRead<BlockType>(BlockType::V128, MakeSpanU8("\x7b"), features);
+}
+
+TEST(ReadTest, BlockType_reference_types) {
+  ExpectReadFailure<BlockType>(
+      {{0, "block type"}, {1, "Unknown block type: 111"}}, MakeSpanU8("\x6f"));
+
+  Features features;
+  features.enable_reference_types();
+  ExpectRead<BlockType>(BlockType::Anyref, MakeSpanU8("\x6f"), features);
 }
 
 TEST(ReadTest, BlockType_Unknown) {
@@ -2496,12 +2514,29 @@ TEST(ReadTest, U8) {
   ExpectReadFailure<u8>({{0, "Unable to read u8"}}, MakeSpanU8(""));
 }
 
-TEST(ReadTest, ValueType) {
+TEST(ReadTest, ValueType_MVP) {
   ExpectRead<ValueType>(ValueType::I32, MakeSpanU8("\x7f"));
   ExpectRead<ValueType>(ValueType::I64, MakeSpanU8("\x7e"));
   ExpectRead<ValueType>(ValueType::F32, MakeSpanU8("\x7d"));
   ExpectRead<ValueType>(ValueType::F64, MakeSpanU8("\x7c"));
-  ExpectRead<ValueType>(ValueType::V128, MakeSpanU8("\x7b"));
+}
+
+TEST(ReadTest, ValueType_simd) {
+  ExpectReadFailure<ValueType>(
+      {{0, "value type"}, {1, "Unknown value type: 123"}}, MakeSpanU8("\x7b"));
+
+  Features features;
+  features.enable_simd();
+  ExpectRead<ValueType>(ValueType::V128, MakeSpanU8("\x7b"), features);
+}
+
+TEST(ReadTest, ValueType_reference_types) {
+  ExpectReadFailure<ValueType>(
+      {{0, "value type"}, {1, "Unknown value type: 111"}}, MakeSpanU8("\x6f"));
+
+  Features features;
+  features.enable_reference_types();
+  ExpectRead<ValueType>(ValueType::Anyref, MakeSpanU8("\x6f"), features);
 }
 
 TEST(ReadTest, ValueType_Unknown) {

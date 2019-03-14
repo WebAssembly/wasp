@@ -35,7 +35,11 @@ optional<BlockType> Read(SpanU8* data,
                          Tag<BlockType>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "block type"};
   WASP_TRY_READ(val, Read<u8>(data, features, errors));
-  WASP_TRY_DECODE(decoded, val, BlockType, "block type");
+  auto decoded = encoding::BlockType::Decode(val, features);
+  if (!decoded) {
+    errors.OnError(*data, format("Unknown block type: {}", val));
+    return nullopt;
+  }
   return decoded;
 }
 

@@ -347,6 +347,10 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
         case ValueType::V128:
           PushValue(NewValue(Instruction{Opcode::V128Const, v128{}}));
           break;
+
+        case ValueType::Anyref:
+          PushValue(NewValue(Instruction{Opcode::RefNull}));
+          break;
       }
     }
   }

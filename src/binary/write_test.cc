@@ -78,6 +78,8 @@ TEST(WriteTest, BlockType) {
   ExpectWrite<BlockType>(MakeSpanU8("\x7e"), BlockType::I64);
   ExpectWrite<BlockType>(MakeSpanU8("\x7d"), BlockType::F32);
   ExpectWrite<BlockType>(MakeSpanU8("\x7c"), BlockType::F64);
+  ExpectWrite<BlockType>(MakeSpanU8("\x7b"), BlockType::V128);
+  ExpectWrite<BlockType>(MakeSpanU8("\x6f"), BlockType::Anyref);
   ExpectWrite<BlockType>(MakeSpanU8("\x40"), BlockType::Void);
 }
 
@@ -1468,6 +1470,7 @@ TEST(WriteTest, ValueType) {
   ExpectWrite<ValueType>(MakeSpanU8("\x7d"), ValueType::F32);
   ExpectWrite<ValueType>(MakeSpanU8("\x7c"), ValueType::F64);
   ExpectWrite<ValueType>(MakeSpanU8("\x7b"), ValueType::V128);
+  ExpectWrite<ValueType>(MakeSpanU8("\x6f"), ValueType::Anyref);
 }
 
 TEST(WriteTest, WriteVector_u8) {

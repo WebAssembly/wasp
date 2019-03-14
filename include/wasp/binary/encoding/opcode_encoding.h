@@ -70,11 +70,10 @@ inline EncodedOpcode Opcode::Encode(::wasp::binary::Opcode decoded) {
 #define WASP_V(prefix, code, Name, str) \
   case ::wasp::binary::Opcode::Name:    \
     return {code, {}};
-#define WASP_FEATURE_V(prefix, code, Name, str, cond) \
-  case ::wasp::binary::Opcode::Name:                  \
-    return {code, {}};
-#define WASP_PREFIX_V(prefix, code, Name, str, cond) \
-  case ::wasp::binary::Opcode::Name:                 \
+#define WASP_FEATURE_V(prefix, code, Name, str, feature) \
+  WASP_V(prefix, code, Name, str)
+#define WASP_PREFIX_V(prefix, code, Name, str, feature) \
+  case ::wasp::binary::Opcode::Name:                    \
     return {prefix, code};
 #include "wasp/binary/opcode.def"
 #undef WASP_V

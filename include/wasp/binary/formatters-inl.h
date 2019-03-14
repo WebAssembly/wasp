@@ -28,12 +28,14 @@ typename Ctx::iterator formatter<::wasp::binary::ValueType>::format(
     Ctx& ctx) {
   string_view result;
   switch (self) {
-#define WASP_V(val, Name, str)          \
+#define WASP_V(val, Name, str, ...)     \
   case ::wasp::binary::ValueType::Name: \
     result = str;                       \
     break;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/value_type.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
     default:
       WASP_UNREACHABLE();
   }
@@ -46,12 +48,14 @@ typename Ctx::iterator formatter<::wasp::binary::BlockType>::format(
     Ctx& ctx) {
   string_view result;
   switch (self) {
-#define WASP_V(val, Name, str)          \
+#define WASP_V(val, Name, str, ...)     \
   case ::wasp::binary::BlockType::Name: \
     result = "[" str "]";               \
     break;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/block_type.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
     default:
       WASP_UNREACHABLE();
   }

@@ -35,7 +35,11 @@ optional<ValueType> Read(SpanU8* data,
                          Tag<ValueType>) {
   ErrorsContextGuard<Errors> guard{errors, *data, "value type"};
   WASP_TRY_READ(val, Read<u8>(data, features, errors));
-  WASP_TRY_DECODE(decoded, val, ValueType, "value type");
+  auto decoded = encoding::ValueType::Decode(val, features);
+  if (!decoded) {
+    errors.OnError(*data, format("Unknown value type: {}", val));
+    return nullopt;
+  }
   return decoded;
 }
 

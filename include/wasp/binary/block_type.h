@@ -24,8 +24,10 @@ namespace binary {
 
 enum class BlockType : s32 {
 #define WASP_V(val, Name, str) Name,
+#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
 #include "wasp/binary/block_type.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
 };
 
 }  // namespace binary
