@@ -214,6 +214,10 @@ Tool::Tool(string_view filename, SpanU8 data, Options options)
       module{ReadModule(data, options.features, errors)} {}
 
 void Tool::Run() {
+  if (!(module.magic && module.version)) {
+    return;
+  }
+
   print("\n{}:\tfile format wasm {}\n", filename, *module.version);
   DoPrepass();
   if (options.print_headers) {
