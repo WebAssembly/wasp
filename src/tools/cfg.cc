@@ -26,6 +26,7 @@
 #include "wasp/base/format.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/optional.h"
+#include "wasp/base/str_to_u32.h"
 #include "wasp/base/string_view.h"
 #include "wasp/binary/errors_nop.h"
 #include "wasp/binary/formatters.h"
@@ -202,14 +203,7 @@ optional<Index> Tool::GetFunctionIndex() {
   }
 
   // Try to convert the string to an integer and search by index.
-  std::string function_str = options.function.to_string();
-  size_t pos = 0;
-  auto index = std::stoul(function_str, &pos);
-  if (pos == function_str.length()) {
-    return static_cast<Index>(index);
-  }
-
-  return nullopt;
+  return StrToU32(options.function);
 }
 
 optional<Code> Tool::GetCode(Index find_index) {
