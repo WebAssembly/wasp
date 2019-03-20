@@ -17,8 +17,6 @@
 #ifndef WASP_VALID_VALIDATE_MEMORY_H_
 #define WASP_VALID_VALIDATE_MEMORY_H_
 
-#include <limits>
-
 #include "wasp/base/features.h"
 #include "wasp/binary/memory.h"
 #include "wasp/valid/context.h"

@@ -17,8 +17,6 @@
 #ifndef WASP_VALID_VALIDATE_TABLE_H_
 #define WASP_VALID_VALIDATE_TABLE_H_
 
-#include <limits>
-
 #include "wasp/base/features.h"
 #include "wasp/binary/table.h"
 #include "wasp/valid/context.h"

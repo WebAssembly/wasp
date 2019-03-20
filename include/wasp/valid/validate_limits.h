@@ -17,8 +17,6 @@
 #ifndef WASP_VALID_VALIDATE_LIMITS_H_
 #define WASP_VALID_VALIDATE_LIMITS_H_
 
-#include <limits>
-
 #include "wasp/base/features.h"
 #include "wasp/binary/limits.h"
 #include "wasp/valid/context.h"

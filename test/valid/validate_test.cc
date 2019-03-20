@@ -20,6 +20,10 @@
 #include "wasp/binary/formatters.h"
 #include "wasp/valid/context.h"
 #include "wasp/valid/validate_constant_expression.h"
+#include "wasp/valid/validate_data_segment.h"
+#include "wasp/valid/validate_element_expression.h"
+#include "wasp/valid/validate_element_segment.h"
+#include "wasp/valid/validate_element_type.h"
 #include "wasp/valid/validate_export.h"
 #include "wasp/valid/validate_function.h"
 #include "wasp/valid/validate_function_type.h"
@@ -172,6 +176,191 @@ TEST(ValidateTest, ConstantExpression_GlobalMutVar) {
   EXPECT_FALSE(
       Validate(ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
                ValueType::I32, max, context, Features{}, errors));
+}
+
+TEST(ValidateTest, DataSegment_Active) {
+  Context context;
+  context.memories.push_back(MemoryType{Limits{0}});
+  context.globals.push_back(GlobalType{ValueType::I32, Mutability::Const});
+
+  const SpanU8 span{reinterpret_cast<const u8*>("123"), 3};
+  const DataSegment tests[] = {
+      DataSegment{0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
+                  span},
+      DataSegment{0,
+                  ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
+                  span},
+  };
+
+  for (const auto& data_segment : tests) {
+    Errors errors;
+    EXPECT_TRUE(Validate(data_segment, context, Features{}, errors));
+  }
+}
+
+TEST(ValidateTest, DataSegment_Active_MemoryIndexOOB) {
+  Context context;
+  Errors errors;
+  const SpanU8 span{reinterpret_cast<const u8*>("123"), 3};
+  const DataSegment data_segment{
+      0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}, span};
+  EXPECT_FALSE(Validate(data_segment, context, Features{}, errors));
+}
+
+TEST(ValidateTest, DataSegment_Active_GlobalIndexOOB) {
+  Context context;
+  context.memories.push_back(MemoryType{Limits{0}});
+  Errors errors;
+  const SpanU8 span{reinterpret_cast<const u8*>("123"), 3};
+  const DataSegment data_segment{
+      0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}, span};
+  EXPECT_FALSE(Validate(data_segment, context, Features{}, errors));
+}
+
+TEST(ValidateTest, ElementExpression) {
+  Context context;
+  context.functions.push_back(Function{0});
+
+  const Instruction tests[] = {
+      Instruction{Opcode::RefNull},
+      Instruction{Opcode::RefFunc, Index{0}},
+  };
+
+  for (const auto& instr : tests) {
+    Errors errors;
+    EXPECT_TRUE(Validate(ElementExpression{instr}, ElementType::Funcref,
+                         context, Features{}, errors));
+  }
+}
+
+TEST(ValidateTest, ElementExpression_InvalidOpcode) {
+  const Instruction tests[] = {
+      Instruction{Opcode::I32Const, s32{0}},
+      Instruction{Opcode::I64Const, s64{0}},
+      Instruction{Opcode::F32Const, f32{0}},
+      Instruction{Opcode::F64Const, f64{0}},
+      Instruction{Opcode::GlobalGet, Index{0}},
+      Instruction{Opcode::I32Add},
+      Instruction{Opcode::Br, Index{0}},
+      Instruction{Opcode::LocalGet, Index{0}},
+      Instruction{Opcode::V128Const, v128{}},
+  };
+
+  for (const auto& instr : tests) {
+    Context context;
+    Errors errors;
+    EXPECT_FALSE(Validate(ElementExpression{instr}, ElementType::Funcref,
+                          context, Features{}, errors));
+  }
+}
+
+TEST(ValidateTest, ElementExpression_FunctionIndexOOB) {
+  Context context;
+  context.functions.push_back(Function{0});
+  Errors errors;
+  EXPECT_FALSE(
+      Validate(ElementExpression{Instruction{Opcode::RefFunc, Index{1}}},
+               ElementType::Funcref, context, Features{}, errors));
+}
+
+TEST(ValidateTest, ElementSegment_Active) {
+  Context context;
+  context.functions.push_back(Function{0});
+  context.functions.push_back(Function{0});
+  context.tables.push_back(TableType{Limits{0}, ElementType::Funcref});
+  context.globals.push_back(GlobalType{ValueType::I32, Mutability::Const});
+
+  const ElementSegment tests[] = {
+      ElementSegment{
+          0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}, {0, 1}},
+      ElementSegment{
+          0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}, {}},
+  };
+
+  for (const auto& element_segment : tests) {
+    Errors errors;
+    EXPECT_TRUE(Validate(element_segment, context, Features{}, errors));
+  }
+}
+
+TEST(ValidateTest, ElementSegment_Passive) {
+  Context context;
+  context.functions.push_back(Function{0});
+
+  const ElementSegment tests[] = {
+      ElementSegment{ElementType::Funcref, {}},
+      ElementSegment{
+          ElementType::Funcref,
+          {ElementExpression{Instruction{Opcode::RefNull}},
+           ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}},
+  };
+
+  for (const auto& element_segment : tests) {
+    Errors errors;
+    EXPECT_TRUE(Validate(element_segment, context, Features{}, errors));
+  }
+}
+
+TEST(ValidateTest, ElementSegment_Active_TypeMismatch) {
+  Context context;
+  context.functions.push_back(Function{0});
+  context.tables.push_back(TableType{Limits{0}, ElementType::Funcref});
+  context.globals.push_back(GlobalType{ValueType::F32, Mutability::Const});
+
+  const ElementSegment tests[] = {
+      ElementSegment{
+          0, ConstantExpression{Instruction{Opcode::F32Const, f32{0}}}, {}},
+      ElementSegment{
+          0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}, {}},
+  };
+
+  for (const auto& element_segment : tests) {
+    Errors errors;
+    EXPECT_FALSE(Validate(element_segment, context, Features{}, errors));
+  }
+}
+
+TEST(ValidateTest, ElementSegment_Active_TableIndexOOB) {
+  Context context;
+  context.functions.push_back(Function{0});
+  const ElementSegment element_segment{
+      0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}, {}};
+  Errors errors;
+  EXPECT_FALSE(Validate(element_segment, context, Features{}, errors));
+}
+
+TEST(ValidateTest, ElementSegment_Active_GlobalIndexOOB) {
+  Context context;
+  context.tables.push_back(TableType{Limits{0}, ElementType::Funcref});
+  const ElementSegment element_segment{
+      0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}, {}};
+  Errors errors;
+  EXPECT_FALSE(Validate(element_segment, context, Features{}, errors));
+}
+
+TEST(ValidateTest, ElementSegment_Active_FunctionIndexOOB) {
+  Context context;
+  context.tables.push_back(TableType{Limits{0}, ElementType::Funcref});
+  const ElementSegment element_segment{
+      0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}, {0}};
+  Errors errors;
+  EXPECT_FALSE(Validate(element_segment, context, Features{}, errors));
+}
+
+TEST(ValidateTest, ElementSegment_Passive_FunctionIndexOOB) {
+  Context context;
+  Errors errors;
+  const ElementSegment element_segment{
+      ElementType::Funcref,
+      {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}};
+  EXPECT_FALSE(Validate(element_segment, context, Features{}, errors));
+}
+
+TEST(ValidateTest, ElementType) {
+  Context context;
+  Errors errors;
+  EXPECT_TRUE(Validate(ElementType::Funcref, ElementType::Funcref, context,
+                       Features{}, errors));
 }
 
 TEST(ValidateTest, Export) {

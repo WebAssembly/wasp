@@ -42,4 +42,3 @@ bool Validate(binary::ValueType actual,
 }  // namespace wasp
 
 #endif  // WASP_VALID_VALIDATE_VALUE_TYPE_H_
-
