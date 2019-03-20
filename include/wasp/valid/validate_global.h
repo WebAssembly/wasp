@@ -23,6 +23,7 @@
 #include "wasp/binary/global.h"
 #include "wasp/valid/context.h"
 #include "wasp/valid/errors_context_guard.h"
+#include "wasp/valid/validate_constant_expression.h"
 #include "wasp/valid/validate_global_type.h"
 #include "wasp/valid/validate_index.h"
 
@@ -35,14 +36,12 @@ bool Validate(const binary::Global& value,
               const Features& features,
               Errors& errors) {
   ErrorsContextGuard<Errors> guard{errors, "global"};
+  context.globals.push_back(value.global_type);
   bool valid = true;
   valid &= Validate(value.global_type, context, features, errors);
-  if (value.init.instruction.opcode == binary::Opcode::GlobalGet) {
-    // Only imported globals can be used in a global's constant expression.
-    valid &=
-        ValidateIndex(value.init.instruction.index_immediate(),
-                      context.imported_global_count, "global index", errors);
-  }
+  // Only imported globals can be used in a global's constant expression.
+  valid &= Validate(value.init, value.global_type.valtype,
+                    context.imported_global_count, context, features, errors);
   return valid;
 }
 

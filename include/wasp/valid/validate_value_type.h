@@ -14,36 +14,32 @@
 // limitations under the License.
 //
 
-#ifndef WASP_VALID_VALIDATE_MEMORY_H_
-#define WASP_VALID_VALIDATE_MEMORY_H_
-
-#include <limits>
+#ifndef WASP_VALID_VALIDATE_VALUE_TYPE_H_
+#define WASP_VALID_VALIDATE_VALUE_TYPE_H_
 
 #include "wasp/base/features.h"
-#include "wasp/binary/memory.h"
+#include "wasp/base/format.h"
+#include "wasp/binary/value_type.h"
 #include "wasp/valid/context.h"
-#include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/validate_memory_type.h"
 
 namespace wasp {
 namespace valid {
 
 template <typename Errors>
-bool Validate(const binary::Memory& value,
+bool Validate(binary::ValueType actual,
+              binary::ValueType expected,
               Context& context,
               const Features& features,
               Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "memory"};
-  context.memories.push_back(value.memory_type);
-  bool valid = Validate(value.memory_type, context, features, errors);
-  if (context.memories.size() > 1) {
-    errors.OnError("Too many memories, must be 1 or fewer");
-    valid = false;
+  if (actual != expected) {
+    errors.OnError(format("Expected value type {}, got {}", expected, actual));
+    return false;
   }
-  return valid;
+  return true;
 }
 
 }  // namespace valid
 }  // namespace wasp
 
-#endif  // WASP_VALID_VALIDATE_MEMORY_H_
+#endif  // WASP_VALID_VALIDATE_VALUE_TYPE_H_
+

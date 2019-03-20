@@ -34,7 +34,13 @@ bool Validate(const binary::Table& value,
               const Features& features,
               Errors& errors) {
   ErrorsContextGuard<Errors> guard{errors, "table"};
-  return Validate(value.table_type, context, features, errors);
+  context.tables.push_back(value.table_type);
+  bool valid = Validate(value.table_type, context, features, errors);
+  if (context.tables.size() > 1 && !features.reference_types_enabled()) {
+    errors.OnError("Too many tables, must be 1 or fewer");
+    valid = false;
+  }
+  return valid;
 }
 
 }  // namespace valid

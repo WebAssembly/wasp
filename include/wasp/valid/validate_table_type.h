@@ -35,7 +35,12 @@ bool Validate(const binary::TableType& value,
               Errors& errors) {
   ErrorsContextGuard<Errors> guard{errors, "table type"};
   constexpr Index kMaxElements = std::numeric_limits<Index>::max();
-  return Validate(value.limits, kMaxElements, context, features, errors);
+  bool valid = Validate(value.limits, kMaxElements, context, features, errors);
+  if (value.limits.shared == binary::Shared::Yes) {
+    errors.OnError("Tables cannot be shared");
+    valid = false;
+  }
+  return valid;
 }
 
 }  // namespace valid

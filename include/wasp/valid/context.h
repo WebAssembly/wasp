@@ -30,7 +30,7 @@ namespace valid {
 
 struct Context {
   std::vector<binary::TypeEntry> types;
-  std::vector<Index> functions;
+  std::vector<binary::Function> functions;
   std::vector<binary::TableType> tables;
   std::vector<binary::MemoryType> memories;
   std::vector<binary::GlobalType> globals;

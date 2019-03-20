@@ -35,7 +35,13 @@ bool Validate(const binary::MemoryType& value,
               Errors& errors) {
   ErrorsContextGuard<Errors> guard{errors, "memory type"};
   constexpr Index kMaxPages = 65535;
-  return Validate(value.limits, kMaxPages, context, features, errors);
+  bool valid = Validate(value.limits, kMaxPages, context, features, errors);
+  if (value.limits.shared == binary::Shared::Yes &&
+      !features.threads_enabled()) {
+    errors.OnError("Memories cannot be shared");
+    valid = false;
+  }
+  return valid;
 }
 
 }  // namespace valid

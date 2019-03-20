@@ -22,6 +22,7 @@
 #include "wasp/binary/import.h"
 #include "wasp/valid/context.h"
 #include "wasp/valid/errors_context_guard.h"
+#include "wasp/valid/validate_function.h"
 #include "wasp/valid/validate_global_type.h"
 #include "wasp/valid/validate_index.h"
 #include "wasp/valid/validate_memory_type.h"
@@ -39,32 +40,29 @@ bool Validate(const binary::Import& value,
   bool valid = true;
   switch (value.kind()) {
     case binary::ExternalKind::Function:
-      context.functions.push_back(value.index());
-      return ValidateIndex(value.index(), context.types.size(),
-                           "function type index", errors);
+      valid &=
+          Validate(binary::Function{value.index()}, context, features, errors);
+      break;
 
     case binary::ExternalKind::Table:
-      context.tables.push_back(value.table_type());
-      valid &= Validate(value.table_type(), context, features, errors);
-      if (context.tables.size() > 1 && !features.reference_types_enabled()) {
-        errors.OnError("Too many tables, must be 1 or fewer");
-        valid = false;
-      }
+      valid &= Validate(binary::Table{value.table_type()}, context, features,
+                        errors);
       break;
 
     case binary::ExternalKind::Memory:
-      context.memories.push_back(value.memory_type());
-      valid &= Validate(value.memory_type(), context, features, errors);
-      if (context.memories.size() > 1) {
-        errors.OnError("Too many memories, must be 1 or fewer");
-        valid = false;
-      }
+      valid &= Validate(binary::Memory{value.memory_type()}, context, features,
+                        errors);
       break;
 
     case binary::ExternalKind::Global:
       context.globals.push_back(value.global_type());
       context.imported_global_count++;
       valid &= Validate(value.global_type(), context, features, errors);
+      if (value.global_type().mut == binary::Mutability::Var &&
+          !features.mutable_globals_enabled()) {
+        errors.OnError("Mutable globals cannot be imported");
+        valid = false;
+      }
       break;
 
     default:

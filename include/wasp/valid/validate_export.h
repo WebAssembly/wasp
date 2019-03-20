@@ -33,35 +33,38 @@ bool Validate(const binary::Export& value,
               const Features& features,
               Errors& errors) {
   ErrorsContextGuard<Errors> guard{errors, "export"};
-  Index max;
-  string_view desc;
   switch (value.kind) {
     case binary::ExternalKind::Function:
-      max = context.functions.size();
-      desc = "function index";
-      break;
+      return ValidateIndex(value.index, context.functions.size(),
+                           "function index", errors);
 
     case binary::ExternalKind::Table:
-      max = context.tables.size();
-      desc = "table index";
-      break;
+      return ValidateIndex(value.index, context.tables.size(), "table index",
+                           errors);
 
     case binary::ExternalKind::Memory:
-      max = context.memories.size();
-      desc = "memory index";
-      break;
+      return ValidateIndex(value.index, context.memories.size(), "memory index",
+                           errors);
 
-    case binary::ExternalKind::Global:
-      max = context.globals.size();
-      desc = "global index";
-      break;
+    case binary::ExternalKind::Global: {
+      if (!ValidateIndex(value.index, context.globals.size(), "global index",
+                        errors)) {
+        return false;
+      }
+
+      const auto& global = context.globals[value.index];
+      if (global.mut == binary::Mutability::Var &&
+          !features.mutable_globals_enabled()) {
+        errors.OnError("Mutable globals cannot be exported");
+        return false;
+      }
+      return true;
+    }
 
     default:
       WASP_UNREACHABLE();
-      break;
+      return false;
   }
-
-  return ValidateIndex(value.index, max, desc, errors);
 }
 
 }  // namespace valid

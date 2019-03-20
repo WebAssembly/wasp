@@ -42,7 +42,8 @@ bool Validate(const binary::Limits& value,
   }
   if (value.max.has_value()) {
     if (*value.max > max) {
-      errors.OnError(format("Expected maximum {} to be <= {}", value.max, max));
+      errors.OnError(
+          format("Expected maximum {} to be <= {}", *value.max, max));
       valid = false;
     }
     if (value.min > *value.max) {
