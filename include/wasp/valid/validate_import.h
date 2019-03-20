@@ -42,6 +42,7 @@ bool Validate(const binary::Import& value,
     case binary::ExternalKind::Function:
       valid &=
           Validate(binary::Function{value.index()}, context, features, errors);
+      context.imported_function_count++;
       break;
 
     case binary::ExternalKind::Table:
