@@ -39,7 +39,7 @@ struct formatter<Point> {
 
   template <typename Ctx>
   typename Ctx::iterator format(const Point& p, Ctx& ctx) {
-    return format_to(ctx.begin(), "{{x:{}, y:{}}}", p.x, p.y);
+    return format_to(ctx.out(), "{{x:{}, y:{}}}", p.x, p.y);
   }
 };
 
