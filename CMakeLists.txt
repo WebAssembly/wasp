@@ -104,6 +104,7 @@ add_executable(wasp_unittests
   test/binary/read_test.cc
   test/binary/test_utils.cc
   test/binary/write_test.cc
+  test/valid/validate_test.cc
 )
 
 target_link_libraries(wasp_unittests
