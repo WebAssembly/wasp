@@ -22,15 +22,15 @@ namespace wasp {
 namespace binary {
 namespace test {
 
-void TestErrors::PushContext(SpanU8 pos, string_view desc) {
+void TestErrors::HandlePushContext(SpanU8 pos, string_view desc) {
   context_stack.push_back(ErrorContext{pos, desc.to_string()});
 }
 
-void TestErrors::PopContext() {
+void TestErrors::HandlePopContext() {
   context_stack.pop_back();
 }
 
-void TestErrors::OnError(SpanU8 pos, string_view message) {
+void TestErrors::HandleOnError(SpanU8 pos, string_view message) {
   errors.emplace_back();
   auto& error = errors.back();
   error = context_stack;

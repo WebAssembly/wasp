@@ -45,8 +45,6 @@ namespace dfg {
 
 using namespace ::wasp::binary;
 
-using ErrorsType = ErrorsNop;
-
 struct Options {
   Features features;
   string_view function;
@@ -137,9 +135,9 @@ struct Tool {
   ValueID AddPhiOperands(VarID, ValueID);
   void SealBlock(BBID);
 
-  ErrorsType errors;
+  ErrorsNop errors;
   Options options;
-  LazyModule<ErrorsType> module;
+  LazyModule module;
   std::vector<TypeEntry> type_entries;
   std::vector<Function> functions;
   std::map<string_view, Index> name_to_function;

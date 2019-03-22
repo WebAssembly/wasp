@@ -23,6 +23,7 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
+#include "wasp/binary/errors.h"
 
 namespace wasp {
 namespace binary {
@@ -45,14 +46,15 @@ struct ErrorContextLoc {
 using Error = std::vector<ErrorContext>;
 using ExpectedError = std::vector<ErrorContextLoc>;
 
-class TestErrors {
+class TestErrors : public Errors {
  public:
-  void PushContext(SpanU8 pos, string_view desc);
-  void PopContext();
-  void OnError(SpanU8 pos, string_view message);
-
   std::vector<ErrorContext> context_stack;
   std::vector<Error> errors;
+
+ protected:
+  void HandlePushContext(SpanU8 pos, string_view desc);
+  void HandlePopContext();
+  void HandleOnError(SpanU8 pos, string_view message);
 };
 
 template <size_t N>

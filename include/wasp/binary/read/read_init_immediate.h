@@ -27,12 +27,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<InitImmediate> Read(SpanU8* data,
-                             const Features& features,
-                             Errors& errors,
-                             Tag<InitImmediate>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "init immediate"};
+inline optional<InitImmediate> Read(SpanU8* data,
+                                    const Features& features,
+                                    Errors& errors,
+                                    Tag<InitImmediate>) {
+  ErrorsContextGuard guard{errors, *data, "init immediate"};
   WASP_TRY_READ(segment_index,
                 ReadIndex(data, features, errors, "segment index"));
   WASP_TRY_READ(reserved, ReadReserved(data, features, errors));

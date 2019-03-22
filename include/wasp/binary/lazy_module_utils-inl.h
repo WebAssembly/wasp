@@ -24,8 +24,8 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors, typename F>
-void ForEachFunctionName(LazyModule<Errors>& module,
+template <typename F>
+void ForEachFunctionName(LazyModule& module,
                          F&& f,
                          const Features& features,
                          Errors& errors) {
@@ -72,8 +72,8 @@ void ForEachFunctionName(LazyModule<Errors>& module,
   }
 }
 
-template <typename Errors, typename Iterator>
-Iterator CopyFunctionNames(LazyModule<Errors>& module,
+template <typename Iterator>
+Iterator CopyFunctionNames(LazyModule& module,
                            Iterator out,
                            const Features& features,
                            Errors& errors) {
@@ -83,11 +83,10 @@ Iterator CopyFunctionNames(LazyModule<Errors>& module,
   return out;
 }
 
-template <typename Errors>
-Index GetImportCount(LazyModule<Errors>& module,
-                     ExternalKind kind,
-                     const Features& features,
-                     Errors& errors) {
+inline Index GetImportCount(LazyModule& module,
+                            ExternalKind kind,
+                            const Features& features,
+                            Errors& errors) {
   Index count = 0;
   for (auto section : module.sections) {
     if (section.is_known()) {

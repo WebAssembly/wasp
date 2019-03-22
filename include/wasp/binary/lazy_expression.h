@@ -27,20 +27,17 @@ namespace wasp {
 namespace binary {
 
 /// ---
-template <typename Errors>
-using LazyExpression = LazySequence<Instruction, Errors>;
+using LazyExpression = LazySequence<Instruction>;
 
-template <typename Errors>
-LazyExpression<Errors> ReadExpression(SpanU8 data,
-                                      const Features& features,
-                                      Errors& errors) {
-  return LazyExpression<Errors>{data, features, errors};
+inline LazyExpression ReadExpression(SpanU8 data,
+                                     const Features& features,
+                                     Errors& errors) {
+  return LazyExpression{data, features, errors};
 }
 
-template <typename Errors>
-LazyExpression<Errors> ReadExpression(Expression expr,
-                                      const Features& features,
-                                      Errors& errors) {
+inline LazyExpression ReadExpression(Expression expr,
+                                     const Features& features,
+                                     Errors& errors) {
   return ReadExpression(expr.data, features, errors);
 }
 

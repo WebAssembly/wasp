@@ -25,16 +25,16 @@
 #include "wasp/base/types.h"
 #include "wasp/binary/locals.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::Locals& value,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "locals"};
+inline bool Validate(const binary::Locals& value,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "locals"};
   const size_t old_count = context.locals.size();
   const Index max = std::numeric_limits<Index>::max();
   if (old_count > max - value.count) {

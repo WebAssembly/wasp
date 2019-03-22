@@ -25,11 +25,12 @@
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::GlobalType& value,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
+class Errors;
+
+inline bool Validate(const binary::GlobalType& value,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
   return true;
 }
 

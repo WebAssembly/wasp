@@ -28,12 +28,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<BrTableImmediate> Read(SpanU8* data,
-                                const Features& features,
-                                Errors& errors,
-                                Tag<BrTableImmediate>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "br_table"};
+inline optional<BrTableImmediate> Read(SpanU8* data,
+                                       const Features& features,
+                                       Errors& errors,
+                                       Tag<BrTableImmediate>) {
+  ErrorsContextGuard guard{errors, *data, "br_table"};
   WASP_TRY_READ(targets, ReadVector<Index>(data, features, errors, "targets"));
   WASP_TRY_READ(default_target,
                 ReadIndex(data, features, errors, "default target"));

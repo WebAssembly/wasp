@@ -21,15 +21,15 @@
 #include "wasp/base/format.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
+#include "wasp/binary/errors.h"
 
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<SpanU8> ReadBytes(SpanU8* data,
-                           SpanU8::index_type N,
-                           const Features& features,
-                           Errors& errors) {
+inline optional<SpanU8> ReadBytes(SpanU8* data,
+                                  SpanU8::index_type N,
+                                  const Features& features,
+                                  Errors& errors) {
   if (data->size() < N) {
     errors.OnError(*data, format("Unable to read {} bytes", N));
     return nullopt;

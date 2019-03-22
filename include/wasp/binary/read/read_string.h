@@ -30,12 +30,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<string_view> ReadString(SpanU8* data,
-                                 const Features& features,
-                                 Errors& errors,
-                                 string_view desc) {
-  ErrorsContextGuard<Errors> guard{errors, *data, desc};
+inline optional<string_view> ReadString(SpanU8* data,
+                                        const Features& features,
+                                        Errors& errors,
+                                        string_view desc) {
+  ErrorsContextGuard guard{errors, *data, desc};
   WASP_TRY_READ(len, ReadLength(data, features, errors));
   string_view result{reinterpret_cast<const char*>(data->data()), len};
   remove_prefix(data, len);

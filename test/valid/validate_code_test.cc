@@ -20,29 +20,20 @@
 #include "wasp/binary/formatters.h"
 #include "wasp/valid/begin_code.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/test_utils.h"
 #include "wasp/valid/validate_instruction.h"
 #include "wasp/valid/validate_locals.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::valid;
-
-namespace {
-
-// XXX
-struct Errors {
-  void PushContext(string_view desc) {}
-  void PopContext() {}
-  void OnError(string_view message) { print("Error: {}\n", message); }
-};
-
-}  // namespace
+using namespace ::wasp::valid::test;
 
 TEST(ValidateCodeTest, BeginCode) {
   Context context;
   context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{0});
-  Errors errors;
+  TestErrors errors;
   EXPECT_TRUE(BeginCode(context, Features{}, errors));
 }
 
@@ -51,7 +42,7 @@ TEST(ValidateCodeTest, BeginCode_CodeIndexOOB) {
   context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{0});
   context.code_count = 1;
-  Errors errors;
+  TestErrors errors;
   EXPECT_FALSE(BeginCode(context, Features{}, errors));
 }
 
@@ -59,13 +50,13 @@ TEST(ValidateCodeTest, BeginCode_TypeIndexOOB) {
   Context context;
   context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{1});
-  Errors errors;
+  TestErrors errors;
   EXPECT_FALSE(BeginCode(context, Features{}, errors));
 }
 
 TEST(ValidateCodeTest, Locals) {
   Context context;
-  Errors errors;
+  TestErrors errors;
   EXPECT_TRUE(
       Validate(Locals{10, ValueType::I32}, context, Features{}, errors));
 }
@@ -86,7 +77,7 @@ class ValidateInstructionTest : public ::testing::Test {
 
   Context context;
   Features features;
-  Errors errors;
+  TestErrors errors;
 };
 
 TEST_F(ValidateInstructionTest, Unreachable) {

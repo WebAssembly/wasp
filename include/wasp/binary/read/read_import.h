@@ -33,12 +33,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Import> Read(SpanU8* data,
-                      const Features& features,
-                      Errors& errors,
-                      Tag<Import>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "import"};
+inline optional<Import> Read(SpanU8* data,
+                             const Features& features,
+                             Errors& errors,
+                             Tag<Import>) {
+  ErrorsContextGuard guard{errors, *data, "import"};
   WASP_TRY_READ(module, ReadString(data, features, errors, "module name"));
   WASP_TRY_READ(name, ReadString(data, features, errors, "field name"));
   WASP_TRY_READ(kind, Read<ExternalKind>(data, features, errors));

@@ -21,19 +21,19 @@
 #include "wasp/base/format.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
+#include "wasp/binary/errors.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/read_bytes.h"
 
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<SpanU8> ReadBytesExpected(SpanU8* data,
-                                   SpanU8 expected,
-                                   const Features& features,
-                                   Errors& errors,
-                                   string_view desc) {
-  ErrorsContextGuard<Errors> guard{errors, *data, desc};
+inline optional<SpanU8> ReadBytesExpected(SpanU8* data,
+                                          SpanU8 expected,
+                                          const Features& features,
+                                          Errors& errors,
+                                          string_view desc) {
+  ErrorsContextGuard guard{errors, *data, desc};
 
   auto actual = ReadBytes(data, expected.size(), features, errors);
   if (actual && actual != expected) {

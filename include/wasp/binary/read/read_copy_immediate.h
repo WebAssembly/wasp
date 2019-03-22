@@ -26,12 +26,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<CopyImmediate> Read(SpanU8* data,
-                             const Features& features,
-                             Errors& errors,
-                             Tag<CopyImmediate>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "copy immediate"};
+inline optional<CopyImmediate> Read(SpanU8* data,
+                                    const Features& features,
+                                    Errors& errors,
+                                    Tag<CopyImmediate>) {
+  ErrorsContextGuard guard{errors, *data, "copy immediate"};
   WASP_TRY_READ(src_reserved, ReadReserved(data, features, errors));
   WASP_TRY_READ(dst_reserved, ReadReserved(data, features, errors));
   return CopyImmediate{src_reserved, dst_reserved};

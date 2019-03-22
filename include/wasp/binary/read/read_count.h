@@ -26,10 +26,9 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Index> ReadCount(SpanU8* data,
-                          const Features& features,
-                          Errors& errors) {
+inline optional<Index> ReadCount(SpanU8* data,
+                                 const Features& features,
+                                 Errors& errors) {
   return ReadCheckLength(data, features, errors, "count", "Count");
 }
 

@@ -32,12 +32,12 @@
 namespace wasp {
 namespace binary {
 
-template <typename T, typename Errors>
+template <typename T>
 optional<std::vector<T>> ReadVector(SpanU8* data,
                                     const Features& features,
                                     Errors& errors,
                                     string_view desc) {
-  ErrorsContextGuard<Errors> guard{errors, *data, desc};
+  ErrorsContextGuard guard{errors, *data, desc};
   std::vector<T> result;
   WASP_TRY_READ(len, ReadCount(data, features, errors));
   result.reserve(len);

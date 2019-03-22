@@ -18,23 +18,23 @@
 #define WASP_BINARY_READ_READ_OPCODE_H_
 
 #include "wasp/base/features.h"
-#include "wasp/binary/opcode.h"
 #include "wasp/binary/encoding/opcode_encoding.h"
+#include "wasp/binary/errors.h"
 #include "wasp/binary/errors_context_guard.h"
+#include "wasp/binary/opcode.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_u8.h"
 #include "wasp/binary/read/read_u32.h"
+#include "wasp/binary/read/read_u8.h"
 
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Opcode> Read(SpanU8* data,
-                      const Features& features,
-                      Errors& errors,
-                      Tag<Opcode>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "opcode"};
+inline optional<Opcode> Read(SpanU8* data,
+                             const Features& features,
+                             Errors& errors,
+                             Tag<Opcode>) {
+  ErrorsContextGuard guard{errors, *data, "opcode"};
   WASP_TRY_READ(val, Read<u8>(data, features, errors));
 
   if (encoding::Opcode::IsPrefixByte(val, features)) {

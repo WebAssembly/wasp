@@ -31,8 +31,8 @@ using namespace ::wasp::binary::test;
 TEST(LazySequenceTest, Basic) {
   Features features;
   ErrorsNop errors;
-  LazySequence<u32, ErrorsNop> seq{MakeSpanU8("\x01\x80\x02\x00\x80\x80\x01"),
-                                   features, errors};
+  LazySequence<u32> seq{MakeSpanU8("\x01\x80\x02\x00\x80\x80\x01"), features,
+                        errors};
   auto it = seq.begin();
 
   EXPECT_EQ(1u, *it++);
@@ -51,7 +51,7 @@ TEST(LazySequenceTest, Basic) {
 TEST(LazySequenceTest, Empty) {
   Features features;
   ErrorsNop errors;
-  LazySequence<u8, ErrorsNop> seq{MakeSpanU8(""), features, errors};
+  LazySequence<u8> seq{MakeSpanU8(""), features, errors};
 
   EXPECT_EQ(seq.begin(), seq.end());
 }
@@ -60,7 +60,7 @@ TEST(LazySequenceTest, Error) {
   Features features;
   TestErrors errors;
   const auto data = MakeSpanU8("\x40\x30\x80");
-  LazySequence<s32, TestErrors> seq{data, features, errors};
+  LazySequence<s32> seq{data, features, errors};
 
   auto it = seq.begin();
 

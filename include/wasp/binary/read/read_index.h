@@ -28,11 +28,10 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Index> ReadIndex(SpanU8* data,
-                          const Features& features,
-                          Errors& errors,
-                          string_view desc) {
+inline optional<Index> ReadIndex(SpanU8* data,
+                                 const Features& features,
+                                 Errors& errors,
+                                 string_view desc) {
   return ReadVarInt<Index>(data, features, errors, desc);
 }
 

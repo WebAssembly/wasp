@@ -19,6 +19,7 @@
 
 #include "wasp/base/features.h"
 #include "wasp/binary/constant_expression.h"
+#include "wasp/binary/errors.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/read/macros.h"
@@ -28,12 +29,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<ConstantExpression> Read(SpanU8* data,
-                                  const Features& features,
-                                  Errors& errors,
-                                  Tag<ConstantExpression>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "constant expression"};
+inline optional<ConstantExpression> Read(SpanU8* data,
+                                         const Features& features,
+                                         Errors& errors,
+                                         Tag<ConstantExpression>) {
+  ErrorsContextGuard guard{errors, *data, "constant expression"};
   WASP_TRY_READ(instr, Read<Instruction>(data, features, errors));
   switch (instr.opcode) {
     case Opcode::I32Const:

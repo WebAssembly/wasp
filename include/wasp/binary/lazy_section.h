@@ -26,19 +26,19 @@
 namespace wasp {
 namespace binary {
 
-template <typename T, typename Errors>
+template <typename T>
 class LazySection {
  public:
   explicit LazySection(SpanU8, const Features&, Errors&);
 
   optional<Index> count;
-  LazySequence<T, Errors> sequence;
+  LazySequence<T> sequence;
 };
 
-template <typename T, typename Errors>
-LazySection<T, Errors>::LazySection(SpanU8 data,
-                                    const Features& features,
-                                    Errors& errors)
+template <typename T>
+LazySection<T>::LazySection(SpanU8 data,
+                            const Features& features,
+                            Errors& errors)
     : count{ReadCount(&data, features, errors)},
       sequence{data, features, errors} {}
 

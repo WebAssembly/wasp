@@ -26,12 +26,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<BrOnExnImmediate> Read(SpanU8* data,
-                                const Features& features,
-                                Errors& errors,
-                                Tag<BrOnExnImmediate>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "br_on_exn"};
+inline optional<BrOnExnImmediate> Read(SpanU8* data,
+                                       const Features& features,
+                                       Errors& errors,
+                                       Tag<BrOnExnImmediate>) {
+  ErrorsContextGuard guard{errors, *data, "br_on_exn"};
   WASP_TRY_READ(target, ReadIndex(data, features, errors, "target"));
   WASP_TRY_READ(exception_index,
                 ReadIndex(data, features, errors, "exception index"));

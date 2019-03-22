@@ -20,19 +20,19 @@
 #include "wasp/base/features.h"
 #include "wasp/binary/limits.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
 #include "wasp/valid/validate_limits.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::Limits& value,
-              Index max,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "limits"};
+inline bool Validate(const binary::Limits& value,
+                     Index max,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "limits"};
   bool valid = true;
   if (value.min > max) {
     errors.OnError(format("Expected minimum {} to be <= {}", value.min, max));

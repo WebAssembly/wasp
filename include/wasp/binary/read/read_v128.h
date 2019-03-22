@@ -29,13 +29,12 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<v128> Read(SpanU8* data,
-                   const Features& features,
-                   Errors& errors,
-                   Tag<v128>) {
+inline optional<v128> Read(SpanU8* data,
+                           const Features& features,
+                           Errors& errors,
+                           Tag<v128>) {
   static_assert(sizeof(v128) == 16, "sizeof(v128) != 16");
-  ErrorsContextGuard<Errors> guard{errors, *data, "v128"};
+  ErrorsContextGuard guard{errors, *data, "v128"};
   WASP_TRY_READ(bytes, ReadBytes(data, sizeof(v128), features, errors));
   v128 result;
   memcpy(&result, bytes.data(), sizeof(v128));

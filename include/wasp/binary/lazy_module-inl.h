@@ -30,21 +30,19 @@ constexpr SpanU8 kVersionSpan{encoding::Version};
 
 }  // namespace
 
-template <typename Errors>
-LazyModule<Errors>::LazyModule(SpanU8 data,
-                               const Features& features,
-                               Errors& errors)
+inline LazyModule::LazyModule(SpanU8 data,
+                              const Features& features,
+                              Errors& errors)
     : data{data},
       magic{ReadBytesExpected(&data, kMagicSpan, features, errors, "magic")},
       version{
           ReadBytesExpected(&data, kVersionSpan, features, errors, "version")},
       sections{data, features, errors} {}
 
-template <typename Errors>
-LazyModule<Errors> ReadModule(SpanU8 data,
-                              const Features& features,
-                              Errors& errors) {
-  return LazyModule<Errors>{data, features, errors};
+inline LazyModule ReadModule(SpanU8 data,
+                             const Features& features,
+                             Errors& errors) {
+  return LazyModule{data, features, errors};
 }
 
 }  // namespace binary

@@ -19,12 +19,12 @@
 
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
+#include "wasp/binary/errors.h"
 
 namespace wasp {
 namespace binary {
 
 /// ---
-template <typename Errors>
 class ErrorsContextGuard {
  public:
   explicit ErrorsContextGuard(Errors& errors, SpanU8 pos, string_view desc)

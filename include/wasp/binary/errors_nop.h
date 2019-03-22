@@ -17,18 +17,16 @@
 #ifndef WASP_BINARY_ERRORS_NOP_H_
 #define WASP_BINARY_ERRORS_NOP_H_
 
-#include "wasp/base/span.h"
-#include "wasp/base/string_view.h"
+#include "wasp/binary/errors.h"
 
 namespace wasp {
 namespace binary {
 
-/// ---
-class ErrorsNop {
- public:
-  void PushContext(SpanU8 pos, string_view desc) {}
-  void PopContext() {}
-  void OnError(SpanU8 pos, string_view message) {}
+class ErrorsNop : public Errors {
+ protected:
+  void HandlePushContext(SpanU8 pos, string_view desc) override {}
+  void HandlePopContext() override {}
+  void HandleOnError(SpanU8 pos, string_view message) override {}
 };
 
 }  // namespace binary

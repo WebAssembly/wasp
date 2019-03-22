@@ -1,5 +1,5 @@
 //
-// Copyright 2019 WebAssembly Community Group participants
+// Copyright 2018 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,34 +14,30 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_READ_READ_U8_H_
-#define WASP_BINARY_READ_READ_U8_H_
+#ifndef WASP_BINARY_ERRORS_H_
+#define WASP_BINARY_ERRORS_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/optional.h"
 #include "wasp/base/span.h"
-#include "wasp/base/types.h"
-#include "wasp/binary/errors.h"
-#include "wasp/binary/read/read.h"
+#include "wasp/base/string_view.h"
 
 namespace wasp {
 namespace binary {
 
-inline optional<u8> Read(SpanU8* data,
-                         const Features& features,
-                         Errors& errors,
-                         Tag<u8>) {
-  if (data->size() < 1) {
-    errors.OnError(*data, "Unable to read u8");
-    return nullopt;
-  }
+class Errors {
+ public:
+  void PushContext(SpanU8 pos, string_view desc);
+  void PopContext();
+  void OnError(SpanU8 pos, string_view message);
 
-  u8 result{(*data)[0]};
-  remove_prefix(data, 1);
-  return result;
-}
+ protected:
+  virtual void HandlePushContext(SpanU8 pos, string_view desc) = 0;
+  virtual void HandlePopContext() = 0;
+  virtual void HandleOnError(SpanU8 pos, string_view message) = 0;
+};
 
 }  // namespace binary
 }  // namespace wasp
 
-#endif  // WASP_BINARY_READ_READ_U8_H_
+#include "wasp/binary/errors-inl.h"
+
+#endif // WASP_BINARY_ERRORS_H_

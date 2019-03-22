@@ -18,23 +18,23 @@
 #define WASP_BINARY_READ_READ_LIMITS_H_
 
 #include "wasp/base/features.h"
-#include "wasp/binary/limits.h"
 #include "wasp/binary/encoding/limits_flags_encoding.h"
+#include "wasp/binary/errors.h"
 #include "wasp/binary/errors_context_guard.h"
+#include "wasp/binary/limits.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_u8.h"
 #include "wasp/binary/read/read_u32.h"
+#include "wasp/binary/read/read_u8.h"
 
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Limits> Read(SpanU8* data,
-                      const Features& features,
-                      Errors& errors,
-                      Tag<Limits>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "limits"};
+inline optional<Limits> Read(SpanU8* data,
+                             const Features& features,
+                             Errors& errors,
+                             Tag<Limits>) {
+  ErrorsContextGuard guard{errors, *data, "limits"};
   WASP_TRY_READ_CONTEXT(flags, Read<u8>(data, features, errors), "flags");
   auto decoded = encoding::LimitsFlags::Decode(flags, features);
   if (!decoded) {

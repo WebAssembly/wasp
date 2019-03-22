@@ -20,6 +20,7 @@
 #include "wasp/base/features.h"
 #include "wasp/binary/block_type.h"
 #include "wasp/binary/encoding/block_type_encoding.h"
+#include "wasp/binary/errors.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
@@ -28,12 +29,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<BlockType> Read(SpanU8* data,
-                         const Features& features,
-                         Errors& errors,
-                         Tag<BlockType>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "block type"};
+inline optional<BlockType> Read(SpanU8* data,
+                                const Features& features,
+                                Errors& errors,
+                                Tag<BlockType>) {
+  ErrorsContextGuard guard{errors, *data, "block type"};
   WASP_TRY_READ(val, Read<u8>(data, features, errors));
   auto decoded = encoding::BlockType::Decode(val, features);
   if (!decoded) {

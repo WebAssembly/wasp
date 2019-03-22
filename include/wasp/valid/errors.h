@@ -14,34 +14,29 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_LAZY_MODULE_H
-#define WASP_BINARY_LAZY_MODULE_H
+#ifndef WASP_VALID_ERRORS_H_
+#define WASP_VALID_ERRORS_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/optional.h"
-#include "wasp/base/span.h"
-#include "wasp/binary/lazy_sequence.h"
-#include "wasp/binary/section.h"
+#include "wasp/base/string_view.h"
 
 namespace wasp {
-namespace binary {
+namespace valid {
 
-/// ---
-class LazyModule {
+class Errors {
  public:
-  explicit LazyModule(SpanU8, const Features&, Errors&);
+  void PushContext(string_view desc);
+  void PopContext();
+  void OnError(string_view message);
 
-  SpanU8 data;
-  optional<SpanU8> magic;
-  optional<SpanU8> version;
-  LazySequence<Section> sections;
+ protected:
+  virtual void HandlePushContext(string_view desc) = 0;
+  virtual void HandlePopContext() = 0;
+  virtual void HandleOnError(string_view message) = 0;
 };
 
-LazyModule ReadModule(SpanU8 data, const Features&, Errors&);
-
-}  // namespace binary
+}  // namespace valid
 }  // namespace wasp
 
-#include "wasp/binary/lazy_module-inl.h"
+#include "wasp/valid/errors-inl.h"
 
-#endif // WASP_BINARY_LAZY_MODULE_H
+#endif // WASP_VALID_ERRORS_H_

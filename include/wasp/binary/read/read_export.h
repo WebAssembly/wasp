@@ -29,12 +29,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Export> Read(SpanU8* data,
-                      const Features& features,
-                      Errors& errors,
-                      Tag<Export>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "export"};
+inline optional<Export> Read(SpanU8* data,
+                             const Features& features,
+                             Errors& errors,
+                             Tag<Export>) {
+  ErrorsContextGuard guard{errors, *data, "export"};
   WASP_TRY_READ(name, ReadString(data, features, errors, "name"));
   WASP_TRY_READ(kind, Read<ExternalKind>(data, features, errors));
   WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));

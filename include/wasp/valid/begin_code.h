@@ -20,14 +20,16 @@
 #include "wasp/base/features.h"
 #include "wasp/base/format.h"
 #include "wasp/base/types.h"
+#include "wasp/binary/errors.h"
 #include "wasp/valid/context.h"
 #include "wasp/valid/errors_context_guard.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool BeginCode(Context& context, const Features& features, Errors& errors) {
+inline bool BeginCode(Context& context,
+                      const Features& features,
+                      Errors& errors) {
   Index func_index = context.imported_function_count + context.code_count;
   if (func_index >= context.functions.size()) {
     errors.OnError(format("Unexpected code index {}, function count is {}",

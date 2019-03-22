@@ -19,6 +19,7 @@
 
 #include "wasp/base/features.h"
 #include "wasp/binary/element_expression.h"
+#include "wasp/binary/errors.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/read/macros.h"
@@ -28,12 +29,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<ElementExpression> Read(SpanU8* data,
-                                 const Features& features,
-                                 Errors& errors,
-                                 Tag<ElementExpression>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "element expression"};
+inline optional<ElementExpression> Read(SpanU8* data,
+                                        const Features& features,
+                                        Errors& errors,
+                                        Tag<ElementExpression>) {
+  ErrorsContextGuard guard{errors, *data, "element expression"};
   // Element expressions were first added in the bulk memory proposal, so it
   // shouldn't be read (and this function shouldn't be called) if that feature
   // is not enabled.

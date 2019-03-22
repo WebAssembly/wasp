@@ -22,18 +22,18 @@
 #include "wasp/base/features.h"
 #include "wasp/binary/table_type.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
 #include "wasp/valid/validate_limits.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::TableType& value,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "table type"};
+inline bool Validate(const binary::TableType& value,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "table type"};
   constexpr Index kMaxElements = std::numeric_limits<Index>::max();
   bool valid = Validate(value.limits, kMaxElements, context, features, errors);
   if (value.limits.shared == binary::Shared::Yes) {

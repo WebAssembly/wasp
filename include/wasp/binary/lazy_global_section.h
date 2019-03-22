@@ -28,20 +28,17 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-using LazyGlobalSection = LazySection<Global, Errors>;
+using LazyGlobalSection = LazySection<Global>;
 
-template <typename Errors>
-LazyGlobalSection<Errors> ReadGlobalSection(SpanU8 data,
-                                            const Features& features,
-                                            Errors& errors) {
-  return LazyGlobalSection<Errors>{data, features, errors};
+inline LazyGlobalSection ReadGlobalSection(SpanU8 data,
+                                           const Features& features,
+                                           Errors& errors) {
+  return LazyGlobalSection{data, features, errors};
 }
 
-template <typename Errors>
-LazyGlobalSection<Errors> ReadGlobalSection(KnownSection sec,
-                                            const Features& features,
-                                            Errors& errors) {
+inline LazyGlobalSection ReadGlobalSection(KnownSection sec,
+                                           const Features& features,
+                                           Errors& errors) {
   return ReadGlobalSection(sec.data, features, errors);
 }
 

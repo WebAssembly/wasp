@@ -28,21 +28,18 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-using LazyNameSection = LazySequence<NameSubsection, Errors>;
+using LazyNameSection = LazySequence<NameSubsection>;
 
-template <typename Errors>
-LazyNameSection<Errors> ReadNameSection(SpanU8 data,
-                                        const Features& features,
-                                        Errors& errors) {
-  return LazyNameSection<Errors>{data, features, errors};
+inline LazyNameSection ReadNameSection(SpanU8 data,
+                                       const Features& features,
+                                       Errors& errors) {
+  return LazyNameSection{data, features, errors};
 }
 
-template <typename Errors>
-LazyNameSection<Errors> ReadNameSection(CustomSection sec,
-                                        const Features& features,
-                                        Errors& errors) {
-  return LazyNameSection<Errors>{sec.data, features, errors};
+inline LazyNameSection ReadNameSection(CustomSection sec,
+                                       const Features& features,
+                                       Errors& errors) {
+  return LazyNameSection{sec.data, features, errors};
 }
 
 }  // namespace binary

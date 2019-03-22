@@ -20,18 +20,18 @@
 #include "wasp/base/features.h"
 #include "wasp/binary/table.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
 #include "wasp/valid/validate_table_type.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::Table& value,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "table"};
+inline bool Validate(const binary::Table& value,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "table"};
   context.tables.push_back(value.table_type);
   bool valid = Validate(value.table_type, context, features, errors);
   if (context.tables.size() > 1 && !features.reference_types_enabled()) {

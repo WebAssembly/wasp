@@ -21,22 +21,22 @@
 #include "wasp/base/macros.h"
 #include "wasp/binary/import.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
 #include "wasp/valid/validate_function.h"
 #include "wasp/valid/validate_global_type.h"
 #include "wasp/valid/validate_index.h"
-#include "wasp/valid/validate_memory_type.h"
-#include "wasp/valid/validate_table_type.h"
+#include "wasp/valid/validate_memory.h"
+#include "wasp/valid/validate_table.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::Import& value,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "import"};
+inline bool Validate(const binary::Import& value,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "import"};
   bool valid = true;
   switch (value.kind()) {
     case binary::ExternalKind::Function:

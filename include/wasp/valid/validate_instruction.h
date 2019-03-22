@@ -32,12 +32,11 @@ namespace valid {
 void MarkUnreachable(Context&);
 void PushLabel(Context&, LabelType, binary::BlockType);
 
-template <typename Errors>
-bool Validate(const binary::Instruction& value,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "instruction"};
+inline bool Validate(const binary::Instruction& value,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "instruction"};
   switch (value.opcode) {
     case binary::Opcode::Unreachable:
       MarkUnreachable(context);

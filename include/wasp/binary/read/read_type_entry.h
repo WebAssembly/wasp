@@ -18,23 +18,23 @@
 #define WASP_BINARY_READ_READ_TYPE_ENTRY_H_
 
 #include "wasp/base/features.h"
-#include "wasp/binary/type_entry.h"
 #include "wasp/binary/encoding.h"  // XXX
+#include "wasp/binary/errors.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_function_type.h"
 #include "wasp/binary/read/read_u8.h"
+#include "wasp/binary/type_entry.h"
 
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<TypeEntry> Read(SpanU8* data,
-                         const Features& features,
-                         Errors& errors,
-                         Tag<TypeEntry>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "type entry"};
+inline optional<TypeEntry> Read(SpanU8* data,
+                                const Features& features,
+                                Errors& errors,
+                                Tag<TypeEntry>) {
+  ErrorsContextGuard guard{errors, *data, "type entry"};
   WASP_TRY_READ_CONTEXT(form, Read<u8>(data, features, errors), "form");
 
   if (form != encoding::Type::Function) {

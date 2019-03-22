@@ -1,5 +1,5 @@
 //
-// Copyright 2019 WebAssembly Community Group participants
+// Copyright 2018 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,31 +14,25 @@
 // limitations under the License.
 //
 
-#ifndef WASP_VALID_VALIDATE_VALUE_TYPE_H_
-#define WASP_VALID_VALIDATE_VALUE_TYPE_H_
+#ifndef WASP_VALID_TEST_UTILS_H_
+#define WASP_VALID_TEST_UTILS_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/format.h"
-#include "wasp/binary/value_type.h"
-#include "wasp/valid/context.h"
 #include "wasp/valid/errors.h"
 
 namespace wasp {
 namespace valid {
+namespace test {
 
-inline bool Validate(binary::ValueType actual,
-                     binary::ValueType expected,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  if (actual != expected) {
-    errors.OnError(format("Expected value type {}, got {}", expected, actual));
-    return false;
-  }
-  return true;
-}
+class TestErrors : public Errors {
+ protected:
+  void HandlePushContext(string_view desc) {}
+  void HandlePopContext() {}
+  void HandleOnError(string_view message) { print("Error: {}\n", message); }
+};
 
+}  // namespace test
 }  // namespace valid
 }  // namespace wasp
 
-#endif  // WASP_VALID_VALIDATE_VALUE_TYPE_H_
+#endif // WASP_VALID_TEST_UTILS_H_

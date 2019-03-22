@@ -46,8 +46,6 @@ namespace cfg {
 
 using namespace ::wasp::binary;
 
-using ErrorsType = ErrorsNop;
-
 struct Options {
   Features features;
   string_view function;
@@ -98,9 +96,9 @@ struct Tool {
   void AddSuccessor(BBID, BBID, const std::string& name = std::string{});
   void Br(Index, const std::string& name = std::string{});
 
-  ErrorsType errors;
+  ErrorsNop errors;
   Options options;
-  LazyModule<ErrorsType> module;
+  LazyModule module;
   std::map<string_view, Index> name_to_function;
   Index imported_function_count = 0;
   std::vector<Label> labels;

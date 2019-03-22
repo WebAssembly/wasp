@@ -26,12 +26,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<ShuffleImmediate> Read(SpanU8* data,
-                                const Features& features,
-                                Errors& errors,
-                                Tag<ShuffleImmediate>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "shuffle immediate"};
+inline optional<ShuffleImmediate> Read(SpanU8* data,
+                                       const Features& features,
+                                       Errors& errors,
+                                       Tag<ShuffleImmediate>) {
+  ErrorsContextGuard guard{errors, *data, "shuffle immediate"};
   ShuffleImmediate immediate;
   for (int i = 0; i < 16; ++i) {
     WASP_TRY_READ(byte, Read<u8>(data, features, errors));

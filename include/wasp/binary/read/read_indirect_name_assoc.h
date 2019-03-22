@@ -29,12 +29,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<IndirectNameAssoc> Read(SpanU8* data,
-                                 const Features& features,
-                                 Errors& errors,
-                                 Tag<IndirectNameAssoc>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "indirect name assoc"};
+inline optional<IndirectNameAssoc> Read(SpanU8* data,
+                                        const Features& features,
+                                        Errors& errors,
+                                        Tag<IndirectNameAssoc>) {
+  ErrorsContextGuard guard{errors, *data, "indirect name assoc"};
   WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
   WASP_TRY_READ(name_map,
                 ReadVector<NameAssoc>(data, features, errors, "name map"));

@@ -25,11 +25,10 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<MemArgImmediate> Read(SpanU8* data,
-                               const Features& features,
-                               Errors& errors,
-                               Tag<MemArgImmediate>) {
+inline optional<MemArgImmediate> Read(SpanU8* data,
+                                      const Features& features,
+                                      Errors& errors,
+                                      Tag<MemArgImmediate>) {
   WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, features, errors),
                         "align log2");
   WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, features, errors), "offset");

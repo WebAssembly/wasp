@@ -21,18 +21,18 @@
 #include "wasp/base/macros.h"
 #include "wasp/binary/export.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
 #include "wasp/valid/validate_index.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::Export& value,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "export"};
+inline bool Validate(const binary::Export& value,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "export"};
   switch (value.kind) {
     case binary::ExternalKind::Function:
       return ValidateIndex(value.index, context.functions.size(),

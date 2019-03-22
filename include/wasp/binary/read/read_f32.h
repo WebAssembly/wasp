@@ -29,13 +29,12 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<f32> Read(SpanU8* data,
-                   const Features& features,
-                   Errors& errors,
-                   Tag<f32>) {
+inline optional<f32> Read(SpanU8* data,
+                          const Features& features,
+                          Errors& errors,
+                          Tag<f32>) {
   static_assert(sizeof(f32) == 4, "sizeof(f32) != 4");
-  ErrorsContextGuard<Errors> guard{errors, *data, "f32"};
+  ErrorsContextGuard guard{errors, *data, "f32"};
   WASP_TRY_READ(bytes, ReadBytes(data, sizeof(f32), features, errors));
   f32 result;
   memcpy(&result, bytes.data(), sizeof(f32));

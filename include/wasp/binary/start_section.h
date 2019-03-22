@@ -29,18 +29,16 @@ namespace binary {
 
 using StartSection = optional<Start>;
 
-template <typename Errors>
-StartSection ReadStartSection(SpanU8 data,
-                              const Features& features,
-                              Errors& errors) {
+inline StartSection ReadStartSection(SpanU8 data,
+                                     const Features& features,
+                                     Errors& errors) {
   SpanU8 copy = data;
   return Read<Start>(&copy, features, errors);
 }
 
-template <typename Errors>
-StartSection ReadStartSection(KnownSection sec,
-                              const Features& features,
-                              Errors& errors) {
+inline StartSection ReadStartSection(KnownSection sec,
+                                     const Features& features,
+                                     Errors& errors) {
   return ReadStartSection(sec.data, features, errors);
 }
 

@@ -26,11 +26,13 @@
 namespace wasp {
 namespace binary {
 
+class Errors;
+
 template <typename Sequence>
 class LazySequenceIterator;
 
 /// ---
-template <typename T, typename Errors>
+template <typename T>
 class LazySequence {
  public:
   using value_type = T;

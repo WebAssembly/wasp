@@ -22,18 +22,18 @@
 #include "wasp/base/macros.h"
 #include "wasp/binary/start.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
 #include "wasp/valid/validate_index.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
 bool Validate(const binary::Start& value,
               Context& context,
               const Features& features,
               Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "start"};
+  ErrorsContextGuard guard{errors, "start"};
   if (!ValidateIndex(value.func_index, context.functions.size(),
                      "function index", errors)) {
     return false;

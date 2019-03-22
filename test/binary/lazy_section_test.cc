@@ -39,9 +39,8 @@ using namespace ::wasp::binary::test;
 
 namespace {
 
-template <typename T, typename Errors>
-void ExpectSection(const std::vector<T>& expected,
-                   LazySection<T, Errors>& sec) {
+template <typename T>
+void ExpectSection(const std::vector<T>& expected, LazySection<T>& sec) {
   EXPECT_EQ(expected.size(), sec.count);
   size_t i = 0;
   for (const auto& item : sec.sequence) {

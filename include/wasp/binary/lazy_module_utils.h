@@ -26,22 +26,17 @@
 namespace wasp {
 namespace binary {
 
+class Errors;
+
 using IndexNamePair = std::pair<Index, string_view>;
 
-template <typename Errors, typename F>
-void ForEachFunctionName(LazyModule<Errors>&, F&&, const Features&, Errors&);
+template <typename F>
+void ForEachFunctionName(LazyModule&, F&&, const Features&, Errors&);
 
-template <typename Errors, typename Iterator>
-Iterator CopyFunctionNames(LazyModule<Errors>&,
-                           Iterator out,
-                           const Features&,
-                           Errors&);
+template <typename Iterator>
+Iterator CopyFunctionNames(LazyModule&, Iterator out, const Features&, Errors&);
 
-template <typename Errors>
-Index GetImportCount(LazyModule<Errors>&,
-                     ExternalKind,
-                     const Features&,
-                     Errors&);
+Index GetImportCount(LazyModule&, ExternalKind, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

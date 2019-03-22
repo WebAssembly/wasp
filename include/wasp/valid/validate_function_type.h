@@ -21,18 +21,18 @@
 #include "wasp/base/format.h"
 #include "wasp/binary/function_type.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
 #include "wasp/valid/validate_function_type.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::FunctionType& value,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "function type"};
+inline bool Validate(const binary::FunctionType& value,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "function type"};
   if (value.result_types.size() > 1 && !features.multi_value_enabled()) {
     errors.OnError(format("Expected result type count of 0 or 1, got {}",
                           value.result_types.size()));

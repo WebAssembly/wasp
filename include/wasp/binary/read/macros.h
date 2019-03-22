@@ -19,6 +19,7 @@
 
 #include "wasp/base/format.h"
 #include "wasp/base/span.h"
+#include "wasp/binary/errors.h"
 #include "wasp/binary/errors_context_guard.h"
 
 #define WASP_TRY_READ(var, call) \
@@ -28,9 +29,9 @@
   }                              \
   auto var = *opt_##var /* No semicolon. */
 
-#define WASP_TRY_READ_CONTEXT(var, call, desc)                 \
-  ErrorsContextGuard<Errors> guard_##var(errors, *data, desc); \
-  WASP_TRY_READ(var, call);                                    \
+#define WASP_TRY_READ_CONTEXT(var, call, desc)         \
+  ErrorsContextGuard guard_##var(errors, *data, desc); \
+  WASP_TRY_READ(var, call);                            \
   guard_##var.PopContext() /* No semicolon. */
 
 #define WASP_TRY_DECODE(out_var, in_var, Type, name)               \

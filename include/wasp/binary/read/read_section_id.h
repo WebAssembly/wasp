@@ -28,12 +28,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<SectionId> Read(SpanU8* data,
-                         const Features& features,
-                         Errors& errors,
-                         Tag<SectionId>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "section id"};
+inline optional<SectionId> Read(SpanU8* data,
+                                const Features& features,
+                                Errors& errors,
+                                Tag<SectionId>) {
+  ErrorsContextGuard guard{errors, *data, "section id"};
   WASP_TRY_READ(val, Read<u32>(data, features, errors));
   WASP_TRY_DECODE(decoded, val, SectionId, "section id");
   return decoded;

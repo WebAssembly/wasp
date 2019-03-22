@@ -24,16 +24,18 @@
 namespace wasp {
 namespace binary {
 
+class Errors;
+
 template <typename T>
 struct Tag {};
 
-template <typename T, typename Errors>
+template <typename T>
 optional<T> Read(SpanU8* data,
                  const Features& features,
                  Errors& errors,
                  Tag<T>);
 
-template <typename T, typename Errors>
+template <typename T>
 optional<T> Read(SpanU8* data, const Features& features, Errors& errors) {
   return Read(data, features, errors, Tag<T>{});
 }

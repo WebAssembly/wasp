@@ -28,12 +28,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<ExternalKind> Read(SpanU8* data,
-                            const Features& features,
-                            Errors& errors,
-                            Tag<ExternalKind>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "external kind"};
+inline optional<ExternalKind> Read(SpanU8* data,
+                                   const Features& features,
+                                   Errors& errors,
+                                   Tag<ExternalKind>) {
+  ErrorsContextGuard guard{errors, *data, "external kind"};
   WASP_TRY_READ(val, Read<u8>(data, features, errors));
   WASP_TRY_DECODE(decoded, val, ExternalKind, "external kind");
   return decoded;

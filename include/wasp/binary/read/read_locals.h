@@ -28,12 +28,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Locals> Read(SpanU8* data,
-                      const Features& features,
-                      Errors& errors,
-                      Tag<Locals>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "locals"};
+inline optional<Locals> Read(SpanU8* data,
+                             const Features& features,
+                             Errors& errors,
+                             Tag<Locals>) {
+  ErrorsContextGuard guard{errors, *data, "locals"};
   WASP_TRY_READ(count, ReadIndex(data, features, errors, "count"));
   WASP_TRY_READ_CONTEXT(type, Read<ValueType>(data, features, errors), "type");
   return Locals{count, type};

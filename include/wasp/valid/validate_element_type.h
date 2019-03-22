@@ -21,16 +21,16 @@
 #include "wasp/base/format.h"
 #include "wasp/binary/element_type.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(binary::ElementType actual,
-              binary::ElementType expected,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
+inline bool Validate(binary::ElementType actual,
+                     binary::ElementType expected,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
   if (actual != expected) {
     errors.OnError(
         format("Expected element type {}, got {}", expected, actual));

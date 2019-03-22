@@ -27,12 +27,11 @@
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::Function& value,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "function"};
+inline bool Validate(const binary::Function& value,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "function"};
   context.functions.push_back(value);
   return ValidateIndex(value.type_index, context.types.size(),
                        "function type index", errors);

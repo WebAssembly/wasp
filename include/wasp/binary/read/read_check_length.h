@@ -23,6 +23,7 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
+#include "wasp/binary/errors.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_index.h"
@@ -30,12 +31,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Index> ReadCheckLength(SpanU8* data,
-                                const Features& features,
-                                Errors& errors,
-                                string_view context_name,
-                                string_view error_name) {
+inline optional<Index> ReadCheckLength(SpanU8* data,
+                                       const Features& features,
+                                       Errors& errors,
+                                       string_view context_name,
+                                       string_view error_name) {
   WASP_TRY_READ(count, ReadIndex(data, features, errors, context_name));
 
   // There should be at least one byte per count, so if the data is smaller

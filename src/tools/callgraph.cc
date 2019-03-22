@@ -45,8 +45,6 @@ namespace callgraph {
 
 using namespace ::wasp::binary;
 
-using ErrorsType = ErrorsNop;
-
 struct Options {
   Features features;
   string_view output_filename;
@@ -62,9 +60,9 @@ struct Tool {
 
   optional<string_view> GetFunctionName(Index) const;
 
-  ErrorsType errors;
+  ErrorsNop errors;
   Options options;
-  LazyModule<ErrorsType> module;
+  LazyModule module;
   std::map<Index, string_view> function_names;
   Index imported_function_count = 0;
   std::set<std::pair<Index, Index>> call_graph;

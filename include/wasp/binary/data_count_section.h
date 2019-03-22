@@ -30,18 +30,16 @@ namespace binary {
 
 using DataCountSection = optional<DataCount>;
 
-template <typename Errors>
-DataCountSection ReadDataCountSection(SpanU8 data,
-                                      const Features& features,
-                                      Errors& errors) {
+inline DataCountSection ReadDataCountSection(SpanU8 data,
+                                             const Features& features,
+                                             Errors& errors) {
   SpanU8 copy = data;
   return Read<DataCount>(&copy, features, errors);
 }
 
-template <typename Errors>
-DataCountSection ReadDataCountSection(KnownSection sec,
-                                      const Features& features,
-                                      Errors& errors) {
+inline DataCountSection ReadDataCountSection(KnownSection sec,
+                                             const Features& features,
+                                             Errors& errors) {
   return ReadDataCountSection(sec.data, features, errors);
 }
 

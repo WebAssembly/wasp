@@ -31,12 +31,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<DataSegment> Read(SpanU8* data,
-                           const Features& features,
-                           Errors& errors,
-                           Tag<DataSegment>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "data segment"};
+inline optional<DataSegment> Read(SpanU8* data,
+                                  const Features& features,
+                                  Errors& errors,
+                                  Tag<DataSegment>) {
+  ErrorsContextGuard guard{errors, *data, "data segment"};
   auto decoded = encoding::DecodedSegmentFlags::MVP();
   if (features.bulk_memory_enabled()) {
     WASP_TRY_READ(flags, ReadIndex(data, features, errors, "flags"));

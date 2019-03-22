@@ -28,12 +28,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<GlobalType> Read(SpanU8* data,
-                          const Features& features,
-                          Errors& errors,
-                          Tag<GlobalType>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "global type"};
+inline optional<GlobalType> Read(SpanU8* data,
+                                 const Features& features,
+                                 Errors& errors,
+                                 Tag<GlobalType>) {
+  ErrorsContextGuard guard{errors, *data, "global type"};
   WASP_TRY_READ(type, Read<ValueType>(data, features, errors));
   WASP_TRY_READ(mut, Read<Mutability>(data, features, errors));
   return GlobalType{type, mut};

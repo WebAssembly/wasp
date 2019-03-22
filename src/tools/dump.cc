@@ -53,8 +53,6 @@ namespace dump {
 
 using namespace ::wasp::binary;
 
-using ErrorsType = ErrorsNop;
-
 enum class Pass {
   Headers,
   Details,
@@ -82,19 +80,19 @@ struct Tool {
   void DoCustomSection(Pass, CustomSection);
   void DoSectionHeader(Pass, string_view name, SpanU8 data);
 
-  void DoTypeSection(Pass, LazyTypeSection<ErrorsType>);
-  void DoImportSection(Pass, LazyImportSection<ErrorsType>);
-  void DoFunctionSection(Pass, LazyFunctionSection<ErrorsType>);
-  void DoTableSection(Pass, LazyTableSection<ErrorsType>);
-  void DoMemorySection(Pass, LazyMemorySection<ErrorsType>);
-  void DoGlobalSection(Pass, LazyGlobalSection<ErrorsType>);
-  void DoExportSection(Pass, LazyExportSection<ErrorsType>);
+  void DoTypeSection(Pass, LazyTypeSection);
+  void DoImportSection(Pass, LazyImportSection);
+  void DoFunctionSection(Pass, LazyFunctionSection);
+  void DoTableSection(Pass, LazyTableSection);
+  void DoMemorySection(Pass, LazyMemorySection);
+  void DoGlobalSection(Pass, LazyGlobalSection);
+  void DoExportSection(Pass, LazyExportSection);
   void DoStartSection(Pass, StartSection);
-  void DoElementSection(Pass, LazyElementSection<ErrorsType>);
-  void DoCodeSection(Pass, LazyCodeSection<ErrorsType>);
-  void DoDataSection(Pass, LazyDataSection<ErrorsType>);
+  void DoElementSection(Pass, LazyElementSection);
+  void DoCodeSection(Pass, LazyCodeSection);
+  void DoDataSection(Pass, LazyDataSection);
   void DoDataCountSection(Pass, DataCountSection);
-  void DoNameSection(Pass, LazyNameSection<ErrorsType>);
+  void DoNameSection(Pass, LazyNameSection);
 
   void DoCount(Pass, optional<Index> count);
 
@@ -123,11 +121,11 @@ struct Tool {
 
   size_t file_offset(SpanU8 data);
 
-  ErrorsType errors;
+  ErrorsNop errors;
   std::string filename;
   Options options;
   SpanU8 data;
-  LazyModule<ErrorsType> module;
+  LazyModule module;
   std::vector<TypeEntry> type_entries;
   std::vector<Function> functions;
   std::map<Index, string_view> function_names;
@@ -481,7 +479,7 @@ void Tool::DoSectionHeader(Pass pass, string_view name, SpanU8 data) {
   }
 }
 
-void Tool::DoTypeSection(Pass pass, LazyTypeSection<ErrorsType> section) {
+void Tool::DoTypeSection(Pass pass, LazyTypeSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -491,7 +489,7 @@ void Tool::DoTypeSection(Pass pass, LazyTypeSection<ErrorsType> section) {
   }
 }
 
-void Tool::DoImportSection(Pass pass, LazyImportSection<ErrorsType> section) {
+void Tool::DoImportSection(Pass pass, LazyImportSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index function_count = 0;
@@ -530,8 +528,7 @@ void Tool::DoImportSection(Pass pass, LazyImportSection<ErrorsType> section) {
   }
 }
 
-void Tool::DoFunctionSection(Pass pass,
-                             LazyFunctionSection<ErrorsType> section) {
+void Tool::DoFunctionSection(Pass pass, LazyFunctionSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_function_count;
@@ -544,7 +541,7 @@ void Tool::DoFunctionSection(Pass pass,
   }
 }
 
-void Tool::DoTableSection(Pass pass, LazyTableSection<ErrorsType> section) {
+void Tool::DoTableSection(Pass pass, LazyTableSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_table_count;
@@ -555,7 +552,7 @@ void Tool::DoTableSection(Pass pass, LazyTableSection<ErrorsType> section) {
   }
 }
 
-void Tool::DoMemorySection(Pass pass, LazyMemorySection<ErrorsType> section) {
+void Tool::DoMemorySection(Pass pass, LazyMemorySection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_memory_count;
@@ -566,7 +563,7 @@ void Tool::DoMemorySection(Pass pass, LazyMemorySection<ErrorsType> section) {
   }
 }
 
-void Tool::DoGlobalSection(Pass pass, LazyGlobalSection<ErrorsType> section) {
+void Tool::DoGlobalSection(Pass pass, LazyGlobalSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_global_count;
@@ -577,7 +574,7 @@ void Tool::DoGlobalSection(Pass pass, LazyGlobalSection<ErrorsType> section) {
   }
 }
 
-void Tool::DoExportSection(Pass pass, LazyExportSection<ErrorsType> section) {
+void Tool::DoExportSection(Pass pass, LazyExportSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -603,7 +600,7 @@ void Tool::DoStartSection(Pass pass, StartSection section) {
   }
 }
 
-void Tool::DoElementSection(Pass pass, LazyElementSection<ErrorsType> section) {
+void Tool::DoElementSection(Pass pass, LazyElementSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -637,7 +634,7 @@ void Tool::DoElementSection(Pass pass, LazyElementSection<ErrorsType> section) {
   }
 }
 
-void Tool::DoCodeSection(Pass pass, LazyCodeSection<ErrorsType> section) {
+void Tool::DoCodeSection(Pass pass, LazyCodeSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_function_count;
@@ -654,7 +651,7 @@ void Tool::DoCodeSection(Pass pass, LazyCodeSection<ErrorsType> section) {
   }
 }
 
-void Tool::DoDataSection(Pass pass, LazyDataSection<ErrorsType> section) {
+void Tool::DoDataSection(Pass pass, LazyDataSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -685,7 +682,7 @@ void Tool::DoDataCountSection(Pass pass, DataCountSection section) {
   }
 }
 
-void Tool::DoNameSection(Pass pass, LazyNameSection<ErrorsType> section) {
+void Tool::DoNameSection(Pass pass, LazyNameSection section) {
   const Features& features=  options.features;
   for (auto subsection : section) {
     switch (subsection.id) {

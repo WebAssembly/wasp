@@ -30,12 +30,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Code> Read(SpanU8* data,
-                    const Features& features,
-                    Errors& errors,
-                    Tag<Code>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "code"};
+inline optional<Code> Read(SpanU8* data,
+                           const Features& features,
+                           Errors& errors,
+                           Tag<Code>) {
+  ErrorsContextGuard guard{errors, *data, "code"};
   WASP_TRY_READ(body_size, ReadLength(data, features, errors));
   WASP_TRY_READ(body, ReadBytes(data, body_size, features, errors));
   WASP_TRY_READ(locals,

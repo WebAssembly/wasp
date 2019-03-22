@@ -27,11 +27,10 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<s64> Read(SpanU8* data,
-                   const Features& features,
-                   Errors& errors,
-                   Tag<s64>) {
+inline optional<s64> Read(SpanU8* data,
+                          const Features& features,
+                          Errors& errors,
+                          Tag<s64>) {
   return ReadVarInt<s64>(data, features, errors, "s64");
 }
 

@@ -27,12 +27,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Function> Read(SpanU8* data,
-                        const Features& features,
-                        Errors& errors,
-                        Tag<Function>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "function"};
+inline optional<Function> Read(SpanU8* data,
+                               const Features& features,
+                               Errors& errors,
+                               Tag<Function>) {
+  ErrorsContextGuard guard{errors, *data, "function"};
   WASP_TRY_READ(type_index, ReadIndex(data, features, errors, "type index"));
   return Function{type_index};
 }

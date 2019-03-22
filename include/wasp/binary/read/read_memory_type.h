@@ -27,12 +27,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<MemoryType> Read(SpanU8* data,
-                          const Features& features,
-                          Errors& errors,
-                          Tag<MemoryType>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "memory type"};
+inline optional<MemoryType> Read(SpanU8* data,
+                                 const Features& features,
+                                 Errors& errors,
+                                 Tag<MemoryType>) {
+  ErrorsContextGuard guard{errors, *data, "memory type"};
   WASP_TRY_READ(limits, Read<Limits>(data, features, errors));
   return MemoryType{limits};
 }

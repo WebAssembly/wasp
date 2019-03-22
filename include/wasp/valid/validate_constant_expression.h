@@ -22,6 +22,7 @@
 #include "wasp/binary/constant_expression.h"
 #include "wasp/binary/value_type.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
 #include "wasp/valid/validate_index.h"
 #include "wasp/valid/validate_value_type.h"
@@ -29,14 +30,13 @@
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::ConstantExpression& value,
-              binary::ValueType expected_type,
-              Index max_global_index,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "constant_expression"};
+inline bool Validate(const binary::ConstantExpression& value,
+                     binary::ValueType expected_type,
+                     Index max_global_index,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "constant_expression"};
   bool valid = true;
   binary::ValueType actual_type;
   switch (value.instruction.opcode) {

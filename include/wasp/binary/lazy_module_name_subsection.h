@@ -29,17 +29,15 @@ namespace binary {
 
 using ModuleNameSubsection = optional<string_view>;
 
-template <typename Errors>
-ModuleNameSubsection ReadModuleNameSubsection(SpanU8 data,
-                                              const Features& features,
-                                              Errors& errors) {
+inline ModuleNameSubsection ReadModuleNameSubsection(SpanU8 data,
+                                                     const Features& features,
+                                                     Errors& errors) {
   return ReadString(&data, features, errors, "module name");
 }
 
-template <typename Errors>
-ModuleNameSubsection ReadModuleNameSubsection(NameSubsection sec,
-                                              const Features& features,
-                                              Errors& errors) {
+inline ModuleNameSubsection ReadModuleNameSubsection(NameSubsection sec,
+                                                     const Features& features,
+                                                     Errors& errors) {
   return ReadModuleNameSubsection(sec.data, features, errors);
 }
 

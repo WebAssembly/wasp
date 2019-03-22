@@ -28,12 +28,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Mutability> Read(SpanU8* data,
-                          const Features& features,
-                          Errors& errors,
-                          Tag<Mutability>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "mutability"};
+inline optional<Mutability> Read(SpanU8* data,
+                                 const Features& features,
+                                 Errors& errors,
+                                 Tag<Mutability>) {
+  ErrorsContextGuard guard{errors, *data, "mutability"};
   WASP_TRY_READ(val, Read<u8>(data, features, errors));
   WASP_TRY_DECODE(decoded, val, Mutability, "mutability");
   return decoded;

@@ -21,13 +21,16 @@
 #include "wasp/base/format.h"
 #include "wasp/base/types.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool ValidateIndex(Index index, Index max, string_view desc, Errors& errors) {
+inline bool ValidateIndex(Index index,
+                          Index max,
+                          string_view desc,
+                          Errors& errors) {
   if (index >= max) {
     errors.OnError(
         format("Invalid {} {}, must be less than {}", desc, index, max));

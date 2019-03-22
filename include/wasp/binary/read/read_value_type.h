@@ -18,22 +18,22 @@
 #define WASP_BINARY_READ_READ_VALUE_TYPE_H_
 
 #include "wasp/base/features.h"
-#include "wasp/binary/value_type.h"
 #include "wasp/binary/encoding/value_type_encoding.h"
+#include "wasp/binary/errors.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
 #include "wasp/binary/read/read_u8.h"
+#include "wasp/binary/value_type.h"
 
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<ValueType> Read(SpanU8* data,
-                         const Features& features,
-                         Errors& errors,
-                         Tag<ValueType>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "value type"};
+inline optional<ValueType> Read(SpanU8* data,
+                                const Features& features,
+                                Errors& errors,
+                                Tag<ValueType>) {
+  ErrorsContextGuard guard{errors, *data, "value type"};
   WASP_TRY_READ(val, Read<u8>(data, features, errors));
   auto decoded = encoding::ValueType::Decode(val, features);
   if (!decoded) {

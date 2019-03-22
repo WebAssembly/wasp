@@ -43,11 +43,10 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Instruction> Read(SpanU8* data,
-                           const Features& features,
-                           Errors& errors,
-                           Tag<Instruction>) {
+inline optional<Instruction> Read(SpanU8* data,
+                                  const Features& features,
+                                  Errors& errors,
+                                  Tag<Instruction>) {
   WASP_TRY_READ(opcode, Read<Opcode>(data, features, errors));
   switch (opcode) {
     // No immediates:

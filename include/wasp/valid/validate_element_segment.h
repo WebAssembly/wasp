@@ -28,12 +28,11 @@
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::ElementSegment& value,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "element segment"};
+inline bool Validate(const binary::ElementSegment& value,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "element segment"};
   bool valid = true;
   if (value.is_active()) {
     const auto& active = value.active();

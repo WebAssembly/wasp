@@ -23,19 +23,20 @@
 #include "wasp/binary/element_expression.h"
 #include "wasp/binary/element_type.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
+#include "wasp/valid/validate_element_type.h"
 #include "wasp/valid/validate_index.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::ElementExpression& value,
-              binary::ElementType element_type,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "element expression"};
+inline bool Validate(const binary::ElementExpression& value,
+                     binary::ElementType element_type,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "element expression"};
   bool valid = true;
   binary::ElementType actual_type;
   switch (value.instruction.opcode) {

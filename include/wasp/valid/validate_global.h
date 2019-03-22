@@ -28,12 +28,11 @@
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::Global& value,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "global"};
+inline bool Validate(const binary::Global& value,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "global"};
   context.globals.push_back(value.global_type);
   bool valid = true;
   valid &= Validate(value.global_type, context, features, errors);

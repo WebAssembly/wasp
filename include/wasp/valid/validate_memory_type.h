@@ -20,18 +20,18 @@
 #include "wasp/base/features.h"
 #include "wasp/binary/memory_type.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
 #include "wasp/valid/validate_limits.h"
 
 namespace wasp {
 namespace valid {
 
-template <typename Errors>
-bool Validate(const binary::MemoryType& value,
-              Context& context,
-              const Features& features,
-              Errors& errors) {
-  ErrorsContextGuard<Errors> guard{errors, "memory type"};
+inline bool Validate(const binary::MemoryType& value,
+                     Context& context,
+                     const Features& features,
+                     Errors& errors) {
+  ErrorsContextGuard guard{errors, "memory type"};
   constexpr Index kMaxPages = 65535;
   bool valid = Validate(value.limits, kMaxPages, context, features, errors);
   if (value.limits.shared == binary::Shared::Yes &&

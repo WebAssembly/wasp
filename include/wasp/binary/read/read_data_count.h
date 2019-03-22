@@ -27,12 +27,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<DataCount> Read(SpanU8* data,
-                         const Features& features,
-                         Errors& errors,
-                         Tag<DataCount>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "data count"};
+inline optional<DataCount> Read(SpanU8* data,
+                                const Features& features,
+                                Errors& errors,
+                                Tag<DataCount>) {
+  ErrorsContextGuard guard{errors, *data, "data count"};
   WASP_TRY_READ(count, ReadIndex(data, features, errors, "count"));
   return DataCount{count};
 }

@@ -41,7 +41,7 @@ S SignExtend(typename std::make_unsigned<S>::type x, int N) {
   return static_cast<S>(x << (kNumBits - N - 1)) >> (kNumBits - N - 1);
 }
 
-template <typename T, typename Errors>
+template <typename T>
 optional<T> ReadVarInt(SpanU8* data,
                        const Features& features,
                        Errors& errors,
@@ -54,7 +54,7 @@ optional<T> ReadVarInt(SpanU8* data,
   constexpr u8 kLastByteMask = ~((1 << kLastByteMaskBits) - 1);
   constexpr u8 kLastByteOnes = kLastByteMask & kByteMask;
 
-  ErrorsContextGuard<Errors> guard{errors, *data, desc};
+  ErrorsContextGuard guard{errors, *data, desc};
 
   U result{};
   for (int i = 0;;) {

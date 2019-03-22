@@ -18,12 +18,12 @@
 #define WASP_VALID_ERRORS_CONTEXT_GUARD_H_
 
 #include "wasp/base/string_view.h"
+#include "wasp/valid/errors.h"
 
 namespace wasp {
 namespace valid {
 
 /// ---
-template <typename Errors>
 class ErrorsContextGuard {
  public:
   explicit ErrorsContextGuard(Errors& errors, string_view desc)

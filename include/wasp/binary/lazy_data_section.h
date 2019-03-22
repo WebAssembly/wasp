@@ -28,20 +28,17 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-using LazyDataSection = LazySection<DataSegment, Errors>;
+using LazyDataSection = LazySection<DataSegment>;
 
-template <typename Errors>
-LazyDataSection<Errors> ReadDataSection(SpanU8 data,
-                                        const Features& features,
-                                        Errors& errors) {
-  return LazyDataSection<Errors>{data, features, errors};
+inline LazyDataSection ReadDataSection(SpanU8 data,
+                                       const Features& features,
+                                       Errors& errors) {
+  return LazyDataSection{data, features, errors};
 }
 
-template <typename Errors>
-LazyDataSection<Errors> ReadDataSection(KnownSection sec,
-                                        const Features& features,
-                                        Errors& errors) {
+inline LazyDataSection ReadDataSection(KnownSection sec,
+                                       const Features& features,
+                                       Errors& errors) {
   return ReadDataSection(sec.data, features, errors);
 }
 

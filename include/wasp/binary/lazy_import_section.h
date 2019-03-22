@@ -28,19 +28,17 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-using LazyImportSection = LazySection<Import, Errors>;
+using LazyImportSection = LazySection<Import>;
 
-template <typename Errors>
-LazyImportSection<Errors> ReadImportSection(SpanU8 data,
-                                            const Features& features,
-                                            Errors& errors) {
-  return LazyImportSection<Errors>{data, features, errors};
+inline LazyImportSection ReadImportSection(SpanU8 data,
+                                           const Features& features,
+                                           Errors& errors) {
+  return LazyImportSection{data, features, errors};
 }
-template <typename Errors>
-LazyImportSection<Errors> ReadImportSection(KnownSection sec,
-                                            const Features& features,
-                                            Errors& errors) {
+
+inline LazyImportSection ReadImportSection(KnownSection sec,
+                                           const Features& features,
+                                           Errors& errors) {
   return ReadImportSection(sec.data, features, errors);
 }
 

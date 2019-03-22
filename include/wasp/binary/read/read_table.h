@@ -27,12 +27,11 @@
 namespace wasp {
 namespace binary {
 
-template <typename Errors>
-optional<Table> Read(SpanU8* data,
-                     const Features& features,
-                     Errors& errors,
-                     Tag<Table>) {
-  ErrorsContextGuard<Errors> guard{errors, *data, "table"};
+inline optional<Table> Read(SpanU8* data,
+                            const Features& features,
+                            Errors& errors,
+                            Tag<Table>) {
+  ErrorsContextGuard guard{errors, *data, "table"};
   WASP_TRY_READ(table_type, Read<TableType>(data, features, errors));
   return Table{table_type};
 }
