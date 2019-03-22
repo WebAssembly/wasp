@@ -62,4 +62,3 @@ bool Validate(const binary::Start& value,
 }  // namespace wasp
 
 #endif  // WASP_VALID_VALIDATE_START_H_
-

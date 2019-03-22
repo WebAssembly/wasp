@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "wasp/base/types.h"
+#include "wasp/binary/function.h"
 #include "wasp/binary/global_type.h"
 #include "wasp/binary/memory_type.h"
 #include "wasp/binary/table_type.h"
@@ -39,11 +40,17 @@ enum class LabelType {
 };
 
 struct Label {
+  Label(LabelType,
+        const binary::ValueTypes& param_types,
+        const binary::ValueTypes& result_types,
+        Index type_stack_limit);
+
   LabelType label_type;
-  binary::ValueType param_types;
-  binary::ValueType result_types;
-  Index type_stack_limit = 0;
-  bool unreachable = false;
+  binary::ValueTypes param_types;
+  binary::ValueTypes result_types;
+  binary::ValueTypes& br_types;
+  Index type_stack_limit;
+  bool unreachable;
 };
 
 struct Context {

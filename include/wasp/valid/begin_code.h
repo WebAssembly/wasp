@@ -29,14 +29,29 @@ namespace valid {
 template <typename Errors>
 bool BeginCode(Context& context, const Features& features, Errors& errors) {
   Index func_index = context.imported_function_count + context.code_count;
-  if (context.code_count >= context.functions.size()) {
-    errors.OnError(
-        format("Unexpected code, non-imported function count is {}",
-               context.functions.size() - context.imported_function_count));
+  if (func_index >= context.functions.size()) {
+    errors.OnError(format("Unexpected code index {}, function count is {}",
+                          func_index, context.functions.size()));
     return false;
   }
   context.code_count++;
-  return true;
+  const binary::Function& function = context.functions[func_index];
+  context.type_stack.clear();
+  context.label_stack.clear();
+  // Don't validate the index, should have already been validated at this point.
+  if (function.type_index < context.types.size()) {
+    const binary::TypeEntry& type_entry = context.types[function.type_index];
+    context.locals = type_entry.type.param_types;
+    context.label_stack.push_back(Label{LabelType::Function,
+                                        type_entry.type.param_types,
+                                        type_entry.type.result_types, 0});
+    return true;
+  } else {
+    // Not valid, but try to continue anyway.
+    context.locals.clear();
+    context.label_stack.push_back(Label{LabelType::Function, {}, {}, 0});
+    return false;
+  }
 }
 
 }  // namespace valid

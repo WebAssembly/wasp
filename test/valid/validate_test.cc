@@ -46,6 +46,7 @@ using namespace ::wasp::valid;
 
 namespace {
 
+// XXX
 struct Errors {
   void PushContext(string_view desc) {}
   void PopContext() {}

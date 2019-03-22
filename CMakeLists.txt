@@ -74,6 +74,8 @@ add_library(wasplib
   src/binary/table.cc
   src/binary/table_type.cc
   src/binary/type_entry.cc
+  src/valid/context.cc
+  src/valid/validate_instruction.cc
 
   third_party/fmt/src/format.cc
 )
@@ -105,6 +107,7 @@ add_executable(wasp_unittests
   test/binary/test_utils.cc
   test/binary/write_test.cc
   test/valid/validate_test.cc
+  test/valid/validate_code_test.cc
 )
 
 target_link_libraries(wasp_unittests
