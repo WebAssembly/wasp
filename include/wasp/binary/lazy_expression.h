@@ -17,29 +17,25 @@
 #ifndef WASP_BINARY_LAZY_EXPRESSION_H
 #define WASP_BINARY_LAZY_EXPRESSION_H
 
-#include "wasp/base/features.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/expression.h"
+#include "wasp/binary/instruction.h"
 #include "wasp/binary/lazy_sequence.h"
 #include "wasp/binary/read/read_instruction.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
+
+class Errors;
 
 /// ---
 using LazyExpression = LazySequence<Instruction>;
 
-inline LazyExpression ReadExpression(SpanU8 data,
-                                     const Features& features,
-                                     Errors& errors) {
-  return LazyExpression{data, features, errors};
-}
-
-inline LazyExpression ReadExpression(Expression expr,
-                                     const Features& features,
-                                     Errors& errors) {
-  return ReadExpression(expr.data, features, errors);
-}
+LazyExpression ReadExpression(SpanU8, const Features&, Errors&);
+LazyExpression ReadExpression(Expression, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

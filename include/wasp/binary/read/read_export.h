@@ -17,28 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_EXPORT_H_
 #define WASP_BINARY_READ_READ_EXPORT_H_
 
-#include "wasp/base/features.h"
-#include "wasp/binary/errors_context_guard.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/export.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_external_kind.h"
-#include "wasp/binary/read/read_index.h"
-#include "wasp/binary/read/read_string.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<Export> Read(SpanU8* data,
-                             const Features& features,
-                             Errors& errors,
-                             Tag<Export>) {
-  ErrorsContextGuard guard{errors, *data, "export"};
-  WASP_TRY_READ(name, ReadString(data, features, errors, "name"));
-  WASP_TRY_READ(kind, Read<ExternalKind>(data, features, errors));
-  WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
-  return Export{kind, name, index};
-}
+class Errors;
+
+optional<Export> Read(SpanU8*, const Features&, Errors&, Tag<Export>);
 
 }  // namespace binary
 }  // namespace wasp

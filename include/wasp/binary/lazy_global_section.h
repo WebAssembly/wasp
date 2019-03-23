@@ -17,8 +17,6 @@
 #ifndef WASP_BINARY_LAZY_GLOBAL_SECTION_H_
 #define WASP_BINARY_LAZY_GLOBAL_SECTION_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/global.h"
 #include "wasp/binary/known_section.h"
@@ -26,21 +24,17 @@
 #include "wasp/binary/read/read_global.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
+
+class Errors;
 
 using LazyGlobalSection = LazySection<Global>;
 
-inline LazyGlobalSection ReadGlobalSection(SpanU8 data,
-                                           const Features& features,
-                                           Errors& errors) {
-  return LazyGlobalSection{data, features, errors};
-}
-
-inline LazyGlobalSection ReadGlobalSection(KnownSection sec,
-                                           const Features& features,
-                                           Errors& errors) {
-  return ReadGlobalSection(sec.data, features, errors);
-}
+LazyGlobalSection ReadGlobalSection(SpanU8, const Features&, Errors&);
+LazyGlobalSection ReadGlobalSection(KnownSection, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

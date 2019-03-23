@@ -14,25 +14,22 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_READ_READ_GLOBAL_H_
-#define WASP_BINARY_READ_READ_GLOBAL_H_
-
-#include "wasp/base/optional.h"
-#include "wasp/base/span.h"
-#include "wasp/binary/global.h"
-#include "wasp/binary/read/read.h"
+#include "wasp/binary/lazy_expression.h"
 
 namespace wasp {
-
-class Features;
-
 namespace binary {
 
-class Errors;
+LazyExpression ReadExpression(SpanU8 data,
+                              const Features& features,
+                              Errors& errors) {
+  return LazyExpression{data, features, errors};
+}
 
-optional<Global> Read(SpanU8*, const Features&, Errors&, Tag<Global>);
+LazyExpression ReadExpression(Expression expr,
+                              const Features& features,
+                              Errors& errors) {
+  return ReadExpression(expr.data, features, errors);
+}
 
 }  // namespace binary
 }  // namespace wasp
-
-#endif  // WASP_BINARY_READ_READ_GLOBAL_H_

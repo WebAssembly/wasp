@@ -17,22 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_U32_H_
 #define WASP_BINARY_READ_READ_U32_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_var_int.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<u32> Read(SpanU8* data,
-                          const Features& features,
-                          Errors& errors,
-                          Tag<u32>) {
-  return ReadVarInt<u32>(data, features, errors, "u32");
-}
+class Errors;
+
+optional<u32> Read(SpanU8*, const Features&, Errors&, Tag<u32>);
 
 }  // namespace binary
 }  // namespace wasp

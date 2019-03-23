@@ -17,25 +17,23 @@
 #ifndef WASP_BINARY_READ_READ_BR_ON_EXN_IMMEDIATE_H_
 #define WASP_BINARY_READ_READ_BR_ON_EXN_IMMEDIATE_H_
 
-#include "wasp/base/features.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/br_on_exn_immediate.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
-#include "wasp/binary/read/read_index.h"
+#include "wasp/binary/read/read.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<BrOnExnImmediate> Read(SpanU8* data,
-                                       const Features& features,
-                                       Errors& errors,
-                                       Tag<BrOnExnImmediate>) {
-  ErrorsContextGuard guard{errors, *data, "br_on_exn"};
-  WASP_TRY_READ(target, ReadIndex(data, features, errors, "target"));
-  WASP_TRY_READ(exception_index,
-                ReadIndex(data, features, errors, "exception index"));
-  return BrOnExnImmediate{target, exception_index};
-}
+class Errors;
+
+optional<BrOnExnImmediate> Read(SpanU8*,
+                                const Features&,
+                                Errors&,
+                                Tag<BrOnExnImmediate>);
 
 }  // namespace binary
 }  // namespace wasp

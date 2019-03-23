@@ -17,36 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_SECTION_H_
 #define WASP_BINARY_READ_READ_SECTION_H_
 
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
+#include "wasp/binary/read/read.h"
 #include "wasp/binary/section.h"
 
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
-#include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_bytes.h"
-#include "wasp/binary/read/read_length.h"
-#include "wasp/binary/read/read_section_id.h"
-#include "wasp/binary/read/read_string.h"
-
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<Section> Read(SpanU8* data,
-                              const Features& features,
-                              Errors& errors,
-                              Tag<Section>) {
-  ErrorsContextGuard guard{errors, *data, "section"};
-  WASP_TRY_READ(id, Read<SectionId>(data, features, errors));
-  WASP_TRY_READ(length, ReadLength(data, features, errors));
-  auto bytes = *ReadBytes(data, length, features, errors);
+class Errors;
 
-  if (id == SectionId::Custom) {
-    WASP_TRY_READ(name,
-                  ReadString(&bytes, features, errors, "custom section name"));
-    return Section{CustomSection{name, bytes}};
-  } else {
-    return Section{KnownSection{id, bytes}};
-  }
-}
+optional<Section> Read(SpanU8*, const Features&, Errors&, Tag<Section>);
 
 }  // namespace binary
 }  // namespace wasp

@@ -17,26 +17,23 @@
 #ifndef WASP_BINARY_READ_READ_EXTERNAL_KIND_H_
 #define WASP_BINARY_READ_READ_EXTERNAL_KIND_H_
 
-#include "wasp/base/features.h"
-#include "wasp/binary/encoding/external_kind_encoding.h"
-#include "wasp/binary/errors_context_guard.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/external_kind.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_u8.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<ExternalKind> Read(SpanU8* data,
-                                   const Features& features,
-                                   Errors& errors,
-                                   Tag<ExternalKind>) {
-  ErrorsContextGuard guard{errors, *data, "external kind"};
-  WASP_TRY_READ(val, Read<u8>(data, features, errors));
-  WASP_TRY_DECODE(decoded, val, ExternalKind, "external kind");
-  return decoded;
-}
+class Errors;
+
+optional<ExternalKind> Read(SpanU8*,
+                            const Features&,
+                            Errors&,
+                            Tag<ExternalKind>);
 
 }  // namespace binary
 }  // namespace wasp

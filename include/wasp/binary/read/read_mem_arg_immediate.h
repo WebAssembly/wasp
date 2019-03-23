@@ -17,23 +17,23 @@
 #ifndef WASP_BINARY_READ_READ_MEM_ARG_IMMEDIATE_H_
 #define WASP_BINARY_READ_READ_MEM_ARG_IMMEDIATE_H_
 
-#include "wasp/base/features.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/mem_arg_immediate.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_u32.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<MemArgImmediate> Read(SpanU8* data,
-                                      const Features& features,
-                                      Errors& errors,
-                                      Tag<MemArgImmediate>) {
-  WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, features, errors),
-                        "align log2");
-  WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, features, errors), "offset");
-  return MemArgImmediate{align_log2, offset};
-}
+class Errors;
+
+optional<MemArgImmediate> Read(SpanU8*,
+                               const Features&,
+                               Errors&,
+                               Tag<MemArgImmediate>);
 
 }  // namespace binary
 }  // namespace wasp

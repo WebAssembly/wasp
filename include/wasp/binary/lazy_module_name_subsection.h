@@ -17,29 +17,24 @@
 #ifndef WASP_BINARY_LAZY_MODULE_NAME_SUBSECTION_H_
 #define WASP_BINARY_LAZY_MODULE_NAME_SUBSECTION_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/binary/name_subsection.h"
-#include "wasp/binary/read/read_string.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
+
+class Errors;
 
 using ModuleNameSubsection = optional<string_view>;
 
-inline ModuleNameSubsection ReadModuleNameSubsection(SpanU8 data,
-                                                     const Features& features,
-                                                     Errors& errors) {
-  return ReadString(&data, features, errors, "module name");
-}
-
-inline ModuleNameSubsection ReadModuleNameSubsection(NameSubsection sec,
-                                                     const Features& features,
-                                                     Errors& errors) {
-  return ReadModuleNameSubsection(sec.data, features, errors);
-}
+ModuleNameSubsection ReadModuleNameSubsection(SpanU8, const Features&, Errors&);
+ModuleNameSubsection ReadModuleNameSubsection(NameSubsection,
+                                              const Features&,
+                                              Errors&);
 
 }  // namespace binary
 }  // namespace wasp

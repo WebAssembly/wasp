@@ -17,27 +17,23 @@
 #ifndef WASP_BINARY_READ_READ_SHUFFLE_IMMEDIATE_H_
 #define WASP_BINARY_READ_READ_SHUFFLE_IMMEDIATE_H_
 
-#include "wasp/base/features.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
+#include "wasp/binary/read/read.h"
 #include "wasp/binary/shuffle_immediate.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
-#include "wasp/binary/read/read_u8.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<ShuffleImmediate> Read(SpanU8* data,
-                                       const Features& features,
-                                       Errors& errors,
-                                       Tag<ShuffleImmediate>) {
-  ErrorsContextGuard guard{errors, *data, "shuffle immediate"};
-  ShuffleImmediate immediate;
-  for (int i = 0; i < 16; ++i) {
-    WASP_TRY_READ(byte, Read<u8>(data, features, errors));
-    immediate[i] = byte;
-  }
-  return immediate;
-}
+class Errors;
+
+optional<ShuffleImmediate> Read(SpanU8*,
+                                const Features&,
+                                Errors&,
+                                Tag<ShuffleImmediate>);
 
 }  // namespace binary
 }  // namespace wasp

@@ -17,31 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_VALUE_TYPE_H_
 #define WASP_BINARY_READ_READ_VALUE_TYPE_H_
 
-#include "wasp/base/features.h"
-#include "wasp/binary/encoding/value_type_encoding.h"
-#include "wasp/binary/errors.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_u8.h"
 #include "wasp/binary/value_type.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<ValueType> Read(SpanU8* data,
-                                const Features& features,
-                                Errors& errors,
-                                Tag<ValueType>) {
-  ErrorsContextGuard guard{errors, *data, "value type"};
-  WASP_TRY_READ(val, Read<u8>(data, features, errors));
-  auto decoded = encoding::ValueType::Decode(val, features);
-  if (!decoded) {
-    errors.OnError(*data, format("Unknown value type: {}", val));
-    return nullopt;
-  }
-  return decoded;
-}
+class Errors;
+
+optional<ValueType> Read(SpanU8*, const Features&, Errors&, Tag<ValueType>);
 
 }  // namespace binary
 }  // namespace wasp

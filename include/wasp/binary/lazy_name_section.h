@@ -17,8 +17,6 @@
 #ifndef WASP_BINARY_LAZY_NAME_SECTION_H_
 #define WASP_BINARY_LAZY_NAME_SECTION_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/custom_section.h"
 #include "wasp/binary/lazy_sequence.h"
@@ -26,21 +24,17 @@
 #include "wasp/binary/read/read_name_subsection.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
+
+class Errors;
 
 using LazyNameSection = LazySequence<NameSubsection>;
 
-inline LazyNameSection ReadNameSection(SpanU8 data,
-                                       const Features& features,
-                                       Errors& errors) {
-  return LazyNameSection{data, features, errors};
-}
-
-inline LazyNameSection ReadNameSection(CustomSection sec,
-                                       const Features& features,
-                                       Errors& errors) {
-  return LazyNameSection{sec.data, features, errors};
-}
+LazyNameSection ReadNameSection(SpanU8, const Features&, Errors&);
+LazyNameSection ReadNameSection(CustomSection, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

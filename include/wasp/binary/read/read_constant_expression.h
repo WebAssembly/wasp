@@ -17,47 +17,23 @@
 #ifndef WASP_BINARY_READ_READ_CONSTANT_EXPRESSION_H_
 #define WASP_BINARY_READ_READ_CONSTANT_EXPRESSION_H_
 
-#include "wasp/base/features.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/constant_expression.h"
-#include "wasp/binary/errors.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/formatters.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_instruction.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<ConstantExpression> Read(SpanU8* data,
-                                         const Features& features,
-                                         Errors& errors,
-                                         Tag<ConstantExpression>) {
-  ErrorsContextGuard guard{errors, *data, "constant expression"};
-  WASP_TRY_READ(instr, Read<Instruction>(data, features, errors));
-  switch (instr.opcode) {
-    case Opcode::I32Const:
-    case Opcode::I64Const:
-    case Opcode::F32Const:
-    case Opcode::F64Const:
-    case Opcode::GlobalGet:
-      // OK.
-      break;
+class Errors;
 
-    default:
-      errors.OnError(
-          *data,
-          format("Illegal instruction in constant expression: {}", instr));
-      return nullopt;
-  }
-
-  WASP_TRY_READ(end, Read<Instruction>(data, features, errors));
-  if (end.opcode != Opcode::End) {
-    errors.OnError(*data, "Expected end instruction");
-    return nullopt;
-  }
-  return ConstantExpression{instr};
-}
+optional<ConstantExpression> Read(SpanU8*,
+                                  const Features&,
+                                  Errors&,
+                                  Tag<ConstantExpression>);
 
 }  // namespace binary
 }  // namespace wasp

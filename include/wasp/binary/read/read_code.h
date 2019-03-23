@@ -17,30 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_CODE_H_
 #define WASP_BINARY_READ_READ_CODE_H_
 
-#include "wasp/base/features.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/code.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_bytes.h"
-#include "wasp/binary/read/read_length.h"
-#include "wasp/binary/read/read_locals.h"
-#include "wasp/binary/read/read_vector.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<Code> Read(SpanU8* data,
-                           const Features& features,
-                           Errors& errors,
-                           Tag<Code>) {
-  ErrorsContextGuard guard{errors, *data, "code"};
-  WASP_TRY_READ(body_size, ReadLength(data, features, errors));
-  WASP_TRY_READ(body, ReadBytes(data, body_size, features, errors));
-  WASP_TRY_READ(locals,
-                ReadVector<Locals>(&body, features, errors, "locals vector"));
-  return Code{std::move(locals), Expression{std::move(body)}};
-}
+class Errors;
+
+optional<Code> Read(SpanU8*, const Features&, Errors&, Tag<Code>);
 
 }  // namespace binary
 }  // namespace wasp

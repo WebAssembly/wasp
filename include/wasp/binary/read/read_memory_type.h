@@ -17,24 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_MEMORY_TYPE_H_
 #define WASP_BINARY_READ_READ_MEMORY_TYPE_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/memory_type.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_limits.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<MemoryType> Read(SpanU8* data,
-                                 const Features& features,
-                                 Errors& errors,
-                                 Tag<MemoryType>) {
-  ErrorsContextGuard guard{errors, *data, "memory type"};
-  WASP_TRY_READ(limits, Read<Limits>(data, features, errors));
-  return MemoryType{limits};
-}
+class Errors;
+
+optional<MemoryType> Read(SpanU8*, const Features&, Errors&, Tag<MemoryType>);
 
 }  // namespace binary
 }  // namespace wasp

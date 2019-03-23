@@ -17,26 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_LOCALS_H_
 #define WASP_BINARY_READ_READ_LOCALS_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/locals.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_index.h"
-#include "wasp/binary/read/read_value_type.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<Locals> Read(SpanU8* data,
-                             const Features& features,
-                             Errors& errors,
-                             Tag<Locals>) {
-  ErrorsContextGuard guard{errors, *data, "locals"};
-  WASP_TRY_READ(count, ReadIndex(data, features, errors, "count"));
-  WASP_TRY_READ_CONTEXT(type, Read<ValueType>(data, features, errors), "type");
-  return Locals{count, type};
-}
+class Errors;
+
+optional<Locals> Read(SpanU8*, const Features&, Errors&, Tag<Locals>);
 
 }  // namespace binary
 }  // namespace wasp

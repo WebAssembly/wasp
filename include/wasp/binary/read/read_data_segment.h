@@ -17,51 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_DATA_SEGMENT_H_
 #define WASP_BINARY_READ_READ_DATA_SEGMENT_H_
 
-#include "wasp/base/features.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/data_segment.h"
-#include "wasp/binary/encoding/segment_flags_encoding.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_bytes.h"
-#include "wasp/binary/read/read_constant_expression.h"
-#include "wasp/binary/read/read_index.h"
-#include "wasp/binary/read/read_length.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<DataSegment> Read(SpanU8* data,
-                                  const Features& features,
-                                  Errors& errors,
-                                  Tag<DataSegment>) {
-  ErrorsContextGuard guard{errors, *data, "data segment"};
-  auto decoded = encoding::DecodedSegmentFlags::MVP();
-  if (features.bulk_memory_enabled()) {
-    WASP_TRY_READ(flags, ReadIndex(data, features, errors, "flags"));
-    WASP_TRY_DECODE(decoded_opt, flags, SegmentFlags, "flags");
-    decoded = *decoded_opt;
-  }
+class Errors;
 
-  Index memory_index = 0;
-  if (decoded.has_index == encoding::HasIndex::Yes) {
-    WASP_TRY_READ(memory_index_,
-                  ReadIndex(data, features, errors, "memory index"));
-    memory_index = memory_index_;
-  }
-
-  if (decoded.segment_type == SegmentType::Active) {
-    WASP_TRY_READ_CONTEXT(
-        offset, Read<ConstantExpression>(data, features, errors), "offset");
-    WASP_TRY_READ(len, ReadLength(data, features, errors));
-    WASP_TRY_READ(init, ReadBytes(data, len, features, errors));
-    return DataSegment{memory_index, offset, init};
-  } else {
-    WASP_TRY_READ(len, ReadLength(data, features, errors));
-    WASP_TRY_READ(init, ReadBytes(data, len, features, errors));
-    return DataSegment{init};
-  }
-}
+optional<DataSegment> Read(SpanU8*, const Features&, Errors&, Tag<DataSegment>);
 
 }  // namespace binary
 }  // namespace wasp

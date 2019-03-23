@@ -17,31 +17,23 @@
 #ifndef WASP_BINARY_DATA_COUNT_SECTION_H_
 #define WASP_BINARY_DATA_COUNT_SECTION_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
-#include "wasp/base/types.h"
 #include "wasp/binary/data_count.h"
 #include "wasp/binary/known_section.h"
-#include "wasp/binary/read/read_data_count.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
+
+class Errors;
 
 using DataCountSection = optional<DataCount>;
 
-inline DataCountSection ReadDataCountSection(SpanU8 data,
-                                             const Features& features,
-                                             Errors& errors) {
-  SpanU8 copy = data;
-  return Read<DataCount>(&copy, features, errors);
-}
-
-inline DataCountSection ReadDataCountSection(KnownSection sec,
-                                             const Features& features,
-                                             Errors& errors) {
-  return ReadDataCountSection(sec.data, features, errors);
-}
+DataCountSection ReadDataCountSection(SpanU8, const Features&, Errors&);
+DataCountSection ReadDataCountSection(KnownSection, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

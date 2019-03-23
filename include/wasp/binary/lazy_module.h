@@ -21,6 +21,7 @@
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/lazy_sequence.h"
+#include "wasp/binary/read/read_section.h"
 #include "wasp/binary/section.h"
 
 namespace wasp {
@@ -41,7 +42,5 @@ LazyModule ReadModule(SpanU8 data, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp
-
-#include "wasp/binary/lazy_module-inl.h"
 
 #endif // WASP_BINARY_LAZY_MODULE_H

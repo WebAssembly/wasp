@@ -17,25 +17,23 @@
 #ifndef WASP_BINARY_READ_READ_CALL_INDIRECT_IMMEDIATE_H_
 #define WASP_BINARY_READ_READ_CALL_INDIRECT_IMMEDIATE_H_
 
-#include "wasp/base/features.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/call_indirect_immediate.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
-#include "wasp/binary/read/read_index.h"
-#include "wasp/binary/read/read_reserved.h"
+#include "wasp/binary/read/read.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<CallIndirectImmediate> Read(SpanU8* data,
-                                            const Features& features,
-                                            Errors& errors,
-                                            Tag<CallIndirectImmediate>) {
-  ErrorsContextGuard guard{errors, *data, "call_indirect"};
-  WASP_TRY_READ(index, ReadIndex(data, features, errors, "type index"));
-  WASP_TRY_READ(reserved, ReadReserved(data, features, errors));
-  return CallIndirectImmediate{index, reserved};
-}
+class Errors;
+
+optional<CallIndirectImmediate> Read(SpanU8*,
+                                     const Features&,
+                                     Errors&,
+                                     Tag<CallIndirectImmediate>);
 
 }  // namespace binary
 }  // namespace wasp

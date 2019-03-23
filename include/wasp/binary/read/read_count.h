@@ -17,20 +17,19 @@
 #ifndef WASP_BINARY_READ_READ_COUNT_H_
 #define WASP_BINARY_READ_READ_COUNT_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
-#include "wasp/base/types.h"
-#include "wasp/binary/read/read_check_length.h"
+#include "wasp/binary/read/read.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<Index> ReadCount(SpanU8* data,
-                                 const Features& features,
-                                 Errors& errors) {
-  return ReadCheckLength(data, features, errors, "count", "Count");
-}
+class Errors;
+
+optional<Index> ReadCount(SpanU8*, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

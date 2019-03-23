@@ -17,24 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_DATA_COUNT_H_
 #define WASP_BINARY_READ_READ_DATA_COUNT_H_
 
-#include "wasp/base/features.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/data_count.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_index.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<DataCount> Read(SpanU8* data,
-                                const Features& features,
-                                Errors& errors,
-                                Tag<DataCount>) {
-  ErrorsContextGuard guard{errors, *data, "data count"};
-  WASP_TRY_READ(count, ReadIndex(data, features, errors, "count"));
-  return DataCount{count};
-}
+class Errors;
+
+optional<DataCount> Read(SpanU8*, const Features&, Errors&, Tag<DataCount>);
 
 }  // namespace binary
 }  // namespace wasp

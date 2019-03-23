@@ -17,37 +17,24 @@
 #ifndef WASP_BINARY_READ_READ_CHECK_LENGTH_H_
 #define WASP_BINARY_READ_READ_CHECK_LENGTH_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/format.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
-#include "wasp/base/types.h"
-#include "wasp/binary/errors.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_index.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<Index> ReadCheckLength(SpanU8* data,
-                                       const Features& features,
-                                       Errors& errors,
-                                       string_view context_name,
-                                       string_view error_name) {
-  WASP_TRY_READ(count, ReadIndex(data, features, errors, context_name));
+class Errors;
 
-  // There should be at least one byte per count, so if the data is smaller
-  // than that, the module must be malformed.
-  if (count > data->size()) {
-    errors.OnError(*data, format("{} extends past end: {} > {}", error_name,
-                                 count, data->size()));
-    return nullopt;
-  }
-
-  return count;
-}
+optional<Index> ReadCheckLength(SpanU8*,
+                                const Features&,
+                                Errors&,
+                                string_view context_name,
+                                string_view error_name);
 
 }  // namespace binary
 }  // namespace wasp

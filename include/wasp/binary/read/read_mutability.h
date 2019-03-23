@@ -17,26 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_MUTABILITY_H_
 #define WASP_BINARY_READ_READ_MUTABILITY_H_
 
-#include "wasp/base/features.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/mutability.h"
-#include "wasp/binary/encoding/mutability_encoding.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_u8.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<Mutability> Read(SpanU8* data,
-                                 const Features& features,
-                                 Errors& errors,
-                                 Tag<Mutability>) {
-  ErrorsContextGuard guard{errors, *data, "mutability"};
-  WASP_TRY_READ(val, Read<u8>(data, features, errors));
-  WASP_TRY_DECODE(decoded, val, Mutability, "mutability");
-  return decoded;
-}
+class Errors;
+
+optional<Mutability> Read(SpanU8*, const Features&, Errors&, Tag<Mutability>);
 
 }  // namespace binary
 }  // namespace wasp

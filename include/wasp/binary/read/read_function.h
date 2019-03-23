@@ -17,24 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_FUNCTION_H_
 #define WASP_BINARY_READ_READ_FUNCTION_H_
 
-#include "wasp/base/features.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/function.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_index.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<Function> Read(SpanU8* data,
-                               const Features& features,
-                               Errors& errors,
-                               Tag<Function>) {
-  ErrorsContextGuard guard{errors, *data, "function"};
-  WASP_TRY_READ(type_index, ReadIndex(data, features, errors, "type index"));
-  return Function{type_index};
-}
+class Errors;
+
+optional<Function> Read(SpanU8*, const Features&, Errors&, Tag<Function>);
 
 }  // namespace binary
 }  // namespace wasp

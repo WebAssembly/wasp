@@ -17,29 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_V128_H_
 #define WASP_BINARY_READ_READ_V128_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/v128.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_bytes.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<v128> Read(SpanU8* data,
-                           const Features& features,
-                           Errors& errors,
-                           Tag<v128>) {
-  static_assert(sizeof(v128) == 16, "sizeof(v128) != 16");
-  ErrorsContextGuard guard{errors, *data, "v128"};
-  WASP_TRY_READ(bytes, ReadBytes(data, sizeof(v128), features, errors));
-  v128 result;
-  memcpy(&result, bytes.data(), sizeof(v128));
-  return result;
-}
+class Errors;
+
+optional<v128> Read(SpanU8*, const Features&, Errors&, Tag<v128>);
 
 }  // namespace binary
 }  // namespace wasp

@@ -17,8 +17,6 @@
 #ifndef WASP_BINARY_LAZY_IMPORT_SECTION_H_
 #define WASP_BINARY_LAZY_IMPORT_SECTION_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/import.h"
 #include "wasp/binary/known_section.h"
@@ -26,21 +24,17 @@
 #include "wasp/binary/read/read_import.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
+
+class Errors;
 
 using LazyImportSection = LazySection<Import>;
 
-inline LazyImportSection ReadImportSection(SpanU8 data,
-                                           const Features& features,
-                                           Errors& errors) {
-  return LazyImportSection{data, features, errors};
-}
-
-inline LazyImportSection ReadImportSection(KnownSection sec,
-                                           const Features& features,
-                                           Errors& errors) {
-  return ReadImportSection(sec.data, features, errors);
-}
+LazyImportSection ReadImportSection(SpanU8, const Features&, Errors&);
+LazyImportSection ReadImportSection(KnownSection, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

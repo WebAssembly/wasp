@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_LAZY_EXPORT_SECTION_H_
 #define WASP_BINARY_LAZY_EXPORT_SECTION_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/export.h"
@@ -26,21 +25,17 @@
 #include "wasp/binary/read/read_export.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
+
+class Errors;
 
 using LazyExportSection = LazySection<Export>;
 
-inline LazyExportSection ReadExportSection(SpanU8 data,
-                                           const Features& features,
-                                           Errors& errors) {
-  return LazyExportSection{data, features, errors};
-}
-
-inline LazyExportSection ReadExportSection(KnownSection sec,
-                                           const Features& features,
-                                           Errors& errors) {
-  return ReadExportSection(sec.data, features, errors);
-}
+LazyExportSection ReadExportSection(SpanU8, const Features&, Errors&);
+LazyExportSection ReadExportSection(KnownSection, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

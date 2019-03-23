@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_LAZY_ELEMENT_SECTION_H_
 #define WASP_BINARY_LAZY_ELEMENT_SECTION_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/element_segment.h"
@@ -25,21 +24,17 @@
 #include "wasp/binary/read/read_element_segment.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
+
+class Errors;
 
 using LazyElementSection = LazySection<ElementSegment>;
 
-inline LazyElementSection ReadElementSection(SpanU8 data,
-                                             const Features& features,
-                                             Errors& errors) {
-  return LazyElementSection{data, features, errors};
-}
-
-inline LazyElementSection ReadElementSection(KnownSection sec,
-                                             const Features& features,
-                                             Errors& errors) {
-  return ReadElementSection(sec.data, features, errors);
-}
+LazyElementSection ReadElementSection(SpanU8, const Features&, Errors&);
+LazyElementSection ReadElementSection(KnownSection, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

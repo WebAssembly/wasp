@@ -17,23 +17,19 @@
 #ifndef WASP_BINARY_READ_H_
 #define WASP_BINARY_READ_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
 class Errors;
 
 template <typename T>
 struct Tag {};
-
-template <typename T>
-optional<T> Read(SpanU8* data,
-                 const Features& features,
-                 Errors& errors,
-                 Tag<T>);
 
 template <typename T>
 optional<T> Read(SpanU8* data, const Features& features, Errors& errors) {

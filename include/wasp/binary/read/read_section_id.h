@@ -17,26 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_SECTION_ID_H_
 #define WASP_BINARY_READ_READ_SECTION_ID_H_
 
-#include "wasp/base/features.h"
-#include "wasp/binary/section_id.h"
-#include "wasp/binary/encoding/section_id_encoding.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_u32.h"
+#include "wasp/binary/section_id.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<SectionId> Read(SpanU8* data,
-                                const Features& features,
-                                Errors& errors,
-                                Tag<SectionId>) {
-  ErrorsContextGuard guard{errors, *data, "section id"};
-  WASP_TRY_READ(val, Read<u32>(data, features, errors));
-  WASP_TRY_DECODE(decoded, val, SectionId, "section id");
-  return decoded;
-}
+class Errors;
+
+optional<SectionId> Read(SpanU8*, const Features&, Errors&, Tag<SectionId>);
 
 }  // namespace binary
 }  // namespace wasp

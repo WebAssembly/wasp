@@ -17,28 +17,23 @@
 #ifndef WASP_BINARY_READ_READ_INDIRECT_NAME_ASSOC_H_
 #define WASP_BINARY_READ_READ_INDIRECT_NAME_ASSOC_H_
 
-#include "wasp/base/features.h"
-#include "wasp/binary/errors_context_guard.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/indirect_name_assoc.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_index.h"
-#include "wasp/binary/read/read_name_assoc.h"
-#include "wasp/binary/read/read_vector.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<IndirectNameAssoc> Read(SpanU8* data,
-                                        const Features& features,
-                                        Errors& errors,
-                                        Tag<IndirectNameAssoc>) {
-  ErrorsContextGuard guard{errors, *data, "indirect name assoc"};
-  WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
-  WASP_TRY_READ(name_map,
-                ReadVector<NameAssoc>(data, features, errors, "name map"));
-  return IndirectNameAssoc{index, std::move(name_map)};
-}
+class Errors;
+
+optional<IndirectNameAssoc> Read(SpanU8*,
+                                 const Features&,
+                                 Errors&,
+                                 Tag<IndirectNameAssoc>);
 
 }  // namespace binary
 }  // namespace wasp

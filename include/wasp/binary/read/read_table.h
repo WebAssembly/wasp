@@ -17,24 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_TABLE_H_
 #define WASP_BINARY_READ_READ_TABLE_H_
 
-#include "wasp/base/features.h"
-#include "wasp/binary/table.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_table_type.h"
+#include "wasp/binary/table.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<Table> Read(SpanU8* data,
-                            const Features& features,
-                            Errors& errors,
-                            Tag<Table>) {
-  ErrorsContextGuard guard{errors, *data, "table"};
-  WASP_TRY_READ(table_type, Read<TableType>(data, features, errors));
-  return Table{table_type};
-}
+class Errors;
+
+optional<Table> Read(SpanU8*, const Features&, Errors&, Tag<Table>);
 
 }  // namespace binary
 }  // namespace wasp

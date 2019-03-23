@@ -17,29 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_F32_H_
 #define WASP_BINARY_READ_READ_F32_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_bytes.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<f32> Read(SpanU8* data,
-                          const Features& features,
-                          Errors& errors,
-                          Tag<f32>) {
-  static_assert(sizeof(f32) == 4, "sizeof(f32) != 4");
-  ErrorsContextGuard guard{errors, *data, "f32"};
-  WASP_TRY_READ(bytes, ReadBytes(data, sizeof(f32), features, errors));
-  f32 result;
-  memcpy(&result, bytes.data(), sizeof(f32));
-  return result;
-}
+class Errors;
+
+optional<f32> Read(SpanU8*, const Features&, Errors&, Tag<f32>);
 
 }  // namespace binary
 }  // namespace wasp

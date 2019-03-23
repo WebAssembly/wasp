@@ -17,24 +17,23 @@
 #ifndef WASP_BINARY_READ_READ_COPY_IMMEDIATE_H_
 #define WASP_BINARY_READ_READ_COPY_IMMEDIATE_H_
 
-#include "wasp/base/features.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/copy_immediate.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
-#include "wasp/binary/read/read_reserved.h"
+#include "wasp/binary/read/read.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<CopyImmediate> Read(SpanU8* data,
-                                    const Features& features,
-                                    Errors& errors,
-                                    Tag<CopyImmediate>) {
-  ErrorsContextGuard guard{errors, *data, "copy immediate"};
-  WASP_TRY_READ(src_reserved, ReadReserved(data, features, errors));
-  WASP_TRY_READ(dst_reserved, ReadReserved(data, features, errors));
-  return CopyImmediate{src_reserved, dst_reserved};
-}
+class Errors;
+
+optional<CopyImmediate> Read(SpanU8* data,
+                             const Features& features,
+                             Errors& errors,
+                             Tag<CopyImmediate>);
 
 }  // namespace binary
 }  // namespace wasp

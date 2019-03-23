@@ -62,6 +62,7 @@ add_library(wasplib
   src/binary/init_immediate.cc
   src/binary/instruction.cc
   src/binary/known_section.cc
+  src/binary/lazy_expression.cc
   src/binary/limits.cc
   src/binary/locals.cc
   src/binary/mem_arg_immediate.cc
@@ -69,6 +70,10 @@ add_library(wasplib
   src/binary/memory_type.cc
   src/binary/name_assoc.cc
   src/binary/name_subsection.cc
+  src/binary/read.cc
+  src/binary/read_module.cc
+  src/binary/read_name_subsection.cc
+  src/binary/read_section.cc
   src/binary/section.cc
   src/binary/start.cc
   src/binary/table.cc

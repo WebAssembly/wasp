@@ -17,29 +17,23 @@
 #ifndef WASP_BINARY_READ_READ_STRING_H_
 #define WASP_BINARY_READ_READ_STRING_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
-#include "wasp/base/types.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_length.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<string_view> ReadString(SpanU8* data,
-                                        const Features& features,
-                                        Errors& errors,
-                                        string_view desc) {
-  ErrorsContextGuard guard{errors, *data, desc};
-  WASP_TRY_READ(len, ReadLength(data, features, errors));
-  string_view result{reinterpret_cast<const char*>(data->data()), len};
-  remove_prefix(data, len);
-  return result;
-}
+class Errors;
+
+optional<string_view> ReadString(SpanU8*,
+                                 const Features&,
+                                 Errors&,
+                                 string_view desc);
 
 }  // namespace binary
 }  // namespace wasp

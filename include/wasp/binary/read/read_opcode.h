@@ -17,43 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_OPCODE_H_
 #define WASP_BINARY_READ_READ_OPCODE_H_
 
-#include "wasp/base/features.h"
-#include "wasp/binary/encoding/opcode_encoding.h"
-#include "wasp/binary/errors.h"
-#include "wasp/binary/errors_context_guard.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/opcode.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_u32.h"
-#include "wasp/binary/read/read_u8.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<Opcode> Read(SpanU8* data,
-                             const Features& features,
-                             Errors& errors,
-                             Tag<Opcode>) {
-  ErrorsContextGuard guard{errors, *data, "opcode"};
-  WASP_TRY_READ(val, Read<u8>(data, features, errors));
+class Errors;
 
-  if (encoding::Opcode::IsPrefixByte(val, features)) {
-    WASP_TRY_READ(code, Read<u32>(data, features, errors));
-    auto decoded = encoding::Opcode::Decode(val, code, features);
-    if (!decoded) {
-      errors.OnError(*data, format("Unknown opcode: {} {}", val, code));
-      return nullopt;
-    }
-    return decoded;
-  } else {
-    auto decoded = encoding::Opcode::Decode(val, features);
-    if (!decoded) {
-      errors.OnError(*data, format("Unknown opcode: {}", val));
-      return nullopt;
-    }
-    return decoded;
-  }
-}
+optional<Opcode> Read(SpanU8*, const Features&, Errors&, Tag<Opcode>);
 
 }  // namespace binary
 }  // namespace wasp

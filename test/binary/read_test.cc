@@ -60,6 +60,7 @@
 #include "wasp/binary/read/read_s64.h"
 #include "wasp/binary/read/read_section.h"
 #include "wasp/binary/read/read_section_id.h"
+#include "wasp/binary/read/read_shuffle_immediate.h"
 #include "wasp/binary/read/read_start.h"
 #include "wasp/binary/read/read_string.h"
 #include "wasp/binary/read/read_table.h"
@@ -67,6 +68,7 @@
 #include "wasp/binary/read/read_type_entry.h"
 #include "wasp/binary/read/read_u32.h"
 #include "wasp/binary/read/read_u8.h"
+#include "wasp/binary/read/read_v128.h"
 #include "wasp/binary/read/read_value_type.h"
 #include "wasp/binary/read/read_vector.h"
 

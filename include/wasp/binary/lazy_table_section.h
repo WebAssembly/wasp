@@ -17,8 +17,6 @@
 #ifndef WASP_BINARY_LAZY_TABLE_SECTION_H_
 #define WASP_BINARY_LAZY_TABLE_SECTION_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/known_section.h"
 #include "wasp/binary/lazy_section.h"
@@ -26,21 +24,17 @@
 #include "wasp/binary/table.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
+
+class Errors;
 
 using LazyTableSection = LazySection<Table>;
 
-inline LazyTableSection ReadTableSection(SpanU8 data,
-                                         const Features& features,
-                                         Errors& errors) {
-  return LazyTableSection{data, features, errors};
-}
-
-inline LazyTableSection ReadTableSection(KnownSection sec,
-                                         const Features& features,
-                                         Errors& errors) {
-  return ReadTableSection(sec.data, features, errors);
-}
+LazyTableSection ReadTableSection(SpanU8, const Features&, Errors&);
+LazyTableSection ReadTableSection(KnownSection, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

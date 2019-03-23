@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_LAZY_LOCAL_NAMES_SUBSECTION_H_
 #define WASP_BINARY_LAZY_LOCAL_NAMES_SUBSECTION_H_
 
-#include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/indirect_name_assoc.h"
 #include "wasp/binary/lazy_section.h"
@@ -25,23 +24,22 @@
 #include "wasp/binary/read/read_indirect_name_assoc.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
+
+class Errors;
 
 using LazyLocalNamesSubsection = LazySection<IndirectNameAssoc>;
 
-inline LazyLocalNamesSubsection ReadLocalNamesSubsection(
-    SpanU8 data,
-    const Features& features,
-    Errors& errors) {
-  return LazyLocalNamesSubsection{data, features, errors};
-}
+LazyLocalNamesSubsection ReadLocalNamesSubsection(SpanU8,
+                                                  const Features&,
+                                                  Errors&);
 
-inline LazyLocalNamesSubsection ReadLocalNamesSubsection(
-    NameSubsection sec,
-    const Features& features,
-    Errors& errors) {
-  return ReadLocalNamesSubsection(sec.data, features, errors);
-}
+LazyLocalNamesSubsection ReadLocalNamesSubsection(NameSubsection,
+                                                  const Features&,
+                                                  Errors&);
 
 }  // namespace binary
 }  // namespace wasp

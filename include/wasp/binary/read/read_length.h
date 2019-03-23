@@ -21,16 +21,16 @@
 #include "wasp/base/span.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_check_length.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<Index> ReadLength(SpanU8* data,
-                                  const Features& features,
-                                  Errors& errors) {
-  return ReadCheckLength(data, features, errors, "length", "Length");
-}
+class Errors;
+
+optional<Index> ReadLength(SpanU8*, const Features&, Errors&);
 
 }  // namespace binary
 }  // namespace wasp

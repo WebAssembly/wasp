@@ -17,31 +17,23 @@
 #ifndef WASP_BINARY_READ_READ_BYTES_EXPECTED_H_
 #define WASP_BINARY_READ_READ_BYTES_EXPECTED_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/format.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
-#include "wasp/binary/errors.h"
-#include "wasp/binary/errors_context_guard.h"
-#include "wasp/binary/read/read_bytes.h"
+#include "wasp/base/string_view.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<SpanU8> ReadBytesExpected(SpanU8* data,
-                                          SpanU8 expected,
-                                          const Features& features,
-                                          Errors& errors,
-                                          string_view desc) {
-  ErrorsContextGuard guard{errors, *data, desc};
+class Errors;
 
-  auto actual = ReadBytes(data, expected.size(), features, errors);
-  if (actual && actual != expected) {
-    errors.OnError(*data,
-                   format("Mismatch: expected {}, got {}", expected, *actual));
-  }
-  return actual;
-}
+optional<SpanU8> ReadBytesExpected(SpanU8* data,
+                                   SpanU8 expected,
+                                   const Features&,
+                                   Errors&,
+                                   string_view desc);
 
 }  // namespace binary
 }  // namespace wasp

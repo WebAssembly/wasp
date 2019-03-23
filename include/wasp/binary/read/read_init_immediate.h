@@ -17,26 +17,23 @@
 #ifndef WASP_BINARY_READ_READ_INIT_IMMEDIATE_H_
 #define WASP_BINARY_READ_READ_INIT_IMMEDIATE_H_
 
-#include "wasp/base/features.h"
-#include "wasp/binary/errors_context_guard.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/init_immediate.h"
-#include "wasp/binary/read/macros.h"
-#include "wasp/binary/read/read_index.h"
-#include "wasp/binary/read/read_reserved.h"
+#include "wasp/binary/read/read.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<InitImmediate> Read(SpanU8* data,
-                                    const Features& features,
-                                    Errors& errors,
-                                    Tag<InitImmediate>) {
-  ErrorsContextGuard guard{errors, *data, "init immediate"};
-  WASP_TRY_READ(segment_index,
-                ReadIndex(data, features, errors, "segment index"));
-  WASP_TRY_READ(reserved, ReadReserved(data, features, errors));
-  return InitImmediate{segment_index, reserved};
-}
+class Errors;
+
+optional<InitImmediate> Read(SpanU8*,
+                             const Features&,
+                             Errors&,
+                             Tag<InitImmediate>);
 
 }  // namespace binary
 }  // namespace wasp

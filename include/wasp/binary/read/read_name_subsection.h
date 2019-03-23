@@ -17,28 +17,23 @@
 #ifndef WASP_BINARY_READ_READ_NAME_SUBSECTION_H_
 #define WASP_BINARY_READ_READ_NAME_SUBSECTION_H_
 
-#include "wasp/base/features.h"
-#include "wasp/binary/errors_context_guard.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
 #include "wasp/binary/name_subsection.h"
-#include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_bytes.h"
-#include "wasp/binary/read/read_length.h"
-#include "wasp/binary/read/read_name_subsection_id.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<NameSubsection> Read(SpanU8* data,
-                                     const Features& features,
-                                     Errors& errors,
-                                     Tag<NameSubsection>) {
-  ErrorsContextGuard guard{errors, *data, "name subsection"};
-  WASP_TRY_READ(id, Read<NameSubsectionId>(data, features, errors));
-  WASP_TRY_READ(length, ReadLength(data, features, errors));
-  auto bytes = *ReadBytes(data, length, features, errors);
-  return NameSubsection{id, bytes};
-}
+class Errors;
+
+optional<NameSubsection> Read(SpanU8*,
+                              const Features&,
+                              Errors&,
+                              Tag<NameSubsection>);
 
 }  // namespace binary
 }  // namespace wasp

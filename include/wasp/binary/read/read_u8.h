@@ -17,29 +17,20 @@
 #ifndef WASP_BINARY_READ_READ_U8_H_
 #define WASP_BINARY_READ_READ_U8_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/errors.h"
 #include "wasp/binary/read/read.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-inline optional<u8> Read(SpanU8* data,
-                         const Features& features,
-                         Errors& errors,
-                         Tag<u8>) {
-  if (data->size() < 1) {
-    errors.OnError(*data, "Unable to read u8");
-    return nullopt;
-  }
+class Errors;
 
-  u8 result{(*data)[0]};
-  remove_prefix(data, 1);
-  return result;
-}
+optional<u8> Read(SpanU8*, const Features&, Errors&, Tag<u8>);
 
 }  // namespace binary
 }  // namespace wasp
