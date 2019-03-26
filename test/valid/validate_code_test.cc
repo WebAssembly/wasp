@@ -75,11 +75,13 @@ class ValidateInstructionTest : public ::testing::Test {
   virtual void TearDown() {}
 
   void Step(const Instruction& instruction) {
-    EXPECT_TRUE(Validate(instruction, context, features, errors));
+    EXPECT_TRUE(Validate(instruction, context, features, errors))
+        << format("{}", instruction);
   }
 
   void Fail(const Instruction& instruction) {
-    EXPECT_FALSE(Validate(instruction, context, features, errors));
+    EXPECT_FALSE(Validate(instruction, context, features, errors))
+        << format("{}", instruction);
   }
 
   Context context;
@@ -320,6 +322,62 @@ TEST_F(ValidateInstructionTest, BrIf_Loop_SingleResult) {
     Step(I{O::Unreachable});
     Step(I{O::End});
   }
+}
+
+TEST_F(ValidateInstructionTest, BrTable_Void) {
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::BrTable, BrTableImmediate{{0, 0, 0}, 0}});
+}
+
+TEST_F(ValidateInstructionTest, BrTable_MultiDepth_Void) {
+  Step(I{O::Block, BlockType::Void});  // 3
+  Step(I{O::Block, BlockType::Void});  // 2
+  Step(I{O::Block, BlockType::Void});  // 1
+  Step(I{O::Block, BlockType::Void});  // 0
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::BrTable, BrTableImmediate{{0, 1, 2, 3}, 4}});
+}
+
+TEST_F(ValidateInstructionTest, BrTable_MultiDepth_SingleResult) {
+  Step(I{O::Block, BlockType::I32});   // 3
+  Step(I{O::Block, BlockType::Void});  // 2
+  Step(I{O::Block, BlockType::I32});   // 1
+  Step(I{O::Block, BlockType::Void});  // 0
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::BrTable, BrTableImmediate{{1, 1, 1, 3}, 3}});
+}
+
+TEST_F(ValidateInstructionTest, BrTable_Unreachable) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::BrTable, BrTableImmediate{{}, 1}});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, BrTable_NoKey) {
+  Fail(I{O::BrTable, BrTableImmediate{{}, 0}});
+}
+
+TEST_F(ValidateInstructionTest, BrTable_EmptyStack) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::BrTable, BrTableImmediate{{}, 0}});
+}
+
+TEST_F(ValidateInstructionTest, BrTable_ValueTypeMismatch) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::F32Const, f32{}});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::BrTable, BrTableImmediate{{0}, 0}});
+}
+
+TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
+  Step(I{O::Block, BlockType::Void});
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::BrTable, BrTableImmediate{{1}, 0}});
 }
 
 TEST_F(ValidateInstructionTest, Drop) {

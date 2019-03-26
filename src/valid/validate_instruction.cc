@@ -23,11 +23,11 @@
 #include "wasp/base/formatters.h"
 #include "wasp/base/macros.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/block_type.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/valid/context.h"
 #include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
+#include "wasp/valid/errors_nop.h"
 #include "wasp/valid/validate_locals.h"
 
 namespace wasp {
@@ -37,6 +37,7 @@ namespace {
 
 using binary::ValueType;
 using binary::ValueTypes;
+using binary::BrTableImmediate;
 using ValueTypeSpan = span<const ValueType>;
 
 optional<binary::FunctionType> GetBlockTypeSignature(
@@ -102,7 +103,7 @@ bool DropTypes(size_t count, Context& context, Errors& errors) {
   return true;
 }
 
-bool PopTypes(ValueTypeSpan expected, Context& context, Errors& errors) {
+bool CheckTypes(ValueTypeSpan expected, Context& context, Errors& errors) {
   ValueTypeSpan full_expected = expected;
   const auto& top_label = TopLabel(context);
   auto type_stack = GetTypeStack(top_label, context);
@@ -111,17 +112,20 @@ bool PopTypes(ValueTypeSpan expected, Context& context, Errors& errors) {
     RemovePrefixIfGreater(&expected, type_stack);
   }
 
-  auto drop_count = expected.size();
-  bool valid = true;
   if (expected != type_stack) {
     // TODO proper formatting of type stack
     errors.OnError(format("Expected stack to contain {}, got {}{}",
                           full_expected, top_label.unreachable ? "..." : "",
                           type_stack));
-    drop_count = std::min(drop_count, type_stack.size());
-    valid = false;
+    return false;
   }
-  DropTypes(drop_count, context, errors);
+  return true;
+}
+
+bool PopTypes(ValueTypeSpan expected, Context& context, Errors& errors) {
+  ErrorsNop errors_nop{};
+  bool valid = CheckTypes(expected, context, errors);
+  valid &= DropTypes(expected.size(), context, errors_nop);
   return valid;
 }
 
@@ -200,6 +204,40 @@ bool BrIf(Index depth, Context& context, Errors& errors) {
   return valid;
 }
 
+bool BrTable(const BrTableImmediate& immediate,
+             Context& context,
+             Errors& errors) {
+  bool valid = PopType(ValueType::I32, context, errors);
+  optional<ValueTypeSpan> br_types;
+  auto handle_target = [&](Index target) {
+    const auto* label = GetLabel(target, context, errors);
+    if (label) {
+      ValueTypeSpan label_br_types{label->br_types()};
+      if (br_types) {
+        if (*br_types != label_br_types) {
+          errors.OnError(
+              format("br_table labels must have the same signature; expected "
+                     "{}, got {}",
+                     *br_types, label_br_types));
+          valid = false;
+        }
+      } else {
+        br_types = label_br_types;
+      }
+      valid &= CheckTypes(*br_types, context, errors);
+    } else {
+      valid = false;
+    }
+  };
+
+  handle_target(immediate.default_target);
+  for (auto target : immediate.targets) {
+    handle_target(target);
+  }
+  SetUnreachable(context);
+  return valid;
+}
+
 }  // namespace
 
 bool Validate(const binary::Locals& value,
@@ -259,6 +297,9 @@ bool Validate(const binary::Instruction& value,
 
     case binary::Opcode::BrIf:
       return BrIf(value.index_immediate(), context, errors);
+
+    case binary::Opcode::BrTable:
+      return BrTable(value.br_table_immediate(), context, errors);
 
     case binary::Opcode::Drop:
       return DropTypes(1, context, errors);
