@@ -45,10 +45,14 @@ struct Label {
         const binary::ValueTypes& result_types,
         Index type_stack_limit);
 
+  const binary::ValueTypes& br_types() const {
+    return label_type == LabelType::Loop ? this->param_types
+                                         : this->result_types;
+  }
+
   LabelType label_type;
   binary::ValueTypes param_types;
   binary::ValueTypes result_types;
-  binary::ValueTypes& br_types;
   Index type_stack_limit;
   bool unreachable;
 };
