@@ -67,12 +67,27 @@ class ValidateInstructionTest : public ::testing::Test {
   using O = Opcode;
 
   virtual void SetUp() {
-    context.types.push_back(TypeEntry{FunctionType{}});
-    context.functions.push_back(Function{0});
-    EXPECT_TRUE(BeginCode(context, features, errors));
+    BeginFunction(FunctionType{});
   }
 
   virtual void TearDown() {}
+
+  void BeginFunction(const FunctionType& function_type) {
+    context = Context{};
+    AddFunction(function_type);
+    EXPECT_TRUE(BeginCode(context, features, errors));
+  }
+
+  Index AddFunctionType(const FunctionType& function_type) {
+    context.types.push_back(TypeEntry{function_type});
+    return context.types.size() - 1;
+  }
+
+  Index AddFunction(const FunctionType& function_type) {
+    Index type_index = AddFunctionType(function_type);
+    context.functions.push_back(Function{type_index});
+    return context.functions.size() - 1;
+  }
 
   void Step(const Instruction& instruction) {
     EXPECT_TRUE(Validate(instruction, context, features, errors))
@@ -378,6 +393,75 @@ TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
   Step(I{O::I32Const, s32{}});
   Step(I{O::I32Const, s32{}});
   Fail(I{O::BrTable, BrTableImmediate{{1}, 0}});
+}
+
+TEST_F(ValidateInstructionTest, Return) {
+  Step(I{O::Return});
+}
+
+TEST_F(ValidateInstructionTest, Return_InsideBlocks) {
+  Step(I{O::Block, BlockType::Void});
+  Step(I{O::Block, BlockType::Void});
+  Step(I{O::Block, BlockType::Void});
+  Step(I{O::Return});
+}
+
+TEST_F(ValidateInstructionTest, Return_Unreachable) {
+  Step(I{O::Block, BlockType::F64});
+  Step(I{O::Return});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, Return_SingleResult) {
+  BeginFunction(FunctionType{{}, {ValueType::I32}});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::Return});
+}
+
+TEST_F(ValidateInstructionTest, Return_TypeMismatch) {
+  BeginFunction(FunctionType{{}, {ValueType::I32}});
+  Step(I{O::F32Const, f32{}});
+  Fail(I{O::Return});
+}
+
+TEST_F(ValidateInstructionTest, Call_Void_Void) {
+  auto index = AddFunction(FunctionType{});
+  Step(I{O::Call, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, Call_Params) {
+  auto index = AddFunction(FunctionType{{ValueType::I32, ValueType::F32}, {}});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::F32Const, f32{}});
+  Step(I{O::Call, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, Call_SingleResult) {
+  auto index = AddFunction(FunctionType{{}, {ValueType::F64}});
+  Step(I{O::Block, BlockType::F64});
+  Step(I{O::Call, Index{index}});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, Call_EmptyStack) {
+  auto index = AddFunction(FunctionType{{ValueType::I32}, {}});
+  Fail(I{O::Call, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, Call_TypeMismatch) {
+  auto index = AddFunction(FunctionType{{ValueType::I32}, {}});
+  Step(I{O::F32Const, f32{}});
+  Fail(I{O::Call, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, Call_FunctionIndexOOB) {
+  Fail(I{O::Call, Index{100}});
+}
+
+TEST_F(ValidateInstructionTest, Call_TypeIndexOOB) {
+  context.functions.push_back(Function{100});
+  Index index = context.functions.size() - 1;
+  Fail(I{O::Call, Index{index}});
 }
 
 TEST_F(ValidateInstructionTest, Drop) {

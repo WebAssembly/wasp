@@ -28,6 +28,7 @@
 #include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
 #include "wasp/valid/errors_nop.h"
+#include "wasp/valid/validate_index.h"
 #include "wasp/valid/validate_locals.h"
 
 namespace wasp {
@@ -190,7 +191,9 @@ bool PopLabel(Context& context, Errors& errors) {
 
 bool Br(Index depth, Context& context, Errors& errors) {
   const auto* label = GetLabel(depth, context, errors);
-  return label ? PopTypes(label->br_types(), context, errors) : false;
+  bool valid = label ? PopTypes(label->br_types(), context, errors) : false;
+  SetUnreachable(context);
+  return valid;
 }
 
 bool BrIf(Index depth, Context& context, Errors& errors) {
@@ -235,6 +238,22 @@ bool BrTable(const BrTableImmediate& immediate,
     handle_target(target);
   }
   SetUnreachable(context);
+  return valid;
+}
+
+bool Call(Index function_index, Context& context, Errors& errors) {
+  if (!ValidateIndex(function_index, context.functions.size(), "function index",
+                     errors)) {
+    return false;
+  }
+  const auto& function = context.functions[function_index];
+  if (!ValidateIndex(function.type_index, context.types.size(), "type index",
+                     errors)) {
+    return false;
+  }
+  const auto& type_entry = context.types[function.type_index];
+  bool valid = PopTypes(type_entry.type.param_types, context, errors);
+  PushTypes(type_entry.type.result_types, context);
   return valid;
 }
 
@@ -289,17 +308,20 @@ bool Validate(const binary::Instruction& value,
     case binary::Opcode::End:
       return PopLabel(context, errors);
 
-    case binary::Opcode::Br: {
-      bool valid = Br(value.index_immediate(), context, errors);
-      SetUnreachable(context);
-      return valid;
-    }
+    case binary::Opcode::Br:
+      return Br(value.index_immediate(), context, errors);
 
     case binary::Opcode::BrIf:
       return BrIf(value.index_immediate(), context, errors);
 
     case binary::Opcode::BrTable:
       return BrTable(value.br_table_immediate(), context, errors);
+
+    case binary::Opcode::Return:
+      return Br(context.label_stack.size() - 1, context, errors);
+
+    case binary::Opcode::Call:
+      return Call(value.index_immediate(), context, errors);
 
     case binary::Opcode::Drop:
       return DropTypes(1, context, errors);
