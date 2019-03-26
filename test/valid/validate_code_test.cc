@@ -612,3 +612,291 @@ TEST_F(ValidateInstructionTest, LocalTee_TypeMismatch) {
   Step(I{O::I32Const, s32{}});
   Fail(I{O::LocalTee, Index{index}});
 }
+
+TEST_F(ValidateInstructionTest, I32Unary) {
+  const Opcode opcodes[] = {Opcode::I32Eqz, Opcode::I32Clz, Opcode::I32Ctz,
+                            Opcode::I32Popcnt};
+
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::I32Const, s32{}});   // -> i32
+  for (auto opcode : opcodes) {  //
+    Step(I{opcode});             // i32 -> i32
+  }                              //
+  Step(I{O::End});               // i32 ->
+}
+
+TEST_F(ValidateInstructionTest, I32Binary) {
+  const Opcode opcodes[] = {
+      Opcode::I32Eq,   Opcode::I32Ne,   Opcode::I32LtS,  Opcode::I32LtU,
+      Opcode::I32GtS,  Opcode::I32GtU,  Opcode::I32LeS,  Opcode::I32LeU,
+      Opcode::I32GeS,  Opcode::I32GeU,  Opcode::I32Add,  Opcode::I32Sub,
+      Opcode::I32Mul,  Opcode::I32DivS, Opcode::I32DivU, Opcode::I32RemS,
+      Opcode::I32RemU, Opcode::I32And,  Opcode::I32Or,   Opcode::I32Xor,
+      Opcode::I32Shl,  Opcode::I32ShrS, Opcode::I32ShrU, Opcode::I32Rotl,
+      Opcode::I32Rotr};
+
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::I32Const, s32{}});    // -> i32
+  for (auto opcode : opcodes) {   //
+    Step(I{O::I32Const, s32{}});  // i32 -> i32 i32
+    Step(I{opcode});              // i32 i32 -> i32
+  }                               //
+  Step(I{O::End});                // i32 ->
+}
+
+TEST_F(ValidateInstructionTest, I64Eqz) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::I64Const, s64{}});
+  Step(I{O::I64Eqz});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, I64Unary) {
+  const Opcode opcodes[] = {Opcode::I64Clz, Opcode::I64Ctz, Opcode::I64Popcnt};
+
+  Step(I{O::Block, BlockType::I64});
+  Step(I{O::I64Const, s64{}});   // -> i64
+  for (auto opcode : opcodes) {  //
+    Step(I{opcode});             // i64 -> i64
+  }                              //
+  Step(I{O::End});               // i64 ->
+}
+
+TEST_F(ValidateInstructionTest, I64Compare) {
+  const Opcode opcodes[] = {Opcode::I64LtS, Opcode::I64LtU, Opcode::I64GtS,
+                            Opcode::I64GtU, Opcode::I64LeS, Opcode::I64LeU,
+                            Opcode::I64GeS, Opcode::I64GeU};
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::I32});
+    Step(I{O::I64Const, s64{}});  // -> i64
+    Step(I{O::I64Const, s64{}});  // i64 -> i64 i64
+    Step(I{opcode});              // i64 i64 -> i32
+    Step(I{O::End});              //
+    Step(I{O::Drop});             // i32 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, I64Binary) {
+  const Opcode opcodes[] = {Opcode::I64Add,  Opcode::I64Sub,  Opcode::I64Mul,
+                            Opcode::I64DivS, Opcode::I64DivU, Opcode::I64RemS,
+                            Opcode::I64RemU, Opcode::I64And,  Opcode::I64Or,
+                            Opcode::I64Xor,  Opcode::I64Shl,  Opcode::I64ShrS,
+                            Opcode::I64ShrU, Opcode::I64Rotl, Opcode::I64Rotr};
+
+  Step(I{O::Block, BlockType::I64});
+  Step(I{O::I64Const, s64{}});    // -> i64
+  for (auto opcode : opcodes) {   //
+    Step(I{O::I64Const, s64{}});  // i64 -> i64 i64
+    Step(I{opcode});              // i64 i64 -> i64
+  }                               //
+  Step(I{O::End});                // i64 ->
+}
+
+TEST_F(ValidateInstructionTest, F32Unary) {
+  const Opcode opcodes[] = {
+      Opcode::F32Abs,   Opcode::F32Neg,     Opcode::F32Ceil, Opcode::F32Floor,
+      Opcode::F32Trunc, Opcode::F32Nearest, Opcode::F32Sqrt};
+
+  Step(I{O::Block, BlockType::F32});
+  Step(I{O::F32Const, s64{}});   // -> f32
+  for (auto opcode : opcodes) {  //
+    Step(I{opcode});             // f32 -> f32
+  }                              //
+  Step(I{O::End});               // f32 ->
+}
+
+TEST_F(ValidateInstructionTest, F32Compare) {
+  const Opcode opcodes[] = {Opcode::F32Eq, Opcode::F32Ne, Opcode::F32Lt,
+                            Opcode::F32Gt, Opcode::F32Le, Opcode::F32Ge};
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::I32});
+    Step(I{O::F32Const, f32{}});  // -> f32
+    Step(I{O::F32Const, f32{}});  // f32 -> f32 f32
+    Step(I{opcode});              // f32 f32 -> i32
+    Step(I{O::End});              //
+    Step(I{O::Drop});             // i32 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, F32Binary) {
+  const Opcode opcodes[] = {Opcode::F32Add,     Opcode::F32Sub, Opcode::F32Mul,
+                            Opcode::F32Div,     Opcode::F32Min, Opcode::F32Max,
+                            Opcode::F32Copysign};
+
+  Step(I{O::Block, BlockType::F32});
+  Step(I{O::F32Const, f32{}});    // -> f32
+  for (auto opcode : opcodes) {   //
+    Step(I{O::F32Const, f32{}});  // f32 -> f32 f32
+    Step(I{opcode});              // f32 f32 -> f32
+  }                               //
+  Step(I{O::End});                // f32 ->
+}
+
+TEST_F(ValidateInstructionTest, F64Unary) {
+  const Opcode opcodes[] = {
+      Opcode::F64Abs,   Opcode::F64Neg,     Opcode::F64Ceil, Opcode::F64Floor,
+      Opcode::F64Trunc, Opcode::F64Nearest, Opcode::F64Sqrt};
+
+  Step(I{O::Block, BlockType::F64});
+  Step(I{O::F64Const, s64{}});   // -> f64
+  for (auto opcode : opcodes) {  //
+    Step(I{opcode});             // f64 -> f64
+  }                              //
+  Step(I{O::End});               // f64 ->
+}
+
+TEST_F(ValidateInstructionTest, F64Compare) {
+  const Opcode opcodes[] = {Opcode::F64Eq, Opcode::F64Ne, Opcode::F64Lt,
+                            Opcode::F64Gt, Opcode::F64Le, Opcode::F64Ge};
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::I32});
+    Step(I{O::F64Const, f64{}});  // -> f64
+    Step(I{O::F64Const, f64{}});  // f64 -> f64 f64
+    Step(I{opcode});              // f64 f64 -> i32
+    Step(I{O::End});              //
+    Step(I{O::Drop});             // i32 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, F64Binary) {
+  const Opcode opcodes[] = {Opcode::F64Add,     Opcode::F64Sub, Opcode::F64Mul,
+                            Opcode::F64Div,     Opcode::F64Min, Opcode::F64Max,
+                            Opcode::F64Copysign};
+
+  Step(I{O::Block, BlockType::F64});
+  Step(I{O::F64Const, f64{}});    // -> f64
+  for (auto opcode : opcodes) {   //
+    Step(I{O::F64Const, f64{}});  // f64 -> f64 f64
+    Step(I{opcode});              // f64 f64 -> f64
+  }                               //
+  Step(I{O::End});                // f64 ->
+}
+
+TEST_F(ValidateInstructionTest, I32_F32) {
+  const Opcode opcodes[] = {Opcode::I32TruncF32S, Opcode::I32TruncF32U,
+                            Opcode::I32ReinterpretF32};
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::I32});
+    Step(I{O::F32Const, f32{}});  // -> f32
+    Step(I{opcode});              // f32 -> i32
+    Step(I{O::End});              //
+    Step(I{O::Drop});             // i32 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, I32_F64) {
+  const Opcode opcodes[] = {Opcode::I32TruncF64S, Opcode::I32TruncF64U};
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::I32});
+    Step(I{O::F64Const, f64{}});  // -> f64
+    Step(I{opcode});              // f32 -> i32
+    Step(I{O::End});              //
+    Step(I{O::Drop});             // i32 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, I64_I32) {
+  const Opcode opcodes[] = {Opcode::I64ExtendI32S, Opcode::I64ExtendI32U};
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::I64});
+    Step(I{O::I32Const, s32{}});  // -> i32
+    Step(I{opcode});              // i32 -> i64
+    Step(I{O::End});              //
+    Step(I{O::Drop});             // i64 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, I64_F32) {
+  const Opcode opcodes[] = {Opcode::I64TruncF32S, Opcode::I64TruncF32U};
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::I64});
+    Step(I{O::F32Const, f32{}});  // -> f32
+    Step(I{opcode});              // f32 -> i64
+    Step(I{O::End});              //
+    Step(I{O::Drop});             // i64 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, I64_F64) {
+  const Opcode opcodes[] = {Opcode::I64TruncF64S, Opcode::I64TruncF64U,
+                            Opcode::I64ReinterpretF64};
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::I64});
+    Step(I{O::F64Const, f64{}});  // -> f64
+    Step(I{opcode});              // f64 -> i64
+    Step(I{O::End});              //
+    Step(I{O::Drop});             // i64 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, F32_I32) {
+  const Opcode opcodes[] = {Opcode::F32ConvertI32S, Opcode::F32ConvertI32U,
+                            Opcode::F32ReinterpretI32};
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::F32});
+    Step(I{O::I32Const, s32{}});  // -> i32
+    Step(I{opcode});              // i32 -> f32
+    Step(I{O::End});              //
+    Step(I{O::Drop});             // f32 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, F32_I64) {
+  const Opcode opcodes[] = {Opcode::F32ConvertI64S, Opcode::F32ConvertI64U};
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::F32});
+    Step(I{O::I64Const, s32{}});  // -> i64
+    Step(I{opcode});              // i64 -> f32
+    Step(I{O::End});              //
+    Step(I{O::Drop});             // f32 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, F32DemoteF64) {
+  Step(I{O::Block, BlockType::F32});
+  Step(I{O::F64Const, f64{}});  // -> f64
+  Step(I{O::F32DemoteF64});     // f64 -> f32
+  Step(I{O::End});              //
+}
+
+TEST_F(ValidateInstructionTest, F64_I32) {
+  const Opcode opcodes[] = {Opcode::F64ConvertI32S, Opcode::F64ConvertI32U};
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::F64});
+    Step(I{O::I32Const, s32{}});  // -> i32
+    Step(I{opcode});              // i32 -> f64
+    Step(I{O::End});              //
+    Step(I{O::Drop});             // f64 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, F64_I64) {
+  const Opcode opcodes[] = {Opcode::F64ConvertI64S, Opcode::F64ConvertI64U,
+                            Opcode::F64ReinterpretI64};
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::F64});
+    Step(I{O::I64Const, s32{}});  // -> i64
+    Step(I{opcode});              // i64 -> f64
+    Step(I{O::End});              //
+    Step(I{O::Drop});             // f64 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, F64PromoteF32) {
+  Step(I{O::Block, BlockType::F64});
+  Step(I{O::F32Const, f32{}});  // -> f32
+  Step(I{O::F64PromoteF32});    // f32 -> f64
+  Step(I{O::End});              //
+}

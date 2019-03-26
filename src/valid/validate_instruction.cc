@@ -39,6 +39,24 @@ namespace {
 using namespace ::wasp::binary;
 using ValueTypeSpan = span<const ValueType>;
 
+#define VALUE_TYPE_SPANS(V)                  \
+  V(i32, ValueType::I32)                     \
+  V(i64, ValueType::I64)                     \
+  V(f32, ValueType::F32)                     \
+  V(f64, ValueType::F64)                     \
+  V(i32_i32, ValueType::I32, ValueType::I32) \
+  V(i64_i64, ValueType::I64, ValueType::I64) \
+  V(f32_f32, ValueType::F32, ValueType::F32) \
+  V(f64_f64, ValueType::F64, ValueType::F64)
+
+#define WASP_V(name, ...)                         \
+  const ValueType array_##name[] = {__VA_ARGS__}; \
+  ValueTypeSpan span_##name{array_##name};
+VALUE_TYPE_SPANS(WASP_V)
+
+#undef WASP_V
+#undef VALUE_TYPE_SPANS
+
 optional<FunctionType> GetBlockTypeSignature(BlockType block_type,
                                              Context& context,
                                              Errors& errors) {
@@ -131,12 +149,20 @@ bool PopType(ValueType type, Context& context, Errors& errors) {
   return PopTypes(ValueTypeSpan(&type, 1), context, errors);
 }
 
+bool PopAndPushTypes(ValueTypeSpan param_types,
+                     ValueTypeSpan result_types,
+                     Context& context,
+                     Errors& errors) {
+  bool valid = PopTypes(param_types, context, errors);
+  PushTypes(result_types, context);
+  return valid;
+}
+
 bool PopAndPushTypes(const FunctionType& function_type,
                      Context& context,
                      Errors& errors) {
-  bool valid = PopTypes(function_type.param_types, context, errors);
-  PushTypes(function_type.result_types, context);
-  return valid;
+  return PopAndPushTypes(function_type.param_types, function_type.result_types,
+                         context, errors);
 }
 
 void SetUnreachable(Context& context) {
@@ -397,6 +423,172 @@ bool Validate(const Instruction& value,
     case Opcode::F64Const:
       PushType(ValueType::F64, context);
       return true;
+
+    case Opcode::I32Eqz:
+    case Opcode::I32Clz:
+    case Opcode::I32Ctz:
+    case Opcode::I32Popcnt:
+      return PopAndPushTypes(span_i32, span_i32, context, errors);
+
+    case Opcode::I64Eqz:
+      return PopAndPushTypes(span_i64, span_i32, context, errors);
+
+    case Opcode::I64Clz:
+    case Opcode::I64Ctz:
+    case Opcode::I64Popcnt:
+      return PopAndPushTypes(span_i64, span_i64, context, errors);
+
+    case Opcode::I32Eq:
+    case Opcode::I32Ne:
+    case Opcode::I32LtS:
+    case Opcode::I32LtU:
+    case Opcode::I32GtS:
+    case Opcode::I32GtU:
+    case Opcode::I32LeS:
+    case Opcode::I32LeU:
+    case Opcode::I32GeS:
+    case Opcode::I32GeU:
+    case Opcode::I32Add:
+    case Opcode::I32Sub:
+    case Opcode::I32Mul:
+    case Opcode::I32DivS:
+    case Opcode::I32DivU:
+    case Opcode::I32RemS:
+    case Opcode::I32RemU:
+    case Opcode::I32And:
+    case Opcode::I32Or:
+    case Opcode::I32Xor:
+    case Opcode::I32Shl:
+    case Opcode::I32ShrS:
+    case Opcode::I32ShrU:
+    case Opcode::I32Rotl:
+    case Opcode::I32Rotr:
+      return PopAndPushTypes(span_i32_i32, span_i32, context, errors);
+
+    case Opcode::I64LtS:
+    case Opcode::I64LtU:
+    case Opcode::I64GtS:
+    case Opcode::I64GtU:
+    case Opcode::I64LeS:
+    case Opcode::I64LeU:
+    case Opcode::I64GeS:
+    case Opcode::I64GeU:
+      return PopAndPushTypes(span_i64_i64, span_i32, context, errors);
+
+    case Opcode::F32Eq:
+    case Opcode::F32Ne:
+    case Opcode::F32Lt:
+    case Opcode::F32Gt:
+    case Opcode::F32Le:
+    case Opcode::F32Ge:
+      return PopAndPushTypes(span_f32_f32, span_i32, context, errors);
+
+    case Opcode::F64Eq:
+    case Opcode::F64Ne:
+    case Opcode::F64Lt:
+    case Opcode::F64Gt:
+    case Opcode::F64Le:
+    case Opcode::F64Ge:
+      return PopAndPushTypes(span_f64_f64, span_i32, context, errors);
+
+    case Opcode::I64Add:
+    case Opcode::I64Sub:
+    case Opcode::I64Mul:
+    case Opcode::I64DivS:
+    case Opcode::I64DivU:
+    case Opcode::I64RemS:
+    case Opcode::I64RemU:
+    case Opcode::I64And:
+    case Opcode::I64Or:
+    case Opcode::I64Xor:
+    case Opcode::I64Shl:
+    case Opcode::I64ShrS:
+    case Opcode::I64ShrU:
+    case Opcode::I64Rotl:
+    case Opcode::I64Rotr:
+      return PopAndPushTypes(span_i64_i64, span_i64, context, errors);
+
+    case Opcode::F32Abs:
+    case Opcode::F32Neg:
+    case Opcode::F32Ceil:
+    case Opcode::F32Floor:
+    case Opcode::F32Trunc:
+    case Opcode::F32Nearest:
+    case Opcode::F32Sqrt:
+      return PopAndPushTypes(span_f32, span_f32, context, errors);
+
+    case Opcode::F32Add:
+    case Opcode::F32Sub:
+    case Opcode::F32Mul:
+    case Opcode::F32Div:
+    case Opcode::F32Min:
+    case Opcode::F32Max:
+    case Opcode::F32Copysign:
+      return PopAndPushTypes(span_f32_f32, span_f32, context, errors);
+
+    case Opcode::F64Abs:
+    case Opcode::F64Neg:
+    case Opcode::F64Ceil:
+    case Opcode::F64Floor:
+    case Opcode::F64Trunc:
+    case Opcode::F64Nearest:
+    case Opcode::F64Sqrt:
+      return PopAndPushTypes(span_f64, span_f64, context, errors);
+
+    case Opcode::F64Add:
+    case Opcode::F64Sub:
+    case Opcode::F64Mul:
+    case Opcode::F64Div:
+    case Opcode::F64Min:
+    case Opcode::F64Max:
+    case Opcode::F64Copysign:
+      return PopAndPushTypes(span_f64_f64, span_f64, context, errors);
+
+    case Opcode::I32TruncF32S:
+    case Opcode::I32TruncF32U:
+    case Opcode::I32ReinterpretF32:
+      return PopAndPushTypes(span_f32, span_i32, context, errors);
+
+    case Opcode::I32TruncF64S:
+    case Opcode::I32TruncF64U:
+      return PopAndPushTypes(span_f64, span_i32, context, errors);
+
+    case Opcode::I64ExtendI32S:
+    case Opcode::I64ExtendI32U:
+      return PopAndPushTypes(span_i32, span_i64, context, errors);
+
+    case Opcode::I64TruncF32S:
+    case Opcode::I64TruncF32U:
+      return PopAndPushTypes(span_f32, span_i64, context, errors);
+
+    case Opcode::I64TruncF64S:
+    case Opcode::I64TruncF64U:
+    case Opcode::I64ReinterpretF64:
+      return PopAndPushTypes(span_f64, span_i64, context, errors);
+
+    case Opcode::F32ConvertI32S:
+    case Opcode::F32ConvertI32U:
+    case Opcode::F32ReinterpretI32:
+      return PopAndPushTypes(span_i32, span_f32, context, errors);
+
+    case Opcode::F32ConvertI64S:
+    case Opcode::F32ConvertI64U:
+      return PopAndPushTypes(span_i64, span_f32, context, errors);
+
+    case Opcode::F32DemoteF64:
+      return PopAndPushTypes(span_f64, span_f32, context, errors);
+
+    case Opcode::F64ConvertI32S:
+    case Opcode::F64ConvertI32U:
+      return PopAndPushTypes(span_i32, span_f64, context, errors);
+
+    case Opcode::F64ConvertI64S:
+    case Opcode::F64ConvertI64U:
+    case Opcode::F64ReinterpretI64:
+      return PopAndPushTypes(span_i64, span_f64, context, errors);
+
+    case Opcode::F64PromoteF32:
+      return PopAndPushTypes(span_f32, span_f64, context, errors);
 
     default:
       WASP_UNREACHABLE();
