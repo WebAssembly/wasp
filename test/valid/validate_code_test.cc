@@ -72,7 +72,14 @@ class ValidateInstructionTest : public ::testing::Test {
     EXPECT_TRUE(BeginCode(context, features, errors));
   }
 
-  virtual void TearDown() {
+  virtual void TearDown() {}
+
+  void Step(const Instruction& instruction) {
+    EXPECT_TRUE(Validate(instruction, context, features, errors));
+  }
+
+  void Fail(const Instruction& instruction) {
+    EXPECT_FALSE(Validate(instruction, context, features, errors));
   }
 
   Context context;
@@ -80,21 +87,248 @@ class ValidateInstructionTest : public ::testing::Test {
   TestErrors errors;
 };
 
+struct ValueTypeInfo {
+  ValueType value_type;
+  BlockType block_type;
+  Instruction instruction;
+};
+const ValueTypeInfo all_value_types[] = {
+    {ValueType::I32, BlockType::I32, Instruction{Opcode::I32Const, s32{}}},
+    {ValueType::I64, BlockType::I64, Instruction{Opcode::I64Const, s64{}}},
+    {ValueType::F32, BlockType::F32, Instruction{Opcode::F32Const, f32{}}},
+    {ValueType::F64, BlockType::F64, Instruction{Opcode::F64Const, f64{}}},
+#if 0
+    {ValueType::V128, BlockType::V128, Instruction{Opcode::V128Const, v128{}}},
+    {ValueType::Anyref, BlockType::Anyref, Instruction{Opcode::RefNull}},
+#endif
+};
+
 TEST_F(ValidateInstructionTest, Unreachable) {
-  EXPECT_TRUE(Validate(I{O::Unreachable}, context, features, errors));
+  Step(I{O::Unreachable});
 }
 
 TEST_F(ValidateInstructionTest, Nop) {
-  EXPECT_TRUE(Validate(I{O::Nop}, context, features, errors));
+  Step(I{O::Nop});
 }
 
-TEST_F(ValidateInstructionTest, Block) {
-  EXPECT_TRUE(
-      Validate(I{O::Block, BlockType::Void}, context, features, errors));
-  EXPECT_TRUE(Validate(I{O::Block, BlockType::I32}, context, features, errors));
+TEST_F(ValidateInstructionTest, Block_Void) {
+  Step(I{O::Block, BlockType::Void});
+  Step(I{O::End});
 }
 
-TEST_F(ValidateInstructionTest, Loop) {
-  EXPECT_TRUE(Validate(I{O::Loop, BlockType::Void}, context, features, errors));
-  EXPECT_TRUE(Validate(I{O::Loop, BlockType::I32}, context, features, errors));
+TEST_F(ValidateInstructionTest, Block_SingleResult) {
+  for (const auto& info : all_value_types) {
+    Step(I{O::Block, info.block_type});
+    Step(info.instruction);
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, Loop_Void) {
+  Step(I{O::Loop, BlockType::Void});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, Loop_SingleResult) {
+  for (const auto& info : all_value_types) {
+    Step(I{O::Loop, info.block_type});
+    Step(info.instruction);
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, End) {
+  Step(I{O::Block, BlockType::Void});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, End_Unreachable) {
+  Step(I{O::Block, BlockType::Void});
+  Step(I{O::Unreachable});
+  Step(I{O::End});
+
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::Unreachable});
+  Step(I{O::End});
+
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::Unreachable});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, End_Unreachable_TypeMismatch) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::Unreachable});
+  Step(I{O::F32Const, f32{}});
+  Fail(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, End_EmptyLabelStack) {
+  Step(I{O::End});  // This `end` ends the function.
+  Fail(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, End_EmptyTypeStack) {
+  Step(I{O::Block, BlockType::I32});
+  Fail(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, End_TypeMismatch) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::F32Const, f32{}});
+  Fail(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, End_TooManyValues) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, End_Unreachable_TooManyValues) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::Unreachable});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, Br_Void) {
+  Step(I{O::Br, Index{0}});
+}
+
+TEST_F(ValidateInstructionTest, Br_Block_SingleResult) {
+  for (const auto& info : all_value_types) {
+    Step(I{O::Block, info.block_type});
+    Step(info.instruction);
+    Step(I{O::Br, Index{0}});
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, Br_EmptyStack) {
+  Step(I{O::Block, BlockType::I32});
+  Fail(I{O::Br, Index{0}});
+}
+
+TEST_F(ValidateInstructionTest, Br_FullerStack) {
+  Step(I{O::Block, BlockType::Void});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::Br, Index{0}});
+}
+
+TEST_F(ValidateInstructionTest, Br_TypeMismatch) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::F32Const, f32{}});
+  Fail(I{O::Br, Index{0}});
+}
+
+TEST_F(ValidateInstructionTest, Br_Depth1) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::Block, BlockType::Void});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::Br, Index{1}});
+}
+
+TEST_F(ValidateInstructionTest, Br_ForwardUnreachable) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::Block, BlockType::F32});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::Br, Index{1}});
+  Step(I{O::Br, Index{0}});
+}
+
+TEST_F(ValidateInstructionTest, Br_Loop_Void) {
+  Step(I{O::Loop, BlockType::Void});
+  Step(I{O::Br, Index{0}});
+  Step(I{O::End});
+
+  Step(I{O::Loop, BlockType::I32});
+  Step(I{O::Br, Index{0}});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, Br_Loop_SingleResult) {
+  for (const auto& info : all_value_types) {
+    Step(I{O::Loop, info.block_type});
+    Step(I{O::Br, Index{0}});
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, BrIf_Void) {
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::BrIf, Index{0}});
+}
+
+TEST_F(ValidateInstructionTest, BrIf_Block_SingleResult) {
+  for (const auto& info : all_value_types) {
+    Step(I{O::Block, info.block_type});
+    Step(info.instruction);
+    Step(I{O::I32Const, s32{}});
+    Step(I{O::BrIf, Index{0}});
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, BrIf_NoCondition) {
+  Fail(I{O::BrIf, Index{0}});
+}
+
+TEST_F(ValidateInstructionTest, BrIf_ConditionMismatch) {
+  Step(I{O::F32Const, f32{}});
+  Fail(I{O::BrIf, Index{0}});
+}
+
+TEST_F(ValidateInstructionTest, BrIf_EmptyStack) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::BrIf, Index{0}});
+}
+
+TEST_F(ValidateInstructionTest, BrIf_TypeMismatch) {
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::F32Const, f32{}});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::BrIf, Index{0}});
+}
+
+TEST_F(ValidateInstructionTest, BrIf_PropagateValue) {
+  Step(I{O::Block, BlockType::F32});
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::F32Const, f32{}});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::BrIf, Index{1}});
+  Fail(I{O::End});  // F32 is still on the stack.
+}
+
+TEST_F(ValidateInstructionTest, BrIf_Loop_Void) {
+  Step(I{O::Loop, BlockType::Void});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::BrIf, Index{0}});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, BrIf_Loop_SingleResult) {
+  for (const auto& info : all_value_types) {
+    Step(I{O::Loop, info.block_type});
+    Step(info.instruction);
+    Step(I{O::I32Const, s32{}});
+    Step(I{O::BrIf, Index{0}});
+    Step(I{O::Unreachable});
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, Drop) {
+  for (const auto& info : all_value_types) {
+    Step(info.instruction);
+    Step(I{O::Drop});
+  }
+}
+
+TEST_F(ValidateInstructionTest, Drop_EmptyStack) {
+  Fail(I{O::Drop});
 }
