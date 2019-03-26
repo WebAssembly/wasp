@@ -94,6 +94,11 @@ class ValidateInstructionTest : public ::testing::Test {
     return context.tables.size() - 1;
   }
 
+  Index AddLocal(const ValueType& value_type) {
+    context.locals.push_back(value_type);
+    return context.locals.size() - 1;
+  }
+
   void Step(const Instruction& instruction) {
     EXPECT_TRUE(Validate(instruction, context, features, errors))
         << format("{}", instruction);
@@ -531,4 +536,79 @@ TEST_F(ValidateInstructionTest, Drop) {
 
 TEST_F(ValidateInstructionTest, Drop_EmptyStack) {
   Fail(I{O::Drop});
+}
+
+TEST_F(ValidateInstructionTest, LocalGet) {
+  for (const auto& info : all_value_types) {
+    auto index = AddLocal(info.value_type);
+    Step(I{O::Block, info.block_type});
+    Step(I{O::LocalGet, Index{index}});
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, LocalGet_IndexOOB) {
+  Fail(I{O::LocalGet, Index{100}});
+}
+
+TEST_F(ValidateInstructionTest, LocalSet) {
+  for (const auto& info : all_value_types) {
+    auto index = AddLocal(info.value_type);
+    Step(I{O::Block, BlockType::Void});
+    Step(info.instruction);
+    Step(I{O::LocalSet, Index{index}});
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, LocalSet_Unreachable) {
+  auto index = AddLocal(ValueType::I32);
+  Step(I{O::Unreachable});
+  Step(I{O::LocalSet, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, LocalSet_IndexOOB) {
+  Fail(I{O::LocalSet, Index{100}});
+}
+
+TEST_F(ValidateInstructionTest, LocalSet_EmptyStack) {
+  auto index = AddLocal(ValueType::I32);
+  Fail(I{O::LocalSet, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, LocalSet_TypeMismatch) {
+  auto index = AddLocal(ValueType::F32);
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::LocalSet, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, LocalTee) {
+  for (const auto& info : all_value_types) {
+    auto index = AddLocal(info.value_type);
+    Step(I{O::Block, info.block_type});
+    Step(info.instruction);
+    Step(I{O::LocalTee, Index{index}});
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, LocalTee_Unreachable) {
+  auto index = AddLocal(ValueType::I32);
+  Step(I{O::Unreachable});
+  Step(I{O::LocalTee, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, LocalTee_IndexOOB) {
+  Fail(I{O::LocalTee, Index{100}});
+}
+
+TEST_F(ValidateInstructionTest, LocalTee_EmptyStack) {
+  auto index = AddLocal(ValueType::I32);
+  Fail(I{O::LocalTee, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, LocalTee_TypeMismatch) {
+  auto index = AddLocal(ValueType::F32);
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::LocalTee, Index{index}});
 }

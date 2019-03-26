@@ -69,7 +69,7 @@ Label& TopLabel(Context& context) {
   return context.label_stack.back();
 }
 
-void Push(ValueType value_type, Context& context) {
+void PushType(ValueType value_type, Context& context) {
   context.type_stack.push_back(value_type);
 }
 
@@ -276,6 +276,31 @@ bool CallIndirect(const CallIndirectImmediate& immediate,
   return valid;
 }
 
+bool LocalGet(Index index, Context& context, Errors& errors) {
+  if (!ValidateIndex(index, context.locals.size(), "local index", errors)) {
+    return false;
+  }
+  PushType(context.locals[index], context);
+  return true;
+}
+
+bool LocalSet(Index index, Context& context, Errors& errors) {
+  if (!ValidateIndex(index, context.locals.size(), "local index", errors)) {
+    return false;
+  }
+  return PopType(context.locals[index], context, errors);
+}
+
+bool LocalTee(Index index, Context& context, Errors& errors) {
+  if (!ValidateIndex(index, context.locals.size(), "local index", errors)) {
+    return false;
+  }
+  auto type = context.locals[index];
+  bool valid = PopType(type, context, errors);
+  PushType(type, context);
+  return valid;
+}
+
 }  // namespace
 
 bool Validate(const Locals& value,
@@ -348,20 +373,29 @@ bool Validate(const Instruction& value,
     case Opcode::Drop:
       return DropTypes(1, context, errors);
 
+    case Opcode::LocalGet:
+      return LocalGet(value.index_immediate(), context, errors);
+
+    case Opcode::LocalSet:
+      return LocalSet(value.index_immediate(), context, errors);
+
+    case Opcode::LocalTee:
+      return LocalTee(value.index_immediate(), context, errors);
+
     case Opcode::I32Const:
-      Push(ValueType::I32, context);
+      PushType(ValueType::I32, context);
       return true;
 
     case Opcode::I64Const:
-      Push(ValueType::I64, context);
+      PushType(ValueType::I64, context);
       return true;
 
     case Opcode::F32Const:
-      Push(ValueType::F32, context);
+      PushType(ValueType::F32, context);
       return true;
 
     case Opcode::F64Const:
-      Push(ValueType::F64, context);
+      PushType(ValueType::F64, context);
       return true;
 
     default:
