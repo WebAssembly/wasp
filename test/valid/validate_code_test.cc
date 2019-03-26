@@ -78,25 +78,31 @@ class ValidateInstructionTest : public ::testing::Test {
     EXPECT_TRUE(BeginCode(context, features, errors));
   }
 
+  template <typename T>
+  Index AddItem(std::vector<T>& vec, const T& type) {
+    vec.push_back(type);
+    return vec.size() - 1;
+  }
+
   Index AddFunctionType(const FunctionType& function_type) {
-    context.types.push_back(TypeEntry{function_type});
-    return context.types.size() - 1;
+    return AddItem(context.types, TypeEntry{function_type});
   }
 
   Index AddFunction(const FunctionType& function_type) {
     Index type_index = AddFunctionType(function_type);
-    context.functions.push_back(Function{type_index});
-    return context.functions.size() - 1;
+    return AddItem(context.functions, Function{type_index});
   }
 
   Index AddTable(const TableType& table_type) {
-    context.tables.push_back(table_type);
-    return context.tables.size() - 1;
+    return AddItem(context.tables, table_type);
+  }
+
+  Index AddGlobal(const GlobalType& global_type) {
+    return AddItem(context.globals, global_type);
   }
 
   Index AddLocal(const ValueType& value_type) {
-    context.locals.push_back(value_type);
-    return context.locals.size() - 1;
+    return AddItem(context.locals, value_type);
   }
 
   void Step(const Instruction& instruction) {
@@ -538,6 +544,33 @@ TEST_F(ValidateInstructionTest, Drop_EmptyStack) {
   Fail(I{O::Drop});
 }
 
+TEST_F(ValidateInstructionTest, Select) {
+  for (const auto& info : all_value_types) {
+    Step(info.instruction);
+    Step(info.instruction);
+    Step(I{O::I32Const, s32{}});
+    Step(I{O::Select});
+  }
+}
+
+TEST_F(ValidateInstructionTest, Select_EmptyStack) {
+  Fail(I{O::Select});
+}
+
+TEST_F(ValidateInstructionTest, Select_ConditionTypeMismatch) {
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::F32Const, f32{}});
+  Fail(I{O::Select});
+}
+
+TEST_F(ValidateInstructionTest, Select_InconsistentTypes) {
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::F32Const, f32{}});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::Select});
+}
+
 TEST_F(ValidateInstructionTest, LocalGet) {
   for (const auto& info : all_value_types) {
     auto index = AddLocal(info.value_type);
@@ -545,6 +578,16 @@ TEST_F(ValidateInstructionTest, LocalGet) {
     Step(I{O::LocalGet, Index{index}});
     Step(I{O::End});
   }
+}
+
+TEST_F(ValidateInstructionTest, LocalGet_Param) {
+  BeginFunction(FunctionType{{ValueType::I32, ValueType::F32}, {}});
+  auto index = AddLocal(ValueType::I64);
+  EXPECT_EQ(2, index);
+  Step(I{O::LocalGet, Index{0}}); // 1st param.
+  Step(I{O::LocalGet, Index{1}}); // 2nd param.
+  Step(I{O::LocalGet, Index{2}}); // 1st local.
+  Fail(I{O::LocalGet, Index{3}}); // Invalid.
 }
 
 TEST_F(ValidateInstructionTest, LocalGet_IndexOOB) {
@@ -559,6 +602,20 @@ TEST_F(ValidateInstructionTest, LocalSet) {
     Step(I{O::LocalSet, Index{index}});
     Step(I{O::End});
   }
+}
+
+TEST_F(ValidateInstructionTest, LocalSet_Param) {
+  BeginFunction(FunctionType{{ValueType::I32, ValueType::F32}, {}});
+  auto index = AddLocal(ValueType::F64);
+  EXPECT_EQ(2, index);
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::LocalSet, Index{0}}); // 1st param.
+  Step(I{O::F32Const, f32{}});
+  Step(I{O::LocalSet, Index{1}}); // 2nd param.
+  Step(I{O::F64Const, f64{}});
+  Step(I{O::LocalSet, Index{2}}); // 1st local.
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::LocalSet, Index{3}}); // Invalid.
 }
 
 TEST_F(ValidateInstructionTest, LocalSet_Unreachable) {
@@ -611,6 +668,58 @@ TEST_F(ValidateInstructionTest, LocalTee_TypeMismatch) {
   auto index = AddLocal(ValueType::F32);
   Step(I{O::I32Const, s32{}});
   Fail(I{O::LocalTee, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, GlobalGet) {
+  for (auto mut : {Mutability::Var, Mutability::Const}) {
+    for (const auto& info : all_value_types) {
+      auto index = AddGlobal(GlobalType{info.value_type, mut});
+      Step(I{O::Block, info.block_type});
+      Step(I{O::GlobalGet, Index{index}});
+      Step(I{O::End});
+    }
+  }
+}
+
+TEST_F(ValidateInstructionTest, GlobalGet_IndexOOB) {
+  Fail(I{O::GlobalGet, Index{100}});
+}
+
+TEST_F(ValidateInstructionTest, GlobalSet) {
+  for (const auto& info : all_value_types) {
+    auto index = AddGlobal(GlobalType{info.value_type, Mutability::Var});
+    Step(I{O::Block, BlockType::Void});
+    Step(info.instruction);
+    Step(I{O::GlobalSet, Index{index}});
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, GlobalSet_Unreachable) {
+  auto index = AddGlobal(GlobalType{ValueType::I32, Mutability::Var});
+  Step(I{O::Unreachable});
+  Step(I{O::GlobalSet, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, GlobalSet_IndexOOB) {
+  Fail(I{O::GlobalSet, Index{100}});
+}
+
+TEST_F(ValidateInstructionTest, GlobalSet_EmptyStack) {
+  auto index = AddGlobal(GlobalType{ValueType::I32, Mutability::Var});
+  Fail(I{O::GlobalSet, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, GlobalSet_TypeMismatch) {
+  auto index = AddGlobal(GlobalType{ValueType::F32, Mutability::Var});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::GlobalSet, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, GlobalSet_Immutable) {
+  auto index = AddGlobal(GlobalType{ValueType::I32, Mutability::Const});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::GlobalSet, Index{index}});
 }
 
 TEST_F(ValidateInstructionTest, I32Unary) {

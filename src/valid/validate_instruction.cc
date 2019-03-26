@@ -78,13 +78,23 @@ optional<FunctionType> GetBlockTypeSignature(BlockType block_type,
   }
 }
 
-ValueTypeSpan GetTypeStack(const Label& label, Context& context) {
-  return ValueTypeSpan{context.type_stack}.subspan(label.type_stack_limit);
-}
-
 Label& TopLabel(Context& context) {
   assert(!context.label_stack.empty());
   return context.label_stack.back();
+}
+
+ValueTypeSpan GetTypeStack(Context& context) {
+  return ValueTypeSpan{context.type_stack}.subspan(
+      TopLabel(context).type_stack_limit);
+}
+
+optional<ValueType> PeekType(Context& context, Errors& errors) {
+  auto type_stack = GetTypeStack(context);
+  if (type_stack.empty()) {
+    errors.OnError("Expected stack to have 1 value, got 0");
+    return nullopt;
+  }
+  return type_stack[type_stack.size() - 1];
 }
 
 void PushType(ValueType value_type, Context& context) {
@@ -122,7 +132,7 @@ bool DropTypes(size_t count, Context& context, Errors& errors) {
 bool CheckTypes(ValueTypeSpan expected, Context& context, Errors& errors) {
   ValueTypeSpan full_expected = expected;
   const auto& top_label = TopLabel(context);
-  auto type_stack = GetTypeStack(top_label, context);
+  auto type_stack = GetTypeStack(context);
   RemovePrefixIfGreater(&type_stack, expected);
   if (top_label.unreachable) {
     RemovePrefixIfGreater(&expected, type_stack);
@@ -204,8 +214,8 @@ bool PushLabel(LabelType label_type,
 bool CheckTypeStackEmpty(Context& context, Errors& errors) {
   const auto& top_label = TopLabel(context);
   if (context.type_stack.size() != top_label.type_stack_limit) {
-    errors.OnError(format("Expected empty stack, got {}",
-                          GetTypeStack(top_label, context)));
+    errors.OnError(
+        format("Expected empty stack, got {}", GetTypeStack(context)));
     return false;
   }
   return true;
@@ -302,6 +312,17 @@ bool CallIndirect(const CallIndirectImmediate& immediate,
   return valid;
 }
 
+bool Select(Context& context, Errors& errors) {
+  bool valid = PopType(ValueType::I32, context, errors);
+  auto type = PeekType(context, errors);
+  if (!type) {
+    return false;
+  }
+  const ValueType types[] = {*type, *type};
+  valid &= PopTypes(ValueTypeSpan{types}, context, errors);
+  return valid;
+}
+
 bool LocalGet(Index index, Context& context, Errors& errors) {
   if (!ValidateIndex(index, context.locals.size(), "local index", errors)) {
     return false;
@@ -324,6 +345,29 @@ bool LocalTee(Index index, Context& context, Errors& errors) {
   auto type = context.locals[index];
   bool valid = PopType(type, context, errors);
   PushType(type, context);
+  return valid;
+}
+
+bool GlobalGet(Index index, Context& context, Errors& errors) {
+  if (!ValidateIndex(index, context.globals.size(), "global index", errors)) {
+    return false;
+  }
+  PushType(context.globals[index].valtype, context);
+  return true;
+}
+
+bool GlobalSet(Index index, Context& context, Errors& errors) {
+  if (!ValidateIndex(index, context.globals.size(), "global index", errors)) {
+    return false;
+  }
+  const auto& global_type = context.globals[index];
+  bool valid = true;
+  if (global_type.mut == Mutability::Const) {
+    errors.OnError(
+        format("global.set is invalid on immutable global {}", index));
+    valid = false;
+  }
+  valid &= PopType(global_type.valtype, context, errors);
   return valid;
 }
 
@@ -399,6 +443,9 @@ bool Validate(const Instruction& value,
     case Opcode::Drop:
       return DropTypes(1, context, errors);
 
+    case Opcode::Select:
+      return Select(context, errors);
+
     case Opcode::LocalGet:
       return LocalGet(value.index_immediate(), context, errors);
 
@@ -407,6 +454,12 @@ bool Validate(const Instruction& value,
 
     case Opcode::LocalTee:
       return LocalTee(value.index_immediate(), context, errors);
+
+    case Opcode::GlobalGet:
+      return GlobalGet(value.index_immediate(), context, errors);
+
+    case Opcode::GlobalSet:
+      return GlobalSet(value.index_immediate(), context, errors);
 
     case Opcode::I32Const:
       PushType(ValueType::I32, context);
