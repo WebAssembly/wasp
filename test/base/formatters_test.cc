@@ -58,6 +58,15 @@ TEST(FormattersTest, SpanU8) {
   EXPECT_EQ(R"(  "\48"  )", format("{:^9s}", SpanU8{buffer, 1}));
 }
 
+TEST(FormattersTest, SpanPoint) {
+  using PointSpan = span<const Point>;
+  const Point points[] = {Point{1, 1}, Point{2, 3}, Point{0, 0}};
+
+  EXPECT_EQ(R"([])", format("{}", PointSpan{}));
+  EXPECT_EQ(R"([{x:1, y:1} {x:2, y:3}])", format("{}", PointSpan{points, 2}));
+  EXPECT_EQ(R"(  [{x:0, y:0}]  )", format("{:^16s}", PointSpan{points + 2, 1}));
+}
+
 TEST(FormattersTest, VectorU32) {
   EXPECT_EQ(R"([])", format("{}", std::vector<u32>{}));
   EXPECT_EQ(R"([1 2 3])", format("{}", std::vector<u32>{{1u, 2u, 3u}}));

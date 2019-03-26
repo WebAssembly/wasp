@@ -38,7 +38,13 @@ struct formatter<::wasp::SpanU8> : formatter<string_view> {
 };
 
 template <typename T>
-struct formatter<std::vector<T>> : formatter<string_view> {
+struct formatter<::wasp::span<const T>> : formatter<string_view> {
+  template <typename Ctx>
+  typename Ctx::iterator format(::wasp::span<const T>, Ctx&);
+};
+
+template <typename T>
+struct formatter<std::vector<T>> : formatter<::wasp::span<const T>> {
   template <typename Ctx>
   typename Ctx::iterator format(const std::vector<T>&, Ctx&);
 };

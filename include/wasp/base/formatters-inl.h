@@ -36,8 +36,8 @@ typename Ctx::iterator formatter<::wasp::SpanU8>::format(
 
 template <typename T>
 template <typename Ctx>
-typename Ctx::iterator formatter<std::vector<T>>::format(
-    const std::vector<T>& self,
+typename Ctx::iterator formatter<::wasp::span<const T>>::format(
+    ::wasp::span<const T> self,
     Ctx& ctx) {
   memory_buffer buf;
   string_view space = "";
@@ -48,6 +48,15 @@ typename Ctx::iterator formatter<std::vector<T>>::format(
   }
   format_to(buf, "]");
   return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename T>
+template <typename Ctx>
+typename Ctx::iterator formatter<std::vector<T>>::format(
+    const std::vector<T>& self,
+    Ctx& ctx) {
+  return formatter<::wasp::span<const T>>::format(::wasp::span<const T>{self},
+                                                  ctx);
 }
 
 template <typename Ctx>
