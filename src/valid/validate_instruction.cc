@@ -36,22 +36,19 @@ namespace valid {
 
 namespace {
 
-using binary::ValueType;
-using binary::ValueTypes;
-using binary::BrTableImmediate;
+using namespace ::wasp::binary;
 using ValueTypeSpan = span<const ValueType>;
 
-optional<binary::FunctionType> GetBlockTypeSignature(
-    binary::BlockType block_type,
-    Context& context,
-    Errors& errors) {
+optional<FunctionType> GetBlockTypeSignature(BlockType block_type,
+                                             Context& context,
+                                             Errors& errors) {
   switch (block_type) {
-    case binary::BlockType::Void:
-      return binary::FunctionType{};
+    case BlockType::Void:
+      return FunctionType{};
 
-#define WASP_V(val, Name, str)  \
-  case binary::BlockType::Name: \
-    return binary::FunctionType{{}, {ValueType::Name}};
+#define WASP_V(val, Name, str) \
+  case BlockType::Name:        \
+    return FunctionType{{}, {ValueType::Name}};
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
 #include "wasp/binary/value_type.def"
 #undef WASP_V
@@ -134,6 +131,14 @@ bool PopType(ValueType type, Context& context, Errors& errors) {
   return PopTypes(ValueTypeSpan(&type, 1), context, errors);
 }
 
+bool PopAndPushTypes(const FunctionType& function_type,
+                     Context& context,
+                     Errors& errors) {
+  bool valid = PopTypes(function_type.param_types, context, errors);
+  PushTypes(function_type.result_types, context);
+  return valid;
+}
+
 void SetUnreachable(Context& context) {
   auto& top_label = TopLabel(context);
   top_label.unreachable = true;
@@ -150,7 +155,7 @@ Label* GetLabel(Index depth, Context& context, Errors& errors) {
 }
 
 void PushLabel(LabelType label_type,
-               const binary::FunctionType& type,
+               const FunctionType& type,
                Context& context) {
   context.label_stack.emplace_back(label_type, type.param_types,
                                    type.result_types,
@@ -159,7 +164,7 @@ void PushLabel(LabelType label_type,
 }
 
 bool PushLabel(LabelType label_type,
-               binary::BlockType block_type,
+               BlockType block_type,
                Context& context,
                Errors& errors) {
   auto sig = GetBlockTypeSignature(block_type, context, errors);
@@ -251,15 +256,29 @@ bool Call(Index function_index, Context& context, Errors& errors) {
                      errors)) {
     return false;
   }
-  const auto& type_entry = context.types[function.type_index];
-  bool valid = PopTypes(type_entry.type.param_types, context, errors);
-  PushTypes(type_entry.type.result_types, context);
+  return PopAndPushTypes(context.types[function.type_index].type, context,
+                         errors);
+}
+
+bool CallIndirect(const CallIndirectImmediate& immediate,
+                  Context& context,
+                  Errors& errors) {
+  if (!ValidateIndex(0, context.tables.size(), "table index", errors)) {
+    return false;
+  }
+  if (!ValidateIndex(immediate.index, context.types.size(), "type index",
+                     errors)) {
+    return false;
+  }
+  bool valid = PopType(ValueType::I32, context, errors);
+  valid &=
+      PopAndPushTypes(context.types[immediate.index].type, context, errors);
   return valid;
 }
 
 }  // namespace
 
-bool Validate(const binary::Locals& value,
+bool Validate(const Locals& value,
               Context& context,
               const Features& features,
               Errors& errors) {
@@ -279,7 +298,7 @@ bool Validate(const binary::Locals& value,
   return true;
 }
 
-bool Validate(const binary::Instruction& value,
+bool Validate(const Instruction& value,
               Context& context,
               const Features& features,
               Errors& errors) {
@@ -290,55 +309,58 @@ bool Validate(const binary::Instruction& value,
   }
 
   switch (value.opcode) {
-    case binary::Opcode::Unreachable:
+    case Opcode::Unreachable:
       SetUnreachable(context);
       return true;
 
-    case binary::Opcode::Nop:
+    case Opcode::Nop:
       return true;
 
-    case binary::Opcode::Block:
+    case Opcode::Block:
       return PushLabel(LabelType::Block, value.block_type_immediate(), context,
                        errors);
 
-    case binary::Opcode::Loop:
+    case Opcode::Loop:
       return PushLabel(LabelType::Loop, value.block_type_immediate(), context,
                        errors);
 
-    case binary::Opcode::End:
+    case Opcode::End:
       return PopLabel(context, errors);
 
-    case binary::Opcode::Br:
+    case Opcode::Br:
       return Br(value.index_immediate(), context, errors);
 
-    case binary::Opcode::BrIf:
+    case Opcode::BrIf:
       return BrIf(value.index_immediate(), context, errors);
 
-    case binary::Opcode::BrTable:
+    case Opcode::BrTable:
       return BrTable(value.br_table_immediate(), context, errors);
 
-    case binary::Opcode::Return:
+    case Opcode::Return:
       return Br(context.label_stack.size() - 1, context, errors);
 
-    case binary::Opcode::Call:
+    case Opcode::Call:
       return Call(value.index_immediate(), context, errors);
 
-    case binary::Opcode::Drop:
+    case Opcode::CallIndirect:
+      return CallIndirect(value.call_indirect_immediate(), context, errors);
+
+    case Opcode::Drop:
       return DropTypes(1, context, errors);
 
-    case binary::Opcode::I32Const:
+    case Opcode::I32Const:
       Push(ValueType::I32, context);
       return true;
 
-    case binary::Opcode::I64Const:
+    case Opcode::I64Const:
       Push(ValueType::I64, context);
       return true;
 
-    case binary::Opcode::F32Const:
+    case Opcode::F32Const:
       Push(ValueType::F32, context);
       return true;
 
-    case binary::Opcode::F64Const:
+    case Opcode::F64Const:
       Push(ValueType::F64, context);
       return true;
 

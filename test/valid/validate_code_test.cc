@@ -89,6 +89,11 @@ class ValidateInstructionTest : public ::testing::Test {
     return context.functions.size() - 1;
   }
 
+  Index AddTable(const TableType& table_type) {
+    context.tables.push_back(table_type);
+    return context.tables.size() - 1;
+  }
+
   void Step(const Instruction& instruction) {
     EXPECT_TRUE(Validate(instruction, context, features, errors))
         << format("{}", instruction);
@@ -434,6 +439,7 @@ TEST_F(ValidateInstructionTest, Call_Params) {
   Step(I{O::I32Const, s32{}});
   Step(I{O::F32Const, f32{}});
   Step(I{O::Call, Index{index}});
+  Step(I{O::End});
 }
 
 TEST_F(ValidateInstructionTest, Call_SingleResult) {
@@ -462,6 +468,58 @@ TEST_F(ValidateInstructionTest, Call_TypeIndexOOB) {
   context.functions.push_back(Function{100});
   Index index = context.functions.size() - 1;
   Fail(I{O::Call, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, CallIndirect) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index = AddFunctionType(FunctionType{});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::CallIndirect, CallIndirectImmediate{index, 0}});
+}
+
+TEST_F(ValidateInstructionTest, CallIndirect_Params) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index =
+      AddFunctionType(FunctionType{{ValueType::F32, ValueType::I64}, {}});
+  Step(I{O::F32Const, f32{}});
+  Step(I{O::I64Const, s64{}});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::CallIndirect, CallIndirectImmediate{index, 0}});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, CallIndirect_SingleResult) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index = AddFunctionType(FunctionType{{}, {ValueType::F64}});
+  Step(I{O::Block, BlockType::F64});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::CallIndirect, CallIndirectImmediate{index, 0}});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, CallIndirect_TableIndexOOB) {
+  auto index = AddFunctionType(FunctionType{});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::CallIndirect, CallIndirectImmediate{index, 0}});
+}
+
+TEST_F(ValidateInstructionTest, CallIndirect_EmptyStack) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index = AddFunctionType(FunctionType{});
+  Fail(I{O::CallIndirect, CallIndirectImmediate{index, 0}});
+}
+
+TEST_F(ValidateInstructionTest, CallIndirect_KeyTypeMismatch) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index = AddFunctionType(FunctionType{});
+  Step(I{O::F32Const, f32{}});
+  Fail(I{O::CallIndirect, CallIndirectImmediate{index, 0}});
+}
+
+TEST_F(ValidateInstructionTest, CallIndirect_TypeIndexOOB) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::CallIndirect, CallIndirectImmediate{100, 0}});
 }
 
 TEST_F(ValidateInstructionTest, Drop) {
