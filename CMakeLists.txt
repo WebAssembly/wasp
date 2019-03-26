@@ -80,6 +80,7 @@ add_library(wasplib
   src/binary/table_type.cc
   src/binary/type_entry.cc
   src/valid/context.cc
+  src/valid/validate.cc
   src/valid/validate_instruction.cc
 
   third_party/fmt/src/format.cc

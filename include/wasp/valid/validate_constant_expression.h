@@ -17,70 +17,25 @@
 #ifndef WASP_VALID_VALIDATE_CONSTANT_EXPRESSION_H_
 #define WASP_VALID_VALIDATE_CONSTANT_EXPRESSION_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/format.h"
+#include "wasp/base/types.h"
 #include "wasp/binary/constant_expression.h"
 #include "wasp/binary/value_type.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors.h"
-#include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/validate_index.h"
-#include "wasp/valid/validate_value_type.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool Validate(const binary::ConstantExpression& value,
-                     binary::ValueType expected_type,
-                     Index max_global_index,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  ErrorsContextGuard guard{errors, "constant_expression"};
-  bool valid = true;
-  binary::ValueType actual_type;
-  switch (value.instruction.opcode) {
-    case binary::Opcode::I32Const:
-      actual_type = binary::ValueType::I32;
-      break;
+struct Context;
+class Errors;
 
-    case binary::Opcode::I64Const:
-      actual_type = binary::ValueType::I64;
-      break;
-
-    case binary::Opcode::F32Const:
-      actual_type = binary::ValueType::F32;
-      break;
-
-    case binary::Opcode::F64Const:
-      actual_type = binary::ValueType::F64;
-      break;
-
-    case binary::Opcode::GlobalGet: {
-      auto index = value.instruction.index_immediate();
-      if (!ValidateIndex(index, max_global_index, "global index", errors)) {
-        return false;
-      }
-
-      const auto& global = context.globals[index];
-      actual_type = global.valtype;
-
-      if (context.globals[index].mut == binary::Mutability::Var) {
-        errors.OnError("A constant expression cannot contain a mutable global");
-        valid = false;
-      }
-      break;
-    }
-
-    default:
-      errors.OnError(format("Invalid instruction in constant expression: {}",
-                            value.instruction));
-      return false;
-  }
-
-  valid &= Validate(actual_type, expected_type, context, features, errors);
-  return valid;
-}
+bool Validate(const binary::ConstantExpression&,
+              binary::ValueType expected_type,
+              Index max_global_index,
+              Context&,
+              const Features&,
+              Errors&);
 
 }  // namespace valid
 }  // namespace wasp

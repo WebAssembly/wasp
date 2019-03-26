@@ -17,51 +17,23 @@
 #ifndef WASP_VALID_VALIDATE_ELEMENT_EXPRESSION_H_
 #define WASP_VALID_VALIDATE_ELEMENT_EXPRESSION_H_
 
-#include <cassert>
-
-#include "wasp/base/features.h"
 #include "wasp/binary/element_expression.h"
 #include "wasp/binary/element_type.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors.h"
-#include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/validate_element_type.h"
-#include "wasp/valid/validate_index.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool Validate(const binary::ElementExpression& value,
-                     binary::ElementType element_type,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  ErrorsContextGuard guard{errors, "element expression"};
-  bool valid = true;
-  binary::ElementType actual_type;
-  switch (value.instruction.opcode) {
-    case binary::Opcode::RefNull:
-      actual_type = binary::ElementType::Funcref;
-      break;
+struct Context;
+class Errors;
 
-    case binary::Opcode::RefFunc: {
-      actual_type = binary::ElementType::Funcref;
-      if (!ValidateIndex(value.instruction.index_immediate(),
-                         context.functions.size(), "function index", errors)) {
-        valid = false;
-      }
-      break;
-    }
-
-    default:
-      errors.OnError(format("Invalid instruction in element expression: {}",
-                            value.instruction));
-      return false;
-  }
-
-  valid &= Validate(actual_type, element_type, context, features, errors);
-  return valid;
-}
+bool Validate(const binary::ElementExpression&,
+              binary::ElementType,
+              Context&,
+              const Features&,
+              Errors&);
 
 }  // namespace valid
 }  // namespace wasp

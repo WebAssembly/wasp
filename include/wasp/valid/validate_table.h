@@ -17,29 +17,18 @@
 #ifndef WASP_VALID_VALIDATE_TABLE_H_
 #define WASP_VALID_VALIDATE_TABLE_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/table.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors.h"
-#include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/validate_table_type.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool Validate(const binary::Table& value,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  ErrorsContextGuard guard{errors, "table"};
-  context.tables.push_back(value.table_type);
-  bool valid = Validate(value.table_type, context, features, errors);
-  if (context.tables.size() > 1 && !features.reference_types_enabled()) {
-    errors.OnError("Too many tables, must be 1 or fewer");
-    valid = false;
-  }
-  return valid;
-}
+struct Context;
+class Errors;
+
+bool Validate(const binary::Table&, Context&, const Features&, Errors&);
 
 }  // namespace valid
 }  // namespace wasp

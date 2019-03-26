@@ -17,22 +17,14 @@
 #ifndef WASP_VALID_VALIDATE_GLOBAL_TYPE_H_
 #define WASP_VALID_VALIDATE_GLOBAL_TYPE_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/global_type.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors_context_guard.h"
 
 namespace wasp {
 namespace valid {
 
 class Errors;
 
-inline bool Validate(const binary::GlobalType& value,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  return true;
-}
+bool Validate(const binary::GlobalType&, Context&, const Features&, Errors&);
 
 }  // namespace valid
 }  // namespace wasp

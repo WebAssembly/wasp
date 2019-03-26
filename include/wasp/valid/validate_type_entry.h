@@ -17,23 +17,18 @@
 #ifndef WASP_VALID_VALIDATE_TYPE_ENTRY_H_
 #define WASP_VALID_VALIDATE_TYPE_ENTRY_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/type_entry.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/validate_function_type.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool Validate(const binary::TypeEntry& value,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  ErrorsContextGuard guard{errors, "type entry"};
-  context.types.push_back(value);
-  return Validate(value.type, context, features, errors);
-}
+struct Context;
+class Errors;
+
+bool Validate(const binary::TypeEntry&, Context&, const Features&, Errors&);
 
 }  // namespace valid
 }  // namespace wasp

@@ -17,47 +17,18 @@
 #ifndef WASP_VALID_VALIDATE_INSTRUCTION_H_
 #define WASP_VALID_VALIDATE_INSTRUCTION_H_
 
-#include <cassert>
-
-#include "wasp/base/features.h"
-#include "wasp/base/format.h"
-#include "wasp/base/macros.h"
 #include "wasp/binary/instruction.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors_context_guard.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-void MarkUnreachable(Context&);
-void PushLabel(Context&, LabelType, binary::BlockType);
+struct Context;
+class Errors;
 
-inline bool Validate(const binary::Instruction& value,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  ErrorsContextGuard guard{errors, "instruction"};
-  switch (value.opcode) {
-    case binary::Opcode::Unreachable:
-      MarkUnreachable(context);
-      return true;
-
-    case binary::Opcode::Nop:
-      return true;
-
-    case binary::Opcode::Block:
-      PushLabel(context, LabelType::Block, value.block_type_immediate());
-      return true;
-
-    case binary::Opcode::Loop:
-      PushLabel(context, LabelType::Loop, value.block_type_immediate());
-      return true;
-
-    default:
-      WASP_UNREACHABLE();
-      return false;
-  }
-}
+bool Validate(const binary::Instruction&, Context&, const Features&, Errors&);
 
 }  // namespace valid
 }  // namespace wasp

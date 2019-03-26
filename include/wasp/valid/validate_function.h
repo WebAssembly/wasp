@@ -17,25 +17,18 @@
 #ifndef WASP_VALID_VALIDATE_FUNCTION_H_
 #define WASP_VALID_VALIDATE_FUNCTION_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/format.h"
 #include "wasp/binary/function.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/validate_index.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool Validate(const binary::Function& value,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  ErrorsContextGuard guard{errors, "function"};
-  context.functions.push_back(value);
-  return ValidateIndex(value.type_index, context.types.size(),
-                       "function type index", errors);
-}
+struct Context;
+class Errors;
+
+bool Validate(const binary::Function&, Context&, const Features&, Errors&);
 
 }  // namespace valid
 }  // namespace wasp

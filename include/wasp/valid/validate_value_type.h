@@ -17,26 +17,22 @@
 #ifndef WASP_VALID_VALIDATE_VALUE_TYPE_H_
 #define WASP_VALID_VALIDATE_VALUE_TYPE_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/format.h"
 #include "wasp/binary/value_type.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool Validate(binary::ValueType actual,
-                     binary::ValueType expected,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  if (actual != expected) {
-    errors.OnError(format("Expected value type {}, got {}", expected, actual));
-    return false;
-  }
-  return true;
-}
+struct Context;
+class Errors;
+
+bool Validate(binary::ValueType actual,
+              binary::ValueType expected,
+              Context&,
+              const Features&,
+              Errors&);
 
 }  // namespace valid
 }  // namespace wasp

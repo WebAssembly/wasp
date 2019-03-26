@@ -17,34 +17,20 @@
 #ifndef WASP_VALID_VALIDATE_DATA_SEGMENT_H_
 #define WASP_VALID_VALIDATE_DATA_SEGMENT_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/data_segment.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/validate_constant_expression.h"
-#include "wasp/valid/validate_index.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool Validate(const binary::DataSegment& value,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  ErrorsContextGuard guard{errors, "data segment"};
-  bool valid = true;
-  if (value.is_active()) {
-    const auto& active = value.active();
-    valid &= ValidateIndex(active.memory_index, context.memories.size(),
-                           "memory index", errors);
-    valid &= Validate(active.offset, binary::ValueType::I32,
-                      context.globals.size(), context, features, errors);
-  }
-  return valid;
-}
+struct Context;
+class Errors;
+
+bool Validate(const binary::DataSegment&, Context&, const Features&, Errors&);
 
 }  // namespace valid
 }  // namespace wasp
 
 #endif  // WASP_VALID_VALIDATE_DATA_SEGMENT_H_
-

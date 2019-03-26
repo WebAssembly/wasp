@@ -17,31 +17,18 @@
 #ifndef WASP_VALID_VALIDATE_TABLE_TYPE_H_
 #define WASP_VALID_VALIDATE_TABLE_TYPE_H_
 
-#include <limits>
-
-#include "wasp/base/features.h"
 #include "wasp/binary/table_type.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors.h"
-#include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/validate_limits.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool Validate(const binary::TableType& value,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  ErrorsContextGuard guard{errors, "table type"};
-  constexpr Index kMaxElements = std::numeric_limits<Index>::max();
-  bool valid = Validate(value.limits, kMaxElements, context, features, errors);
-  if (value.limits.shared == binary::Shared::Yes) {
-    errors.OnError("Tables cannot be shared");
-    valid = false;
-  }
-  return valid;
-}
+struct Context;
+class Errors;
+
+bool Validate(const binary::TableType&, Context&, const Features&, Errors&);
 
 }  // namespace valid
 }  // namespace wasp

@@ -17,38 +17,18 @@
 #ifndef WASP_VALID_VALIDATE_LOCALS_H_
 #define WASP_VALID_VALIDATE_LOCALS_H_
 
-#include <limits>
-
-#include "wasp/base/features.h"
-#include "wasp/base/format.h"
-#include "wasp/base/macros.h"
-#include "wasp/base/types.h"
 #include "wasp/binary/locals.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool Validate(const binary::Locals& value,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  ErrorsContextGuard guard{errors, "locals"};
-  const size_t old_count = context.locals.size();
-  const Index max = std::numeric_limits<Index>::max();
-  if (old_count > max - value.count) {
-    errors.OnError(format("Too many locals; max is {}, got {}", max,
-                          static_cast<u64>(old_count) + value.count));
-    return false;
-  }
-  const size_t new_count = old_count + value.count;
-  context.locals.reserve(new_count);
-  for (Index i = 0; i < value.count; ++i) {
-    context.locals.push_back(value.type);
-  }
-  return true;
-}
+struct Context;
+class Errors;
+
+bool Validate(const binary::Locals&, Context&, const Features&, Errors&);
 
 }  // namespace valid
 }  // namespace wasp

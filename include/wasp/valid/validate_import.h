@@ -17,61 +17,18 @@
 #ifndef WASP_VALID_VALIDATE_IMPORT_H_
 #define WASP_VALID_VALIDATE_IMPORT_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/macros.h"
 #include "wasp/binary/import.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors.h"
-#include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/validate_function.h"
-#include "wasp/valid/validate_global_type.h"
-#include "wasp/valid/validate_index.h"
-#include "wasp/valid/validate_memory.h"
-#include "wasp/valid/validate_table.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool Validate(const binary::Import& value,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  ErrorsContextGuard guard{errors, "import"};
-  bool valid = true;
-  switch (value.kind()) {
-    case binary::ExternalKind::Function:
-      valid &=
-          Validate(binary::Function{value.index()}, context, features, errors);
-      context.imported_function_count++;
-      break;
+struct Context;
+class Errors;
 
-    case binary::ExternalKind::Table:
-      valid &= Validate(binary::Table{value.table_type()}, context, features,
-                        errors);
-      break;
-
-    case binary::ExternalKind::Memory:
-      valid &= Validate(binary::Memory{value.memory_type()}, context, features,
-                        errors);
-      break;
-
-    case binary::ExternalKind::Global:
-      context.globals.push_back(value.global_type());
-      context.imported_global_count++;
-      valid &= Validate(value.global_type(), context, features, errors);
-      if (value.global_type().mut == binary::Mutability::Var &&
-          !features.mutable_globals_enabled()) {
-        errors.OnError("Mutable globals cannot be imported");
-        valid = false;
-      }
-      break;
-
-    default:
-      WASP_UNREACHABLE();
-      break;
-  }
-  return valid;
-}
+bool Validate(const binary::Import&, Context&, const Features&, Errors&);
 
 }  // namespace valid
 }  // namespace wasp

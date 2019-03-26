@@ -17,30 +17,18 @@
 #ifndef WASP_VALID_VALIDATE_GLOBAL_H_
 #define WASP_VALID_VALIDATE_GLOBAL_H_
 
-#include "wasp/base/features.h"
 #include "wasp/binary/global.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/validate_constant_expression.h"
-#include "wasp/valid/validate_global_type.h"
-#include "wasp/valid/validate_index.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool Validate(const binary::Global& value,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  ErrorsContextGuard guard{errors, "global"};
-  context.globals.push_back(value.global_type);
-  bool valid = true;
-  valid &= Validate(value.global_type, context, features, errors);
-  // Only imported globals can be used in a global's constant expression.
-  valid &= Validate(value.init, value.global_type.valtype,
-                    context.imported_global_count, context, features, errors);
-  return valid;
-}
+struct Context;
+class Errors;
+
+bool Validate(const binary::Global&, Context&, const Features&, Errors&);
 
 }  // namespace valid
 }  // namespace wasp

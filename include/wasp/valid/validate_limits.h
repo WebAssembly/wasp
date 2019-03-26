@@ -17,41 +17,23 @@
 #ifndef WASP_VALID_VALIDATE_LIMITS_H_
 #define WASP_VALID_VALIDATE_LIMITS_H_
 
-#include "wasp/base/features.h"
+#include "wasp/base/types.h"
 #include "wasp/binary/limits.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors.h"
-#include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/validate_limits.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool Validate(const binary::Limits& value,
-                     Index max,
-                     Context& context,
-                     const Features& features,
-                     Errors& errors) {
-  ErrorsContextGuard guard{errors, "limits"};
-  bool valid = true;
-  if (value.min > max) {
-    errors.OnError(format("Expected minimum {} to be <= {}", value.min, max));
-    valid = false;
-  }
-  if (value.max.has_value()) {
-    if (*value.max > max) {
-      errors.OnError(
-          format("Expected maximum {} to be <= {}", *value.max, max));
-      valid = false;
-    }
-    if (value.min > *value.max) {
-      errors.OnError(format("Expected minimum {} to be <= maximum {}",
-                            value.min, *value.max));
-      valid = false;
-    }
-  }
-  return valid;
-}
+struct Context;
+class Errors;
+
+bool Validate(const binary::Limits&,
+              Index max,
+              Context&,
+              const Features&,
+              Errors&);
 
 }  // namespace valid
 }  // namespace wasp

@@ -17,27 +17,19 @@
 #ifndef WASP_VALID_VALIDATE_INDEX_H_
 #define WASP_VALID_VALIDATE_INDEX_H_
 
-#include "wasp/base/features.h"
-#include "wasp/base/format.h"
+#include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
-#include "wasp/valid/context.h"
-#include "wasp/valid/errors.h"
-#include "wasp/valid/errors_context_guard.h"
 
 namespace wasp {
+
+class Features;
+
 namespace valid {
 
-inline bool ValidateIndex(Index index,
-                          Index max,
-                          string_view desc,
-                          Errors& errors) {
-  if (index >= max) {
-    errors.OnError(
-        format("Invalid {} {}, must be less than {}", desc, index, max));
-    return false;
-  }
-  return true;
-}
+struct Context;
+class Errors;
+
+bool ValidateIndex(Index index, Index max, string_view desc, Errors&);
 
 }  // namespace valid
 }  // namespace wasp
