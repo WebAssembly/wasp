@@ -97,6 +97,10 @@ class ValidateInstructionTest : public ::testing::Test {
     return AddItem(context.tables, table_type);
   }
 
+  Index AddMemory(const MemoryType& memory_type) {
+    return AddItem(context.memories, memory_type);
+  }
+
   Index AddGlobal(const GlobalType& global_type) {
     return AddItem(context.globals, global_type);
   }
@@ -833,9 +837,155 @@ TEST_F(ValidateInstructionTest, GlobalSet_Immutable) {
   Fail(I{O::GlobalSet, Index{index}});
 }
 
+TEST_F(ValidateInstructionTest, I32Load) {
+  const Opcode opcodes[] = {O::I32Load, O::I32Load8S, O::I32Load8U,
+                            O::I32Load16S, O::I32Load16U};
+  AddMemory(MemoryType{Limits{0}});
+
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::I32Const, s32{}});               // -> i32
+  for (auto opcode : opcodes) {              //
+    Step(I{opcode, MemArgImmediate{0, 0}});  // i32 -> i32
+  }                                          //
+  Step(I{O::End});                           // i32 ->
+}
+
+TEST_F(ValidateInstructionTest, I64Load) {
+  const Opcode opcodes[] = {O::I64Load,    O::I64Load8S,  O::I64Load8U,
+                            O::I64Load16S, O::I64Load16U, O::I64Load32S,
+                            O::I64Load32U};
+  AddMemory(MemoryType{Limits{0}});
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::I64});
+    Step(I{O::I32Const, s32{}});             // -> i32
+    Step(I{opcode, MemArgImmediate{0, 0}});  // i32 -> i64
+    Step(I{O::End});                         // i32 ->
+  }
+}
+
+TEST_F(ValidateInstructionTest, F32Load) {
+  AddMemory(MemoryType{Limits{0}});
+  Step(I{O::Block, BlockType::F32});
+  Step(I{O::I32Const, s32{}});                 // -> i32
+  Step(I{O::F32Load, MemArgImmediate{0, 0}});  // i32 -> f32
+  Step(I{O::End});                             // f32 ->
+}
+
+TEST_F(ValidateInstructionTest, F64Load) {
+  AddMemory(MemoryType{Limits{0}});
+  Step(I{O::Block, BlockType::F64});
+  Step(I{O::I32Const, s32{}});                 // -> i32
+  Step(I{O::F64Load, MemArgImmediate{0, 0}});  // i32 -> f64
+  Step(I{O::End});                             // f64 ->
+}
+
+TEST_F(ValidateInstructionTest, Load_Alignment) {
+  struct {
+    Opcode opcode;
+    uint32_t max_align;
+  } const infos[] = {{O::I32Load, 2},    {O::I64Load, 3},    {O::F32Load, 2},
+                     {O::F64Load, 3},    {O::I32Load8S, 0},  {O::I32Load8U, 0},
+                     {O::I32Load16S, 1}, {O::I32Load16U, 1}, {O::I64Load8S, 0},
+                     {O::I64Load8U, 0},  {O::I64Load16S, 1}, {O::I64Load16U, 1},
+                     {O::I64Load32S, 2}, {O::I64Load32U, 2}};
+
+  AddMemory(MemoryType{Limits{0}});
+  for (const auto& info : infos) {
+    Step(I{O::I32Const, s32{}});
+    Step(I{info.opcode, MemArgImmediate{info.max_align, 0}});
+
+    Step(I{O::I32Const, s32{}});
+    Fail(I{info.opcode, MemArgImmediate{info.max_align + 1, 0}});
+  }
+}
+
+TEST_F(ValidateInstructionTest, Load_MemoryOOB) {
+  const Opcode opcodes[] = {
+      O::I32Load,    O::I64Load,    O::F32Load,    O::F64Load,   O::I32Load8S,
+      O::I32Load8U,  O::I32Load16S, O::I32Load16U, O::I64Load8S, O::I64Load8U,
+      O::I64Load16S, O::I64Load16U, O::I64Load32S, O::I64Load32U};
+
+  for (const auto& opcode : opcodes) {
+    Step(I{O::I32Const, s32{}});
+    Fail(I{opcode, MemArgImmediate{0, 0}});
+  }
+}
+
+TEST_F(ValidateInstructionTest, I32Store) {
+  const Opcode opcodes[] = {O::I32Store, O::I32Store8, O::I32Store16};
+  AddMemory(MemoryType{Limits{0}});
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::Void});
+    Step(I{O::I32Const, s32{}});             // -> i32
+    Step(I{O::I32Const, s32{}});             // i32 -> i32 i32
+    Step(I{opcode, MemArgImmediate{0, 0}});  // i32 i32 ->
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, I64Store) {
+  const Opcode opcodes[] = {O::I64Store, O::I64Store8, O::I64Store16,
+                            O::I64Store32};
+  AddMemory(MemoryType{Limits{0}});
+
+  for (auto opcode : opcodes) {
+    Step(I{O::Block, BlockType::Void});
+    Step(I{O::I32Const, s32{}});             // -> i32
+    Step(I{O::I64Const, s64{}});             // i32 -> i32 i64
+    Step(I{opcode, MemArgImmediate{0, 0}});  // i32 i64 ->
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, F32Store) {
+  AddMemory(MemoryType{Limits{0}});
+  Step(I{O::Block, BlockType::Void});
+  Step(I{O::I32Const, s32{}});                  // -> i32
+  Step(I{O::F32Const, f32{}});                  // i32 -> i32 f32
+  Step(I{O::F32Store, MemArgImmediate{0, 0}});  // i32 f32 ->
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, F64Store) {
+  AddMemory(MemoryType{Limits{0}});
+  Step(I{O::Block, BlockType::Void});
+  Step(I{O::I32Const, s32{}});                  // -> i32
+  Step(I{O::F64Const, f64{}});                  // i32 -> i32 f64
+  Step(I{O::F64Store, MemArgImmediate{0, 0}});  // i32 f64 ->
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, Store_MemoryOOB) {
+  const Opcode opcodes[] = {O::I32Store,  O::I64Store,   O::F32Store,
+                            O::F64Store,  O::I32Store8,  O::I32Store16,
+                            O::I64Store8, O::I64Store16, O::I64Store32};
+
+  Step(I{O::Unreachable});
+  for (const auto& opcode : opcodes) {
+    Fail(I{opcode, MemArgImmediate{0, 0}});
+  }
+}
+
+TEST_F(ValidateInstructionTest, Store_Alignment) {
+  struct {
+    Opcode opcode;
+    uint32_t max_align;
+  } const infos[] = {{O::I32Store, 2},  {O::I64Store, 3},   {O::F32Store, 2},
+                     {O::F64Store, 3},  {O::I32Store8, 0},  {O::I32Store16, 1},
+                     {O::I64Store8, 0}, {O::I64Store16, 1}, {O::I64Store32, 2}};
+
+  AddMemory(MemoryType{Limits{0}});
+  Step(I{O::Unreachable});
+  for (const auto& info : infos) {
+    Step(I{info.opcode, MemArgImmediate{info.max_align, 0}});
+    Fail(I{info.opcode, MemArgImmediate{info.max_align + 1, 0}});
+  }
+}
+
 TEST_F(ValidateInstructionTest, I32Unary) {
-  const Opcode opcodes[] = {Opcode::I32Eqz, Opcode::I32Clz, Opcode::I32Ctz,
-                            Opcode::I32Popcnt};
+  const Opcode opcodes[] = {O::I32Eqz, O::I32Clz, O::I32Ctz, O::I32Popcnt};
 
   Step(I{O::Block, BlockType::I32});
   Step(I{O::I32Const, s32{}});   // -> i32
@@ -847,13 +997,11 @@ TEST_F(ValidateInstructionTest, I32Unary) {
 
 TEST_F(ValidateInstructionTest, I32Binary) {
   const Opcode opcodes[] = {
-      Opcode::I32Eq,   Opcode::I32Ne,   Opcode::I32LtS,  Opcode::I32LtU,
-      Opcode::I32GtS,  Opcode::I32GtU,  Opcode::I32LeS,  Opcode::I32LeU,
-      Opcode::I32GeS,  Opcode::I32GeU,  Opcode::I32Add,  Opcode::I32Sub,
-      Opcode::I32Mul,  Opcode::I32DivS, Opcode::I32DivU, Opcode::I32RemS,
-      Opcode::I32RemU, Opcode::I32And,  Opcode::I32Or,   Opcode::I32Xor,
-      Opcode::I32Shl,  Opcode::I32ShrS, Opcode::I32ShrU, Opcode::I32Rotl,
-      Opcode::I32Rotr};
+      O::I32Eq,   O::I32Ne,   O::I32LtS,  O::I32LtU,  O::I32GtS,
+      O::I32GtU,  O::I32LeS,  O::I32LeU,  O::I32GeS,  O::I32GeU,
+      O::I32Add,  O::I32Sub,  O::I32Mul,  O::I32DivS, O::I32DivU,
+      O::I32RemS, O::I32RemU, O::I32And,  O::I32Or,   O::I32Xor,
+      O::I32Shl,  O::I32ShrS, O::I32ShrU, O::I32Rotl, O::I32Rotr};
 
   Step(I{O::Block, BlockType::I32});
   Step(I{O::I32Const, s32{}});    // -> i32
@@ -872,7 +1020,7 @@ TEST_F(ValidateInstructionTest, I64Eqz) {
 }
 
 TEST_F(ValidateInstructionTest, I64Unary) {
-  const Opcode opcodes[] = {Opcode::I64Clz, Opcode::I64Ctz, Opcode::I64Popcnt};
+  const Opcode opcodes[] = {O::I64Clz, O::I64Ctz, O::I64Popcnt};
 
   Step(I{O::Block, BlockType::I64});
   Step(I{O::I64Const, s64{}});   // -> i64
@@ -883,9 +1031,8 @@ TEST_F(ValidateInstructionTest, I64Unary) {
 }
 
 TEST_F(ValidateInstructionTest, I64Compare) {
-  const Opcode opcodes[] = {Opcode::I64LtS, Opcode::I64LtU, Opcode::I64GtS,
-                            Opcode::I64GtU, Opcode::I64LeS, Opcode::I64LeU,
-                            Opcode::I64GeS, Opcode::I64GeU};
+  const Opcode opcodes[] = {O::I64LtS, O::I64LtU, O::I64GtS, O::I64GtU,
+                            O::I64LeS, O::I64LeU, O::I64GeS, O::I64GeU};
 
   for (auto opcode : opcodes) {
     Step(I{O::Block, BlockType::I32});
@@ -898,11 +1045,10 @@ TEST_F(ValidateInstructionTest, I64Compare) {
 }
 
 TEST_F(ValidateInstructionTest, I64Binary) {
-  const Opcode opcodes[] = {Opcode::I64Add,  Opcode::I64Sub,  Opcode::I64Mul,
-                            Opcode::I64DivS, Opcode::I64DivU, Opcode::I64RemS,
-                            Opcode::I64RemU, Opcode::I64And,  Opcode::I64Or,
-                            Opcode::I64Xor,  Opcode::I64Shl,  Opcode::I64ShrS,
-                            Opcode::I64ShrU, Opcode::I64Rotl, Opcode::I64Rotr};
+  const Opcode opcodes[] = {O::I64Add,  O::I64Sub,  O::I64Mul,  O::I64DivS,
+                            O::I64DivU, O::I64RemS, O::I64RemU, O::I64And,
+                            O::I64Or,   O::I64Xor,  O::I64Shl,  O::I64ShrS,
+                            O::I64ShrU, O::I64Rotl, O::I64Rotr};
 
   Step(I{O::Block, BlockType::I64});
   Step(I{O::I64Const, s64{}});    // -> i64
@@ -914,9 +1060,8 @@ TEST_F(ValidateInstructionTest, I64Binary) {
 }
 
 TEST_F(ValidateInstructionTest, F32Unary) {
-  const Opcode opcodes[] = {
-      Opcode::F32Abs,   Opcode::F32Neg,     Opcode::F32Ceil, Opcode::F32Floor,
-      Opcode::F32Trunc, Opcode::F32Nearest, Opcode::F32Sqrt};
+  const Opcode opcodes[] = {O::F32Abs,   O::F32Neg,     O::F32Ceil, O::F32Floor,
+                            O::F32Trunc, O::F32Nearest, O::F32Sqrt};
 
   Step(I{O::Block, BlockType::F32});
   Step(I{O::F32Const, s64{}});   // -> f32
@@ -927,8 +1072,8 @@ TEST_F(ValidateInstructionTest, F32Unary) {
 }
 
 TEST_F(ValidateInstructionTest, F32Compare) {
-  const Opcode opcodes[] = {Opcode::F32Eq, Opcode::F32Ne, Opcode::F32Lt,
-                            Opcode::F32Gt, Opcode::F32Le, Opcode::F32Ge};
+  const Opcode opcodes[] = {O::F32Eq, O::F32Ne, O::F32Lt,
+                            O::F32Gt, O::F32Le, O::F32Ge};
 
   for (auto opcode : opcodes) {
     Step(I{O::Block, BlockType::I32});
@@ -941,9 +1086,8 @@ TEST_F(ValidateInstructionTest, F32Compare) {
 }
 
 TEST_F(ValidateInstructionTest, F32Binary) {
-  const Opcode opcodes[] = {Opcode::F32Add,     Opcode::F32Sub, Opcode::F32Mul,
-                            Opcode::F32Div,     Opcode::F32Min, Opcode::F32Max,
-                            Opcode::F32Copysign};
+  const Opcode opcodes[] = {O::F32Add, O::F32Sub, O::F32Mul,     O::F32Div,
+                            O::F32Min, O::F32Max, O::F32Copysign};
 
   Step(I{O::Block, BlockType::F32});
   Step(I{O::F32Const, f32{}});    // -> f32
@@ -955,9 +1099,8 @@ TEST_F(ValidateInstructionTest, F32Binary) {
 }
 
 TEST_F(ValidateInstructionTest, F64Unary) {
-  const Opcode opcodes[] = {
-      Opcode::F64Abs,   Opcode::F64Neg,     Opcode::F64Ceil, Opcode::F64Floor,
-      Opcode::F64Trunc, Opcode::F64Nearest, Opcode::F64Sqrt};
+  const Opcode opcodes[] = {O::F64Abs,   O::F64Neg,     O::F64Ceil, O::F64Floor,
+                            O::F64Trunc, O::F64Nearest, O::F64Sqrt};
 
   Step(I{O::Block, BlockType::F64});
   Step(I{O::F64Const, s64{}});   // -> f64
@@ -968,8 +1111,8 @@ TEST_F(ValidateInstructionTest, F64Unary) {
 }
 
 TEST_F(ValidateInstructionTest, F64Compare) {
-  const Opcode opcodes[] = {Opcode::F64Eq, Opcode::F64Ne, Opcode::F64Lt,
-                            Opcode::F64Gt, Opcode::F64Le, Opcode::F64Ge};
+  const Opcode opcodes[] = {O::F64Eq, O::F64Ne, O::F64Lt,
+                            O::F64Gt, O::F64Le, O::F64Ge};
 
   for (auto opcode : opcodes) {
     Step(I{O::Block, BlockType::I32});
@@ -982,9 +1125,8 @@ TEST_F(ValidateInstructionTest, F64Compare) {
 }
 
 TEST_F(ValidateInstructionTest, F64Binary) {
-  const Opcode opcodes[] = {Opcode::F64Add,     Opcode::F64Sub, Opcode::F64Mul,
-                            Opcode::F64Div,     Opcode::F64Min, Opcode::F64Max,
-                            Opcode::F64Copysign};
+  const Opcode opcodes[] = {O::F64Add, O::F64Sub, O::F64Mul,     O::F64Div,
+                            O::F64Min, O::F64Max, O::F64Copysign};
 
   Step(I{O::Block, BlockType::F64});
   Step(I{O::F64Const, f64{}});    // -> f64
@@ -996,8 +1138,8 @@ TEST_F(ValidateInstructionTest, F64Binary) {
 }
 
 TEST_F(ValidateInstructionTest, I32_F32) {
-  const Opcode opcodes[] = {Opcode::I32TruncF32S, Opcode::I32TruncF32U,
-                            Opcode::I32ReinterpretF32};
+  const Opcode opcodes[] = {O::I32TruncF32S, O::I32TruncF32U,
+                            O::I32ReinterpretF32};
 
   for (auto opcode : opcodes) {
     Step(I{O::Block, BlockType::I32});
@@ -1009,7 +1151,7 @@ TEST_F(ValidateInstructionTest, I32_F32) {
 }
 
 TEST_F(ValidateInstructionTest, I32_F64) {
-  const Opcode opcodes[] = {Opcode::I32TruncF64S, Opcode::I32TruncF64U};
+  const Opcode opcodes[] = {O::I32TruncF64S, O::I32TruncF64U};
 
   for (auto opcode : opcodes) {
     Step(I{O::Block, BlockType::I32});
@@ -1021,7 +1163,7 @@ TEST_F(ValidateInstructionTest, I32_F64) {
 }
 
 TEST_F(ValidateInstructionTest, I64_I32) {
-  const Opcode opcodes[] = {Opcode::I64ExtendI32S, Opcode::I64ExtendI32U};
+  const Opcode opcodes[] = {O::I64ExtendI32S, O::I64ExtendI32U};
 
   for (auto opcode : opcodes) {
     Step(I{O::Block, BlockType::I64});
@@ -1033,7 +1175,7 @@ TEST_F(ValidateInstructionTest, I64_I32) {
 }
 
 TEST_F(ValidateInstructionTest, I64_F32) {
-  const Opcode opcodes[] = {Opcode::I64TruncF32S, Opcode::I64TruncF32U};
+  const Opcode opcodes[] = {O::I64TruncF32S, O::I64TruncF32U};
 
   for (auto opcode : opcodes) {
     Step(I{O::Block, BlockType::I64});
@@ -1045,8 +1187,8 @@ TEST_F(ValidateInstructionTest, I64_F32) {
 }
 
 TEST_F(ValidateInstructionTest, I64_F64) {
-  const Opcode opcodes[] = {Opcode::I64TruncF64S, Opcode::I64TruncF64U,
-                            Opcode::I64ReinterpretF64};
+  const Opcode opcodes[] = {O::I64TruncF64S, O::I64TruncF64U,
+                            O::I64ReinterpretF64};
 
   for (auto opcode : opcodes) {
     Step(I{O::Block, BlockType::I64});
@@ -1058,8 +1200,8 @@ TEST_F(ValidateInstructionTest, I64_F64) {
 }
 
 TEST_F(ValidateInstructionTest, F32_I32) {
-  const Opcode opcodes[] = {Opcode::F32ConvertI32S, Opcode::F32ConvertI32U,
-                            Opcode::F32ReinterpretI32};
+  const Opcode opcodes[] = {O::F32ConvertI32S, O::F32ConvertI32U,
+                            O::F32ReinterpretI32};
 
   for (auto opcode : opcodes) {
     Step(I{O::Block, BlockType::F32});
@@ -1071,7 +1213,7 @@ TEST_F(ValidateInstructionTest, F32_I32) {
 }
 
 TEST_F(ValidateInstructionTest, F32_I64) {
-  const Opcode opcodes[] = {Opcode::F32ConvertI64S, Opcode::F32ConvertI64U};
+  const Opcode opcodes[] = {O::F32ConvertI64S, O::F32ConvertI64U};
 
   for (auto opcode : opcodes) {
     Step(I{O::Block, BlockType::F32});
@@ -1090,7 +1232,7 @@ TEST_F(ValidateInstructionTest, F32DemoteF64) {
 }
 
 TEST_F(ValidateInstructionTest, F64_I32) {
-  const Opcode opcodes[] = {Opcode::F64ConvertI32S, Opcode::F64ConvertI32U};
+  const Opcode opcodes[] = {O::F64ConvertI32S, O::F64ConvertI32U};
 
   for (auto opcode : opcodes) {
     Step(I{O::Block, BlockType::F64});
@@ -1102,8 +1244,8 @@ TEST_F(ValidateInstructionTest, F64_I32) {
 }
 
 TEST_F(ValidateInstructionTest, F64_I64) {
-  const Opcode opcodes[] = {Opcode::F64ConvertI64S, Opcode::F64ConvertI64U,
-                            Opcode::F64ReinterpretI64};
+  const Opcode opcodes[] = {O::F64ConvertI64S, O::F64ConvertI64U,
+                            O::F64ReinterpretI64};
 
   for (auto opcode : opcodes) {
     Step(I{O::Block, BlockType::F64});

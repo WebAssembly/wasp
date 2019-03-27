@@ -45,6 +45,9 @@ using ValueTypeSpan = span<const ValueType>;
   V(f32, ValueType::F32)                     \
   V(f64, ValueType::F64)                     \
   V(i32_i32, ValueType::I32, ValueType::I32) \
+  V(i32_i64, ValueType::I32, ValueType::I64) \
+  V(i32_f32, ValueType::I32, ValueType::F32) \
+  V(i32_f64, ValueType::I32, ValueType::F64) \
   V(i64_i64, ValueType::I64, ValueType::I64) \
   V(f32_f32, ValueType::F32, ValueType::F32) \
   V(f64_f64, ValueType::F64, ValueType::F64)
@@ -221,16 +224,6 @@ bool CheckTypeStackEmpty(Context& context, Errors& errors) {
   return true;
 }
 
-bool PopLabel(Context& context, Errors& errors) {
-  const auto& top_label = TopLabel(context);
-  bool valid = PopTypes(top_label.result_types, context, errors);
-  valid &= CheckTypeStackEmpty(context, errors);
-  ResetTypeStackToLimit(context);
-  PushTypes(top_label.result_types, context);
-  context.label_stack.pop_back();
-  return valid;
-}
-
 bool Else(Context& context, Errors& errors) {
   auto& top_label = TopLabel(context);
   if (top_label.label_type != LabelType::If) {
@@ -252,7 +245,11 @@ bool End(Context& context, Errors& errors) {
   if (top_label.label_type == LabelType::If) {
     valid &= Else(context, errors);
   }
-  valid &= PopLabel(context, errors);
+  valid &= PopTypes(top_label.result_types, context, errors);
+  valid &= CheckTypeStackEmpty(context, errors);
+  ResetTypeStackToLimit(context);
+  PushTypes(top_label.result_types, context);
+  context.label_stack.pop_back();
   return valid;
 }
 
@@ -397,6 +394,72 @@ bool GlobalSet(Index index, Context& context, Errors& errors) {
   return valid;
 }
 
+bool CheckAlignment(const Instruction& instruction,
+                    uint32_t max_align,
+                    Errors& errors) {
+  const auto& mem_arg = instruction.mem_arg_immediate();
+  if (mem_arg.align_log2 > max_align) {
+    errors.OnError(format("Invalid alignment {}", instruction));
+    return false;
+  }
+  return true;
+}
+
+bool Load(const Instruction& instruction, Context& context, Errors& errors) {
+  if (!ValidateIndex(0, context.memories.size(), "memory index", errors)) {
+    return false;
+  }
+  ValueTypeSpan span;
+  uint32_t max_align;
+  switch (instruction.opcode) {
+    case Opcode::I32Load:    span = span_i32; max_align = 2; break;
+    case Opcode::I64Load:    span = span_i64; max_align = 3; break;
+    case Opcode::F32Load:    span = span_f32; max_align = 2; break;
+    case Opcode::F64Load:    span = span_f64; max_align = 3; break;
+    case Opcode::I32Load8S:  span = span_i32; max_align = 0; break;
+    case Opcode::I32Load8U:  span = span_i32; max_align = 0; break;
+    case Opcode::I32Load16S: span = span_i32; max_align = 1; break;
+    case Opcode::I32Load16U: span = span_i32; max_align = 1; break;
+    case Opcode::I64Load8S:  span = span_i64; max_align = 0; break;
+    case Opcode::I64Load8U:  span = span_i64; max_align = 0; break;
+    case Opcode::I64Load16S: span = span_i64; max_align = 1; break;
+    case Opcode::I64Load16U: span = span_i64; max_align = 1; break;
+    case Opcode::I64Load32S: span = span_i64; max_align = 2; break;
+    case Opcode::I64Load32U: span = span_i64; max_align = 2; break;
+    default:
+      WASP_UNREACHABLE();
+  }
+
+  bool valid = CheckAlignment(instruction, max_align, errors);
+  valid &= PopAndPushTypes(span_i32, span, context, errors);
+  return valid;
+}
+
+bool Store(const Instruction& instruction, Context& context, Errors& errors) {
+  if (!ValidateIndex(0, context.memories.size(), "memory index", errors)) {
+    return false;
+  }
+  ValueTypeSpan span;
+  uint32_t max_align;
+  switch (instruction.opcode) {
+    case Opcode::I32Store:   span = span_i32_i32; max_align = 2; break;
+    case Opcode::I64Store:   span = span_i32_i64; max_align = 3; break;
+    case Opcode::F32Store:   span = span_i32_f32; max_align = 2; break;
+    case Opcode::F64Store:   span = span_i32_f64; max_align = 3; break;
+    case Opcode::I32Store8:  span = span_i32_i32; max_align = 0; break;
+    case Opcode::I32Store16: span = span_i32_i32; max_align = 1; break;
+    case Opcode::I64Store8:  span = span_i32_i64; max_align = 0; break;
+    case Opcode::I64Store16: span = span_i32_i64; max_align = 1; break;
+    case Opcode::I64Store32: span = span_i32_i64; max_align = 2; break;
+    default:
+      WASP_UNREACHABLE();
+  }
+
+  bool valid = CheckAlignment(instruction, max_align, errors);
+  valid &= PopTypes(span, context, errors);
+  return valid;
+}
+
 }  // namespace
 
 bool Validate(const Locals& value,
@@ -496,6 +559,33 @@ bool Validate(const Instruction& value,
 
     case Opcode::GlobalSet:
       return GlobalSet(value.index_immediate(), context, errors);
+
+    case Opcode::I32Load:
+    case Opcode::I64Load:
+    case Opcode::F32Load:
+    case Opcode::F64Load:
+    case Opcode::I32Load8S:
+    case Opcode::I32Load8U:
+    case Opcode::I32Load16S:
+    case Opcode::I32Load16U:
+    case Opcode::I64Load8S:
+    case Opcode::I64Load8U:
+    case Opcode::I64Load16S:
+    case Opcode::I64Load16U:
+    case Opcode::I64Load32S:
+    case Opcode::I64Load32U:
+      return Load(value, context, errors);
+
+    case Opcode::I32Store:
+    case Opcode::I64Store:
+    case Opcode::F32Store:
+    case Opcode::F64Store:
+    case Opcode::I32Store8:
+    case Opcode::I32Store16:
+    case Opcode::I64Store8:
+    case Opcode::I64Store16:
+    case Opcode::I64Store32:
+      return Store(value, context, errors);
 
     case Opcode::I32Const:
       PushType(ValueType::I32, context);
