@@ -460,6 +460,21 @@ bool Store(const Instruction& instruction, Context& context, Errors& errors) {
   return valid;
 }
 
+bool MemorySize(Context& context, Errors& errors) {
+  if (!ValidateIndex(0, context.memories.size(), "memory index", errors)) {
+    return false;
+  }
+  PushType(ValueType::I32, context);
+  return true;
+}
+
+bool MemoryGrow(Context& context, Errors& errors) {
+  if (!ValidateIndex(0, context.memories.size(), "memory index", errors)) {
+    return false;
+  }
+  return PopAndPushTypes(span_i32, span_i32, context, errors);
+}
+
 }  // namespace
 
 bool Validate(const Locals& value,
@@ -586,6 +601,12 @@ bool Validate(const Instruction& value,
     case Opcode::I64Store16:
     case Opcode::I64Store32:
       return Store(value, context, errors);
+
+    case Opcode::MemorySize:
+      return MemorySize(context, errors);
+
+    case Opcode::MemoryGrow:
+      return MemoryGrow(context, errors);
 
     case Opcode::I32Const:
       PushType(ValueType::I32, context);

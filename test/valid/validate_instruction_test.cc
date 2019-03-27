@@ -951,6 +951,30 @@ TEST_F(ValidateInstructionTest, Store_Alignment) {
   }
 }
 
+TEST_F(ValidateInstructionTest, MemorySize) {
+  AddMemory(MemoryType{Limits{0}});
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::MemorySize, u8{}});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, MemorySize_MemoryIndexOOB) {
+  Fail(I{O::MemorySize, u8{}});
+}
+
+TEST_F(ValidateInstructionTest, MemoryGrow) {
+  AddMemory(MemoryType{Limits{0}});
+  Step(I{O::Block, BlockType::I32});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::MemoryGrow, u8{}});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, MemoryGrow_MemoryIndexOOB) {
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::MemoryGrow, u8{}});
+}
+
 TEST_F(ValidateInstructionTest, I32Unary) {
   const Opcode opcodes[] = {O::I32Eqz, O::I32Clz, O::I32Ctz, O::I32Popcnt};
 
