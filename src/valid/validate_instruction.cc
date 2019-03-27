@@ -665,6 +665,8 @@ bool Validate(const Instruction& value,
     case Opcode::I32Rotr:
       return PopAndPushTypes(span_i32_i32, span_i32, context, errors);
 
+    case Opcode::I64Eq:
+    case Opcode::I64Ne:
     case Opcode::I64LtS:
     case Opcode::I64LtU:
     case Opcode::I64GtS:
