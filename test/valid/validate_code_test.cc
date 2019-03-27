@@ -170,6 +170,117 @@ TEST_F(ValidateInstructionTest, Loop_SingleResult) {
   }
 }
 
+TEST_F(ValidateInstructionTest, If_End_Void) {
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::If, BlockType::Void});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, If_Else_Void) {
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::If, BlockType::Void});
+  Step(I{O::Else});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, If_Else_SingleResult) {
+  for (const auto& info : all_value_types) {
+    Step(I{O::I32Const, s32{}});
+    Step(I{O::If, info.block_type});
+    Step(info.instruction);
+    Step(I{O::Else});
+    Step(info.instruction);
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, If_End_Void_Unreachable) {
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::If, BlockType::Void});
+  Step(I{O::Unreachable});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, If_Else_Void_Unreachable) {
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::If, BlockType::Void});
+  Step(I{O::Unreachable});
+  Step(I{O::Else});
+  Step(I{O::End});
+
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::If, BlockType::Void});
+  Step(I{O::Else});
+  Step(I{O::Unreachable});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, If_Else_SingleResult_Unreachable) {
+  for (const auto& info : all_value_types) {
+    Step(I{O::I32Const, s32{}});
+    Step(I{O::If, info.block_type});
+    Step(I{O::Unreachable});
+    Step(I{O::Else});
+    Step(info.instruction);
+    Step(I{O::End});
+  }
+
+  for (const auto& info : all_value_types) {
+    Step(I{O::I32Const, s32{}});
+    Step(I{O::If, info.block_type});
+    Step(info.instruction);
+    Step(I{O::Else});
+    Step(I{O::Unreachable});
+    Step(I{O::End});
+  }
+}
+
+TEST_F(ValidateInstructionTest, If_EmptyStack) {
+  Fail(I{O::If, BlockType::Void});
+}
+
+TEST_F(ValidateInstructionTest, If_CondTypeMismatch) {
+  Step(I{O::F32Const, f32{}});
+  Fail(I{O::If, BlockType::Void});
+}
+
+TEST_F(ValidateInstructionTest, If_End_I32) {
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::If, BlockType::I32});
+  Step(I{O::I32Const, s32{}});
+  Fail(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, If_End_I32_Unreachable) {
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::If, BlockType::I32});
+  Step(I{O::Unreachable});
+  Fail(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, If_Else_TypeMismatch) {
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::If, BlockType::I32});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::Else});
+  Step(I{O::F32Const, f32{}});
+  Fail(I{O::End});
+
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::If, BlockType::I32});
+  Step(I{O::F32Const, f32{}});
+  Fail(I{O::Else});
+  Step(I{O::I32Const, s32{}});
+  Step(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, Else_NoIf) {
+  Fail(I{O::Else});
+
+  Step(I{O::Block, BlockType::Void});
+  Fail(I{O::Else});
+}
+
 TEST_F(ValidateInstructionTest, End) {
   Step(I{O::Block, BlockType::Void});
   Step(I{O::End});

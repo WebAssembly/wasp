@@ -225,8 +225,34 @@ bool PopLabel(Context& context, Errors& errors) {
   const auto& top_label = TopLabel(context);
   bool valid = PopTypes(top_label.result_types, context, errors);
   valid &= CheckTypeStackEmpty(context, errors);
+  ResetTypeStackToLimit(context);
   PushTypes(top_label.result_types, context);
   context.label_stack.pop_back();
+  return valid;
+}
+
+bool Else(Context& context, Errors& errors) {
+  auto& top_label = TopLabel(context);
+  if (top_label.label_type != LabelType::If) {
+    errors.OnError("Got else instruction without if");
+    return false;
+  }
+  bool valid = PopTypes(top_label.result_types, context, errors);
+  valid &= CheckTypeStackEmpty(context, errors);
+  ResetTypeStackToLimit(context);
+  PushTypes(top_label.param_types, context);
+  top_label.label_type = LabelType::Else;
+  top_label.unreachable = false;
+  return valid;
+}
+
+bool End(Context& context, Errors& errors) {
+  auto& top_label = TopLabel(context);
+  bool valid = true;
+  if (top_label.label_type == LabelType::If) {
+    valid &= Else(context, errors);
+  }
+  valid &= PopLabel(context, errors);
   return valid;
 }
 
@@ -419,8 +445,18 @@ bool Validate(const Instruction& value,
       return PushLabel(LabelType::Loop, value.block_type_immediate(), context,
                        errors);
 
+    case Opcode::If: {
+      bool valid = PopType(ValueType::I32, context, errors);
+      valid &= PushLabel(LabelType::If, value.block_type_immediate(), context,
+                         errors);
+      return valid;
+    }
+
+    case Opcode::Else:
+      return Else(context, errors);
+
     case Opcode::End:
-      return PopLabel(context, errors);
+      return End(context, errors);
 
     case Opcode::Br:
       return Br(value.index_immediate(), context, errors);
