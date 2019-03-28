@@ -558,6 +558,7 @@ bool Validate(const Instruction& value,
     return false;
   }
 
+  ValueTypeSpan params, results;
   switch (value.opcode) {
     case Opcode::Unreachable:
       SetUnreachable(context);
@@ -683,10 +684,12 @@ bool Validate(const Instruction& value,
     case Opcode::I32Popcnt:
     case Opcode::I32Extend8S:
     case Opcode::I32Extend16S:
-      return PopAndPushTypes(span_i32, span_i32, context, errors);
+      params = span_i32, results = span_i32;
+      break;
 
     case Opcode::I64Eqz:
-      return PopAndPushTypes(span_i64, span_i32, context, errors);
+      params = span_i64, results = span_i32;
+      break;
 
     case Opcode::I64Clz:
     case Opcode::I64Ctz:
@@ -694,7 +697,8 @@ bool Validate(const Instruction& value,
     case Opcode::I64Extend8S:
     case Opcode::I64Extend16S:
     case Opcode::I64Extend32S:
-      return PopAndPushTypes(span_i64, span_i64, context, errors);
+      params = span_i64, results = span_i64;
+      break;
 
     case Opcode::I32Eq:
     case Opcode::I32Ne:
@@ -721,7 +725,8 @@ bool Validate(const Instruction& value,
     case Opcode::I32ShrU:
     case Opcode::I32Rotl:
     case Opcode::I32Rotr:
-      return PopAndPushTypes(span_i32_i32, span_i32, context, errors);
+      params = span_i32_i32, results = span_i32;
+      break;
 
     case Opcode::I64Eq:
     case Opcode::I64Ne:
@@ -733,7 +738,8 @@ bool Validate(const Instruction& value,
     case Opcode::I64LeU:
     case Opcode::I64GeS:
     case Opcode::I64GeU:
-      return PopAndPushTypes(span_i64_i64, span_i32, context, errors);
+      params = span_i64_i64, results = span_i32;
+      break;
 
     case Opcode::F32Eq:
     case Opcode::F32Ne:
@@ -741,7 +747,8 @@ bool Validate(const Instruction& value,
     case Opcode::F32Gt:
     case Opcode::F32Le:
     case Opcode::F32Ge:
-      return PopAndPushTypes(span_f32_f32, span_i32, context, errors);
+      params = span_f32_f32, results = span_i32;
+      break;
 
     case Opcode::F64Eq:
     case Opcode::F64Ne:
@@ -749,7 +756,8 @@ bool Validate(const Instruction& value,
     case Opcode::F64Gt:
     case Opcode::F64Le:
     case Opcode::F64Ge:
-      return PopAndPushTypes(span_f64_f64, span_i32, context, errors);
+      params = span_f64_f64, results = span_i32;
+      break;
 
     case Opcode::I64Add:
     case Opcode::I64Sub:
@@ -766,7 +774,8 @@ bool Validate(const Instruction& value,
     case Opcode::I64ShrU:
     case Opcode::I64Rotl:
     case Opcode::I64Rotr:
-      return PopAndPushTypes(span_i64_i64, span_i64, context, errors);
+      params = span_i64_i64, results = span_i64;
+      break;
 
     case Opcode::F32Abs:
     case Opcode::F32Neg:
@@ -775,7 +784,8 @@ bool Validate(const Instruction& value,
     case Opcode::F32Trunc:
     case Opcode::F32Nearest:
     case Opcode::F32Sqrt:
-      return PopAndPushTypes(span_f32, span_f32, context, errors);
+      params = span_f32, results = span_f32;
+      break;
 
     case Opcode::F32Add:
     case Opcode::F32Sub:
@@ -784,7 +794,8 @@ bool Validate(const Instruction& value,
     case Opcode::F32Min:
     case Opcode::F32Max:
     case Opcode::F32Copysign:
-      return PopAndPushTypes(span_f32_f32, span_f32, context, errors);
+      params = span_f32_f32, results = span_f32;
+      break;
 
     case Opcode::F64Abs:
     case Opcode::F64Neg:
@@ -793,7 +804,8 @@ bool Validate(const Instruction& value,
     case Opcode::F64Trunc:
     case Opcode::F64Nearest:
     case Opcode::F64Sqrt:
-      return PopAndPushTypes(span_f64, span_f64, context, errors);
+      params = span_f64, results = span_f64;
+      break;
 
     case Opcode::F64Add:
     case Opcode::F64Sub:
@@ -802,61 +814,73 @@ bool Validate(const Instruction& value,
     case Opcode::F64Min:
     case Opcode::F64Max:
     case Opcode::F64Copysign:
-      return PopAndPushTypes(span_f64_f64, span_f64, context, errors);
+      params = span_f64_f64, results = span_f64;
+      break;
 
     case Opcode::I32TruncF32S:
     case Opcode::I32TruncF32U:
     case Opcode::I32ReinterpretF32:
     case Opcode::I32TruncSatF32S:
     case Opcode::I32TruncSatF32U:
-      return PopAndPushTypes(span_f32, span_i32, context, errors);
+      params = span_f32, results = span_i32;
+      break;
 
     case Opcode::I32TruncF64S:
     case Opcode::I32TruncF64U:
     case Opcode::I32TruncSatF64S:
     case Opcode::I32TruncSatF64U:
-      return PopAndPushTypes(span_f64, span_i32, context, errors);
+      params = span_f64, results = span_i32;
+      break;
 
     case Opcode::I64ExtendI32S:
     case Opcode::I64ExtendI32U:
-      return PopAndPushTypes(span_i32, span_i64, context, errors);
+      params = span_i32, results = span_i64;
+      break;
 
     case Opcode::I64TruncF32S:
     case Opcode::I64TruncF32U:
     case Opcode::I64TruncSatF32S:
     case Opcode::I64TruncSatF32U:
-      return PopAndPushTypes(span_f32, span_i64, context, errors);
+      params = span_f32, results = span_i64;
+      break;
 
     case Opcode::I64TruncF64S:
     case Opcode::I64TruncF64U:
     case Opcode::I64ReinterpretF64:
     case Opcode::I64TruncSatF64S:
     case Opcode::I64TruncSatF64U:
-      return PopAndPushTypes(span_f64, span_i64, context, errors);
+      params = span_f64, results = span_i64;
+      break;
 
     case Opcode::F32ConvertI32S:
     case Opcode::F32ConvertI32U:
     case Opcode::F32ReinterpretI32:
-      return PopAndPushTypes(span_i32, span_f32, context, errors);
+      params = span_i32, results = span_f32;
+      break;
 
     case Opcode::F32ConvertI64S:
     case Opcode::F32ConvertI64U:
-      return PopAndPushTypes(span_i64, span_f32, context, errors);
+      params = span_i64, results = span_f32;
+      break;
 
     case Opcode::F32DemoteF64:
-      return PopAndPushTypes(span_f64, span_f32, context, errors);
+      params = span_f64, results = span_f32;
+      break;
 
     case Opcode::F64ConvertI32S:
     case Opcode::F64ConvertI32U:
-      return PopAndPushTypes(span_i32, span_f64, context, errors);
+      params = span_i32, results = span_f64;
+      break;
 
     case Opcode::F64ConvertI64S:
     case Opcode::F64ConvertI64U:
     case Opcode::F64ReinterpretI64:
-      return PopAndPushTypes(span_i64, span_f64, context, errors);
+      params = span_i64, results = span_f64;
+      break;
 
     case Opcode::F64PromoteF32:
-      return PopAndPushTypes(span_f32, span_f64, context, errors);
+      params = span_f32, results = span_f64;
+      break;
 
     case Opcode::V128Const:
       PushType(ValueType::V128, context);
@@ -881,10 +905,12 @@ bool Validate(const Instruction& value,
     case Opcode::F32X4ConvertI32X4U:
     case Opcode::F64X2ConvertI64X2S:
     case Opcode::F64X2ConvertI64X2U:
-      return PopAndPushTypes(span_v128, span_v128, context, errors);
+      params = span_v128, results = span_v128;
+      break;
 
     case Opcode::V128BitSelect:
-      return PopAndPushTypes(span_v128_v128_v128, span_v128, context, errors);
+      params = span_v128_v128_v128, results = span_v128;
+      break;
 
     case Opcode::V8X16Shuffle:
     case Opcode::I8X16Eq:
@@ -963,21 +989,26 @@ bool Validate(const Instruction& value,
     case Opcode::F64X2Div:
     case Opcode::F64X2Min:
     case Opcode::F64X2Max:
-      return PopAndPushTypes(span_v128_v128, span_v128, context, errors);
+      params = span_v128_v128, results = span_v128;
+      break;
 
     case Opcode::I8X16Splat:
     case Opcode::I16X8Splat:
     case Opcode::I32X4Splat:
-      return PopAndPushTypes(span_i32, span_v128, context, errors);
+      params = span_i32, results = span_v128;
+      break;
 
     case Opcode::I64X2Splat:
-      return PopAndPushTypes(span_i64, span_v128, context, errors);
+      params = span_i64, results = span_v128;
+      break;
 
     case Opcode::F32X4Splat:
-      return PopAndPushTypes(span_f32, span_v128, context, errors);
+      params = span_f32, results = span_v128;
+      break;
 
     case Opcode::F64X2Splat:
-      return PopAndPushTypes(span_f64, span_v128, context, errors);
+      params = span_f64, results = span_v128;
+      break;
 
     case Opcode::I8X16ExtractLaneS:
     case Opcode::I8X16ExtractLaneU:
@@ -992,16 +1023,20 @@ bool Validate(const Instruction& value,
     case Opcode::I32X4AllTrue:
     case Opcode::I64X2AnyTrue:
     case Opcode::I64X2AllTrue:
-      return PopAndPushTypes(span_v128, span_i32, context, errors);
+      params = span_v128, results = span_i32;
+      break;
 
     case Opcode::I64X2ExtractLane:
-      return PopAndPushTypes(span_v128, span_i64, context, errors);
+      params = span_v128, results = span_i64;
+      break;
 
     case Opcode::F32X4ExtractLane:
-      return PopAndPushTypes(span_v128, span_f32, context, errors);
+      params = span_v128, results = span_f32;
+      break;
 
     case Opcode::F64X2ExtractLane:
-      return PopAndPushTypes(span_v128, span_f64, context, errors);
+      params = span_v128, results = span_f64;
+      break;
 
     case Opcode::I8X16ReplaceLane:
     case Opcode::I16X8ReplaceLane:
@@ -1018,21 +1053,27 @@ bool Validate(const Instruction& value,
     case Opcode::I64X2Shl:
     case Opcode::I64X2ShrS:
     case Opcode::I64X2ShrU:
-      return PopAndPushTypes(span_v128_i32, span_v128, context, errors);
+      params = span_v128_i32, results = span_v128;
+      break;
 
     case Opcode::I64X2ReplaceLane:
-      return PopAndPushTypes(span_v128_i64, span_v128, context, errors);
+      params = span_v128_i64, results = span_v128;
+      break;
 
     case Opcode::F32X4ReplaceLane:
-      return PopAndPushTypes(span_v128_f32, span_v128, context, errors);
+      params = span_v128_f32, results = span_v128;
+      break;
 
     case Opcode::F64X2ReplaceLane:
-      return PopAndPushTypes(span_v128_f64, span_v128, context, errors);
+      params = span_v128_f64, results = span_v128;
+      break;
 
     default:
       WASP_UNREACHABLE();
       return false;
   }
+
+  return PopAndPushTypes(params, results, context, errors);
 }
 
 }  // namespace valid
