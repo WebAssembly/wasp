@@ -60,6 +60,13 @@ VALUE_TYPE_SPANS(WASP_V)
 #undef WASP_V
 #undef VALUE_TYPE_SPANS
 
+bool AllTrue() { return true; }
+
+template <typename T, typename... Args>
+bool AllTrue(T first, Args... rest) {
+  return !!first & AllTrue(rest...);
+}
+
 optional<FunctionType> GetBlockTypeSignature(BlockType block_type,
                                              Context& context,
                                              Errors& errors) {
@@ -89,6 +96,79 @@ Label& TopLabel(Context& context) {
 ValueTypeSpan GetTypeStack(Context& context) {
   return ValueTypeSpan{context.type_stack}.subspan(
       TopLabel(context).type_stack_limit);
+}
+
+optional<Function> GetFunction(Index index, Context& context, Errors& errors) {
+  if (!ValidateIndex(index, context.functions.size(), "function index",
+                     errors)) {
+    return nullopt;
+  }
+  return context.functions[index];
+}
+
+optional<FunctionType> GetFunctionType(Index index,
+                                       Context& context,
+                                       Errors& errors) {
+  if (!ValidateIndex(index, context.types.size(), "type index", errors)) {
+    return nullopt;
+  }
+  return context.types[index].type;
+}
+
+optional<TableType> GetTableType(Index index,
+                                 Context& context,
+                                 Errors& errors) {
+  if (!ValidateIndex(index, context.tables.size(), "table index", errors)) {
+    return nullopt;
+  }
+  return context.tables[index];
+}
+
+optional<MemoryType> GetMemoryType(Index index,
+                                   Context& context,
+                                   Errors& errors) {
+  if (!ValidateIndex(index, context.memories.size(), "memory index", errors)) {
+    return nullopt;
+  }
+  return context.memories[index];
+}
+
+optional<GlobalType> GetGlobalType(Index index,
+                                   Context& context,
+                                   Errors& errors) {
+  if (!ValidateIndex(index, context.globals.size(), "global index", errors)) {
+    return nullopt;
+  }
+  return context.globals[index];
+}
+
+optional<ValueType> GetLocalType(Index index,
+                                 Context& context,
+                                 Errors& errors) {
+  if (!ValidateIndex(index, context.locals.size(), "local index", errors)) {
+    return nullopt;
+  }
+  return context.locals[index];
+}
+
+ValueType MaybeDefault(optional<ValueType> value) {
+  return value.value_or(ValueType::I32);
+}
+
+Function MaybeDefault(optional<Function> value) {
+  return value.value_or(Function{0});
+}
+
+FunctionType MaybeDefault(optional<FunctionType> value) {
+  return value.value_or(FunctionType{});
+}
+
+GlobalType MaybeDefault(optional<GlobalType> value) {
+  return value.value_or(GlobalType{ValueType::I32, Mutability::Const});
+}
+
+Label MaybeDefault(const Label* value) {
+  return value ? *value : Label{LabelType::Block, {}, {}, 0};
 }
 
 optional<ValueType> PeekType(Context& context, Errors& errors) {
@@ -255,20 +335,18 @@ bool End(Context& context, Errors& errors) {
 
 bool Br(Index depth, Context& context, Errors& errors) {
   const auto* label = GetLabel(depth, context, errors);
-  bool valid = label ? PopTypes(label->br_types(), context, errors) : false;
+  bool valid = PopTypes(MaybeDefault(label).br_types(), context, errors);
   SetUnreachable(context);
-  return valid;
+  return AllTrue(label, valid);
 }
 
 bool BrIf(Index depth, Context& context, Errors& errors) {
   bool valid = PopType(ValueType::I32, context, errors);
   const auto* label = GetLabel(depth, context, errors);
-  if (!label) {
-    return false;
-  }
-  valid &= PopTypes(label->br_types(), context, errors);
-  PushTypes(label->br_types(), context);
-  return valid;
+  auto label_ = MaybeDefault(label);
+  return AllTrue(
+      valid, label,
+      PopAndPushTypes(label_.br_types(), label_.br_types(), context, errors));
 }
 
 bool BrTable(const BrTableImmediate& immediate,
@@ -306,99 +384,70 @@ bool BrTable(const BrTableImmediate& immediate,
 }
 
 bool Call(Index function_index, Context& context, Errors& errors) {
-  if (!ValidateIndex(function_index, context.functions.size(), "function index",
-                     errors)) {
-    return false;
-  }
-  const auto& function = context.functions[function_index];
-  if (!ValidateIndex(function.type_index, context.types.size(), "type index",
-                     errors)) {
-    return false;
-  }
-  return PopAndPushTypes(context.types[function.type_index].type, context,
-                         errors);
+  auto function = GetFunction(function_index, context, errors);
+  auto function_type =
+      GetFunctionType(MaybeDefault(function).type_index, context, errors);
+  return AllTrue(function, function_type,
+                 PopAndPushTypes(MaybeDefault(function_type), context, errors));
 }
 
 bool CallIndirect(const CallIndirectImmediate& immediate,
                   Context& context,
                   Errors& errors) {
-  if (!ValidateIndex(0, context.tables.size(), "table index", errors)) {
-    return false;
-  }
-  if (!ValidateIndex(immediate.index, context.types.size(), "type index",
-                     errors)) {
-    return false;
-  }
+  auto table_type = GetTableType(0, context, errors);
+  auto function_type = GetFunctionType(immediate.index, context, errors);
   bool valid = PopType(ValueType::I32, context, errors);
-  valid &=
-      PopAndPushTypes(context.types[immediate.index].type, context, errors);
-  return valid;
+  return AllTrue(table_type, function_type, valid,
+                 PopAndPushTypes(MaybeDefault(function_type), context, errors));
 }
 
 bool Select(Context& context, Errors& errors) {
   bool valid = PopType(ValueType::I32, context, errors);
   auto type = PeekType(context, errors);
-  if (!type) {
-    return false;
-  }
-  const ValueType types[] = {*type, *type};
-  valid &= PopTypes(ValueTypeSpan{types}, context, errors);
-  return valid;
+  const ValueType types[] = {MaybeDefault(type), MaybeDefault(type)};
+  return AllTrue(valid, type, PopTypes(types, context, errors));
 }
 
 bool LocalGet(Index index, Context& context, Errors& errors) {
-  if (!ValidateIndex(index, context.locals.size(), "local index", errors)) {
-    return false;
-  }
-  PushType(context.locals[index], context);
-  return true;
+  auto local_type = GetLocalType(index, context, errors);
+  PushType(MaybeDefault(local_type), context);
+  return AllTrue(local_type);
 }
 
 bool LocalSet(Index index, Context& context, Errors& errors) {
-  if (!ValidateIndex(index, context.locals.size(), "local index", errors)) {
-    return false;
-  }
-  return PopType(context.locals[index], context, errors);
+  auto local_type = GetLocalType(index, context, errors);
+  return AllTrue(local_type,
+                 PopType(MaybeDefault(local_type), context, errors));
 }
 
 bool LocalTee(Index index, Context& context, Errors& errors) {
-  if (!ValidateIndex(index, context.locals.size(), "local index", errors)) {
-    return false;
-  }
-  auto type = context.locals[index];
-  bool valid = PopType(type, context, errors);
-  PushType(type, context);
-  return valid;
+  auto local_type = GetLocalType(index, context, errors);
+  const ValueType type[] = {MaybeDefault(local_type)};
+  return AllTrue(local_type, PopAndPushTypes(type, type, context, errors));
 }
 
 bool GlobalGet(Index index, Context& context, Errors& errors) {
-  if (!ValidateIndex(index, context.globals.size(), "global index", errors)) {
-    return false;
-  }
-  PushType(context.globals[index].valtype, context);
-  return true;
+  auto global_type = GetGlobalType(index, context, errors);
+  PushType(MaybeDefault(global_type).valtype, context);
+  return AllTrue(global_type);
 }
 
 bool GlobalSet(Index index, Context& context, Errors& errors) {
-  if (!ValidateIndex(index, context.globals.size(), "global index", errors)) {
-    return false;
-  }
-  const auto& global_type = context.globals[index];
+  auto global_type = GetGlobalType(index, context, errors);
+  auto type = MaybeDefault(global_type);
   bool valid = true;
-  if (global_type.mut == Mutability::Const) {
+  if (type.mut == Mutability::Const) {
     errors.OnError(
         format("global.set is invalid on immutable global {}", index));
     valid = false;
   }
-  valid &= PopType(global_type.valtype, context, errors);
-  return valid;
+  return AllTrue(valid, PopType(type.valtype, context, errors));
 }
 
 bool CheckAlignment(const Instruction& instruction,
                     uint32_t max_align,
                     Errors& errors) {
-  const auto& mem_arg = instruction.mem_arg_immediate();
-  if (mem_arg.align_log2 > max_align) {
+  if (instruction.mem_arg_immediate().align_log2 > max_align) {
     errors.OnError(format("Invalid alignment {}", instruction));
     return false;
   }
@@ -406,9 +455,7 @@ bool CheckAlignment(const Instruction& instruction,
 }
 
 bool Load(const Instruction& instruction, Context& context, Errors& errors) {
-  if (!ValidateIndex(0, context.memories.size(), "memory index", errors)) {
-    return false;
-  }
+  auto memory_type = GetMemoryType(0, context, errors);
   ValueTypeSpan span;
   uint32_t max_align;
   switch (instruction.opcode) {
@@ -431,14 +478,12 @@ bool Load(const Instruction& instruction, Context& context, Errors& errors) {
   }
 
   bool valid = CheckAlignment(instruction, max_align, errors);
-  valid &= PopAndPushTypes(span_i32, span, context, errors);
-  return valid;
+  return AllTrue(memory_type, valid,
+                 PopAndPushTypes(span_i32, span, context, errors));
 }
 
 bool Store(const Instruction& instruction, Context& context, Errors& errors) {
-  if (!ValidateIndex(0, context.memories.size(), "memory index", errors)) {
-    return false;
-  }
+  auto memory_type = GetMemoryType(0, context, errors);
   ValueTypeSpan span;
   uint32_t max_align;
   switch (instruction.opcode) {
@@ -456,23 +501,19 @@ bool Store(const Instruction& instruction, Context& context, Errors& errors) {
   }
 
   bool valid = CheckAlignment(instruction, max_align, errors);
-  valid &= PopTypes(span, context, errors);
-  return valid;
+  return AllTrue(memory_type, valid, PopTypes(span, context, errors));
 }
 
 bool MemorySize(Context& context, Errors& errors) {
-  if (!ValidateIndex(0, context.memories.size(), "memory index", errors)) {
-    return false;
-  }
+  auto memory_type = GetMemoryType(0, context, errors);
   PushType(ValueType::I32, context);
-  return true;
+  return AllTrue(memory_type);
 }
 
 bool MemoryGrow(Context& context, Errors& errors) {
-  if (!ValidateIndex(0, context.memories.size(), "memory index", errors)) {
-    return false;
-  }
-  return PopAndPushTypes(span_i32, span_i32, context, errors);
+  auto memory_type = GetMemoryType(0, context, errors);
+  return AllTrue(memory_type,
+                 PopAndPushTypes(span_i32, span_i32, context, errors));
 }
 
 }  // namespace
