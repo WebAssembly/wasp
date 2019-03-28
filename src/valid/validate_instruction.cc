@@ -39,22 +39,30 @@ namespace {
 using namespace ::wasp::binary;
 using ValueTypeSpan = span<const ValueType>;
 
-#define VALUE_TYPE_SPANS(V)                  \
-  V(i32, ValueType::I32)                     \
-  V(i64, ValueType::I64)                     \
-  V(f32, ValueType::F32)                     \
-  V(f64, ValueType::F64)                     \
-  V(i32_i32, ValueType::I32, ValueType::I32) \
-  V(i32_i64, ValueType::I32, ValueType::I64) \
-  V(i32_f32, ValueType::I32, ValueType::F32) \
-  V(i32_f64, ValueType::I32, ValueType::F64) \
-  V(i64_i64, ValueType::I64, ValueType::I64) \
-  V(f32_f32, ValueType::F32, ValueType::F32) \
-  V(f64_f64, ValueType::F64, ValueType::F64)
+#define VALUE_TYPE_SPANS(V)                      \
+  V(i32, ValueType::I32)                         \
+  V(i64, ValueType::I64)                         \
+  V(f32, ValueType::F32)                         \
+  V(f64, ValueType::F64)                         \
+  V(v128, ValueType::V128)                       \
+  V(i32_i32, ValueType::I32, ValueType::I32)     \
+  V(i32_i64, ValueType::I32, ValueType::I64)     \
+  V(i32_f32, ValueType::I32, ValueType::F32)     \
+  V(i32_f64, ValueType::I32, ValueType::F64)     \
+  V(i32_v128, ValueType::I32, ValueType::V128)   \
+  V(i64_i64, ValueType::I64, ValueType::I64)     \
+  V(f32_f32, ValueType::F32, ValueType::F32)     \
+  V(f64_f64, ValueType::F64, ValueType::F64)     \
+  V(v128_i32, ValueType::V128, ValueType::I32)   \
+  V(v128_i64, ValueType::V128, ValueType::I64)   \
+  V(v128_f32, ValueType::V128, ValueType::F32)   \
+  V(v128_f64, ValueType::V128, ValueType::F64)   \
+  V(v128_v128, ValueType::V128, ValueType::V128) \
+  V(v128_v128_v128, ValueType::V128, ValueType::V128, ValueType::V128)
 
 #define WASP_V(name, ...)                         \
   const ValueType array_##name[] = {__VA_ARGS__}; \
-  ValueTypeSpan span_##name{array_##name};
+  const ValueTypeSpan span_##name{array_##name};
 VALUE_TYPE_SPANS(WASP_V)
 
 #undef WASP_V
@@ -473,6 +481,7 @@ bool Load(const Instruction& instruction, Context& context, Errors& errors) {
     case Opcode::I64Load16U: span = span_i64; max_align = 1; break;
     case Opcode::I64Load32S: span = span_i64; max_align = 2; break;
     case Opcode::I64Load32U: span = span_i64; max_align = 2; break;
+    case Opcode::V128Load:   span = span_v128; max_align = 4; break;
     default:
       WASP_UNREACHABLE();
   }
@@ -496,6 +505,7 @@ bool Store(const Instruction& instruction, Context& context, Errors& errors) {
     case Opcode::I64Store8:  span = span_i32_i64; max_align = 0; break;
     case Opcode::I64Store16: span = span_i32_i64; max_align = 1; break;
     case Opcode::I64Store32: span = span_i32_i64; max_align = 2; break;
+    case Opcode::V128Store:  span = span_i32_v128; max_align = 4; break;
     default:
       WASP_UNREACHABLE();
   }
@@ -630,6 +640,7 @@ bool Validate(const Instruction& value,
     case Opcode::I64Load16U:
     case Opcode::I64Load32S:
     case Opcode::I64Load32U:
+    case Opcode::V128Load:
       return Load(value, context, errors);
 
     case Opcode::I32Store:
@@ -641,6 +652,7 @@ bool Validate(const Instruction& value,
     case Opcode::I64Store8:
     case Opcode::I64Store16:
     case Opcode::I64Store32:
+    case Opcode::V128Store:
       return Store(value, context, errors);
 
     case Opcode::MemorySize:
@@ -669,6 +681,8 @@ bool Validate(const Instruction& value,
     case Opcode::I32Clz:
     case Opcode::I32Ctz:
     case Opcode::I32Popcnt:
+    case Opcode::I32Extend8S:
+    case Opcode::I32Extend16S:
       return PopAndPushTypes(span_i32, span_i32, context, errors);
 
     case Opcode::I64Eqz:
@@ -677,6 +691,9 @@ bool Validate(const Instruction& value,
     case Opcode::I64Clz:
     case Opcode::I64Ctz:
     case Opcode::I64Popcnt:
+    case Opcode::I64Extend8S:
+    case Opcode::I64Extend16S:
+    case Opcode::I64Extend32S:
       return PopAndPushTypes(span_i64, span_i64, context, errors);
 
     case Opcode::I32Eq:
@@ -790,10 +807,14 @@ bool Validate(const Instruction& value,
     case Opcode::I32TruncF32S:
     case Opcode::I32TruncF32U:
     case Opcode::I32ReinterpretF32:
+    case Opcode::I32TruncSatF32S:
+    case Opcode::I32TruncSatF32U:
       return PopAndPushTypes(span_f32, span_i32, context, errors);
 
     case Opcode::I32TruncF64S:
     case Opcode::I32TruncF64U:
+    case Opcode::I32TruncSatF64S:
+    case Opcode::I32TruncSatF64U:
       return PopAndPushTypes(span_f64, span_i32, context, errors);
 
     case Opcode::I64ExtendI32S:
@@ -802,11 +823,15 @@ bool Validate(const Instruction& value,
 
     case Opcode::I64TruncF32S:
     case Opcode::I64TruncF32U:
+    case Opcode::I64TruncSatF32S:
+    case Opcode::I64TruncSatF32U:
       return PopAndPushTypes(span_f32, span_i64, context, errors);
 
     case Opcode::I64TruncF64S:
     case Opcode::I64TruncF64U:
     case Opcode::I64ReinterpretF64:
+    case Opcode::I64TruncSatF64S:
+    case Opcode::I64TruncSatF64U:
       return PopAndPushTypes(span_f64, span_i64, context, errors);
 
     case Opcode::F32ConvertI32S:
@@ -832,6 +857,177 @@ bool Validate(const Instruction& value,
 
     case Opcode::F64PromoteF32:
       return PopAndPushTypes(span_f32, span_f64, context, errors);
+
+    case Opcode::V128Const:
+      PushType(ValueType::V128, context);
+      return true;
+
+    case Opcode::V128Not:
+    case Opcode::I8X16Neg:
+    case Opcode::I16X8Neg:
+    case Opcode::I32X4Neg:
+    case Opcode::I64X2Neg:
+    case Opcode::F32X4Abs:
+    case Opcode::F32X4Neg:
+    case Opcode::F32X4Sqrt:
+    case Opcode::F64X2Abs:
+    case Opcode::F64X2Neg:
+    case Opcode::F64X2Sqrt:
+    case Opcode::I32X4TruncSatF32X4S:
+    case Opcode::I32X4TruncSatF32X4U:
+    case Opcode::I64X2TruncSatF64X2S:
+    case Opcode::I64X2TruncSatF64X2U:
+    case Opcode::F32X4ConvertI32X4S:
+    case Opcode::F32X4ConvertI32X4U:
+    case Opcode::F64X2ConvertI64X2S:
+    case Opcode::F64X2ConvertI64X2U:
+      return PopAndPushTypes(span_v128, span_v128, context, errors);
+
+    case Opcode::V128BitSelect:
+      return PopAndPushTypes(span_v128_v128_v128, span_v128, context, errors);
+
+    case Opcode::V8X16Shuffle:
+    case Opcode::I8X16Eq:
+    case Opcode::I8X16Ne:
+    case Opcode::I8X16LtS:
+    case Opcode::I8X16LtU:
+    case Opcode::I8X16GtS:
+    case Opcode::I8X16GtU:
+    case Opcode::I8X16LeS:
+    case Opcode::I8X16LeU:
+    case Opcode::I8X16GeS:
+    case Opcode::I8X16GeU:
+    case Opcode::I16X8Eq:
+    case Opcode::I16X8Ne:
+    case Opcode::I16X8LtS:
+    case Opcode::I16X8LtU:
+    case Opcode::I16X8GtS:
+    case Opcode::I16X8GtU:
+    case Opcode::I16X8LeS:
+    case Opcode::I16X8LeU:
+    case Opcode::I16X8GeS:
+    case Opcode::I16X8GeU:
+    case Opcode::I32X4Eq:
+    case Opcode::I32X4Ne:
+    case Opcode::I32X4LtS:
+    case Opcode::I32X4LtU:
+    case Opcode::I32X4GtS:
+    case Opcode::I32X4GtU:
+    case Opcode::I32X4LeS:
+    case Opcode::I32X4LeU:
+    case Opcode::I32X4GeS:
+    case Opcode::I32X4GeU:
+    case Opcode::F32X4Eq:
+    case Opcode::F32X4Ne:
+    case Opcode::F32X4Lt:
+    case Opcode::F32X4Gt:
+    case Opcode::F32X4Le:
+    case Opcode::F32X4Ge:
+    case Opcode::F64X2Eq:
+    case Opcode::F64X2Ne:
+    case Opcode::F64X2Lt:
+    case Opcode::F64X2Gt:
+    case Opcode::F64X2Le:
+    case Opcode::F64X2Ge:
+    case Opcode::V128And:
+    case Opcode::V128Or:
+    case Opcode::V128Xor:
+    case Opcode::I8X16Add:
+    case Opcode::I8X16AddSaturateS:
+    case Opcode::I8X16AddSaturateU:
+    case Opcode::I8X16Sub:
+    case Opcode::I8X16SubSaturateS:
+    case Opcode::I8X16SubSaturateU:
+    case Opcode::I8X16Mul:
+    case Opcode::I16X8Add:
+    case Opcode::I16X8AddSaturateS:
+    case Opcode::I16X8AddSaturateU:
+    case Opcode::I16X8Sub:
+    case Opcode::I16X8SubSaturateS:
+    case Opcode::I16X8SubSaturateU:
+    case Opcode::I16X8Mul:
+    case Opcode::I32X4Add:
+    case Opcode::I32X4Sub:
+    case Opcode::I32X4Mul:
+    case Opcode::I64X2Add:
+    case Opcode::I64X2Sub:
+    case Opcode::F32X4Add:
+    case Opcode::F32X4Sub:
+    case Opcode::F32X4Mul:
+    case Opcode::F32X4Div:
+    case Opcode::F32X4Min:
+    case Opcode::F32X4Max:
+    case Opcode::F64X2Add:
+    case Opcode::F64X2Sub:
+    case Opcode::F64X2Mul:
+    case Opcode::F64X2Div:
+    case Opcode::F64X2Min:
+    case Opcode::F64X2Max:
+      return PopAndPushTypes(span_v128_v128, span_v128, context, errors);
+
+    case Opcode::I8X16Splat:
+    case Opcode::I16X8Splat:
+    case Opcode::I32X4Splat:
+      return PopAndPushTypes(span_i32, span_v128, context, errors);
+
+    case Opcode::I64X2Splat:
+      return PopAndPushTypes(span_i64, span_v128, context, errors);
+
+    case Opcode::F32X4Splat:
+      return PopAndPushTypes(span_f32, span_v128, context, errors);
+
+    case Opcode::F64X2Splat:
+      return PopAndPushTypes(span_f64, span_v128, context, errors);
+
+    case Opcode::I8X16ExtractLaneS:
+    case Opcode::I8X16ExtractLaneU:
+    case Opcode::I16X8ExtractLaneS:
+    case Opcode::I16X8ExtractLaneU:
+    case Opcode::I32X4ExtractLane:
+    case Opcode::I8X16AnyTrue:
+    case Opcode::I8X16AllTrue:
+    case Opcode::I16X8AnyTrue:
+    case Opcode::I16X8AllTrue:
+    case Opcode::I32X4AnyTrue:
+    case Opcode::I32X4AllTrue:
+    case Opcode::I64X2AnyTrue:
+    case Opcode::I64X2AllTrue:
+      return PopAndPushTypes(span_v128, span_i32, context, errors);
+
+    case Opcode::I64X2ExtractLane:
+      return PopAndPushTypes(span_v128, span_i64, context, errors);
+
+    case Opcode::F32X4ExtractLane:
+      return PopAndPushTypes(span_v128, span_f32, context, errors);
+
+    case Opcode::F64X2ExtractLane:
+      return PopAndPushTypes(span_v128, span_f64, context, errors);
+
+    case Opcode::I8X16ReplaceLane:
+    case Opcode::I16X8ReplaceLane:
+    case Opcode::I32X4ReplaceLane:
+    case Opcode::I8X16Shl:
+    case Opcode::I8X16ShrS:
+    case Opcode::I8X16ShrU:
+    case Opcode::I16X8Shl:
+    case Opcode::I16X8ShrS:
+    case Opcode::I16X8ShrU:
+    case Opcode::I32X4Shl:
+    case Opcode::I32X4ShrS:
+    case Opcode::I32X4ShrU:
+    case Opcode::I64X2Shl:
+    case Opcode::I64X2ShrS:
+    case Opcode::I64X2ShrU:
+      return PopAndPushTypes(span_v128_i32, span_v128, context, errors);
+
+    case Opcode::I64X2ReplaceLane:
+      return PopAndPushTypes(span_v128_i64, span_v128, context, errors);
+
+    case Opcode::F32X4ReplaceLane:
+      return PopAndPushTypes(span_v128_f32, span_v128, context, errors);
+
+    case Opcode::F64X2ReplaceLane:
+      return PopAndPushTypes(span_v128_f64, span_v128, context, errors);
 
     default:
       WASP_UNREACHABLE();
