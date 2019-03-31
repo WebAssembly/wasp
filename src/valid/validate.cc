@@ -149,6 +149,7 @@ bool Validate(const binary::ElementSegment& value,
               const Features& features,
               Errors& errors) {
   ErrorsContextGuard guard{errors, "element segment"};
+  context.element_segments.push_back(value.segment_type());
   bool valid = true;
   if (value.is_active()) {
     const auto& active = value.active();

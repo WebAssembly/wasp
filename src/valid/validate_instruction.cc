@@ -39,25 +39,26 @@ namespace {
 using namespace ::wasp::binary;
 using ValueTypeSpan = span<const ValueType>;
 
-#define VALUE_TYPE_SPANS(V)                      \
-  V(i32, ValueType::I32)                         \
-  V(i64, ValueType::I64)                         \
-  V(f32, ValueType::F32)                         \
-  V(f64, ValueType::F64)                         \
-  V(v128, ValueType::V128)                       \
-  V(i32_i32, ValueType::I32, ValueType::I32)     \
-  V(i32_i64, ValueType::I32, ValueType::I64)     \
-  V(i32_f32, ValueType::I32, ValueType::F32)     \
-  V(i32_f64, ValueType::I32, ValueType::F64)     \
-  V(i32_v128, ValueType::I32, ValueType::V128)   \
-  V(i64_i64, ValueType::I64, ValueType::I64)     \
-  V(f32_f32, ValueType::F32, ValueType::F32)     \
-  V(f64_f64, ValueType::F64, ValueType::F64)     \
-  V(v128_i32, ValueType::V128, ValueType::I32)   \
-  V(v128_i64, ValueType::V128, ValueType::I64)   \
-  V(v128_f32, ValueType::V128, ValueType::F32)   \
-  V(v128_f64, ValueType::V128, ValueType::F64)   \
-  V(v128_v128, ValueType::V128, ValueType::V128) \
+#define VALUE_TYPE_SPANS(V)                                      \
+  V(i32, ValueType::I32)                                         \
+  V(i64, ValueType::I64)                                         \
+  V(f32, ValueType::F32)                                         \
+  V(f64, ValueType::F64)                                         \
+  V(v128, ValueType::V128)                                       \
+  V(i32_i32, ValueType::I32, ValueType::I32)                     \
+  V(i32_i64, ValueType::I32, ValueType::I64)                     \
+  V(i32_f32, ValueType::I32, ValueType::F32)                     \
+  V(i32_f64, ValueType::I32, ValueType::F64)                     \
+  V(i32_v128, ValueType::I32, ValueType::V128)                   \
+  V(i64_i64, ValueType::I64, ValueType::I64)                     \
+  V(f32_f32, ValueType::F32, ValueType::F32)                     \
+  V(f64_f64, ValueType::F64, ValueType::F64)                     \
+  V(v128_i32, ValueType::V128, ValueType::I32)                   \
+  V(v128_i64, ValueType::V128, ValueType::I64)                   \
+  V(v128_f32, ValueType::V128, ValueType::F32)                   \
+  V(v128_f64, ValueType::V128, ValueType::F64)                   \
+  V(v128_v128, ValueType::V128, ValueType::V128)                 \
+  V(i32_i32_i32, ValueType::I32, ValueType::I32, ValueType::I32) \
   V(v128_v128_v128, ValueType::V128, ValueType::V128, ValueType::V128)
 
 #define WASP_V(name, ...)                         \
@@ -150,6 +151,16 @@ optional<GlobalType> GetGlobalType(Index index,
   return context.globals[index];
 }
 
+optional<SegmentType> GetElementSegmentType(Index index,
+                                            Context& context,
+                                            Errors& errors) {
+  if (!ValidateIndex(index, context.element_segments.size(),
+                     "element segment index", errors)) {
+    return nullopt;
+  }
+  return context.element_segments[index];
+}
+
 optional<ValueType> GetLocalType(Index index,
                                  Context& context,
                                  Errors& errors) {
@@ -157,6 +168,11 @@ optional<ValueType> GetLocalType(Index index,
     return nullopt;
   }
   return context.locals[index];
+}
+
+bool CheckDataSegment(Index index, Context& context, Errors& errors) {
+  return ValidateIndex(index, context.data_segment_count, "data segment index",
+                       errors);
 }
 
 ValueType MaybeDefault(optional<ValueType> value) {
@@ -526,6 +542,53 @@ bool MemoryGrow(Context& context, Errors& errors) {
                  PopAndPushTypes(span_i32, span_i32, context, errors));
 }
 
+bool MemoryInit(const InitImmediate& immediate,
+                Context& context,
+                Errors& errors) {
+  auto memory_type = GetMemoryType(0, context, errors);
+  bool valid = CheckDataSegment(immediate.segment_index, context, errors);
+  return AllTrue(memory_type, valid,
+                 PopTypes(span_i32_i32_i32, context, errors));
+}
+
+bool DataDrop(Index segment_index, Context& context, Errors& errors) {
+  return CheckDataSegment(segment_index, context, errors);
+}
+
+bool MemoryCopy(const CopyImmediate& immediate,
+                Context& context,
+                Errors& errors) {
+  auto memory_type = GetMemoryType(0, context, errors);
+  return AllTrue(memory_type, PopTypes(span_i32_i32_i32, context, errors));
+}
+
+bool MemoryFill(Context& context, Errors& errors) {
+  auto memory_type = GetMemoryType(0, context, errors);
+  return AllTrue(memory_type, PopTypes(span_i32_i32_i32, context, errors));
+}
+
+bool TableInit(const InitImmediate& immediate,
+               Context& context,
+               Errors& errors) {
+  auto table_type = GetTableType(0, context, errors);
+  auto segment_type =
+      GetElementSegmentType(immediate.segment_index, context, errors);
+  return AllTrue(table_type, segment_type,
+                 PopTypes(span_i32_i32_i32, context, errors));
+}
+
+bool ElemDrop(Index segment_index, Context& context, Errors& errors) {
+  auto segment_type = GetElementSegmentType(segment_index, context, errors);
+  return AllTrue(segment_type);
+}
+
+bool TableCopy(const CopyImmediate& immediate,
+               Context& context,
+               Errors& errors) {
+  auto table_type = GetTableType(0, context, errors);
+  return AllTrue(table_type, PopTypes(span_i32_i32_i32, context, errors));
+}
+
 }  // namespace
 
 bool Validate(const Locals& value,
@@ -881,6 +944,27 @@ bool Validate(const Instruction& value,
     case Opcode::F64PromoteF32:
       params = span_f32, results = span_f64;
       break;
+
+    case Opcode::MemoryInit:
+      return MemoryInit(value.init_immediate(), context, errors);
+
+    case Opcode::DataDrop:
+      return DataDrop(value.index_immediate(), context, errors);
+
+    case Opcode::MemoryCopy:
+      return MemoryCopy(value.copy_immediate(), context, errors);
+
+    case Opcode::MemoryFill:
+      return MemoryFill(context, errors);
+
+    case Opcode::TableInit:
+      return TableInit(value.init_immediate(), context, errors);
+
+    case Opcode::ElemDrop:
+      return ElemDrop(value.index_immediate(), context, errors);
+
+    case Opcode::TableCopy:
+      return TableCopy(value.copy_immediate(), context, errors);
 
     case Opcode::V128Const:
       PushType(ValueType::V128, context);

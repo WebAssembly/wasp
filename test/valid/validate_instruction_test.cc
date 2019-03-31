@@ -74,6 +74,10 @@ class ValidateInstructionTest : public ::testing::Test {
     return AddItem(context.globals, global_type);
   }
 
+  Index AddElementSegment(const SegmentType& segment_type) {
+    return AddItem(context.element_segments, segment_type);
+  }
+
   Index AddLocal(const ValueType& value_type) {
     return AddItem(context.locals, value_type);
   }
@@ -1002,6 +1006,110 @@ TEST_F(ValidateInstructionTest, SaturatingFloatToInt) {
   for (const auto& info: infos) {
     TestSignature(I{info.opcode}, {info.from}, {info.to});
   }
+}
+
+TEST_F(ValidateInstructionTest, MemoryInit) {
+  context.data_segment_count = 2;
+  AddMemory(MemoryType{Limits{0}});
+  TestSignature(I{O::MemoryInit, InitImmediate{1, 0}},
+                {VT::I32, VT::I32, VT::I32}, {});
+}
+
+TEST_F(ValidateInstructionTest, MemoryInit_MemoryIndexOOB) {
+  context.data_segment_count = 2;
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::MemoryInit, InitImmediate{1, 0}});
+}
+
+TEST_F(ValidateInstructionTest, MemoryInit_SegmentIndexOOB) {
+  context.data_segment_count = 2;
+  AddMemory(MemoryType{Limits{0}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::MemoryInit, InitImmediate{2, 0}});
+}
+
+TEST_F(ValidateInstructionTest, DataDrop) {
+  context.data_segment_count = 2;
+  TestSignature(I{O::DataDrop, Index{1}}, {}, {});
+}
+
+TEST_F(ValidateInstructionTest, DataDrop_SegmentIndexOOB) {
+  context.data_segment_count = 2;
+  Fail(I{O::DataDrop, Index{2}});
+}
+
+TEST_F(ValidateInstructionTest, MemoryCopy) {
+  AddMemory(MemoryType{Limits{0}});
+  TestSignature(I{O::MemoryCopy, CopyImmediate{0, 0}},
+                {VT::I32, VT::I32, VT::I32}, {});
+}
+
+TEST_F(ValidateInstructionTest, MemoryCopy_MemoryIndexOOB) {
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::MemoryCopy, CopyImmediate{0, 0}});
+}
+
+TEST_F(ValidateInstructionTest, MemoryFill) {
+  AddMemory(MemoryType{Limits{0}});
+  TestSignature(I{O::MemoryFill, u8{0}}, {VT::I32, VT::I32, VT::I32}, {});
+}
+
+TEST_F(ValidateInstructionTest, MemoryFill_MemoryIndexOOB) {
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::MemoryFill, u8{0}});
+}
+
+TEST_F(ValidateInstructionTest, TableInit) {
+  auto index = AddElementSegment(SegmentType::Passive);
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  TestSignature(I{O::TableInit, InitImmediate{index, 0}},
+                {VT::I32, VT::I32, VT::I32}, {});
+}
+
+TEST_F(ValidateInstructionTest, TableInit_TableIndexOOB) {
+  auto index = AddElementSegment(SegmentType::Passive);
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::TableInit, InitImmediate{index, 0}});
+}
+
+TEST_F(ValidateInstructionTest, TableInit_SegmentIndexOOB) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::TableInit, InitImmediate{0, 0}});
+}
+
+TEST_F(ValidateInstructionTest, ElemDrop) {
+  auto index = AddElementSegment(SegmentType::Passive);
+  TestSignature(I{O::ElemDrop, Index{index}}, {}, {});
+}
+
+TEST_F(ValidateInstructionTest, ElemDrop_SegmentIndexOOB) {
+  Fail(I{O::ElemDrop, Index{0}});
+}
+
+TEST_F(ValidateInstructionTest, TableCopy) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  TestSignature(I{O::TableCopy, CopyImmediate{0, 0}},
+                {VT::I32, VT::I32, VT::I32}, {});
+}
+
+TEST_F(ValidateInstructionTest, TableCopy_TableIndexOOB) {
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::TableCopy, CopyImmediate{0, 0}});
 }
 
 TEST_F(ValidateInstructionTest, SimdLoad) {

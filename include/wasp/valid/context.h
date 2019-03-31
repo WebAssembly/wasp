@@ -23,6 +23,7 @@
 #include "wasp/binary/function.h"
 #include "wasp/binary/global_type.h"
 #include "wasp/binary/memory_type.h"
+#include "wasp/binary/segment_type.h"
 #include "wasp/binary/table_type.h"
 #include "wasp/binary/type_entry.h"
 #include "wasp/binary/value_types.h"
@@ -63,8 +64,10 @@ struct Context {
   std::vector<binary::TableType> tables;
   std::vector<binary::MemoryType> memories;
   std::vector<binary::GlobalType> globals;
+  std::vector<binary::SegmentType> element_segments;
   Index imported_function_count = 0;
   Index imported_global_count = 0;
+  Index data_segment_count = 0;
   Index code_count = 0;
   std::vector<binary::ValueType> locals;
   std::vector<binary::ValueType> type_stack;
