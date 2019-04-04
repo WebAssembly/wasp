@@ -64,6 +64,7 @@ add_library(wasplib
   src/binary/known_section.cc
   src/binary/lazy_expression.cc
   src/binary/limits.cc
+  src/binary/linking_subsection.cc
   src/binary/locals.cc
   src/binary/mem_arg_immediate.cc
   src/binary/memory.cc
@@ -74,8 +75,11 @@ add_library(wasplib
   src/binary/read_module.cc
   src/binary/read_name_subsection.cc
   src/binary/read_section.cc
+  src/binary/relocation_entry.cc
   src/binary/section.cc
+  src/binary/segment_info.cc
   src/binary/start.cc
+  src/binary/symbol_info.cc
   src/binary/table.cc
   src/binary/table_type.cc
   src/binary/type_entry.cc

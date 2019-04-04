@@ -27,11 +27,15 @@
 #include "wasp/binary/encoding/element_type_encoding.h"
 #include "wasp/binary/encoding/external_kind_encoding.h"
 #include "wasp/binary/encoding/limits_flags_encoding.h"
+#include "wasp/binary/encoding/linking_subsection_id_encoding.h"
 #include "wasp/binary/encoding/mutability_encoding.h"
 #include "wasp/binary/encoding/name_subsection_id_encoding.h"
 #include "wasp/binary/encoding/opcode_encoding.h"
+#include "wasp/binary/encoding/relocation_type_encoding.h"
 #include "wasp/binary/encoding/section_id_encoding.h"
 #include "wasp/binary/encoding/segment_flags_encoding.h"
+#include "wasp/binary/encoding/symbol_info_flags_encoding.h"
+#include "wasp/binary/encoding/symbol_info_kind_encoding.h"
 #include "wasp/binary/encoding/value_type_encoding.h"
 #include "wasp/binary/errors.h"
 #include "wasp/binary/errors_context_guard.h"
@@ -68,6 +72,8 @@
 #include "wasp/binary/read/read_instruction.h"
 #include "wasp/binary/read/read_length.h"
 #include "wasp/binary/read/read_limits.h"
+#include "wasp/binary/read/read_linking_subsection.h"
+#include "wasp/binary/read/read_linking_subsection_id.h"
 #include "wasp/binary/read/read_locals.h"
 #include "wasp/binary/read/read_mem_arg_immediate.h"
 #include "wasp/binary/read/read_memory.h"
@@ -77,6 +83,8 @@
 #include "wasp/binary/read/read_name_subsection.h"
 #include "wasp/binary/read/read_name_subsection_id.h"
 #include "wasp/binary/read/read_opcode.h"
+#include "wasp/binary/read/read_relocation_entry.h"
+#include "wasp/binary/read/read_relocation_type.h"
 #include "wasp/binary/read/read_reserved.h"
 #include "wasp/binary/read/read_s32.h"
 #include "wasp/binary/read/read_s64.h"
@@ -85,6 +93,8 @@
 #include "wasp/binary/read/read_shuffle_immediate.h"
 #include "wasp/binary/read/read_start.h"
 #include "wasp/binary/read/read_string.h"
+#include "wasp/binary/read/read_symbol_info.h"
+#include "wasp/binary/read/read_symbol_info_kind.h"
 #include "wasp/binary/read/read_table.h"
 #include "wasp/binary/read/read_table_type.h"
 #include "wasp/binary/read/read_u32.h"
@@ -1049,6 +1059,27 @@ optional<Limits> Read(SpanU8* data,
   }
 }
 
+optional<LinkingSubsection> Read(SpanU8* data,
+                                 const Features& features,
+                                 Errors& errors,
+                                 Tag<LinkingSubsection>) {
+  ErrorsContextGuard guard{errors, *data, "linking subsection"};
+  WASP_TRY_READ(id, Read<LinkingSubsectionId>(data, features, errors));
+  WASP_TRY_READ(length, ReadLength(data, features, errors));
+  auto bytes = *ReadBytes(data, length, features, errors);
+  return LinkingSubsection{id, bytes};
+}
+
+optional<LinkingSubsectionId> Read(SpanU8* data,
+                                   const Features& features,
+                                   Errors& errors,
+                                   Tag<LinkingSubsectionId>) {
+  ErrorsContextGuard guard{errors, *data, "linking subsection id"};
+  WASP_TRY_READ(val, Read<u8>(data, features, errors));
+  WASP_TRY_DECODE(decoded, val, LinkingSubsectionId, "linking subsection id");
+  return decoded;
+}
+
 optional<Locals> Read(SpanU8* data,
                       const Features& features,
                       Errors& errors,
@@ -1153,6 +1184,39 @@ optional<Opcode> Read(SpanU8* data,
   }
 }
 
+optional<RelocationEntry> Read(SpanU8* data,
+                               const Features& features,
+                               Errors& errors,
+                               Tag<RelocationEntry>) {
+  ErrorsContextGuard guard{errors, *data, "relocation entry"};
+  WASP_TRY_READ(type, Read<RelocationType>(data, features, errors));
+  WASP_TRY_READ(offset, Read<u32>(data, features, errors));
+  WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
+  switch (type) {
+    case RelocationType::MemoryAddressLEB:
+    case RelocationType::MemoryAddressSLEB:
+    case RelocationType::MemoryAddressI32:
+    case RelocationType::FunctionOffsetI32:
+    case RelocationType::SectionOffsetI32: {
+      WASP_TRY_READ(addend, Read<s32>(data, features, errors));
+      return RelocationEntry{type, offset, index, addend};
+    }
+
+    default:
+      return RelocationEntry{type, offset, index, nullopt};
+  }
+}
+
+optional<RelocationType> Read(SpanU8* data,
+                         const Features& features,
+                         Errors& errors,
+                         Tag<RelocationType>) {
+  ErrorsContextGuard guard{errors, *data, "relocation type"};
+  WASP_TRY_READ(val, Read<u8>(data, features, errors));
+  WASP_TRY_DECODE(decoded, val, RelocationType, "relocation type");
+  return decoded;
+}
+
 optional<u8> ReadReserved(SpanU8* data,
                           const Features& features,
                           Errors& errors) {
@@ -1238,6 +1302,59 @@ optional<string_view> ReadString(SpanU8* data,
   string_view result{reinterpret_cast<const char*>(data->data()), len};
   remove_prefix(data, len);
   return result;
+}
+
+optional<SymbolInfo> Read(SpanU8* data,
+                          const Features& features,
+                          Errors& errors,
+                          Tag<SymbolInfo>) {
+  ErrorsContextGuard guard{errors, *data, "symbol info"};
+  WASP_TRY_READ(kind, Read<SymbolInfoKind>(data, features, errors));
+  WASP_TRY_READ(encoded_flags, Read<u32>(data, features, errors));
+  WASP_TRY_DECODE(flags_opt, encoded_flags, SymbolInfoFlags, "symbol info flags");
+  auto flags = *flags_opt;
+  switch (kind) {
+    case SymbolInfoKind::Function:
+    case SymbolInfoKind::Global:
+    case SymbolInfoKind::Event: {
+      WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
+      optional<string_view> name;
+      if (flags.undefined == SymbolInfo::Flags::Undefined::No &&
+          flags.explicit_name == SymbolInfo::Flags::ExplicitName::Yes) {
+        WASP_TRY_READ(name_, ReadString(data, features, errors, "name"));
+        name = name_;
+      }
+      return SymbolInfo{flags, SymbolInfo::Base{kind, index, name}};
+    }
+
+    case SymbolInfoKind::Data: {
+      WASP_TRY_READ(name, ReadString(data, features, errors, "name"));
+      optional<SymbolInfo::Data::Defined> defined;
+      if (flags.undefined == SymbolInfo::Flags::Undefined::No) {
+        WASP_TRY_READ(index,
+                      ReadIndex(data, features, errors, "segment index"));
+        WASP_TRY_READ(offset, Read<u32>(data, features, errors));
+        WASP_TRY_READ(size, Read<u32>(data, features, errors));
+        defined = SymbolInfo::Data::Defined{index, offset, size};
+      }
+      return SymbolInfo{flags, SymbolInfo::Data{name, defined}};
+    }
+
+    case SymbolInfoKind::Section:
+      WASP_TRY_READ(section, Read<u32>(data, features, errors));
+      return SymbolInfo{flags, SymbolInfo::Section{section}};
+  }
+  WASP_UNREACHABLE();
+}
+
+optional<SymbolInfoKind> Read(SpanU8* data,
+                              const Features& features,
+                              Errors& errors,
+                              Tag<SymbolInfoKind>) {
+  ErrorsContextGuard guard{errors, *data, "symbol info kind"};
+  WASP_TRY_READ(val, Read<u8>(data, features, errors));
+  WASP_TRY_DECODE(decoded, val, SymbolInfoKind, "symbol info kind");
+  return decoded;
 }
 
 optional<Table> Read(SpanU8* data,

@@ -39,4 +39,11 @@
   }                                                                  \
   bool operator!=(const Name& lhs, const Name& rhs) { return !(lhs == rhs); }
 
+#define WASP_OPERATOR_EQ_NE_4(Name, f1, f2, f3, f4)                    \
+  bool operator==(const Name& lhs, const Name& rhs) {                  \
+    return lhs.f1 == rhs.f1 && lhs.f2 == rhs.f2 && lhs.f3 == rhs.f3 && \
+           lhs.f4 == rhs.f4;                                           \
+  }                                                                    \
+  bool operator!=(const Name& lhs, const Name& rhs) { return !(lhs == rhs); }
+
 #endif // WASP_BASE_OPERATOR_EQ_NE_MACROS_H_
