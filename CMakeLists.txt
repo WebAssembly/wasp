@@ -42,6 +42,8 @@ add_library(wasplib
   src/binary/br_table_immediate.cc
   src/binary/call_indirect_immediate.cc
   src/binary/code.cc
+  src/binary/comdat.cc
+  src/binary/comdat_symbol.cc
   src/binary/constant_expression.cc
   src/binary/copy_immediate.cc
   src/binary/custom_section.cc

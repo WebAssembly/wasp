@@ -619,4 +619,41 @@ typename Ctx::iterator formatter<::wasp::binary::NameSubsection>::format(
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::Comdat>::format(
+    const ::wasp::binary::Comdat& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{name {}, flags {}, index {}, symbols {}}}", self.name,
+            self.flags, self.index, self.symbols);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::ComdatSymbol>::format(
+    const ::wasp::binary::ComdatSymbol& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{kind {}, index {}}}", self.kind, self.index);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::ComdatSymbolKind>::format(
+    const ::wasp::binary::ComdatSymbolKind& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+#define WASP_V(val, Name, str)                 \
+  case ::wasp::binary::ComdatSymbolKind::Name: \
+    result = str;                              \
+    break;
+#include "wasp/binary/comdat_symbol_kind.def"
+#undef WASP_V
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
 }  // namespace fmt

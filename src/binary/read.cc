@@ -24,6 +24,7 @@
 #include "wasp/base/format.h"
 #include "wasp/binary/encoding.h"  // XXX
 #include "wasp/binary/encoding/block_type_encoding.h"
+#include "wasp/binary/encoding/comdat_symbol_kind_encoding.h"
 #include "wasp/binary/encoding/element_type_encoding.h"
 #include "wasp/binary/encoding/external_kind_encoding.h"
 #include "wasp/binary/encoding/limits_flags_encoding.h"
@@ -50,6 +51,9 @@
 #include "wasp/binary/read/read_call_indirect_immediate.h"
 #include "wasp/binary/read/read_check_length.h"
 #include "wasp/binary/read/read_code.h"
+#include "wasp/binary/read/read_comdat.h"
+#include "wasp/binary/read/read_comdat_symbol.h"
+#include "wasp/binary/read/read_comdat_symbol_kind.h"
 #include "wasp/binary/read/read_constant_expression.h"
 #include "wasp/binary/read/read_copy_immediate.h"
 #include "wasp/binary/read/read_count.h"
@@ -211,6 +215,39 @@ optional<Code> Read(SpanU8* data,
   WASP_TRY_READ(locals,
                 ReadVector<Locals>(&body, features, errors, "locals vector"));
   return Code{std::move(locals), Expression{std::move(body)}};
+}
+
+optional<Comdat> Read(SpanU8* data,
+                      const Features& features,
+                      Errors& errors,
+                      Tag<Comdat>) {
+  ErrorsContextGuard guard{errors, *data, "comdat"};
+  WASP_TRY_READ(name, ReadString(data, features, errors, "name"));
+  WASP_TRY_READ(flags, Read<u32>(data, features, errors));
+  WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
+  WASP_TRY_READ(symbols, ReadVector<ComdatSymbol>(data, features, errors,
+                                                  "comdat symbols vector"));
+  return Comdat{name, flags, index, std::move(symbols)};
+}
+
+optional<ComdatSymbol> Read(SpanU8* data,
+                            const Features& features,
+                            Errors& errors,
+                            Tag<ComdatSymbol>) {
+  ErrorsContextGuard guard{errors, *data, "comdat symbol"};
+  WASP_TRY_READ(kind, Read<ComdatSymbolKind>(data, features, errors));
+  WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
+  return ComdatSymbol{kind, index};
+}
+
+optional<ComdatSymbolKind> Read(SpanU8* data,
+                                const Features& features,
+                                Errors& errors,
+                                Tag<ComdatSymbolKind>) {
+  ErrorsContextGuard guard{errors, *data, "comdat symbol kind"};
+  WASP_TRY_READ(val, Read<u8>(data, features, errors));
+  WASP_TRY_DECODE(decoded, val, ComdatSymbolKind, "comdat symbol kind");
+  return decoded;
 }
 
 optional<ConstantExpression> Read(SpanU8* data,

@@ -21,6 +21,9 @@
 #include "wasp/binary/br_on_exn_immediate.h"
 #include "wasp/binary/br_table_immediate.h"
 #include "wasp/binary/code.h"
+#include "wasp/binary/comdat.h"
+#include "wasp/binary/comdat_symbol.h"
+#include "wasp/binary/comdat_symbol_kind.h"
 #include "wasp/binary/constant_expression.h"
 #include "wasp/binary/data_count.h"
 #include "wasp/binary/data_segment.h"
@@ -98,6 +101,9 @@ WASP_DEFINE_FORMATTER(DataCount);
 WASP_DEFINE_FORMATTER(NameAssoc);
 WASP_DEFINE_FORMATTER(IndirectNameAssoc);
 WASP_DEFINE_FORMATTER(NameSubsection);
+WASP_DEFINE_FORMATTER(Comdat);
+WASP_DEFINE_FORMATTER(ComdatSymbol);
+WASP_DEFINE_FORMATTER(ComdatSymbolKind);
 
 #undef WASP_DEFINE_FORMATTER
 
