@@ -36,14 +36,21 @@
 #include "wasp/binary/import.h"
 #include "wasp/binary/indirect_name_assoc.h"
 #include "wasp/binary/instruction.h"
+#include "wasp/binary/linking_subsection.h"
+#include "wasp/binary/linking_subsection_id.h"
 #include "wasp/binary/locals.h"
 #include "wasp/binary/memory.h"
 #include "wasp/binary/name_assoc.h"
 #include "wasp/binary/name_subsection.h"
 #include "wasp/binary/name_subsection_id.h"
+#include "wasp/binary/relocation_entry.h"
+#include "wasp/binary/relocation_type.h"
 #include "wasp/binary/section.h"
+#include "wasp/binary/segment_info.h"
 #include "wasp/binary/shared.h"
 #include "wasp/binary/start.h"
+#include "wasp/binary/symbol_info.h"
+#include "wasp/binary/symbol_info_kind.h"
 #include "wasp/binary/table.h"
 #include "wasp/binary/type_entry.h"
 
@@ -104,6 +111,17 @@ WASP_DEFINE_FORMATTER(NameSubsection);
 WASP_DEFINE_FORMATTER(Comdat);
 WASP_DEFINE_FORMATTER(ComdatSymbol);
 WASP_DEFINE_FORMATTER(ComdatSymbolKind);
+WASP_DEFINE_FORMATTER(LinkingSubsection);
+WASP_DEFINE_FORMATTER(LinkingSubsectionId);
+WASP_DEFINE_FORMATTER(RelocationEntry);
+WASP_DEFINE_FORMATTER(RelocationType);
+WASP_DEFINE_FORMATTER(SegmentInfo);
+WASP_DEFINE_FORMATTER(SymbolInfo);
+WASP_DEFINE_FORMATTER(SymbolInfo::Flags::Binding);
+WASP_DEFINE_FORMATTER(SymbolInfo::Flags::Visibility);
+WASP_DEFINE_FORMATTER(SymbolInfo::Flags::Undefined);
+WASP_DEFINE_FORMATTER(SymbolInfo::Flags::ExplicitName);
+WASP_DEFINE_FORMATTER(SymbolInfoKind);
 
 #undef WASP_DEFINE_FORMATTER
 
