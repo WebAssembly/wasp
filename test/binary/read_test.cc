@@ -77,75 +77,73 @@ using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
 TEST(ReadTest, BlockType_MVP) {
-  ExpectRead<BlockType>(BlockType::I32, MakeSpanU8("\x7f"));
-  ExpectRead<BlockType>(BlockType::I64, MakeSpanU8("\x7e"));
-  ExpectRead<BlockType>(BlockType::F32, MakeSpanU8("\x7d"));
-  ExpectRead<BlockType>(BlockType::F64, MakeSpanU8("\x7c"));
-  ExpectRead<BlockType>(BlockType::Void, MakeSpanU8("\x40"));
+  ExpectRead<BlockType>(BlockType::I32, "\x7f"_su8);
+  ExpectRead<BlockType>(BlockType::I64, "\x7e"_su8);
+  ExpectRead<BlockType>(BlockType::F32, "\x7d"_su8);
+  ExpectRead<BlockType>(BlockType::F64, "\x7c"_su8);
+  ExpectRead<BlockType>(BlockType::Void, "\x40"_su8);
 }
 
 TEST(ReadTest, BlockType_simd) {
   ExpectReadFailure<BlockType>(
-      {{0, "block type"}, {1, "Unknown block type: 123"}}, MakeSpanU8("\x7b"));
+      {{0, "block type"}, {1, "Unknown block type: 123"}}, "\x7b"_su8);
 
   Features features;
   features.enable_simd();
-  ExpectRead<BlockType>(BlockType::V128, MakeSpanU8("\x7b"), features);
+  ExpectRead<BlockType>(BlockType::V128, "\x7b"_su8, features);
 }
 
 TEST(ReadTest, BlockType_reference_types) {
   ExpectReadFailure<BlockType>(
-      {{0, "block type"}, {1, "Unknown block type: 111"}}, MakeSpanU8("\x6f"));
+      {{0, "block type"}, {1, "Unknown block type: 111"}}, "\x6f"_su8);
 
   Features features;
   features.enable_reference_types();
-  ExpectRead<BlockType>(BlockType::Anyref, MakeSpanU8("\x6f"), features);
+  ExpectRead<BlockType>(BlockType::Anyref, "\x6f"_su8, features);
 }
 
 TEST(ReadTest, BlockType_Unknown) {
   ExpectReadFailure<BlockType>(
-      {{0, "block type"}, {1, "Unknown block type: 0"}}, MakeSpanU8("\x00"));
+      {{0, "block type"}, {1, "Unknown block type: 0"}}, "\x00"_su8);
 
   // Overlong encoding is not allowed.
   ExpectReadFailure<BlockType>(
-      {{0, "block type"}, {1, "Unknown block type: 255"}},
-      MakeSpanU8("\xff\x7f"));
+      {{0, "block type"}, {1, "Unknown block type: 255"}}, "\xff\x7f"_su8);
 }
 
 TEST(ReadTest, BrOnExnImmediate) {
-  ExpectRead<BrOnExnImmediate>(BrOnExnImmediate{0, 0}, MakeSpanU8("\x00\x00"));
+  ExpectRead<BrOnExnImmediate>(BrOnExnImmediate{0, 0}, "\x00\x00"_su8);
 }
 
 TEST(ReadTest, BrOnExnImmediate_PastEnd) {
   ExpectReadFailure<BrOnExnImmediate>(
-      {{0, "br_on_exn"}, {0, "target"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      {{0, "br_on_exn"}, {0, "target"}, {0, "Unable to read u8"}}, ""_su8);
 
   ExpectReadFailure<BrOnExnImmediate>(
       {{0, "br_on_exn"}, {1, "exception index"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x00"));
+      "\x00"_su8);
 }
 
 TEST(ReadTest, BrTableImmediate) {
-  ExpectRead<BrTableImmediate>(BrTableImmediate{{}, 0}, MakeSpanU8("\x00\x00"));
+  ExpectRead<BrTableImmediate>(BrTableImmediate{{}, 0}, "\x00\x00"_su8);
   ExpectRead<BrTableImmediate>(BrTableImmediate{{1, 2}, 3},
-                               MakeSpanU8("\x02\x01\x02\x03"));
+                               "\x02\x01\x02\x03"_su8);
 }
 
 TEST(ReadTest, BrTableImmediate_PastEnd) {
   ExpectReadFailure<BrTableImmediate>(
       {{0, "br_table"}, {0, "targets"}, {0, "count"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      ""_su8);
 
   ExpectReadFailure<BrTableImmediate>(
       {{0, "br_table"}, {1, "default target"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x00"));
+      "\x00"_su8);
 }
 
 TEST(ReadTest, ReadBytes) {
   Features features;
   TestErrors errors;
-  const SpanU8 data = MakeSpanU8("\x12\x34\x56");
+  const SpanU8 data = "\x12\x34\x56"_su8;
   SpanU8 copy = data;
   auto result = ReadBytes(&copy, 3, features, errors);
   ExpectNoErrors(errors);
@@ -156,7 +154,7 @@ TEST(ReadTest, ReadBytes) {
 TEST(ReadTest, ReadBytes_Leftovers) {
   Features features;
   TestErrors errors;
-  const SpanU8 data = MakeSpanU8("\x12\x34\x56");
+  const SpanU8 data = "\x12\x34\x56"_su8;
   SpanU8 copy = data;
   auto result = ReadBytes(&copy, 2, features, errors);
   ExpectNoErrors(errors);
@@ -167,7 +165,7 @@ TEST(ReadTest, ReadBytes_Leftovers) {
 TEST(ReadTest, ReadBytes_Fail) {
   Features features;
   TestErrors errors;
-  const SpanU8 data = MakeSpanU8("\x12\x34\x56");
+  const SpanU8 data = "\x12\x34\x56"_su8;
   SpanU8 copy = data;
   auto result = ReadBytes(&copy, 4, features, errors);
   EXPECT_EQ(nullopt, result);
@@ -176,9 +174,9 @@ TEST(ReadTest, ReadBytes_Fail) {
 
 TEST(ReadTest, CallIndirectImmediate) {
   ExpectRead<CallIndirectImmediate>(CallIndirectImmediate{1, 0},
-                                    MakeSpanU8("\x01\x00"));
+                                    "\x01\x00"_su8);
   ExpectRead<CallIndirectImmediate>(CallIndirectImmediate{128, 0},
-                                    MakeSpanU8("\x80\x01\x00"));
+                                    "\x80\x01\x00"_su8);
 }
 
 TEST(ReadTest, CallIndirectImmediate_BadReserved) {
@@ -186,174 +184,170 @@ TEST(ReadTest, CallIndirectImmediate_BadReserved) {
       {{0, "call_indirect"},
        {1, "reserved"},
        {2, "Expected reserved byte 0, got 1"}},
-      MakeSpanU8("\x00\x01"));
+      "\x00\x01"_su8);
 }
 
 TEST(ReadTest, CallIndirectImmediate_PastEnd) {
   ExpectReadFailure<CallIndirectImmediate>(
       {{0, "call_indirect"}, {0, "type index"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      ""_su8);
 
   ExpectReadFailure<CallIndirectImmediate>(
       {{0, "call_indirect"}, {1, "reserved"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x00"));
+      "\x00"_su8);
 }
 
 TEST(ReadTest, Code) {
   // Empty body. This will fail validation, but can still be read.
-  ExpectRead<Code>(Code{{}, MakeExpression("")}, MakeSpanU8("\x01\x00"));
+  ExpectRead<Code>(Code{{}, ""_expr}, "\x01\x00"_su8);
 
   // Smallest valid empty body.
-  ExpectRead<Code>(Code{{}, MakeExpression("\x0b")},
-                   MakeSpanU8("\x02\x00\x0b"));
+  ExpectRead<Code>(Code{{}, "\x0b"_expr}, "\x02\x00\x0b"_su8);
 
   // (func
   //   (local i32 i32 i64 i64 i64)
   //   (nop))
   ExpectRead<Code>(Code{{Locals{2, ValueType::I32}, Locals{3, ValueType::I64}},
-                        MakeExpression("\x01\x0b")},
-                   MakeSpanU8("\x07\x02\x02\x7f\x03\x7e\x01\x0b"));
+                        "\x01\x0b"_expr},
+                   "\x07\x02\x02\x7f\x03\x7e\x01\x0b"_su8);
 }
 
 TEST(ReadTest, Code_PastEnd) {
   ExpectReadFailure<Code>(
-      {{0, "code"}, {0, "length"}, {0, "Unable to read u8"}}, MakeSpanU8(""));
+      {{0, "code"}, {0, "length"}, {0, "Unable to read u8"}}, ""_su8);
 
   ExpectReadFailure<Code>({{0, "code"}, {1, "Length extends past end: 1 > 0"}},
-                          MakeSpanU8("\x01"));
+                          "\x01"_su8);
 
   ExpectReadFailure<Code>(
       {{0, "code"}, {1, "locals vector"}, {2, "Count extends past end: 1 > 0"}},
-      MakeSpanU8("\x01\x01"));
+      "\x01\x01"_su8);
 }
 
 TEST(ReadTest, ConstantExpression) {
   // i32.const
   ExpectRead<ConstantExpression>(
       ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
-      MakeSpanU8("\x41\x00\x0b"));
+      "\x41\x00\x0b"_su8);
 
   // i64.const
   ExpectRead<ConstantExpression>(
       ConstantExpression{Instruction{Opcode::I64Const, s64{34359738368}}},
-      MakeSpanU8("\x42\x80\x80\x80\x80\x80\x01\x0b"));
+      "\x42\x80\x80\x80\x80\x80\x01\x0b"_su8);
 
   // f32.const
   ExpectRead<ConstantExpression>(
       ConstantExpression{Instruction{Opcode::F32Const, f32{0}}},
-      MakeSpanU8("\x43\x00\x00\x00\x00\x0b"));
+      "\x43\x00\x00\x00\x00\x0b"_su8);
 
   // f64.const
   ExpectRead<ConstantExpression>(
       ConstantExpression{Instruction{Opcode::F64Const, f64{0}}},
-      MakeSpanU8("\x44\x00\x00\x00\x00\x00\x00\x00\x00\x0b"));
+      "\x44\x00\x00\x00\x00\x00\x00\x00\x00\x0b"_su8);
 
   // global.get
   ExpectRead<ConstantExpression>(
       ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-      MakeSpanU8("\x23\x00\x0b"));
+      "\x23\x00\x0b"_su8);
 }
 
 TEST(ReadTest, ConstantExpression_NoEnd) {
   // i32.const
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
-      MakeSpanU8("\x41\x00"));
+      "\x41\x00"_su8);
 
   // i64.const
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {7, "opcode"}, {7, "Unable to read u8"}},
-      MakeSpanU8("\x42\x80\x80\x80\x80\x80\x01"));
+      "\x42\x80\x80\x80\x80\x80\x01"_su8);
 
   // f32.const
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {5, "opcode"}, {5, "Unable to read u8"}},
-      MakeSpanU8("\x43\x00\x00\x00\x00"));
+      "\x43\x00\x00\x00\x00"_su8);
 
   // f64.const
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {9, "opcode"}, {9, "Unable to read u8"}},
-      MakeSpanU8("\x44\x00\x00\x00\x00\x00\x00\x00\x00"));
+      "\x44\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
 
   // global.get
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
-      MakeSpanU8("\x23\x00"));
+      "\x23\x00"_su8);
 }
 
 TEST(ReadTest, ConstantExpression_TooLong) {
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {3, "Expected end instruction"}},
-      MakeSpanU8("\x41\x00\x01\x0b"));
+      "\x41\x00\x01\x0b"_su8);
 }
 
 TEST(ReadTest, ConstantExpression_InvalidInstruction) {
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {0, "opcode"}, {1, "Unknown opcode: 6"}},
-      MakeSpanU8("\x06"));
+      "\x06"_su8);
 }
 
 TEST(ReadTest, ConstantExpression_IllegalInstruction) {
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"},
        {1, "Illegal instruction in constant expression: unreachable"}},
-      MakeSpanU8("\x00"));
+      "\x00"_su8);
 }
 
 TEST(ReadTest, ConstantExpression_PastEnd) {
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {0, "opcode"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      ""_su8);
 }
 
 TEST(ReadTest, CopyImmediate) {
-  ExpectRead<CopyImmediate>(CopyImmediate{0, 0}, MakeSpanU8("\x00\x00"));
+  ExpectRead<CopyImmediate>(CopyImmediate{0, 0}, "\x00\x00"_su8);
 }
 
 TEST(ReadTest, CopyImmediate_BadReserved) {
   ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
                                     {0, "reserved"},
                                     {1, "Expected reserved byte 0, got 1"}},
-                                   MakeSpanU8("\x01"));
+                                   "\x01"_su8);
 
   ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
                                     {1, "reserved"},
                                     {2, "Expected reserved byte 0, got 1"}},
-                                   MakeSpanU8("\x00\x01"));
+                                   "\x00\x01"_su8);
 }
 
 TEST(ReadTest, CopyImmediate_PastEnd) {
   ExpectReadFailure<CopyImmediate>(
       {{0, "copy immediate"}, {0, "reserved"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      ""_su8);
 
   ExpectReadFailure<CopyImmediate>(
       {{0, "copy immediate"}, {1, "reserved"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x00"));
+      "\x00"_su8);
 }
 
 TEST(ReadTest, ShuffleImmediate) {
   ExpectRead<ShuffleImmediate>(
       ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
-      MakeSpanU8(
-          "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"));
+      "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
 }
 
 TEST(ReadTest, ShuffleImmediate_PastEnd) {
   ExpectReadFailure<ShuffleImmediate>(
-      {{0, "shuffle immediate"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      {{0, "shuffle immediate"}, {0, "Unable to read u8"}}, ""_su8);
 
   ExpectReadFailure<ShuffleImmediate>(
       {{0, "shuffle immediate"}, {15, "Unable to read u8"}},
-      MakeSpanU8(
-          "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"));
+      "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
 }
 
 TEST(ReadTest, ReadCount) {
   Features features;
   TestErrors errors;
-  const SpanU8 data = MakeSpanU8("\x01\x00\x00\x00");
+  const SpanU8 data = "\x01\x00\x00\x00"_su8;
   SpanU8 copy = data;
   auto result = ReadCount(&copy, features, errors);
   ExpectNoErrors(errors);
@@ -364,7 +358,7 @@ TEST(ReadTest, ReadCount) {
 TEST(ReadTest, ReadCount_PastEnd) {
   Features features;
   TestErrors errors;
-  const SpanU8 data = MakeSpanU8("\x05\x00\x00\x00");
+  const SpanU8 data = "\x05\x00\x00\x00"_su8;
   SpanU8 copy = data;
   auto result = ReadCount(&copy, features, errors);
   ExpectError({{1, "Count extends past end: 5 > 3"}}, errors, data);
@@ -375,42 +369,42 @@ TEST(ReadTest, ReadCount_PastEnd) {
 TEST(ReadTest, DataSegment_MVP) {
   ExpectRead<DataSegment>(
       DataSegment{1, ConstantExpression{Instruction{Opcode::I64Const, s64{1}}},
-                  MakeSpanU8("wxyz")},
-      MakeSpanU8("\x01\x42\x01\x0b\x04wxyz"));
+                  "wxyz"_su8},
+      "\x01\x42\x01\x0b\x04wxyz"_su8);
 }
 
 TEST(ReadTest, DataSegment_MVP_PastEnd) {
   ExpectReadFailure<DataSegment>(
       {{0, "data segment"}, {0, "memory index"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      ""_su8);
 
   ExpectReadFailure<DataSegment>({{0, "data segment"},
                                   {1, "offset"},
                                   {1, "constant expression"},
                                   {1, "opcode"},
                                   {1, "Unable to read u8"}},
-                                 MakeSpanU8("\x00"));
+                                 "\x00"_su8);
 
   ExpectReadFailure<DataSegment>(
       {{0, "data segment"}, {4, "length"}, {4, "Unable to read u8"}},
-      MakeSpanU8("\x00\x41\x00\x0b"));
+      "\x00\x41\x00\x0b"_su8);
 
   ExpectReadFailure<DataSegment>(
       {{0, "data segment"}, {5, "Length extends past end: 2 > 0"}},
-      MakeSpanU8("\x00\x41\x00\x0b\x02"));
+      "\x00\x41\x00\x0b\x02"_su8);
 }
 
 TEST(ReadTest, DataSegment_BulkMemory) {
   Features features;
   features.enable_bulk_memory();
 
-  ExpectRead<DataSegment>(DataSegment{MakeSpanU8("wxyz")},
-                          MakeSpanU8("\x01\x04wxyz"), features);
+  ExpectRead<DataSegment>(DataSegment{"wxyz"_su8}, "\x01\x04wxyz"_su8,
+                          features);
 
   ExpectRead<DataSegment>(
       DataSegment{1u, ConstantExpression{Instruction{Opcode::I32Const, s32{2}}},
-                  MakeSpanU8("xyz")},
-      MakeSpanU8("\x02\x01\x41\x02\x0b\x03xyz"), features);
+                  "xyz"_su8},
+      "\x02\x01\x41\x02\x0b\x03xyz"_su8, features);
 }
 
 TEST(ReadTest, DataSegment_BulkMemory_BadFlags) {
@@ -418,7 +412,7 @@ TEST(ReadTest, DataSegment_BulkMemory_BadFlags) {
   features.enable_bulk_memory();
 
   ExpectReadFailure<DataSegment>({{0, "data segment"}, {1, "Unknown flags: 3"}},
-                                 MakeSpanU8("\x03"), features);
+                                 "\x03"_su8, features);
 }
 
 TEST(ReadTest, DataSegment_BulkMemory_PastEnd) {
@@ -426,37 +420,37 @@ TEST(ReadTest, DataSegment_BulkMemory_PastEnd) {
   features.enable_bulk_memory();
 
   ExpectReadFailure<DataSegment>(
-      {{0, "data segment"}, {0, "flags"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""), features);
+      {{0, "data segment"}, {0, "flags"}, {0, "Unable to read u8"}}, ""_su8,
+      features);
 
   // Passive.
   ExpectReadFailure<DataSegment>(
       {{0, "data segment"}, {1, "length"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x01"), features);
+      "\x01"_su8, features);
 
   ExpectReadFailure<DataSegment>(
       {{0, "data segment"}, {2, "Length extends past end: 1 > 0"}},
-      MakeSpanU8("\x01\x01"), features);
+      "\x01\x01"_su8, features);
 
   // Active w/ memory index.
   ExpectReadFailure<DataSegment>(
       {{0, "data segment"}, {1, "memory index"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x02"), features);
+      "\x02"_su8, features);
 
   ExpectReadFailure<DataSegment>({{0, "data segment"},
                                   {2, "offset"},
                                   {2, "constant expression"},
                                   {2, "opcode"},
                                   {2, "Unable to read u8"}},
-                                 MakeSpanU8("\x02\x00"), features);
+                                 "\x02\x00"_su8, features);
 
   ExpectReadFailure<DataSegment>(
       {{0, "data segment"}, {5, "length"}, {5, "Unable to read u8"}},
-      MakeSpanU8("\x02\x00\x41\x00\x0b"), features);
+      "\x02\x00\x41\x00\x0b"_su8, features);
 
   ExpectReadFailure<DataSegment>(
       {{0, "data segment"}, {6, "Length extends past end: 1 > 0"}},
-      MakeSpanU8("\x02\x00\x41\x00\x0b\x01"), features);
+      "\x02\x00\x41\x00\x0b\x01"_su8, features);
 }
 
 TEST(ReadTest, ElementExpression) {
@@ -465,12 +459,12 @@ TEST(ReadTest, ElementExpression) {
 
   // ref.null
   ExpectRead<ElementExpression>(ElementExpression{Instruction{Opcode::RefNull}},
-                                MakeSpanU8("\xd0\x0b"), features);
+                                "\xd0\x0b"_su8, features);
 
   // ref.func 2
   ExpectRead<ElementExpression>(
       ElementExpression{Instruction{Opcode::RefFunc, Index{2u}}},
-      MakeSpanU8("\xd2\x02\x0b"), features);
+      "\xd2\x02\x0b"_su8, features);
 }
 
 TEST(ReadTest, ElementExpression_NoEnd) {
@@ -480,12 +474,12 @@ TEST(ReadTest, ElementExpression_NoEnd) {
   // ref.null
   ExpectReadFailure<ElementExpression>(
       {{0, "element expression"}, {1, "opcode"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\xd0"), features);
+      "\xd0"_su8, features);
 
   // ref.func
   ExpectReadFailure<ElementExpression>(
       {{0, "element expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
-      MakeSpanU8("\xd2\x00"), features);
+      "\xd2\x00"_su8, features);
 }
 
 TEST(ReadTest, ElementExpression_TooLong) {
@@ -494,7 +488,7 @@ TEST(ReadTest, ElementExpression_TooLong) {
 
   ExpectReadFailure<ElementExpression>(
       {{0, "element expression"}, {2, "Expected end instruction"}},
-      MakeSpanU8("\xd0\x00"), features);
+      "\xd0\x00"_su8, features);
 }
 
 TEST(ReadTest, ElementExpression_InvalidInstruction) {
@@ -503,7 +497,7 @@ TEST(ReadTest, ElementExpression_InvalidInstruction) {
 
   ExpectReadFailure<ElementExpression>(
       {{0, "element expression"}, {0, "opcode"}, {1, "Unknown opcode: 6"}},
-      MakeSpanU8("\x06"), features);
+      "\x06"_su8, features);
 }
 
 TEST(ReadTest, ElementExpression_IllegalInstruction) {
@@ -513,7 +507,7 @@ TEST(ReadTest, ElementExpression_IllegalInstruction) {
   ExpectReadFailure<ElementExpression>(
       {{0, "element expression"},
        {1, "Illegal instruction in element expression: ref.is_null"}},
-      MakeSpanU8("\xd1"), features);
+      "\xd1"_su8, features);
 }
 
 TEST(ReadTest, ElementExpression_PastEnd) {
@@ -522,7 +516,7 @@ TEST(ReadTest, ElementExpression_PastEnd) {
 
   ExpectReadFailure<ElementExpression>(
       {{0, "element expression"}, {0, "opcode"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""), features);
+      ""_su8, features);
 }
 
 TEST(ReadTest, ElementSegment_MVP) {
@@ -530,26 +524,26 @@ TEST(ReadTest, ElementSegment_MVP) {
       ElementSegment{0,
                      ConstantExpression{Instruction{Opcode::I32Const, s32{1}}},
                      {1, 2, 3}},
-      MakeSpanU8("\x00\x41\x01\x0b\x03\x01\x02\x03"));
+      "\x00\x41\x01\x0b\x03\x01\x02\x03"_su8);
 }
 
 TEST(ReadTest, ElementSegment_MVP_PastEnd) {
   ExpectReadFailure<ElementSegment>(
       {{0, "element segment"}, {0, "table index"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      ""_su8);
 
   ExpectReadFailure<ElementSegment>({{0, "element segment"},
                                      {1, "offset"},
                                      {1, "constant expression"},
                                      {1, "opcode"},
                                      {1, "Unable to read u8"}},
-                                    MakeSpanU8("\x00"));
+                                    "\x00"_su8);
 
   ExpectReadFailure<ElementSegment>({{0, "element segment"},
                                      {4, "initializers"},
                                      {4, "count"},
                                      {4, "Unable to read u8"}},
-                                    MakeSpanU8("\x00\x23\x00\x0b"));
+                                    "\x00\x23\x00\x0b"_su8);
 }
 
 TEST(ReadTest, ElementSegment_BulkMemory) {
@@ -561,7 +555,7 @@ TEST(ReadTest, ElementSegment_BulkMemory) {
       ElementSegment{1u,
                      ConstantExpression{Instruction{Opcode::I32Const, s32{2}}},
                      {3, 4}},
-      MakeSpanU8("\x02\x01\x41\x02\x0b\x02\x03\x04"), features);
+      "\x02\x01\x41\x02\x0b\x02\x03\x04"_su8, features);
 
   // Passive element segment.
   ExpectRead<ElementSegment>(
@@ -569,7 +563,7 @@ TEST(ReadTest, ElementSegment_BulkMemory) {
           ElementType::Funcref,
           {ElementExpression{Instruction{Opcode::RefFunc, Index{1u}}},
            ElementExpression{Instruction{Opcode::RefNull}}}},
-      MakeSpanU8("\x01\x70\x02\xd2\x01\x0b\xd0\x0b"), features);
+      "\x01\x70\x02\xd2\x01\x0b\xd0\x0b"_su8, features);
 }
 
 TEST(ReadTest, ElementSegment_BulkMemory_BadFlags) {
@@ -577,8 +571,7 @@ TEST(ReadTest, ElementSegment_BulkMemory_BadFlags) {
   features.enable_bulk_memory();
 
   ExpectReadFailure<ElementSegment>(
-      {{0, "element segment"}, {1, "Unknown flags: 3"}}, MakeSpanU8("\x03"),
-      features);
+      {{0, "element segment"}, {1, "Unknown flags: 3"}}, "\x03"_su8, features);
 }
 
 TEST(ReadTest, ElementSegment_BulkMemory_PastEnd) {
@@ -586,119 +579,112 @@ TEST(ReadTest, ElementSegment_BulkMemory_PastEnd) {
   features.enable_bulk_memory();
 
   ExpectReadFailure<ElementSegment>(
-      {{0, "element segment"}, {0, "flags"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""), features);
+      {{0, "element segment"}, {0, "flags"}, {0, "Unable to read u8"}}, ""_su8,
+      features);
 
   // Passive.
   ExpectReadFailure<ElementSegment>(
       {{0, "element segment"}, {1, "element type"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x01"), features);
+      "\x01"_su8, features);
 
   ExpectReadFailure<ElementSegment>({{0, "element segment"},
                                      {2, "initializers"},
                                      {2, "count"},
                                      {2, "Unable to read u8"}},
-                                    MakeSpanU8("\x01\x70"), features);
+                                    "\x01\x70"_su8, features);
 
   ExpectReadFailure<ElementSegment>({{0, "element segment"},
                                      {2, "initializers"},
                                      {3, "Count extends past end: 1 > 0"}},
-                                    MakeSpanU8("\x01\x70\x01"), features);
+                                    "\x01\x70\x01"_su8, features);
 
   // Active w/ table index.
   ExpectReadFailure<ElementSegment>(
       {{0, "element segment"}, {1, "table index"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x02"), features);
+      "\x02"_su8, features);
 
   ExpectReadFailure<ElementSegment>({{0, "element segment"},
-                                  {2, "offset"},
-                                  {2, "constant expression"},
-                                  {2, "opcode"},
-                                  {2, "Unable to read u8"}},
-                                 MakeSpanU8("\x02\x00"), features);
+                                     {2, "offset"},
+                                     {2, "constant expression"},
+                                     {2, "opcode"},
+                                     {2, "Unable to read u8"}},
+                                    "\x02\x00"_su8, features);
 
   ExpectReadFailure<ElementSegment>({{0, "element segment"},
                                      {5, "initializers"},
                                      {5, "count"},
                                      {5, "Unable to read u8"}},
-                                    MakeSpanU8("\x02\x00\x41\x00\x0b"),
-                                    features);
+                                    "\x02\x00\x41\x00\x0b"_su8, features);
 
   ExpectReadFailure<ElementSegment>({{0, "element segment"},
                                      {5, "initializers"},
                                      {6, "Count extends past end: 1 > 0"}},
-                                    MakeSpanU8("\x02\x00\x41\x00\x0b\x01"),
-                                    features);
+                                    "\x02\x00\x41\x00\x0b\x01"_su8, features);
 }
 
 TEST(ReadTest, ElementType) {
-  ExpectRead<ElementType>(ElementType::Funcref, MakeSpanU8("\x70"));
+  ExpectRead<ElementType>(ElementType::Funcref, "\x70"_su8);
 }
 
 TEST(ReadTest, ElementType_Unknown) {
   ExpectReadFailure<ElementType>(
-      {{0, "element type"}, {1, "Unknown element type: 0"}},
-      MakeSpanU8("\x00"));
+      {{0, "element type"}, {1, "Unknown element type: 0"}}, "\x00"_su8);
 
   // Overlong encoding is not allowed.
   ExpectReadFailure<ElementType>(
-      {{0, "element type"}, {1, "Unknown element type: 240"}},
-      MakeSpanU8("\xf0\x7f"));
+      {{0, "element type"}, {1, "Unknown element type: 240"}}, "\xf0\x7f"_su8);
 }
 
 TEST(ReadTest, Export) {
   ExpectRead<Export>(Export{ExternalKind::Function, "hi", 3},
-                     MakeSpanU8("\x02hi\x00\x03"));
+                     "\x02hi\x00\x03"_su8);
   ExpectRead<Export>(Export{ExternalKind::Table, "", 1000},
-                     MakeSpanU8("\x00\x01\xe8\x07"));
+                     "\x00\x01\xe8\x07"_su8);
   ExpectRead<Export>(Export{ExternalKind::Memory, "mem", 0},
-                     MakeSpanU8("\x03mem\x02\x00"));
-  ExpectRead<Export>(Export{ExternalKind::Global, "g", 1},
-                     MakeSpanU8("\x01g\x03\x01"));
+                     "\x03mem\x02\x00"_su8);
+  ExpectRead<Export>(Export{ExternalKind::Global, "g", 1}, "\x01g\x03\x01"_su8);
 }
 
 TEST(ReadTest, Export_PastEnd) {
   ExpectReadFailure<Export>(
       {{0, "export"}, {0, "name"}, {0, "length"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      ""_su8);
 
   ExpectReadFailure<Export>(
       {{0, "export"}, {1, "external kind"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x00"));
+      "\x00"_su8);
 
   ExpectReadFailure<Export>(
-      {{0, "export"}, {2, "index"}, {2, "Unable to read u8"}},
-      MakeSpanU8("\x00\x00"));
+      {{0, "export"}, {2, "index"}, {2, "Unable to read u8"}}, "\x00\x00"_su8);
 }
 
 TEST(ReadTest, ExternalKind) {
-  ExpectRead<ExternalKind>(ExternalKind::Function, MakeSpanU8("\x00"));
-  ExpectRead<ExternalKind>(ExternalKind::Table, MakeSpanU8("\x01"));
-  ExpectRead<ExternalKind>(ExternalKind::Memory, MakeSpanU8("\x02"));
-  ExpectRead<ExternalKind>(ExternalKind::Global, MakeSpanU8("\x03"));
+  ExpectRead<ExternalKind>(ExternalKind::Function, "\x00"_su8);
+  ExpectRead<ExternalKind>(ExternalKind::Table, "\x01"_su8);
+  ExpectRead<ExternalKind>(ExternalKind::Memory, "\x02"_su8);
+  ExpectRead<ExternalKind>(ExternalKind::Global, "\x03"_su8);
 }
 
 TEST(ReadTest, ExternalKind_Unknown) {
   ExpectReadFailure<ExternalKind>(
-      {{0, "external kind"}, {1, "Unknown external kind: 4"}},
-      MakeSpanU8("\x04"));
+      {{0, "external kind"}, {1, "Unknown external kind: 4"}}, "\x04"_su8);
 
   // Overlong encoding is not allowed.
   ExpectReadFailure<ExternalKind>(
       {{0, "external kind"}, {1, "Unknown external kind: 132"}},
-      MakeSpanU8("\x84\x00"));
+      "\x84\x00"_su8);
 }
 
 TEST(ReadTest, F32) {
-  ExpectRead<f32>(0.0f, MakeSpanU8("\x00\x00\x00\x00"));
-  ExpectRead<f32>(-1.0f, MakeSpanU8("\x00\x00\x80\xbf"));
-  ExpectRead<f32>(1234567.0f, MakeSpanU8("\x38\xb4\x96\x49"));
-  ExpectRead<f32>(INFINITY, MakeSpanU8("\x00\x00\x80\x7f"));
-  ExpectRead<f32>(-INFINITY, MakeSpanU8("\x00\x00\x80\xff"));
+  ExpectRead<f32>(0.0f, "\x00\x00\x00\x00"_su8);
+  ExpectRead<f32>(-1.0f, "\x00\x00\x80\xbf"_su8);
+  ExpectRead<f32>(1234567.0f, "\x38\xb4\x96\x49"_su8);
+  ExpectRead<f32>(INFINITY, "\x00\x00\x80\x7f"_su8);
+  ExpectRead<f32>(-INFINITY, "\x00\x00\x80\xff"_su8);
 
   // NaN
   {
-    auto data = MakeSpanU8("\x00\x00\xc0\x7f");
+    auto data = "\x00\x00\xc0\x7f"_su8;
     Features features;
     TestErrors errors;
     auto result = Read<f32>(&data, features, errors);
@@ -711,20 +697,19 @@ TEST(ReadTest, F32) {
 
 TEST(ReadTest, F32_PastEnd) {
   ExpectReadFailure<f32>({{0, "f32"}, {0, "Unable to read 4 bytes"}},
-                         MakeSpanU8("\x00\x00\x00"));
+                         "\x00\x00\x00"_su8);
 }
 
 TEST(ReadTest, F64) {
-  ExpectRead<f64>(0.0, MakeSpanU8("\x00\x00\x00\x00\x00\x00\x00\x00"));
-  ExpectRead<f64>(-1.0, MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf0\xbf"));
-  ExpectRead<f64>(111111111111111,
-                  MakeSpanU8("\xc0\x71\xbc\x93\x84\x43\xd9\x42"));
-  ExpectRead<f64>(INFINITY, MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf0\x7f"));
-  ExpectRead<f64>(-INFINITY, MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf0\xff"));
+  ExpectRead<f64>(0.0, "\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
+  ExpectRead<f64>(-1.0, "\x00\x00\x00\x00\x00\x00\xf0\xbf"_su8);
+  ExpectRead<f64>(111111111111111, "\xc0\x71\xbc\x93\x84\x43\xd9\x42"_su8);
+  ExpectRead<f64>(INFINITY, "\x00\x00\x00\x00\x00\x00\xf0\x7f"_su8);
+  ExpectRead<f64>(-INFINITY, "\x00\x00\x00\x00\x00\x00\xf0\xff"_su8);
 
   // NaN
   {
-    auto data = MakeSpanU8("\x00\x00\x00\x00\x00\x00\xf8\x7f");
+    auto data = "\x00\x00\x00\x00\x00\x00\xf8\x7f"_su8;
     Features features;
     TestErrors errors;
     auto result = Read<f64>(&data, features, errors);
@@ -737,24 +722,23 @@ TEST(ReadTest, F64) {
 
 TEST(ReadTest, F64_PastEnd) {
   ExpectReadFailure<f64>({{0, "f64"}, {0, "Unable to read 8 bytes"}},
-                         MakeSpanU8("\x00\x00\x00\x00\x00\x00\x00"));
+                         "\x00\x00\x00\x00\x00\x00\x00"_su8);
 }
 
 TEST(ReadTest, Function) {
-  ExpectRead<Function>(Function{1}, MakeSpanU8("\x01"));
+  ExpectRead<Function>(Function{1}, "\x01"_su8);
 }
 
 TEST(ReadTest, Function_PastEnd) {
   ExpectReadFailure<Function>(
-      {{0, "function"}, {0, "type index"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      {{0, "function"}, {0, "type index"}, {0, "Unable to read u8"}}, ""_su8);
 }
 
 TEST(ReadTest, FunctionType) {
-  ExpectRead<FunctionType>(FunctionType{{}, {}}, MakeSpanU8("\x00\x00"));
+  ExpectRead<FunctionType>(FunctionType{{}, {}}, "\x00\x00"_su8);
   ExpectRead<FunctionType>(
       FunctionType{{ValueType::I32, ValueType::I64}, {ValueType::F64}},
-      MakeSpanU8("\x02\x7f\x7e\x01\x7c"));
+      "\x02\x7f\x7e\x01\x7c"_su8);
 }
 
 TEST(ReadTest, FunctionType_PastEnd) {
@@ -762,23 +746,23 @@ TEST(ReadTest, FunctionType_PastEnd) {
                                    {0, "param types"},
                                    {0, "count"},
                                    {0, "Unable to read u8"}},
-                                  MakeSpanU8(""));
+                                  ""_su8);
 
   ExpectReadFailure<FunctionType>({{0, "function type"},
                                    {0, "param types"},
                                    {1, "Count extends past end: 1 > 0"}},
-                                  MakeSpanU8("\x01"));
+                                  "\x01"_su8);
 
   ExpectReadFailure<FunctionType>({{0, "function type"},
                                    {1, "result types"},
                                    {1, "count"},
                                    {1, "Unable to read u8"}},
-                                  MakeSpanU8("\x00"));
+                                  "\x00"_su8);
 
   ExpectReadFailure<FunctionType>({{0, "function type"},
                                    {1, "result types"},
                                    {2, "Count extends past end: 1 > 0"}},
-                                  MakeSpanU8("\x00\x01"));
+                                  "\x00\x01"_su8);
 }
 
 TEST(ReadTest, Global) {
@@ -787,7 +771,7 @@ TEST(ReadTest, Global) {
   ExpectRead<Global>(
       Global{GlobalType{ValueType::I32, Mutability::Var},
              ConstantExpression{Instruction{Opcode::I64Const, s64{0}}}},
-      MakeSpanU8("\x7f\x01\x42\x00\x0b"));
+      "\x7f\x01\x42\x00\x0b"_su8);
 }
 
 TEST(ReadTest, Global_PastEnd) {
@@ -795,46 +779,46 @@ TEST(ReadTest, Global_PastEnd) {
                              {0, "global type"},
                              {0, "value type"},
                              {0, "Unable to read u8"}},
-                            MakeSpanU8(""));
+                            ""_su8);
 
   ExpectReadFailure<Global>({{0, "global"},
                              {2, "constant expression"},
                              {2, "opcode"},
                              {2, "Unable to read u8"}},
-                            MakeSpanU8("\x7f\x00"));
+                            "\x7f\x00"_su8);
 }
 
 TEST(ReadTest, GlobalType) {
   ExpectRead<GlobalType>(GlobalType{ValueType::I32, Mutability::Const},
-                         MakeSpanU8("\x7f\x00"));
+                         "\x7f\x00"_su8);
   ExpectRead<GlobalType>(GlobalType{ValueType::F32, Mutability::Var},
-                         MakeSpanU8("\x7d\x01"));
+                         "\x7d\x01"_su8);
 }
 
 TEST(ReadTest, GlobalType_PastEnd) {
   ExpectReadFailure<GlobalType>(
       {{0, "global type"}, {0, "value type"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      ""_su8);
 
   ExpectReadFailure<GlobalType>(
       {{0, "global type"}, {1, "mutability"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x7f"));
+      "\x7f"_su8);
 }
 
 TEST(ReadTest, Import) {
   ExpectRead<Import>(Import{"a", "func", 11u},
-                     MakeSpanU8("\x01\x61\x04\x66unc\x00\x0b"));
+                     "\x01\x61\x04\x66unc\x00\x0b"_su8);
 
   ExpectRead<Import>(
       Import{"b", "table", TableType{Limits{1}, ElementType::Funcref}},
-      MakeSpanU8("\x01\x62\x05table\x01\x70\x00\x01"));
+      "\x01\x62\x05table\x01\x70\x00\x01"_su8);
 
   ExpectRead<Import>(Import{"c", "memory", MemoryType{Limits{0, 2}}},
-                     MakeSpanU8("\x01\x63\x06memory\x02\x01\x00\x02"));
+                     "\x01\x63\x06memory\x02\x01\x00\x02"_su8);
 
   ExpectRead<Import>(
       Import{"d", "global", GlobalType{ValueType::I32, Mutability::Const}},
-      MakeSpanU8("\x01\x64\x06global\x03\x7f\x00"));
+      "\x01\x64\x06global\x03\x7f\x00"_su8);
 }
 
 TEST(ReadTest, ImportType_PastEnd) {
@@ -842,89 +826,89 @@ TEST(ReadTest, ImportType_PastEnd) {
                              {0, "module name"},
                              {0, "length"},
                              {0, "Unable to read u8"}},
-                            MakeSpanU8(""));
+                            ""_su8);
 
   ExpectReadFailure<Import>({{0, "import"},
                              {1, "field name"},
                              {1, "length"},
                              {1, "Unable to read u8"}},
-                            MakeSpanU8("\x00"));
+                            "\x00"_su8);
 
   ExpectReadFailure<Import>(
       {{0, "import"}, {2, "external kind"}, {2, "Unable to read u8"}},
-      MakeSpanU8("\x00\x00"));
+      "\x00\x00"_su8);
 
   ExpectReadFailure<Import>(
       {{0, "import"}, {3, "function index"}, {3, "Unable to read u8"}},
-      MakeSpanU8("\x00\x00\x00"));
+      "\x00\x00\x00"_su8);
 
   ExpectReadFailure<Import>({{0, "import"},
                              {3, "table type"},
                              {3, "element type"},
                              {3, "Unable to read u8"}},
-                            MakeSpanU8("\x00\x00\x01"));
+                            "\x00\x00\x01"_su8);
 
   ExpectReadFailure<Import>({{0, "import"},
                              {3, "memory type"},
                              {3, "limits"},
                              {3, "flags"},
                              {3, "Unable to read u8"}},
-                            MakeSpanU8("\x00\x00\x02"));
+                            "\x00\x00\x02"_su8);
 
   ExpectReadFailure<Import>({{0, "import"},
                              {3, "global type"},
                              {3, "value type"},
                              {3, "Unable to read u8"}},
-                            MakeSpanU8("\x00\x00\x03"));
+                            "\x00\x00\x03"_su8);
 }
 
 TEST(ReadTest, IndirectNameAssoc) {
   ExpectRead<IndirectNameAssoc>(
       IndirectNameAssoc{100u, {{0u, "zero"}, {1u, "one"}}},
-      MakeSpanU8("\x64"          // Index.
-                 "\x02"          // Count.
-                 "\x00\x04zero"  // 0 "zero"
-                 "\x01\x03one"   // 1 "one"
-                 ));
+      "\x64"             // Index.
+      "\x02"             // Count.
+      "\x00\x04zero"     // 0 "zero"
+      "\x01\x03one"_su8  // 1 "one"
+  );
 }
 
 TEST(ReadTest, IndirectNameAssoc_PastEnd) {
   ExpectReadFailure<IndirectNameAssoc>(
       {{0, "indirect name assoc"}, {0, "index"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      ""_su8);
 
   ExpectReadFailure<IndirectNameAssoc>({{0, "indirect name assoc"},
                                         {1, "name map"},
                                         {1, "count"},
                                         {1, "Unable to read u8"}},
-                                       MakeSpanU8("\x00"));
+                                       "\x00"_su8);
 
   ExpectReadFailure<IndirectNameAssoc>({{0, "indirect name assoc"},
                                         {1, "name map"},
                                         {2, "Count extends past end: 1 > 0"}},
-                                       MakeSpanU8("\x00\x01"));
+                                       "\x00\x01"_su8);
 }
 
 TEST(ReadTest, InitImmediate) {
-  ExpectRead<InitImmediate>(InitImmediate{1, 0}, MakeSpanU8("\x01\x00"));
-  ExpectRead<InitImmediate>(InitImmediate{128, 0}, MakeSpanU8("\x80\x01\x00"));
+  ExpectRead<InitImmediate>(InitImmediate{1, 0}, "\x01\x00"_su8);
+  ExpectRead<InitImmediate>(InitImmediate{128, 0}, "\x80\x01\x00"_su8);
 }
 
 TEST(ReadTest, InitImmediate_BadReserved) {
   ExpectReadFailure<InitImmediate>({{0, "init immediate"},
                                     {1, "reserved"},
                                     {2, "Expected reserved byte 0, got 1"}},
-                                   MakeSpanU8("\x00\x01"));
+                                   "\x00\x01"_su8);
 }
 
 TEST(ReadTest, InitImmediate_PastEnd) {
   ExpectReadFailure<InitImmediate>(
       {{0, "init immediate"}, {0, "segment index"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      ""_su8);
 
   ExpectReadFailure<InitImmediate>(
       {{0, "init immediate"}, {1, "reserved"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x01"));
+      "\x01"_su8);
 }
 
 TEST(ReadTest, Instruction) {
@@ -932,190 +916,190 @@ TEST(ReadTest, Instruction) {
   using O = Opcode;
   using MemArg = MemArgImmediate;
 
-  ExpectRead<I>(I{O::Unreachable}, MakeSpanU8("\x00"));
-  ExpectRead<I>(I{O::Nop}, MakeSpanU8("\x01"));
-  ExpectRead<I>(I{O::Block, BlockType::I32}, MakeSpanU8("\x02\x7f"));
-  ExpectRead<I>(I{O::Loop, BlockType::Void}, MakeSpanU8("\x03\x40"));
-  ExpectRead<I>(I{O::If, BlockType::F64}, MakeSpanU8("\x04\x7c"));
-  ExpectRead<I>(I{O::Else}, MakeSpanU8("\x05"));
-  ExpectRead<I>(I{O::End}, MakeSpanU8("\x0b"));
-  ExpectRead<I>(I{O::Br, Index{1}}, MakeSpanU8("\x0c\x01"));
-  ExpectRead<I>(I{O::BrIf, Index{2}}, MakeSpanU8("\x0d\x02"));
+  ExpectRead<I>(I{O::Unreachable}, "\x00"_su8);
+  ExpectRead<I>(I{O::Nop}, "\x01"_su8);
+  ExpectRead<I>(I{O::Block, BlockType::I32}, "\x02\x7f"_su8);
+  ExpectRead<I>(I{O::Loop, BlockType::Void}, "\x03\x40"_su8);
+  ExpectRead<I>(I{O::If, BlockType::F64}, "\x04\x7c"_su8);
+  ExpectRead<I>(I{O::Else}, "\x05"_su8);
+  ExpectRead<I>(I{O::End}, "\x0b"_su8);
+  ExpectRead<I>(I{O::Br, Index{1}}, "\x0c\x01"_su8);
+  ExpectRead<I>(I{O::BrIf, Index{2}}, "\x0d\x02"_su8);
   ExpectRead<I>(I{O::BrTable, BrTableImmediate{{3, 4, 5}, 6}},
-                MakeSpanU8("\x0e\x03\x03\x04\x05\x06"));
-  ExpectRead<I>(I{O::Return}, MakeSpanU8("\x0f"));
-  ExpectRead<I>(I{O::Call, Index{7}}, MakeSpanU8("\x10\x07"));
+                "\x0e\x03\x03\x04\x05\x06"_su8);
+  ExpectRead<I>(I{O::Return}, "\x0f"_su8);
+  ExpectRead<I>(I{O::Call, Index{7}}, "\x10\x07"_su8);
   ExpectRead<I>(I{O::CallIndirect, CallIndirectImmediate{8, 0}},
-                MakeSpanU8("\x11\x08\x00"));
-  ExpectRead<I>(I{O::Drop}, MakeSpanU8("\x1a"));
-  ExpectRead<I>(I{O::Select}, MakeSpanU8("\x1b"));
-  ExpectRead<I>(I{O::LocalGet, Index{5}}, MakeSpanU8("\x20\x05"));
-  ExpectRead<I>(I{O::LocalSet, Index{6}}, MakeSpanU8("\x21\x06"));
-  ExpectRead<I>(I{O::LocalTee, Index{7}}, MakeSpanU8("\x22\x07"));
-  ExpectRead<I>(I{O::GlobalGet, Index{8}}, MakeSpanU8("\x23\x08"));
-  ExpectRead<I>(I{O::GlobalSet, Index{9}}, MakeSpanU8("\x24\x09"));
-  ExpectRead<I>(I{O::I32Load, MemArg{10, 11}}, MakeSpanU8("\x28\x0a\x0b"));
-  ExpectRead<I>(I{O::I64Load, MemArg{12, 13}}, MakeSpanU8("\x29\x0c\x0d"));
-  ExpectRead<I>(I{O::F32Load, MemArg{14, 15}}, MakeSpanU8("\x2a\x0e\x0f"));
-  ExpectRead<I>(I{O::F64Load, MemArg{16, 17}}, MakeSpanU8("\x2b\x10\x11"));
-  ExpectRead<I>(I{O::I32Load8S, MemArg{18, 19}}, MakeSpanU8("\x2c\x12\x13"));
-  ExpectRead<I>(I{O::I32Load8U, MemArg{20, 21}}, MakeSpanU8("\x2d\x14\x15"));
-  ExpectRead<I>(I{O::I32Load16S, MemArg{22, 23}}, MakeSpanU8("\x2e\x16\x17"));
-  ExpectRead<I>(I{O::I32Load16U, MemArg{24, 25}}, MakeSpanU8("\x2f\x18\x19"));
-  ExpectRead<I>(I{O::I64Load8S, MemArg{26, 27}}, MakeSpanU8("\x30\x1a\x1b"));
-  ExpectRead<I>(I{O::I64Load8U, MemArg{28, 29}}, MakeSpanU8("\x31\x1c\x1d"));
-  ExpectRead<I>(I{O::I64Load16S, MemArg{30, 31}}, MakeSpanU8("\x32\x1e\x1f"));
-  ExpectRead<I>(I{O::I64Load16U, MemArg{32, 33}}, MakeSpanU8("\x33\x20\x21"));
-  ExpectRead<I>(I{O::I64Load32S, MemArg{34, 35}}, MakeSpanU8("\x34\x22\x23"));
-  ExpectRead<I>(I{O::I64Load32U, MemArg{36, 37}}, MakeSpanU8("\x35\x24\x25"));
-  ExpectRead<I>(I{O::I32Store, MemArg{38, 39}}, MakeSpanU8("\x36\x26\x27"));
-  ExpectRead<I>(I{O::I64Store, MemArg{40, 41}}, MakeSpanU8("\x37\x28\x29"));
-  ExpectRead<I>(I{O::F32Store, MemArg{42, 43}}, MakeSpanU8("\x38\x2a\x2b"));
-  ExpectRead<I>(I{O::F64Store, MemArg{44, 45}}, MakeSpanU8("\x39\x2c\x2d"));
-  ExpectRead<I>(I{O::I32Store8, MemArg{46, 47}}, MakeSpanU8("\x3a\x2e\x2f"));
-  ExpectRead<I>(I{O::I32Store16, MemArg{48, 49}}, MakeSpanU8("\x3b\x30\x31"));
-  ExpectRead<I>(I{O::I64Store8, MemArg{50, 51}}, MakeSpanU8("\x3c\x32\x33"));
-  ExpectRead<I>(I{O::I64Store16, MemArg{52, 53}}, MakeSpanU8("\x3d\x34\x35"));
-  ExpectRead<I>(I{O::I64Store32, MemArg{54, 55}}, MakeSpanU8("\x3e\x36\x37"));
-  ExpectRead<I>(I{O::MemorySize, u8{0}}, MakeSpanU8("\x3f\x00"));
-  ExpectRead<I>(I{O::MemoryGrow, u8{0}}, MakeSpanU8("\x40\x00"));
-  ExpectRead<I>(I{O::I32Const, s32{0}}, MakeSpanU8("\x41\x00"));
-  ExpectRead<I>(I{O::I64Const, s64{0}}, MakeSpanU8("\x42\x00"));
-  ExpectRead<I>(I{O::F32Const, f32{0}}, MakeSpanU8("\x43\x00\x00\x00\x00"));
+                "\x11\x08\x00"_su8);
+  ExpectRead<I>(I{O::Drop}, "\x1a"_su8);
+  ExpectRead<I>(I{O::Select}, "\x1b"_su8);
+  ExpectRead<I>(I{O::LocalGet, Index{5}}, "\x20\x05"_su8);
+  ExpectRead<I>(I{O::LocalSet, Index{6}}, "\x21\x06"_su8);
+  ExpectRead<I>(I{O::LocalTee, Index{7}}, "\x22\x07"_su8);
+  ExpectRead<I>(I{O::GlobalGet, Index{8}}, "\x23\x08"_su8);
+  ExpectRead<I>(I{O::GlobalSet, Index{9}}, "\x24\x09"_su8);
+  ExpectRead<I>(I{O::I32Load, MemArg{10, 11}}, "\x28\x0a\x0b"_su8);
+  ExpectRead<I>(I{O::I64Load, MemArg{12, 13}}, "\x29\x0c\x0d"_su8);
+  ExpectRead<I>(I{O::F32Load, MemArg{14, 15}}, "\x2a\x0e\x0f"_su8);
+  ExpectRead<I>(I{O::F64Load, MemArg{16, 17}}, "\x2b\x10\x11"_su8);
+  ExpectRead<I>(I{O::I32Load8S, MemArg{18, 19}}, "\x2c\x12\x13"_su8);
+  ExpectRead<I>(I{O::I32Load8U, MemArg{20, 21}}, "\x2d\x14\x15"_su8);
+  ExpectRead<I>(I{O::I32Load16S, MemArg{22, 23}}, "\x2e\x16\x17"_su8);
+  ExpectRead<I>(I{O::I32Load16U, MemArg{24, 25}}, "\x2f\x18\x19"_su8);
+  ExpectRead<I>(I{O::I64Load8S, MemArg{26, 27}}, "\x30\x1a\x1b"_su8);
+  ExpectRead<I>(I{O::I64Load8U, MemArg{28, 29}}, "\x31\x1c\x1d"_su8);
+  ExpectRead<I>(I{O::I64Load16S, MemArg{30, 31}}, "\x32\x1e\x1f"_su8);
+  ExpectRead<I>(I{O::I64Load16U, MemArg{32, 33}}, "\x33\x20\x21"_su8);
+  ExpectRead<I>(I{O::I64Load32S, MemArg{34, 35}}, "\x34\x22\x23"_su8);
+  ExpectRead<I>(I{O::I64Load32U, MemArg{36, 37}}, "\x35\x24\x25"_su8);
+  ExpectRead<I>(I{O::I32Store, MemArg{38, 39}}, "\x36\x26\x27"_su8);
+  ExpectRead<I>(I{O::I64Store, MemArg{40, 41}}, "\x37\x28\x29"_su8);
+  ExpectRead<I>(I{O::F32Store, MemArg{42, 43}}, "\x38\x2a\x2b"_su8);
+  ExpectRead<I>(I{O::F64Store, MemArg{44, 45}}, "\x39\x2c\x2d"_su8);
+  ExpectRead<I>(I{O::I32Store8, MemArg{46, 47}}, "\x3a\x2e\x2f"_su8);
+  ExpectRead<I>(I{O::I32Store16, MemArg{48, 49}}, "\x3b\x30\x31"_su8);
+  ExpectRead<I>(I{O::I64Store8, MemArg{50, 51}}, "\x3c\x32\x33"_su8);
+  ExpectRead<I>(I{O::I64Store16, MemArg{52, 53}}, "\x3d\x34\x35"_su8);
+  ExpectRead<I>(I{O::I64Store32, MemArg{54, 55}}, "\x3e\x36\x37"_su8);
+  ExpectRead<I>(I{O::MemorySize, u8{0}}, "\x3f\x00"_su8);
+  ExpectRead<I>(I{O::MemoryGrow, u8{0}}, "\x40\x00"_su8);
+  ExpectRead<I>(I{O::I32Const, s32{0}}, "\x41\x00"_su8);
+  ExpectRead<I>(I{O::I64Const, s64{0}}, "\x42\x00"_su8);
+  ExpectRead<I>(I{O::F32Const, f32{0}}, "\x43\x00\x00\x00\x00"_su8);
   ExpectRead<I>(I{O::F64Const, f64{0}},
-                MakeSpanU8("\x44\x00\x00\x00\x00\x00\x00\x00\x00"));
-  ExpectRead<I>(I{O::I32Eqz}, MakeSpanU8("\x45"));
-  ExpectRead<I>(I{O::I32Eq}, MakeSpanU8("\x46"));
-  ExpectRead<I>(I{O::I32Ne}, MakeSpanU8("\x47"));
-  ExpectRead<I>(I{O::I32LtS}, MakeSpanU8("\x48"));
-  ExpectRead<I>(I{O::I32LtU}, MakeSpanU8("\x49"));
-  ExpectRead<I>(I{O::I32GtS}, MakeSpanU8("\x4a"));
-  ExpectRead<I>(I{O::I32GtU}, MakeSpanU8("\x4b"));
-  ExpectRead<I>(I{O::I32LeS}, MakeSpanU8("\x4c"));
-  ExpectRead<I>(I{O::I32LeU}, MakeSpanU8("\x4d"));
-  ExpectRead<I>(I{O::I32GeS}, MakeSpanU8("\x4e"));
-  ExpectRead<I>(I{O::I32GeU}, MakeSpanU8("\x4f"));
-  ExpectRead<I>(I{O::I64Eqz}, MakeSpanU8("\x50"));
-  ExpectRead<I>(I{O::I64Eq}, MakeSpanU8("\x51"));
-  ExpectRead<I>(I{O::I64Ne}, MakeSpanU8("\x52"));
-  ExpectRead<I>(I{O::I64LtS}, MakeSpanU8("\x53"));
-  ExpectRead<I>(I{O::I64LtU}, MakeSpanU8("\x54"));
-  ExpectRead<I>(I{O::I64GtS}, MakeSpanU8("\x55"));
-  ExpectRead<I>(I{O::I64GtU}, MakeSpanU8("\x56"));
-  ExpectRead<I>(I{O::I64LeS}, MakeSpanU8("\x57"));
-  ExpectRead<I>(I{O::I64LeU}, MakeSpanU8("\x58"));
-  ExpectRead<I>(I{O::I64GeS}, MakeSpanU8("\x59"));
-  ExpectRead<I>(I{O::I64GeU}, MakeSpanU8("\x5a"));
-  ExpectRead<I>(I{O::F32Eq}, MakeSpanU8("\x5b"));
-  ExpectRead<I>(I{O::F32Ne}, MakeSpanU8("\x5c"));
-  ExpectRead<I>(I{O::F32Lt}, MakeSpanU8("\x5d"));
-  ExpectRead<I>(I{O::F32Gt}, MakeSpanU8("\x5e"));
-  ExpectRead<I>(I{O::F32Le}, MakeSpanU8("\x5f"));
-  ExpectRead<I>(I{O::F32Ge}, MakeSpanU8("\x60"));
-  ExpectRead<I>(I{O::F64Eq}, MakeSpanU8("\x61"));
-  ExpectRead<I>(I{O::F64Ne}, MakeSpanU8("\x62"));
-  ExpectRead<I>(I{O::F64Lt}, MakeSpanU8("\x63"));
-  ExpectRead<I>(I{O::F64Gt}, MakeSpanU8("\x64"));
-  ExpectRead<I>(I{O::F64Le}, MakeSpanU8("\x65"));
-  ExpectRead<I>(I{O::F64Ge}, MakeSpanU8("\x66"));
-  ExpectRead<I>(I{O::I32Clz}, MakeSpanU8("\x67"));
-  ExpectRead<I>(I{O::I32Ctz}, MakeSpanU8("\x68"));
-  ExpectRead<I>(I{O::I32Popcnt}, MakeSpanU8("\x69"));
-  ExpectRead<I>(I{O::I32Add}, MakeSpanU8("\x6a"));
-  ExpectRead<I>(I{O::I32Sub}, MakeSpanU8("\x6b"));
-  ExpectRead<I>(I{O::I32Mul}, MakeSpanU8("\x6c"));
-  ExpectRead<I>(I{O::I32DivS}, MakeSpanU8("\x6d"));
-  ExpectRead<I>(I{O::I32DivU}, MakeSpanU8("\x6e"));
-  ExpectRead<I>(I{O::I32RemS}, MakeSpanU8("\x6f"));
-  ExpectRead<I>(I{O::I32RemU}, MakeSpanU8("\x70"));
-  ExpectRead<I>(I{O::I32And}, MakeSpanU8("\x71"));
-  ExpectRead<I>(I{O::I32Or}, MakeSpanU8("\x72"));
-  ExpectRead<I>(I{O::I32Xor}, MakeSpanU8("\x73"));
-  ExpectRead<I>(I{O::I32Shl}, MakeSpanU8("\x74"));
-  ExpectRead<I>(I{O::I32ShrS}, MakeSpanU8("\x75"));
-  ExpectRead<I>(I{O::I32ShrU}, MakeSpanU8("\x76"));
-  ExpectRead<I>(I{O::I32Rotl}, MakeSpanU8("\x77"));
-  ExpectRead<I>(I{O::I32Rotr}, MakeSpanU8("\x78"));
-  ExpectRead<I>(I{O::I64Clz}, MakeSpanU8("\x79"));
-  ExpectRead<I>(I{O::I64Ctz}, MakeSpanU8("\x7a"));
-  ExpectRead<I>(I{O::I64Popcnt}, MakeSpanU8("\x7b"));
-  ExpectRead<I>(I{O::I64Add}, MakeSpanU8("\x7c"));
-  ExpectRead<I>(I{O::I64Sub}, MakeSpanU8("\x7d"));
-  ExpectRead<I>(I{O::I64Mul}, MakeSpanU8("\x7e"));
-  ExpectRead<I>(I{O::I64DivS}, MakeSpanU8("\x7f"));
-  ExpectRead<I>(I{O::I64DivU}, MakeSpanU8("\x80"));
-  ExpectRead<I>(I{O::I64RemS}, MakeSpanU8("\x81"));
-  ExpectRead<I>(I{O::I64RemU}, MakeSpanU8("\x82"));
-  ExpectRead<I>(I{O::I64And}, MakeSpanU8("\x83"));
-  ExpectRead<I>(I{O::I64Or}, MakeSpanU8("\x84"));
-  ExpectRead<I>(I{O::I64Xor}, MakeSpanU8("\x85"));
-  ExpectRead<I>(I{O::I64Shl}, MakeSpanU8("\x86"));
-  ExpectRead<I>(I{O::I64ShrS}, MakeSpanU8("\x87"));
-  ExpectRead<I>(I{O::I64ShrU}, MakeSpanU8("\x88"));
-  ExpectRead<I>(I{O::I64Rotl}, MakeSpanU8("\x89"));
-  ExpectRead<I>(I{O::I64Rotr}, MakeSpanU8("\x8a"));
-  ExpectRead<I>(I{O::F32Abs}, MakeSpanU8("\x8b"));
-  ExpectRead<I>(I{O::F32Neg}, MakeSpanU8("\x8c"));
-  ExpectRead<I>(I{O::F32Ceil}, MakeSpanU8("\x8d"));
-  ExpectRead<I>(I{O::F32Floor}, MakeSpanU8("\x8e"));
-  ExpectRead<I>(I{O::F32Trunc}, MakeSpanU8("\x8f"));
-  ExpectRead<I>(I{O::F32Nearest}, MakeSpanU8("\x90"));
-  ExpectRead<I>(I{O::F32Sqrt}, MakeSpanU8("\x91"));
-  ExpectRead<I>(I{O::F32Add}, MakeSpanU8("\x92"));
-  ExpectRead<I>(I{O::F32Sub}, MakeSpanU8("\x93"));
-  ExpectRead<I>(I{O::F32Mul}, MakeSpanU8("\x94"));
-  ExpectRead<I>(I{O::F32Div}, MakeSpanU8("\x95"));
-  ExpectRead<I>(I{O::F32Min}, MakeSpanU8("\x96"));
-  ExpectRead<I>(I{O::F32Max}, MakeSpanU8("\x97"));
-  ExpectRead<I>(I{O::F32Copysign}, MakeSpanU8("\x98"));
-  ExpectRead<I>(I{O::F64Abs}, MakeSpanU8("\x99"));
-  ExpectRead<I>(I{O::F64Neg}, MakeSpanU8("\x9a"));
-  ExpectRead<I>(I{O::F64Ceil}, MakeSpanU8("\x9b"));
-  ExpectRead<I>(I{O::F64Floor}, MakeSpanU8("\x9c"));
-  ExpectRead<I>(I{O::F64Trunc}, MakeSpanU8("\x9d"));
-  ExpectRead<I>(I{O::F64Nearest}, MakeSpanU8("\x9e"));
-  ExpectRead<I>(I{O::F64Sqrt}, MakeSpanU8("\x9f"));
-  ExpectRead<I>(I{O::F64Add}, MakeSpanU8("\xa0"));
-  ExpectRead<I>(I{O::F64Sub}, MakeSpanU8("\xa1"));
-  ExpectRead<I>(I{O::F64Mul}, MakeSpanU8("\xa2"));
-  ExpectRead<I>(I{O::F64Div}, MakeSpanU8("\xa3"));
-  ExpectRead<I>(I{O::F64Min}, MakeSpanU8("\xa4"));
-  ExpectRead<I>(I{O::F64Max}, MakeSpanU8("\xa5"));
-  ExpectRead<I>(I{O::F64Copysign}, MakeSpanU8("\xa6"));
-  ExpectRead<I>(I{O::I32WrapI64}, MakeSpanU8("\xa7"));
-  ExpectRead<I>(I{O::I32TruncF32S}, MakeSpanU8("\xa8"));
-  ExpectRead<I>(I{O::I32TruncF32U}, MakeSpanU8("\xa9"));
-  ExpectRead<I>(I{O::I32TruncF64S}, MakeSpanU8("\xaa"));
-  ExpectRead<I>(I{O::I32TruncF64U}, MakeSpanU8("\xab"));
-  ExpectRead<I>(I{O::I64ExtendI32S}, MakeSpanU8("\xac"));
-  ExpectRead<I>(I{O::I64ExtendI32U}, MakeSpanU8("\xad"));
-  ExpectRead<I>(I{O::I64TruncF32S}, MakeSpanU8("\xae"));
-  ExpectRead<I>(I{O::I64TruncF32U}, MakeSpanU8("\xaf"));
-  ExpectRead<I>(I{O::I64TruncF64S}, MakeSpanU8("\xb0"));
-  ExpectRead<I>(I{O::I64TruncF64U}, MakeSpanU8("\xb1"));
-  ExpectRead<I>(I{O::F32ConvertI32S}, MakeSpanU8("\xb2"));
-  ExpectRead<I>(I{O::F32ConvertI32U}, MakeSpanU8("\xb3"));
-  ExpectRead<I>(I{O::F32ConvertI64S}, MakeSpanU8("\xb4"));
-  ExpectRead<I>(I{O::F32ConvertI64U}, MakeSpanU8("\xb5"));
-  ExpectRead<I>(I{O::F32DemoteF64}, MakeSpanU8("\xb6"));
-  ExpectRead<I>(I{O::F64ConvertI32S}, MakeSpanU8("\xb7"));
-  ExpectRead<I>(I{O::F64ConvertI32U}, MakeSpanU8("\xb8"));
-  ExpectRead<I>(I{O::F64ConvertI64S}, MakeSpanU8("\xb9"));
-  ExpectRead<I>(I{O::F64ConvertI64U}, MakeSpanU8("\xba"));
-  ExpectRead<I>(I{O::F64PromoteF32}, MakeSpanU8("\xbb"));
-  ExpectRead<I>(I{O::I32ReinterpretF32}, MakeSpanU8("\xbc"));
-  ExpectRead<I>(I{O::I64ReinterpretF64}, MakeSpanU8("\xbd"));
-  ExpectRead<I>(I{O::F32ReinterpretI32}, MakeSpanU8("\xbe"));
-  ExpectRead<I>(I{O::F64ReinterpretI64}, MakeSpanU8("\xbf"));
+                "\x44\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
+  ExpectRead<I>(I{O::I32Eqz}, "\x45"_su8);
+  ExpectRead<I>(I{O::I32Eq}, "\x46"_su8);
+  ExpectRead<I>(I{O::I32Ne}, "\x47"_su8);
+  ExpectRead<I>(I{O::I32LtS}, "\x48"_su8);
+  ExpectRead<I>(I{O::I32LtU}, "\x49"_su8);
+  ExpectRead<I>(I{O::I32GtS}, "\x4a"_su8);
+  ExpectRead<I>(I{O::I32GtU}, "\x4b"_su8);
+  ExpectRead<I>(I{O::I32LeS}, "\x4c"_su8);
+  ExpectRead<I>(I{O::I32LeU}, "\x4d"_su8);
+  ExpectRead<I>(I{O::I32GeS}, "\x4e"_su8);
+  ExpectRead<I>(I{O::I32GeU}, "\x4f"_su8);
+  ExpectRead<I>(I{O::I64Eqz}, "\x50"_su8);
+  ExpectRead<I>(I{O::I64Eq}, "\x51"_su8);
+  ExpectRead<I>(I{O::I64Ne}, "\x52"_su8);
+  ExpectRead<I>(I{O::I64LtS}, "\x53"_su8);
+  ExpectRead<I>(I{O::I64LtU}, "\x54"_su8);
+  ExpectRead<I>(I{O::I64GtS}, "\x55"_su8);
+  ExpectRead<I>(I{O::I64GtU}, "\x56"_su8);
+  ExpectRead<I>(I{O::I64LeS}, "\x57"_su8);
+  ExpectRead<I>(I{O::I64LeU}, "\x58"_su8);
+  ExpectRead<I>(I{O::I64GeS}, "\x59"_su8);
+  ExpectRead<I>(I{O::I64GeU}, "\x5a"_su8);
+  ExpectRead<I>(I{O::F32Eq}, "\x5b"_su8);
+  ExpectRead<I>(I{O::F32Ne}, "\x5c"_su8);
+  ExpectRead<I>(I{O::F32Lt}, "\x5d"_su8);
+  ExpectRead<I>(I{O::F32Gt}, "\x5e"_su8);
+  ExpectRead<I>(I{O::F32Le}, "\x5f"_su8);
+  ExpectRead<I>(I{O::F32Ge}, "\x60"_su8);
+  ExpectRead<I>(I{O::F64Eq}, "\x61"_su8);
+  ExpectRead<I>(I{O::F64Ne}, "\x62"_su8);
+  ExpectRead<I>(I{O::F64Lt}, "\x63"_su8);
+  ExpectRead<I>(I{O::F64Gt}, "\x64"_su8);
+  ExpectRead<I>(I{O::F64Le}, "\x65"_su8);
+  ExpectRead<I>(I{O::F64Ge}, "\x66"_su8);
+  ExpectRead<I>(I{O::I32Clz}, "\x67"_su8);
+  ExpectRead<I>(I{O::I32Ctz}, "\x68"_su8);
+  ExpectRead<I>(I{O::I32Popcnt}, "\x69"_su8);
+  ExpectRead<I>(I{O::I32Add}, "\x6a"_su8);
+  ExpectRead<I>(I{O::I32Sub}, "\x6b"_su8);
+  ExpectRead<I>(I{O::I32Mul}, "\x6c"_su8);
+  ExpectRead<I>(I{O::I32DivS}, "\x6d"_su8);
+  ExpectRead<I>(I{O::I32DivU}, "\x6e"_su8);
+  ExpectRead<I>(I{O::I32RemS}, "\x6f"_su8);
+  ExpectRead<I>(I{O::I32RemU}, "\x70"_su8);
+  ExpectRead<I>(I{O::I32And}, "\x71"_su8);
+  ExpectRead<I>(I{O::I32Or}, "\x72"_su8);
+  ExpectRead<I>(I{O::I32Xor}, "\x73"_su8);
+  ExpectRead<I>(I{O::I32Shl}, "\x74"_su8);
+  ExpectRead<I>(I{O::I32ShrS}, "\x75"_su8);
+  ExpectRead<I>(I{O::I32ShrU}, "\x76"_su8);
+  ExpectRead<I>(I{O::I32Rotl}, "\x77"_su8);
+  ExpectRead<I>(I{O::I32Rotr}, "\x78"_su8);
+  ExpectRead<I>(I{O::I64Clz}, "\x79"_su8);
+  ExpectRead<I>(I{O::I64Ctz}, "\x7a"_su8);
+  ExpectRead<I>(I{O::I64Popcnt}, "\x7b"_su8);
+  ExpectRead<I>(I{O::I64Add}, "\x7c"_su8);
+  ExpectRead<I>(I{O::I64Sub}, "\x7d"_su8);
+  ExpectRead<I>(I{O::I64Mul}, "\x7e"_su8);
+  ExpectRead<I>(I{O::I64DivS}, "\x7f"_su8);
+  ExpectRead<I>(I{O::I64DivU}, "\x80"_su8);
+  ExpectRead<I>(I{O::I64RemS}, "\x81"_su8);
+  ExpectRead<I>(I{O::I64RemU}, "\x82"_su8);
+  ExpectRead<I>(I{O::I64And}, "\x83"_su8);
+  ExpectRead<I>(I{O::I64Or}, "\x84"_su8);
+  ExpectRead<I>(I{O::I64Xor}, "\x85"_su8);
+  ExpectRead<I>(I{O::I64Shl}, "\x86"_su8);
+  ExpectRead<I>(I{O::I64ShrS}, "\x87"_su8);
+  ExpectRead<I>(I{O::I64ShrU}, "\x88"_su8);
+  ExpectRead<I>(I{O::I64Rotl}, "\x89"_su8);
+  ExpectRead<I>(I{O::I64Rotr}, "\x8a"_su8);
+  ExpectRead<I>(I{O::F32Abs}, "\x8b"_su8);
+  ExpectRead<I>(I{O::F32Neg}, "\x8c"_su8);
+  ExpectRead<I>(I{O::F32Ceil}, "\x8d"_su8);
+  ExpectRead<I>(I{O::F32Floor}, "\x8e"_su8);
+  ExpectRead<I>(I{O::F32Trunc}, "\x8f"_su8);
+  ExpectRead<I>(I{O::F32Nearest}, "\x90"_su8);
+  ExpectRead<I>(I{O::F32Sqrt}, "\x91"_su8);
+  ExpectRead<I>(I{O::F32Add}, "\x92"_su8);
+  ExpectRead<I>(I{O::F32Sub}, "\x93"_su8);
+  ExpectRead<I>(I{O::F32Mul}, "\x94"_su8);
+  ExpectRead<I>(I{O::F32Div}, "\x95"_su8);
+  ExpectRead<I>(I{O::F32Min}, "\x96"_su8);
+  ExpectRead<I>(I{O::F32Max}, "\x97"_su8);
+  ExpectRead<I>(I{O::F32Copysign}, "\x98"_su8);
+  ExpectRead<I>(I{O::F64Abs}, "\x99"_su8);
+  ExpectRead<I>(I{O::F64Neg}, "\x9a"_su8);
+  ExpectRead<I>(I{O::F64Ceil}, "\x9b"_su8);
+  ExpectRead<I>(I{O::F64Floor}, "\x9c"_su8);
+  ExpectRead<I>(I{O::F64Trunc}, "\x9d"_su8);
+  ExpectRead<I>(I{O::F64Nearest}, "\x9e"_su8);
+  ExpectRead<I>(I{O::F64Sqrt}, "\x9f"_su8);
+  ExpectRead<I>(I{O::F64Add}, "\xa0"_su8);
+  ExpectRead<I>(I{O::F64Sub}, "\xa1"_su8);
+  ExpectRead<I>(I{O::F64Mul}, "\xa2"_su8);
+  ExpectRead<I>(I{O::F64Div}, "\xa3"_su8);
+  ExpectRead<I>(I{O::F64Min}, "\xa4"_su8);
+  ExpectRead<I>(I{O::F64Max}, "\xa5"_su8);
+  ExpectRead<I>(I{O::F64Copysign}, "\xa6"_su8);
+  ExpectRead<I>(I{O::I32WrapI64}, "\xa7"_su8);
+  ExpectRead<I>(I{O::I32TruncF32S}, "\xa8"_su8);
+  ExpectRead<I>(I{O::I32TruncF32U}, "\xa9"_su8);
+  ExpectRead<I>(I{O::I32TruncF64S}, "\xaa"_su8);
+  ExpectRead<I>(I{O::I32TruncF64U}, "\xab"_su8);
+  ExpectRead<I>(I{O::I64ExtendI32S}, "\xac"_su8);
+  ExpectRead<I>(I{O::I64ExtendI32U}, "\xad"_su8);
+  ExpectRead<I>(I{O::I64TruncF32S}, "\xae"_su8);
+  ExpectRead<I>(I{O::I64TruncF32U}, "\xaf"_su8);
+  ExpectRead<I>(I{O::I64TruncF64S}, "\xb0"_su8);
+  ExpectRead<I>(I{O::I64TruncF64U}, "\xb1"_su8);
+  ExpectRead<I>(I{O::F32ConvertI32S}, "\xb2"_su8);
+  ExpectRead<I>(I{O::F32ConvertI32U}, "\xb3"_su8);
+  ExpectRead<I>(I{O::F32ConvertI64S}, "\xb4"_su8);
+  ExpectRead<I>(I{O::F32ConvertI64U}, "\xb5"_su8);
+  ExpectRead<I>(I{O::F32DemoteF64}, "\xb6"_su8);
+  ExpectRead<I>(I{O::F64ConvertI32S}, "\xb7"_su8);
+  ExpectRead<I>(I{O::F64ConvertI32U}, "\xb8"_su8);
+  ExpectRead<I>(I{O::F64ConvertI64S}, "\xb9"_su8);
+  ExpectRead<I>(I{O::F64ConvertI64U}, "\xba"_su8);
+  ExpectRead<I>(I{O::F64PromoteF32}, "\xbb"_su8);
+  ExpectRead<I>(I{O::I32ReinterpretF32}, "\xbc"_su8);
+  ExpectRead<I>(I{O::I64ReinterpretF64}, "\xbd"_su8);
+  ExpectRead<I>(I{O::F32ReinterpretI32}, "\xbe"_su8);
+  ExpectRead<I>(I{O::F64ReinterpretI64}, "\xbf"_su8);
 }
 
 TEST(ReadTest, Instruction_BadMemoryReserved) {
   ExpectReadFailure<Instruction>(
       {{1, "reserved"}, {2, "Expected reserved byte 0, got 1"}},
-      MakeSpanU8("\x3f\x01"));
+      "\x3f\x01"_su8);
   ExpectReadFailure<Instruction>(
       {{1, "reserved"}, {2, "Expected reserved byte 0, got 1"}},
-      MakeSpanU8("\x40\x01"));
+      "\x40\x01"_su8);
 }
 
 TEST(ReadTest, Instruction_exceptions) {
@@ -1125,12 +1109,12 @@ TEST(ReadTest, Instruction_exceptions) {
   Features features;
   features.enable_exceptions();
 
-  ExpectRead<I>(I{O::Try, BlockType::Void}, MakeSpanU8("\x06\x40"), features);
-  ExpectRead<I>(I{O::Catch}, MakeSpanU8("\x07"), features);
-  ExpectRead<I>(I{O::Throw, Index{0}}, MakeSpanU8("\x08\x00"), features);
-  ExpectRead<I>(I{O::Rethrow}, MakeSpanU8("\x09"), features);
-  ExpectRead<I>(I{O::BrOnExn, BrOnExnImmediate{1, 2}},
-                MakeSpanU8("\x0a\x01\x02"), features);
+  ExpectRead<I>(I{O::Try, BlockType::Void}, "\x06\x40"_su8, features);
+  ExpectRead<I>(I{O::Catch}, "\x07"_su8, features);
+  ExpectRead<I>(I{O::Throw, Index{0}}, "\x08\x00"_su8, features);
+  ExpectRead<I>(I{O::Rethrow}, "\x09"_su8, features);
+  ExpectRead<I>(I{O::BrOnExn, BrOnExnImmediate{1, 2}}, "\x0a\x01\x02"_su8,
+                features);
 }
 
 TEST(ReadTest, Instruction_tail_call) {
@@ -1140,9 +1124,9 @@ TEST(ReadTest, Instruction_tail_call) {
   Features features;
   features.enable_tail_call();
 
-  ExpectRead<I>(I{O::ReturnCall, Index{0}}, MakeSpanU8("\x12\x00"), features);
+  ExpectRead<I>(I{O::ReturnCall, Index{0}}, "\x12\x00"_su8, features);
   ExpectRead<I>(I{O::ReturnCallIndirect, CallIndirectImmediate{8, 0}},
-                MakeSpanU8("\x13\x08\x00"), features);
+                "\x13\x08\x00"_su8, features);
 }
 
 TEST(ReadTest, Instruction_sign_extension) {
@@ -1152,11 +1136,11 @@ TEST(ReadTest, Instruction_sign_extension) {
   Features features;
   features.enable_sign_extension();
 
-  ExpectRead<I>(I{O::I32Extend8S}, MakeSpanU8("\xc0"), features);
-  ExpectRead<I>(I{O::I32Extend16S}, MakeSpanU8("\xc1"), features);
-  ExpectRead<I>(I{O::I64Extend8S}, MakeSpanU8("\xc2"), features);
-  ExpectRead<I>(I{O::I64Extend16S}, MakeSpanU8("\xc3"), features);
-  ExpectRead<I>(I{O::I64Extend32S}, MakeSpanU8("\xc4"), features);
+  ExpectRead<I>(I{O::I32Extend8S}, "\xc0"_su8, features);
+  ExpectRead<I>(I{O::I32Extend16S}, "\xc1"_su8, features);
+  ExpectRead<I>(I{O::I64Extend8S}, "\xc2"_su8, features);
+  ExpectRead<I>(I{O::I64Extend16S}, "\xc3"_su8, features);
+  ExpectRead<I>(I{O::I64Extend32S}, "\xc4"_su8, features);
 }
 
 TEST(ReadTest, Instruction_reference_types) {
@@ -1166,14 +1150,12 @@ TEST(ReadTest, Instruction_reference_types) {
   Features features;
   features.enable_reference_types();
 
-  ExpectRead<I>(I{O::TableGet, Index{0}}, MakeSpanU8("\x25\x00"), features);
-  ExpectRead<I>(I{O::TableSet, Index{0}}, MakeSpanU8("\x26\x00"), features);
-  ExpectRead<I>(I{O::TableGrow, Index{0}}, MakeSpanU8("\xfc\x0f\x00"),
-                features);
-  ExpectRead<I>(I{O::TableSize, Index{0}}, MakeSpanU8("\xfc\x10\x00"),
-                features);
-  ExpectRead<I>(I{O::RefNull}, MakeSpanU8("\xd0"), features);
-  ExpectRead<I>(I{O::RefIsNull}, MakeSpanU8("\xd1"), features);
+  ExpectRead<I>(I{O::TableGet, Index{0}}, "\x25\x00"_su8, features);
+  ExpectRead<I>(I{O::TableSet, Index{0}}, "\x26\x00"_su8, features);
+  ExpectRead<I>(I{O::TableGrow, Index{0}}, "\xfc\x0f\x00"_su8, features);
+  ExpectRead<I>(I{O::TableSize, Index{0}}, "\xfc\x10\x00"_su8, features);
+  ExpectRead<I>(I{O::RefNull}, "\xd0"_su8, features);
+  ExpectRead<I>(I{O::RefIsNull}, "\xd1"_su8, features);
 }
 
 TEST(ReadTest, Instruction_function_references) {
@@ -1183,7 +1165,7 @@ TEST(ReadTest, Instruction_function_references) {
   Features features;
   features.enable_function_references();
 
-  ExpectRead<I>(I{O::RefFunc, Index{0}}, MakeSpanU8("\xd2\x00"), features);
+  ExpectRead<I>(I{O::RefFunc, Index{0}}, "\xd2\x00"_su8, features);
 }
 
 TEST(ReadTest, Instruction_saturating_float_to_int) {
@@ -1193,14 +1175,14 @@ TEST(ReadTest, Instruction_saturating_float_to_int) {
   Features features;
   features.enable_saturating_float_to_int();
 
-  ExpectRead<I>(I{O::I32TruncSatF32S}, MakeSpanU8("\xfc\x00"), features);
-  ExpectRead<I>(I{O::I32TruncSatF32U}, MakeSpanU8("\xfc\x01"), features);
-  ExpectRead<I>(I{O::I32TruncSatF64S}, MakeSpanU8("\xfc\x02"), features);
-  ExpectRead<I>(I{O::I32TruncSatF64U}, MakeSpanU8("\xfc\x03"), features);
-  ExpectRead<I>(I{O::I64TruncSatF32S}, MakeSpanU8("\xfc\x04"), features);
-  ExpectRead<I>(I{O::I64TruncSatF32U}, MakeSpanU8("\xfc\x05"), features);
-  ExpectRead<I>(I{O::I64TruncSatF64S}, MakeSpanU8("\xfc\x06"), features);
-  ExpectRead<I>(I{O::I64TruncSatF64U}, MakeSpanU8("\xfc\x07"), features);
+  ExpectRead<I>(I{O::I32TruncSatF32S}, "\xfc\x00"_su8, features);
+  ExpectRead<I>(I{O::I32TruncSatF32U}, "\xfc\x01"_su8, features);
+  ExpectRead<I>(I{O::I32TruncSatF64S}, "\xfc\x02"_su8, features);
+  ExpectRead<I>(I{O::I32TruncSatF64U}, "\xfc\x03"_su8, features);
+  ExpectRead<I>(I{O::I64TruncSatF32S}, "\xfc\x04"_su8, features);
+  ExpectRead<I>(I{O::I64TruncSatF32U}, "\xfc\x05"_su8, features);
+  ExpectRead<I>(I{O::I64TruncSatF64S}, "\xfc\x06"_su8, features);
+  ExpectRead<I>(I{O::I64TruncSatF64U}, "\xfc\x07"_su8, features);
 }
 
 TEST(ReadTest, Instruction_bulk_memory) {
@@ -1210,17 +1192,17 @@ TEST(ReadTest, Instruction_bulk_memory) {
   Features features;
   features.enable_bulk_memory();
 
-  ExpectRead<I>(I{O::MemoryInit, InitImmediate{1, 0}},
-                MakeSpanU8("\xfc\x08\x01\x00"), features);
-  ExpectRead<I>(I{O::DataDrop, Index{2}}, MakeSpanU8("\xfc\x09\x02"), features);
-  ExpectRead<I>(I{O::MemoryCopy, CopyImmediate{0, 0}},
-                MakeSpanU8("\xfc\x0a\x00\x00"), features);
-  ExpectRead<I>(I{O::MemoryFill, u8{0}}, MakeSpanU8("\xfc\x0b\x00"), features);
-  ExpectRead<I>(I{O::TableInit, InitImmediate{3, 0}},
-                MakeSpanU8("\xfc\x0c\x03\x00"), features);
-  ExpectRead<I>(I{O::ElemDrop, Index{4}}, MakeSpanU8("\xfc\x0d\x04"), features);
-  ExpectRead<I>(I{O::TableCopy, CopyImmediate{0, 0}},
-                MakeSpanU8("\xfc\x0e\x00\x00"), features);
+  ExpectRead<I>(I{O::MemoryInit, InitImmediate{1, 0}}, "\xfc\x08\x01\x00"_su8,
+                features);
+  ExpectRead<I>(I{O::DataDrop, Index{2}}, "\xfc\x09\x02"_su8, features);
+  ExpectRead<I>(I{O::MemoryCopy, CopyImmediate{0, 0}}, "\xfc\x0a\x00\x00"_su8,
+                features);
+  ExpectRead<I>(I{O::MemoryFill, u8{0}}, "\xfc\x0b\x00"_su8, features);
+  ExpectRead<I>(I{O::TableInit, InitImmediate{3, 0}}, "\xfc\x0c\x03\x00"_su8,
+                features);
+  ExpectRead<I>(I{O::ElemDrop, Index{4}}, "\xfc\x0d\x04"_su8, features);
+  ExpectRead<I>(I{O::TableCopy, CopyImmediate{0, 0}}, "\xfc\x0e\x00\x00"_su8,
+                features);
 }
 
 TEST(ReadTest, Instruction_simd) {
@@ -1230,156 +1212,155 @@ TEST(ReadTest, Instruction_simd) {
   Features f;
   f.enable_simd();
 
-  ExpectRead<I>(I{O::V128Load, MemArgImmediate{1, 2}},
-                MakeSpanU8("\xfd\x00\x01\x02"), f);
-  ExpectRead<I>(I{O::V128Store, MemArgImmediate{3, 4}},
-                MakeSpanU8("\xfd\x01\x03\x04"), f);
-  ExpectRead<I>(I{O::V128Const, v128{u64{5}, u64{6}}},
-                MakeSpanU8("\xfd\x02\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00"
-                           "\x00\x00\x00\x00\x00\x00"),
+  ExpectRead<I>(I{O::V128Load, MemArgImmediate{1, 2}}, "\xfd\x00\x01\x02"_su8,
                 f);
-  ExpectRead<I>(
-      I{O::V8X16Shuffle,
-        ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}},
-      MakeSpanU8("\xfd\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                 "\x00\x00\x00\x00"),
-      f);
-  ExpectRead<I>(I{O::I8X16Splat}, MakeSpanU8("\xfd\x04"), f);
-  ExpectRead<I>(I{O::I8X16ExtractLaneS, u8{0}}, MakeSpanU8("\xfd\x05\x00"), f);
-  ExpectRead<I>(I{O::I8X16ExtractLaneU, u8{0}}, MakeSpanU8("\xfd\x06\x00"), f);
-  ExpectRead<I>(I{O::I8X16ReplaceLane, u8{0}}, MakeSpanU8("\xfd\x07\x00"), f);
-  ExpectRead<I>(I{O::I16X8Splat}, MakeSpanU8("\xfd\x08"), f);
-  ExpectRead<I>(I{O::I16X8ExtractLaneS, u8{0}}, MakeSpanU8("\xfd\x09\x00"), f);
-  ExpectRead<I>(I{O::I16X8ExtractLaneU, u8{0}}, MakeSpanU8("\xfd\x0a\x00"), f);
-  ExpectRead<I>(I{O::I16X8ReplaceLane, u8{0}}, MakeSpanU8("\xfd\x0b\x00"), f);
-  ExpectRead<I>(I{O::I32X4Splat}, MakeSpanU8("\xfd\x0c"), f);
-  ExpectRead<I>(I{O::I32X4ExtractLane, u8{0}}, MakeSpanU8("\xfd\x0d\x00"), f);
-  ExpectRead<I>(I{O::I32X4ReplaceLane, u8{0}}, MakeSpanU8("\xfd\x0e\x00"), f);
-  ExpectRead<I>(I{O::I64X2Splat}, MakeSpanU8("\xfd\x0f"), f);
-  ExpectRead<I>(I{O::I64X2ExtractLane, u8{0}}, MakeSpanU8("\xfd\x10\x00"), f);
-  ExpectRead<I>(I{O::I64X2ReplaceLane, u8{0}}, MakeSpanU8("\xfd\x11\x00"), f);
-  ExpectRead<I>(I{O::F32X4Splat}, MakeSpanU8("\xfd\x12"), f);
-  ExpectRead<I>(I{O::F32X4ExtractLane, u8{0}}, MakeSpanU8("\xfd\x13\x00"), f);
-  ExpectRead<I>(I{O::F32X4ReplaceLane, u8{0}}, MakeSpanU8("\xfd\x14\x00"), f);
-  ExpectRead<I>(I{O::F64X2Splat}, MakeSpanU8("\xfd\x15"), f);
-  ExpectRead<I>(I{O::F64X2ExtractLane, u8{0}}, MakeSpanU8("\xfd\x16\x00"), f);
-  ExpectRead<I>(I{O::F64X2ReplaceLane, u8{0}}, MakeSpanU8("\xfd\x17\x00"), f);
-  ExpectRead<I>(I{O::I8X16Eq}, MakeSpanU8("\xfd\x18"), f);
-  ExpectRead<I>(I{O::I8X16Ne}, MakeSpanU8("\xfd\x19"), f);
-  ExpectRead<I>(I{O::I8X16LtS}, MakeSpanU8("\xfd\x1a"), f);
-  ExpectRead<I>(I{O::I8X16LtU}, MakeSpanU8("\xfd\x1b"), f);
-  ExpectRead<I>(I{O::I8X16GtS}, MakeSpanU8("\xfd\x1c"), f);
-  ExpectRead<I>(I{O::I8X16GtU}, MakeSpanU8("\xfd\x1d"), f);
-  ExpectRead<I>(I{O::I8X16LeS}, MakeSpanU8("\xfd\x1e"), f);
-  ExpectRead<I>(I{O::I8X16LeU}, MakeSpanU8("\xfd\x1f"), f);
-  ExpectRead<I>(I{O::I8X16GeS}, MakeSpanU8("\xfd\x20"), f);
-  ExpectRead<I>(I{O::I8X16GeU}, MakeSpanU8("\xfd\x21"), f);
-  ExpectRead<I>(I{O::I16X8Eq}, MakeSpanU8("\xfd\x22"), f);
-  ExpectRead<I>(I{O::I16X8Ne}, MakeSpanU8("\xfd\x23"), f);
-  ExpectRead<I>(I{O::I16X8LtS}, MakeSpanU8("\xfd\x24"), f);
-  ExpectRead<I>(I{O::I16X8LtU}, MakeSpanU8("\xfd\x25"), f);
-  ExpectRead<I>(I{O::I16X8GtS}, MakeSpanU8("\xfd\x26"), f);
-  ExpectRead<I>(I{O::I16X8GtU}, MakeSpanU8("\xfd\x27"), f);
-  ExpectRead<I>(I{O::I16X8LeS}, MakeSpanU8("\xfd\x28"), f);
-  ExpectRead<I>(I{O::I16X8LeU}, MakeSpanU8("\xfd\x29"), f);
-  ExpectRead<I>(I{O::I16X8GeS}, MakeSpanU8("\xfd\x2a"), f);
-  ExpectRead<I>(I{O::I16X8GeU}, MakeSpanU8("\xfd\x2b"), f);
-  ExpectRead<I>(I{O::I32X4Eq}, MakeSpanU8("\xfd\x2c"), f);
-  ExpectRead<I>(I{O::I32X4Ne}, MakeSpanU8("\xfd\x2d"), f);
-  ExpectRead<I>(I{O::I32X4LtS}, MakeSpanU8("\xfd\x2e"), f);
-  ExpectRead<I>(I{O::I32X4LtU}, MakeSpanU8("\xfd\x2f"), f);
-  ExpectRead<I>(I{O::I32X4GtS}, MakeSpanU8("\xfd\x30"), f);
-  ExpectRead<I>(I{O::I32X4GtU}, MakeSpanU8("\xfd\x31"), f);
-  ExpectRead<I>(I{O::I32X4LeS}, MakeSpanU8("\xfd\x32"), f);
-  ExpectRead<I>(I{O::I32X4LeU}, MakeSpanU8("\xfd\x33"), f);
-  ExpectRead<I>(I{O::I32X4GeS}, MakeSpanU8("\xfd\x34"), f);
-  ExpectRead<I>(I{O::I32X4GeU}, MakeSpanU8("\xfd\x35"), f);
-  ExpectRead<I>(I{O::F32X4Eq}, MakeSpanU8("\xfd\x40"), f);
-  ExpectRead<I>(I{O::F32X4Ne}, MakeSpanU8("\xfd\x41"), f);
-  ExpectRead<I>(I{O::F32X4Lt}, MakeSpanU8("\xfd\x42"), f);
-  ExpectRead<I>(I{O::F32X4Gt}, MakeSpanU8("\xfd\x43"), f);
-  ExpectRead<I>(I{O::F32X4Le}, MakeSpanU8("\xfd\x44"), f);
-  ExpectRead<I>(I{O::F32X4Ge}, MakeSpanU8("\xfd\x45"), f);
-  ExpectRead<I>(I{O::F64X2Eq}, MakeSpanU8("\xfd\x46"), f);
-  ExpectRead<I>(I{O::F64X2Ne}, MakeSpanU8("\xfd\x47"), f);
-  ExpectRead<I>(I{O::F64X2Lt}, MakeSpanU8("\xfd\x48"), f);
-  ExpectRead<I>(I{O::F64X2Gt}, MakeSpanU8("\xfd\x49"), f);
-  ExpectRead<I>(I{O::F64X2Le}, MakeSpanU8("\xfd\x4a"), f);
-  ExpectRead<I>(I{O::F64X2Ge}, MakeSpanU8("\xfd\x4b"), f);
-  ExpectRead<I>(I{O::V128Not}, MakeSpanU8("\xfd\x4c"), f);
-  ExpectRead<I>(I{O::V128And}, MakeSpanU8("\xfd\x4d"), f);
-  ExpectRead<I>(I{O::V128Or}, MakeSpanU8("\xfd\x4e"), f);
-  ExpectRead<I>(I{O::V128Xor}, MakeSpanU8("\xfd\x4f"), f);
-  ExpectRead<I>(I{O::V128BitSelect}, MakeSpanU8("\xfd\x50"), f);
-  ExpectRead<I>(I{O::I8X16Neg}, MakeSpanU8("\xfd\x51"), f);
-  ExpectRead<I>(I{O::I8X16AnyTrue}, MakeSpanU8("\xfd\x52"), f);
-  ExpectRead<I>(I{O::I8X16AllTrue}, MakeSpanU8("\xfd\x53"), f);
-  ExpectRead<I>(I{O::I8X16Shl}, MakeSpanU8("\xfd\x54"), f);
-  ExpectRead<I>(I{O::I8X16ShrS}, MakeSpanU8("\xfd\x55"), f);
-  ExpectRead<I>(I{O::I8X16ShrU}, MakeSpanU8("\xfd\x56"), f);
-  ExpectRead<I>(I{O::I8X16Add}, MakeSpanU8("\xfd\x57"), f);
-  ExpectRead<I>(I{O::I8X16AddSaturateS}, MakeSpanU8("\xfd\x58"), f);
-  ExpectRead<I>(I{O::I8X16AddSaturateU}, MakeSpanU8("\xfd\x59"), f);
-  ExpectRead<I>(I{O::I8X16Sub}, MakeSpanU8("\xfd\x5a"), f);
-  ExpectRead<I>(I{O::I8X16SubSaturateS}, MakeSpanU8("\xfd\x5b"), f);
-  ExpectRead<I>(I{O::I8X16SubSaturateU}, MakeSpanU8("\xfd\x5c"), f);
-  ExpectRead<I>(I{O::I8X16Mul}, MakeSpanU8("\xfd\x5d"), f);
-  ExpectRead<I>(I{O::I16X8Neg}, MakeSpanU8("\xfd\x62"), f);
-  ExpectRead<I>(I{O::I16X8AnyTrue}, MakeSpanU8("\xfd\x63"), f);
-  ExpectRead<I>(I{O::I16X8AllTrue}, MakeSpanU8("\xfd\x64"), f);
-  ExpectRead<I>(I{O::I16X8Shl}, MakeSpanU8("\xfd\x65"), f);
-  ExpectRead<I>(I{O::I16X8ShrS}, MakeSpanU8("\xfd\x66"), f);
-  ExpectRead<I>(I{O::I16X8ShrU}, MakeSpanU8("\xfd\x67"), f);
-  ExpectRead<I>(I{O::I16X8Add}, MakeSpanU8("\xfd\x68"), f);
-  ExpectRead<I>(I{O::I16X8AddSaturateS}, MakeSpanU8("\xfd\x69"), f);
-  ExpectRead<I>(I{O::I16X8AddSaturateU}, MakeSpanU8("\xfd\x6a"), f);
-  ExpectRead<I>(I{O::I16X8Sub}, MakeSpanU8("\xfd\x6b"), f);
-  ExpectRead<I>(I{O::I16X8SubSaturateS}, MakeSpanU8("\xfd\x6c"), f);
-  ExpectRead<I>(I{O::I16X8SubSaturateU}, MakeSpanU8("\xfd\x6d"), f);
-  ExpectRead<I>(I{O::I16X8Mul}, MakeSpanU8("\xfd\x6e"), f);
-  ExpectRead<I>(I{O::I32X4Neg}, MakeSpanU8("\xfd\x73"), f);
-  ExpectRead<I>(I{O::I32X4AnyTrue}, MakeSpanU8("\xfd\x74"), f);
-  ExpectRead<I>(I{O::I32X4AllTrue}, MakeSpanU8("\xfd\x75"), f);
-  ExpectRead<I>(I{O::I32X4Shl}, MakeSpanU8("\xfd\x76"), f);
-  ExpectRead<I>(I{O::I32X4ShrS}, MakeSpanU8("\xfd\x77"), f);
-  ExpectRead<I>(I{O::I32X4ShrU}, MakeSpanU8("\xfd\x78"), f);
-  ExpectRead<I>(I{O::I32X4Add}, MakeSpanU8("\xfd\x79"), f);
-  ExpectRead<I>(I{O::I32X4Sub}, MakeSpanU8("\xfd\x7c"), f);
-  ExpectRead<I>(I{O::I32X4Mul}, MakeSpanU8("\xfd\x7f"), f);
-  ExpectRead<I>(I{O::I64X2Neg}, MakeSpanU8("\xfd\x84\x01"), f);
-  ExpectRead<I>(I{O::I64X2AnyTrue}, MakeSpanU8("\xfd\x85\x01"), f);
-  ExpectRead<I>(I{O::I64X2AllTrue}, MakeSpanU8("\xfd\x86\x01"), f);
-  ExpectRead<I>(I{O::I64X2Shl}, MakeSpanU8("\xfd\x87\x01"), f);
-  ExpectRead<I>(I{O::I64X2ShrS}, MakeSpanU8("\xfd\x88\x01"), f);
-  ExpectRead<I>(I{O::I64X2ShrU}, MakeSpanU8("\xfd\x89\x01"), f);
-  ExpectRead<I>(I{O::I64X2Add}, MakeSpanU8("\xfd\x8a\x01"), f);
-  ExpectRead<I>(I{O::I64X2Sub}, MakeSpanU8("\xfd\x8d\x01"), f);
-  ExpectRead<I>(I{O::F32X4Abs}, MakeSpanU8("\xfd\x95\x01"), f);
-  ExpectRead<I>(I{O::F32X4Neg}, MakeSpanU8("\xfd\x96\x01"), f);
-  ExpectRead<I>(I{O::F32X4Sqrt}, MakeSpanU8("\xfd\x97\x01"), f);
-  ExpectRead<I>(I{O::F32X4Add}, MakeSpanU8("\xfd\x9a\x01"), f);
-  ExpectRead<I>(I{O::F32X4Sub}, MakeSpanU8("\xfd\x9b\x01"), f);
-  ExpectRead<I>(I{O::F32X4Mul}, MakeSpanU8("\xfd\x9c\x01"), f);
-  ExpectRead<I>(I{O::F32X4Div}, MakeSpanU8("\xfd\x9d\x01"), f);
-  ExpectRead<I>(I{O::F32X4Min}, MakeSpanU8("\xfd\x9e\x01"), f);
-  ExpectRead<I>(I{O::F32X4Max}, MakeSpanU8("\xfd\x9f\x01"), f);
-  ExpectRead<I>(I{O::F64X2Abs}, MakeSpanU8("\xfd\xa0\x01"), f);
-  ExpectRead<I>(I{O::F64X2Neg}, MakeSpanU8("\xfd\xa1\x01"), f);
-  ExpectRead<I>(I{O::F64X2Sqrt}, MakeSpanU8("\xfd\xa2\x01"), f);
-  ExpectRead<I>(I{O::F64X2Add}, MakeSpanU8("\xfd\xa5\x01"), f);
-  ExpectRead<I>(I{O::F64X2Sub}, MakeSpanU8("\xfd\xa6\x01"), f);
-  ExpectRead<I>(I{O::F64X2Mul}, MakeSpanU8("\xfd\xa7\x01"), f);
-  ExpectRead<I>(I{O::F64X2Div}, MakeSpanU8("\xfd\xa8\x01"), f);
-  ExpectRead<I>(I{O::F64X2Min}, MakeSpanU8("\xfd\xa9\x01"), f);
-  ExpectRead<I>(I{O::F64X2Max}, MakeSpanU8("\xfd\xaa\x01"), f);
-  ExpectRead<I>(I{O::I32X4TruncSatF32X4S}, MakeSpanU8("\xfd\xab\x01"), f);
-  ExpectRead<I>(I{O::I32X4TruncSatF32X4U}, MakeSpanU8("\xfd\xac\x01"), f);
-  ExpectRead<I>(I{O::I64X2TruncSatF64X2S}, MakeSpanU8("\xfd\xad\x01"), f);
-  ExpectRead<I>(I{O::I64X2TruncSatF64X2U}, MakeSpanU8("\xfd\xae\x01"), f);
-  ExpectRead<I>(I{O::F32X4ConvertI32X4S}, MakeSpanU8("\xfd\xaf\x01"), f);
-  ExpectRead<I>(I{O::F32X4ConvertI32X4U}, MakeSpanU8("\xfd\xb0\x01"), f);
-  ExpectRead<I>(I{O::F64X2ConvertI64X2S}, MakeSpanU8("\xfd\xb1\x01"), f);
-  ExpectRead<I>(I{O::F64X2ConvertI64X2U}, MakeSpanU8("\xfd\xb2\x01"), f);
+  ExpectRead<I>(I{O::V128Store, MemArgImmediate{3, 4}}, "\xfd\x01\x03\x04"_su8,
+                f);
+  ExpectRead<I>(I{O::V128Const, v128{u64{5}, u64{6}}},
+                "\xfd\x02\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00"
+                "\x00\x00\x00\x00\x00\x00"_su8,
+                f);
+  ExpectRead<I>(I{O::V8X16Shuffle, ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                     0, 0, 0, 0, 0, 0, 0}}},
+                "\xfd\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00"_su8,
+                f);
+  ExpectRead<I>(I{O::I8X16Splat}, "\xfd\x04"_su8, f);
+  ExpectRead<I>(I{O::I8X16ExtractLaneS, u8{0}}, "\xfd\x05\x00"_su8, f);
+  ExpectRead<I>(I{O::I8X16ExtractLaneU, u8{0}}, "\xfd\x06\x00"_su8, f);
+  ExpectRead<I>(I{O::I8X16ReplaceLane, u8{0}}, "\xfd\x07\x00"_su8, f);
+  ExpectRead<I>(I{O::I16X8Splat}, "\xfd\x08"_su8, f);
+  ExpectRead<I>(I{O::I16X8ExtractLaneS, u8{0}}, "\xfd\x09\x00"_su8, f);
+  ExpectRead<I>(I{O::I16X8ExtractLaneU, u8{0}}, "\xfd\x0a\x00"_su8, f);
+  ExpectRead<I>(I{O::I16X8ReplaceLane, u8{0}}, "\xfd\x0b\x00"_su8, f);
+  ExpectRead<I>(I{O::I32X4Splat}, "\xfd\x0c"_su8, f);
+  ExpectRead<I>(I{O::I32X4ExtractLane, u8{0}}, "\xfd\x0d\x00"_su8, f);
+  ExpectRead<I>(I{O::I32X4ReplaceLane, u8{0}}, "\xfd\x0e\x00"_su8, f);
+  ExpectRead<I>(I{O::I64X2Splat}, "\xfd\x0f"_su8, f);
+  ExpectRead<I>(I{O::I64X2ExtractLane, u8{0}}, "\xfd\x10\x00"_su8, f);
+  ExpectRead<I>(I{O::I64X2ReplaceLane, u8{0}}, "\xfd\x11\x00"_su8, f);
+  ExpectRead<I>(I{O::F32X4Splat}, "\xfd\x12"_su8, f);
+  ExpectRead<I>(I{O::F32X4ExtractLane, u8{0}}, "\xfd\x13\x00"_su8, f);
+  ExpectRead<I>(I{O::F32X4ReplaceLane, u8{0}}, "\xfd\x14\x00"_su8, f);
+  ExpectRead<I>(I{O::F64X2Splat}, "\xfd\x15"_su8, f);
+  ExpectRead<I>(I{O::F64X2ExtractLane, u8{0}}, "\xfd\x16\x00"_su8, f);
+  ExpectRead<I>(I{O::F64X2ReplaceLane, u8{0}}, "\xfd\x17\x00"_su8, f);
+  ExpectRead<I>(I{O::I8X16Eq}, "\xfd\x18"_su8, f);
+  ExpectRead<I>(I{O::I8X16Ne}, "\xfd\x19"_su8, f);
+  ExpectRead<I>(I{O::I8X16LtS}, "\xfd\x1a"_su8, f);
+  ExpectRead<I>(I{O::I8X16LtU}, "\xfd\x1b"_su8, f);
+  ExpectRead<I>(I{O::I8X16GtS}, "\xfd\x1c"_su8, f);
+  ExpectRead<I>(I{O::I8X16GtU}, "\xfd\x1d"_su8, f);
+  ExpectRead<I>(I{O::I8X16LeS}, "\xfd\x1e"_su8, f);
+  ExpectRead<I>(I{O::I8X16LeU}, "\xfd\x1f"_su8, f);
+  ExpectRead<I>(I{O::I8X16GeS}, "\xfd\x20"_su8, f);
+  ExpectRead<I>(I{O::I8X16GeU}, "\xfd\x21"_su8, f);
+  ExpectRead<I>(I{O::I16X8Eq}, "\xfd\x22"_su8, f);
+  ExpectRead<I>(I{O::I16X8Ne}, "\xfd\x23"_su8, f);
+  ExpectRead<I>(I{O::I16X8LtS}, "\xfd\x24"_su8, f);
+  ExpectRead<I>(I{O::I16X8LtU}, "\xfd\x25"_su8, f);
+  ExpectRead<I>(I{O::I16X8GtS}, "\xfd\x26"_su8, f);
+  ExpectRead<I>(I{O::I16X8GtU}, "\xfd\x27"_su8, f);
+  ExpectRead<I>(I{O::I16X8LeS}, "\xfd\x28"_su8, f);
+  ExpectRead<I>(I{O::I16X8LeU}, "\xfd\x29"_su8, f);
+  ExpectRead<I>(I{O::I16X8GeS}, "\xfd\x2a"_su8, f);
+  ExpectRead<I>(I{O::I16X8GeU}, "\xfd\x2b"_su8, f);
+  ExpectRead<I>(I{O::I32X4Eq}, "\xfd\x2c"_su8, f);
+  ExpectRead<I>(I{O::I32X4Ne}, "\xfd\x2d"_su8, f);
+  ExpectRead<I>(I{O::I32X4LtS}, "\xfd\x2e"_su8, f);
+  ExpectRead<I>(I{O::I32X4LtU}, "\xfd\x2f"_su8, f);
+  ExpectRead<I>(I{O::I32X4GtS}, "\xfd\x30"_su8, f);
+  ExpectRead<I>(I{O::I32X4GtU}, "\xfd\x31"_su8, f);
+  ExpectRead<I>(I{O::I32X4LeS}, "\xfd\x32"_su8, f);
+  ExpectRead<I>(I{O::I32X4LeU}, "\xfd\x33"_su8, f);
+  ExpectRead<I>(I{O::I32X4GeS}, "\xfd\x34"_su8, f);
+  ExpectRead<I>(I{O::I32X4GeU}, "\xfd\x35"_su8, f);
+  ExpectRead<I>(I{O::F32X4Eq}, "\xfd\x40"_su8, f);
+  ExpectRead<I>(I{O::F32X4Ne}, "\xfd\x41"_su8, f);
+  ExpectRead<I>(I{O::F32X4Lt}, "\xfd\x42"_su8, f);
+  ExpectRead<I>(I{O::F32X4Gt}, "\xfd\x43"_su8, f);
+  ExpectRead<I>(I{O::F32X4Le}, "\xfd\x44"_su8, f);
+  ExpectRead<I>(I{O::F32X4Ge}, "\xfd\x45"_su8, f);
+  ExpectRead<I>(I{O::F64X2Eq}, "\xfd\x46"_su8, f);
+  ExpectRead<I>(I{O::F64X2Ne}, "\xfd\x47"_su8, f);
+  ExpectRead<I>(I{O::F64X2Lt}, "\xfd\x48"_su8, f);
+  ExpectRead<I>(I{O::F64X2Gt}, "\xfd\x49"_su8, f);
+  ExpectRead<I>(I{O::F64X2Le}, "\xfd\x4a"_su8, f);
+  ExpectRead<I>(I{O::F64X2Ge}, "\xfd\x4b"_su8, f);
+  ExpectRead<I>(I{O::V128Not}, "\xfd\x4c"_su8, f);
+  ExpectRead<I>(I{O::V128And}, "\xfd\x4d"_su8, f);
+  ExpectRead<I>(I{O::V128Or}, "\xfd\x4e"_su8, f);
+  ExpectRead<I>(I{O::V128Xor}, "\xfd\x4f"_su8, f);
+  ExpectRead<I>(I{O::V128BitSelect}, "\xfd\x50"_su8, f);
+  ExpectRead<I>(I{O::I8X16Neg}, "\xfd\x51"_su8, f);
+  ExpectRead<I>(I{O::I8X16AnyTrue}, "\xfd\x52"_su8, f);
+  ExpectRead<I>(I{O::I8X16AllTrue}, "\xfd\x53"_su8, f);
+  ExpectRead<I>(I{O::I8X16Shl}, "\xfd\x54"_su8, f);
+  ExpectRead<I>(I{O::I8X16ShrS}, "\xfd\x55"_su8, f);
+  ExpectRead<I>(I{O::I8X16ShrU}, "\xfd\x56"_su8, f);
+  ExpectRead<I>(I{O::I8X16Add}, "\xfd\x57"_su8, f);
+  ExpectRead<I>(I{O::I8X16AddSaturateS}, "\xfd\x58"_su8, f);
+  ExpectRead<I>(I{O::I8X16AddSaturateU}, "\xfd\x59"_su8, f);
+  ExpectRead<I>(I{O::I8X16Sub}, "\xfd\x5a"_su8, f);
+  ExpectRead<I>(I{O::I8X16SubSaturateS}, "\xfd\x5b"_su8, f);
+  ExpectRead<I>(I{O::I8X16SubSaturateU}, "\xfd\x5c"_su8, f);
+  ExpectRead<I>(I{O::I8X16Mul}, "\xfd\x5d"_su8, f);
+  ExpectRead<I>(I{O::I16X8Neg}, "\xfd\x62"_su8, f);
+  ExpectRead<I>(I{O::I16X8AnyTrue}, "\xfd\x63"_su8, f);
+  ExpectRead<I>(I{O::I16X8AllTrue}, "\xfd\x64"_su8, f);
+  ExpectRead<I>(I{O::I16X8Shl}, "\xfd\x65"_su8, f);
+  ExpectRead<I>(I{O::I16X8ShrS}, "\xfd\x66"_su8, f);
+  ExpectRead<I>(I{O::I16X8ShrU}, "\xfd\x67"_su8, f);
+  ExpectRead<I>(I{O::I16X8Add}, "\xfd\x68"_su8, f);
+  ExpectRead<I>(I{O::I16X8AddSaturateS}, "\xfd\x69"_su8, f);
+  ExpectRead<I>(I{O::I16X8AddSaturateU}, "\xfd\x6a"_su8, f);
+  ExpectRead<I>(I{O::I16X8Sub}, "\xfd\x6b"_su8, f);
+  ExpectRead<I>(I{O::I16X8SubSaturateS}, "\xfd\x6c"_su8, f);
+  ExpectRead<I>(I{O::I16X8SubSaturateU}, "\xfd\x6d"_su8, f);
+  ExpectRead<I>(I{O::I16X8Mul}, "\xfd\x6e"_su8, f);
+  ExpectRead<I>(I{O::I32X4Neg}, "\xfd\x73"_su8, f);
+  ExpectRead<I>(I{O::I32X4AnyTrue}, "\xfd\x74"_su8, f);
+  ExpectRead<I>(I{O::I32X4AllTrue}, "\xfd\x75"_su8, f);
+  ExpectRead<I>(I{O::I32X4Shl}, "\xfd\x76"_su8, f);
+  ExpectRead<I>(I{O::I32X4ShrS}, "\xfd\x77"_su8, f);
+  ExpectRead<I>(I{O::I32X4ShrU}, "\xfd\x78"_su8, f);
+  ExpectRead<I>(I{O::I32X4Add}, "\xfd\x79"_su8, f);
+  ExpectRead<I>(I{O::I32X4Sub}, "\xfd\x7c"_su8, f);
+  ExpectRead<I>(I{O::I32X4Mul}, "\xfd\x7f"_su8, f);
+  ExpectRead<I>(I{O::I64X2Neg}, "\xfd\x84\x01"_su8, f);
+  ExpectRead<I>(I{O::I64X2AnyTrue}, "\xfd\x85\x01"_su8, f);
+  ExpectRead<I>(I{O::I64X2AllTrue}, "\xfd\x86\x01"_su8, f);
+  ExpectRead<I>(I{O::I64X2Shl}, "\xfd\x87\x01"_su8, f);
+  ExpectRead<I>(I{O::I64X2ShrS}, "\xfd\x88\x01"_su8, f);
+  ExpectRead<I>(I{O::I64X2ShrU}, "\xfd\x89\x01"_su8, f);
+  ExpectRead<I>(I{O::I64X2Add}, "\xfd\x8a\x01"_su8, f);
+  ExpectRead<I>(I{O::I64X2Sub}, "\xfd\x8d\x01"_su8, f);
+  ExpectRead<I>(I{O::F32X4Abs}, "\xfd\x95\x01"_su8, f);
+  ExpectRead<I>(I{O::F32X4Neg}, "\xfd\x96\x01"_su8, f);
+  ExpectRead<I>(I{O::F32X4Sqrt}, "\xfd\x97\x01"_su8, f);
+  ExpectRead<I>(I{O::F32X4Add}, "\xfd\x9a\x01"_su8, f);
+  ExpectRead<I>(I{O::F32X4Sub}, "\xfd\x9b\x01"_su8, f);
+  ExpectRead<I>(I{O::F32X4Mul}, "\xfd\x9c\x01"_su8, f);
+  ExpectRead<I>(I{O::F32X4Div}, "\xfd\x9d\x01"_su8, f);
+  ExpectRead<I>(I{O::F32X4Min}, "\xfd\x9e\x01"_su8, f);
+  ExpectRead<I>(I{O::F32X4Max}, "\xfd\x9f\x01"_su8, f);
+  ExpectRead<I>(I{O::F64X2Abs}, "\xfd\xa0\x01"_su8, f);
+  ExpectRead<I>(I{O::F64X2Neg}, "\xfd\xa1\x01"_su8, f);
+  ExpectRead<I>(I{O::F64X2Sqrt}, "\xfd\xa2\x01"_su8, f);
+  ExpectRead<I>(I{O::F64X2Add}, "\xfd\xa5\x01"_su8, f);
+  ExpectRead<I>(I{O::F64X2Sub}, "\xfd\xa6\x01"_su8, f);
+  ExpectRead<I>(I{O::F64X2Mul}, "\xfd\xa7\x01"_su8, f);
+  ExpectRead<I>(I{O::F64X2Div}, "\xfd\xa8\x01"_su8, f);
+  ExpectRead<I>(I{O::F64X2Min}, "\xfd\xa9\x01"_su8, f);
+  ExpectRead<I>(I{O::F64X2Max}, "\xfd\xaa\x01"_su8, f);
+  ExpectRead<I>(I{O::I32X4TruncSatF32X4S}, "\xfd\xab\x01"_su8, f);
+  ExpectRead<I>(I{O::I32X4TruncSatF32X4U}, "\xfd\xac\x01"_su8, f);
+  ExpectRead<I>(I{O::I64X2TruncSatF64X2S}, "\xfd\xad\x01"_su8, f);
+  ExpectRead<I>(I{O::I64X2TruncSatF64X2U}, "\xfd\xae\x01"_su8, f);
+  ExpectRead<I>(I{O::F32X4ConvertI32X4S}, "\xfd\xaf\x01"_su8, f);
+  ExpectRead<I>(I{O::F32X4ConvertI32X4U}, "\xfd\xb0\x01"_su8, f);
+  ExpectRead<I>(I{O::F64X2ConvertI64X2S}, "\xfd\xb1\x01"_su8, f);
+  ExpectRead<I>(I{O::F64X2ConvertI64X2U}, "\xfd\xb2\x01"_su8, f);
 }
 
 TEST(ReadTest, Instruction_threads) {
@@ -1391,135 +1372,123 @@ TEST(ReadTest, Instruction_threads) {
   Features f;
   f.enable_threads();
 
-  ExpectRead<I>(I{O::AtomicNotify, m}, MakeSpanU8("\xfe\x00\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicWait, m}, MakeSpanU8("\xfe\x01\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicWait, m}, MakeSpanU8("\xfe\x02\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicLoad, m}, MakeSpanU8("\xfe\x10\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicLoad, m}, MakeSpanU8("\xfe\x11\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicLoad8U, m}, MakeSpanU8("\xfe\x12\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicLoad16U, m}, MakeSpanU8("\xfe\x13\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicLoad8U, m}, MakeSpanU8("\xfe\x14\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicLoad16U, m}, MakeSpanU8("\xfe\x15\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicLoad32U, m}, MakeSpanU8("\xfe\x16\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicStore, m}, MakeSpanU8("\xfe\x17\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicStore, m}, MakeSpanU8("\xfe\x18\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicStore8, m}, MakeSpanU8("\xfe\x19\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicStore16, m}, MakeSpanU8("\xfe\x1a\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicStore8, m}, MakeSpanU8("\xfe\x1b\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicStore16, m}, MakeSpanU8("\xfe\x1c\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicStore32, m}, MakeSpanU8("\xfe\x1d\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmwAdd, m}, MakeSpanU8("\xfe\x1e\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmwAdd, m}, MakeSpanU8("\xfe\x1f\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmw8AddU, m}, MakeSpanU8("\xfe\x20\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmw16AddU, m}, MakeSpanU8("\xfe\x21\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw8AddU, m}, MakeSpanU8("\xfe\x22\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw16AddU, m}, MakeSpanU8("\xfe\x23\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw32AddU, m}, MakeSpanU8("\xfe\x24\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmwSub, m}, MakeSpanU8("\xfe\x25\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmwSub, m}, MakeSpanU8("\xfe\x26\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmw8SubU, m}, MakeSpanU8("\xfe\x27\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmw16SubU, m}, MakeSpanU8("\xfe\x28\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw8SubU, m}, MakeSpanU8("\xfe\x29\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw16SubU, m}, MakeSpanU8("\xfe\x2a\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw32SubU, m}, MakeSpanU8("\xfe\x2b\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmwAnd, m}, MakeSpanU8("\xfe\x2c\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmwAnd, m}, MakeSpanU8("\xfe\x2d\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmw8AndU, m}, MakeSpanU8("\xfe\x2e\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmw16AndU, m}, MakeSpanU8("\xfe\x2f\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw8AndU, m}, MakeSpanU8("\xfe\x30\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw16AndU, m}, MakeSpanU8("\xfe\x31\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw32AndU, m}, MakeSpanU8("\xfe\x32\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmwOr, m}, MakeSpanU8("\xfe\x33\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmwOr, m}, MakeSpanU8("\xfe\x34\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmw8OrU, m}, MakeSpanU8("\xfe\x35\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmw16OrU, m}, MakeSpanU8("\xfe\x36\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw8OrU, m}, MakeSpanU8("\xfe\x37\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw16OrU, m}, MakeSpanU8("\xfe\x38\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw32OrU, m}, MakeSpanU8("\xfe\x39\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmwXor, m}, MakeSpanU8("\xfe\x3a\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmwXor, m}, MakeSpanU8("\xfe\x3b\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmw8XorU, m}, MakeSpanU8("\xfe\x3c\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmw16XorU, m}, MakeSpanU8("\xfe\x3d\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw8XorU, m}, MakeSpanU8("\xfe\x3e\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw16XorU, m}, MakeSpanU8("\xfe\x3f\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw32XorU, m}, MakeSpanU8("\xfe\x40\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmwXchg, m}, MakeSpanU8("\xfe\x41\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmwXchg, m}, MakeSpanU8("\xfe\x42\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmw8XchgU, m}, MakeSpanU8("\xfe\x43\x00\x00"), f);
-  ExpectRead<I>(I{O::I32AtomicRmw16XchgU, m}, MakeSpanU8("\xfe\x44\x00\x00"),
-                f);
-  ExpectRead<I>(I{O::I64AtomicRmw8XchgU, m}, MakeSpanU8("\xfe\x45\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw16XchgU, m}, MakeSpanU8("\xfe\x46\x00\x00"),
-                f);
-  ExpectRead<I>(I{O::I64AtomicRmw32XchgU, m}, MakeSpanU8("\xfe\x47\x00\x00"),
-                f);
-  ExpectRead<I>(I{O::I32AtomicRmwCmpxchg, m}, MakeSpanU8("\xfe\x48\x00\x00"),
-                f);
-  ExpectRead<I>(I{O::I64AtomicRmwCmpxchg, m}, MakeSpanU8("\xfe\x49\x00\x00"),
-                f);
-  ExpectRead<I>(I{O::I32AtomicRmw8CmpxchgU, m}, MakeSpanU8("\xfe\x4a\x00\x00"),
-                f);
-  ExpectRead<I>(I{O::I32AtomicRmw16CmpxchgU, m},
-                MakeSpanU8("\xfe\x4b\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw8CmpxchgU, m}, MakeSpanU8("\xfe\x4c\x00\x00"),
-                f);
-  ExpectRead<I>(I{O::I64AtomicRmw16CmpxchgU, m},
-                MakeSpanU8("\xfe\x4d\x00\x00"), f);
-  ExpectRead<I>(I{O::I64AtomicRmw32CmpxchgU, m},
-                MakeSpanU8("\xfe\x4e\x00\x00"), f);
+  ExpectRead<I>(I{O::AtomicNotify, m}, "\xfe\x00\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicWait, m}, "\xfe\x01\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicWait, m}, "\xfe\x02\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicLoad, m}, "\xfe\x10\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicLoad, m}, "\xfe\x11\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicLoad8U, m}, "\xfe\x12\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicLoad16U, m}, "\xfe\x13\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicLoad8U, m}, "\xfe\x14\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicLoad16U, m}, "\xfe\x15\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicLoad32U, m}, "\xfe\x16\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicStore, m}, "\xfe\x17\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicStore, m}, "\xfe\x18\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicStore8, m}, "\xfe\x19\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicStore16, m}, "\xfe\x1a\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicStore8, m}, "\xfe\x1b\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicStore16, m}, "\xfe\x1c\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicStore32, m}, "\xfe\x1d\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmwAdd, m}, "\xfe\x1e\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmwAdd, m}, "\xfe\x1f\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw8AddU, m}, "\xfe\x20\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw16AddU, m}, "\xfe\x21\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw8AddU, m}, "\xfe\x22\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw16AddU, m}, "\xfe\x23\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw32AddU, m}, "\xfe\x24\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmwSub, m}, "\xfe\x25\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmwSub, m}, "\xfe\x26\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw8SubU, m}, "\xfe\x27\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw16SubU, m}, "\xfe\x28\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw8SubU, m}, "\xfe\x29\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw16SubU, m}, "\xfe\x2a\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw32SubU, m}, "\xfe\x2b\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmwAnd, m}, "\xfe\x2c\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmwAnd, m}, "\xfe\x2d\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw8AndU, m}, "\xfe\x2e\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw16AndU, m}, "\xfe\x2f\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw8AndU, m}, "\xfe\x30\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw16AndU, m}, "\xfe\x31\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw32AndU, m}, "\xfe\x32\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmwOr, m}, "\xfe\x33\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmwOr, m}, "\xfe\x34\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw8OrU, m}, "\xfe\x35\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw16OrU, m}, "\xfe\x36\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw8OrU, m}, "\xfe\x37\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw16OrU, m}, "\xfe\x38\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw32OrU, m}, "\xfe\x39\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmwXor, m}, "\xfe\x3a\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmwXor, m}, "\xfe\x3b\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw8XorU, m}, "\xfe\x3c\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw16XorU, m}, "\xfe\x3d\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw8XorU, m}, "\xfe\x3e\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw16XorU, m}, "\xfe\x3f\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw32XorU, m}, "\xfe\x40\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmwXchg, m}, "\xfe\x41\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmwXchg, m}, "\xfe\x42\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw8XchgU, m}, "\xfe\x43\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw16XchgU, m}, "\xfe\x44\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw8XchgU, m}, "\xfe\x45\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw16XchgU, m}, "\xfe\x46\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw32XchgU, m}, "\xfe\x47\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmwCmpxchg, m}, "\xfe\x48\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmwCmpxchg, m}, "\xfe\x49\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw8CmpxchgU, m}, "\xfe\x4a\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I32AtomicRmw16CmpxchgU, m}, "\xfe\x4b\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw8CmpxchgU, m}, "\xfe\x4c\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw16CmpxchgU, m}, "\xfe\x4d\x00\x00"_su8, f);
+  ExpectRead<I>(I{O::I64AtomicRmw32CmpxchgU, m}, "\xfe\x4e\x00\x00"_su8, f);
 }
 
 TEST(ReadTest, Limits) {
-  ExpectRead<Limits>(Limits{129}, MakeSpanU8("\x00\x81\x01"));
-  ExpectRead<Limits>(Limits{2, 1000}, MakeSpanU8("\x01\x02\xe8\x07"));
+  ExpectRead<Limits>(Limits{129}, "\x00\x81\x01"_su8);
+  ExpectRead<Limits>(Limits{2, 1000}, "\x01\x02\xe8\x07"_su8);
 }
 
 TEST(ReadTest, Limits_BadFlags) {
   ExpectReadFailure<Limits>({{0, "limits"}, {1, "Invalid flags value: 2"}},
-                            MakeSpanU8("\x02\x01"));
+                            "\x02\x01"_su8);
   ExpectReadFailure<Limits>({{0, "limits"}, {1, "Invalid flags value: 3"}},
-                            MakeSpanU8("\x03\x01"));
+                            "\x03\x01"_su8);
 }
 
 TEST(ReadTest, Limits_threads) {
   Features features;
   features.enable_threads();
 
-  ExpectRead<Limits>(Limits{2, 1000, Shared::Yes},
-                     MakeSpanU8("\x03\x02\xe8\x07"), features);
+  ExpectRead<Limits>(Limits{2, 1000, Shared::Yes}, "\x03\x02\xe8\x07"_su8,
+                     features);
 }
 
 TEST(ReadTest, Limits_PastEnd) {
   ExpectReadFailure<Limits>(
       {{0, "limits"}, {1, "min"}, {1, "u32"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x00"));
+      "\x00"_su8);
   ExpectReadFailure<Limits>(
       {{0, "limits"}, {2, "max"}, {2, "u32"}, {2, "Unable to read u8"}},
-      MakeSpanU8("\x01\x00"));
+      "\x01\x00"_su8);
 }
 
 TEST(ReadTest, Locals) {
-  ExpectRead<Locals>(Locals{2, ValueType::I32}, MakeSpanU8("\x02\x7f"));
-  ExpectRead<Locals>(Locals{320, ValueType::F64}, MakeSpanU8("\xc0\x02\x7c"));
+  ExpectRead<Locals>(Locals{2, ValueType::I32}, "\x02\x7f"_su8);
+  ExpectRead<Locals>(Locals{320, ValueType::F64}, "\xc0\x02\x7c"_su8);
 }
 
 TEST(ReadTest, Locals_PastEnd) {
   ExpectReadFailure<Locals>(
-      {{0, "locals"}, {0, "count"}, {0, "Unable to read u8"}}, MakeSpanU8(""));
+      {{0, "locals"}, {0, "count"}, {0, "Unable to read u8"}}, ""_su8);
   ExpectReadFailure<Locals>(
       {{0, "locals"}, {2, "type"}, {2, "value type"}, {2, "Unable to read u8"}},
-      MakeSpanU8("\xc0\x02"));
+      "\xc0\x02"_su8);
 }
 
 TEST(ReadTest, MemArgImmediate) {
-  ExpectRead<MemArgImmediate>(MemArgImmediate{0, 0}, MakeSpanU8("\x00\x00"));
-  ExpectRead<MemArgImmediate>(MemArgImmediate{1, 256},
-                              MakeSpanU8("\x01\x80\x02"));
+  ExpectRead<MemArgImmediate>(MemArgImmediate{0, 0}, "\x00\x00"_su8);
+  ExpectRead<MemArgImmediate>(MemArgImmediate{1, 256}, "\x01\x80\x02"_su8);
 }
 
 TEST(ReadTest, Memory) {
-  ExpectRead<Memory>(Memory{MemoryType{Limits{1, 2}}},
-                     MakeSpanU8("\x01\x01\x02"));
+  ExpectRead<Memory>(Memory{MemoryType{Limits{1, 2}}}, "\x01\x01\x02"_su8);
 }
 
 TEST(ReadTest, Memory_PastEnd) {
@@ -1528,13 +1497,12 @@ TEST(ReadTest, Memory_PastEnd) {
                              {0, "limits"},
                              {0, "flags"},
                              {0, "Unable to read u8"}},
-                            MakeSpanU8(""));
+                            ""_su8);
 }
 
 TEST(ReadTest, MemoryType) {
-  ExpectRead<MemoryType>(MemoryType{Limits{1}}, MakeSpanU8("\x00\x01"));
-  ExpectRead<MemoryType>(MemoryType{Limits{0, 128}},
-                         MakeSpanU8("\x01\x00\x80\x01"));
+  ExpectRead<MemoryType>(MemoryType{Limits{1}}, "\x00\x01"_su8);
+  ExpectRead<MemoryType>(MemoryType{Limits{0, 128}}, "\x01\x00\x80\x01"_su8);
 }
 
 TEST(ReadTest, MemoryType_PastEnd) {
@@ -1542,261 +1510,255 @@ TEST(ReadTest, MemoryType_PastEnd) {
                                  {0, "limits"},
                                  {0, "flags"},
                                  {0, "Unable to read u8"}},
-                                MakeSpanU8(""));
+                                ""_su8);
 }
 
 TEST(ReadTest, Mutability) {
-  ExpectRead<Mutability>(Mutability::Const, MakeSpanU8("\x00"));
-  ExpectRead<Mutability>(Mutability::Var, MakeSpanU8("\x01"));
+  ExpectRead<Mutability>(Mutability::Const, "\x00"_su8);
+  ExpectRead<Mutability>(Mutability::Var, "\x01"_su8);
 }
 
 TEST(ReadTest, Mutability_Unknown) {
   ExpectReadFailure<Mutability>(
-      {{0, "mutability"}, {1, "Unknown mutability: 4"}}, MakeSpanU8("\x04"));
+      {{0, "mutability"}, {1, "Unknown mutability: 4"}}, "\x04"_su8);
 
   // Overlong encoding is not allowed.
   ExpectReadFailure<Mutability>(
-      {{0, "mutability"}, {1, "Unknown mutability: 132"}},
-      MakeSpanU8("\x84\x00"));
+      {{0, "mutability"}, {1, "Unknown mutability: 132"}}, "\x84\x00"_su8);
 }
 
 TEST(ReadTest, NameAssoc) {
-  ExpectRead<NameAssoc>(NameAssoc{2u, "hi"}, MakeSpanU8("\x02\x02hi"));
+  ExpectRead<NameAssoc>(NameAssoc{2u, "hi"}, "\x02\x02hi"_su8);
 }
 
 TEST(ReadTest, NameAssoc_PastEnd) {
   ExpectReadFailure<NameAssoc>(
-      {{0, "name assoc"}, {0, "index"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      {{0, "name assoc"}, {0, "index"}, {0, "Unable to read u8"}}, ""_su8);
 
   ExpectReadFailure<NameAssoc>(
       {{0, "name assoc"}, {1, "name"}, {1, "length"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x00"));
+      "\x00"_su8);
 }
 
 TEST(ReadTest, NameSubsectionId) {
-  ExpectRead<NameSubsectionId>(NameSubsectionId::ModuleName,
-                               MakeSpanU8("\x00"));
-  ExpectRead<NameSubsectionId>(NameSubsectionId::FunctionNames,
-                               MakeSpanU8("\x01"));
-  ExpectRead<NameSubsectionId>(NameSubsectionId::LocalNames,
-                               MakeSpanU8("\x02"));
+  ExpectRead<NameSubsectionId>(NameSubsectionId::ModuleName, "\x00"_su8);
+  ExpectRead<NameSubsectionId>(NameSubsectionId::FunctionNames, "\x01"_su8);
+  ExpectRead<NameSubsectionId>(NameSubsectionId::LocalNames, "\x02"_su8);
 }
 
 TEST(ReadTest, NameSubsectionId_Unknown) {
   ExpectReadFailure<NameSubsectionId>(
       {{0, "name subsection id"}, {1, "Unknown name subsection id: 3"}},
-      MakeSpanU8("\x03"));
+      "\x03"_su8);
   ExpectReadFailure<NameSubsectionId>(
       {{0, "name subsection id"}, {1, "Unknown name subsection id: 255"}},
-      MakeSpanU8("\xff"));
+      "\xff"_su8);
 }
 
 TEST(ReadTest, NameSubsection) {
   ExpectRead<NameSubsection>(
-      NameSubsection{NameSubsectionId::ModuleName, MakeSpanU8("\0")},
-      MakeSpanU8("\x00\x01\0"));
+      NameSubsection{NameSubsectionId::ModuleName, "\0"_su8}, "\x00\x01\0"_su8);
 
   ExpectRead<NameSubsection>(
-      NameSubsection{NameSubsectionId::FunctionNames, MakeSpanU8("\0\0")},
-      MakeSpanU8("\x01\x02\0\0"));
+      NameSubsection{NameSubsectionId::FunctionNames, "\0\0"_su8},
+      "\x01\x02\0\0"_su8);
 
   ExpectRead<NameSubsection>(
-      NameSubsection{NameSubsectionId::LocalNames, MakeSpanU8("\0\0\0")},
-      MakeSpanU8("\x02\x03\0\0\0"));
+      NameSubsection{NameSubsectionId::LocalNames, "\0\0\0"_su8},
+      "\x02\x03\0\0\0"_su8);
 }
 
 TEST(ReadTest, NameSubsection_BadSubsectionId) {
   ExpectReadFailure<NameSubsection>({{0, "name subsection"},
                                      {0, "name subsection id"},
                                      {1, "Unknown name subsection id: 3"}},
-                                    MakeSpanU8("\x03"));
+                                    "\x03"_su8);
 }
 
 TEST(ReadTest, NameSubsection_PastEnd) {
   ExpectReadFailure<NameSubsection>({{0, "name subsection"},
                                      {0, "name subsection id"},
                                      {0, "Unable to read u8"}},
-                                    MakeSpanU8(""));
+                                    ""_su8);
 
   ExpectReadFailure<NameSubsection>(
       {{0, "name subsection"}, {1, "length"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x00"));
+      "\x00"_su8);
 }
 
 TEST(ReadTest, Opcode) {
-  ExpectRead<Opcode>(Opcode::Unreachable, MakeSpanU8("\x00"));
-  ExpectRead<Opcode>(Opcode::Nop, MakeSpanU8("\x01"));
-  ExpectRead<Opcode>(Opcode::Block, MakeSpanU8("\x02"));
-  ExpectRead<Opcode>(Opcode::Loop, MakeSpanU8("\x03"));
-  ExpectRead<Opcode>(Opcode::If, MakeSpanU8("\x04"));
-  ExpectRead<Opcode>(Opcode::Else, MakeSpanU8("\x05"));
-  ExpectRead<Opcode>(Opcode::End, MakeSpanU8("\x0b"));
-  ExpectRead<Opcode>(Opcode::Br, MakeSpanU8("\x0c"));
-  ExpectRead<Opcode>(Opcode::BrIf, MakeSpanU8("\x0d"));
-  ExpectRead<Opcode>(Opcode::BrTable, MakeSpanU8("\x0e"));
-  ExpectRead<Opcode>(Opcode::Return, MakeSpanU8("\x0f"));
-  ExpectRead<Opcode>(Opcode::Call, MakeSpanU8("\x10"));
-  ExpectRead<Opcode>(Opcode::CallIndirect, MakeSpanU8("\x11"));
-  ExpectRead<Opcode>(Opcode::Drop, MakeSpanU8("\x1a"));
-  ExpectRead<Opcode>(Opcode::Select, MakeSpanU8("\x1b"));
-  ExpectRead<Opcode>(Opcode::LocalGet, MakeSpanU8("\x20"));
-  ExpectRead<Opcode>(Opcode::LocalSet, MakeSpanU8("\x21"));
-  ExpectRead<Opcode>(Opcode::LocalTee, MakeSpanU8("\x22"));
-  ExpectRead<Opcode>(Opcode::GlobalGet, MakeSpanU8("\x23"));
-  ExpectRead<Opcode>(Opcode::GlobalSet, MakeSpanU8("\x24"));
-  ExpectRead<Opcode>(Opcode::I32Load, MakeSpanU8("\x28"));
-  ExpectRead<Opcode>(Opcode::I64Load, MakeSpanU8("\x29"));
-  ExpectRead<Opcode>(Opcode::F32Load, MakeSpanU8("\x2a"));
-  ExpectRead<Opcode>(Opcode::F64Load, MakeSpanU8("\x2b"));
-  ExpectRead<Opcode>(Opcode::I32Load8S, MakeSpanU8("\x2c"));
-  ExpectRead<Opcode>(Opcode::I32Load8U, MakeSpanU8("\x2d"));
-  ExpectRead<Opcode>(Opcode::I32Load16S, MakeSpanU8("\x2e"));
-  ExpectRead<Opcode>(Opcode::I32Load16U, MakeSpanU8("\x2f"));
-  ExpectRead<Opcode>(Opcode::I64Load8S, MakeSpanU8("\x30"));
-  ExpectRead<Opcode>(Opcode::I64Load8U, MakeSpanU8("\x31"));
-  ExpectRead<Opcode>(Opcode::I64Load16S, MakeSpanU8("\x32"));
-  ExpectRead<Opcode>(Opcode::I64Load16U, MakeSpanU8("\x33"));
-  ExpectRead<Opcode>(Opcode::I64Load32S, MakeSpanU8("\x34"));
-  ExpectRead<Opcode>(Opcode::I64Load32U, MakeSpanU8("\x35"));
-  ExpectRead<Opcode>(Opcode::I32Store, MakeSpanU8("\x36"));
-  ExpectRead<Opcode>(Opcode::I64Store, MakeSpanU8("\x37"));
-  ExpectRead<Opcode>(Opcode::F32Store, MakeSpanU8("\x38"));
-  ExpectRead<Opcode>(Opcode::F64Store, MakeSpanU8("\x39"));
-  ExpectRead<Opcode>(Opcode::I32Store8, MakeSpanU8("\x3a"));
-  ExpectRead<Opcode>(Opcode::I32Store16, MakeSpanU8("\x3b"));
-  ExpectRead<Opcode>(Opcode::I64Store8, MakeSpanU8("\x3c"));
-  ExpectRead<Opcode>(Opcode::I64Store16, MakeSpanU8("\x3d"));
-  ExpectRead<Opcode>(Opcode::I64Store32, MakeSpanU8("\x3e"));
-  ExpectRead<Opcode>(Opcode::MemorySize, MakeSpanU8("\x3f"));
-  ExpectRead<Opcode>(Opcode::MemoryGrow, MakeSpanU8("\x40"));
-  ExpectRead<Opcode>(Opcode::I32Const, MakeSpanU8("\x41"));
-  ExpectRead<Opcode>(Opcode::I64Const, MakeSpanU8("\x42"));
-  ExpectRead<Opcode>(Opcode::F32Const, MakeSpanU8("\x43"));
-  ExpectRead<Opcode>(Opcode::F64Const, MakeSpanU8("\x44"));
-  ExpectRead<Opcode>(Opcode::I32Eqz, MakeSpanU8("\x45"));
-  ExpectRead<Opcode>(Opcode::I32Eq, MakeSpanU8("\x46"));
-  ExpectRead<Opcode>(Opcode::I32Ne, MakeSpanU8("\x47"));
-  ExpectRead<Opcode>(Opcode::I32LtS, MakeSpanU8("\x48"));
-  ExpectRead<Opcode>(Opcode::I32LtU, MakeSpanU8("\x49"));
-  ExpectRead<Opcode>(Opcode::I32GtS, MakeSpanU8("\x4a"));
-  ExpectRead<Opcode>(Opcode::I32GtU, MakeSpanU8("\x4b"));
-  ExpectRead<Opcode>(Opcode::I32LeS, MakeSpanU8("\x4c"));
-  ExpectRead<Opcode>(Opcode::I32LeU, MakeSpanU8("\x4d"));
-  ExpectRead<Opcode>(Opcode::I32GeS, MakeSpanU8("\x4e"));
-  ExpectRead<Opcode>(Opcode::I32GeU, MakeSpanU8("\x4f"));
-  ExpectRead<Opcode>(Opcode::I64Eqz, MakeSpanU8("\x50"));
-  ExpectRead<Opcode>(Opcode::I64Eq, MakeSpanU8("\x51"));
-  ExpectRead<Opcode>(Opcode::I64Ne, MakeSpanU8("\x52"));
-  ExpectRead<Opcode>(Opcode::I64LtS, MakeSpanU8("\x53"));
-  ExpectRead<Opcode>(Opcode::I64LtU, MakeSpanU8("\x54"));
-  ExpectRead<Opcode>(Opcode::I64GtS, MakeSpanU8("\x55"));
-  ExpectRead<Opcode>(Opcode::I64GtU, MakeSpanU8("\x56"));
-  ExpectRead<Opcode>(Opcode::I64LeS, MakeSpanU8("\x57"));
-  ExpectRead<Opcode>(Opcode::I64LeU, MakeSpanU8("\x58"));
-  ExpectRead<Opcode>(Opcode::I64GeS, MakeSpanU8("\x59"));
-  ExpectRead<Opcode>(Opcode::I64GeU, MakeSpanU8("\x5a"));
-  ExpectRead<Opcode>(Opcode::F32Eq, MakeSpanU8("\x5b"));
-  ExpectRead<Opcode>(Opcode::F32Ne, MakeSpanU8("\x5c"));
-  ExpectRead<Opcode>(Opcode::F32Lt, MakeSpanU8("\x5d"));
-  ExpectRead<Opcode>(Opcode::F32Gt, MakeSpanU8("\x5e"));
-  ExpectRead<Opcode>(Opcode::F32Le, MakeSpanU8("\x5f"));
-  ExpectRead<Opcode>(Opcode::F32Ge, MakeSpanU8("\x60"));
-  ExpectRead<Opcode>(Opcode::F64Eq, MakeSpanU8("\x61"));
-  ExpectRead<Opcode>(Opcode::F64Ne, MakeSpanU8("\x62"));
-  ExpectRead<Opcode>(Opcode::F64Lt, MakeSpanU8("\x63"));
-  ExpectRead<Opcode>(Opcode::F64Gt, MakeSpanU8("\x64"));
-  ExpectRead<Opcode>(Opcode::F64Le, MakeSpanU8("\x65"));
-  ExpectRead<Opcode>(Opcode::F64Ge, MakeSpanU8("\x66"));
-  ExpectRead<Opcode>(Opcode::I32Clz, MakeSpanU8("\x67"));
-  ExpectRead<Opcode>(Opcode::I32Ctz, MakeSpanU8("\x68"));
-  ExpectRead<Opcode>(Opcode::I32Popcnt, MakeSpanU8("\x69"));
-  ExpectRead<Opcode>(Opcode::I32Add, MakeSpanU8("\x6a"));
-  ExpectRead<Opcode>(Opcode::I32Sub, MakeSpanU8("\x6b"));
-  ExpectRead<Opcode>(Opcode::I32Mul, MakeSpanU8("\x6c"));
-  ExpectRead<Opcode>(Opcode::I32DivS, MakeSpanU8("\x6d"));
-  ExpectRead<Opcode>(Opcode::I32DivU, MakeSpanU8("\x6e"));
-  ExpectRead<Opcode>(Opcode::I32RemS, MakeSpanU8("\x6f"));
-  ExpectRead<Opcode>(Opcode::I32RemU, MakeSpanU8("\x70"));
-  ExpectRead<Opcode>(Opcode::I32And, MakeSpanU8("\x71"));
-  ExpectRead<Opcode>(Opcode::I32Or, MakeSpanU8("\x72"));
-  ExpectRead<Opcode>(Opcode::I32Xor, MakeSpanU8("\x73"));
-  ExpectRead<Opcode>(Opcode::I32Shl, MakeSpanU8("\x74"));
-  ExpectRead<Opcode>(Opcode::I32ShrS, MakeSpanU8("\x75"));
-  ExpectRead<Opcode>(Opcode::I32ShrU, MakeSpanU8("\x76"));
-  ExpectRead<Opcode>(Opcode::I32Rotl, MakeSpanU8("\x77"));
-  ExpectRead<Opcode>(Opcode::I32Rotr, MakeSpanU8("\x78"));
-  ExpectRead<Opcode>(Opcode::I64Clz, MakeSpanU8("\x79"));
-  ExpectRead<Opcode>(Opcode::I64Ctz, MakeSpanU8("\x7a"));
-  ExpectRead<Opcode>(Opcode::I64Popcnt, MakeSpanU8("\x7b"));
-  ExpectRead<Opcode>(Opcode::I64Add, MakeSpanU8("\x7c"));
-  ExpectRead<Opcode>(Opcode::I64Sub, MakeSpanU8("\x7d"));
-  ExpectRead<Opcode>(Opcode::I64Mul, MakeSpanU8("\x7e"));
-  ExpectRead<Opcode>(Opcode::I64DivS, MakeSpanU8("\x7f"));
-  ExpectRead<Opcode>(Opcode::I64DivU, MakeSpanU8("\x80"));
-  ExpectRead<Opcode>(Opcode::I64RemS, MakeSpanU8("\x81"));
-  ExpectRead<Opcode>(Opcode::I64RemU, MakeSpanU8("\x82"));
-  ExpectRead<Opcode>(Opcode::I64And, MakeSpanU8("\x83"));
-  ExpectRead<Opcode>(Opcode::I64Or, MakeSpanU8("\x84"));
-  ExpectRead<Opcode>(Opcode::I64Xor, MakeSpanU8("\x85"));
-  ExpectRead<Opcode>(Opcode::I64Shl, MakeSpanU8("\x86"));
-  ExpectRead<Opcode>(Opcode::I64ShrS, MakeSpanU8("\x87"));
-  ExpectRead<Opcode>(Opcode::I64ShrU, MakeSpanU8("\x88"));
-  ExpectRead<Opcode>(Opcode::I64Rotl, MakeSpanU8("\x89"));
-  ExpectRead<Opcode>(Opcode::I64Rotr, MakeSpanU8("\x8a"));
-  ExpectRead<Opcode>(Opcode::F32Abs, MakeSpanU8("\x8b"));
-  ExpectRead<Opcode>(Opcode::F32Neg, MakeSpanU8("\x8c"));
-  ExpectRead<Opcode>(Opcode::F32Ceil, MakeSpanU8("\x8d"));
-  ExpectRead<Opcode>(Opcode::F32Floor, MakeSpanU8("\x8e"));
-  ExpectRead<Opcode>(Opcode::F32Trunc, MakeSpanU8("\x8f"));
-  ExpectRead<Opcode>(Opcode::F32Nearest, MakeSpanU8("\x90"));
-  ExpectRead<Opcode>(Opcode::F32Sqrt, MakeSpanU8("\x91"));
-  ExpectRead<Opcode>(Opcode::F32Add, MakeSpanU8("\x92"));
-  ExpectRead<Opcode>(Opcode::F32Sub, MakeSpanU8("\x93"));
-  ExpectRead<Opcode>(Opcode::F32Mul, MakeSpanU8("\x94"));
-  ExpectRead<Opcode>(Opcode::F32Div, MakeSpanU8("\x95"));
-  ExpectRead<Opcode>(Opcode::F32Min, MakeSpanU8("\x96"));
-  ExpectRead<Opcode>(Opcode::F32Max, MakeSpanU8("\x97"));
-  ExpectRead<Opcode>(Opcode::F32Copysign, MakeSpanU8("\x98"));
-  ExpectRead<Opcode>(Opcode::F64Abs, MakeSpanU8("\x99"));
-  ExpectRead<Opcode>(Opcode::F64Neg, MakeSpanU8("\x9a"));
-  ExpectRead<Opcode>(Opcode::F64Ceil, MakeSpanU8("\x9b"));
-  ExpectRead<Opcode>(Opcode::F64Floor, MakeSpanU8("\x9c"));
-  ExpectRead<Opcode>(Opcode::F64Trunc, MakeSpanU8("\x9d"));
-  ExpectRead<Opcode>(Opcode::F64Nearest, MakeSpanU8("\x9e"));
-  ExpectRead<Opcode>(Opcode::F64Sqrt, MakeSpanU8("\x9f"));
-  ExpectRead<Opcode>(Opcode::F64Add, MakeSpanU8("\xa0"));
-  ExpectRead<Opcode>(Opcode::F64Sub, MakeSpanU8("\xa1"));
-  ExpectRead<Opcode>(Opcode::F64Mul, MakeSpanU8("\xa2"));
-  ExpectRead<Opcode>(Opcode::F64Div, MakeSpanU8("\xa3"));
-  ExpectRead<Opcode>(Opcode::F64Min, MakeSpanU8("\xa4"));
-  ExpectRead<Opcode>(Opcode::F64Max, MakeSpanU8("\xa5"));
-  ExpectRead<Opcode>(Opcode::F64Copysign, MakeSpanU8("\xa6"));
-  ExpectRead<Opcode>(Opcode::I32WrapI64, MakeSpanU8("\xa7"));
-  ExpectRead<Opcode>(Opcode::I32TruncF32S, MakeSpanU8("\xa8"));
-  ExpectRead<Opcode>(Opcode::I32TruncF32U, MakeSpanU8("\xa9"));
-  ExpectRead<Opcode>(Opcode::I32TruncF64S, MakeSpanU8("\xaa"));
-  ExpectRead<Opcode>(Opcode::I32TruncF64U, MakeSpanU8("\xab"));
-  ExpectRead<Opcode>(Opcode::I64ExtendI32S, MakeSpanU8("\xac"));
-  ExpectRead<Opcode>(Opcode::I64ExtendI32U, MakeSpanU8("\xad"));
-  ExpectRead<Opcode>(Opcode::I64TruncF32S, MakeSpanU8("\xae"));
-  ExpectRead<Opcode>(Opcode::I64TruncF32U, MakeSpanU8("\xaf"));
-  ExpectRead<Opcode>(Opcode::I64TruncF64S, MakeSpanU8("\xb0"));
-  ExpectRead<Opcode>(Opcode::I64TruncF64U, MakeSpanU8("\xb1"));
-  ExpectRead<Opcode>(Opcode::F32ConvertI32S, MakeSpanU8("\xb2"));
-  ExpectRead<Opcode>(Opcode::F32ConvertI32U, MakeSpanU8("\xb3"));
-  ExpectRead<Opcode>(Opcode::F32ConvertI64S, MakeSpanU8("\xb4"));
-  ExpectRead<Opcode>(Opcode::F32ConvertI64U, MakeSpanU8("\xb5"));
-  ExpectRead<Opcode>(Opcode::F32DemoteF64, MakeSpanU8("\xb6"));
-  ExpectRead<Opcode>(Opcode::F64ConvertI32S, MakeSpanU8("\xb7"));
-  ExpectRead<Opcode>(Opcode::F64ConvertI32U, MakeSpanU8("\xb8"));
-  ExpectRead<Opcode>(Opcode::F64ConvertI64S, MakeSpanU8("\xb9"));
-  ExpectRead<Opcode>(Opcode::F64ConvertI64U, MakeSpanU8("\xba"));
-  ExpectRead<Opcode>(Opcode::F64PromoteF32, MakeSpanU8("\xbb"));
-  ExpectRead<Opcode>(Opcode::I32ReinterpretF32, MakeSpanU8("\xbc"));
-  ExpectRead<Opcode>(Opcode::I64ReinterpretF64, MakeSpanU8("\xbd"));
-  ExpectRead<Opcode>(Opcode::F32ReinterpretI32, MakeSpanU8("\xbe"));
-  ExpectRead<Opcode>(Opcode::F64ReinterpretI64, MakeSpanU8("\xbf"));
+  ExpectRead<Opcode>(Opcode::Unreachable, "\x00"_su8);
+  ExpectRead<Opcode>(Opcode::Nop, "\x01"_su8);
+  ExpectRead<Opcode>(Opcode::Block, "\x02"_su8);
+  ExpectRead<Opcode>(Opcode::Loop, "\x03"_su8);
+  ExpectRead<Opcode>(Opcode::If, "\x04"_su8);
+  ExpectRead<Opcode>(Opcode::Else, "\x05"_su8);
+  ExpectRead<Opcode>(Opcode::End, "\x0b"_su8);
+  ExpectRead<Opcode>(Opcode::Br, "\x0c"_su8);
+  ExpectRead<Opcode>(Opcode::BrIf, "\x0d"_su8);
+  ExpectRead<Opcode>(Opcode::BrTable, "\x0e"_su8);
+  ExpectRead<Opcode>(Opcode::Return, "\x0f"_su8);
+  ExpectRead<Opcode>(Opcode::Call, "\x10"_su8);
+  ExpectRead<Opcode>(Opcode::CallIndirect, "\x11"_su8);
+  ExpectRead<Opcode>(Opcode::Drop, "\x1a"_su8);
+  ExpectRead<Opcode>(Opcode::Select, "\x1b"_su8);
+  ExpectRead<Opcode>(Opcode::LocalGet, "\x20"_su8);
+  ExpectRead<Opcode>(Opcode::LocalSet, "\x21"_su8);
+  ExpectRead<Opcode>(Opcode::LocalTee, "\x22"_su8);
+  ExpectRead<Opcode>(Opcode::GlobalGet, "\x23"_su8);
+  ExpectRead<Opcode>(Opcode::GlobalSet, "\x24"_su8);
+  ExpectRead<Opcode>(Opcode::I32Load, "\x28"_su8);
+  ExpectRead<Opcode>(Opcode::I64Load, "\x29"_su8);
+  ExpectRead<Opcode>(Opcode::F32Load, "\x2a"_su8);
+  ExpectRead<Opcode>(Opcode::F64Load, "\x2b"_su8);
+  ExpectRead<Opcode>(Opcode::I32Load8S, "\x2c"_su8);
+  ExpectRead<Opcode>(Opcode::I32Load8U, "\x2d"_su8);
+  ExpectRead<Opcode>(Opcode::I32Load16S, "\x2e"_su8);
+  ExpectRead<Opcode>(Opcode::I32Load16U, "\x2f"_su8);
+  ExpectRead<Opcode>(Opcode::I64Load8S, "\x30"_su8);
+  ExpectRead<Opcode>(Opcode::I64Load8U, "\x31"_su8);
+  ExpectRead<Opcode>(Opcode::I64Load16S, "\x32"_su8);
+  ExpectRead<Opcode>(Opcode::I64Load16U, "\x33"_su8);
+  ExpectRead<Opcode>(Opcode::I64Load32S, "\x34"_su8);
+  ExpectRead<Opcode>(Opcode::I64Load32U, "\x35"_su8);
+  ExpectRead<Opcode>(Opcode::I32Store, "\x36"_su8);
+  ExpectRead<Opcode>(Opcode::I64Store, "\x37"_su8);
+  ExpectRead<Opcode>(Opcode::F32Store, "\x38"_su8);
+  ExpectRead<Opcode>(Opcode::F64Store, "\x39"_su8);
+  ExpectRead<Opcode>(Opcode::I32Store8, "\x3a"_su8);
+  ExpectRead<Opcode>(Opcode::I32Store16, "\x3b"_su8);
+  ExpectRead<Opcode>(Opcode::I64Store8, "\x3c"_su8);
+  ExpectRead<Opcode>(Opcode::I64Store16, "\x3d"_su8);
+  ExpectRead<Opcode>(Opcode::I64Store32, "\x3e"_su8);
+  ExpectRead<Opcode>(Opcode::MemorySize, "\x3f"_su8);
+  ExpectRead<Opcode>(Opcode::MemoryGrow, "\x40"_su8);
+  ExpectRead<Opcode>(Opcode::I32Const, "\x41"_su8);
+  ExpectRead<Opcode>(Opcode::I64Const, "\x42"_su8);
+  ExpectRead<Opcode>(Opcode::F32Const, "\x43"_su8);
+  ExpectRead<Opcode>(Opcode::F64Const, "\x44"_su8);
+  ExpectRead<Opcode>(Opcode::I32Eqz, "\x45"_su8);
+  ExpectRead<Opcode>(Opcode::I32Eq, "\x46"_su8);
+  ExpectRead<Opcode>(Opcode::I32Ne, "\x47"_su8);
+  ExpectRead<Opcode>(Opcode::I32LtS, "\x48"_su8);
+  ExpectRead<Opcode>(Opcode::I32LtU, "\x49"_su8);
+  ExpectRead<Opcode>(Opcode::I32GtS, "\x4a"_su8);
+  ExpectRead<Opcode>(Opcode::I32GtU, "\x4b"_su8);
+  ExpectRead<Opcode>(Opcode::I32LeS, "\x4c"_su8);
+  ExpectRead<Opcode>(Opcode::I32LeU, "\x4d"_su8);
+  ExpectRead<Opcode>(Opcode::I32GeS, "\x4e"_su8);
+  ExpectRead<Opcode>(Opcode::I32GeU, "\x4f"_su8);
+  ExpectRead<Opcode>(Opcode::I64Eqz, "\x50"_su8);
+  ExpectRead<Opcode>(Opcode::I64Eq, "\x51"_su8);
+  ExpectRead<Opcode>(Opcode::I64Ne, "\x52"_su8);
+  ExpectRead<Opcode>(Opcode::I64LtS, "\x53"_su8);
+  ExpectRead<Opcode>(Opcode::I64LtU, "\x54"_su8);
+  ExpectRead<Opcode>(Opcode::I64GtS, "\x55"_su8);
+  ExpectRead<Opcode>(Opcode::I64GtU, "\x56"_su8);
+  ExpectRead<Opcode>(Opcode::I64LeS, "\x57"_su8);
+  ExpectRead<Opcode>(Opcode::I64LeU, "\x58"_su8);
+  ExpectRead<Opcode>(Opcode::I64GeS, "\x59"_su8);
+  ExpectRead<Opcode>(Opcode::I64GeU, "\x5a"_su8);
+  ExpectRead<Opcode>(Opcode::F32Eq, "\x5b"_su8);
+  ExpectRead<Opcode>(Opcode::F32Ne, "\x5c"_su8);
+  ExpectRead<Opcode>(Opcode::F32Lt, "\x5d"_su8);
+  ExpectRead<Opcode>(Opcode::F32Gt, "\x5e"_su8);
+  ExpectRead<Opcode>(Opcode::F32Le, "\x5f"_su8);
+  ExpectRead<Opcode>(Opcode::F32Ge, "\x60"_su8);
+  ExpectRead<Opcode>(Opcode::F64Eq, "\x61"_su8);
+  ExpectRead<Opcode>(Opcode::F64Ne, "\x62"_su8);
+  ExpectRead<Opcode>(Opcode::F64Lt, "\x63"_su8);
+  ExpectRead<Opcode>(Opcode::F64Gt, "\x64"_su8);
+  ExpectRead<Opcode>(Opcode::F64Le, "\x65"_su8);
+  ExpectRead<Opcode>(Opcode::F64Ge, "\x66"_su8);
+  ExpectRead<Opcode>(Opcode::I32Clz, "\x67"_su8);
+  ExpectRead<Opcode>(Opcode::I32Ctz, "\x68"_su8);
+  ExpectRead<Opcode>(Opcode::I32Popcnt, "\x69"_su8);
+  ExpectRead<Opcode>(Opcode::I32Add, "\x6a"_su8);
+  ExpectRead<Opcode>(Opcode::I32Sub, "\x6b"_su8);
+  ExpectRead<Opcode>(Opcode::I32Mul, "\x6c"_su8);
+  ExpectRead<Opcode>(Opcode::I32DivS, "\x6d"_su8);
+  ExpectRead<Opcode>(Opcode::I32DivU, "\x6e"_su8);
+  ExpectRead<Opcode>(Opcode::I32RemS, "\x6f"_su8);
+  ExpectRead<Opcode>(Opcode::I32RemU, "\x70"_su8);
+  ExpectRead<Opcode>(Opcode::I32And, "\x71"_su8);
+  ExpectRead<Opcode>(Opcode::I32Or, "\x72"_su8);
+  ExpectRead<Opcode>(Opcode::I32Xor, "\x73"_su8);
+  ExpectRead<Opcode>(Opcode::I32Shl, "\x74"_su8);
+  ExpectRead<Opcode>(Opcode::I32ShrS, "\x75"_su8);
+  ExpectRead<Opcode>(Opcode::I32ShrU, "\x76"_su8);
+  ExpectRead<Opcode>(Opcode::I32Rotl, "\x77"_su8);
+  ExpectRead<Opcode>(Opcode::I32Rotr, "\x78"_su8);
+  ExpectRead<Opcode>(Opcode::I64Clz, "\x79"_su8);
+  ExpectRead<Opcode>(Opcode::I64Ctz, "\x7a"_su8);
+  ExpectRead<Opcode>(Opcode::I64Popcnt, "\x7b"_su8);
+  ExpectRead<Opcode>(Opcode::I64Add, "\x7c"_su8);
+  ExpectRead<Opcode>(Opcode::I64Sub, "\x7d"_su8);
+  ExpectRead<Opcode>(Opcode::I64Mul, "\x7e"_su8);
+  ExpectRead<Opcode>(Opcode::I64DivS, "\x7f"_su8);
+  ExpectRead<Opcode>(Opcode::I64DivU, "\x80"_su8);
+  ExpectRead<Opcode>(Opcode::I64RemS, "\x81"_su8);
+  ExpectRead<Opcode>(Opcode::I64RemU, "\x82"_su8);
+  ExpectRead<Opcode>(Opcode::I64And, "\x83"_su8);
+  ExpectRead<Opcode>(Opcode::I64Or, "\x84"_su8);
+  ExpectRead<Opcode>(Opcode::I64Xor, "\x85"_su8);
+  ExpectRead<Opcode>(Opcode::I64Shl, "\x86"_su8);
+  ExpectRead<Opcode>(Opcode::I64ShrS, "\x87"_su8);
+  ExpectRead<Opcode>(Opcode::I64ShrU, "\x88"_su8);
+  ExpectRead<Opcode>(Opcode::I64Rotl, "\x89"_su8);
+  ExpectRead<Opcode>(Opcode::I64Rotr, "\x8a"_su8);
+  ExpectRead<Opcode>(Opcode::F32Abs, "\x8b"_su8);
+  ExpectRead<Opcode>(Opcode::F32Neg, "\x8c"_su8);
+  ExpectRead<Opcode>(Opcode::F32Ceil, "\x8d"_su8);
+  ExpectRead<Opcode>(Opcode::F32Floor, "\x8e"_su8);
+  ExpectRead<Opcode>(Opcode::F32Trunc, "\x8f"_su8);
+  ExpectRead<Opcode>(Opcode::F32Nearest, "\x90"_su8);
+  ExpectRead<Opcode>(Opcode::F32Sqrt, "\x91"_su8);
+  ExpectRead<Opcode>(Opcode::F32Add, "\x92"_su8);
+  ExpectRead<Opcode>(Opcode::F32Sub, "\x93"_su8);
+  ExpectRead<Opcode>(Opcode::F32Mul, "\x94"_su8);
+  ExpectRead<Opcode>(Opcode::F32Div, "\x95"_su8);
+  ExpectRead<Opcode>(Opcode::F32Min, "\x96"_su8);
+  ExpectRead<Opcode>(Opcode::F32Max, "\x97"_su8);
+  ExpectRead<Opcode>(Opcode::F32Copysign, "\x98"_su8);
+  ExpectRead<Opcode>(Opcode::F64Abs, "\x99"_su8);
+  ExpectRead<Opcode>(Opcode::F64Neg, "\x9a"_su8);
+  ExpectRead<Opcode>(Opcode::F64Ceil, "\x9b"_su8);
+  ExpectRead<Opcode>(Opcode::F64Floor, "\x9c"_su8);
+  ExpectRead<Opcode>(Opcode::F64Trunc, "\x9d"_su8);
+  ExpectRead<Opcode>(Opcode::F64Nearest, "\x9e"_su8);
+  ExpectRead<Opcode>(Opcode::F64Sqrt, "\x9f"_su8);
+  ExpectRead<Opcode>(Opcode::F64Add, "\xa0"_su8);
+  ExpectRead<Opcode>(Opcode::F64Sub, "\xa1"_su8);
+  ExpectRead<Opcode>(Opcode::F64Mul, "\xa2"_su8);
+  ExpectRead<Opcode>(Opcode::F64Div, "\xa3"_su8);
+  ExpectRead<Opcode>(Opcode::F64Min, "\xa4"_su8);
+  ExpectRead<Opcode>(Opcode::F64Max, "\xa5"_su8);
+  ExpectRead<Opcode>(Opcode::F64Copysign, "\xa6"_su8);
+  ExpectRead<Opcode>(Opcode::I32WrapI64, "\xa7"_su8);
+  ExpectRead<Opcode>(Opcode::I32TruncF32S, "\xa8"_su8);
+  ExpectRead<Opcode>(Opcode::I32TruncF32U, "\xa9"_su8);
+  ExpectRead<Opcode>(Opcode::I32TruncF64S, "\xaa"_su8);
+  ExpectRead<Opcode>(Opcode::I32TruncF64U, "\xab"_su8);
+  ExpectRead<Opcode>(Opcode::I64ExtendI32S, "\xac"_su8);
+  ExpectRead<Opcode>(Opcode::I64ExtendI32U, "\xad"_su8);
+  ExpectRead<Opcode>(Opcode::I64TruncF32S, "\xae"_su8);
+  ExpectRead<Opcode>(Opcode::I64TruncF32U, "\xaf"_su8);
+  ExpectRead<Opcode>(Opcode::I64TruncF64S, "\xb0"_su8);
+  ExpectRead<Opcode>(Opcode::I64TruncF64U, "\xb1"_su8);
+  ExpectRead<Opcode>(Opcode::F32ConvertI32S, "\xb2"_su8);
+  ExpectRead<Opcode>(Opcode::F32ConvertI32U, "\xb3"_su8);
+  ExpectRead<Opcode>(Opcode::F32ConvertI64S, "\xb4"_su8);
+  ExpectRead<Opcode>(Opcode::F32ConvertI64U, "\xb5"_su8);
+  ExpectRead<Opcode>(Opcode::F32DemoteF64, "\xb6"_su8);
+  ExpectRead<Opcode>(Opcode::F64ConvertI32S, "\xb7"_su8);
+  ExpectRead<Opcode>(Opcode::F64ConvertI32U, "\xb8"_su8);
+  ExpectRead<Opcode>(Opcode::F64ConvertI64S, "\xb9"_su8);
+  ExpectRead<Opcode>(Opcode::F64ConvertI64U, "\xba"_su8);
+  ExpectRead<Opcode>(Opcode::F64PromoteF32, "\xbb"_su8);
+  ExpectRead<Opcode>(Opcode::I32ReinterpretF32, "\xbc"_su8);
+  ExpectRead<Opcode>(Opcode::I64ReinterpretF64, "\xbd"_su8);
+  ExpectRead<Opcode>(Opcode::F32ReinterpretI32, "\xbe"_su8);
+  ExpectRead<Opcode>(Opcode::F64ReinterpretI64, "\xbf"_su8);
 }
 
 namespace {
@@ -1843,76 +1805,76 @@ TEST(ReadTest, Opcode_exceptions) {
   Features features;
   features.enable_exceptions();
 
-  ExpectRead<Opcode>(Opcode::Try, MakeSpanU8("\x06"), features);
-  ExpectRead<Opcode>(Opcode::Catch, MakeSpanU8("\x07"), features);
-  ExpectRead<Opcode>(Opcode::Throw, MakeSpanU8("\x08"), features);
-  ExpectRead<Opcode>(Opcode::Rethrow, MakeSpanU8("\x09"), features);
-  ExpectRead<Opcode>(Opcode::BrOnExn, MakeSpanU8("\x0a"), features);
+  ExpectRead<Opcode>(Opcode::Try, "\x06"_su8, features);
+  ExpectRead<Opcode>(Opcode::Catch, "\x07"_su8, features);
+  ExpectRead<Opcode>(Opcode::Throw, "\x08"_su8, features);
+  ExpectRead<Opcode>(Opcode::Rethrow, "\x09"_su8, features);
+  ExpectRead<Opcode>(Opcode::BrOnExn, "\x0a"_su8, features);
 }
 
 TEST(ReadTest, Opcode_tail_call) {
   Features features;
   features.enable_tail_call();
 
-  ExpectRead<Opcode>(Opcode::ReturnCall, MakeSpanU8("\x12"), features);
-  ExpectRead<Opcode>(Opcode::ReturnCallIndirect, MakeSpanU8("\x13"), features);
+  ExpectRead<Opcode>(Opcode::ReturnCall, "\x12"_su8, features);
+  ExpectRead<Opcode>(Opcode::ReturnCallIndirect, "\x13"_su8, features);
 }
 
 TEST(ReadTest, Opcode_sign_extension) {
   Features features;
   features.enable_sign_extension();
 
-  ExpectRead<Opcode>(Opcode::I32Extend8S, MakeSpanU8("\xc0"), features);
-  ExpectRead<Opcode>(Opcode::I32Extend16S, MakeSpanU8("\xc1"), features);
-  ExpectRead<Opcode>(Opcode::I64Extend8S, MakeSpanU8("\xc2"), features);
-  ExpectRead<Opcode>(Opcode::I64Extend16S, MakeSpanU8("\xc3"), features);
-  ExpectRead<Opcode>(Opcode::I64Extend32S, MakeSpanU8("\xc4"), features);
+  ExpectRead<Opcode>(Opcode::I32Extend8S, "\xc0"_su8, features);
+  ExpectRead<Opcode>(Opcode::I32Extend16S, "\xc1"_su8, features);
+  ExpectRead<Opcode>(Opcode::I64Extend8S, "\xc2"_su8, features);
+  ExpectRead<Opcode>(Opcode::I64Extend16S, "\xc3"_su8, features);
+  ExpectRead<Opcode>(Opcode::I64Extend32S, "\xc4"_su8, features);
 }
 
 TEST(ReadTest, Opcode_reference_types) {
   Features features;
   features.enable_reference_types();
 
-  ExpectRead<Opcode>(Opcode::TableGet, MakeSpanU8("\x25"), features);
-  ExpectRead<Opcode>(Opcode::TableSet, MakeSpanU8("\x26"), features);
-  ExpectRead<Opcode>(Opcode::TableGrow, MakeSpanU8("\xfc\x0f"), features);
-  ExpectRead<Opcode>(Opcode::TableSize, MakeSpanU8("\xfc\x10"), features);
-  ExpectRead<Opcode>(Opcode::RefNull, MakeSpanU8("\xd0"), features);
-  ExpectRead<Opcode>(Opcode::RefIsNull, MakeSpanU8("\xd1"), features);
+  ExpectRead<Opcode>(Opcode::TableGet, "\x25"_su8, features);
+  ExpectRead<Opcode>(Opcode::TableSet, "\x26"_su8, features);
+  ExpectRead<Opcode>(Opcode::TableGrow, "\xfc\x0f"_su8, features);
+  ExpectRead<Opcode>(Opcode::TableSize, "\xfc\x10"_su8, features);
+  ExpectRead<Opcode>(Opcode::RefNull, "\xd0"_su8, features);
+  ExpectRead<Opcode>(Opcode::RefIsNull, "\xd1"_su8, features);
 }
 
 TEST(ReadTest, Opcode_function_references) {
   Features features;
   features.enable_function_references();
 
-  ExpectRead<Opcode>(Opcode::RefFunc, MakeSpanU8("\xd2"), features);
+  ExpectRead<Opcode>(Opcode::RefFunc, "\xd2"_su8, features);
 }
 
 TEST(ReadTest, Opcode_saturating_float_to_int) {
   Features features;
   features.enable_saturating_float_to_int();
 
-  ExpectRead<Opcode>(Opcode::I32TruncSatF32S, MakeSpanU8("\xfc\x00"), features);
-  ExpectRead<Opcode>(Opcode::I32TruncSatF32U, MakeSpanU8("\xfc\x01"), features);
-  ExpectRead<Opcode>(Opcode::I32TruncSatF64S, MakeSpanU8("\xfc\x02"), features);
-  ExpectRead<Opcode>(Opcode::I32TruncSatF64U, MakeSpanU8("\xfc\x03"), features);
-  ExpectRead<Opcode>(Opcode::I64TruncSatF32S, MakeSpanU8("\xfc\x04"), features);
-  ExpectRead<Opcode>(Opcode::I64TruncSatF32U, MakeSpanU8("\xfc\x05"), features);
-  ExpectRead<Opcode>(Opcode::I64TruncSatF64S, MakeSpanU8("\xfc\x06"), features);
-  ExpectRead<Opcode>(Opcode::I64TruncSatF64U, MakeSpanU8("\xfc\x07"), features);
+  ExpectRead<Opcode>(Opcode::I32TruncSatF32S, "\xfc\x00"_su8, features);
+  ExpectRead<Opcode>(Opcode::I32TruncSatF32U, "\xfc\x01"_su8, features);
+  ExpectRead<Opcode>(Opcode::I32TruncSatF64S, "\xfc\x02"_su8, features);
+  ExpectRead<Opcode>(Opcode::I32TruncSatF64U, "\xfc\x03"_su8, features);
+  ExpectRead<Opcode>(Opcode::I64TruncSatF32S, "\xfc\x04"_su8, features);
+  ExpectRead<Opcode>(Opcode::I64TruncSatF32U, "\xfc\x05"_su8, features);
+  ExpectRead<Opcode>(Opcode::I64TruncSatF64S, "\xfc\x06"_su8, features);
+  ExpectRead<Opcode>(Opcode::I64TruncSatF64U, "\xfc\x07"_su8, features);
 }
 
 TEST(ReadTest, Opcode_bulk_memory) {
   Features features;
   features.enable_bulk_memory();
 
-  ExpectRead<Opcode>(Opcode::MemoryInit, MakeSpanU8("\xfc\x08"), features);
-  ExpectRead<Opcode>(Opcode::DataDrop, MakeSpanU8("\xfc\x09"), features);
-  ExpectRead<Opcode>(Opcode::MemoryCopy, MakeSpanU8("\xfc\x0a"), features);
-  ExpectRead<Opcode>(Opcode::MemoryFill, MakeSpanU8("\xfc\x0b"), features);
-  ExpectRead<Opcode>(Opcode::TableInit, MakeSpanU8("\xfc\x0c"), features);
-  ExpectRead<Opcode>(Opcode::ElemDrop, MakeSpanU8("\xfc\x0d"), features);
-  ExpectRead<Opcode>(Opcode::TableCopy, MakeSpanU8("\xfc\x0e"), features);
+  ExpectRead<Opcode>(Opcode::MemoryInit, "\xfc\x08"_su8, features);
+  ExpectRead<Opcode>(Opcode::DataDrop, "\xfc\x09"_su8, features);
+  ExpectRead<Opcode>(Opcode::MemoryCopy, "\xfc\x0a"_su8, features);
+  ExpectRead<Opcode>(Opcode::MemoryFill, "\xfc\x0b"_su8, features);
+  ExpectRead<Opcode>(Opcode::TableInit, "\xfc\x0c"_su8, features);
+  ExpectRead<Opcode>(Opcode::ElemDrop, "\xfc\x0d"_su8, features);
+  ExpectRead<Opcode>(Opcode::TableCopy, "\xfc\x0e"_su8, features);
 }
 
 TEST(ReadTest, Opcode_disabled_misc_prefix) {
@@ -1964,146 +1926,146 @@ TEST(ReadTest, Opcode_simd) {
   Features features;
   features.enable_simd();
 
-  ExpectRead<O>(O::V128Load, MakeSpanU8("\xfd\x00"), features);
-  ExpectRead<O>(O::V128Store, MakeSpanU8("\xfd\x01"), features);
-  ExpectRead<O>(O::V128Const, MakeSpanU8("\xfd\x02"), features);
-  ExpectRead<O>(O::V8X16Shuffle, MakeSpanU8("\xfd\x03"), features);
-  ExpectRead<O>(O::I8X16Splat, MakeSpanU8("\xfd\x04"), features);
-  ExpectRead<O>(O::I8X16ExtractLaneS, MakeSpanU8("\xfd\x05"), features);
-  ExpectRead<O>(O::I8X16ExtractLaneU, MakeSpanU8("\xfd\x06"), features);
-  ExpectRead<O>(O::I8X16ReplaceLane, MakeSpanU8("\xfd\x07"), features);
-  ExpectRead<O>(O::I16X8Splat, MakeSpanU8("\xfd\x08"), features);
-  ExpectRead<O>(O::I16X8ExtractLaneS, MakeSpanU8("\xfd\x09"), features);
-  ExpectRead<O>(O::I16X8ExtractLaneU, MakeSpanU8("\xfd\x0a"), features);
-  ExpectRead<O>(O::I16X8ReplaceLane, MakeSpanU8("\xfd\x0b"), features);
-  ExpectRead<O>(O::I32X4Splat, MakeSpanU8("\xfd\x0c"), features);
-  ExpectRead<O>(O::I32X4ExtractLane, MakeSpanU8("\xfd\x0d"), features);
-  ExpectRead<O>(O::I32X4ReplaceLane, MakeSpanU8("\xfd\x0e"), features);
-  ExpectRead<O>(O::I64X2Splat, MakeSpanU8("\xfd\x0f"), features);
-  ExpectRead<O>(O::I64X2ExtractLane, MakeSpanU8("\xfd\x10"), features);
-  ExpectRead<O>(O::I64X2ReplaceLane, MakeSpanU8("\xfd\x11"), features);
-  ExpectRead<O>(O::F32X4Splat, MakeSpanU8("\xfd\x12"), features);
-  ExpectRead<O>(O::F32X4ExtractLane, MakeSpanU8("\xfd\x13"), features);
-  ExpectRead<O>(O::F32X4ReplaceLane, MakeSpanU8("\xfd\x14"), features);
-  ExpectRead<O>(O::F64X2Splat, MakeSpanU8("\xfd\x15"), features);
-  ExpectRead<O>(O::F64X2ExtractLane, MakeSpanU8("\xfd\x16"), features);
-  ExpectRead<O>(O::F64X2ReplaceLane, MakeSpanU8("\xfd\x17"), features);
-  ExpectRead<O>(O::I8X16Eq, MakeSpanU8("\xfd\x18"), features);
-  ExpectRead<O>(O::I8X16Ne, MakeSpanU8("\xfd\x19"), features);
-  ExpectRead<O>(O::I8X16LtS, MakeSpanU8("\xfd\x1a"), features);
-  ExpectRead<O>(O::I8X16LtU, MakeSpanU8("\xfd\x1b"), features);
-  ExpectRead<O>(O::I8X16GtS, MakeSpanU8("\xfd\x1c"), features);
-  ExpectRead<O>(O::I8X16GtU, MakeSpanU8("\xfd\x1d"), features);
-  ExpectRead<O>(O::I8X16LeS, MakeSpanU8("\xfd\x1e"), features);
-  ExpectRead<O>(O::I8X16LeU, MakeSpanU8("\xfd\x1f"), features);
-  ExpectRead<O>(O::I8X16GeS, MakeSpanU8("\xfd\x20"), features);
-  ExpectRead<O>(O::I8X16GeU, MakeSpanU8("\xfd\x21"), features);
-  ExpectRead<O>(O::I16X8Eq, MakeSpanU8("\xfd\x22"), features);
-  ExpectRead<O>(O::I16X8Ne, MakeSpanU8("\xfd\x23"), features);
-  ExpectRead<O>(O::I16X8LtS, MakeSpanU8("\xfd\x24"), features);
-  ExpectRead<O>(O::I16X8LtU, MakeSpanU8("\xfd\x25"), features);
-  ExpectRead<O>(O::I16X8GtS, MakeSpanU8("\xfd\x26"), features);
-  ExpectRead<O>(O::I16X8GtU, MakeSpanU8("\xfd\x27"), features);
-  ExpectRead<O>(O::I16X8LeS, MakeSpanU8("\xfd\x28"), features);
-  ExpectRead<O>(O::I16X8LeU, MakeSpanU8("\xfd\x29"), features);
-  ExpectRead<O>(O::I16X8GeS, MakeSpanU8("\xfd\x2a"), features);
-  ExpectRead<O>(O::I16X8GeU, MakeSpanU8("\xfd\x2b"), features);
-  ExpectRead<O>(O::I32X4Eq, MakeSpanU8("\xfd\x2c"), features);
-  ExpectRead<O>(O::I32X4Ne, MakeSpanU8("\xfd\x2d"), features);
-  ExpectRead<O>(O::I32X4LtS, MakeSpanU8("\xfd\x2e"), features);
-  ExpectRead<O>(O::I32X4LtU, MakeSpanU8("\xfd\x2f"), features);
-  ExpectRead<O>(O::I32X4GtS, MakeSpanU8("\xfd\x30"), features);
-  ExpectRead<O>(O::I32X4GtU, MakeSpanU8("\xfd\x31"), features);
-  ExpectRead<O>(O::I32X4LeS, MakeSpanU8("\xfd\x32"), features);
-  ExpectRead<O>(O::I32X4LeU, MakeSpanU8("\xfd\x33"), features);
-  ExpectRead<O>(O::I32X4GeS, MakeSpanU8("\xfd\x34"), features);
-  ExpectRead<O>(O::I32X4GeU, MakeSpanU8("\xfd\x35"), features);
-  ExpectRead<O>(O::F32X4Eq, MakeSpanU8("\xfd\x40"), features);
-  ExpectRead<O>(O::F32X4Ne, MakeSpanU8("\xfd\x41"), features);
-  ExpectRead<O>(O::F32X4Lt, MakeSpanU8("\xfd\x42"), features);
-  ExpectRead<O>(O::F32X4Gt, MakeSpanU8("\xfd\x43"), features);
-  ExpectRead<O>(O::F32X4Le, MakeSpanU8("\xfd\x44"), features);
-  ExpectRead<O>(O::F32X4Ge, MakeSpanU8("\xfd\x45"), features);
-  ExpectRead<O>(O::F64X2Eq, MakeSpanU8("\xfd\x46"), features);
-  ExpectRead<O>(O::F64X2Ne, MakeSpanU8("\xfd\x47"), features);
-  ExpectRead<O>(O::F64X2Lt, MakeSpanU8("\xfd\x48"), features);
-  ExpectRead<O>(O::F64X2Gt, MakeSpanU8("\xfd\x49"), features);
-  ExpectRead<O>(O::F64X2Le, MakeSpanU8("\xfd\x4a"), features);
-  ExpectRead<O>(O::F64X2Ge, MakeSpanU8("\xfd\x4b"), features);
-  ExpectRead<O>(O::V128Not, MakeSpanU8("\xfd\x4c"), features);
-  ExpectRead<O>(O::V128And, MakeSpanU8("\xfd\x4d"), features);
-  ExpectRead<O>(O::V128Or, MakeSpanU8("\xfd\x4e"), features);
-  ExpectRead<O>(O::V128Xor, MakeSpanU8("\xfd\x4f"), features);
-  ExpectRead<O>(O::V128BitSelect, MakeSpanU8("\xfd\x50"), features);
-  ExpectRead<O>(O::I8X16Neg, MakeSpanU8("\xfd\x51"), features);
-  ExpectRead<O>(O::I8X16AnyTrue, MakeSpanU8("\xfd\x52"), features);
-  ExpectRead<O>(O::I8X16AllTrue, MakeSpanU8("\xfd\x53"), features);
-  ExpectRead<O>(O::I8X16Shl, MakeSpanU8("\xfd\x54"), features);
-  ExpectRead<O>(O::I8X16ShrS, MakeSpanU8("\xfd\x55"), features);
-  ExpectRead<O>(O::I8X16ShrU, MakeSpanU8("\xfd\x56"), features);
-  ExpectRead<O>(O::I8X16Add, MakeSpanU8("\xfd\x57"), features);
-  ExpectRead<O>(O::I8X16AddSaturateS, MakeSpanU8("\xfd\x58"), features);
-  ExpectRead<O>(O::I8X16AddSaturateU, MakeSpanU8("\xfd\x59"), features);
-  ExpectRead<O>(O::I8X16Sub, MakeSpanU8("\xfd\x5a"), features);
-  ExpectRead<O>(O::I8X16SubSaturateS, MakeSpanU8("\xfd\x5b"), features);
-  ExpectRead<O>(O::I8X16SubSaturateU, MakeSpanU8("\xfd\x5c"), features);
-  ExpectRead<O>(O::I8X16Mul, MakeSpanU8("\xfd\x5d"), features);
-  ExpectRead<O>(O::I16X8Neg, MakeSpanU8("\xfd\x62"), features);
-  ExpectRead<O>(O::I16X8AnyTrue, MakeSpanU8("\xfd\x63"), features);
-  ExpectRead<O>(O::I16X8AllTrue, MakeSpanU8("\xfd\x64"), features);
-  ExpectRead<O>(O::I16X8Shl, MakeSpanU8("\xfd\x65"), features);
-  ExpectRead<O>(O::I16X8ShrS, MakeSpanU8("\xfd\x66"), features);
-  ExpectRead<O>(O::I16X8ShrU, MakeSpanU8("\xfd\x67"), features);
-  ExpectRead<O>(O::I16X8Add, MakeSpanU8("\xfd\x68"), features);
-  ExpectRead<O>(O::I16X8AddSaturateS, MakeSpanU8("\xfd\x69"), features);
-  ExpectRead<O>(O::I16X8AddSaturateU, MakeSpanU8("\xfd\x6a"), features);
-  ExpectRead<O>(O::I16X8Sub, MakeSpanU8("\xfd\x6b"), features);
-  ExpectRead<O>(O::I16X8SubSaturateS, MakeSpanU8("\xfd\x6c"), features);
-  ExpectRead<O>(O::I16X8SubSaturateU, MakeSpanU8("\xfd\x6d"), features);
-  ExpectRead<O>(O::I16X8Mul, MakeSpanU8("\xfd\x6e"), features);
-  ExpectRead<O>(O::I32X4Neg, MakeSpanU8("\xfd\x73"), features);
-  ExpectRead<O>(O::I32X4AnyTrue, MakeSpanU8("\xfd\x74"), features);
-  ExpectRead<O>(O::I32X4AllTrue, MakeSpanU8("\xfd\x75"), features);
-  ExpectRead<O>(O::I32X4Shl, MakeSpanU8("\xfd\x76"), features);
-  ExpectRead<O>(O::I32X4ShrS, MakeSpanU8("\xfd\x77"), features);
-  ExpectRead<O>(O::I32X4ShrU, MakeSpanU8("\xfd\x78"), features);
-  ExpectRead<O>(O::I32X4Add, MakeSpanU8("\xfd\x79"), features);
-  ExpectRead<O>(O::I32X4Sub, MakeSpanU8("\xfd\x7c"), features);
-  ExpectRead<O>(O::I32X4Mul, MakeSpanU8("\xfd\x7f"), features);
-  ExpectRead<O>(O::I64X2Neg, MakeSpanU8("\xfd\x84\x01"), features);
-  ExpectRead<O>(O::I64X2AnyTrue, MakeSpanU8("\xfd\x85\x01"), features);
-  ExpectRead<O>(O::I64X2AllTrue, MakeSpanU8("\xfd\x86\x01"), features);
-  ExpectRead<O>(O::I64X2Shl, MakeSpanU8("\xfd\x87\x01"), features);
-  ExpectRead<O>(O::I64X2ShrS, MakeSpanU8("\xfd\x88\x01"), features);
-  ExpectRead<O>(O::I64X2ShrU, MakeSpanU8("\xfd\x89\x01"), features);
-  ExpectRead<O>(O::I64X2Add, MakeSpanU8("\xfd\x8a\x01"), features);
-  ExpectRead<O>(O::I64X2Sub, MakeSpanU8("\xfd\x8d\x01"), features);
-  ExpectRead<O>(O::F32X4Abs, MakeSpanU8("\xfd\x95\x01"), features);
-  ExpectRead<O>(O::F32X4Neg, MakeSpanU8("\xfd\x96\x01"), features);
-  ExpectRead<O>(O::F32X4Sqrt, MakeSpanU8("\xfd\x97\x01"), features);
-  ExpectRead<O>(O::F32X4Add, MakeSpanU8("\xfd\x9a\x01"), features);
-  ExpectRead<O>(O::F32X4Sub, MakeSpanU8("\xfd\x9b\x01"), features);
-  ExpectRead<O>(O::F32X4Mul, MakeSpanU8("\xfd\x9c\x01"), features);
-  ExpectRead<O>(O::F32X4Div, MakeSpanU8("\xfd\x9d\x01"), features);
-  ExpectRead<O>(O::F32X4Min, MakeSpanU8("\xfd\x9e\x01"), features);
-  ExpectRead<O>(O::F32X4Max, MakeSpanU8("\xfd\x9f\x01"), features);
-  ExpectRead<O>(O::F64X2Abs, MakeSpanU8("\xfd\xa0\x01"), features);
-  ExpectRead<O>(O::F64X2Neg, MakeSpanU8("\xfd\xa1\x01"), features);
-  ExpectRead<O>(O::F64X2Sqrt, MakeSpanU8("\xfd\xa2\x01"), features);
-  ExpectRead<O>(O::F64X2Add, MakeSpanU8("\xfd\xa5\x01"), features);
-  ExpectRead<O>(O::F64X2Sub, MakeSpanU8("\xfd\xa6\x01"), features);
-  ExpectRead<O>(O::F64X2Mul, MakeSpanU8("\xfd\xa7\x01"), features);
-  ExpectRead<O>(O::F64X2Div, MakeSpanU8("\xfd\xa8\x01"), features);
-  ExpectRead<O>(O::F64X2Min, MakeSpanU8("\xfd\xa9\x01"), features);
-  ExpectRead<O>(O::F64X2Max, MakeSpanU8("\xfd\xaa\x01"), features);
-  ExpectRead<O>(O::I32X4TruncSatF32X4S, MakeSpanU8("\xfd\xab\x01"), features);
-  ExpectRead<O>(O::I32X4TruncSatF32X4U, MakeSpanU8("\xfd\xac\x01"), features);
-  ExpectRead<O>(O::I64X2TruncSatF64X2S, MakeSpanU8("\xfd\xad\x01"), features);
-  ExpectRead<O>(O::I64X2TruncSatF64X2U, MakeSpanU8("\xfd\xae\x01"), features);
-  ExpectRead<O>(O::F32X4ConvertI32X4S, MakeSpanU8("\xfd\xaf\x01"), features);
-  ExpectRead<O>(O::F32X4ConvertI32X4U, MakeSpanU8("\xfd\xb0\x01"), features);
-  ExpectRead<O>(O::F64X2ConvertI64X2S, MakeSpanU8("\xfd\xb1\x01"), features);
-  ExpectRead<O>(O::F64X2ConvertI64X2U, MakeSpanU8("\xfd\xb2\x01"), features);
+  ExpectRead<O>(O::V128Load, "\xfd\x00"_su8, features);
+  ExpectRead<O>(O::V128Store, "\xfd\x01"_su8, features);
+  ExpectRead<O>(O::V128Const, "\xfd\x02"_su8, features);
+  ExpectRead<O>(O::V8X16Shuffle, "\xfd\x03"_su8, features);
+  ExpectRead<O>(O::I8X16Splat, "\xfd\x04"_su8, features);
+  ExpectRead<O>(O::I8X16ExtractLaneS, "\xfd\x05"_su8, features);
+  ExpectRead<O>(O::I8X16ExtractLaneU, "\xfd\x06"_su8, features);
+  ExpectRead<O>(O::I8X16ReplaceLane, "\xfd\x07"_su8, features);
+  ExpectRead<O>(O::I16X8Splat, "\xfd\x08"_su8, features);
+  ExpectRead<O>(O::I16X8ExtractLaneS, "\xfd\x09"_su8, features);
+  ExpectRead<O>(O::I16X8ExtractLaneU, "\xfd\x0a"_su8, features);
+  ExpectRead<O>(O::I16X8ReplaceLane, "\xfd\x0b"_su8, features);
+  ExpectRead<O>(O::I32X4Splat, "\xfd\x0c"_su8, features);
+  ExpectRead<O>(O::I32X4ExtractLane, "\xfd\x0d"_su8, features);
+  ExpectRead<O>(O::I32X4ReplaceLane, "\xfd\x0e"_su8, features);
+  ExpectRead<O>(O::I64X2Splat, "\xfd\x0f"_su8, features);
+  ExpectRead<O>(O::I64X2ExtractLane, "\xfd\x10"_su8, features);
+  ExpectRead<O>(O::I64X2ReplaceLane, "\xfd\x11"_su8, features);
+  ExpectRead<O>(O::F32X4Splat, "\xfd\x12"_su8, features);
+  ExpectRead<O>(O::F32X4ExtractLane, "\xfd\x13"_su8, features);
+  ExpectRead<O>(O::F32X4ReplaceLane, "\xfd\x14"_su8, features);
+  ExpectRead<O>(O::F64X2Splat, "\xfd\x15"_su8, features);
+  ExpectRead<O>(O::F64X2ExtractLane, "\xfd\x16"_su8, features);
+  ExpectRead<O>(O::F64X2ReplaceLane, "\xfd\x17"_su8, features);
+  ExpectRead<O>(O::I8X16Eq, "\xfd\x18"_su8, features);
+  ExpectRead<O>(O::I8X16Ne, "\xfd\x19"_su8, features);
+  ExpectRead<O>(O::I8X16LtS, "\xfd\x1a"_su8, features);
+  ExpectRead<O>(O::I8X16LtU, "\xfd\x1b"_su8, features);
+  ExpectRead<O>(O::I8X16GtS, "\xfd\x1c"_su8, features);
+  ExpectRead<O>(O::I8X16GtU, "\xfd\x1d"_su8, features);
+  ExpectRead<O>(O::I8X16LeS, "\xfd\x1e"_su8, features);
+  ExpectRead<O>(O::I8X16LeU, "\xfd\x1f"_su8, features);
+  ExpectRead<O>(O::I8X16GeS, "\xfd\x20"_su8, features);
+  ExpectRead<O>(O::I8X16GeU, "\xfd\x21"_su8, features);
+  ExpectRead<O>(O::I16X8Eq, "\xfd\x22"_su8, features);
+  ExpectRead<O>(O::I16X8Ne, "\xfd\x23"_su8, features);
+  ExpectRead<O>(O::I16X8LtS, "\xfd\x24"_su8, features);
+  ExpectRead<O>(O::I16X8LtU, "\xfd\x25"_su8, features);
+  ExpectRead<O>(O::I16X8GtS, "\xfd\x26"_su8, features);
+  ExpectRead<O>(O::I16X8GtU, "\xfd\x27"_su8, features);
+  ExpectRead<O>(O::I16X8LeS, "\xfd\x28"_su8, features);
+  ExpectRead<O>(O::I16X8LeU, "\xfd\x29"_su8, features);
+  ExpectRead<O>(O::I16X8GeS, "\xfd\x2a"_su8, features);
+  ExpectRead<O>(O::I16X8GeU, "\xfd\x2b"_su8, features);
+  ExpectRead<O>(O::I32X4Eq, "\xfd\x2c"_su8, features);
+  ExpectRead<O>(O::I32X4Ne, "\xfd\x2d"_su8, features);
+  ExpectRead<O>(O::I32X4LtS, "\xfd\x2e"_su8, features);
+  ExpectRead<O>(O::I32X4LtU, "\xfd\x2f"_su8, features);
+  ExpectRead<O>(O::I32X4GtS, "\xfd\x30"_su8, features);
+  ExpectRead<O>(O::I32X4GtU, "\xfd\x31"_su8, features);
+  ExpectRead<O>(O::I32X4LeS, "\xfd\x32"_su8, features);
+  ExpectRead<O>(O::I32X4LeU, "\xfd\x33"_su8, features);
+  ExpectRead<O>(O::I32X4GeS, "\xfd\x34"_su8, features);
+  ExpectRead<O>(O::I32X4GeU, "\xfd\x35"_su8, features);
+  ExpectRead<O>(O::F32X4Eq, "\xfd\x40"_su8, features);
+  ExpectRead<O>(O::F32X4Ne, "\xfd\x41"_su8, features);
+  ExpectRead<O>(O::F32X4Lt, "\xfd\x42"_su8, features);
+  ExpectRead<O>(O::F32X4Gt, "\xfd\x43"_su8, features);
+  ExpectRead<O>(O::F32X4Le, "\xfd\x44"_su8, features);
+  ExpectRead<O>(O::F32X4Ge, "\xfd\x45"_su8, features);
+  ExpectRead<O>(O::F64X2Eq, "\xfd\x46"_su8, features);
+  ExpectRead<O>(O::F64X2Ne, "\xfd\x47"_su8, features);
+  ExpectRead<O>(O::F64X2Lt, "\xfd\x48"_su8, features);
+  ExpectRead<O>(O::F64X2Gt, "\xfd\x49"_su8, features);
+  ExpectRead<O>(O::F64X2Le, "\xfd\x4a"_su8, features);
+  ExpectRead<O>(O::F64X2Ge, "\xfd\x4b"_su8, features);
+  ExpectRead<O>(O::V128Not, "\xfd\x4c"_su8, features);
+  ExpectRead<O>(O::V128And, "\xfd\x4d"_su8, features);
+  ExpectRead<O>(O::V128Or, "\xfd\x4e"_su8, features);
+  ExpectRead<O>(O::V128Xor, "\xfd\x4f"_su8, features);
+  ExpectRead<O>(O::V128BitSelect, "\xfd\x50"_su8, features);
+  ExpectRead<O>(O::I8X16Neg, "\xfd\x51"_su8, features);
+  ExpectRead<O>(O::I8X16AnyTrue, "\xfd\x52"_su8, features);
+  ExpectRead<O>(O::I8X16AllTrue, "\xfd\x53"_su8, features);
+  ExpectRead<O>(O::I8X16Shl, "\xfd\x54"_su8, features);
+  ExpectRead<O>(O::I8X16ShrS, "\xfd\x55"_su8, features);
+  ExpectRead<O>(O::I8X16ShrU, "\xfd\x56"_su8, features);
+  ExpectRead<O>(O::I8X16Add, "\xfd\x57"_su8, features);
+  ExpectRead<O>(O::I8X16AddSaturateS, "\xfd\x58"_su8, features);
+  ExpectRead<O>(O::I8X16AddSaturateU, "\xfd\x59"_su8, features);
+  ExpectRead<O>(O::I8X16Sub, "\xfd\x5a"_su8, features);
+  ExpectRead<O>(O::I8X16SubSaturateS, "\xfd\x5b"_su8, features);
+  ExpectRead<O>(O::I8X16SubSaturateU, "\xfd\x5c"_su8, features);
+  ExpectRead<O>(O::I8X16Mul, "\xfd\x5d"_su8, features);
+  ExpectRead<O>(O::I16X8Neg, "\xfd\x62"_su8, features);
+  ExpectRead<O>(O::I16X8AnyTrue, "\xfd\x63"_su8, features);
+  ExpectRead<O>(O::I16X8AllTrue, "\xfd\x64"_su8, features);
+  ExpectRead<O>(O::I16X8Shl, "\xfd\x65"_su8, features);
+  ExpectRead<O>(O::I16X8ShrS, "\xfd\x66"_su8, features);
+  ExpectRead<O>(O::I16X8ShrU, "\xfd\x67"_su8, features);
+  ExpectRead<O>(O::I16X8Add, "\xfd\x68"_su8, features);
+  ExpectRead<O>(O::I16X8AddSaturateS, "\xfd\x69"_su8, features);
+  ExpectRead<O>(O::I16X8AddSaturateU, "\xfd\x6a"_su8, features);
+  ExpectRead<O>(O::I16X8Sub, "\xfd\x6b"_su8, features);
+  ExpectRead<O>(O::I16X8SubSaturateS, "\xfd\x6c"_su8, features);
+  ExpectRead<O>(O::I16X8SubSaturateU, "\xfd\x6d"_su8, features);
+  ExpectRead<O>(O::I16X8Mul, "\xfd\x6e"_su8, features);
+  ExpectRead<O>(O::I32X4Neg, "\xfd\x73"_su8, features);
+  ExpectRead<O>(O::I32X4AnyTrue, "\xfd\x74"_su8, features);
+  ExpectRead<O>(O::I32X4AllTrue, "\xfd\x75"_su8, features);
+  ExpectRead<O>(O::I32X4Shl, "\xfd\x76"_su8, features);
+  ExpectRead<O>(O::I32X4ShrS, "\xfd\x77"_su8, features);
+  ExpectRead<O>(O::I32X4ShrU, "\xfd\x78"_su8, features);
+  ExpectRead<O>(O::I32X4Add, "\xfd\x79"_su8, features);
+  ExpectRead<O>(O::I32X4Sub, "\xfd\x7c"_su8, features);
+  ExpectRead<O>(O::I32X4Mul, "\xfd\x7f"_su8, features);
+  ExpectRead<O>(O::I64X2Neg, "\xfd\x84\x01"_su8, features);
+  ExpectRead<O>(O::I64X2AnyTrue, "\xfd\x85\x01"_su8, features);
+  ExpectRead<O>(O::I64X2AllTrue, "\xfd\x86\x01"_su8, features);
+  ExpectRead<O>(O::I64X2Shl, "\xfd\x87\x01"_su8, features);
+  ExpectRead<O>(O::I64X2ShrS, "\xfd\x88\x01"_su8, features);
+  ExpectRead<O>(O::I64X2ShrU, "\xfd\x89\x01"_su8, features);
+  ExpectRead<O>(O::I64X2Add, "\xfd\x8a\x01"_su8, features);
+  ExpectRead<O>(O::I64X2Sub, "\xfd\x8d\x01"_su8, features);
+  ExpectRead<O>(O::F32X4Abs, "\xfd\x95\x01"_su8, features);
+  ExpectRead<O>(O::F32X4Neg, "\xfd\x96\x01"_su8, features);
+  ExpectRead<O>(O::F32X4Sqrt, "\xfd\x97\x01"_su8, features);
+  ExpectRead<O>(O::F32X4Add, "\xfd\x9a\x01"_su8, features);
+  ExpectRead<O>(O::F32X4Sub, "\xfd\x9b\x01"_su8, features);
+  ExpectRead<O>(O::F32X4Mul, "\xfd\x9c\x01"_su8, features);
+  ExpectRead<O>(O::F32X4Div, "\xfd\x9d\x01"_su8, features);
+  ExpectRead<O>(O::F32X4Min, "\xfd\x9e\x01"_su8, features);
+  ExpectRead<O>(O::F32X4Max, "\xfd\x9f\x01"_su8, features);
+  ExpectRead<O>(O::F64X2Abs, "\xfd\xa0\x01"_su8, features);
+  ExpectRead<O>(O::F64X2Neg, "\xfd\xa1\x01"_su8, features);
+  ExpectRead<O>(O::F64X2Sqrt, "\xfd\xa2\x01"_su8, features);
+  ExpectRead<O>(O::F64X2Add, "\xfd\xa5\x01"_su8, features);
+  ExpectRead<O>(O::F64X2Sub, "\xfd\xa6\x01"_su8, features);
+  ExpectRead<O>(O::F64X2Mul, "\xfd\xa7\x01"_su8, features);
+  ExpectRead<O>(O::F64X2Div, "\xfd\xa8\x01"_su8, features);
+  ExpectRead<O>(O::F64X2Min, "\xfd\xa9\x01"_su8, features);
+  ExpectRead<O>(O::F64X2Max, "\xfd\xaa\x01"_su8, features);
+  ExpectRead<O>(O::I32X4TruncSatF32X4S, "\xfd\xab\x01"_su8, features);
+  ExpectRead<O>(O::I32X4TruncSatF32X4U, "\xfd\xac\x01"_su8, features);
+  ExpectRead<O>(O::I64X2TruncSatF64X2S, "\xfd\xad\x01"_su8, features);
+  ExpectRead<O>(O::I64X2TruncSatF64X2U, "\xfd\xae\x01"_su8, features);
+  ExpectRead<O>(O::F32X4ConvertI32X4S, "\xfd\xaf\x01"_su8, features);
+  ExpectRead<O>(O::F32X4ConvertI32X4U, "\xfd\xb0\x01"_su8, features);
+  ExpectRead<O>(O::F64X2ConvertI64X2S, "\xfd\xb1\x01"_su8, features);
+  ExpectRead<O>(O::F64X2ConvertI64X2U, "\xfd\xb2\x01"_su8, features);
 }
 
 TEST(ReadTest, Opcode_Unknown_simd_prefix) {
@@ -2132,72 +2094,72 @@ TEST(ReadTest, Opcode_threads) {
   Features features;
   features.enable_threads();
 
-  ExpectRead<O>(O::AtomicNotify, MakeSpanU8("\xfe\x00"), features);
-  ExpectRead<O>(O::I32AtomicWait, MakeSpanU8("\xfe\x01"), features);
-  ExpectRead<O>(O::I64AtomicWait, MakeSpanU8("\xfe\x02"), features);
-  ExpectRead<O>(O::I32AtomicLoad, MakeSpanU8("\xfe\x10"), features);
-  ExpectRead<O>(O::I64AtomicLoad, MakeSpanU8("\xfe\x11"), features);
-  ExpectRead<O>(O::I32AtomicLoad8U, MakeSpanU8("\xfe\x12"), features);
-  ExpectRead<O>(O::I32AtomicLoad16U, MakeSpanU8("\xfe\x13"), features);
-  ExpectRead<O>(O::I64AtomicLoad8U, MakeSpanU8("\xfe\x14"), features);
-  ExpectRead<O>(O::I64AtomicLoad16U, MakeSpanU8("\xfe\x15"), features);
-  ExpectRead<O>(O::I64AtomicLoad32U, MakeSpanU8("\xfe\x16"), features);
-  ExpectRead<O>(O::I32AtomicStore, MakeSpanU8("\xfe\x17"), features);
-  ExpectRead<O>(O::I64AtomicStore, MakeSpanU8("\xfe\x18"), features);
-  ExpectRead<O>(O::I32AtomicStore8, MakeSpanU8("\xfe\x19"), features);
-  ExpectRead<O>(O::I32AtomicStore16, MakeSpanU8("\xfe\x1a"), features);
-  ExpectRead<O>(O::I64AtomicStore8, MakeSpanU8("\xfe\x1b"), features);
-  ExpectRead<O>(O::I64AtomicStore16, MakeSpanU8("\xfe\x1c"), features);
-  ExpectRead<O>(O::I64AtomicStore32, MakeSpanU8("\xfe\x1d"), features);
-  ExpectRead<O>(O::I32AtomicRmwAdd, MakeSpanU8("\xfe\x1e"), features);
-  ExpectRead<O>(O::I64AtomicRmwAdd, MakeSpanU8("\xfe\x1f"), features);
-  ExpectRead<O>(O::I32AtomicRmw8AddU, MakeSpanU8("\xfe\x20"), features);
-  ExpectRead<O>(O::I32AtomicRmw16AddU, MakeSpanU8("\xfe\x21"), features);
-  ExpectRead<O>(O::I64AtomicRmw8AddU, MakeSpanU8("\xfe\x22"), features);
-  ExpectRead<O>(O::I64AtomicRmw16AddU, MakeSpanU8("\xfe\x23"), features);
-  ExpectRead<O>(O::I64AtomicRmw32AddU, MakeSpanU8("\xfe\x24"), features);
-  ExpectRead<O>(O::I32AtomicRmwSub, MakeSpanU8("\xfe\x25"), features);
-  ExpectRead<O>(O::I64AtomicRmwSub, MakeSpanU8("\xfe\x26"), features);
-  ExpectRead<O>(O::I32AtomicRmw8SubU, MakeSpanU8("\xfe\x27"), features);
-  ExpectRead<O>(O::I32AtomicRmw16SubU, MakeSpanU8("\xfe\x28"), features);
-  ExpectRead<O>(O::I64AtomicRmw8SubU, MakeSpanU8("\xfe\x29"), features);
-  ExpectRead<O>(O::I64AtomicRmw16SubU, MakeSpanU8("\xfe\x2a"), features);
-  ExpectRead<O>(O::I64AtomicRmw32SubU, MakeSpanU8("\xfe\x2b"), features);
-  ExpectRead<O>(O::I32AtomicRmwAnd, MakeSpanU8("\xfe\x2c"), features);
-  ExpectRead<O>(O::I64AtomicRmwAnd, MakeSpanU8("\xfe\x2d"), features);
-  ExpectRead<O>(O::I32AtomicRmw8AndU, MakeSpanU8("\xfe\x2e"), features);
-  ExpectRead<O>(O::I32AtomicRmw16AndU, MakeSpanU8("\xfe\x2f"), features);
-  ExpectRead<O>(O::I64AtomicRmw8AndU, MakeSpanU8("\xfe\x30"), features);
-  ExpectRead<O>(O::I64AtomicRmw16AndU, MakeSpanU8("\xfe\x31"), features);
-  ExpectRead<O>(O::I64AtomicRmw32AndU, MakeSpanU8("\xfe\x32"), features);
-  ExpectRead<O>(O::I32AtomicRmwOr, MakeSpanU8("\xfe\x33"), features);
-  ExpectRead<O>(O::I64AtomicRmwOr, MakeSpanU8("\xfe\x34"), features);
-  ExpectRead<O>(O::I32AtomicRmw8OrU, MakeSpanU8("\xfe\x35"), features);
-  ExpectRead<O>(O::I32AtomicRmw16OrU, MakeSpanU8("\xfe\x36"), features);
-  ExpectRead<O>(O::I64AtomicRmw8OrU, MakeSpanU8("\xfe\x37"), features);
-  ExpectRead<O>(O::I64AtomicRmw16OrU, MakeSpanU8("\xfe\x38"), features);
-  ExpectRead<O>(O::I64AtomicRmw32OrU, MakeSpanU8("\xfe\x39"), features);
-  ExpectRead<O>(O::I32AtomicRmwXor, MakeSpanU8("\xfe\x3a"), features);
-  ExpectRead<O>(O::I64AtomicRmwXor, MakeSpanU8("\xfe\x3b"), features);
-  ExpectRead<O>(O::I32AtomicRmw8XorU, MakeSpanU8("\xfe\x3c"), features);
-  ExpectRead<O>(O::I32AtomicRmw16XorU, MakeSpanU8("\xfe\x3d"), features);
-  ExpectRead<O>(O::I64AtomicRmw8XorU, MakeSpanU8("\xfe\x3e"), features);
-  ExpectRead<O>(O::I64AtomicRmw16XorU, MakeSpanU8("\xfe\x3f"), features);
-  ExpectRead<O>(O::I64AtomicRmw32XorU, MakeSpanU8("\xfe\x40"), features);
-  ExpectRead<O>(O::I32AtomicRmwXchg, MakeSpanU8("\xfe\x41"), features);
-  ExpectRead<O>(O::I64AtomicRmwXchg, MakeSpanU8("\xfe\x42"), features);
-  ExpectRead<O>(O::I32AtomicRmw8XchgU, MakeSpanU8("\xfe\x43"), features);
-  ExpectRead<O>(O::I32AtomicRmw16XchgU, MakeSpanU8("\xfe\x44"), features);
-  ExpectRead<O>(O::I64AtomicRmw8XchgU, MakeSpanU8("\xfe\x45"), features);
-  ExpectRead<O>(O::I64AtomicRmw16XchgU, MakeSpanU8("\xfe\x46"), features);
-  ExpectRead<O>(O::I64AtomicRmw32XchgU, MakeSpanU8("\xfe\x47"), features);
-  ExpectRead<O>(O::I32AtomicRmwCmpxchg, MakeSpanU8("\xfe\x48"), features);
-  ExpectRead<O>(O::I64AtomicRmwCmpxchg, MakeSpanU8("\xfe\x49"), features);
-  ExpectRead<O>(O::I32AtomicRmw8CmpxchgU, MakeSpanU8("\xfe\x4a"), features);
-  ExpectRead<O>(O::I32AtomicRmw16CmpxchgU, MakeSpanU8("\xfe\x4b"), features);
-  ExpectRead<O>(O::I64AtomicRmw8CmpxchgU, MakeSpanU8("\xfe\x4c"), features);
-  ExpectRead<O>(O::I64AtomicRmw16CmpxchgU, MakeSpanU8("\xfe\x4d"), features);
-  ExpectRead<O>(O::I64AtomicRmw32CmpxchgU, MakeSpanU8("\xfe\x4e"), features);
+  ExpectRead<O>(O::AtomicNotify, "\xfe\x00"_su8, features);
+  ExpectRead<O>(O::I32AtomicWait, "\xfe\x01"_su8, features);
+  ExpectRead<O>(O::I64AtomicWait, "\xfe\x02"_su8, features);
+  ExpectRead<O>(O::I32AtomicLoad, "\xfe\x10"_su8, features);
+  ExpectRead<O>(O::I64AtomicLoad, "\xfe\x11"_su8, features);
+  ExpectRead<O>(O::I32AtomicLoad8U, "\xfe\x12"_su8, features);
+  ExpectRead<O>(O::I32AtomicLoad16U, "\xfe\x13"_su8, features);
+  ExpectRead<O>(O::I64AtomicLoad8U, "\xfe\x14"_su8, features);
+  ExpectRead<O>(O::I64AtomicLoad16U, "\xfe\x15"_su8, features);
+  ExpectRead<O>(O::I64AtomicLoad32U, "\xfe\x16"_su8, features);
+  ExpectRead<O>(O::I32AtomicStore, "\xfe\x17"_su8, features);
+  ExpectRead<O>(O::I64AtomicStore, "\xfe\x18"_su8, features);
+  ExpectRead<O>(O::I32AtomicStore8, "\xfe\x19"_su8, features);
+  ExpectRead<O>(O::I32AtomicStore16, "\xfe\x1a"_su8, features);
+  ExpectRead<O>(O::I64AtomicStore8, "\xfe\x1b"_su8, features);
+  ExpectRead<O>(O::I64AtomicStore16, "\xfe\x1c"_su8, features);
+  ExpectRead<O>(O::I64AtomicStore32, "\xfe\x1d"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmwAdd, "\xfe\x1e"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmwAdd, "\xfe\x1f"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw8AddU, "\xfe\x20"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw16AddU, "\xfe\x21"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw8AddU, "\xfe\x22"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw16AddU, "\xfe\x23"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw32AddU, "\xfe\x24"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmwSub, "\xfe\x25"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmwSub, "\xfe\x26"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw8SubU, "\xfe\x27"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw16SubU, "\xfe\x28"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw8SubU, "\xfe\x29"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw16SubU, "\xfe\x2a"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw32SubU, "\xfe\x2b"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmwAnd, "\xfe\x2c"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmwAnd, "\xfe\x2d"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw8AndU, "\xfe\x2e"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw16AndU, "\xfe\x2f"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw8AndU, "\xfe\x30"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw16AndU, "\xfe\x31"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw32AndU, "\xfe\x32"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmwOr, "\xfe\x33"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmwOr, "\xfe\x34"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw8OrU, "\xfe\x35"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw16OrU, "\xfe\x36"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw8OrU, "\xfe\x37"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw16OrU, "\xfe\x38"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw32OrU, "\xfe\x39"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmwXor, "\xfe\x3a"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmwXor, "\xfe\x3b"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw8XorU, "\xfe\x3c"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw16XorU, "\xfe\x3d"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw8XorU, "\xfe\x3e"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw16XorU, "\xfe\x3f"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw32XorU, "\xfe\x40"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmwXchg, "\xfe\x41"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmwXchg, "\xfe\x42"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw8XchgU, "\xfe\x43"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw16XchgU, "\xfe\x44"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw8XchgU, "\xfe\x45"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw16XchgU, "\xfe\x46"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw32XchgU, "\xfe\x47"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmwCmpxchg, "\xfe\x48"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmwCmpxchg, "\xfe\x49"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw8CmpxchgU, "\xfe\x4a"_su8, features);
+  ExpectRead<O>(O::I32AtomicRmw16CmpxchgU, "\xfe\x4b"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw8CmpxchgU, "\xfe\x4c"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw16CmpxchgU, "\xfe\x4d"_su8, features);
+  ExpectRead<O>(O::I64AtomicRmw32CmpxchgU, "\xfe\x4e"_su8, features);
 }
 
 TEST(ReadTest, Opcode_Unknown_threads_prefix) {
@@ -2220,16 +2182,16 @@ TEST(ReadTest, Opcode_Unknown_threads_prefix) {
 }
 
 TEST(ReadTest, S32) {
-  ExpectRead<s32>(32, MakeSpanU8("\x20"));
-  ExpectRead<s32>(-16, MakeSpanU8("\x70"));
-  ExpectRead<s32>(448, MakeSpanU8("\xc0\x03"));
-  ExpectRead<s32>(-3648, MakeSpanU8("\xc0\x63"));
-  ExpectRead<s32>(33360, MakeSpanU8("\xd0\x84\x02"));
-  ExpectRead<s32>(-753072, MakeSpanU8("\xd0\x84\x52"));
-  ExpectRead<s32>(101718048, MakeSpanU8("\xa0\xb0\xc0\x30"));
-  ExpectRead<s32>(-32499680, MakeSpanU8("\xa0\xb0\xc0\x70"));
-  ExpectRead<s32>(1042036848, MakeSpanU8("\xf0\xf0\xf0\xf0\x03"));
-  ExpectRead<s32>(-837011344, MakeSpanU8("\xf0\xf0\xf0\xf0\x7c"));
+  ExpectRead<s32>(32, "\x20"_su8);
+  ExpectRead<s32>(-16, "\x70"_su8);
+  ExpectRead<s32>(448, "\xc0\x03"_su8);
+  ExpectRead<s32>(-3648, "\xc0\x63"_su8);
+  ExpectRead<s32>(33360, "\xd0\x84\x02"_su8);
+  ExpectRead<s32>(-753072, "\xd0\x84\x52"_su8);
+  ExpectRead<s32>(101718048, "\xa0\xb0\xc0\x30"_su8);
+  ExpectRead<s32>(-32499680, "\xa0\xb0\xc0\x70"_su8);
+  ExpectRead<s32>(1042036848, "\xf0\xf0\xf0\xf0\x03"_su8);
+  ExpectRead<s32>(-837011344, "\xf0\xf0\xf0\xf0\x7c"_su8);
 }
 
 TEST(ReadTest, S32_TooLong) {
@@ -2237,52 +2199,48 @@ TEST(ReadTest, S32_TooLong) {
                           {5,
                            "Last byte of s32 must be sign extension: expected "
                            "0x5 or 0x7d, got 0x15"}},
-                         MakeSpanU8("\xf0\xf0\xf0\xf0\x15"));
+                         "\xf0\xf0\xf0\xf0\x15"_su8);
   ExpectReadFailure<s32>({{0, "s32"},
                           {5,
                            "Last byte of s32 must be sign extension: expected "
                            "0x3 or 0x7b, got 0x73"}},
-                         MakeSpanU8("\xff\xff\xff\xff\x73"));
+                         "\xff\xff\xff\xff\x73"_su8);
 }
 
 TEST(ReadTest, S32_PastEnd) {
-  ExpectReadFailure<s32>({{0, "s32"}, {0, "Unable to read u8"}},
-                         MakeSpanU8(""));
-  ExpectReadFailure<s32>({{0, "s32"}, {1, "Unable to read u8"}},
-                         MakeSpanU8("\xc0"));
+  ExpectReadFailure<s32>({{0, "s32"}, {0, "Unable to read u8"}}, ""_su8);
+  ExpectReadFailure<s32>({{0, "s32"}, {1, "Unable to read u8"}}, "\xc0"_su8);
   ExpectReadFailure<s32>({{0, "s32"}, {2, "Unable to read u8"}},
-                         MakeSpanU8("\xd0\x84"));
+                         "\xd0\x84"_su8);
   ExpectReadFailure<s32>({{0, "s32"}, {3, "Unable to read u8"}},
-                         MakeSpanU8("\xa0\xb0\xc0"));
+                         "\xa0\xb0\xc0"_su8);
   ExpectReadFailure<s32>({{0, "s32"}, {4, "Unable to read u8"}},
-                         MakeSpanU8("\xf0\xf0\xf0\xf0"));
+                         "\xf0\xf0\xf0\xf0"_su8);
 }
 
 TEST(ReadTest, S64) {
-  ExpectRead<s64>(32, MakeSpanU8("\x20"));
-  ExpectRead<s64>(-16, MakeSpanU8("\x70"));
-  ExpectRead<s64>(448, MakeSpanU8("\xc0\x03"));
-  ExpectRead<s64>(-3648, MakeSpanU8("\xc0\x63"));
-  ExpectRead<s64>(33360, MakeSpanU8("\xd0\x84\x02"));
-  ExpectRead<s64>(-753072, MakeSpanU8("\xd0\x84\x52"));
-  ExpectRead<s64>(101718048, MakeSpanU8("\xa0\xb0\xc0\x30"));
-  ExpectRead<s64>(-32499680, MakeSpanU8("\xa0\xb0\xc0\x70"));
-  ExpectRead<s64>(1042036848, MakeSpanU8("\xf0\xf0\xf0\xf0\x03"));
-  ExpectRead<s64>(-837011344, MakeSpanU8("\xf0\xf0\xf0\xf0\x7c"));
-  ExpectRead<s64>(13893120096, MakeSpanU8("\xe0\xe0\xe0\xe0\x33"));
-  ExpectRead<s64>(-12413554592, MakeSpanU8("\xe0\xe0\xe0\xe0\x51"));
-  ExpectRead<s64>(1533472417872, MakeSpanU8("\xd0\xd0\xd0\xd0\xd0\x2c"));
-  ExpectRead<s64>(-287593715632, MakeSpanU8("\xd0\xd0\xd0\xd0\xd0\x77"));
-  ExpectRead<s64>(139105536057408, MakeSpanU8("\xc0\xc0\xc0\xc0\xc0\xd0\x1f"));
-  ExpectRead<s64>(-124777254608832, MakeSpanU8("\xc0\xc0\xc0\xc0\xc0\xd0\x63"));
-  ExpectRead<s64>(1338117014066474,
-                  MakeSpanU8("\xaa\xaa\xaa\xaa\xaa\xa0\xb0\x02"));
-  ExpectRead<s64>(-12172681868045014,
-                  MakeSpanU8("\xaa\xaa\xaa\xaa\xaa\xa0\xb0\x6a"));
+  ExpectRead<s64>(32, "\x20"_su8);
+  ExpectRead<s64>(-16, "\x70"_su8);
+  ExpectRead<s64>(448, "\xc0\x03"_su8);
+  ExpectRead<s64>(-3648, "\xc0\x63"_su8);
+  ExpectRead<s64>(33360, "\xd0\x84\x02"_su8);
+  ExpectRead<s64>(-753072, "\xd0\x84\x52"_su8);
+  ExpectRead<s64>(101718048, "\xa0\xb0\xc0\x30"_su8);
+  ExpectRead<s64>(-32499680, "\xa0\xb0\xc0\x70"_su8);
+  ExpectRead<s64>(1042036848, "\xf0\xf0\xf0\xf0\x03"_su8);
+  ExpectRead<s64>(-837011344, "\xf0\xf0\xf0\xf0\x7c"_su8);
+  ExpectRead<s64>(13893120096, "\xe0\xe0\xe0\xe0\x33"_su8);
+  ExpectRead<s64>(-12413554592, "\xe0\xe0\xe0\xe0\x51"_su8);
+  ExpectRead<s64>(1533472417872, "\xd0\xd0\xd0\xd0\xd0\x2c"_su8);
+  ExpectRead<s64>(-287593715632, "\xd0\xd0\xd0\xd0\xd0\x77"_su8);
+  ExpectRead<s64>(139105536057408, "\xc0\xc0\xc0\xc0\xc0\xd0\x1f"_su8);
+  ExpectRead<s64>(-124777254608832, "\xc0\xc0\xc0\xc0\xc0\xd0\x63"_su8);
+  ExpectRead<s64>(1338117014066474, "\xaa\xaa\xaa\xaa\xaa\xa0\xb0\x02"_su8);
+  ExpectRead<s64>(-12172681868045014, "\xaa\xaa\xaa\xaa\xaa\xa0\xb0\x6a"_su8);
   ExpectRead<s64>(1070725794579330814,
-                  MakeSpanU8("\xfe\xed\xfe\xed\xfe\xed\xfe\xed\x0e"));
+                  "\xfe\xed\xfe\xed\xfe\xed\xfe\xed\x0e"_su8);
   ExpectRead<s64>(-3540960223848057090,
-                  MakeSpanU8("\xfe\xed\xfe\xed\xfe\xed\xfe\xed\x4e"));
+                  "\xfe\xed\xfe\xed\xfe\xed\xfe\xed\x4e"_su8);
 }
 
 TEST(ReadTest, S64_TooLong) {
@@ -2291,94 +2249,89 @@ TEST(ReadTest, S64_TooLong) {
        {10,
         "Last byte of s64 must be sign extension: expected 0x0 or 0x7f, got "
         "0xf0"}},
-      MakeSpanU8("\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0"));
+      "\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0"_su8);
   ExpectReadFailure<s64>(
       {{0, "s64"},
        {10,
         "Last byte of s64 must be sign extension: expected 0x0 or 0x7f, got "
         "0xff"}},
-      MakeSpanU8("\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"));
+      "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"_su8);
 }
 
 TEST(ReadTest, S64_PastEnd) {
-  ExpectReadFailure<s64>({{0, "s64"}, {0, "Unable to read u8"}},
-                         MakeSpanU8(""));
-  ExpectReadFailure<s64>({{0, "s64"}, {1, "Unable to read u8"}},
-                         MakeSpanU8("\xc0"));
+  ExpectReadFailure<s64>({{0, "s64"}, {0, "Unable to read u8"}}, ""_su8);
+  ExpectReadFailure<s64>({{0, "s64"}, {1, "Unable to read u8"}}, "\xc0"_su8);
   ExpectReadFailure<s64>({{0, "s64"}, {2, "Unable to read u8"}},
-                         MakeSpanU8("\xd0\x84"));
+                         "\xd0\x84"_su8);
   ExpectReadFailure<s64>({{0, "s64"}, {3, "Unable to read u8"}},
-                         MakeSpanU8("\xa0\xb0\xc0"));
+                         "\xa0\xb0\xc0"_su8);
   ExpectReadFailure<s64>({{0, "s64"}, {4, "Unable to read u8"}},
-                         MakeSpanU8("\xf0\xf0\xf0\xf0"));
+                         "\xf0\xf0\xf0\xf0"_su8);
   ExpectReadFailure<s64>({{0, "s64"}, {5, "Unable to read u8"}},
-                         MakeSpanU8("\xe0\xe0\xe0\xe0\xe0"));
+                         "\xe0\xe0\xe0\xe0\xe0"_su8);
   ExpectReadFailure<s64>({{0, "s64"}, {6, "Unable to read u8"}},
-                         MakeSpanU8("\xd0\xd0\xd0\xd0\xd0\xc0"));
+                         "\xd0\xd0\xd0\xd0\xd0\xc0"_su8);
   ExpectReadFailure<s64>({{0, "s64"}, {7, "Unable to read u8"}},
-                         MakeSpanU8("\xc0\xc0\xc0\xc0\xc0\xd0\x84"));
+                         "\xc0\xc0\xc0\xc0\xc0\xd0\x84"_su8);
   ExpectReadFailure<s64>({{0, "s64"}, {8, "Unable to read u8"}},
-                         MakeSpanU8("\xaa\xaa\xaa\xaa\xaa\xa0\xb0\xc0"));
+                         "\xaa\xaa\xaa\xaa\xaa\xa0\xb0\xc0"_su8);
   ExpectReadFailure<s64>({{0, "s64"}, {9, "Unable to read u8"}},
-                         MakeSpanU8("\xfe\xed\xfe\xed\xfe\xed\xfe\xed\xfe"));
+                         "\xfe\xed\xfe\xed\xfe\xed\xfe\xed\xfe"_su8);
 }
 
 TEST(ReadTest, SectionId) {
-  ExpectRead<SectionId>(SectionId::Custom, MakeSpanU8("\x00"));
-  ExpectRead<SectionId>(SectionId::Type, MakeSpanU8("\x01"));
-  ExpectRead<SectionId>(SectionId::Import, MakeSpanU8("\x02"));
-  ExpectRead<SectionId>(SectionId::Function, MakeSpanU8("\x03"));
-  ExpectRead<SectionId>(SectionId::Table, MakeSpanU8("\x04"));
-  ExpectRead<SectionId>(SectionId::Memory, MakeSpanU8("\x05"));
-  ExpectRead<SectionId>(SectionId::Global, MakeSpanU8("\x06"));
-  ExpectRead<SectionId>(SectionId::Export, MakeSpanU8("\x07"));
-  ExpectRead<SectionId>(SectionId::Start, MakeSpanU8("\x08"));
-  ExpectRead<SectionId>(SectionId::Element, MakeSpanU8("\x09"));
-  ExpectRead<SectionId>(SectionId::Code, MakeSpanU8("\x0a"));
-  ExpectRead<SectionId>(SectionId::Data, MakeSpanU8("\x0b"));
-  ExpectRead<SectionId>(SectionId::DataCount, MakeSpanU8("\x0c"));
+  ExpectRead<SectionId>(SectionId::Custom, "\x00"_su8);
+  ExpectRead<SectionId>(SectionId::Type, "\x01"_su8);
+  ExpectRead<SectionId>(SectionId::Import, "\x02"_su8);
+  ExpectRead<SectionId>(SectionId::Function, "\x03"_su8);
+  ExpectRead<SectionId>(SectionId::Table, "\x04"_su8);
+  ExpectRead<SectionId>(SectionId::Memory, "\x05"_su8);
+  ExpectRead<SectionId>(SectionId::Global, "\x06"_su8);
+  ExpectRead<SectionId>(SectionId::Export, "\x07"_su8);
+  ExpectRead<SectionId>(SectionId::Start, "\x08"_su8);
+  ExpectRead<SectionId>(SectionId::Element, "\x09"_su8);
+  ExpectRead<SectionId>(SectionId::Code, "\x0a"_su8);
+  ExpectRead<SectionId>(SectionId::Data, "\x0b"_su8);
+  ExpectRead<SectionId>(SectionId::DataCount, "\x0c"_su8);
 
   // Overlong encoding.
-  ExpectRead<SectionId>(SectionId::Custom, MakeSpanU8("\x80\x00"));
+  ExpectRead<SectionId>(SectionId::Custom, "\x80\x00"_su8);
 }
 
 TEST(ReadTest, SectionId_Unknown) {
   ExpectReadFailure<SectionId>(
-      {{0, "section id"}, {1, "Unknown section id: 13"}}, MakeSpanU8("\x0d"));
+      {{0, "section id"}, {1, "Unknown section id: 13"}}, "\x0d"_su8);
 }
 
 TEST(ReadTest, Section) {
   ExpectRead<Section>(
-      Section{KnownSection{SectionId::Type, MakeSpanU8("\x01\x02\x03")}},
-      MakeSpanU8("\x01\x03\x01\x02\x03"));
+      Section{KnownSection{SectionId::Type, "\x01\x02\x03"_su8}},
+      "\x01\x03\x01\x02\x03"_su8);
 
-  ExpectRead<Section>(
-      Section{CustomSection{"name", MakeSpanU8("\x04\x05\x06")}},
-      MakeSpanU8("\x00\x08\x04name\x04\x05\x06"));
+  ExpectRead<Section>(Section{CustomSection{"name", "\x04\x05\x06"_su8}},
+                      "\x00\x08\x04name\x04\x05\x06"_su8);
 }
 
 TEST(ReadTest, Section_PastEnd) {
   ExpectReadFailure<Section>(
       {{0, "section"}, {0, "section id"}, {0, "u32"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      ""_su8);
 
   ExpectReadFailure<Section>(
-      {{0, "section"}, {1, "length"}, {1, "Unable to read u8"}},
-      MakeSpanU8("\x01"));
+      {{0, "section"}, {1, "length"}, {1, "Unable to read u8"}}, "\x01"_su8);
 
   ExpectReadFailure<Section>(
-      {{0, "section"}, {2, "Length extends past end: 1 > 0"}},
-      MakeSpanU8("\x01\x01"));
+      {{0, "section"}, {2, "Length extends past end: 1 > 0"}}, "\x01\x01"_su8);
 }
 
 TEST(ReadTest, Start) {
-  ExpectRead<Start>(Start{256}, MakeSpanU8("\x80\x02"));
+  ExpectRead<Start>(Start{256}, "\x80\x02"_su8);
 }
 
 TEST(ReadTest, ReadString) {
   Features features;
   TestErrors errors;
-  const SpanU8 data = MakeSpanU8("\x05hello");
+  const SpanU8 data = "\x05hello"_su8;
   SpanU8 copy = data;
   auto result = ReadString(&copy, features, errors, "test");
   ExpectNoErrors(errors);
@@ -2389,7 +2342,7 @@ TEST(ReadTest, ReadString) {
 TEST(ReadTest, ReadString_Leftovers) {
   Features features;
   TestErrors errors;
-  const SpanU8 data = MakeSpanU8("\x01more");
+  const SpanU8 data = "\x01more"_su8;
   SpanU8 copy = data;
   auto result = ReadString(&copy, features, errors, "test");
   ExpectNoErrors(errors);
@@ -2401,7 +2354,7 @@ TEST(ReadTest, ReadString_BadLength) {
   {
     Features features;
     TestErrors errors;
-    const SpanU8 data = MakeSpanU8("");
+    const SpanU8 data = ""_su8;
     SpanU8 copy = data;
     auto result = ReadString(&copy, features, errors, "test");
     ExpectError({{0, "test"}, {0, "length"}, {0, "Unable to read u8"}}, errors,
@@ -2413,7 +2366,7 @@ TEST(ReadTest, ReadString_BadLength) {
   {
     Features features;
     TestErrors errors;
-    const SpanU8 data = MakeSpanU8("\xc0");
+    const SpanU8 data = "\xc0"_su8;
     SpanU8 copy = data;
     auto result = ReadString(&copy, features, errors, "test");
     ExpectError({{0, "test"}, {0, "length"}, {1, "Unable to read u8"}}, errors,
@@ -2426,7 +2379,7 @@ TEST(ReadTest, ReadString_BadLength) {
 TEST(ReadTest, ReadString_Fail) {
   Features features;
   TestErrors errors;
-  const SpanU8 data = MakeSpanU8("\x06small");
+  const SpanU8 data = "\x06small"_su8;
   SpanU8 copy = data;
   auto result = ReadString(&copy, features, errors, "test");
   ExpectError({{0, "test"}, {1, "Length extends past end: 6 > 5"}}, errors,
@@ -2437,7 +2390,7 @@ TEST(ReadTest, ReadString_Fail) {
 
 TEST(ReadTest, Table) {
   ExpectRead<Table>(Table{TableType{Limits{1}, ElementType::Funcref}},
-                    MakeSpanU8("\x70\x00\x01"));
+                    "\x70\x00\x01"_su8);
 }
 
 TEST(ReadTest, Table_PastEnd) {
@@ -2445,116 +2398,113 @@ TEST(ReadTest, Table_PastEnd) {
                             {0, "table type"},
                             {0, "element type"},
                             {0, "Unable to read u8"}},
-                           MakeSpanU8(""));
+                           ""_su8);
 }
 
 TEST(ReadTest, TableType) {
   ExpectRead<TableType>(TableType{Limits{1}, ElementType::Funcref},
-                        MakeSpanU8("\x70\x00\x01"));
+                        "\x70\x00\x01"_su8);
   ExpectRead<TableType>(TableType{Limits{1, 2}, ElementType::Funcref},
-                        MakeSpanU8("\x70\x01\x01\x02"));
+                        "\x70\x01\x01\x02"_su8);
 }
 
 TEST(ReadTest, TableType_BadElementType) {
   ExpectReadFailure<TableType>(
       {{0, "table type"}, {0, "element type"}, {1, "Unknown element type: 0"}},
-      MakeSpanU8("\x00"));
+      "\x00"_su8);
 }
 
 TEST(ReadTest, TableType_PastEnd) {
   ExpectReadFailure<TableType>(
       {{0, "table type"}, {0, "element type"}, {0, "Unable to read u8"}},
-      MakeSpanU8(""));
+      ""_su8);
 
   ExpectReadFailure<TableType>({{0, "table type"},
                                 {1, "limits"},
                                 {1, "flags"},
                                 {1, "Unable to read u8"}},
-                               MakeSpanU8("\x70"));
+                               "\x70"_su8);
 }
 
 TEST(ReadTest, TypeEntry) {
   ExpectRead<TypeEntry>(TypeEntry{FunctionType{{}, {ValueType::I32}}},
-                        MakeSpanU8("\x60\x00\x01\x7f"));
+                        "\x60\x00\x01\x7f"_su8);
 }
 
 TEST(ReadTest, TypeEntry_BadForm) {
   ExpectReadFailure<TypeEntry>(
-      {{0, "type entry"}, {1, "Unknown type form: 64"}}, MakeSpanU8("\x40"));
+      {{0, "type entry"}, {1, "Unknown type form: 64"}}, "\x40"_su8);
 }
 
 TEST(ReadTest, U32) {
-  ExpectRead<u32>(32u, MakeSpanU8("\x20"));
-  ExpectRead<u32>(448u, MakeSpanU8("\xc0\x03"));
-  ExpectRead<u32>(33360u, MakeSpanU8("\xd0\x84\x02"));
-  ExpectRead<u32>(101718048u, MakeSpanU8("\xa0\xb0\xc0\x30"));
-  ExpectRead<u32>(1042036848u, MakeSpanU8("\xf0\xf0\xf0\xf0\x03"));
+  ExpectRead<u32>(32u, "\x20"_su8);
+  ExpectRead<u32>(448u, "\xc0\x03"_su8);
+  ExpectRead<u32>(33360u, "\xd0\x84\x02"_su8);
+  ExpectRead<u32>(101718048u, "\xa0\xb0\xc0\x30"_su8);
+  ExpectRead<u32>(1042036848u, "\xf0\xf0\xf0\xf0\x03"_su8);
 }
 
 TEST(ReadTest, U32_TooLong) {
   ExpectReadFailure<u32>(
       {{0, "u32"},
        {5, "Last byte of u32 must be zero extension: expected 0x2, got 0x12"}},
-      MakeSpanU8("\xf0\xf0\xf0\xf0\x12"));
+      "\xf0\xf0\xf0\xf0\x12"_su8);
 }
 
 TEST(ReadTest, U32_PastEnd) {
-  ExpectReadFailure<u32>({{0, "u32"}, {0, "Unable to read u8"}},
-                         MakeSpanU8(""));
-  ExpectReadFailure<u32>({{0, "u32"}, {1, "Unable to read u8"}},
-                         MakeSpanU8("\xc0"));
+  ExpectReadFailure<u32>({{0, "u32"}, {0, "Unable to read u8"}}, ""_su8);
+  ExpectReadFailure<u32>({{0, "u32"}, {1, "Unable to read u8"}}, "\xc0"_su8);
   ExpectReadFailure<u32>({{0, "u32"}, {2, "Unable to read u8"}},
-                         MakeSpanU8("\xd0\x84"));
+                         "\xd0\x84"_su8);
   ExpectReadFailure<u32>({{0, "u32"}, {3, "Unable to read u8"}},
-                         MakeSpanU8("\xa0\xb0\xc0"));
+                         "\xa0\xb0\xc0"_su8);
   ExpectReadFailure<u32>({{0, "u32"}, {4, "Unable to read u8"}},
-                         MakeSpanU8("\xf0\xf0\xf0\xf0"));
+                         "\xf0\xf0\xf0\xf0"_su8);
 }
 
 TEST(ReadTest, U8) {
-  ExpectRead<u8>(32, MakeSpanU8("\x20"));
-  ExpectReadFailure<u8>({{0, "Unable to read u8"}}, MakeSpanU8(""));
+  ExpectRead<u8>(32, "\x20"_su8);
+  ExpectReadFailure<u8>({{0, "Unable to read u8"}}, ""_su8);
 }
 
 TEST(ReadTest, ValueType_MVP) {
-  ExpectRead<ValueType>(ValueType::I32, MakeSpanU8("\x7f"));
-  ExpectRead<ValueType>(ValueType::I64, MakeSpanU8("\x7e"));
-  ExpectRead<ValueType>(ValueType::F32, MakeSpanU8("\x7d"));
-  ExpectRead<ValueType>(ValueType::F64, MakeSpanU8("\x7c"));
+  ExpectRead<ValueType>(ValueType::I32, "\x7f"_su8);
+  ExpectRead<ValueType>(ValueType::I64, "\x7e"_su8);
+  ExpectRead<ValueType>(ValueType::F32, "\x7d"_su8);
+  ExpectRead<ValueType>(ValueType::F64, "\x7c"_su8);
 }
 
 TEST(ReadTest, ValueType_simd) {
   ExpectReadFailure<ValueType>(
-      {{0, "value type"}, {1, "Unknown value type: 123"}}, MakeSpanU8("\x7b"));
+      {{0, "value type"}, {1, "Unknown value type: 123"}}, "\x7b"_su8);
 
   Features features;
   features.enable_simd();
-  ExpectRead<ValueType>(ValueType::V128, MakeSpanU8("\x7b"), features);
+  ExpectRead<ValueType>(ValueType::V128, "\x7b"_su8, features);
 }
 
 TEST(ReadTest, ValueType_reference_types) {
   ExpectReadFailure<ValueType>(
-      {{0, "value type"}, {1, "Unknown value type: 111"}}, MakeSpanU8("\x6f"));
+      {{0, "value type"}, {1, "Unknown value type: 111"}}, "\x6f"_su8);
 
   Features features;
   features.enable_reference_types();
-  ExpectRead<ValueType>(ValueType::Anyref, MakeSpanU8("\x6f"), features);
+  ExpectRead<ValueType>(ValueType::Anyref, "\x6f"_su8, features);
 }
 
 TEST(ReadTest, ValueType_Unknown) {
   ExpectReadFailure<ValueType>(
-      {{0, "value type"}, {1, "Unknown value type: 16"}}, MakeSpanU8("\x10"));
+      {{0, "value type"}, {1, "Unknown value type: 16"}}, "\x10"_su8);
 
   // Overlong encoding is not allowed.
   ExpectReadFailure<ValueType>(
-      {{0, "value type"}, {1, "Unknown value type: 255"}},
-      MakeSpanU8("\xff\x7f"));
+      {{0, "value type"}, {1, "Unknown value type: 255"}}, "\xff\x7f"_su8);
 }
 
 TEST(ReadTest, ReadVector_u8) {
   Features features;
   TestErrors errors;
-  const SpanU8 data = MakeSpanU8("\x05hello");
+  const SpanU8 data = "\x05hello"_su8;
   SpanU8 copy = data;
   auto result = ReadVector<u8>(&copy, features, errors, "test");
   ExpectNoErrors(errors);
@@ -2565,11 +2515,11 @@ TEST(ReadTest, ReadVector_u8) {
 TEST(ReadTest, ReadVector_u32) {
   Features features;
   TestErrors errors;
-  const SpanU8 data = MakeSpanU8(
+  const SpanU8 data =
       "\x03"  // Count.
       "\x05"
       "\x80\x01"
-      "\xcc\xcc\x0c");
+      "\xcc\xcc\x0c"_su8;
   SpanU8 copy = data;
   auto result = ReadVector<u32>(&copy, features, errors, "test");
   ExpectNoErrors(errors);
@@ -2580,9 +2530,9 @@ TEST(ReadTest, ReadVector_u32) {
 TEST(ReadTest, ReadVector_FailLength) {
   Features features;
   TestErrors errors;
-  const SpanU8 data = MakeSpanU8(
+  const SpanU8 data =
       "\x02"  // Count.
-      "\x05");
+      "\x05"_su8;
   SpanU8 copy = data;
   auto result = ReadVector<u32>(&copy, features, errors, "test");
   ExpectError({{0, "test"}, {1, "Count extends past end: 2 > 1"}}, errors,
@@ -2594,10 +2544,10 @@ TEST(ReadTest, ReadVector_FailLength) {
 TEST(ReadTest, ReadVector_PastEnd) {
   Features features;
   TestErrors errors;
-  const SpanU8 data = MakeSpanU8(
+  const SpanU8 data =
       "\x02"  // Count.
       "\x05"
-      "\x80");
+      "\x80"_su8;
   SpanU8 copy = data;
   auto result = ReadVector<u32>(&copy, features, errors, "test");
   ExpectError({{0, "test"}, {2, "u32"}, {3, "Unable to read u8"}}, errors,

@@ -21,16 +21,13 @@ namespace wasp {
 namespace binary {
 namespace test {
 
-template <size_t N>
-SpanU8 MakeSpanU8(const char (&str)[N]) {
-  return SpanU8{
-      reinterpret_cast<const u8*>(str),
-      static_cast<SpanU8::index_type>(N - 1)};  // -1 to remove \0 at end.
+inline SpanU8 operator"" _su8(const char* str, size_t N) {
+  return SpanU8{reinterpret_cast<const u8*>(str),
+                static_cast<SpanU8::index_type>(N)};
 }
 
-template <size_t N>
-Expression MakeExpression(const char (&str)[N]) {
-  return Expression{MakeSpanU8<N>(str)};
+inline Expression operator"" _expr(const char* str, size_t N) {
+  return Expression{operator"" _su8(str, N)};
 }
 
 }  // namespace test

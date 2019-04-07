@@ -28,31 +28,30 @@ TEST(LazyModuleTest, Basic) {
   Features features;
   TestErrors errors;
   auto module = ReadModule(
-      MakeSpanU8("\0asm\x01\0\0\0"
-                 "\x01\x03\0\0\0"         // Invalid type section.
-                 "\x01\x05\0\0\0\0\0"     // Another invalid type section.
-                 "\x0a\x01\0"             // Code section.
-                 "\x00\x06\x03yup\0\0"),  // Custom section "yup"
-      features,
-      errors);
+      "\0asm\x01\0\0\0"
+      "\x01\x03\0\0\0"            // Invalid type section.
+      "\x01\x05\0\0\0\0\0"        // Another invalid type section.
+      "\x0a\x01\0"                // Code section.
+      "\x00\x06\x03yup\0\0"_su8,  // Custom section "yup"
+      features, errors);
 
-  EXPECT_EQ(MakeSpanU8("\0asm"), module.magic);
-  EXPECT_EQ(MakeSpanU8("\x01\0\0\0"), module.version);
+  EXPECT_EQ("\0asm"_su8, module.magic);
+  EXPECT_EQ("\x01\0\0\0"_su8, module.version);
 
   auto it = module.sections.begin(), end = module.sections.end();
 
-  EXPECT_EQ((Section{KnownSection{SectionId::Type, MakeSpanU8("\0\0\0")}}),
+  EXPECT_EQ((Section{KnownSection{SectionId::Type, "\0\0\0"_su8}}),
             *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ((Section{KnownSection{SectionId::Type, MakeSpanU8("\0\0\0\0\0")}}),
+  EXPECT_EQ((Section{KnownSection{SectionId::Type, "\0\0\0\0\0"_su8}}),
             *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ((Section{KnownSection{SectionId::Code, MakeSpanU8("\0")}}), *it++);
+  EXPECT_EQ((Section{KnownSection{SectionId::Code, "\0"_su8}}), *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ((Section{CustomSection{"yup", MakeSpanU8("\0\0")}}), *it++);
+  EXPECT_EQ((Section{CustomSection{"yup", "\0\0"_su8}}), *it++);
   ASSERT_EQ(end, it);
 
   ExpectNoErrors(errors);
@@ -60,7 +59,7 @@ TEST(LazyModuleTest, Basic) {
 
 TEST(LazyModuleTest, BadMagic) {
   TestErrors errors;
-  auto data = MakeSpanU8("wasm\x01\0\0\0");
+  auto data = "wasm\x01\0\0\0"_su8;
   auto module = ReadModule(data, Features{}, errors);
 
   ExpectError({{0, "magic"},
@@ -70,7 +69,7 @@ TEST(LazyModuleTest, BadMagic) {
 
 TEST(LazyModuleTest, Magic_PastEnd) {
   TestErrors errors;
-  auto data = MakeSpanU8("\0as");
+  auto data = "\0as"_su8;
   auto module = ReadModule(data, Features{}, errors);
 
   // TODO(binji): This should produce better errors.
@@ -81,7 +80,7 @@ TEST(LazyModuleTest, Magic_PastEnd) {
 
 TEST(LazyModuleTest, BadVersion) {
   TestErrors errors;
-  auto data = MakeSpanU8("\0asm\x02\0\0\0");
+  auto data = "\0asm\x02\0\0\0"_su8;
   auto module = ReadModule(data, Features{}, errors);
 
   ExpectError({{4, "version"},
@@ -91,7 +90,7 @@ TEST(LazyModuleTest, BadVersion) {
 
 TEST(LazyModuleTest, Version_PastEnd) {
   TestErrors errors;
-  auto data = MakeSpanU8("\0asm\x01");
+  auto data = "\0asm\x01"_su8;
   auto module = ReadModule(data, Features{}, errors);
 
   ExpectError({{4, "version"}, {4, "Unable to read 4 bytes"}}, errors, data);

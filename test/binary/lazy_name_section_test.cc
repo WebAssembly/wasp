@@ -46,26 +46,25 @@ TEST(LazyNameSectionTest, NameSection) {
   Features features;
   TestErrors errors;
   auto sec = ReadNameSection(
-      MakeSpanU8(
-          "\x00\x02\x01m"                           // Module name = "m"
-          "\x01\x03\x02\x01g"                       // Function names: 2 => "g"
-          "\x02\x0a\x03\x02\x04\x02g4\x05\x02g5"),  // Local names: function 3
-                                                    //   4 => "g4", 5 => "g5"
+      "\x00\x02\x01m"                              // Module name = "m"
+      "\x01\x03\x02\x01g"                          // Function names: 2 => "g"
+      "\x02\x0a\x03\x02\x04\x02g4\x05\x02g5"_su8,  // Local names: function 3
+                                                   //   4 => "g4", 5 => "g5"
       features, errors);
 
   auto it = sec.begin();
 
-  EXPECT_EQ((NameSubsection{NameSubsectionId::ModuleName, MakeSpanU8("\x01m")}),
+  EXPECT_EQ((NameSubsection{NameSubsectionId::ModuleName, "\x01m"_su8}),
             *it++);
   ASSERT_NE(sec.end(), it);
 
   EXPECT_EQ((NameSubsection{NameSubsectionId::FunctionNames,
-                            MakeSpanU8("\x02\x01g")}),
+                            "\x02\x01g"_su8}),
             *it++);
   ASSERT_NE(sec.end(), it);
 
   EXPECT_EQ((NameSubsection{NameSubsectionId::LocalNames,
-                            MakeSpanU8("\x03\x02\x04\x02g4\x05\x02g5")}),
+                            "\x03\x02\x04\x02g4\x05\x02g5"_su8}),
             *it++);
   ASSERT_EQ(sec.end(), it);
 
@@ -76,7 +75,7 @@ TEST(LazyNameSectionTest, ModuleNameSubsection) {
   Features features;
   TestErrors errors;
   auto name =
-      ReadModuleNameSubsection(MakeSpanU8("\x04name"), features, errors);
+      ReadModuleNameSubsection("\x04name"_su8, features, errors);
   EXPECT_EQ("name", name);
   ExpectNoErrors(errors);
 }
@@ -84,9 +83,10 @@ TEST(LazyNameSectionTest, ModuleNameSubsection) {
 TEST(LazyNameSectionTest, FunctionNamesSubsection) {
   Features features;
   TestErrors errors;
-  auto sec = ReadFunctionNamesSubsection(MakeSpanU8("\x02\x03\x05three\x05\x04"
-                                                    "five"),
-                                         features, errors);
+  auto sec = ReadFunctionNamesSubsection(
+      "\x02\x03\x05three\x05\x04"
+      "five"_su8,
+      features, errors);
 
   ExpectSubsection(
       {
@@ -100,12 +100,12 @@ TEST(LazyNameSectionTest, FunctionNamesSubsection) {
 TEST(LazyNameSectionTest, LocalNamesSubsection) {
   Features features;
   TestErrors errors;
-  auto sec =
-      ReadLocalNamesSubsection(MakeSpanU8("\x02"
-                                          "\x02\x02\x01\x04ichi\x03\x03san"
-                                          "\x04\x01\x05\x05"
-                                          "cinco"),
-                               features, errors);
+  auto sec = ReadLocalNamesSubsection(
+      "\x02"
+      "\x02\x02\x01\x04ichi\x03\x03san"
+      "\x04\x01\x05\x05"
+      "cinco"_su8,
+      features, errors);
 
   ExpectSubsection(
       {

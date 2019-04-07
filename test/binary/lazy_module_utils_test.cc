@@ -30,18 +30,16 @@ using namespace ::wasp::binary::test;
 namespace {
 
 SpanU8 GetModuleData() {
-  // clang-format off
-  return MakeSpanU8(
-      "\0asm\x01\0\0\0"
-      "\x01\x04\x01\x60\0\0"              // 1 type: params:[] results:[]
-      "\x02\x0b\x01\0\x06import\0\0"      // 1 import: func mod:"" name:"import"
-      "\x03\x03\x02\0\0"                  // 2 funcs: type 0, type 0
-      "\x07\x0a\x01\x06""export\0\x01"    // 1 export: func 1 name:"export"
-      "\x0a\x07\x02\x02\0\x0b\x02\0\x0b"  // 2 code: both empty
-      "\0\x10\x04name"                    // "name" section
-      "\x01\x09\x01\x02\x06""custom"      // func 2, name "custom"
-  );
-  // clang-format on
+  return "\0asm\x01\0\0\0"
+         "\x01\x04\x01\x60\0\0"          // 1 type: params:[] results:[]
+         "\x02\x0b\x01\0\x06import\0\0"  // 1 import: func mod:"" name:"import"
+         "\x03\x03\x02\0\0"              // 2 funcs: type 0, type 0
+         "\x07\x0a\x01\x06"
+         "export\0\x01"                      // 1 export: func 1 name:"export"
+         "\x0a\x07\x02\x02\0\x0b\x02\0\x0b"  // 2 code: both empty
+         "\0\x10\x04name"                    // "name" section
+         "\x01\x09\x01\x02\x06"
+         "custom"_su8;  // func 2, name "custom"
 }
 
 }  // namespace
@@ -93,17 +91,14 @@ TEST(LazyModuleUtilsTest, CopyFunctionNames) {
 TEST(LazyModuleUtilsTest, GetImportCount) {
   Features features;
   TestErrors errors;
-  // clang-format off
-  auto data = MakeSpanU8(
+  auto data =
       "\0asm\x01\0\0\0"
       "\x01\x04\x01\x60\0\0"
       "\x02\x13\x03"
       "\0\x01w\0\0"
       "\0\x01x\x03\x7f\0"
-      "\0\x01z\x01\x70\0\0"
-  );
+      "\0\x01z\x01\x70\0\0"_su8;
 
-  // clang-format on
   auto module = ReadModule(data, features, errors);
 
   EXPECT_EQ(1u,

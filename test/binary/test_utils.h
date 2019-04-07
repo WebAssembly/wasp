@@ -57,11 +57,11 @@ class TestErrors : public Errors {
   void HandleOnError(SpanU8 pos, string_view message);
 };
 
-template <size_t N>
-SpanU8 MakeSpanU8(const char (&str)[N]);
+// Make SpanU8 from literal string.
+SpanU8 operator"" _su8(const char* str, size_t N);
 
-template <size_t N>
-Expression MakeExpression(const char (&str)[N]);
+// Make Expression from literal string.
+Expression operator"" _expr(const char* str, size_t N);
 
 void ExpectNoErrors(const TestErrors&);
 void ExpectErrors(const std::vector<ExpectedError>&,

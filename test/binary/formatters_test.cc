@@ -90,25 +90,25 @@ TEST(FormattersTest, Locals) {
 TEST(FormattersTest, KnownSection) {
   EXPECT_EQ(
       R"({id type, contents "\00\01\02"})",
-      format("{}", KnownSection{SectionId::Type, MakeSpanU8("\x00\x01\x02")}));
+      format("{}", KnownSection{SectionId::Type, "\x00\x01\x02"_su8}));
 
   EXPECT_EQ(
       R"(   {id code, contents ""})",
-      format("{:>25s}", KnownSection{SectionId::Code, MakeSpanU8("")}));
+      format("{:>25s}", KnownSection{SectionId::Code, ""_su8}));
 }
 
 TEST(FormattersTest, CustomSection) {
   EXPECT_EQ(
       R"({name "custom", contents "\00\01\02"})",
-      format("{}", CustomSection{"custom", MakeSpanU8("\x00\x01\x02")}));
+      format("{}", CustomSection{"custom", "\x00\x01\x02"_su8}));
 
   EXPECT_EQ(
       R"(   {name "", contents ""})",
-      format("{:>25s}", CustomSection{"", MakeSpanU8("")}));
+      format("{:>25s}", CustomSection{"", ""_su8}));
 }
 
 TEST(FormattersTest, Section) {
-  auto span = MakeSpanU8("\x00\x01\x02");
+  auto span = "\x00\x01\x02"_su8;
   EXPECT_EQ(
       R"({id type, contents "\00\01\02"})",
       format("{}", Section{KnownSection{SectionId::Type, span}}));
@@ -123,8 +123,7 @@ TEST(FormattersTest, Section) {
 
   EXPECT_EQ(
       R"(   {id data, contents ""})",
-      format("{:>25s}",
-             Section{KnownSection{SectionId::Data, MakeSpanU8("")}}));
+      format("{:>25s}", Section{KnownSection{SectionId::Data, ""_su8}}));
 }
 
 TEST(FormattersTest, TypeEntry) {
@@ -205,9 +204,8 @@ TEST(FormattersTest, Export) {
 }
 
 TEST(FormattersTest, Expression) {
-  EXPECT_EQ(R"("\00\01\02")",
-            format("{}", Expression{MakeSpanU8("\00\01\02")}));
-  EXPECT_EQ(R"(   "\00")", format("{:>8s}", Expression{MakeSpanU8("\00")}));
+  EXPECT_EQ(R"("\00\01\02")", format("{}", Expression{"\00\01\02"_su8}));
+  EXPECT_EQ(R"(   "\00")", format("{:>8s}", Expression{"\00"_su8}));
 }
 
 TEST(FormattersTest, ConstantExpression) {
@@ -376,12 +374,11 @@ TEST(FormattersTest, ElementSegment_Passive) {
 TEST(FormattersTest, Code) {
   EXPECT_EQ(
       R"({locals [i32 ** 1], body "\0b"})",
-      format("{}", Code{{Locals{1, ValueType::I32}},
-                        Expression{MakeSpanU8("\x0b")}}));
+      format("{}", Code{{Locals{1, ValueType::I32}}, Expression{"\x0b"_su8}}));
 
   EXPECT_EQ(
       R"(     {locals [], body ""})",
-      format("{:>25s}", Code{{}, Expression{MakeSpanU8("")}}));
+      format("{:>25s}", Code{{}, Expression{""_su8}}));
 }
 
 TEST(FormattersTest, DataSegment_Active) {
@@ -390,22 +387,22 @@ TEST(FormattersTest, DataSegment_Active) {
       format("{}",
              DataSegment{Index{0u},
                          ConstantExpression{Instruction{Opcode::I32Const, 0u}},
-                         MakeSpanU8("\x12\x34")}));
+                         "\x12\x34"_su8}));
 
   EXPECT_EQ(
       R"(  {memory 0, offset nop end, init ""})",
       format(
           "{:>37s}",
           DataSegment{Index{0u}, ConstantExpression{Instruction{Opcode::Nop}},
-                      MakeSpanU8("")}));
+                      ""_su8}));
 }
 
 TEST(FormattersTest, DataSegment_Passive) {
   EXPECT_EQ(
-      R"({init "\12\34"})", format("{}", DataSegment{MakeSpanU8("\x12\x34")}));
+      R"({init "\12\34"})", format("{}", DataSegment{"\x12\x34"_su8}));
 
   EXPECT_EQ(
-      R"(  {init ""})", format("{:>11}", DataSegment{MakeSpanU8("")}));
+      R"(  {init ""})", format("{:>11}", DataSegment{""_su8}));
 }
 
 TEST(FormattersTest, DataCount) {
@@ -428,19 +425,19 @@ TEST(FormattersTest, IndirectNameAssoc) {
 }
 
 TEST(FormattersTest, NameSubsection) {
-  EXPECT_EQ(R"(module "\00\00\00")",
-            format("{}", NameSubsection{NameSubsectionId::ModuleName,
-                                        MakeSpanU8("\0\0\0")}));
+  EXPECT_EQ(
+      R"(module "\00\00\00")",
+      format("{}", NameSubsection{NameSubsectionId::ModuleName, "\0\0\0"_su8}));
 
   EXPECT_EQ(R"(functions "\00\00\00")",
             format("{}", NameSubsection{NameSubsectionId::FunctionNames,
-                                        MakeSpanU8("\0\0\0")}));
+                                        "\0\0\0"_su8}));
 
-  EXPECT_EQ(R"(locals "\00\00\00")",
-            format("{}", NameSubsection{NameSubsectionId::LocalNames,
-                                        MakeSpanU8("\0\0\0")}));
+  EXPECT_EQ(
+      R"(locals "\00\00\00")",
+      format("{}", NameSubsection{NameSubsectionId::LocalNames, "\0\0\0"_su8}));
 
-  EXPECT_EQ(R"( locals "")",
-            format("{:>10s}", NameSubsection{NameSubsectionId::LocalNames,
-                                             MakeSpanU8("")}));
+  EXPECT_EQ(
+      R"( locals "")",
+      format("{:>10s}", NameSubsection{NameSubsectionId::LocalNames, ""_su8}));
 }
