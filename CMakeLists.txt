@@ -116,6 +116,7 @@ add_executable(wasp_unittests
   test/binary/lazy_section_test.cc
   test/binary/lazy_sequence_test.cc
   test/binary/read_test.cc
+  test/binary/read_linking_test.cc
   test/binary/test_utils.cc
   test/binary/write_test.cc
   test/valid/validate_test.cc
