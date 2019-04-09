@@ -61,6 +61,7 @@ add_library(wasplib
   src/binary/global_type.cc
   src/binary/import.cc
   src/binary/indirect_name_assoc.cc
+  src/binary/init_function.cc
   src/binary/init_immediate.cc
   src/binary/instruction.cc
   src/binary/known_section.cc

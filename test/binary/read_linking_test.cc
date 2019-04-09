@@ -22,6 +22,7 @@
 #include "wasp/binary/read/read_comdat.h"
 #include "wasp/binary/read/read_comdat_symbol.h"
 #include "wasp/binary/read/read_comdat_symbol_kind.h"
+#include "wasp/binary/read/read_init_function.h"
 #include "wasp/binary/read/read_linking_subsection.h"
 #include "wasp/binary/read/read_linking_subsection_id.h"
 #include "wasp/binary/read/read_relocation_entry.h"
@@ -53,6 +54,10 @@ TEST(ReadLinkingTest, ComdatSymbolKind) {
   ExpectRead<ComdatSymbolKind>(ComdatSymbolKind::Function, "\x01"_su8);
   ExpectRead<ComdatSymbolKind>(ComdatSymbolKind::Global, "\x02"_su8);
   ExpectRead<ComdatSymbolKind>(ComdatSymbolKind::Event, "\x03"_su8);
+}
+
+TEST(ReadLinkingTest, InitFunction) {
+  ExpectRead<InitFunction>(InitFunction{13, 15}, "\x0d\x0f"_su8);
 }
 
 TEST(ReadLinkingTest, LinkingSubsection) {

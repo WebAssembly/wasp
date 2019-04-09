@@ -611,6 +611,15 @@ typename Ctx::iterator formatter<::wasp::binary::IndirectNameAssoc>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::InitFunction>::format(
+    const ::wasp::binary::InitFunction& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{priority {}, index {}}}", self.priority, self.index);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::NameSubsection>::format(
     const ::wasp::binary::NameSubsection& self,
     Ctx& ctx) {

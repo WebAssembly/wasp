@@ -72,6 +72,7 @@
 #include "wasp/binary/read/read_global_type.h"
 #include "wasp/binary/read/read_index.h"
 #include "wasp/binary/read/read_indirect_name_assoc.h"
+#include "wasp/binary/read/read_init_function.h"
 #include "wasp/binary/read/read_init_immediate.h"
 #include "wasp/binary/read/read_instruction.h"
 #include "wasp/binary/read/read_length.h"
@@ -549,6 +550,16 @@ optional<IndirectNameAssoc> Read(SpanU8* data,
   WASP_TRY_READ(name_map,
                 ReadVector<NameAssoc>(data, features, errors, "name map"));
   return IndirectNameAssoc{index, std::move(name_map)};
+}
+
+optional<InitFunction> Read(SpanU8* data,
+                            const Features& features,
+                            Errors& errors,
+                            Tag<InitFunction>) {
+  ErrorsContextGuard guard{errors, *data, "init function"};
+  WASP_TRY_READ(priority, Read<u32>(data, features, errors));
+  WASP_TRY_READ(index, ReadIndex(data, features, errors, "function index"));
+  return InitFunction{priority, index};
 }
 
 optional<InitImmediate> Read(SpanU8* data,

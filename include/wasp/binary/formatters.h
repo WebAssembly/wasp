@@ -35,6 +35,7 @@
 #include "wasp/binary/global.h"
 #include "wasp/binary/import.h"
 #include "wasp/binary/indirect_name_assoc.h"
+#include "wasp/binary/init_function.h"
 #include "wasp/binary/instruction.h"
 #include "wasp/binary/linking_subsection.h"
 #include "wasp/binary/linking_subsection_id.h"
@@ -107,6 +108,7 @@ WASP_DEFINE_FORMATTER(DataSegment);
 WASP_DEFINE_FORMATTER(DataCount);
 WASP_DEFINE_FORMATTER(NameAssoc);
 WASP_DEFINE_FORMATTER(IndirectNameAssoc);
+WASP_DEFINE_FORMATTER(InitFunction);
 WASP_DEFINE_FORMATTER(NameSubsection);
 WASP_DEFINE_FORMATTER(Comdat);
 WASP_DEFINE_FORMATTER(ComdatSymbol);

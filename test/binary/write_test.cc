@@ -46,6 +46,7 @@
 #include "wasp/binary/write/write_global.h"
 #include "wasp/binary/write/write_global_type.h"
 #include "wasp/binary/write/write_import.h"
+#include "wasp/binary/write/write_init_function.h"
 #include "wasp/binary/write/write_init_immediate.h"
 #include "wasp/binary/write/write_instruction.h"
 #include "wasp/binary/write/write_locals.h"

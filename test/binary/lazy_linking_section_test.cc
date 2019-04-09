@@ -20,6 +20,7 @@
 
 #include "test/binary/test_utils.h"
 #include "wasp/binary/lazy_comdat_subsection.h"
+#include "wasp/binary/lazy_init_functions_subsection.h"
 #include "wasp/binary/lazy_segment_info_subsection.h"
 #include "wasp/binary/lazy_symbol_table_subsection.h"
 
@@ -48,7 +49,7 @@ TEST(LinkingSectionTest, LinkingSection) {
   auto sec = ReadLinkingSection(
       "\x02"                // Linking version.
       "\x05\x05zzzzz"       // Segment info
-      ""                    // TODO Init functions
+      "\x06\x05zzzzz"       // Init functions
       "\x07\x05zzzzz"       // Comdat info
       "\x08\x05zzzzz"_su8,  // Symbol table
       features, errors);
@@ -58,6 +59,11 @@ TEST(LinkingSectionTest, LinkingSection) {
 
   EXPECT_EQ((LinkingSubsection{LinkingSubsectionId::SegmentInfo, "zzzzz"_su8}),
             *it++);
+  ASSERT_NE(end, it);
+
+  EXPECT_EQ(
+      (LinkingSubsection{LinkingSubsectionId::InitFunctions, "zzzzz"_su8}),
+      *it++);
   ASSERT_NE(end, it);
 
   EXPECT_EQ((LinkingSubsection{LinkingSubsectionId::ComdatInfo, "zzzzz"_su8}),
@@ -91,6 +97,42 @@ TEST(LinkingSectionTest, SegmentInfoSubsection) {
   ExpectNoErrors(errors);
 }
 
+TEST(LinkingSectionTest, InitFunctionsSubsection) {
+  Features features;
+  TestErrors errors;
+  auto sec = ReadInitFunctionsSubsection(
+      "\x02"
+      "\x01\x02"
+      "\x03\x04"_su8,
+      features, errors);
+
+  ExpectSubsection(
+      {
+          InitFunction{1, 2},
+          InitFunction{3, 4},
+      },
+      sec);
+  ExpectNoErrors(errors);
+}
+
+TEST(LinkingSectionTest, ComdatSubsection) {
+  Features features;
+  TestErrors errors;
+  auto sec = ReadComdatSubsection(
+      "\x02"
+      "\x01X\0\x01\x03\x04"
+      "\x01Y\0\x00"_su8,
+      features, errors);
+
+  ExpectSubsection(
+      {
+          Comdat{"X", 0, {{ComdatSymbolKind::Event, 4}}},
+          Comdat{"Y", 0, {}},
+      },
+      sec);
+  ExpectNoErrors(errors);
+}
+
 TEST(LinkingSectionTest, SymbolTableSubsection) {
   Features features;
   TestErrors errors;
@@ -117,24 +159,6 @@ TEST(LinkingSectionTest, SymbolTableSubsection) {
           SymbolInfo{F{F::Binding::Global, F::Visibility::Default,
                        F::Undefined::No, F::ExplicitName::No},
                      SI::Section{0}},
-      },
-      sec);
-  ExpectNoErrors(errors);
-}
-
-TEST(LinkingSectionTest, ComdatSubsection) {
-  Features features;
-  TestErrors errors;
-  auto sec = ReadComdatSubsection(
-      "\x02"
-      "\x01X\0\x01\x03\x04"
-      "\x01Y\0\x00"_su8,
-      features, errors);
-
-  ExpectSubsection(
-      {
-          Comdat{"X", 0, {{ComdatSymbolKind::Event, 4}}},
-          Comdat{"Y", 0, {}},
       },
       sec);
   ExpectNoErrors(errors);

@@ -15,6 +15,7 @@
 //
 
 #include "wasp/binary/lazy_comdat_subsection.h"
+#include "wasp/binary/lazy_init_functions_subsection.h"
 #include "wasp/binary/lazy_segment_info_subsection.h"
 #include "wasp/binary/lazy_symbol_table_subsection.h"
 
@@ -31,6 +32,20 @@ LazyComdatSubsection ReadComdatSubsection(LinkingSubsection sec,
                                           const Features& features,
                                           Errors& errors) {
   return LazyComdatSubsection{sec.data, features, errors};
+}
+
+LazyInitFunctionsSubsection ReadInitFunctionsSubsection(
+    SpanU8 data,
+    const Features& features,
+    Errors& errors) {
+  return LazyInitFunctionsSubsection{data, features, errors};
+}
+
+LazyInitFunctionsSubsection ReadInitFunctionsSubsection(
+    LinkingSubsection sec,
+    const Features& features,
+    Errors& errors) {
+  return LazyInitFunctionsSubsection{sec.data, features, errors};
 }
 
 LazySegmentInfoSubsection ReadSegmentInfoSubsection(SpanU8 data,
