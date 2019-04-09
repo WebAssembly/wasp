@@ -1379,7 +1379,7 @@ optional<SymbolInfo> Read(SpanU8* data,
     case SymbolInfoKind::Event: {
       WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
       optional<string_view> name;
-      if (flags.undefined == SymbolInfo::Flags::Undefined::No &&
+      if (flags.undefined == SymbolInfo::Flags::Undefined::No ||
           flags.explicit_name == SymbolInfo::Flags::ExplicitName::Yes) {
         WASP_TRY_READ(name_, ReadString(data, features, errors, "name"));
         name = name_;

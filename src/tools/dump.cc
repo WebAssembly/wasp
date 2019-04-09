@@ -30,6 +30,7 @@
 #include "wasp/binary/errors_nop.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/lazy_code_section.h"
+#include "wasp/binary/lazy_comdat_subsection.h"
 #include "wasp/binary/lazy_data_section.h"
 #include "wasp/binary/lazy_element_section.h"
 #include "wasp/binary/lazy_export_section.h"
@@ -38,13 +39,18 @@
 #include "wasp/binary/lazy_function_section.h"
 #include "wasp/binary/lazy_global_section.h"
 #include "wasp/binary/lazy_import_section.h"
+#include "wasp/binary/lazy_init_functions_subsection.h"
 #include "wasp/binary/lazy_local_names_subsection.h"
 #include "wasp/binary/lazy_memory_section.h"
 #include "wasp/binary/lazy_module.h"
 #include "wasp/binary/lazy_module_name_subsection.h"
 #include "wasp/binary/lazy_name_section.h"
+#include "wasp/binary/lazy_segment_info_subsection.h"
+#include "wasp/binary/lazy_symbol_table_subsection.h"
 #include "wasp/binary/lazy_table_section.h"
 #include "wasp/binary/lazy_type_section.h"
+#include "wasp/binary/linking_section.h"
+#include "wasp/binary/relocation_section.h"
 #include "wasp/binary/start_section.h"
 
 namespace wasp {
@@ -93,6 +99,8 @@ struct Tool {
   void DoDataSection(Pass, LazyDataSection);
   void DoDataCountSection(Pass, DataCountSection);
   void DoNameSection(Pass, LazyNameSection);
+  void DoLinkingSection(Pass, LinkingSection);
+  void DoRelocationSection(Pass, RelocationSection);
 
   void DoCount(Pass, optional<Index> count);
 
@@ -121,6 +129,12 @@ struct Tool {
 
   size_t file_offset(SpanU8 data);
 
+  struct Symbol {
+    SymbolInfoKind kind;
+    std::string name;
+    Index index;
+  };
+
   ErrorsNop errors;
   std::string filename;
   Options options;
@@ -130,6 +144,7 @@ struct Tool {
   std::vector<Function> functions;
   std::map<Index, string_view> function_names;
   std::map<Index, string_view> global_names;
+  std::map<Index, Symbol> symbol_table;
   bool should_print_details = true;
   Index imported_function_count = 0;
   Index imported_table_count = 0;
@@ -311,6 +326,37 @@ void Tool::DoPrepass() {
             }
           }
         }
+      } else if (custom.name == "linking") {
+        for (auto subsection :
+             ReadLinkingSection(custom, features, errors).subsections) {
+          if (subsection.id == LinkingSubsectionId::SymbolTable) {
+            Index symbol_index = 0;
+            for (auto symbol :
+                 ReadSymbolTableSubsection(subsection, features, errors)
+                     .sequence) {
+              auto kind = symbol.kind();
+              auto name_opt = symbol.name();
+              auto name = name_opt.value_or("").to_string();
+              if (symbol.is_base()) {
+                auto item_index = symbol.base().index;
+                if (name_opt) {
+                  if (kind == SymbolInfoKind::Function) {
+                    InsertFunctionName(item_index, *name_opt);
+                  } else if (kind == SymbolInfoKind::Global) {
+                    InsertGlobalName(item_index, *name_opt);
+                  }
+                }
+                symbol_table[symbol_index] = Symbol{kind, name, item_index};
+              } else if (symbol.is_data()) {
+                symbol_table[symbol_index] = Symbol{kind, name, 0};
+              } else if (symbol.is_section()) {
+                symbol_table[symbol_index] =
+                    Symbol{kind, name, symbol.section().section};
+              }
+              ++symbol_index;
+            }
+          }
+        }
       }
     }
   }
@@ -446,6 +492,11 @@ void Tool::DoCustomSection(Pass pass, CustomSection custom) {
       print("\n");
       if (custom.name == "name") {
         DoNameSection(pass, ReadNameSection(custom, features, errors));
+      } else if (custom.name == "linking") {
+        DoLinkingSection(pass, ReadLinkingSection(custom, features, errors));
+      } else if (custom.name.starts_with("reloc.")) {
+        DoRelocationSection(pass,
+                            ReadRelocationSection(custom, features, errors));
       }
       break;
 
@@ -683,7 +734,7 @@ void Tool::DoDataCountSection(Pass pass, DataCountSection section) {
 }
 
 void Tool::DoNameSection(Pass pass, LazyNameSection section) {
-  const Features& features=  options.features;
+  const Features& features = options.features;
   for (auto subsection : section) {
     switch (subsection.id) {
       case NameSubsectionId::ModuleName: {
@@ -723,6 +774,158 @@ void Tool::DoNameSection(Pass pass, LazyNameSection section) {
         break;
       }
     }
+  }
+}
+
+void Tool::DoLinkingSection(Pass pass, LinkingSection section) {
+  const Features& features = options.features;
+  for (auto subsection : section.subsections) {
+    switch (subsection.id) {
+      case LinkingSubsectionId::SegmentInfo: {
+        if (ShouldPrintDetails(pass)) {
+          auto segment_infos =
+              ReadSegmentInfoSubsection(subsection.data, features, errors);
+          print(" - segment info [count={}]\n",
+                segment_infos.count.value_or(0));
+          Index index = 0;
+          for (auto segment_info : segment_infos.sequence) {
+            print("  - {}: {} p2align={} flags={:#x}\n", index,
+                  segment_info.name, segment_info.align_log2,
+                  segment_info.flags);
+            ++index;
+          }
+        }
+        break;
+      }
+
+      case LinkingSubsectionId::InitFunctions: {
+        if (ShouldPrintDetails(pass)) {
+          auto init_functions =
+              ReadInitFunctionsSubsection(subsection.data, features, errors);
+          print(" - init functions [count={}]\n",
+                init_functions.count.value_or(0));
+          for (auto init_function : init_functions.sequence) {
+            print("  - {}: priority={}\n", init_function.index,
+                  init_function.priority);
+          }
+        }
+        break;
+      }
+
+      case LinkingSubsectionId::ComdatInfo: {
+        if (ShouldPrintDetails(pass)) {
+          auto comdats =
+              ReadComdatSubsection(subsection.data, features, errors);
+          print(" - comdat [count={}]\n", comdats.count.value_or(0));
+          Index comdat_index = 0;
+          for (auto comdat : comdats.sequence) {
+            print("  - {}: \"{}\" flags={:#x} [count={}]\n",
+                  comdat_index, comdat.name, comdat.flags);
+            Index symbol_index = 0;
+            for (auto symbol : comdat.symbols) {
+              print("   - {}: {} index={}\n", symbol_index, symbol.kind,
+                    symbol.index);
+              ++symbol_index;
+            }
+            ++comdat_index;
+          }
+        }
+        break;
+      }
+
+      case LinkingSubsectionId::SymbolTable: {
+        if (ShouldPrintDetails(pass)) {
+          auto print_symbol_flags = [&](SymbolInfo::Flags flags) {
+            if (flags.undefined == SymbolInfo::Flags::Undefined::Yes) {
+              print(" {}", flags.undefined);
+            }
+            print(" binding={} vis={}", flags.binding, flags.visibility);
+            if (flags.explicit_name == SymbolInfo::Flags::ExplicitName::Yes) {
+              print(" {}", flags.explicit_name);
+            }
+          };
+
+          auto symbol_table =
+              ReadSymbolTableSubsection(subsection.data, features, errors);
+          print(" - symbol table [count={}]\n",
+                symbol_table.count.value_or(0));
+          Index index = 0;
+          for (auto symbol : symbol_table.sequence) {
+            switch (symbol.kind()) {
+              case SymbolInfoKind::Function: {
+                const auto& base = symbol.base();
+                print("  - {}: F <{}> func={}", index,
+                      base.name.value_or(
+                          GetFunctionName(base.index).value_or("")),
+                      base.index);
+                print_symbol_flags(symbol.flags);
+                break;
+              }
+
+              case SymbolInfoKind::Global: {
+                const auto& base = symbol.base();
+                print(
+                    "  - {}: G <{}> global={}", index,
+                    base.name.value_or(GetGlobalName(base.index).value_or("")),
+                    base.index);
+                print_symbol_flags(symbol.flags);
+                break;
+              }
+
+              case SymbolInfoKind::Event: {
+                const auto& base = symbol.base();
+                // TODO GetEventName.
+                print("  - {}: E <{}> event={}", index, base.name.value_or(""),
+                      base.index);
+                print_symbol_flags(symbol.flags);
+                break;
+              }
+
+              case SymbolInfoKind::Data: {
+                const auto& data = symbol.data();
+                print("  - {}: D <{}>", index, data.name);
+                if (data.defined) {
+                  print(" segment={} offset={} size={}", data.defined->index,
+                        data.defined->offset, data.defined->size);
+                }
+                print_symbol_flags(symbol.flags);
+                break;
+              }
+
+              case SymbolInfoKind::Section: {
+                string_view name = "";  // TODO
+                print("  - {}: S <{}> section={}", index, name,
+                      symbol.section().section);
+                print_symbol_flags(symbol.flags);
+                break;
+              }
+            }
+            print("\n");
+            ++index;
+          }
+        }
+        break;
+      }
+    }
+  }
+}
+
+void Tool::DoRelocationSection(Pass pass, RelocationSection section) {
+  const Features& features = options.features;
+  PrintDetails(pass, " - relocations for section {} [{}]\n",
+               section.section_index.value_or(0), section.count.value_or(0));
+  for (auto subsection : section.entries) {
+#if 0
+    Offset total_offset = GetSectionStart(reloc_section_) + offset;
+    PrintDetails("   - %-18s offset=%#08" PRIoffset "(file=%#08" PRIoffset ") ",
+                 GetRelocTypeName(type), offset, total_offset);
+    if (type == RelocType::TypeIndexLEB) {
+      PrintDetails("type=%" PRIindex, index);
+    } else {
+      PrintDetails("symbol=%" PRIindex " <" PRIstringview ">", index,
+                   WABT_PRINTF_STRING_VIEW_ARG(GetSymbolName(index)));
+    }
+#endif
   }
 }
 

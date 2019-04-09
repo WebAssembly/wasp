@@ -81,6 +81,8 @@ struct SymbolInfo {
   Section& section();
   const Section& section() const;
 
+  optional<string_view> name() const;
+
   Flags flags;
   variant<Base, Data, Section> desc;
 };
@@ -107,5 +109,7 @@ bool operator!=(const SymbolInfo::Section&, const SymbolInfo::Section&);
 
 }  // namespace binary
 }  // namespace wasp
+
+#include "wasp/binary/symbol_info-inl.h"
 
 #endif // WASP_BINARY_SYMBOL_INFO_H_

@@ -188,8 +188,9 @@ TEST(ReadLinkingTest, SymbolInfo_Flags) {
 
 TEST(ReadLinkingTest, SymbolInfo_Function) {
   using SI = SymbolInfo;
-  ExpectRead<SI>(SI{zero_flags, SI::Base{SymbolInfoKind::Function, 0, nullopt}},
-                 "\x00\x00\x00"_su8);
+  ExpectRead<SI>(
+      SI{undefined_flags, SI::Base{SymbolInfoKind::Function, 0, nullopt}},
+      "\x00\x10\x00"_su8);
   ExpectRead<SI>(
       SI{explicit_name_flags, SI::Base{SymbolInfoKind::Function, 0, "name"}},
       "\x00\x40\x00\x04name"_su8);
@@ -205,8 +206,9 @@ TEST(ReadLinkingTest, SymbolInfo_Data) {
 
 TEST(ReadLinkingTest, SymbolInfo_Global) {
   using SI = SymbolInfo;
-  ExpectRead<SI>(SI{zero_flags, SI::Base{SymbolInfoKind::Global, 0, nullopt}},
-                 "\x02\x00\x00"_su8);
+  ExpectRead<SI>(
+      SI{undefined_flags, SI::Base{SymbolInfoKind::Global, 0, nullopt}},
+      "\x02\x10\x00"_su8);
   ExpectRead<SI>(
       SI{explicit_name_flags, SI::Base{SymbolInfoKind::Global, 0, "name"}},
       "\x02\x40\x00\x04name"_su8);
@@ -219,8 +221,9 @@ TEST(ReadLinkingTest, SymbolInfo_Section) {
 
 TEST(ReadLinkingTest, SymbolInfo_Event) {
   using SI = SymbolInfo;
-  ExpectRead<SI>(SI{zero_flags, SI::Base{SymbolInfoKind::Event, 0, nullopt}},
-                 "\x04\x00\x00"_su8);
+  ExpectRead<SI>(
+      SI{undefined_flags, SI::Base{SymbolInfoKind::Event, 0, nullopt}},
+      "\x04\x10\x00"_su8);
   ExpectRead<SI>(
       SI{explicit_name_flags, SI::Base{SymbolInfoKind::Event, 0, "name"}},
       "\x04\x40\x00\x04name"_su8);

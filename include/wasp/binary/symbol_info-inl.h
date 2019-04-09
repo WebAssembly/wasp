@@ -16,6 +16,8 @@
 
 #include "wasp/binary/symbol_info.h"
 
+#include "wasp/base/macros.h"
+
 namespace wasp {
 namespace binary {
 
@@ -28,7 +30,7 @@ inline SymbolInfoKind SymbolInfo::kind() const {
     case 2:
       return SymbolInfoKind::Section;
     default:
-      WASP_UNREACHABLE;
+      WASP_UNREACHABLE();
   }
 }
 
@@ -66,6 +68,16 @@ inline SymbolInfo::Section& SymbolInfo::section() {
 
 inline const SymbolInfo::Section& SymbolInfo::section() const {
   return get<Section>(desc);
+}
+
+inline optional<string_view> SymbolInfo::name() const {
+  if (is_base()) {
+    return base().name;
+  } else if (is_data()) {
+    return data().name;
+  } else {
+    return nullopt;
+  }
 }
 
 }  // namespace binary
