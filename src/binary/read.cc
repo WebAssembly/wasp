@@ -1348,7 +1348,8 @@ optional<SymbolInfo> Read(SpanU8* data,
   ErrorsContextGuard guard{errors, *data, "symbol info"};
   WASP_TRY_READ(kind, Read<SymbolInfoKind>(data, features, errors));
   WASP_TRY_READ(encoded_flags, Read<u32>(data, features, errors));
-  WASP_TRY_DECODE(flags_opt, encoded_flags, SymbolInfoFlags, "symbol info flags");
+  WASP_TRY_DECODE(flags_opt, encoded_flags, SymbolInfoFlags,
+                  "symbol info flags");
   auto flags = *flags_opt;
   switch (kind) {
     case SymbolInfoKind::Function:
