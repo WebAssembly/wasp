@@ -26,6 +26,7 @@
 #include "wasp/binary/read/read_linking_subsection_id.h"
 #include "wasp/binary/read/read_relocation_entry.h"
 #include "wasp/binary/read/read_relocation_type.h"
+#include "wasp/binary/read/read_segment_info.h"
 #include "wasp/binary/read/read_symbol_info.h"
 #include "wasp/binary/read/read_symbol_info_kind.h"
 
@@ -37,9 +38,8 @@ TEST(ReadLinkingTest, Comdat) {
   ExpectRead<Comdat>(
       Comdat{"name",
              0,
-             1,
              {{ComdatSymbolKind::Data, 2}, {ComdatSymbolKind::Function, 3}}},
-      "\x04name\x00\x01"
+      "\x04name\x00"
       "\x02\x00\x02\x01\x03"_su8);
 }
 
@@ -128,6 +128,10 @@ TEST(ReadLinkingTest, RelocationType) {
   ExpectRead<RelocationType>(RelocationType::EventIndexLEB, "\x0a"_su8);
   ExpectRead<RelocationType>(RelocationType::MemoryAddressRelSLEB, "\x0b"_su8);
   ExpectRead<RelocationType>(RelocationType::TableIndexRelSLEB, "\x0c"_su8);
+}
+
+TEST(ReadLinkingTest, ReadSegmentInfo) {
+  ExpectRead<SegmentInfo>(SegmentInfo{"name", 1, 2}, "\x04name\x01\x02"_su8);
 }
 
 namespace {

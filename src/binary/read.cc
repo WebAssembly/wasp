@@ -94,6 +94,7 @@
 #include "wasp/binary/read/read_s64.h"
 #include "wasp/binary/read/read_section.h"
 #include "wasp/binary/read/read_section_id.h"
+#include "wasp/binary/read/read_segment_info.h"
 #include "wasp/binary/read/read_shuffle_immediate.h"
 #include "wasp/binary/read/read_start.h"
 #include "wasp/binary/read/read_string.h"
@@ -224,10 +225,9 @@ optional<Comdat> Read(SpanU8* data,
   ErrorsContextGuard guard{errors, *data, "comdat"};
   WASP_TRY_READ(name, ReadString(data, features, errors, "name"));
   WASP_TRY_READ(flags, Read<u32>(data, features, errors));
-  WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
   WASP_TRY_READ(symbols, ReadVector<ComdatSymbol>(data, features, errors,
                                                   "comdat symbols vector"));
-  return Comdat{name, flags, index, std::move(symbols)};
+  return Comdat{name, flags, std::move(symbols)};
 }
 
 optional<ComdatSymbol> Read(SpanU8* data,
@@ -1306,6 +1306,17 @@ optional<SectionId> Read(SpanU8* data,
   WASP_TRY_READ(val, Read<u32>(data, features, errors));
   WASP_TRY_DECODE(decoded, val, SectionId, "section id");
   return decoded;
+}
+
+optional<SegmentInfo> Read(SpanU8* data,
+                           const Features& features,
+                           Errors& errors,
+                           Tag<SegmentInfo>) {
+  ErrorsContextGuard guard{errors, *data, "segment info"};
+  WASP_TRY_READ(name, ReadString(data, features, errors, "name"));
+  WASP_TRY_READ(align_log2, Read<u32>(data, features, errors));
+  WASP_TRY_READ(flags, Read<u32>(data, features, errors));
+  return SegmentInfo{name, align_log2, flags};
 }
 
 optional<ShuffleImmediate> Read(SpanU8* data,

@@ -29,7 +29,6 @@ namespace binary {
 struct Comdat {
   string_view name;
   u32 flags;
-  Index index;
   std::vector<ComdatSymbol> symbols;
 };
 

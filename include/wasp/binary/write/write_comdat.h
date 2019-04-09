@@ -19,7 +19,6 @@
 
 #include "wasp/binary/comdat.h"
 #include "wasp/binary/write/write_comdat_symbol.h"
-#include "wasp/binary/write/write_index.h"
 #include "wasp/binary/write/write_string.h"
 #include "wasp/binary/write/write_u32.h"
 #include "wasp/binary/write/write_vector.h"
@@ -31,7 +30,6 @@ template <typename Iterator>
 Iterator Write(const Comdat& value, Iterator out) {
   out = Write(value.name, out);
   out = Write(value.flags, out);
-  out = WriteIndex(value.index, out);
   out = WriteVector(value.symbols.begin(), value.symbols.end(), out);
   return out;
 }

@@ -14,14 +14,25 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/comdat.h"
+#ifndef WASP_BINARY_READ_READ_SEGMENT_INFO_H_
+#define WASP_BINARY_READ_READ_SEGMENT_INFO_H_
 
-#include "src/base/operator_eq_ne_macros.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/span.h"
+#include "wasp/binary/read/read.h"
+#include "wasp/binary/segment_info.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-WASP_OPERATOR_EQ_NE_3(Comdat, name, flags, symbols)
+class Errors;
+
+optional<SegmentInfo> Read(SpanU8*, const Features&, Errors&, Tag<SegmentInfo>);
 
 }  // namespace binary
 }  // namespace wasp
+
+#endif  // WASP_BINARY_READ_READ_SEGMENT_INFO_H_

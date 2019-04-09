@@ -624,8 +624,8 @@ typename Ctx::iterator formatter<::wasp::binary::Comdat>::format(
     const ::wasp::binary::Comdat& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{{name {}, flags {}, index {}, symbols {}}}", self.name,
-            self.flags, self.index, self.symbols);
+  format_to(buf, "{{name {}, flags {}, symbols {}}}", self.name, self.flags,
+            self.symbols);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 

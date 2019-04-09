@@ -15,7 +15,10 @@
 //
 
 #include "wasp/binary/read/read_section.h"
+#include "wasp/base/format.h"
 #include "wasp/binary/data_count_section.h"
+#include "wasp/binary/errors.h"
+#include "wasp/binary/formatters.h"
 #include "wasp/binary/lazy_code_section.h"
 #include "wasp/binary/lazy_data_section.h"
 #include "wasp/binary/lazy_element_section.h"
@@ -27,7 +30,11 @@
 #include "wasp/binary/lazy_name_section.h"
 #include "wasp/binary/lazy_table_section.h"
 #include "wasp/binary/lazy_type_section.h"
+#include "wasp/binary/linking_section.h"
+#include "wasp/binary/read/read_count.h"
 #include "wasp/binary/read/read_data_count.h"
+#include "wasp/binary/read/read_u32.h"
+#include "wasp/binary/relocation_section.h"
 
 namespace wasp {
 namespace binary {
@@ -129,6 +136,31 @@ LazyImportSection ReadImportSection(KnownSection sec,
   return ReadImportSection(sec.data, features, errors);
 }
 
+LinkingSection::LinkingSection(SpanU8 data,
+                               const Features& features,
+                               Errors& errors)
+    : data{data},
+      version{Read<u32>(&data, features, errors)},
+      subsections{data, features, errors} {
+  constexpr u32 kVersion = 2;
+  if (version && version != kVersion) {
+    errors.OnError(data, format("Expected linking section version: {}, got {}",
+                                kVersion, *version));
+  }
+}
+
+LinkingSection ReadLinkingSection(SpanU8 data,
+                                  const Features& features,
+                                  Errors& errors) {
+  return LinkingSection{data, features, errors};
+}
+
+LinkingSection ReadLinkingSection(CustomSection sec,
+                                  const Features& features,
+                                  Errors& errors) {
+  return LinkingSection{sec.data, features, errors};
+}
+
 LazyMemorySection ReadMemorySection(SpanU8 data,
                                     const Features& features,
                                     Errors& errors) {
@@ -151,6 +183,26 @@ LazyNameSection ReadNameSection(CustomSection sec,
                                 const Features& features,
                                 Errors& errors) {
   return LazyNameSection{sec.data, features, errors};
+}
+
+RelocationSection::RelocationSection(SpanU8 data,
+                                     const Features& features,
+                                     Errors& errors)
+    : data{data},
+      section_index{Read<u32>(&data, features, errors)},
+      count{ReadCount(&data, features, errors)},
+      entries{data, features, errors} {}
+
+RelocationSection ReadRelocationSection(SpanU8 data,
+                                        const Features& features,
+                                        Errors& errors) {
+  return RelocationSection{data, features, errors};
+}
+
+RelocationSection ReadRelocationSection(CustomSection sec,
+                                        const Features& features,
+                                        Errors& errors) {
+  return RelocationSection{sec.data, features, errors};
 }
 
 LazyTableSection ReadTableSection(SpanU8 data,

@@ -74,6 +74,7 @@ add_library(wasplib
   src/binary/name_assoc.cc
   src/binary/name_subsection.cc
   src/binary/read.cc
+  src/binary/read_linking_subsection.cc
   src/binary/read_module.cc
   src/binary/read_name_subsection.cc
   src/binary/read_section.cc
@@ -110,9 +111,11 @@ add_executable(wasp_unittests
   test/base/v128_test.cc
   test/binary/formatters_test.cc
   test/binary/lazy_expression_test.cc
+  test/binary/lazy_linking_section_test.cc
   test/binary/lazy_module_test.cc
   test/binary/lazy_module_utils_test.cc
   test/binary/lazy_name_section_test.cc
+  test/binary/lazy_relocation_section_test.cc
   test/binary/lazy_section_test.cc
   test/binary/lazy_sequence_test.cc
   test/binary/read_test.cc

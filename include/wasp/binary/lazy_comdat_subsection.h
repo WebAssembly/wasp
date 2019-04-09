@@ -14,14 +14,32 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/comdat.h"
+#ifndef WASP_BINARY_LAZY_COMDAT_SUBSECTION_H_
+#define WASP_BINARY_LAZY_COMDAT_SUBSECTION_H_
 
-#include "src/base/operator_eq_ne_macros.h"
+#include "wasp/base/span.h"
+#include "wasp/binary/comdat.h"
+#include "wasp/binary/lazy_section.h"
+#include "wasp/binary/linking_subsection.h"
+#include "wasp/binary/read/read_comdat.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
 
-WASP_OPERATOR_EQ_NE_3(Comdat, name, flags, symbols)
+class Errors;
+
+using LazyComdatSubsection = LazySection<Comdat>;
+
+LazyComdatSubsection ReadComdatSubsection(SpanU8, const Features&, Errors&);
+
+LazyComdatSubsection ReadComdatSubsection(LinkingSubsection,
+                                          const Features&,
+                                          Errors&);
 
 }  // namespace binary
 }  // namespace wasp
+
+#endif  // WASP_BINARY_LAZY_COMDAT_SUBSECTION_H_
