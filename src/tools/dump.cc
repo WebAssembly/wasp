@@ -1075,8 +1075,8 @@ void Tool::PrintMemory(SpanU8 start,
     const SpanU8 line = data.subspan(0, line_size);
     print("{}", prefix);
     print("{:07x}: ", (line.begin() - start.begin()) + offset);
-    for (int i = 0; i < octets_per_line; ++i) {
-      for (int j = 0; j < octets_per_group; ++j) {
+    for (int i = 0; i < octets_per_line;) {
+      for (int j = 0; j < octets_per_group; ++j, ++i) {
         if (i < line.size()) {
           print("{:02x}", line[i]);
         } else {
