@@ -41,5 +41,13 @@ inline const CustomSection& Section::custom() const {
   return get<CustomSection>(contents);
 }
 
+inline SpanU8 Section::data() const {
+  if (is_known()) {
+    return known().data;
+  } else {
+    return custom().data;
+  }
+}
+
 }  // namespace binary
 }  // namespace wasp

@@ -25,6 +25,7 @@ namespace binary {
 
 class Errors {
  public:
+  virtual ~Errors() {}
   void PushContext(SpanU8 pos, string_view desc);
   void PopContext();
   void OnError(SpanU8 pos, string_view message);

@@ -33,6 +33,8 @@ struct Section {
   CustomSection& custom();
   const CustomSection& custom() const;
 
+  SpanU8 data() const;
+
   variant<KnownSection, CustomSection> contents;
 };
 

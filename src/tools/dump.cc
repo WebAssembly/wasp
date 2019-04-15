@@ -27,7 +27,7 @@
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/data_count_section.h"
-#include "wasp/binary/errors_nop.h"
+#include "wasp/binary/errors.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/lazy_code_section.h"
 #include "wasp/binary/lazy_comdat_subsection.h"
@@ -66,6 +66,20 @@ enum class Pass {
   RawData,
 };
 
+class ErrorsBasic : public Errors {
+ public:
+  explicit ErrorsBasic(SpanU8 data) : data{data} {}
+
+ protected:
+  void HandlePushContext(SpanU8 pos, string_view desc) override {}
+  void HandlePopContext() override {}
+  void HandleOnError(SpanU8 pos, string_view message) override {
+    print("{:08x}: {}\n", pos.data() - data.data(), message);
+  }
+
+  SpanU8 data;
+};
+
 struct Options {
   Features features;
   bool print_headers = false;
@@ -78,40 +92,47 @@ struct Options {
 struct Tool {
   explicit Tool(string_view filename, SpanU8 data, Options);
 
+  using SectionIndex = u32;
+
   void Run();
   void DoPrepass();
   void DoPass(Pass);
   bool SectionMatches(Section) const;
-  void DoKnownSection(Pass, KnownSection);
-  void DoCustomSection(Pass, CustomSection);
-  void DoSectionHeader(Pass, string_view name, SpanU8 data);
+  void DoSectionHeader(Pass, Section);
+  void DoKnownSection(Pass, SectionIndex, KnownSection);
+  void DoCustomSection(Pass, SectionIndex, CustomSection);
 
-  void DoTypeSection(Pass, LazyTypeSection);
-  void DoImportSection(Pass, LazyImportSection);
-  void DoFunctionSection(Pass, LazyFunctionSection);
-  void DoTableSection(Pass, LazyTableSection);
-  void DoMemorySection(Pass, LazyMemorySection);
-  void DoGlobalSection(Pass, LazyGlobalSection);
-  void DoExportSection(Pass, LazyExportSection);
-  void DoStartSection(Pass, StartSection);
-  void DoElementSection(Pass, LazyElementSection);
-  void DoCodeSection(Pass, LazyCodeSection);
-  void DoDataSection(Pass, LazyDataSection);
-  void DoDataCountSection(Pass, DataCountSection);
-  void DoNameSection(Pass, LazyNameSection);
-  void DoLinkingSection(Pass, LinkingSection);
-  void DoRelocationSection(Pass, RelocationSection);
+  void DoTypeSection(Pass, SectionIndex, LazyTypeSection);
+  void DoImportSection(Pass, SectionIndex, LazyImportSection);
+  void DoFunctionSection(Pass, SectionIndex, LazyFunctionSection);
+  void DoTableSection(Pass, SectionIndex, LazyTableSection);
+  void DoMemorySection(Pass, SectionIndex, LazyMemorySection);
+  void DoGlobalSection(Pass, SectionIndex, LazyGlobalSection);
+  void DoExportSection(Pass, SectionIndex, LazyExportSection);
+  void DoStartSection(Pass, SectionIndex, StartSection);
+  void DoElementSection(Pass, SectionIndex, LazyElementSection);
+  void DoCodeSection(Pass, SectionIndex, LazyCodeSection);
+  void DoDataSection(Pass, SectionIndex, LazyDataSection);
+  void DoDataCountSection(Pass, SectionIndex, DataCountSection);
+  void DoNameSection(Pass, SectionIndex, LazyNameSection);
+  void DoLinkingSection(Pass, SectionIndex, LinkingSection);
+  void DoRelocationSection(Pass, SectionIndex, RelocationSection);
 
   void DoCount(Pass, optional<Index> count);
 
-  void Disassemble(Index func_index, Code);
+  void Disassemble(SectionIndex, Index func_index, Code);
 
   void InsertFunctionName(Index, string_view name);
   void InsertGlobalName(Index, string_view name);
   optional<FunctionType> GetFunctionType(Index) const;
   optional<string_view> GetFunctionName(Index) const;
   optional<string_view> GetGlobalName(Index) const;
+  optional<string_view> GetSectionName(Index) const;
+  optional<string_view> GetSymbolName(Index) const;
   optional<Index> GetI32Value(const ConstantExpression&);
+
+  using RelocationEntries = std::vector<RelocationEntry>;
+  optional<RelocationEntries> GetRelocationEntries(SectionIndex);
 
   enum class PrintChars { No, Yes };
 
@@ -135,16 +156,19 @@ struct Tool {
     Index index;
   };
 
-  ErrorsNop errors;
   std::string filename;
   Options options;
   SpanU8 data;
+  ErrorsBasic errors;
   LazyModule module;
   std::vector<TypeEntry> type_entries;
   std::vector<Function> functions;
   std::map<Index, string_view> function_names;
   std::map<Index, string_view> global_names;
   std::map<Index, Symbol> symbol_table;
+  std::map<SectionIndex, std::string> section_names;
+  std::map<SectionIndex, size_t> section_starts;
+  std::map<SectionIndex, RelocationEntries> section_relocations;
   bool should_print_details = true;
   Index imported_function_count = 0;
   Index imported_table_count = 0;
@@ -224,6 +248,7 @@ Tool::Tool(string_view filename, SpanU8 data, Options options)
     : filename(filename),
       options{options},
       data{data},
+      errors{data},
       module{ReadModule(data, options.features, errors)} {}
 
 void Tool::Run() {
@@ -249,9 +274,12 @@ void Tool::Run() {
 
 void Tool::DoPrepass() {
   const Features& features = options.features;
+  SectionIndex section_index = 0;
   for (auto section : module.sections) {
+    section_starts[section_index] = file_offset(section.data());
     if (section.is_known()) {
       auto known = section.known();
+      section_names[section_index] = format("{}", known.id);
       switch (known.id) {
         case SectionId::Type: {
           auto seq = ReadTypeSection(known, features, errors).sequence;
@@ -316,6 +344,7 @@ void Tool::DoPrepass() {
       }
     } else if (section.is_custom()) {
       auto custom = section.custom();
+      section_names[section_index] = custom.name.to_string();
       if (custom.name == "name") {
         for (auto subsection : ReadNameSection(custom, features, errors)) {
           if (subsection.id == NameSubsectionId::FunctionNames) {
@@ -357,8 +386,15 @@ void Tool::DoPrepass() {
             }
           }
         }
+      } else if (custom.name.starts_with("reloc.")) {
+        auto sec = ReadRelocationSection(custom, features, errors);
+        if (sec.section_index) {
+          section_relocations[*sec.section_index] =
+              RelocationEntries{sec.entries.begin(), sec.entries.end()};
+        }
       }
     }
+    ++section_index;
   }
 }
 
@@ -380,15 +416,17 @@ void Tool::DoPass(Pass pass) {
       break;
   }
 
+  SectionIndex section_index = 0;
   for (auto section : module.sections) {
-    if (!SectionMatches(section)) {
-      continue;
+    if (SectionMatches(section)) {
+      DoSectionHeader(pass, section);
+      if (section.is_known()) {
+        DoKnownSection(pass, section_index, section.known());
+      } else if (section.is_custom()) {
+        DoCustomSection(pass, section_index, section.custom());
+      }
     }
-    if (section.is_known()) {
-      DoKnownSection(pass, section.known());
-    } else if (section.is_custom()) {
-      DoCustomSection(pass, section.custom());
-    }
+    ++section_index;
   }
 }
 
@@ -422,80 +460,96 @@ bool Tool::SectionMatches(Section section) const {
   return StringsAreEqualCaseInsensitive(name, options.section_name);
 }
 
-void Tool::DoKnownSection(Pass pass, KnownSection known) {
+void Tool::DoKnownSection(Pass pass,
+                          SectionIndex section_index,
+                          KnownSection known) {
   const Features& features = options.features;
-  DoSectionHeader(pass, format("{}", known.id), known.data);
   switch (known.id) {
     case SectionId::Custom:
       WASP_UNREACHABLE();
       break;
 
     case SectionId::Type:
-      DoTypeSection(pass, ReadTypeSection(known, features, errors));
+      DoTypeSection(pass, section_index,
+                    ReadTypeSection(known, features, errors));
       break;
 
     case SectionId::Import:
-      DoImportSection(pass, ReadImportSection(known, features, errors));
+      DoImportSection(pass, section_index,
+                      ReadImportSection(known, features, errors));
       break;
 
     case SectionId::Function:
-      DoFunctionSection(pass, ReadFunctionSection(known, features, errors));
+      DoFunctionSection(pass, section_index,
+                        ReadFunctionSection(known, features, errors));
       break;
 
     case SectionId::Table:
-      DoTableSection(pass, ReadTableSection(known, features, errors));
+      DoTableSection(pass, section_index,
+                     ReadTableSection(known, features, errors));
       break;
 
     case SectionId::Memory:
-      DoMemorySection(pass, ReadMemorySection(known, features, errors));
+      DoMemorySection(pass, section_index,
+                      ReadMemorySection(known, features, errors));
       break;
 
     case SectionId::Global:
-      DoGlobalSection(pass, ReadGlobalSection(known, features, errors));
+      DoGlobalSection(pass, section_index,
+                      ReadGlobalSection(known, features, errors));
       break;
 
     case SectionId::Export:
-      DoExportSection(pass, ReadExportSection(known, features, errors));
+      DoExportSection(pass, section_index,
+                      ReadExportSection(known, features, errors));
       break;
 
     case SectionId::Start:
-      DoStartSection(pass, ReadStartSection(known, features, errors));
+      DoStartSection(pass, section_index,
+                     ReadStartSection(known, features, errors));
       break;
 
     case SectionId::Element:
-      DoElementSection(pass, ReadElementSection(known, features, errors));
+      DoElementSection(pass, section_index,
+                       ReadElementSection(known, features, errors));
       break;
 
     case SectionId::Code:
-      DoCodeSection(pass, ReadCodeSection(known, features, errors));
+      DoCodeSection(pass, section_index,
+                    ReadCodeSection(known, features, errors));
       break;
 
     case SectionId::Data:
-      DoDataSection(pass, ReadDataSection(known, features, errors));
+      DoDataSection(pass, section_index,
+                    ReadDataSection(known, features, errors));
       break;
 
     case SectionId::DataCount:
-      DoDataCountSection(pass, ReadDataCountSection(known, features, errors));
+      DoDataCountSection(pass, section_index,
+                         ReadDataCountSection(known, features, errors));
       break;
   }
 }
 
-void Tool::DoCustomSection(Pass pass, CustomSection custom) {
+void Tool::DoCustomSection(Pass pass,
+                           SectionIndex section_index,
+                           CustomSection custom) {
   const Features& features = options.features;
-  DoSectionHeader(pass, format("custom \"{}\"", custom.name), custom.data);
   switch (pass) {
     case Pass::Headers:
       print("\"{}\"\n", custom.name);
       break;
 
     case Pass::Details:
-      print("\n");
+      print(":\n - name: \"{}\"\n", custom.name);
       if (custom.name == "name") {
-        DoNameSection(pass, ReadNameSection(custom, features, errors));
+        DoNameSection(pass, section_index,
+                      ReadNameSection(custom, features, errors));
       } else if (custom.name == "linking") {
-        DoLinkingSection(pass, ReadLinkingSection(custom, features, errors));
+        DoLinkingSection(pass, section_index,
+                         ReadLinkingSection(custom, features, errors));
       } else if (custom.name.starts_with("reloc.")) {
-        DoRelocationSection(pass,
+        DoRelocationSection(pass, section_index,
                             ReadRelocationSection(custom, features, errors));
       }
       break;
@@ -505,32 +559,41 @@ void Tool::DoCustomSection(Pass pass, CustomSection custom) {
   }
 }
 
-void Tool::DoSectionHeader(Pass pass, string_view name, SpanU8 data) {
+void Tool::DoSectionHeader(Pass pass,
+                           Section section) {
+  auto id = section.is_known() ? section.known().id : SectionId::Custom;
+  auto data = section.data();
   auto offset = data.begin() - module.data.begin();
   auto size = data.size();
   switch (pass) {
     case Pass::Headers: {
-      print("{:>9} start={:#010x} end={:#010x} (size={:#010x}) ", name, offset,
+      print("{:>9} start={:#010x} end={:#010x} (size={:#010x}) ", id, offset,
             offset + size, size);
       break;
     }
 
     case Pass::Details:
-      print("{}", name);
+      print("{}", id);
       break;
 
     case Pass::Disassemble:
       break;
 
     case Pass::RawData: {
-      print("\nContents of section {}:\n", name);
+      if (section.is_custom()) {
+        print("\nContents of custom section ({}):\n", section.custom().name);
+      } else {
+        print("\nContents of section {}:\n", id);
+      }
       PrintMemory(data, offset, PrintChars::Yes);
       break;
     }
   }
 }
 
-void Tool::DoTypeSection(Pass pass, LazyTypeSection section) {
+void Tool::DoTypeSection(Pass pass,
+                         SectionIndex section_index,
+                         LazyTypeSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -540,7 +603,9 @@ void Tool::DoTypeSection(Pass pass, LazyTypeSection section) {
   }
 }
 
-void Tool::DoImportSection(Pass pass, LazyImportSection section) {
+void Tool::DoImportSection(Pass pass,
+                           SectionIndex section_index,
+                           LazyImportSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index function_count = 0;
@@ -579,7 +644,9 @@ void Tool::DoImportSection(Pass pass, LazyImportSection section) {
   }
 }
 
-void Tool::DoFunctionSection(Pass pass, LazyFunctionSection section) {
+void Tool::DoFunctionSection(Pass pass,
+                             SectionIndex section_index,
+                             LazyFunctionSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_function_count;
@@ -592,7 +659,9 @@ void Tool::DoFunctionSection(Pass pass, LazyFunctionSection section) {
   }
 }
 
-void Tool::DoTableSection(Pass pass, LazyTableSection section) {
+void Tool::DoTableSection(Pass pass,
+                          SectionIndex section_index,
+                          LazyTableSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_table_count;
@@ -603,7 +672,9 @@ void Tool::DoTableSection(Pass pass, LazyTableSection section) {
   }
 }
 
-void Tool::DoMemorySection(Pass pass, LazyMemorySection section) {
+void Tool::DoMemorySection(Pass pass,
+                           SectionIndex section_index,
+                           LazyMemorySection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_memory_count;
@@ -614,7 +685,9 @@ void Tool::DoMemorySection(Pass pass, LazyMemorySection section) {
   }
 }
 
-void Tool::DoGlobalSection(Pass pass, LazyGlobalSection section) {
+void Tool::DoGlobalSection(Pass pass,
+                           SectionIndex section_index,
+                           LazyGlobalSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_global_count;
@@ -625,7 +698,9 @@ void Tool::DoGlobalSection(Pass pass, LazyGlobalSection section) {
   }
 }
 
-void Tool::DoExportSection(Pass pass, LazyExportSection section) {
+void Tool::DoExportSection(Pass pass,
+                           SectionIndex section_index,
+                           LazyExportSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -640,7 +715,9 @@ void Tool::DoExportSection(Pass pass, LazyExportSection section) {
   }
 }
 
-void Tool::DoStartSection(Pass pass, StartSection section) {
+void Tool::DoStartSection(Pass pass,
+                          SectionIndex section_index,
+                          StartSection section) {
   if (section) {
     auto start = *section;
     if (pass == Pass::Headers) {
@@ -651,7 +728,9 @@ void Tool::DoStartSection(Pass pass, StartSection section) {
   }
 }
 
-void Tool::DoElementSection(Pass pass, LazyElementSection section) {
+void Tool::DoElementSection(Pass pass,
+                            SectionIndex section_index,
+                            LazyElementSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -685,7 +764,9 @@ void Tool::DoElementSection(Pass pass, LazyElementSection section) {
   }
 }
 
-void Tool::DoCodeSection(Pass pass, LazyCodeSection section) {
+void Tool::DoCodeSection(Pass pass,
+                         SectionIndex section_index,
+                         LazyCodeSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = imported_function_count;
@@ -696,13 +777,15 @@ void Tool::DoCodeSection(Pass pass, LazyCodeSection section) {
   } else if (pass == Pass::Disassemble) {
     Index count = imported_function_count;
     for (auto code : section.sequence) {
-      Disassemble(count, code);
+      Disassemble(section_index, count, code);
       ++count;
     }
   }
 }
 
-void Tool::DoDataSection(Pass pass, LazyDataSection section) {
+void Tool::DoDataSection(Pass pass,
+                         SectionIndex section_index,
+                         LazyDataSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
     Index count = 0;
@@ -722,7 +805,9 @@ void Tool::DoDataSection(Pass pass, LazyDataSection section) {
   }
 }
 
-void Tool::DoDataCountSection(Pass pass, DataCountSection section) {
+void Tool::DoDataCountSection(Pass pass,
+                              SectionIndex section_index,
+                              DataCountSection section) {
   if (section) {
     auto data_count = *section;
     if (pass == Pass::Headers) {
@@ -733,7 +818,9 @@ void Tool::DoDataCountSection(Pass pass, DataCountSection section) {
   }
 }
 
-void Tool::DoNameSection(Pass pass, LazyNameSection section) {
+void Tool::DoNameSection(Pass pass,
+                         SectionIndex section_index,
+                         LazyNameSection section) {
   const Features& features = options.features;
   for (auto subsection : section) {
     switch (subsection.id) {
@@ -777,7 +864,9 @@ void Tool::DoNameSection(Pass pass, LazyNameSection section) {
   }
 }
 
-void Tool::DoLinkingSection(Pass pass, LinkingSection section) {
+void Tool::DoLinkingSection(Pass pass,
+                            SectionIndex section_index,
+                            LinkingSection section) {
   const Features& features = options.features;
   for (auto subsection : section.subsections) {
     switch (subsection.id) {
@@ -893,9 +982,10 @@ void Tool::DoLinkingSection(Pass pass, LinkingSection section) {
               }
 
               case SymbolInfoKind::Section: {
-                string_view name = "";  // TODO
-                print("  - {}: S <{}> section={}", index, name,
-                      symbol.section().section);
+                auto section_index = symbol.section().section;
+                print("  - {}: S <{}> section={}", index,
+                      GetSectionName(section_index).value_or(""),
+                      section_index);
                 print_symbol_flags(symbol.flags);
                 break;
               }
@@ -910,22 +1000,35 @@ void Tool::DoLinkingSection(Pass pass, LinkingSection section) {
   }
 }
 
-void Tool::DoRelocationSection(Pass pass, RelocationSection section) {
+void Tool::DoRelocationSection(Pass pass,
+                               SectionIndex section_index,
+                               RelocationSection section) {
   const Features& features = options.features;
-  PrintDetails(pass, " - relocations for section {} [{}]\n",
-               section.section_index.value_or(0), section.count.value_or(0));
-  for (auto subsection : section.entries) {
-#if 0
-    Offset total_offset = GetSectionStart(reloc_section_) + offset;
-    PrintDetails("   - %-18s offset=%#08" PRIoffset "(file=%#08" PRIoffset ") ",
-                 GetRelocTypeName(type), offset, total_offset);
-    if (type == RelocType::TypeIndexLEB) {
-      PrintDetails("type=%" PRIindex, index);
-    } else {
-      PrintDetails("symbol=%" PRIindex " <" PRIstringview ">", index,
-                   WABT_PRINTF_STRING_VIEW_ARG(GetSymbolName(index)));
+  auto reloc_section_index = section.section_index.value_or(-1);
+  PrintDetails(pass, " - relocations for section {} ({}) [{}]\n",
+               reloc_section_index,
+               GetSectionName(reloc_section_index).value_or(""),
+               section.count.value_or(0));
+  for (auto entry : section.entries) {
+    size_t total_offset = entry.offset;
+    auto start = section_starts.find(*section.section_index);
+    if (start != section_starts.end()) {
+      total_offset += start->second;
     }
-#endif
+    if (ShouldPrintDetails(pass)) {
+      print("   - {:18s} offset={:#08x}(file={:#08x}) ", entry.type,
+            entry.offset, total_offset);
+      if (entry.type == RelocationType::TypeIndexLEB) {
+        print("type={}", entry.index);
+      } else {
+        print("symbol={} <{}>", entry.index,
+              GetSymbolName(entry.index).value_or(""));
+      }
+      if (entry.addend && *entry.addend != 0) {
+        print("{:+#x}", *entry.addend);
+      }
+      print("\n");
+    }
   }
 }
 
@@ -937,7 +1040,9 @@ void Tool::DoCount(Pass pass, optional<Index> count) {
   }
 }
 
-void Tool::Disassemble(Index func_index, Code code) {
+void Tool::Disassemble(SectionIndex section_index,
+                       Index func_index,
+                       Code code) {
   constexpr int max_octets_per_line = 9;
   auto func_type = GetFunctionType(func_index);
   int param_count = 0;
@@ -960,7 +1065,11 @@ void Tool::Disassemble(Index func_index, Code code) {
     local_count += locals.count;
   }
   int indent = 0;
+  auto section_start = section_starts[section_index];
   auto last_data = code.body.data;
+  auto relocs =
+      GetRelocationEntries(section_index).value_or(RelocationEntries{});
+  auto reloc_it = relocs.begin();
   auto instrs = ReadExpression(code.body, options.features, errors);
   for (auto it = instrs.begin(), end = instrs.end(); it != end; ++it) {
     auto instr = *it;
@@ -988,6 +1097,21 @@ void Tool::Disassemble(Index func_index, Code code) {
         }
       }
       print("\n");
+    }
+    if (reloc_it < relocs.end()) {
+      auto offset = section_start + reloc_it->offset;
+      if (offset < file_offset(it.data())) {
+        print("           {:06x}: {:18s} {}", offset, reloc_it->type,
+              reloc_it->index);
+        if (reloc_it->addend && *reloc_it->addend) {
+          print(" {:+d}", *reloc_it->addend);
+        }
+        if (reloc_it->type != RelocationType::TypeIndexLEB) {
+          print(" <{}>", GetSymbolName(reloc_it->index).value_or(""));
+        }
+        print("\n");
+        ++reloc_it;
+      }
     }
     if (instr.opcode == Opcode::Block || instr.opcode == Opcode::If ||
         instr.opcode == Opcode::Loop || instr.opcode == Opcode::Else) {
@@ -1030,6 +1154,40 @@ optional<string_view> Tool::GetGlobalName(Index index) const {
   }
 }
 
+optional<string_view> Tool::GetSectionName(Index index) const {
+  auto it = section_names.find(index);
+  if (it != section_names.end()) {
+    return it->second;
+  } else {
+    return nullopt;
+  }
+}
+
+optional<string_view> Tool::GetSymbolName(Index index) const {
+  auto it = symbol_table.find(index);
+  if (it != symbol_table.end()) {
+    const auto& symbol = it->second;
+    switch (symbol.kind) {
+      case SymbolInfoKind::Function:
+        return GetFunctionName(symbol.index);
+
+      case SymbolInfoKind::Data:
+        return symbol.name;
+
+      case SymbolInfoKind::Global:
+        return GetGlobalName(symbol.index);
+
+      case SymbolInfoKind::Section:
+        return GetSectionName(symbol.index);
+
+      case SymbolInfoKind::Event:
+        return "";  // XXX
+    }
+  } else {
+    return nullopt;
+  }
+}
+
 optional<Index> Tool::GetI32Value(const ConstantExpression& expr) {
   switch (expr.instruction.opcode) {
     case Opcode::I32Const:
@@ -1037,6 +1195,16 @@ optional<Index> Tool::GetI32Value(const ConstantExpression& expr) {
 
     default:
       return nullopt;
+  }
+}
+
+optional<Tool::RelocationEntries> Tool::GetRelocationEntries(
+    SectionIndex section_index) {
+  auto it = section_relocations.find(section_index);
+  if (it != section_relocations.end()) {
+    return it->second;
+  } else {
+    return nullopt;
   }
 }
 
