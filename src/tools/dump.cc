@@ -147,6 +147,12 @@ struct Tool {
                    string_view prefix = "",
                    int octets_per_line = 16,
                    int octets_per_group = 2);
+  void PrintFunctionHeader(Index func_index, Code);
+  void PrintInstruction(const Instruction&,
+                        SpanU8 data,
+                        SpanU8 post_data,
+                        int indent);
+  void PrintRelocation(const RelocationEntry& entry, size_t file_offset);
 
   size_t file_offset(SpanU8 data);
 
@@ -155,6 +161,8 @@ struct Tool {
     std::string name;
     Index index;
   };
+
+  static constexpr int max_octets_per_line = 9;
 
   std::string filename;
   Options options;
@@ -175,6 +183,9 @@ struct Tool {
   Index imported_memory_count = 0;
   Index imported_global_count = 0;
 };
+
+// static
+constexpr int Tool::max_octets_per_line;
 
 int Main(int argc, char** argv) {
   std::vector<string_view> filenames;
@@ -908,8 +919,8 @@ void Tool::DoLinkingSection(Pass pass,
           print(" - comdat [count={}]\n", comdats.count.value_or(0));
           Index comdat_index = 0;
           for (auto comdat : comdats.sequence) {
-            print("  - {}: \"{}\" flags={:#x} [count={}]\n",
-                  comdat_index, comdat.name, comdat.flags);
+            print("  - {}: \"{}\" flags={:#x} [count={}]\n", comdat_index,
+                  comdat.name, comdat.flags, comdat.symbols.size());
             Index symbol_index = 0;
             for (auto symbol : comdat.symbols) {
               print("   - {}: {} index={}\n", symbol_index, symbol.kind,
@@ -1043,78 +1054,36 @@ void Tool::DoCount(Pass pass, optional<Index> count) {
 void Tool::Disassemble(SectionIndex section_index,
                        Index func_index,
                        Code code) {
-  constexpr int max_octets_per_line = 9;
-  auto func_type = GetFunctionType(func_index);
-  int param_count = 0;
-  print("func[{}]", func_index);
-  PrintFunctionName(func_index);
-  print(":");
-  if (func_type) {
-    print(" {}\n", *func_type);
-    param_count = func_type->param_types.size();
-  } else {
-    print("\n");
-  }
-  int local_count = param_count;
-  for (auto locals : code.locals) {
-    print(" {:{}s} | locals[{}", "", 7 + max_octets_per_line * 3, local_count);
-    if (locals.count != 1) {
-      print("..{}", local_count + locals.count - 1);
-    }
-    print("] type={}\n", locals.type);
-    local_count += locals.count;
-  }
+  PrintFunctionHeader(func_index, code);
   int indent = 0;
   auto section_start = section_starts[section_index];
+  auto section_offset = [&](SpanU8 data) {
+    return file_offset(data) - section_start;
+  };
   auto last_data = code.body.data;
   auto relocs =
       GetRelocationEntries(section_index).value_or(RelocationEntries{});
-  auto reloc_it = relocs.begin();
+  auto reloc_it =
+      std::lower_bound(relocs.begin(), relocs.end(), section_offset(last_data),
+                       [&](const RelocationEntry& lhs, size_t offset) {
+                         return lhs.offset < offset;
+                       });
   auto instrs = ReadExpression(code.body, options.features, errors);
   for (auto it = instrs.begin(), end = instrs.end(); it != end; ++it) {
-    auto instr = *it;
-    if (instr.opcode == Opcode::Else || instr.opcode == Opcode::End) {
+    const auto& instr = *it;
+    auto opcode = instr.opcode;
+    if (opcode == Opcode::Else || opcode == Opcode::End) {
       indent = std::max(indent - 2, 0);
     }
-    bool first_line = true;
-    while (last_data.begin() < it.data().begin()) {
-      print(" {:06x}:", file_offset(last_data));
-      int line_octets = std::min<int>(max_octets_per_line,
-                                      it.data().begin() - last_data.begin());
-      for (int i = 0; i < line_octets; ++i) {
-        print(" {:02x}", last_data[i]);
-      }
-      remove_prefix(&last_data, line_octets);
-      print("{:{}s} |", "", (max_octets_per_line - line_octets) * 3);
-      if (first_line) {
-        first_line = false;
-        print(" {:{}s}{}", "", indent, instr);
-        if (instr.opcode == Opcode::Call) {
-          PrintFunctionName(instr.index_immediate());
-        } else if (instr.opcode == Opcode::GlobalGet ||
-                   instr.opcode == Opcode::GlobalSet) {
-          PrintGlobalName(instr.index_immediate());
-        }
-      }
-      print("\n");
+    PrintInstruction(instr, last_data, it.data(), indent);
+    last_data = it.data();
+    for (; reloc_it < relocs.end() &&
+           reloc_it->offset < section_offset(it.data());
+         ++reloc_it) {
+      PrintRelocation(*reloc_it, section_start + reloc_it->offset);
     }
-    if (reloc_it < relocs.end()) {
-      auto offset = section_start + reloc_it->offset;
-      if (offset < file_offset(it.data())) {
-        print("           {:06x}: {:18s} {}", offset, reloc_it->type,
-              reloc_it->index);
-        if (reloc_it->addend && *reloc_it->addend) {
-          print(" {:+d}", *reloc_it->addend);
-        }
-        if (reloc_it->type != RelocationType::TypeIndexLEB) {
-          print(" <{}>", GetSymbolName(reloc_it->index).value_or(""));
-        }
-        print("\n");
-        ++reloc_it;
-      }
-    }
-    if (instr.opcode == Opcode::Block || instr.opcode == Opcode::If ||
-        instr.opcode == Opcode::Loop || instr.opcode == Opcode::Else) {
+    if (opcode == Opcode::Block || opcode == Opcode::If ||
+        opcode == Opcode::Loop || opcode == Opcode::Else) {
       indent += 2;
     }
   }
@@ -1263,6 +1232,68 @@ void Tool::PrintMemory(SpanU8 start,
     print("\n");
     remove_prefix(&data, line_size);
   }
+}
+
+void Tool::PrintFunctionHeader(Index func_index, Code code) {
+  auto func_type = GetFunctionType(func_index);
+  size_t param_count = 0;
+  print("func[{}]", func_index);
+  PrintFunctionName(func_index);
+  print(":");
+  if (func_type) {
+    print(" {}\n", *func_type);
+    param_count = func_type->param_types.size();
+  } else {
+    print("\n");
+  }
+  size_t local_count = param_count;
+  for (auto locals : code.locals) {
+    print(" {:{}s} | locals[{}", "", 7 + max_octets_per_line * 3, local_count);
+    if (locals.count != 1) {
+      print("..{}", local_count + locals.count - 1);
+    }
+    print("] type={}\n", locals.type);
+    local_count += locals.count;
+  }
+}
+
+void Tool::PrintInstruction(const Instruction& instr,
+                            SpanU8 data,
+                            SpanU8 post_data,
+                            int indent) {
+  bool first_line = true;
+  while (data.begin() < post_data.begin()) {
+    print(" {:06x}:", file_offset(data));
+    int line_octets =
+        std::min<int>(max_octets_per_line, post_data.begin() - data.begin());
+    for (int i = 0; i < line_octets; ++i) {
+      print(" {:02x}", data[i]);
+    }
+    remove_prefix(&data, line_octets);
+    print("{:{}s} |", "", (max_octets_per_line - line_octets) * 3);
+    if (first_line) {
+      first_line = false;
+      print(" {:{}s}{}", "", indent, instr);
+      if (instr.opcode == Opcode::Call) {
+        PrintFunctionName(instr.index_immediate());
+      } else if (instr.opcode == Opcode::GlobalGet ||
+                 instr.opcode == Opcode::GlobalSet) {
+        PrintGlobalName(instr.index_immediate());
+      }
+    }
+    print("\n");
+  }
+}
+
+void Tool::PrintRelocation(const RelocationEntry& entry, size_t file_offset) {
+  print("           {:06x}: {:18s} {}", file_offset, entry.type, entry.index);
+  if (entry.addend && *entry.addend) {
+    print(" {:+d}", *entry.addend);
+  }
+  if (entry.type != RelocationType::TypeIndexLEB) {
+    print(" <{}>", GetSymbolName(entry.index).value_or(""));
+  }
+  print("\n");
 }
 
 size_t Tool::file_offset(SpanU8 data) {
