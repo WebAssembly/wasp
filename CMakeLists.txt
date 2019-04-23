@@ -107,6 +107,7 @@ target_link_libraries(wasp
 )
 
 add_executable(wasp_unittests
+  test/base/enumerate_test.cc
   test/base/formatters_test.cc
   test/base/str_to_u32_test.cc
   test/base/v128_test.cc
