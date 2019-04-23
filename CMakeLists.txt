@@ -140,3 +140,14 @@ target_link_libraries(wasp_unittests
   gmock
   gmock_main
 )
+
+add_executable(wasp_sqlite
+  src/tools/wasp_sqlite.cc
+  third_party/sqlite/sqlite3.c
+)
+
+target_link_libraries(wasp_sqlite
+  wasplib
+  dl
+  pthread
+)
