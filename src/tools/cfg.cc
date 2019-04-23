@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/format.h"
@@ -210,12 +211,10 @@ optional<Code> Tool::GetCode(Index find_index) {
       auto known = section.known();
       if (known.id == SectionId::Code) {
         auto section = ReadCodeSection(known, options.features, errors);
-        Index function_index = imported_function_count;
-        for (auto code : section.sequence) {
-          if (function_index == find_index) {
-            return code;
+        for (auto code : enumerate(section.sequence, imported_function_count)) {
+          if (code.index == find_index) {
+            return code.value;
           }
-          ++function_index;
         }
       }
     }
@@ -323,13 +322,12 @@ void Tool::CalculateCFG(Code code) {
 void Tool::RemoveEmptyBasicBlocks() {
   std::map<BBID, BBID> empty_map;
   // Map each empty bb to its successor.
-  BBID cur = 0;
-  for (const auto& bb: cfg) {
-    if (bb.empty()) {
-      BBID next = bb.successors.empty() ? InvalidBBID : bb.successors[0].bbid;
-      empty_map.emplace(cur, next);
+  for (const auto& bb: enumerate(cfg)) {
+    if (bb.value.empty()) {
+      BBID next = bb.value.successors.empty() ? InvalidBBID
+                                              : bb.value.successors[0].bbid;
+      empty_map.emplace(bb.index, next);
     }
-    ++cur;
   }
 
   for (auto& pair: empty_map) {
@@ -389,17 +387,16 @@ void Tool::WriteDotFile() {
   print(*stream, "strict digraph {{\n");
 
   // Write nodes.
-  BBID bbid = 0;
-  for (const auto& bb: cfg) {
-    if (!bb.empty()) {
-      auto colspan =
-          std::max<int>(1, std::min<int>(bb.successors.size(), kMaxSuccessors));
+  for (const auto& bb: enumerate(cfg)) {
+    if (!bb.value.empty()) {
+      auto colspan = std::max<int>(
+          1, std::min<int>(bb.value.successors.size(), kMaxSuccessors));
       print(*stream,
             "  {} [shape=none;margin=0;label=<"
             "<TABLE BORDER=\"1\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR>"
             "<TD BORDER=\"0\" ALIGN=\"LEFT\" COLSPAN=\"{}\">",
-            bbid, colspan);
-      auto instrs = ReadExpression(bb.code, options.features, errors);
+            bb.index, colspan);
+      auto instrs = ReadExpression(bb.value.code, options.features, errors);
       for (const auto& instr: instrs) {
         if (IsExtraneousInstruction(instr)) {
           continue;
@@ -412,57 +409,50 @@ void Tool::WriteDotFile() {
       }
       print(*stream, "</TD></TR>");
       // Add ports.
-      if (bb.successors.size() > 1) {
+      if (bb.value.successors.size() > 1) {
         print(*stream, "<TR>");
-        int count = 0;
         string_view sides = "T";
-        for (const auto& succ: bb.successors) {
-          if (count < kMaxSuccessors) {
-            assert(!succ.name.empty());
-            print(*stream, "<TD PORT=\"{}\" SIDES=\"{}\">{}</TD>", succ.name,
-                  sides, succ.name);
+        for (const auto& succ: enumerate(bb.value.successors)) {
+          if (succ.index < kMaxSuccessors) {
+            assert(!succ.value.name.empty());
+            print(*stream, "<TD PORT=\"{}\" SIDES=\"{}\">{}</TD>",
+                  succ.value.name, sides, succ.value.name);
           } else {
             print(*stream, "<TD PORT=\"trunc\" SIDES=\"TL\">...</TD>");
             break;
           }
           sides = "TL";
-          ++count;
         }
         print(*stream, "</TR>");
       }
       print(*stream, "</TABLE>>]\n");
     }
-    ++bbid;
   }
 
   // Write edges.
   print(*stream, "  start -> {}\n", start_bbid);
-  bbid = 0;
-  for (const auto& bb: cfg) {
-    if (!bb.empty()) {
-      int count = 0;
-      for (const auto& succ : bb.successors) {
-        if (succ.bbid == InvalidBBID) {
-          print(*stream, "  {} -> end", bbid);
+  for (const auto& bb: enumerate(cfg)) {
+    if (!bb.value.empty()) {
+      for (const auto& succ : enumerate(bb.value.successors)) {
+        if (succ.value.bbid == InvalidBBID) {
+          print(*stream, "  {} -> end", bb.index);
         } else {
-          print(*stream, "  {}", bbid);
-          if (!succ.name.empty()) {
-            if (count < kMaxSuccessors) {
-              print(*stream, ":{}", succ.name);
+          print(*stream, "  {}", bb.index);
+          if (!succ.value.name.empty()) {
+            if (succ.index < kMaxSuccessors) {
+              print(*stream, ":{}", succ.value.name);
             } else {
               print(*stream, ":trunc");
             }
           }
-          print(*stream, " -> {}", succ.bbid);
-          if (count >= kMaxSuccessors && !succ.name.empty()) {
-            print(*stream, " [headlabel=\"{}\"]", succ.name);
+          print(*stream, " -> {}", succ.value.bbid);
+          if (succ.index >= kMaxSuccessors && !succ.value.name.empty()) {
+            print(*stream, " [headlabel=\"{}\"]", succ.value.name);
           }
           print(*stream, "\n");
         }
-        ++count;
       }
     }
-    ++bbid;
   }
 
   print(*stream, "}}\n");

@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/format.h"
@@ -138,17 +139,15 @@ void Tool::CalculateCallGraph() {
       auto known = section.known();
       if (known.id == SectionId::Code) {
         auto section = ReadCodeSection(known, options.features, errors);
-        Index caller_index = imported_function_count;
-        for (auto code : section.sequence) {
-          auto instrs = ReadExpression(code.body, options.features, errors);
-          for (const auto& instr : instrs) {
+        for (auto code : enumerate(section.sequence, imported_function_count)) {
+          for (const auto& instr :
+               ReadExpression(code.value.body, options.features, errors)) {
             if (instr.opcode == Opcode::Call) {
               assert(instr.has_index_immediate());
               auto callee_index = instr.index_immediate();
-              call_graph.insert(std::make_pair(caller_index, callee_index));
+              call_graph.insert(std::make_pair(code.index, callee_index));
             }
           }
-          ++caller_index;
         }
       }
     }

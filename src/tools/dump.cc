@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/formatters.h"
@@ -285,12 +286,11 @@ void Tool::Run() {
 
 void Tool::DoPrepass() {
   const Features& features = options.features;
-  SectionIndex section_index = 0;
-  for (auto section : module.sections) {
-    section_starts[section_index] = file_offset(section.data());
-    if (section.is_known()) {
-      auto known = section.known();
-      section_names[section_index] = format("{}", known.id);
+  for (auto section : enumerate(module.sections)) {
+    section_starts[section.index] = file_offset(section.value.data());
+    if (section.value.is_known()) {
+      auto known = section.value.known();
+      section_names[section.index] = format("{}", known.id);
       switch (known.id) {
         case SectionId::Type: {
           auto seq = ReadTypeSection(known, features, errors).sequence;
@@ -353,9 +353,9 @@ void Tool::DoPrepass() {
         default:
           break;
       }
-    } else if (section.is_custom()) {
-      auto custom = section.custom();
-      section_names[section_index] = custom.name.to_string();
+    } else if (section.value.is_custom()) {
+      auto custom = section.value.custom();
+      section_names[section.index] = custom.name.to_string();
       if (custom.name == "name") {
         for (auto subsection : ReadNameSection(custom, features, errors)) {
           if (subsection.id == NameSubsectionId::FunctionNames) {
@@ -370,10 +370,11 @@ void Tool::DoPrepass() {
         for (auto subsection :
              ReadLinkingSection(custom, features, errors).subsections) {
           if (subsection.id == LinkingSubsectionId::SymbolTable) {
-            Index symbol_index = 0;
-            for (auto symbol :
-                 ReadSymbolTableSubsection(subsection, features, errors)
-                     .sequence) {
+            for (auto symbol_pair : enumerate(
+                     ReadSymbolTableSubsection(subsection, features, errors)
+                         .sequence)) {
+              auto symbol_index = symbol_pair.index;
+              auto symbol = symbol_pair.value;
               auto kind = symbol.kind();
               auto name_opt = symbol.name();
               auto name = name_opt.value_or("").to_string();
@@ -393,7 +394,6 @@ void Tool::DoPrepass() {
                 symbol_table[symbol_index] =
                     Symbol{kind, name, symbol.section().section};
               }
-              ++symbol_index;
             }
           }
         }
@@ -405,7 +405,6 @@ void Tool::DoPrepass() {
         }
       }
     }
-    ++section_index;
   }
 }
 
@@ -427,17 +426,15 @@ void Tool::DoPass(Pass pass) {
       break;
   }
 
-  SectionIndex section_index = 0;
-  for (auto section : module.sections) {
-    if (SectionMatches(section)) {
-      DoSectionHeader(pass, section);
-      if (section.is_known()) {
-        DoKnownSection(pass, section_index, section.known());
-      } else if (section.is_custom()) {
-        DoCustomSection(pass, section_index, section.custom());
+  for (auto section : enumerate(module.sections)) {
+    if (SectionMatches(section.value)) {
+      DoSectionHeader(pass, section.value);
+      if (section.value.is_known()) {
+        DoKnownSection(pass, section.index, section.value.known());
+      } else if (section.value.is_custom()) {
+        DoCustomSection(pass, section.index, section.value.custom());
       }
     }
-    ++section_index;
   }
 }
 
@@ -660,12 +657,10 @@ void Tool::DoFunctionSection(Pass pass,
                              LazyFunctionSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
-    Index count = imported_function_count;
-    for (auto func : section.sequence) {
-      print(" - func[{}] sig={}", count, func.type_index);
-      PrintFunctionName(count);
+    for (auto func : enumerate(section.sequence, imported_function_count)) {
+      print(" - func[{}] sig={}", func.index, func.value.type_index);
+      PrintFunctionName(func.index);
       print("\n");
-      ++count;
     }
   }
 }
@@ -675,10 +670,8 @@ void Tool::DoTableSection(Pass pass,
                           LazyTableSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
-    Index count = imported_table_count;
-    for (auto table : section.sequence) {
-      print(" - table[{}] {}\n", count, table.table_type);
-      ++count;
+    for (auto table : enumerate(section.sequence, imported_table_count)) {
+      print(" - table[{}] {}\n", table.index, table.value.table_type);
     }
   }
 }
@@ -688,10 +681,8 @@ void Tool::DoMemorySection(Pass pass,
                            LazyMemorySection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
-    Index count = imported_memory_count;
-    for (auto memory : section.sequence) {
-      print(" - memory[{}] {}\n", count, memory.memory_type);
-      ++count;
+    for (auto memory : enumerate(section.sequence, imported_memory_count)) {
+      print(" - memory[{}] {}\n", memory.index, memory.value.memory_type);
     }
   }
 }
@@ -701,10 +692,9 @@ void Tool::DoGlobalSection(Pass pass,
                            LazyGlobalSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
-    Index count = imported_global_count;
-    for (auto global : section.sequence) {
-      print(" - global[{}] {} - {}\n", count, global.global_type, global.init);
-      ++count;
+    for (auto global : enumerate(section.sequence, imported_global_count)) {
+      print(" - global[{}] {} - {}\n", global.index, global.value.global_type,
+            global.value.init);
     }
   }
 }
@@ -714,14 +704,12 @@ void Tool::DoExportSection(Pass pass,
                            LazyExportSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
-    Index count = 0;
     for (auto export_ : section.sequence) {
       print(" - {}[{}]", export_.kind, export_.index);
       if (export_.kind == ExternalKind::Function) {
         PrintFunctionName(export_.index);
       }
       print(" -> \"{}\"\n", export_.name);
-      ++count;
     }
   }
 }
@@ -744,33 +732,27 @@ void Tool::DoElementSection(Pass pass,
                             LazyElementSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
-    Index count = 0;
-    for (auto element : section.sequence) {
+    for (auto segment : enumerate(section.sequence)) {
       Index offset = 0;
-      if (element.is_active()) {
-        const auto& active = element.active();
-        print(" - segment[{}] table={} count={} - init {}\n", count,
+      if (segment.value.is_active()) {
+        const auto& active = segment.value.active();
+        print(" - segment[{}] table={} count={} - init {}\n", segment.index,
               active.table_index, active.init.size(), active.offset);
-        offset = GetI32Value(element.active().offset).value_or(0);
-        Index elem_count = 0;
-        for (auto func_index : active.init) {
-          print("  - elem[{}] = func[{}]", offset + elem_count, func_index);
-          PrintFunctionName(func_index);
+        offset = GetI32Value(active.offset).value_or(0);
+        for (auto element : enumerate(active.init)) {
+          print("  - elem[{}] = func[{}]", offset + element.index,
+                element.value);
+          PrintFunctionName(element.value);
           print("\n");
-          ++elem_count;
         }
       } else {
-        const auto& passive = element.passive();
-        print(" - segment[{}] count={} element_type={} passive\n", count,
-              passive.element_type, passive.init.size());
-        Index elem_count = 0;
-        for (auto element : passive.init) {
-          print("  - elem[{}] = {}\n", offset + elem_count, element);
-          ++elem_count;
+        const auto& passive = segment.value.passive();
+        print(" - segment[{}] count={} element_type={} passive\n",
+              segment.index, passive.element_type, passive.init.size());
+        for (auto element : enumerate(passive.init)) {
+          print("  - elem[{}] = {}\n", offset + element.index, element.value);
         }
       }
-
-      ++count;
     }
   }
 }
@@ -780,16 +762,12 @@ void Tool::DoCodeSection(Pass pass,
                          LazyCodeSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
-    Index count = imported_function_count;
-    for (auto code : section.sequence) {
-      print(" - func[{}] size={}\n", count, code.body.data.size());
-      ++count;
+    for (auto code : enumerate(section.sequence, imported_function_count)) {
+      print(" - func[{}] size={}\n", code.index, code.value.body.data.size());
     }
   } else if (pass == Pass::Disassemble) {
-    Index count = imported_function_count;
-    for (auto code : section.sequence) {
-      Disassemble(section_index, count, code);
-      ++count;
+    for (auto code : enumerate(section.sequence, imported_function_count)) {
+      Disassemble(section_index, code.index, code.value);
     }
   }
 }
@@ -799,19 +777,18 @@ void Tool::DoDataSection(Pass pass,
                          LazyDataSection section) {
   DoCount(pass, section.count);
   if (ShouldPrintDetails(pass)) {
-    Index count = 0;
-    for (auto data : section.sequence) {
+    for (auto segment : enumerate(section.sequence)) {
       Index offset = 0;
-      if (data.is_active()) {
-        print(" - segment[{}] memory={} size={} - init {}\n", count,
-              data.active().memory_index, data.init.size(),
-              data.active().offset);
-        offset = GetI32Value(data.active().offset).value_or(0);
+      if (segment.value.is_active()) {
+        const auto& active = segment.value.active();
+        print(" - segment[{}] memory={} size={} - init {}\n", segment.index,
+              active.memory_index, segment.value.init.size(), active.offset);
+        offset = GetI32Value(active.offset).value_or(0);
       } else {
-        print(" - segment[{}] size={} passive\n", count, data.init.size());
+        print(" - segment[{}] size={} passive\n", segment.index,
+              segment.value.init.size());
       }
-      PrintMemory(data.init, offset, PrintChars::Yes, "  - ");
-      ++count;
+      PrintMemory(segment.value.init, offset, PrintChars::Yes, "  - ");
     }
   }
 }
@@ -847,10 +824,9 @@ void Tool::DoNameSection(Pass pass,
             ReadFunctionNamesSubsection(subsection.data, features, errors);
         print("  function names[{}]:\n",
               function_names_subsection.count.value_or(0));
-        Index count = 0;
-        for (auto name_assoc : function_names_subsection.sequence) {
-          print("   - [{}]: func[{}] name=\"{}\"\n", count++, name_assoc.index,
-                name_assoc.name);
+        for (auto name_assoc : enumerate(function_names_subsection.sequence)) {
+          print("   - [{}]: func[{}] name=\"{}\"\n", name_assoc.index,
+                name_assoc.value.index, name_assoc.value.name);
         }
         break;
       }
@@ -859,14 +835,15 @@ void Tool::DoNameSection(Pass pass,
         auto local_names_subsection =
             ReadLocalNamesSubsection(subsection.data, features, errors);
         print("  local names[{}]:\n", local_names_subsection.count.value_or(0));
-        Index func_count = 0;
-        for (auto indirect_name_assoc : local_names_subsection.sequence) {
-          print("   - [{}]: func[{}] count={}\n", func_count++,
-                indirect_name_assoc.index, indirect_name_assoc.name_map.size());
-          Index local_count = 0;
-          for (auto name_assoc : indirect_name_assoc.name_map) {
-            print("     - [{}]: local[{}] name=\"{}\"\n", local_count++,
-                  name_assoc.index, name_assoc.name);
+        for (auto indirect_name_assoc :
+             enumerate(local_names_subsection.sequence)) {
+          print("   - [{}]: func[{}] count={}\n", indirect_name_assoc.index,
+                indirect_name_assoc.value.index,
+                indirect_name_assoc.value.name_map.size());
+          for (auto name_assoc :
+               enumerate(indirect_name_assoc.value.name_map)) {
+            print("     - [{}]: local[{}] name=\"{}\"\n", name_assoc.index,
+                  name_assoc.value.index, name_assoc.value.name);
           }
         }
         break;
@@ -887,12 +864,10 @@ void Tool::DoLinkingSection(Pass pass,
               ReadSegmentInfoSubsection(subsection.data, features, errors);
           print(" - segment info [count={}]\n",
                 segment_infos.count.value_or(0));
-          Index index = 0;
-          for (auto segment_info : segment_infos.sequence) {
-            print("  - {}: {} p2align={} flags={:#x}\n", index,
-                  segment_info.name, segment_info.align_log2,
-                  segment_info.flags);
-            ++index;
+          for (auto segment_info : enumerate(segment_infos.sequence)) {
+            print("  - {}: {} p2align={} flags={:#x}\n", segment_info.index,
+                  segment_info.value.name, segment_info.value.align_log2,
+                  segment_info.value.flags);
           }
         }
         break;
@@ -917,17 +892,14 @@ void Tool::DoLinkingSection(Pass pass,
           auto comdats =
               ReadComdatSubsection(subsection.data, features, errors);
           print(" - comdat [count={}]\n", comdats.count.value_or(0));
-          Index comdat_index = 0;
-          for (auto comdat : comdats.sequence) {
-            print("  - {}: \"{}\" flags={:#x} [count={}]\n", comdat_index,
-                  comdat.name, comdat.flags, comdat.symbols.size());
-            Index symbol_index = 0;
-            for (auto symbol : comdat.symbols) {
-              print("   - {}: {} index={}\n", symbol_index, symbol.kind,
-                    symbol.index);
-              ++symbol_index;
+          for (auto comdat : enumerate(comdats.sequence)) {
+            print("  - {}: \"{}\" flags={:#x} [count={}]\n", comdat.index,
+                  comdat.value.name, comdat.value.flags,
+                  comdat.value.symbols.size());
+            for (auto symbol : enumerate(comdat.value.symbols)) {
+              print("   - {}: {} index={}\n", symbol.index, symbol.value.kind,
+                    symbol.value.index);
             }
-            ++comdat_index;
           }
         }
         break;
@@ -949,60 +921,58 @@ void Tool::DoLinkingSection(Pass pass,
               ReadSymbolTableSubsection(subsection.data, features, errors);
           print(" - symbol table [count={}]\n",
                 symbol_table.count.value_or(0));
-          Index index = 0;
-          for (auto symbol : symbol_table.sequence) {
-            switch (symbol.kind()) {
+          for (auto symbol : enumerate(symbol_table.sequence)) {
+            switch (symbol.value.kind()) {
               case SymbolInfoKind::Function: {
-                const auto& base = symbol.base();
-                print("  - {}: F <{}> func={}", index,
+                const auto& base = symbol.value.base();
+                print("  - {}: F <{}> func={}", symbol.index,
                       base.name.value_or(
                           GetFunctionName(base.index).value_or("")),
                       base.index);
-                print_symbol_flags(symbol.flags);
+                print_symbol_flags(symbol.value.flags);
                 break;
               }
 
               case SymbolInfoKind::Global: {
-                const auto& base = symbol.base();
+                const auto& base = symbol.value.base();
                 print(
-                    "  - {}: G <{}> global={}", index,
+                    "  - {}: G <{}> global={}", symbol.index,
                     base.name.value_or(GetGlobalName(base.index).value_or("")),
                     base.index);
-                print_symbol_flags(symbol.flags);
+                print_symbol_flags(symbol.value.flags);
                 break;
               }
 
               case SymbolInfoKind::Event: {
-                const auto& base = symbol.base();
+                const auto& base = symbol.value.base();
                 // TODO GetEventName.
-                print("  - {}: E <{}> event={}", index, base.name.value_or(""),
-                      base.index);
-                print_symbol_flags(symbol.flags);
+                print("  - {}: E <{}> event={}", symbol.index,
+                      base.name.value_or(""), base.index);
+                print_symbol_flags(symbol.value.flags);
                 break;
               }
 
               case SymbolInfoKind::Data: {
-                const auto& data = symbol.data();
-                print("  - {}: D <{}>", index, data.name);
+                const auto& data = symbol.value.data();
+                print("  - {}: D <{}>", symbol.index, data.name);
                 if (data.defined) {
                   print(" segment={} offset={} size={}", data.defined->index,
                         data.defined->offset, data.defined->size);
                 }
-                print_symbol_flags(symbol.flags);
+                print_symbol_flags(symbol.value.flags);
                 break;
               }
 
               case SymbolInfoKind::Section: {
-                auto section_index = symbol.section().section;
-                print("  - {}: S <{}> section={}", index,
+                auto section_index = symbol.value.section().section;
+                print("  - {}: S <{}> section={}", symbol.index,
                       GetSectionName(section_index).value_or(""),
                       section_index);
-                print_symbol_flags(symbol.flags);
+                print_symbol_flags(symbol.value.flags);
                 break;
               }
             }
             print("\n");
-            ++index;
           }
         }
         break;

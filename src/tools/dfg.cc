@@ -20,6 +20,7 @@
 #include <set>
 #include <string>
 
+#include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/format.h"
@@ -299,12 +300,10 @@ optional<Code> Tool::GetCode(Index find_index) {
       auto known = section.known();
       if (known.id == SectionId::Code) {
         auto section = ReadCodeSection(known, options.features, errors);
-        Index function_index = imported_function_count;
-        for (auto code : section.sequence) {
-          if (function_index == find_index) {
-            return code;
+        for (auto code : enumerate(section.sequence, imported_function_count)) {
+          if (code.index == find_index) {
+            return code.value;
           }
-          ++function_index;
         }
       }
     }
