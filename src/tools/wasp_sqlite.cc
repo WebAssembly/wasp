@@ -22,6 +22,7 @@
 #include "wasp/base/string_view.h"
 #include "wasp/binary/errors.h"
 #include "wasp/binary/errors_nop.h"
+#include "wasp/binary/lazy_code_section.h"
 #include "wasp/binary/lazy_data_section.h"
 #include "wasp/binary/lazy_element_section.h"
 #include "wasp/binary/lazy_export_section.h"
@@ -69,7 +70,10 @@ struct Tool {
   void DoExportSection(LazyExportSection);
   void DoStartSection(StartSection);
   void DoElementSection(LazyElementSection);
+  void DoCodeSection(LazyCodeSection);
   void DoDataSection(LazyDataSection);
+
+  size_t file_offset(SpanU8 data);
 
   std::string filename;
   Options options;
@@ -99,11 +103,11 @@ int main(int argc, char** argv) {
   for (int i = 1; i < argc; ++i) {
     string_view arg = argv[i];
     if (arg[0] == '-') {
-      print("Unknown short argument {}\n", arg[0]);
-      break;
+      print("Unknown short argument -{}\n", arg[1]);
     } else {
       filename = arg;
     }
+    break;
   }
 
   if (filename.empty()) {
@@ -120,6 +124,9 @@ int main(int argc, char** argv) {
   SpanU8 data{*optbuf};
   Tool tool{filename, data, options};
   tool.Run();
+  if (argc > 2) {
+    tool.Exec(argv[2]);
+  }
   return 0;
 }
 
@@ -144,12 +151,12 @@ bool Tool::OpenDB() {
 template <typename... Args>
 bool Tool::Exec(const char* sql, const Args&... args) {
   auto fmt_sql = vformat(sql, make_format_args(args...));
-  print(">> Executing \"{}\"\n", fmt_sql);
+  // print(">> Executing \"{}\"\n", fmt_sql);
 
   auto cb = [](void*, int columns, char** values, char** names) {
     string_view first = "";
     for (int i = 0; i < columns; ++i) {
-      print("{}{} = {}", first, names[i], values[i]);
+      print("{}{} = {}", first, names[i], values[i] ? values[i] : "(null)");
       first = ", ";
     }
     print("\n");
@@ -191,9 +198,12 @@ bool Tool::CreateTables() {
   CHECK(Exec("create table start (func_idx int);"));
   CHECK(Exec("create table element (idx int primary key, kind int, table_idx);"));
   CHECK(Exec("create table element_offset (element_idx int, opcode int, value);"));
-  CHECK(Exec("create table element_init (element_idx int, opcode, value);"));
+  CHECK(Exec("create table element_init (element_idx int, idx int, opcode, value);"));
   CHECK(Exec("create table data (idx int primary key, kind int, memory_idx, data);"));
   CHECK(Exec("create table data_offset (data_idx int, opcode int, value);"));
+  CHECK(Exec("create table code (idx int primary key, offset int, size int);"));
+  CHECK(Exec("create table locals (code_idx int, idx int, count int, type int);"));
+  CHECK(Exec("create table instruction (code_idx int, idx int, offset int, size int, opcode int, immediate);"));
   return true;
 }
 
@@ -243,7 +253,7 @@ void Tool::Run() {
   for (auto section : enumerate(module.sections)) {
     if (section.value.is_known()) {
       auto known = section.value.known();
-      auto offset = section.value.data().begin() - module.data.begin();
+      auto offset = file_offset(section.value.data());
       auto size = section.value.data().size();
 
       Exec("insert into section values ({}, {}, {}, {});", section.index,
@@ -285,6 +295,10 @@ void Tool::Run() {
 
         case SectionId::Element:
           DoElementSection(ReadElementSection(known, options.features, errors));
+          break;
+
+        case SectionId::Code:
+          DoCodeSection(ReadCodeSection(known, options.features, errors));
           break;
 
         case SectionId::Data:
@@ -350,7 +364,7 @@ void Tool::DoImportSection(LazyImportSection section) {
 
       case ExternalKind::Global:
         auto global_type = import.value.global_type();
-        Exec("insert into global_import values ({}, {});",
+        Exec("insert into global_import values ({}, {}, {}, {});",
              imported_global_count++, import.index,
              static_cast<int>(global_type.valtype),
              static_cast<int>(global_type.mut));
@@ -376,7 +390,7 @@ void Tool::DoTableSection(LazyTableSection section) {
 }
 
 void Tool::DoMemorySection(LazyMemorySection section) {
-  for (auto memory : enumerate(section.sequence)) {
+  for (auto memory : enumerate(section.sequence, imported_memory_count)) {
     Exec("insert into memory values ({}, {}, {});", memory.index,
          memory.value.memory_type.limits.min,
          OrNull(memory.value.memory_type.limits.max));
@@ -384,7 +398,7 @@ void Tool::DoMemorySection(LazyMemorySection section) {
 }
 
 void Tool::DoGlobalSection(LazyGlobalSection section) {
-  for (auto global : enumerate(section.sequence)) {
+  for (auto global : enumerate(section.sequence, imported_global_count)) {
     Exec("insert into global values ({}, {}, {});", global.index,
          static_cast<int>(global.value.global_type.valtype),
          static_cast<int>(global.value.global_type.mut));
@@ -415,26 +429,27 @@ void Tool::DoElementSection(LazyElementSection section) {
            static_cast<int>(segment.value.segment_type()), active.table_index);
 
       InsertConstantExpression(active.offset, "element_offset", segment.index);
-      for (auto index : active.init) {
-        Exec("insert into element_init values ({}, null, {});", segment.index,
-             index);
+      for (auto func : enumerate(active.init)) {
+        Exec("insert into element_init values ({}, {}, null, {});",
+             segment.index, func.index, func.value);
       }
     } else {
       const auto& passive = segment.value.passive();
       Exec("insert into element values ({}, {}, null);", segment.index,
            static_cast<int>(segment.value.segment_type()));
-      for (auto expr : passive.init) {
-        auto instr = expr.instruction;
+      for (auto expr : enumerate(passive.init)) {
+        auto instr = expr.value.instruction;
         auto opcode_val = static_cast<int>(instr.opcode);
         switch (instr.opcode) {
           case Opcode::RefNull:
-            Exec("insert into element_init values ({}, {}, null);",
-                 segment.index, opcode_val);
+            Exec("insert into element_init values ({}, {}, {}, null);",
+                 segment.index, expr.index, opcode_val);
             break;
 
           case Opcode::RefFunc:
-            Exec("insert into element_init values ({}, {}, {});", segment.index,
-                 opcode_val, instr.index_immediate());
+            Exec("insert into element_init values ({}, {}, {}, {});",
+                 segment.index, expr.index, opcode_val,
+                 instr.index_immediate());
             break;
 
           default:
@@ -445,5 +460,74 @@ void Tool::DoElementSection(LazyElementSection section) {
   }
 }
 
+void Tool::DoCodeSection(LazyCodeSection section) {
+  for (auto code : enumerate(section.sequence, imported_function_count)) {
+    Exec("insert into code values ({}, {}, {});", code.index,
+         file_offset(code.value.body.data), code.value.body.data.size());
+
+    for (const auto& locals : enumerate(code.value.locals)) {
+      Exec("insert into locals values ({}, {}, {}, {});", code.index,
+           locals.index, locals.value.count,
+           static_cast<int>(locals.value.type));
+    }
+
+    SpanU8 last_data = code.value.body.data;
+    Index index = 0;
+    auto instrs = ReadExpression(code.value.body, options.features, errors);
+    for (auto it = instrs.begin(), end = instrs.end(); it != end;
+         ++it, ++index) {
+      const auto& instr = *it;
+      auto opcode_val = static_cast<int>(instr.opcode);
+
+      std::string immediate = "null";
+      if (instr.has_empty_immediate()) {
+      } else if (instr.has_block_type_immediate()) {
+        immediate =
+            format("{}", static_cast<int>(instr.block_type_immediate()));
+      } else if (instr.has_index_immediate()) {
+        immediate = format("{}", instr.index_immediate());
+      } else if (instr.has_call_indirect_immediate()) {
+        // TODO: immediate
+      } else if (instr.has_br_table_immediate()) {
+        // TODO: immediate
+      } else if (instr.has_br_on_exn_immediate()) {
+        // TODO: immediate
+      } else if (instr.has_u8_immediate()) {
+        immediate = format("{}", instr.u8_immediate());
+      } else if (instr.has_mem_arg_immediate()) {
+        // TODO: immediate
+      } else if (instr.has_s32_immediate()) {
+        immediate = format("{}", instr.s32_immediate());
+      } else if (instr.has_s64_immediate()) {
+        immediate = format("{}", instr.s64_immediate());
+      } else if (instr.has_f32_immediate()) {
+        immediate = format("{}", instr.f32_immediate());
+      } else if (instr.has_f64_immediate()) {
+        immediate = format("{}", instr.f64_immediate());
+      } else if (instr.has_v128_immediate()) {
+        // TODO: immediate
+      } else if (instr.has_init_immediate()) {
+        // TODO: immediate
+      } else if (instr.has_copy_immediate()) {
+        // TODO: immediate
+      } else if (instr.has_shuffle_immediate()) {
+        // TODO: immediate
+      }
+
+      auto offset = file_offset(it.data());
+      auto size = it.data().begin() - last_data.begin();
+      last_data = it.data();
+
+      Exec("insert into instruction values ({}, {}, {}, {}, {}, {});",
+           code.index, index, offset, size, opcode_val, immediate);
+    }
+  }
+}
+
 void Tool::DoDataSection(LazyDataSection section) {
+  // TODO
+}
+
+size_t Tool::file_offset(SpanU8 data) {
+  return data.begin() - module.data.begin();
 }
