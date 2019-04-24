@@ -141,6 +141,7 @@ Tool::~Tool() {
 }
 
 bool Tool::OpenDB() {
+  sqlite3_config(SQLITE_CONFIG_SINGLETHREAD);
   if (sqlite3_open(":memory:", &db) != SQLITE_OK) {
     print("Unable to open database.\n");
     return false;
@@ -310,6 +311,8 @@ void Tool::Run() {
       }
     }
   }
+
+  print("memory used: {}\n", sqlite3_memory_highwater(0));
 }
 
 void Tool::DoTypeSection(LazyTypeSection section) {
@@ -461,6 +464,14 @@ void Tool::DoElementSection(LazyElementSection section) {
 }
 
 void Tool::DoCodeSection(LazyCodeSection section) {
+  sqlite3_stmt* stmt;
+  if (sqlite3_prepare_v2(
+          db, "insert into instruction values (?1, ?2, ?3, ?4, ?5, ?6);", -1,
+          &stmt, nullptr) != SQLITE_OK) {
+    print("Error: {}\n", sqlite3_errmsg(db));
+    return;
+  }
+
   for (auto code : enumerate(section.sequence, imported_function_count)) {
     Exec("insert into code values ({}, {}, {});", code.index,
          file_offset(code.value.body.data), code.value.body.data.size());
@@ -479,49 +490,69 @@ void Tool::DoCodeSection(LazyCodeSection section) {
       const auto& instr = *it;
       auto opcode_val = static_cast<int>(instr.opcode);
 
-      std::string immediate = "null";
       if (instr.has_empty_immediate()) {
+        sqlite3_bind_null(stmt, 6);
       } else if (instr.has_block_type_immediate()) {
-        immediate =
-            format("{}", static_cast<int>(instr.block_type_immediate()));
+        sqlite3_bind_int(stmt, 6,
+                         static_cast<int>(instr.block_type_immediate()));
       } else if (instr.has_index_immediate()) {
-        immediate = format("{}", instr.index_immediate());
+        sqlite3_bind_int(stmt, 6, static_cast<int>(instr.index_immediate()));
       } else if (instr.has_call_indirect_immediate()) {
         // TODO: immediate
+        sqlite3_bind_null(stmt, 6);
       } else if (instr.has_br_table_immediate()) {
         // TODO: immediate
+        sqlite3_bind_null(stmt, 6);
       } else if (instr.has_br_on_exn_immediate()) {
         // TODO: immediate
+        sqlite3_bind_null(stmt, 6);
       } else if (instr.has_u8_immediate()) {
-        immediate = format("{}", instr.u8_immediate());
+        sqlite3_bind_int(stmt, 6, instr.u8_immediate());
       } else if (instr.has_mem_arg_immediate()) {
         // TODO: immediate
+        sqlite3_bind_null(stmt, 6);
       } else if (instr.has_s32_immediate()) {
-        immediate = format("{}", instr.s32_immediate());
+        sqlite3_bind_int(stmt, 6, instr.s32_immediate());
       } else if (instr.has_s64_immediate()) {
-        immediate = format("{}", instr.s64_immediate());
+        sqlite3_bind_int64(stmt, 6, instr.s64_immediate());
       } else if (instr.has_f32_immediate()) {
-        immediate = format("{}", instr.f32_immediate());
+        sqlite3_bind_double(stmt, 6, instr.f32_immediate());
       } else if (instr.has_f64_immediate()) {
-        immediate = format("{}", instr.f64_immediate());
+        sqlite3_bind_double(stmt, 6, instr.f64_immediate());
       } else if (instr.has_v128_immediate()) {
         // TODO: immediate
+        sqlite3_bind_null(stmt, 6);
       } else if (instr.has_init_immediate()) {
         // TODO: immediate
+        sqlite3_bind_null(stmt, 6);
       } else if (instr.has_copy_immediate()) {
         // TODO: immediate
+        sqlite3_bind_null(stmt, 6);
       } else if (instr.has_shuffle_immediate()) {
         // TODO: immediate
+        sqlite3_bind_null(stmt, 6);
       }
 
       auto offset = file_offset(it.data());
       auto size = it.data().begin() - last_data.begin();
       last_data = it.data();
 
-      Exec("insert into instruction values ({}, {}, {}, {}, {}, {});",
-           code.index, index, offset, size, opcode_val, immediate);
+      sqlite3_bind_int(stmt, 1, code.index);
+      sqlite3_bind_int(stmt, 2, index);
+      sqlite3_bind_int(stmt, 3, offset);
+      sqlite3_bind_int(stmt, 4, size);
+      sqlite3_bind_int(stmt, 5, opcode_val);
+
+      int result = sqlite3_step(stmt);
+      if (result != SQLITE_DONE) {
+        print("Error: {}\n", sqlite3_errmsg(db));
+      }
+
+      sqlite3_reset(stmt);
     }
   }
+
+  sqlite3_finalize(stmt);
 }
 
 void Tool::DoDataSection(LazyDataSection section) {
