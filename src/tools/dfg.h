@@ -17,11 +17,14 @@
 #ifndef WASP_TOOLS_DFG_H_
 #define WASP_TOOLS_DFG_H_
 
+#include "wasp/base/span.h"
+#include "wasp/base/string_view.h"
+
 namespace wasp {
 namespace tools {
 namespace dfg {
 
-int Main(int argc, char** argv);
+int Main(span<string_view> const& args);
 
 }  // namespace dfg
 }  // namespace tools

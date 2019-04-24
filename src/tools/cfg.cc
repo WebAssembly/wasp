@@ -108,22 +108,22 @@ struct Tool {
   BBID current_bbid = InvalidBBID;
 };
 
-int Main(int argc, char** argv) {
+int Main(span<string_view> const& args) {
   string_view filename;
   Options options;
   options.features.EnableAll();
 
-  for (int i = 0; i < argc; ++i) {
-    string_view arg = argv[i];
+  for (int i = 0; i < args.size(); ++i) {
+    string_view arg = args[i];
     if (arg[0] == '-') {
       switch (arg[1]) {
-        case 'o': options.output_filename = argv[++i]; break;
-        case 'f': options.function = argv[++i]; break;
+        case 'o': options.output_filename = args[++i]; break;
+        case 'f': options.function = args[++i]; break;
         case '-':
           if (arg == "--output") {
-            options.output_filename = argv[++i];
+            options.output_filename = args[++i];
           } else if (arg == "--function") {
-            options.function = argv[++i];
+            options.function = args[++i];
           } else {
             print(stderr, "Unknown long argument {}\n", arg);
           }
