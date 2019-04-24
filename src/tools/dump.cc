@@ -205,20 +205,20 @@ struct Tool {
 // static
 constexpr int Tool::max_octets_per_line;
 
-int Main(int argc, char** argv) {
+int Main(span<string_view> const& args) {
   std::vector<string_view> filenames;
   Options options;
   options.features.EnableAll();
 
-  for (int i = 0; i < argc; ++i) {
-    string_view arg = argv[i];
+  for (int i = 0; i < args.size(); ++i) {
+    string_view arg = args[i];
     if (arg[0] == '-') {
       switch (arg[1]) {
         case 'h': options.print_headers = true; break;
         case 'd': options.print_disassembly = true; break;
         case 'x': options.print_details = true; break;
         case 's': options.print_raw_data = true; break;
-        case 'j': options.section_name = argv[++i]; break;
+        case 'j': options.section_name = args[++i]; break;
         case '-':
           if (arg == "--headers") {
             options.print_headers = true;
@@ -229,7 +229,7 @@ int Main(int argc, char** argv) {
           } else if (arg == "--full-contents") {
             options.print_raw_data = true;
           } else if (arg == "--section") {
-            options.section_name = argv[++i];
+            options.section_name = args[++i];
           } else {
             print("Unknown long argument {}\n", arg);
           }

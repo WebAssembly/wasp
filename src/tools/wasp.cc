@@ -19,19 +19,26 @@
 #include "src/tools/dfg.h"
 #include "src/tools/dump.h"
 
+#include "wasp/base/enumerate.h"
 #include "wasp/base/format.h"
 #include "wasp/base/formatters.h"
+#include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 
 using namespace ::wasp;
 
-using Command = int (*)(int argc, char** argv);
+using Command = int (*)(span<string_view> const& args);
 
 void PrintHelp();
 
 int main(int argc, char** argv) {
+  std::vector<string_view> args(argc - 1);
   for (int i = 1; i < argc; ++i) {
-    string_view arg = argv[i];
+    args[i - 1] = argv[i];
+  }
+
+  for (const auto& argPair : enumerate(args)) {
+    auto arg = argPair.value;
     if (arg[0] == '-') {
       switch (arg[1]) {
         case 'h':
@@ -57,7 +64,8 @@ int main(int argc, char** argv) {
         return 1;
       }
 
-      return command(argc - i - 1, argv + i + 1);
+      span<string_view> argSpan = args;
+      return command(argSpan.subspan(argPair.index));
     }
   }
 
