@@ -140,6 +140,76 @@ Tool::~Tool() {
   sqlite3_close(db);
 }
 
+void Tool::Run() {
+  if (!(module.magic && module.version)) return;
+  if (!OpenDB()) return;
+  if (!CreateTables()) return;
+
+  auto module = ReadModule(data, options.features, errors);
+  for (auto section : enumerate(module.sections)) {
+    if (section.value.is_known()) {
+      auto known = section.value.known();
+      auto offset = file_offset(section.value.data());
+      auto size = section.value.data().size();
+
+      Exec("insert into section values ({}, {}, {}, {});", section.index,
+           static_cast<int>(known.id), offset, size);
+
+      switch (known.id) {
+        case SectionId::Type:
+          DoTypeSection(ReadTypeSection(known, options.features, errors));
+          break;
+
+        case SectionId::Import:
+          DoImportSection(ReadImportSection(known, options.features, errors));
+          break;
+
+        case SectionId::Function:
+          DoFunctionSection(
+              ReadFunctionSection(known, options.features, errors));
+          break;
+
+        case SectionId::Table:
+          DoTableSection(ReadTableSection(known, options.features, errors));
+          break;
+
+        case SectionId::Memory:
+          DoMemorySection(ReadMemorySection(known, options.features, errors));
+          break;
+
+        case SectionId::Global:
+          DoGlobalSection(ReadGlobalSection(known, options.features, errors));
+          break;
+
+        case SectionId::Export:
+          DoExportSection(ReadExportSection(known, options.features, errors));
+          break;
+
+        case SectionId::Start:
+          DoStartSection(ReadStartSection(known, options.features, errors));
+          break;
+
+        case SectionId::Element:
+          DoElementSection(ReadElementSection(known, options.features, errors));
+          break;
+
+        case SectionId::Code:
+          DoCodeSection(ReadCodeSection(known, options.features, errors));
+          break;
+
+        case SectionId::Data:
+          DoDataSection(ReadDataSection(known, options.features, errors));
+          break;
+
+        default:
+          break;
+      }
+    }
+  }
+
+  print("memory used: {}\n", sqlite3_memory_highwater(0));
+}
+
 bool Tool::OpenDB() {
   sqlite3_config(SQLITE_CONFIG_SINGLETHREAD);
   if (sqlite3_open(":memory:", &db) != SQLITE_OK) {
@@ -243,76 +313,6 @@ bool Tool::InsertConstantExpression(const ConstantExpression& expr,
   }
 
   return true;
-}
-
-void Tool::Run() {
-  if (!(module.magic && module.version)) return;
-  if (!OpenDB()) return;
-  if (!CreateTables()) return;
-
-  auto module = ReadModule(data, options.features, errors);
-  for (auto section : enumerate(module.sections)) {
-    if (section.value.is_known()) {
-      auto known = section.value.known();
-      auto offset = file_offset(section.value.data());
-      auto size = section.value.data().size();
-
-      Exec("insert into section values ({}, {}, {}, {});", section.index,
-           static_cast<int>(known.id), offset, size);
-
-      switch (known.id) {
-        case SectionId::Type:
-          DoTypeSection(ReadTypeSection(known, options.features, errors));
-          break;
-
-        case SectionId::Import:
-          DoImportSection(ReadImportSection(known, options.features, errors));
-          break;
-
-        case SectionId::Function:
-          DoFunctionSection(
-              ReadFunctionSection(known, options.features, errors));
-          break;
-
-        case SectionId::Table:
-          DoTableSection(ReadTableSection(known, options.features, errors));
-          break;
-
-        case SectionId::Memory:
-          DoMemorySection(ReadMemorySection(known, options.features, errors));
-          break;
-
-        case SectionId::Global:
-          DoGlobalSection(ReadGlobalSection(known, options.features, errors));
-          break;
-
-        case SectionId::Export:
-          DoExportSection(ReadExportSection(known, options.features, errors));
-          break;
-
-        case SectionId::Start:
-          DoStartSection(ReadStartSection(known, options.features, errors));
-          break;
-
-        case SectionId::Element:
-          DoElementSection(ReadElementSection(known, options.features, errors));
-          break;
-
-        case SectionId::Code:
-          DoCodeSection(ReadCodeSection(known, options.features, errors));
-          break;
-
-        case SectionId::Data:
-          DoDataSection(ReadDataSection(known, options.features, errors));
-          break;
-
-        default:
-          break;
-      }
-    }
-  }
-
-  print("memory used: {}\n", sqlite3_memory_highwater(0));
 }
 
 void Tool::DoTypeSection(LazyTypeSection section) {
@@ -531,6 +531,8 @@ void Tool::DoCodeSection(LazyCodeSection section) {
       } else if (instr.has_shuffle_immediate()) {
         // TODO: immediate
         sqlite3_bind_null(stmt, 6);
+      } else {
+        assert(false);
       }
 
       auto offset = file_offset(it.data());
