@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/format.h"
@@ -238,15 +239,14 @@ void Tool::Run() {
   if (!OpenDB()) return;
   if (!CreateTables()) return;
 
-  Index section_index = 0;
   auto module = ReadModule(data, options.features, errors);
-  for (auto section : module.sections) {
-    if (section.is_known()) {
-      auto known = section.known();
-      auto offset = section.data().begin() - module.data.begin();
-      auto size = section.data().size();
+  for (auto section : enumerate(module.sections)) {
+    if (section.value.is_known()) {
+      auto known = section.value.known();
+      auto offset = section.value.data().begin() - module.data.begin();
+      auto size = section.value.data().size();
 
-      Exec("insert into section values ({}, {}, {}, {});", section_index,
+      Exec("insert into section values ({}, {}, {}, {});", section.index,
            static_cast<int>(known.id), offset, size);
 
       switch (known.id) {
@@ -295,27 +295,20 @@ void Tool::Run() {
           break;
       }
     }
-    ++section_index;
   }
 }
 
 void Tool::DoTypeSection(LazyTypeSection section) {
-  Index type_index = 0;
-  for (auto entry : section.sequence) {
-    Exec("insert into function_type values ({});", type_index);
-    Index param_index = 0;
-    for (auto param : entry.type.param_types) {
-      Exec("insert into param_type values ({}, {}, {});", type_index,
-           param_index, static_cast<int>(param));
-      ++param_index;
+  for (auto entry : enumerate(section.sequence)) {
+    Exec("insert into function_type values ({});", entry.index);
+    for (auto param : enumerate(entry.value.type.param_types)) {
+      Exec("insert into param_type values ({}, {}, {});", entry.index,
+           param.index, static_cast<int>(param.value));
     }
-    Index result_index = 0;
-    for (auto result : entry.type.result_types) {
-      Exec("insert into result_type values ({}, {}, {});", type_index,
-           result_index, static_cast<int>(result));
-      ++result_index;
+    for (auto result : enumerate(entry.value.type.result_types)) {
+      Exec("insert into result_type values ({}, {}, {});", entry.index,
+           result.index, static_cast<int>(result.value));
     }
-    ++type_index;
   }
 }
 
@@ -329,94 +322,82 @@ std::string OrNull(optional<T> x) {
 }  // namespace
 
 void Tool::DoImportSection(LazyImportSection section) {
-  Index import_index = 0;
-  for (auto import : section.sequence) {
-    Exec("insert into import values ({}, \"{}\", \"{}\");", import_index,
-         import.module, import.name);
-    switch (import.kind()) {
+  for (auto import : enumerate(section.sequence)) {
+    Exec("insert into import values ({}, \"{}\", \"{}\");", import.index,
+         import.value.module, import.value.name);
+    switch (import.value.kind()) {
       case ExternalKind::Function:
         Exec("insert into function_import values ({}, {}, {});",
-             imported_function_count++, import_index, import.index());
+             imported_function_count++, import.index, import.value.index());
         break;
 
       case ExternalKind::Table: {
-        auto table_type = import.table_type();
+        auto table_type = import.value.table_type();
         Exec("insert into table_import values ({}, {}, {}, {}, {});",
-             imported_table_count++, import_index, table_type.limits.min,
+             imported_table_count++, import.index, table_type.limits.min,
              OrNull(table_type.limits.max),
              static_cast<int>(table_type.elemtype));
         break;
       }
 
       case ExternalKind::Memory: {
-        auto memory_type = import.memory_type();
+        auto memory_type = import.value.memory_type();
         Exec("insert into memory_import values ({}, {}, {}, {});",
-             imported_memory_count++, import_index, memory_type.limits.min,
+             imported_memory_count++, import.index, memory_type.limits.min,
              OrNull(memory_type.limits.max));
         break;
       }
 
       case ExternalKind::Global:
-        auto global_type = import.global_type();
+        auto global_type = import.value.global_type();
         Exec("insert into global_import values ({}, {});",
-             imported_global_count++, import_index,
+             imported_global_count++, import.index,
              static_cast<int>(global_type.valtype),
              static_cast<int>(global_type.mut));
         break;
     }
-    ++import_index;
   }
 }
 
 void Tool::DoFunctionSection(LazyFunctionSection section) {
-  Index function_index = imported_function_count;
-  for (auto func : section.sequence) {
-    Exec("insert into function values ({}, {});", function_index,
-         func.type_index);
-    ++function_index;
+  for (auto func : enumerate(section.sequence, imported_function_count)) {
+    Exec("insert into function values ({}, {});", func.index,
+         func.value.type_index);
   }
 }
 
 void Tool::DoTableSection(LazyTableSection section) {
-  Index table_index = imported_table_count;
-  for (auto table : section.sequence) {
-    auto table_type = table.table_type;
-    Exec("insert into table_ values ({}, {}, {}, {});", table_index,
-         table_type.limits.min, OrNull(table_type.limits.max),
-         static_cast<int>(table_type.elemtype));
-    ++table_index;
+  for (auto table : enumerate(section.sequence, imported_table_count)) {
+    Exec("insert into table_ values ({}, {}, {}, {});", table.index,
+         table.value.table_type.limits.min,
+         OrNull(table.value.table_type.limits.max),
+         static_cast<int>(table.value.table_type.elemtype));
   }
 }
 
 void Tool::DoMemorySection(LazyMemorySection section) {
-  Index memory_index = imported_memory_count;
-  for (auto memory : section.sequence) {
-    auto memory_type = memory.memory_type;
-    Exec("insert into memory values ({}, {}, {});", memory_index,
-         memory_type.limits.min, OrNull(memory_type.limits.max));
-    ++memory_index;
+  for (auto memory : enumerate(section.sequence)) {
+    Exec("insert into memory values ({}, {}, {});", memory.index,
+         memory.value.memory_type.limits.min,
+         OrNull(memory.value.memory_type.limits.max));
   }
 }
 
 void Tool::DoGlobalSection(LazyGlobalSection section) {
-  Index global_index = imported_global_count;
-  for (auto global : section.sequence) {
-    auto global_type = global.global_type;
-    Exec("insert into global values ({}, {}, {});", global_index,
-         static_cast<int>(global_type.valtype),
-         static_cast<int>(global_type.mut));
+  for (auto global : enumerate(section.sequence)) {
+    Exec("insert into global values ({}, {}, {});", global.index,
+         static_cast<int>(global.value.global_type.valtype),
+         static_cast<int>(global.value.global_type.mut));
 
-    InsertConstantExpression(global.init, "global_init", global_index);
-    ++global_index;
+    InsertConstantExpression(global.value.init, "global_init", global.index);
   }
 }
 
 void Tool::DoExportSection(LazyExportSection section) {
-  Index export_index = 0;
-  for (auto export_ : section.sequence) {
-    Exec("insert into export values ({}, {}, \"{}\", {});", export_index,
-         static_cast<int>(export_.kind), export_.name, export_.index);
-    ++export_index;
+  for (auto export_ : enumerate(section.sequence)) {
+    Exec("insert into export values ({}, {}, \"{}\", {});", export_.index,
+         static_cast<int>(export_.value.kind), export_.value.name,
+         export_.value.index);
   }
 }
 
@@ -427,33 +408,32 @@ void Tool::DoStartSection(StartSection section) {
 }
 
 void Tool::DoElementSection(LazyElementSection section) {
-  Index element_index = 0;
-  for (auto element : section.sequence) {
-    if (element.is_active()) {
-      const auto& active = element.active();
-      Exec("insert into element values ({}, {}, {});", element_index,
-           static_cast<int>(element.segment_type()), active.table_index);
+  for (auto segment : enumerate(section.sequence)) {
+    if (segment.value.is_active()) {
+      const auto& active = segment.value.active();
+      Exec("insert into element values ({}, {}, {});", segment.index,
+           static_cast<int>(segment.value.segment_type()), active.table_index);
 
-      InsertConstantExpression(active.offset, "element_offset", element_index);
-      for (auto index: active.init) {
-        Exec("insert into element_init values ({}, null, {});", element_index,
+      InsertConstantExpression(active.offset, "element_offset", segment.index);
+      for (auto index : active.init) {
+        Exec("insert into element_init values ({}, null, {});", segment.index,
              index);
       }
     } else {
-      const auto& passive = element.passive();
-      Exec("insert into element values ({}, {}, null);", element_index,
-           static_cast<int>(element.segment_type()));
-      for (auto expr: passive.init) {
+      const auto& passive = segment.value.passive();
+      Exec("insert into element values ({}, {}, null);", segment.index,
+           static_cast<int>(segment.value.segment_type()));
+      for (auto expr : passive.init) {
         auto instr = expr.instruction;
         auto opcode_val = static_cast<int>(instr.opcode);
         switch (instr.opcode) {
           case Opcode::RefNull:
             Exec("insert into element_init values ({}, {}, null);",
-                 element_index, opcode_val);
+                 segment.index, opcode_val);
             break;
 
           case Opcode::RefFunc:
-            Exec("insert into element_init values ({}, {}, {});", element_index,
+            Exec("insert into element_init values ({}, {}, {});", segment.index,
                  opcode_val, instr.index_immediate());
             break;
 
@@ -462,7 +442,6 @@ void Tool::DoElementSection(LazyElementSection section) {
         }
       }
     }
-    ++element_index;
   }
 }
 
