@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+#include <iostream>
+
 #include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
@@ -22,6 +24,7 @@
 #include "wasp/base/string_view.h"
 #include "wasp/binary/errors.h"
 #include "wasp/binary/errors_nop.h"
+#include "wasp/binary/formatters.h"
 #include "wasp/binary/lazy_code_section.h"
 #include "wasp/binary/lazy_data_section.h"
 #include "wasp/binary/lazy_element_section.h"
@@ -73,6 +76,8 @@ struct Tool {
   void DoCodeSection(LazyCodeSection);
   void DoDataSection(LazyDataSection);
 
+  void Repl();
+
   size_t file_offset(SpanU8 data);
 
   std::string filename;
@@ -92,7 +97,7 @@ struct Tool {
 using namespace ::wasp;
 
 void PrintHelp() {
-  print("usage: wasp_sqllite <filename>\n");
+  print("usage: wasp_sqllite <filename> <command>\n");
 }
 
 int main(int argc, char** argv) {
@@ -126,6 +131,8 @@ int main(int argc, char** argv) {
   tool.Run();
   if (argc > 2) {
     tool.Exec(argv[2]);
+  } else {
+    tool.Repl();
   }
   return 0;
 }
@@ -275,6 +282,68 @@ bool Tool::CreateTables() {
   CHECK(Exec("create table code (idx int primary key, offset int, size int);"));
   CHECK(Exec("create table locals (code_idx int, idx int, count int, type int);"));
   CHECK(Exec("create table instruction (code_idx int, idx int, offset int, size int, opcode int, immediate);"));
+
+  // Name tables.
+  CHECK(Exec("create table section_name (code int primary key, name text);"));
+  CHECK(Exec("create table value_type_name (code int primary key, name text);"));
+  CHECK(Exec("create table opcode_name (opcode int primary key, name text);"));
+
+  // Views using names.
+  CHECK(Exec("create view section_n as select section.*, name from section, section_name using (code);"));
+  CHECK(Exec("create view param_type_n as select param_type.*, name from param_type, value_type_name using (code);"));
+  CHECK(Exec("create view result_type_n as select result_type.*, name from result_type, value_type_name using (code);"));
+  CHECK(Exec("create view global_import_n as select global_import.*, name from global_import, value_type_name on valtype = code;"));
+  CHECK(Exec("create view global_n as select global.*, name from global, value_type_name on valtype = code;"));
+  CHECK(Exec("create view locals_n as select locals.*, name from locals, value_type_name on type = code;"));
+  CHECK(Exec("create view element_offset_n as select element_offset.*, name from element_offset, opcode_name using (opcode);"));
+  CHECK(Exec("create view data_offset_n as select data_offset.*, name from data_offset, opcode_name using (opcode);"));
+  CHECK(Exec("create view instruction_n as select instruction.*, name from instruction, opcode_name using (opcode);"));
+
+  // Convenience views.
+  CHECK(Exec(R"(create view ftype as
+    with
+      pt as (
+        select ft.idx, group_concat(name) as names
+        from function_type as ft
+        left join param_type_n on ft.idx = type_idx
+        group by ft.idx
+      ),
+      rt as (
+        select ft.idx, group_concat(name) as names
+        from function_type as ft
+        left join result_type_n on ft.idx = type_idx
+        group by ft.idx
+      )
+    select ft.idx, pt.names as params, rt.names as results
+    from function_type as ft, pt, rt
+    where ft.idx = pt.idx and ft.idx = rt.idx;)"));
+
+  CHECK(Exec("create view function_ft as select f.idx, ftype.idx as type_idx, ftype.params, ftype.results from function as f, ftype on type=ftype.idx;"));
+
+  int count = 0;
+#define WASP_V(prefix, val, Name, str, ...) \
+  CHECK(Exec("insert into opcode_name values ({}, \"{}\");", count++, str));
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
+#define WASP_PREFIX_V(...) WASP_V(__VA_ARGS__)
+#include "wasp/binary/opcode.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+#undef WASP_PREFIX_V
+
+  count = 0;
+#define WASP_V(val, Name, str) \
+  CHECK(Exec("insert into value_type_name values ({}, \"{}\");", count++, str));
+#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
+#include "wasp/binary/value_type.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+
+  count = 0;
+#define WASP_V(val, Name, str) \
+  CHECK(Exec("insert into section_name values ({}, \"{}\");", count++, str));
+#include "wasp/binary/section_id.def"
+#undef WASP_V
+
   return true;
 }
 
@@ -563,4 +632,21 @@ void Tool::DoDataSection(LazyDataSection section) {
 
 size_t Tool::file_offset(SpanU8 data) {
   return data.begin() - module.data.begin();
+}
+
+void Tool::Repl() {
+  std::string input;
+  while (true) {
+    std::cout << "> ";
+    if (!getline(std::cin, input)) {
+      break;
+    }
+    if (input == "help" || input == "h" || input == "" || input == "?") {
+      print("type a sql command, or \"quit\" to exit.\n");
+    } else if (input == "quit") {
+      break;
+    } else {
+      Exec(input.c_str());
+    }
+  }
 }
