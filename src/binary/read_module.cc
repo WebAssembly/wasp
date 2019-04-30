@@ -37,7 +37,9 @@ LazyModule::LazyModule(SpanU8 data, const Features& features, Errors& errors)
       magic{ReadBytesExpected(&data, kMagicSpan, features, errors, "magic")},
       version{
           ReadBytesExpected(&data, kVersionSpan, features, errors, "version")},
-      sections{data, features, errors} {}
+      sections{data, features, errors},
+      features{features},
+      errors{errors} {}
 
 LazyModule ReadModule(SpanU8 data, const Features& features, Errors& errors) {
   return LazyModule{data, features, errors};

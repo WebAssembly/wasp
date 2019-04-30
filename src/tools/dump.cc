@@ -27,32 +27,23 @@
 #include "wasp/base/macros.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/data_count_section.h"
 #include "wasp/binary/errors.h"
 #include "wasp/binary/formatters.h"
-#include "wasp/binary/lazy_code_section.h"
 #include "wasp/binary/lazy_comdat_subsection.h"
-#include "wasp/binary/lazy_data_section.h"
-#include "wasp/binary/lazy_element_section.h"
-#include "wasp/binary/lazy_export_section.h"
 #include "wasp/binary/lazy_expression.h"
 #include "wasp/binary/lazy_function_names_subsection.h"
-#include "wasp/binary/lazy_function_section.h"
-#include "wasp/binary/lazy_global_section.h"
-#include "wasp/binary/lazy_import_section.h"
 #include "wasp/binary/lazy_init_functions_subsection.h"
 #include "wasp/binary/lazy_local_names_subsection.h"
-#include "wasp/binary/lazy_memory_section.h"
 #include "wasp/binary/lazy_module.h"
 #include "wasp/binary/lazy_module_name_subsection.h"
 #include "wasp/binary/lazy_name_section.h"
 #include "wasp/binary/lazy_segment_info_subsection.h"
 #include "wasp/binary/lazy_symbol_table_subsection.h"
-#include "wasp/binary/lazy_table_section.h"
-#include "wasp/binary/lazy_type_section.h"
 #include "wasp/binary/linking_section.h"
 #include "wasp/binary/relocation_section.h"
 #include "wasp/binary/start_section.h"
+
+#include "wasp/binary/visitor.h"
 
 namespace wasp {
 namespace tools {
@@ -100,21 +91,47 @@ struct Tool {
   void DoPass(Pass);
   bool SectionMatches(Section) const;
   void DoSectionHeader(Pass, Section);
-  void DoKnownSection(Pass, SectionIndex, KnownSection);
   void DoCustomSection(Pass, SectionIndex, CustomSection);
 
-  void DoTypeSection(Pass, SectionIndex, LazyTypeSection);
-  void DoImportSection(Pass, SectionIndex, LazyImportSection);
-  void DoFunctionSection(Pass, SectionIndex, LazyFunctionSection);
-  void DoTableSection(Pass, SectionIndex, LazyTableSection);
-  void DoMemorySection(Pass, SectionIndex, LazyMemorySection);
-  void DoGlobalSection(Pass, SectionIndex, LazyGlobalSection);
-  void DoExportSection(Pass, SectionIndex, LazyExportSection);
-  void DoStartSection(Pass, SectionIndex, StartSection);
-  void DoElementSection(Pass, SectionIndex, LazyElementSection);
-  void DoCodeSection(Pass, SectionIndex, LazyCodeSection);
-  void DoDataSection(Pass, SectionIndex, LazyDataSection);
-  void DoDataCountSection(Pass, SectionIndex, DataCountSection);
+  struct Visitor : visit::Visitor {
+    explicit Visitor(Tool&, Pass);
+
+    visit::Result OnSection(Section);
+    visit::Result BeginTypeSection(LazyTypeSection);
+    visit::Result OnType(const TypeEntry&);
+    visit::Result BeginImportSection(LazyImportSection);
+    visit::Result OnImport(const Import&);
+    visit::Result BeginFunctionSection(LazyFunctionSection);
+    visit::Result OnFunction(const Function&);
+    visit::Result BeginTableSection(LazyTableSection);
+    visit::Result OnTable(const Table&);
+    visit::Result BeginMemorySection(LazyMemorySection);
+    visit::Result OnMemory(const Memory&);
+    visit::Result BeginGlobalSection(LazyGlobalSection);
+    visit::Result OnGlobal(const Global&);
+    visit::Result BeginExportSection(LazyExportSection);
+    visit::Result OnExport(const Export&);
+    visit::Result BeginStartSection(StartSection);
+    visit::Result BeginElementSection(LazyElementSection);
+    visit::Result OnElement(const ElementSegment&);
+    visit::Result BeginDataCountSection(DataCountSection);
+    visit::Result BeginCodeSection(LazyCodeSection);
+    visit::Result OnCode(const Code&);
+    visit::Result BeginDataSection(LazyDataSection);
+    visit::Result OnData(const DataSegment&);
+
+    visit::Result SkipUnless(bool);
+
+    Tool& tool;
+    Pass pass;
+    SectionIndex section_index = 0;
+    Index index = 0;
+    Index function_count = 0;
+    Index table_count = 0;
+    Index memory_count = 0;
+    Index global_count = 0;
+  };
+
   void DoNameSection(Pass, SectionIndex, LazyNameSection);
   void DoLinkingSection(Pass, SectionIndex, LinkingSection);
   void DoRelocationSection(Pass, SectionIndex, RelocationSection);
@@ -426,15 +443,22 @@ void Tool::DoPass(Pass pass) {
       break;
   }
 
-  for (auto section : enumerate(module.sections)) {
-    if (SectionMatches(section.value)) {
-      DoSectionHeader(pass, section.value);
-      if (section.value.is_known()) {
-        DoKnownSection(pass, section.index, section.value.known());
-      } else if (section.value.is_custom()) {
-        DoCustomSection(pass, section.index, section.value.custom());
-      }
+  Visitor visitor{*this, pass};
+  visit::Visit(module, visitor);
+}
+
+Tool::Visitor::Visitor(Tool& tool, Pass pass) : tool{tool}, pass{pass} {}
+
+visit::Result Tool::Visitor::OnSection(Section section) {
+  auto this_idx = section_index++;
+  if (tool.SectionMatches(section)) {
+    tool.DoSectionHeader(pass, section);
+    if (section.is_custom()) {
+      tool.DoCustomSection(pass, this_idx, section.custom());
     }
+    return visit::Result::Ok;
+  } else {
+    return visit::Result::Skip;
   }
 }
 
@@ -466,77 +490,6 @@ bool Tool::SectionMatches(Section section) const {
     name = section.custom().name.to_string();
   }
   return StringsAreEqualCaseInsensitive(name, options.section_name);
-}
-
-void Tool::DoKnownSection(Pass pass,
-                          SectionIndex section_index,
-                          KnownSection known) {
-  const Features& features = options.features;
-  switch (known.id) {
-    case SectionId::Custom:
-      WASP_UNREACHABLE();
-      break;
-
-    case SectionId::Type:
-      DoTypeSection(pass, section_index,
-                    ReadTypeSection(known, features, errors));
-      break;
-
-    case SectionId::Import:
-      DoImportSection(pass, section_index,
-                      ReadImportSection(known, features, errors));
-      break;
-
-    case SectionId::Function:
-      DoFunctionSection(pass, section_index,
-                        ReadFunctionSection(known, features, errors));
-      break;
-
-    case SectionId::Table:
-      DoTableSection(pass, section_index,
-                     ReadTableSection(known, features, errors));
-      break;
-
-    case SectionId::Memory:
-      DoMemorySection(pass, section_index,
-                      ReadMemorySection(known, features, errors));
-      break;
-
-    case SectionId::Global:
-      DoGlobalSection(pass, section_index,
-                      ReadGlobalSection(known, features, errors));
-      break;
-
-    case SectionId::Export:
-      DoExportSection(pass, section_index,
-                      ReadExportSection(known, features, errors));
-      break;
-
-    case SectionId::Start:
-      DoStartSection(pass, section_index,
-                     ReadStartSection(known, features, errors));
-      break;
-
-    case SectionId::Element:
-      DoElementSection(pass, section_index,
-                       ReadElementSection(known, features, errors));
-      break;
-
-    case SectionId::Code:
-      DoCodeSection(pass, section_index,
-                    ReadCodeSection(known, features, errors));
-      break;
-
-    case SectionId::Data:
-      DoDataSection(pass, section_index,
-                    ReadDataSection(known, features, errors));
-      break;
-
-    case SectionId::DataCount:
-      DoDataCountSection(pass, section_index,
-                         ReadDataCountSection(known, features, errors));
-      break;
-  }
 }
 
 void Tool::DoCustomSection(Pass pass,
@@ -599,211 +552,211 @@ void Tool::DoSectionHeader(Pass pass,
   }
 }
 
-void Tool::DoTypeSection(Pass pass,
-                         SectionIndex section_index,
-                         LazyTypeSection section) {
-  DoCount(pass, section.count);
-  if (ShouldPrintDetails(pass)) {
-    Index count = 0;
-    for (auto type_entry : section.sequence) {
-      print(" - type[{}] {}\n", count++, type_entry);
-    }
-  }
+visit::Result Tool::Visitor::BeginTypeSection(LazyTypeSection section) {
+  index = 0;
+  tool.DoCount(pass, section.count);
+  return SkipUnless(tool.ShouldPrintDetails(pass));
 }
 
-void Tool::DoImportSection(Pass pass,
-                           SectionIndex section_index,
-                           LazyImportSection section) {
-  DoCount(pass, section.count);
-  if (ShouldPrintDetails(pass)) {
-    Index function_count = 0;
-    Index table_count = 0;
-    Index memory_count = 0;
-    Index global_count = 0;
-    for (auto import : section.sequence) {
-      switch (import.kind()) {
-        case ExternalKind::Function: {
-          print(" - func[{}] sig={}", function_count, import.index());
-          PrintFunctionName(function_count);
-          ++function_count;
-          break;
-        }
-
-        case ExternalKind::Table: {
-          print(" - table[{}] {}", table_count, import.table_type());
-          ++table_count;
-          break;
-        }
-
-        case ExternalKind::Memory: {
-          print(" - memory[{}] {}", memory_count, import.memory_type());
-          ++memory_count;
-          break;
-        }
-
-        case ExternalKind::Global: {
-          print(" - global[{}] {}", global_count, import.global_type());
-          ++global_count;
-          break;
-        }
-      }
-      print(" <- {}.{}\n", import.module, import.name);
-    }
-  }
+visit::Result Tool::Visitor::OnType(const TypeEntry& type_entry) {
+  print(" - type[{}] {}\n", index++, type_entry);
+  return visit::Result::Ok;
 }
 
-void Tool::DoFunctionSection(Pass pass,
-                             SectionIndex section_index,
-                             LazyFunctionSection section) {
-  DoCount(pass, section.count);
-  if (ShouldPrintDetails(pass)) {
-    for (auto func : enumerate(section.sequence, imported_function_count)) {
-      print(" - func[{}] sig={}", func.index, func.value.type_index);
-      PrintFunctionName(func.index);
-      print("\n");
-    }
-  }
+visit::Result Tool::Visitor::BeginImportSection(LazyImportSection section) {
+  function_count = 0;
+  table_count = 0;
+  memory_count = 0;
+  global_count = 0;
+  tool.DoCount(pass, section.count);
+  return SkipUnless(tool.ShouldPrintDetails(pass));
 }
 
-void Tool::DoTableSection(Pass pass,
-                          SectionIndex section_index,
-                          LazyTableSection section) {
-  DoCount(pass, section.count);
-  if (ShouldPrintDetails(pass)) {
-    for (auto table : enumerate(section.sequence, imported_table_count)) {
-      print(" - table[{}] {}\n", table.index, table.value.table_type);
+visit::Result Tool::Visitor::OnImport(const Import& import) {
+  switch (import.kind()) {
+    case ExternalKind::Function: {
+      print(" - func[{}] sig={}", function_count, import.index());
+      tool.PrintFunctionName(function_count);
+      ++function_count;
+      break;
+    }
+
+    case ExternalKind::Table: {
+      print(" - table[{}] {}", table_count, import.table_type());
+      ++table_count;
+      break;
+    }
+
+    case ExternalKind::Memory: {
+      print(" - memory[{}] {}", memory_count, import.memory_type());
+      ++memory_count;
+      break;
+    }
+
+    case ExternalKind::Global: {
+      print(" - global[{}] {}", global_count, import.global_type());
+      ++global_count;
+      break;
     }
   }
+  print(" <- {}.{}\n", import.module, import.name);
+  return visit::Result::Ok;
 }
 
-void Tool::DoMemorySection(Pass pass,
-                           SectionIndex section_index,
-                           LazyMemorySection section) {
-  DoCount(pass, section.count);
-  if (ShouldPrintDetails(pass)) {
-    for (auto memory : enumerate(section.sequence, imported_memory_count)) {
-      print(" - memory[{}] {}\n", memory.index, memory.value.memory_type);
-    }
+visit::Result Tool::Visitor::BeginFunctionSection(LazyFunctionSection section) {
+  index = tool.imported_function_count;
+  tool.DoCount(pass, section.count);
+  return SkipUnless(tool.ShouldPrintDetails(pass));
+}
+
+visit::Result Tool::Visitor::OnFunction(const Function& func) {
+  print(" - func[{}] sig={}", index, func.type_index);
+  tool.PrintFunctionName(index);
+  print("\n");
+  ++index;
+  return visit::Result::Ok;
+}
+
+visit::Result Tool::Visitor::BeginTableSection(LazyTableSection section) {
+  index = tool.imported_table_count;
+  tool.DoCount(pass, section.count);
+  return SkipUnless(tool.ShouldPrintDetails(pass));
+}
+
+visit::Result Tool::Visitor::OnTable(const Table& table) {
+  print(" - table[{}] {}\n", index++, table.table_type);
+  return visit::Result::Ok;
+}
+
+visit::Result Tool::Visitor::BeginMemorySection(LazyMemorySection section) {
+  index = tool.imported_memory_count;
+  tool.DoCount(pass, section.count);
+  return SkipUnless(tool.ShouldPrintDetails(pass));
+}
+
+visit::Result Tool::Visitor::OnMemory(const Memory& memory) {
+  print(" - memory[{}] {}\n", index++, memory.memory_type);
+  return visit::Result::Ok;
+}
+
+visit::Result Tool::Visitor::BeginGlobalSection(LazyGlobalSection section) {
+  index = tool.imported_global_count;
+  tool.DoCount(pass, section.count);
+  return SkipUnless(tool.ShouldPrintDetails(pass));
+}
+
+visit::Result Tool::Visitor::OnGlobal(const Global& global) {
+  print(" - global[{}] {} - {}\n", index++, global.global_type, global.init);
+  return visit::Result::Ok;
+}
+
+visit::Result Tool::Visitor::BeginExportSection(LazyExportSection section) {
+  tool.DoCount(pass, section.count);
+  return SkipUnless(tool.ShouldPrintDetails(pass));
+}
+
+visit::Result Tool::Visitor::OnExport(const Export& export_) {
+  print(" - {}[{}]", export_.kind, export_.index);
+  if (export_.kind == ExternalKind::Function) {
+    tool.PrintFunctionName(export_.index);
   }
+  print(" -> \"{}\"\n", export_.name);
+  return visit::Result::Ok;
 }
 
-void Tool::DoGlobalSection(Pass pass,
-                           SectionIndex section_index,
-                           LazyGlobalSection section) {
-  DoCount(pass, section.count);
-  if (ShouldPrintDetails(pass)) {
-    for (auto global : enumerate(section.sequence, imported_global_count)) {
-      print(" - global[{}] {} - {}\n", global.index, global.value.global_type,
-            global.value.init);
-    }
-  }
-}
-
-void Tool::DoExportSection(Pass pass,
-                           SectionIndex section_index,
-                           LazyExportSection section) {
-  DoCount(pass, section.count);
-  if (ShouldPrintDetails(pass)) {
-    for (auto export_ : section.sequence) {
-      print(" - {}[{}]", export_.kind, export_.index);
-      if (export_.kind == ExternalKind::Function) {
-        PrintFunctionName(export_.index);
-      }
-      print(" -> \"{}\"\n", export_.name);
-    }
-  }
-}
-
-void Tool::DoStartSection(Pass pass,
-                          SectionIndex section_index,
-                          StartSection section) {
+visit::Result Tool::Visitor::BeginStartSection(StartSection section) {
   if (section) {
     auto start = *section;
     if (pass == Pass::Headers) {
       print("start: {}\n", start.func_index);
     } else {
-      PrintDetails(pass, " - start function: {}\n", start.func_index);
+      tool.PrintDetails(pass, " - start function: {}\n", start.func_index);
     }
   }
+  return visit::Result::Ok;
 }
 
-void Tool::DoElementSection(Pass pass,
-                            SectionIndex section_index,
-                            LazyElementSection section) {
-  DoCount(pass, section.count);
-  if (ShouldPrintDetails(pass)) {
-    for (auto segment : enumerate(section.sequence)) {
-      Index offset = 0;
-      if (segment.value.is_active()) {
-        const auto& active = segment.value.active();
-        print(" - segment[{}] table={} count={} - init {}\n", segment.index,
-              active.table_index, active.init.size(), active.offset);
-        offset = GetI32Value(active.offset).value_or(0);
-        for (auto element : enumerate(active.init)) {
-          print("  - elem[{}] = func[{}]", offset + element.index,
-                element.value);
-          PrintFunctionName(element.value);
-          print("\n");
-        }
-      } else {
-        const auto& passive = segment.value.passive();
-        print(" - segment[{}] count={} element_type={} passive\n",
-              segment.index, passive.element_type, passive.init.size());
-        for (auto element : enumerate(passive.init)) {
-          print("  - elem[{}] = {}\n", offset + element.index, element.value);
-        }
-      }
+visit::Result Tool::Visitor::BeginElementSection(LazyElementSection section) {
+  index = 0;
+  tool.DoCount(pass, section.count);
+  return SkipUnless(tool.ShouldPrintDetails(pass));
+}
+
+visit::Result Tool::Visitor::OnElement(const ElementSegment& segment) {
+  Index offset = 0;
+  if (segment.is_active()) {
+    const auto& active = segment.active();
+    print(" - segment[{}] table={} count={} - init {}\n", index,
+          active.table_index, active.init.size(), active.offset);
+    offset = tool.GetI32Value(active.offset).value_or(0);
+    for (auto element : enumerate(active.init)) {
+      print("  - elem[{}] = func[{}]", offset + element.index, element.value);
+      tool.PrintFunctionName(element.value);
+      print("\n");
+    }
+  } else {
+    const auto& passive = segment.passive();
+    print(" - segment[{}] count={} element_type={} passive\n", index,
+          passive.element_type, passive.init.size());
+    for (auto element : enumerate(passive.init)) {
+      print("  - elem[{}] = {}\n", offset + element.index, element.value);
     }
   }
+  ++index;
+  return visit::Result::Ok;
 }
 
-void Tool::DoCodeSection(Pass pass,
-                         SectionIndex section_index,
-                         LazyCodeSection section) {
-  DoCount(pass, section.count);
-  if (ShouldPrintDetails(pass)) {
-    for (auto code : enumerate(section.sequence, imported_function_count)) {
-      print(" - func[{}] size={}\n", code.index, code.value.body.data.size());
-    }
-  } else if (pass == Pass::Disassemble) {
-    for (auto code : enumerate(section.sequence, imported_function_count)) {
-      Disassemble(section_index, code.index, code.value);
-    }
-  }
-}
-
-void Tool::DoDataSection(Pass pass,
-                         SectionIndex section_index,
-                         LazyDataSection section) {
-  DoCount(pass, section.count);
-  if (ShouldPrintDetails(pass)) {
-    for (auto segment : enumerate(section.sequence)) {
-      Index offset = 0;
-      if (segment.value.is_active()) {
-        const auto& active = segment.value.active();
-        print(" - segment[{}] memory={} size={} - init {}\n", segment.index,
-              active.memory_index, segment.value.init.size(), active.offset);
-        offset = GetI32Value(active.offset).value_or(0);
-      } else {
-        print(" - segment[{}] size={} passive\n", segment.index,
-              segment.value.init.size());
-      }
-      PrintMemory(segment.value.init, offset, PrintChars::Yes, "  - ");
-    }
-  }
-}
-
-void Tool::DoDataCountSection(Pass pass,
-                              SectionIndex section_index,
-                              DataCountSection section) {
+visit::Result Tool::Visitor::BeginDataCountSection(DataCountSection section) {
   if (section) {
     auto data_count = *section;
     if (pass == Pass::Headers) {
       print("count: {}\n", data_count.count);
     } else {
-      PrintDetails(pass, " - data count: {}\n", data_count.count);
+      tool.PrintDetails(pass, " - data count: {}\n", data_count.count);
     }
   }
+  return visit::Result::Ok;
+}
+
+visit::Result Tool::Visitor::BeginCodeSection(LazyCodeSection section) {
+  index = tool.imported_function_count;
+  tool.DoCount(pass, section.count);
+  return SkipUnless(tool.ShouldPrintDetails(pass) || pass == Pass::Disassemble);
+}
+
+visit::Result Tool::Visitor::OnCode(const Code& code) {
+  if (pass == Pass::Details) {
+    print(" - func[{}] size={}\n", index, code.body.data.size());
+  } else {
+    tool.Disassemble(section_index, index, code);
+  }
+  ++index;
+  return visit::Result::Ok;
+}
+
+visit::Result Tool::Visitor::BeginDataSection(LazyDataSection section) {
+  index = 0;
+  tool.DoCount(pass, section.count);
+  return SkipUnless(tool.ShouldPrintDetails(pass));
+}
+
+visit::Result Tool::Visitor::OnData(const DataSegment& segment) {
+  Index offset = 0;
+  if (segment.is_active()) {
+    const auto& active = segment.active();
+    print(" - segment[{}] memory={} size={} - init {}\n", index,
+          active.memory_index, segment.init.size(), active.offset);
+    offset = tool.GetI32Value(active.offset).value_or(0);
+  } else {
+    print(" - segment[{}] size={} passive\n", index, segment.init.size());
+  }
+  tool.PrintMemory(segment.init, offset, PrintChars::Yes, "  - ");
+  ++index;
+  return visit::Result::Ok;
+}
+
+visit::Result Tool::Visitor::SkipUnless(bool b) {
+  return b ? visit::Result::Ok : visit::Result::Skip;
 }
 
 void Tool::DoNameSection(Pass pass,
