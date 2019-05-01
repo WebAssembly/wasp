@@ -937,7 +937,6 @@ void Tool::DoLinkingSection(Pass pass,
 void Tool::DoRelocationSection(Pass pass,
                                SectionIndex section_index,
                                RelocationSection section) {
-  const Features& features = options.features;
   auto reloc_section_index = section.section_index.value_or(-1);
   PrintDetails(pass, " - relocations for section {} ({}) [{}]\n",
                reloc_section_index,
@@ -1075,9 +1074,8 @@ optional<string_view> Tool::GetSymbolName(Index index) const {
       case SymbolInfoKind::Event:
         return "";  // XXX
     }
-  } else {
-    return nullopt;
   }
+  return nullopt;
 }
 
 optional<Index> Tool::GetI32Value(const ConstantExpression& expr) {

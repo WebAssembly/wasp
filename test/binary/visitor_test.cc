@@ -123,7 +123,7 @@ class VisitorTest : public ::testing::Test {
 TEST_F(VisitorTest, AllOk) {
   using ::testing::_;
   using ::testing::Return;
-  using ::visit::Result;
+  using ::wasp::binary::visit::Result;
 
   EXPECT_CALL(v, OnSection(_)).Times(kSectionCount);
 
@@ -183,7 +183,7 @@ TEST_F(VisitorTest, AllOk) {
 TEST_F(VisitorTest, AllSkipped) {
   using ::testing::_;
   using ::testing::Return;
-  using ::visit::Result;
+  using ::wasp::binary::visit::Result;
 
   EXPECT_CALL(v, OnSection(_)).Times(kSectionCount);
   EXPECT_CALL(v, BeginTypeSection(_)).WillOnce(Return(Result::Skip));
@@ -204,7 +204,7 @@ TEST_F(VisitorTest, AllSkipped) {
 TEST_F(VisitorTest, TypeSectionFailed) {
   using ::testing::_;
   using ::testing::Return;
-  using ::visit::Result;
+  using ::wasp::binary::visit::Result;
 
   EXPECT_CALL(v, OnSection(_)).Times(1);
   EXPECT_CALL(v, BeginTypeSection(_)).WillOnce(Return(Result::Fail));
@@ -214,7 +214,7 @@ TEST_F(VisitorTest, TypeSectionFailed) {
 TEST_F(VisitorTest, OnTypeFailed) {
   using ::testing::_;
   using ::testing::Return;
-  using ::visit::Result;
+  using ::wasp::binary::visit::Result;
 
   EXPECT_CALL(v, OnSection(_)).Times(1);
   EXPECT_CALL(v, BeginTypeSection(_)).WillOnce(Return(Result::Ok));
@@ -225,7 +225,7 @@ TEST_F(VisitorTest, OnTypeFailed) {
 TEST_F(VisitorTest, OnTypeFailedAfter1) {
   using ::testing::_;
   using ::testing::Return;
-  using ::visit::Result;
+  using ::wasp::binary::visit::Result;
 
   EXPECT_CALL(v, OnSection(_)).Times(1);
   EXPECT_CALL(v, BeginTypeSection(_)).WillOnce(Return(Result::Ok));
@@ -239,7 +239,7 @@ TEST_F(VisitorTest, OnTypeFailedAfter1) {
 TEST_F(VisitorTest, OkSkipFail) {
   using ::testing::_;
   using ::testing::Return;
-  using ::visit::Result;
+  using ::wasp::binary::visit::Result;
 
   EXPECT_CALL(v, OnSection(_)).Times(3);
 
