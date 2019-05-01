@@ -46,6 +46,25 @@ Write the callgraph as a DOT file to `file.dot`.
 $ wasp callgraph mod.wasm -o file.dot
 ```
 
+You can use graphviz to convert the DOT file to an SVG:
+
+```sh
+$ dot -Tsvg file.dot -O
+```
+
+For example, the following wasm file:
+
+```wasm
+(func $a call $b)
+(func $b call $c call $d)
+(func $c)
+(func $d call $a call $b call $d)
+```
+
+Becomes this SVG:
+
+![callgraph](./images/callgraph.svg)
+
 ## wasp cfg examples
 
 Write the CFG of function 0 as a DOT file to stdout.
@@ -60,6 +79,20 @@ Write the CFG of function `foo` as a DOT file to `file.dot`.
 $ wasp cfg -f foo mod.wasm -o file.dot
 ```
 
+For example, the following wasm file:
+
+```wasm
+(func $fac (param i64) (result i64)
+  (if (result i64) (i64.eq (local.get 0) (i64.const 0))
+    (then (i64.const 1))
+    (else
+      (i64.mul (local.get 0) (call 0 (i64.sub (local.get 0) (i64.const 1)))))))
+```
+
+Becomes this SVG:
+
+![cfg](./images/cfg.svg)
+
 ## wasp dfg examples
 
 Write the DFG of function 0 as a DOT file to stdout.
@@ -73,6 +106,20 @@ Write the DFG of function `foo` as a DOT file to `file.dot`.
 ```sh
 $ wasp dfg -f foo mod.wasm -o file.dot
 ```
+
+For example, the following wasm file:
+
+```wasm
+(func $fac (param i64) (result i64)
+  (if (result i64) (i64.eq (local.get 0) (i64.const 0))
+    (then (i64.const 1))
+    (else
+      (i64.mul (local.get 0) (call 0 (i64.sub (local.get 0) (i64.const 1)))))))
+```
+
+Becomes this SVG:
+
+![cfg](./images/dfg.svg)
 
 [wabt]: https://github.com/WebAssembly/wabt
 [dot graph]: http://graphviz.gitlab.io/documentation/
