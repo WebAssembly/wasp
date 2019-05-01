@@ -24,7 +24,7 @@ namespace wasp {
 namespace tools {
 namespace dump {
 
-int Main(span<string_view> const& args);
+int Main(span<string_view> args);
 
 }  // namespace dump
 }  // namespace tools

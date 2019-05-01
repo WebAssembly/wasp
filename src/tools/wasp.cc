@@ -27,7 +27,7 @@
 
 using namespace ::wasp;
 
-using Command = int (*)(span<string_view> const& args);
+using Command = int (*)(span<string_view> args);
 
 void PrintHelp();
 
@@ -37,8 +37,8 @@ int main(int argc, char** argv) {
     args[i - 1] = argv[i];
   }
 
-  for (const auto& argPair : enumerate(args)) {
-    auto arg = argPair.value;
+  for (const auto& arg_pair : enumerate(args)) {
+    auto arg = arg_pair.value;
     if (arg[0] == '-') {
       switch (arg[1]) {
         case 'h':
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
       }
 
       span<string_view> argSpan = args;
-      return command(argSpan.subspan(argPair.index));
+      return command(argSpan.subspan(arg_pair.index));
     }
   }
 

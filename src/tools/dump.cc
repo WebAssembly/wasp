@@ -205,7 +205,7 @@ struct Tool {
 // static
 constexpr int Tool::max_octets_per_line;
 
-int Main(span<string_view> const& args) {
+int Main(span<string_view> args) {
   std::vector<string_view> filenames;
   Options options;
   options.features.EnableAll();

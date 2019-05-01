@@ -108,7 +108,7 @@ struct Tool {
   BBID current_bbid = InvalidBBID;
 };
 
-int Main(span<string_view> const& args) {
+int Main(span<string_view> args) {
   string_view filename;
   Options options;
   options.features.EnableAll();

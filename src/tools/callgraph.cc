@@ -69,7 +69,7 @@ struct Tool {
   std::set<std::pair<Index, Index>> call_graph;
 };
 
-int Main(span<string_view> const& args) {
+int Main(span<string_view> args) {
   string_view filename;
   Options options;
   options.features.EnableAll();

@@ -24,7 +24,7 @@ namespace wasp {
 namespace tools {
 namespace dfg {
 
-int Main(span<string_view> const& args);
+int Main(span<string_view> args);
 
 }  // namespace dfg
 }  // namespace tools

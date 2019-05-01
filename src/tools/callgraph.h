@@ -24,7 +24,7 @@ namespace wasp {
 namespace tools {
 namespace callgraph {
 
-int Main(span<string_view> const& args);
+int Main(span<string_view> args);
 
 }  // namespace callgraph
 }  // namespace tools
