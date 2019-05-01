@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "src/tools/argparser.h"
 #include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
@@ -108,47 +109,35 @@ struct Tool {
   BBID current_bbid = InvalidBBID;
 };
 
+void PrintHelp(int);
+
 int Main(span<string_view> args) {
   string_view filename;
   Options options;
   options.features.EnableAll();
 
-  for (int i = 0; i < args.size(); ++i) {
-    string_view arg = args[i];
-    if (arg[0] == '-') {
-      switch (arg[1]) {
-        case 'o': options.output_filename = args[++i]; break;
-        case 'f': options.function = args[++i]; break;
-        case '-':
-          if (arg == "--output") {
-            options.output_filename = args[++i];
-          } else if (arg == "--function") {
-            options.function = args[++i];
-          } else {
-            print(stderr, "Unknown long argument {}\n", arg);
-          }
-          break;
-        default:
-          print(stderr, "Unknown short argument {}\n", arg[0]);
-          break;
-      }
-    } else {
-      if (filename.empty()) {
-        filename = arg;
-      } else {
-        print(stderr, "Filename already given\n");
-      }
-    }
-  }
+  ArgParser parser;
+  parser.Add('h', "--help", []() { PrintHelp(0); })
+      .Add('o', "--output",
+           [&](string_view arg) { options.output_filename = arg; })
+      .Add('f', "--function", [&](string_view arg) { options.function = arg; })
+      .Add([&](string_view arg) {
+        if (filename.empty()) {
+          filename = arg;
+        } else {
+          print(stderr, "Filename already given\n");
+        }
+      });
+  parser.Parse(args);
 
   if (filename.empty()) {
-    print(stderr, "No filenames given.\n");
-    return 1;
+    print(stderr, "No filename given.\n");
+    PrintHelp(1);
   }
 
   if (options.function.empty()) {
     print(stderr, "No function given.\n");
-    return 1;
+    PrintHelp(1);
   }
 
   auto optbuf = ReadFile(filename);
@@ -160,6 +149,16 @@ int Main(span<string_view> args) {
   SpanU8 data{*optbuf};
   Tool tool{data, options};
   return tool.Run();
+}
+
+void PrintHelp(int errcode) {
+  print("usage: wasp cfg [options] <filename.wasm>\n");
+  print("\n");
+  print("options:\n");
+  print(" -h, --help                print help and exit\n");
+  print(" -o, --output <filename>   write DOT file output to <filename>\n");
+  print(" -f, --function <func>     generate CFG for <func>\n");
+  exit(errcode);
 }
 
 Tool::Tool(SpanU8 data, Options options)

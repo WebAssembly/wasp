@@ -95,11 +95,12 @@ add_library(wasplib
 )
 
 add_executable(wasp
-  src/tools/wasp.cc
+  src/tools/argparser.cc
   src/tools/callgraph.cc
   src/tools/cfg.cc
   src/tools/dfg.cc
   src/tools/dump.cc
+  src/tools/wasp.cc
 )
 
 target_link_libraries(wasp
@@ -107,6 +108,7 @@ target_link_libraries(wasp
 )
 
 add_executable(wasp_unittests
+  src/tools/argparser.cc
   test/base/enumerate_test.cc
   test/base/formatters_test.cc
   test/base/str_to_u32_test.cc
@@ -125,6 +127,7 @@ add_executable(wasp_unittests
   test/binary/test_utils.cc
   test/binary/visitor_test.cc
   test/binary/write_test.cc
+  test/tools/argparser_test.cc
   test/valid/validate_test.cc
   test/valid/validate_code_test.cc
   test/valid/validate_instruction_test.cc

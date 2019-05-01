@@ -15,7 +15,9 @@
 //
 
 #include <algorithm>
+#include <map>
 
+#include "src/tools/argparser.h"
 #include "src/tools/callgraph.h"
 #include "src/tools/cfg.h"
 #include "src/tools/dfg.h"
@@ -31,48 +33,34 @@ using namespace ::wasp;
 
 using Command = int (*)(span<string_view> args);
 
-void PrintHelp();
+void PrintHelp(int);
 
 int main(int argc, char** argv) {
   std::vector<string_view> args(argc - 1);
   std::copy(&argv[1], &argv[argc], args.begin());
 
-  for (const auto& arg_pair : enumerate(args)) {
-    auto arg = arg_pair.value;
-    if (arg[0] == '-') {
-      switch (arg[1]) {
-        case 'h':
-          PrintHelp();
-          return 0;
-        default:
-          print("Unknown short argument {}\n", arg[0]);
-          break;
-      }
+  const std::map<string_view, Command> commands = {
+      {"dump", wasp::tools::dump::Main},
+      {"callgraph", wasp::tools::callgraph::Main},
+      {"cfg", wasp::tools::cfg::Main},
+      {"dfg", wasp::tools::dfg::Main},
+  };
+
+  wasp::tools::ArgParser parser;
+  parser.Add('h', "--help", []() { PrintHelp(0); }).Add([&](string_view arg) {
+    auto iter = commands.find(arg);
+    if (iter == commands.end()) {
+      print("Unknown command `{}`\n", arg);
+      PrintHelp(1);
     } else {
-      Command command = nullptr;
-
-      if (arg == "dump") {
-        command = wasp::tools::dump::Main;
-      } else if (arg == "callgraph") {
-        command = wasp::tools::callgraph::Main;
-      } else if (arg == "cfg") {
-        command = wasp::tools::cfg::Main;
-      } else if (arg == "dfg") {
-        command = wasp::tools::dfg::Main;
-      } else {
-        print("Unknown command \"{}\"\n", arg);
-        return 1;
-      }
-
-      return command(span<string_view>{args}.subspan(arg_pair.index + 1));
+      exit(iter->second(parser.RestOfArgs()));
     }
-  }
-
-  PrintHelp();
-  return 1;
+  });
+  parser.Parse(args);
+  PrintHelp(1);
 }
 
-void PrintHelp() {
+void PrintHelp(int errcode) {
   print("usage: wasp <command> [<options>]\n");
   print("\n");
   print("commands:\n");
@@ -80,4 +68,5 @@ void PrintHelp() {
   print("  callgraph   Generate DOT file for the function call graph.\n");
   print("  cfg         Generate DOT file of a function's control flow graph.\n");
   print("  dfg         Generate DOT file of a function's data flow graph.\n");
+  exit(errcode);
 }

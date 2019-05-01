@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "src/tools/argparser.h"
 #include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
@@ -42,7 +43,6 @@
 #include "wasp/binary/linking_section.h"
 #include "wasp/binary/relocation_section.h"
 #include "wasp/binary/start_section.h"
-
 #include "wasp/binary/visitor.h"
 
 namespace wasp {
@@ -205,47 +205,27 @@ struct Tool {
 // static
 constexpr int Tool::max_octets_per_line;
 
+void PrintHelp(int);
+
 int Main(span<string_view> args) {
   std::vector<string_view> filenames;
   Options options;
   options.features.EnableAll();
 
-  for (int i = 0; i < args.size(); ++i) {
-    string_view arg = args[i];
-    if (arg[0] == '-') {
-      switch (arg[1]) {
-        case 'h': options.print_headers = true; break;
-        case 'd': options.print_disassembly = true; break;
-        case 'x': options.print_details = true; break;
-        case 's': options.print_raw_data = true; break;
-        case 'j': options.section_name = args[++i]; break;
-        case '-':
-          if (arg == "--headers") {
-            options.print_headers = true;
-          } else if (arg == "--disassemble") {
-            options.print_disassembly = true;
-          } else if (arg == "--details") {
-            options.print_details = true;
-          } else if (arg == "--full-contents") {
-            options.print_raw_data = true;
-          } else if (arg == "--section") {
-            options.section_name = args[++i];
-          } else {
-            print("Unknown long argument {}\n", arg);
-          }
-          break;
-        default:
-          print("Unknown short argument {}\n", arg[0]);
-          break;
-      }
-    } else {
-      filenames.push_back(arg);
-    }
-  }
+  ArgParser parser;
+  parser.Add('\0', "--help", []() { PrintHelp(0); })
+      .Add('h', "--headers", [&]() { options.print_headers = true; })
+      .Add('d', "--disassemble", [&]() { options.print_disassembly = true; })
+      .Add('x', "--details", [&]() { options.print_details = true; })
+      .Add('s', "--full-contents", [&]() { options.print_raw_data = true; })
+      .Add('j', "--section",
+           [&](string_view arg) { options.section_name = arg; })
+      .Add([&](string_view arg) { filenames.push_back(arg); });
+  parser.Parse(args);
 
   if (filenames.empty()) {
     print("No filenames given.\n");
-    return 1;
+    PrintHelp(1);
   }
 
   if (!(options.print_headers || options.print_disassembly ||
@@ -255,7 +235,7 @@ int Main(span<string_view> args) {
     print(" -h/--headers\n");
     print(" -x/--details\n");
     print(" -s/--full-contents\n");
-    return 1;
+    PrintHelp(1);
   }
 
   for (auto filename : filenames) {
@@ -272,6 +252,20 @@ int Main(span<string_view> args) {
 
   return 0;
 }
+
+void PrintHelp(int errcode) {
+  print("usage: wasp dump [options] <filename.wasm>...\n");
+  print("\n");
+  print("options:\n");
+  print("     --help                 print help and exit\n");
+  print(" -h, --headers              print section headers\n");
+  print(" -d, --disassemble          print disassembly\n");
+  print(" -x, --details              print section details\n");
+  print(" -s, --full-contents        print raw contents of the section\n");
+  print(" -j, --section <section>    print only the contents of <section>\n");
+  exit(errcode);
+}
+
 
 Tool::Tool(string_view filename, SpanU8 data, Options options)
     : filename(filename),

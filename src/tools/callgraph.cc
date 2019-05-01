@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "src/tools/argparser.h"
 #include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
@@ -69,39 +70,29 @@ struct Tool {
   std::set<std::pair<Index, Index>> call_graph;
 };
 
+void PrintHelp(int);
+
 int Main(span<string_view> args) {
   string_view filename;
   Options options;
   options.features.EnableAll();
 
-  for (int i = 0; i < args.size(); ++i) {
-    string_view arg = args[i];
-    if (arg[0] == '-') {
-      switch (arg[1]) {
-        case 'o': options.output_filename = args[++i]; break;
-        case '-':
-          if (arg == "--output") {
-            options.output_filename = args[++i];
-          } else {
-            print(stderr, "Unknown long argument {}\n", arg);
-          }
-          break;
-        default:
-          print(stderr, "Unknown short argument {}\n", arg[0]);
-          break;
-      }
-    } else {
-      if (filename.empty()) {
-        filename = arg;
-      } else {
-        print(stderr, "Filename already given\n");
-      }
-    }
-  }
+  ArgParser parser;
+  parser.Add('h', "--help", []() { PrintHelp(0); })
+      .Add('o', "--output",
+           [&](string_view arg) { options.output_filename = arg; })
+      .Add([&](string_view arg) {
+        if (filename.empty()) {
+          filename = arg;
+        } else {
+          print(stderr, "Filename already given\n");
+        }
+      });
+  parser.Parse(args);
 
   if (filename.empty()) {
     print(stderr, "No filenames given.\n");
-    return 1;
+    PrintHelp(1);
   }
 
   auto optbuf = ReadFile(filename);
@@ -115,6 +106,15 @@ int Main(span<string_view> args) {
   tool.Run();
 
   return 0;
+}
+
+void PrintHelp(int errcode) {
+  print("usage: wasp callgraph [options] <filename.wasm>\n");
+  print("\n");
+  print("options:\n");
+  print(" -h, --help                print help and exit\n");
+  print(" -o, --output <filename>   write DOT file output to <filename>\n");
+  exit(errcode);
 }
 
 Tool::Tool(SpanU8 data, Options options)
