@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+#include <algorithm>
+
 #include "src/tools/callgraph.h"
 #include "src/tools/cfg.h"
 #include "src/tools/dfg.h"
@@ -33,9 +35,7 @@ void PrintHelp();
 
 int main(int argc, char** argv) {
   std::vector<string_view> args(argc - 1);
-  for (int i = 1; i < argc; ++i) {
-    args[i - 1] = argv[i];
-  }
+  std::copy(&argv[1], &argv[argc], args.begin());
 
   for (const auto& arg_pair : enumerate(args)) {
     auto arg = arg_pair.value;
@@ -64,8 +64,7 @@ int main(int argc, char** argv) {
         return 1;
       }
 
-      span<string_view> argSpan = args;
-      return command(argSpan.subspan(arg_pair.index));
+      return command(span<string_view>{args}.subspan(arg_pair.index + 1));
     }
   }
 
