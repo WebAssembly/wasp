@@ -42,64 +42,80 @@ struct Visitor {
   Result OnSection(Section) { return Result::Ok; }
 
   // Section 1.
-  Result BeginTypeSection(LazyTypeSection) { return Result::Skip; }
+  Result BeginTypeSection(LazyTypeSection) { return Result::Ok; }
   Result OnType(const TypeEntry&) { return Result::Ok; }
   Result EndTypeSection(LazyTypeSection) { return Result::Ok; }
 
   // Section 2.
-  Result BeginImportSection(LazyImportSection) { return Result::Skip; }
+  Result BeginImportSection(LazyImportSection) { return Result::Ok; }
   Result OnImport(const Import&) { return Result::Ok; }
   Result EndImportSection(LazyImportSection) { return Result::Ok; }
 
   // Section 3.
-  Result BeginFunctionSection(LazyFunctionSection) { return Result::Skip; }
+  Result BeginFunctionSection(LazyFunctionSection) { return Result::Ok; }
   Result OnFunction(const Function&) { return Result::Ok; }
   Result EndFunctionSection(LazyFunctionSection) { return Result::Ok; }
 
   // Section 4.
-  Result BeginTableSection(LazyTableSection) { return Result::Skip; }
+  Result BeginTableSection(LazyTableSection) { return Result::Ok; }
   Result OnTable(const Table&) { return Result::Ok; }
   Result EndTableSection(LazyTableSection) { return Result::Ok; }
 
   // Section 5.
-  Result BeginMemorySection(LazyMemorySection) { return Result::Skip; }
+  Result BeginMemorySection(LazyMemorySection) { return Result::Ok; }
   Result OnMemory(const Memory&) { return Result::Ok; }
   Result EndMemorySection(LazyMemorySection) { return Result::Ok; }
 
   // Section 6.
-  Result BeginGlobalSection(LazyGlobalSection) { return Result::Skip; }
+  Result BeginGlobalSection(LazyGlobalSection) { return Result::Ok; }
   Result OnGlobal(const Global&) { return Result::Ok; }
   Result EndGlobalSection(LazyGlobalSection) { return Result::Ok; }
 
   // Section 7.
-  Result BeginExportSection(LazyExportSection) { return Result::Skip; }
+  Result BeginExportSection(LazyExportSection) { return Result::Ok; }
   Result OnExport(const Export&) { return Result::Ok; }
   Result EndExportSection(LazyExportSection) { return Result::Ok; }
 
   // Section 8.
-  Result BeginStartSection(StartSection) { return Result::Skip; }
+  Result BeginStartSection(StartSection) { return Result::Ok; }
   Result OnStart(const Start&) { return Result::Ok; }
   Result EndStartSection(StartSection) { return Result::Ok; }
 
   // Section 9.
-  Result BeginElementSection(LazyElementSection) { return Result::Skip; }
+  Result BeginElementSection(LazyElementSection) { return Result::Ok; }
   Result OnElement(const ElementSegment&) { return Result::Ok; }
   Result EndElementSection(LazyElementSection) { return Result::Ok; }
 
   // Section 12.
-  Result BeginDataCountSection(DataCountSection) { return Result::Skip; }
+  Result BeginDataCountSection(DataCountSection) { return Result::Ok; }
   Result OnDataCount(const DataCount&) { return Result::Ok; }
   Result EndDataCountSection(DataCountSection) { return Result::Ok; }
 
   // Section 10.
-  Result BeginCodeSection(LazyCodeSection) { return Result::Skip; }
+  Result BeginCodeSection(LazyCodeSection) { return Result::Ok; }
   Result OnCode(const Code&) { return Result::Ok; }
   Result EndCodeSection(LazyCodeSection) { return Result::Ok; }
 
   // Section 11.
-  Result BeginDataSection(LazyDataSection) { return Result::Skip; }
+  Result BeginDataSection(LazyDataSection) { return Result::Ok; }
   Result OnData(const DataSegment&) { return Result::Ok; }
   Result EndDataSection(LazyDataSection) { return Result::Ok; }
+};
+
+struct SkipVisitor : Visitor {
+  Result OnSection(Section) { return Result::Skip; }
+  Result BeginTypeSection(LazyTypeSection) { return Result::Skip; }
+  Result BeginImportSection(LazyImportSection) { return Result::Skip; }
+  Result BeginFunctionSection(LazyFunctionSection) { return Result::Skip; }
+  Result BeginTableSection(LazyTableSection) { return Result::Skip; }
+  Result BeginMemorySection(LazyMemorySection) { return Result::Skip; }
+  Result BeginGlobalSection(LazyGlobalSection) { return Result::Skip; }
+  Result BeginExportSection(LazyExportSection) { return Result::Skip; }
+  Result BeginStartSection(StartSection) { return Result::Skip; }
+  Result BeginElementSection(LazyElementSection) { return Result::Skip; }
+  Result BeginDataCountSection(DataCountSection) { return Result::Skip; }
+  Result BeginCodeSection(LazyCodeSection) { return Result::Skip; }
+  Result BeginDataSection(LazyDataSection) { return Result::Skip; }
 };
 
 template <typename Visitor>
