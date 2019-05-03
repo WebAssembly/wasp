@@ -11,6 +11,7 @@ It also includes the `wasp` tool, which has the following commands:
 * `wasp callgraph`: Generate a [dot graph][] of the module's callgraph
 * `wasp cfg`: Generate a [dot graph][] of a function's [control-flow graph][]
 * `wasp dfg`: Generate a [dot graph][] of a function's [data-flow graph][]
+* `wasp validate`: Validate a WebAssembly module
 
 ## wasp dump examples
 
@@ -119,7 +120,21 @@ For example, the following wasm file:
 
 Becomes this SVG:
 
-![cfg](./images/dfg.svg)
+![dfg](./images/dfg.svg)
+
+## wasp validate examples
+
+Validate a module.
+
+```sh
+$ wasp validate mod.wasm
+```
+
+Validate multiple modules.
+
+```sh
+$ wasp validate mod1.wasm mod2.wasm mod3.wasm
+```
 
 [wabt]: https://github.com/WebAssembly/wabt
 [dot graph]: http://graphviz.gitlab.io/documentation/

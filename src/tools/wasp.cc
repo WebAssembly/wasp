@@ -22,6 +22,7 @@
 #include "src/tools/cfg.h"
 #include "src/tools/dfg.h"
 #include "src/tools/dump.h"
+#include "src/tools/validate.h"
 
 #include "wasp/base/enumerate.h"
 #include "wasp/base/format.h"
@@ -44,6 +45,7 @@ int main(int argc, char** argv) {
       {"callgraph", wasp::tools::callgraph::Main},
       {"cfg", wasp::tools::cfg::Main},
       {"dfg", wasp::tools::dfg::Main},
+      {"validate", wasp::tools::validate::Main},
   };
 
   wasp::tools::ArgParser parser;
@@ -68,5 +70,6 @@ void PrintHelp(int errcode) {
   print("  callgraph   Generate DOT file for the function call graph.\n");
   print("  cfg         Generate DOT file of a function's control flow graph.\n");
   print("  dfg         Generate DOT file of a function's data flow graph.\n");
+  print("  validate    Validate a WebAssembly file.\n");
   exit(errcode);
 }
