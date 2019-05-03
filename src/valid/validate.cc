@@ -24,6 +24,7 @@
 #include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
 #include "wasp/valid/validate_constant_expression.h"
+#include "wasp/valid/validate_data_count.h"
 #include "wasp/valid/validate_data_segment.h"
 #include "wasp/valid/validate_element_expression.h"
 #include "wasp/valid/validate_element_segment.h"
@@ -94,6 +95,14 @@ bool Validate(const binary::ConstantExpression& value,
 
   valid &= Validate(actual_type, expected_type, context, features, errors);
   return valid;
+}
+
+bool Validate(const binary::DataCount& value,
+              Context& context,
+              const Features& features,
+              Errors& errors) {
+  context.data_segment_count = value.count;
+  return true;
 }
 
 bool Validate(const binary::DataSegment& value,

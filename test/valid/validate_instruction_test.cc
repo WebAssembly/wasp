@@ -632,10 +632,8 @@ TEST_F(ValidateInstructionTest, Drop_EmptyStack) {
 
 TEST_F(ValidateInstructionTest, Select) {
   for (const auto& info : all_value_types) {
-    Ok(info.instruction);
-    Ok(info.instruction);
-    Ok(I{O::I32Const, s32{}});
-    Ok(I{O::Select});
+    TestSignature(I{O::Select}, {info.value_type, info.value_type, VT::I32},
+                  {info.value_type});
   }
 }
 
@@ -944,7 +942,8 @@ TEST_F(ValidateInstructionTest, Conversion) {
     Opcode opcode;
     ValueType to;
     ValueType from;
-  } infos[] = {{O::I32TruncF32S, VT::I32, VT::F32},
+  } infos[] = {{O::I32WrapI64, VT::I32, VT::I64},
+               {O::I32TruncF32S, VT::I32, VT::F32},
                {O::I32TruncF32U, VT::I32, VT::F32},
                {O::I32ReinterpretF32, VT::I32, VT::F32},
                {O::I32TruncF64S, VT::I32, VT::F64},

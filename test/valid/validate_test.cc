@@ -21,6 +21,7 @@
 #include "wasp/valid/context.h"
 #include "wasp/valid/test_utils.h"
 #include "wasp/valid/validate_constant_expression.h"
+#include "wasp/valid/validate_data_count.h"
 #include "wasp/valid/validate_data_segment.h"
 #include "wasp/valid/validate_element_expression.h"
 #include "wasp/valid/validate_element_segment.h"
@@ -168,6 +169,13 @@ TEST(ValidateTest, ConstantExpression_GlobalMutVar) {
   EXPECT_FALSE(
       Validate(ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
                ValueType::I32, max, context, Features{}, errors));
+}
+
+TEST(ValidateTest, DataCount) {
+  Context context;
+  TestErrors errors;
+  EXPECT_TRUE(Validate(DataCount{1}, context, Features{}, errors));
+  EXPECT_EQ(1, context.data_segment_count);
 }
 
 TEST(ValidateTest, DataSegment_Active) {

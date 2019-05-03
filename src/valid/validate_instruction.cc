@@ -427,9 +427,10 @@ bool CallIndirect(const CallIndirectImmediate& immediate,
 
 bool Select(Context& context, Errors& errors) {
   bool valid = PopType(ValueType::I32, context, errors);
-  auto type = PeekType(context, errors);
-  const ValueType types[] = {MaybeDefault(type), MaybeDefault(type)};
-  return AllTrue(valid, type, PopTypes(types, context, errors));
+  auto type = MaybeDefault(PeekType(context, errors));
+  const ValueType pop_types[] = {type, type};
+  const ValueType push_type[] = {type};
+  return AllTrue(valid, PopAndPushTypes(pop_types, push_type, context, errors));
 }
 
 bool LocalGet(Index index, Context& context, Errors& errors) {
@@ -751,6 +752,7 @@ bool Validate(const Instruction& value,
       break;
 
     case Opcode::I64Eqz:
+    case Opcode::I32WrapI64:
       params = span_i64, results = span_i32;
       break;
 
