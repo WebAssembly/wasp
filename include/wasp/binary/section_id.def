@@ -14,6 +14,10 @@
 // limitations under the License.
 //
 
+// The section ids are ordered by their expected order in the binary format.
+// So, for example, the DataCount section must come after the Element section
+// but before the Code section, if it exists.
+
 WASP_V(0, Custom, "custom")
 WASP_V(1, Type, "type")
 WASP_V(2, Import, "import")
@@ -24,6 +28,6 @@ WASP_V(6, Global, "global")
 WASP_V(7, Export, "export")
 WASP_V(8, Start, "start")
 WASP_V(9, Element, "element")
+WASP_V(12, DataCount, "datacount")
 WASP_V(10, Code, "code")
 WASP_V(11, Data, "data")
-WASP_V(12, DataCount, "datacount")

@@ -188,35 +188,9 @@ Tool::Visitor::Visitor(Tool& tool)
       errors{tool.errors} {}
 
 visit::Result Tool::Visitor::OnSection(Section section) {
-  // TODO: Move into binary reading.
-  static constexpr std::array<SectionId, 12> kSectionOrder = {{
-      SectionId::Type,
-      SectionId::Import,
-      SectionId::Function,
-      SectionId::Table,
-      SectionId::Memory,
-      SectionId::Global,
-      SectionId::Export,
-      SectionId::Start,
-      SectionId::Element,
-      SectionId::DataCount,
-      SectionId::Code,
-      SectionId::Data,
-  }};
-
-  auto get_order = [&](SectionId id) -> optional<int> {
-    auto iter = std::find(kSectionOrder.begin(), kSectionOrder.end(), id);
-    if (iter == kSectionOrder.end()) {
-      errors.OnError(section.data(), format("Unknown section id: {}\n", id));
-      return nullopt;
-    }
-    return iter - kSectionOrder.begin();
-  };
-
   if (section.is_known()) {
     auto id = section.known().id;
-    auto order = get_order(id);
-    if (last_section_id && get_order(*last_section_id) >= order) {
+    if (last_section_id && *last_section_id >= id) {
       errors.OnError(section.data(),
                      format("Section out of order: {} cannot occur after {}\n",
                             id, *last_section_id));

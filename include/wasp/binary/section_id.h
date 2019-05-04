@@ -22,6 +22,7 @@
 namespace wasp {
 namespace binary {
 
+// The section ids are ordered by their expected order in the binary format.
 enum class SectionId : u32 {
 #define WASP_V(val, Name, str) Name,
 #include "wasp/binary/section_id.def"
