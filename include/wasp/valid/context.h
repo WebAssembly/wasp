@@ -22,6 +22,7 @@
 #include "wasp/base/types.h"
 #include "wasp/binary/function.h"
 #include "wasp/binary/global_type.h"
+#include "wasp/binary/locals.h"
 #include "wasp/binary/memory_type.h"
 #include "wasp/binary/segment_type.h"
 #include "wasp/binary/table_type.h"
@@ -58,6 +59,11 @@ struct Label {
 };
 
 struct Context {
+  Index GetLocalCount() const;
+  optional<binary::ValueType> GetLocalType(Index) const;
+  bool AppendLocals(Index count, binary::ValueType);
+  bool AppendLocals(const binary::ValueTypes&);
+
   std::vector<binary::TypeEntry> types;
   std::vector<binary::Function> functions;
   std::vector<binary::TableType> tables;
@@ -68,6 +74,7 @@ struct Context {
   Index imported_global_count = 0;
   Index data_segment_count = 0;
   Index code_count = 0;
+  std::vector<Index> locals_partial_sum;
   std::vector<binary::ValueType> locals;
   std::vector<binary::ValueType> type_stack;
   std::vector<Label> label_stack;

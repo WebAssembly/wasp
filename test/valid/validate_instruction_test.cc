@@ -79,7 +79,10 @@ class ValidateInstructionTest : public ::testing::Test {
   }
 
   Index AddLocal(const ValueType& value_type) {
-    return AddItem(context.locals, value_type);
+    bool ok = context.AppendLocals(1, value_type);
+    WASP_USE(ok);
+    assert(ok);
+    return context.GetLocalCount() - 1;
   }
 
   void Ok(const Instruction& instruction) {

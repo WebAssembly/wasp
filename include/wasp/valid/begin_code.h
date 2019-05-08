@@ -40,17 +40,18 @@ inline bool BeginCode(Context& context,
   const binary::Function& function = context.functions[func_index];
   context.type_stack.clear();
   context.label_stack.clear();
+  context.locals_partial_sum.clear();
+  context.locals.clear();
   // Don't validate the index, should have already been validated at this point.
   if (function.type_index < context.types.size()) {
     const binary::TypeEntry& type_entry = context.types[function.type_index];
-    context.locals = type_entry.type.param_types;
+    context.AppendLocals(type_entry.type.param_types);
     context.label_stack.push_back(Label{LabelType::Function,
                                         type_entry.type.param_types,
                                         type_entry.type.result_types, 0});
     return true;
   } else {
     // Not valid, but try to continue anyway.
-    context.locals.clear();
     context.label_stack.push_back(Label{LabelType::Function, {}, {}, 0});
     return false;
   }

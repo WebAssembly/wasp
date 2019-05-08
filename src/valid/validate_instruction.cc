@@ -166,10 +166,10 @@ optional<SegmentType> GetElementSegmentType(Index index,
 optional<ValueType> GetLocalType(Index index,
                                  Context& context,
                                  Errors& errors) {
-  if (!ValidateIndex(index, context.locals.size(), "local index", errors)) {
+  if (!ValidateIndex(index, context.GetLocalCount(), "local index", errors)) {
     return nullopt;
   }
-  return context.locals[index];
+  return context.GetLocalType(index);
 }
 
 bool CheckDataSegment(Index index, Context& context, Errors& errors) {
@@ -783,17 +783,12 @@ bool Validate(const Locals& value,
               const Features& features,
               Errors& errors) {
   ErrorsContextGuard guard{errors, "locals"};
-  const size_t old_count = context.locals.size();
-  const Index max = std::numeric_limits<Index>::max();
-  if (old_count > max - value.count) {
-    errors.OnError(format("Too many locals; max is {}, got {}", max,
-                          static_cast<u64>(old_count) + value.count));
+  if (!context.AppendLocals(value.count, value.type)) {
+    const Index max = std::numeric_limits<Index>::max();
+    errors.OnError(
+        format("Too many locals; max is {}, got {}", max,
+               static_cast<u64>(context.GetLocalCount()) + value.count));
     return false;
-  }
-  const size_t new_count = old_count + value.count;
-  context.locals.reserve(new_count);
-  for (Index i = 0; i < value.count; ++i) {
-    context.locals.push_back(value.type);
   }
   return true;
 }
@@ -1417,7 +1412,7 @@ bool Validate(const Instruction& value,
       return AtomicRmw(value, context, errors);
 
     default:
-      errors.OnError(format("Unimplemented instruction {}\n", value));
+      errors.OnError(format("Unimplemented instruction {}", value));
       return false;
   }
 
