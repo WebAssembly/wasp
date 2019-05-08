@@ -57,10 +57,26 @@ namespace validate {
 
 using namespace ::wasp::binary;
 
+struct Message {
+  optional<u32> pos;
+  std::string message;
+};
+
 // TODO: share w/ dump.cc
 class ErrorsBasic : public Errors, public valid::Errors {
  public:
   explicit ErrorsBasic(SpanU8 data) : data{data} {}
+
+  void Print() {
+    for (const auto& error : errors) {
+      if (error.pos) {
+        print("{:08x}: {}\n", *error.pos, error.message);
+      } else {
+        // TODO: get error location for validation errors.
+        print("????????: {}\n", error.message);
+      }
+    }
+  }
 
   using binary::Errors::OnError;
   using valid::Errors::OnError;
@@ -70,15 +86,19 @@ class ErrorsBasic : public Errors, public valid::Errors {
   void HandlePushContext(string_view desc) override {}
   void HandlePopContext() override {}
   void HandleOnError(SpanU8 pos, string_view message) override {
-    print("{:08x}: {}\n", pos.data() - data.data(), message);
+    errors.push_back(Message{pos.data() - data.data(), message.to_string()});
   }
-  void HandleOnError(string_view message) override { print("{}\n", message); }
+  void HandleOnError(string_view message) override {
+    errors.push_back(Message{nullopt, message.to_string()});
+  }
 
   SpanU8 data;
+  std::vector<Message> errors;
 };
 
 struct Options {
   Features features;
+  bool verbose = false;
 };
 
 struct Tool {
@@ -131,6 +151,7 @@ int Main(span<string_view> args) {
 
   ArgParser parser;
   parser.Add('h', "--help", []() { PrintHelp(0); })
+      .Add('v', "--verbose", [&]() { options.verbose = true; })
       .Add([&](string_view arg) { filenames.push_back(arg); });
   parser.Parse(args);
 
@@ -140,7 +161,6 @@ int Main(span<string_view> args) {
   }
 
   bool ok = true;
-
   for (auto filename : filenames) {
     auto optbuf = ReadFile(filename);
     if (!optbuf) {
@@ -151,7 +171,12 @@ int Main(span<string_view> args) {
 
     SpanU8 data{*optbuf};
     Tool tool{filename, data, options};
-    ok &= tool.Run();
+    bool valid = tool.Run();
+    if (options.verbose) {
+      print("[{:^4}] {}\n", valid ? "OK" : "FAIL", filename);
+      tool.errors.Print();
+    }
+    ok &= valid;
   }
 
   return ok ? 0 : 1;
@@ -161,7 +186,8 @@ void PrintHelp(int errcode) {
   print("usage: wasp validate [options] <filename.wasm>...\n");
   print("\n");
   print("options:\n");
-  print(" -h  --help    print help and exit\n");
+  print(" -h  --help     print help and exit\n");
+  print(" -v  --verbose  print filename and whether it was valid\n");
   exit(errcode);
 }
 
@@ -192,7 +218,7 @@ visit::Result Tool::Visitor::OnSection(Section section) {
     auto id = section.known().id;
     if (last_section_id && *last_section_id >= id) {
       errors.OnError(section.data(),
-                     format("Section out of order: {} cannot occur after {}\n",
+                     format("Section out of order: {} cannot occur after {}",
                             id, *last_section_id));
       return visit::Result::Fail;
     }
