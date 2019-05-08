@@ -59,6 +59,8 @@ using ValueTypeSpan = span<const ValueType>;
   V(v128_f64, ValueType::V128, ValueType::F64)                   \
   V(v128_v128, ValueType::V128, ValueType::V128)                 \
   V(i32_i32_i32, ValueType::I32, ValueType::I32, ValueType::I32) \
+  V(i32_i32_i64, ValueType::I32, ValueType::I32, ValueType::I64) \
+  V(i32_i64_i64, ValueType::I32, ValueType::I64, ValueType::I64) \
   V(v128_v128_v128, ValueType::V128, ValueType::V128, ValueType::V128)
 
 #define WASP_V(name, ...)                         \
@@ -470,7 +472,7 @@ bool GlobalSet(Index index, Context& context, Errors& errors) {
 }
 
 bool CheckAlignment(const Instruction& instruction,
-                    uint32_t max_align,
+                    u32 max_align,
                     Errors& errors) {
   if (instruction.mem_arg_immediate().align_log2 > max_align) {
     errors.OnError(format("Invalid alignment {}", instruction));
@@ -482,7 +484,7 @@ bool CheckAlignment(const Instruction& instruction,
 bool Load(const Instruction& instruction, Context& context, Errors& errors) {
   auto memory_type = GetMemoryType(0, context, errors);
   ValueTypeSpan span;
-  uint32_t max_align;
+  u32 max_align;
   switch (instruction.opcode) {
     case Opcode::I32Load:    span = span_i32; max_align = 2; break;
     case Opcode::I64Load:    span = span_i64; max_align = 3; break;
@@ -511,7 +513,7 @@ bool Load(const Instruction& instruction, Context& context, Errors& errors) {
 bool Store(const Instruction& instruction, Context& context, Errors& errors) {
   auto memory_type = GetMemoryType(0, context, errors);
   ValueTypeSpan span;
-  uint32_t max_align;
+  u32 max_align;
   switch (instruction.opcode) {
     case Opcode::I32Store:   span = span_i32_i32; max_align = 2; break;
     case Opcode::I64Store:   span = span_i32_i64; max_align = 3; break;
@@ -588,6 +590,190 @@ bool TableCopy(const CopyImmediate& immediate,
                Errors& errors) {
   auto table_type = GetTableType(0, context, errors);
   return AllTrue(table_type, PopTypes(span_i32_i32_i32, context, errors));
+}
+
+bool CheckAtomicAlignment(const Instruction& instruction,
+                          u32 align,
+                          Errors& errors) {
+  if (instruction.mem_arg_immediate().align_log2 != align) {
+    errors.OnError(format("Invalid atomic alignment {}", instruction));
+    return false;
+  }
+  return true;
+}
+
+bool CheckSharedMemory(const Instruction& instruction,
+                       const optional<MemoryType>& memory_type,
+                       Errors& errors) {
+  if (memory_type && memory_type->limits.shared == Shared::No) {
+    errors.OnError(format("Memory must be shared for {}", instruction));
+    return false;
+  }
+  return true;
+}
+
+bool AtomicNotify(const Instruction& instruction,
+                  Context& context,
+                  Errors& errors) {
+  const u32 align = 2;
+  auto memory_type = GetMemoryType(0, context, errors);
+  bool valid = CheckAtomicAlignment(instruction, align, errors);
+  valid &= CheckSharedMemory(instruction, memory_type, errors);
+  return AllTrue(memory_type, valid,
+                 PopAndPushTypes(span_i32_i32, span_i32, context, errors));
+}
+
+bool AtomicWait(const Instruction& instruction,
+                Context& context,
+                Errors& errors) {
+  auto memory_type = GetMemoryType(0, context, errors);
+  ValueTypeSpan span;
+  u32 align;
+  switch (instruction.opcode) {
+    case Opcode::I32AtomicWait:    span = span_i32_i32_i64; align = 2; break;
+    case Opcode::I64AtomicWait:    span = span_i32_i64_i64; align = 3; break;
+    default:
+      WASP_UNREACHABLE();
+  }
+
+  bool valid = CheckAtomicAlignment(instruction, align, errors);
+  valid &= CheckSharedMemory(instruction, memory_type, errors);
+  return AllTrue(memory_type, valid,
+                 PopAndPushTypes(span, span_i32, context, errors));
+}
+
+bool AtomicLoad(const Instruction& instruction,
+                Context& context,
+                Errors& errors) {
+  auto memory_type = GetMemoryType(0, context, errors);
+  ValueTypeSpan span;
+  u32 align;
+  switch (instruction.opcode) {
+    case Opcode::I32AtomicLoad:    span = span_i32; align = 2; break;
+    case Opcode::I64AtomicLoad:    span = span_i64; align = 3; break;
+    case Opcode::I32AtomicLoad8U:  span = span_i32; align = 0; break;
+    case Opcode::I32AtomicLoad16U: span = span_i32; align = 1; break;
+    case Opcode::I64AtomicLoad8U:  span = span_i64; align = 0; break;
+    case Opcode::I64AtomicLoad16U: span = span_i64; align = 1; break;
+    case Opcode::I64AtomicLoad32U: span = span_i64; align = 2; break;
+    default:
+      WASP_UNREACHABLE();
+  }
+
+  bool valid = CheckAtomicAlignment(instruction, align, errors);
+  valid &= CheckSharedMemory(instruction, memory_type, errors);
+  return AllTrue(memory_type, valid,
+                 PopAndPushTypes(span_i32, span, context, errors));
+}
+
+
+bool AtomicStore(const Instruction& instruction,
+                 Context& context,
+                 Errors& errors) {
+  auto memory_type = GetMemoryType(0, context, errors);
+  ValueTypeSpan span;
+  u32 align;
+  switch (instruction.opcode) {
+    case Opcode::I32AtomicStore:   span = span_i32_i32; align = 2; break;
+    case Opcode::I64AtomicStore:   span = span_i32_i64; align = 3; break;
+    case Opcode::I32AtomicStore8:  span = span_i32_i32; align = 0; break;
+    case Opcode::I32AtomicStore16: span = span_i32_i32; align = 1; break;
+    case Opcode::I64AtomicStore8:  span = span_i32_i64; align = 0; break;
+    case Opcode::I64AtomicStore16: span = span_i32_i64; align = 1; break;
+    case Opcode::I64AtomicStore32: span = span_i32_i64; align = 2; break;
+    default:
+      WASP_UNREACHABLE();
+  }
+
+  bool valid = CheckAtomicAlignment(instruction, align, errors);
+  valid &= CheckSharedMemory(instruction, memory_type, errors);
+  return AllTrue(memory_type, valid, PopTypes(span, context, errors));
+}
+
+bool AtomicRmw(const Instruction& instruction,
+               Context& context,
+               Errors& errors) {
+  auto memory_type = GetMemoryType(0, context, errors);
+  ValueTypeSpan params, results;
+  u32 align;
+  switch (instruction.opcode) {
+    case Opcode::I32AtomicRmwAdd:
+    case Opcode::I32AtomicRmwSub:
+    case Opcode::I32AtomicRmwAnd:
+    case Opcode::I32AtomicRmwOr:
+    case Opcode::I32AtomicRmwXor:
+    case Opcode::I32AtomicRmwXchg:    align = 2; goto rmw32;
+    case Opcode::I32AtomicRmw16AddU:
+    case Opcode::I32AtomicRmw16SubU:
+    case Opcode::I32AtomicRmw16AndU:
+    case Opcode::I32AtomicRmw16OrU:
+    case Opcode::I32AtomicRmw16XorU:
+    case Opcode::I32AtomicRmw16XchgU: align = 1; goto rmw32;
+    case Opcode::I32AtomicRmw8AddU:
+    case Opcode::I32AtomicRmw8SubU:
+    case Opcode::I32AtomicRmw8AndU:
+    case Opcode::I32AtomicRmw8OrU:
+    case Opcode::I32AtomicRmw8XorU:
+    case Opcode::I32AtomicRmw8XchgU:  align = 0; goto rmw32;
+
+    rmw32:
+      params = span_i32_i32, results = span_i32;
+      break;
+
+    case Opcode::I64AtomicRmwAdd:
+    case Opcode::I64AtomicRmwSub:
+    case Opcode::I64AtomicRmwAnd:
+    case Opcode::I64AtomicRmwOr:
+    case Opcode::I64AtomicRmwXor:
+    case Opcode::I64AtomicRmwXchg:    align = 3; goto rmw64;
+    case Opcode::I64AtomicRmw8AddU:
+    case Opcode::I64AtomicRmw8SubU:
+    case Opcode::I64AtomicRmw8AndU:
+    case Opcode::I64AtomicRmw8OrU:
+    case Opcode::I64AtomicRmw8XorU:
+    case Opcode::I64AtomicRmw8XchgU:  align = 0; goto rmw64;
+    case Opcode::I64AtomicRmw16AddU:
+    case Opcode::I64AtomicRmw16SubU:
+    case Opcode::I64AtomicRmw16AndU:
+    case Opcode::I64AtomicRmw16OrU:
+    case Opcode::I64AtomicRmw16XorU:
+    case Opcode::I64AtomicRmw16XchgU: align = 1; goto rmw64;
+    case Opcode::I64AtomicRmw32AddU:
+    case Opcode::I64AtomicRmw32SubU:
+    case Opcode::I64AtomicRmw32AndU:
+    case Opcode::I64AtomicRmw32OrU:
+    case Opcode::I64AtomicRmw32XorU:
+    case Opcode::I64AtomicRmw32XchgU: align = 2; goto rmw64;
+
+    rmw64:
+      params = span_i32_i64, results = span_i64;
+      break;
+
+    case Opcode::I32AtomicRmwCmpxchg:    align = 2; goto cmpxchg32;
+    case Opcode::I32AtomicRmw8CmpxchgU:  align = 0; goto cmpxchg32;
+    case Opcode::I32AtomicRmw16CmpxchgU: align = 1; goto cmpxchg32;
+
+    cmpxchg32:
+      params = span_i32_i32_i32, results = span_i32;
+      break;
+
+    case Opcode::I64AtomicRmwCmpxchg:    align = 3; goto cmpxchg64;
+    case Opcode::I64AtomicRmw8CmpxchgU:  align = 0; goto cmpxchg64;
+    case Opcode::I64AtomicRmw16CmpxchgU: align = 1; goto cmpxchg64;
+    case Opcode::I64AtomicRmw32CmpxchgU: align = 2; goto cmpxchg64;
+
+    cmpxchg64:
+      params = span_i32_i64_i64, results = span_i64;
+      break;
+
+    default:
+      WASP_UNREACHABLE();
+  }
+
+  bool valid = CheckAtomicAlignment(instruction, align, errors);
+  valid &= CheckSharedMemory(instruction, memory_type, errors);
+  return AllTrue(memory_type, valid,
+                 PopAndPushTypes(params, results, context, errors));
 }
 
 }  // namespace
@@ -1154,8 +1340,84 @@ bool Validate(const Instruction& value,
       params = span_v128_f64, results = span_v128;
       break;
 
+    case Opcode::AtomicNotify:
+      return AtomicNotify(value, context, errors);
+
+    case Opcode::I32AtomicWait:
+    case Opcode::I64AtomicWait:
+      return AtomicWait(value, context, errors);
+
+    case Opcode::I32AtomicLoad:
+    case Opcode::I64AtomicLoad:
+    case Opcode::I32AtomicLoad8U:
+    case Opcode::I32AtomicLoad16U:
+    case Opcode::I64AtomicLoad8U:
+    case Opcode::I64AtomicLoad16U:
+    case Opcode::I64AtomicLoad32U:
+      return AtomicLoad(value, context, errors);
+
+    case Opcode::I32AtomicStore:
+    case Opcode::I64AtomicStore:
+    case Opcode::I32AtomicStore8:
+    case Opcode::I32AtomicStore16:
+    case Opcode::I64AtomicStore8:
+    case Opcode::I64AtomicStore16:
+    case Opcode::I64AtomicStore32:
+      return AtomicStore(value, context, errors);
+
+    case Opcode::I32AtomicRmwAdd:
+    case Opcode::I32AtomicRmw8AddU:
+    case Opcode::I32AtomicRmw16AddU:
+    case Opcode::I32AtomicRmwSub:
+    case Opcode::I32AtomicRmw8SubU:
+    case Opcode::I32AtomicRmw16SubU:
+    case Opcode::I32AtomicRmwAnd:
+    case Opcode::I32AtomicRmw8AndU:
+    case Opcode::I32AtomicRmw16AndU:
+    case Opcode::I32AtomicRmwOr:
+    case Opcode::I32AtomicRmw8OrU:
+    case Opcode::I32AtomicRmw16OrU:
+    case Opcode::I32AtomicRmwXor:
+    case Opcode::I32AtomicRmw8XorU:
+    case Opcode::I32AtomicRmw16XorU:
+    case Opcode::I32AtomicRmwXchg:
+    case Opcode::I32AtomicRmw8XchgU:
+    case Opcode::I32AtomicRmw16XchgU:
+    case Opcode::I64AtomicRmwAdd:
+    case Opcode::I64AtomicRmw8AddU:
+    case Opcode::I64AtomicRmw16AddU:
+    case Opcode::I64AtomicRmw32AddU:
+    case Opcode::I64AtomicRmwSub:
+    case Opcode::I64AtomicRmw8SubU:
+    case Opcode::I64AtomicRmw16SubU:
+    case Opcode::I64AtomicRmw32SubU:
+    case Opcode::I64AtomicRmwAnd:
+    case Opcode::I64AtomicRmw8AndU:
+    case Opcode::I64AtomicRmw16AndU:
+    case Opcode::I64AtomicRmw32AndU:
+    case Opcode::I64AtomicRmwOr:
+    case Opcode::I64AtomicRmw8OrU:
+    case Opcode::I64AtomicRmw16OrU:
+    case Opcode::I64AtomicRmw32OrU:
+    case Opcode::I64AtomicRmwXor:
+    case Opcode::I64AtomicRmw8XorU:
+    case Opcode::I64AtomicRmw16XorU:
+    case Opcode::I64AtomicRmw32XorU:
+    case Opcode::I64AtomicRmwXchg:
+    case Opcode::I64AtomicRmw8XchgU:
+    case Opcode::I64AtomicRmw16XchgU:
+    case Opcode::I64AtomicRmw32XchgU:
+    case Opcode::I32AtomicRmwCmpxchg:
+    case Opcode::I64AtomicRmwCmpxchg:
+    case Opcode::I32AtomicRmw8CmpxchgU:
+    case Opcode::I32AtomicRmw16CmpxchgU:
+    case Opcode::I64AtomicRmw8CmpxchgU:
+    case Opcode::I64AtomicRmw16CmpxchgU:
+    case Opcode::I64AtomicRmw32CmpxchgU:
+      return AtomicRmw(value, context, errors);
+
     default:
-      WASP_UNREACHABLE();
+      errors.OnError(format("Unimplemented instruction {}\n", value));
       return false;
   }
 

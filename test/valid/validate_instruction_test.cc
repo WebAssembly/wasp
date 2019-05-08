@@ -765,7 +765,7 @@ TEST_F(ValidateInstructionTest, Load) {
 TEST_F(ValidateInstructionTest, Load_Alignment) {
   struct {
     Opcode opcode;
-    uint32_t max_align;
+    u32 max_align;
   } const infos[] = {{O::I32Load, 2},    {O::I64Load, 3},    {O::F32Load, 2},
                      {O::F64Load, 3},    {O::I32Load8S, 0},  {O::I32Load8U, 0},
                      {O::I32Load16S, 1}, {O::I32Load16U, 1}, {O::I64Load8S, 0},
@@ -825,7 +825,7 @@ TEST_F(ValidateInstructionTest, Store_MemoryOOB) {
 TEST_F(ValidateInstructionTest, Store_Alignment) {
   struct {
     Opcode opcode;
-    uint32_t max_align;
+    u32 max_align;
   } const infos[] = {{O::I32Store, 2},  {O::I64Store, 3},   {O::F32Store, 2},
                      {O::F64Store, 3},  {O::I32Store8, 0},  {O::I32Store16, 1},
                      {O::I64Store8, 0}, {O::I64Store16, 1}, {O::I64Store32, 2}};
@@ -1277,5 +1277,338 @@ TEST_F(ValidateInstructionTest, SimdShifts) {
 
   for (const auto& opcode : opcodes) {
     TestSignature(I{opcode}, {VT::V128, VT::I32}, {VT::V128});
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicNotifyAndWait) {
+  AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
+  TestSignature(I{O::AtomicNotify, MemArgImmediate{2, 0}}, {VT::I32, VT::I32},
+                {VT::I32});
+  TestSignature(I{O::I32AtomicWait, MemArgImmediate{2, 0}},
+                {VT::I32, VT::I32, VT::I64}, {VT::I32});
+  TestSignature(I{O::I64AtomicWait, MemArgImmediate{3, 0}},
+                {VT::I32, VT::I64, VT::I64}, {VT::I32});
+}
+
+TEST_F(ValidateInstructionTest, AtomicNotifyAndWait_Alignment) {
+  AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
+  Ok(I{O::Unreachable});
+  Fail(I{O::AtomicNotify, MemArgImmediate{0, 0}});
+  Fail(I{O::AtomicNotify, MemArgImmediate{1, 0}});
+  Fail(I{O::AtomicNotify, MemArgImmediate{3, 0}});
+  Fail(I{O::I32AtomicWait, MemArgImmediate{0, 0}});
+  Fail(I{O::I32AtomicWait, MemArgImmediate{1, 0}});
+  Fail(I{O::I32AtomicWait, MemArgImmediate{3, 0}});
+  Fail(I{O::I64AtomicWait, MemArgImmediate{0, 0}});
+  Fail(I{O::I64AtomicWait, MemArgImmediate{1, 0}});
+  Fail(I{O::I64AtomicWait, MemArgImmediate{2, 0}});
+  Fail(I{O::I64AtomicWait, MemArgImmediate{4, 0}});
+}
+
+
+TEST_F(ValidateInstructionTest, AtomicLoad) {
+  const struct {
+    Opcode opcode;
+    ValueType result;
+    u32 align;
+  } infos[] = {
+      {O::I32AtomicLoad, VT::I32, 2},    {O::I32AtomicLoad8U, VT::I32, 0},
+      {O::I32AtomicLoad16U, VT::I32, 1}, {O::I64AtomicLoad, VT::I64, 3},
+      {O::I64AtomicLoad8U, VT::I64, 0},  {O::I64AtomicLoad16U, VT::I64, 1},
+      {O::I64AtomicLoad32U, VT::I64, 2}};
+
+  AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
+  for (const auto& info: infos) {
+    TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}}, {VT::I32},
+                  {info.result});
+  }
+
+  for (const auto& info: infos) {
+    // Only natural alignment is valid.
+    for (u32 align = 0; align <= info.align + 1; ++align) {
+      if (align != info.align) {
+        Ok(I{O::I32Const, s32{}});
+        Fail(I{info.opcode, MemArgImmediate{align, 0}});
+      }
+    }
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicLoad_MemoryOOB) {
+  const struct {
+    Opcode opcode;
+    u32 align;
+  } infos[] = {{O::I32AtomicLoad, 2},    {O::I32AtomicLoad8U, 0},
+               {O::I32AtomicLoad16U, 1}, {O::I64AtomicLoad, 3},
+               {O::I64AtomicLoad8U, 0},  {O::I64AtomicLoad16U, 1},
+               {O::I64AtomicLoad32U, 2}};
+
+  for (const auto& info: infos) {
+    Ok(I{O::I32Const, s32{}});
+    Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicLoad_MemoryNonShared) {
+  const struct {
+    Opcode opcode;
+    u32 align;
+  } infos[] = {{O::I32AtomicLoad, 2},    {O::I32AtomicLoad8U, 0},
+               {O::I32AtomicLoad16U, 1}, {O::I64AtomicLoad, 3},
+               {O::I64AtomicLoad8U, 0},  {O::I64AtomicLoad16U, 1},
+               {O::I64AtomicLoad32U, 2}};
+
+  AddMemory(MemoryType{Limits{0}});
+  for (const auto& info: infos) {
+    Ok(I{O::I32Const, s32{}});
+    Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicStore) {
+  const struct {
+    Opcode opcode;
+    ValueType value_type;
+    u32 align;
+  } infos[] = {
+      {O::I32AtomicStore, VT::I32, 2},   {O::I32AtomicStore8, VT::I32, 0},
+      {O::I32AtomicStore16, VT::I32, 1}, {O::I64AtomicStore, VT::I64, 3},
+      {O::I64AtomicStore8, VT::I64, 0},  {O::I64AtomicStore16, VT::I64, 1},
+      {O::I64AtomicStore32, VT::I64, 2}};
+
+  AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
+  for (const auto& info: infos) {
+    TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}},
+                  {VT::I32, info.value_type}, {});
+  }
+
+  Ok(I{O::Unreachable});
+  for (const auto& info: infos) {
+    // Only natural alignment is valid.
+    for (u32 align = 0; align <= info.align + 1; ++align) {
+      if (align != info.align) {
+        Fail(I{info.opcode, MemArgImmediate{align, 0}});
+      }
+    }
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicStore_MemoryOOB) {
+  const struct {
+    Opcode opcode;
+    u32 align;
+  } infos[] = {{O::I32AtomicStore, 2},   {O::I32AtomicStore8, 0},
+               {O::I32AtomicStore16, 1}, {O::I64AtomicStore, 3},
+               {O::I64AtomicStore8, 0},  {O::I64AtomicStore16, 1},
+               {O::I64AtomicStore32, 2}};
+
+  Ok(I{O::Unreachable});
+  for (const auto& info: infos) {
+    Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicStore_MemoryNonShared) {
+  const struct {
+    Opcode opcode;
+    u32 align;
+  } infos[] = {{O::I32AtomicStore, 2},   {O::I32AtomicStore8, 0},
+               {O::I32AtomicStore16, 1}, {O::I64AtomicStore, 3},
+               {O::I64AtomicStore8, 0},  {O::I64AtomicStore16, 1},
+               {O::I64AtomicStore32, 2}};
+
+  AddMemory(MemoryType{Limits{0}});
+  Ok(I{O::Unreachable});
+  for (const auto& info: infos) {
+    Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicRmw) {
+  const struct {
+    Opcode opcode;
+    ValueType value_type;
+    u32 align;
+  } infos[] = {
+      {O::I32AtomicRmwAdd, VT::I32, 2},    {O::I32AtomicRmwSub, VT::I32, 2},
+      {O::I32AtomicRmwAnd, VT::I32, 2},    {O::I32AtomicRmwOr, VT::I32, 2},
+      {O::I32AtomicRmwXor, VT::I32, 2},    {O::I32AtomicRmwXchg, VT::I32, 2},
+      {O::I32AtomicRmw16AddU, VT::I32, 1}, {O::I32AtomicRmw16SubU, VT::I32, 1},
+      {O::I32AtomicRmw16AndU, VT::I32, 1}, {O::I32AtomicRmw16OrU, VT::I32, 1},
+      {O::I32AtomicRmw16XorU, VT::I32, 1}, {O::I32AtomicRmw16XchgU, VT::I32, 1},
+      {O::I32AtomicRmw8AddU, VT::I32, 0},  {O::I32AtomicRmw8SubU, VT::I32, 0},
+      {O::I32AtomicRmw8AndU, VT::I32, 0},  {O::I32AtomicRmw8OrU, VT::I32, 0},
+      {O::I32AtomicRmw8XorU, VT::I32, 0},  {O::I32AtomicRmw8XchgU, VT::I32, 0},
+      {O::I64AtomicRmwAdd, VT::I64, 3},    {O::I64AtomicRmwSub, VT::I64, 3},
+      {O::I64AtomicRmwAnd, VT::I64, 3},    {O::I64AtomicRmwOr, VT::I64, 3},
+      {O::I64AtomicRmwXor, VT::I64, 3},    {O::I64AtomicRmwXchg, VT::I64, 3},
+      {O::I64AtomicRmw32AddU, VT::I64, 2}, {O::I64AtomicRmw32SubU, VT::I64, 2},
+      {O::I64AtomicRmw32AndU, VT::I64, 2}, {O::I64AtomicRmw32OrU, VT::I64, 2},
+      {O::I64AtomicRmw32XorU, VT::I64, 2}, {O::I64AtomicRmw32XchgU, VT::I64, 2},
+      {O::I64AtomicRmw16AddU, VT::I64, 1}, {O::I64AtomicRmw16SubU, VT::I64, 1},
+      {O::I64AtomicRmw16AndU, VT::I64, 1}, {O::I64AtomicRmw16OrU, VT::I64, 1},
+      {O::I64AtomicRmw16XorU, VT::I64, 1}, {O::I64AtomicRmw16XchgU, VT::I64, 1},
+      {O::I64AtomicRmw8AddU, VT::I64, 0},  {O::I64AtomicRmw8SubU, VT::I64, 0},
+      {O::I64AtomicRmw8AndU, VT::I64, 0},  {O::I64AtomicRmw8OrU, VT::I64, 0},
+      {O::I64AtomicRmw8XorU, VT::I64, 0},  {O::I64AtomicRmw8XchgU, VT::I64, 0},
+  };
+
+  AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
+  for (const auto& info: infos) {
+    TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}},
+                  {VT::I32, info.value_type}, {info.value_type});
+  }
+
+  Ok(I{O::Unreachable});
+  for (const auto& info: infos) {
+    // Only natural alignment is valid.
+    for (u32 align = 0; align <= info.align + 1; ++align) {
+      if (align != info.align) {
+        Fail(I{info.opcode, MemArgImmediate{align, 0}});
+        Ok(I{O::Drop});
+      }
+    }
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicRmw_MemoryOOB) {
+  const struct {
+    Opcode opcode;
+    u32 align;
+  } infos[] = {
+      {O::I32AtomicRmwAdd, 2},    {O::I32AtomicRmwSub, 2},
+      {O::I32AtomicRmwAnd, 2},    {O::I32AtomicRmwOr, 2},
+      {O::I32AtomicRmwXor, 2},    {O::I32AtomicRmwXchg, 2},
+      {O::I32AtomicRmw16AddU, 1}, {O::I32AtomicRmw16SubU, 1},
+      {O::I32AtomicRmw16AndU, 1}, {O::I32AtomicRmw16OrU, 1},
+      {O::I32AtomicRmw16XorU, 1}, {O::I32AtomicRmw16XchgU, 1},
+      {O::I32AtomicRmw8AddU, 0},  {O::I32AtomicRmw8SubU, 0},
+      {O::I32AtomicRmw8AndU, 0},  {O::I32AtomicRmw8OrU, 0},
+      {O::I32AtomicRmw8XorU, 0},  {O::I32AtomicRmw8XchgU, 0},
+      {O::I64AtomicRmwAdd, 3},    {O::I64AtomicRmwSub, 3},
+      {O::I64AtomicRmwAnd, 3},    {O::I64AtomicRmwOr, 3},
+      {O::I64AtomicRmwXor, 3},    {O::I64AtomicRmwXchg, 3},
+      {O::I64AtomicRmw32AddU, 2}, {O::I64AtomicRmw32SubU, 2},
+      {O::I64AtomicRmw32AndU, 2}, {O::I64AtomicRmw32OrU, 2},
+      {O::I64AtomicRmw32XorU, 2}, {O::I64AtomicRmw32XchgU, 2},
+      {O::I64AtomicRmw16AddU, 1}, {O::I64AtomicRmw16SubU, 1},
+      {O::I64AtomicRmw16AndU, 1}, {O::I64AtomicRmw16OrU, 1},
+      {O::I64AtomicRmw16XorU, 1}, {O::I64AtomicRmw16XchgU, 1},
+      {O::I64AtomicRmw8AddU, 0},  {O::I64AtomicRmw8SubU, 0},
+      {O::I64AtomicRmw8AndU, 0},  {O::I64AtomicRmw8OrU, 0},
+      {O::I64AtomicRmw8XorU, 0},  {O::I64AtomicRmw8XchgU, 0},
+  };
+
+  Ok(I{O::Unreachable});
+  for (const auto& info: infos) {
+    Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+    Ok(I{O::Drop});
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicRmw_MemoryNonShared) {
+  const struct {
+    Opcode opcode;
+    u32 align;
+  } infos[] = {
+      {O::I32AtomicRmwAdd, 2},    {O::I32AtomicRmwSub, 2},
+      {O::I32AtomicRmwAnd, 2},    {O::I32AtomicRmwOr, 2},
+      {O::I32AtomicRmwXor, 2},    {O::I32AtomicRmwXchg, 2},
+      {O::I32AtomicRmw16AddU, 1}, {O::I32AtomicRmw16SubU, 1},
+      {O::I32AtomicRmw16AndU, 1}, {O::I32AtomicRmw16OrU, 1},
+      {O::I32AtomicRmw16XorU, 1}, {O::I32AtomicRmw16XchgU, 1},
+      {O::I32AtomicRmw8AddU, 0},  {O::I32AtomicRmw8SubU, 0},
+      {O::I32AtomicRmw8AndU, 0},  {O::I32AtomicRmw8OrU, 0},
+      {O::I32AtomicRmw8XorU, 0},  {O::I32AtomicRmw8XchgU, 0},
+      {O::I64AtomicRmwAdd, 3},    {O::I64AtomicRmwSub, 3},
+      {O::I64AtomicRmwAnd, 3},    {O::I64AtomicRmwOr, 3},
+      {O::I64AtomicRmwXor, 3},    {O::I64AtomicRmwXchg, 3},
+      {O::I64AtomicRmw32AddU, 2}, {O::I64AtomicRmw32SubU, 2},
+      {O::I64AtomicRmw32AndU, 2}, {O::I64AtomicRmw32OrU, 2},
+      {O::I64AtomicRmw32XorU, 2}, {O::I64AtomicRmw32XchgU, 2},
+      {O::I64AtomicRmw16AddU, 1}, {O::I64AtomicRmw16SubU, 1},
+      {O::I64AtomicRmw16AndU, 1}, {O::I64AtomicRmw16OrU, 1},
+      {O::I64AtomicRmw16XorU, 1}, {O::I64AtomicRmw16XchgU, 1},
+      {O::I64AtomicRmw8AddU, 0},  {O::I64AtomicRmw8SubU, 0},
+      {O::I64AtomicRmw8AndU, 0},  {O::I64AtomicRmw8OrU, 0},
+      {O::I64AtomicRmw8XorU, 0},  {O::I64AtomicRmw8XchgU, 0},
+  };
+
+  Ok(I{O::Unreachable});
+  AddMemory(MemoryType{Limits{0}});
+  for (const auto& info: infos) {
+    Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+    Ok(I{O::Drop});
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicCmpxchg) {
+  const struct {
+    Opcode opcode;
+    ValueType value_type;
+    u32 align;
+  } infos[] = {
+      {O::I32AtomicRmwCmpxchg, VT::I32, 2},
+      {O::I32AtomicRmw16CmpxchgU, VT::I32, 1},
+      {O::I32AtomicRmw8CmpxchgU, VT::I32, 0},
+      {O::I64AtomicRmwCmpxchg, VT::I64, 3},
+      {O::I64AtomicRmw32CmpxchgU, VT::I64, 2},
+      {O::I64AtomicRmw16CmpxchgU, VT::I64, 1},
+      {O::I64AtomicRmw8CmpxchgU, VT::I64, 0},
+  };
+
+  AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
+  for (const auto& info: infos) {
+    TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}},
+                  {VT::I32, info.value_type, info.value_type},
+                  {info.value_type});
+  }
+
+  Ok(I{O::Unreachable});
+  for (const auto& info: infos) {
+    // Only natural alignment is valid.
+    for (u32 align = 0; align <= info.align + 1; ++align) {
+      if (align != info.align) {
+        Fail(I{info.opcode, MemArgImmediate{align, 0}});
+        Ok(I{O::Drop});
+      }
+    }
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicCmpxchg_MemoryOOB) {
+  const struct {
+    Opcode opcode;
+    u32 align;
+  } infos[] = {
+      {O::I32AtomicRmwCmpxchg, 2},    {O::I32AtomicRmw16CmpxchgU, 1},
+      {O::I32AtomicRmw8CmpxchgU, 0},  {O::I64AtomicRmwCmpxchg, 3},
+      {O::I64AtomicRmw32CmpxchgU, 2}, {O::I64AtomicRmw16CmpxchgU, 1},
+      {O::I64AtomicRmw8CmpxchgU, 0},
+  };
+
+  Ok(I{O::Unreachable});
+  for (const auto& info: infos) {
+    Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+    Ok(I{O::Drop});
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicCmpxchg_MemoryNonShared) {
+  const struct {
+    Opcode opcode;
+    u32 align;
+  } infos[] = {
+      {O::I32AtomicRmwCmpxchg, 2},    {O::I32AtomicRmw16CmpxchgU, 1},
+      {O::I32AtomicRmw8CmpxchgU, 0},  {O::I64AtomicRmwCmpxchg, 3},
+      {O::I64AtomicRmw32CmpxchgU, 2}, {O::I64AtomicRmw16CmpxchgU, 1},
+      {O::I64AtomicRmw8CmpxchgU, 0},
+  };
+
+  Ok(I{O::Unreachable});
+  AddMemory(MemoryType{Limits{0}});
+  for (const auto& info: infos) {
+    Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+    Ok(I{O::Drop});
   }
 }
