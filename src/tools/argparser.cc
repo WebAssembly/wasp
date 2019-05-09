@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include <algorithm>
 #include <cstdio>
 
 #include "src/tools/argparser.h"
@@ -23,48 +24,51 @@
 namespace wasp {
 namespace tools {
 
-ArgParser& ArgParser::Add(string_view long_arg, FlagCallback cb) {
-  return Add('\0', long_arg, cb);
+ArgParser::Option::Option(LongName long_name, Help help, FlagCallback cb)
+    : Option{kInvalidShortName, long_name, help, cb} {}
+
+ArgParser::Option::Option(ShortName short_name,
+                          LongName long_name,
+                          Help help,
+                          FlagCallback cb)
+    : short_name{short_name}, long_name{long_name}, help{help}, callback{cb} {}
+
+ArgParser::Option::Option(LongName long_name,
+                          Metavar metavar,
+                          Help help,
+                          ParamCallback cb)
+    : Option{kInvalidShortName, long_name, metavar, help, cb} {}
+
+ArgParser::Option::Option(ShortName short_name,
+                          LongName long_name,
+                          Metavar metavar,
+                          Help help,
+                          ParamCallback cb)
+    : short_name{short_name},
+      long_name{long_name},
+      metavar{metavar},
+      help{help},
+      callback{cb} {}
+
+ArgParser::Option::Option(Metavar metavar, Help help, ParamCallback cb)
+    : Option{kInvalidShortName, {}, metavar, help, cb} {}
+
+bool ArgParser::Option::is_flag() const {
+  return holds_alternative<FlagCallback>(callback);
 }
 
-ArgParser& ArgParser::Add(char short_arg, FlagCallback cb) {
-  return Add(short_arg, {}, cb);
+bool ArgParser::Option::is_param() const {
+  return holds_alternative<ParamCallback>(callback);
 }
 
-ArgParser& ArgParser::Add(char short_arg,
-                          string_view long_arg,
-                          FlagCallback cb) {
-  if (short_arg != '\0') {
-    short_map_.emplace(short_arg, cb);
-  }
-  if (!long_arg.empty()) {
-    long_map_.emplace(long_arg, cb);
-  }
-  return *this;
+bool ArgParser::Option::is_bare() const {
+  return short_name == kInvalidShortName && long_name.empty();
 }
 
-ArgParser& ArgParser::Add(string_view long_arg, ParamCallback cb) {
-  return Add('\0', long_arg, cb);
-}
+ArgParser::ArgParser(string_view program) : program_{program} {}
 
-ArgParser& ArgParser::Add(char short_arg, ParamCallback cb) {
-  return Add(short_arg, {}, cb);
-}
-
-ArgParser& ArgParser::Add(char short_arg,
-                          string_view long_arg,
-                          ParamCallback cb) {
-  if (short_arg != '\0') {
-    short_map_.emplace(short_arg, cb);
-  }
-  if (!long_arg.empty()) {
-    long_map_.emplace(long_arg, cb);
-  }
-  return *this;
-}
-
-ArgParser& ArgParser::Add(ParamCallback cb) {
-  bare_ = cb;
+ArgParser& ArgParser::AddRaw(const Option& option) {
+  options_.push_back(option);
   return *this;
 }
 
@@ -74,26 +78,25 @@ void ArgParser::Parse(span<string_view> args) {
   for (index_ = 0; index_ < args.size(); ++index_) {
     string_view arg = args[index_];
 
-    auto call = [&](Callback cb) -> bool {
-      if (holds_alternative<ParamCallback>(cb)) {
+    auto call = [&](const Option& option) -> bool {
+      if (option.is_param() || option.is_bare()) {
         if (index_ + 1 < args.size()) {
-          get<ParamCallback>(cb)(args[++index_]);
+          get<ParamCallback>(option.callback)(args[++index_]);
         } else {
           print(stderr, "Argument `{}` requires parameter\n.", arg);
         }
         return true;
       } else {
-        get<FlagCallback>(cb)();
+        get<FlagCallback>(option.callback)();
         return false;
       }
     };
 
     if (arg.starts_with("--")) {
-      auto iter = long_map_.find(arg);
-      if (iter == long_map_.end()) {
-        print(stderr, "Unknown long argument `{}`.\n", arg);
+      if (auto option = FindLongOption(arg)) {
+        call(*option);
       } else {
-        call(iter->second);
+        print(stderr, "Unknown long argument `{}`.\n", arg);
       }
     } else if (arg[0] == '-') {
       optional<char> prev_arg_with_param;
@@ -106,19 +109,20 @@ void ArgParser::Parse(span<string_view> args) {
           continue;
         }
 
-        auto iter = short_map_.find(c);
-        if (iter == short_map_.end()) {
+        if (auto option = FindShortName(c)) {
+          if (call(*option)) {
+            // When a short argument has a parameter, we don't allow other
+            // short args to be grouped after it.
+            prev_arg_with_param = c;
+          }
+        } else {
           print(stderr, "Unknown short argument `-{}`.\n", c);
-        } else if (call(iter->second)) {
-          // When a short argument has a parameter, we don't allow other
-          // short args to be grouped after it.
-          prev_arg_with_param = c;
         }
       }
     } else {
-      if (!holds_alternative<monostate>(bare_)) {
+      if (auto option = FindBare()) {
         --index_;  // Back up so call reads arg as the parameter.
-        call(bare_);
+        call(*option);
       } else {
         print(stderr, "Unexpected bare argument `{}`.\n", arg);
       }
@@ -128,6 +132,78 @@ void ArgParser::Parse(span<string_view> args) {
 
 span<string_view> ArgParser::RestOfArgs() {
   return args_.subspan(index_ + 1);
+}
+
+std::string ArgParser::GetHelpString() const {
+  std::string result;
+  result += format("usage: {}", program_);
+  if (!options_.empty()) {
+    result += " [options]";
+  }
+  if (auto bare = FindBare()) {
+    result += format(" {}", bare->metavar);
+  }
+
+  if (!options_.empty()) {
+    auto option_width = [](const Option& option) {
+      // + 1 for the space between name and metavar.
+      return option.long_name.size() + 1 + option.metavar.size();
+    };
+
+    auto width = option_width(
+        *(std::max_element(options_.begin(), options_.end(),
+                           [&](const Option& lhs, const Option& rhs) {
+                             return option_width(lhs) < option_width(rhs);
+                           })));
+    result += "\n\noptions:\n";
+    for (const auto& option: options_) {
+      if (option.is_bare()) {
+        continue;
+      }
+
+      if (option.short_name != kInvalidShortName) {
+        result += format(" -{}, ", option.short_name);
+      } else {
+        result += "     ";
+      }
+      result += format("{:<{}}  {}\n",
+                       format("{} {}", option.long_name, option.metavar), width,
+                       option.help);
+    }
+
+    result += "\npositional:\n";
+    if (auto option = FindBare()) {
+      result +=
+          format(" {:<{}}      {}\n", option->metavar, width, option->help);
+    }
+  }
+  return result;
+}
+
+void ArgParser::PrintHelpAndExit(int errcode) {
+  print(stderr, GetHelpString());
+  exit(errcode);
+}
+
+auto ArgParser::FindShortName(ShortName short_name) const -> optional<Option> {
+  auto iter = std::find_if(
+      options_.begin(), options_.end(),
+      [&](const Option& option) { return option.short_name == short_name; });
+  return iter != options_.end() ? optional<Option>{*iter} : nullopt;
+}
+
+auto ArgParser::FindLongOption(LongName long_name) const -> optional<Option> {
+  auto iter = std::find_if(
+      options_.begin(), options_.end(),
+      [&](const Option& option) { return option.long_name == long_name; });
+  return iter != options_.end() ? optional<Option>{*iter} : nullopt;
+}
+
+auto ArgParser::FindBare() const -> optional<Option> {
+  auto iter =
+      std::find_if(options_.begin(), options_.end(),
+                   [&](const Option& option) { return option.is_bare(); });
+  return iter != options_.end() ? optional<Option>{*iter} : nullopt;
 }
 
 ArgParser::ArgsGuard::ArgsGuard(ArgParser& parser, span<string_view> args)

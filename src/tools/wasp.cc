@@ -48,28 +48,29 @@ int main(int argc, char** argv) {
       {"validate", wasp::tools::validate::Main},
   };
 
-  wasp::tools::ArgParser parser;
-  parser.Add('h', "--help", []() { PrintHelp(0); }).Add([&](string_view arg) {
-    auto iter = commands.find(arg);
-    if (iter == commands.end()) {
-      print("Unknown command `{}`\n", arg);
-      PrintHelp(1);
-    } else {
-      exit(iter->second(parser.RestOfArgs()));
-    }
-  });
+  wasp::tools::ArgParser parser{"wasp"};
+  parser.Add('h', "--help", "print help and exit", []() { PrintHelp(0); })
+      .Add("<command>", "command", [&](string_view arg) {
+        auto iter = commands.find(arg);
+        if (iter == commands.end()) {
+          print(stderr, "Unknown command `{}`\n", arg);
+          PrintHelp(1);
+        } else {
+          exit(iter->second(parser.RestOfArgs()));
+        }
+      });
   parser.Parse(args);
   PrintHelp(1);
 }
 
 void PrintHelp(int errcode) {
-  print("usage: wasp <command> [<options>]\n");
-  print("\n");
-  print("commands:\n");
-  print("  dump        Dump the contents of a WebAssembly file.\n");
-  print("  callgraph   Generate DOT file for the function call graph.\n");
-  print("  cfg         Generate DOT file of a function's control flow graph.\n");
-  print("  dfg         Generate DOT file of a function's data flow graph.\n");
-  print("  validate    Validate a WebAssembly file.\n");
+  print(stderr, "usage: wasp <command> [<options>]\n");
+  print(stderr, "\n");
+  print(stderr, "commands:\n");
+  print(stderr, "  dump        Dump the contents of a WebAssembly file.\n");
+  print(stderr, "  callgraph   Generate DOT file for the function call graph.\n");
+  print(stderr, "  cfg         Generate DOT file of a function's control flow graph.\n");
+  print(stderr, "  dfg         Generate DOT file of a function's data flow graph.\n");
+  print(stderr, "  validate    Validate a WebAssembly file.\n");
   exit(errcode);
 }

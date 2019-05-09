@@ -66,7 +66,7 @@ class ErrorsBasic : public Errors {
   void HandlePushContext(SpanU8 pos, string_view desc) override {}
   void HandlePopContext() override {}
   void HandleOnError(SpanU8 pos, string_view message) override {
-    print("{:08x}: {}\n", pos.data() - data.data(), message);
+    print(stderr, "{:08x}: {}\n", pos.data() - data.data(), message);
   }
 
   SpanU8 data;
@@ -205,43 +205,49 @@ struct Tool {
 // static
 constexpr int Tool::max_octets_per_line;
 
-void PrintHelp(int);
-
 int Main(span<string_view> args) {
   std::vector<string_view> filenames;
   Options options;
   options.features.EnableAll();
 
-  ArgParser parser;
-  parser.Add('\0', "--help", []() { PrintHelp(0); })
-      .Add('h', "--headers", [&]() { options.print_headers = true; })
-      .Add('d', "--disassemble", [&]() { options.print_disassembly = true; })
-      .Add('x', "--details", [&]() { options.print_details = true; })
-      .Add('s', "--full-contents", [&]() { options.print_raw_data = true; })
-      .Add('j', "--section",
+  ArgParser parser{"wasp dump"};
+  parser
+      .Add("--help", "print help and exit",
+           [&]() { parser.PrintHelpAndExit(0); })
+      .Add('h', "--headers", "print section headers",
+           [&]() { options.print_headers = true; })
+      .Add('d', "--disassemble", "print disassembly",
+           [&]() { options.print_disassembly = true; })
+      .Add('x', "--details", "print section details",
+           [&]() { options.print_details = true; })
+      .Add('s', "--full-contents", "print raw contents of the section",
+           [&]() { options.print_raw_data = true; })
+      .Add('j', "--section", "<section>",
+           "print only the contents of <section>",
            [&](string_view arg) { options.section_name = arg; })
-      .Add([&](string_view arg) { filenames.push_back(arg); });
+      .Add("<filenames...>", "input wasm files",
+           [&](string_view arg) { filenames.push_back(arg); });
   parser.Parse(args);
 
   if (filenames.empty()) {
-    print("No filenames given.\n");
-    PrintHelp(1);
+    print(stderr, "No filenames given.\n");
+    parser.PrintHelpAndExit(1);
   }
 
   if (!(options.print_headers || options.print_disassembly ||
         options.print_details || options.print_raw_data)) {
-    print("At least one of the following switches must be given:\n");
-    print(" -d/--disassemble\n");
-    print(" -h/--headers\n");
-    print(" -x/--details\n");
-    print(" -s/--full-contents\n");
-    PrintHelp(1);
+    print(stderr, "At least one of the following switches must be given:\n");
+    print(stderr, " -d/--disassemble\n");
+    print(stderr, " -h/--headers\n");
+    print(stderr, " -x/--details\n");
+    print(stderr, " -s/--full-contents\n");
+    parser.PrintHelpAndExit(1);
   }
 
   for (auto filename : filenames) {
     auto optbuf = ReadFile(filename);
     if (!optbuf) {
-      print("Error reading file {}.\n", filename);
+      print(stderr, "Error reading file {}.\n", filename);
       continue;
     }
 
@@ -252,20 +258,6 @@ int Main(span<string_view> args) {
 
   return 0;
 }
-
-void PrintHelp(int errcode) {
-  print("usage: wasp dump [options] <filename.wasm>...\n");
-  print("\n");
-  print("options:\n");
-  print("     --help                 print help and exit\n");
-  print(" -h, --headers              print section headers\n");
-  print(" -d, --disassemble          print disassembly\n");
-  print(" -x, --details              print section details\n");
-  print(" -s, --full-contents        print raw contents of the section\n");
-  print(" -j, --section <section>    print only the contents of <section>\n");
-  exit(errcode);
-}
-
 
 Tool::Tool(string_view filename, SpanU8 data, Options options)
     : filename(filename),

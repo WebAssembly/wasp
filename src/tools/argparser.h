@@ -18,7 +18,8 @@
 #define WASP_TOOLS_ARGPARSER_H_
 
 #include <functional>
-#include <map>
+#include <string>
+#include <vector>
 
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
@@ -30,30 +31,57 @@ namespace tools {
 
 class ArgParser {
  public:
+  using ShortName = char;
+  using LongName = string_view;
+  using Help = string_view;
+  using Metavar = string_view;
   using FlagCallback = std::function<void()>;
   using ParamCallback = std::function<void(string_view)>;
-  using Callback = variant<monostate, FlagCallback, ParamCallback>;
 
-  // Flag callbacks: `-f`, `--foo`
-  ArgParser& Add(string_view long_arg, FlagCallback);
-  ArgParser& Add(char short_arg, FlagCallback);
-  ArgParser& Add(char short_arg, string_view long_arg, FlagCallback);
+  struct Option {
+    // Flag callbacks: `-f`, `--foo`
+    explicit Option(LongName, Help, FlagCallback);
+    explicit Option(ShortName, LongName, Help, FlagCallback);
 
-  // Param callbacks: `-f 3`, `--foo 3`
-  ArgParser& Add(string_view long_arg, ParamCallback);
-  ArgParser& Add(char short_arg, ParamCallback);
-  ArgParser& Add(char short_arg, string_view long_arg, ParamCallback);
+    // Param callbacks: `-f 3`, `--foo 3`
+    explicit Option(LongName, Metavar, Help, ParamCallback);
+    explicit Option(ShortName, LongName, Metavar, Help, ParamCallback);
 
-  // Bare callback: `foo`, `bar`
-  ArgParser& Add(ParamCallback);
+    // Bare callback: `foo`, `bar`
+    explicit Option(Metavar, Help, ParamCallback);
+
+    bool is_flag() const;
+    bool is_param() const;
+    bool is_bare() const;
+
+    ShortName short_name;
+    LongName long_name;
+    string_view metavar;
+    string_view help;
+    variant<FlagCallback, ParamCallback> callback;
+  };
+
+  explicit ArgParser(string_view program);
+
+  template <typename... Ts>
+  ArgParser& Add(Ts&&... ts) { return AddRaw(Option{std::forward<Ts>(ts)...}); }
+  ArgParser& AddRaw(const Option&);
+
   void Parse(span<string_view>);
-
   span<string_view> RestOfArgs();
 
+  std::string GetHelpString() const;
+  void PrintHelpAndExit(int errcode);
+
  private:
-  std::map<char, Callback> short_map_;
-  std::map<string_view, Callback> long_map_;
-  Callback bare_;
+  static const ShortName kInvalidShortName = '\0';
+
+  optional<Option> FindShortName(ShortName) const;
+  optional<Option> FindLongOption(LongName) const;
+  optional<Option> FindBare() const;
+
+  string_view program_;
+  std::vector<Option> options_;
 
   struct ArgsGuard {
     explicit ArgsGuard(ArgParser& parser, span<string_view> args);

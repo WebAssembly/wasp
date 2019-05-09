@@ -70,10 +70,10 @@ class ErrorsBasic : public Errors, public valid::Errors {
   void Print() {
     for (const auto& error : errors) {
       if (error.pos) {
-        print("{:08x}: {}\n", *error.pos, error.message);
+        print(stderr, "{:08x}: {}\n", *error.pos, error.message);
       } else {
         // TODO: get error location for validation errors.
-        print("????????: {}\n", error.message);
+        print(stderr, "????????: {}\n", error.message);
       }
     }
   }
@@ -142,29 +142,31 @@ struct Tool {
   valid::Context context;
 };
 
-void PrintHelp(int);
-
 int Main(span<string_view> args) {
   std::vector<string_view> filenames;
   Options options;
   options.features.EnableAll();
 
-  ArgParser parser;
-  parser.Add('h', "--help", []() { PrintHelp(0); })
-      .Add('v', "--verbose", [&]() { options.verbose = true; })
-      .Add([&](string_view arg) { filenames.push_back(arg); });
+  ArgParser parser{"wasp validate"};
+  parser
+      .Add('h', "--help", "print help and exit",
+           [&]() { parser.PrintHelpAndExit(0); })
+      .Add('v', "--verbose", "print filename and whether it was valid",
+           [&]() { options.verbose = true; })
+      .Add("<filenames...>", "input wasm files",
+           [&](string_view arg) { filenames.push_back(arg); });
   parser.Parse(args);
 
   if (filenames.empty()) {
     print("No filenames given.\n");
-    PrintHelp(1);
+    parser.PrintHelpAndExit(1);
   }
 
   bool ok = true;
   for (auto filename : filenames) {
     auto optbuf = ReadFile(filename);
     if (!optbuf) {
-      print("Error reading file {}.\n", filename);
+      print(stderr, "Error reading file {}.\n", filename);
       ok = false;
       continue;
     }
@@ -180,15 +182,6 @@ int Main(span<string_view> args) {
   }
 
   return ok ? 0 : 1;
-}
-
-void PrintHelp(int errcode) {
-  print("usage: wasp validate [options] <filename.wasm>...\n");
-  print("\n");
-  print("options:\n");
-  print(" -h  --help     print help and exit\n");
-  print(" -v  --verbose  print filename and whether it was valid\n");
-  exit(errcode);
 }
 
 Tool::Tool(string_view filename, SpanU8 data, Options options)

@@ -70,18 +70,18 @@ struct Tool {
   std::set<std::pair<Index, Index>> call_graph;
 };
 
-void PrintHelp(int);
-
 int Main(span<string_view> args) {
   string_view filename;
   Options options;
   options.features.EnableAll();
 
-  ArgParser parser;
-  parser.Add('h', "--help", []() { PrintHelp(0); })
-      .Add('o', "--output",
+  ArgParser parser{"wasp callgraph"};
+  parser
+      .Add('h', "--help", "print help and exit",
+           [&]() { parser.PrintHelpAndExit(0); })
+      .Add('o', "--output", "<filename>", "write DOT file output to <filename>",
            [&](string_view arg) { options.output_filename = arg; })
-      .Add([&](string_view arg) {
+      .Add("<filename>", "input wasm file", [&](string_view arg) {
         if (filename.empty()) {
           filename = arg;
         } else {
@@ -92,7 +92,7 @@ int Main(span<string_view> args) {
 
   if (filename.empty()) {
     print(stderr, "No filenames given.\n");
-    PrintHelp(1);
+    parser.PrintHelpAndExit(1);
   }
 
   auto optbuf = ReadFile(filename);
@@ -106,15 +106,6 @@ int Main(span<string_view> args) {
   tool.Run();
 
   return 0;
-}
-
-void PrintHelp(int errcode) {
-  print("usage: wasp callgraph [options] <filename.wasm>\n");
-  print("\n");
-  print("options:\n");
-  print(" -h, --help                print help and exit\n");
-  print(" -o, --output <filename>   write DOT file output to <filename>\n");
-  exit(errcode);
 }
 
 Tool::Tool(SpanU8 data, Options options)
