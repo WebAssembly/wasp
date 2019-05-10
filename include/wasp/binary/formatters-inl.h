@@ -57,7 +57,10 @@ typename Ctx::iterator formatter<::wasp::binary::BlockType>::format(
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
-      WASP_UNREACHABLE();
+      // Block types that are indexes in the type section.
+      memory_buffer buf;
+      format_to(buf, "{}", static_cast<::wasp::s32>(self));
+      return formatter<string_view>::format(to_string_view(buf), ctx);
   }
   return formatter<string_view>::format(result, ctx);
 }

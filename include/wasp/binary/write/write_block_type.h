@@ -19,7 +19,7 @@
 
 #include "wasp/binary/block_type.h"
 #include "wasp/binary/encoding/block_type_encoding.h"
-#include "wasp/binary/write/write_u8.h"
+#include "wasp/binary/write/write_s32.h"
 
 namespace wasp {
 namespace binary {

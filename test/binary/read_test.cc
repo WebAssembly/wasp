@@ -84,6 +84,17 @@ TEST(ReadTest, BlockType_MVP) {
   ExpectRead<BlockType>(BlockType::Void, "\x40"_su8);
 }
 
+TEST(ReadTest, BlockType_Basic_multi_value) {
+  Features features;
+  features.enable_multi_value();
+
+  ExpectRead<BlockType>(BlockType::I32, "\x7f"_su8, features);
+  ExpectRead<BlockType>(BlockType::I64, "\x7e"_su8, features);
+  ExpectRead<BlockType>(BlockType::F32, "\x7d"_su8, features);
+  ExpectRead<BlockType>(BlockType::F64, "\x7c"_su8, features);
+  ExpectRead<BlockType>(BlockType::Void, "\x40"_su8, features);
+}
+
 TEST(ReadTest, BlockType_simd) {
   ExpectReadFailure<BlockType>(
       {{0, "block type"}, {1, "Unknown block type: 123"}}, "\x7b"_su8);
@@ -91,6 +102,23 @@ TEST(ReadTest, BlockType_simd) {
   Features features;
   features.enable_simd();
   ExpectRead<BlockType>(BlockType::V128, "\x7b"_su8, features);
+}
+
+TEST(ReadTest, BlockType_MultiValueNegative) {
+  Features features;
+  features.enable_multi_value();
+  ExpectReadFailure<BlockType>(
+      {{0, "block type"}, {1, "Unknown block type: -9"}}, "\x77"_su8, features);
+}
+
+TEST(ReadTest, BlockType_multi_value) {
+  ExpectReadFailure<BlockType>(
+      {{0, "block type"}, {1, "Unknown block type: 1"}}, "\x01"_su8);
+
+  Features features;
+  features.enable_multi_value();
+  ExpectRead<BlockType>(BlockType(1), "\x01"_su8, features);
+  ExpectRead<BlockType>(BlockType(448), "\xc0\x03"_su8, features);
 }
 
 TEST(ReadTest, BlockType_reference_types) {

@@ -119,13 +119,23 @@ optional<BlockType> Read(SpanU8* data,
                          Errors& errors,
                          Tag<BlockType>) {
   ErrorsContextGuard guard{errors, *data, "block type"};
-  WASP_TRY_READ(val, Read<u8>(data, features, errors));
-  auto decoded = encoding::BlockType::Decode(val, features);
-  if (!decoded) {
-    errors.OnError(*data, format("Unknown block type: {}", val));
-    return nullopt;
+  if (features.multi_value_enabled()) {
+    WASP_TRY_READ(val, Read<s32>(data, features, errors));
+    auto decoded = encoding::BlockType::Decode(val, features);
+    if (!decoded) {
+      errors.OnError(*data, format("Unknown block type: {}", val));
+      return nullopt;
+    }
+    return decoded;
+  } else {
+    WASP_TRY_READ(val, Read<u8>(data, features, errors));
+    auto decoded = encoding::BlockType::Decode(val, features);
+    if (!decoded) {
+      errors.OnError(*data, format("Unknown block type: {}", val));
+      return nullopt;
+    }
+    return decoded;
   }
-  return decoded;
 }
 
 optional<BrOnExnImmediate> Read(SpanU8* data,

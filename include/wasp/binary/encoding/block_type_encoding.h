@@ -22,6 +22,7 @@
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/block_type.h"
+#include "wasp/binary/read/read_s32.h"
 
 namespace wasp {
 namespace binary {
@@ -34,23 +35,14 @@ struct BlockType {
 #undef WASP_V
 #undef WASP_FEATURE_V
 
-  static u8 Encode(::wasp::binary::BlockType);
+  static s32 Encode(::wasp::binary::BlockType);
   static optional<::wasp::binary::BlockType> Decode(u8, const Features&);
+  static optional<::wasp::binary::BlockType> Decode(s32, const Features&);
 };
 
 // static
-inline u8 BlockType::Encode(::wasp::binary::BlockType decoded) {
-  switch (decoded) {
-#define WASP_V(val, Name, str, ...)     \
-  case ::wasp::binary::BlockType::Name: \
-    return val;
-#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/block_type.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-  default:
-    WASP_UNREACHABLE();
-  }
+inline s32 BlockType::Encode(::wasp::binary::BlockType decoded) {
+  return s32(decoded);
 }
 
 // static
@@ -71,6 +63,32 @@ inline optional<::wasp::binary::BlockType> BlockType::Decode(
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
+      break;
+  }
+  return nullopt;
+}
+
+// static
+inline optional<::wasp::binary::BlockType> BlockType::Decode(
+    s32 val,
+    const Features& features) {
+  switch (val) {
+#define WASP_V(val, Name, str)               \
+  case s32(::wasp::binary::BlockType::Name): \
+    return ::wasp::binary::BlockType::Name;
+#define WASP_FEATURE_V(val, Name, str, feature) \
+  case s32(::wasp::binary::BlockType::Name):    \
+    if (features.feature##_enabled()) {         \
+      return ::wasp::binary::BlockType::Name;   \
+    }                                           \
+    break;
+#include "wasp/binary/block_type.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+    default:
+      if (features.multi_value_enabled() && val >= 0) {
+        return ::wasp::binary::BlockType(val);
+      }
       break;
   }
   return nullopt;

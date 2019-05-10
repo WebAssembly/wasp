@@ -32,6 +32,7 @@ TEST(FormattersTest, ValueType) {
 TEST(FormattersTest, BlockType) {
   EXPECT_EQ(R"([i32])", format("{}", BlockType::I32));
   EXPECT_EQ(R"([])", format("{}", BlockType::Void));
+  EXPECT_EQ(R"(100)", format("{}", BlockType(100)));
   EXPECT_EQ(R"(   [f64])", format("{:>8s}", BlockType::F64));
 }
 
