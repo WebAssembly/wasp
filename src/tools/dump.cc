@@ -142,6 +142,8 @@ struct Tool {
 
   void InsertFunctionName(Index, string_view name);
   void InsertGlobalName(Index, string_view name);
+  optional<TypeEntry> GetTypeEntry(Index) const;
+  optional<Function> GetFunction(Index) const;
   optional<FunctionType> GetFunctionType(Index) const;
   optional<string_view> GetFunctionName(Index) const;
   optional<string_view> GetGlobalName(Index) const;
@@ -1005,12 +1007,27 @@ void Tool::InsertGlobalName(Index index, string_view name) {
   global_names.insert(std::make_pair(index, name));
 }
 
-optional<FunctionType> Tool::GetFunctionType(Index func_index) const {
-  if (func_index >= functions.size() ||
-      functions[func_index].type_index >= type_entries.size()) {
+optional<TypeEntry> Tool::GetTypeEntry(Index type_index) const {
+  if (type_index >= type_entries.size()) {
     return nullopt;
   }
-  return type_entries[functions[func_index].type_index].type;
+  return type_entries[type_index];
+}
+
+optional<Function> Tool::GetFunction(Index func_index) const {
+  if (func_index >= functions.size()) {
+    return nullopt;
+  }
+  return functions[func_index];
+}
+
+optional<FunctionType> Tool::GetFunctionType(Index func_index) const {
+  if (auto func = GetFunction(func_index)) {
+    if (auto type_entry = GetTypeEntry(func->type_index)) {
+      return type_entry->type;
+    }
+  }
+  return nullopt;
 }
 
 optional<string_view> Tool::GetFunctionName(Index index) const {
@@ -1181,11 +1198,20 @@ void Tool::PrintInstruction(const Instruction& instr,
     if (first_line) {
       first_line = false;
       print(" {:{}s}{}", "", indent, instr);
+
       if (instr.opcode == Opcode::Call) {
         PrintFunctionName(instr.index_immediate());
       } else if (instr.opcode == Opcode::GlobalGet ||
                  instr.opcode == Opcode::GlobalSet) {
         PrintGlobalName(instr.index_immediate());
+      } else if (instr.has_block_type_immediate()) {
+        auto block_type = instr.block_type_immediate();
+        if (s32(block_type) >= 0) {
+          auto type_entry_opt = GetTypeEntry(Index(block_type));
+          if (type_entry_opt) {
+            print(" <{}>", type_entry_opt->type);
+          }
+        }
       }
     }
     print("\n");
