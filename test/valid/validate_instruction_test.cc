@@ -180,6 +180,23 @@ TEST_F(ValidateInstructionTest, Block_SingleResult) {
   }
 }
 
+TEST_F(ValidateInstructionTest, Block_MultiResult) {
+  auto index = AddFunctionType(FunctionType{{}, {VT::I32, VT::F32}});
+  Ok(I{O::Block, BlockType(index)});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::F32Const, s32{}});
+  Ok(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, Block_Param) {
+  auto index = AddFunctionType(FunctionType{{VT::I64}, {}});
+  Ok(I{O::I64Const, s64{}});
+  Ok(I{O::Block, BlockType(index)});
+  Ok(I{O::Drop});
+  Ok(I{O::End});
+  Fail(I{O::Drop});  // Nothing left on the stack.
+}
+
 TEST_F(ValidateInstructionTest, Loop_Void) {
   Ok(I{O::Loop, BlockType::Void});
   Ok(I{O::End});
@@ -191,6 +208,23 @@ TEST_F(ValidateInstructionTest, Loop_SingleResult) {
     Ok(info.instruction);
     Ok(I{O::End});
   }
+}
+
+TEST_F(ValidateInstructionTest, Loop_MultiResult) {
+  auto index = AddFunctionType(FunctionType{{}, {VT::I32, VT::F32}});
+  Ok(I{O::Loop, BlockType(index)});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::F32Const, s32{}});
+  Ok(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, Loop_Param) {
+  auto index = AddFunctionType(FunctionType{{VT::I64}, {}});
+  Ok(I{O::I64Const, s64{}});
+  Ok(I{O::Loop, BlockType(index)});
+  Ok(I{O::Drop});
+  Ok(I{O::End});
+  Fail(I{O::Drop});  // Nothing left on the stack.
 }
 
 TEST_F(ValidateInstructionTest, If_End_Void) {
@@ -215,6 +249,47 @@ TEST_F(ValidateInstructionTest, If_Else_SingleResult) {
     Ok(info.instruction);
     Ok(I{O::End});
   }
+}
+
+TEST_F(ValidateInstructionTest, If_Else_MultiResult) {
+  auto index = AddFunctionType(FunctionType{{}, {VT::I32, VT::F32}});
+
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::If, BlockType(index)});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::F32Const, f32{}});
+  Ok(I{O::Else});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::F32Const, f32{}});
+  Ok(I{O::End});
+
+  Ok(I{O::I32TruncF32S});  // Convert f32 -> i32.
+  Ok(I{O::I32Add});        // Should have [i32 i32] on the stack.
+}
+
+TEST_F(ValidateInstructionTest, If_Else_Param) {
+  auto index = AddFunctionType(FunctionType{{VT::I32}, {}});
+
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::If, BlockType(index)});
+  Ok(I{O::Drop});
+  Ok(I{O::Else});
+  Ok(I{O::Drop});
+  Ok(I{O::End});
+  Fail(I{O::Drop});  // Nothing left on the stack.
+}
+
+TEST_F(ValidateInstructionTest, If_Multi_PassThrough) {
+  auto index = AddFunctionType(FunctionType{{VT::I32}, {VT::I32}});
+
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::If, BlockType(index)});
+  Ok(I{O::I32Eqz, s32{}});
+  Ok(I{O::End});  // There is no else branch; if the condition is false, then
+                  // the value is passed through.
+  Ok(I{O::Drop});
 }
 
 TEST_F(ValidateInstructionTest, If_End_Void_Unreachable) {
@@ -258,6 +333,18 @@ TEST_F(ValidateInstructionTest, If_Else_SingleResult_Unreachable) {
   }
 }
 
+TEST_F(ValidateInstructionTest, If_Else_MultiResult_Unreachable) {
+  auto index = AddFunctionType(FunctionType{{}, {VT::I32, VT::F32}});
+
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::If, BlockType(index)});
+  Ok(I{O::Unreachable});
+  Ok(I{O::Else});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::F32Const, f32{}});
+  Ok(I{O::End});
+}
+
 TEST_F(ValidateInstructionTest, If_EmptyStack) {
   Fail(I{O::If, BlockType::Void});
 }
@@ -295,6 +382,18 @@ TEST_F(ValidateInstructionTest, If_Else_TypeMismatch) {
   Fail(I{O::Else});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::End});
+}
+
+TEST_F(ValidateInstructionTest, If_Else_ArityMismatch) {
+  auto index = AddFunctionType(FunctionType{{}, {VT::I32, VT::F32}});
+
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::If, BlockType(index)});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::F32Const, f32{}});
+  Ok(I{O::Else});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::End});
 }
 
 TEST_F(ValidateInstructionTest, Else_NoIf) {

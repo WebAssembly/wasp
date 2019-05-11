@@ -78,6 +78,15 @@ bool AllTrue(T first, Args... rest) {
   return !!first & AllTrue(rest...);
 }
 
+optional<FunctionType> GetFunctionType(Index index,
+                                       Context& context,
+                                       Errors& errors) {
+  if (!ValidateIndex(index, context.types.size(), "type index", errors)) {
+    return nullopt;
+  }
+  return context.types[index].type;
+}
+
 optional<FunctionType> GetBlockTypeSignature(BlockType block_type,
                                              Context& context,
                                              Errors& errors) {
@@ -94,8 +103,7 @@ optional<FunctionType> GetBlockTypeSignature(BlockType block_type,
 #undef WASP_FEATURE_V
 
     default:
-      // TODO multi-value returns
-      return nullopt;
+      return GetFunctionType(Index(block_type), context, errors);
   }
 }
 
@@ -115,15 +123,6 @@ optional<Function> GetFunction(Index index, Context& context, Errors& errors) {
     return nullopt;
   }
   return context.functions[index];
-}
-
-optional<FunctionType> GetFunctionType(Index index,
-                                       Context& context,
-                                       Errors& errors) {
-  if (!ValidateIndex(index, context.types.size(), "type index", errors)) {
-    return nullopt;
-  }
-  return context.types[index].type;
 }
 
 optional<TableType> GetTableType(Index index,
@@ -299,13 +298,16 @@ Label* GetLabel(Index depth, Context& context, Errors& errors) {
   return &context.label_stack[context.label_stack.size() - depth - 1];
 }
 
-void PushLabel(LabelType label_type,
+bool PushLabel(LabelType label_type,
                const FunctionType& type,
-               Context& context) {
+               Context& context,
+               Errors& errors) {
+  bool valid = PopTypes(type.param_types, context, errors);
   context.label_stack.emplace_back(label_type, type.param_types,
                                    type.result_types,
                                    context.type_stack.size());
   PushTypes(type.param_types, context);
+  return valid;
 }
 
 bool PushLabel(LabelType label_type,
@@ -316,8 +318,7 @@ bool PushLabel(LabelType label_type,
   if (!sig) {
     return false;
   }
-  PushLabel(label_type, *sig, context);
-  return true;
+  return PushLabel(label_type, *sig, context, errors);
 }
 
 bool CheckTypeStackEmpty(Context& context, Errors& errors) {
