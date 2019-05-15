@@ -1089,6 +1089,25 @@ TEST_F(ValidateInstructionTest, Conversion) {
   }
 }
 
+TEST_F(ValidateInstructionTest, ReturnCall) {
+  BeginFunction(FunctionType{{}, {VT::F32}});
+  auto index = AddFunction(FunctionType{{VT::I32}, {VT::F32}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::ReturnCall, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, ReturnCall_ParamTypeMismatch) {
+  auto index = AddFunction(FunctionType{{VT::I32}, {}});
+  Ok(I{O::F32Const, f32{}});
+  Ok(I{O::ReturnCall, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, ReturnCall_ResultTypeMismatch) {
+  BeginFunction(FunctionType{{}, {VT::F32}});
+  auto index = AddFunction(FunctionType{{}, {VT::I32}});
+  Ok(I{O::ReturnCall, Index{index}});
+}
+
 TEST_F(ValidateInstructionTest, SignExtension) {
   const struct {
     Opcode opcode;

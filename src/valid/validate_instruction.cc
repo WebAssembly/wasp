@@ -777,6 +777,14 @@ bool AtomicRmw(const Instruction& instruction,
                  PopAndPushTypes(params, results, context, errors));
 }
 
+bool ReturnCall(Index function_index, Context& context, Errors& errors) {
+  auto function = GetFunction(function_index, context, errors);
+  auto function_type =
+      GetFunctionType(MaybeDefault(function).type_index, context, errors);
+  return AllTrue(function, function_type,
+                 PopAndPushTypes(MaybeDefault(function_type), context, errors));
+}
+
 }  // namespace
 
 bool Validate(const Locals& value,
@@ -1128,6 +1136,9 @@ bool Validate(const Instruction& value,
     case Opcode::F64PromoteF32:
       params = span_f32, results = span_f64;
       break;
+
+    case Opcode::ReturnCall:
+      return ReturnCall(value.index_immediate(), context, errors);
 
     case Opcode::MemoryInit:
       return MemoryInit(value.init_immediate(), context, errors);
