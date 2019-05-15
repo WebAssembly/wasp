@@ -695,6 +695,13 @@ TEST_F(ValidateInstructionTest, Call_TypeIndexOOB) {
   Fail(I{O::Call, Index{index}});
 }
 
+TEST_F(ValidateInstructionTest, Call_MultiResult) {
+  auto param_types = {VT::F32};
+  auto result_types = {VT::I32, VT::I32};
+  auto index = AddFunction(FunctionType{param_types, result_types});
+  TestSignature(I{O::Call, Index{index}}, param_types, result_types);
+}
+
 TEST_F(ValidateInstructionTest, CallIndirect) {
   AddTable(TableType{Limits{0}, ElementType::Funcref});
   auto index = AddFunctionType(FunctionType{});
@@ -707,6 +714,13 @@ TEST_F(ValidateInstructionTest, CallIndirect_Params) {
   auto index = AddFunctionType(FunctionType{{VT::F32, VT::I64}, {}});
   TestSignature(I{O::CallIndirect, CallIndirectImmediate{index, 0}},
                 {VT::F32, VT::I64, VT::I32}, {});
+}
+
+TEST_F(ValidateInstructionTest, CallIndirect_MultiResult) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index = AddFunctionType(FunctionType{{}, {VT::I64, VT::F32}});
+  TestSignature(I{O::CallIndirect, CallIndirectImmediate{index, 0}}, {VT::I32},
+                {VT::I64, VT::F32});
 }
 
 TEST_F(ValidateInstructionTest, CallIndirect_TableIndexOOB) {
