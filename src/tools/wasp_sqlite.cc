@@ -16,6 +16,8 @@
 
 #include <iostream>
 
+#include "src/tools/argparser.h"
+
 #include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
@@ -58,7 +60,7 @@ struct Tool {
   void Run();
   bool OpenDB();
   template <typename... Args>
-  bool Exec(const char* sql, const Args&...);
+  bool Exec(string_view sql, const Args&...);
   bool CreateTables();
   bool InsertConstantExpression(const ConstantExpression&,
                                 string_view table,
@@ -96,24 +98,29 @@ struct Tool {
 
 using namespace ::wasp;
 
-void PrintHelp() {
-  print("usage: wasp_sqllite <filename> <command>\n");
-}
-
 int main(int argc, char** argv) {
+  std::vector<string_view> args(argc - 1);
+  std::copy(&argv[1], &argv[argc], args.begin());
+
   string_view filename;
+  string_view command;
   Options options;
   options.features.EnableAll();
 
-  for (int i = 1; i < argc; ++i) {
-    string_view arg = argv[i];
-    if (arg[0] == '-') {
-      print("Unknown short argument -{}\n", arg[1]);
-    } else {
-      filename = arg;
-    }
-    break;
-  }
+  wasp::tools::ArgParser parser{"wasp_sqlite"};
+  parser
+      .Add('h', "--help", "print help and exit", [&]() {
+        print(parser.GetHelpString());
+        exit(0);
+      })
+      .Add('c', "--command", "<command>", "command", [&](string_view arg) {
+        command = arg;
+      })
+      .Add("<filenames>", "filenames", [&](string_view arg) {
+        // TODO: handle multiple filenames
+        filename = arg;
+      });
+  parser.Parse(args);
 
   if (filename.empty()) {
     print("No filename given.\n");
@@ -129,8 +136,8 @@ int main(int argc, char** argv) {
   SpanU8 data{*optbuf};
   Tool tool{filename, data, options};
   tool.Run();
-  if (argc > 2) {
-    tool.Exec(argv[2]);
+  if (!command.empty()) {
+    tool.Exec(command);
   } else {
     tool.Repl();
   }
@@ -227,8 +234,8 @@ bool Tool::OpenDB() {
 }
 
 template <typename... Args>
-bool Tool::Exec(const char* sql, const Args&... args) {
-  auto fmt_sql = vformat(sql, make_format_args(args...));
+bool Tool::Exec(string_view sql, const Args&... args) {
+  auto fmt_sql = vformat(sql.to_string(), make_format_args(args...));
   // print(">> Executing \"{}\"\n", fmt_sql);
 
   auto cb = [](void*, int columns, char** values, char** names) {
