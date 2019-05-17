@@ -1096,16 +1096,98 @@ TEST_F(ValidateInstructionTest, ReturnCall) {
   Ok(I{O::ReturnCall, Index{index}});
 }
 
+TEST_F(ValidateInstructionTest, ReturnCall_Unreachable) {
+  BeginFunction(FunctionType{{}, {}});
+  auto index = AddFunction(FunctionType{{VT::I32}, {}});
+
+  Ok(I{O::Block, BlockType::I32});
+  Ok(I{O::F64Const, f64{}});  // Extra value on stack is ok.
+
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::ReturnCall, Index{index}});
+
+  Ok(I{O::End});  // Stack is polymorphic. F64 was dropped, so I32 result is OK.
+}
+
+TEST_F(ValidateInstructionTest, ReturnCall_FunctionIndexOOB) {
+  Index index = context.functions.size();
+  Fail(I{O::ReturnCall, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, ReturnCall_TypeIndexOOB) {
+  context.functions.push_back(Function{100});
+  Index index = context.functions.size() - 1;
+  Fail(I{O::ReturnCall, Index{index}});
+}
+
 TEST_F(ValidateInstructionTest, ReturnCall_ParamTypeMismatch) {
   auto index = AddFunction(FunctionType{{VT::I32}, {}});
   Ok(I{O::F32Const, f32{}});
-  Ok(I{O::ReturnCall, Index{index}});
+  Fail(I{O::ReturnCall, Index{index}});
 }
 
 TEST_F(ValidateInstructionTest, ReturnCall_ResultTypeMismatch) {
   BeginFunction(FunctionType{{}, {VT::F32}});
   auto index = AddFunction(FunctionType{{}, {VT::I32}});
-  Ok(I{O::ReturnCall, Index{index}});
+  Fail(I{O::ReturnCall, Index{index}});
+}
+
+TEST_F(ValidateInstructionTest, ReturnCallIndirect) {
+  BeginFunction(FunctionType{{}, {VT::F32}});
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index = AddFunctionType(FunctionType{{VT::I64}, {VT::F32}});
+  Ok(I{O::I64Const, s64{}});  // Param.
+  Ok(I{O::I32Const, s32{}});  // call_indirect key.
+  Ok(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
+}
+
+TEST_F(ValidateInstructionTest, ReturnCallIndirect_Unreachable) {
+  BeginFunction(FunctionType{{}, {}});
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index = AddFunctionType(FunctionType{{VT::I64}, {}});
+
+  Ok(I{O::Block, BlockType::I32});
+  Ok(I{O::F64Const, f64{}});  // Extra value on stack is ok.
+
+  Ok(I{O::I64Const, s64{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
+
+  Ok(I{O::End});  // Stack is polymorphic. F64 was dropped, so I32 result is OK.
+}
+
+TEST_F(ValidateInstructionTest, ReturnCallIndirect_TableIndexOOB) {
+  auto index = AddFunction(FunctionType{{VT::I32}, {}});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
+}
+
+TEST_F(ValidateInstructionTest, ReturnCallIndirect_TypeIndexOOB) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{100, 0}});
+}
+
+TEST_F(ValidateInstructionTest, ReturnCallIndirect_NoKey) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index = AddFunction(FunctionType{{}, {}});
+  Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
+}
+
+TEST_F(ValidateInstructionTest, ReturnCallIndirect_ParamTypeMismatch) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index = AddFunction(FunctionType{{VT::I32}, {}});
+  Ok(I{O::F32Const, f32{}});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
+}
+
+TEST_F(ValidateInstructionTest, ReturnCallIndirect_ResultTypeMismatch) {
+  BeginFunction(FunctionType{{}, {VT::F32}});
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index = AddFunction(FunctionType{{}, {VT::I32}});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
 }
 
 TEST_F(ValidateInstructionTest, SignExtension) {

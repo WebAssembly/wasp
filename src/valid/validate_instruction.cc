@@ -256,6 +256,18 @@ bool CheckTypes(ValueTypeSpan expected, Context& context, Errors& errors) {
   return true;
 }
 
+bool CheckResultTypes(ValueTypeSpan caller,
+                      ValueTypeSpan callee,
+                      Errors& errors) {
+  if (caller != callee) {
+    errors.OnError(
+        format("Callee's result types {} must equal caller's result types {}",
+               callee, caller));
+    return false;
+  }
+  return true;
+}
+
 bool PopTypes(ValueTypeSpan expected, Context& context, Errors& errors) {
   ErrorsNop errors_nop{};
   bool valid = CheckTypes(expected, context, errors);
@@ -781,8 +793,26 @@ bool ReturnCall(Index function_index, Context& context, Errors& errors) {
   auto function = GetFunction(function_index, context, errors);
   auto function_type =
       GetFunctionType(MaybeDefault(function).type_index, context, errors);
-  return AllTrue(function, function_type,
-                 PopAndPushTypes(MaybeDefault(function_type), context, errors));
+  auto* label = GetLabel(context.label_stack.size() - 1, context, errors);
+  bool valid = CheckResultTypes(MaybeDefault(function_type).result_types,
+                                MaybeDefault(label).br_types(), errors);
+  valid &= PopTypes(MaybeDefault(function_type).param_types, context, errors);
+  SetUnreachable(context);
+  return AllTrue(function, function_type, valid);
+}
+
+bool ReturnCallIndirect(const CallIndirectImmediate& immediate,
+                        Context& context,
+                        Errors& errors) {
+  auto table_type = GetTableType(0, context, errors);
+  auto function_type = GetFunctionType(immediate.index, context, errors);
+  auto* label = GetLabel(context.label_stack.size() - 1, context, errors);
+  bool valid = CheckResultTypes(MaybeDefault(function_type).result_types,
+                                MaybeDefault(label).br_types(), errors);
+  valid &= PopType(ValueType::I32, context, errors);
+  valid &= PopTypes(MaybeDefault(function_type).param_types, context, errors);
+  SetUnreachable(context);
+  return AllTrue(table_type, function_type, valid);
 }
 
 }  // namespace
@@ -1139,6 +1169,10 @@ bool Validate(const Instruction& value,
 
     case Opcode::ReturnCall:
       return ReturnCall(value.index_immediate(), context, errors);
+
+    case Opcode::ReturnCallIndirect:
+      return ReturnCallIndirect(value.call_indirect_immediate(), context,
+                                errors);
 
     case Opcode::MemoryInit:
       return MemoryInit(value.init_immediate(), context, errors);
