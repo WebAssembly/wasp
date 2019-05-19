@@ -17,6 +17,9 @@
 #ifndef WASP_VALID_TEST_UTILS_H_
 #define WASP_VALID_TEST_UTILS_H_
 
+#include <string>
+#include <vector>
+
 #include "wasp/base/format.h"
 #include "wasp/valid/errors.h"
 
@@ -24,12 +27,25 @@ namespace wasp {
 namespace valid {
 namespace test {
 
+using Error = std::vector<std::string>;
+using ExpectedError = std::vector<std::string>;
+
 class TestErrors : public Errors {
+ public:
+  std::vector<std::string> context_stack;
+  std::vector<Error> errors;
+
  protected:
-  void HandlePushContext(string_view desc) {}
-  void HandlePopContext() {}
-  void HandleOnError(string_view message) { print("Error: {}\n", message); }
+  void HandlePushContext(string_view desc);
+  void HandlePopContext();
+  void HandleOnError(string_view message);
 };
+
+void ExpectNoErrors(const TestErrors&);
+void ExpectErrors(const std::vector<ExpectedError>&, TestErrors&);
+void ExpectError(const ExpectedError&, TestErrors&);
+void ExpectErrorSubstr(const ExpectedError&, TestErrors&);
+void ClearErrors(TestErrors&);
 
 }  // namespace test
 }  // namespace valid

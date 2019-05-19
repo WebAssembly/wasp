@@ -129,6 +129,7 @@ add_executable(wasp_unittests
   test/binary/visitor_test.cc
   test/binary/write_test.cc
   test/tools/argparser_test.cc
+  test/valid/test_utils.cc
   test/valid/validate_test.cc
   test/valid/validate_code_test.cc
   test/valid/validate_instruction_test.cc

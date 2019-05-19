@@ -16,12 +16,12 @@
 
 #include "gtest/gtest.h"
 
+#include "test/valid/test_utils.h"
 #include "wasp/base/features.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/valid/begin_code.h"
 #include "wasp/valid/context.h"
 #include "wasp/valid/errors_nop.h"
-#include "wasp/valid/test_utils.h"
 #include "wasp/valid/validate_instruction.h"
 
 using namespace ::wasp;
@@ -161,15 +161,18 @@ const ValueTypeInfo all_value_types[] = {
 
 TEST_F(ValidateInstructionTest, Unreachable) {
   Ok(I{O::Unreachable});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Nop) {
   Ok(I{O::Nop});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Block_Void) {
   Ok(I{O::Block, BlockType::Void});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Block_SingleResult) {
@@ -178,6 +181,7 @@ TEST_F(ValidateInstructionTest, Block_SingleResult) {
     Ok(info.instruction);
     Ok(I{O::End});
   }
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Block_MultiResult) {
@@ -186,6 +190,7 @@ TEST_F(ValidateInstructionTest, Block_MultiResult) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, s32{}});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Block_Param) {
@@ -195,11 +200,14 @@ TEST_F(ValidateInstructionTest, Block_Param) {
   Ok(I{O::Drop});
   Ok(I{O::End});
   Fail(I{O::Drop});  // Nothing left on the stack.
+  ExpectError({"instruction", "Expected stack to contain 1 value, got 0"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, Loop_Void) {
   Ok(I{O::Loop, BlockType::Void});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Loop_SingleResult) {
@@ -208,6 +216,7 @@ TEST_F(ValidateInstructionTest, Loop_SingleResult) {
     Ok(info.instruction);
     Ok(I{O::End});
   }
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Loop_MultiResult) {
@@ -216,6 +225,7 @@ TEST_F(ValidateInstructionTest, Loop_MultiResult) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, s32{}});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Loop_Param) {
@@ -225,12 +235,15 @@ TEST_F(ValidateInstructionTest, Loop_Param) {
   Ok(I{O::Drop});
   Ok(I{O::End});
   Fail(I{O::Drop});  // Nothing left on the stack.
+  ExpectError({"instruction", "Expected stack to contain 1 value, got 0"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, If_End_Void) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::If, BlockType::Void});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, If_Else_Void) {
@@ -238,6 +251,7 @@ TEST_F(ValidateInstructionTest, If_Else_Void) {
   Ok(I{O::If, BlockType::Void});
   Ok(I{O::Else});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, If_Else_SingleResult) {
@@ -249,6 +263,7 @@ TEST_F(ValidateInstructionTest, If_Else_SingleResult) {
     Ok(info.instruction);
     Ok(I{O::End});
   }
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, If_Else_MultiResult) {
@@ -265,6 +280,7 @@ TEST_F(ValidateInstructionTest, If_Else_MultiResult) {
 
   Ok(I{O::I32TruncF32S});  // Convert f32 -> i32.
   Ok(I{O::I32Add});        // Should have [i32 i32] on the stack.
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, If_Else_Param) {
@@ -278,6 +294,8 @@ TEST_F(ValidateInstructionTest, If_Else_Param) {
   Ok(I{O::Drop});
   Ok(I{O::End});
   Fail(I{O::Drop});  // Nothing left on the stack.
+  ExpectError({"instruction", "Expected stack to contain 1 value, got 0"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, If_Multi_PassThrough) {
@@ -290,6 +308,7 @@ TEST_F(ValidateInstructionTest, If_Multi_PassThrough) {
   Ok(I{O::End});  // There is no else branch; if the condition is false, then
                   // the value is passed through.
   Ok(I{O::Drop});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, If_End_Void_Unreachable) {
@@ -297,6 +316,7 @@ TEST_F(ValidateInstructionTest, If_End_Void_Unreachable) {
   Ok(I{O::If, BlockType::Void});
   Ok(I{O::Unreachable});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, If_Else_Void_Unreachable) {
@@ -311,6 +331,7 @@ TEST_F(ValidateInstructionTest, If_Else_Void_Unreachable) {
   Ok(I{O::Else});
   Ok(I{O::Unreachable});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, If_Else_SingleResult_Unreachable) {
@@ -331,6 +352,7 @@ TEST_F(ValidateInstructionTest, If_Else_SingleResult_Unreachable) {
     Ok(I{O::Unreachable});
     Ok(I{O::End});
   }
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, If_Else_MultiResult_Unreachable) {
@@ -343,15 +365,20 @@ TEST_F(ValidateInstructionTest, If_Else_MultiResult_Unreachable) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, If_EmptyStack) {
   Fail(I{O::If, BlockType::Void});
+  ExpectError({"instruction", "Expected stack to contain [i32], got []"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, If_CondTypeMismatch) {
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::If, BlockType::Void});
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, If_End_I32) {
@@ -359,6 +386,8 @@ TEST_F(ValidateInstructionTest, If_End_I32) {
   Ok(I{O::If, BlockType::I32});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::End});
+  ExpectError({"instruction", "Expected stack to contain [i32], got []"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, If_End_I32_Unreachable) {
@@ -366,6 +395,8 @@ TEST_F(ValidateInstructionTest, If_End_I32_Unreachable) {
   Ok(I{O::If, BlockType::I32});
   Ok(I{O::Unreachable});
   Fail(I{O::End});
+  ExpectError({"instruction", "Expected stack to contain [i32], got []"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, If_Else_TypeMismatch) {
@@ -375,6 +406,8 @@ TEST_F(ValidateInstructionTest, If_Else_TypeMismatch) {
   Ok(I{O::Else});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::End});
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+              errors);
 
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::If, BlockType::I32});
@@ -382,6 +415,8 @@ TEST_F(ValidateInstructionTest, If_Else_TypeMismatch) {
   Fail(I{O::Else});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::End});
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, If_Else_ArityMismatch) {
@@ -394,18 +429,23 @@ TEST_F(ValidateInstructionTest, If_Else_ArityMismatch) {
   Ok(I{O::Else});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::End});
+  ExpectError({"instruction", "Expected stack to contain [i32 f32], got [i32]"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, Else_NoIf) {
   Fail(I{O::Else});
+  ExpectError({"instruction", "Got else instruction without if"}, errors);
 
   Ok(I{O::Block, BlockType::Void});
   Fail(I{O::Else});
+  ExpectError({"instruction", "Got else instruction without if"}, errors);
 }
 
 TEST_F(ValidateInstructionTest, End) {
   Ok(I{O::Block, BlockType::Void});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, End_Unreachable) {
@@ -421,6 +461,7 @@ TEST_F(ValidateInstructionTest, End_Unreachable) {
   Ok(I{O::Unreachable});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, End_Unreachable_TypeMismatch) {
@@ -428,22 +469,30 @@ TEST_F(ValidateInstructionTest, End_Unreachable_TypeMismatch) {
   Ok(I{O::Unreachable});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::End});
+  ExpectError({"instruction", "Expected stack to contain [i32], got ...[f32]"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, End_EmptyLabelStack) {
   Ok(I{O::End});  // This `end` ends the function.
   Fail(I{O::End});
+  ExpectError({"instruction", "Unexpected instruction after function end"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, End_EmptyTypeStack) {
   Ok(I{O::Block, BlockType::I32});
   Fail(I{O::End});
+  ExpectError({"instruction", "Expected stack to contain [i32], got []"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, End_TypeMismatch) {
   Ok(I{O::Block, BlockType::I32});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::End});
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, End_TooManyValues) {
@@ -451,6 +500,7 @@ TEST_F(ValidateInstructionTest, End_TooManyValues) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::End});
+  ExpectError({"instruction", "Expected empty stack, got [i32]"}, errors);
 }
 
 TEST_F(ValidateInstructionTest, End_Unreachable_TooManyValues) {
@@ -459,10 +509,12 @@ TEST_F(ValidateInstructionTest, End_Unreachable_TooManyValues) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::End});
+  ExpectError({"instruction", "Expected empty stack, got [i32]"}, errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_Void) {
   Ok(I{O::Br, Index{0}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_Block_SingleResult) {
@@ -472,23 +524,29 @@ TEST_F(ValidateInstructionTest, Br_Block_SingleResult) {
     Ok(I{O::Br, Index{0}});
     Ok(I{O::End});
   }
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_EmptyStack) {
   Ok(I{O::Block, BlockType::I32});
   Fail(I{O::Br, Index{0}});
+  ExpectError({"instruction", "Expected stack to contain [i32], got []"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_FullerStack) {
   Ok(I{O::Block, BlockType::Void});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::Br, Index{0}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_TypeMismatch) {
   Ok(I{O::Block, BlockType::I32});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::Br, Index{0}});
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_Depth1) {
@@ -496,6 +554,7 @@ TEST_F(ValidateInstructionTest, Br_Depth1) {
   Ok(I{O::Block, BlockType::Void});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::Br, Index{1}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_ForwardUnreachable) {
@@ -504,6 +563,7 @@ TEST_F(ValidateInstructionTest, Br_ForwardUnreachable) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::Br, Index{1}});
   Ok(I{O::Br, Index{0}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_Loop_Void) {
@@ -514,6 +574,7 @@ TEST_F(ValidateInstructionTest, Br_Loop_Void) {
   Ok(I{O::Loop, BlockType::I32});
   Ok(I{O::Br, Index{0}});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_Loop_SingleResult) {
@@ -522,11 +583,13 @@ TEST_F(ValidateInstructionTest, Br_Loop_SingleResult) {
     Ok(I{O::Br, Index{0}});
     Ok(I{O::End});
   }
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrIf_Void) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrIf, Index{0}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrIf_Block_SingleResult) {
@@ -537,21 +600,28 @@ TEST_F(ValidateInstructionTest, BrIf_Block_SingleResult) {
     Ok(I{O::BrIf, Index{0}});
     Ok(I{O::End});
   }
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrIf_NoCondition) {
   Fail(I{O::BrIf, Index{0}});
+  ExpectError({"instruction", "Expected stack to contain [i32], got []"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, BrIf_ConditionMismatch) {
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::BrIf, Index{0}});
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, BrIf_EmptyStack) {
   Ok(I{O::Block, BlockType::I32});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrIf, Index{0}});
+  ExpectError({"instruction", "Expected stack to contain [i32], got []"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, BrIf_TypeMismatch) {
@@ -559,6 +629,8 @@ TEST_F(ValidateInstructionTest, BrIf_TypeMismatch) {
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrIf, Index{0}});
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, BrIf_PropagateValue) {
@@ -568,6 +640,8 @@ TEST_F(ValidateInstructionTest, BrIf_PropagateValue) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrIf, Index{1}});
   Fail(I{O::End});  // F32 is still on the stack.
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, BrIf_Loop_Void) {
@@ -575,6 +649,7 @@ TEST_F(ValidateInstructionTest, BrIf_Loop_Void) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrIf, Index{0}});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrIf_Loop_SingleResult) {
@@ -586,11 +661,13 @@ TEST_F(ValidateInstructionTest, BrIf_Loop_SingleResult) {
     Ok(I{O::Unreachable});
     Ok(I{O::End});
   }
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrTable_Void) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrTable, BrTableImmediate{{0, 0, 0}, 0}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrTable_MultiDepth_Void) {
@@ -600,6 +677,7 @@ TEST_F(ValidateInstructionTest, BrTable_MultiDepth_Void) {
   Ok(I{O::Block, BlockType::Void});  // 0
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrTable, BrTableImmediate{{0, 1, 2, 3}, 4}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrTable_MultiDepth_SingleResult) {
@@ -610,6 +688,7 @@ TEST_F(ValidateInstructionTest, BrTable_MultiDepth_SingleResult) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrTable, BrTableImmediate{{1, 1, 1, 3}, 3}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrTable_Unreachable) {
@@ -617,16 +696,21 @@ TEST_F(ValidateInstructionTest, BrTable_Unreachable) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrTable, BrTableImmediate{{}, 1}});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrTable_NoKey) {
   Fail(I{O::BrTable, BrTableImmediate{{}, 0}});
+  ExpectError({"instruction", "Expected stack to contain [i32], got []"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, BrTable_EmptyStack) {
   Ok(I{O::Block, BlockType::I32});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrTable, BrTableImmediate{{}, 0}});
+  ExpectError({"instruction", "Expected stack to contain [i32], got []"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, BrTable_ValueTypeMismatch) {
@@ -634,6 +718,9 @@ TEST_F(ValidateInstructionTest, BrTable_ValueTypeMismatch) {
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrTable, BrTableImmediate{{0}, 0}});
+  ExpectErrors({{"instruction", "Expected stack to contain [i32], got [f32]"},
+                {"instruction", "Expected stack to contain [i32], got [f32]"}},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
@@ -642,10 +729,15 @@ TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrTable, BrTableImmediate{{1}, 0}});
+  ExpectError({"instruction",
+               "br_table labels must have the same signature; expected "
+               "[i32], got []"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, Return) {
   Ok(I{O::Return});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Return_InsideBlocks) {
@@ -653,29 +745,35 @@ TEST_F(ValidateInstructionTest, Return_InsideBlocks) {
   Ok(I{O::Block, BlockType::Void});
   Ok(I{O::Block, BlockType::Void});
   Ok(I{O::Return});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Return_Unreachable) {
   Ok(I{O::Block, BlockType::F64});
   Ok(I{O::Return});
   Ok(I{O::End});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Return_SingleResult) {
   BeginFunction(FunctionType{{}, {VT::I32}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::Return});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Return_TypeMismatch) {
   BeginFunction(FunctionType{{}, {VT::I32}});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::Return});
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, Call_Void_Void) {
   auto index = AddFunction(FunctionType{});
   Ok(I{O::Call, Index{index}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Call_Params) {
@@ -687,12 +785,17 @@ TEST_F(ValidateInstructionTest, Call_Params) {
 
 TEST_F(ValidateInstructionTest, Call_FunctionIndexOOB) {
   Fail(I{O::Call, Index{100}});
+  ExpectError(
+      {"instruction", "Invalid function index 100, must be less than 1"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, Call_TypeIndexOOB) {
   context.functions.push_back(Function{100});
   Index index = context.functions.size() - 1;
   Fail(I{O::Call, Index{index}});
+  ExpectError({"instruction", "Invalid type index 100, must be less than 1"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, Call_MultiResult) {
@@ -707,6 +810,7 @@ TEST_F(ValidateInstructionTest, CallIndirect) {
   auto index = AddFunctionType(FunctionType{});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::CallIndirect, CallIndirectImmediate{index, 0}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, CallIndirect_Params) {
@@ -727,12 +831,16 @@ TEST_F(ValidateInstructionTest, CallIndirect_TableIndexOOB) {
   auto index = AddFunctionType(FunctionType{});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::CallIndirect, CallIndirectImmediate{index, 0}});
+  ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, CallIndirect_TypeIndexOOB) {
   AddTable(TableType{Limits{0}, ElementType::Funcref});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::CallIndirect, CallIndirectImmediate{100, 0}});
+  ExpectError({"instruction", "Invalid type index 100, must be less than 1"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, Drop) {
@@ -740,10 +848,13 @@ TEST_F(ValidateInstructionTest, Drop) {
     Ok(info.instruction);
     Ok(I{O::Drop});
   }
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Drop_EmptyStack) {
   Fail(I{O::Drop});
+  ExpectError({"instruction", "Expected stack to contain 1 value, got 0"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, Select) {
@@ -755,6 +866,10 @@ TEST_F(ValidateInstructionTest, Select) {
 
 TEST_F(ValidateInstructionTest, Select_EmptyStack) {
   Fail(I{O::Select});
+  ExpectErrors({{"instruction", "Expected stack to contain [i32], got []"},
+                {"instruction", "Expected stack to have 1 value, got 0"},
+                {"instruction", "Expected stack to contain [i32 i32], got []"}},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, Select_ConditionTypeMismatch) {
@@ -762,6 +877,8 @@ TEST_F(ValidateInstructionTest, Select_ConditionTypeMismatch) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::Select});
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, Select_InconsistentTypes) {
@@ -769,6 +886,9 @@ TEST_F(ValidateInstructionTest, Select_InconsistentTypes) {
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::Select});
+  ExpectError(
+      {"instruction", "Expected stack to contain [f32 f32], got [i32 f32]"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, LocalGet) {
@@ -786,10 +906,15 @@ TEST_F(ValidateInstructionTest, LocalGet_Param) {
   Ok(I{O::LocalGet, Index{1}}); // 2nd param.
   Ok(I{O::LocalGet, Index{2}}); // 1st local.
   Fail(I{O::LocalGet, Index{3}}); // Invalid.
+  ExpectError({"instruction", "Invalid local index 3, must be less than 3"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, LocalGet_IndexOOB) {
   Fail(I{O::LocalGet, Index{100}});
+  ExpectError(
+      {"instruction", "Invalid local index 100, must be less than 0"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, LocalSet) {
@@ -811,10 +936,15 @@ TEST_F(ValidateInstructionTest, LocalSet_Param) {
   Ok(I{O::LocalSet, Index{2}}); // 1st local.
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::LocalSet, Index{3}}); // Invalid.
+  ExpectError({"instruction", "Invalid local index 3, must be less than 3"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, LocalSet_IndexOOB) {
   Fail(I{O::LocalSet, Index{100}});
+  ExpectErrors({{"instruction", "Invalid local index 100, must be less than 0"},
+                {"instruction", "Expected stack to contain [i32], got []"}},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, LocalTee) {
@@ -827,6 +957,9 @@ TEST_F(ValidateInstructionTest, LocalTee) {
 
 TEST_F(ValidateInstructionTest, LocalTee_IndexOOB) {
   Fail(I{O::LocalTee, Index{100}});
+  ExpectErrors({{"instruction", "Invalid local index 100, must be less than 0"},
+                {"instruction", "Expected stack to contain [i32], got []"}},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, GlobalGet) {
@@ -840,6 +973,9 @@ TEST_F(ValidateInstructionTest, GlobalGet) {
 
 TEST_F(ValidateInstructionTest, GlobalGet_IndexOOB) {
   Fail(I{O::GlobalGet, Index{100}});
+  ExpectError(
+      {"instruction", "Invalid global index 100, must be less than 0"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, GlobalSet) {
@@ -851,12 +987,19 @@ TEST_F(ValidateInstructionTest, GlobalSet) {
 
 TEST_F(ValidateInstructionTest, GlobalSet_IndexOOB) {
   Fail(I{O::GlobalSet, Index{100}});
+  ExpectErrors(
+      {{"instruction", "Invalid global index 100, must be less than 0"},
+       {"instruction", "global.set is invalid on immutable global 100"},
+       {"instruction", "Expected stack to contain [i32], got []"}},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, GlobalSet_Immutable) {
   auto index = AddGlobal(GlobalType{VT::I32, Mutability::Const});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::GlobalSet, Index{index}});
+  ExpectError({"instruction", "global.set is invalid on immutable global 0"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, Load) {
@@ -895,6 +1038,7 @@ TEST_F(ValidateInstructionTest, Load_Alignment) {
 
     Ok(I{O::I32Const, s32{}});
     Fail(I{info.opcode, MemArgImmediate{info.max_align + 1, 0}});
+    ExpectErrorSubstr({"instruction", "Invalid alignment"}, errors);
   }
 }
 
@@ -907,6 +1051,8 @@ TEST_F(ValidateInstructionTest, Load_MemoryOOB) {
   for (const auto& opcode : opcodes) {
     Ok(I{O::I32Const, s32{}});
     Fail(I{opcode, MemArgImmediate{0, 0}});
+    ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+                errors);
   }
 }
 
@@ -935,6 +1081,8 @@ TEST_F(ValidateInstructionTest, Store_MemoryOOB) {
   Ok(I{O::Unreachable});
   for (const auto& opcode : opcodes) {
     Fail(I{opcode, MemArgImmediate{0, 0}});
+    ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+                errors);
   }
 }
 
@@ -951,6 +1099,7 @@ TEST_F(ValidateInstructionTest, Store_Alignment) {
   for (const auto& info : infos) {
     Ok(I{info.opcode, MemArgImmediate{info.max_align, 0}});
     Fail(I{info.opcode, MemArgImmediate{info.max_align + 1, 0}});
+    ExpectErrorSubstr({"instruction", "Invalid alignment"}, errors);
   }
 }
 
@@ -961,6 +1110,8 @@ TEST_F(ValidateInstructionTest, MemorySize) {
 
 TEST_F(ValidateInstructionTest, MemorySize_MemoryIndexOOB) {
   Fail(I{O::MemorySize, u8{}});
+  ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, MemoryGrow) {
@@ -971,6 +1122,8 @@ TEST_F(ValidateInstructionTest, MemoryGrow) {
 TEST_F(ValidateInstructionTest, MemoryGrow_MemoryIndexOOB) {
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::MemoryGrow, u8{}});
+  ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, Unary) {
@@ -1094,6 +1247,7 @@ TEST_F(ValidateInstructionTest, ReturnCall) {
   auto index = AddFunction(FunctionType{{VT::I32}, {VT::F32}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::ReturnCall, Index{index}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCall_Unreachable) {
@@ -1107,29 +1261,41 @@ TEST_F(ValidateInstructionTest, ReturnCall_Unreachable) {
   Ok(I{O::ReturnCall, Index{index}});
 
   Ok(I{O::End});  // Stack is polymorphic. F64 was dropped, so I32 result is OK.
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCall_FunctionIndexOOB) {
   Index index = context.functions.size();
   Fail(I{O::ReturnCall, Index{index}});
+  ExpectError(
+      {"instruction", "Invalid function index 1, must be less than 1"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCall_TypeIndexOOB) {
   context.functions.push_back(Function{100});
   Index index = context.functions.size() - 1;
   Fail(I{O::ReturnCall, Index{index}});
+  ExpectError({"instruction", "Invalid type index 100, must be less than 1"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCall_ParamTypeMismatch) {
   auto index = AddFunction(FunctionType{{VT::I32}, {}});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::ReturnCall, Index{index}});
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCall_ResultTypeMismatch) {
   BeginFunction(FunctionType{{}, {VT::F32}});
   auto index = AddFunction(FunctionType{{}, {VT::I32}});
   Fail(I{O::ReturnCall, Index{index}});
+  ExpectError(
+      {"instruction",
+      "Callee's result types [f32] must equal caller's result types [i32]"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect) {
@@ -1139,6 +1305,7 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect) {
   Ok(I{O::I64Const, s64{}});  // Param.
   Ok(I{O::I32Const, s32{}});  // call_indirect key.
   Ok(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_Unreachable) {
@@ -1154,24 +1321,32 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect_Unreachable) {
   Ok(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
 
   Ok(I{O::End});  // Stack is polymorphic. F64 was dropped, so I32 result is OK.
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_TableIndexOOB) {
   auto index = AddFunction(FunctionType{{VT::I32}, {}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
+  ExpectErrors({{"instruction", "Invalid table index 0, must be less than 0"},
+                {"instruction", "Expected stack to contain [i32], got []"}},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_TypeIndexOOB) {
   AddTable(TableType{Limits{0}, ElementType::Funcref});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{100, 0}});
+  ExpectError({"instruction", "Invalid type index 100, must be less than 1"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_NoKey) {
   AddTable(TableType{Limits{0}, ElementType::Funcref});
   auto index = AddFunction(FunctionType{{}, {}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
+  ExpectError({"instruction", "Expected stack to contain [i32], got []"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_ParamTypeMismatch) {
@@ -1180,6 +1355,8 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect_ParamTypeMismatch) {
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_ResultTypeMismatch) {
@@ -1188,6 +1365,10 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect_ResultTypeMismatch) {
   auto index = AddFunction(FunctionType{{}, {VT::I32}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
+  ExpectError(
+      {"instruction",
+      "Callee's result types [f32] must equal caller's result types [i32]"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, SignExtension) {
@@ -1237,6 +1418,8 @@ TEST_F(ValidateInstructionTest, MemoryInit_MemoryIndexOOB) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::MemoryInit, InitImmediate{1, 0}});
+  ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, MemoryInit_SegmentIndexOOB) {
@@ -1246,6 +1429,9 @@ TEST_F(ValidateInstructionTest, MemoryInit_SegmentIndexOOB) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::MemoryInit, InitImmediate{2, 0}});
+  ExpectError(
+      {"instruction", "Invalid data segment index 2, must be less than 2"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, DataDrop) {
@@ -1256,6 +1442,9 @@ TEST_F(ValidateInstructionTest, DataDrop) {
 TEST_F(ValidateInstructionTest, DataDrop_SegmentIndexOOB) {
   context.data_segment_count = 2;
   Fail(I{O::DataDrop, Index{2}});
+  ExpectError(
+      {"instruction", "Invalid data segment index 2, must be less than 2"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, MemoryCopy) {
@@ -1269,6 +1458,8 @@ TEST_F(ValidateInstructionTest, MemoryCopy_MemoryIndexOOB) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::MemoryCopy, CopyImmediate{0, 0}});
+  ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, MemoryFill) {
@@ -1281,6 +1472,8 @@ TEST_F(ValidateInstructionTest, MemoryFill_MemoryIndexOOB) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::MemoryFill, u8{0}});
+  ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, TableInit) {
@@ -1296,6 +1489,8 @@ TEST_F(ValidateInstructionTest, TableInit_TableIndexOOB) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::TableInit, InitImmediate{index, 0}});
+  ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, TableInit_SegmentIndexOOB) {
@@ -1304,6 +1499,9 @@ TEST_F(ValidateInstructionTest, TableInit_SegmentIndexOOB) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::TableInit, InitImmediate{0, 0}});
+  ExpectError(
+      {"instruction", "Invalid element segment index 0, must be less than 0"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, ElemDrop) {
@@ -1313,6 +1511,9 @@ TEST_F(ValidateInstructionTest, ElemDrop) {
 
 TEST_F(ValidateInstructionTest, ElemDrop_SegmentIndexOOB) {
   Fail(I{O::ElemDrop, Index{0}});
+  ExpectError(
+      {"instruction", "Invalid element segment index 0, must be less than 0"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, TableCopy) {
@@ -1326,6 +1527,8 @@ TEST_F(ValidateInstructionTest, TableCopy_TableIndexOOB) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::TableCopy, CopyImmediate{0, 0}});
+  ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, SimdLoad) {
@@ -1339,11 +1542,16 @@ TEST_F(ValidateInstructionTest, SimdLoad_Alignment) {
   Ok(I{O::V128Load, MemArgImmediate{4, 0}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::V128Load, MemArgImmediate{5, 0}});
+  ExpectError(
+      {"instruction", "Invalid alignment v128.load {align 5, offset 0}"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, SimdLoad_MemoryOOB) {
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::V128Load, MemArgImmediate{0, 0}});
+  ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, SimdStore) {
@@ -1357,12 +1565,17 @@ TEST_F(ValidateInstructionTest, SimdStore_Alignment) {
   Ok(I{O::Unreachable});
   Ok(I{O::V128Store, MemArgImmediate{4, 0}});
   Fail(I{O::V128Store, MemArgImmediate{5, 0}});
+  ExpectError(
+      {"instruction", "Invalid alignment v128.store {align 5, offset 0}"},
+      errors);
 }
 
 TEST_F(ValidateInstructionTest, SimdStore_MemoryOOB) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::V128Const, v128{}});
   Fail(I{O::V128Store, MemArgImmediate{0, 0}});
+  ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, SimdConst) {
@@ -1508,18 +1721,25 @@ TEST_F(ValidateInstructionTest, AtomicNotifyAndWait) {
 }
 
 TEST_F(ValidateInstructionTest, AtomicNotifyAndWait_Alignment) {
+  const struct {
+    Opcode opcode;
+    u32 align;
+  } infos[] = {
+      {O::AtomicNotify, 2}, {O::I32AtomicWait, 2}, {O::I64AtomicWait, 3}};
+
   AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
   Ok(I{O::Unreachable});
-  Fail(I{O::AtomicNotify, MemArgImmediate{0, 0}});
-  Fail(I{O::AtomicNotify, MemArgImmediate{1, 0}});
-  Fail(I{O::AtomicNotify, MemArgImmediate{3, 0}});
-  Fail(I{O::I32AtomicWait, MemArgImmediate{0, 0}});
-  Fail(I{O::I32AtomicWait, MemArgImmediate{1, 0}});
-  Fail(I{O::I32AtomicWait, MemArgImmediate{3, 0}});
-  Fail(I{O::I64AtomicWait, MemArgImmediate{0, 0}});
-  Fail(I{O::I64AtomicWait, MemArgImmediate{1, 0}});
-  Fail(I{O::I64AtomicWait, MemArgImmediate{2, 0}});
-  Fail(I{O::I64AtomicWait, MemArgImmediate{4, 0}});
+
+  for (const auto& info: infos) {
+    // Only natural alignment is valid.
+    for (u32 align = 0; align <= info.align + 1; ++align) {
+      if (align != info.align) {
+        Fail(I{info.opcode, MemArgImmediate{align, 0}});
+        Ok(I{O::Drop});
+        ExpectErrorSubstr({"instruction", "Invalid atomic alignment"}, errors);
+      }
+    }
+  }
 }
 
 
@@ -1546,6 +1766,7 @@ TEST_F(ValidateInstructionTest, AtomicLoad) {
       if (align != info.align) {
         Ok(I{O::I32Const, s32{}});
         Fail(I{info.opcode, MemArgImmediate{align, 0}});
+        ExpectErrorSubstr({"instruction", "Invalid atomic alignment"}, errors);
       }
     }
   }
@@ -1563,6 +1784,8 @@ TEST_F(ValidateInstructionTest, AtomicLoad_MemoryOOB) {
   for (const auto& info: infos) {
     Ok(I{O::I32Const, s32{}});
     Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+    ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+                errors);
   }
 }
 
@@ -1579,6 +1802,7 @@ TEST_F(ValidateInstructionTest, AtomicLoad_MemoryNonShared) {
   for (const auto& info: infos) {
     Ok(I{O::I32Const, s32{}});
     Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+    ExpectErrorSubstr({"instruction", "Memory must be shared"}, errors);
   }
 }
 
@@ -1605,6 +1829,7 @@ TEST_F(ValidateInstructionTest, AtomicStore) {
     for (u32 align = 0; align <= info.align + 1; ++align) {
       if (align != info.align) {
         Fail(I{info.opcode, MemArgImmediate{align, 0}});
+        ExpectErrorSubstr({"instruction", "Invalid atomic alignment"}, errors);
       }
     }
   }
@@ -1622,6 +1847,8 @@ TEST_F(ValidateInstructionTest, AtomicStore_MemoryOOB) {
   Ok(I{O::Unreachable});
   for (const auto& info: infos) {
     Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+    ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+                errors);
   }
 }
 
@@ -1638,6 +1865,7 @@ TEST_F(ValidateInstructionTest, AtomicStore_MemoryNonShared) {
   Ok(I{O::Unreachable});
   for (const auto& info: infos) {
     Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+    ExpectErrorSubstr({"instruction", "Memory must be shared"}, errors);
   }
 }
 
@@ -1682,6 +1910,7 @@ TEST_F(ValidateInstructionTest, AtomicRmw) {
     for (u32 align = 0; align <= info.align + 1; ++align) {
       if (align != info.align) {
         Fail(I{info.opcode, MemArgImmediate{align, 0}});
+        ExpectErrorSubstr({"instruction", "Invalid atomic alignment"}, errors);
         Ok(I{O::Drop});
       }
     }
@@ -1720,6 +1949,8 @@ TEST_F(ValidateInstructionTest, AtomicRmw_MemoryOOB) {
   for (const auto& info: infos) {
     Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
     Ok(I{O::Drop});
+    ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+                errors);
   }
 }
 
@@ -1755,6 +1986,7 @@ TEST_F(ValidateInstructionTest, AtomicRmw_MemoryNonShared) {
   AddMemory(MemoryType{Limits{0}});
   for (const auto& info: infos) {
     Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+    ExpectErrorSubstr({"instruction", "Memory must be shared"}, errors);
     Ok(I{O::Drop});
   }
 }
@@ -1787,6 +2019,7 @@ TEST_F(ValidateInstructionTest, AtomicCmpxchg) {
     for (u32 align = 0; align <= info.align + 1; ++align) {
       if (align != info.align) {
         Fail(I{info.opcode, MemArgImmediate{align, 0}});
+        ExpectErrorSubstr({"instruction", "Invalid atomic alignment"}, errors);
         Ok(I{O::Drop});
       }
     }
@@ -1808,6 +2041,8 @@ TEST_F(ValidateInstructionTest, AtomicCmpxchg_MemoryOOB) {
   for (const auto& info: infos) {
     Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
     Ok(I{O::Drop});
+    ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+                errors);
   }
 }
 
@@ -1826,6 +2061,7 @@ TEST_F(ValidateInstructionTest, AtomicCmpxchg_MemoryNonShared) {
   AddMemory(MemoryType{Limits{0}});
   for (const auto& info: infos) {
     Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
+    ExpectErrorSubstr({"instruction", "Memory must be shared"}, errors);
     Ok(I{O::Drop});
   }
 }

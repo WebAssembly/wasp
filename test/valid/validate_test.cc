@@ -16,10 +16,10 @@
 
 #include "gtest/gtest.h"
 
+#include "test/valid/test_utils.h"
 #include "wasp/base/features.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/valid/context.h"
-#include "wasp/valid/test_utils.h"
 #include "wasp/valid/validate_constant_expression.h"
 #include "wasp/valid/validate_data_count.h"
 #include "wasp/valid/validate_data_segment.h"
