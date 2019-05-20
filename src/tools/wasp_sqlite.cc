@@ -52,7 +52,7 @@ struct Options {
 };
 
 struct Tool {
-  explicit Tool(string_view filename, SpanU8 data, Options);
+  explicit Tool(std::vector<string_view> filenames, Options);
   ~Tool();
   Tool(const Tool&) = delete;
   Tool& operator=(const Tool&) = delete;
@@ -82,11 +82,11 @@ struct Tool {
 
   size_t file_offset(SpanU8 data);
 
-  std::string filename;
+  std::vector<string_view> filenames;
   Options options;
-  SpanU8 data;
   ErrorsNop errors;  // XXX
-  LazyModule module;
+  std::vector<LazyModule> modules;
+  LazyModule* module; // HACK: current module
   sqlite3* db = nullptr;
   Index imported_function_count = 0;
   Index imported_table_count = 0;
@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
   std::vector<string_view> args(argc - 1);
   std::copy(&argv[1], &argv[argc], args.begin());
 
-  string_view filename;
+  std::vector<string_view> filenames;
   string_view command;
   Options options;
   options.features.EnableAll();
@@ -117,24 +117,20 @@ int main(int argc, char** argv) {
         command = arg;
       })
       .Add("<filenames>", "filenames", [&](string_view arg) {
-        // TODO: handle multiple filenames
-        filename = arg;
+        filenames.push_back(arg);
       });
   parser.Parse(args);
 
-  if (filename.empty()) {
+  if (filenames.empty()) {
     print("No filename given.\n");
     return 1;
   }
-
-  auto optbuf = ReadFile(filename);
-  if (!optbuf) {
-    print("Error reading file {}.\n", filename);
+  if (filenames.size() > 1) {
+    print("Multiple files not yet supported\n");
     return 1;
   }
 
-  SpanU8 data{*optbuf};
-  Tool tool{filename, data, options};
+  Tool tool{filenames, options};
   tool.Run();
   if (!command.empty()) {
     tool.Exec(command);
@@ -144,78 +140,88 @@ int main(int argc, char** argv) {
   return 0;
 }
 
-Tool::Tool(string_view filename, SpanU8 data, Options options)
-    : filename(filename),
-      options{options},
-      data{data},
-      module{ReadModule(data, options.features, errors)} {}
+Tool::Tool(std::vector<string_view> filenames, Options options)
+    : filenames(filenames),
+      options{options} {}
 
 Tool::~Tool() {
   sqlite3_close(db);
 }
 
 void Tool::Run() {
-  if (!(module.magic && module.version)) return;
   if (!OpenDB()) return;
   if (!CreateTables()) return;
+  for (auto filename : filenames) {
+    auto optbuf = ReadFile(filename);
+    if (!optbuf) {
+      print("Error reading file {}.\n", filename);
+      continue;
+    }
 
-  for (auto section : enumerate(module.sections)) {
-    if (section.value.is_known()) {
-      auto known = section.value.known();
-      auto offset = file_offset(section.value.data());
-      auto size = section.value.data().size();
+    SpanU8 data{*optbuf};
+    LazyModule cur_module{ReadModule(data, options.features, errors)};
+    if (!(cur_module.magic && cur_module.version)) continue;
+    modules.push_back(cur_module);
+    module = &cur_module;
 
-      Exec("insert into section values ({}, {}, {}, {});", section.index,
-           static_cast<int>(known.id), offset, size);
+    for (auto section : enumerate(module->sections)) {
+      if (section.value.is_known()) {
+        auto known = section.value.known();
+        auto offset = file_offset(section.value.data());
+        auto size = section.value.data().size();
 
-      switch (known.id) {
-        case SectionId::Type:
-          DoTypeSection(ReadTypeSection(known, options.features, errors));
-          break;
+        Exec("insert into section values ({}, {}, {}, {});", section.index,
+             static_cast<int>(known.id), offset, size);
 
-        case SectionId::Import:
-          DoImportSection(ReadImportSection(known, options.features, errors));
-          break;
+        switch (known.id) {
+          case SectionId::Type:
+            DoTypeSection(ReadTypeSection(known, options.features, errors));
+            break;
 
-        case SectionId::Function:
-          DoFunctionSection(
-              ReadFunctionSection(known, options.features, errors));
-          break;
+          case SectionId::Import:
+            DoImportSection(ReadImportSection(known, options.features, errors));
+            break;
 
-        case SectionId::Table:
-          DoTableSection(ReadTableSection(known, options.features, errors));
-          break;
+          case SectionId::Function:
+            DoFunctionSection(
+                ReadFunctionSection(known, options.features, errors));
+            break;
 
-        case SectionId::Memory:
-          DoMemorySection(ReadMemorySection(known, options.features, errors));
-          break;
+          case SectionId::Table:
+            DoTableSection(ReadTableSection(known, options.features, errors));
+            break;
 
-        case SectionId::Global:
-          DoGlobalSection(ReadGlobalSection(known, options.features, errors));
-          break;
+          case SectionId::Memory:
+            DoMemorySection(ReadMemorySection(known, options.features, errors));
+            break;
 
-        case SectionId::Export:
-          DoExportSection(ReadExportSection(known, options.features, errors));
-          break;
+          case SectionId::Global:
+            DoGlobalSection(ReadGlobalSection(known, options.features, errors));
+            break;
 
-        case SectionId::Start:
-          DoStartSection(ReadStartSection(known, options.features, errors));
-          break;
+          case SectionId::Export:
+            DoExportSection(ReadExportSection(known, options.features, errors));
+            break;
 
-        case SectionId::Element:
-          DoElementSection(ReadElementSection(known, options.features, errors));
-          break;
+          case SectionId::Start:
+            DoStartSection(ReadStartSection(known, options.features, errors));
+            break;
 
-        case SectionId::Code:
-          DoCodeSection(ReadCodeSection(known, options.features, errors));
-          break;
+          case SectionId::Element:
+            DoElementSection(ReadElementSection(known, options.features, errors));
+            break;
 
-        case SectionId::Data:
-          DoDataSection(ReadDataSection(known, options.features, errors));
-          break;
+          case SectionId::Code:
+            DoCodeSection(ReadCodeSection(known, options.features, errors));
+            break;
 
-        default:
-          break;
+          case SectionId::Data:
+            DoDataSection(ReadDataSection(known, options.features, errors));
+            break;
+
+          default:
+            break;
+        }
       }
     }
   }
@@ -637,7 +643,7 @@ void Tool::DoDataSection(LazyDataSection section) {
 }
 
 size_t Tool::file_offset(SpanU8 data) {
-  return data.begin() - module.data.begin();
+  return data.begin() - module->data.begin();
 }
 
 void Tool::Repl() {
