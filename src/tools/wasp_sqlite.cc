@@ -159,7 +159,6 @@ void Tool::Run() {
   if (!OpenDB()) return;
   if (!CreateTables()) return;
 
-  auto module = ReadModule(data, options.features, errors);
   for (auto section : enumerate(module.sections)) {
     if (section.value.is_known()) {
       auto known = section.value.known();
