@@ -52,7 +52,7 @@ struct Options {
 };
 
 struct Tool {
-  explicit Tool(std::vector<string_view> filenames, Options);
+  explicit Tool(span<string_view> filenames, Options);
   ~Tool();
   Tool(const Tool&) = delete;
   Tool& operator=(const Tool&) = delete;
@@ -82,10 +82,9 @@ struct Tool {
 
   size_t file_offset(SpanU8 data);
 
-  std::vector<string_view> filenames;
+  span<string_view> filenames;
   Options options;
   ErrorsNop errors;  // XXX
-  std::vector<LazyModule> modules;
   LazyModule* module; // HACK: current module
   sqlite3* db = nullptr;
   Index imported_function_count = 0;
@@ -140,7 +139,7 @@ int main(int argc, char** argv) {
   return 0;
 }
 
-Tool::Tool(std::vector<string_view> filenames, Options options)
+Tool::Tool(span<string_view> filenames, Options options)
     : filenames(filenames),
       options{options} {}
 
@@ -161,7 +160,6 @@ void Tool::Run() {
     SpanU8 data{*optbuf};
     LazyModule cur_module{ReadModule(data, options.features, errors)};
     if (!(cur_module.magic && cur_module.version)) continue;
-    modules.push_back(cur_module);
     module = &cur_module;
 
     for (auto section : enumerate(module->sections)) {
