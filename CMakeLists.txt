@@ -142,6 +142,7 @@ target_link_libraries(wasp_unittests
 )
 
 add_executable(wasp_sqlite
+  src/tools/argparser.cc
   src/tools/wasp_sqlite.cc
   third_party/sqlite/sqlite3.c
 )

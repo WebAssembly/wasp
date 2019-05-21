@@ -16,6 +16,8 @@
 
 #include <iostream>
 
+#include "src/tools/argparser.h"
+
 #include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
@@ -50,7 +52,7 @@ struct Options {
 };
 
 struct Tool {
-  explicit Tool(string_view filename, SpanU8 data, Options);
+  explicit Tool(span<string_view> filenames, Options);
   ~Tool();
   Tool(const Tool&) = delete;
   Tool& operator=(const Tool&) = delete;
@@ -58,7 +60,7 @@ struct Tool {
   void Run();
   bool OpenDB();
   template <typename... Args>
-  bool Exec(const char* sql, const Args&...);
+  bool Exec(string_view sql, const Args&...);
   bool CreateTables();
   bool InsertConstantExpression(const ConstantExpression&,
                                 string_view table,
@@ -80,11 +82,10 @@ struct Tool {
 
   size_t file_offset(SpanU8 data);
 
-  std::string filename;
+  span<string_view> filenames;
   Options options;
-  SpanU8 data;
   ErrorsNop errors;  // XXX
-  LazyModule module;
+  LazyModule* module; // HACK: current module
   sqlite3* db = nullptr;
   Index imported_function_count = 0;
   Index imported_table_count = 0;
@@ -96,120 +97,129 @@ struct Tool {
 
 using namespace ::wasp;
 
-void PrintHelp() {
-  print("usage: wasp_sqllite <filename> <command>\n");
-}
-
 int main(int argc, char** argv) {
-  string_view filename;
+  std::vector<string_view> args(argc - 1);
+  std::copy(&argv[1], &argv[argc], args.begin());
+
+  std::vector<string_view> filenames;
+  string_view command;
   Options options;
   options.features.EnableAll();
 
-  for (int i = 1; i < argc; ++i) {
-    string_view arg = argv[i];
-    if (arg[0] == '-') {
-      print("Unknown short argument -{}\n", arg[1]);
-    } else {
-      filename = arg;
-    }
-    break;
-  }
+  wasp::tools::ArgParser parser{"wasp_sqlite"};
+  parser
+      .Add('h', "--help", "print help and exit", [&]() {
+        print(parser.GetHelpString());
+        exit(0);
+      })
+      .Add('c', "--command", "<command>", "command", [&](string_view arg) {
+        command = arg;
+      })
+      .Add("<filenames>", "filenames", [&](string_view arg) {
+        filenames.push_back(arg);
+      });
+  parser.Parse(args);
 
-  if (filename.empty()) {
+  if (filenames.empty()) {
     print("No filename given.\n");
     return 1;
   }
-
-  auto optbuf = ReadFile(filename);
-  if (!optbuf) {
-    print("Error reading file {}.\n", filename);
+  if (filenames.size() > 1) {
+    print("Multiple files not yet supported\n");
     return 1;
   }
 
-  SpanU8 data{*optbuf};
-  Tool tool{filename, data, options};
+  Tool tool{filenames, options};
   tool.Run();
-  if (argc > 2) {
-    tool.Exec(argv[2]);
+  if (!command.empty()) {
+    tool.Exec(command);
   } else {
     tool.Repl();
   }
   return 0;
 }
 
-Tool::Tool(string_view filename, SpanU8 data, Options options)
-    : filename(filename),
-      options{options},
-      data{data},
-      module{ReadModule(data, options.features, errors)} {}
+Tool::Tool(span<string_view> filenames, Options options)
+    : filenames(filenames),
+      options{options} {}
 
 Tool::~Tool() {
   sqlite3_close(db);
 }
 
 void Tool::Run() {
-  if (!(module.magic && module.version)) return;
   if (!OpenDB()) return;
   if (!CreateTables()) return;
+  for (auto filename : filenames) {
+    auto optbuf = ReadFile(filename);
+    if (!optbuf) {
+      print("Error reading file {}.\n", filename);
+      continue;
+    }
 
-  auto module = ReadModule(data, options.features, errors);
-  for (auto section : enumerate(module.sections)) {
-    if (section.value.is_known()) {
-      auto known = section.value.known();
-      auto offset = file_offset(section.value.data());
-      auto size = section.value.data().size();
+    SpanU8 data{*optbuf};
+    LazyModule cur_module{ReadModule(data, options.features, errors)};
+    if (!(cur_module.magic && cur_module.version)) continue;
+    module = &cur_module;
 
-      Exec("insert into section values ({}, {}, {}, {});", section.index,
-           static_cast<int>(known.id), offset, size);
+    for (auto section : enumerate(module->sections)) {
+      if (section.value.is_known()) {
+        auto known = section.value.known();
+        auto offset = file_offset(section.value.data());
+        auto size = section.value.data().size();
 
-      switch (known.id) {
-        case SectionId::Type:
-          DoTypeSection(ReadTypeSection(known, options.features, errors));
-          break;
+        Exec("insert into section values ({}, {}, {}, {});", section.index,
+             static_cast<int>(known.id), offset, size);
 
-        case SectionId::Import:
-          DoImportSection(ReadImportSection(known, options.features, errors));
-          break;
+        switch (known.id) {
+          case SectionId::Type:
+            DoTypeSection(ReadTypeSection(known, options.features, errors));
+            break;
 
-        case SectionId::Function:
-          DoFunctionSection(
-              ReadFunctionSection(known, options.features, errors));
-          break;
+          case SectionId::Import:
+            DoImportSection(ReadImportSection(known, options.features, errors));
+            break;
 
-        case SectionId::Table:
-          DoTableSection(ReadTableSection(known, options.features, errors));
-          break;
+          case SectionId::Function:
+            DoFunctionSection(
+                ReadFunctionSection(known, options.features, errors));
+            break;
 
-        case SectionId::Memory:
-          DoMemorySection(ReadMemorySection(known, options.features, errors));
-          break;
+          case SectionId::Table:
+            DoTableSection(ReadTableSection(known, options.features, errors));
+            break;
 
-        case SectionId::Global:
-          DoGlobalSection(ReadGlobalSection(known, options.features, errors));
-          break;
+          case SectionId::Memory:
+            DoMemorySection(ReadMemorySection(known, options.features, errors));
+            break;
 
-        case SectionId::Export:
-          DoExportSection(ReadExportSection(known, options.features, errors));
-          break;
+          case SectionId::Global:
+            DoGlobalSection(ReadGlobalSection(known, options.features, errors));
+            break;
 
-        case SectionId::Start:
-          DoStartSection(ReadStartSection(known, options.features, errors));
-          break;
+          case SectionId::Export:
+            DoExportSection(ReadExportSection(known, options.features, errors));
+            break;
 
-        case SectionId::Element:
-          DoElementSection(ReadElementSection(known, options.features, errors));
-          break;
+          case SectionId::Start:
+            DoStartSection(ReadStartSection(known, options.features, errors));
+            break;
 
-        case SectionId::Code:
-          DoCodeSection(ReadCodeSection(known, options.features, errors));
-          break;
+          case SectionId::Element:
+            DoElementSection(ReadElementSection(known, options.features, errors));
+            break;
 
-        case SectionId::Data:
-          DoDataSection(ReadDataSection(known, options.features, errors));
-          break;
+          case SectionId::Code:
+            DoCodeSection(ReadCodeSection(known, options.features, errors));
+            break;
 
-        default:
-          break;
+          case SectionId::Data:
+            DoDataSection(ReadDataSection(known, options.features, errors));
+            break;
+
+          default:
+            break;
+        }
       }
     }
   }
@@ -227,8 +237,8 @@ bool Tool::OpenDB() {
 }
 
 template <typename... Args>
-bool Tool::Exec(const char* sql, const Args&... args) {
-  auto fmt_sql = vformat(sql, make_format_args(args...));
+bool Tool::Exec(string_view sql, const Args&... args) {
+  auto fmt_sql = vformat(sql.to_string(), make_format_args(args...));
   // print(">> Executing \"{}\"\n", fmt_sql);
 
   auto cb = [](void*, int columns, char** values, char** names) {
@@ -631,7 +641,7 @@ void Tool::DoDataSection(LazyDataSection section) {
 }
 
 size_t Tool::file_offset(SpanU8 data) {
-  return data.begin() - module.data.begin();
+  return data.begin() - module->data.begin();
 }
 
 void Tool::Repl() {
