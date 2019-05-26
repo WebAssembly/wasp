@@ -22,6 +22,7 @@
 #include "wasp/base/variant.h"
 #include "wasp/binary/custom_section.h"
 #include "wasp/binary/known_section.h"
+#include "wasp/binary/section_id.h"
 
 namespace wasp {
 namespace binary {
@@ -35,6 +36,7 @@ struct Section {
   CustomSection& custom();
   const CustomSection& custom() const;
 
+  SectionId id() const;
   SpanU8 data() const;
 
   variant<KnownSection, CustomSection> contents;

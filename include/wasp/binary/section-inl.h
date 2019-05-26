@@ -41,12 +41,12 @@ inline const CustomSection& Section::custom() const {
   return get<CustomSection>(contents);
 }
 
+inline SectionId Section::id() const {
+  return is_known() ? known().id : SectionId::Custom;
+}
+
 inline SpanU8 Section::data() const {
-  if (is_known()) {
-    return known().data;
-  } else {
-    return custom().data;
-  }
+  return is_known() ? known().data : custom().data;
 }
 
 }  // namespace binary

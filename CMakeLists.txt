@@ -104,6 +104,7 @@ add_executable(wasp
   src/tools/dfg.cc
   src/tools/dump.cc
   src/tools/validate.cc
+  src/tools/pattern.cc
   src/tools/wasp.cc
 )
 
