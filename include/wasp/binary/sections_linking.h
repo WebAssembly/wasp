@@ -25,15 +25,10 @@
 #include "wasp/binary/types_linking.h"
 
 namespace wasp {
-
-class Features;
-
 namespace binary {
 
-class Errors;
-
 struct RelocationSection {
-  explicit RelocationSection(SpanU8, const Features&, Errors&);
+  explicit RelocationSection(SpanU8, Context&);
 
   SpanU8 data;
   optional<Index> section_index;
@@ -42,7 +37,7 @@ struct RelocationSection {
 };
 
 struct LinkingSection {
-  explicit LinkingSection(SpanU8, const Features&, Errors&);
+  explicit LinkingSection(SpanU8, Context&);
 
   SpanU8 data;
   optional<u32> version;
@@ -54,41 +49,26 @@ using LazyInitFunctionsSubsection = LazySection<InitFunction>;
 using LazyComdatSubsection = LazySection<Comdat>;
 using LazySymbolTableSubsection = LazySection<SymbolInfo>;
 
-RelocationSection ReadRelocationSection(SpanU8 data,
-                                        const Features& features,
-                                        Errors& errors);
-RelocationSection ReadRelocationSection(CustomSection sec,
-                                        const Features& features,
-                                        Errors& errors);
+RelocationSection ReadRelocationSection(SpanU8 data, Context&);
+RelocationSection ReadRelocationSection(CustomSection sec, Context&);
 
-LinkingSection ReadLinkingSection(SpanU8, const Features&, Errors&);
-LinkingSection ReadLinkingSection(CustomSection, const Features&, Errors&);
+LinkingSection ReadLinkingSection(SpanU8, Context&);
+LinkingSection ReadLinkingSection(CustomSection, Context&);
 
-LazySegmentInfoSubsection ReadSegmentInfoSubsection(SpanU8,
-                                                    const Features&,
-                                                    Errors&);
+LazySegmentInfoSubsection ReadSegmentInfoSubsection(SpanU8, Context&);
 LazySegmentInfoSubsection ReadSegmentInfoSubsection(LinkingSubsection,
-                                                    const Features&,
-                                                    Errors&);
+                                                    Context&);
 
-LazyInitFunctionsSubsection ReadInitFunctionsSubsection(SpanU8,
-                                                        const Features&,
-                                                        Errors&);
+LazyInitFunctionsSubsection ReadInitFunctionsSubsection(SpanU8, Context&);
 LazyInitFunctionsSubsection ReadInitFunctionsSubsection(LinkingSubsection,
-                                                        const Features&,
-                                                        Errors&);
+                                                        Context&);
 
-LazyComdatSubsection ReadComdatSubsection(SpanU8, const Features&, Errors&);
-LazyComdatSubsection ReadComdatSubsection(LinkingSubsection,
-                                          const Features&,
-                                          Errors&);
+LazyComdatSubsection ReadComdatSubsection(SpanU8, Context&);
+LazyComdatSubsection ReadComdatSubsection(LinkingSubsection, Context&);
 
-LazySymbolTableSubsection ReadSymbolTableSubsection(SpanU8,
-                                                    const Features&,
-                                                    Errors&);
+LazySymbolTableSubsection ReadSymbolTableSubsection(SpanU8, Context&);
 LazySymbolTableSubsection ReadSymbolTableSubsection(LinkingSubsection,
-                                                    const Features&,
-                                                    Errors&);
+                                                    Context&);
 
 }  // namespace binary
 }  // namespace wasp

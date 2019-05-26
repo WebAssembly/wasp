@@ -161,48 +161,47 @@ void Tool::Run() {
 
         switch (known.id) {
           case SectionId::Type:
-            DoTypeSection(ReadTypeSection(known, options.features, errors));
+            DoTypeSection(ReadTypeSection(known, module->context));
             break;
 
           case SectionId::Import:
-            DoImportSection(ReadImportSection(known, options.features, errors));
+            DoImportSection(ReadImportSection(known, module->context));
             break;
 
           case SectionId::Function:
-            DoFunctionSection(
-                ReadFunctionSection(known, options.features, errors));
+            DoFunctionSection(ReadFunctionSection(known, module->context));
             break;
 
           case SectionId::Table:
-            DoTableSection(ReadTableSection(known, options.features, errors));
+            DoTableSection(ReadTableSection(known, module->context));
             break;
 
           case SectionId::Memory:
-            DoMemorySection(ReadMemorySection(known, options.features, errors));
+            DoMemorySection(ReadMemorySection(known, module->context));
             break;
 
           case SectionId::Global:
-            DoGlobalSection(ReadGlobalSection(known, options.features, errors));
+            DoGlobalSection(ReadGlobalSection(known, module->context));
             break;
 
           case SectionId::Export:
-            DoExportSection(ReadExportSection(known, options.features, errors));
+            DoExportSection(ReadExportSection(known, module->context));
             break;
 
           case SectionId::Start:
-            DoStartSection(ReadStartSection(known, options.features, errors));
+            DoStartSection(ReadStartSection(known, module->context));
             break;
 
           case SectionId::Element:
-            DoElementSection(ReadElementSection(known, options.features, errors));
+            DoElementSection(ReadElementSection(known, module->context));
             break;
 
           case SectionId::Code:
-            DoCodeSection(ReadCodeSection(known, options.features, errors));
+            DoCodeSection(ReadCodeSection(known, module->context));
             break;
 
           case SectionId::Data:
-            DoDataSection(ReadDataSection(known, options.features, errors));
+            DoDataSection(ReadDataSection(known, module->context));
             break;
 
           default:
@@ -561,7 +560,7 @@ void Tool::DoCodeSection(LazyCodeSection section) {
 
     SpanU8 last_data = code.value.body.data;
     Index index = 0;
-    auto instrs = ReadExpression(code.value.body, options.features, errors);
+    auto instrs = ReadExpression(code.value.body, module->context);
     for (auto it = instrs.begin(), end = instrs.end(); it != end;
          ++it, ++index) {
       const auto& instr = *it;

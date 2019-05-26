@@ -216,27 +216,23 @@ int Tool::Run() {
 }
 
 void Tool::DoPrepass() {
-  ForEachFunctionName(
-      module,
-      [this](const IndexNamePair& pair) {
-        name_to_function.insert(std::make_pair(pair.second, pair.first));
-      },
-      options.features, errors);
+  ForEachFunctionName(module, [this](const IndexNamePair& pair) {
+    name_to_function.insert(std::make_pair(pair.second, pair.first));
+  });
 
-  const Features& features = options.features;
   for (auto section : module.sections) {
     if (section.is_known()) {
       auto known = section.known();
       switch (known.id) {
         case SectionId::Type: {
-          auto seq = ReadTypeSection(known, features, errors).sequence;
+          auto seq = ReadTypeSection(known, module.context).sequence;
           std::copy(seq.begin(), seq.end(), std::back_inserter(type_entries));
           break;
         }
 
         case SectionId::Import:
           for (auto import :
-               ReadImportSection(known, features, errors).sequence) {
+               ReadImportSection(known, module.context).sequence) {
             if (import.kind() == ExternalKind::Function) {
               functions.push_back(Function{import.index()});
             }
@@ -245,7 +241,7 @@ void Tool::DoPrepass() {
           break;
 
         case SectionId::Function: {
-          auto seq = ReadFunctionSection(known, features, errors).sequence;
+          auto seq = ReadFunctionSection(known, module.context).sequence;
           std::copy(seq.begin(), seq.end(), std::back_inserter(functions));
           break;
         }
@@ -285,7 +281,7 @@ optional<Code> Tool::GetCode(Index find_index) {
     if (section.is_known()) {
       auto known = section.known();
       if (known.id == SectionId::Code) {
-        auto section = ReadCodeSection(known, options.features, errors);
+        auto section = ReadCodeSection(known, module.context);
         for (auto code : enumerate(section.sequence, imported_function_count)) {
           if (code.index == find_index) {
             return code.value;
@@ -349,8 +345,7 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
   PushUndefValues(type.result_types.size());
   PushLabel(Opcode::Return, return_bbid, return_bbid);
 
-  for (const auto& instr :
-       ReadExpression(code.body, options.features, errors)) {
+  for (const auto& instr : ReadExpression(code.body, module.context)) {
     DoInstruction(instr);
   }
 

@@ -28,11 +28,14 @@
 #include "wasp/base/types.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read.h"
+#include "wasp/binary/read/context.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/var_int.h"
 
 namespace wasp {
 namespace binary {
+
+struct Context;
 
 template <typename S>
 S SignExtend(typename std::make_unsigned<S>::type x, int N) {
@@ -41,10 +44,7 @@ S SignExtend(typename std::make_unsigned<S>::type x, int N) {
 }
 
 template <typename T>
-optional<T> ReadVarInt(SpanU8* data,
-                       const Features& features,
-                       Errors& errors,
-                       string_view desc) {
+optional<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
   using U = typename std::make_unsigned<T>::type;
   constexpr bool is_signed = std::is_signed<T>::value;
   constexpr int kByteMask = VarInt<T>::kByteMask;
@@ -53,11 +53,11 @@ optional<T> ReadVarInt(SpanU8* data,
   constexpr u8 kLastByteMask = ~((1 << kLastByteMaskBits) - 1);
   constexpr u8 kLastByteOnes = kLastByteMask & kByteMask;
 
-  ErrorsContextGuard guard{errors, *data, desc};
+  ErrorsContextGuard guard{context.errors, *data, desc};
 
   U result{};
   for (int i = 0;;) {
-    WASP_TRY_READ(byte, Read<u8>(data, features, errors));
+    WASP_TRY_READ(byte, Read<u8>(data, context));
 
     const int shift = i * 7;
     result |= U(byte & kByteMask) << shift;
@@ -70,14 +70,15 @@ optional<T> ReadVarInt(SpanU8* data,
       const u8 zero_ext = byte & ~kLastByteMask & kByteMask;
       const u8 one_ext = (byte | kLastByteOnes) & kByteMask;
       if (is_signed) {
-        errors.OnError(
+        context.errors.OnError(
             *data, format("Last byte of {} must be sign "
                           "extension: expected {:#2x} or {:#2x}, got {:#2x}",
                           desc, zero_ext, one_ext, byte));
       } else {
-        errors.OnError(*data, format("Last byte of {} must be zero "
-                                     "extension: expected {:#2x}, got {:#2x}",
-                                     desc, zero_ext, byte));
+        context.errors.OnError(*data,
+                               format("Last byte of {} must be zero "
+                                      "extension: expected {:#2x}, got {:#2x}",
+                                      desc, zero_ext, byte));
       }
       return nullopt;
     } else if ((byte & VarInt<T>::kExtendBit) == 0) {

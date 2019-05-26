@@ -18,18 +18,16 @@
 #define WASP_BINARY_READ_H_
 
 #include <utility>
+
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/binary/types.h"
 
 namespace wasp {
-
-class Features;
-
 namespace binary {
 
-class Errors;
+struct Context;
 
 enum class BulkImmediateKind {
   Memory,
@@ -40,175 +38,131 @@ template <typename T>
 struct Tag {};
 
 template <typename T, typename... Args>
-optional<T> Read(SpanU8* data,
-                 const Features& features,
-                 Errors& errors,
-                 Args&&... args) {
-  return Read(data, features, errors, Tag<T>{}, std::forward<Args>(args)...);
+optional<T> Read(SpanU8* data, Context& context, Args&&... args) {
+  return Read(data, context, Tag<T>{}, std::forward<Args>(args)...);
 }
 
-optional<BlockType> Read(SpanU8*, const Features&, Errors&, Tag<BlockType>);
+optional<BlockType> Read(SpanU8*, Context&, Tag<BlockType>);
 
-optional<BrOnExnImmediate> Read(SpanU8*,
-                                const Features&,
-                                Errors&,
-                                Tag<BrOnExnImmediate>);
+optional<BrOnExnImmediate> Read(SpanU8*, Context&, Tag<BrOnExnImmediate>);
 
-optional<BrTableImmediate> Read(SpanU8*,
-                                const Features&,
-                                Errors&,
-                                Tag<BrTableImmediate>);
+optional<BrTableImmediate> Read(SpanU8*, Context&, Tag<BrTableImmediate>);
 
 optional<SpanU8> ReadBytesExpected(SpanU8* data,
                                    SpanU8 expected,
-                                   const Features&,
-                                   Errors&,
+                                   Context&,
                                    string_view desc);
 
-optional<SpanU8> ReadBytes(SpanU8* data,
-                           SpanU8::index_type N,
-                           const Features&,
-                           Errors&);
+optional<SpanU8> ReadBytes(SpanU8* data, SpanU8::index_type N, Context&);
 
 optional<CallIndirectImmediate> Read(SpanU8*,
-                                     const Features&,
-                                     Errors&,
+                                     Context&,
                                      Tag<CallIndirectImmediate>);
 
 optional<Index> ReadCheckLength(SpanU8*,
-                                const Features&,
-                                Errors&,
+                                Context&,
                                 string_view context_name,
                                 string_view error_name);
 
-optional<Code> Read(SpanU8*, const Features&, Errors&, Tag<Code>);
+optional<Code> Read(SpanU8*, Context&, Tag<Code>);
 
-optional<ConstantExpression> Read(SpanU8*,
-                                  const Features&,
-                                  Errors&,
-                                  Tag<ConstantExpression>);
+optional<ConstantExpression> Read(SpanU8*, Context&, Tag<ConstantExpression>);
 
 optional<CopyImmediate> Read(SpanU8* data,
-                             const Features& features,
-                             Errors& errors,
+                             Context&,
                              Tag<CopyImmediate>,
                              BulkImmediateKind);
 
-optional<Index> ReadCount(SpanU8*, const Features&, Errors&);
+optional<Index> ReadCount(SpanU8*, Context&);
 
-optional<DataCount> Read(SpanU8*, const Features&, Errors&, Tag<DataCount>);
+optional<DataCount> Read(SpanU8*, Context&, Tag<DataCount>);
 
-optional<DataSegment> Read(SpanU8*, const Features&, Errors&, Tag<DataSegment>);
+optional<DataSegment> Read(SpanU8*, Context&, Tag<DataSegment>);
 
-optional<ElementExpression> Read(SpanU8*,
-                                 const Features&,
-                                 Errors&,
-                                 Tag<ElementExpression>);
+optional<ElementExpression> Read(SpanU8*, Context&, Tag<ElementExpression>);
 
-optional<ElementSegment> Read(SpanU8*,
-                              const Features&,
-                              Errors&,
-                              Tag<ElementSegment>);
+optional<ElementSegment> Read(SpanU8*, Context&, Tag<ElementSegment>);
 
-optional<ElementType> Read(SpanU8*, const Features&, Errors&, Tag<ElementType>);
+optional<ElementType> Read(SpanU8*, Context&, Tag<ElementType>);
 
-optional<Event> Read(SpanU8*, const Features&, Errors&, Tag<Event>);
+optional<Event> Read(SpanU8*, Context&, Tag<Event>);
 
-optional<EventAttribute> Read(SpanU8*,
-                              const Features&,
-                              Errors&,
-                              Tag<EventAttribute>);
+optional<EventAttribute> Read(SpanU8*, Context&, Tag<EventAttribute>);
 
-optional<EventType> Read(SpanU8*, const Features&, Errors&, Tag<EventType>);
+optional<EventType> Read(SpanU8*, Context&, Tag<EventType>);
 
-optional<Export> Read(SpanU8*, const Features&, Errors&, Tag<Export>);
+optional<Export> Read(SpanU8*, Context&, Tag<Export>);
 
-optional<ExternalKind> Read(SpanU8*,
-                            const Features&,
-                            Errors&,
-                            Tag<ExternalKind>);
+optional<ExternalKind> Read(SpanU8*, Context&, Tag<ExternalKind>);
 
-optional<f32> Read(SpanU8*, const Features&, Errors&, Tag<f32>);
+optional<f32> Read(SpanU8*, Context&, Tag<f32>);
 
-optional<f64> Read(SpanU8*, const Features&, Errors&, Tag<f64>);
+optional<f64> Read(SpanU8*, Context&, Tag<f64>);
 
-optional<Function> Read(SpanU8*, const Features&, Errors&, Tag<Function>);
+optional<Function> Read(SpanU8*, Context&, Tag<Function>);
 
-optional<FunctionType> Read(SpanU8*,
-                            const Features&,
-                            Errors&,
-                            Tag<FunctionType>);
+optional<FunctionType> Read(SpanU8*, Context&, Tag<FunctionType>);
 
-optional<Global> Read(SpanU8*, const Features&, Errors&, Tag<Global>);
+optional<Global> Read(SpanU8*, Context&, Tag<Global>);
 
-optional<GlobalType> Read(SpanU8*, const Features&, Errors&, Tag<GlobalType>);
+optional<GlobalType> Read(SpanU8*, Context&, Tag<GlobalType>);
 
-optional<Import> Read(SpanU8*, const Features&, Errors&, Tag<Import>);
+optional<Import> Read(SpanU8*, Context&, Tag<Import>);
 
-optional<Index> ReadIndex(SpanU8*, const Features&, Errors&, string_view desc);
+optional<Index> ReadIndex(SpanU8*, Context&, string_view desc);
 
 optional<InitImmediate> Read(SpanU8*,
-                             const Features&,
-                             Errors&,
+                             Context&,
                              Tag<InitImmediate>,
                              BulkImmediateKind);
 
-optional<Instruction> Read(SpanU8*, const Features&, Errors&, Tag<Instruction>);
+optional<Instruction> Read(SpanU8*, Context&, Tag<Instruction>);
 
-optional<Index> ReadLength(SpanU8*, const Features&, Errors&);
+optional<Index> ReadLength(SpanU8*, Context&);
 
-optional<Limits> Read(SpanU8*, const Features&, Errors&, Tag<Limits>);
+optional<Limits> Read(SpanU8*, Context&, Tag<Limits>);
 
-optional<Locals> Read(SpanU8*, const Features&, Errors&, Tag<Locals>);
+optional<Locals> Read(SpanU8*, Context&, Tag<Locals>);
 
-optional<MemArgImmediate> Read(SpanU8*,
-                               const Features&,
-                               Errors&,
-                               Tag<MemArgImmediate>);
+optional<MemArgImmediate> Read(SpanU8*, Context&, Tag<MemArgImmediate>);
 
-optional<Memory> Read(SpanU8*, const Features&, Errors&, Tag<Memory>);
+optional<Memory> Read(SpanU8*, Context&, Tag<Memory>);
 
-optional<MemoryType> Read(SpanU8*, const Features&, Errors&, Tag<MemoryType>);
+optional<MemoryType> Read(SpanU8*, Context&, Tag<MemoryType>);
 
-optional<Mutability> Read(SpanU8*, const Features&, Errors&, Tag<Mutability>);
+optional<Mutability> Read(SpanU8*, Context&, Tag<Mutability>);
 
-optional<Opcode> Read(SpanU8*, const Features&, Errors&, Tag<Opcode>);
+optional<Opcode> Read(SpanU8*, Context&, Tag<Opcode>);
 
-optional<u8> ReadReserved(SpanU8*, const Features&, Errors&);
+optional<u8> ReadReserved(SpanU8*, Context&);
 
-optional<s32> Read(SpanU8*, const Features&, Errors&, Tag<s32>);
+optional<s32> Read(SpanU8*, Context&, Tag<s32>);
 
-optional<s64> Read(SpanU8*, const Features&, Errors&, Tag<s64>);
+optional<s64> Read(SpanU8*, Context&, Tag<s64>);
 
-optional<Section> Read(SpanU8*, const Features&, Errors&, Tag<Section>);
+optional<Section> Read(SpanU8*, Context&, Tag<Section>);
 
-optional<SectionId> Read(SpanU8*, const Features&, Errors&, Tag<SectionId>);
+optional<SectionId> Read(SpanU8*, Context&, Tag<SectionId>);
 
-optional<ShuffleImmediate> Read(SpanU8*,
-                                const Features&,
-                                Errors&,
-                                Tag<ShuffleImmediate>);
+optional<ShuffleImmediate> Read(SpanU8*, Context&, Tag<ShuffleImmediate>);
 
-optional<Start> Read(SpanU8*, const Features&, Errors&, Tag<Start>);
+optional<Start> Read(SpanU8*, Context&, Tag<Start>);
 
-optional<string_view> ReadString(SpanU8*,
-                                 const Features&,
-                                 Errors&,
-                                 string_view desc);
+optional<string_view> ReadString(SpanU8*, Context&, string_view desc);
 
-optional<Table> Read(SpanU8*, const Features&, Errors&, Tag<Table>);
+optional<Table> Read(SpanU8*, Context&, Tag<Table>);
 
-optional<TableType> Read(SpanU8*, const Features&, Errors&, Tag<TableType>);
+optional<TableType> Read(SpanU8*, Context&, Tag<TableType>);
 
-optional<TypeEntry> Read(SpanU8*, const Features&, Errors&, Tag<TypeEntry>);
+optional<TypeEntry> Read(SpanU8*, Context&, Tag<TypeEntry>);
 
-optional<u32> Read(SpanU8*, const Features&, Errors&, Tag<u32>);
+optional<u32> Read(SpanU8*, Context&, Tag<u32>);
 
-optional<u8> Read(SpanU8*, const Features&, Errors&, Tag<u8>);
+optional<u8> Read(SpanU8*, Context&, Tag<u8>);
 
-optional<v128> Read(SpanU8*, const Features&, Errors&, Tag<v128>);
+optional<v128> Read(SpanU8*, Context&, Tag<v128>);
 
-optional<ValueType> Read(SpanU8*, const Features&, Errors&, Tag<ValueType>);
+optional<ValueType> Read(SpanU8*, Context&, Tag<ValueType>);
 
 }  // namespace binary
 }  // namespace wasp

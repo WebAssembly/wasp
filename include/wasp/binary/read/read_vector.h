@@ -19,13 +19,13 @@
 
 #include <vector>
 
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read.h"
+#include "wasp/binary/read/context.h"
 #include "wasp/binary/read/macros.h"
 
 namespace wasp {
@@ -33,15 +33,14 @@ namespace binary {
 
 template <typename T>
 optional<std::vector<T>> ReadVector(SpanU8* data,
-                                    const Features& features,
-                                    Errors& errors,
+                                    Context& context,
                                     string_view desc) {
-  ErrorsContextGuard guard{errors, *data, desc};
+  ErrorsContextGuard guard{context.errors, *data, desc};
   std::vector<T> result;
-  WASP_TRY_READ(len, ReadCount(data, features, errors));
+  WASP_TRY_READ(len, ReadCount(data, context));
   result.reserve(len);
   for (u32 i = 0; i < len; ++i) {
-    WASP_TRY_READ(elt, Read<T>(data, features, errors));
+    WASP_TRY_READ(elt, Read<T>(data, context));
     result.emplace_back(std::move(elt));
   }
   return result;

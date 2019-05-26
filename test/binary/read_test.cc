@@ -22,6 +22,7 @@
 #include "gtest/gtest.h"
 #include "test/binary/read_test_utils.h"
 #include "test/binary/test_utils.h"
+#include "wasp/binary/read/context.h"
 #include "wasp/binary/read/read_vector.h"
 #include "wasp/binary/read_name.h"
 
@@ -122,33 +123,33 @@ TEST(ReadTest, BrTableImmediate_PastEnd) {
 }
 
 TEST(ReadTest, ReadBytes) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const SpanU8 data = "\x12\x34\x56"_su8;
   SpanU8 copy = data;
-  auto result = ReadBytes(&copy, 3, features, errors);
+  auto result = ReadBytes(&copy, 3, context);
   ExpectNoErrors(errors);
   EXPECT_EQ(data, result);
   EXPECT_EQ(0u, copy.size());
 }
 
 TEST(ReadTest, ReadBytes_Leftovers) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const SpanU8 data = "\x12\x34\x56"_su8;
   SpanU8 copy = data;
-  auto result = ReadBytes(&copy, 2, features, errors);
+  auto result = ReadBytes(&copy, 2, context);
   ExpectNoErrors(errors);
   EXPECT_EQ(data.subspan(0, 2), result);
   EXPECT_EQ(1u, copy.size());
 }
 
 TEST(ReadTest, ReadBytes_Fail) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const SpanU8 data = "\x12\x34\x56"_su8;
   SpanU8 copy = data;
-  auto result = ReadBytes(&copy, 4, features, errors);
+  auto result = ReadBytes(&copy, 4, context);
   EXPECT_EQ(nullopt, result);
   ExpectError({{0, "Unable to read 4 bytes"}}, errors, data);
 }
@@ -385,22 +386,22 @@ TEST(ReadTest, ShuffleImmediate_PastEnd) {
 }
 
 TEST(ReadTest, ReadCount) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const SpanU8 data = "\x01\x00\x00\x00"_su8;
   SpanU8 copy = data;
-  auto result = ReadCount(&copy, features, errors);
+  auto result = ReadCount(&copy, context);
   ExpectNoErrors(errors);
   EXPECT_EQ(1u, result);
   EXPECT_EQ(3u, copy.size());
 }
 
 TEST(ReadTest, ReadCount_PastEnd) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const SpanU8 data = "\x05\x00\x00\x00"_su8;
   SpanU8 copy = data;
-  auto result = ReadCount(&copy, features, errors);
+  auto result = ReadCount(&copy, context);
   ExpectError({{1, "Count extends past end: 5 > 3"}}, errors, data);
   EXPECT_EQ(nullopt, result);
   EXPECT_EQ(3u, copy.size());
@@ -814,9 +815,9 @@ TEST(ReadTest, F32) {
   // NaN
   {
     auto data = "\x00\x00\xc0\x7f"_su8;
-    Features features;
     TestErrors errors;
-    auto result = Read<f32>(&data, features, errors);
+    Context context{errors};
+    auto result = Read<f32>(&data, context);
     ExpectNoErrors(errors);
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(std::isnan(*result));
@@ -839,9 +840,9 @@ TEST(ReadTest, F64) {
   // NaN
   {
     auto data = "\x00\x00\x00\x00\x00\x00\xf8\x7f"_su8;
-    Features features;
     TestErrors errors;
-    auto result = Read<f64>(&data, features, errors);
+    Context context{errors};
+    auto result = Read<f64>(&data, context);
     ExpectNoErrors(errors);
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(std::isnan(*result));
@@ -2608,22 +2609,22 @@ TEST(ReadTest, Start) {
 }
 
 TEST(ReadTest, ReadString) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const SpanU8 data = "\x05hello"_su8;
   SpanU8 copy = data;
-  auto result = ReadString(&copy, features, errors, "test");
+  auto result = ReadString(&copy, context, "test");
   ExpectNoErrors(errors);
   EXPECT_EQ(string_view{"hello"}, result);
   EXPECT_EQ(0u, copy.size());
 }
 
 TEST(ReadTest, ReadString_Leftovers) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const SpanU8 data = "\x01more"_su8;
   SpanU8 copy = data;
-  auto result = ReadString(&copy, features, errors, "test");
+  auto result = ReadString(&copy, context, "test");
   ExpectNoErrors(errors);
   EXPECT_EQ(string_view{"m"}, result);
   EXPECT_EQ(3u, copy.size());
@@ -2631,11 +2632,11 @@ TEST(ReadTest, ReadString_Leftovers) {
 
 TEST(ReadTest, ReadString_BadLength) {
   {
-    Features features;
     TestErrors errors;
+    Context context{errors};
     const SpanU8 data = ""_su8;
     SpanU8 copy = data;
-    auto result = ReadString(&copy, features, errors, "test");
+    auto result = ReadString(&copy, context, "test");
     ExpectError({{0, "test"}, {0, "length"}, {0, "Unable to read u8"}}, errors,
                 data);
     EXPECT_EQ(nullopt, result);
@@ -2643,11 +2644,11 @@ TEST(ReadTest, ReadString_BadLength) {
   }
 
   {
-    Features features;
     TestErrors errors;
+    Context context{errors};
     const SpanU8 data = "\xc0"_su8;
     SpanU8 copy = data;
-    auto result = ReadString(&copy, features, errors, "test");
+    auto result = ReadString(&copy, context, "test");
     ExpectError({{0, "test"}, {0, "length"}, {1, "Unable to read u8"}}, errors,
                 data);
     EXPECT_EQ(nullopt, result);
@@ -2656,11 +2657,11 @@ TEST(ReadTest, ReadString_BadLength) {
 }
 
 TEST(ReadTest, ReadString_Fail) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const SpanU8 data = "\x06small"_su8;
   SpanU8 copy = data;
-  auto result = ReadString(&copy, features, errors, "test");
+  auto result = ReadString(&copy, context, "test");
   ExpectError({{0, "test"}, {1, "Length extends past end: 6 > 5"}}, errors,
               data);
   EXPECT_EQ(nullopt, result);
@@ -2796,39 +2797,39 @@ TEST(ReadTest, ValueType_Unknown) {
 }
 
 TEST(ReadTest, ReadVector_u8) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const SpanU8 data = "\x05hello"_su8;
   SpanU8 copy = data;
-  auto result = ReadVector<u8>(&copy, features, errors, "test");
+  auto result = ReadVector<u8>(&copy, context, "test");
   ExpectNoErrors(errors);
   EXPECT_EQ((std::vector<u8>{'h', 'e', 'l', 'l', 'o'}), result);
   EXPECT_EQ(0u, copy.size());
 }
 
 TEST(ReadTest, ReadVector_u32) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const SpanU8 data =
       "\x03"  // Count.
       "\x05"
       "\x80\x01"
       "\xcc\xcc\x0c"_su8;
   SpanU8 copy = data;
-  auto result = ReadVector<u32>(&copy, features, errors, "test");
+  auto result = ReadVector<u32>(&copy, context, "test");
   ExpectNoErrors(errors);
   EXPECT_EQ((std::vector<u32>{5, 128, 206412}), result);
   EXPECT_EQ(0u, copy.size());
 }
 
 TEST(ReadTest, ReadVector_FailLength) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const SpanU8 data =
       "\x02"  // Count.
       "\x05"_su8;
   SpanU8 copy = data;
-  auto result = ReadVector<u32>(&copy, features, errors, "test");
+  auto result = ReadVector<u32>(&copy, context, "test");
   ExpectError({{0, "test"}, {1, "Count extends past end: 2 > 1"}}, errors,
               data);
   EXPECT_EQ(nullopt, result);
@@ -2836,14 +2837,14 @@ TEST(ReadTest, ReadVector_FailLength) {
 }
 
 TEST(ReadTest, ReadVector_PastEnd) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const SpanU8 data =
       "\x02"  // Count.
       "\x05"
       "\x80"_su8;
   SpanU8 copy = data;
-  auto result = ReadVector<u32>(&copy, features, errors, "test");
+  auto result = ReadVector<u32>(&copy, context, "test");
   ExpectError({{0, "test"}, {2, "u32"}, {3, "Unable to read u8"}}, errors,
               data);
   EXPECT_EQ(nullopt, result);

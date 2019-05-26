@@ -23,6 +23,7 @@
 #include "wasp/base/features.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/read.h"
+#include "wasp/binary/read/context.h"
 
 namespace wasp {
 namespace binary {
@@ -34,8 +35,9 @@ void ExpectRead(const T& expected,
                 const wasp::Features& features,
                 Args&&... args) {
   wasp::binary::test::TestErrors errors;
-  auto result = wasp::binary::Read<T>(&data, features, errors,
-                                      std::forward<Args>(args)...);
+  wasp::binary::Context context{features, errors};
+  auto result =
+      wasp::binary::Read<T>(&data, context, std::forward<Args>(args)...);
   wasp::binary::test::ExpectNoErrors(errors);
   EXPECT_EQ(expected, result);
   EXPECT_EQ(0u, data.size());
@@ -52,9 +54,10 @@ void ExpectReadFailure(const wasp::binary::test::ExpectedError& expected,
                        const wasp::Features& features,
                        Args&&... args) {
   wasp::binary::test::TestErrors errors;
+  wasp::binary::Context context{features, errors};
   const wasp::SpanU8 orig_data = data;
-  auto result = wasp::binary::Read<T>(&data, features, errors,
-                                      std::forward<Args>(args)...);
+  auto result =
+      wasp::binary::Read<T>(&data, context, std::forward<Args>(args)...);
   wasp::binary::test::ExpectError(expected, errors, orig_data);
   EXPECT_EQ(wasp::nullopt, result);
 }

@@ -114,10 +114,9 @@ void Tool::Run() {
 }
 
 void Tool::DoPrepass() {
-  CopyFunctionNames(module, std::inserter(function_names, function_names.end()),
-                    options.features, errors);
-  imported_function_count =
-      GetImportCount(module, ExternalKind::Function, options.features, errors);
+  CopyFunctionNames(module,
+                    std::inserter(function_names, function_names.end()));
+  imported_function_count = GetImportCount(module, ExternalKind::Function);
 }
 
 void Tool::CalculateCallGraph() {
@@ -125,10 +124,10 @@ void Tool::CalculateCallGraph() {
     if (section.is_known()) {
       auto known = section.known();
       if (known.id == SectionId::Code) {
-        auto section = ReadCodeSection(known, options.features, errors);
+        auto section = ReadCodeSection(known, module.context);
         for (auto code : enumerate(section.sequence, imported_function_count)) {
           for (const auto& instr :
-               ReadExpression(code.value.body, options.features, errors)) {
+               ReadExpression(code.value.body, module.context)) {
             if (instr.opcode == Opcode::Call) {
               assert(instr.has_index_immediate());
               auto callee_index = instr.index_immediate();

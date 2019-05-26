@@ -15,6 +15,7 @@
 //
 
 #include "wasp/binary/lazy_expression.h"
+#include "wasp/binary/read/context.h"
 
 #include "gtest/gtest.h"
 
@@ -25,18 +26,18 @@ using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
 TEST(LazyExprTest, Basic) {
-  Features features;
   TestErrors errors;
-  auto expr = ReadExpression("\x00"_su8, features, errors);
+  Context context{errors};
+  auto expr = ReadExpression("\x00"_su8, context);
   auto it = expr.begin(), end = expr.end();
   EXPECT_EQ((Instruction{Opcode::Unreachable}), *it++);
   ASSERT_EQ(end, it);
 }
 
 TEST(LazyExprTest, Multiple) {
-  Features features;
   TestErrors errors;
-  auto expr = ReadExpression("\x01\x01"_su8, features, errors);
+  Context context{errors};
+  auto expr = ReadExpression("\x01\x01"_su8, context);
   auto it = expr.begin(), end = expr.end();
   EXPECT_EQ((Instruction{Opcode::Nop}), *it++);
   ASSERT_NE(end, it);
@@ -45,12 +46,12 @@ TEST(LazyExprTest, Multiple) {
 }
 
 TEST(LazyExprTest, SimpleFunction) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   // local.get 0
   // local.get 1
   // i32.add
-  auto expr = ReadExpression("\x20\x00\x20\x01\x6a"_su8, features, errors);
+  auto expr = ReadExpression("\x20\x00\x20\x01\x6a"_su8, context);
   auto it = expr.begin(), end = expr.end();
   EXPECT_EQ((Instruction{Opcode::LocalGet, Index{0}}), *it++);
   ASSERT_NE(end, it);

@@ -1,5 +1,5 @@
 //
-// Copyright 2018 WebAssembly Community Group participants
+// Copyright 2019 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,34 +14,40 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_LAZY_SECTION_H_
-#define WASP_BINARY_LAZY_SECTION_H_
+#ifndef WASP_BINARY_READ_CONTEXT_H_
+#define WASP_BINARY_READ_CONTEXT_H_
 
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
-#include "wasp/base/span.h"
-#include "wasp/binary/lazy_sequence.h"
-#include "wasp/binary/read.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {
 
-struct Context;
+class Errors;
 
-template <typename T>
-class LazySection {
- public:
-  explicit LazySection(SpanU8, string_view name, Context&);
+struct Context {
+  explicit Context(Errors&);
+  explicit Context(const Features&, Errors&);
 
-  optional<Index> count;
-  LazySequence<T> sequence;
+  Features features;
+  Errors& errors;
+
+  optional<SectionId> last_section_id;
+  Index type_count;
+  Index import_count;
+  Index function_count;
+  Index table_count;
+  Index memory_count;
+  Index global_count;
+  Index export_count;
+  Index element_count;
+  Index data_count_count;
+  Index code_count;
+  Index data_count;
 };
-
-template <typename T>
-LazySection<T>::LazySection(SpanU8 data, string_view name, Context& context)
-    : count{ReadCount(&data, context)}, sequence{data, count, name, context} {}
 
 }  // namespace binary
 }  // namespace wasp
 
-#endif // WASP_BINARY_LAZY_SECTION_H_
+#endif  // WASP_BINARY_READ_CONTEXT_H_

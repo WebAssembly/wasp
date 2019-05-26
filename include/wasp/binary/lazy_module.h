@@ -32,11 +32,10 @@ class LazyModule {
   explicit LazyModule(SpanU8, const Features&, Errors&);
 
   SpanU8 data;
+  Context context;
   optional<SpanU8> magic;
   optional<SpanU8> version;
   LazySequence<Section> sections;
-  const Features& features;
-  Errors& errors;
 };
 
 LazyModule ReadModule(SpanU8 data, const Features&, Errors&);

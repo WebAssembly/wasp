@@ -21,59 +21,31 @@
 #include "wasp/binary/types_linking.h"
 
 namespace wasp {
-
-class Features;
-
 namespace binary {
 
-class Errors;
+struct Context;
 
-optional<Comdat> Read(SpanU8*, const Features&, Errors&, Tag<Comdat>);
+optional<Comdat> Read(SpanU8*, Context&, Tag<Comdat>);
 
-optional<ComdatSymbol> Read(SpanU8*,
-                            const Features&,
-                            Errors&,
-                            Tag<ComdatSymbol>);
+optional<ComdatSymbol> Read(SpanU8*, Context&, Tag<ComdatSymbol>);
 
-optional<ComdatSymbolKind> Read(SpanU8*,
-                                const Features&,
-                                Errors&,
-                                Tag<ComdatSymbolKind>);
+optional<ComdatSymbolKind> Read(SpanU8*, Context&, Tag<ComdatSymbolKind>);
 
-optional<InitFunction> Read(SpanU8*,
-                            const Features&,
-                            Errors&,
-                            Tag<InitFunction>);
+optional<InitFunction> Read(SpanU8*, Context&, Tag<InitFunction>);
 
-optional<LinkingSubsection> Read(SpanU8*,
-                                 const Features&,
-                                 Errors&,
-                                 Tag<LinkingSubsection>);
+optional<LinkingSubsection> Read(SpanU8*, Context&, Tag<LinkingSubsection>);
 
-optional<LinkingSubsectionId> Read(SpanU8*,
-                                   const Features&,
-                                   Errors&,
-                                   Tag<LinkingSubsectionId>);
+optional<LinkingSubsectionId> Read(SpanU8*, Context&, Tag<LinkingSubsectionId>);
 
-optional<RelocationEntry> Read(SpanU8*,
-                               const Features&,
-                               Errors&,
-                               Tag<RelocationEntry>);
+optional<RelocationEntry> Read(SpanU8*, Context&, Tag<RelocationEntry>);
 
-optional<RelocationType> Read(SpanU8*,
-                              const Features&,
-                              Errors&,
-                              Tag<RelocationType>);
+optional<RelocationType> Read(SpanU8*, Context&, Tag<RelocationType>);
 
-optional<SegmentInfo> Read(SpanU8*, const Features&, Errors&, Tag<SegmentInfo>);
+optional<SegmentInfo> Read(SpanU8*, Context&, Tag<SegmentInfo>);
 
-optional<SymbolInfo> Read(SpanU8*, const Features&, Errors&, Tag<SymbolInfo>);
+optional<SymbolInfo> Read(SpanU8*, Context&, Tag<SymbolInfo>);
 
-optional<SymbolInfoKind> Read(SpanU8*,
-                              const Features&,
-                              Errors&,
-                              Tag<SymbolInfoKind>);
-
+optional<SymbolInfoKind> Read(SpanU8*, Context&, Tag<SymbolInfoKind>);
 
 }  // namespace binary
 }  // namespace wasp

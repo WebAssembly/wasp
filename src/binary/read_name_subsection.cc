@@ -19,44 +19,34 @@
 namespace wasp {
 namespace binary {
 
-LazyFunctionNamesSubsection ReadFunctionNamesSubsection(
-    SpanU8 data,
-    const Features& features,
-    Errors& errors) {
+LazyFunctionNamesSubsection ReadFunctionNamesSubsection(SpanU8 data,
+                                                        Context& context) {
   return LazyFunctionNamesSubsection{data, "function names subsection",
-                                     features, errors};
+                                     context};
 }
 
-LazyFunctionNamesSubsection ReadFunctionNamesSubsection(
-    NameSubsection sec,
-    const Features& features,
-    Errors& errors) {
-  return ReadFunctionNamesSubsection(sec.data, features, errors);
+LazyFunctionNamesSubsection ReadFunctionNamesSubsection(NameSubsection sec,
+                                                        Context& context) {
+  return ReadFunctionNamesSubsection(sec.data, context);
 }
 
 LazyLocalNamesSubsection ReadLocalNamesSubsection(SpanU8 data,
-                                                  const Features& features,
-                                                  Errors& errors) {
-  return LazyLocalNamesSubsection{data, "local names subsection", features,
-                                  errors};
+                                                  Context& context) {
+  return LazyLocalNamesSubsection{data, "local names subsection", context};
 }
 
 LazyLocalNamesSubsection ReadLocalNamesSubsection(NameSubsection sec,
-                                                  const Features& features,
-                                                  Errors& errors) {
-  return ReadLocalNamesSubsection(sec.data, features, errors);
+                                                  Context& context) {
+  return ReadLocalNamesSubsection(sec.data, context);
 }
 
-ModuleNameSubsection ReadModuleNameSubsection(SpanU8 data,
-                                              const Features& features,
-                                              Errors& errors) {
-  return ReadString(&data, features, errors, "module name");
+ModuleNameSubsection ReadModuleNameSubsection(SpanU8 data, Context& context) {
+  return ReadString(&data, context, "module name");
 }
 
 ModuleNameSubsection ReadModuleNameSubsection(NameSubsection sec,
-                                              const Features& features,
-                                              Errors& errors) {
-  return ReadModuleNameSubsection(sec.data, features, errors);
+                                              Context& context) {
+  return ReadModuleNameSubsection(sec.data, context);
 }
 
 }  // namespace binary

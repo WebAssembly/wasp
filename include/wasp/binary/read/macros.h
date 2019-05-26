@@ -30,22 +30,22 @@
   auto var = *opt_##var /* No semicolon. */
 
 #define WASP_TRY_READ_CONTEXT(var, call, desc)         \
-  ErrorsContextGuard guard_##var(errors, *data, desc); \
+  ErrorsContextGuard guard_##var(context.errors, *data, desc); \
   WASP_TRY_READ(var, call);                            \
   guard_##var.PopContext() /* No semicolon. */
 
-#define WASP_TRY_DECODE(out_var, in_var, Type, name)               \
-  auto out_var = encoding::Type::Decode(in_var);                   \
-  if (!out_var) {                                                  \
-    errors.OnError(*data, format("Unknown " name ": {}", in_var)); \
-    return nullopt;                                                \
+#define WASP_TRY_DECODE(out_var, in_var, Type, name)                       \
+  auto out_var = encoding::Type::Decode(in_var);                           \
+  if (!out_var) {                                                          \
+    context.errors.OnError(*data, format("Unknown " name ": {}", in_var)); \
+    return nullopt;                                                        \
   }
 
-#define WASP_TRY_DECODE_FEATURES(out_var, in_var, Type, name, features) \
-  auto out_var = encoding::Type::Decode(in_var, features);              \
-  if (!out_var) {                                                       \
-    errors.OnError(*data, format("Unknown " name ": {}", in_var));      \
-    return nullopt;                                                     \
+#define WASP_TRY_DECODE_FEATURES(out_var, in_var, Type, name, features)    \
+  auto out_var = encoding::Type::Decode(in_var, features);                 \
+  if (!out_var) {                                                          \
+    context.errors.OnError(*data, format("Unknown " name ": {}", in_var)); \
+    return nullopt;                                                        \
   }
 
 #endif  // WASP_BINARY_MACROS_H_

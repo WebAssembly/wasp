@@ -49,27 +49,25 @@ TEST(LazyModuleUtilsTest, ForEachFunctionName) {
   TestErrors errors;
   auto module = ReadModule(GetModuleData(), features, errors);
 
-  ForEachFunctionName(module,
-                      [](const std::pair<Index, string_view>& pair) {
-                        switch (pair.first) {
-                          case 0:
-                            EXPECT_EQ("import", pair.second);
-                            break;
+  ForEachFunctionName(module, [](const std::pair<Index, string_view>& pair) {
+    switch (pair.first) {
+      case 0:
+        EXPECT_EQ("import", pair.second);
+        break;
 
-                          case 1:
-                            EXPECT_EQ("export", pair.second);
-                            break;
+      case 1:
+        EXPECT_EQ("export", pair.second);
+        break;
 
-                          case 2:
-                            EXPECT_EQ("custom", pair.second);
-                            break;
+      case 2:
+        EXPECT_EQ("custom", pair.second);
+        break;
 
-                          default:
-                            EXPECT_TRUE(false);
-                            break;
-                        }
-                      },
-                      features, errors);
+      default:
+        EXPECT_TRUE(false);
+        break;
+    }
+  });
 }
 
 TEST(LazyModuleUtilsTest, CopyFunctionNames) {
@@ -80,8 +78,8 @@ TEST(LazyModuleUtilsTest, CopyFunctionNames) {
   using FunctionNameMap = std::map<Index, string_view>;
 
   FunctionNameMap function_names;
-  CopyFunctionNames(module, std::inserter(function_names, function_names.end()),
-                    features, errors);
+  CopyFunctionNames(module,
+                    std::inserter(function_names, function_names.end()));
 
   EXPECT_EQ((FunctionNameMap{{0, "import"}, {1, "export"}, {2, "custom"}}),
             function_names);
@@ -101,10 +99,9 @@ TEST(LazyModuleUtilsTest, GetImportCount) {
 
   auto module = ReadModule(data, features, errors);
 
-  EXPECT_EQ(1u,
-            GetImportCount(module, ExternalKind::Function, features, errors));
-  EXPECT_EQ(1u, GetImportCount(module, ExternalKind::Global, features, errors));
-  EXPECT_EQ(0u, GetImportCount(module, ExternalKind::Memory, features, errors));
-  EXPECT_EQ(1u, GetImportCount(module, ExternalKind::Table, features, errors));
+  EXPECT_EQ(1u, GetImportCount(module, ExternalKind::Function));
+  EXPECT_EQ(1u, GetImportCount(module, ExternalKind::Global));
+  EXPECT_EQ(0u, GetImportCount(module, ExternalKind::Memory));
+  EXPECT_EQ(1u, GetImportCount(module, ExternalKind::Table));
   ExpectNoErrors(errors);
 }

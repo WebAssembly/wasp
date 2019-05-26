@@ -26,39 +26,25 @@
 #include "wasp/binary/types_name.h"
 
 namespace wasp {
-
-class Features;
-
 namespace binary {
-
-class Errors;
 
 using LazyNameSection = LazySequence<NameSubsection>;
 using ModuleNameSubsection = optional<string_view>;
 using LazyFunctionNamesSubsection = LazySection<NameAssoc>;
 using LazyLocalNamesSubsection = LazySection<IndirectNameAssoc>;
 
-LazyNameSection ReadNameSection(SpanU8, const Features&, Errors&);
-LazyNameSection ReadNameSection(CustomSection, const Features&, Errors&);
+LazyNameSection ReadNameSection(SpanU8, Context&);
+LazyNameSection ReadNameSection(CustomSection, Context&);
 
-ModuleNameSubsection ReadModuleNameSubsection(SpanU8, const Features&, Errors&);
-ModuleNameSubsection ReadModuleNameSubsection(NameSubsection,
-                                              const Features&,
-                                              Errors&);
+ModuleNameSubsection ReadModuleNameSubsection(SpanU8, Context&);
+ModuleNameSubsection ReadModuleNameSubsection(NameSubsection, Context&);
 
-LazyFunctionNamesSubsection ReadFunctionNamesSubsection(SpanU8,
-                                                        const Features&,
-                                                        Errors&);
+LazyFunctionNamesSubsection ReadFunctionNamesSubsection(SpanU8, Context&);
 LazyFunctionNamesSubsection ReadFunctionNamesSubsection(NameSubsection,
-                                                        const Features&,
-                                                        Errors&);
+                                                        Context&);
 
-LazyLocalNamesSubsection ReadLocalNamesSubsection(SpanU8,
-                                                  const Features&,
-                                                  Errors&);
-LazyLocalNamesSubsection ReadLocalNamesSubsection(NameSubsection,
-                                                  const Features&,
-                                                  Errors&);
+LazyLocalNamesSubsection ReadLocalNamesSubsection(SpanU8, Context&);
+LazyLocalNamesSubsection ReadLocalNamesSubsection(NameSubsection, Context&);
 
 }  // namespace binary
 }  // namespace wasp

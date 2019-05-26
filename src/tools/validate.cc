@@ -252,7 +252,8 @@ visit::Result Tool::Visitor::OnCode(const Code& code) {
     }
   }
 
-  for (const auto& instruction : ReadExpression(code.body, features, errors)) {
+  for (const auto& instruction :
+       ReadExpression(code.body, tool.module.context)) {
     if (!Validate(instruction, context, features, errors)) {
       return visit::Result::Fail;
     }

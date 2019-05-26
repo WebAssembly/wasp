@@ -15,20 +15,17 @@
 //
 
 #include "wasp/binary/lazy_expression.h"
+#include "wasp/binary/read/context.h"
 
 namespace wasp {
 namespace binary {
 
-LazyExpression ReadExpression(SpanU8 data,
-                              const Features& features,
-                              Errors& errors) {
-  return LazyExpression{data, features, errors};
+LazyExpression ReadExpression(SpanU8 data, Context& context) {
+  return LazyExpression{data, context};
 }
 
-LazyExpression ReadExpression(Expression expr,
-                              const Features& features,
-                              Errors& errors) {
-  return ReadExpression(expr.data, features, errors);
+LazyExpression ReadExpression(Expression expr, Context& context) {
+  return ReadExpression(expr.data, context);
 }
 
 }  // namespace binary

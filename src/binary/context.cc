@@ -14,26 +14,15 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_READ_NAME_H_
-#define WASP_BINARY_READ_NAME_H_
-
-#include "wasp/binary/read.h"
-#include "wasp/binary/types_name.h"
+#include "wasp/binary/read/context.h"
 
 namespace wasp {
 namespace binary {
 
-struct Context;
+Context::Context(Errors& errors) : errors(errors) {}
 
-optional<IndirectNameAssoc> Read(SpanU8*, Context&, Tag<IndirectNameAssoc>);
-
-optional<NameAssoc> Read(SpanU8*, Context&, Tag<NameAssoc>);
-
-optional<NameSubsection> Read(SpanU8*, Context&, Tag<NameSubsection>);
-
-optional<NameSubsectionId> Read(SpanU8*, Context&, Tag<NameSubsectionId>);
+Context::Context(const Features& features, Errors& errors)
+    : features(features), errors(errors) {}
 
 }  // namespace binary
 }  // namespace wasp
-
-#endif  // WASP_BINARY_READ_NAME_H_

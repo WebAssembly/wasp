@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_SECTIONS_H_
 #define WASP_BINARY_SECTIONS_H_
 
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/lazy_section.h"
@@ -25,9 +24,6 @@
 #include "wasp/binary/types.h"
 
 namespace wasp {
-
-class Features;
-
 namespace binary {
 
 class Errors;
@@ -46,42 +42,38 @@ using DataCountSection = optional<DataCount>;
 using LazyCodeSection = LazySection<Code>;
 using LazyDataSection = LazySection<DataSegment>;
 
-LazyTypeSection ReadTypeSection(SpanU8, const Features&, Errors&);
-LazyTypeSection ReadTypeSection(KnownSection, const Features&, Errors&);
-LazyImportSection ReadImportSection(SpanU8, const Features&, Errors&);
-LazyImportSection ReadImportSection(KnownSection, const Features&, Errors&);
-LazyFunctionSection ReadFunctionSection(SpanU8, const Features&, Errors&);
-LazyFunctionSection ReadFunctionSection(KnownSection, const Features&, Errors&);
-LazyTableSection ReadTableSection(SpanU8, const Features&, Errors&);
-LazyTableSection ReadTableSection(KnownSection, const Features&, Errors&);
-LazyMemorySection ReadMemorySection(SpanU8, const Features&, Errors&);
-LazyMemorySection ReadMemorySection(KnownSection, const Features&, Errors&);
-LazyGlobalSection ReadGlobalSection(SpanU8, const Features&, Errors&);
-LazyGlobalSection ReadGlobalSection(KnownSection, const Features&, Errors&);
-LazyEventSection ReadEventSection(SpanU8, const Features&, Errors&);
-LazyEventSection ReadEventSection(KnownSection, const Features&, Errors&);
-LazyExportSection ReadExportSection(SpanU8, const Features&, Errors&);
-LazyExportSection ReadExportSection(KnownSection, const Features&, Errors&);
-LazyElementSection ReadElementSection(SpanU8, const Features&, Errors&);
-LazyElementSection ReadElementSection(KnownSection, const Features&, Errors&);
-DataCountSection ReadDataCountSection(SpanU8, const Features&, Errors&);
-DataCountSection ReadDataCountSection(KnownSection, const Features&, Errors&);
-LazyCodeSection ReadCodeSection(SpanU8, const Features&, Errors&);
-LazyCodeSection ReadCodeSection(KnownSection, const Features&, Errors&);
-LazyDataSection ReadDataSection(SpanU8, const Features&, Errors&);
-LazyDataSection ReadDataSection(KnownSection, const Features&, Errors&);
+LazyTypeSection ReadTypeSection(SpanU8, Context&);
+LazyTypeSection ReadTypeSection(KnownSection, Context&);
+LazyImportSection ReadImportSection(SpanU8, Context&);
+LazyImportSection ReadImportSection(KnownSection, Context&);
+LazyFunctionSection ReadFunctionSection(SpanU8, Context&);
+LazyFunctionSection ReadFunctionSection(KnownSection, Context&);
+LazyTableSection ReadTableSection(SpanU8, Context&);
+LazyTableSection ReadTableSection(KnownSection, Context&);
+LazyMemorySection ReadMemorySection(SpanU8, Context&);
+LazyMemorySection ReadMemorySection(KnownSection, Context&);
+LazyGlobalSection ReadGlobalSection(SpanU8, Context&);
+LazyGlobalSection ReadGlobalSection(KnownSection, Context&);
+LazyEventSection ReadEventSection(SpanU8, Context&);
+LazyEventSection ReadEventSection(KnownSection, Context&);
+LazyExportSection ReadExportSection(SpanU8, Context&);
+LazyExportSection ReadExportSection(KnownSection, Context&);
+LazyElementSection ReadElementSection(SpanU8, Context&);
+LazyElementSection ReadElementSection(KnownSection, Context&);
+DataCountSection ReadDataCountSection(SpanU8, Context&);
+DataCountSection ReadDataCountSection(KnownSection, Context&);
+LazyCodeSection ReadCodeSection(SpanU8, Context&);
+LazyCodeSection ReadCodeSection(KnownSection, Context&);
+LazyDataSection ReadDataSection(SpanU8, Context&);
+LazyDataSection ReadDataSection(KnownSection, Context&);
 
-inline StartSection ReadStartSection(SpanU8 data,
-                                     const Features& features,
-                                     Errors& errors) {
+inline StartSection ReadStartSection(SpanU8 data, Context& context) {
   SpanU8 copy = data;
-  return Read<Start>(&copy, features, errors);
+  return Read<Start>(&copy, context);
 }
 
-inline StartSection ReadStartSection(KnownSection sec,
-                                     const Features& features,
-                                     Errors& errors) {
-  return ReadStartSection(sec.data, features, errors);
+inline StartSection ReadStartSection(KnownSection sec, Context& context) {
+  return ReadStartSection(sec.data, context);
 }
 
 }  // namespace binary

@@ -19,57 +19,44 @@
 namespace wasp {
 namespace binary {
 
-LazyComdatSubsection ReadComdatSubsection(SpanU8 data,
-                                          const Features& features,
-                                          Errors& errors) {
-  return LazyComdatSubsection{data, "comdat subsection", features, errors};
+LazyComdatSubsection ReadComdatSubsection(SpanU8 data, Context& context) {
+  return LazyComdatSubsection{data, "comdat subsection", context};
 }
 
 LazyComdatSubsection ReadComdatSubsection(LinkingSubsection sec,
-                                          const Features& features,
-                                          Errors& errors) {
-  return ReadComdatSubsection(sec.data, features, errors);
+                                          Context& context) {
+  return ReadComdatSubsection(sec.data, context);
 }
 
-LazyInitFunctionsSubsection ReadInitFunctionsSubsection(
-    SpanU8 data,
-    const Features& features,
-    Errors& errors) {
+LazyInitFunctionsSubsection ReadInitFunctionsSubsection(SpanU8 data,
+                                                        Context& context) {
   return LazyInitFunctionsSubsection{data, "init functions subsection",
-                                     features, errors};
+                                     context};
 }
 
-LazyInitFunctionsSubsection ReadInitFunctionsSubsection(
-    LinkingSubsection sec,
-    const Features& features,
-    Errors& errors) {
-  return ReadInitFunctionsSubsection(sec.data, features, errors);
+LazyInitFunctionsSubsection ReadInitFunctionsSubsection(LinkingSubsection sec,
+                                                        Context& context) {
+  return ReadInitFunctionsSubsection(sec.data, context);
 }
 
 LazySegmentInfoSubsection ReadSegmentInfoSubsection(SpanU8 data,
-                                                    const Features& features,
-                                                    Errors& errors) {
-  return LazySegmentInfoSubsection{data, "segment info subsection", features,
-                                   errors};
+                                                    Context& context) {
+  return LazySegmentInfoSubsection{data, "segment info subsection", context};
 }
 
 LazySegmentInfoSubsection ReadSegmentInfoSubsection(LinkingSubsection sec,
-                                                    const Features& features,
-                                                    Errors& errors) {
-  return ReadSegmentInfoSubsection(sec.data, features, errors);
+                                                    Context& context) {
+  return ReadSegmentInfoSubsection(sec.data, context);
 }
 
 LazySymbolTableSubsection ReadSymbolTableSubsection(SpanU8 data,
-                                                    const Features& features,
-                                                    Errors& errors) {
-  return LazySymbolTableSubsection{data, "symbol table subsection", features,
-                                   errors};
+                                                    Context& context) {
+  return LazySymbolTableSubsection{data, "symbol table subsection", context};
 }
 
 LazySymbolTableSubsection ReadSymbolTableSubsection(LinkingSubsection sec,
-                                                    const Features& features,
-                                                    Errors& errors) {
-  return ReadSymbolTableSubsection(sec.data, features, errors);
+                                                    Context& context) {
+  return ReadSymbolTableSubsection(sec.data, context);
 }
 
 }  // namespace binary

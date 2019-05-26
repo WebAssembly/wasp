@@ -121,34 +121,34 @@ Result Visit(LazyModule, Visitor&);
     return Result::Fail;   \
   }
 
-#define WASP_SECTION(Name)                                                 \
-  case SectionId::Name: {                                                  \
-    auto sec = Read##Name##Section(known, module.features, module.errors); \
-    auto res = visitor.Begin##Name##Section(sec);                          \
-    if (res == Result::Ok) {                                               \
-      for (const auto& item : sec.sequence) {                              \
-        WASP_CHECK(visitor.On##Name(item));                                \
-      }                                                                    \
-      WASP_CHECK(visitor.End##Name##Section(sec));                         \
-    } else if (res == Result::Fail) {                                      \
-      return Result::Fail;                                                 \
-    }                                                                      \
-    break;                                                                 \
+#define WASP_SECTION(Name)                                 \
+  case SectionId::Name: {                                  \
+    auto sec = Read##Name##Section(known, module.context); \
+    auto res = visitor.Begin##Name##Section(sec);          \
+    if (res == Result::Ok) {                               \
+      for (const auto& item : sec.sequence) {              \
+        WASP_CHECK(visitor.On##Name(item));                \
+      }                                                    \
+      WASP_CHECK(visitor.End##Name##Section(sec));         \
+    } else if (res == Result::Fail) {                      \
+      return Result::Fail;                                 \
+    }                                                      \
+    break;                                                 \
   }
 
-#define WASP_OPT_SECTION(Name)                                             \
-  case SectionId::Name: {                                                  \
-    auto opt = Read##Name##Section(known, module.features, module.errors); \
-    auto res = visitor.Begin##Name##Section(opt);                          \
-    if (res == Result::Ok) {                                               \
-      if (opt) {                                                           \
-        WASP_CHECK(visitor.On##Name(*opt));                                \
-      }                                                                    \
-      WASP_CHECK(visitor.End##Name##Section(opt));                         \
-    } else if (res == Result::Fail) {                                      \
-      return Result::Fail;                                                 \
-    }                                                                      \
-    break;                                                                 \
+#define WASP_OPT_SECTION(Name)                             \
+  case SectionId::Name: {                                  \
+    auto opt = Read##Name##Section(known, module.context); \
+    auto res = visitor.Begin##Name##Section(opt);          \
+    if (res == Result::Ok) {                               \
+      if (opt) {                                           \
+        WASP_CHECK(visitor.On##Name(*opt));                \
+      }                                                    \
+      WASP_CHECK(visitor.End##Name##Section(opt));         \
+    } else if (res == Result::Fail) {                      \
+      return Result::Fail;                                 \
+    }                                                      \
+    break;                                                 \
   }
 
 template <typename Visitor>

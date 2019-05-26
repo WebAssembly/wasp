@@ -20,15 +20,16 @@
 #include "test/binary/test_utils.h"
 #include "wasp/binary/errors_nop.h"
 #include "wasp/binary/read.h"
+#include "wasp/binary/read/context.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
 TEST(LazySequenceTest, Basic) {
-  Features features;
   ErrorsNop errors;
-  LazySequence<u32> seq{"\x01\x80\x02\x00\x80\x80\x01"_su8, features, errors};
+  Context context{errors};
+  LazySequence<u32> seq{"\x01\x80\x02\x00\x80\x80\x01"_su8, context};
   auto it = seq.begin();
 
   EXPECT_EQ(1u, *it++);
@@ -45,18 +46,18 @@ TEST(LazySequenceTest, Basic) {
 }
 
 TEST(LazySequenceTest, Empty) {
-  Features features;
   ErrorsNop errors;
-  LazySequence<u8> seq{""_su8, features, errors};
+  Context context{errors};
+  LazySequence<u8> seq{""_su8, context};
 
   EXPECT_EQ(seq.begin(), seq.end());
 }
 
 TEST(LazySequenceTest, Error) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const auto data = "\x40\x30\x80"_su8;
-  LazySequence<s32> seq{data, features, errors};
+  LazySequence<s32> seq{data, context};
 
   auto it = seq.begin();
 
@@ -70,10 +71,10 @@ TEST(LazySequenceTest, Error) {
 }
 
 TEST(LazySequenceTest, ExpectedCount_Match) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const auto data = "\x00\x01"_su8;
-  LazySequence<s32> seq{data, 2, "MySequence", features, errors};
+  LazySequence<s32> seq{data, 2, "MySequence", context};
 
   auto it = seq.begin();
   it++;
@@ -82,10 +83,10 @@ TEST(LazySequenceTest, ExpectedCount_Match) {
 }
 
 TEST(LazySequenceTest, ExpectedCount_ActualLess) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const auto data = "\x00"_su8;
-  LazySequence<s32> seq{data, 2, "MySequence", features, errors};
+  LazySequence<s32> seq{data, 2, "MySequence", context};
 
   auto it = seq.begin();
   it++;
@@ -94,10 +95,10 @@ TEST(LazySequenceTest, ExpectedCount_ActualLess) {
 }
 
 TEST(LazySequenceTest, ExpectedCount_ActualMore) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   const auto data = "\x00\x01\x02\x03"_su8;
-  LazySequence<s32> seq{data, 2, "MySequence", features, errors};
+  LazySequence<s32> seq{data, 2, "MySequence", context};
 
   auto it = seq.begin();
   it++;

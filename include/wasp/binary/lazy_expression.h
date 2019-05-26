@@ -22,18 +22,15 @@
 #include "wasp/binary/types.h"
 
 namespace wasp {
-
-class Features;
-
 namespace binary {
 
-class Errors;
+struct Context;
 
 /// ---
 using LazyExpression = LazySequence<Instruction>;
 
-LazyExpression ReadExpression(SpanU8, const Features&, Errors&);
-LazyExpression ReadExpression(Expression, const Features&, Errors&);
+LazyExpression ReadExpression(SpanU8, Context&);
+LazyExpression ReadExpression(Expression, Context&);
 
 }  // namespace binary
 }  // namespace wasp

@@ -18,6 +18,7 @@
 #include "test/binary/test_utils.h"
 #include "wasp/binary/sections_linking.h"
 #include "wasp/binary/types_linking.h"
+#include "wasp/binary/read/context.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
@@ -39,15 +40,15 @@ void ExpectSubsection(const std::vector<T>& expected, LazySection<T>& sec) {
 }  // namespace
 
 TEST(LinkingSectionTest, LinkingSection) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   auto sec = ReadLinkingSection(
       "\x02"                // Linking version.
       "\x05\x05zzzzz"       // Segment info
       "\x06\x05zzzzz"       // Init functions
       "\x07\x05zzzzz"       // Comdat info
       "\x08\x05zzzzz"_su8,  // Symbol table
-      features, errors);
+      context);
 
   auto it = sec.subsections.begin();
   auto end = sec.subsections.end();
@@ -73,14 +74,14 @@ TEST(LinkingSectionTest, LinkingSection) {
 }
 
 TEST(LinkingSectionTest, SegmentInfoSubsection) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   auto sec = ReadSegmentInfoSubsection(
       "\x03"
       "\x01X\x01\x02"
       "\x01Y\x03\x04"
       "\x01Z\x05\x06"_su8,
-      features, errors);
+      context);
 
   ExpectSubsection(
       {
@@ -93,13 +94,13 @@ TEST(LinkingSectionTest, SegmentInfoSubsection) {
 }
 
 TEST(LinkingSectionTest, InitFunctionsSubsection) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   auto sec = ReadInitFunctionsSubsection(
       "\x02"
       "\x01\x02"
       "\x03\x04"_su8,
-      features, errors);
+      context);
 
   ExpectSubsection(
       {
@@ -111,13 +112,13 @@ TEST(LinkingSectionTest, InitFunctionsSubsection) {
 }
 
 TEST(LinkingSectionTest, ComdatSubsection) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   auto sec = ReadComdatSubsection(
       "\x02"
       "\x01X\0\x01\x03\x04"
       "\x01Y\0\x00"_su8,
-      features, errors);
+      context);
 
   ExpectSubsection(
       {
@@ -129,14 +130,14 @@ TEST(LinkingSectionTest, ComdatSubsection) {
 }
 
 TEST(LinkingSectionTest, SymbolTableSubsection) {
-  Features features;
   TestErrors errors;
+  Context context{errors};
   auto sec = ReadSymbolTableSubsection(
       "\x03"
       "\x00\x40\x00\x03YYY"
       "\x01\x00\x03ZZZ\x00\x00\x00"
       "\x03\x00\x00"_su8,
-      features, errors);
+      context);
 
   using SI = SymbolInfo;
   using F = SymbolInfo::Flags;
