@@ -31,6 +31,7 @@ include_directories(
   ${wasp_SOURCE_DIR}/third_party/span-lite/include
   ${wasp_SOURCE_DIR}/third_party/string-view-lite/include
   ${wasp_SOURCE_DIR}/third_party/variant-lite/include
+  ${wasp_SOURCE_DIR}/third_party/parallel-hashmap
 )
 
 add_library(wasplib
@@ -112,6 +113,7 @@ add_executable(wasp_unittests
   src/tools/argparser.cc
   test/base/enumerate_test.cc
   test/base/formatters_test.cc
+  test/base/hash_test.cc
   test/base/str_to_u32_test.cc
   test/base/v128_test.cc
   test/binary/formatters_test.cc
