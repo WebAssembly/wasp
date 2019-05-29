@@ -17,6 +17,7 @@
 #include "wasp/binary/limits.h"
 
 #include "src/base/operator_eq_ne_macros.h"
+#include "src/base/std_hash_macros.h"
 
 namespace wasp {
 namespace binary {
@@ -32,3 +33,5 @@ WASP_OPERATOR_EQ_NE_3(Limits, min, max, shared)
 
 }  // namespace binary
 }  // namespace wasp
+
+WASP_STD_HASH_3(::wasp::binary::Limits, min, max, shared)

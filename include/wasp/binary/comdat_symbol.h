@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_COMDAT_SYMBOL_H_
 #define WASP_BINARY_COMDAT_SYMBOL_H_
 
+#include <functional>
+
 #include "wasp/base/types.h"
 #include "wasp/binary/comdat_symbol_kind.h"
 
@@ -33,5 +35,14 @@ bool operator!=(const ComdatSymbol&, const ComdatSymbol&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::ComdatSymbol> {
+  size_t operator()(const ::wasp::binary::ComdatSymbol&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_COMDAT_SYMBOL_H_

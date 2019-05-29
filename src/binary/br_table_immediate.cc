@@ -17,6 +17,7 @@
 #include "wasp/binary/br_table_immediate.h"
 
 #include "src/base/operator_eq_ne_macros.h"
+#include "wasp/base/hash.h"
 
 namespace wasp {
 namespace binary {
@@ -25,3 +26,11 @@ WASP_OPERATOR_EQ_NE_2(BrTableImmediate, targets, default_target)
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+size_t hash<::wasp::binary::BrTableImmediate>::operator()(
+    const ::wasp::binary::BrTableImmediate& v) const {
+  return ::wasp::HashState::combine(0, ::wasp::HashContainer(v.targets),
+                                    v.default_target);
+}
+}  // namespace std

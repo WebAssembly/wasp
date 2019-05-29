@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_DATA_SEGMENT_H_
 #define WASP_BINARY_DATA_SEGMENT_H_
 
+#include <functional>
+
 #include "wasp/base/span.h"
 #include "wasp/base/types.h"
 #include "wasp/base/variant.h"
@@ -66,6 +68,25 @@ bool operator!=(const DataSegment::Passive&, const DataSegment::Passive&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::DataSegment> {
+  size_t operator()(const ::wasp::binary::DataSegment&) const;
+};
+
+template <>
+struct hash<::wasp::binary::DataSegment::Active> {
+  size_t operator()(const ::wasp::binary::DataSegment::Active&) const;
+};
+
+template <>
+struct hash<::wasp::binary::DataSegment::Passive> {
+  size_t operator()(const ::wasp::binary::DataSegment::Passive&) const;
+};
+
+}  // namespace std
 
 #include "wasp/binary/data_segment-inl.h"
 

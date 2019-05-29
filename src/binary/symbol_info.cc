@@ -19,6 +19,7 @@
 #include <cassert>
 
 #include "src/base/operator_eq_ne_macros.h"
+#include "src/base/std_hash_macros.h"
 
 namespace wasp {
 namespace binary {
@@ -49,3 +50,14 @@ WASP_OPERATOR_EQ_NE_1(SymbolInfo::Section, section)
 
 }  // namespace binary
 }  // namespace wasp
+
+WASP_STD_HASH_2(::wasp::binary::SymbolInfo, flags, desc)
+WASP_STD_HASH_4(::wasp::binary::SymbolInfo::Flags,
+                binding,
+                visibility,
+                undefined,
+                explicit_name)
+WASP_STD_HASH_3(::wasp::binary::SymbolInfo::Base, kind, index, name)
+WASP_STD_HASH_2(::wasp::binary::SymbolInfo::Data, name, defined)
+WASP_STD_HASH_3(::wasp::binary::SymbolInfo::Data::Defined, index, offset, size)
+WASP_STD_HASH_1(::wasp::binary::SymbolInfo::Section, section)

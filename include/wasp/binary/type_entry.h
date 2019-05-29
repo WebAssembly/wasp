@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_TYPE_ENTRY_H_
 #define WASP_BINARY_TYPE_ENTRY_H_
 
+#include <functional>
+
 #include "wasp/binary/function_type.h"
 
 namespace wasp {
@@ -31,5 +33,14 @@ bool operator!=(const TypeEntry&, const TypeEntry&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::TypeEntry> {
+  size_t operator()(const ::wasp::binary::TypeEntry&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_TYPE_ENTRY_H_

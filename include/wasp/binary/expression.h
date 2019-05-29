@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_EXPRESSION_H_
 #define WASP_BINARY_EXPRESSION_H_
 
+#include <functional>
+
 #include "wasp/base/span.h"
 
 namespace wasp {
@@ -31,5 +33,14 @@ bool operator!=(const Expression&, const Expression&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Expression> {
+  size_t operator()(const ::wasp::binary::Expression&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_EXPRESSION_H_

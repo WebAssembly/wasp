@@ -14,17 +14,14 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/export.h"
+#include "wasp/base/span.h"
 
-#include "src/base/operator_eq_ne_macros.h"
-#include "src/base/std_hash_macros.h"
+#include "wasp/base/hash.h"
 
-namespace wasp {
-namespace binary {
+namespace std {
 
-WASP_OPERATOR_EQ_NE_3(Export, kind, name, index)
+size_t hash<::wasp::SpanU8>::operator()(::wasp::SpanU8 v) const {
+  return ::wasp::HashContainer(v);
+}
 
-}  // namespace binary
-}  // namespace wasp
-
-WASP_STD_HASH_3(::wasp::binary::Export, kind, name, index)
+}  // namespace std

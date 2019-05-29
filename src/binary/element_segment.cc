@@ -17,6 +17,7 @@
 #include "wasp/binary/element_segment.h"
 
 #include "src/base/operator_eq_ne_macros.h"
+#include "src/base/std_hash_macros.h"
 
 namespace wasp {
 namespace binary {
@@ -36,3 +37,19 @@ WASP_OPERATOR_EQ_NE_2(ElementSegment::Passive, element_type, init)
 
 }  // namespace binary
 }  // namespace wasp
+
+WASP_STD_HASH_1(::wasp::binary::ElementSegment, desc)
+
+namespace std {
+
+size_t hash<::wasp::binary::ElementSegment::Active>::operator()(
+    const ::wasp::binary::ElementSegment::Active& v) const {
+  return ::wasp::HashState::combine(0, v.offset, ::wasp::HashContainer(v.init));
+}
+
+size_t hash<::wasp::binary::ElementSegment::Passive>::operator()(
+    const ::wasp::binary::ElementSegment::Passive& v) const {
+  return ::wasp::HashState::combine(0, ::wasp::HashContainer(v.init));
+}
+
+}  // namespace std

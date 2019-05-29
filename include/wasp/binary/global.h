@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_GLOBAL_H_
 #define WASP_BINARY_GLOBAL_H_
 
+#include <functional>
+
 #include "wasp/binary/constant_expression.h"
 #include "wasp/binary/global_type.h"
 
@@ -33,5 +35,14 @@ bool operator!=(const Global&, const Global&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Global> {
+  size_t operator()(const ::wasp::binary::Global&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_GLOBAL_H_

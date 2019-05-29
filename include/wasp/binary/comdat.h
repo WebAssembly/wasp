@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_COMDAT_H_
 #define WASP_BINARY_COMDAT_H_
 
+#include <functional>
 #include <vector>
 
 #include "wasp/base/string_view.h"
@@ -37,5 +38,14 @@ bool operator!=(const Comdat&, const Comdat&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Comdat> {
+  size_t operator()(const ::wasp::binary::Comdat&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_COMDAT_H_

@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_CALL_INDIRECT_IMMEDIATE_H_
 #define WASP_BINARY_CALL_INDIRECT_IMMEDIATE_H_
 
+#include <functional>
+
 #include "wasp/base/types.h"
 
 namespace wasp {
@@ -32,5 +34,14 @@ bool operator!=(const CallIndirectImmediate&, const CallIndirectImmediate&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::CallIndirectImmediate> {
+  size_t operator()(const ::wasp::binary::CallIndirectImmediate&) const;
+};
+
+}  // namespace std
 
 #endif  // WASP_BINARY_CALL_INDIRECT_IMMEDIATE_H_

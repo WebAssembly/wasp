@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_RELOCATION_ENTRY_H_
 #define WASP_BINARY_RELOCATION_ENTRY_H_
 
+#include <functional>
+
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/relocation_type.h"
@@ -36,5 +38,14 @@ bool operator!=(const RelocationEntry&, const RelocationEntry&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::RelocationEntry> {
+  size_t operator()(const ::wasp::binary::RelocationEntry&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_RELOCATION_ENTRY_H_

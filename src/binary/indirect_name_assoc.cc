@@ -17,6 +17,7 @@
 #include "wasp/binary/indirect_name_assoc.h"
 
 #include "src/base/operator_eq_ne_macros.h"
+#include "wasp/base/hash.h"
 
 namespace wasp {
 namespace binary {
@@ -25,3 +26,11 @@ WASP_OPERATOR_EQ_NE_2(IndirectNameAssoc, index, name_map)
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+size_t hash<::wasp::binary::IndirectNameAssoc>::operator()(
+    const ::wasp::binary::IndirectNameAssoc& v) const {
+  return ::wasp::HashState::combine(0, v.index,
+                                    ::wasp::HashContainer(v.name_map));
+}
+}  // namespace std

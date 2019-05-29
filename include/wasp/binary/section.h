@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_SECTION_H_
 #define WASP_BINARY_SECTION_H_
 
+#include <functional>
+
 #include "wasp/base/variant.h"
 #include "wasp/binary/custom_section.h"
 #include "wasp/binary/known_section.h"
@@ -43,6 +45,15 @@ bool operator!=(const Section&, const Section&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Section> {
+  size_t operator()(const ::wasp::binary::Section&) const;
+};
+
+}  // namespace std
 
 #include "wasp/binary/section-inl.h"
 

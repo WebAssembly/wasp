@@ -17,6 +17,7 @@
 #include "wasp/binary/comdat.h"
 
 #include "src/base/operator_eq_ne_macros.h"
+#include "wasp/base/hash.h"
 
 namespace wasp {
 namespace binary {
@@ -25,3 +26,11 @@ WASP_OPERATOR_EQ_NE_3(Comdat, name, flags, symbols)
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+size_t hash<::wasp::binary::Comdat>::operator()(
+    const ::wasp::binary::Comdat& v) const {
+  return ::wasp::HashState::combine(0, v.name, v.flags,
+                                    ::wasp::HashContainer(v.symbols));
+}
+}  // namespace std

@@ -17,6 +17,7 @@
 #include "wasp/binary/relocation_entry.h"
 
 #include "src/base/operator_eq_ne_macros.h"
+#include "src/base/std_hash_macros.h"
 
 namespace wasp {
 namespace binary {
@@ -25,3 +26,5 @@ WASP_OPERATOR_EQ_NE_4(RelocationEntry, type, offset, index, addend)
 
 }  // namespace binary
 }  // namespace wasp
+
+WASP_STD_HASH_4(::wasp::binary::RelocationEntry, type, offset, index, addend)

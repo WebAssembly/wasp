@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_LINKING_SUBSECTION_H_
 #define WASP_BINARY_LINKING_SUBSECTION_H_
 
+#include <functional>
+
 #include "wasp/base/span.h"
 #include "wasp/binary/linking_subsection_id.h"
 
@@ -33,5 +35,14 @@ bool operator!=(const LinkingSubsection&, const LinkingSubsection&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::LinkingSubsection> {
+  size_t operator()(const ::wasp::binary::LinkingSubsection&) const;
+};
+
+}  // namespace std
 
 #endif  // WASP_BINARY_LINKING_SUBSECTION_H_

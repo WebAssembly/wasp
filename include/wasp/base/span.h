@@ -17,6 +17,8 @@
 #ifndef WASP_BASE_SPAN_H_
 #define WASP_BASE_SPAN_H_
 
+#include <functional>
+
 #include "nonstd/span.hpp"
 
 #include "wasp/base/types.h"
@@ -44,5 +46,14 @@ void remove_prefix(span<T, Extent>* s, span_index_t offset) {
 using SpanU8 = span<const u8>;
 
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::SpanU8> {
+  size_t operator()(::wasp::SpanU8) const;
+};
+
+}
 
 #endif  // WASP_BASE_SPAN_H_

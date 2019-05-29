@@ -30,7 +30,7 @@ struct S {
   // Documentation says to use friend function named `hash_value`, but this
   // only seems to work with a static function.
   static size_t hash_value(const S& s) {
-    return HashState().combine(0, s.x, s.y);
+    return HashState::combine(0, s.x, s.y);
   }
 
   int x, y;

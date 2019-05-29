@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_LOCALS_H_
 #define WASP_BINARY_LOCALS_H_
 
+#include <functional>
+
 #include "wasp/base/types.h"
 #include "wasp/binary/value_type.h"
 
@@ -33,5 +35,14 @@ bool operator!=(const Locals&, const Locals&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Locals> {
+  size_t operator()(const ::wasp::binary::Locals&) const;
+};
+
+}  // namespace std
 
 #endif  // WASP_BINARY_LOCALS_H_

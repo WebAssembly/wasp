@@ -16,6 +16,8 @@
 
 #include <cstring>
 
+#include "wasp/base/hash.h"
+
 namespace wasp {
 
 template <typename T>

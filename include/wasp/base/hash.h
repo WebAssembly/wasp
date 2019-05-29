@@ -17,6 +17,8 @@
 #ifndef WASP_BASE_HASH_H_
 #define WASP_BASE_HASH_H_
 
+#include <iterator>
+
 #include "parallel_hashmap/phmap.h"
 #include "parallel_hashmap/phmap_utils.h"
 
@@ -28,6 +30,20 @@ using phmap::node_hash_set;
 using phmap::node_hash_map;
 
 using phmap::HashState;
+
+template <typename T1, typename T2>
+size_t HashRange(T1 begin, T2 end) {
+  size_t state = 0;
+  for (auto it = begin; it != end; ++it) {
+    state = HashState::combine(state, *it);
+  }
+  return state;
+}
+
+template <typename C>
+size_t HashContainer(const C& c) {
+  return HashRange(std::begin(c), std::end(c));
+}
 
 }  // namespace wasp
 

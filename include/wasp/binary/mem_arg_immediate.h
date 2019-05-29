@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_MEM_ARG_IMMEDIATE_H_
 #define WASP_BINARY_MEM_ARG_IMMEDIATE_H_
 
+#include <functional>
+
 #include "wasp/base/types.h"
 
 namespace wasp {
@@ -32,5 +34,14 @@ bool operator!=(const MemArgImmediate&, const MemArgImmediate&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::MemArgImmediate> {
+  size_t operator()(const ::wasp::binary::MemArgImmediate&) const;
+};
+
+}  // namespace std
 
 #endif  // WASP_BINARY_MEM_ARG_IMMEDIATE_H_

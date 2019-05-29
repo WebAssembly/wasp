@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_SEGMENT_INFO_H_
 #define WASP_BINARY_SEGMENT_INFO_H_
 
+#include <functional>
+
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 
@@ -34,5 +36,14 @@ bool operator!=(const SegmentInfo&, const SegmentInfo&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::SegmentInfo> {
+  size_t operator()(const ::wasp::binary::SegmentInfo&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_SEGMENT_INFO_H_

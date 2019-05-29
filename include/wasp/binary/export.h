@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_EXPORT_H_
 #define WASP_BINARY_EXPORT_H_
 
+#include <functional>
+
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/external_kind.h"
@@ -35,5 +37,14 @@ bool operator!=(const Export&, const Export&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Export> {
+  size_t operator()(const ::wasp::binary::Export&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_EXPORT_H_

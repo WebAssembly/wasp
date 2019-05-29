@@ -18,6 +18,7 @@
 #define WASP_BASE_V128_H_
 
 #include <array>
+#include <functional>
 #include <type_traits>
 
 #include "wasp/base/types.h"
@@ -92,6 +93,15 @@ struct v128 {
 };
 
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::v128> {
+  size_t operator()(const ::wasp::v128&) const;
+};
+
+}  // namespace std
 
 #include "wasp/base/v128-inl.h"
 

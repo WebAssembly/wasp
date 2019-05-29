@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_CODE_H_
 #define WASP_BINARY_CODE_H_
 
+#include <functional>
 #include <vector>
 
 #include "wasp/binary/expression.h"
@@ -35,5 +36,14 @@ bool operator!=(const Code&, const Code&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Code> {
+  size_t operator()(const ::wasp::binary::Code&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_CODE_H_

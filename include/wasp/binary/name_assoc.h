@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_NAME_ASSOC_H_
 #define WASP_BINARY_NAME_ASSOC_H_
 
+#include <functional>
+
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 
@@ -33,5 +35,14 @@ bool operator!=(const NameAssoc&, const NameAssoc&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::NameAssoc> {
+  size_t operator()(const ::wasp::binary::NameAssoc&) const;
+};
+
+}  // namespace std
 
 #endif  // WASP_BINARY_NAME_ASSOC_H_

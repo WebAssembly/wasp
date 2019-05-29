@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_FUNCTION_TYPE_H_
 #define WASP_BINARY_FUNCTION_TYPE_H_
 
+#include <functional>
+
 #include "wasp/binary/value_types.h"
 
 namespace wasp {
@@ -32,5 +34,14 @@ bool operator!=(const FunctionType&, const FunctionType&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::FunctionType> {
+  size_t operator()(const ::wasp::binary::FunctionType&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_FUNCTION_TYPE_H_

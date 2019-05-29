@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_LIMITS_H_
 #define WASP_BINARY_LIMITS_H_
 
+#include <functional>
+
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/shared.h"
@@ -39,5 +41,14 @@ bool operator!=(const Limits&, const Limits&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Limits> {
+  size_t operator()(const ::wasp::binary::Limits&) const;
+};
+
+}  // namespace std
 
 #endif  // WASP_BINARY_LIMITS_H_

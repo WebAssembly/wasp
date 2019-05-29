@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_SYMBOL_INFO_H_
 #define WASP_BINARY_SYMBOL_INFO_H_
 
+#include <functional>
+
 #include "wasp/base/optional.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
@@ -109,6 +111,40 @@ bool operator!=(const SymbolInfo::Section&, const SymbolInfo::Section&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::SymbolInfo> {
+  size_t operator()(const ::wasp::binary::SymbolInfo&) const;
+};
+
+template <>
+struct hash<::wasp::binary::SymbolInfo::Flags> {
+  size_t operator()(const ::wasp::binary::SymbolInfo::Flags&) const;
+};
+
+template <>
+struct hash<::wasp::binary::SymbolInfo::Base> {
+  size_t operator()(const ::wasp::binary::SymbolInfo::Base&) const;
+};
+
+template <>
+struct hash<::wasp::binary::SymbolInfo::Data> {
+  size_t operator()(const ::wasp::binary::SymbolInfo::Data&) const;
+};
+
+template <>
+struct hash<::wasp::binary::SymbolInfo::Data::Defined> {
+  size_t operator()(const ::wasp::binary::SymbolInfo::Data::Defined&) const;
+};
+
+template <>
+struct hash<::wasp::binary::SymbolInfo::Section> {
+  size_t operator()(const ::wasp::binary::SymbolInfo::Section&) const;
+};
+
+}  // namespace std
 
 #include "wasp/binary/symbol_info-inl.h"
 

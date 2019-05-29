@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_KNOWN_SECTION_H_
 #define WASP_BINARY_KNOWN_SECTION_H_
 
+#include <functional>
+
 #include "wasp/base/span.h"
 #include "wasp/binary/section_id.h"
 
@@ -33,5 +35,14 @@ bool operator!=(const KnownSection&, const KnownSection&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::KnownSection> {
+  size_t operator()(const ::wasp::binary::KnownSection&) const;
+};
+
+}  // namespace std
 
 #endif  // WASP_BINARY_KNOWN_SECTION_H_

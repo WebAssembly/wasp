@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_BR_TABLE_IMMEDIATE_H_
 #define WASP_BINARY_BR_TABLE_IMMEDIATE_H_
 
+#include <functional>
 #include <vector>
 
 #include "wasp/base/types.h"
@@ -34,5 +35,14 @@ bool operator!=(const BrTableImmediate&, const BrTableImmediate&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::BrTableImmediate> {
+  size_t operator()(const ::wasp::binary::BrTableImmediate&) const;
+};
+
+}  // namespace std
 
 #endif  // WASP_BINARY_BR_TABLE_IMMEDIATE_H_

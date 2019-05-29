@@ -17,6 +17,7 @@
 #include "wasp/binary/known_section.h"
 
 #include "src/base/operator_eq_ne_macros.h"
+#include "src/base/std_hash_macros.h"
 
 namespace wasp {
 namespace binary {
@@ -25,3 +26,5 @@ WASP_OPERATOR_EQ_NE_2(KnownSection, id, data)
 
 }  // namespace binary
 }  // namespace wasp
+
+WASP_STD_HASH_2(::wasp::binary::KnownSection, id, data)

@@ -29,4 +29,13 @@ using ShuffleImmediate = std::array<u8, 16>;
 }  // namespace binary
 }  // namespace wasp
 
+namespace std {
+
+template <>
+struct hash<::wasp::binary::ShuffleImmediate> {
+  size_t operator()(const ::wasp::binary::ShuffleImmediate&) const;
+};
+
+}  // namespace std
+
 #endif  // WASP_BINARY_SHUFFLE_IMMEDIATE_H_

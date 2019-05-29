@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_START_H_
 #define WASP_BINARY_START_H_
 
+#include <functional>
+
 #include "wasp/base/types.h"
 
 namespace wasp {
@@ -31,5 +33,14 @@ bool operator!=(const Start&, const Start&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Start> {
+  size_t operator()(const ::wasp::binary::Start&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_START_H_

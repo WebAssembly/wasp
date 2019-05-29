@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_INSTRUCTION_H_
 #define WASP_BINARY_INSTRUCTION_H_
 
+#include <functional>
+
 #include "wasp/base/types.h"
 #include "wasp/base/v128.h"
 #include "wasp/base/variant.h"
@@ -128,6 +130,15 @@ bool operator!=(const Instruction&, const Instruction&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Instruction> {
+  size_t operator()(const ::wasp::binary::Instruction&) const;
+};
+
+}  // namespace std
 
 #include "wasp/binary/instruction-inl.h"
 

@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_NAME_SUBSECTION_H_
 #define WASP_BINARY_NAME_SUBSECTION_H_
 
+#include <functional>
+
 #include "wasp/base/span.h"
 #include "wasp/binary/name_subsection_id.h"
 
@@ -33,5 +35,14 @@ bool operator!=(const NameSubsection&, const NameSubsection&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::NameSubsection> {
+  size_t operator()(const ::wasp::binary::NameSubsection&) const;
+};
+
+}  // namespace std
 
 #endif  // WASP_BINARY_NAME_SUBSECTION_H_

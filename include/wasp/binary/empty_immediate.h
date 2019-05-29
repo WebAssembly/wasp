@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_EMPTY_IMMEDIATE_H_
 #define WASP_BINARY_EMPTY_IMMEDIATE_H_
 
+#include <functional>
+
 namespace wasp {
 namespace binary {
 
@@ -27,5 +29,14 @@ bool operator!=(const EmptyImmediate&, const EmptyImmediate&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::EmptyImmediate> {
+  size_t operator()(const ::wasp::binary::EmptyImmediate&) const;
+};
+
+}  // namespace std
 
 #endif  // WASP_BINARY_EMPTY_IMMEDIATE_H_

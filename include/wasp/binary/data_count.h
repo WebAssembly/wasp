@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_DATA_COUNT_H_
 #define WASP_BINARY_DATA_COUNT_H_
 
+#include <functional>
+
 #include "wasp/base/types.h"
 
 namespace wasp {
@@ -31,5 +33,14 @@ bool operator!=(const DataCount&, const DataCount&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::DataCount> {
+  size_t operator()(const ::wasp::binary::DataCount&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_DATA_COUNT_H_

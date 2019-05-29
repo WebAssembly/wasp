@@ -37,6 +37,7 @@ include_directories(
 add_library(wasplib
   src/base/features.cc
   src/base/file.cc
+  src/base/span.cc
   src/base/str_to_u32.cc
   src/base/v128.cc
   src/binary/br_on_exn_immediate.cc
@@ -83,6 +84,7 @@ add_library(wasplib
   src/binary/relocation_entry.cc
   src/binary/section.cc
   src/binary/segment_info.cc
+  src/binary/shuffle_immediate.cc
   src/binary/start.cc
   src/binary/symbol_info.cc
   src/binary/table.cc

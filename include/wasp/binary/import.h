@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_IMPORT_H_
 #define WASP_BINARY_IMPORT_H_
 
+#include <functional>
+
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/base/variant.h"
@@ -54,6 +56,15 @@ bool operator!=(const Import&, const Import&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Import> {
+  size_t operator()(const ::wasp::binary::Import&) const;
+};
+
+}  // namespace std
 
 #include "wasp/binary/import-inl.h"
 

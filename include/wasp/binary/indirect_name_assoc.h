@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_INDIRECT_NAME_ASSOC_H_
 #define WASP_BINARY_INDIRECT_NAME_ASSOC_H_
 
+#include <functional>
+
 #include "wasp/base/types.h"
 #include "wasp/binary/name_map.h"
 
@@ -33,5 +35,14 @@ bool operator!=(const IndirectNameAssoc&, const IndirectNameAssoc&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::IndirectNameAssoc> {
+  size_t operator()(const ::wasp::binary::IndirectNameAssoc&) const;
+};
+
+}  // namespace std
 
 #endif  // WASP_BINARY_INDIRECT_NAME_ASSOC_H_

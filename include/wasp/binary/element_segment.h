@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_ELEMENT_SEGMENT_H_
 #define WASP_BINARY_ELEMENT_SEGMENT_H_
 
+#include <functional>
 #include <vector>
 
 #include "wasp/base/types.h"
@@ -73,6 +74,25 @@ bool operator!=(const ElementSegment::Passive&, const ElementSegment::Passive&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::ElementSegment> {
+  size_t operator()(const ::wasp::binary::ElementSegment&) const;
+};
+
+template <>
+struct hash<::wasp::binary::ElementSegment::Active> {
+  size_t operator()(const ::wasp::binary::ElementSegment::Active&) const;
+};
+
+template <>
+struct hash<::wasp::binary::ElementSegment::Passive> {
+  size_t operator()(const ::wasp::binary::ElementSegment::Passive&) const;
+};
+
+}  // namespace std
 
 #include "wasp/binary/element_segment-inl.h"
 

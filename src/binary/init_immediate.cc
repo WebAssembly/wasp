@@ -17,6 +17,7 @@
 #include "wasp/binary/init_immediate.h"
 
 #include "src/base/operator_eq_ne_macros.h"
+#include "src/base/std_hash_macros.h"
 
 namespace wasp {
 namespace binary {
@@ -25,3 +26,5 @@ WASP_OPERATOR_EQ_NE_2(InitImmediate, segment_index, reserved)
 
 }  // namespace binary
 }  // namespace wasp
+
+WASP_STD_HASH_2(::wasp::binary::InitImmediate, segment_index, reserved)

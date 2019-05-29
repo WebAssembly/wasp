@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_GLOBAL_TYPE_H_
 #define WASP_BINARY_GLOBAL_TYPE_H_
 
+#include <functional>
+
 #include "wasp/binary/mutability.h"
 #include "wasp/binary/value_type.h"
 
@@ -33,5 +35,14 @@ bool operator!=(const GlobalType&, const GlobalType&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::GlobalType> {
+  size_t operator()(const ::wasp::binary::GlobalType&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_GLOBAL_TYPE_H_

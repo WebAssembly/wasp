@@ -17,6 +17,7 @@
 #include "wasp/binary/code.h"
 
 #include "src/base/operator_eq_ne_macros.h"
+#include "wasp/base/hash.h"
 
 namespace wasp {
 namespace binary {
@@ -25,3 +26,10 @@ WASP_OPERATOR_EQ_NE_2(Code, locals, body)
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+size_t hash<::wasp::binary::Code>::operator()(
+    const ::wasp::binary::Code& v) const {
+  return ::wasp::HashState::combine(0, ::wasp::HashContainer(v.locals), v.body);
+}
+}  // namespace std

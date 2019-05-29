@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_CUSTOM_SECTION_H_
 #define WASP_BINARY_CUSTOM_SECTION_H_
 
+#include <functional>
+
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 
@@ -33,5 +35,14 @@ bool operator!=(const CustomSection&, const CustomSection&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::CustomSection> {
+  size_t operator()(const ::wasp::binary::CustomSection&) const;
+};
+
+}  // namespace std
 
 #endif  // WASP_BINARY_CUSTOM_SECTION_H_

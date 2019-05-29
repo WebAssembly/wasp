@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_TABLE_H_
 #define WASP_BINARY_TABLE_H_
 
+#include <functional>
+
 #include "wasp/binary/table_type.h"
 
 namespace wasp {
@@ -31,5 +33,14 @@ bool operator!=(const Table&, const Table&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Table> {
+  size_t operator()(const ::wasp::binary::Table&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_TABLE_H_

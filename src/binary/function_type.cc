@@ -17,6 +17,7 @@
 #include "wasp/binary/function_type.h"
 
 #include "src/base/operator_eq_ne_macros.h"
+#include "wasp/base/hash.h"
 
 namespace wasp {
 namespace binary {
@@ -25,3 +26,11 @@ WASP_OPERATOR_EQ_NE_2(FunctionType, param_types, result_types)
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+size_t hash<::wasp::binary::FunctionType>::operator()(
+    const ::wasp::binary::FunctionType& v) const {
+  return ::wasp::HashState::combine(0, ::wasp::HashContainer(v.param_types),
+                                    ::wasp::HashContainer(v.result_types));
+}
+}  // namespace std

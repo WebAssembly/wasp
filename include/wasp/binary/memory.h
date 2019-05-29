@@ -17,6 +17,8 @@
 #ifndef WASP_BINARY_MEMORY_H_
 #define WASP_BINARY_MEMORY_H_
 
+#include <functional>
+
 #include "wasp/binary/memory_type.h"
 
 namespace wasp {
@@ -31,5 +33,14 @@ bool operator!=(const Memory&, const Memory&);
 
 }  // namespace binary
 }  // namespace wasp
+
+namespace std {
+
+template <>
+struct hash<::wasp::binary::Memory> {
+  size_t operator()(const ::wasp::binary::Memory&) const;
+};
+
+}  // namespace std
 
 #endif // WASP_BINARY_MEMORY_H_
