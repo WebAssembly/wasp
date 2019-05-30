@@ -12,6 +12,7 @@ It also includes the `wasp` tool, which has the following commands:
 * `wasp cfg`: Generate a [dot graph][] of a function's [control-flow graph][]
 * `wasp dfg`: Generate a [dot graph][] of a function's [data-flow graph][]
 * `wasp validate`: Validate a WebAssembly module
+* `wasp pattern`: Find instruction sequence patterns
 
 ## wasp dump examples
 
@@ -134,6 +135,35 @@ Validate multiple modules.
 
 ```sh
 $ wasp validate mod1.wasm mod2.wasm mod3.wasm
+```
+
+## wasp pattern examples
+
+Print the 10 most common instruction sequences.
+
+```sh
+$ wasp pattern mod.wasm -d 10
+```
+
+This produces results similar to those shown below. The columns are as follows:
+
+1. How often the instruction sequence occurred
+2. The instruction sequence length
+3. The instruction sequence
+4. A percentage, calculated as `100 * count * sequence length / total instructions`.
+
+```
+71333: [2] [i32.const 0 global.set 10] 4.17%
+37382: [2] [end end] 2.19%
+34937: [2] [i32.const 1 i32.and] 2.04%
+25099: [2] [block [] block []] 1.47%
+21440: [2] [i32.and if []] 1.25%
+20154: [2] [i32.eqz if []] 1.18%
+19883: [3] [i32.const 1 i32.and if []] 1.75%
+18643: [2] [return end] 1.09%
+15857: [3] [block [] block [] block []] 1.39%
+15314: [2] [end local.get 0] 0.90%
+total instructions: 3417737
 ```
 
 [wabt]: https://github.com/WebAssembly/wabt

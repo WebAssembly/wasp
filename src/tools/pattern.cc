@@ -145,9 +145,8 @@ int Tool::Run() {
   for (const auto& pattern : sorted) {
     if (pattern.second > 1) {
       u64 pattern_instructions = u64(pattern.first.size()) * pattern.second;
-      print("| {} | {} | {} | {:.2f}% |\n", pattern.second,
-            pattern.first.size(), pattern.first,
-            100.0 * pattern_instructions / total_instructions);
+      print("{}: [{}] {} {:.2f}%\n", pattern.second, pattern.first.size(),
+            pattern.first, 100.0 * pattern_instructions / total_instructions);
     }
   }
   print("total instructions: {}\n", total_instructions);
@@ -171,11 +170,14 @@ visit::Result Tool::Visitor::OnCode(const Code& code) {
   auto instrs = ReadExpression(code.body, tool.options.features, tool.errors);
   for (auto it = instrs.begin(), end = instrs.end(); it != end; ++it) {
     auto instr = *it;
+#if 0
+    // Make all offsets and indexes 0.
     if (instr.has_mem_arg_immediate()) {
       instr.mem_arg_immediate().offset = 0;
     } else if (instr.has_index_immediate()) {
       instr.index_immediate() = 0;
     }
+#endif
 
     instructions.push_back(instr);
 
