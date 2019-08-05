@@ -26,6 +26,7 @@
 #include "wasp/base/file.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/macros.h"
+#include "wasp/base/str_to_u32.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/errors.h"
@@ -79,6 +80,8 @@ struct Options {
   bool print_disassembly = false;
   bool print_raw_data = false;
   string_view section_name;
+  optional<string_view> function;
+  optional<u32> func_index;
 };
 
 struct Tool {
@@ -227,6 +230,8 @@ int Main(span<string_view> args) {
       .Add('j', "--section", "<section>",
            "print only the contents of <section>",
            [&](string_view arg) { options.section_name = arg; })
+      .Add('f', "--function", "<func>", "only print information for <func>",
+           [&](string_view arg) { options.function = arg; })
       .Add("<filenames...>", "input wasm files",
            [&](string_view arg) { filenames.push_back(arg); });
   parser.Parse(args);
@@ -275,6 +280,15 @@ void Tool::Run() {
 
   print("\n{}:\tfile format wasm {}\n", filename, *module.version);
   DoPrepass();
+  // If we haven't found a function with the given name, try interpreting it as
+  // an index.
+  if (options.function && !options.func_index) {
+    options.func_index = StrToU32(*options.function);
+    if (!options.func_index) {
+      print(stderr, "unknown function {}\n", *options.function);
+      return;
+    }
+  }
   if (options.print_headers) {
     DoPass(Pass::Headers);
   }
@@ -598,9 +612,11 @@ visit::Result Tool::Visitor::BeginFunctionSection(LazyFunctionSection section) {
 }
 
 visit::Result Tool::Visitor::OnFunction(const Function& func) {
-  print(" - func[{}] sig={}", index, func.type_index);
-  tool.PrintFunctionName(index);
-  print("\n");
+  if (!tool.options.func_index || index == tool.options.func_index) {
+    print(" - func[{}] sig={}", index, func.type_index);
+    tool.PrintFunctionName(index);
+    print("\n");
+  }
   ++index;
   return visit::Result::Ok;
 }
@@ -713,10 +729,12 @@ visit::Result Tool::Visitor::BeginCodeSection(LazyCodeSection section) {
 }
 
 visit::Result Tool::Visitor::OnCode(const Code& code) {
-  if (pass == Pass::Details) {
-    print(" - func[{}] size={}\n", index, code.body.data.size());
-  } else {
-    tool.Disassemble(section_index, index, code);
+  if (!tool.options.func_index || index == tool.options.func_index) {
+    if (pass == Pass::Details) {
+      print(" - func[{}] size={}\n", index, code.body.data.size());
+    } else {
+      tool.Disassemble(section_index, index, code);
+    }
   }
   ++index;
   return visit::Result::Ok;
@@ -1001,6 +1019,9 @@ void Tool::Disassemble(SectionIndex section_index,
 
 void Tool::InsertFunctionName(Index index, string_view name) {
   function_names.insert(std::make_pair(index, name));
+  if (options.function == name) {
+    options.func_index = index;
+  }
 }
 
 void Tool::InsertGlobalName(Index index, string_view name) {
