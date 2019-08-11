@@ -645,11 +645,6 @@ TEST(WriteTest, Instruction_simd) {
       "\xfd\x02\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00"
       "\x00\x00\x00\x00\x00\x00"_su8,
       I{O::V128Const, v128{u64{5}, u64{6}}});
-  ExpectWrite<I>(
-      "\xfd\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-      "\x00\x00\x00\x00"_su8,
-      I{O::V8X16Shuffle,
-        ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}});
   ExpectWrite<I>("\xfd\x04"_su8, I{O::I8X16Splat});
   ExpectWrite<I>("\xfd\x05\x00"_su8, I{O::I8X16ExtractLaneS, u8{0}});
   ExpectWrite<I>("\xfd\x06\x00"_su8, I{O::I8X16ExtractLaneU, u8{0}});
@@ -786,6 +781,12 @@ TEST(WriteTest, Instruction_simd) {
   ExpectWrite<I>("\xfd\xb0\x01"_su8, I{O::F32X4ConvertI32X4U});
   ExpectWrite<I>("\xfd\xb1\x01"_su8, I{O::F64X2ConvertI64X2S});
   ExpectWrite<I>("\xfd\xb2\x01"_su8, I{O::F64X2ConvertI64X2U});
+  ExpectWrite<I>("\xfd\xc0\x01"_su8, I{O::V8X16Swizzle});
+  ExpectWrite<I>(
+      "\xfd\xc1\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+      "\x00\x00\x00\x00"_su8,
+      I{O::V8X16Shuffle,
+        ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}});
 }
 
 TEST(WriteTest, Instruction_threads) {
@@ -1133,7 +1134,6 @@ TEST(WriteTest, Opcode_simd) {
   ExpectWrite<O>("\xfd\x00"_su8, O::V128Load);
   ExpectWrite<O>("\xfd\x01"_su8, O::V128Store);
   ExpectWrite<O>("\xfd\x02"_su8, O::V128Const);
-  ExpectWrite<O>("\xfd\x03"_su8, O::V8X16Shuffle);
   ExpectWrite<O>("\xfd\x04"_su8, O::I8X16Splat);
   ExpectWrite<O>("\xfd\x05"_su8, O::I8X16ExtractLaneS);
   ExpectWrite<O>("\xfd\x06"_su8, O::I8X16ExtractLaneU);
@@ -1270,6 +1270,8 @@ TEST(WriteTest, Opcode_simd) {
   ExpectWrite<O>("\xfd\xb0\x01"_su8, O::F32X4ConvertI32X4U);
   ExpectWrite<O>("\xfd\xb1\x01"_su8, O::F64X2ConvertI64X2S);
   ExpectWrite<O>("\xfd\xb2\x01"_su8, O::F64X2ConvertI64X2U);
+  ExpectWrite<O>("\xfd\xc0\x01"_su8, O::V8X16Swizzle);
+  ExpectWrite<O>("\xfd\xc1\x01"_su8, O::V8X16Shuffle);
 }
 
 TEST(WriteTest, Opcode_threads) {

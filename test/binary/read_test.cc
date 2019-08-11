@@ -1248,11 +1248,6 @@ TEST(ReadTest, Instruction_simd) {
                 "\xfd\x02\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00"
                 "\x00\x00\x00\x00\x00\x00"_su8,
                 f);
-  ExpectRead<I>(I{O::V8X16Shuffle, ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                                     0, 0, 0, 0, 0, 0, 0}}},
-                "\xfd\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00"_su8,
-                f);
   ExpectRead<I>(I{O::I8X16Splat}, "\xfd\x04"_su8, f);
   ExpectRead<I>(I{O::I8X16ExtractLaneS, u8{0}}, "\xfd\x05\x00"_su8, f);
   ExpectRead<I>(I{O::I8X16ExtractLaneU, u8{0}}, "\xfd\x06\x00"_su8, f);
@@ -1389,6 +1384,12 @@ TEST(ReadTest, Instruction_simd) {
   ExpectRead<I>(I{O::F32X4ConvertI32X4U}, "\xfd\xb0\x01"_su8, f);
   ExpectRead<I>(I{O::F64X2ConvertI64X2S}, "\xfd\xb1\x01"_su8, f);
   ExpectRead<I>(I{O::F64X2ConvertI64X2U}, "\xfd\xb2\x01"_su8, f);
+  ExpectRead<I>(I{O::V8X16Swizzle}, "\xfd\xc0\x01"_su8, f);
+  ExpectRead<I>(I{O::V8X16Shuffle, ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                     0, 0, 0, 0, 0, 0, 0}}},
+                "\xfd\xc1\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00"_su8,
+                f);
 }
 
 TEST(ReadTest, Instruction_threads) {
@@ -1957,7 +1958,6 @@ TEST(ReadTest, Opcode_simd) {
   ExpectRead<O>(O::V128Load, "\xfd\x00"_su8, features);
   ExpectRead<O>(O::V128Store, "\xfd\x01"_su8, features);
   ExpectRead<O>(O::V128Const, "\xfd\x02"_su8, features);
-  ExpectRead<O>(O::V8X16Shuffle, "\xfd\x03"_su8, features);
   ExpectRead<O>(O::I8X16Splat, "\xfd\x04"_su8, features);
   ExpectRead<O>(O::I8X16ExtractLaneS, "\xfd\x05"_su8, features);
   ExpectRead<O>(O::I8X16ExtractLaneU, "\xfd\x06"_su8, features);
@@ -2094,6 +2094,8 @@ TEST(ReadTest, Opcode_simd) {
   ExpectRead<O>(O::F32X4ConvertI32X4U, "\xfd\xb0\x01"_su8, features);
   ExpectRead<O>(O::F64X2ConvertI64X2S, "\xfd\xb1\x01"_su8, features);
   ExpectRead<O>(O::F64X2ConvertI64X2U, "\xfd\xb2\x01"_su8, features);
+  ExpectRead<O>(O::V8X16Swizzle, "\xfd\xc0\x01"_su8, features);
+  ExpectRead<O>(O::V8X16Shuffle, "\xfd\xc1\x01"_su8, features);
 }
 
 TEST(ReadTest, Opcode_Unknown_simd_prefix) {
@@ -2101,10 +2103,10 @@ TEST(ReadTest, Opcode_Unknown_simd_prefix) {
   features.enable_simd();
 
   const u8 kInvalidOpcodes[] = {
-      0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
-      0x5e, 0x5f, 0x60, 0x61, 0x6f, 0x70, 0x71, 0x72, 0x7a, 0x7b,
-      0x7d, 0x7e, 0x80, 0x81, 0x82, 0x83, 0x8b, 0x8c, 0x8e, 0x8f,
-      0x90, 0x91, 0x92, 0x93, 0x94, 0xa3, 0xa4, 0xb3,
+      0x03, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e,
+      0x3f, 0x5e, 0x5f, 0x60, 0x61, 0x6f, 0x70, 0x71, 0x72, 0x7a,
+      0x7b, 0x7d, 0x7e, 0x80, 0x81, 0x82, 0x83, 0x8b, 0x8c, 0x8e,
+      0x8f, 0x90, 0x91, 0x92, 0x93, 0x94, 0xa3, 0xa4, 0xb3,
   };
   for (auto code : SpanU8{kInvalidOpcodes, sizeof(kInvalidOpcodes)}) {
     ExpectUnknownOpcode(0xfd, code, features);

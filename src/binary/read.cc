@@ -859,6 +859,7 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::I32X4TruncSatF32X4U:
     case Opcode::I64X2TruncSatF64X2S:
     case Opcode::I64X2TruncSatF64X2U:
+    case Opcode::V8X16Swizzle:
       return Instruction{Opcode{opcode}};
 
     // Type immediate.

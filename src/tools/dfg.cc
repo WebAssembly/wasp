@@ -753,6 +753,7 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::F64Max:
     case Opcode::F64Copysign:
     case Opcode::V8X16Shuffle:
+    case Opcode::V8X16Swizzle:
     case Opcode::I8X16ReplaceLane:
     case Opcode::I16X8ReplaceLane:
     case Opcode::I32X4ReplaceLane:
