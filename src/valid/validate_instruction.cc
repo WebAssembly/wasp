@@ -514,6 +514,10 @@ bool Load(const Instruction& instruction, Context& context, Errors& errors) {
     case Opcode::I64Load32S: span = span_i64; max_align = 2; break;
     case Opcode::I64Load32U: span = span_i64; max_align = 2; break;
     case Opcode::V128Load:   span = span_v128; max_align = 4; break;
+    case Opcode::I8X16LoadSplat:   span = span_v128; max_align = 0; break;
+    case Opcode::I16X8LoadSplat:   span = span_v128; max_align = 1; break;
+    case Opcode::I32X4LoadSplat:   span = span_v128; max_align = 2; break;
+    case Opcode::I64X2LoadSplat:   span = span_v128; max_align = 3; break;
     default:
       WASP_UNREACHABLE();
   }
@@ -926,6 +930,10 @@ bool Validate(const Instruction& value,
     case Opcode::I64Load32S:
     case Opcode::I64Load32U:
     case Opcode::V128Load:
+    case Opcode::I8X16LoadSplat:
+    case Opcode::I16X8LoadSplat:
+    case Opcode::I32X4LoadSplat:
+    case Opcode::I64X2LoadSplat:
       return Load(value, context, errors);
 
     case Opcode::I32Store:

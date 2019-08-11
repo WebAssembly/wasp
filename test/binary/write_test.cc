@@ -787,6 +787,14 @@ TEST(WriteTest, Instruction_simd) {
       "\x00\x00\x00\x00"_su8,
       I{O::V8X16Shuffle,
         ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}});
+  ExpectWrite<I>("\xfd\xc2\x01\x01\x02"_su8,
+                 I{O::I8X16LoadSplat, MemArgImmediate{1, 2}});
+  ExpectWrite<I>("\xfd\xc3\x01\x01\x02"_su8,
+                 I{O::I16X8LoadSplat, MemArgImmediate{1, 2}});
+  ExpectWrite<I>("\xfd\xc4\x01\x01\x02"_su8,
+                 I{O::I32X4LoadSplat, MemArgImmediate{1, 2}});
+  ExpectWrite<I>("\xfd\xc5\x01\x01\x02"_su8,
+                 I{O::I64X2LoadSplat, MemArgImmediate{1, 2}});
 }
 
 TEST(WriteTest, Instruction_threads) {
@@ -1272,6 +1280,10 @@ TEST(WriteTest, Opcode_simd) {
   ExpectWrite<O>("\xfd\xb2\x01"_su8, O::F64X2ConvertI64X2U);
   ExpectWrite<O>("\xfd\xc0\x01"_su8, O::V8X16Swizzle);
   ExpectWrite<O>("\xfd\xc1\x01"_su8, O::V8X16Shuffle);
+  ExpectWrite<O>("\xfd\xc2\x01"_su8, O::I8X16LoadSplat);
+  ExpectWrite<O>("\xfd\xc3\x01"_su8, O::I16X8LoadSplat);
+  ExpectWrite<O>("\xfd\xc4\x01"_su8, O::I32X4LoadSplat);
+  ExpectWrite<O>("\xfd\xc5\x01"_su8, O::I64X2LoadSplat);
 }
 
 TEST(WriteTest, Opcode_threads) {

@@ -1532,26 +1532,45 @@ TEST_F(ValidateInstructionTest, TableCopy_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, SimdLoad) {
+  const Opcode opcodes[] = {O::V128Load, O::I8X16LoadSplat, O::I16X8LoadSplat,
+                            O::I32X4LoadSplat, O::I64X2LoadSplat};
+
   AddMemory(MemoryType{Limits{0}});
-  TestSignature(I{O::V128Load, MemArgImmediate{0, 0}}, {VT::I32}, {VT::V128});
+  for (const auto& opcode : opcodes) {
+    TestSignature(I{opcode, MemArgImmediate{0, 0}}, {VT::I32}, {VT::V128});
+  }
 }
 
 TEST_F(ValidateInstructionTest, SimdLoad_Alignment) {
+  struct {
+    Opcode opcode;
+    u32 max_align;
+  } const infos[] = {{O::V128Load, 4},
+                     {O::I8X16LoadSplat, 0},
+                     {O::I16X8LoadSplat, 1},
+                     {O::I32X4LoadSplat, 2},
+                     {O::I64X2LoadSplat, 3}};
+
   AddMemory(MemoryType{Limits{0}});
-  Ok(I{O::I32Const, s32{}});
-  Ok(I{O::V128Load, MemArgImmediate{4, 0}});
-  Ok(I{O::I32Const, s32{}});
-  Fail(I{O::V128Load, MemArgImmediate{5, 0}});
-  ExpectError(
-      {"instruction", "Invalid alignment v128.load {align 5, offset 0}"},
-      errors);
+  for (const auto& info : infos) {
+    Ok(I{O::I32Const, s32{}});
+    Ok(I{info.opcode, MemArgImmediate{info.max_align, 0}});
+    Ok(I{O::I32Const, s32{}});
+    Fail(I{info.opcode, MemArgImmediate{info.max_align + 1, 0}});
+    ExpectErrorSubstr({"instruction", "Invalid alignment"}, errors);
+  }
 }
 
 TEST_F(ValidateInstructionTest, SimdLoad_MemoryOOB) {
-  Ok(I{O::I32Const, s32{}});
-  Fail(I{O::V128Load, MemArgImmediate{0, 0}});
-  ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
-               errors);
+  const Opcode opcodes[] = {O::V128Load, O::I8X16LoadSplat, O::I16X8LoadSplat,
+                            O::I32X4LoadSplat, O::I64X2LoadSplat};
+
+  for (const auto& opcode : opcodes) {
+    Ok(I{O::I32Const, s32{}});
+    Fail(I{opcode, MemArgImmediate{0, 0}});
+    ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+                 errors);
+  }
 }
 
 TEST_F(ValidateInstructionTest, SimdStore) {

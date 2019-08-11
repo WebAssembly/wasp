@@ -1390,6 +1390,14 @@ TEST(ReadTest, Instruction_simd) {
                 "\xfd\xc1\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
                 "\x00\x00\x00\x00"_su8,
                 f);
+  ExpectRead<I>(I{O::I8X16LoadSplat, MemArgImmediate{1, 2}},
+                "\xfd\xc2\x01\x01\x02"_su8, f);
+  ExpectRead<I>(I{O::I16X8LoadSplat, MemArgImmediate{1, 2}},
+                "\xfd\xc3\x01\x01\x02"_su8, f);
+  ExpectRead<I>(I{O::I32X4LoadSplat, MemArgImmediate{1, 2}},
+                "\xfd\xc4\x01\x01\x02"_su8, f);
+  ExpectRead<I>(I{O::I64X2LoadSplat, MemArgImmediate{1, 2}},
+                "\xfd\xc5\x01\x01\x02"_su8, f);
 }
 
 TEST(ReadTest, Instruction_threads) {
@@ -2096,6 +2104,10 @@ TEST(ReadTest, Opcode_simd) {
   ExpectRead<O>(O::F64X2ConvertI64X2U, "\xfd\xb2\x01"_su8, features);
   ExpectRead<O>(O::V8X16Swizzle, "\xfd\xc0\x01"_su8, features);
   ExpectRead<O>(O::V8X16Shuffle, "\xfd\xc1\x01"_su8, features);
+  ExpectRead<O>(O::I8X16LoadSplat, "\xfd\xc2\x01"_su8, features);
+  ExpectRead<O>(O::I16X8LoadSplat, "\xfd\xc3\x01"_su8, features);
+  ExpectRead<O>(O::I32X4LoadSplat, "\xfd\xc4\x01"_su8, features);
+  ExpectRead<O>(O::I64X2LoadSplat, "\xfd\xc5\x01"_su8, features);
 }
 
 TEST(ReadTest, Opcode_Unknown_simd_prefix) {

@@ -939,6 +939,10 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::I64Store16:
     case Opcode::I64Store32:
     case Opcode::V128Store:
+    case Opcode::I8X16LoadSplat:
+    case Opcode::I16X8LoadSplat:
+    case Opcode::I32X4LoadSplat:
+    case Opcode::I64X2LoadSplat:
     case Opcode::AtomicNotify:
     case Opcode::I32AtomicWait:
     case Opcode::I64AtomicWait:
