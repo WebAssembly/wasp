@@ -1225,7 +1225,6 @@ bool Validate(const Instruction& value,
       params = span_v128_v128_v128, results = span_v128;
       break;
 
-    case Opcode::V8X16Shuffle:
     case Opcode::I8X16Eq:
     case Opcode::I8X16Ne:
     case Opcode::I8X16LtS:
@@ -1302,6 +1301,8 @@ bool Validate(const Instruction& value,
     case Opcode::F64X2Div:
     case Opcode::F64X2Min:
     case Opcode::F64X2Max:
+    case Opcode::V8X16Shuffle:
+    case Opcode::V8X16Swizzle:
       params = span_v128_v128, results = span_v128;
       break;
 
