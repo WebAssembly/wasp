@@ -17,6 +17,8 @@
 #ifndef WASP_BASE_STD_HASH_MACROS_H_
 #define WASP_BASE_STD_HASH_MACROS_H_
 
+#include <functional>
+
 #include "wasp/base/hash.h"
 
 #define WASP_STD_HASH_0(Name)                                      \
