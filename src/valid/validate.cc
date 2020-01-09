@@ -198,38 +198,47 @@ bool Validate(const binary::Export& value,
               const Features& features,
               Errors& errors) {
   ErrorsContextGuard guard{errors, "export"};
+  bool valid = true;
+  if (context.export_names.find(value.name) != context.export_names.end()) {
+    errors.OnError(format("Duplicate export name {}", value.name));
+    valid = false;
+  }
+  context.export_names.insert(value.name);
+
   switch (value.kind) {
     case binary::ExternalKind::Function:
-      return ValidateIndex(value.index, context.functions.size(),
-                           "function index", errors);
+      valid &= ValidateIndex(value.index, context.functions.size(),
+                             "function index", errors);
+      break;
 
     case binary::ExternalKind::Table:
-      return ValidateIndex(value.index, context.tables.size(), "table index",
-                           errors);
+      valid &= ValidateIndex(value.index, context.tables.size(), "table index",
+                             errors);
+      break;
 
     case binary::ExternalKind::Memory:
-      return ValidateIndex(value.index, context.memories.size(), "memory index",
-                           errors);
+      valid &= ValidateIndex(value.index, context.memories.size(),
+                             "memory index", errors);
+      break;
 
-    case binary::ExternalKind::Global: {
-      if (!ValidateIndex(value.index, context.globals.size(), "global index",
+    case binary::ExternalKind::Global:
+      if (ValidateIndex(value.index, context.globals.size(), "global index",
                          errors)) {
-        return false;
+        const auto& global = context.globals[value.index];
+        if (global.mut == binary::Mutability::Var &&
+            !features.mutable_globals_enabled()) {
+          errors.OnError("Mutable globals cannot be exported");
+          valid = false;
+        }
+      } else {
+        valid = false;
       }
-
-      const auto& global = context.globals[value.index];
-      if (global.mut == binary::Mutability::Var &&
-          !features.mutable_globals_enabled()) {
-        errors.OnError("Mutable globals cannot be exported");
-        return false;
-      }
-      return true;
-    }
+      break;
 
     default:
       WASP_UNREACHABLE();
-      return false;
   }
+  return valid;
 }
 
 bool Validate(const binary::Function& value,

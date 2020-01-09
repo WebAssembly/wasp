@@ -78,6 +78,10 @@ class ErrorsBasic : public Errors, public valid::Errors {
     }
   }
 
+  bool has_error() const {
+    return !errors.empty();
+  }
+
   using binary::Errors::OnError;
   using valid::Errors::OnError;
 
@@ -192,12 +196,11 @@ Tool::Tool(string_view filename, SpanU8 data, Options options)
       module{ReadModule(data, options.features, errors)} {}
 
 bool Tool::Run() {
-  if (!(module.magic && module.version)) {
-    return false;
+  if (module.magic && module.version) {
+    Visitor visitor{*this};
+    visit::Visit(module, visitor);
   }
-
-  Visitor visitor{*this};
-  return visit::Visit(module, visitor) == visit::Result::Ok;
+  return !errors.has_error();
 }
 
 Tool::Visitor::Visitor(Tool& tool)

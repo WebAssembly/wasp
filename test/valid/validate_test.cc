@@ -371,10 +371,10 @@ TEST(ValidateTest, Export) {
   context.globals.push_back(GlobalType{ValueType::I32, Mutability::Const});
 
   const Export tests[] = {
-      Export{ExternalKind::Function, "", 0},
-      Export{ExternalKind::Table, "", 0},
-      Export{ExternalKind::Memory, "", 0},
-      Export{ExternalKind::Global, "", 0},
+      Export{ExternalKind::Function, "f", 0},
+      Export{ExternalKind::Table, "t", 0},
+      Export{ExternalKind::Memory, "m", 0},
+      Export{ExternalKind::Global, "g", 0},
   };
 
   for (const auto& export_ : tests) {
@@ -415,6 +415,17 @@ TEST(ValidateTest, Export_GlobalMutVar_MutableGlobals) {
   TestErrors errors;
   EXPECT_TRUE(
       Validate(Export{ExternalKind::Global, "", 0}, context, features, errors));
+}
+
+TEST(ValidateTest, Export_Duplicate) {
+  Features features;
+  Context context;
+  context.functions.push_back(Function{0});
+  TestErrors errors;
+  EXPECT_TRUE(Validate(Export{ExternalKind::Function, "hi", 0}, context,
+                       features, errors));
+  EXPECT_FALSE(Validate(Export{ExternalKind::Function, "hi", 0}, context,
+                        features, errors));
 }
 
 TEST(ValidateTest, Function) {

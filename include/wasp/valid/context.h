@@ -17,8 +17,10 @@
 #ifndef WASP_VALID_CONTEXT_H_
 #define WASP_VALID_CONTEXT_H_
 
+#include <set>
 #include <vector>
 
+#include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/function.h"
 #include "wasp/binary/global_type.h"
@@ -78,6 +80,7 @@ struct Context {
   std::vector<binary::ValueType> locals;
   std::vector<binary::ValueType> type_stack;
   std::vector<Label> label_stack;
+  std::set<string_view> export_names;
 };
 
 }  // namespace valid
