@@ -39,6 +39,7 @@ add_library(wasplib
   src/base/file.cc
   src/base/span.cc
   src/base/str_to_u32.cc
+  src/base/utf8.cc
   src/base/v128.cc
   src/binary/br_on_exn_immediate.cc
   src/binary/br_table_immediate.cc
@@ -118,6 +119,7 @@ add_executable(wasp_unittests
   test/base/formatters_test.cc
   test/base/hash_test.cc
   test/base/str_to_u32_test.cc
+  test/base/utf8_test.cc
   test/base/v128_test.cc
   test/binary/formatters_test.cc
   test/binary/lazy_expression_test.cc

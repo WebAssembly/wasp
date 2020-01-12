@@ -19,6 +19,7 @@
 #include "wasp/base/features.h"
 #include "wasp/base/format.h"
 #include "wasp/base/macros.h"
+#include "wasp/base/utf8.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/valid/context.h"
 #include "wasp/valid/errors.h"
@@ -44,6 +45,18 @@
 
 namespace wasp {
 namespace valid {
+
+namespace {
+
+bool ValidateUtf8(string_view s, Errors& errors) {
+  if (!IsValidUtf8(s)) {
+    errors.OnError("Invalid UTF-8 encoding");
+    return false;
+  }
+  return true;
+}
+
+}  // namespace
 
 bool Validate(const binary::ConstantExpression& value,
               binary::ValueType expected_type,
@@ -199,6 +212,8 @@ bool Validate(const binary::Export& value,
               Errors& errors) {
   ErrorsContextGuard guard{errors, "export"};
   bool valid = true;
+  valid &= ValidateUtf8(value.name, errors);
+
   if (context.export_names.find(value.name) != context.export_names.end()) {
     errors.OnError(format("Duplicate export name {}", value.name));
     valid = false;
@@ -291,6 +306,9 @@ bool Validate(const binary::Import& value,
               Errors& errors) {
   ErrorsContextGuard guard{errors, "import"};
   bool valid = true;
+  valid &= ValidateUtf8(value.module, errors);
+  valid &= ValidateUtf8(value.name, errors);
+
   switch (value.kind()) {
     case binary::ExternalKind::Function:
       valid &=
