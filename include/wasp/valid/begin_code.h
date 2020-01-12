@@ -46,9 +46,9 @@ inline bool BeginCode(Context& context,
   if (function.type_index < context.types.size()) {
     const binary::TypeEntry& type_entry = context.types[function.type_index];
     context.AppendLocals(type_entry.type.param_types);
-    context.label_stack.push_back(Label{LabelType::Function,
-                                        type_entry.type.param_types,
-                                        type_entry.type.result_types, 0});
+    context.label_stack.push_back(
+        Label{LabelType::Function, ToStackTypeSpan(type_entry.type.param_types),
+              ToStackTypeSpan(type_entry.type.result_types), 0});
     return true;
   } else {
     // Not valid, but try to continue anyway.

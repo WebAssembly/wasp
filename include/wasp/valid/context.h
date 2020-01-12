@@ -20,6 +20,7 @@
 #include <set>
 #include <vector>
 
+#include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/function.h"
@@ -31,6 +32,9 @@
 #include "wasp/binary/table_type.h"
 #include "wasp/binary/type_entry.h"
 #include "wasp/binary/value_types.h"
+#include "wasp/valid/stack_type.h"
+#include "wasp/valid/stack_type_span.h"
+#include "wasp/valid/stack_types.h"
 
 namespace wasp {
 namespace valid {
@@ -44,19 +48,21 @@ enum class LabelType {
   Try,
 };
 
+using ValueTypeSpan = span<const binary::ValueType>;
+
 struct Label {
   Label(LabelType,
-        const binary::ValueTypes& param_types,
-        const binary::ValueTypes& result_types,
+        StackTypeSpan param_types,
+        StackTypeSpan result_types,
         Index type_stack_limit);
 
-  const binary::ValueTypes& br_types() const {
+  const StackTypes& br_types() const {
     return label_type == LabelType::Loop ? param_types : result_types;
   }
 
   LabelType label_type;
-  binary::ValueTypes param_types;
-  binary::ValueTypes result_types;
+  StackTypes param_types;
+  StackTypes result_types;
   Index type_stack_limit;
   bool unreachable;
 };
@@ -78,8 +84,8 @@ struct Context {
   Index data_segment_count = 0;
   Index code_count = 0;
   std::vector<Index> locals_partial_sum;
-  std::vector<binary::ValueType> locals;
-  std::vector<binary::ValueType> type_stack;
+  binary::ValueTypes locals;
+  StackTypes type_stack;
   std::vector<Label> label_stack;
   std::set<string_view> export_names;
   optional<binary::SectionId> last_section_id;

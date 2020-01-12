@@ -22,6 +22,7 @@
 #include "wasp/valid/begin_code.h"
 #include "wasp/valid/context.h"
 #include "wasp/valid/errors_nop.h"
+#include "wasp/valid/formatters.h"
 #include "wasp/valid/validate_instruction.h"
 
 using namespace ::wasp;
@@ -34,6 +35,7 @@ class ValidateInstructionTest : public ::testing::Test {
   using I = Instruction;
   using O = Opcode;
   using VT = ValueType;
+  using ST = StackType;
 
   virtual void SetUp() {
     BeginFunction(FunctionType{});
@@ -101,28 +103,30 @@ class ValidateInstructionTest : public ::testing::Test {
     auto saved_context = context;
     ErrorsNop errors_nop;
     auto& type_stack = context.type_stack;
+    const StackTypes stack_param_types = ToStackTypes(param_types);
+    const StackTypes stack_result_types = ToStackTypes(result_types);
 
     // Test that it is only valid when the full list of parameters is on the
     // stack.
     for (size_t n = 0; n <= param_types.size(); ++n) {
-      const ValueTypes param_types_slice(param_types.begin() + n,
-                                         param_types.end());
-      type_stack = param_types_slice;
+      const StackTypes stack_param_types_slice(stack_param_types.begin() + n,
+                                               stack_param_types.end());
+      type_stack = stack_param_types_slice;
       if (n == 0) {
         EXPECT_TRUE(Validate(instruction, context, features, errors))
-            << format("{} with stack {}", instruction, param_types_slice);
-        EXPECT_EQ(result_types, type_stack) << format("{}", instruction);
+            << format("{} with stack {}", instruction, stack_param_types_slice);
+        EXPECT_EQ(stack_result_types, type_stack) << format("{}", instruction);
       } else {
         EXPECT_FALSE(Validate(instruction, context, features, errors_nop))
-            << format("{} with stack {}", instruction, param_types_slice);
+            << format("{} with stack {}", instruction, stack_param_types_slice);
       }
     }
 
-    if (!param_types.empty()) {
+    if (!stack_param_types.empty()) {
       // Create a type stack of the right size, but with all mismatched types.
-      auto mismatch_types = param_types;
-      for (auto& value_type : mismatch_types) {
-        value_type = value_type == VT::I32 ? VT::F64 : VT::I32;
+      auto mismatch_types = stack_param_types;
+      for (auto& stack_type : mismatch_types) {
+        stack_type = stack_type == ST::I32 ? ST::F64 : ST::I32;
       }
       type_stack = mismatch_types;
       EXPECT_FALSE(Validate(instruction, context, features, errors_nop))

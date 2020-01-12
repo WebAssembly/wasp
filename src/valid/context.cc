@@ -23,12 +23,12 @@ namespace wasp {
 namespace valid {
 
 Label::Label(LabelType label_type,
-             const binary::ValueTypes& param_types,
-             const binary::ValueTypes& result_types,
+             StackTypeSpan param_types,
+             StackTypeSpan result_types,
              Index type_stack_limit)
     : label_type{label_type},
-      param_types{param_types},
-      result_types{result_types},
+      param_types{param_types.begin(), param_types.end()},
+      result_types{result_types.begin(), result_types.end()},
       type_stack_limit{type_stack_limit},
       unreachable{false} {}
 
