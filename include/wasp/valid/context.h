@@ -26,6 +26,7 @@
 #include "wasp/binary/global_type.h"
 #include "wasp/binary/locals.h"
 #include "wasp/binary/memory_type.h"
+#include "wasp/binary/section_id.h"
 #include "wasp/binary/segment_type.h"
 #include "wasp/binary/table_type.h"
 #include "wasp/binary/type_entry.h"
@@ -81,6 +82,7 @@ struct Context {
   std::vector<binary::ValueType> type_stack;
   std::vector<Label> label_stack;
   std::set<string_view> export_names;
+  optional<binary::SectionId> last_section_id;
 };
 
 }  // namespace valid

@@ -39,6 +39,7 @@
 #include "wasp/valid/validate_limits.h"
 #include "wasp/valid/validate_memory.h"
 #include "wasp/valid/validate_memory_type.h"
+#include "wasp/valid/validate_section.h"
 #include "wasp/valid/validate_table.h"
 #include "wasp/valid/validate_table_type.h"
 #include "wasp/valid/validate_value_type.h"
@@ -406,6 +407,24 @@ bool Validate(const binary::MemoryType& value,
     valid = false;
   }
   return valid;
+}
+
+bool Validate(const binary::Section& value,
+              Context& context,
+              const Features& features,
+              Errors& errors) {
+  if (value.is_known()) {
+    auto id = value.known().id;
+    if (context.last_section_id && *context.last_section_id >= id) {
+      errors.OnError(format("Section out of order: {} cannot occur after {}",
+                            id, *context.last_section_id));
+      return false;
+    }
+    context.last_section_id = id;
+    return true;
+  } else {
+    return ValidateUtf8(value.custom().name, errors);
+  }
 }
 
 bool Validate(const binary::Table& value,

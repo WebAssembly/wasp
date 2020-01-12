@@ -47,6 +47,7 @@
 #include "wasp/valid/validate_instruction.h"
 #include "wasp/valid/validate_locals.h"
 #include "wasp/valid/validate_memory.h"
+#include "wasp/valid/validate_section.h"
 #include "wasp/valid/validate_start.h"
 #include "wasp/valid/validate_table.h"
 #include "wasp/valid/validate_type_entry.h"
@@ -133,8 +134,6 @@ struct Tool {
     valid::Context& context;
     Features& features;
     ErrorsBasic& errors;
-
-    optional<SectionId> last_section_id;
   };
 
   std::string filename;
@@ -210,18 +209,7 @@ Tool::Visitor::Visitor(Tool& tool)
       errors{tool.errors} {}
 
 visit::Result Tool::Visitor::OnSection(Section section) {
-  if (section.is_known()) {
-    auto id = section.known().id;
-    if (last_section_id && *last_section_id >= id) {
-      errors.OnError(section.data(),
-                     format("Section out of order: {} cannot occur after {}",
-                            id, *last_section_id));
-      return visit::Result::Fail;
-    }
-    last_section_id = id;
-  }
-
-  return visit::Result::Ok;
+  return FailUnless(Validate(section, context, features, errors));
 }
 
 visit::Result Tool::Visitor::OnType(const TypeEntry& type_entry) {
