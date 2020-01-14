@@ -81,7 +81,8 @@ class Runner(object):
 
 def main(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--verbose', default=False, help='verbose output')
+    parser.add_argument('-v', '--verbose', action='store_true', default=False,
+                        help='verbose output')
     parser.add_argument('-w', '--wasp', default='wasp', help='wasp binary to use')
     parser.add_argument('filename', help='wast2json file to read as input')
     options = parser.parse_args(args)
