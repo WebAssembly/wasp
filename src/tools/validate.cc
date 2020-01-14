@@ -36,6 +36,7 @@
 #include "wasp/binary/visitor.h"
 #include "wasp/valid/begin_code.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/end_module.h"
 #include "wasp/valid/errors.h"
 #include "wasp/valid/validate_data_count.h"
 #include "wasp/valid/validate_data_segment.h"
@@ -198,6 +199,7 @@ bool Tool::Run() {
   if (module.magic && module.version) {
     Visitor visitor{*this};
     visit::Visit(module, visitor);
+    EndModule(context, options.features, errors);
   }
   return !errors.has_error();
 }
@@ -256,7 +258,6 @@ visit::Result Tool::Visitor::OnCode(const Code& code) {
   if (!BeginCode(context, features, errors)) {
     return visit::Result::Fail;
   }
-  print("func\n");
 
   for (const auto& locals : code.locals) {
     if (!Validate(locals, context, features, errors)) {
@@ -265,9 +266,7 @@ visit::Result Tool::Visitor::OnCode(const Code& code) {
   }
 
   for (const auto& instruction : ReadExpression(code.body, features, errors)) {
-    print("  {}\n", instruction);
     if (!Validate(instruction, context, features, errors)) {
-      print("  failed\n");
       return visit::Result::Fail;
     }
   }
