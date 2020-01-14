@@ -148,7 +148,7 @@ struct Tool {
 int Main(span<string_view> args) {
   std::vector<string_view> filenames;
   Options options;
-  options.features.EnableAll();
+  // options.features.EnableAll();
 
   ArgParser parser{"wasp validate"};
   parser
@@ -256,6 +256,7 @@ visit::Result Tool::Visitor::OnCode(const Code& code) {
   if (!BeginCode(context, features, errors)) {
     return visit::Result::Fail;
   }
+  print("func\n");
 
   for (const auto& locals : code.locals) {
     if (!Validate(locals, context, features, errors)) {
@@ -263,9 +264,10 @@ visit::Result Tool::Visitor::OnCode(const Code& code) {
     }
   }
 
-  for (const auto& instruction :
-       ReadExpression(code.body, features, errors)) {
+  for (const auto& instruction : ReadExpression(code.body, features, errors)) {
+    print("  {}\n", instruction);
     if (!Validate(instruction, context, features, errors)) {
+      print("  failed\n");
       return visit::Result::Fail;
     }
   }

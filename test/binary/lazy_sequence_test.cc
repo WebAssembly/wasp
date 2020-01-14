@@ -71,3 +71,42 @@ TEST(LazySequenceTest, Error) {
 
   ExpectError({{2, "s32"}, {3, "Unable to read u8"}}, errors, data);
 }
+
+TEST(LazySequenceTest, ExpectedCount_Match) {
+  Features features;
+  TestErrors errors;
+  const auto data = "\x00\x01"_su8;
+  LazySequence<s32> seq{data, 2, "MySequence", features, errors};
+
+  auto it = seq.begin();
+  it++;
+  it++;
+  ExpectNoErrors(errors);
+}
+
+TEST(LazySequenceTest, ExpectedCount_ActualLess) {
+  Features features;
+  TestErrors errors;
+  const auto data = "\x00"_su8;
+  LazySequence<s32> seq{data, 2, "MySequence", features, errors};
+
+  auto it = seq.begin();
+  it++;
+  ExpectError({{1, "Expected MySequence to have count 2, got 1"}}, errors,
+              data);
+}
+
+TEST(LazySequenceTest, ExpectedCount_ActualMore) {
+  Features features;
+  TestErrors errors;
+  const auto data = "\x00\x01\x02\x03"_su8;
+  LazySequence<s32> seq{data, 2, "MySequence", features, errors};
+
+  auto it = seq.begin();
+  it++;
+  it++;
+  it++;
+  it++;
+  ExpectError({{4, "Expected MySequence to have count 2, got 4"}}, errors,
+              data);
+}

@@ -69,6 +69,7 @@ add_library(wasplib
   src/binary/instruction.cc
   src/binary/known_section.cc
   src/binary/lazy_expression.cc
+  src/binary/lazy_sequence.cc
   src/binary/limits.cc
   src/binary/linking_subsection.cc
   src/binary/locals.cc

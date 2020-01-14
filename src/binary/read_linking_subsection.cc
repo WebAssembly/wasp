@@ -25,51 +25,54 @@ namespace binary {
 LazyComdatSubsection ReadComdatSubsection(SpanU8 data,
                                           const Features& features,
                                           Errors& errors) {
-  return LazyComdatSubsection{data, features, errors};
+  return LazyComdatSubsection{data, "comdat subsection", features, errors};
 }
 
 LazyComdatSubsection ReadComdatSubsection(LinkingSubsection sec,
                                           const Features& features,
                                           Errors& errors) {
-  return LazyComdatSubsection{sec.data, features, errors};
+  return ReadComdatSubsection(sec.data, features, errors);
 }
 
 LazyInitFunctionsSubsection ReadInitFunctionsSubsection(
     SpanU8 data,
     const Features& features,
     Errors& errors) {
-  return LazyInitFunctionsSubsection{data, features, errors};
+  return LazyInitFunctionsSubsection{data, "init functions subsection",
+                                     features, errors};
 }
 
 LazyInitFunctionsSubsection ReadInitFunctionsSubsection(
     LinkingSubsection sec,
     const Features& features,
     Errors& errors) {
-  return LazyInitFunctionsSubsection{sec.data, features, errors};
+  return ReadInitFunctionsSubsection(sec.data, features, errors);
 }
 
 LazySegmentInfoSubsection ReadSegmentInfoSubsection(SpanU8 data,
                                                     const Features& features,
                                                     Errors& errors) {
-  return LazySegmentInfoSubsection{data, features, errors};
+  return LazySegmentInfoSubsection{data, "segment info subsection", features,
+                                   errors};
 }
 
 LazySegmentInfoSubsection ReadSegmentInfoSubsection(LinkingSubsection sec,
                                                     const Features& features,
                                                     Errors& errors) {
-  return LazySegmentInfoSubsection{sec.data, features, errors};
+  return ReadSegmentInfoSubsection(sec.data, features, errors);
 }
 
 LazySymbolTableSubsection ReadSymbolTableSubsection(SpanU8 data,
                                                     const Features& features,
                                                     Errors& errors) {
-  return LazySymbolTableSubsection{data, features, errors};
+  return LazySymbolTableSubsection{data, "symbol table subsection", features,
+                                   errors};
 }
 
 LazySymbolTableSubsection ReadSymbolTableSubsection(LinkingSubsection sec,
                                                     const Features& features,
                                                     Errors& errors) {
-  return LazySymbolTableSubsection{sec.data, features, errors};
+  return ReadSymbolTableSubsection(sec.data, features, errors);
 }
 
 }  // namespace binary

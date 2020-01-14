@@ -19,6 +19,20 @@
 namespace wasp {
 namespace binary {
 
+template <typename T>
+void LazySequence<T>::NotifyRead(const u8* pos, bool ok) {
+  if (pos > last_pos_) {
+    last_pos_ = pos;
+    if (ok) {
+      count_++;
+    } else if (expected_count_ && count_ != *expected_count_) {
+      // Reached the end, but there was a mismatch.
+      LazySequenceBase::OnCountError(errors_, SpanU8{last_pos_, data_.end()},
+                                     name_, *expected_count_, count_);
+    }
+  }
+}
+
 template <typename Sequence>
 LazySequenceIterator<Sequence>::LazySequenceIterator(Sequence* seq, SpanU8 data)
     : sequence_(seq), data_(data) {
@@ -31,10 +45,13 @@ LazySequenceIterator<Sequence>::LazySequenceIterator(Sequence* seq, SpanU8 data)
 
 template <typename Sequence>
 auto LazySequenceIterator<Sequence>::operator++() -> LazySequenceIterator& {
+  const u8* pos = data_.data();
   if (empty()) {
+    sequence_->NotifyRead(pos, false);
     clear();
   } else {
     value_ = Read<value_type>(&data_, sequence_->features_, sequence_->errors_);
+    sequence_->NotifyRead(pos, !!value_);
     if (!value_) {
       clear();
     }

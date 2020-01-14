@@ -29,7 +29,7 @@ namespace binary {
 template <typename T>
 class LazySection {
  public:
-  explicit LazySection(SpanU8, const Features&, Errors&);
+  explicit LazySection(SpanU8, string_view name, const Features&, Errors&);
 
   optional<Index> count;
   LazySequence<T> sequence;
@@ -37,10 +37,11 @@ class LazySection {
 
 template <typename T>
 LazySection<T>::LazySection(SpanU8 data,
+                            string_view name,
                             const Features& features,
                             Errors& errors)
     : count{ReadCount(&data, features, errors)},
-      sequence{data, features, errors} {}
+      sequence{data, count, name, features, errors} {}
 
 }  // namespace binary
 }  // namespace wasp

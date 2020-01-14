@@ -42,7 +42,7 @@ namespace binary {
 LazyCodeSection ReadCodeSection(SpanU8 data,
                                 const Features& features,
                                 Errors& errors) {
-  return LazyCodeSection{data, features, errors};
+  return LazyCodeSection{data, "code section", features, errors};
 }
 
 LazyCodeSection ReadCodeSection(KnownSection sec,
@@ -54,7 +54,7 @@ LazyCodeSection ReadCodeSection(KnownSection sec,
 LazyDataSection ReadDataSection(SpanU8 data,
                                 const Features& features,
                                 Errors& errors) {
-  return LazyDataSection{data, features, errors};
+  return LazyDataSection{data, "data section", features, errors};
 }
 
 LazyDataSection ReadDataSection(KnownSection sec,
@@ -79,7 +79,7 @@ DataCountSection ReadDataCountSection(KnownSection sec,
 LazyElementSection ReadElementSection(SpanU8 data,
                                       const Features& features,
                                       Errors& errors) {
-  return LazyElementSection{data, features, errors};
+  return LazyElementSection{data, "element section", features, errors};
 }
 
 LazyElementSection ReadElementSection(KnownSection sec,
@@ -91,7 +91,7 @@ LazyElementSection ReadElementSection(KnownSection sec,
 LazyExportSection ReadExportSection(SpanU8 data,
                                     const Features& features,
                                     Errors& errors) {
-  return LazyExportSection{data, features, errors};
+  return LazyExportSection{data, "export section", features, errors};
 }
 
 LazyExportSection ReadExportSection(KnownSection sec,
@@ -103,7 +103,7 @@ LazyExportSection ReadExportSection(KnownSection sec,
 LazyFunctionSection ReadFunctionSection(SpanU8 data,
                                         const Features& features,
                                         Errors& errors) {
-  return LazyFunctionSection{data, features, errors};
+  return LazyFunctionSection{data, "function section", features, errors};
 }
 
 LazyFunctionSection ReadFunctionSection(KnownSection sec,
@@ -115,7 +115,7 @@ LazyFunctionSection ReadFunctionSection(KnownSection sec,
 LazyGlobalSection ReadGlobalSection(SpanU8 data,
                                     const Features& features,
                                     Errors& errors) {
-  return LazyGlobalSection{data, features, errors};
+  return LazyGlobalSection{data, "global section", features, errors};
 }
 
 LazyGlobalSection ReadGlobalSection(KnownSection sec,
@@ -127,7 +127,7 @@ LazyGlobalSection ReadGlobalSection(KnownSection sec,
 LazyImportSection ReadImportSection(SpanU8 data,
                                     const Features& features,
                                     Errors& errors) {
-  return LazyImportSection{data, features, errors};
+  return LazyImportSection{data, "import section", features, errors};
 }
 
 LazyImportSection ReadImportSection(KnownSection sec,
@@ -164,7 +164,7 @@ LinkingSection ReadLinkingSection(CustomSection sec,
 LazyMemorySection ReadMemorySection(SpanU8 data,
                                     const Features& features,
                                     Errors& errors) {
-  return LazyMemorySection{data, features, errors};
+  return LazyMemorySection{data, "memory section", features, errors};
 }
 
 LazyMemorySection ReadMemorySection(KnownSection sec,
@@ -191,7 +191,7 @@ RelocationSection::RelocationSection(SpanU8 data,
     : data{data},
       section_index{Read<u32>(&data, features, errors)},
       count{ReadCount(&data, features, errors)},
-      entries{data, features, errors} {}
+      entries{data, count, "relocation section", features, errors} {}
 
 RelocationSection ReadRelocationSection(SpanU8 data,
                                         const Features& features,
@@ -208,7 +208,7 @@ RelocationSection ReadRelocationSection(CustomSection sec,
 LazyTableSection ReadTableSection(SpanU8 data,
                                   const Features& features,
                                   Errors& errors) {
-  return LazyTableSection{data, features, errors};
+  return LazyTableSection{data, "table section", features, errors};
 }
 
 LazyTableSection ReadTableSection(KnownSection sec,
@@ -220,7 +220,7 @@ LazyTableSection ReadTableSection(KnownSection sec,
 LazyTypeSection ReadTypeSection(SpanU8 data,
                                 const Features& features,
                                 Errors& errors) {
-  return LazyTypeSection{data, features, errors};
+  return LazyTypeSection{data, "type section", features, errors};
 }
 
 LazyTypeSection ReadTypeSection(KnownSection sec,

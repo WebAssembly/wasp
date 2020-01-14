@@ -22,6 +22,8 @@
 #include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
+#include "wasp/base/string_view.h"
+#include "wasp/base/types.h"
 
 namespace wasp {
 namespace binary {
@@ -31,9 +33,18 @@ class Errors;
 template <typename Sequence>
 class LazySequenceIterator;
 
+class LazySequenceBase {
+ protected:
+  static void OnCountError(Errors&,
+                           SpanU8,
+                           string_view name,
+                           Index expected,
+                           Index actual);
+};
+
 /// ---
 template <typename T>
-class LazySequence {
+class LazySequence : public LazySequenceBase {
  public:
   using value_type = T;
   using pointer = T*;
@@ -48,6 +59,17 @@ class LazySequence {
   explicit LazySequence(SpanU8 data, const Features& features, Errors& errors)
       : data_{data}, features_{features}, errors_{errors} {}
 
+  explicit LazySequence(SpanU8 data,
+                        optional<Index> expected_count,
+                        string_view name,
+                        const Features& features,
+                        Errors& errors)
+      : data_{data},
+        features_{features},
+        errors_{errors},
+        name_{name},
+        expected_count_{expected_count} {}
+
   iterator begin() { return iterator{this, data_}; }
   iterator end() { return iterator{this, SpanU8{}}; }
   const_iterator begin() const { return const_iterator{this, data_}; }
@@ -59,9 +81,18 @@ class LazySequence {
   template <typename Sequence>
   friend class LazySequenceIterator;
 
+  void NotifyRead(const u8*, bool);
+
   SpanU8 data_;
   const Features& features_;
   Errors& errors_;
+
+  // Check for errors when there is an expected count.
+  string_view name_;
+  optional<Index> expected_count_;
+  Index count_ = 0;
+  // Tracks the last value read by any iterator that uses this sequence.
+  const u8* last_pos_ = nullptr;
 };
 
 /// ---

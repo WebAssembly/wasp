@@ -26,7 +26,8 @@ LazyFunctionNamesSubsection ReadFunctionNamesSubsection(
     SpanU8 data,
     const Features& features,
     Errors& errors) {
-  return LazyFunctionNamesSubsection{data, features, errors};
+  return LazyFunctionNamesSubsection{data, "function names subsection",
+                                     features, errors};
 }
 
 LazyFunctionNamesSubsection ReadFunctionNamesSubsection(
@@ -39,7 +40,8 @@ LazyFunctionNamesSubsection ReadFunctionNamesSubsection(
 LazyLocalNamesSubsection ReadLocalNamesSubsection(SpanU8 data,
                                                   const Features& features,
                                                   Errors& errors) {
-  return LazyLocalNamesSubsection{data, features, errors};
+  return LazyLocalNamesSubsection{data, "local names subsection", features,
+                                  errors};
 }
 
 LazyLocalNamesSubsection ReadLocalNamesSubsection(NameSubsection sec,
