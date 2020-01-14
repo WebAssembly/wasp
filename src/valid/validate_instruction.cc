@@ -42,6 +42,7 @@ using namespace ::wasp::binary;
   V(f32, StackType::F32)                                         \
   V(f64, StackType::F64)                                         \
   V(v128, StackType::V128)                                       \
+  V(anyref, StackType::Anyref)                                   \
   V(i32_i32, StackType::I32, StackType::I32)                     \
   V(i32_i64, StackType::I32, StackType::I64)                     \
   V(i32_f32, StackType::I32, StackType::F32)                     \
@@ -131,6 +132,21 @@ optional<TableType> GetTableType(Index index,
   return context.tables[index];
 }
 
+optional<StackType> GetTableElementStackType(Index index,
+    Context& context, Errors& errors){
+  auto table_type = GetTableType(index, context, errors);
+  if (!table_type) {
+    return nullopt;
+  }
+
+  switch (table_type->elemtype) {
+    case ElementType::Funcref:
+      return StackType::Funcref;
+    default:
+      return nullopt;
+  }
+}
+
 optional<MemoryType> GetMemoryType(Index index,
                                    Context& context,
                                    Errors& errors) {
@@ -181,6 +197,10 @@ StackType MaybeDefault(optional<StackType> value) {
   return value.value_or(StackType::I32);
 }
 
+StackType MaybeDefaultElementType(optional<StackType> value) {
+  return value.value_or(StackType::Funcref);
+}
+
 Function MaybeDefault(optional<Function> value) {
   return value.value_or(Function{0});
 }
@@ -224,20 +244,50 @@ void RemovePrefixIfGreater(StackTypeSpan* lhs, StackTypeSpan rhs) {
   }
 }
 
-bool StackTypeSpansAreDifferent(StackTypeSpan lhs, StackTypeSpan rhs) {
-  if (lhs.size() != rhs.size()) {
+bool IsReferenceType(StackType type) {
+  return type == StackType::Anyref || type == StackType::Funcref ||
+         type == StackType::Nullref;
+}
+
+bool TypesMatch(StackType expected, StackType actual) {
+  // Types are the same.
+  if (expected == actual) {
     return true;
   }
 
-  for (auto liter = lhs.begin(), lend = lhs.end(), riter = rhs.begin();
-       liter != lend; ++liter, ++riter) {
-    StackType ltype = *liter;
-    StackType rtype = *riter;
-    if (ltype != rtype && ltype != StackType::Any && rtype != StackType::Any) {
-      return true;
+  // One of the types is "any" (i.e. universal supertype or subtype)
+  if (expected == StackType::Any || actual == StackType::Any) {
+    return true;
+  }
+
+  // Anyref is a super type of all reference types.
+  if (expected == StackType::Anyref && IsReferenceType(actual)) {
+    return true;
+  }
+
+  // Nullref is a subtype of all reference types.
+  if (IsReferenceType(expected) && actual == StackType::Nullref) {
+    return true;
+  }
+
+  return false;
+}
+
+bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual) {
+  if (expected.size() != actual.size()) {
+    return false;
+  }
+
+  for (auto eiter = expected.begin(), lend = expected.end(),
+            aiter = actual.begin();
+       eiter != lend; ++eiter, ++aiter) {
+    StackType etype = *eiter;
+    StackType atype = *aiter;
+    if (!TypesMatch(etype, atype)) {
+      return false;
     }
   }
-  return false;
+  return true;
 }
 
 bool CheckTypes(StackTypeSpan expected, Context& context, Errors& errors) {
@@ -249,7 +299,7 @@ bool CheckTypes(StackTypeSpan expected, Context& context, Errors& errors) {
     RemovePrefixIfGreater(&expected, type_stack);
   }
 
-  if (StackTypeSpansAreDifferent(expected, type_stack)) {
+  if (!TypesMatch(expected, type_stack)) {
     // TODO proper formatting of type stack
     errors.OnError(format("Expected stack to contain {}, got {}{}",
                           full_expected, top_label.unreachable ? "..." : "",
@@ -262,7 +312,7 @@ bool CheckTypes(StackTypeSpan expected, Context& context, Errors& errors) {
 bool CheckResultTypes(StackTypeSpan caller,
                       StackTypeSpan callee,
                       Errors& errors) {
-  if (StackTypeSpansAreDifferent(caller, callee)) {
+  if (!TypesMatch(caller, callee)) {
     errors.OnError(
         format("Callee's result types {} must equal caller's result types {}",
                callee, caller));
@@ -413,6 +463,7 @@ bool BrIf(Index depth, Context& context, Errors& errors) {
 
 bool BrTable(const BrTableImmediate& immediate,
              Context& context,
+             const Features& features,
              Errors& errors) {
   bool valid = PopType(StackType::I32, context, errors);
   optional<StackTypeSpan> br_types;
@@ -420,18 +471,22 @@ bool BrTable(const BrTableImmediate& immediate,
     const auto* label = GetLabel(target, context, errors);
     if (label) {
       StackTypeSpan label_br_types{label->br_types()};
-      if (br_types) {
-        if (*br_types != label_br_types) {
-          errors.OnError(
-              format("br_table labels must have the same signature; expected "
-                     "{}, got {}",
-                     *br_types, label_br_types));
-          valid = false;
-        }
+      if (features.reference_types_enabled()) {
+        valid &= CheckTypes(label_br_types, context, errors);
       } else {
-        br_types = label_br_types;
+        if (br_types) {
+          if (*br_types != label_br_types) {
+            errors.OnError(
+                format("br_table labels must have the same signature; expected "
+                       "{}, got {}",
+                       *br_types, label_br_types));
+            valid = false;
+          }
+        } else {
+          br_types = label_br_types;
+          valid &= CheckTypes(*br_types, context, errors);
+        }
       }
-      valid &= CheckTypes(*br_types, context, errors);
     } else {
       valid = false;
     }
@@ -466,6 +521,30 @@ bool CallIndirect(const CallIndirectImmediate& immediate,
 bool Select(Context& context, Errors& errors) {
   bool valid = PopType(StackType::I32, context, errors);
   auto type = MaybeDefault(PeekType(context, errors));
+  if (!(type == StackType::I32 || type == StackType::I64 ||
+        type == StackType::F32 || type == StackType::F64 ||
+        type == StackType::Any)) {
+    errors.OnError(
+        format("select instruction without expected type can only be used "
+               "with i32, i64, f32, f64; got {}",
+               type));
+    return false;
+  }
+  const StackType pop_types[] = {type, type};
+  const StackType push_type[] = {type};
+  return AllTrue(valid, PopAndPushTypes(pop_types, push_type, context, errors));
+}
+
+bool SelectT(const ValueTypes& value_types, Context& context, Errors& errors) {
+  bool valid = PopType(StackType::I32, context, errors);
+  if (value_types.size() != 1) {
+    errors.OnError(format(
+        "select instruction must have types immediate with size 1, got {}",
+        value_types.size()));
+    return false;
+  }
+  StackTypeSpan stack_types = ToStackTypeSpan(value_types);
+  StackType type = stack_types[0];
   const StackType pop_types[] = {type, type};
   const StackType push_type[] = {type};
   return AllTrue(valid, PopAndPushTypes(pop_types, push_type, context, errors));
@@ -505,6 +584,19 @@ bool GlobalSet(Index index, Context& context, Errors& errors) {
     valid = false;
   }
   return AllTrue(valid, PopType(StackType(type.valtype), context, errors));
+}
+
+bool TableGet(Index index, Context& context, Errors& errors) {
+  auto stack_type = GetTableElementStackType(index, context, errors);
+  const StackType type[] = {MaybeDefaultElementType(stack_type)};
+  return AllTrue(stack_type, PopAndPushTypes(span_i32, type, context, errors));
+}
+
+bool TableSet(Index index, Context& context, Errors& errors) {
+  auto stack_type = GetTableElementStackType(index, context, errors);
+  const StackType types[] = {StackType::I32,
+                             MaybeDefaultElementType(stack_type)};
+  return AllTrue(stack_type, PopTypes(types, context, errors));
 }
 
 bool CheckAlignment(const Instruction& instruction,
@@ -636,6 +728,26 @@ bool TableCopy(const CopyImmediate& immediate,
                Errors& errors) {
   auto table_type = GetTableType(0, context, errors);
   return AllTrue(table_type, PopTypes(span_i32_i32_i32, context, errors));
+}
+
+bool TableGrow(Index index, Context& context, Errors& errors) {
+  auto stack_type = GetTableElementStackType(index, context, errors);
+  const StackType types[] = {StackType::I32,
+                             MaybeDefaultElementType(stack_type)};
+  return AllTrue(stack_type, PopAndPushTypes(types, span_i32, context, errors));
+}
+
+bool TableSize(Index index, Context& context, Errors& errors) {
+  auto table_type = GetTableType(0, context, errors);
+  PushTypes(span_i32, context);
+  return AllTrue(table_type);
+}
+
+bool TableFill(Index index, Context& context, Errors& errors) {
+  auto stack_type = GetTableElementStackType(index, context, errors);
+  const StackType types[] = {
+      StackType::I32, MaybeDefaultElementType(stack_type), StackType::I32};
+  return AllTrue(stack_type, PopTypes(types, context, errors));
 }
 
 bool CheckAtomicAlignment(const Instruction& instruction,
@@ -916,7 +1028,7 @@ bool Validate(const Instruction& value,
       return BrIf(value.index_immediate(), context, errors);
 
     case Opcode::BrTable:
-      return BrTable(value.br_table_immediate(), context, errors);
+      return BrTable(value.br_table_immediate(), context, features, errors);
 
     case Opcode::Return:
       return Br(context.label_stack.size() - 1, context, errors);
@@ -933,6 +1045,9 @@ bool Validate(const Instruction& value,
     case Opcode::Select:
       return Select(context, errors);
 
+    case Opcode::SelectT:
+      return SelectT(value.value_types_immediate(), context, errors);
+
     case Opcode::LocalGet:
       return LocalGet(value.index_immediate(), context, errors);
 
@@ -947,6 +1062,20 @@ bool Validate(const Instruction& value,
 
     case Opcode::GlobalSet:
       return GlobalSet(value.index_immediate(), context, errors);
+
+    case Opcode::TableGet:
+      return TableGet(value.index_immediate(), context, errors);
+
+    case Opcode::TableSet:
+      return TableSet(value.index_immediate(), context, errors);
+
+    case Opcode::RefNull:
+      PushType(StackType::Nullref, context);
+      return true;
+
+    case Opcode::RefIsNull:
+      params = span_anyref, results = span_i32;
+      break;
 
     case Opcode::I32Load:
     case Opcode::I64Load:
@@ -1241,6 +1370,15 @@ bool Validate(const Instruction& value,
 
     case Opcode::TableCopy:
       return TableCopy(value.copy_immediate(), context, errors);
+
+    case Opcode::TableGrow:
+      return TableGrow(value.index_immediate(), context, errors);
+
+    case Opcode::TableSize:
+      return TableSize(value.index_immediate(), context, errors);
+
+    case Opcode::TableFill:
+      return TableFill(value.index_immediate(), context, errors);
 
     case Opcode::V128Const:
       PushType(StackType::V128, context);

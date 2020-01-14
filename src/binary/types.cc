@@ -89,6 +89,9 @@ Instruction::Instruction(Opcode opcode, CopyImmediate immediate)
 Instruction::Instruction(Opcode opcode, ShuffleImmediate immediate)
     : opcode(opcode), immediate(immediate) {}
 
+Instruction::Instruction(Opcode opcode, const ValueTypes& immediate)
+    : opcode(opcode), immediate(immediate) {}
+
 Limits::Limits(u32 min) : min{min}, shared{Shared::No} {}
 
 Limits::Limits(u32 min, u32 max) : min{min}, max{max}, shared{Shared::No} {}
@@ -99,10 +102,10 @@ Limits::Limits(u32 min, u32 max, Shared shared)
 
 WASP_OPERATOR_EQ_NE_2(BrOnExnImmediate, target, exception_index)
 WASP_OPERATOR_EQ_NE_2(BrTableImmediate, targets, default_target)
-WASP_OPERATOR_EQ_NE_2(CallIndirectImmediate, index, reserved)
+WASP_OPERATOR_EQ_NE_2(CallIndirectImmediate, index, table_index)
 WASP_OPERATOR_EQ_NE_2(Code, locals, body)
 WASP_OPERATOR_EQ_NE_1(ConstantExpression, instruction)
-WASP_OPERATOR_EQ_NE_2(CopyImmediate, src_reserved, dst_reserved)
+WASP_OPERATOR_EQ_NE_2(CopyImmediate, src_index, dst_index)
 WASP_OPERATOR_EQ_NE_2(CustomSection, name, data)
 WASP_OPERATOR_EQ_NE_1(DataCount, count)
 WASP_OPERATOR_EQ_NE_2(DataSegment, init, desc)
@@ -120,7 +123,7 @@ WASP_OPERATOR_EQ_NE_2(FunctionType, param_types, result_types)
 WASP_OPERATOR_EQ_NE_2(Global, global_type, init)
 WASP_OPERATOR_EQ_NE_2(GlobalType, valtype, mut)
 WASP_OPERATOR_EQ_NE_3(Import, module, name, desc)
-WASP_OPERATOR_EQ_NE_2(InitImmediate, segment_index, reserved)
+WASP_OPERATOR_EQ_NE_2(InitImmediate, segment_index, dst_index)
 WASP_OPERATOR_EQ_NE_2(Instruction, opcode, immediate)
 WASP_OPERATOR_EQ_NE_2(KnownSection, id, data)
 WASP_OPERATOR_EQ_NE_3(Limits, min, max, shared)
@@ -138,9 +141,9 @@ WASP_OPERATOR_EQ_NE_1(TypeEntry, type)
 }  // namespace wasp
 
 WASP_STD_HASH_2(::wasp::binary::BrOnExnImmediate, target, exception_index);
-WASP_STD_HASH_2(::wasp::binary::CallIndirectImmediate, index, reserved)
+WASP_STD_HASH_2(::wasp::binary::CallIndirectImmediate, index, table_index)
 WASP_STD_HASH_1(::wasp::binary::ConstantExpression, instruction)
-WASP_STD_HASH_2(::wasp::binary::CopyImmediate, src_reserved, dst_reserved)
+WASP_STD_HASH_2(::wasp::binary::CopyImmediate, src_index, dst_index)
 WASP_STD_HASH_2(::wasp::binary::CustomSection, name, data)
 WASP_STD_HASH_1(::wasp::binary::DataCount, count)
 WASP_STD_HASH_2(::wasp::binary::DataSegment, init, desc)
@@ -155,7 +158,7 @@ WASP_STD_HASH_1(::wasp::binary::Function, type_index)
 WASP_STD_HASH_2(::wasp::binary::Global, global_type, init)
 WASP_STD_HASH_2(::wasp::binary::GlobalType, valtype, mut)
 WASP_STD_HASH_3(::wasp::binary::Import, module, name, desc)
-WASP_STD_HASH_2(::wasp::binary::InitImmediate, segment_index, reserved)
+WASP_STD_HASH_2(::wasp::binary::InitImmediate, segment_index, dst_index)
 WASP_STD_HASH_2(::wasp::binary::Instruction, opcode, immediate)
 WASP_STD_HASH_2(::wasp::binary::KnownSection, id, data)
 WASP_STD_HASH_3(::wasp::binary::Limits, min, max, shared)
@@ -199,6 +202,11 @@ size_t hash<::wasp::binary::FunctionType>::operator()(
 
 size_t hash<::wasp::binary::ShuffleImmediate>::operator()(
     const ::wasp::binary::ShuffleImmediate& v) const {
+  return ::wasp::HashContainer(v);
+}
+
+size_t hash<::wasp::binary::ValueTypes>::operator()(
+    const ::wasp::binary::ValueTypes& v) const {
   return ::wasp::HashContainer(v);
 }
 

@@ -154,7 +154,7 @@ Iterator Write(string_view value, Iterator out) {
 template <typename Iterator>
 Iterator Write(const CallIndirectImmediate& immediate, Iterator out) {
   out = WriteIndex(immediate.index, out);
-  out = Write(immediate.reserved, out);
+  out = Write(immediate.table_index, out);
   return out;
 }
 
@@ -182,8 +182,8 @@ Iterator Write(const ConstantExpression& value, Iterator out) {
 
 template <typename Iterator>
 Iterator Write(const CopyImmediate& immediate, Iterator out) {
-  out = Write(immediate.src_reserved, out);
-  out = Write(immediate.dst_reserved, out);
+  out = Write(immediate.src_index, out);
+  out = Write(immediate.dst_index, out);
   return out;
 }
 
@@ -353,7 +353,7 @@ Iterator Write(const Import& value, Iterator out) {
 template <typename Iterator>
 Iterator Write(const InitImmediate& immediate, Iterator out) {
   out = WriteIndex(immediate.segment_index, out);
-  out = Write(immediate.reserved, out);
+  out = Write(immediate.dst_index, out);
   return out;
 }
 
@@ -690,6 +690,7 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::ElemDrop:
     case Opcode::TableGrow:
     case Opcode::TableSize:
+    case Opcode::TableFill:
       return Write(instr.index_immediate(), out);
 
     // Index, Index immediates.
@@ -844,6 +845,11 @@ Iterator Write(const Instruction& instr, Iterator out) {
     // Shuffle immediate.
     case Opcode::V8X16Shuffle:
       return Write(instr.shuffle_immediate(), out);
+
+    // ValueTypes immediate.
+    case Opcode::SelectT:
+      return WriteVector(instr.value_types_immediate().begin(),
+                         instr.value_types_immediate().end(), out);
 
     // u8 immediate.
     case Opcode::I8X16ExtractLaneS:

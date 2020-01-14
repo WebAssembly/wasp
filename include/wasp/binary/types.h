@@ -149,7 +149,7 @@ struct EmptyImmediate {};
 
 struct CallIndirectImmediate {
   Index index;
-  u8 reserved;
+  Index table_index;
 };
 
 struct BrOnExnImmediate {
@@ -169,12 +169,12 @@ struct MemArgImmediate {
 
 struct InitImmediate {
   Index segment_index;
-  u8 reserved;
+  Index dst_index;
 };
 
 struct CopyImmediate {
-  u8 src_reserved;
-  u8 dst_reserved;
+  Index dst_index;
+  Index src_index;
 };
 
 struct Instruction {
@@ -195,6 +195,7 @@ struct Instruction {
   explicit Instruction(Opcode opcode, InitImmediate);
   explicit Instruction(Opcode opcode, CopyImmediate);
   explicit Instruction(Opcode opcode, ShuffleImmediate);
+  explicit Instruction(Opcode opcode, const ValueTypes&);
 
   bool has_empty_immediate() const;
   bool has_block_type_immediate() const;
@@ -212,6 +213,7 @@ struct Instruction {
   bool has_init_immediate() const;
   bool has_copy_immediate() const;
   bool has_shuffle_immediate() const;
+  bool has_value_types_immediate() const;
 
   EmptyImmediate& empty_immediate();
   const EmptyImmediate& empty_immediate() const;
@@ -245,6 +247,8 @@ struct Instruction {
   const CopyImmediate& copy_immediate() const;
   ShuffleImmediate& shuffle_immediate();
   const ShuffleImmediate& shuffle_immediate() const;
+  ValueTypes& value_types_immediate();
+  const ValueTypes& value_types_immediate() const;
 
   Opcode opcode;
   variant<EmptyImmediate,
@@ -262,7 +266,8 @@ struct Instruction {
           v128,
           InitImmediate,
           CopyImmediate,
-          ShuffleImmediate>
+          ShuffleImmediate,
+          ValueTypes>
       immediate;
 };
 
@@ -526,6 +531,11 @@ WASP_TYPES(WASP_DECLARE_STD_HASH)
 template <>
 struct hash<::wasp::binary::ShuffleImmediate> {
   size_t operator()(const ::wasp::binary::ShuffleImmediate&) const;
+};
+
+template <>
+struct hash<::wasp::binary::ValueTypes> {
+  size_t operator()(const ::wasp::binary::ValueTypes&) const;
 };
 
 }  // namespace std

@@ -81,6 +81,10 @@ inline bool Instruction::has_shuffle_immediate() const {
   return holds_alternative<ShuffleImmediate>(immediate);
 }
 
+inline bool Instruction::has_value_types_immediate() const {
+  return holds_alternative<ValueTypes>(immediate);
+}
+
 inline EmptyImmediate& Instruction::empty_immediate() {
   return get<EmptyImmediate>(immediate);
 }
@@ -208,6 +212,14 @@ inline ShuffleImmediate& Instruction::shuffle_immediate() {
 
 inline const ShuffleImmediate& Instruction::shuffle_immediate() const {
   return get<ShuffleImmediate>(immediate);
+}
+
+inline ValueTypes& Instruction::value_types_immediate() {
+  return get<ValueTypes>(immediate);
+}
+
+inline const ValueTypes& Instruction::value_types_immediate() const {
+  return get<ValueTypes>(immediate);
 }
 
 }  // namespace binary

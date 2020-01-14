@@ -721,8 +721,7 @@ TEST_F(ValidateInstructionTest, BrTable_ValueTypeMismatch) {
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrTable, BrTableImmediate{{0}, 0}});
-  ExpectErrors({{"instruction", "Expected stack to contain [i32], got [f32]"},
-                {"instruction", "Expected stack to contain [i32], got [f32]"}},
+  ExpectErrors({{"instruction", "Expected stack to contain [i32], got [f32]"}},
                errors);
 }
 
@@ -736,6 +735,30 @@ TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
                "br_table labels must have the same signature; expected "
                "[i32], got []"},
               errors);
+}
+
+TEST_F(ValidateInstructionTest, BrTable_reference_types) {
+  features.enable_reference_types();
+
+  // In the reference types proposal, label types don't have to be the same;
+  // just need to be follow normal subtyping relationship.
+  Ok(I{O::Block, BlockType::F32});
+  Ok(I{O::Block, BlockType::I32});
+  Ok(I{O::Unreachable});
+  Ok(I{O::BrTable, BrTableImmediate{{0}, 1}});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, BrTable_References) {
+  features.enable_reference_types();
+
+  Ok(I{O::Block, BlockType::Anyref});
+  Ok(I{O::Block, BlockType::Funcref});
+  Ok(I{O::Block, BlockType::Nullref});
+  Ok(I{O::RefNull});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::BrTable, BrTableImmediate{{0, 1}, 2}});
+  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Return) {
@@ -846,6 +869,15 @@ TEST_F(ValidateInstructionTest, CallIndirect_TypeIndexOOB) {
                errors);
 }
 
+TEST_F(ValidateInstructionTest,
+       CallIndirect_NonZeroTableIndex_reference_types) {
+  auto index = AddFunctionType(FunctionType{});
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::CallIndirect, CallIndirectImmediate{index, 1}});
+}
+
 TEST_F(ValidateInstructionTest, Drop) {
   for (const auto& info : all_value_types) {
     Ok(info.instruction);
@@ -892,6 +924,99 @@ TEST_F(ValidateInstructionTest, Select_InconsistentTypes) {
   ExpectError(
       {"instruction", "Expected stack to contain [f32 f32], got [i32 f32]"},
       errors);
+}
+
+TEST_F(ValidateInstructionTest, Select_reference_types) {
+  // Select can only be used with {i,f}{32,64} value types.
+  for (auto stack_type : {ST::Anyref, ST::Funcref, ST::Nullref}) {
+    context.type_stack = {stack_type, stack_type, ST::I32};
+    Fail(I{O::Select});
+    ExpectError(
+        {"instruction",
+         format("select instruction without expected type can only be used "
+                "with i32, i64, f32, f64; got {}",
+                stack_type)},
+        errors);
+  }
+}
+
+TEST_F(ValidateInstructionTest, SelectT) {
+  for (const auto& vt : {VT::I32, VT::I64, VT::F32, VT::F64, VT::Anyref,
+                           VT::Funcref, VT::Nullref}) {
+    TestSignature(I{O::SelectT, ValueTypes{vt}}, {vt, vt, VT::I32}, {vt});
+  }
+}
+
+TEST_F(ValidateInstructionTest, SelectT_EmptyStack) {
+  Fail(I{O::SelectT, {VT::I64}});
+  ExpectErrors({{"instruction", "Expected stack to contain [i32], got []"},
+                {"instruction", "Expected stack to contain [i64 i64], got []"}},
+               errors);
+}
+
+TEST_F(ValidateInstructionTest, SelectT_ConditionTypeMismatch) {
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::F32Const, f32{}});
+  Fail(I{O::SelectT, {VT::I32}});
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+              errors);
+}
+
+TEST_F(ValidateInstructionTest, SelectT_SubtypeOk) {
+  struct {
+    ValueType texpected;
+    StackType t1;
+    StackType t2;
+  } tests[] = {
+    {VT::Anyref, ST::Anyref, ST::Anyref},
+    {VT::Anyref, ST::Anyref, ST::Funcref},
+    {VT::Anyref, ST::Anyref, ST::Nullref},
+    {VT::Anyref, ST::Funcref, ST::Anyref},
+    {VT::Anyref, ST::Funcref, ST::Funcref},
+    {VT::Anyref, ST::Funcref, ST::Nullref},
+    {VT::Anyref, ST::Nullref, ST::Anyref},
+    {VT::Anyref, ST::Nullref, ST::Funcref},
+    {VT::Anyref, ST::Nullref, ST::Nullref},
+
+    {VT::Funcref, ST::Funcref, ST::Funcref},
+    {VT::Funcref, ST::Funcref, ST::Nullref},
+    {VT::Funcref, ST::Nullref, ST::Funcref},
+    {VT::Funcref, ST::Nullref, ST::Nullref},
+    {VT::Nullref, ST::Nullref, ST::Nullref},
+  };
+  for (auto test : tests) {
+    context.type_stack = {test.t1, test.t2, ST::I32};
+    Ok(I{O::SelectT, ValueTypes{test.texpected}});
+  }
+}
+
+TEST_F(ValidateInstructionTest, SelectT_SubtypeFail) {
+  struct {
+    ValueType texpected;
+    StackType t1;
+    StackType t2;
+  } tests[] = {
+    {VT::Funcref, ST::Anyref, ST::Anyref},
+    {VT::Funcref, ST::Anyref, ST::Funcref},
+    {VT::Funcref, ST::Anyref, ST::Nullref},
+    {VT::Funcref, ST::Funcref, ST::Anyref},
+    {VT::Funcref, ST::Nullref, ST::Anyref},
+
+    {VT::Nullref, ST::Anyref, ST::Anyref},
+    {VT::Nullref, ST::Anyref, ST::Funcref},
+    {VT::Nullref, ST::Anyref, ST::Nullref},
+    {VT::Nullref, ST::Funcref, ST::Anyref},
+    {VT::Nullref, ST::Funcref, ST::Funcref},
+    {VT::Nullref, ST::Funcref, ST::Nullref},
+    {VT::Nullref, ST::Nullref, ST::Anyref},
+    {VT::Nullref, ST::Nullref, ST::Funcref},
+  };
+  for (auto test : tests) {
+    context.type_stack = {test.t1, test.t2, ST::I32};
+    Fail(I{O::SelectT, ValueTypes{test.texpected}});
+    ClearErrors(errors);
+  }
 }
 
 TEST_F(ValidateInstructionTest, LocalGet) {
@@ -1004,6 +1129,42 @@ TEST_F(ValidateInstructionTest, GlobalSet_Immutable) {
   ExpectError({"instruction", "global.set is invalid on immutable global 0"},
                errors);
 }
+
+TEST_F(ValidateInstructionTest, TableGet) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  TestSignature(I{O::TableGet, Index{0}}, {VT::I32}, {VT::Funcref});
+}
+
+TEST_F(ValidateInstructionTest, TableGet_IndexOOB) {
+  context.type_stack = {ST::I32};
+  Fail(I{O::TableGet, Index{0}});
+  ExpectErrors({{"instruction", "Invalid table index 0, must be less than 0"}},
+               errors);
+}
+
+TEST_F(ValidateInstructionTest, TableSet) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  for (auto ref_type : {VT::Funcref, VT::Nullref}) {
+    TestSignature(I{O::TableSet, Index{0}}, {VT::I32, ref_type}, {});
+  }
+}
+
+TEST_F(ValidateInstructionTest, TableSet_IndexOOB) {
+  context.type_stack = {ST::I32, ST::Nullref};
+  Fail(I{O::TableSet, Index{0}});
+  ExpectErrors({{"instruction", "Invalid table index 0, must be less than 0"}},
+               errors);
+}
+
+TEST_F(ValidateInstructionTest, TableSet_InvalidType) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  context.type_stack = {ST::I32, ST::Anyref};
+  Fail(I{O::TableSet, Index{0}});
+  ExpectErrors({{"instruction",
+                 "Expected stack to contain [i32 funcref], got [i32 anyref]"}},
+               errors);
+}
+
 
 TEST_F(ValidateInstructionTest, Load) {
   const struct {
@@ -1389,6 +1550,13 @@ TEST_F(ValidateInstructionTest, SignExtension) {
   }
 }
 
+TEST_F(ValidateInstructionTest, ReferenceTypes) {
+  TestSignature(I{O::RefNull}, {}, {VT::Nullref});
+  for (auto ref_type : {VT::Anyref, VT::Funcref, VT::Nullref}) {
+    TestSignature(I{O::RefIsNull}, {ref_type}, {VT::I32});
+  }
+}
+
 TEST_F(ValidateInstructionTest, SaturatingFloatToInt) {
   const struct {
     Opcode opcode;
@@ -1530,6 +1698,41 @@ TEST_F(ValidateInstructionTest, TableCopy_TableIndexOOB) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::TableCopy, CopyImmediate{0, 0}});
+  ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
+               errors);
+}
+
+TEST_F(ValidateInstructionTest, TableGrow) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  TestSignature(I{O::TableGrow, Index{0}}, {VT::I32, VT::Funcref}, {VT::I32});
+}
+
+TEST_F(ValidateInstructionTest, TableGrow_TableIndexOOB) {
+  context.type_stack = StackTypes{ST::I32, ST::Funcref};
+  Fail(I{O::TableGrow, Index{0}});
+  ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
+               errors);
+}
+
+TEST_F(ValidateInstructionTest, TableSize) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  TestSignature(I{O::TableSize, Index{0}}, {}, {VT::I32});
+}
+
+TEST_F(ValidateInstructionTest, TableSize_TableIndexOOB) {
+  Fail(I{O::TableSize, Index{0}});
+  ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
+               errors);
+}
+
+TEST_F(ValidateInstructionTest, TableFill) {
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  TestSignature(I{O::TableFill, Index{0}}, {VT::I32, VT::Funcref, VT::I32}, {});
+}
+
+TEST_F(ValidateInstructionTest, TableFill_TableIndexOOB) {
+  context.type_stack = StackTypes{ST::I32, ST::Funcref, ST::I32};
+  Fail(I{O::TableFill, Index{0}});
   ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
                errors);
 }

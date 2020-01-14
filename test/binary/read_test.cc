@@ -285,30 +285,64 @@ TEST(ReadTest, ConstantExpression_PastEnd) {
 }
 
 TEST(ReadTest, CopyImmediate) {
-  ExpectRead<CopyImmediate>(CopyImmediate{0, 0}, "\x00\x00"_su8);
+  for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
+    ExpectRead<CopyImmediate>(CopyImmediate{0, 0}, "\x00\x00"_su8, Features{},
+                              kind);
+  }
 }
 
 TEST(ReadTest, CopyImmediate_BadReserved) {
-  ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
-                                    {0, "reserved"},
-                                    {1, "Expected reserved byte 0, got 1"}},
-                                   "\x01"_su8);
+  for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
+    ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
+                                      {0, "reserved"},
+                                      {1, "Expected reserved byte 0, got 1"}},
+                                     "\x01"_su8, Features{}, kind);
 
-  ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
-                                    {1, "reserved"},
-                                    {2, "Expected reserved byte 0, got 1"}},
-                                   "\x00\x01"_su8);
+    ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
+                                      {1, "reserved"},
+                                      {2, "Expected reserved byte 0, got 1"}},
+                                     "\x00\x01"_su8, Features{}, kind);
+  }
 }
 
 TEST(ReadTest, CopyImmediate_PastEnd) {
-  ExpectReadFailure<CopyImmediate>(
-      {{0, "copy immediate"}, {0, "reserved"}, {0, "Unable to read u8"}},
-      ""_su8);
+  for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
+    ExpectReadFailure<CopyImmediate>(
+        {{0, "copy immediate"}, {0, "reserved"}, {0, "Unable to read u8"}},
+        ""_su8, Features{}, kind);
 
-  ExpectReadFailure<CopyImmediate>(
-      {{0, "copy immediate"}, {1, "reserved"}, {1, "Unable to read u8"}},
-      "\x00"_su8);
+    ExpectReadFailure<CopyImmediate>(
+        {{0, "copy immediate"}, {1, "reserved"}, {1, "Unable to read u8"}},
+        "\x00"_su8, Features{}, kind);
+  }
 }
+
+TEST(ReadTest, CopyImmediate_Table_reference_types) {
+  Features features;
+  features.enable_reference_types();
+
+  ExpectRead<CopyImmediate>(CopyImmediate{128, 1}, "\x80\x01\x01"_su8, features,
+                            BulkImmediateKind::Table);
+  ExpectRead<CopyImmediate>(CopyImmediate{1, 128}, "\x01\x80\x01"_su8, features,
+                            BulkImmediateKind::Table);
+}
+
+TEST(ReadTest, CopyImmediate_Memory_reference_types) {
+  Features features;
+  features.enable_reference_types();
+
+  ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
+                                    {0, "reserved"},
+                                    {1, "Expected reserved byte 0, got 128"}},
+                                   "\x80\x01\x01"_su8, features,
+                                   BulkImmediateKind::Memory);
+  ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
+                                    {0, "reserved"},
+                                    {1, "Expected reserved byte 0, got 1"}},
+                                   "\x01\x80\x01"_su8, features,
+                                   BulkImmediateKind::Memory);
+}
+
 
 TEST(ReadTest, ShuffleImmediate) {
   ExpectRead<ShuffleImmediate>(
@@ -871,26 +905,61 @@ TEST(ReadTest, IndirectNameAssoc_PastEnd) {
 }
 
 TEST(ReadTest, InitImmediate) {
-  ExpectRead<InitImmediate>(InitImmediate{1, 0}, "\x01\x00"_su8);
-  ExpectRead<InitImmediate>(InitImmediate{128, 0}, "\x80\x01\x00"_su8);
+  for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
+    ExpectRead<InitImmediate>(InitImmediate{1, 0}, "\x01\x00"_su8, Features{},
+                              kind);
+    ExpectRead<InitImmediate>(InitImmediate{128, 0}, "\x80\x01\x00"_su8,
+                              Features{}, kind);
+  }
 }
 
 TEST(ReadTest, InitImmediate_BadReserved) {
-  ExpectReadFailure<InitImmediate>({{0, "init immediate"},
-                                    {1, "reserved"},
-                                    {2, "Expected reserved byte 0, got 1"}},
-                                   "\x00\x01"_su8);
+  for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
+    ExpectReadFailure<InitImmediate>({{0, "init immediate"},
+                                      {1, "reserved"},
+                                      {2, "Expected reserved byte 0, got 1"}},
+                                     "\x00\x01"_su8, Features{}, kind);
+  }
 }
 
 TEST(ReadTest, InitImmediate_PastEnd) {
-  ExpectReadFailure<InitImmediate>(
-      {{0, "init immediate"}, {0, "segment index"}, {0, "Unable to read u8"}},
-      ""_su8);
+  for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
+    ExpectReadFailure<InitImmediate>(
+        {{0, "init immediate"}, {0, "segment index"}, {0, "Unable to read u8"}},
+        ""_su8, Features{}, kind);
 
-  ExpectReadFailure<InitImmediate>(
-      {{0, "init immediate"}, {1, "reserved"}, {1, "Unable to read u8"}},
-      "\x01"_su8);
+    ExpectReadFailure<InitImmediate>(
+        {{0, "init immediate"}, {1, "reserved"}, {1, "Unable to read u8"}},
+        "\x01"_su8, Features{}, kind);
+  }
 }
+
+TEST(ReadTest, InitImmediate_Table_reference_types) {
+  Features features;
+  features.enable_reference_types();
+
+  ExpectRead<InitImmediate>(InitImmediate{1, 1}, "\x01\x01"_su8, features,
+                            BulkImmediateKind::Table);
+  ExpectRead<InitImmediate>(InitImmediate{128, 128}, "\x80\x01\x80\x01"_su8,
+                            features, BulkImmediateKind::Table);
+}
+
+TEST(ReadTest, InitImmediate_Memory_reference_types) {
+  Features features;
+  features.enable_reference_types();
+
+  ExpectReadFailure<InitImmediate>({{0, "init immediate"},
+                                    {1, "reserved"},
+                                    {2, "Expected reserved byte 0, got 1"}},
+                                   "\x01\x01"_su8, features,
+                                   BulkImmediateKind::Memory);
+  ExpectReadFailure<InitImmediate>({{0, "init immediate"},
+                                    {2, "reserved"},
+                                    {3, "Expected reserved byte 0, got 128"}},
+                                   "\x80\x01\x80\x01"_su8, features,
+                                   BulkImmediateKind::Memory);
+}
+
 
 TEST(ReadTest, Instruction) {
   using I = Instruction;
@@ -1131,10 +1200,17 @@ TEST(ReadTest, Instruction_reference_types) {
   Features features;
   features.enable_reference_types();
 
+  ExpectRead<I>(I{O::SelectT, ValueTypes{ValueType::I32, ValueType::I64}},
+                "\x1c\x02\x7f\x7e"_su8, features);
   ExpectRead<I>(I{O::TableGet, Index{0}}, "\x25\x00"_su8, features);
   ExpectRead<I>(I{O::TableSet, Index{0}}, "\x26\x00"_su8, features);
+  ExpectRead<I>(I{O::TableInit, InitImmediate{0, 1}}, "\xfc\x0c\x00\x01"_su8,
+                features);
+  ExpectRead<I>(I{O::TableCopy, CopyImmediate{0, 1}}, "\xfc\x0e\x00\x01"_su8,
+                features);
   ExpectRead<I>(I{O::TableGrow, Index{0}}, "\xfc\x0f\x00"_su8, features);
   ExpectRead<I>(I{O::TableSize, Index{0}}, "\xfc\x10\x00"_su8, features);
+  ExpectRead<I>(I{O::TableFill, Index{0}}, "\xfc\x11\x00"_su8, features);
   ExpectRead<I>(I{O::RefNull}, "\xd0"_su8, features);
   ExpectRead<I>(I{O::RefIsNull}, "\xd1"_su8, features);
 }
@@ -1184,6 +1260,22 @@ TEST(ReadTest, Instruction_bulk_memory) {
   ExpectRead<I>(I{O::ElemDrop, Index{4}}, "\xfc\x0d\x04"_su8, features);
   ExpectRead<I>(I{O::TableCopy, CopyImmediate{0, 0}}, "\xfc\x0e\x00\x00"_su8,
                 features);
+}
+
+TEST(ReadTest, Instruction_BadReserved_bulk_memory) {
+  using I = Instruction;
+
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectReadFailure<I>({{2, "init immediate"},
+                        {3, "reserved"},
+                        {4, "Expected reserved byte 0, got 1"}},
+                       "\xfc\x0c\x00\x01"_su8, features);
+  ExpectReadFailure<I>({{2, "copy immediate"},
+                        {3, "reserved"},
+                        {4, "Expected reserved byte 0, got 1"}},
+                       "\xfc\x0e\x00\x01"_su8, features);
 }
 
 TEST(ReadTest, Instruction_simd) {
@@ -1852,10 +1944,12 @@ TEST(ReadTest, Opcode_reference_types) {
   Features features;
   features.enable_reference_types();
 
+  ExpectRead<Opcode>(Opcode::SelectT, "\x1c"_su8, features);
   ExpectRead<Opcode>(Opcode::TableGet, "\x25"_su8, features);
   ExpectRead<Opcode>(Opcode::TableSet, "\x26"_su8, features);
   ExpectRead<Opcode>(Opcode::TableGrow, "\xfc\x0f"_su8, features);
   ExpectRead<Opcode>(Opcode::TableSize, "\xfc\x10"_su8, features);
+  ExpectRead<Opcode>(Opcode::TableFill, "\xfc\x11"_su8, features);
   ExpectRead<Opcode>(Opcode::RefNull, "\xd0"_su8, features);
   ExpectRead<Opcode>(Opcode::RefIsNull, "\xd1"_su8, features);
 }
@@ -2528,11 +2622,17 @@ TEST(ReadTest, ValueType_simd) {
 
 TEST(ReadTest, ValueType_reference_types) {
   ExpectReadFailure<ValueType>(
+      {{0, "value type"}, {1, "Unknown value type: 112"}}, "\x70"_su8);
+  ExpectReadFailure<ValueType>(
       {{0, "value type"}, {1, "Unknown value type: 111"}}, "\x6f"_su8);
+  ExpectReadFailure<ValueType>(
+      {{0, "value type"}, {1, "Unknown value type: 110"}}, "\x6e"_su8);
 
   Features features;
   features.enable_reference_types();
+  ExpectRead<ValueType>(ValueType::Funcref, "\x70"_su8, features);
   ExpectRead<ValueType>(ValueType::Anyref, "\x6f"_su8, features);
+  ExpectRead<ValueType>(ValueType::Nullref, "\x6e"_su8, features);
 }
 
 TEST(ReadTest, ValueType_Unknown) {

@@ -548,10 +548,13 @@ TEST(WriteTest, Instruction_reference_types) {
   using I = Instruction;
   using O = Opcode;
 
+  ExpectWrite<I>("\x1c\x02\x7f\x7e"_su8,
+                 I{O::SelectT, ValueTypes{ValueType::I32, ValueType::I64}});
   ExpectWrite<I>("\x25\x00"_su8, I{O::TableGet, Index{0}});
   ExpectWrite<I>("\x26\x00"_su8, I{O::TableSet, Index{0}});
   ExpectWrite<I>("\xfc\x0f\x00"_su8, I{O::TableGrow, Index{0}});
   ExpectWrite<I>("\xfc\x10\x00"_su8, I{O::TableSize, Index{0}});
+  ExpectWrite<I>("\xfc\x11\x00"_su8, I{O::TableFill, Index{0}});
   ExpectWrite<I>("\xd0"_su8, I{O::RefNull});
   ExpectWrite<I>("\xd1"_su8, I{O::RefIsNull});
 }
@@ -1087,10 +1090,12 @@ TEST(WriteTest, Opcode_sign_extension) {
 }
 
 TEST(WriteTest, Opcode_reference_types) {
+  ExpectWrite<Opcode>("\x1c"_su8, Opcode::SelectT);
   ExpectWrite<Opcode>("\x25"_su8, Opcode::TableGet);
   ExpectWrite<Opcode>("\x26"_su8, Opcode::TableSet);
   ExpectWrite<Opcode>("\xfc\x0f"_su8, Opcode::TableGrow);
   ExpectWrite<Opcode>("\xfc\x10"_su8, Opcode::TableSize);
+  ExpectWrite<Opcode>("\xfc\x11"_su8, Opcode::TableFill);
   ExpectWrite<Opcode>("\xd0"_su8, Opcode::RefNull);
   ExpectWrite<Opcode>("\xd1"_su8, Opcode::RefIsNull);
 }

@@ -408,7 +408,7 @@ typename Ctx::iterator formatter<::wasp::binary::CallIndirectImmediate>::format(
     const ::wasp::binary::CallIndirectImmediate& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{} {}", self.index, self.reserved);
+  format_to(buf, "{} {}", self.index, self.table_index);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
@@ -435,7 +435,7 @@ typename Ctx::iterator formatter<::wasp::binary::InitImmediate>::format(
     const ::wasp::binary::InitImmediate& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{} {}", self.segment_index, self.reserved);
+  format_to(buf, "{} {}", self.segment_index, self.dst_index);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
@@ -444,7 +444,7 @@ typename Ctx::iterator formatter<::wasp::binary::CopyImmediate>::format(
     const ::wasp::binary::CopyImmediate& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{} {}", self.src_reserved, self.dst_reserved);
+  format_to(buf, "{} {}", self.src_index, self.dst_index);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 

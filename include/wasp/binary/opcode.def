@@ -199,10 +199,12 @@ WASP_FEATURE_V(0x00, 0x12, ReturnCall, "return_call", tail_call)
 WASP_FEATURE_V(0x00, 0x13, ReturnCallIndirect, "return_call_indirect", tail_call)
 
 // Reference type opcodes
+WASP_FEATURE_V(0x00, 0x1c, SelectT, "select", reference_types)
 WASP_FEATURE_V(0x00, 0x25, TableGet, "table.get", reference_types)
 WASP_FEATURE_V(0x00, 0x26, TableSet, "table.set", reference_types)
 WASP_PREFIX_V (0xfc, 0x0f, TableGrow, "table.grow", reference_types)
 WASP_PREFIX_V (0xfc, 0x10, TableSize, "table.size", reference_types)
+WASP_PREFIX_V (0xfc, 0x11, TableFill, "table.fill", reference_types)
 WASP_FEATURE_V(0x00, 0xd0, RefNull, "ref.null", reference_types)
 WASP_FEATURE_V(0x00, 0xd1, RefIsNull, "ref.is_null", reference_types)
 

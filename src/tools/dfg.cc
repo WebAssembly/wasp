@@ -332,6 +332,8 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
           break;
 
         case ValueType::Anyref:
+        case ValueType::Funcref:
+        case ValueType::Nullref:
           PushValue(NewValue(Instruction{Opcode::RefNull}));
           break;
       }
@@ -499,6 +501,7 @@ void Tool::DoInstruction(const Instruction& instr) {
       break;
 
     case Opcode::Select:
+    case Opcode::SelectT:
     case Opcode::V128BitSelect:
     case Opcode::I32AtomicWait:
     case Opcode::I64AtomicWait:
@@ -936,6 +939,7 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::TableSet:
     case Opcode::TableGrow:
     case Opcode::TableSize:
+    case Opcode::TableFill:
       // TODO
       assert(false);
       break;

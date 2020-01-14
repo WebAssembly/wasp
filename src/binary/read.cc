@@ -129,8 +129,14 @@ optional<CallIndirectImmediate> Read(SpanU8* data,
                                      Tag<CallIndirectImmediate>) {
   ErrorsContextGuard guard{errors, *data, "call_indirect"};
   WASP_TRY_READ(index, ReadIndex(data, features, errors, "type index"));
-  WASP_TRY_READ(reserved, ReadReserved(data, features, errors));
-  return CallIndirectImmediate{index, reserved};
+  if (features.reference_types_enabled()) {
+    WASP_TRY_READ(table_index,
+                  ReadIndex(data, features, errors, "table index"));
+    return CallIndirectImmediate{index, table_index};
+  } else {
+    WASP_TRY_READ(reserved, ReadReserved(data, features, errors));
+    return CallIndirectImmediate{index, reserved};
+  }
 }
 
 optional<Index> ReadCheckLength(SpanU8* data,
@@ -228,11 +234,18 @@ optional<ConstantExpression> Read(SpanU8* data,
 optional<CopyImmediate> Read(SpanU8* data,
                              const Features& features,
                              Errors& errors,
-                             Tag<CopyImmediate>) {
+                             Tag<CopyImmediate>,
+                             BulkImmediateKind kind) {
   ErrorsContextGuard guard{errors, *data, "copy immediate"};
-  WASP_TRY_READ(src_reserved, ReadReserved(data, features, errors));
-  WASP_TRY_READ(dst_reserved, ReadReserved(data, features, errors));
-  return CopyImmediate{src_reserved, dst_reserved};
+  if (kind == BulkImmediateKind::Table && features.reference_types_enabled()) {
+    WASP_TRY_READ(dst_index, ReadIndex(data, features, errors, "dst index"));
+    WASP_TRY_READ(src_index, ReadIndex(data, features, errors, "src index"));
+    return CopyImmediate{dst_index, src_index};
+  } else {
+    WASP_TRY_READ(dst_reserved, ReadReserved(data, features, errors));
+    WASP_TRY_READ(src_reserved, ReadReserved(data, features, errors));
+    return CopyImmediate{dst_reserved, src_reserved};
+  }
 }
 
 optional<Index> ReadCount(SpanU8* data,
@@ -509,12 +522,18 @@ optional<InitFunction> Read(SpanU8* data,
 optional<InitImmediate> Read(SpanU8* data,
                              const Features& features,
                              Errors& errors,
-                             Tag<InitImmediate>) {
+                             Tag<InitImmediate>,
+                             BulkImmediateKind kind) {
   ErrorsContextGuard guard{errors, *data, "init immediate"};
   WASP_TRY_READ(segment_index,
                 ReadIndex(data, features, errors, "segment index"));
-  WASP_TRY_READ(reserved, ReadReserved(data, features, errors));
-  return InitImmediate{segment_index, reserved};
+  if (kind == BulkImmediateKind::Table && features.reference_types_enabled()) {
+    WASP_TRY_READ(dst_index, ReadIndex(data, features, errors, "table index"));
+    return InitImmediate{segment_index, dst_index};
+  } else {
+    WASP_TRY_READ(reserved, ReadReserved(data, features, errors));
+    return InitImmediate{segment_index, reserved};
+  }
 }
 
 optional<Instruction> Read(SpanU8* data,
@@ -837,7 +856,8 @@ optional<Instruction> Read(SpanU8* data,
     case Opcode::DataDrop:
     case Opcode::ElemDrop:
     case Opcode::TableGrow:
-    case Opcode::TableSize: {
+    case Opcode::TableSize:
+    case Opcode::TableFill: {
       WASP_TRY_READ(index, ReadIndex(data, features, errors, "index"));
       return Instruction{Opcode{opcode}, index};
     }
@@ -1008,22 +1028,39 @@ optional<Instruction> Read(SpanU8* data,
     }
 
     // Reserved, Index immediates.
-    case Opcode::MemoryInit:
+    case Opcode::MemoryInit: {
+      WASP_TRY_READ(immediate, Read<InitImmediate>(data, features, errors,
+                                                   BulkImmediateKind::Memory));
+      return Instruction{Opcode{opcode}, immediate};
+    }
     case Opcode::TableInit: {
-      WASP_TRY_READ(immediate, Read<InitImmediate>(data, features, errors));
+      WASP_TRY_READ(immediate, Read<InitImmediate>(data, features, errors,
+                                                   BulkImmediateKind::Table));
       return Instruction{Opcode{opcode}, immediate};
     }
 
     // Reserved, reserved immediates.
-    case Opcode::MemoryCopy:
+    case Opcode::MemoryCopy: {
+      WASP_TRY_READ(immediate, Read<CopyImmediate>(data, features, errors,
+                                                   BulkImmediateKind::Memory));
+      return Instruction{Opcode{opcode}, immediate};
+    }
     case Opcode::TableCopy: {
-      WASP_TRY_READ(immediate, Read<CopyImmediate>(data, features, errors));
+      WASP_TRY_READ(immediate, Read<CopyImmediate>(data, features, errors,
+                                                   BulkImmediateKind::Table));
       return Instruction{Opcode{opcode}, immediate};
     }
 
     // Shuffle immediate.
     case Opcode::V8X16Shuffle: {
       WASP_TRY_READ(immediate, Read<ShuffleImmediate>(data, features, errors));
+      return Instruction{Opcode{opcode}, immediate};
+    }
+
+    // ValueTypes immediate.
+    case Opcode::SelectT: {
+      WASP_TRY_READ(immediate,
+                    ReadVector<ValueType>(data, features, errors, "types"));
       return Instruction{Opcode{opcode}, immediate};
     }
 

@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_READ_H_
 #define WASP_BINARY_READ_H_
 
+#include <utility>
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
@@ -30,12 +31,20 @@ namespace binary {
 
 class Errors;
 
+enum class BulkImmediateKind {
+  Memory,
+  Table,
+};
+
 template <typename T>
 struct Tag {};
 
-template <typename T>
-optional<T> Read(SpanU8* data, const Features& features, Errors& errors) {
-  return Read(data, features, errors, Tag<T>{});
+template <typename T, typename... Args>
+optional<T> Read(SpanU8* data,
+                 const Features& features,
+                 Errors& errors,
+                 Args&&... args) {
+  return Read(data, features, errors, Tag<T>{}, std::forward<Args>(args)...);
 }
 
 optional<BlockType> Read(SpanU8*, const Features&, Errors&, Tag<BlockType>);
@@ -82,7 +91,8 @@ optional<ConstantExpression> Read(SpanU8*,
 optional<CopyImmediate> Read(SpanU8* data,
                              const Features& features,
                              Errors& errors,
-                             Tag<CopyImmediate>);
+                             Tag<CopyImmediate>,
+                             BulkImmediateKind);
 
 optional<Index> ReadCount(SpanU8*, const Features&, Errors&);
 
@@ -131,7 +141,8 @@ optional<Index> ReadIndex(SpanU8*, const Features&, Errors&, string_view desc);
 optional<InitImmediate> Read(SpanU8*,
                              const Features&,
                              Errors&,
-                             Tag<InitImmediate>);
+                             Tag<InitImmediate>,
+                             BulkImmediateKind);
 
 optional<Instruction> Read(SpanU8*, const Features&, Errors&, Tag<Instruction>);
 

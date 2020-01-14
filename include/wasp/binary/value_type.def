@@ -19,4 +19,4 @@ WASP_V(0x7e, I64, "i64")
 WASP_V(0x7d, F32, "f32")
 WASP_V(0x7c, F64, "f64")
 WASP_FEATURE_V(0x7b, V128, "v128", simd)
-WASP_FEATURE_V(0x6f, Anyref, "anyref", reference_types)
+#include "wasp/binary/reference_type.def"

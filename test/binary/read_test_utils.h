@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_READ_TEST_UTILS_H_
 #define WASP_BINARY_READ_TEST_UTILS_H_
 
+#include <utility>
 #include "gtest/gtest.h"
 #include "test/binary/test_utils.h"
 #include "wasp/base/features.h"
@@ -27,26 +28,41 @@ namespace wasp {
 namespace binary {
 namespace test {
 
-template <typename T>
+template <typename T, typename... Args>
 void ExpectRead(const T& expected,
                 wasp::SpanU8 data,
-                const wasp::Features& features = wasp::Features{}) {
+                const wasp::Features& features,
+                Args&&... args) {
   wasp::binary::test::TestErrors errors;
-  auto result = wasp::binary::Read<T>(&data, features, errors);
+  auto result = wasp::binary::Read<T>(&data, features, errors,
+                                      std::forward<Args>(args)...);
   wasp::binary::test::ExpectNoErrors(errors);
   EXPECT_EQ(expected, result);
   EXPECT_EQ(0u, data.size());
 }
 
 template <typename T>
+void ExpectRead(const T& expected, wasp::SpanU8 data) {
+  ExpectRead<T>(expected, data, Features{});
+}
+
+template <typename T, typename... Args>
 void ExpectReadFailure(const wasp::binary::test::ExpectedError& expected,
                        wasp::SpanU8 data,
-                       const wasp::Features& features = wasp::Features{}) {
+                       const wasp::Features& features,
+                       Args&&... args) {
   wasp::binary::test::TestErrors errors;
   const wasp::SpanU8 orig_data = data;
-  auto result = wasp::binary::Read<T>(&data, features, errors);
+  auto result = wasp::binary::Read<T>(&data, features, errors,
+                                      std::forward<Args>(args)...);
   wasp::binary::test::ExpectError(expected, errors, orig_data);
   EXPECT_EQ(wasp::nullopt, result);
+}
+
+template <typename T>
+void ExpectReadFailure(const wasp::binary::test::ExpectedError& expected,
+                       wasp::SpanU8 data) {
+  ExpectReadFailure<T>(expected, data, Features{});
 }
 
 }  // namespace test

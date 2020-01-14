@@ -1,5 +1,5 @@
 //
-// Copyright 2019 WebAssembly Community Group participants
+// Copyright 2020 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,20 +14,6 @@
 // limitations under the License.
 //
 
-#include "wasp/base/features.h"
-
-namespace wasp {
-
-void Features::EnableAll() {
-#define WASP_V(variable, flag, default_) enable_##variable();
-#include "wasp/base/features.def"
-#undef WASP_V
-}
-
-void Features::UpdateDependencies(){
-  if (reference_types_enabled_) {
-    bulk_memory_enabled_ = true;
-  }
-}
-
-}  // namespace wasp
+WASP_FEATURE_V(0x70, Funcref, "funcref", reference_types)
+WASP_FEATURE_V(0x6f, Anyref, "anyref", reference_types)
+WASP_FEATURE_V(0x6e, Nullref, "nullref", reference_types)
