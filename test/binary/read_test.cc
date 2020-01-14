@@ -1351,6 +1351,33 @@ TEST(ReadTest, Instruction_simd) {
                 "\xfd\xc4\x01\x01\x02"_su8, f);
   ExpectRead<I>(I{O::I64X2LoadSplat, MemArgImmediate{1, 2}},
                 "\xfd\xc5\x01\x01\x02"_su8, f);
+  ExpectRead<I>(I{O::I8X16NarrowI16X8S}, "\xfd\xc6\x01"_su8, f);
+  ExpectRead<I>(I{O::I8X16NarrowI16X8U}, "\xfd\xc7\x01"_su8, f);
+  ExpectRead<I>(I{O::I16X8NarrowI32X4S}, "\xfd\xc8\x01"_su8, f);
+  ExpectRead<I>(I{O::I16X8NarrowI32X4U}, "\xfd\xc9\x01"_su8, f);
+  ExpectRead<I>(I{O::I16X8WidenLowI8X16S}, "\xfd\xca\x01"_su8, f);
+  ExpectRead<I>(I{O::I16X8WidenHighI8X16S}, "\xfd\xcb\x01"_su8, f);
+  ExpectRead<I>(I{O::I16X8WidenLowI8X16U}, "\xfd\xcc\x01"_su8, f);
+  ExpectRead<I>(I{O::I16X8WidenHighI8X16U}, "\xfd\xcd\x01"_su8, f);
+  ExpectRead<I>(I{O::I32X4WidenLowI16X8S}, "\xfd\xce\x01"_su8, f);
+  ExpectRead<I>(I{O::I32X4WidenHighI16X8S}, "\xfd\xcf\x01"_su8, f);
+  ExpectRead<I>(I{O::I32X4WidenLowI16X8U}, "\xfd\xd0\x01"_su8, f);
+  ExpectRead<I>(I{O::I32X4WidenHighI16X8U}, "\xfd\xd1\x01"_su8, f);
+  ExpectRead<I>(I{O::I16X8Load8X8S, MemArgImmediate{1, 2}},
+                "\xfd\xd2\x01\x01\x02"_su8, f);
+  ExpectRead<I>(I{O::I16X8Load8X8U, MemArgImmediate{1, 2}},
+                "\xfd\xd3\x01\x01\x02"_su8, f);
+  ExpectRead<I>(I{O::I32X4Load16X4S, MemArgImmediate{1, 2}},
+                "\xfd\xd4\x01\x01\x02"_su8, f);
+  ExpectRead<I>(I{O::I32X4Load16X4U, MemArgImmediate{1, 2}},
+                "\xfd\xd5\x01\x01\x02"_su8, f);
+  ExpectRead<I>(I{O::I64X2Load32X2S, MemArgImmediate{1, 2}},
+                "\xfd\xd6\x01\x01\x02"_su8, f);
+  ExpectRead<I>(I{O::I64X2Load32X2U, MemArgImmediate{1, 2}},
+                "\xfd\xd7\x01\x01\x02"_su8, f);
+  ExpectRead<I>(I{O::V128Andnot}, "\xfd\xd8\x01"_su8, f);
+  ExpectRead<I>(I{O::I8X16AvgrU}, "\xfd\xd9\x01"_su8, f);
+  ExpectRead<I>(I{O::I16X8AvgrU}, "\xfd\xda\x01"_su8, f);
 }
 
 TEST(ReadTest, Instruction_threads) {
@@ -2061,6 +2088,27 @@ TEST(ReadTest, Opcode_simd) {
   ExpectRead<O>(O::I16X8LoadSplat, "\xfd\xc3\x01"_su8, features);
   ExpectRead<O>(O::I32X4LoadSplat, "\xfd\xc4\x01"_su8, features);
   ExpectRead<O>(O::I64X2LoadSplat, "\xfd\xc5\x01"_su8, features);
+  ExpectRead<O>(O::I8X16NarrowI16X8S, "\xfd\xc6\x01"_su8, features);
+  ExpectRead<O>(O::I8X16NarrowI16X8U, "\xfd\xc7\x01"_su8, features);
+  ExpectRead<O>(O::I16X8NarrowI32X4S, "\xfd\xc8\x01"_su8, features);
+  ExpectRead<O>(O::I16X8NarrowI32X4U, "\xfd\xc9\x01"_su8, features);
+  ExpectRead<O>(O::I16X8WidenLowI8X16S, "\xfd\xca\x01"_su8, features);
+  ExpectRead<O>(O::I16X8WidenHighI8X16S, "\xfd\xcb\x01"_su8, features);
+  ExpectRead<O>(O::I16X8WidenLowI8X16U, "\xfd\xcc\x01"_su8, features);
+  ExpectRead<O>(O::I16X8WidenHighI8X16U, "\xfd\xcd\x01"_su8, features);
+  ExpectRead<O>(O::I32X4WidenLowI16X8S, "\xfd\xce\x01"_su8, features);
+  ExpectRead<O>(O::I32X4WidenHighI16X8S, "\xfd\xcf\x01"_su8, features);
+  ExpectRead<O>(O::I32X4WidenLowI16X8U, "\xfd\xd0\x01"_su8, features);
+  ExpectRead<O>(O::I32X4WidenHighI16X8U, "\xfd\xd1\x01"_su8, features);
+  ExpectRead<O>(O::I16X8Load8X8S, "\xfd\xd2\x01"_su8, features);
+  ExpectRead<O>(O::I16X8Load8X8U, "\xfd\xd3\x01"_su8, features);
+  ExpectRead<O>(O::I32X4Load16X4S, "\xfd\xd4\x01"_su8, features);
+  ExpectRead<O>(O::I32X4Load16X4U, "\xfd\xd5\x01"_su8, features);
+  ExpectRead<O>(O::I64X2Load32X2S, "\xfd\xd6\x01"_su8, features);
+  ExpectRead<O>(O::I64X2Load32X2U, "\xfd\xd7\x01"_su8, features);
+  ExpectRead<O>(O::V128Andnot, "\xfd\xd8\x01"_su8, features);
+  ExpectRead<O>(O::I8X16AvgrU, "\xfd\xd9\x01"_su8, features);
+  ExpectRead<O>(O::I16X8AvgrU, "\xfd\xda\x01"_su8, features);
 }
 
 TEST(ReadTest, Opcode_Unknown_simd_prefix) {
@@ -2071,7 +2119,7 @@ TEST(ReadTest, Opcode_Unknown_simd_prefix) {
       0x03, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e,
       0x3f, 0x5e, 0x5f, 0x60, 0x61, 0x6f, 0x70, 0x71, 0x72, 0x7a,
       0x7b, 0x7d, 0x7e, 0x80, 0x81, 0x82, 0x83, 0x8b, 0x8c, 0x8e,
-      0x8f, 0x90, 0x91, 0x92, 0x93, 0x94, 0xa3, 0xa4, 0xb3,
+      0x8f, 0x90, 0x91, 0x92, 0x93, 0x94, 0xa3, 0xa4, 0xb3, 0xdb,
   };
   for (auto code : SpanU8{kInvalidOpcodes, sizeof(kInvalidOpcodes)}) {
     ExpectUnknownOpcode(0xfd, code, features);

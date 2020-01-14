@@ -1535,8 +1535,12 @@ TEST_F(ValidateInstructionTest, TableCopy_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, SimdLoad) {
-  const Opcode opcodes[] = {O::V128Load, O::I8X16LoadSplat, O::I16X8LoadSplat,
-                            O::I32X4LoadSplat, O::I64X2LoadSplat};
+  const Opcode opcodes[] = {
+      O::V128Load,       O::I8X16LoadSplat, O::I16X8LoadSplat,
+      O::I32X4LoadSplat, O::I64X2LoadSplat, O::I16X8Load8X8S,
+      O::I16X8Load8X8U,  O::I32X4Load16X4S, O::I32X4Load16X4U,
+      O::I64X2Load32X2S, O::I64X2Load32X2U,
+  };
 
   AddMemory(MemoryType{Limits{0}});
   for (const auto& opcode : opcodes) {
@@ -1548,11 +1552,12 @@ TEST_F(ValidateInstructionTest, SimdLoad_Alignment) {
   struct {
     Opcode opcode;
     u32 max_align;
-  } const infos[] = {{O::V128Load, 4},
-                     {O::I8X16LoadSplat, 0},
-                     {O::I16X8LoadSplat, 1},
-                     {O::I32X4LoadSplat, 2},
-                     {O::I64X2LoadSplat, 3}};
+  } const infos[] = {
+      {O::V128Load, 4},       {O::I8X16LoadSplat, 0}, {O::I16X8LoadSplat, 1},
+      {O::I32X4LoadSplat, 2}, {O::I64X2LoadSplat, 3}, {O::I16X8Load8X8S, 3},
+      {O::I16X8Load8X8U, 3},  {O::I32X4Load16X4S, 3}, {O::I32X4Load16X4U, 3},
+      {O::I64X2Load32X2S, 3}, {O::I64X2Load32X2U, 3},
+  };
 
   AddMemory(MemoryType{Limits{0}});
   for (const auto& info : infos) {
@@ -1565,8 +1570,12 @@ TEST_F(ValidateInstructionTest, SimdLoad_Alignment) {
 }
 
 TEST_F(ValidateInstructionTest, SimdLoad_MemoryOOB) {
-  const Opcode opcodes[] = {O::V128Load, O::I8X16LoadSplat, O::I16X8LoadSplat,
-                            O::I32X4LoadSplat, O::I64X2LoadSplat};
+  const Opcode opcodes[] = {
+      O::V128Load,       O::I8X16LoadSplat, O::I16X8LoadSplat,
+      O::I32X4LoadSplat, O::I64X2LoadSplat, O::I16X8Load8X8S,
+      O::I16X8Load8X8U,  O::I32X4Load16X4S, O::I32X4Load16X4U,
+      O::I64X2Load32X2S, O::I64X2Load32X2U,
+  };
 
   for (const auto& opcode : opcodes) {
     Ok(I{O::I32Const, s32{}});
@@ -1611,25 +1620,33 @@ TEST_F(ValidateInstructionTest, SimdBitSelect) {
 
 TEST_F(ValidateInstructionTest, SimdUnary) {
   const Opcode opcodes[] = {
-    O::V128Not,
-    O::I8X16Neg,
-    O::I16X8Neg,
-    O::I32X4Neg,
-    O::I64X2Neg,
-    O::F32X4Abs,
-    O::F32X4Neg,
-    O::F32X4Sqrt,
-    O::F64X2Abs,
-    O::F64X2Neg,
-    O::F64X2Sqrt,
-    O::I32X4TruncSatF32X4S,
-    O::I32X4TruncSatF32X4U,
-    O::I64X2TruncSatF64X2S,
-    O::I64X2TruncSatF64X2U,
-    O::F32X4ConvertI32X4S,
-    O::F32X4ConvertI32X4U,
-    O::F64X2ConvertI64X2S,
-    O::F64X2ConvertI64X2U,
+      O::V128Not,
+      O::I8X16Neg,
+      O::I16X8Neg,
+      O::I32X4Neg,
+      O::I64X2Neg,
+      O::F32X4Abs,
+      O::F32X4Neg,
+      O::F32X4Sqrt,
+      O::F64X2Abs,
+      O::F64X2Neg,
+      O::F64X2Sqrt,
+      O::I32X4TruncSatF32X4S,
+      O::I32X4TruncSatF32X4U,
+      O::I64X2TruncSatF64X2S,
+      O::I64X2TruncSatF64X2U,
+      O::F32X4ConvertI32X4S,
+      O::F32X4ConvertI32X4U,
+      O::F64X2ConvertI64X2S,
+      O::F64X2ConvertI64X2U,
+      O::I16X8WidenLowI8X16S,
+      O::I16X8WidenHighI8X16S,
+      O::I16X8WidenLowI8X16U,
+      O::I16X8WidenHighI8X16U,
+      O::I32X4WidenLowI16X8S,
+      O::I32X4WidenHighI16X8S,
+      O::I32X4WidenLowI16X8U,
+      O::I32X4WidenHighI16X8U,
   };
 
   for (const auto& opcode: opcodes) {
@@ -1638,45 +1655,51 @@ TEST_F(ValidateInstructionTest, SimdUnary) {
 }
 
 TEST_F(ValidateInstructionTest, SimdBinary) {
-  const Opcode opcodes[] = {O::I8X16Eq,           O::I8X16Ne,
-                            O::I8X16LtS,          O::I8X16LtU,
-                            O::I8X16GtS,          O::I8X16GtU,
-                            O::I8X16LeS,          O::I8X16LeU,
-                            O::I8X16GeS,          O::I8X16GeU,
-                            O::I16X8Eq,           O::I16X8Ne,
-                            O::I16X8LtS,          O::I16X8LtU,
-                            O::I16X8GtS,          O::I16X8GtU,
-                            O::I16X8LeS,          O::I16X8LeU,
-                            O::I16X8GeS,          O::I16X8GeU,
-                            O::I32X4Eq,           O::I32X4Ne,
-                            O::I32X4LtS,          O::I32X4LtU,
-                            O::I32X4GtS,          O::I32X4GtU,
-                            O::I32X4LeS,          O::I32X4LeU,
-                            O::I32X4GeS,          O::I32X4GeU,
-                            O::F32X4Eq,           O::F32X4Ne,
-                            O::F32X4Lt,           O::F32X4Gt,
-                            O::F32X4Le,           O::F32X4Ge,
-                            O::F64X2Eq,           O::F64X2Ne,
-                            O::F64X2Lt,           O::F64X2Gt,
-                            O::F64X2Le,           O::F64X2Ge,
-                            O::V128And,           O::V128Or,
-                            O::V128Xor,           O::I8X16Add,
-                            O::I8X16AddSaturateS, O::I8X16AddSaturateU,
-                            O::I8X16Sub,          O::I8X16SubSaturateS,
-                            O::I8X16SubSaturateU, O::I8X16Mul,
-                            O::I16X8Add,          O::I16X8AddSaturateS,
-                            O::I16X8AddSaturateU, O::I16X8Sub,
-                            O::I16X8SubSaturateS, O::I16X8SubSaturateU,
-                            O::I16X8Mul,          O::I32X4Add,
-                            O::I32X4Sub,          O::I32X4Mul,
-                            O::I64X2Add,          O::I64X2Sub,
-                            O::F32X4Add,          O::F32X4Sub,
-                            O::F32X4Mul,          O::F32X4Div,
-                            O::F32X4Min,          O::F32X4Max,
-                            O::F64X2Add,          O::F64X2Sub,
-                            O::F64X2Mul,          O::F64X2Div,
-                            O::F64X2Min,          O::F64X2Max,
-                            O::V8X16Shuffle,      O::V8X16Swizzle};
+  const Opcode opcodes[] = {
+      O::I8X16Eq,           O::I8X16Ne,
+      O::I8X16LtS,          O::I8X16LtU,
+      O::I8X16GtS,          O::I8X16GtU,
+      O::I8X16LeS,          O::I8X16LeU,
+      O::I8X16GeS,          O::I8X16GeU,
+      O::I16X8Eq,           O::I16X8Ne,
+      O::I16X8LtS,          O::I16X8LtU,
+      O::I16X8GtS,          O::I16X8GtU,
+      O::I16X8LeS,          O::I16X8LeU,
+      O::I16X8GeS,          O::I16X8GeU,
+      O::I32X4Eq,           O::I32X4Ne,
+      O::I32X4LtS,          O::I32X4LtU,
+      O::I32X4GtS,          O::I32X4GtU,
+      O::I32X4LeS,          O::I32X4LeU,
+      O::I32X4GeS,          O::I32X4GeU,
+      O::F32X4Eq,           O::F32X4Ne,
+      O::F32X4Lt,           O::F32X4Gt,
+      O::F32X4Le,           O::F32X4Ge,
+      O::F64X2Eq,           O::F64X2Ne,
+      O::F64X2Lt,           O::F64X2Gt,
+      O::F64X2Le,           O::F64X2Ge,
+      O::V128And,           O::V128Or,
+      O::V128Xor,           O::I8X16Add,
+      O::I8X16AddSaturateS, O::I8X16AddSaturateU,
+      O::I8X16Sub,          O::I8X16SubSaturateS,
+      O::I8X16SubSaturateU, O::I8X16Mul,
+      O::I16X8Add,          O::I16X8AddSaturateS,
+      O::I16X8AddSaturateU, O::I16X8Sub,
+      O::I16X8SubSaturateS, O::I16X8SubSaturateU,
+      O::I16X8Mul,          O::I32X4Add,
+      O::I32X4Sub,          O::I32X4Mul,
+      O::I64X2Add,          O::I64X2Sub,
+      O::F32X4Add,          O::F32X4Sub,
+      O::F32X4Mul,          O::F32X4Div,
+      O::F32X4Min,          O::F32X4Max,
+      O::F64X2Add,          O::F64X2Sub,
+      O::F64X2Mul,          O::F64X2Div,
+      O::F64X2Min,          O::F64X2Max,
+      O::V8X16Shuffle,      O::V8X16Swizzle,
+      O::I8X16NarrowI16X8S, O::I8X16NarrowI16X8U,
+      O::I16X8NarrowI32X4S, O::I16X8NarrowI32X4U,
+      O::V128Andnot,        O::I8X16AvgrU,
+      O::I16X8AvgrU,
+  };
 
   for (const auto& opcode: opcodes) {
     TestSignature(I{opcode}, {VT::V128, VT::V128}, {VT::V128});

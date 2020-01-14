@@ -751,6 +751,34 @@ TEST(WriteTest, Instruction_simd) {
                  I{O::I32X4LoadSplat, MemArgImmediate{1, 2}});
   ExpectWrite<I>("\xfd\xc5\x01\x01\x02"_su8,
                  I{O::I64X2LoadSplat, MemArgImmediate{1, 2}});
+
+  ExpectWrite<I>("\xfd\xc6\x01"_su8, I{O::I8X16NarrowI16X8S});
+  ExpectWrite<I>("\xfd\xc7\x01"_su8, I{O::I8X16NarrowI16X8U});
+  ExpectWrite<I>("\xfd\xc8\x01"_su8, I{O::I16X8NarrowI32X4S});
+  ExpectWrite<I>("\xfd\xc9\x01"_su8, I{O::I16X8NarrowI32X4U});
+  ExpectWrite<I>("\xfd\xca\x01"_su8, I{O::I16X8WidenLowI8X16S});
+  ExpectWrite<I>("\xfd\xcb\x01"_su8, I{O::I16X8WidenHighI8X16S});
+  ExpectWrite<I>("\xfd\xcc\x01"_su8, I{O::I16X8WidenLowI8X16U});
+  ExpectWrite<I>("\xfd\xcd\x01"_su8, I{O::I16X8WidenHighI8X16U});
+  ExpectWrite<I>("\xfd\xce\x01"_su8, I{O::I32X4WidenLowI16X8S});
+  ExpectWrite<I>("\xfd\xcf\x01"_su8, I{O::I32X4WidenHighI16X8S});
+  ExpectWrite<I>("\xfd\xd0\x01"_su8, I{O::I32X4WidenLowI16X8U});
+  ExpectWrite<I>("\xfd\xd1\x01"_su8, I{O::I32X4WidenHighI16X8U});
+  ExpectWrite<I>("\xfd\xd2\x01\x01\x02"_su8,
+                 I{O::I16X8Load8X8S, MemArgImmediate{1, 2}});
+  ExpectWrite<I>("\xfd\xd3\x01\x01\x02"_su8,
+                 I{O::I16X8Load8X8U, MemArgImmediate{1, 2}});
+  ExpectWrite<I>("\xfd\xd4\x01\x01\x02"_su8,
+                 I{O::I32X4Load16X4S, MemArgImmediate{1, 2}});
+  ExpectWrite<I>("\xfd\xd5\x01\x01\x02"_su8,
+                 I{O::I32X4Load16X4U, MemArgImmediate{1, 2}});
+  ExpectWrite<I>("\xfd\xd6\x01\x01\x02"_su8,
+                 I{O::I64X2Load32X2S, MemArgImmediate{1, 2}});
+  ExpectWrite<I>("\xfd\xd7\x01\x01\x02"_su8,
+                 I{O::I64X2Load32X2U, MemArgImmediate{1, 2}});
+  ExpectWrite<I>("\xfd\xd8\x01"_su8, I{O::V128Andnot});
+  ExpectWrite<I>("\xfd\xd9\x01"_su8, I{O::I8X16AvgrU});
+  ExpectWrite<I>("\xfd\xda\x01"_su8, I{O::I16X8AvgrU});
 }
 
 TEST(WriteTest, Instruction_threads) {
@@ -1240,6 +1268,27 @@ TEST(WriteTest, Opcode_simd) {
   ExpectWrite<O>("\xfd\xc3\x01"_su8, O::I16X8LoadSplat);
   ExpectWrite<O>("\xfd\xc4\x01"_su8, O::I32X4LoadSplat);
   ExpectWrite<O>("\xfd\xc5\x01"_su8, O::I64X2LoadSplat);
+  ExpectWrite<O>("\xfd\xc6\x01"_su8, O::I8X16NarrowI16X8S);
+  ExpectWrite<O>("\xfd\xc7\x01"_su8, O::I8X16NarrowI16X8U);
+  ExpectWrite<O>("\xfd\xc8\x01"_su8, O::I16X8NarrowI32X4S);
+  ExpectWrite<O>("\xfd\xc9\x01"_su8, O::I16X8NarrowI32X4U);
+  ExpectWrite<O>("\xfd\xca\x01"_su8, O::I16X8WidenLowI8X16S);
+  ExpectWrite<O>("\xfd\xcb\x01"_su8, O::I16X8WidenHighI8X16S);
+  ExpectWrite<O>("\xfd\xcc\x01"_su8, O::I16X8WidenLowI8X16U);
+  ExpectWrite<O>("\xfd\xcd\x01"_su8, O::I16X8WidenHighI8X16U);
+  ExpectWrite<O>("\xfd\xce\x01"_su8, O::I32X4WidenLowI16X8S);
+  ExpectWrite<O>("\xfd\xcf\x01"_su8, O::I32X4WidenHighI16X8S);
+  ExpectWrite<O>("\xfd\xd0\x01"_su8, O::I32X4WidenLowI16X8U);
+  ExpectWrite<O>("\xfd\xd1\x01"_su8, O::I32X4WidenHighI16X8U);
+  ExpectWrite<O>("\xfd\xd2\x01"_su8, O::I16X8Load8X8S);
+  ExpectWrite<O>("\xfd\xd3\x01"_su8, O::I16X8Load8X8U);
+  ExpectWrite<O>("\xfd\xd4\x01"_su8, O::I32X4Load16X4S);
+  ExpectWrite<O>("\xfd\xd5\x01"_su8, O::I32X4Load16X4U);
+  ExpectWrite<O>("\xfd\xd6\x01"_su8, O::I64X2Load32X2S);
+  ExpectWrite<O>("\xfd\xd7\x01"_su8, O::I64X2Load32X2U);
+  ExpectWrite<O>("\xfd\xd8\x01"_su8, O::V128Andnot);
+  ExpectWrite<O>("\xfd\xd9\x01"_su8, O::I8X16AvgrU);
+  ExpectWrite<O>("\xfd\xda\x01"_su8, O::I16X8AvgrU);
 }
 
 TEST(WriteTest, Opcode_threads) {

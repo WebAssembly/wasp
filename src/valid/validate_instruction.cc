@@ -541,6 +541,12 @@ bool Load(const Instruction& instruction, Context& context, Errors& errors) {
     case Opcode::I16X8LoadSplat:   span = span_v128; max_align = 1; break;
     case Opcode::I32X4LoadSplat:   span = span_v128; max_align = 2; break;
     case Opcode::I64X2LoadSplat:   span = span_v128; max_align = 3; break;
+    case Opcode::I16X8Load8X8S:    span = span_v128; max_align = 3; break;
+    case Opcode::I16X8Load8X8U:    span = span_v128; max_align = 3; break;
+    case Opcode::I32X4Load16X4S:   span = span_v128; max_align = 3; break;
+    case Opcode::I32X4Load16X4U:   span = span_v128; max_align = 3; break;
+    case Opcode::I64X2Load32X2S:   span = span_v128; max_align = 3; break;
+    case Opcode::I64X2Load32X2U:   span = span_v128; max_align = 3; break;
     default:
       WASP_UNREACHABLE();
   }
@@ -961,6 +967,12 @@ bool Validate(const Instruction& value,
     case Opcode::I16X8LoadSplat:
     case Opcode::I32X4LoadSplat:
     case Opcode::I64X2LoadSplat:
+    case Opcode::I16X8Load8X8S:
+    case Opcode::I16X8Load8X8U:
+    case Opcode::I32X4Load16X4S:
+    case Opcode::I32X4Load16X4U:
+    case Opcode::I64X2Load32X2S:
+    case Opcode::I64X2Load32X2U:
       return Load(value, context, errors);
 
     case Opcode::I32Store:
@@ -1253,6 +1265,14 @@ bool Validate(const Instruction& value,
     case Opcode::F32X4ConvertI32X4U:
     case Opcode::F64X2ConvertI64X2S:
     case Opcode::F64X2ConvertI64X2U:
+    case Opcode::I16X8WidenLowI8X16S:
+    case Opcode::I16X8WidenHighI8X16S:
+    case Opcode::I16X8WidenLowI8X16U:
+    case Opcode::I16X8WidenHighI8X16U:
+    case Opcode::I32X4WidenLowI16X8S:
+    case Opcode::I32X4WidenHighI16X8S:
+    case Opcode::I32X4WidenLowI16X8U:
+    case Opcode::I32X4WidenHighI16X8U:
       params = span_v128, results = span_v128;
       break;
 
@@ -1338,6 +1358,13 @@ bool Validate(const Instruction& value,
     case Opcode::F64X2Max:
     case Opcode::V8X16Shuffle:
     case Opcode::V8X16Swizzle:
+    case Opcode::I8X16NarrowI16X8S:
+    case Opcode::I8X16NarrowI16X8U:
+    case Opcode::I16X8NarrowI32X4S:
+    case Opcode::I16X8NarrowI32X4U:
+    case Opcode::V128Andnot:
+    case Opcode::I8X16AvgrU:
+    case Opcode::I16X8AvgrU:
       params = span_v128_v128, results = span_v128;
       break;
 
