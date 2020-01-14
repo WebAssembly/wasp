@@ -399,7 +399,7 @@ bool Validate(const binary::MemoryType& value,
               const Features& features,
               Errors& errors) {
   ErrorsContextGuard guard{errors, "memory type"};
-  constexpr Index kMaxPages = 65535;
+  constexpr Index kMaxPages = 65536;
   bool valid = Validate(value.limits, kMaxPages, context, features, errors);
   if (value.limits.shared == binary::Shared::Yes &&
       !features.threads_enabled()) {

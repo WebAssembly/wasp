@@ -698,6 +698,7 @@ TEST(ValidateTest, MemoryType) {
       MemoryType{Limits{1000}},
       MemoryType{Limits{100, 12345}},
       MemoryType{Limits{0, 65535}},
+      MemoryType{Limits{0, 65536}},
   };
 
   for (const auto& memory_type : tests) {
@@ -709,8 +710,8 @@ TEST(ValidateTest, MemoryType) {
 
 TEST(ValidateTest, MemoryType_TooLarge) {
   const MemoryType tests[] = {
-      MemoryType{Limits{65536}},
-      MemoryType{Limits{0, 65536}},
+      MemoryType{Limits{65537}},
+      MemoryType{Limits{0, 65537}},
       MemoryType{Limits{0xffffffffu, 0xffffffffu}},
   };
 
