@@ -19,7 +19,7 @@
 
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/symbol_info.h"
+#include "wasp/binary/types_linking.h"
 
 namespace wasp {
 namespace binary {

@@ -14,8 +14,6 @@
 // limitations under the License.
 //
 
-#include "wasp/valid/validate_instruction.h"
-
 #include <limits>
 
 #include "wasp/base/features.h"
@@ -29,8 +27,7 @@
 #include "wasp/valid/errors_context_guard.h"
 #include "wasp/valid/errors_nop.h"
 #include "wasp/valid/formatters.h"
-#include "wasp/valid/validate_index.h"
-#include "wasp/valid/validate_locals.h"
+#include "wasp/valid/validate.h"
 
 namespace wasp {
 namespace valid {

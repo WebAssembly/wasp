@@ -14,27 +14,12 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/read/read_section.h"
 #include "wasp/base/format.h"
-#include "wasp/binary/data_count_section.h"
 #include "wasp/binary/errors.h"
 #include "wasp/binary/formatters.h"
-#include "wasp/binary/lazy_code_section.h"
-#include "wasp/binary/lazy_data_section.h"
-#include "wasp/binary/lazy_element_section.h"
-#include "wasp/binary/lazy_export_section.h"
-#include "wasp/binary/lazy_function_section.h"
-#include "wasp/binary/lazy_global_section.h"
-#include "wasp/binary/lazy_import_section.h"
-#include "wasp/binary/lazy_memory_section.h"
-#include "wasp/binary/lazy_name_section.h"
-#include "wasp/binary/lazy_table_section.h"
-#include "wasp/binary/lazy_type_section.h"
-#include "wasp/binary/linking_section.h"
-#include "wasp/binary/read/read_count.h"
-#include "wasp/binary/read/read_data_count.h"
-#include "wasp/binary/read/read_u32.h"
-#include "wasp/binary/relocation_section.h"
+#include "wasp/binary/sections.h"
+#include "wasp/binary/sections_linking.h"
+#include "wasp/binary/sections_name.h"
 
 namespace wasp {
 namespace binary {

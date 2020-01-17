@@ -14,8 +14,6 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/symbol_info.h"
-
 #include "wasp/base/macros.h"
 
 namespace wasp {

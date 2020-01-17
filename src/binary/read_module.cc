@@ -18,9 +18,7 @@
 
 #include "wasp/base/formatters.h"
 #include "wasp/binary/encoding.h"  // XXX
-#include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_bytes_expected.h"
-#include "wasp/binary/read/read_section.h"
+#include "wasp/binary/read.h"
 
 namespace wasp {
 namespace binary {

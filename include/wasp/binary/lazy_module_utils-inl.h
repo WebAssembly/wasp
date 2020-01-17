@@ -16,10 +16,8 @@
 
 #include <utility>
 
-#include "wasp/binary/lazy_export_section.h"
-#include "wasp/binary/lazy_function_names_subsection.h"
-#include "wasp/binary/lazy_import_section.h"
-#include "wasp/binary/lazy_name_section.h"
+#include "wasp/binary/sections.h"
+#include "wasp/binary/sections_name.h"
 
 namespace wasp {
 namespace binary {

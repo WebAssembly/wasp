@@ -20,7 +20,7 @@
 #include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/limits.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {

@@ -14,22 +14,12 @@
 // limitations under the License.
 //
 
-#include "gtest/gtest.h"
+#include "wasp/binary/read_linking.h"
 
+#include "gtest/gtest.h"
 #include "test/binary/read_test_utils.h"
 #include "test/binary/test_utils.h"
 #include "wasp/binary/encoding/symbol_info_flags_encoding.h"
-#include "wasp/binary/read/read_comdat.h"
-#include "wasp/binary/read/read_comdat_symbol.h"
-#include "wasp/binary/read/read_comdat_symbol_kind.h"
-#include "wasp/binary/read/read_init_function.h"
-#include "wasp/binary/read/read_linking_subsection.h"
-#include "wasp/binary/read/read_linking_subsection_id.h"
-#include "wasp/binary/read/read_relocation_entry.h"
-#include "wasp/binary/read/read_relocation_type.h"
-#include "wasp/binary/read/read_segment_info.h"
-#include "wasp/binary/read/read_symbol_info.h"
-#include "wasp/binary/read/read_symbol_info_kind.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

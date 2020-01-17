@@ -18,10 +18,8 @@
 #define WASP_BINARY_LAZY_EXPRESSION_H
 
 #include "wasp/base/span.h"
-#include "wasp/binary/expression.h"
-#include "wasp/binary/instruction.h"
 #include "wasp/binary/lazy_sequence.h"
-#include "wasp/binary/read/read_instruction.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/read/read.h"
+#include "wasp/binary/read.h"
 
 namespace wasp {
 namespace binary {

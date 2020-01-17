@@ -20,7 +20,7 @@
 #include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/mutability.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {

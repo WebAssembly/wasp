@@ -38,20 +38,7 @@
 #include "wasp/valid/context.h"
 #include "wasp/valid/end_module.h"
 #include "wasp/valid/errors.h"
-#include "wasp/valid/validate_data_count.h"
-#include "wasp/valid/validate_data_segment.h"
-#include "wasp/valid/validate_element_segment.h"
-#include "wasp/valid/validate_export.h"
-#include "wasp/valid/validate_function.h"
-#include "wasp/valid/validate_global.h"
-#include "wasp/valid/validate_import.h"
-#include "wasp/valid/validate_instruction.h"
-#include "wasp/valid/validate_locals.h"
-#include "wasp/valid/validate_memory.h"
-#include "wasp/valid/validate_section.h"
-#include "wasp/valid/validate_start.h"
-#include "wasp/valid/validate_table.h"
-#include "wasp/valid/validate_type_entry.h"
+#include "wasp/valid/validate.h"
 
 namespace wasp {
 namespace tools {

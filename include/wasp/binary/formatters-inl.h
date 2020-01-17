@@ -18,7 +18,6 @@
 
 #include "wasp/base/formatters.h"
 #include "wasp/base/macros.h"
-#include "wasp/binary/value_type.h"
 
 namespace fmt {
 

@@ -19,7 +19,7 @@
 
 #include "wasp/base/format.h"
 #include "wasp/base/macros.h"
-#include "wasp/valid/stack_type.h"
+#include "wasp/valid/types.h"
 
 namespace fmt {
 

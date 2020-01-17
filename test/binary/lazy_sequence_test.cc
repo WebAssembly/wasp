@@ -17,12 +17,9 @@
 #include "wasp/binary/lazy_sequence.h"
 
 #include "gtest/gtest.h"
-
 #include "test/binary/test_utils.h"
 #include "wasp/binary/errors_nop.h"
-#include "wasp/binary/read/read_s32.h"
-#include "wasp/binary/read/read_u32.h"
-#include "wasp/binary/read/read_u8.h"
+#include "wasp/binary/read.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

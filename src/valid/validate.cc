@@ -14,35 +14,17 @@
 // limitations under the License.
 //
 
-#include "wasp/base/types.h"
+#include "wasp/valid/validate.h"
 
 #include "wasp/base/features.h"
 #include "wasp/base/format.h"
 #include "wasp/base/macros.h"
+#include "wasp/base/types.h"
 #include "wasp/base/utf8.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/valid/context.h"
 #include "wasp/valid/errors.h"
 #include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/validate_constant_expression.h"
-#include "wasp/valid/validate_data_count.h"
-#include "wasp/valid/validate_data_segment.h"
-#include "wasp/valid/validate_element_expression.h"
-#include "wasp/valid/validate_element_segment.h"
-#include "wasp/valid/validate_element_type.h"
-#include "wasp/valid/validate_function.h"
-#include "wasp/valid/validate_function_type.h"
-#include "wasp/valid/validate_global.h"
-#include "wasp/valid/validate_global_type.h"
-#include "wasp/valid/validate_import.h"
-#include "wasp/valid/validate_index.h"
-#include "wasp/valid/validate_limits.h"
-#include "wasp/valid/validate_memory.h"
-#include "wasp/valid/validate_memory_type.h"
-#include "wasp/valid/validate_section.h"
-#include "wasp/valid/validate_table.h"
-#include "wasp/valid/validate_table_type.h"
-#include "wasp/valid/validate_value_type.h"
 
 namespace wasp {
 namespace valid {
@@ -425,6 +407,35 @@ bool Validate(const binary::Section& value,
   } else {
     return ValidateUtf8(value.custom().name, errors);
   }
+}
+
+bool Validate(const binary::Start& value,
+              Context& context,
+              const Features& features,
+              Errors& errors) {
+  ErrorsContextGuard guard{errors, "start"};
+  if (!ValidateIndex(value.func_index, context.functions.size(),
+                     "function index", errors)) {
+    return false;
+  }
+
+  bool valid = true;
+  auto function = context.functions[value.func_index];
+  if (function.type_index < context.types.size()) {
+    const auto& type_entry = context.types[function.type_index];
+    if (type_entry.type.param_types.size() != 0) {
+      errors.OnError(format("Expected start function to have 0 params, got {}",
+                            type_entry.type.param_types.size()));
+      valid = false;
+    }
+
+    if (type_entry.type.result_types.size() != 0) {
+      errors.OnError(format("Expected start function to have 0 results, got {}",
+                            type_entry.type.result_types.size()));
+      valid = false;
+    }
+  }
+  return valid;
 }
 
 bool Validate(const binary::Table& value,

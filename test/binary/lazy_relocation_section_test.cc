@@ -14,11 +14,9 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/relocation_section.h"
-
 #include "gtest/gtest.h"
-
 #include "test/binary/test_utils.h"
+#include "wasp/binary/sections_linking.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

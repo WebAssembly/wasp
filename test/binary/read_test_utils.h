@@ -17,12 +17,11 @@
 #ifndef WASP_BINARY_READ_TEST_UTILS_H_
 #define WASP_BINARY_READ_TEST_UTILS_H_
 
+#include "gtest/gtest.h"
 #include "test/binary/test_utils.h"
 #include "wasp/base/features.h"
 #include "wasp/base/span.h"
-#include "wasp/binary/read/read.h"
-
-#include "gtest/gtest.h"
+#include "wasp/binary/read.h"
 
 namespace wasp {
 namespace binary {

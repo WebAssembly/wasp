@@ -21,8 +21,7 @@
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/lazy_sequence.h"
-#include "wasp/binary/read/read_section.h"
-#include "wasp/binary/section.h"
+#include "wasp/binary/sections.h"
 
 namespace wasp {
 namespace binary {

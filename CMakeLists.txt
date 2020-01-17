@@ -41,57 +41,18 @@ add_library(wasplib
   src/base/str_to_u32.cc
   src/base/utf8.cc
   src/base/v128.cc
-  src/binary/br_on_exn_immediate.cc
-  src/binary/br_table_immediate.cc
-  src/binary/call_indirect_immediate.cc
-  src/binary/code.cc
-  src/binary/comdat.cc
-  src/binary/comdat_symbol.cc
-  src/binary/constant_expression.cc
-  src/binary/copy_immediate.cc
-  src/binary/custom_section.cc
-  src/binary/data_count.cc
-  src/binary/data_segment.cc
-  src/binary/element_expression.cc
-  src/binary/element_segment.cc
-  src/binary/empty_immediate.cc
-  src/binary/export.cc
-  src/binary/expression.cc
   src/binary/formatters.cc
-  src/binary/function.cc
-  src/binary/function_type.cc
-  src/binary/global.cc
-  src/binary/global_type.cc
-  src/binary/import.cc
-  src/binary/indirect_name_assoc.cc
-  src/binary/init_function.cc
-  src/binary/init_immediate.cc
-  src/binary/instruction.cc
-  src/binary/known_section.cc
   src/binary/lazy_expression.cc
   src/binary/lazy_sequence.cc
-  src/binary/limits.cc
-  src/binary/linking_subsection.cc
-  src/binary/locals.cc
-  src/binary/mem_arg_immediate.cc
-  src/binary/memory.cc
-  src/binary/memory_type.cc
-  src/binary/name_assoc.cc
-  src/binary/name_subsection.cc
+  src/binary/types_name.cc
   src/binary/read.cc
   src/binary/read_linking_subsection.cc
   src/binary/read_module.cc
   src/binary/read_name_subsection.cc
   src/binary/read_section.cc
-  src/binary/relocation_entry.cc
-  src/binary/section.cc
-  src/binary/segment_info.cc
-  src/binary/shuffle_immediate.cc
-  src/binary/start.cc
-  src/binary/symbol_info.cc
-  src/binary/table.cc
-  src/binary/table_type.cc
-  src/binary/type_entry.cc
+  src/binary/types.cc
+  src/binary/types_linking.cc
+  src/binary/types_name.cc
   src/valid/context.cc
   src/valid/formatters.cc
   src/valid/validate.cc

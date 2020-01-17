@@ -14,15 +14,10 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/linking_section.h"
-
 #include "gtest/gtest.h"
-
 #include "test/binary/test_utils.h"
-#include "wasp/binary/lazy_comdat_subsection.h"
-#include "wasp/binary/lazy_init_functions_subsection.h"
-#include "wasp/binary/lazy_segment_info_subsection.h"
-#include "wasp/binary/lazy_symbol_table_subsection.h"
+#include "wasp/binary/sections_linking.h"
+#include "wasp/binary/types_linking.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

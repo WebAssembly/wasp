@@ -23,18 +23,8 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/function.h"
-#include "wasp/binary/global_type.h"
-#include "wasp/binary/locals.h"
-#include "wasp/binary/memory_type.h"
-#include "wasp/binary/section_id.h"
-#include "wasp/binary/segment_type.h"
-#include "wasp/binary/table_type.h"
-#include "wasp/binary/type_entry.h"
-#include "wasp/binary/value_types.h"
-#include "wasp/valid/stack_type.h"
-#include "wasp/valid/stack_type_span.h"
-#include "wasp/valid/stack_types.h"
+#include "wasp/binary/types.h"
+#include "wasp/valid/types.h"
 
 namespace wasp {
 namespace valid {

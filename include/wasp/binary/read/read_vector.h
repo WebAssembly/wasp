@@ -25,9 +25,8 @@
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/errors_context_guard.h"
+#include "wasp/binary/read.h"
 #include "wasp/binary/read/macros.h"
-#include "wasp/binary/read/read.h"
-#include "wasp/binary/read/read_count.h"
 
 namespace wasp {
 namespace binary {

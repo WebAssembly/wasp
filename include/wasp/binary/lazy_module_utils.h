@@ -20,8 +20,8 @@
 #include <utility>
 
 #include "wasp/base/features.h"
-#include "wasp/binary/external_kind.h"
 #include "wasp/binary/lazy_module.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {

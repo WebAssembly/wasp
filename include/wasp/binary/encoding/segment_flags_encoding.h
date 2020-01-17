@@ -17,9 +17,9 @@
 #ifndef WASP_BINARY_SEGMENT_FLAGS_ENCODING_H
 #define WASP_BINARY_SEGMENT_FLAGS_ENCODING_H
 
-#include "wasp/base/types.h"
 #include "wasp/base/optional.h"
-#include "wasp/binary/segment_type.h"
+#include "wasp/base/types.h"
+#include "wasp/binary/types_linking.h"
 
 namespace wasp {
 namespace binary {

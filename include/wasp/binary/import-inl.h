@@ -14,8 +14,6 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/import.h"
-
 namespace wasp {
 namespace binary {
 

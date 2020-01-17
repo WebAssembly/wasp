@@ -20,7 +20,7 @@
 #include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/name_subsection_id.h"
+#include "wasp/binary/types_name.h"
 
 namespace wasp {
 namespace binary {

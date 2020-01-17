@@ -14,10 +14,7 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/lazy_function_names_subsection.h"
-#include "wasp/binary/lazy_local_names_subsection.h"
-#include "wasp/binary/lazy_module_name_subsection.h"
-#include "wasp/binary/read/read_string.h"
+#include "wasp/binary/sections_name.h"
 
 namespace wasp {
 namespace binary {

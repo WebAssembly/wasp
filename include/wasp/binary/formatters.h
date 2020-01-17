@@ -18,42 +18,9 @@
 #define WASP_BINARY_FORMATTERS_H_
 
 #include "wasp/base/format.h"
-#include "wasp/binary/br_on_exn_immediate.h"
-#include "wasp/binary/br_table_immediate.h"
-#include "wasp/binary/code.h"
-#include "wasp/binary/comdat.h"
-#include "wasp/binary/comdat_symbol.h"
-#include "wasp/binary/comdat_symbol_kind.h"
-#include "wasp/binary/constant_expression.h"
-#include "wasp/binary/data_count.h"
-#include "wasp/binary/data_segment.h"
-#include "wasp/binary/element_expression.h"
-#include "wasp/binary/element_segment.h"
-#include "wasp/binary/export.h"
-#include "wasp/binary/expression.h"
-#include "wasp/binary/function.h"
-#include "wasp/binary/global.h"
-#include "wasp/binary/import.h"
-#include "wasp/binary/indirect_name_assoc.h"
-#include "wasp/binary/init_function.h"
-#include "wasp/binary/instruction.h"
-#include "wasp/binary/linking_subsection.h"
-#include "wasp/binary/linking_subsection_id.h"
-#include "wasp/binary/locals.h"
-#include "wasp/binary/memory.h"
-#include "wasp/binary/name_assoc.h"
-#include "wasp/binary/name_subsection.h"
-#include "wasp/binary/name_subsection_id.h"
-#include "wasp/binary/relocation_entry.h"
-#include "wasp/binary/relocation_type.h"
-#include "wasp/binary/section.h"
-#include "wasp/binary/segment_info.h"
-#include "wasp/binary/shared.h"
-#include "wasp/binary/start.h"
-#include "wasp/binary/symbol_info.h"
-#include "wasp/binary/symbol_info_kind.h"
-#include "wasp/binary/table.h"
-#include "wasp/binary/type_entry.h"
+#include "wasp/binary/types.h"
+#include "wasp/binary/types_linking.h"
+#include "wasp/binary/types_name.h"
 
 namespace fmt {
 
@@ -64,6 +31,7 @@ namespace fmt {
     typename Ctx::iterator format(const ::wasp::binary::Name&, Ctx&); \
   } /* No semicolon. */
 
+// TODO separate out linking/name
 WASP_DEFINE_FORMATTER(ValueType);
 WASP_DEFINE_FORMATTER(BlockType);
 WASP_DEFINE_FORMATTER(ElementType);

@@ -14,14 +14,9 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/lazy_name_section.h"
-
 #include "gtest/gtest.h"
-
 #include "test/binary/test_utils.h"
-#include "wasp/binary/lazy_function_names_subsection.h"
-#include "wasp/binary/lazy_local_names_subsection.h"
-#include "wasp/binary/lazy_module_name_subsection.h"
+#include "wasp/binary/sections_name.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

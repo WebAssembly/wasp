@@ -14,8 +14,6 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/data_segment.h"
-
 namespace wasp {
 namespace binary {
 

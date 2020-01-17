@@ -17,19 +17,8 @@
 #ifndef WASP_BINARY_VISITOR_H_
 #define WASP_BINARY_VISITOR_H_
 
-#include "wasp/binary/data_count_section.h"
-#include "wasp/binary/lazy_code_section.h"
-#include "wasp/binary/lazy_data_section.h"
-#include "wasp/binary/lazy_element_section.h"
-#include "wasp/binary/lazy_export_section.h"
-#include "wasp/binary/lazy_function_section.h"
-#include "wasp/binary/lazy_global_section.h"
-#include "wasp/binary/lazy_import_section.h"
-#include "wasp/binary/lazy_memory_section.h"
 #include "wasp/binary/lazy_module.h"
-#include "wasp/binary/lazy_table_section.h"
-#include "wasp/binary/lazy_type_section.h"
-#include "wasp/binary/start_section.h"
+#include "wasp/binary/sections.h"
 
 namespace wasp {
 namespace binary {

@@ -31,15 +31,11 @@
 #include "wasp/base/string_view.h"
 #include "wasp/binary/errors_nop.h"
 #include "wasp/binary/formatters.h"
-#include "wasp/binary/function_type.h"
-#include "wasp/binary/lazy_code_section.h"
 #include "wasp/binary/lazy_expression.h"
-#include "wasp/binary/lazy_function_section.h"
-#include "wasp/binary/lazy_import_section.h"
 #include "wasp/binary/lazy_module.h"
 #include "wasp/binary/lazy_module_utils.h"
-#include "wasp/binary/lazy_name_section.h"
-#include "wasp/binary/lazy_type_section.h"
+#include "wasp/binary/sections.h"
+#include "wasp/binary/sections_name.h"
 
 namespace wasp {
 namespace tools {

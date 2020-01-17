@@ -14,8 +14,7 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/constant_expression.h"
-#include "wasp/binary/expression.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {

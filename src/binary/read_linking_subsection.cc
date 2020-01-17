@@ -14,10 +14,7 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/lazy_comdat_subsection.h"
-#include "wasp/binary/lazy_init_functions_subsection.h"
-#include "wasp/binary/lazy_segment_info_subsection.h"
-#include "wasp/binary/lazy_symbol_table_subsection.h"
+#include "wasp/binary/sections_linking.h"
 
 namespace wasp {
 namespace binary {

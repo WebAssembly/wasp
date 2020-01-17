@@ -21,8 +21,7 @@
 #include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/block_type.h"
-#include "wasp/binary/read/read_s32.h"
+#include "wasp/binary/types.h"
 
 namespace wasp {
 namespace binary {
