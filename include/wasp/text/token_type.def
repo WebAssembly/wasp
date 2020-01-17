@@ -1,0 +1,89 @@
+//
+// Copyright 2020 WebAssembly Community Group participants
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+// Invalid or EOF
+WASP_V(Eof)
+WASP_V(InvalidBlockComment)
+WASP_V(InvalidChar)
+WASP_V(InvalidLineComment)
+WASP_V(InvalidText)
+WASP_V(Reserved)
+
+// Whitespace or comments
+WASP_V(BlockComment)
+WASP_V(LineComment)
+WASP_V(Whitespace)
+
+// .wat symbols
+WASP_V(AlignEqNat)   // "align=8"
+WASP_V(Binary)       // "binary"
+WASP_V(BlockInstr)   // "block", "loop", etc.
+WASP_V(Catch)        // "catch"
+WASP_V(Data)         // "data"
+WASP_V(Drop)         // "drop"
+WASP_V(Elem)         // "elem"
+WASP_V(Else)         // "else"
+WASP_V(End)          // "end"
+WASP_V(Event)        // "event"
+WASP_V(Export)       // "export"
+WASP_V(F32X4)        // "f32x4"
+WASP_V(F64X2)        // "f64x2"
+WASP_V(Float)        // "3.14159"
+WASP_V(Func)         // "func"
+WASP_V(Global)       // "global"
+WASP_V(I16X8)        // "i16x8"
+WASP_V(I32X4)        // "i32x4"
+WASP_V(I64X2)        // "i64x2"
+WASP_V(I8X16)        // "i8x16"
+WASP_V(Id)           // "$hello"
+WASP_V(Import)       // "import"
+WASP_V(Int)          // "+1234"
+WASP_V(Item)         // "item"
+WASP_V(Local)        // "local"
+WASP_V(Lpar)         // "("
+WASP_V(LparAnn)      // "(@keyword"
+WASP_V(Memory)       // "memory"
+WASP_V(Module)       // "module"
+WASP_V(Mut)          // "mut"
+WASP_V(Nat)          // "1234"
+WASP_V(Offset)       // "offset"
+WASP_V(OffsetEqNat)  // "offset=1234"
+WASP_V(Param)        // "param"
+WASP_V(PlainInstr)   // "i32.add", "f32.const", etc.
+WASP_V(Quote)        // "quote"
+WASP_V(Result)       // "result"
+WASP_V(Rpar)         // ")"
+WASP_V(Shared)       // "shared"
+WASP_V(Start)        // "start"
+WASP_V(Table)        // "table"
+WASP_V(Text)         // "\"hello world\""
+WASP_V(Then)         // "then"
+WASP_V(Type)         // "type"
+WASP_V(ValueType)    // "i32", "f32", etc.
+
+// .wast symbols
+WASP_V(AssertExhaustion)  // "assert_exhaustion"
+WASP_V(AssertInvalid)     // "assert_invalid"
+WASP_V(AssertMalformed)   // "assert_malformed"
+WASP_V(AssertReturn)      // "assert_return"
+WASP_V(AssertTrap)        // "assert_trap"
+WASP_V(AssertUnlinkable)  // "assert_unlinkable"
+WASP_V(Get)               // "get"
+WASP_V(Invoke)            // "invoke"
+WASP_V(NanArithmetic)     // "nan:arithmetic"
+WASP_V(NanCanonical)      // "nan:canonical"
+WASP_V(RefHost)           // "ref.host"
+WASP_V(Register)          // "register"
