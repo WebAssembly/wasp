@@ -12,7 +12,7 @@
 	url = https://github.com/martinmoene/optional-lite
 [submodule "third_party/variant-lite"]
 	path = third_party/variant-lite
-	url = https://github.com/martinmoene/variant-lite
+	url = https://github.com/binji/variant-lite
 [submodule "third_party/span-lite"]
 	path = third_party/span-lite
 	url = https://github.com/martinmoene/span-lite
