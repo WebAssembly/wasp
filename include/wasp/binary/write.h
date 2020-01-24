@@ -25,6 +25,7 @@
 #include "wasp/binary/encoding.h"  // XXX
 #include "wasp/binary/encoding/block_type_encoding.h"
 #include "wasp/binary/encoding/element_type_encoding.h"
+#include "wasp/binary/encoding/event_attribute_encoding.h"
 #include "wasp/binary/encoding/external_kind_encoding.h"
 #include "wasp/binary/encoding/limits_flags_encoding.h"
 #include "wasp/binary/encoding/mutability_encoding.h"
@@ -245,6 +246,23 @@ Iterator Write(ElementType value, Iterator out) {
 }
 
 template <typename Iterator>
+Iterator Write(const EventAttribute& value, Iterator out) {
+  return Write(encoding::EventAttribute::Encode(value), out);
+}
+
+template <typename Iterator>
+Iterator Write(const EventType& value, Iterator out) {
+  out = Write(value.attribute, out);
+  return Write(value.type_index, out);
+}
+
+template <typename Iterator>
+Iterator Write(const Event& value, Iterator out) {
+  out = Write(value.event_type, out);
+  return out;
+}
+
+template <typename Iterator>
 Iterator Write(const Export& value, Iterator out) {
   out = Write(value.name, out);
   out = Write(value.kind, out);
@@ -344,6 +362,9 @@ Iterator Write(const Import& value, Iterator out) {
 
     case ExternalKind::Global:
       return Write(value.global_type(), out);
+
+    case ExternalKind::Event:
+      return Write(value.event_type(), out);
 
     default:
       WASP_UNREACHABLE();

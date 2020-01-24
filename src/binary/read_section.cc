@@ -73,6 +73,18 @@ LazyElementSection ReadElementSection(KnownSection sec,
   return ReadElementSection(sec.data, features, errors);
 }
 
+LazyEventSection ReadEventSection(SpanU8 data,
+                                  const Features& features,
+                                  Errors& errors) {
+  return LazyEventSection{data, "event section", features, errors};
+}
+
+LazyEventSection ReadEventSection(KnownSection sec,
+                                  const Features& features,
+                                  Errors& errors) {
+  return ReadEventSection(sec.data, features, errors);
+}
+
 LazyExportSection ReadExportSection(SpanU8 data,
                                     const Features& features,
                                     Errors& errors) {

@@ -66,7 +66,15 @@ enum class ElementType : s32 {
 
 enum class ExternalKind : u8 {
 #define WASP_V(val, Name, str) Name,
+#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
 #include "wasp/binary/external_kind.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+};
+
+enum class EventAttribute : u8 {
+#define WASP_V(val, Name, str) Name,
+#include "wasp/binary/event_attribute.def"
 #undef WASP_V
 };
 
@@ -88,9 +96,11 @@ enum class Opcode : u32 {
 
 // The section ids are ordered by their expected order in the binary format.
 enum class SectionId : u32 {
-#define WASP_V(val, Name, str) Name,
+#define WASP_V(val, Name, str, ...) Name,
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/section_id.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
 };
 
 enum class SegmentType {
@@ -309,12 +319,18 @@ struct GlobalType {
   Mutability mut;
 };
 
+struct EventType {
+  EventAttribute attribute;
+  Index type_index;
+};
+
 struct Import {
   ExternalKind kind() const;
   bool is_function() const;
   bool is_table() const;
   bool is_memory() const;
   bool is_global() const;
+  bool is_event() const;
 
   Index& index();
   const Index& index() const;
@@ -324,10 +340,12 @@ struct Import {
   const MemoryType& memory_type() const;
   GlobalType& global_type();
   const GlobalType& global_type() const;
+  EventType& event_type();
+  const EventType& event_type() const;
 
   string_view module;
   string_view name;
-  variant<Index, TableType, MemoryType, GlobalType> desc;
+  variant<Index, TableType, MemoryType, GlobalType, EventType> desc;
 };
 
 // Section 3: Function
@@ -465,6 +483,11 @@ struct DataCount {
   Index count;
 };
 
+// Section 13: Event
+
+struct Event {
+  EventType event_type;
+};
 
 #define WASP_TYPES(WASP_V)        \
   WASP_V(BrOnExnImmediate)        \
@@ -483,6 +506,8 @@ struct DataCount {
   WASP_V(ElementSegment::Active)  \
   WASP_V(ElementSegment::Passive) \
   WASP_V(EmptyImmediate)          \
+  WASP_V(Event)                   \
+  WASP_V(EventType)               \
   WASP_V(Export)                  \
   WASP_V(Expression)              \
   WASP_V(Function)                \
@@ -494,15 +519,15 @@ struct DataCount {
   WASP_V(Instruction)             \
   WASP_V(KnownSection)            \
   WASP_V(Limits)                  \
-  WASP_V(Locals) \
-  WASP_V(MemArgImmediate) \
-  WASP_V(Memory) \
-  WASP_V(MemoryType) \
-  WASP_V(Section) \
-  WASP_V(Start) \
-  WASP_V(Table) \
-  WASP_V(TableType) \
-  WASP_V(TypeEntry) \
+  WASP_V(Locals)                  \
+  WASP_V(MemArgImmediate)         \
+  WASP_V(Memory)                  \
+  WASP_V(MemoryType)              \
+  WASP_V(Section)                 \
+  WASP_V(Start)                   \
+  WASP_V(Table)                   \
+  WASP_V(TableType)               \
+  WASP_V(TypeEntry)
 
 #define WASP_DECLARE_OPERATOR_EQ_NE(Type)    \
   bool operator==(const Type&, const Type&); \

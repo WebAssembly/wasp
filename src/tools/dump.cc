@@ -104,6 +104,8 @@ struct Tool {
     visit::Result OnMemory(const Memory&);
     visit::Result BeginGlobalSection(LazyGlobalSection);
     visit::Result OnGlobal(const Global&);
+    visit::Result BeginEventSection(LazyEventSection);
+    visit::Result OnEvent(const Event&);
     visit::Result BeginExportSection(LazyExportSection);
     visit::Result OnExport(const Export&);
     visit::Result BeginStartSection(StartSection);
@@ -125,6 +127,7 @@ struct Tool {
     Index table_count = 0;
     Index memory_count = 0;
     Index global_count = 0;
+    Index event_count = 0;
   };
 
   void DoNameSection(Pass, SectionIndex, LazyNameSection);
@@ -197,6 +200,7 @@ struct Tool {
   Index imported_table_count = 0;
   Index imported_memory_count = 0;
   Index imported_global_count = 0;
+  Index imported_event_count = 0;
 };
 
 // static
@@ -328,6 +332,10 @@ void Tool::DoPrepass() {
 
               case ExternalKind::Global:
                 InsertGlobalName(imported_global_count++, import.name);
+                break;
+
+              case ExternalKind::Event:
+                imported_event_count++;
                 break;
 
               default:
@@ -562,6 +570,7 @@ visit::Result Tool::Visitor::BeginImportSection(LazyImportSection section) {
   table_count = 0;
   memory_count = 0;
   global_count = 0;
+  event_count = 0;
   tool.DoCount(pass, section.count);
   return SkipUnless(tool.ShouldPrintDetails(pass));
 }
@@ -590,6 +599,12 @@ visit::Result Tool::Visitor::OnImport(const Import& import) {
     case ExternalKind::Global: {
       print(" - global[{}] {}", global_count, import.global_type());
       ++global_count;
+      break;
+    }
+
+    case ExternalKind::Event: {
+      print(" - event[{}] {}", event_count, import.event_type());
+      ++event_count;
       break;
     }
   }
@@ -643,6 +658,17 @@ visit::Result Tool::Visitor::BeginGlobalSection(LazyGlobalSection section) {
 
 visit::Result Tool::Visitor::OnGlobal(const Global& global) {
   print(" - global[{}] {} - {}\n", index++, global.global_type, global.init);
+  return visit::Result::Ok;
+}
+
+visit::Result Tool::Visitor::BeginEventSection(LazyEventSection section) {
+  index = tool.imported_event_count;
+  tool.DoCount(pass, section.count);
+  return SkipUnless(tool.ShouldPrintDetails(pass));
+}
+
+visit::Result Tool::Visitor::OnEvent(const Event& event) {
+  print(" - event[{}] {}\n", index++, event.event_type);
   return visit::Result::Ok;
 }
 
@@ -992,7 +1018,8 @@ void Tool::Disassemble(SectionIndex section_index,
   for (auto it = instrs.begin(), end = instrs.end(); it != end; ++it) {
     const auto& instr = *it;
     auto opcode = instr.opcode;
-    if (opcode == Opcode::Else || opcode == Opcode::End) {
+    if (opcode == Opcode::Else || opcode == Opcode::Catch ||
+        opcode == Opcode::End) {
       indent = std::max(indent - 2, 0);
     }
     PrintInstruction(instr, last_data, it.data(), indent);
@@ -1003,7 +1030,8 @@ void Tool::Disassemble(SectionIndex section_index,
       PrintRelocation(*reloc_it, section_start + reloc_it->offset);
     }
     if (opcode == Opcode::Block || opcode == Opcode::If ||
-        opcode == Opcode::Loop || opcode == Opcode::Else) {
+        opcode == Opcode::Loop || opcode == Opcode::Else ||
+        opcode == Opcode::Catch || opcode == Opcode::Try) {
       indent += 2;
     }
   }

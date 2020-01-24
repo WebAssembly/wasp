@@ -37,6 +37,10 @@ inline bool Import::is_global() const {
   return kind() == ExternalKind::Global;
 }
 
+inline bool Import::is_event() const {
+  return kind() == ExternalKind::Event;
+}
+
 inline Index& Import::index() {
   return get<Index>(desc);
 }
@@ -67,6 +71,14 @@ inline GlobalType& Import::global_type() {
 
 inline const GlobalType& Import::global_type() const {
   return get<GlobalType>(desc);
+}
+
+inline EventType& Import::event_type() {
+  return get<EventType>(desc);
+}
+
+inline const EventType& Import::event_type() const {
+  return get<EventType>(desc);
 }
 
 }  // namespace binary

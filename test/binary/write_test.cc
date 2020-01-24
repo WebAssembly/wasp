@@ -156,6 +156,16 @@ TEST(WriteTest, ElementType) {
   ExpectWrite<ElementType>("\x70"_su8, ElementType::Funcref);
 }
 
+TEST(WriteTest, Event) {
+  ExpectWrite<Event>("\x00\x01"_su8,
+                     Event{EventType{EventAttribute::Exception, 1}});
+}
+
+TEST(WriteTest, EventType) {
+  ExpectWrite<EventType>("\x00\x01"_su8,
+                         EventType{EventAttribute::Exception, 1});
+}
+
 TEST(WriteTest, Export) {
   ExpectWrite<Export>("\x02hi\x00\x03"_su8,
                       Export{ExternalKind::Function, "hi", 3});
@@ -165,6 +175,7 @@ TEST(WriteTest, Export) {
                       Export{ExternalKind::Memory, "mem", 0});
   ExpectWrite<Export>("\x01g\x03\x01"_su8,
                       Export{ExternalKind::Global, "g", 1});
+  ExpectWrite<Export>("\x01v\x04\x02"_su8, Export{ExternalKind::Event, "v", 2});
 }
 
 TEST(WriteTest, ExternalKind) {
@@ -172,6 +183,7 @@ TEST(WriteTest, ExternalKind) {
   ExpectWrite<ExternalKind>("\x01"_su8, ExternalKind::Table);
   ExpectWrite<ExternalKind>("\x02"_su8, ExternalKind::Memory);
   ExpectWrite<ExternalKind>("\x03"_su8, ExternalKind::Global);
+  ExpectWrite<ExternalKind>("\x04"_su8, ExternalKind::Event);
 }
 
 TEST(WriteTest, F32) {
@@ -324,6 +336,10 @@ TEST(WriteTest, Import) {
   ExpectWrite<Import>(
       "\x01\x64\x06global\x03\x7f\x00"_su8,
       Import{"d", "global", GlobalType{ValueType::I32, Mutability::Const}});
+
+  ExpectWrite<Import>(
+      "\x01v\x06!event\x04\x00\x02"_su8,
+      Import{"v", "!event", EventType{EventAttribute::Exception, 2}});
 }
 
 TEST(WriteTest, InitImmediate) {
@@ -1405,6 +1421,7 @@ TEST(WriteTest, SectionId) {
   ExpectWrite<SectionId>("\x0a"_su8, SectionId::Code);
   ExpectWrite<SectionId>("\x0b"_su8, SectionId::Data);
   ExpectWrite<SectionId>("\x0c"_su8, SectionId::DataCount);
+  ExpectWrite<SectionId>("\x0d"_su8, SectionId::Event);
 }
 
 TEST(WriteTest, ShuffleImmediate) {
@@ -1457,7 +1474,10 @@ TEST(WriteTest, ValueType) {
   ExpectWrite<ValueType>("\x7d"_su8, ValueType::F32);
   ExpectWrite<ValueType>("\x7c"_su8, ValueType::F64);
   ExpectWrite<ValueType>("\x7b"_su8, ValueType::V128);
+  ExpectWrite<ValueType>("\x70"_su8, ValueType::Funcref);
   ExpectWrite<ValueType>("\x6f"_su8, ValueType::Anyref);
+  ExpectWrite<ValueType>("\x6e"_su8, ValueType::Nullref);
+  ExpectWrite<ValueType>("\x68"_su8, ValueType::Exnref);
 }
 
 TEST(WriteTest, WriteVector_u8) {

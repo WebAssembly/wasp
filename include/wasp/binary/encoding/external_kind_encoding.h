@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_EXTERNAL_KIND_ENCODING_H
 #define WASP_BINARY_EXTERNAL_KIND_ENCODING_H
 
+#include "wasp/base/features.h"
 #include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
@@ -27,38 +28,53 @@ namespace binary {
 namespace encoding {
 
 struct ExternalKind {
-#define WASP_V(val, Name, str) static constexpr u8 Name = val;
+#define WASP_V(val, Name, str, ...) static constexpr u8 Name = val;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/external_kind.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
 
   static u8 Encode(::wasp::binary::ExternalKind);
-  static optional<::wasp::binary::ExternalKind> Decode(u8);
+  static optional<::wasp::binary::ExternalKind> Decode(u8,
+                                                       const Features& feature);
 };
 
 // static
 inline u8 ExternalKind::Encode(::wasp::binary::ExternalKind decoded) {
   switch (decoded) {
-#define WASP_V(val, Name, str)             \
+#define WASP_V(val, Name, str, ...)        \
   case ::wasp::binary::ExternalKind::Name: \
     return val;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/external_kind.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
     default:
       WASP_UNREACHABLE();
   }
 }
 
 // static
-inline optional<::wasp::binary::ExternalKind> ExternalKind::Decode(u8 val) {
+inline optional<::wasp::binary::ExternalKind> ExternalKind::Decode(
+    u8 val,
+    const Features& features) {
   switch (val) {
-#define WASP_V(val, Name, str) \
-  case Name:                   \
+#define WASP_V(val, Name, str, ...) \
+  case Name:                        \
     return ::wasp::binary::ExternalKind::Name;
+#define WASP_FEATURE_V(val, Name, str, feature)  \
+  case Name:                                     \
+    if (features.feature##_enabled()) {          \
+      return ::wasp::binary::ExternalKind::Name; \
+    }                                            \
+    break;
 #include "wasp/binary/external_kind.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
     default:
-      return nullopt;
+      break;
   }
+  return nullopt;
 }
 
 }  // namespace encoding

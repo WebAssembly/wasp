@@ -112,6 +112,15 @@ optional<ElementSegment> Read(SpanU8*,
 
 optional<ElementType> Read(SpanU8*, const Features&, Errors&, Tag<ElementType>);
 
+optional<Event> Read(SpanU8*, const Features&, Errors&, Tag<Event>);
+
+optional<EventAttribute> Read(SpanU8*,
+                              const Features&,
+                              Errors&,
+                              Tag<EventAttribute>);
+
+optional<EventType> Read(SpanU8*, const Features&, Errors&, Tag<EventType>);
+
 optional<Export> Read(SpanU8*, const Features&, Errors&, Tag<Export>);
 
 optional<ExternalKind> Read(SpanU8*,

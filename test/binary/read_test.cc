@@ -650,6 +650,31 @@ TEST(ReadTest, ElementType_Unknown) {
       {{0, "element type"}, {1, "Unknown element type: 240"}}, "\xf0\x7f"_su8);
 }
 
+TEST(ReadTest, Event) {
+  ExpectRead<Event>(Event{EventType{EventAttribute::Exception, 1}},
+                    "\x00\x01"_su8);
+}
+
+TEST(ReadTest, Event_PastEnd) {
+  ExpectReadFailure<Event>({{0, "event"},
+                            {0, "event type"},
+                            {0, "event attribute"},
+                            {0, "u32"},
+                            {0, "Unable to read u8"}},
+                           ""_su8);
+
+  ExpectReadFailure<Event>({{0, "event"},
+                            {0, "event type"},
+                            {1, "type index"},
+                            {1, "Unable to read u8"}},
+                           "\x00"_su8);
+}
+
+TEST(ReadTest, EventType) {
+  ExpectRead<EventType>(EventType{EventAttribute::Exception, 1},
+                        "\x00\x01"_su8);
+}
+
 TEST(ReadTest, Export) {
   ExpectRead<Export>(Export{ExternalKind::Function, "hi", 3},
                      "\x02hi\x00\x03"_su8);
@@ -673,6 +698,17 @@ TEST(ReadTest, Export_PastEnd) {
       {{0, "export"}, {2, "index"}, {2, "Unable to read u8"}}, "\x00\x00"_su8);
 }
 
+TEST(ReadTest, Export_exceptions) {
+  ExpectReadFailure<Export>(
+      {{0, "export"}, {2, "external kind"}, {3, "Unknown external kind: 4"}},
+      "\x01v\x04\x02"_su8);
+
+  Features features;
+  features.enable_exceptions();
+  ExpectRead<Export>(Export{ExternalKind::Event, "v", 2}, "\x01v\x04\x02"_su8,
+                     features);
+}
+
 TEST(ReadTest, ExternalKind) {
   ExpectRead<ExternalKind>(ExternalKind::Function, "\x00"_su8);
   ExpectRead<ExternalKind>(ExternalKind::Table, "\x01"_su8);
@@ -680,9 +716,19 @@ TEST(ReadTest, ExternalKind) {
   ExpectRead<ExternalKind>(ExternalKind::Global, "\x03"_su8);
 }
 
-TEST(ReadTest, ExternalKind_Unknown) {
+TEST(ReadTest, ExternalKind_exceptions) {
   ExpectReadFailure<ExternalKind>(
       {{0, "external kind"}, {1, "Unknown external kind: 4"}}, "\x04"_su8);
+
+  Features features;
+  features.enable_exceptions();
+
+  ExpectRead<ExternalKind>(ExternalKind::Event, "\x04"_su8, features);
+}
+
+TEST(ReadTest, ExternalKind_Unknown) {
+  ExpectReadFailure<ExternalKind>(
+      {{0, "external kind"}, {1, "Unknown external kind: 5"}}, "\x05"_su8);
 
   // Overlong encoding is not allowed.
   ExpectReadFailure<ExternalKind>(
@@ -834,6 +880,18 @@ TEST(ReadTest, Import) {
   ExpectRead<Import>(
       Import{"d", "global", GlobalType{ValueType::I32, Mutability::Const}},
       "\x01\x64\x06global\x03\x7f\x00"_su8);
+}
+
+TEST(ReadTest, Import_exceptions) {
+  ExpectReadFailure<Import>(
+      {{0, "import"}, {9, "external kind"}, {10, "Unknown external kind: 4"}},
+      "\x01v\x06!event\x04\x00\x02"_su8);
+
+  Features features;
+  features.enable_exceptions();
+  ExpectRead<Import>(
+      Import{"v", "!event", EventType{EventAttribute::Exception, 2}},
+      "\x01v\x06!event\x04\x00\x02"_su8, features);
 }
 
 TEST(ReadTest, ImportType_PastEnd) {
@@ -1561,9 +1619,9 @@ TEST(ReadTest, Limits) {
 }
 
 TEST(ReadTest, Limits_BadFlags) {
-  ExpectReadFailure<Limits>({{0, "limits"}, {1, "Invalid flags value: 2"}},
+  ExpectReadFailure<Limits>({{0, "limits"}, {1, "Unknown flags value: 2"}},
                             "\x02\x01"_su8);
-  ExpectReadFailure<Limits>({{0, "limits"}, {1, "Invalid flags value: 3"}},
+  ExpectReadFailure<Limits>({{0, "limits"}, {1, "Unknown flags value: 3"}},
                             "\x03\x01"_su8);
 }
 
@@ -2441,15 +2499,34 @@ TEST(ReadTest, SectionId) {
   ExpectRead<SectionId>(SectionId::Element, "\x09"_su8);
   ExpectRead<SectionId>(SectionId::Code, "\x0a"_su8);
   ExpectRead<SectionId>(SectionId::Data, "\x0b"_su8);
-  ExpectRead<SectionId>(SectionId::DataCount, "\x0c"_su8);
 
   // Overlong encoding.
   ExpectRead<SectionId>(SectionId::Custom, "\x80\x00"_su8);
 }
 
-TEST(ReadTest, SectionId_Unknown) {
+TEST(ReadTest, SectionId_bulk_memory) {
+  ExpectReadFailure<SectionId>(
+      {{0, "section id"}, {1, "Unknown section id: 12"}}, "\x0c"_su8);
+
+  Features features;
+  features.enable_bulk_memory();
+
+  ExpectRead<SectionId>(SectionId::DataCount, "\x0c"_su8, features);
+}
+
+TEST(ReadTest, SectionId_exceptions) {
   ExpectReadFailure<SectionId>(
       {{0, "section id"}, {1, "Unknown section id: 13"}}, "\x0d"_su8);
+
+  Features features;
+  features.enable_exceptions();
+
+  ExpectRead<SectionId>(SectionId::Event, "\x0d"_su8, features);
+}
+
+TEST(ReadTest, SectionId_Unknown) {
+  ExpectReadFailure<SectionId>(
+      {{0, "section id"}, {1, "Unknown section id: 14"}}, "\x0e"_su8);
 }
 
 TEST(ReadTest, Section) {
@@ -2645,6 +2722,15 @@ TEST(ReadTest, ValueType_reference_types) {
   ExpectRead<ValueType>(ValueType::Funcref, "\x70"_su8, features);
   ExpectRead<ValueType>(ValueType::Anyref, "\x6f"_su8, features);
   ExpectRead<ValueType>(ValueType::Nullref, "\x6e"_su8, features);
+}
+
+TEST(ReadTest, ValueType_exceptions) {
+  ExpectReadFailure<ValueType>(
+      {{0, "value type"}, {1, "Unknown value type: 104"}}, "\x68"_su8);
+
+  Features features;
+  features.enable_exceptions();
+  ExpectRead<ValueType>(ValueType::Exnref, "\x68"_su8, features);
 }
 
 TEST(ReadTest, ValueType_Unknown) {

@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_SECTION_ID_ENCODING_H
 #define WASP_BINARY_SECTION_ID_ENCODING_H
 
+#include "wasp/base/features.h"
 #include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
@@ -27,38 +28,53 @@ namespace binary {
 namespace encoding {
 
 struct SectionId {
-#define WASP_V(val, Name, str) static constexpr u32 Name = val;
+#define WASP_V(val, Name, str, ...) static constexpr u32 Name = val;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/section_id.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
 
   static u32 Encode(::wasp::binary::SectionId);
-  static optional<::wasp::binary::SectionId> Decode(u32);
+  static optional<::wasp::binary::SectionId> Decode(u32,
+                                                    const Features& features);
 };
 
 // static
 inline u32 SectionId::Encode(::wasp::binary::SectionId decoded) {
   switch (decoded) {
-#define WASP_V(val, Name, str)          \
+#define WASP_V(val, Name, str, ...)     \
   case ::wasp::binary::SectionId::Name: \
     return val;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/section_id.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
     default:
       WASP_UNREACHABLE();
   }
 }
 
 // static
-inline optional<::wasp::binary::SectionId> SectionId::Decode(u32 val) {
+inline optional<::wasp::binary::SectionId> SectionId::Decode(
+    u32 val,
+    const Features& features) {
   switch (val) {
 #define WASP_V(val, Name, str) \
   case Name:                   \
     return ::wasp::binary::SectionId::Name;
+#define WASP_FEATURE_V(val, Name, str, feature) \
+  case Name:                                    \
+    if (features.feature##_enabled()) {         \
+      return ::wasp::binary::SectionId::Name;   \
+    }                                           \
+    break;
 #include "wasp/binary/section_id.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
     default:
-      return nullopt;
+      break;
   }
+  return nullopt;
 }
 
 }  // namespace encoding

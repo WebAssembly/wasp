@@ -46,6 +46,11 @@ TEST(FormattersTest, ExternalKind) {
   EXPECT_EQ(R"(  global)", format("{:>8s}", ExternalKind::Global));
 }
 
+TEST(FormattersTest, EventAttribute) {
+  EXPECT_EQ(R"(exception)", format("{}", EventAttribute::Exception));
+  EXPECT_EQ(R"(  exception)", format("{:>11s}", EventAttribute::Exception));
+}
+
 TEST(FormattersTest, Mutability) {
   EXPECT_EQ(R"(const)", format("{}", Mutability::Const));
   EXPECT_EQ(R"(   var)", format("{:>6s}", Mutability::Var));
@@ -165,6 +170,13 @@ TEST(FormattersTest, GlobalType) {
             format("{:>10s}", GlobalType{ValueType::F64, Mutability::Var}));
 }
 
+TEST(FormattersTest, EventType) {
+  EXPECT_EQ(R"(exception 0)",
+            format("{}", EventType{EventAttribute::Exception, 0}));
+  EXPECT_EQ(R"(  exception 0)",
+            format("{:>13s}", EventType{EventAttribute::Exception, 0}));
+}
+
 TEST(FormattersTest, Import) {
   // Function
   EXPECT_EQ(R"({module "a", name "b", desc func 3})",
@@ -187,6 +199,11 @@ TEST(FormattersTest, Import) {
       format("{}",
              Import{"g", "h", GlobalType{ValueType::I32, Mutability::Var}}));
 
+  // Event
+  EXPECT_EQ(
+      R"({module "i", name "j", desc event exception 0})",
+      format("{}", Import{"i", "j", EventType{EventAttribute::Exception, 0}}));
+
   EXPECT_EQ(R"(  {module "", name "", desc func 0})",
             format("{:>35s}", Import{"", "", Index{0}}));
 }
@@ -200,6 +217,8 @@ TEST(FormattersTest, Export) {
             format("{}", Export{ExternalKind::Memory, "m", Index{2}}));
   EXPECT_EQ(R"({name "g", desc global 3})",
             format("{}", Export{ExternalKind::Global, "g", Index{3}}));
+  EXPECT_EQ(R"({name "e", desc event 4})",
+            format("{}", Export{ExternalKind::Event, "e", Index{4}}));
   EXPECT_EQ(R"(    {name "", desc mem 0})",
             format("{:>25s}", Export{ExternalKind::Memory, "", Index{0}}));
 }
@@ -281,6 +300,9 @@ TEST(FormattersTest, Instruction) {
       R"(call_indirect 1 0)",
       format("{}",
              Instruction{Opcode::CallIndirect, CallIndirectImmediate{1, 0}}));
+  // br_on_exn 1 2
+  EXPECT_EQ(R"(br_on_exn 1 2)",
+            format("{}", Instruction{Opcode::BrOnExn, BrOnExnImmediate{1, 2}}));
   // memory.size (w/ a reserved value of 0)
   EXPECT_EQ(R"(memory.size 0)",
             format("{}", Instruction{Opcode::MemorySize, u8{0}}));
@@ -299,10 +321,27 @@ TEST(FormattersTest, Instruction) {
   // f64.const 6.25
   EXPECT_EQ(R"(f64.const 6.250000)",
             format("{}", Instruction{Opcode::F64Const, f64{6.25}}));
+  // v128.const i32x4 1 2 3 4
+  EXPECT_EQ(R"(v128.const 0x1 0x2 0x3 0x4)",
+            format("{}", Instruction{Opcode::V128Const,
+                                     v128{s32{1}, s32{2}, s32{3}, s32{4}}}));
   // memory.init 0 10
   EXPECT_EQ(
       R"(memory.init 0 10)",
       format("{}", Instruction{Opcode::MemoryInit, InitImmediate{0, 10}}));
+  // memory.copy 1 2
+  EXPECT_EQ(R"(memory.copy 1 2)",
+            format("{}", Instruction{Opcode::MemoryCopy, CopyImmediate{1, 2}}));
+  // v8x16.shuffle
+  EXPECT_EQ(
+      R"(v8x16.shuffle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16)",
+      format("{}", Instruction{Opcode::V8X16Shuffle,
+                               ShuffleImmediate{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                                                 11, 12, 13, 14, 15, 16}}}));
+  // select (result i32)
+  EXPECT_EQ(
+      R"(select [i32])",
+      format("{}", Instruction{Opcode::SelectT, ValueTypes{ValueType::I32}}));
 
   EXPECT_EQ(R"(   i32.add)", format("{:>10s}", Instruction{Opcode::I32Add}));
 }

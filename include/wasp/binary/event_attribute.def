@@ -14,7 +14,4 @@
 // limitations under the License.
 //
 
-WASP_FEATURE_V(0x70, Funcref, "funcref", reference_types)
-WASP_FEATURE_V(0x6f, Anyref, "anyref", reference_types)
-WASP_FEATURE_V(0x6e, Nullref, "nullref", reference_types)
-WASP_FEATURE_V(0x68, Exnref, "exnref", exceptions)
+WASP_V(0, Exception, "exception")

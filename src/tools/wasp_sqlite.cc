@@ -339,8 +339,10 @@ bool Tool::CreateTables() {
   count = 0;
 #define WASP_V(val, Name, str) \
   CHECK(Exec("insert into section_name values ({}, \"{}\");", count++, str));
+#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
 #include "wasp/binary/section_id.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
 
   return true;
 }
@@ -432,12 +434,17 @@ void Tool::DoImportSection(LazyImportSection section) {
         break;
       }
 
-      case ExternalKind::Global:
+      case ExternalKind::Global: {
         auto global_type = import.value.global_type();
         Exec("insert into global_import values ({}, {}, {}, {});",
              imported_global_count++, import.index,
              static_cast<int>(global_type.valtype),
              static_cast<int>(global_type.mut));
+        break;
+      }
+
+      case ExternalKind::Event:
+        // TODO(binji): implement
         break;
     }
   }

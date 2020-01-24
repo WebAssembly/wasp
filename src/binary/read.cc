@@ -24,6 +24,7 @@
 #include "wasp/binary/encoding/block_type_encoding.h"
 #include "wasp/binary/encoding/comdat_symbol_kind_encoding.h"
 #include "wasp/binary/encoding/element_type_encoding.h"
+#include "wasp/binary/encoding/event_attribute_encoding.h"
 #include "wasp/binary/encoding/external_kind_encoding.h"
 #include "wasp/binary/encoding/limits_flags_encoding.h"
 #include "wasp/binary/encoding/linking_subsection_id_encoding.h"
@@ -43,7 +44,7 @@
 #include "wasp/binary/read/read_var_int.h"
 #include "wasp/binary/read/read_vector.h"
 #include "wasp/binary/read_linking.h"  // TODO move to read_linking.cc
-#include "wasp/binary/read_name.h"  // TODO move to read_name.cc
+#include "wasp/binary/read_name.h"     // TODO move to read_name.cc
 
 namespace wasp {
 namespace binary {
@@ -55,19 +56,11 @@ optional<BlockType> Read(SpanU8* data,
   ErrorsContextGuard guard{errors, *data, "block type"};
   if (features.multi_value_enabled()) {
     WASP_TRY_READ(val, Read<s32>(data, features, errors));
-    auto decoded = encoding::BlockType::Decode(val, features);
-    if (!decoded) {
-      errors.OnError(*data, format("Unknown block type: {}", val));
-      return nullopt;
-    }
+    WASP_TRY_DECODE_FEATURES(decoded, val, BlockType, "block type", features);
     return decoded;
   } else {
     WASP_TRY_READ(val, Read<u8>(data, features, errors));
-    auto decoded = encoding::BlockType::Decode(val, features);
-    if (!decoded) {
-      errors.OnError(*data, format("Unknown block type: {}", val));
-      return nullopt;
-    }
+    WASP_TRY_DECODE_FEATURES(decoded, val, BlockType, "block type", features);
     return decoded;
   }
 }
@@ -375,6 +368,35 @@ optional<ElementType> Read(SpanU8* data,
   return decoded;
 }
 
+optional<Event> Read(SpanU8* data,
+                     const Features& features,
+                     Errors& errors,
+                     Tag<Event>) {
+  ErrorsContextGuard guard{errors, *data, "event"};
+  WASP_TRY_READ(event_type, Read<EventType>(data, features, errors));
+  return Event{event_type};
+}
+
+optional<EventAttribute> Read(SpanU8* data,
+                              const Features& features,
+                              Errors& errors,
+                              Tag<EventAttribute>) {
+  ErrorsContextGuard guard{errors, *data, "event attribute"};
+  WASP_TRY_READ(val, Read<u32>(data, features, errors));
+  WASP_TRY_DECODE(decoded, val, EventAttribute, "event attribute");
+  return decoded;
+}
+
+optional<EventType> Read(SpanU8* data,
+                         const Features& features,
+                         Errors& errors,
+                         Tag<EventType>) {
+  ErrorsContextGuard guard{errors, *data, "event type"};
+  WASP_TRY_READ(attribute, Read<EventAttribute>(data, features, errors));
+  WASP_TRY_READ(type_index, ReadIndex(data, features, errors, "type index"));
+  return EventType{attribute, type_index};
+}
+
 optional<Export> Read(SpanU8* data,
                       const Features& features,
                       Errors& errors,
@@ -392,7 +414,8 @@ optional<ExternalKind> Read(SpanU8* data,
                             Tag<ExternalKind>) {
   ErrorsContextGuard guard{errors, *data, "external kind"};
   WASP_TRY_READ(val, Read<u8>(data, features, errors));
-  WASP_TRY_DECODE(decoded, val, ExternalKind, "external kind");
+  WASP_TRY_DECODE_FEATURES(decoded, val, ExternalKind, "external kind",
+                           features);
   return decoded;
 }
 
@@ -486,6 +509,10 @@ optional<Import> Read(SpanU8* data,
     case ExternalKind::Global: {
       WASP_TRY_READ(global_type, Read<GlobalType>(data, features, errors));
       return Import{module, name, global_type};
+    }
+    case ExternalKind::Event: {
+      WASP_TRY_READ(event_type, Read<EventType>(data, features, errors));
+      return Import{module, name, event_type};
     }
   }
   WASP_UNREACHABLE();
@@ -1104,11 +1131,7 @@ optional<Limits> Read(SpanU8* data,
                       Tag<Limits>) {
   ErrorsContextGuard guard{errors, *data, "limits"};
   WASP_TRY_READ_CONTEXT(flags, Read<u8>(data, features, errors), "flags");
-  auto decoded = encoding::LimitsFlags::Decode(flags, features);
-  if (!decoded) {
-    errors.OnError(*data, format("Invalid flags value: {}", flags));
-    return nullopt;
-  }
+  WASP_TRY_DECODE_FEATURES(decoded, flags, LimitsFlags, "flags value", features);
 
   WASP_TRY_READ_CONTEXT(min, Read<u32>(data, features, errors), "min");
 
@@ -1236,11 +1259,7 @@ optional<Opcode> Read(SpanU8* data,
     }
     return decoded;
   } else {
-    auto decoded = encoding::Opcode::Decode(val, features);
-    if (!decoded) {
-      errors.OnError(*data, format("Unknown opcode: {}", val));
-      return nullopt;
-    }
+    WASP_TRY_DECODE_FEATURES(decoded, val, Opcode, "opcode", features);
     return decoded;
   }
 }
@@ -1328,7 +1347,7 @@ optional<SectionId> Read(SpanU8* data,
                          Tag<SectionId>) {
   ErrorsContextGuard guard{errors, *data, "section id"};
   WASP_TRY_READ(val, Read<u32>(data, features, errors));
-  WASP_TRY_DECODE(decoded, val, SectionId, "section id");
+  WASP_TRY_DECODE_FEATURES(decoded, val, SectionId, "section id", features);
   return decoded;
 }
 

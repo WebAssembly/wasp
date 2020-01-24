@@ -88,11 +88,31 @@ typename Ctx::iterator formatter<::wasp::binary::ExternalKind>::format(
     Ctx& ctx) {
   string_view result;
   switch (self) {
-#define WASP_V(val, Name, str)             \
+#define WASP_V(val, Name, str, ...)        \
   case ::wasp::binary::ExternalKind::Name: \
     result = str;                          \
     break;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/external_kind.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::EventAttribute>::format(
+    const ::wasp::binary::EventAttribute& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+#define WASP_V(val, Name, str)               \
+  case ::wasp::binary::EventAttribute::Name: \
+    result = str;                            \
+    break;
+#include "wasp/binary/event_attribute.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -160,12 +180,14 @@ typename Ctx::iterator formatter<::wasp::binary::SectionId>::format(
     Ctx& ctx) {
   string_view result;
   switch (self) {
-#define WASP_V(val, Name, str)          \
+#define WASP_V(val, Name, str, ...)     \
   case ::wasp::binary::SectionId::Name: \
     result = str;                       \
     break;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/section_id.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
     default: {
       // Special case for sections with unknown ids.
       memory_buffer buf;
@@ -309,6 +331,15 @@ typename Ctx::iterator formatter<::wasp::binary::GlobalType>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::EventType>::format(
+    const ::wasp::binary::EventType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.attribute, self.type_index);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Import>::format(
     const ::wasp::binary::Import& self,
     Ctx& ctx) {
@@ -331,6 +362,10 @@ typename Ctx::iterator formatter<::wasp::binary::Import>::format(
 
     case ::wasp::binary::ExternalKind::Global:
       format_to(buf, " {}}}", self.global_type());
+      break;
+
+    case ::wasp::binary::ExternalKind::Event:
+      format_to(buf, " {}}}", self.event_type());
       break;
 
     default:
@@ -444,7 +479,7 @@ typename Ctx::iterator formatter<::wasp::binary::CopyImmediate>::format(
     const ::wasp::binary::CopyImmediate& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{} {}", self.src_index, self.dst_index);
+  format_to(buf, "{} {}", self.dst_index, self.src_index);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
@@ -468,34 +503,24 @@ typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
   memory_buffer buf;
   format_to(buf, "{}", self.opcode);
 
-  if (self.has_empty_immediate()) {
-    // Nothing.
-  } else if (self.has_block_type_immediate()) {
-    format_to(buf, " {}", self.block_type_immediate());
-  } else if (self.has_index_immediate()) {
-    format_to(buf, " {}", self.index_immediate());
-  } else if (self.has_call_indirect_immediate()) {
-    format_to(buf, " {}", self.call_indirect_immediate());
-  } else if (self.has_br_table_immediate()) {
-    format_to(buf, " {}", self.br_table_immediate());
-  } else if (self.has_u8_immediate()) {
-    format_to(buf, " {}", self.u8_immediate());
-  } else if (self.has_mem_arg_immediate()) {
-    format_to(buf, " {}", self.mem_arg_immediate());
-  } else if (self.has_s32_immediate()) {
-    format_to(buf, " {}", self.s32_immediate());
-  } else if (self.has_s64_immediate()) {
-    format_to(buf, " {}", self.s64_immediate());
-  } else if (self.has_f32_immediate()) {
-    format_to(buf, " {:f}", self.f32_immediate());
-  } else if (self.has_f64_immediate()) {
-    format_to(buf, " {:f}", self.f64_immediate());
-  } else if (self.has_init_immediate()) {
-    format_to(buf, " {}", self.init_immediate());
-  } else if (self.has_copy_immediate()) {
-    format_to(buf, " {}", self.copy_immediate());
-  } else if (self.has_shuffle_immediate()) {
-    format_to(buf, " {}", self.shuffle_immediate());
+  switch (self.immediate.index()) {
+    case 0: /* Nothing. */ break;
+    case 1: format_to(buf, " {}", self.block_type_immediate()); break;
+    case 2: format_to(buf, " {}", self.index_immediate()); break;
+    case 3: format_to(buf, " {}", self.call_indirect_immediate()); break;
+    case 4: format_to(buf, " {}", self.br_table_immediate()); break;
+    case 5: format_to(buf, " {}", self.br_on_exn_immediate()); break;
+    case 6: format_to(buf, " {}", self.u8_immediate()); break;
+    case 7: format_to(buf, " {}", self.mem_arg_immediate()); break;
+    case 8: format_to(buf, " {}", self.s32_immediate()); break;
+    case 9: format_to(buf, " {}", self.s64_immediate()); break;
+    case 10: format_to(buf, " {:f}", self.f32_immediate()); break;
+    case 11: format_to(buf, " {:f}", self.f64_immediate()); break;
+    case 12: format_to(buf, " {}", self.v128_immediate()); break;
+    case 13: format_to(buf, " {}", self.init_immediate()); break;
+    case 14: format_to(buf, " {}", self.copy_immediate()); break;
+    case 15: format_to(buf, " {}", self.shuffle_immediate()); break;
+    case 16: format_to(buf, " {}", self.value_types_immediate()); break;
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
@@ -591,6 +616,15 @@ typename Ctx::iterator formatter<::wasp::binary::DataCount>::format(
     Ctx& ctx) {
   memory_buffer buf;
   format_to(buf, "{{count {}}}", self.count);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::Event>::format(
+    const ::wasp::binary::Event& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{type {}}}", self.event_type);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 

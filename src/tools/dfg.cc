@@ -334,6 +334,7 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
         case ValueType::Anyref:
         case ValueType::Funcref:
         case ValueType::Nullref:
+        case ValueType::Exnref:
           PushValue(NewValue(Instruction{Opcode::RefNull}));
           break;
       }
