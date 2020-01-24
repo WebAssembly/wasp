@@ -629,10 +629,10 @@ bool Load(const Instruction& instruction, Context& context, Errors& errors) {
     case Opcode::I64Load32S: span = span_i64; max_align = 2; break;
     case Opcode::I64Load32U: span = span_i64; max_align = 2; break;
     case Opcode::V128Load:   span = span_v128; max_align = 4; break;
-    case Opcode::I8X16LoadSplat:   span = span_v128; max_align = 0; break;
-    case Opcode::I16X8LoadSplat:   span = span_v128; max_align = 1; break;
-    case Opcode::I32X4LoadSplat:   span = span_v128; max_align = 2; break;
-    case Opcode::I64X2LoadSplat:   span = span_v128; max_align = 3; break;
+    case Opcode::V8X16LoadSplat:   span = span_v128; max_align = 0; break;
+    case Opcode::V16X8LoadSplat:   span = span_v128; max_align = 1; break;
+    case Opcode::V32X4LoadSplat:   span = span_v128; max_align = 2; break;
+    case Opcode::V64X2LoadSplat:   span = span_v128; max_align = 3; break;
     case Opcode::I16X8Load8X8S:    span = span_v128; max_align = 3; break;
     case Opcode::I16X8Load8X8U:    span = span_v128; max_align = 3; break;
     case Opcode::I32X4Load16X4S:   span = span_v128; max_align = 3; break;
@@ -1092,10 +1092,10 @@ bool Validate(const Instruction& value,
     case Opcode::I64Load32S:
     case Opcode::I64Load32U:
     case Opcode::V128Load:
-    case Opcode::I8X16LoadSplat:
-    case Opcode::I16X8LoadSplat:
-    case Opcode::I32X4LoadSplat:
-    case Opcode::I64X2LoadSplat:
+    case Opcode::V8X16LoadSplat:
+    case Opcode::V16X8LoadSplat:
+    case Opcode::V32X4LoadSplat:
+    case Opcode::V64X2LoadSplat:
     case Opcode::I16X8Load8X8S:
     case Opcode::I16X8Load8X8U:
     case Opcode::I32X4Load16X4S:
@@ -1397,12 +1397,8 @@ bool Validate(const Instruction& value,
     case Opcode::F64X2Sqrt:
     case Opcode::I32X4TruncSatF32X4S:
     case Opcode::I32X4TruncSatF32X4U:
-    case Opcode::I64X2TruncSatF64X2S:
-    case Opcode::I64X2TruncSatF64X2U:
     case Opcode::F32X4ConvertI32X4S:
     case Opcode::F32X4ConvertI32X4U:
-    case Opcode::F64X2ConvertI64X2S:
-    case Opcode::F64X2ConvertI64X2U:
     case Opcode::I16X8WidenLowI8X16S:
     case Opcode::I16X8WidenHighI8X16S:
     case Opcode::I16X8WidenLowI8X16U:
@@ -1469,7 +1465,10 @@ bool Validate(const Instruction& value,
     case Opcode::I8X16Sub:
     case Opcode::I8X16SubSaturateS:
     case Opcode::I8X16SubSaturateU:
-    case Opcode::I8X16Mul:
+    case Opcode::I8X16MinS:
+    case Opcode::I8X16MinU:
+    case Opcode::I8X16MaxS:
+    case Opcode::I8X16MaxU:
     case Opcode::I16X8Add:
     case Opcode::I16X8AddSaturateS:
     case Opcode::I16X8AddSaturateU:
@@ -1477,11 +1476,20 @@ bool Validate(const Instruction& value,
     case Opcode::I16X8SubSaturateS:
     case Opcode::I16X8SubSaturateU:
     case Opcode::I16X8Mul:
+    case Opcode::I16X8MinS:
+    case Opcode::I16X8MinU:
+    case Opcode::I16X8MaxS:
+    case Opcode::I16X8MaxU:
     case Opcode::I32X4Add:
     case Opcode::I32X4Sub:
     case Opcode::I32X4Mul:
+    case Opcode::I32X4MinS:
+    case Opcode::I32X4MinU:
+    case Opcode::I32X4MaxS:
+    case Opcode::I32X4MaxU:
     case Opcode::I64X2Add:
     case Opcode::I64X2Sub:
+    case Opcode::I64X2Mul:
     case Opcode::F32X4Add:
     case Opcode::F32X4Sub:
     case Opcode::F32X4Mul:
@@ -1535,8 +1543,6 @@ bool Validate(const Instruction& value,
     case Opcode::I16X8AllTrue:
     case Opcode::I32X4AnyTrue:
     case Opcode::I32X4AllTrue:
-    case Opcode::I64X2AnyTrue:
-    case Opcode::I64X2AllTrue:
       params = span_v128, results = span_i32;
       break;
 

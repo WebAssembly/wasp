@@ -1372,7 +1372,10 @@ TEST(ReadTest, Instruction_simd) {
   ExpectRead<I>(I{O::I8X16Sub}, "\xfd\x5a"_su8, f);
   ExpectRead<I>(I{O::I8X16SubSaturateS}, "\xfd\x5b"_su8, f);
   ExpectRead<I>(I{O::I8X16SubSaturateU}, "\xfd\x5c"_su8, f);
-  ExpectRead<I>(I{O::I8X16Mul}, "\xfd\x5d"_su8, f);
+  ExpectRead<I>(I{O::I8X16MinS}, "\xfd\x5e"_su8, f);
+  ExpectRead<I>(I{O::I8X16MinU}, "\xfd\x5f"_su8, f);
+  ExpectRead<I>(I{O::I8X16MaxS}, "\xfd\x60"_su8, f);
+  ExpectRead<I>(I{O::I8X16MaxU}, "\xfd\x61"_su8, f);
   ExpectRead<I>(I{O::I16X8Neg}, "\xfd\x62"_su8, f);
   ExpectRead<I>(I{O::I16X8AnyTrue}, "\xfd\x63"_su8, f);
   ExpectRead<I>(I{O::I16X8AllTrue}, "\xfd\x64"_su8, f);
@@ -1386,6 +1389,10 @@ TEST(ReadTest, Instruction_simd) {
   ExpectRead<I>(I{O::I16X8SubSaturateS}, "\xfd\x6c"_su8, f);
   ExpectRead<I>(I{O::I16X8SubSaturateU}, "\xfd\x6d"_su8, f);
   ExpectRead<I>(I{O::I16X8Mul}, "\xfd\x6e"_su8, f);
+  ExpectRead<I>(I{O::I16X8MinS}, "\xfd\x6f"_su8, f);
+  ExpectRead<I>(I{O::I16X8MinU}, "\xfd\x70"_su8, f);
+  ExpectRead<I>(I{O::I16X8MaxS}, "\xfd\x71"_su8, f);
+  ExpectRead<I>(I{O::I16X8MaxU}, "\xfd\x72"_su8, f);
   ExpectRead<I>(I{O::I32X4Neg}, "\xfd\x73"_su8, f);
   ExpectRead<I>(I{O::I32X4AnyTrue}, "\xfd\x74"_su8, f);
   ExpectRead<I>(I{O::I32X4AllTrue}, "\xfd\x75"_su8, f);
@@ -1395,14 +1402,17 @@ TEST(ReadTest, Instruction_simd) {
   ExpectRead<I>(I{O::I32X4Add}, "\xfd\x79"_su8, f);
   ExpectRead<I>(I{O::I32X4Sub}, "\xfd\x7c"_su8, f);
   ExpectRead<I>(I{O::I32X4Mul}, "\xfd\x7f"_su8, f);
+  ExpectRead<I>(I{O::I32X4MinS}, "\xfd\x80\x01"_su8, f);
+  ExpectRead<I>(I{O::I32X4MinU}, "\xfd\x81\x01"_su8, f);
+  ExpectRead<I>(I{O::I32X4MaxS}, "\xfd\x82\x01"_su8, f);
+  ExpectRead<I>(I{O::I32X4MaxU}, "\xfd\x83\x01"_su8, f);
   ExpectRead<I>(I{O::I64X2Neg}, "\xfd\x84\x01"_su8, f);
-  ExpectRead<I>(I{O::I64X2AnyTrue}, "\xfd\x85\x01"_su8, f);
-  ExpectRead<I>(I{O::I64X2AllTrue}, "\xfd\x86\x01"_su8, f);
   ExpectRead<I>(I{O::I64X2Shl}, "\xfd\x87\x01"_su8, f);
   ExpectRead<I>(I{O::I64X2ShrS}, "\xfd\x88\x01"_su8, f);
   ExpectRead<I>(I{O::I64X2ShrU}, "\xfd\x89\x01"_su8, f);
   ExpectRead<I>(I{O::I64X2Add}, "\xfd\x8a\x01"_su8, f);
   ExpectRead<I>(I{O::I64X2Sub}, "\xfd\x8d\x01"_su8, f);
+  ExpectRead<I>(I{O::I64X2Mul}, "\xfd\x90\x01"_su8, f);
   ExpectRead<I>(I{O::F32X4Abs}, "\xfd\x95\x01"_su8, f);
   ExpectRead<I>(I{O::F32X4Neg}, "\xfd\x96\x01"_su8, f);
   ExpectRead<I>(I{O::F32X4Sqrt}, "\xfd\x97\x01"_su8, f);
@@ -1423,25 +1433,21 @@ TEST(ReadTest, Instruction_simd) {
   ExpectRead<I>(I{O::F64X2Max}, "\xfd\xaa\x01"_su8, f);
   ExpectRead<I>(I{O::I32X4TruncSatF32X4S}, "\xfd\xab\x01"_su8, f);
   ExpectRead<I>(I{O::I32X4TruncSatF32X4U}, "\xfd\xac\x01"_su8, f);
-  ExpectRead<I>(I{O::I64X2TruncSatF64X2S}, "\xfd\xad\x01"_su8, f);
-  ExpectRead<I>(I{O::I64X2TruncSatF64X2U}, "\xfd\xae\x01"_su8, f);
   ExpectRead<I>(I{O::F32X4ConvertI32X4S}, "\xfd\xaf\x01"_su8, f);
   ExpectRead<I>(I{O::F32X4ConvertI32X4U}, "\xfd\xb0\x01"_su8, f);
-  ExpectRead<I>(I{O::F64X2ConvertI64X2S}, "\xfd\xb1\x01"_su8, f);
-  ExpectRead<I>(I{O::F64X2ConvertI64X2U}, "\xfd\xb2\x01"_su8, f);
   ExpectRead<I>(I{O::V8X16Swizzle}, "\xfd\xc0\x01"_su8, f);
   ExpectRead<I>(I{O::V8X16Shuffle, ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0,
                                                      0, 0, 0, 0, 0, 0, 0}}},
                 "\xfd\xc1\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
                 "\x00\x00\x00\x00"_su8,
                 f);
-  ExpectRead<I>(I{O::I8X16LoadSplat, MemArgImmediate{1, 2}},
+  ExpectRead<I>(I{O::V8X16LoadSplat, MemArgImmediate{1, 2}},
                 "\xfd\xc2\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{O::I16X8LoadSplat, MemArgImmediate{1, 2}},
+  ExpectRead<I>(I{O::V16X8LoadSplat, MemArgImmediate{1, 2}},
                 "\xfd\xc3\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{O::I32X4LoadSplat, MemArgImmediate{1, 2}},
+  ExpectRead<I>(I{O::V32X4LoadSplat, MemArgImmediate{1, 2}},
                 "\xfd\xc4\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{O::I64X2LoadSplat, MemArgImmediate{1, 2}},
+  ExpectRead<I>(I{O::V64X2LoadSplat, MemArgImmediate{1, 2}},
                 "\xfd\xc5\x01\x01\x02"_su8, f);
   ExpectRead<I>(I{O::I8X16NarrowI16X8S}, "\xfd\xc6\x01"_su8, f);
   ExpectRead<I>(I{O::I8X16NarrowI16X8U}, "\xfd\xc7\x01"_su8, f);
@@ -2119,7 +2125,10 @@ TEST(ReadTest, Opcode_simd) {
   ExpectRead<O>(O::I8X16Sub, "\xfd\x5a"_su8, features);
   ExpectRead<O>(O::I8X16SubSaturateS, "\xfd\x5b"_su8, features);
   ExpectRead<O>(O::I8X16SubSaturateU, "\xfd\x5c"_su8, features);
-  ExpectRead<O>(O::I8X16Mul, "\xfd\x5d"_su8, features);
+  ExpectRead<O>(O::I8X16MinS, "\xfd\x5e"_su8, features);
+  ExpectRead<O>(O::I8X16MinU, "\xfd\x5f"_su8, features);
+  ExpectRead<O>(O::I8X16MaxS, "\xfd\x60"_su8, features);
+  ExpectRead<O>(O::I8X16MaxU, "\xfd\x61"_su8, features);
   ExpectRead<O>(O::I16X8Neg, "\xfd\x62"_su8, features);
   ExpectRead<O>(O::I16X8AnyTrue, "\xfd\x63"_su8, features);
   ExpectRead<O>(O::I16X8AllTrue, "\xfd\x64"_su8, features);
@@ -2133,6 +2142,10 @@ TEST(ReadTest, Opcode_simd) {
   ExpectRead<O>(O::I16X8SubSaturateS, "\xfd\x6c"_su8, features);
   ExpectRead<O>(O::I16X8SubSaturateU, "\xfd\x6d"_su8, features);
   ExpectRead<O>(O::I16X8Mul, "\xfd\x6e"_su8, features);
+  ExpectRead<O>(O::I16X8MinS, "\xfd\x6f"_su8, features);
+  ExpectRead<O>(O::I16X8MinU, "\xfd\x70"_su8, features);
+  ExpectRead<O>(O::I16X8MaxS, "\xfd\x71"_su8, features);
+  ExpectRead<O>(O::I16X8MaxU, "\xfd\x72"_su8, features);
   ExpectRead<O>(O::I32X4Neg, "\xfd\x73"_su8, features);
   ExpectRead<O>(O::I32X4AnyTrue, "\xfd\x74"_su8, features);
   ExpectRead<O>(O::I32X4AllTrue, "\xfd\x75"_su8, features);
@@ -2142,14 +2155,17 @@ TEST(ReadTest, Opcode_simd) {
   ExpectRead<O>(O::I32X4Add, "\xfd\x79"_su8, features);
   ExpectRead<O>(O::I32X4Sub, "\xfd\x7c"_su8, features);
   ExpectRead<O>(O::I32X4Mul, "\xfd\x7f"_su8, features);
+  ExpectRead<O>(O::I32X4MinS, "\xfd\x80\x01"_su8, features);
+  ExpectRead<O>(O::I32X4MinU, "\xfd\x81\x01"_su8, features);
+  ExpectRead<O>(O::I32X4MaxS, "\xfd\x82\x01"_su8, features);
+  ExpectRead<O>(O::I32X4MaxU, "\xfd\x83\x01"_su8, features);
   ExpectRead<O>(O::I64X2Neg, "\xfd\x84\x01"_su8, features);
-  ExpectRead<O>(O::I64X2AnyTrue, "\xfd\x85\x01"_su8, features);
-  ExpectRead<O>(O::I64X2AllTrue, "\xfd\x86\x01"_su8, features);
   ExpectRead<O>(O::I64X2Shl, "\xfd\x87\x01"_su8, features);
   ExpectRead<O>(O::I64X2ShrS, "\xfd\x88\x01"_su8, features);
   ExpectRead<O>(O::I64X2ShrU, "\xfd\x89\x01"_su8, features);
   ExpectRead<O>(O::I64X2Add, "\xfd\x8a\x01"_su8, features);
   ExpectRead<O>(O::I64X2Sub, "\xfd\x8d\x01"_su8, features);
+  ExpectRead<O>(O::I64X2Mul, "\xfd\x90\x01"_su8, features);
   ExpectRead<O>(O::F32X4Abs, "\xfd\x95\x01"_su8, features);
   ExpectRead<O>(O::F32X4Neg, "\xfd\x96\x01"_su8, features);
   ExpectRead<O>(O::F32X4Sqrt, "\xfd\x97\x01"_su8, features);
@@ -2170,18 +2186,14 @@ TEST(ReadTest, Opcode_simd) {
   ExpectRead<O>(O::F64X2Max, "\xfd\xaa\x01"_su8, features);
   ExpectRead<O>(O::I32X4TruncSatF32X4S, "\xfd\xab\x01"_su8, features);
   ExpectRead<O>(O::I32X4TruncSatF32X4U, "\xfd\xac\x01"_su8, features);
-  ExpectRead<O>(O::I64X2TruncSatF64X2S, "\xfd\xad\x01"_su8, features);
-  ExpectRead<O>(O::I64X2TruncSatF64X2U, "\xfd\xae\x01"_su8, features);
   ExpectRead<O>(O::F32X4ConvertI32X4S, "\xfd\xaf\x01"_su8, features);
   ExpectRead<O>(O::F32X4ConvertI32X4U, "\xfd\xb0\x01"_su8, features);
-  ExpectRead<O>(O::F64X2ConvertI64X2S, "\xfd\xb1\x01"_su8, features);
-  ExpectRead<O>(O::F64X2ConvertI64X2U, "\xfd\xb2\x01"_su8, features);
   ExpectRead<O>(O::V8X16Swizzle, "\xfd\xc0\x01"_su8, features);
   ExpectRead<O>(O::V8X16Shuffle, "\xfd\xc1\x01"_su8, features);
-  ExpectRead<O>(O::I8X16LoadSplat, "\xfd\xc2\x01"_su8, features);
-  ExpectRead<O>(O::I16X8LoadSplat, "\xfd\xc3\x01"_su8, features);
-  ExpectRead<O>(O::I32X4LoadSplat, "\xfd\xc4\x01"_su8, features);
-  ExpectRead<O>(O::I64X2LoadSplat, "\xfd\xc5\x01"_su8, features);
+  ExpectRead<O>(O::V8X16LoadSplat, "\xfd\xc2\x01"_su8, features);
+  ExpectRead<O>(O::V16X8LoadSplat, "\xfd\xc3\x01"_su8, features);
+  ExpectRead<O>(O::V32X4LoadSplat, "\xfd\xc4\x01"_su8, features);
+  ExpectRead<O>(O::V64X2LoadSplat, "\xfd\xc5\x01"_su8, features);
   ExpectRead<O>(O::I8X16NarrowI16X8S, "\xfd\xc6\x01"_su8, features);
   ExpectRead<O>(O::I8X16NarrowI16X8U, "\xfd\xc7\x01"_su8, features);
   ExpectRead<O>(O::I16X8NarrowI32X4S, "\xfd\xc8\x01"_su8, features);
@@ -2210,10 +2222,10 @@ TEST(ReadTest, Opcode_Unknown_simd_prefix) {
   features.enable_simd();
 
   const u8 kInvalidOpcodes[] = {
-      0x03, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e,
-      0x3f, 0x5e, 0x5f, 0x60, 0x61, 0x6f, 0x70, 0x71, 0x72, 0x7a,
-      0x7b, 0x7d, 0x7e, 0x80, 0x81, 0x82, 0x83, 0x8b, 0x8c, 0x8e,
-      0x8f, 0x90, 0x91, 0x92, 0x93, 0x94, 0xa3, 0xa4, 0xb3, 0xdb,
+      0x03, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x5d,
+      0x7a, 0x7b, 0x7d, 0x7e, 0x85, 0x86, 0x8b, 0x8c, 0x8e, 0x8f, 0x91, 0x92,
+      0x93, 0x94, 0x98, 0x99, 0xa3, 0xa4, 0xad, 0xae, 0xb1, 0xb2, 0xb3, 0xb4,
+      0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf, 0xdb,
   };
   for (auto code : SpanU8{kInvalidOpcodes, sizeof(kInvalidOpcodes)}) {
     ExpectUnknownOpcode(0xfd, code, features);

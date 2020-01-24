@@ -629,8 +629,6 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::I32X4AnyTrue:
     case Opcode::I32X4AllTrue:
     case Opcode::I64X2Neg:
-    case Opcode::I64X2AnyTrue:
-    case Opcode::I64X2AllTrue:
     case Opcode::F32X4Abs:
     case Opcode::F32X4Neg:
     case Opcode::F32X4Sqrt:
@@ -639,16 +637,12 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::F64X2Sqrt:
     case Opcode::I32X4TruncSatF32X4S:
     case Opcode::I32X4TruncSatF32X4U:
-    case Opcode::I64X2TruncSatF64X2S:
-    case Opcode::I64X2TruncSatF64X2U:
     case Opcode::F32X4ConvertI32X4S:
     case Opcode::F32X4ConvertI32X4U:
-    case Opcode::F64X2ConvertI64X2S:
-    case Opcode::F64X2ConvertI64X2U:
-    case Opcode::I8X16LoadSplat:
-    case Opcode::I16X8LoadSplat:
-    case Opcode::I32X4LoadSplat:
-    case Opcode::I64X2LoadSplat:
+    case Opcode::V8X16LoadSplat:
+    case Opcode::V16X8LoadSplat:
+    case Opcode::V32X4LoadSplat:
+    case Opcode::V64X2LoadSplat:
     case Opcode::I16X8WidenLowI8X16S:
     case Opcode::I16X8WidenHighI8X16S:
     case Opcode::I16X8WidenLowI8X16U:
@@ -831,7 +825,10 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::I8X16Sub:
     case Opcode::I8X16SubSaturateS:
     case Opcode::I8X16SubSaturateU:
-    case Opcode::I8X16Mul:
+    case Opcode::I8X16MinS:
+    case Opcode::I8X16MinU:
+    case Opcode::I8X16MaxS:
+    case Opcode::I8X16MaxU:
     case Opcode::I16X8Shl:
     case Opcode::I16X8ShrS:
     case Opcode::I16X8ShrU:
@@ -842,17 +839,26 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::I16X8SubSaturateS:
     case Opcode::I16X8SubSaturateU:
     case Opcode::I16X8Mul:
+    case Opcode::I16X8MinS:
+    case Opcode::I16X8MinU:
+    case Opcode::I16X8MaxS:
+    case Opcode::I16X8MaxU:
     case Opcode::I32X4Shl:
     case Opcode::I32X4ShrS:
     case Opcode::I32X4ShrU:
     case Opcode::I32X4Add:
     case Opcode::I32X4Sub:
     case Opcode::I32X4Mul:
+    case Opcode::I32X4MinS:
+    case Opcode::I32X4MinU:
+    case Opcode::I32X4MaxS:
+    case Opcode::I32X4MaxU:
     case Opcode::I64X2Shl:
     case Opcode::I64X2ShrS:
     case Opcode::I64X2ShrU:
     case Opcode::I64X2Add:
     case Opcode::I64X2Sub:
+    case Opcode::I64X2Mul:
     case Opcode::F32X4Add:
     case Opcode::F32X4Sub:
     case Opcode::F32X4Mul:

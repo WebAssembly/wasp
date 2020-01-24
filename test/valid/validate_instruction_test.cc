@@ -1739,8 +1739,8 @@ TEST_F(ValidateInstructionTest, TableFill_TableIndexOOB) {
 
 TEST_F(ValidateInstructionTest, SimdLoad) {
   const Opcode opcodes[] = {
-      O::V128Load,       O::I8X16LoadSplat, O::I16X8LoadSplat,
-      O::I32X4LoadSplat, O::I64X2LoadSplat, O::I16X8Load8X8S,
+      O::V128Load,       O::V8X16LoadSplat, O::V16X8LoadSplat,
+      O::V32X4LoadSplat, O::V64X2LoadSplat, O::I16X8Load8X8S,
       O::I16X8Load8X8U,  O::I32X4Load16X4S, O::I32X4Load16X4U,
       O::I64X2Load32X2S, O::I64X2Load32X2U,
   };
@@ -1756,8 +1756,8 @@ TEST_F(ValidateInstructionTest, SimdLoad_Alignment) {
     Opcode opcode;
     u32 max_align;
   } const infos[] = {
-      {O::V128Load, 4},       {O::I8X16LoadSplat, 0}, {O::I16X8LoadSplat, 1},
-      {O::I32X4LoadSplat, 2}, {O::I64X2LoadSplat, 3}, {O::I16X8Load8X8S, 3},
+      {O::V128Load, 4},       {O::V8X16LoadSplat, 0}, {O::V16X8LoadSplat, 1},
+      {O::V32X4LoadSplat, 2}, {O::V64X2LoadSplat, 3}, {O::I16X8Load8X8S, 3},
       {O::I16X8Load8X8U, 3},  {O::I32X4Load16X4S, 3}, {O::I32X4Load16X4U, 3},
       {O::I64X2Load32X2S, 3}, {O::I64X2Load32X2U, 3},
   };
@@ -1774,8 +1774,8 @@ TEST_F(ValidateInstructionTest, SimdLoad_Alignment) {
 
 TEST_F(ValidateInstructionTest, SimdLoad_MemoryOOB) {
   const Opcode opcodes[] = {
-      O::V128Load,       O::I8X16LoadSplat, O::I16X8LoadSplat,
-      O::I32X4LoadSplat, O::I64X2LoadSplat, O::I16X8Load8X8S,
+      O::V128Load,       O::V8X16LoadSplat, O::V16X8LoadSplat,
+      O::V32X4LoadSplat, O::V64X2LoadSplat, O::I16X8Load8X8S,
       O::I16X8Load8X8U,  O::I32X4Load16X4S, O::I32X4Load16X4U,
       O::I64X2Load32X2S, O::I64X2Load32X2U,
   };
@@ -1836,12 +1836,8 @@ TEST_F(ValidateInstructionTest, SimdUnary) {
       O::F64X2Sqrt,
       O::I32X4TruncSatF32X4S,
       O::I32X4TruncSatF32X4U,
-      O::I64X2TruncSatF64X2S,
-      O::I64X2TruncSatF64X2U,
       O::F32X4ConvertI32X4S,
       O::F32X4ConvertI32X4U,
-      O::F64X2ConvertI64X2S,
-      O::F64X2ConvertI64X2U,
       O::I16X8WidenLowI8X16S,
       O::I16X8WidenHighI8X16S,
       O::I16X8WidenLowI8X16U,
@@ -1884,13 +1880,19 @@ TEST_F(ValidateInstructionTest, SimdBinary) {
       O::V128Xor,           O::I8X16Add,
       O::I8X16AddSaturateS, O::I8X16AddSaturateU,
       O::I8X16Sub,          O::I8X16SubSaturateS,
-      O::I8X16SubSaturateU, O::I8X16Mul,
-      O::I16X8Add,          O::I16X8AddSaturateS,
-      O::I16X8AddSaturateU, O::I16X8Sub,
-      O::I16X8SubSaturateS, O::I16X8SubSaturateU,
-      O::I16X8Mul,          O::I32X4Add,
-      O::I32X4Sub,          O::I32X4Mul,
-      O::I64X2Add,          O::I64X2Sub,
+      O::I8X16SubSaturateU, O::I8X16MinS,
+      O::I8X16MinU,         O::I8X16MaxS,
+      O::I8X16MaxU,         O::I16X8Add,
+      O::I16X8AddSaturateS, O::I16X8AddSaturateU,
+      O::I16X8Sub,          O::I16X8SubSaturateS,
+      O::I16X8SubSaturateU, O::I16X8Mul,
+      O::I16X8MinS,         O::I16X8MinU,
+      O::I16X8MaxS,         O::I16X8MaxU,
+      O::I32X4Add,          O::I32X4Sub,
+      O::I32X4Mul,          O::I32X4MinS,
+      O::I32X4MinU,         O::I32X4MaxS,
+      O::I32X4MaxU,         O::I64X2Add,
+      O::I64X2Sub,          O::I64X2Mul,
       O::F32X4Add,          O::F32X4Sub,
       O::F32X4Mul,          O::F32X4Div,
       O::F32X4Min,          O::F32X4Max,
@@ -1911,8 +1913,7 @@ TEST_F(ValidateInstructionTest, SimdBinary) {
 
 TEST_F(ValidateInstructionTest, SimdAnyTrueAllTrue) {
   const Opcode opcodes[] = {O::I8X16AnyTrue, O::I8X16AllTrue, O::I16X8AnyTrue,
-                            O::I16X8AllTrue, O::I32X4AnyTrue, O::I32X4AllTrue,
-                            O::I64X2AnyTrue, O::I64X2AllTrue};
+                            O::I16X8AllTrue, O::I32X4AnyTrue, O::I32X4AllTrue};
 
   for (const auto& opcode : opcodes) {
     TestSignature(I{opcode}, {VT::V128}, {VT::I32});
