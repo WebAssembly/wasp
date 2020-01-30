@@ -385,30 +385,34 @@ TEST(FormattersTest, Start) {
 
 TEST(FormattersTest, ElementSegment_Active) {
   EXPECT_EQ(
-      R"({table 1, offset nop end, init [2 3]})",
+      R"({type func, init [2 3], mode active {table 1, offset nop end}})",
       format("{}", ElementSegment{Index{1u},
                                   ConstantExpression{Instruction{Opcode::Nop}},
+                                  ExternalKind::Function,
                                   {2u, 3u}}));
 
-  EXPECT_EQ(
-      R"( {table 0, offset nop end, init []})",
-      format("{:>35s}",
-             ElementSegment{
-                 Index{0u}, ConstantExpression{Instruction{Opcode::Nop}}, {}}));
+  EXPECT_EQ(R"( {type func, init [], mode active {table 0, offset nop end}})",
+            format("{:>60s}",
+                   ElementSegment{Index{0u},
+                                  ConstantExpression{Instruction{Opcode::Nop}},
+                                  ExternalKind::Function,
+                                  {}}));
 }
 
 TEST(FormattersTest, ElementSegment_Passive) {
   EXPECT_EQ(
-      R"({element_type funcref, init [ref.func 2 end ref.null end]})",
+      R"({type funcref, init [ref.func 2 end ref.null end], mode passive})",
       format("{}",
              ElementSegment{
+                 SegmentType::Passive,
                  ElementType::Funcref,
                  {ElementExpression{Instruction{Opcode::RefFunc, Index{2u}}},
                   ElementExpression{Instruction{Opcode::RefNull}}}}));
 
   EXPECT_EQ(
-      R"( {element_type funcref, init []})",
-      format("{:>32s}", ElementSegment{ElementType::Funcref, {}}));
+      R"( {type funcref, init [], mode passive})",
+      format("{:>38s}",
+             ElementSegment{SegmentType::Passive, ElementType::Funcref, {}}));
 }
 
 TEST(FormattersTest, Code) {
@@ -423,26 +427,25 @@ TEST(FormattersTest, Code) {
 
 TEST(FormattersTest, DataSegment_Active) {
   EXPECT_EQ(
-      R"({memory 0, offset i32.const 0 end, init "\12\34"})",
+      R"({init "\12\34", mode active {memory 0, offset i32.const 0 end}})",
       format("{}",
              DataSegment{Index{0u},
                          ConstantExpression{Instruction{Opcode::I32Const, 0u}},
                          "\x12\x34"_su8}));
 
-  EXPECT_EQ(
-      R"(  {memory 0, offset nop end, init ""})",
-      format(
-          "{:>37s}",
-          DataSegment{Index{0u}, ConstantExpression{Instruction{Opcode::Nop}},
-                      ""_su8}));
+  EXPECT_EQ(R"(  {init "", mode active {memory 0, offset nop end}})",
+            format("{:>51s}",
+                   DataSegment{Index{0u},
+                               ConstantExpression{Instruction{Opcode::Nop}},
+                               ""_su8}));
 }
 
 TEST(FormattersTest, DataSegment_Passive) {
-  EXPECT_EQ(
-      R"({init "\12\34"})", format("{}", DataSegment{"\x12\x34"_su8}));
+  EXPECT_EQ(R"({init "\12\34", mode passive})",
+            format("{}", DataSegment{"\x12\x34"_su8}));
 
-  EXPECT_EQ(
-      R"(  {init ""})", format("{:>11}", DataSegment{""_su8}));
+  EXPECT_EQ(R"(  {init "", mode passive})",
+            format("{:>25}", DataSegment{""_su8}));
 }
 
 TEST(FormattersTest, DataCount) {

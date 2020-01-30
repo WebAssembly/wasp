@@ -500,21 +500,24 @@ void Tool::DoStartSection(StartSection section) {
 
 void Tool::DoElementSection(LazyElementSection section) {
   for (auto segment : enumerate(section.sequence)) {
-    if (segment.value.is_active()) {
-      const auto& active = segment.value.active();
+    if (segment.value.table_index) {
       Exec("insert into element values ({}, {}, {});", segment.index,
-           static_cast<int>(segment.value.segment_type()), active.table_index);
-
-      InsertConstantExpression(active.offset, "element_offset", segment.index);
-      for (auto func : enumerate(active.init)) {
-        Exec("insert into element_init values ({}, {}, null, {});",
-             segment.index, func.index, func.value);
-      }
+           static_cast<int>(segment.value.type), *segment.value.table_index);
     } else {
-      const auto& passive = segment.value.passive();
       Exec("insert into element values ({}, {}, null);", segment.index,
-           static_cast<int>(segment.value.segment_type()));
-      for (auto expr : enumerate(passive.init)) {
+           static_cast<int>(segment.value.type));
+    }
+    if (segment.value.offset) {
+      InsertConstantExpression(*segment.value.offset, "element_offset",
+                               segment.index);
+    }
+    if (segment.value.has_indexes()) {
+      for (auto item : enumerate(segment.value.indexes().init)) {
+        Exec("insert into element_init values ({}, {}, null, {});",
+             segment.index, item.index, item.value);
+      }
+    } else if (segment.value.has_expressions()) {
+      for (auto expr : enumerate(segment.value.expressions().init)) {
         auto instr = expr.value.instruction;
         auto opcode_val = static_cast<int>(instr.opcode);
         switch (instr.opcode) {

@@ -190,19 +190,17 @@ Iterator Write(const CopyImmediate& immediate, Iterator out) {
 
 template <typename Iterator>
 Iterator Write(const DataSegment& value, Iterator out) {
-  encoding::DecodedSegmentFlags flags = {value.segment_type(),
-                                         encoding::HasIndex::No};
+  encoding::DecodedDataSegmentFlags flags = {
+      value.type, value.memory_index && *value.memory_index != 0
+                      ? encoding::HasNonZeroIndex::Yes
+                      : encoding::HasNonZeroIndex::No};
+
+  out = Write(encoding::DataSegmentFlags::Encode(flags), out);
+  if (flags.has_non_zero_index == encoding::HasNonZeroIndex::Yes) {
+    out = Write(*value.memory_index, out);
+  }
   if (flags.segment_type == SegmentType::Active) {
-    const auto& active = value.active();
-    flags.has_index = active.memory_index != 0 ? encoding::HasIndex::Yes
-                                               : encoding::HasIndex::No;
-    out = Write(encoding::SegmentFlags::Encode(flags), out);
-    if (flags.has_index == encoding::HasIndex::Yes) {
-      out = Write(active.memory_index, out);
-    }
-    out = Write(active.offset, out);
-  } else {
-    out = Write(encoding::SegmentFlags::Encode(flags), out);
+    out = Write(*value.offset, out);
   }
   assert(value.init.size() < std::numeric_limits<u32>::max());
   out = Write(static_cast<u32>(value.init.size()), out);
@@ -219,23 +217,31 @@ Iterator Write(const ElementExpression& value, Iterator out) {
 
 template <typename Iterator>
 Iterator Write(const ElementSegment& value, Iterator out) {
-  encoding::DecodedSegmentFlags flags = {value.segment_type(),
-                                         encoding::HasIndex::No};
+  encoding::DecodedElemSegmentFlags flags = {
+      value.type,
+      value.table_index && *value.table_index != 0
+          ? encoding::HasNonZeroIndex::Yes
+          : encoding::HasNonZeroIndex::No,
+      value.has_expressions() ? encoding::HasExpressions::Yes
+                              : encoding::HasExpressions::No};
+
+  out = Write(encoding::ElemSegmentFlags::Encode(flags), out);
+  if (flags.has_non_zero_index == encoding::HasNonZeroIndex::Yes) {
+    out = Write(*value.table_index, out);
+  }
   if (flags.segment_type == SegmentType::Active) {
-    const auto& active = value.active();
-    flags.has_index = active.table_index != 0 ? encoding::HasIndex::Yes
-                                              : encoding::HasIndex::No;
-    out = Write(encoding::SegmentFlags::Encode(flags), out);
-    if (flags.has_index == encoding::HasIndex::Yes) {
-      out = Write(active.table_index, out);
-    }
-    out = Write(active.offset, out);
-    out = WriteVector(active.init.begin(), active.init.end(), out);
+    out = Write(*value.offset, out);
+  }
+  if (flags.has_expressions == encoding::HasExpressions::Yes) {
+    const auto& desc = value.expressions();
+    out = Write(desc.element_type, out);
+    out = WriteVector(desc.init.begin(), desc.init.end(), out);
   } else {
-    const auto& passive = value.passive();
-    out = Write(encoding::SegmentFlags::Encode(flags), out);
-    out = Write(passive.element_type, out);
-    out = WriteVector(passive.init.begin(), passive.init.end(), out);
+    const auto& desc = value.indexes();
+    if (!flags.is_mvp()) {
+      out = Write(desc.kind, out);
+    }
+    out = WriteVector(desc.init.begin(), desc.init.end(), out);
   }
   return out;
 }

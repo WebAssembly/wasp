@@ -150,6 +150,9 @@ typename Ctx::iterator formatter<::wasp::binary::SegmentType>::format(
     case ::wasp::binary::SegmentType::Passive:
       result = "passive";
       break;
+    case ::wasp::binary::SegmentType::Declared:
+      result = "declared";
+      break;
     default:
       WASP_UNREACHABLE();
   }
@@ -575,14 +578,27 @@ typename Ctx::iterator formatter<::wasp::binary::ElementSegment>::format(
     const ::wasp::binary::ElementSegment& self,
     Ctx& ctx) {
   memory_buffer buf;
-  if (self.is_active()) {
-    const auto& active = self.active();
-    format_to(buf, "{{table {}, offset {}, init {}}}", active.table_index,
-              active.offset, active.init);
-  } else if (self.is_passive()) {
-    const auto& passive = self.passive();
-    format_to(buf, "{{element_type {}, init {}}}", passive.element_type,
-              passive.init);
+  if (self.has_indexes()) {
+    format_to(buf, "{{type {}, init {}, ", self.indexes().kind,
+              self.indexes().init);
+  } else if (self.has_expressions()) {
+    format_to(buf, "{{type {}, init {}, ", self.expressions().element_type,
+              self.expressions().init);
+  }
+
+  switch (self.type) {
+    case ::wasp::binary::SegmentType::Active:
+      format_to(buf, "mode active {{table {}, offset {}}}}}", *self.table_index,
+                *self.offset);
+      break;
+
+    case ::wasp::binary::SegmentType::Passive:
+      format_to(buf, "mode passive}}");
+      break;
+
+    case ::wasp::binary::SegmentType::Declared:
+      format_to(buf, "mode declared}}");
+      break;
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
@@ -601,11 +617,19 @@ typename Ctx::iterator formatter<::wasp::binary::DataSegment>::format(
     const ::wasp::binary::DataSegment& self,
     Ctx& ctx) {
   memory_buffer buf;
-  if (self.is_active()) {
-    format_to(buf, "{{memory {}, offset {}, init {}}}",
-              self.active().memory_index, self.active().offset, self.init);
-  } else if (self.is_passive()) {
-    format_to(buf, "{{init {}}}", self.init);
+  format_to(buf, "{{init {}, ", self.init);
+  switch (self.type) {
+    case ::wasp::binary::SegmentType::Active:
+      format_to(buf, "mode active {{memory {}, offset {}}}}}",
+                *self.memory_index, *self.offset);
+      break;
+
+    case ::wasp::binary::SegmentType::Passive:
+      format_to(buf, "mode passive}}");
+      break;
+
+    case ::wasp::binary::SegmentType::Declared:
+      WASP_UNREACHABLE();
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }

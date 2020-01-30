@@ -538,6 +538,7 @@ TEST(ReadTest, ElementSegment_MVP) {
   ExpectRead<ElementSegment>(
       ElementSegment{0,
                      ConstantExpression{Instruction{Opcode::I32Const, s32{1}}},
+                     ExternalKind::Function,
                      {1, 2, 3}},
       "\x00\x41\x01\x0b\x03\x01\x02\x03"_su8);
 }
@@ -565,28 +566,57 @@ TEST(ReadTest, ElementSegment_BulkMemory) {
   Features features;
   features.enable_bulk_memory();
 
-  // Active element segment with non-zero table index.
+  // Flags == 1: Passive, index list
+  ExpectRead<ElementSegment>(
+      ElementSegment{SegmentType::Passive, ExternalKind::Function, {1, 2}},
+      "\x01\x00\x02\x01\x02"_su8, features);
+
+  // Flags == 2: Active, table index, index list
   ExpectRead<ElementSegment>(
       ElementSegment{1u,
                      ConstantExpression{Instruction{Opcode::I32Const, s32{2}}},
+                     ExternalKind::Function,
                      {3, 4}},
-      "\x02\x01\x41\x02\x0b\x02\x03\x04"_su8, features);
+      "\x02\x01\x41\x02\x0b\x00\x02\x03\x04"_su8, features);
 
-  // Passive element segment.
+  // Flags == 4: Active (function only), table 0, expression list
   ExpectRead<ElementSegment>(
       ElementSegment{
+          0u,
+          ConstantExpression{Instruction{Opcode::I32Const, s32{5}}},
           ElementType::Funcref,
-          {ElementExpression{Instruction{Opcode::RefFunc, Index{1u}}},
+          {ElementExpression{Instruction{Opcode::RefFunc, Index{6u}}}}},
+      "\x04\x41\x05\x0b\x70\x01\xd2\x06\x0b"_su8, features);
+
+  // Flags == 5: Passive, expression list
+  ExpectRead<ElementSegment>(
+      ElementSegment{
+          SegmentType::Passive,
+          ElementType::Funcref,
+          {ElementExpression{Instruction{Opcode::RefFunc, Index{7u}}},
            ElementExpression{Instruction{Opcode::RefNull}}}},
-      "\x01\x70\x02\xd2\x01\x0b\xd0\x0b"_su8, features);
+      "\x05\x70\x02\xd2\x07\x0b\xd0\x0b"_su8, features);
+
+  // Flags == 6: Active, table index, expression list
+  ExpectRead<ElementSegment>(
+      ElementSegment{2u,
+                     ConstantExpression{Instruction{Opcode::I32Const, s32{8}}},
+                     ElementType::Funcref,
+                     {ElementExpression{Instruction{Opcode::RefNull}}}},
+      "\x06\x02\x41\x08\x0b\x70\x01\xd0\x0b"_su8, features);
 }
 
 TEST(ReadTest, ElementSegment_BulkMemory_BadFlags) {
   Features features;
   features.enable_bulk_memory();
 
+  // Flags == 3: Declared, index list
   ExpectReadFailure<ElementSegment>(
       {{0, "element segment"}, {1, "Unknown flags: 3"}}, "\x03"_su8, features);
+
+  // Flags == 7: Declared, expression list
+  ExpectReadFailure<ElementSegment>(
+      {{0, "element segment"}, {1, "Unknown flags: 7"}}, "\x07"_su8, features);
 }
 
 TEST(ReadTest, ElementSegment_BulkMemory_PastEnd) {
@@ -597,44 +627,33 @@ TEST(ReadTest, ElementSegment_BulkMemory_PastEnd) {
       {{0, "element segment"}, {0, "flags"}, {0, "Unable to read u8"}}, ""_su8,
       features);
 
-  // Passive.
+  // Flags == 1: Passive, index list
   ExpectReadFailure<ElementSegment>(
-      {{0, "element segment"}, {1, "element type"}, {1, "Unable to read u8"}},
+      {{0, "element segment"}, {1, "external kind"}, {1, "Unable to read u8"}},
       "\x01"_su8, features);
 
-  ExpectReadFailure<ElementSegment>({{0, "element segment"},
-                                     {2, "initializers"},
-                                     {2, "count"},
-                                     {2, "Unable to read u8"}},
-                                    "\x01\x70"_su8, features);
-
-  ExpectReadFailure<ElementSegment>({{0, "element segment"},
-                                     {2, "initializers"},
-                                     {3, "Count extends past end: 1 > 0"}},
-                                    "\x01\x70\x01"_su8, features);
-
-  // Active w/ table index.
+  // Flags == 2: Active, table index, index list
   ExpectReadFailure<ElementSegment>(
       {{0, "element segment"}, {1, "table index"}, {1, "Unable to read u8"}},
       "\x02"_su8, features);
 
+  // Flags == 4: Active (function only), table 0, expression list
   ExpectReadFailure<ElementSegment>({{0, "element segment"},
-                                     {2, "offset"},
-                                     {2, "constant expression"},
-                                     {2, "opcode"},
-                                     {2, "Unable to read u8"}},
-                                    "\x02\x00"_su8, features);
+                                     {1, "offset"},
+                                     {1, "constant expression"},
+                                     {1, "opcode"},
+                                     {1, "Unable to read u8"}},
+                                    "\x04"_su8, features);
 
-  ExpectReadFailure<ElementSegment>({{0, "element segment"},
-                                     {5, "initializers"},
-                                     {5, "count"},
-                                     {5, "Unable to read u8"}},
-                                    "\x02\x00\x41\x00\x0b"_su8, features);
+  // Flags == 5: Passive, expression list
+  ExpectReadFailure<ElementSegment>(
+      {{0, "element segment"}, {1, "element type"}, {1, "Unable to read u8"}},
+      "\x05"_su8, features);
 
-  ExpectReadFailure<ElementSegment>({{0, "element segment"},
-                                     {5, "initializers"},
-                                     {6, "Count extends past end: 1 > 0"}},
-                                    "\x02\x00\x41\x00\x0b\x01"_su8, features);
+  // Flags == 6: Active, table index, expression list
+  ExpectReadFailure<ElementSegment>(
+      {{0, "element segment"}, {1, "table index"}, {1, "Unable to read u8"}},
+      "\x06"_su8, features);
 }
 
 TEST(ReadTest, ElementType) {

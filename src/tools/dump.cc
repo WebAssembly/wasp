@@ -705,25 +705,36 @@ visit::Result Tool::Visitor::BeginElementSection(LazyElementSection section) {
 }
 
 visit::Result Tool::Visitor::OnElement(const ElementSegment& segment) {
+  print(" - segment[{}] {}", index, segment.type);
+  if (segment.table_index) {
+    print(" table={}", *segment.table_index);
+  }
+
+  if (segment.has_indexes()) {
+    print(" kind={} count={}", segment.indexes().kind,
+          segment.indexes().init.size());
+  } else if (segment.has_expressions()) {
+    print(" element_type={} count={}", segment.expressions().element_type,
+          segment.expressions().init.size());
+  }
+
   Index offset = 0;
-  if (segment.is_active()) {
-    const auto& active = segment.active();
-    print(" - segment[{}] table={} count={} - init {}\n", index,
-          active.table_index, active.init.size(), active.offset);
-    offset = tool.GetI32Value(active.offset).value_or(0);
-    for (auto element : enumerate(active.init)) {
-      print("  - elem[{}] = func[{}]", offset + element.index, element.value);
-      tool.PrintFunctionName(element.value);
-      print("\n");
+  if (segment.offset) {
+    offset = tool.GetI32Value(*segment.offset).value_or(0);
+    print(" - init {}", offset);
+  }
+  print("\n");
+
+  if (segment.has_indexes()) {
+    for (auto item : enumerate(segment.indexes().init)) {
+      print("  - elem[{}] = {}\n", offset + item.index, item.value);
     }
-  } else {
-    const auto& passive = segment.passive();
-    print(" - segment[{}] count={} element_type={} passive\n", index,
-          passive.element_type, passive.init.size());
-    for (auto element : enumerate(passive.init)) {
-      print("  - elem[{}] = {}\n", offset + element.index, element.value);
+  } else if (segment.has_expressions()) {
+    for (auto item : enumerate(segment.expressions().init)) {
+      print("  - elem[{}] = {}\n", offset + item.index, item.value);
     }
   }
+
   ++index;
   return visit::Result::Ok;
 }
@@ -765,15 +776,17 @@ visit::Result Tool::Visitor::BeginDataSection(LazyDataSection section) {
 }
 
 visit::Result Tool::Visitor::OnData(const DataSegment& segment) {
-  Index offset = 0;
-  if (segment.is_active()) {
-    const auto& active = segment.active();
-    print(" - segment[{}] memory={} size={} - init {}\n", index,
-          active.memory_index, segment.init.size(), active.offset);
-    offset = tool.GetI32Value(active.offset).value_or(0);
-  } else {
-    print(" - segment[{}] size={} passive\n", index, segment.init.size());
+  print(" - segment[{}] {}", index, segment.type);
+  if (segment.memory_index) {
+    print(" memory={}", *segment.memory_index);
   }
+  print(" size={}", segment.init.size());
+  Index offset = 0;
+  if (segment.offset) {
+    offset = tool.GetI32Value(*segment.offset).value_or(0);
+    print(" - init {}", offset);
+  }
+  print("\n");
   tool.PrintMemory(segment.init, offset, PrintChars::Yes, "  - ");
   ++index;
   return visit::Result::Ok;

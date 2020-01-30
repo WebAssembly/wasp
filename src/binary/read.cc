@@ -261,15 +261,16 @@ optional<DataSegment> Read(SpanU8* data,
                            Errors& errors,
                            Tag<DataSegment>) {
   ErrorsContextGuard guard{errors, *data, "data segment"};
-  auto decoded = encoding::DecodedSegmentFlags::MVP();
+  auto decoded = encoding::DecodedDataSegmentFlags::MVP();
   if (features.bulk_memory_enabled()) {
     WASP_TRY_READ(flags, ReadIndex(data, features, errors, "flags"));
-    WASP_TRY_DECODE(decoded_opt, flags, SegmentFlags, "flags");
+    WASP_TRY_DECODE(decoded_opt, flags, DataSegmentFlags, "flags");
     decoded = *decoded_opt;
   }
 
   Index memory_index = 0;
-  if (decoded.has_index == encoding::HasIndex::Yes) {
+  if (!features.bulk_memory_enabled() ||
+      decoded.has_non_zero_index == encoding::HasNonZeroIndex::Yes) {
     WASP_TRY_READ(memory_index_,
                   ReadIndex(data, features, errors, "memory index"));
     memory_index = memory_index_;
@@ -330,31 +331,52 @@ optional<ElementSegment> Read(SpanU8* data,
                               Errors& errors,
                               Tag<ElementSegment>) {
   ErrorsContextGuard guard{errors, *data, "element segment"};
-  auto decoded = encoding::DecodedSegmentFlags::MVP();
+  auto decoded = encoding::DecodedElemSegmentFlags::MVP();
   if (features.bulk_memory_enabled()) {
     WASP_TRY_READ(flags, ReadIndex(data, features, errors, "flags"));
-    WASP_TRY_DECODE(decoded_opt, flags, SegmentFlags, "flags");
+    WASP_TRY_DECODE_FEATURES(decoded_opt, flags, ElemSegmentFlags, "flags",
+                             features);
     decoded = *decoded_opt;
   }
 
   Index table_index = 0;
-  if (decoded.has_index == encoding::HasIndex::Yes) {
+  if (!features.bulk_memory_enabled() ||
+      decoded.has_non_zero_index == encoding::HasNonZeroIndex::Yes) {
     WASP_TRY_READ(table_index_,
                   ReadIndex(data, features, errors, "table index"));
     table_index = table_index_;
   }
 
+  optional<ConstantExpression> offset;
   if (decoded.segment_type == SegmentType::Active) {
     WASP_TRY_READ_CONTEXT(
-        offset, Read<ConstantExpression>(data, features, errors), "offset");
-    WASP_TRY_READ(init,
-                  ReadVector<Index>(data, features, errors, "initializers"));
-    return ElementSegment{table_index, offset, init};
-  } else {
+        offset_, Read<ConstantExpression>(data, features, errors), "offset");
+    offset = offset_;
+  }
+
+  if (decoded.has_expressions == encoding::HasExpressions::Yes) {
     WASP_TRY_READ(element_type, Read<ElementType>(data, features, errors));
     WASP_TRY_READ(init, ReadVector<ElementExpression>(data, features, errors,
                                                       "initializers"));
-    return ElementSegment{element_type, init};
+    if (decoded.segment_type == SegmentType::Active) {
+      return ElementSegment{table_index, *offset, element_type, init};
+    } else {
+      return ElementSegment{decoded.segment_type, element_type, init};
+    }
+  } else {
+    ExternalKind kind = ExternalKind::Function;
+    if (!decoded.is_mvp()) {
+      WASP_TRY_READ(kind_, Read<ExternalKind>(data, features, errors));
+      kind = kind_;
+    }
+    WASP_TRY_READ(init,
+                  ReadVector<Index>(data, features, errors, "initializers"));
+
+    if (decoded.segment_type == SegmentType::Active) {
+      return ElementSegment{table_index, *offset, kind, init};
+    } else {
+      return ElementSegment{decoded.segment_type, kind, init};
+    }
   }
 }
 

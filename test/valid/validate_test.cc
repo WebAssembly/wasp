@@ -251,10 +251,15 @@ TEST(ValidateTest, ElementSegment_Active) {
   context.globals.push_back(GlobalType{ValueType::I32, Mutability::Const});
 
   const ElementSegment tests[] = {
+      ElementSegment{0,
+                     ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
+                     ExternalKind::Function,
+                     {0, 1}},
       ElementSegment{
-          0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}, {0, 1}},
-      ElementSegment{
-          0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}, {}},
+          0,
+          ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
+          ExternalKind::Function,
+          {}},
   };
 
   for (const auto& element_segment : tests) {
@@ -268,8 +273,9 @@ TEST(ValidateTest, ElementSegment_Passive) {
   context.functions.push_back(Function{0});
 
   const ElementSegment tests[] = {
-      ElementSegment{ElementType::Funcref, {}},
+      ElementSegment{SegmentType::Passive, ElementType::Funcref, {}},
       ElementSegment{
+          SegmentType::Passive,
           ElementType::Funcref,
           {ElementExpression{Instruction{Opcode::RefNull}},
            ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}},
@@ -288,10 +294,15 @@ TEST(ValidateTest, ElementSegment_Active_TypeMismatch) {
   context.globals.push_back(GlobalType{ValueType::F32, Mutability::Const});
 
   const ElementSegment tests[] = {
+      ElementSegment{0,
+                     ConstantExpression{Instruction{Opcode::F32Const, f32{0}}},
+                     ExternalKind::Function,
+                     {}},
       ElementSegment{
-          0, ConstantExpression{Instruction{Opcode::F32Const, f32{0}}}, {}},
-      ElementSegment{
-          0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}, {}},
+          0,
+          ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
+          ExternalKind::Function,
+          {}},
   };
 
   for (const auto& element_segment : tests) {
@@ -304,7 +315,10 @@ TEST(ValidateTest, ElementSegment_Active_TableIndexOOB) {
   Context context;
   context.functions.push_back(Function{0});
   const ElementSegment element_segment{
-      0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}, {}};
+      0,
+      ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
+      ExternalKind::Function,
+      {}};
   TestErrors errors;
   EXPECT_FALSE(Validate(element_segment, context, Features{}, errors));
 }
@@ -313,7 +327,10 @@ TEST(ValidateTest, ElementSegment_Active_GlobalIndexOOB) {
   Context context;
   context.tables.push_back(TableType{Limits{0}, ElementType::Funcref});
   const ElementSegment element_segment{
-      0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}, {}};
+      0,
+      ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
+      ExternalKind::Function,
+      {}};
   TestErrors errors;
   EXPECT_FALSE(Validate(element_segment, context, Features{}, errors));
 }
@@ -322,7 +339,10 @@ TEST(ValidateTest, ElementSegment_Active_FunctionIndexOOB) {
   Context context;
   context.tables.push_back(TableType{Limits{0}, ElementType::Funcref});
   const ElementSegment element_segment{
-      0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}, {0}};
+      0,
+      ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
+      ExternalKind::Function,
+      {0}};
   TestErrors errors;
   EXPECT_FALSE(Validate(element_segment, context, Features{}, errors));
 }
@@ -331,6 +351,7 @@ TEST(ValidateTest, ElementSegment_Passive_FunctionIndexOOB) {
   Context context;
   TestErrors errors;
   const ElementSegment element_segment{
+      SegmentType::Passive,
       ElementType::Funcref,
       {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}};
   EXPECT_FALSE(Validate(element_segment, context, Features{}, errors));

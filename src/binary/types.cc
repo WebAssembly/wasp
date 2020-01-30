@@ -25,18 +25,43 @@ namespace binary {
 DataSegment::DataSegment(Index memory_index,
                          ConstantExpression offset,
                          SpanU8 init)
-    : init{init}, desc{Active{memory_index, offset}} {}
+    : type{SegmentType::Active},
+      memory_index{memory_index},
+      offset{offset},
+      init{init} {}
 
-DataSegment::DataSegment(SpanU8 init) : init{init}, desc{Passive{}} {}
+DataSegment::DataSegment(SpanU8 init)
+    : type{SegmentType::Passive}, init{init} {}
 
 ElementSegment::ElementSegment(Index table_index,
                                ConstantExpression offset,
+                               ExternalKind kind,
                                const std::vector<Index>& init)
-    : desc{Active{table_index, offset, init}} {}
+    : type{SegmentType::Active},
+      table_index{table_index},
+      offset{offset},
+      desc{IndexesInit{kind, init}} {}
 
-ElementSegment::ElementSegment(ElementType element_type,
-                               const std::vector<ElementExpression>& init)
-    : desc{Passive{element_type, init}} {}
+ElementSegment::ElementSegment(Index table_index,
+                               ConstantExpression offset,
+                               ElementType element_type,
+                               const ElementExpressions& init)
+    : type{SegmentType::Active},
+      table_index{table_index},
+      offset{offset},
+      desc{ExpressionsInit{element_type, init}} {}
+
+ElementSegment::ElementSegment(SegmentType type,
+                               ExternalKind kind,
+                               const Indexes& init)
+    : type{type}, desc{IndexesInit{kind, init}} {
+  assert(type == SegmentType::Passive || type == SegmentType::Active);
+}
+
+ElementSegment::ElementSegment(SegmentType type,
+                               ElementType element_type,
+                               const ElementExpressions& init)
+    : type{type}, desc{ExpressionsInit{element_type, init}} {}
 
 Instruction::Instruction(Opcode opcode)
     : opcode(opcode), immediate(EmptyImmediate{}) {}
@@ -108,13 +133,11 @@ WASP_OPERATOR_EQ_NE_1(ConstantExpression, instruction)
 WASP_OPERATOR_EQ_NE_2(CopyImmediate, src_index, dst_index)
 WASP_OPERATOR_EQ_NE_2(CustomSection, name, data)
 WASP_OPERATOR_EQ_NE_1(DataCount, count)
-WASP_OPERATOR_EQ_NE_2(DataSegment, init, desc)
-WASP_OPERATOR_EQ_NE_2(DataSegment::Active, memory_index, offset)
-WASP_OPERATOR_EQ_NE_0(DataSegment::Passive)
+WASP_OPERATOR_EQ_NE_4(DataSegment, type, memory_index, offset, init)
 WASP_OPERATOR_EQ_NE_1(ElementExpression, instruction)
-WASP_OPERATOR_EQ_NE_1(ElementSegment, desc)
-WASP_OPERATOR_EQ_NE_3(ElementSegment::Active, table_index, offset, init)
-WASP_OPERATOR_EQ_NE_2(ElementSegment::Passive, element_type, init)
+WASP_OPERATOR_EQ_NE_4(ElementSegment, type, table_index, offset, desc)
+WASP_OPERATOR_EQ_NE_2(ElementSegment::IndexesInit, kind, init)
+WASP_OPERATOR_EQ_NE_2(ElementSegment::ExpressionsInit, element_type, init)
 WASP_OPERATOR_EQ_NE_0(EmptyImmediate)
 WASP_OPERATOR_EQ_NE_1(Event, event_type)
 WASP_OPERATOR_EQ_NE_2(EventType, attribute, type_index)
@@ -148,11 +171,9 @@ WASP_STD_HASH_1(::wasp::binary::ConstantExpression, instruction)
 WASP_STD_HASH_2(::wasp::binary::CopyImmediate, src_index, dst_index)
 WASP_STD_HASH_2(::wasp::binary::CustomSection, name, data)
 WASP_STD_HASH_1(::wasp::binary::DataCount, count)
-WASP_STD_HASH_2(::wasp::binary::DataSegment, init, desc)
-WASP_STD_HASH_2(::wasp::binary::DataSegment::Active, memory_index, offset)
-WASP_STD_HASH_0(::wasp::binary::DataSegment::Passive)
+WASP_STD_HASH_4(::wasp::binary::DataSegment, type, memory_index, offset, init)
 WASP_STD_HASH_1(::wasp::binary::ElementExpression, instruction)
-WASP_STD_HASH_1(::wasp::binary::ElementSegment, desc)
+WASP_STD_HASH_4(::wasp::binary::ElementSegment, type, table_index, offset, desc)
 WASP_STD_HASH_0(::wasp::binary::EmptyImmediate)
 WASP_STD_HASH_1(::wasp::binary::Event, event_type)
 WASP_STD_HASH_2(::wasp::binary::EventType, attribute, type_index)
@@ -188,14 +209,15 @@ size_t hash<::wasp::binary::Code>::operator()(
   return ::wasp::HashState::combine(0, ::wasp::HashContainer(v.locals), v.body);
 }
 
-size_t hash<::wasp::binary::ElementSegment::Active>::operator()(
-    const ::wasp::binary::ElementSegment::Active& v) const {
-  return ::wasp::HashState::combine(0, v.offset, ::wasp::HashContainer(v.init));
+size_t hash<::wasp::binary::ElementSegment::IndexesInit>::operator()(
+    const ::wasp::binary::ElementSegment::IndexesInit& v) const {
+  return ::wasp::HashState::combine(0, v.kind, ::wasp::HashContainer(v.init));
 }
 
-size_t hash<::wasp::binary::ElementSegment::Passive>::operator()(
-    const ::wasp::binary::ElementSegment::Passive& v) const {
-  return ::wasp::HashState::combine(0, ::wasp::HashContainer(v.init));
+size_t hash<::wasp::binary::ElementSegment::ExpressionsInit>::operator()(
+    const ::wasp::binary::ElementSegment::ExpressionsInit& v) const {
+  return ::wasp::HashState::combine(0, v.element_type,
+                                    ::wasp::HashContainer(v.init));
 }
 
 size_t hash<::wasp::binary::FunctionType>::operator()(

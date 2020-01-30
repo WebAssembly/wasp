@@ -191,10 +191,12 @@ TEST(LazySectionTest, Element) {
           ElementSegment{
               0,
               ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
+              ExternalKind::Function,
               {0, 1}},
           ElementSegment{
               0,
               ConstantExpression{Instruction{Opcode::I32Const, s32{2}}},
+              ExternalKind::Function,
               {3}},
       },
       sec);

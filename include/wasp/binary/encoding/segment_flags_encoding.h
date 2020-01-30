@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_SEGMENT_FLAGS_ENCODING_H
 #define WASP_BINARY_SEGMENT_FLAGS_ENCODING_H
 
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/types_linking.h"
@@ -25,52 +26,145 @@ namespace wasp {
 namespace binary {
 namespace encoding {
 
-enum class HasIndex { No, Yes };
+enum class HasNonZeroIndex { No, Yes };
+enum class HasExpressions { No, Yes };
 
-struct DecodedSegmentFlags {
-  static DecodedSegmentFlags MVP();
+struct DecodedDataSegmentFlags {
+  static DecodedDataSegmentFlags MVP();
 
   SegmentType segment_type;
-  HasIndex has_index;
+  HasNonZeroIndex has_non_zero_index;
+};
+
+struct DecodedElemSegmentFlags {
+  static DecodedElemSegmentFlags MVP();
+
+  bool is_mvp() const;
+
+  SegmentType segment_type;
+  HasNonZeroIndex has_non_zero_index;
+  HasExpressions has_expressions;
 };
 
 // static
-inline DecodedSegmentFlags DecodedSegmentFlags::MVP() {
-  return DecodedSegmentFlags{SegmentType::Active, HasIndex::Yes};
+inline DecodedDataSegmentFlags DecodedDataSegmentFlags::MVP() {
+  return DecodedDataSegmentFlags{SegmentType::Active, HasNonZeroIndex::No};
 }
 
-struct SegmentFlags {
+// static
+inline DecodedElemSegmentFlags DecodedElemSegmentFlags::MVP() {
+  return DecodedElemSegmentFlags{SegmentType::Active, HasNonZeroIndex::No,
+                                 HasExpressions::No};
+}
+
+inline bool DecodedElemSegmentFlags::is_mvp() const {
+  return segment_type == SegmentType::Active &&
+         has_non_zero_index == HasNonZeroIndex::No &&
+         has_expressions == HasExpressions::No;
+}
+
+struct DataSegmentFlags {
   static constexpr u8 ActiveIndex0 = 0;
   static constexpr u8 Passive = 1;
   static constexpr u8 ActiveWithIndex = 2;
 
-  static u8 Encode(DecodedSegmentFlags);
-  static optional<DecodedSegmentFlags> Decode(Index);
+  static u8 Encode(DecodedDataSegmentFlags);
+  static optional<DecodedDataSegmentFlags> Decode(Index);
+};
+
+struct ElemSegmentFlags {
+  static constexpr u8 Active = 0;
+  static constexpr u8 Passive = 1;
+  static constexpr u8 HasNonZeroIndex = 2;
+  static constexpr u8 Declared = 3;
+  static constexpr u8 HasExpressions = 4;
+
+  static u8 Encode(DecodedElemSegmentFlags);
+  static optional<DecodedElemSegmentFlags> Decode(Index, const Features&);
 };
 
 // static
-inline u8 SegmentFlags::Encode(DecodedSegmentFlags flags) {
+inline u8 DataSegmentFlags::Encode(DecodedDataSegmentFlags flags) {
   if (flags.segment_type == SegmentType::Active) {
-    return flags.has_index == HasIndex::Yes ? ActiveWithIndex : ActiveIndex0;
+    return flags.has_non_zero_index == HasNonZeroIndex::Yes ? ActiveWithIndex
+                                                            : ActiveIndex0;
   }
   return Passive;
 }
 
 // static
-inline optional<DecodedSegmentFlags> SegmentFlags::Decode(Index flags) {
+inline optional<DecodedDataSegmentFlags> DataSegmentFlags::Decode(Index flags) {
   switch (flags) {
     case ActiveIndex0:
-      return {{SegmentType::Active, HasIndex::No}};
+      return {{SegmentType::Active, HasNonZeroIndex::No}};
 
     case Passive:
-      return {{SegmentType::Passive, HasIndex::No}};
+      return {{SegmentType::Passive, HasNonZeroIndex::No}};
 
     case ActiveWithIndex:
-      return {{SegmentType::Active, HasIndex::Yes}};
+      return {{SegmentType::Active, HasNonZeroIndex::Yes}};
 
     default:
       return nullopt;
   }
+}
+
+// static
+inline u8 ElemSegmentFlags::Encode(DecodedElemSegmentFlags flags) {
+  u8 result = 0;
+  if (flags.segment_type == SegmentType::Passive) {
+    result |= Passive;
+  } else if (flags.segment_type == SegmentType::Declared) {
+    assert(flags.has_non_zero_index == HasNonZeroIndex::No);
+    result |= Declared;
+  }
+  if (flags.has_non_zero_index == HasNonZeroIndex::Yes) {
+    result |= HasNonZeroIndex;
+  }
+  if (flags.has_expressions == HasExpressions::Yes) {
+    result |= HasExpressions;
+  }
+  return result;
+}
+
+// static
+inline optional<DecodedElemSegmentFlags> ElemSegmentFlags::Decode(
+    Index flags,
+    const Features& features) {
+  switch (flags) {
+    case Active:
+      return {{SegmentType::Active, HasNonZeroIndex::No, HasExpressions::No}};
+
+    case Passive:
+      return {{SegmentType::Passive, HasNonZeroIndex::No, HasExpressions::No}};
+
+    case Active | HasNonZeroIndex:
+      return {{SegmentType::Active, HasNonZeroIndex::Yes, HasExpressions::No}};
+
+    case Declared:
+      if (features.reference_types_enabled()) {
+        return {
+            {SegmentType::Declared, HasNonZeroIndex::No, HasExpressions::No}};
+      }
+      break;
+
+    case Active | HasExpressions:
+      return {{SegmentType::Active, HasNonZeroIndex::No, HasExpressions::Yes}};
+
+    case Passive | HasExpressions:
+      return {{SegmentType::Passive, HasNonZeroIndex::No, HasExpressions::Yes}};
+
+    case Active | HasNonZeroIndex | HasExpressions:
+      return {{SegmentType::Active, HasNonZeroIndex::Yes, HasExpressions::Yes}};
+
+    case Declared | HasExpressions:
+      if (features.reference_types_enabled()) {
+        return {
+            {SegmentType::Declared, HasNonZeroIndex::No, HasExpressions::Yes}};
+      }
+      break;
+  }
+  return nullopt;
 }
 
 }  // namespace encoding

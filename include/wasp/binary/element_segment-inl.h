@@ -17,36 +17,29 @@
 namespace wasp {
 namespace binary {
 
-inline SegmentType ElementSegment::segment_type() const {
-  if (desc.index() == 0) {
-    return SegmentType::Active;
-  } else {
-    return SegmentType::Passive;
-  }
+inline bool ElementSegment::has_indexes() const {
+  return desc.index() == 0;
 }
 
-inline bool ElementSegment::is_active() const {
-  return segment_type() == SegmentType::Active;
+inline bool ElementSegment::has_expressions() const {
+  return desc.index() == 1;
 }
 
-inline bool ElementSegment::is_passive() const {
-  return segment_type() == SegmentType::Passive;
+inline ElementSegment::IndexesInit& ElementSegment::indexes() {
+  return get<IndexesInit>(desc);
 }
 
-inline ElementSegment::Active& ElementSegment::active() {
-  return get<Active>(desc);
+inline const ElementSegment::IndexesInit& ElementSegment::indexes() const {
+  return get<IndexesInit>(desc);
 }
 
-inline const ElementSegment::Active& ElementSegment::active() const {
-  return get<Active>(desc);
+inline ElementSegment::ExpressionsInit& ElementSegment::expressions() {
+  return get<ExpressionsInit>(desc);
 }
 
-inline ElementSegment::Passive& ElementSegment::passive() {
-  return get<Passive>(desc);
-}
-
-inline const ElementSegment::Passive& ElementSegment::passive() const {
-  return get<Passive>(desc);
+inline const ElementSegment::ExpressionsInit& ElementSegment::expressions()
+    const {
+  return get<ExpressionsInit>(desc);
 }
 
 }  // namespace binary

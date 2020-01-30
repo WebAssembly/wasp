@@ -106,6 +106,7 @@ enum class SectionId : u32 {
 enum class SegmentType {
   Active,
   Passive,
+  Declared,
 };
 
 enum class Shared {
@@ -398,36 +399,47 @@ struct ElementExpression {
 };
 
 struct ElementSegment {
-  struct Active {
-    Index table_index;
-    ConstantExpression offset;
-    std::vector<Index> init;
+  using Indexes = std::vector<Index>;
+  using ElementExpressions = std::vector<ElementExpression>;
+
+  struct IndexesInit {
+    ExternalKind kind;
+    Indexes init;
   };
 
-  struct Passive {
+  struct ExpressionsInit {
     ElementType element_type;
-    std::vector<ElementExpression> init;
+    ElementExpressions init;
   };
 
   // Active.
   explicit ElementSegment(Index table_index,
                           ConstantExpression offset,
+                          ExternalKind,
                           const std::vector<Index>& init);
+  explicit ElementSegment(Index table_index,
+                          ConstantExpression offset,
+                          ElementType,
+                          const ElementExpressions& init);
 
-  // Passive.
-  explicit ElementSegment(ElementType element_type,
-                          const std::vector<ElementExpression>& init);
+  // Passive or declared.
+  explicit ElementSegment(SegmentType, ExternalKind, const Indexes& init);
+  explicit ElementSegment(SegmentType,
+                          ElementType,
+                          const ElementExpressions& init);
 
-  SegmentType segment_type() const;
-  bool is_active() const;
-  bool is_passive() const;
+  bool has_indexes() const;
+  bool has_expressions() const;
 
-  Active& active();
-  const Active& active() const;
-  Passive& passive();
-  const Passive& passive() const;
+  IndexesInit& indexes();
+  const IndexesInit& indexes() const;
+  ExpressionsInit& expressions();
+  const ExpressionsInit& expressions() const;
 
-  variant<Active, Passive> desc;
+  SegmentType type;
+  optional<Index> table_index;
+  optional<ConstantExpression> offset;
+  variant<IndexesInit, ExpressionsInit> desc;
 };
 
 // Section 10: Code
@@ -449,13 +461,6 @@ struct Code {
 // Section 11: Data
 
 struct DataSegment {
-  struct Active {
-    Index memory_index;
-    ConstantExpression offset;
-  };
-
-  struct Passive {};
-
   // Active.
   explicit DataSegment(Index memory_index,
                        ConstantExpression offset,
@@ -464,17 +469,10 @@ struct DataSegment {
   // Passive.
   explicit DataSegment(SpanU8 init);
 
-  SegmentType segment_type() const;
-  bool is_active() const;
-  bool is_passive() const;
-
-  Active& active();
-  const Active& active() const;
-  Passive& passive();
-  const Passive& passive() const;
-
+  SegmentType type;
+  optional<Index> memory_index;
+  optional<ConstantExpression> offset;
   SpanU8 init;
-  variant<Active, Passive> desc;
 };
 
 // Section 12: DataCount
@@ -489,44 +487,42 @@ struct Event {
   EventType event_type;
 };
 
-#define WASP_TYPES(WASP_V)        \
-  WASP_V(BrOnExnImmediate)        \
-  WASP_V(BrTableImmediate)        \
-  WASP_V(CallIndirectImmediate)   \
-  WASP_V(Code)                    \
-  WASP_V(ConstantExpression)      \
-  WASP_V(CopyImmediate)           \
-  WASP_V(CustomSection)           \
-  WASP_V(DataCount)               \
-  WASP_V(DataSegment)             \
-  WASP_V(DataSegment::Active)     \
-  WASP_V(DataSegment::Passive)    \
-  WASP_V(ElementExpression)       \
-  WASP_V(ElementSegment)          \
-  WASP_V(ElementSegment::Active)  \
-  WASP_V(ElementSegment::Passive) \
-  WASP_V(EmptyImmediate)          \
-  WASP_V(Event)                   \
-  WASP_V(EventType)               \
-  WASP_V(Export)                  \
-  WASP_V(Expression)              \
-  WASP_V(Function)                \
-  WASP_V(FunctionType)            \
-  WASP_V(Global)                  \
-  WASP_V(GlobalType)              \
-  WASP_V(Import)                  \
-  WASP_V(InitImmediate)           \
-  WASP_V(Instruction)             \
-  WASP_V(KnownSection)            \
-  WASP_V(Limits)                  \
-  WASP_V(Locals)                  \
-  WASP_V(MemArgImmediate)         \
-  WASP_V(Memory)                  \
-  WASP_V(MemoryType)              \
-  WASP_V(Section)                 \
-  WASP_V(Start)                   \
-  WASP_V(Table)                   \
-  WASP_V(TableType)               \
+#define WASP_TYPES(WASP_V)                \
+  WASP_V(BrOnExnImmediate)                \
+  WASP_V(BrTableImmediate)                \
+  WASP_V(CallIndirectImmediate)           \
+  WASP_V(Code)                            \
+  WASP_V(ConstantExpression)              \
+  WASP_V(CopyImmediate)                   \
+  WASP_V(CustomSection)                   \
+  WASP_V(DataCount)                       \
+  WASP_V(DataSegment)                     \
+  WASP_V(ElementExpression)               \
+  WASP_V(ElementSegment)                  \
+  WASP_V(ElementSegment::IndexesInit)     \
+  WASP_V(ElementSegment::ExpressionsInit) \
+  WASP_V(EmptyImmediate)                  \
+  WASP_V(Event)                           \
+  WASP_V(EventType)                       \
+  WASP_V(Export)                          \
+  WASP_V(Expression)                      \
+  WASP_V(Function)                        \
+  WASP_V(FunctionType)                    \
+  WASP_V(Global)                          \
+  WASP_V(GlobalType)                      \
+  WASP_V(Import)                          \
+  WASP_V(InitImmediate)                   \
+  WASP_V(Instruction)                     \
+  WASP_V(KnownSection)                    \
+  WASP_V(Limits)                          \
+  WASP_V(Locals)                          \
+  WASP_V(MemArgImmediate)                 \
+  WASP_V(Memory)                          \
+  WASP_V(MemoryType)                      \
+  WASP_V(Section)                         \
+  WASP_V(Start)                           \
+  WASP_V(Table)                           \
+  WASP_V(TableType)                       \
   WASP_V(TypeEntry)
 
 #define WASP_DECLARE_OPERATOR_EQ_NE(Type)    \
@@ -565,7 +561,6 @@ struct hash<::wasp::binary::ValueTypes> {
 
 }  // namespace std
 
-#include "wasp/binary/data_segment-inl.h"
 #include "wasp/binary/element_segment-inl.h"
 #include "wasp/binary/import-inl.h"
 #include "wasp/binary/instruction-inl.h"

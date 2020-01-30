@@ -107,11 +107,12 @@ bool Validate(const binary::DataSegment& value,
               Errors& errors) {
   ErrorsContextGuard guard{errors, "data segment"};
   bool valid = true;
-  if (value.is_active()) {
-    const auto& active = value.active();
-    valid &= ValidateIndex(active.memory_index, context.memories.size(),
+  if (value.memory_index) {
+    valid &= ValidateIndex(*value.memory_index, context.memories.size(),
                            "memory index", errors);
-    valid &= Validate(active.offset, binary::ValueType::I32,
+  }
+  if (value.offset) {
+    valid &= Validate(*value.offset, binary::ValueType::I32,
                       context.globals.size(), context, features, errors);
   }
   return valid;
@@ -154,23 +155,45 @@ bool Validate(const binary::ElementSegment& value,
               const Features& features,
               Errors& errors) {
   ErrorsContextGuard guard{errors, "element segment"};
-  context.element_segments.push_back(value.segment_type());
+  context.element_segments.push_back(value.type);
   bool valid = true;
-  if (value.is_active()) {
-    const auto& active = value.active();
-    valid &= ValidateIndex(active.table_index, context.tables.size(),
+  if (value.table_index) {
+    valid &= ValidateIndex(*value.table_index, context.tables.size(),
                            "table index", errors);
-    valid &= Validate(active.offset, binary::ValueType::I32,
+  }
+  if (value.offset) {
+    valid &= Validate(*value.offset, binary::ValueType::I32,
                       context.globals.size(), context, features, errors);
-    for (auto func_index : active.init) {
-      valid &= ValidateIndex(func_index, context.functions.size(),
-                             "function index", errors);
+  }
+  if (value.has_indexes()) {
+    auto&& desc = value.indexes();
+    Index max_index;
+    switch (desc.kind) {
+      case binary::ExternalKind::Function:
+        max_index = context.functions.size();
+        break;
+      case binary::ExternalKind::Table:
+        max_index = context.tables.size();
+        break;
+      case binary::ExternalKind::Memory:
+        max_index = context.memories.size();
+        break;
+      case binary::ExternalKind::Global:
+        max_index = context.globals.size();
+        break;
+      case binary::ExternalKind::Event:
+        max_index = 0; // TODO: context.events.size();
+        break;
     }
-  } else {
-    const auto& passive = value.passive();
-    for (const auto& element_expr : passive.init) {
-      valid &= Validate(element_expr, passive.element_type, context, features,
-                        errors);
+
+    for (auto index : desc.init) {
+      valid &= ValidateIndex(index, max_index, "index", errors);
+    }
+  } else if (value.has_expressions()) {
+    auto&& desc = value.expressions();
+
+    for (const auto& expr : desc.init) {
+      valid &= Validate(expr, desc.element_type, context, features, errors);
     }
   }
   return valid;

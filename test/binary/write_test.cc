@@ -132,24 +132,49 @@ TEST(WriteTest, ElementSegment) {
       "\x00\x41\x01\x0b\x03\x01\x02\x03"_su8,
       ElementSegment{0,
                      ConstantExpression{Instruction{Opcode::I32Const, s32{1}}},
+                     ExternalKind::Function,
                      {1, 2, 3}});
 }
 
 TEST(WriteTest, ElementSegment_BulkMemory) {
-  // Active element segment with non-zero table index.
+  // Flags == 1: Passive, index list
   ExpectWrite<ElementSegment>(
-      "\x02\x01\x41\x01\x0b\x03\x01\x02\x03"_su8,
-      ElementSegment{1,
-                     ConstantExpression{Instruction{Opcode::I32Const, s32{1}}},
-                     {1, 2, 3}});
+      "\x01\x00\x02\x01\x02"_su8,
+      ElementSegment{SegmentType::Passive, ExternalKind::Function, {1, 2}});
 
-  // Passive element segment.
+  // Flags == 2: Active, table index, index list
   ExpectWrite<ElementSegment>(
-      "\x01\x70\x02\xd2\x01\x0b\xd0\x0b"_su8,
+      "\x02\x01\x41\x02\x0b\x00\x02\x03\x04"_su8,
+      ElementSegment{1u,
+                     ConstantExpression{Instruction{Opcode::I32Const, s32{2}}},
+                     ExternalKind::Function,
+                     {3, 4}});
+
+  // Flags == 4: Active (function only), table 0, expression list
+  ExpectWrite<ElementSegment>(
+      "\x04\x41\x05\x0b\x70\x01\xd2\x06\x0b"_su8,
       ElementSegment{
+          0u,
+          ConstantExpression{Instruction{Opcode::I32Const, s32{5}}},
           ElementType::Funcref,
-          {ElementExpression{Instruction{Opcode::RefFunc, Index{1u}}},
+          {ElementExpression{Instruction{Opcode::RefFunc, Index{6u}}}}});
+
+  // Flags == 5: Passive, expression list
+  ExpectWrite<ElementSegment>(
+      "\x05\x70\x02\xd2\x07\x0b\xd0\x0b"_su8,
+      ElementSegment{
+          SegmentType::Passive,
+          ElementType::Funcref,
+          {ElementExpression{Instruction{Opcode::RefFunc, Index{7u}}},
            ElementExpression{Instruction{Opcode::RefNull}}}});
+
+  // Flags == 6: Active, table index, expression list
+  ExpectWrite<ElementSegment>(
+      "\x06\x02\x41\x08\x0b\x70\x01\xd0\x0b"_su8,
+      ElementSegment{2u,
+                     ConstantExpression{Instruction{Opcode::I32Const, s32{8}}},
+                     ElementType::Funcref,
+                     {ElementExpression{Instruction{Opcode::RefNull}}}});
 }
 
 TEST(WriteTest, ElementType) {
