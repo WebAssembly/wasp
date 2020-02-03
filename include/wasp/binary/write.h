@@ -234,11 +234,13 @@ Iterator Write(const ElementSegment& value, Iterator out) {
   }
   if (flags.has_expressions == encoding::HasExpressions::Yes) {
     const auto& desc = value.expressions();
-    out = Write(desc.element_type, out);
+    if (!flags.is_legacy_active()) {
+      out = Write(desc.element_type, out);
+    }
     out = WriteVector(desc.init.begin(), desc.init.end(), out);
   } else {
     const auto& desc = value.indexes();
-    if (!flags.is_mvp()) {
+    if (!flags.is_legacy_active()) {
       out = Write(desc.kind, out);
     }
     out = WriteVector(desc.init.begin(), desc.init.end(), out);

@@ -586,7 +586,7 @@ TEST(ReadTest, ElementSegment_BulkMemory) {
           ConstantExpression{Instruction{Opcode::I32Const, s32{5}}},
           ElementType::Funcref,
           {ElementExpression{Instruction{Opcode::RefFunc, Index{6u}}}}},
-      "\x04\x41\x05\x0b\x70\x01\xd2\x06\x0b"_su8, features);
+      "\x04\x41\x05\x0b\x01\xd2\x06\x0b"_su8, features);
 
   // Flags == 5: Passive, expression list
   ExpectRead<ElementSegment>(

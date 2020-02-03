@@ -39,7 +39,7 @@ struct DecodedDataSegmentFlags {
 struct DecodedElemSegmentFlags {
   static DecodedElemSegmentFlags MVP();
 
-  bool is_mvp() const;
+  bool is_legacy_active() const;
 
   SegmentType segment_type;
   HasNonZeroIndex has_non_zero_index;
@@ -57,10 +57,9 @@ inline DecodedElemSegmentFlags DecodedElemSegmentFlags::MVP() {
                                  HasExpressions::No};
 }
 
-inline bool DecodedElemSegmentFlags::is_mvp() const {
+inline bool DecodedElemSegmentFlags::is_legacy_active() const {
   return segment_type == SegmentType::Active &&
-         has_non_zero_index == HasNonZeroIndex::No &&
-         has_expressions == HasExpressions::No;
+         has_non_zero_index == HasNonZeroIndex::No;
 }
 
 struct DataSegmentFlags {

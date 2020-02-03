@@ -152,7 +152,7 @@ TEST(WriteTest, ElementSegment_BulkMemory) {
 
   // Flags == 4: Active (function only), table 0, expression list
   ExpectWrite<ElementSegment>(
-      "\x04\x41\x05\x0b\x70\x01\xd2\x06\x0b"_su8,
+      "\x04\x41\x05\x0b\x01\xd2\x06\x0b"_su8,
       ElementSegment{
           0u,
           ConstantExpression{Instruction{Opcode::I32Const, s32{5}}},

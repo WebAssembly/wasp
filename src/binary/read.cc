@@ -355,7 +355,11 @@ optional<ElementSegment> Read(SpanU8* data,
   }
 
   if (decoded.has_expressions == encoding::HasExpressions::Yes) {
-    WASP_TRY_READ(element_type, Read<ElementType>(data, features, errors));
+    ElementType element_type = ElementType::Funcref;
+    if (!decoded.is_legacy_active()) {
+      WASP_TRY_READ(element_type_, Read<ElementType>(data, features, errors));
+      element_type = element_type_;
+    }
     WASP_TRY_READ(init, ReadVector<ElementExpression>(data, features, errors,
                                                       "initializers"));
     if (decoded.segment_type == SegmentType::Active) {
@@ -365,7 +369,7 @@ optional<ElementSegment> Read(SpanU8* data,
     }
   } else {
     ExternalKind kind = ExternalKind::Function;
-    if (!decoded.is_mvp()) {
+    if (!decoded.is_legacy_active()) {
       WASP_TRY_READ(kind_, Read<ExternalKind>(data, features, errors));
       kind = kind_;
     }
