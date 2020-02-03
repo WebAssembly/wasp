@@ -140,8 +140,10 @@ optional<StackType> GetTableElementStackType(Index index,
   }
 
   switch (table_type->elemtype) {
-    case ElementType::Funcref:
-      return StackType::Funcref;
+    case ElementType::Funcref: return StackType::Funcref;
+    case ElementType::Anyref: return StackType::Anyref;
+    case ElementType::Nullref: return StackType::Nullref;
+    case ElementType::Exnref: return StackType::Exnref;
     default:
       return nullopt;
   }
@@ -189,8 +191,8 @@ optional<StackType> GetLocalType(Index index,
 }
 
 bool CheckDataSegment(Index index, Context& context, Errors& errors) {
-  return ValidateIndex(index, context.data_segment_count, "data segment index",
-                       errors);
+  return ValidateIndex(index, context.declared_data_count.value_or(0),
+                       "data segment index", errors);
 }
 
 StackType MaybeDefault(optional<StackType> value) {
@@ -471,10 +473,17 @@ bool BrTable(const BrTableImmediate& immediate,
     const auto* label = GetLabel(target, context, errors);
     if (label) {
       StackTypeSpan label_br_types{label->br_types()};
-      if (features.reference_types_enabled()) {
-        valid &= CheckTypes(label_br_types, context, errors);
-      } else {
-        if (br_types) {
+      if (br_types) {
+        if (features.reference_types_enabled()) {
+          // In the reference types proposal, only the arity is checked.
+          if (br_types->size() != label_br_types.size()) {
+            errors.OnError(
+                format("br_table labels must have the same arity; expected "
+                       "{}, got {}",
+                       br_types->size(), label_br_types.size()));
+            valid = false;
+          }
+        } else {
           if (*br_types != label_br_types) {
             errors.OnError(
                 format("br_table labels must have the same signature; expected "
@@ -482,10 +491,10 @@ bool BrTable(const BrTableImmediate& immediate,
                        *br_types, label_br_types));
             valid = false;
           }
-        } else {
-          br_types = label_br_types;
-          valid &= CheckTypes(*br_types, context, errors);
         }
+      } else {
+        br_types = label_br_types;
+        valid &= CheckTypes(*br_types, context, errors);
       }
     } else {
       valid = false;
@@ -732,8 +741,8 @@ bool TableCopy(const CopyImmediate& immediate,
 
 bool TableGrow(Index index, Context& context, Errors& errors) {
   auto stack_type = GetTableElementStackType(index, context, errors);
-  const StackType types[] = {StackType::I32,
-                             MaybeDefaultElementType(stack_type)};
+  const StackType types[] = {MaybeDefaultElementType(stack_type),
+                             StackType::I32};
   return AllTrue(stack_type, PopAndPushTypes(types, span_i32, context, errors));
 }
 
@@ -1076,6 +1085,10 @@ bool Validate(const Instruction& value,
     case Opcode::RefIsNull:
       params = span_anyref, results = span_i32;
       break;
+
+    case Opcode::RefFunc:
+      PushType(StackType::Funcref, context);
+      return true;
 
     case Opcode::I32Load:
     case Opcode::I64Load:

@@ -155,7 +155,8 @@ TEST(ValidateTest, DataCount) {
   Context context;
   TestErrors errors;
   EXPECT_TRUE(Validate(DataCount{1}, context, Features{}, errors));
-  EXPECT_EQ(1, context.data_segment_count);
+  ASSERT_TRUE(context.declared_data_count);
+  EXPECT_EQ(1u, context.declared_data_count);
 }
 
 TEST(ValidateTest, DataSegment_Active) {

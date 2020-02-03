@@ -36,6 +36,11 @@ inline bool EndModule(Context& context,
                           defined_function_count, context.code_count));
     return false;
   }
+  if (context.declared_data_count &&
+      *context.declared_data_count != context.data_count) {
+    errors.OnError(format("Expected data count of {}, but got {}",
+                          *context.declared_data_count, context.data_count));
+  }
   return true;
 }
 

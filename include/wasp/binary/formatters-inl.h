@@ -70,12 +70,14 @@ typename Ctx::iterator formatter<::wasp::binary::ElementType>::format(
     Ctx& ctx) {
   string_view result;
   switch (self) {
-#define WASP_V(val, Name, str)            \
+#define WASP_V(val, Name, str, ...)       \
   case ::wasp::binary::ElementType::Name: \
     result = str;                         \
     break;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #include "wasp/binary/element_type.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
     default:
       WASP_UNREACHABLE();
   }

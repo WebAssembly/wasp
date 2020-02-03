@@ -737,7 +737,7 @@ TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
               errors);
 }
 
-TEST_F(ValidateInstructionTest, BrTable_reference_types) {
+TEST_F(ValidateInstructionTest, BrTable_ReferenceTypes) {
   features.enable_reference_types();
 
   // In the reference types proposal, label types don't have to be the same;
@@ -747,6 +747,18 @@ TEST_F(ValidateInstructionTest, BrTable_reference_types) {
   Ok(I{O::Unreachable});
   Ok(I{O::BrTable, BrTableImmediate{{0}, 1}});
   ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, BrTable_ReferenceTypes_ArityMismatch) {
+  features.enable_reference_types();
+
+  Ok(I{O::Block, BlockType::Void});
+  Ok(I{O::Block, BlockType::I32});
+  Ok(I{O::Unreachable});
+  Fail(I{O::BrTable, BrTableImmediate{{0}, 1}});
+  ExpectError({"instruction",
+               "br_table labels must have the same arity; expected 0, got 1"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, BrTable_References) {
@@ -869,8 +881,7 @@ TEST_F(ValidateInstructionTest, CallIndirect_TypeIndexOOB) {
                errors);
 }
 
-TEST_F(ValidateInstructionTest,
-       CallIndirect_NonZeroTableIndex_reference_types) {
+TEST_F(ValidateInstructionTest, CallIndirect_NonZeroTableIndex_ReferenceTypes) {
   auto index = AddFunctionType(FunctionType{});
   AddTable(TableType{Limits{0}, ElementType::Funcref});
   AddTable(TableType{Limits{0}, ElementType::Funcref});
@@ -926,7 +937,7 @@ TEST_F(ValidateInstructionTest, Select_InconsistentTypes) {
       errors);
 }
 
-TEST_F(ValidateInstructionTest, Select_reference_types) {
+TEST_F(ValidateInstructionTest, Select_ReferenceTypes) {
   // Select can only be used with {i,f}{32,64} value types.
   for (auto stack_type : {ST::Anyref, ST::Funcref, ST::Nullref}) {
     context.type_stack = {stack_type, stack_type, ST::I32};
@@ -1577,14 +1588,14 @@ TEST_F(ValidateInstructionTest, SaturatingFloatToInt) {
 }
 
 TEST_F(ValidateInstructionTest, MemoryInit) {
-  context.data_segment_count = 2;
+  context.declared_data_count = 2;
   AddMemory(MemoryType{Limits{0}});
   TestSignature(I{O::MemoryInit, InitImmediate{1, 0}},
                 {VT::I32, VT::I32, VT::I32}, {});
 }
 
 TEST_F(ValidateInstructionTest, MemoryInit_MemoryIndexOOB) {
-  context.data_segment_count = 2;
+  context.declared_data_count = 2;
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1594,7 +1605,7 @@ TEST_F(ValidateInstructionTest, MemoryInit_MemoryIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, MemoryInit_SegmentIndexOOB) {
-  context.data_segment_count = 2;
+  context.declared_data_count = 2;
   AddMemory(MemoryType{Limits{0}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1606,12 +1617,12 @@ TEST_F(ValidateInstructionTest, MemoryInit_SegmentIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, DataDrop) {
-  context.data_segment_count = 2;
+  context.declared_data_count = 2;
   TestSignature(I{O::DataDrop, Index{1}}, {}, {});
 }
 
 TEST_F(ValidateInstructionTest, DataDrop_SegmentIndexOOB) {
-  context.data_segment_count = 2;
+  context.declared_data_count = 2;
   Fail(I{O::DataDrop, Index{2}});
   ExpectError(
       {"instruction", "Invalid data segment index 2, must be less than 2"},
@@ -1704,11 +1715,11 @@ TEST_F(ValidateInstructionTest, TableCopy_TableIndexOOB) {
 
 TEST_F(ValidateInstructionTest, TableGrow) {
   AddTable(TableType{Limits{0}, ElementType::Funcref});
-  TestSignature(I{O::TableGrow, Index{0}}, {VT::I32, VT::Funcref}, {VT::I32});
+  TestSignature(I{O::TableGrow, Index{0}}, {VT::Funcref, VT::I32}, {VT::I32});
 }
 
 TEST_F(ValidateInstructionTest, TableGrow_TableIndexOOB) {
-  context.type_stack = StackTypes{ST::I32, ST::Funcref};
+  context.type_stack = StackTypes{ST::Funcref, ST::I32};
   Fail(I{O::TableGrow, Index{0}});
   ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
                errors);

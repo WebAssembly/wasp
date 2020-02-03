@@ -71,7 +71,8 @@ struct Context {
   std::vector<binary::SegmentType> element_segments;
   Index imported_function_count = 0;
   Index imported_global_count = 0;
-  Index data_segment_count = 0;
+  optional<Index> declared_data_count;
+  Index data_count = 0;
   Index code_count = 0;
   std::vector<Index> locals_partial_sum;
   binary::ValueTypes locals;

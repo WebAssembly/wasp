@@ -232,6 +232,31 @@ TEST(ReadTest, ConstantExpression) {
       "\x23\x00\x0b"_su8);
 }
 
+TEST(ReadTest, ConstantExpression_ReferenceTypes) {
+  // ref.null
+  ExpectReadFailure<ConstantExpression>(
+      {{0, "constant expression"}, {0, "opcode"}, {1, "Unknown opcode: 208"}},
+      "\xd0\x0b"_su8);
+
+  // ref.func
+  ExpectReadFailure<ConstantExpression>(
+      {{0, "constant expression"}, {0, "opcode"}, {1, "Unknown opcode: 210"}},
+      "\xd2\x00\x0b"_su8);
+
+  Features features;
+  features.enable_reference_types();
+
+  // ref.null
+  ExpectRead<ConstantExpression>(
+      ConstantExpression{Instruction{Opcode::RefNull}}, "\xd0\x0b"_su8,
+      features);
+
+  // ref.func
+  ExpectRead<ConstantExpression>(
+      ConstantExpression{Instruction{Opcode::RefFunc, Index{0}}},
+      "\xd2\x00\x0b"_su8, features);
+}
+
 TEST(ReadTest, ConstantExpression_NoEnd) {
   // i32.const
   ExpectReadFailure<ConstantExpression>(
@@ -659,6 +684,30 @@ TEST(ReadTest, ElementSegment_BulkMemory_PastEnd) {
 TEST(ReadTest, ElementType) {
   ExpectRead<ElementType>(ElementType::Funcref, "\x70"_su8);
 }
+
+TEST(ReadTest, ElementType_ReferenceTypes) {
+  ExpectReadFailure<ElementType>(
+      {{0, "element type"}, {1, "Unknown element type: 111"}}, "\x6f"_su8);
+  ExpectReadFailure<ElementType>(
+      {{0, "element type"}, {1, "Unknown element type: 110"}}, "\x6e"_su8);
+
+  Features features;
+  features.enable_reference_types();
+
+  ExpectRead<ElementType>(ElementType::Anyref, "\x6f"_su8, features);
+  ExpectRead<ElementType>(ElementType::Nullref, "\x6e"_su8, features);
+}
+
+TEST(ReadTest, ElementType_Exceptions) {
+  ExpectReadFailure<ElementType>(
+      {{0, "element type"}, {1, "Unknown element type: 104"}}, "\x68"_su8);
+
+  Features features;
+  features.enable_exceptions();
+
+  ExpectRead<ElementType>(ElementType::Exnref, "\x68"_su8, features);
+}
+
 
 TEST(ReadTest, ElementType_Unknown) {
   ExpectReadFailure<ElementType>(
@@ -1290,15 +1339,6 @@ TEST(ReadTest, Instruction_reference_types) {
   ExpectRead<I>(I{O::TableFill, Index{0}}, "\xfc\x11\x00"_su8, features);
   ExpectRead<I>(I{O::RefNull}, "\xd0"_su8, features);
   ExpectRead<I>(I{O::RefIsNull}, "\xd1"_su8, features);
-}
-
-TEST(ReadTest, Instruction_function_references) {
-  using I = Instruction;
-  using O = Opcode;
-
-  Features features;
-  features.enable_function_references();
-
   ExpectRead<I>(I{O::RefFunc, Index{0}}, "\xd2\x00"_su8, features);
 }
 
@@ -2035,12 +2075,6 @@ TEST(ReadTest, Opcode_reference_types) {
   ExpectRead<Opcode>(Opcode::TableFill, "\xfc\x11"_su8, features);
   ExpectRead<Opcode>(Opcode::RefNull, "\xd0"_su8, features);
   ExpectRead<Opcode>(Opcode::RefIsNull, "\xd1"_su8, features);
-}
-
-TEST(ReadTest, Opcode_function_references) {
-  Features features;
-  features.enable_function_references();
-
   ExpectRead<Opcode>(Opcode::RefFunc, "\xd2"_su8, features);
 }
 

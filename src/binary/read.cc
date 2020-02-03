@@ -209,6 +209,13 @@ optional<ConstantExpression> Read(SpanU8* data,
       // OK.
       break;
 
+    case Opcode::RefNull:
+    case Opcode::RefFunc:
+      if (features.reference_types_enabled()) {
+        break;
+      }
+      // Fallthrough.
+
     default:
       errors.OnError(
           *data,
@@ -298,12 +305,10 @@ optional<ElementExpression> Read(SpanU8* data,
   // shouldn't be read (and this function shouldn't be called) if that feature
   // is not enabled.
   assert(features.bulk_memory_enabled());
-  // The only valid instructions are enabled by the reference types and
-  // function references proposals, but their encoding is still used by the
-  // bulk memory proposal.
+  // The only valid instructions are enabled by the reference types proposal,
+  // but their encoding is still used by the bulk memory proposal.
   Features new_features;
   new_features.enable_reference_types();
-  new_features.enable_function_references();
   WASP_TRY_READ(instr, Read<Instruction>(data, new_features, errors));
   switch (instr.opcode) {
     case Opcode::RefNull:
@@ -390,7 +395,7 @@ optional<ElementType> Read(SpanU8* data,
                            Tag<ElementType>) {
   ErrorsContextGuard guard{errors, *data, "element type"};
   WASP_TRY_READ(val, Read<u8>(data, features, errors));
-  WASP_TRY_DECODE(decoded, val, ElementType, "element type");
+  WASP_TRY_DECODE_FEATURES(decoded, val, ElementType, "element type", features);
   return decoded;
 }
 

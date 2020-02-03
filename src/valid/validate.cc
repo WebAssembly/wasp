@@ -83,6 +83,20 @@ bool Validate(const binary::ConstantExpression& value,
       break;
     }
 
+    case binary::Opcode::RefNull:
+      actual_type = binary::ValueType::Nullref;
+      break;
+
+    case binary::Opcode::RefFunc: {
+      auto index = value.instruction.index_immediate();
+      if (!ValidateIndex(index, context.functions.size(), "func index",
+                         errors)) {
+        return false;
+      }
+      actual_type = binary::ValueType::Funcref;
+      break;
+    }
+
     default:
       errors.OnError(format("Invalid instruction in constant expression: {}",
                             value.instruction));
@@ -97,7 +111,7 @@ bool Validate(const binary::DataCount& value,
               Context& context,
               const Features& features,
               Errors& errors) {
-  context.data_segment_count = value.count;
+  context.declared_data_count = value.count;
   return true;
 }
 
@@ -115,6 +129,7 @@ bool Validate(const binary::DataSegment& value,
     valid &= Validate(*value.offset, binary::ValueType::I32,
                       context.globals.size(), context, features, errors);
   }
+  context.data_count++;
   return valid;
 }
 
@@ -498,12 +513,43 @@ bool Validate(const binary::TypeEntry& value,
   return Validate(value.type, context, features, errors);
 }
 
+namespace {
+
+bool IsReferenceType(binary::ValueType type) {
+  return type == binary::ValueType::Anyref ||
+         type == binary::ValueType::Funcref ||
+         type == binary::ValueType::Nullref;
+}
+
+// TODO: Almost the same as in TypesMatch (minus StackType::Any); how to
+// share?
+bool TypesMatch(binary::ValueType expected, binary::ValueType actual) {
+  // Types are the same.
+  if (expected == actual) {
+    return true;
+  }
+
+  // Anyref is a super type of all reference types.
+  if (expected == binary::ValueType::Anyref && IsReferenceType(actual)) {
+    return true;
+  }
+
+  // Nullref is a subtype of all reference types.
+  if (IsReferenceType(expected) && actual == binary::ValueType::Nullref) {
+    return true;
+  }
+
+  return false;
+}
+
+}  // namespace
+
 bool Validate(binary::ValueType actual,
               binary::ValueType expected,
               Context& context,
               const Features& features,
               Errors& errors) {
-  if (actual != expected) {
+  if (!TypesMatch(expected, actual)) {
     errors.OnError(format("Expected value type {}, got {}", expected, actual));
     return false;
   }

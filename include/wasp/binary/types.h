@@ -60,8 +60,10 @@ static_assert(s32(BlockType::Void) == -64, "Invalid value for BlockType::Void");
 
 enum class ElementType : s32 {
 #define WASP_V(val, Name, str) Name,
+#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
 #include "wasp/binary/element_type.def"
 #undef WASP_V
+#undef WASP_FEATURE_V
 };
 
 enum class ExternalKind : u8 {
