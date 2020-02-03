@@ -27,11 +27,15 @@ class Error(Exception):
 
 class Runner(object):
 
-    def __init__(self, spec_json, options):
+    def __init__(self, filename, options, flags):
+        with open(filename) as json_file:
+            spec_json = json.load(json_file)
+
         self.source_filename = spec_json['source_filename']
-        self.source_dir = os.path.dirname(options.filename)
+        self.source_dir = os.path.dirname(filename)
         self.commands = spec_json['commands']
         self.options = options
+        self.flags = flags
 
     def Run(self):
         for command in self.commands:
@@ -63,8 +67,9 @@ class Runner(object):
             self._Validate(command, filename, expected)
 
     def _Validate(self, command, filename, expected):
-        proc = subprocess.run([self.options.wasp, 'validate', '-v', filename],
-                              capture_output=True)
+        proc = subprocess.run(
+            [self.options.wasp, 'validate', '-v', filename, *self.flags],
+            capture_output=True)
         actual = proc.returncode == 0
         if actual != expected:
             print('[FAIL] %s:%d:' % (self.source_filename, command['line']))
@@ -79,6 +84,10 @@ class Runner(object):
                 print('[ OK ] %s' % filename)
 
 
+def DoFile(filename, options, flags=None):
+    Runner(filename, options, flags or []).Run()
+
+
 def main(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
@@ -87,10 +96,28 @@ def main(args):
     parser.add_argument('filename', help='wast2json file to read as input')
     options = parser.parse_args(args)
 
-    with open(options.filename) as json_file:
-        spec_json = json.load(json_file)
+    proposals = {
+        'bulk-memory-operations': 'bulk-memory',
+        'multi-value': 'multi-value',
+        'mutable-global': 'mutable-globals',
+        'nontrapping-float-to-int-conversions': 'saturating-float-to-int',
+        'reference-types': 'reference-types',
+        'sign-extension-ops': 'sign-extension',
+    }
 
-    Runner(spec_json, options).Run()
+    if os.path.isdir(options.filename):
+        for root, dirs, files in os.walk(options.filename):
+            for file in files:
+                path = os.path.join(root, file)
+                flags = []
+                for dir, flag in proposals.items():
+                    if dir in path:
+                        flags.append('--enable-{}'.format(flag))
+
+                if os.path.splitext(path)[1] == '.json':
+                    DoFile(path, options, flags)
+    else:
+        DoFile(options.filename, options)
 
 if __name__ == '__main__':
     try:

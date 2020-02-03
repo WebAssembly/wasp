@@ -187,3 +187,14 @@ positional:
  <bare>                           help for bare
 )", parser.GetHelpString());
 }
+
+TEST(ArgParserTest, Features) {
+  ArgParser parser{"prog"};
+  Features features;
+  parser.AddFeatureFlags(features);
+
+  std::vector<string_view> args{{"--enable-simd"}};
+  parser.Parse(args);
+
+  EXPECT_TRUE(features.simd_enabled());
+}

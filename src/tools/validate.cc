@@ -136,7 +136,6 @@ struct Tool {
 int Main(span<string_view> args) {
   std::vector<string_view> filenames;
   Options options;
-  // options.features.EnableAll();
 
   ArgParser parser{"wasp validate"};
   parser
@@ -144,6 +143,7 @@ int Main(span<string_view> args) {
            [&]() { parser.PrintHelpAndExit(0); })
       .Add('v', "--verbose", "print filename and whether it was valid",
            [&]() { options.verbose = true; })
+      .AddFeatureFlags(options.features)
       .Add("<filenames...>", "input wasm files",
            [&](string_view arg) { filenames.push_back(arg); });
   parser.Parse(args);

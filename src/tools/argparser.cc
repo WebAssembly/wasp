@@ -72,6 +72,15 @@ ArgParser& ArgParser::AddRaw(const Option& option) {
   return *this;
 }
 
+ArgParser& ArgParser::AddFeatureFlags(Features& features) {
+#define WASP_V(variable, flag, default_)                                \
+  Add("--disable-" flag, "", [&]() { features.disable_##variable(); }); \
+  Add("--enable-" flag, "", [&]() { features.enable_##variable(); });
+#include "wasp/base/features.def"
+#undef WASP_V
+  return *this;
+}
+
 void ArgParser::Parse(span<string_view> args) {
   ArgsGuard guard{*this, args};
 

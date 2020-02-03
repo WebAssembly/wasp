@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
@@ -66,6 +67,8 @@ class ArgParser {
   template <typename... Ts>
   ArgParser& Add(Ts&&... ts) { return AddRaw(Option{std::forward<Ts>(ts)...}); }
   ArgParser& AddRaw(const Option&);
+
+  ArgParser& AddFeatureFlags(Features&);
 
   void Parse(span<string_view>);
   span<string_view> RestOfArgs();
