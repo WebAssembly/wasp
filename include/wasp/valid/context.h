@@ -36,6 +36,7 @@ enum class LabelType {
   If,
   Else,
   Try,
+  Catch,
 };
 
 using ValueTypeSpan = span<const binary::ValueType>;
@@ -68,6 +69,7 @@ struct Context {
   std::vector<binary::TableType> tables;
   std::vector<binary::MemoryType> memories;
   std::vector<binary::GlobalType> globals;
+  std::vector<binary::EventType> events;
   std::vector<binary::SegmentType> element_segments;
   Index imported_function_count = 0;
   Index imported_global_count = 0;

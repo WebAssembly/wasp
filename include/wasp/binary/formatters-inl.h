@@ -466,7 +466,7 @@ typename Ctx::iterator formatter<::wasp::binary::BrOnExnImmediate>::format(
     const ::wasp::binary::BrOnExnImmediate& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{} {}", self.target, self.exception_index);
+  format_to(buf, "{} {}", self.target, self.event_index);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 

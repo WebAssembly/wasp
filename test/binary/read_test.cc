@@ -101,7 +101,7 @@ TEST(ReadTest, BrOnExnImmediate_PastEnd) {
       {{0, "br_on_exn"}, {0, "target"}, {0, "Unable to read u8"}}, ""_su8);
 
   ExpectReadFailure<BrOnExnImmediate>(
-      {{0, "br_on_exn"}, {1, "exception index"}, {1, "Unable to read u8"}},
+      {{0, "br_on_exn"}, {1, "event index"}, {1, "Unable to read u8"}},
       "\x00"_su8);
 }
 

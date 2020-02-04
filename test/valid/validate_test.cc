@@ -367,16 +367,19 @@ TEST(ValidateTest, ElementType) {
 
 TEST(ValidateTest, Export) {
   Context context;
+  context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{0});
   context.tables.push_back(TableType{Limits{1}, ElementType::Funcref});
   context.memories.push_back(MemoryType{Limits{1}});
   context.globals.push_back(GlobalType{ValueType::I32, Mutability::Const});
+  context.events.push_back(EventType{EventAttribute::Exception, Index{0}});
 
   const Export tests[] = {
       Export{ExternalKind::Function, "f", 0},
       Export{ExternalKind::Table, "t", 0},
       Export{ExternalKind::Memory, "m", 0},
       Export{ExternalKind::Global, "g", 0},
+      Export{ExternalKind::Event, "e", 0},
   };
 
   for (const auto& export_ : tests) {
@@ -391,6 +394,7 @@ TEST(ValidateTest, Export_IndexOOB) {
       Export{ExternalKind::Table, "", 0},
       Export{ExternalKind::Memory, "", 0},
       Export{ExternalKind::Global, "", 0},
+      Export{ExternalKind::Event, "", 0},
   };
 
   for (const auto& export_ : tests) {
@@ -427,6 +431,41 @@ TEST(ValidateTest, Export_Duplicate) {
   EXPECT_TRUE(Validate(Export{ExternalKind::Function, "hi", 0}, context,
                        features, errors));
   EXPECT_FALSE(Validate(Export{ExternalKind::Function, "hi", 0}, context,
+                        features, errors));
+}
+
+TEST(ValidateTest, Event) {
+  Features features;
+  Context context;
+  context.types.push_back(TypeEntry{FunctionType{}});
+  TestErrors errors;
+  EXPECT_TRUE(Validate(Event{EventType{EventAttribute::Exception, Index{0}}},
+                       context, features, errors));
+}
+
+TEST(ValidateTest, EventType) {
+  Features features;
+  Context context;
+  context.types.push_back(TypeEntry{FunctionType{{ValueType::I32}, {}}});
+  TestErrors errors;
+  EXPECT_TRUE(Validate(EventType{EventAttribute::Exception, Index{0}}, context,
+                       features, errors));
+}
+
+TEST(ValidateTest, EventType_IndexOOB) {
+  Features features;
+  Context context;
+  TestErrors errors;
+  EXPECT_FALSE(Validate(EventType{EventAttribute::Exception, Index{0}}, context,
+                        features, errors));
+}
+
+TEST(ValidateTest, EventType_NonEmptyResult) {
+  Features features;
+  Context context;
+  context.types.push_back(TypeEntry{FunctionType{{}, {ValueType::I32}}});
+  TestErrors errors;
+  EXPECT_FALSE(Validate(EventType{EventAttribute::Exception, Index{0}}, context,
                         features, errors));
 }
 
@@ -599,6 +638,7 @@ TEST(ValidateTest, Import) {
       Import{"", "", TableType{Limits{0}, ElementType::Funcref}},
       Import{"", "", MemoryType{Limits{0}}},
       Import{"", "", GlobalType{ValueType::I32, Mutability::Const}},
+      Import{"", "", EventType{EventAttribute::Exception, Index{0}}},
   };
 
   for (const auto& import : tests) {
@@ -649,6 +689,25 @@ TEST(ValidateTest, Import_GlobalMutVar_MutableGlobals) {
   EXPECT_TRUE(
       Validate(Import{"", "", GlobalType{ValueType::I32, Mutability::Var}},
                context, Features{}, errors));
+}
+
+TEST(ValidateTest, Import_Event_IndexOOB) {
+  Features features;
+  Context context;
+  TestErrors errors;
+  EXPECT_FALSE(
+      Validate(Import{"", "", EventType{EventAttribute::Exception, Index{0}}},
+               context, features, errors));
+}
+
+TEST(ValidateTest, Import_Event_NonEmptyResult) {
+  Features features;
+  Context context;
+  context.types.push_back(TypeEntry{FunctionType{{}, {ValueType::F32}}});
+  TestErrors errors;
+  EXPECT_FALSE(
+      Validate(Import{"", "", EventType{EventAttribute::Exception, Index{0}}},
+               context, features, errors));
 }
 
 TEST(ValidateTest, Index) {

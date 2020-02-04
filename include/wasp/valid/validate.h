@@ -61,6 +61,10 @@ bool Validate(binary::ElementType actual,
 
 bool Validate(const binary::Export&, Context&, const Features&, Errors&);
 
+bool Validate(const binary::Event&, Context&, const Features&, Errors&);
+
+bool Validate(const binary::EventType&, Context&, const Features&, Errors&);
+
 bool Validate(const binary::Function&, Context&, const Features&, Errors&);
 
 bool Validate(const binary::FunctionType&, Context&, const Features&, Errors&);

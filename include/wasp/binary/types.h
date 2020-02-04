@@ -167,7 +167,7 @@ struct CallIndirectImmediate {
 
 struct BrOnExnImmediate {
   Index target;
-  Index exception_index;
+  Index event_index;
 };
 
 struct BrTableImmediate {

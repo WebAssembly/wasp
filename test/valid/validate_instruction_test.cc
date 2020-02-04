@@ -75,6 +75,10 @@ class ValidateInstructionTest : public ::testing::Test {
     return AddItem(context.globals, global_type);
   }
 
+  Index AddEvent(const EventType& event_type) {
+    return AddItem(context.events, event_type);
+  }
+
   Index AddElementSegment(const SegmentType& segment_type) {
     return AddItem(context.element_segments, segment_type);
   }
@@ -513,6 +517,202 @@ TEST_F(ValidateInstructionTest, End_Unreachable_TooManyValues) {
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::End});
   ExpectError({"instruction", "Expected empty stack, got [i32]"}, errors);
+}
+
+TEST_F(ValidateInstructionTest, Try_Void) {
+  Ok(I{O::Try, BlockType::Void});
+  Ok(I{O::End});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, Try_SingleResult) {
+  for (const auto& info : all_value_types) {
+    Ok(I{O::Try, info.block_type});
+    Ok(info.instruction);
+    Ok(I{O::End});
+  }
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, Try_MultiResult) {
+  auto index = AddFunctionType(FunctionType{{}, {VT::I32, VT::F32}});
+  Ok(I{O::Try, BlockType(index)});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::F32Const, s32{}});
+  Ok(I{O::End});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, Try_Param) {
+  auto index = AddFunctionType(FunctionType{{VT::I64}, {}});
+  Ok(I{O::I64Const, s64{}});
+  Ok(I{O::Try, BlockType(index)});
+  Ok(I{O::Drop});
+  Ok(I{O::End});
+  Fail(I{O::Drop});  // Nothing left on the stack.
+  ExpectError({"instruction", "Expected stack to contain 1 value, got 0"},
+              errors);
+}
+
+TEST_F(ValidateInstructionTest, Try_Catch_Void) {
+  Ok(I{O::Try, BlockType::Void});
+  Ok(I{O::Catch});
+  Ok(I{O::Drop});  // Drop the exception.
+  Ok(I{O::End});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, Try_Catch_SingleResult) {
+  for (const auto& info : all_value_types) {
+    Ok(I{O::Try, info.block_type});
+    Ok(info.instruction);
+    Ok(I{O::Catch});
+    Ok(I{O::Drop});  // Drop the exception.
+    Ok(info.instruction);
+    Ok(I{O::End});
+    ExpectNoErrors(errors);
+  }
+}
+
+TEST_F(ValidateInstructionTest, Try_Catch_MultiResult) {
+  auto index = AddFunctionType(FunctionType{{}, {VT::I32, VT::F32}});
+  Ok(I{O::Try, BlockType(index)});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::F32Const, f32{}});
+  Ok(I{O::Catch});
+  Ok(I{O::Drop});  // Drop the exception.
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::F32Const, f32{}});
+  Ok(I{O::End});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, Try_Catch_Param) {
+  auto index = AddFunctionType(FunctionType{{VT::I32}, {}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::Try, BlockType(index)});
+  Ok(I{O::Drop});
+  Ok(I{O::Catch});
+  Ok(I{O::Drop});  // Drop the exception.
+  Ok(I{O::End});
+  ExpectNoErrors(errors);
+  Fail(I{O::Drop});  // Nothing left on the stack.
+  ExpectError({"instruction", "Expected stack to contain 1 value, got 0"},
+              errors);
+}
+
+TEST_F(ValidateInstructionTest, Catch_IsException) {
+  auto global = AddGlobal(GlobalType{VT::Exnref, Mutability::Var});
+  Ok(I{O::Try, BlockType::Void});
+  Ok(I{O::Catch});
+  Ok(I{O::GlobalSet, global});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, Throw) {
+  auto type_index = AddFunctionType(FunctionType{{VT::I32, VT::F32}, {}});
+  auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::F32Const, f32{}});
+  Ok(I{O::Throw, Index{event_index}});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, Throw_Unreachable) {
+  auto type_index = AddFunctionType(FunctionType{{VT::I32}, {}});
+  auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
+  Ok(I{O::Block, BlockType::F32});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::Throw, Index{event_index}});
+  Ok(I{O::End});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, Throw_IndexOOB) {
+  Fail(I{O::Throw, Index{0}});
+  ExpectError({"instruction", "Invalid event index 0, must be less than 0"},
+              errors);
+}
+
+TEST_F(ValidateInstructionTest, Throw_TypeMismatch) {
+  auto type_index = AddFunctionType(FunctionType{{VT::I32, VT::F32}, {}});
+  auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
+  Ok(I{O::I64Const, s32{}});
+  Fail(I{O::Throw, Index{event_index}});
+  ExpectError({"instruction", "Expected stack to contain [i32 f32], got [i64]"},
+              errors);
+}
+
+TEST_F(ValidateInstructionTest, Rethrow) {
+  context.type_stack = {ST::Exnref};
+  Ok(I{O::Rethrow});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, Rethrow_Unreachable) {
+  Ok(I{O::Try, BlockType::I32});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::Catch});
+  Ok(I{O::Rethrow});
+  Ok(I{O::End});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, Rethrow_Mismatch) {
+  Fail(I{O::Rethrow});
+  ExpectError({"instruction", "Expected stack to contain [exnref], got []"},
+              errors);
+}
+
+TEST_F(ValidateInstructionTest, BrOnExn_Void) {
+  auto type_index = AddFunctionType(FunctionType{});
+  auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
+  Ok(I{O::Try, BlockType::Void});
+  Ok(I{O::Catch});
+  Ok(I{O::BrOnExn, BrOnExnImmediate{0, event_index}});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, BrOnExn_SingleResult) {
+  auto type_index = AddFunctionType(FunctionType{{VT::I32}, {}});
+  auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
+  Ok(I{O::Block, BlockType::I32});
+  Ok(I{O::Try, BlockType::Void});
+  Ok(I{O::Catch});
+  Ok(I{O::BrOnExn, BrOnExnImmediate{1, event_index}});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, BrOnExn_MultiResult) {
+  auto if_v = AddFunctionType(FunctionType{{VT::I32, VT::F32}, {}});
+  auto v_if = AddFunctionType(FunctionType{{}, {VT::I32, VT::F32}});
+  auto event_index = AddEvent(EventType{EventAttribute::Exception, if_v});
+  Ok(I{O::Block, BlockType(v_if)});
+  Ok(I{O::Try, BlockType::Void});
+  Ok(I{O::Catch});
+  Ok(I{O::BrOnExn, BrOnExnImmediate{1, event_index}});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, BrOnExn_ForwardExn) {
+  auto type_index = AddFunctionType(FunctionType{{VT::I32}, {}});
+  auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
+  Ok(I{O::Block, BlockType::I32});
+  Ok(I{O::Block, BlockType::I32});
+  Ok(I{O::Try, BlockType::Void});
+  Ok(I{O::Catch});
+  Ok(I{O::BrOnExn, BrOnExnImmediate{1, event_index}});
+  Ok(I{O::BrOnExn, BrOnExnImmediate{2, event_index}});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, BrOnExn_TypeMismatch) {
+  auto type_index = AddFunctionType(FunctionType{});
+  auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
+  Ok(I{O::Block, BlockType::Void});
+  Fail(I{O::BrOnExn, BrOnExnImmediate{0, event_index}});
+  ExpectError({"instruction", "Expected stack to contain [exnref], got []"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_Void) {

@@ -125,7 +125,7 @@ Limits::Limits(u32 min, u32 max, Shared shared)
     : min{min}, max{max}, shared{shared} {}
 
 
-WASP_OPERATOR_EQ_NE_2(BrOnExnImmediate, target, exception_index)
+WASP_OPERATOR_EQ_NE_2(BrOnExnImmediate, target, event_index)
 WASP_OPERATOR_EQ_NE_2(BrTableImmediate, targets, default_target)
 WASP_OPERATOR_EQ_NE_2(CallIndirectImmediate, index, table_index)
 WASP_OPERATOR_EQ_NE_2(Code, locals, body)
@@ -165,7 +165,7 @@ WASP_OPERATOR_EQ_NE_1(TypeEntry, type)
 }  // namespace binary
 }  // namespace wasp
 
-WASP_STD_HASH_2(::wasp::binary::BrOnExnImmediate, target, exception_index);
+WASP_STD_HASH_2(::wasp::binary::BrOnExnImmediate, target, event_index);
 WASP_STD_HASH_2(::wasp::binary::CallIndirectImmediate, index, table_index)
 WASP_STD_HASH_1(::wasp::binary::ConstantExpression, instruction)
 WASP_STD_HASH_2(::wasp::binary::CopyImmediate, src_index, dst_index)

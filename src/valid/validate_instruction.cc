@@ -43,6 +43,7 @@ using namespace ::wasp::binary;
   V(f64, StackType::F64)                                         \
   V(v128, StackType::V128)                                       \
   V(anyref, StackType::Anyref)                                   \
+  V(exnref, StackType::Exnref)                                   \
   V(i32_i32, StackType::I32, StackType::I32)                     \
   V(i32_i64, StackType::I32, StackType::I64)                     \
   V(i32_f32, StackType::I32, StackType::F32)                     \
@@ -167,6 +168,15 @@ optional<GlobalType> GetGlobalType(Index index,
   return context.globals[index];
 }
 
+optional<EventType> GetEventType(Index index,
+                                 Context& context,
+                                 Errors& errors) {
+  if (!ValidateIndex(index, context.events.size(), "event index", errors)) {
+    return nullopt;
+  }
+  return context.events[index];
+}
+
 optional<SegmentType> GetElementSegmentType(Index index,
                                             Context& context,
                                             Errors& errors) {
@@ -213,6 +223,10 @@ FunctionType MaybeDefault(optional<FunctionType> value) {
 
 GlobalType MaybeDefault(optional<GlobalType> value) {
   return value.value_or(GlobalType{ValueType::I32, Mutability::Const});
+}
+
+EventType MaybeDefault(optional<EventType> value) {
+  return value.value_or(EventType{EventAttribute::Exception, 0});
 }
 
 Label MaybeDefault(const Label* value) {
@@ -416,6 +430,21 @@ bool CheckTypeStackEmpty(Context& context, Errors& errors) {
     return false;
   }
   return true;
+}
+
+bool Catch(Context& context, Errors& errors) {
+  auto& top_label = TopLabel(context);
+  if (top_label.label_type != LabelType::Try) {
+    errors.OnError("Got catch instruction without try");
+    return false;
+  }
+  bool valid = PopTypes(top_label.result_types, context, errors);
+  valid &= CheckTypeStackEmpty(context, errors);
+  ResetTypeStackToLimit(context);
+  PushTypes(span_exnref, context);
+  top_label.label_type = LabelType::Catch;
+  top_label.unreachable = false;
+  return valid;
 }
 
 bool Else(Context& context, Errors& errors) {
@@ -973,6 +1002,37 @@ bool ReturnCallIndirect(const CallIndirectImmediate& immediate,
   return AllTrue(table_type, function_type, valid);
 }
 
+bool Throw(Index index, Context& context, Errors& errors) {
+  auto event_type = GetEventType(index, context, errors);
+  auto function_type =
+      GetFunctionType(MaybeDefault(event_type).type_index, context, errors);
+  bool valid =
+      PopTypes(ToStackTypeSpan(MaybeDefault(function_type).param_types),
+               context, errors);
+  SetUnreachable(context);
+  return AllTrue(event_type, function_type, valid);
+}
+
+bool Rethrow(Context& context, Errors& errors) {
+  bool valid = PopTypes(span_exnref, context, errors);
+  SetUnreachable(context);
+  return valid;
+}
+
+bool BrOnExn(const BrOnExnImmediate& immediate,
+             Context& context,
+             Errors& errors) {
+  auto event_type = GetEventType(immediate.event_index, context, errors);
+  auto function_type =
+      GetFunctionType(MaybeDefault(event_type).type_index, context, errors);
+  auto* label = GetLabel(immediate.target, context, errors);
+  bool valid =
+      TypesMatch(ToStackTypeSpan(MaybeDefault(function_type).param_types),
+                 MaybeDefault(label).br_types());
+  valid &= PopAndPushTypes(span_exnref, span_exnref, context, errors);
+  return AllTrue(event_type, function_type, label, valid);
+}
+
 }  // namespace
 
 bool Validate(const Locals& value,
@@ -1029,6 +1089,22 @@ bool Validate(const Instruction& value,
 
     case Opcode::End:
       return End(context, errors);
+
+    case Opcode::Try:
+      return PushLabel(LabelType::Try, value.block_type_immediate(), context,
+                       errors);
+
+    case Opcode::Catch:
+      return Catch(context, errors);
+
+    case Opcode::Throw:
+      return Throw(value.index_immediate(), context, errors);
+
+    case Opcode::Rethrow:
+      return Rethrow(context, errors);
+
+    case Opcode::BrOnExn:
+      return BrOnExn(value.br_on_exn_immediate(), context, errors);
 
     case Opcode::Br:
       return Br(value.index_immediate(), context, errors);

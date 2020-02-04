@@ -118,7 +118,7 @@ Iterator Write(BlockType value, Iterator out) {
 template <typename Iterator>
 Iterator Write(const BrOnExnImmediate& value, Iterator out) {
   out = WriteIndex(value.target, out);
-  out = WriteIndex(value.exception_index, out);
+  out = WriteIndex(value.event_index, out);
   return out;
 }
 

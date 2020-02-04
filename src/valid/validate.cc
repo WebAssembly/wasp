@@ -197,7 +197,7 @@ bool Validate(const binary::ElementSegment& value,
         max_index = context.globals.size();
         break;
       case binary::ExternalKind::Event:
-        max_index = 0; // TODO: context.events.size();
+        max_index = context.events.size();
         break;
     }
 
@@ -271,10 +271,43 @@ bool Validate(const binary::Export& value,
       }
       break;
 
+    case binary::ExternalKind::Event:
+      valid &= ValidateIndex(value.index, context.events.size(), "event index",
+                             errors);
+      break;
+
     default:
       WASP_UNREACHABLE();
   }
   return valid;
+}
+
+bool Validate(const binary::Event& value,
+              Context& context,
+              const Features& features,
+              Errors& errors) {
+  ErrorsContextGuard guard{errors, "event"};
+  return Validate(value.event_type, context, features, errors);
+}
+
+bool Validate(const binary::EventType& value,
+              Context& context,
+              const Features& features,
+              Errors& errors) {
+  ErrorsContextGuard guard{errors, "event type"};
+  context.events.push_back(value);
+  if (!ValidateIndex(value.type_index, context.types.size(), "event type index",
+                    errors)) {
+    return false;
+  }
+
+  auto&& entry = context.types[value.type_index];
+  if (!entry.type.result_types.empty()) {
+    errors.OnError(format("Expected an empty exception result type, got {}",
+                          entry.type.result_types));
+    return false;
+  }
+  return true;
 }
 
 bool Validate(const binary::Function& value,
@@ -356,6 +389,11 @@ bool Validate(const binary::Import& value,
         errors.OnError("Mutable globals cannot be imported");
         valid = false;
       }
+      break;
+
+    case binary::ExternalKind::Event:
+      valid &= Validate(binary::Event{value.event_type()}, context, features,
+                        errors);
       break;
 
     default:

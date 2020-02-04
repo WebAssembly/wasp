@@ -71,9 +71,8 @@ optional<BrOnExnImmediate> Read(SpanU8* data,
                                 Tag<BrOnExnImmediate>) {
   ErrorsContextGuard guard{errors, *data, "br_on_exn"};
   WASP_TRY_READ(target, ReadIndex(data, features, errors, "target"));
-  WASP_TRY_READ(exception_index,
-                ReadIndex(data, features, errors, "exception index"));
-  return BrOnExnImmediate{target, exception_index};
+  WASP_TRY_READ(event_index, ReadIndex(data, features, errors, "event index"));
+  return BrOnExnImmediate{target, event_index};
 }
 
 optional<BrTableImmediate> Read(SpanU8* data,
