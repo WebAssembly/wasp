@@ -104,32 +104,27 @@ TEST(FormattersTest, KnownSection) {
 }
 
 TEST(FormattersTest, CustomSection) {
-  EXPECT_EQ(
-      R"({name "custom", contents "\00\01\02"})",
-      format("{}", CustomSection{"custom", "\x00\x01\x02"_su8}));
+  EXPECT_EQ(R"({name "custom", contents "\00\01\02"})",
+            format("{}", CustomSection{"custom"_sv, "\x00\x01\x02"_su8}));
 
-  EXPECT_EQ(
-      R"(   {name "", contents ""})",
-      format("{:>25s}", CustomSection{"", ""_su8}));
+  EXPECT_EQ(R"(   {name "", contents ""})",
+            format("{:>25s}", CustomSection{""_sv, ""_su8}));
 }
 
 TEST(FormattersTest, Section) {
   auto span = "\x00\x01\x02"_su8;
-  EXPECT_EQ(
-      R"({id type, contents "\00\01\02"})",
-      format("{}", Section{KnownSection{SectionId::Type, span}}));
+  EXPECT_EQ(R"({id type, contents "\00\01\02"})",
+            format("{}", Section{KnownSection{SectionId::Type, span}}));
 
-  EXPECT_EQ(
-      R"({name "custom", contents "\00\01\02"})",
-      format("{}", Section{CustomSection{"custom", span}}));
+  EXPECT_EQ(R"({name "custom", contents "\00\01\02"})",
+            format("{}", Section{CustomSection{"custom"_sv, span}}));
 
   EXPECT_EQ(
       R"({id 100, contents "\00\01\02"})",
       format("{}", Section{KnownSection{static_cast<SectionId>(100), span}}));
 
-  EXPECT_EQ(
-      R"(   {id data, contents ""})",
-      format("{:>25s}", Section{KnownSection{SectionId::Data, ""_su8}}));
+  EXPECT_EQ(R"(   {id data, contents ""})",
+            format("{:>25s}", Section{KnownSection{SectionId::Data, ""_su8}}));
 }
 
 TEST(FormattersTest, TypeEntry) {
@@ -180,47 +175,44 @@ TEST(FormattersTest, EventType) {
 TEST(FormattersTest, Import) {
   // Function
   EXPECT_EQ(R"({module "a", name "b", desc func 3})",
-            format("{}", Import{"a", "b", Index{3}}));
+            format("{}", Import{"a"_sv, "b"_sv, Index{3}}));
 
   // Table
-  EXPECT_EQ(
-      R"({module "c", name "d", desc table {min 1} funcref})",
-      format("{}",
-             Import{"c", "d", TableType{Limits{1}, ElementType::Funcref}}));
+  EXPECT_EQ(R"({module "c", name "d", desc table {min 1} funcref})",
+            format("{}", Import{"c"_sv, "d"_sv,
+                                TableType{Limits{1}, ElementType::Funcref}}));
 
   // Memory
-  EXPECT_EQ(
-      R"({module "e", name "f", desc mem {min 0, max 4}})",
-      format("{}", Import{"e", "f", MemoryType{Limits{0, 4}}}));
+  EXPECT_EQ(R"({module "e", name "f", desc mem {min 0, max 4}})",
+            format("{}", Import{"e"_sv, "f"_sv, MemoryType{Limits{0, 4}}}));
 
   // Global
-  EXPECT_EQ(
-      R"({module "g", name "h", desc global var i32})",
-      format("{}",
-             Import{"g", "h", GlobalType{ValueType::I32, Mutability::Var}}));
+  EXPECT_EQ(R"({module "g", name "h", desc global var i32})",
+            format("{}", Import{"g"_sv, "h"_sv,
+                                GlobalType{ValueType::I32, Mutability::Var}}));
 
   // Event
-  EXPECT_EQ(
-      R"({module "i", name "j", desc event exception 0})",
-      format("{}", Import{"i", "j", EventType{EventAttribute::Exception, 0}}));
+  EXPECT_EQ(R"({module "i", name "j", desc event exception 0})",
+            format("{}", Import{"i"_sv, "j"_sv,
+                                EventType{EventAttribute::Exception, 0}}));
 
   EXPECT_EQ(R"(  {module "", name "", desc func 0})",
-            format("{:>35s}", Import{"", "", Index{0}}));
+            format("{:>35s}", Import{""_sv, ""_sv, Index{0}}));
 }
 
 TEST(FormattersTest, Export) {
   EXPECT_EQ(R"({name "f", desc func 0})",
-            format("{}", Export{ExternalKind::Function, "f", Index{0}}));
+            format("{}", Export{ExternalKind::Function, "f"_sv, Index{0}}));
   EXPECT_EQ(R"({name "t", desc table 1})",
-            format("{}", Export{ExternalKind::Table, "t", Index{1}}));
+            format("{}", Export{ExternalKind::Table, "t"_sv, Index{1}}));
   EXPECT_EQ(R"({name "m", desc mem 2})",
-            format("{}", Export{ExternalKind::Memory, "m", Index{2}}));
+            format("{}", Export{ExternalKind::Memory, "m"_sv, Index{2}}));
   EXPECT_EQ(R"({name "g", desc global 3})",
-            format("{}", Export{ExternalKind::Global, "g", Index{3}}));
+            format("{}", Export{ExternalKind::Global, "g"_sv, Index{3}}));
   EXPECT_EQ(R"({name "e", desc event 4})",
-            format("{}", Export{ExternalKind::Event, "e", Index{4}}));
+            format("{}", Export{ExternalKind::Event, "e"_sv, Index{4}}));
   EXPECT_EQ(R"(    {name "", desc mem 0})",
-            format("{:>25s}", Export{ExternalKind::Memory, "", Index{0}}));
+            format("{:>25s}", Export{ExternalKind::Memory, ""_sv, Index{0}}));
 }
 
 TEST(FormattersTest, Expression) {
@@ -367,11 +359,10 @@ TEST(FormattersTest, Memory) {
 }
 
 TEST(FormattersTest, Global) {
-  EXPECT_EQ(
-      R"({type const i32, init i32.const 0 end})",
-      format("{}",
-             Global{GlobalType{ValueType::I32, Mutability::Const},
-                    ConstantExpression{Instruction{Opcode::I32Const, 0U}}}));
+  EXPECT_EQ(R"({type const i32, init i32.const 0 end})",
+            format("{}", Global{GlobalType{ValueType::I32, Mutability::Const},
+                                ConstantExpression{
+                                    Instruction{Opcode::I32Const, s32{0}}}}));
   EXPECT_EQ(
       R"(  {type var f32, init nop end})",
       format("{:>30s}", Global{GlobalType{ValueType::F32, Mutability::Var},
@@ -428,10 +419,10 @@ TEST(FormattersTest, Code) {
 TEST(FormattersTest, DataSegment_Active) {
   EXPECT_EQ(
       R"({init "\12\34", mode active {memory 0, offset i32.const 0 end}})",
-      format("{}",
-             DataSegment{Index{0u},
-                         ConstantExpression{Instruction{Opcode::I32Const, 0u}},
-                         "\x12\x34"_su8}));
+      format("{}", DataSegment{Index{0u},
+                               ConstantExpression{
+                                   Instruction{Opcode::I32Const, s32{0}}},
+                               "\x12\x34"_su8}));
 
   EXPECT_EQ(R"(  {init "", mode active {memory 0, offset nop end}})",
             format("{:>51s}",
@@ -454,17 +445,19 @@ TEST(FormattersTest, DataCount) {
 }
 
 TEST(FormattersTest, NameAssoc) {
-  EXPECT_EQ(R"(3 "hi")", format("{}", NameAssoc{3u, "hi"}));
-  EXPECT_EQ(R"(  0 "")", format("{:>6s}", NameAssoc{0u, ""}));
+  EXPECT_EQ(R"(3 "hi")", format("{}", NameAssoc{3u, "hi"_sv}));
+  EXPECT_EQ(R"(  0 "")", format("{:>6s}", NameAssoc{0u, ""_sv}));
 }
 
 TEST(FormattersTest, IndirectNameAssoc) {
-  EXPECT_EQ(
-      R"(0 [1 "first" 2 "second"])",
-      format("{}", IndirectNameAssoc{0u, {{1u, "first"}, {2u, "second"}}}));
-  EXPECT_EQ(
-      R"(  1 [10 "a" 100 "b"])",
-      format("{:>20s}", IndirectNameAssoc{1u, {{10u, "a"}, {100u, "b"}}}));
+  EXPECT_EQ(R"(0 [1 "first" 2 "second"])",
+            format("{}", IndirectNameAssoc{0u,
+                                           {NameAssoc{1u, "first"_sv},
+                                            NameAssoc{2u, "second"_sv}}}));
+  EXPECT_EQ(R"(  1 [10 "a" 100 "b"])",
+            format("{:>20s}",
+                   IndirectNameAssoc{
+                       1u, {NameAssoc{10u, "a"_sv}, NameAssoc{100u, "b"_sv}}}));
 }
 
 TEST(FormattersTest, NameSubsection) {

@@ -85,9 +85,9 @@ TEST(LinkingSectionTest, SegmentInfoSubsection) {
 
   ExpectSubsection(
       {
-          SegmentInfo{"X", 1, 2},
-          SegmentInfo{"Y", 3, 4},
-          SegmentInfo{"Z", 5, 6},
+          SegmentInfo{"X"_sv, 1, 2},
+          SegmentInfo{"Y"_sv, 3, 4},
+          SegmentInfo{"Z"_sv, 5, 6},
       },
       sec);
   ExpectNoErrors(errors);
@@ -122,8 +122,8 @@ TEST(LinkingSectionTest, ComdatSubsection) {
 
   ExpectSubsection(
       {
-          Comdat{"X", 0, {{ComdatSymbolKind::Event, 4}}},
-          Comdat{"Y", 0, {}},
+          Comdat{"X"_sv, 0, {ComdatSymbol{ComdatSymbolKind::Event, 4}}},
+          Comdat{"Y"_sv, 0, {}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -146,11 +146,11 @@ TEST(LinkingSectionTest, SymbolTableSubsection) {
       {
           SymbolInfo{F{F::Binding::Global, F::Visibility::Default,
                        F::Undefined::No, F::ExplicitName::Yes},
-                     SI::Base{SymbolInfoKind::Function, 0, "YYY"}},
+                     SI::Base{SymbolInfoKind::Function, 0, "YYY"_sv}},
 
           SymbolInfo{F{F::Binding::Global, F::Visibility::Default,
                        F::Undefined::No, F::ExplicitName::No},
-                     SI::Data{"ZZZ", SI::Data::Defined{0, 0, 0}}},
+                     SI::Data{"ZZZ"_sv, SI::Data::Defined{0, 0, 0}}},
 
           SymbolInfo{F{F::Binding::Global, F::Visibility::Default,
                        F::Undefined::No, F::ExplicitName::No},

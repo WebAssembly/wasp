@@ -85,8 +85,8 @@ TEST(LazyNameSectionTest, FunctionNamesSubsection) {
 
   ExpectSubsection(
       {
-          NameAssoc{3, "three"},
-          NameAssoc{5, "five"},
+          NameAssoc{3, "three"_sv},
+          NameAssoc{5, "five"_sv},
       },
       sec);
   ExpectNoErrors(errors);
@@ -104,8 +104,9 @@ TEST(LazyNameSectionTest, LocalNamesSubsection) {
 
   ExpectSubsection(
       {
-          IndirectNameAssoc{2, {{1, "ichi"}, {3, "san"}}},
-          IndirectNameAssoc{4, {{5, "cinco"}}},
+          IndirectNameAssoc{2,
+                            {NameAssoc{1, "ichi"_sv}, NameAssoc{3, "san"_sv}}},
+          IndirectNameAssoc{4, {NameAssoc{5, "cinco"_sv}}},
       },
       sec);
   ExpectNoErrors(errors);

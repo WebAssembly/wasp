@@ -19,6 +19,7 @@
 
 #include <vector>
 
+#include "wasp/base/at.h"
 #include "wasp/base/format.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
@@ -30,6 +31,18 @@ namespace fmt {
 // this conversion was omitted from the fmt library.
 template <typename T, std::size_t SIZE, typename Allocator>
 string_view to_string_view(const basic_memory_buffer<T, SIZE, Allocator>&);
+
+template <typename T>
+struct formatter<::wasp::At<T>> : formatter<T> {
+  template <typename Ctx>
+  typename Ctx::iterator format(const ::wasp::At<T>&, Ctx&);
+};
+
+template <>
+struct formatter<::wasp::string_view> : formatter<string_view> {
+  template <typename Ctx>
+  typename Ctx::iterator format(const ::wasp::string_view&, Ctx&);
+};
 
 template <>
 struct formatter<::wasp::SpanU8> : formatter<string_view> {

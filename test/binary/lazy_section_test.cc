@@ -70,8 +70,8 @@ TEST(LazySectionTest, Import) {
 
   ExpectSection(
       {
-          Import{"w", "x", 2},
-          Import{"y", "z", MemoryType{Limits{1, 2}}},
+          Import{"w"_sv, "x"_sv, Index{2}},
+          Import{"y"_sv, "z"_sv, MemoryType{Limits{1, 2}}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -161,9 +161,9 @@ TEST(LazySectionTest, Export) {
 
   ExpectSection(
       {
-          Export{ExternalKind::Function, "one", 1},
-          Export{ExternalKind::Memory, "two", 2},
-          Export{ExternalKind::Global, "three", 2},
+          Export{ExternalKind::Function, "one"_sv, 1},
+          Export{ExternalKind::Memory, "two"_sv, 2},
+          Export{ExternalKind::Global, "three"_sv, 2},
       },
       sec);
   ExpectNoErrors(errors);

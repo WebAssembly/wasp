@@ -37,7 +37,7 @@ bool Validate(const binary::ConstantExpression& value,
   ErrorsContextGuard guard{errors, "constant_expression"};
   bool valid = true;
   binary::ValueType actual_type;
-  switch (value.instruction.opcode) {
+  switch (value.instruction->opcode) {
     case binary::Opcode::I32Const:
       actual_type = binary::ValueType::I32;
       break;
@@ -55,7 +55,7 @@ bool Validate(const binary::ConstantExpression& value,
       break;
 
     case binary::Opcode::GlobalGet: {
-      auto index = value.instruction.index_immediate();
+      auto index = value.instruction->index_immediate();
       if (!ValidateIndex(index, max_global_index, "global index", errors)) {
         return false;
       }
@@ -75,7 +75,7 @@ bool Validate(const binary::ConstantExpression& value,
       break;
 
     case binary::Opcode::RefFunc: {
-      auto index = value.instruction.index_immediate();
+      auto index = value.instruction->index_immediate();
       if (!ValidateIndex(index, context.functions.size(), "func index",
                          errors)) {
         return false;
@@ -127,14 +127,14 @@ bool Validate(const binary::ElementExpression& value,
   ErrorsContextGuard guard{errors, "element expression"};
   bool valid = true;
   binary::ElementType actual_type;
-  switch (value.instruction.opcode) {
+  switch (value.instruction->opcode) {
     case binary::Opcode::RefNull:
       actual_type = binary::ElementType::Funcref;
       break;
 
     case binary::Opcode::RefFunc: {
       actual_type = binary::ElementType::Funcref;
-      if (!ValidateIndex(value.instruction.index_immediate(),
+      if (!ValidateIndex(value.instruction->index_immediate(),
                          context.functions.size(), "function index", errors)) {
         valid = false;
       }
@@ -287,9 +287,9 @@ bool Validate(const binary::EventType& value,
   }
 
   auto&& entry = context.types[value.type_index];
-  if (!entry.type.result_types.empty()) {
+  if (!entry.type->result_types.empty()) {
     errors.OnError(format("Expected an empty exception result type, got {}",
-                          entry.type.result_types));
+                          entry.type->result_types));
     return false;
   }
   return true;
@@ -327,7 +327,7 @@ bool Validate(const binary::Global& value,
   bool valid = true;
   valid &= Validate(value.global_type, context, features, errors);
   // Only imported globals can be used in a global's constant expression.
-  valid &= Validate(value.init, value.global_type.valtype,
+  valid &= Validate(value.init, value.global_type->valtype,
                     context.imported_global_count, context, features, errors);
   return valid;
 }
@@ -367,7 +367,7 @@ bool Validate(const binary::Import& value,
       context.globals.push_back(value.global_type());
       context.imported_global_count++;
       valid &= Validate(value.global_type(), context, features, errors);
-      if (value.global_type().mut == binary::Mutability::Var &&
+      if (value.global_type()->mut == binary::Mutability::Var &&
           !features.mutable_globals_enabled()) {
         errors.OnError("Mutable globals cannot be imported");
         valid = false;
@@ -442,7 +442,7 @@ bool Validate(const binary::MemoryType& value,
   ErrorsContextGuard guard{errors, "memory type"};
   constexpr Index kMaxPages = 65536;
   bool valid = Validate(value.limits, kMaxPages, context, features, errors);
-  if (value.limits.shared == binary::Shared::Yes &&
+  if (value.limits->shared == binary::Shared::Yes &&
       !features.threads_enabled()) {
     errors.OnError("Memories cannot be shared");
     valid = false;
@@ -464,15 +464,15 @@ bool Validate(const binary::Start& value,
   auto function = context.functions[value.func_index];
   if (function.type_index < context.types.size()) {
     const auto& type_entry = context.types[function.type_index];
-    if (type_entry.type.param_types.size() != 0) {
+    if (type_entry.type->param_types.size() != 0) {
       errors.OnError(format("Expected start function to have 0 params, got {}",
-                            type_entry.type.param_types.size()));
+                            type_entry.type->param_types.size()));
       valid = false;
     }
 
-    if (type_entry.type.result_types.size() != 0) {
+    if (type_entry.type->result_types.size() != 0) {
       errors.OnError(format("Expected start function to have 0 results, got {}",
-                            type_entry.type.result_types.size()));
+                            type_entry.type->result_types.size()));
       valid = false;
     }
   }
@@ -500,7 +500,7 @@ bool Validate(const binary::TableType& value,
   ErrorsContextGuard guard{errors, "table type"};
   constexpr Index kMaxElements = std::numeric_limits<Index>::max();
   bool valid = Validate(value.limits, kMaxElements, context, features, errors);
-  if (value.limits.shared == binary::Shared::Yes) {
+  if (value.limits->shared == binary::Shared::Yes) {
     errors.OnError("Tables cannot be shared");
     valid = false;
   }

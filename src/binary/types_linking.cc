@@ -22,17 +22,17 @@
 namespace wasp {
 namespace binary {
 
-SymbolInfo::SymbolInfo(Flags flags, const Base& base)
+SymbolInfo::SymbolInfo(At<Flags> flags, const Base& base)
     : flags{flags}, desc{base} {
   assert(base.kind == SymbolInfoKind::Function ||
          base.kind == SymbolInfoKind::Global ||
          base.kind == SymbolInfoKind::Event);
 }
 
-SymbolInfo::SymbolInfo(Flags flags, const Data& data)
+SymbolInfo::SymbolInfo(At<Flags> flags, const Data& data)
     : flags{flags}, desc{data} {}
 
-SymbolInfo::SymbolInfo(Flags flags, const Section& section)
+SymbolInfo::SymbolInfo(At<Flags> flags, const Section& section)
     : flags{flags}, desc{section} {}
 
 

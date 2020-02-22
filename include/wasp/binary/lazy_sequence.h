@@ -19,6 +19,7 @@
 
 #include <iterator>
 
+#include "wasp/base/at.h"
 #include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
@@ -48,11 +49,11 @@ class LazySequenceBase {
 template <typename T>
 class LazySequence : public LazySequenceBase {
  public:
-  using value_type = T;
-  using pointer = T*;
-  using const_pointer = const T*;
-  using reference = T&;
-  using const_reference = const T&;
+  using value_type = At<T>;
+  using pointer = At<T>*;
+  using const_pointer = const At<T>*;
+  using reference = At<T>&;
+  using const_reference = const At<T>&;
   using size_type = std::size_t;
   using difference_type = std::ptrdiff_t;
   using iterator = LazySequenceIterator<LazySequence>;

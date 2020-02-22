@@ -44,7 +44,7 @@ S SignExtend(typename std::make_unsigned<S>::type x, int N) {
 }
 
 template <typename T>
-optional<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
+OptAt<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
   using U = typename std::make_unsigned<T>::type;
   constexpr bool is_signed = std::is_signed<T>::value;
   constexpr int kByteMask = VarInt<T>::kByteMask;
@@ -54,6 +54,7 @@ optional<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
   constexpr u8 kLastByteOnes = kLastByteMask & kByteMask;
 
   ErrorsContextGuard guard{context.errors, *data, desc};
+  auto loc = data->begin();
 
   U result{};
   for (int i = 0;;) {
@@ -65,7 +66,7 @@ optional<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
     if (++i == VarInt<T>::kMaxBytes) {
       if ((byte & kLastByteMask) == 0 ||
           (is_signed && (byte & kLastByteMask) == kLastByteOnes)) {
-        return static_cast<T>(result);
+        return MakeAt(loc, T(result));
       }
       const u8 zero_ext = byte & ~kLastByteMask & kByteMask;
       const u8 one_ext = (byte | kLastByteOnes) & kByteMask;
@@ -82,7 +83,8 @@ optional<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
       }
       return nullopt;
     } else if ((byte & VarInt<T>::kExtendBit) == 0) {
-      return is_signed ? SignExtend<T>(result, 6 + shift) : result;
+      return MakeAt(loc,
+                    is_signed ? SignExtend<T>(result, 6 + shift) : T(result));
     }
   }
 }

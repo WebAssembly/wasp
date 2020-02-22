@@ -221,9 +221,9 @@ void Tool::DoPrepass() {
   });
 
   for (auto section : module.sections) {
-    if (section.is_known()) {
-      auto known = section.known();
-      switch (known.id) {
+    if (section->is_known()) {
+      auto known = section->known();
+      switch (known->id) {
         case SectionId::Type: {
           auto seq = ReadTypeSection(known, module.context).sequence;
           std::copy(seq.begin(), seq.end(), std::back_inserter(type_entries));
@@ -233,8 +233,8 @@ void Tool::DoPrepass() {
         case SectionId::Import:
           for (auto import :
                ReadImportSection(known, module.context).sequence) {
-            if (import.kind() == ExternalKind::Function) {
-              functions.push_back(Function{import.index()});
+            if (import->kind() == ExternalKind::Function) {
+              functions.push_back(Function{import->index()});
             }
           }
           imported_function_count = functions.size();
@@ -278,9 +278,9 @@ optional<FunctionType> Tool::GetFunctionType(Index func_index) {
 
 optional<Code> Tool::GetCode(Index find_index) {
   for (auto section : module.sections) {
-    if (section.is_known()) {
-      auto known = section.known();
-      if (known.id == SectionId::Code) {
+    if (section->is_known()) {
+      auto known = section->known();
+      if (known->id == SectionId::Code) {
         auto section = ReadCodeSection(known, module.context);
         for (auto code : enumerate(section.sequence, imported_function_count)) {
           if (code.index == find_index) {
@@ -300,38 +300,43 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
 
   // Add params.
   for (u32 i = 0; i < type.param_types.size(); ++i) {
-    PushValue(NewValue(Instruction{Opcode::LocalGet, u32{i}}));
+    PushValue(NewValue(Instruction{MakeAt(Opcode::LocalGet), MakeAt(i)}));
   }
 
   // Add locals, initialized to 0.
   for (const auto& locals : code.locals) {
-    for (Index i = 0; i < locals.count; ++i) {
-      switch (locals.type) {
+    for (Index i = 0; i < locals->count; ++i) {
+      switch (locals->type) {
         case ValueType::I32:
-          PushValue(NewValue(Instruction{Opcode::I32Const, s32{0}}));
+          PushValue(
+              NewValue(Instruction{MakeAt(Opcode::I32Const), MakeAt(s32{0})}));
           break;
 
         case ValueType::F32:
-          PushValue(NewValue(Instruction{Opcode::F32Const, f32{0}}));
+          PushValue(
+              NewValue(Instruction{MakeAt(Opcode::F32Const), MakeAt(f32{0})}));
           break;
 
         case ValueType::I64:
-          PushValue(NewValue(Instruction{Opcode::I64Const, s64{0}}));
+          PushValue(
+              NewValue(Instruction{MakeAt(Opcode::I64Const), MakeAt(s64{0})}));
           break;
 
         case ValueType::F64:
-          PushValue(NewValue(Instruction{Opcode::F64Const, f64{0}}));
+          PushValue(
+              NewValue(Instruction{MakeAt(Opcode::F64Const), MakeAt(f64{0})}));
           break;
 
         case ValueType::V128:
-          PushValue(NewValue(Instruction{Opcode::V128Const, v128{}}));
+          PushValue(
+              NewValue(Instruction{MakeAt(Opcode::V128Const), MakeAt(v128{})}));
           break;
 
         case ValueType::Anyref:
         case ValueType::Funcref:
         case ValueType::Nullref:
         case ValueType::Exnref:
-          PushValue(NewValue(Instruction{Opcode::RefNull}));
+          PushValue(NewValue(Instruction{MakeAt(Opcode::RefNull)}));
           break;
       }
     }
@@ -349,7 +354,8 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
     DoInstruction(instr);
   }
 
-  BasicInstruction(Instruction{Opcode::Return}, type.result_types.size(), 0);
+  BasicInstruction(Instruction{MakeAt(Opcode::Return)},
+                   type.result_types.size(), 0);
   SealBlock(return_bbid);
 }
 
@@ -425,10 +431,10 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::BrTable: {
       const auto& immediate = instr.br_table_immediate();
       BasicInstruction(instr, 1, 0);
-      for (const auto& target : immediate.targets) {
+      for (const auto& target : immediate->targets) {
         Br(target);
       }
-      Br(immediate.default_target);
+      Br(immediate->default_target);
       MarkUnreachable();
       break;
     }
@@ -456,11 +462,11 @@ void Tool::DoInstruction(const Instruction& instr) {
 
     case Opcode::CallIndirect:
     case Opcode::ReturnCallIndirect: {
-      auto type_index = instr.call_indirect_immediate().index;
+      auto type_index = instr.call_indirect_immediate()->index;
       if (type_index < type_entries.size()) {
         const auto& func_type = type_entries[type_index].type;
-        BasicInstruction(instr, func_type.param_types.size() + 1,
-                         func_type.result_types.size());
+        BasicInstruction(instr, func_type->param_types.size() + 1,
+                         func_type->result_types.size());
       } else {
         print(stderr, "*** Error: `{}` with unknown type\n", instr);
       }
@@ -1037,7 +1043,7 @@ ValueID Tool::NewPhi(BBID bbid) {
 
 ValueID Tool::Undef() {
   if (undef == InvalidValueID) {
-    undef = NewValue(Instruction{Opcode::Unreachable});
+    undef = NewValue(Instruction{MakeAt(Opcode::Unreachable)});
   }
   return undef;
 }

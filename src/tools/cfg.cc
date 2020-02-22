@@ -189,9 +189,9 @@ optional<Index> Tool::GetFunctionIndex() {
 
 optional<Code> Tool::GetCode(Index find_index) {
   for (auto section : module.sections) {
-    if (section.is_known()) {
-      auto known = section.known();
-      if (known.id == SectionId::Code) {
+    if (section->is_known()) {
+      auto known = section->known();
+      if (known->id == SectionId::Code) {
         auto section = ReadCodeSection(known, module.context);
         for (auto code : enumerate(section.sequence, imported_function_count)) {
           if (code.index == find_index) {
@@ -205,7 +205,7 @@ optional<Code> Tool::GetCode(Index find_index) {
 }
 
 void Tool::CalculateCFG(Code code) {
-  const u8* ptr = code.body.data.data();
+  const u8* ptr = code.body->data.data();
   PushLabel(Opcode::Return, InvalidBBID, InvalidBBID);
   start_bbid = NewBasicBlock();
   StartBasicBlock(start_bbid, ptr);
@@ -216,14 +216,14 @@ void Tool::CalculateCFG(Code code) {
        ++it, prev_ptr = ptr) {
     const auto& instr = *it;
     ptr = it.data().data();
-    switch (instr.opcode) {
+    switch (instr->opcode) {
       case Opcode::Unreachable:
         MarkUnreachable(ptr);
         break;
 
       case Opcode::Block: {
         auto next = NewBasicBlock();
-        PushLabel(instr.opcode, next, next);
+        PushLabel(instr->opcode, next, next);
         break;
       }
 
@@ -231,7 +231,7 @@ void Tool::CalculateCFG(Code code) {
         auto loop = NewBasicBlock();
         auto next = NewBasicBlock();
         AddSuccessor(loop);
-        PushLabel(instr.opcode, loop, next);
+        PushLabel(instr->opcode, loop, next);
         StartBasicBlock(loop, prev_ptr);
         break;
       }
@@ -240,7 +240,7 @@ void Tool::CalculateCFG(Code code) {
         auto true_ = NewBasicBlock();
         auto next = NewBasicBlock();
         AddSuccessor(true_, "T");
-        PushLabel(instr.opcode, next, next);
+        PushLabel(instr->opcode, next, next);
         StartBasicBlock(true_, ptr);
         break;
       }
@@ -250,7 +250,7 @@ void Tool::CalculateCFG(Code code) {
         AddSuccessor(top.next);
         auto false_ = NewBasicBlock();
         AddSuccessor(top.parent, false_, "F");
-        PushLabel(instr.opcode, top.next, top.next);
+        PushLabel(instr->opcode, top.next, top.next);
         StartBasicBlock(false_, ptr);
         break;
       }
@@ -266,12 +266,12 @@ void Tool::CalculateCFG(Code code) {
       }
 
       case Opcode::Br:
-        Br(instr.index_immediate());
+        Br(instr->index_immediate());
         MarkUnreachable(ptr);
         break;
 
       case Opcode::BrIf: {
-        Br(instr.index_immediate(), "T");
+        Br(instr->index_immediate(), "T");
         auto next = NewBasicBlock();
         AddSuccessor(next, "F");
         StartBasicBlock(next, ptr);
@@ -279,12 +279,12 @@ void Tool::CalculateCFG(Code code) {
       }
 
       case Opcode::BrTable: {
-        const auto& immediate = instr.br_table_immediate();
+        const auto& immediate = instr->br_table_immediate();
         u32 value = 0;
-        for (const auto& target : immediate.targets) {
+        for (const auto& target : immediate->targets) {
           Br(target, format("{}", value++));
         }
-        Br(immediate.default_target, "default");
+        Br(immediate->default_target, "default");
         MarkUnreachable(ptr);
         break;
       }
@@ -348,8 +348,8 @@ void Tool::RemoveEmptyBasicBlocks() {
   }
 }
 
-bool IsExtraneousInstruction(const Instruction& instr) {
-  auto opcode = instr.opcode;
+bool IsExtraneousInstruction(const At<Instruction>& instr) {
+  auto opcode = instr->opcode;
   return opcode == Opcode::Block || opcode == Opcode::Else ||
          opcode == Opcode::End || opcode == Opcode::Br;
 }
@@ -382,10 +382,10 @@ void Tool::WriteDotFile() {
       for (const auto& instr: instrs) {
         if (IsExtraneousInstruction(instr)) {
           continue;
-        } else if (instr.opcode == Opcode::BrTable) {
-          print(*stream, "{}...", instr.opcode);
+        } else if (instr->opcode == Opcode::BrTable) {
+          print(*stream, "{}...", instr->opcode);
         } else {
-          print(*stream, "{}", instr);
+          print(*stream, "{}", *instr);
         }
         print(*stream, "<BR ALIGN=\"LEFT\"/>");
       }

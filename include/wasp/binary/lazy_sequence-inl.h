@@ -51,7 +51,7 @@ auto LazySequenceIterator<Sequence>::operator++() -> LazySequenceIterator& {
     sequence_->NotifyRead(pos, false);
     clear();
   } else {
-    value_ = Read<value_type>(&data_, sequence_->context_);
+    value_ = Read<typename value_type::value_type>(&data_, sequence_->context_);
     sequence_->NotifyRead(pos, !!value_);
     if (!value_) {
       clear();

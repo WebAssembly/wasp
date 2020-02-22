@@ -50,7 +50,7 @@ TEST(LazyModuleTest, Basic) {
   EXPECT_EQ((Section{KnownSection{SectionId::Code, "\0"_su8}}), *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ((Section{CustomSection{"yup", "\0\0"_su8}}), *it++);
+  EXPECT_EQ((Section{CustomSection{"yup"_sv, "\0\0"_su8}}), *it++);
   ASSERT_EQ(end, it);
 
   ExpectNoErrors(errors);

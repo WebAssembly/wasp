@@ -34,18 +34,20 @@
   WASP_TRY_READ(var, call);                            \
   guard_##var.PopContext() /* No semicolon. */
 
-#define WASP_TRY_DECODE(out_var, in_var, Type, name)                       \
-  auto out_var = encoding::Type::Decode(in_var);                           \
-  if (!out_var) {                                                          \
-    context.errors.OnError(*data, format("Unknown " name ": {}", in_var)); \
-    return nullopt;                                                        \
-  }
+#define WASP_TRY_DECODE(out_var, in_var_at, Type, name)                       \
+  auto out_var##opt = encoding::Type::Decode(in_var_at);                      \
+  if (!out_var##opt) {                                                        \
+    context.errors.OnError(*data, format("Unknown " name ": {}", in_var_at)); \
+    return nullopt;                                                           \
+  }                                                                           \
+  auto out_var = MakeAt(in_var_at.loc(), *out_var##opt) /* No semicolon. */
 
-#define WASP_TRY_DECODE_FEATURES(out_var, in_var, Type, name, features)    \
-  auto out_var = encoding::Type::Decode(in_var, features);                 \
-  if (!out_var) {                                                          \
-    context.errors.OnError(*data, format("Unknown " name ": {}", in_var)); \
-    return nullopt;                                                        \
-  }
+#define WASP_TRY_DECODE_FEATURES(out_var, in_var_at, Type, name, features)    \
+  auto out_var##opt = encoding::Type::Decode(in_var_at, features);            \
+  if (!out_var##opt) {                                                        \
+    context.errors.OnError(*data, format("Unknown " name ": {}", in_var_at)); \
+    return nullopt;                                                           \
+  }                                                                           \
+  auto out_var = MakeAt(in_var_at.loc(), *out_var##opt) /* No semicolon. */
 
 #endif  // WASP_BINARY_MACROS_H_

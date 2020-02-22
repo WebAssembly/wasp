@@ -25,28 +25,28 @@ inline bool Section::is_custom() const {
   return contents.index() == 1;
 }
 
-inline KnownSection& Section::known() {
-  return get<KnownSection>(contents);
+inline At<KnownSection>& Section::known() {
+  return get<At<KnownSection>>(contents);
 }
 
-inline const KnownSection& Section::known() const {
-  return get<KnownSection>(contents);
+inline const At<KnownSection>& Section::known() const {
+  return get<At<KnownSection>>(contents);
 }
 
-inline CustomSection& Section::custom() {
-  return get<CustomSection>(contents);
+inline At<CustomSection>& Section::custom() {
+  return get<At<CustomSection>>(contents);
 }
 
-inline const CustomSection& Section::custom() const {
-  return get<CustomSection>(contents);
+inline const At<CustomSection>& Section::custom() const {
+  return get<At<CustomSection>>(contents);
 }
 
-inline SectionId Section::id() const {
-  return is_known() ? known().id : SectionId::Custom;
+inline At<SectionId> Section::id() const {
+  return is_known() ? known()->id : MakeAt(SectionId::Custom);
 }
 
 inline SpanU8 Section::data() const {
-  return is_known() ? known().data : custom().data;
+  return is_known() ? known()->data : custom()->data;
 }
 
 }  // namespace binary

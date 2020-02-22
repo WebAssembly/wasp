@@ -21,6 +21,7 @@
 #include <functional>
 #include <vector>
 
+#include "wasp/base/at.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
@@ -125,34 +126,41 @@ enum class ValueType : s32 {
 };
 
 
-using ValueTypes = std::vector<ValueType>;
+using ValueTypes = std::vector<At<ValueType>>;
 using ShuffleImmediate = std::array<u8, 16>;
 
 // Section
 
 struct KnownSection {
-  SectionId id;
+  At<SectionId> id;
   SpanU8 data;
 };
 
 struct CustomSection {
-  string_view name;
+  At<string_view> name;
   SpanU8 data;
 };
 
 struct Section {
+  Section(At<KnownSection>);
+  Section(At<CustomSection>);
+
+  // Convenience constructors w/ no Location.
+  Section(KnownSection);
+  Section(CustomSection);
+
   bool is_known() const;
   bool is_custom() const;
 
-  KnownSection& known();
-  const KnownSection& known() const;
-  CustomSection& custom();
-  const CustomSection& custom() const;
+  At<KnownSection>& known();
+  const At<KnownSection>& known() const;
+  At<CustomSection>& custom();
+  const At<CustomSection>& custom() const;
 
-  SectionId id() const;
+  At<SectionId> id() const;
   SpanU8 data() const;
 
-  variant<KnownSection, CustomSection> contents;
+  variant<At<KnownSection>, At<CustomSection>> contents;
 };
 
 
@@ -161,54 +169,74 @@ struct Section {
 struct EmptyImmediate {};
 
 struct CallIndirectImmediate {
-  Index index;
-  Index table_index;
+  At<Index> index;
+  At<Index> table_index;
 };
 
 struct BrOnExnImmediate {
-  Index target;
-  Index event_index;
+  At<Index> target;
+  At<Index> event_index;
 };
 
 struct BrTableImmediate {
-  std::vector<Index> targets;
-  Index default_target;
+  std::vector<At<Index>> targets;
+  At<Index> default_target;
 };
 
 struct MemArgImmediate {
-  u32 align_log2;
-  u32 offset;
+  At<u32> align_log2;
+  At<u32> offset;
 };
 
 struct InitImmediate {
-  Index segment_index;
-  Index dst_index;
+  At<Index> segment_index;
+  At<Index> dst_index;
 };
 
 struct CopyImmediate {
-  Index dst_index;
-  Index src_index;
+  At<Index> dst_index;
+  At<Index> src_index;
 };
 
 struct Instruction {
-  explicit Instruction(Opcode opcode);
-  explicit Instruction(Opcode opcode, EmptyImmediate);
-  explicit Instruction(Opcode opcode, BlockType);
-  explicit Instruction(Opcode opcode, Index);
-  explicit Instruction(Opcode opcode, CallIndirectImmediate);
-  explicit Instruction(Opcode opcode, BrOnExnImmediate);
-  explicit Instruction(Opcode opcode, BrTableImmediate);
-  explicit Instruction(Opcode opcode, u8);
-  explicit Instruction(Opcode opcode, MemArgImmediate);
-  explicit Instruction(Opcode opcode, s32);
-  explicit Instruction(Opcode opcode, s64);
-  explicit Instruction(Opcode opcode, f32);
-  explicit Instruction(Opcode opcode, f64);
-  explicit Instruction(Opcode opcode, v128);
-  explicit Instruction(Opcode opcode, InitImmediate);
-  explicit Instruction(Opcode opcode, CopyImmediate);
-  explicit Instruction(Opcode opcode, ShuffleImmediate);
-  explicit Instruction(Opcode opcode, const ValueTypes&);
+  explicit Instruction(At<Opcode>);
+  explicit Instruction(At<Opcode>, EmptyImmediate);
+  explicit Instruction(At<Opcode>, At<BlockType>);
+  explicit Instruction(At<Opcode>, At<Index>);
+  explicit Instruction(At<Opcode>, At<CallIndirectImmediate>);
+  explicit Instruction(At<Opcode>, At<BrOnExnImmediate>);
+  explicit Instruction(At<Opcode>, At<BrTableImmediate>);
+  explicit Instruction(At<Opcode>, At<u8>);
+  explicit Instruction(At<Opcode>, At<MemArgImmediate>);
+  explicit Instruction(At<Opcode>, At<s32>);
+  explicit Instruction(At<Opcode>, At<s64>);
+  explicit Instruction(At<Opcode>, At<f32>);
+  explicit Instruction(At<Opcode>, At<f64>);
+  explicit Instruction(At<Opcode>, At<v128>);
+  explicit Instruction(At<Opcode>, At<InitImmediate>);
+  explicit Instruction(At<Opcode>, At<CopyImmediate>);
+  explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
+  explicit Instruction(At<Opcode>, const ValueTypes&);
+
+  // Convenience constructors w/ no Location.
+  explicit Instruction(Opcode);
+  explicit Instruction(Opcode, EmptyImmediate);
+  explicit Instruction(Opcode, BlockType);
+  explicit Instruction(Opcode, Index);
+  explicit Instruction(Opcode, CallIndirectImmediate);
+  explicit Instruction(Opcode, BrOnExnImmediate);
+  explicit Instruction(Opcode, BrTableImmediate);
+  explicit Instruction(Opcode, u8);
+  explicit Instruction(Opcode, MemArgImmediate);
+  explicit Instruction(Opcode, s32);
+  explicit Instruction(Opcode, s64);
+  explicit Instruction(Opcode, f32);
+  explicit Instruction(Opcode, f64);
+  explicit Instruction(Opcode, v128);
+  explicit Instruction(Opcode, InitImmediate);
+  explicit Instruction(Opcode, CopyImmediate);
+  explicit Instruction(Opcode, ShuffleImmediate);
+  explicit Instruction(Opcode, const ValueTypes&);
 
   bool has_empty_immediate() const;
   bool has_block_type_immediate() const;
@@ -230,56 +258,56 @@ struct Instruction {
 
   EmptyImmediate& empty_immediate();
   const EmptyImmediate& empty_immediate() const;
-  BlockType& block_type_immediate();
-  const BlockType& block_type_immediate() const;
-  Index& index_immediate();
-  const Index& index_immediate() const;
-  CallIndirectImmediate& call_indirect_immediate();
-  const CallIndirectImmediate& call_indirect_immediate() const;
-  BrTableImmediate& br_table_immediate();
-  const BrTableImmediate& br_table_immediate() const;
-  BrOnExnImmediate& br_on_exn_immediate();
-  const BrOnExnImmediate& br_on_exn_immediate() const;
-  u8& u8_immediate();
-  const u8& u8_immediate() const;
-  MemArgImmediate& mem_arg_immediate();
-  const MemArgImmediate& mem_arg_immediate() const;
-  s32& s32_immediate();
-  const s32& s32_immediate() const;
-  s64& s64_immediate();
-  const s64& s64_immediate() const;
-  f32& f32_immediate();
-  const f32& f32_immediate() const;
-  f64& f64_immediate();
-  const f64& f64_immediate() const;
-  v128& v128_immediate();
-  const v128& v128_immediate() const;
-  InitImmediate& init_immediate();
-  const InitImmediate& init_immediate() const;
-  CopyImmediate& copy_immediate();
-  const CopyImmediate& copy_immediate() const;
-  ShuffleImmediate& shuffle_immediate();
-  const ShuffleImmediate& shuffle_immediate() const;
+  At<BlockType>& block_type_immediate();
+  const At<BlockType>& block_type_immediate() const;
+  At<Index>& index_immediate();
+  const At<Index>& index_immediate() const;
+  At<CallIndirectImmediate>& call_indirect_immediate();
+  const At<CallIndirectImmediate>& call_indirect_immediate() const;
+  At<BrTableImmediate>& br_table_immediate();
+  const At<BrTableImmediate>& br_table_immediate() const;
+  At<BrOnExnImmediate>& br_on_exn_immediate();
+  const At<BrOnExnImmediate>& br_on_exn_immediate() const;
+  At<u8>& u8_immediate();
+  const At<u8>& u8_immediate() const;
+  At<MemArgImmediate>& mem_arg_immediate();
+  const At<MemArgImmediate>& mem_arg_immediate() const;
+  At<s32>& s32_immediate();
+  const At<s32>& s32_immediate() const;
+  At<s64>& s64_immediate();
+  const At<s64>& s64_immediate() const;
+  At<f32>& f32_immediate();
+  const At<f32>& f32_immediate() const;
+  At<f64>& f64_immediate();
+  const At<f64>& f64_immediate() const;
+  At<v128>& v128_immediate();
+  const At<v128>& v128_immediate() const;
+  At<InitImmediate>& init_immediate();
+  const At<InitImmediate>& init_immediate() const;
+  At<CopyImmediate>& copy_immediate();
+  const At<CopyImmediate>& copy_immediate() const;
+  At<ShuffleImmediate>& shuffle_immediate();
+  const At<ShuffleImmediate>& shuffle_immediate() const;
   ValueTypes& value_types_immediate();
   const ValueTypes& value_types_immediate() const;
 
-  Opcode opcode;
+  At<Opcode> opcode;
   variant<EmptyImmediate,
-          BlockType,
-          Index,
-          CallIndirectImmediate,
-          BrTableImmediate,
-          BrOnExnImmediate,
-          u8,
-          MemArgImmediate,
-          s32,
-          s64,
-          f32,
-          f64,
-          v128,
-          InitImmediate,
-          CopyImmediate,
-          ShuffleImmediate,
+          At<BlockType>,
+          At<Index>,
+          At<CallIndirectImmediate>,
+          At<BrTableImmediate>,
+          At<BrOnExnImmediate>,
+          At<u8>,
+          At<MemArgImmediate>,
+          At<s32>,
+          At<s64>,
+          At<f32>,
+          At<f64>,
+          At<v128>,
+          At<InitImmediate>,
+          At<CopyImmediate>,
+          At<ShuffleImmediate>,
           ValueTypes>
       immediate;
 };
@@ -293,41 +321,54 @@ struct FunctionType {
 };
 
 struct TypeEntry {
-  FunctionType type;
+  At<FunctionType> type;
 };
 
 // Section 2: Import
 
 struct Limits {
-  explicit Limits(u32 min);
-  explicit Limits(u32 min, u32 max);
-  explicit Limits(u32 min, u32 max, Shared);
+  explicit Limits(At<u32> min);
+  explicit Limits(At<u32> min, OptAt<u32> max);
+  explicit Limits(At<u32> min, OptAt<u32> max, At<Shared>);
 
-  u32 min;
-  optional<u32> max;
-  Shared shared;
+  At<u32> min;
+  OptAt<u32> max;
+  At<Shared> shared;
 };
 
 struct TableType {
-  Limits limits;
-  ElementType elemtype;
+  At<Limits> limits;
+  At<ElementType> elemtype;
 };
 
 struct MemoryType {
-  Limits limits;
+  At<Limits> limits;
 };
 
 struct GlobalType {
-  ValueType valtype;
-  Mutability mut;
+  At<ValueType> valtype;
+  At<Mutability> mut;
 };
 
 struct EventType {
-  EventAttribute attribute;
-  Index type_index;
+  At<EventAttribute> attribute;
+  At<Index> type_index;
 };
 
 struct Import {
+  explicit Import(At<string_view> module, At<string_view> name, At<Index>);
+  explicit Import(At<string_view> module, At<string_view> name, At<TableType>);
+  explicit Import(At<string_view> module, At<string_view> name, At<MemoryType>);
+  explicit Import(At<string_view> module, At<string_view> name, At<GlobalType>);
+  explicit Import(At<string_view> module, At<string_view> name, At<EventType>);
+
+  // Convenience constructors w/ no Location.
+  explicit Import(string_view module, string_view name, Index);
+  explicit Import(string_view module, string_view name, TableType);
+  explicit Import(string_view module, string_view name, MemoryType);
+  explicit Import(string_view module, string_view name, GlobalType);
+  explicit Import(string_view module, string_view name, EventType);
+
   ExternalKind kind() const;
   bool is_function() const;
   bool is_table() const;
@@ -335,99 +376,109 @@ struct Import {
   bool is_global() const;
   bool is_event() const;
 
-  Index& index();
-  const Index& index() const;
-  TableType& table_type();
-  const TableType& table_type() const;
-  MemoryType& memory_type();
-  const MemoryType& memory_type() const;
-  GlobalType& global_type();
-  const GlobalType& global_type() const;
-  EventType& event_type();
-  const EventType& event_type() const;
+  At<Index>& index();
+  const At<Index>& index() const;
+  At<TableType>& table_type();
+  const At<TableType>& table_type() const;
+  At<MemoryType>& memory_type();
+  const At<MemoryType>& memory_type() const;
+  At<GlobalType>& global_type();
+  const At<GlobalType>& global_type() const;
+  At<EventType>& event_type();
+  const At<EventType>& event_type() const;
 
-  string_view module;
-  string_view name;
-  variant<Index, TableType, MemoryType, GlobalType, EventType> desc;
+  At<string_view> module;
+  At<string_view> name;
+  variant<At<Index>,
+          At<TableType>,
+          At<MemoryType>,
+          At<GlobalType>,
+          At<EventType>>
+      desc;
 };
 
 // Section 3: Function
 
 struct Function {
-  Index type_index;
+  At<Index> type_index;
 };
 
 // Section 4: Table
 
 struct Table {
-  TableType table_type;
+  At<TableType> table_type;
 };
 
 // Section 5: Memory
 
 struct Memory {
-  MemoryType memory_type;
+  At<MemoryType> memory_type;
 };
 
 // Section 6: Global
 
 struct ConstantExpression {
-  Instruction instruction;
+  At<Instruction> instruction;
 };
 
 struct Global {
-  GlobalType global_type;
-  ConstantExpression init;
+  At<GlobalType> global_type;
+  At<ConstantExpression> init;
 };
 
 // Section 7: Export
 
 struct Export {
-  ExternalKind kind;
-  string_view name;
-  Index index;
+  Export(At<ExternalKind>, At<string_view>, At<Index>);
+
+  // Convenience constructor w/ no Location.
+  Export(ExternalKind, string_view, Index);
+
+  At<ExternalKind> kind;
+  At<string_view> name;
+  At<Index> index;
 };
 
 // Section 8: Start
 
 struct Start {
-  Index func_index;
+  At<Index> func_index;
 };
 
 // Section 9: Elem
 
 struct ElementExpression {
-  Instruction instruction;
+  At<Instruction> instruction;
 };
 
 struct ElementSegment {
-  using Indexes = std::vector<Index>;
-  using ElementExpressions = std::vector<ElementExpression>;
+  using Indexes = std::vector<At<Index>>;
+  using ElementExpressions = std::vector<At<ElementExpression>>;
 
   struct IndexesInit {
-    ExternalKind kind;
+    At<ExternalKind> kind;
     Indexes init;
   };
 
   struct ExpressionsInit {
-    ElementType element_type;
+    At<ElementType> element_type;
     ElementExpressions init;
   };
 
   // Active.
-  explicit ElementSegment(Index table_index,
-                          ConstantExpression offset,
-                          ExternalKind,
-                          const std::vector<Index>& init);
-  explicit ElementSegment(Index table_index,
-                          ConstantExpression offset,
-                          ElementType,
+  explicit ElementSegment(At<Index> table_index,
+                          At<ConstantExpression> offset,
+                          At<ExternalKind>,
+                          const Indexes& init);
+  explicit ElementSegment(At<Index> table_index,
+                          At<ConstantExpression> offset,
+                          At<ElementType>,
                           const ElementExpressions& init);
 
   // Passive or declared.
-  explicit ElementSegment(SegmentType, ExternalKind, const Indexes& init);
+  explicit ElementSegment(SegmentType, At<ExternalKind>, const Indexes& init);
   explicit ElementSegment(SegmentType,
-                          ElementType,
+                          At<ElementType>,
                           const ElementExpressions& init);
 
   bool has_indexes() const;
@@ -439,16 +490,16 @@ struct ElementSegment {
   const ExpressionsInit& expressions() const;
 
   SegmentType type;
-  optional<Index> table_index;
-  optional<ConstantExpression> offset;
+  OptAt<Index> table_index;
+  OptAt<ConstantExpression> offset;
   variant<IndexesInit, ExpressionsInit> desc;
 };
 
 // Section 10: Code
 
 struct Locals {
-  Index count;
-  ValueType type;
+  At<Index> count;
+  At<ValueType> type;
 };
 
 struct Expression {
@@ -456,37 +507,37 @@ struct Expression {
 };
 
 struct Code {
-  std::vector<Locals> locals;
-  Expression body;
+  std::vector<At<Locals>> locals;
+  At<Expression> body;
 };
 
 // Section 11: Data
 
 struct DataSegment {
   // Active.
-  explicit DataSegment(Index memory_index,
-                       ConstantExpression offset,
+  explicit DataSegment(OptAt<Index> memory_index,
+                       OptAt<ConstantExpression> offset,
                        SpanU8 init);
 
   // Passive.
   explicit DataSegment(SpanU8 init);
 
   SegmentType type;
-  optional<Index> memory_index;
-  optional<ConstantExpression> offset;
+  OptAt<Index> memory_index;
+  OptAt<ConstantExpression> offset;
   SpanU8 init;
 };
 
 // Section 12: DataCount
 
 struct DataCount {
-  Index count;
+  At<Index> count;
 };
 
 // Section 13: Event
 
 struct Event {
-  EventType event_type;
+  At<EventType> event_type;
 };
 
 #define WASP_TYPES(WASP_V)                \

@@ -31,21 +31,21 @@ void ForEachFunctionName(LazyModule& module, F&& f) {
 
   Index imported_function_count = 0;
   for (auto section : module.sections) {
-    if (section.is_known()) {
-      auto known = section.known();
-      switch (known.id) {
+    if (section->is_known()) {
+      auto known = section->known();
+      switch (known->id) {
         case SectionId::Import:
           for (auto import : ReadImportSection(known, copy.context).sequence) {
-            if (import.kind() == ExternalKind::Function) {
-              f(IndexNamePair{imported_function_count++, import.name});
+            if (import->kind() == ExternalKind::Function) {
+              f(IndexNamePair{imported_function_count++, import->name});
             }
           }
           break;
 
         case SectionId::Export:
           for (auto export_ : ReadExportSection(known, copy.context).sequence) {
-            if (export_.kind == ExternalKind::Function) {
-              f(IndexNamePair{export_.index, export_.name});
+            if (export_->kind == ExternalKind::Function) {
+              f(IndexNamePair{export_->index, export_->name});
             }
           }
           break;
@@ -53,15 +53,15 @@ void ForEachFunctionName(LazyModule& module, F&& f) {
         default:
           break;
       }
-    } else if (section.is_custom()) {
-      auto custom = section.custom();
-      if (custom.name == "name") {
+    } else if (section->is_custom()) {
+      auto custom = section->custom();
+      if (*custom->name == "name") {
         for (auto subsection : ReadNameSection(custom, copy.context)) {
-          if (subsection.id == NameSubsectionId::FunctionNames) {
+          if (subsection->id == NameSubsectionId::FunctionNames) {
             for (auto name_assoc :
-                 ReadFunctionNamesSubsection(subsection, copy.context)
+                 ReadFunctionNamesSubsection(*subsection, copy.context)
                      .sequence) {
-              f(IndexNamePair{name_assoc.index, name_assoc.name});
+              f(IndexNamePair{name_assoc->index, name_assoc->name});
             }
           }
         }
@@ -83,11 +83,11 @@ inline Index GetImportCount(LazyModule& module, ExternalKind kind) {
 
   Index count = 0;
   for (auto section : copy.sections) {
-    if (section.is_known()) {
-      auto known = section.known();
-      if (known.id == SectionId::Import) {
+    if (section->is_known()) {
+      auto known = section->known();
+      if (known->id == SectionId::Import) {
         for (auto import : ReadImportSection(known, copy.context).sequence) {
-          if (import.kind() == kind) {
+          if (import->kind() == kind) {
             count++;
           }
         }

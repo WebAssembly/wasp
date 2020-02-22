@@ -129,7 +129,7 @@ TEST(ReadTest, ReadBytes) {
   SpanU8 copy = data;
   auto result = ReadBytes(&copy, 3, context);
   ExpectNoErrors(errors);
-  EXPECT_EQ(data, result);
+  EXPECT_EQ(data, **result);
   EXPECT_EQ(0u, copy.size());
 }
 
@@ -140,7 +140,7 @@ TEST(ReadTest, ReadBytes_Leftovers) {
   SpanU8 copy = data;
   auto result = ReadBytes(&copy, 2, context);
   ExpectNoErrors(errors);
-  EXPECT_EQ(data.subspan(0, 2), result);
+  EXPECT_EQ(data.subspan(0, 2), **result);
   EXPECT_EQ(1u, copy.size());
 }
 
@@ -745,13 +745,14 @@ TEST(ReadTest, EventType) {
 }
 
 TEST(ReadTest, Export) {
-  ExpectRead<Export>(Export{ExternalKind::Function, "hi", 3},
+  ExpectRead<Export>(Export{ExternalKind::Function, "hi"_sv, 3},
                      "\x02hi\x00\x03"_su8);
-  ExpectRead<Export>(Export{ExternalKind::Table, "", 1000},
+  ExpectRead<Export>(Export{ExternalKind::Table, ""_sv, 1000},
                      "\x00\x01\xe8\x07"_su8);
-  ExpectRead<Export>(Export{ExternalKind::Memory, "mem", 0},
+  ExpectRead<Export>(Export{ExternalKind::Memory, "mem"_sv, 0},
                      "\x03mem\x02\x00"_su8);
-  ExpectRead<Export>(Export{ExternalKind::Global, "g", 1}, "\x01g\x03\x01"_su8);
+  ExpectRead<Export>(Export{ExternalKind::Global, "g"_sv, 1},
+                     "\x01g\x03\x01"_su8);
 }
 
 TEST(ReadTest, Export_PastEnd) {
@@ -774,8 +775,8 @@ TEST(ReadTest, Export_exceptions) {
 
   Features features;
   features.enable_exceptions();
-  ExpectRead<Export>(Export{ExternalKind::Event, "v", 2}, "\x01v\x04\x02"_su8,
-                     features);
+  ExpectRead<Export>(Export{ExternalKind::Event, "v"_sv, 2},
+                     "\x01v\x04\x02"_su8, features);
 }
 
 TEST(ReadTest, ExternalKind) {
@@ -936,19 +937,19 @@ TEST(ReadTest, GlobalType_PastEnd) {
 }
 
 TEST(ReadTest, Import) {
-  ExpectRead<Import>(Import{"a", "func", 11u},
+  ExpectRead<Import>(Import{"a"_sv, "func"_sv, 11u},
                      "\x01\x61\x04\x66unc\x00\x0b"_su8);
 
   ExpectRead<Import>(
-      Import{"b", "table", TableType{Limits{1}, ElementType::Funcref}},
+      Import{"b"_sv, "table"_sv, TableType{Limits{1}, ElementType::Funcref}},
       "\x01\x62\x05table\x01\x70\x00\x01"_su8);
 
-  ExpectRead<Import>(Import{"c", "memory", MemoryType{Limits{0, 2}}},
+  ExpectRead<Import>(Import{"c"_sv, "memory"_sv, MemoryType{Limits{0, 2}}},
                      "\x01\x63\x06memory\x02\x01\x00\x02"_su8);
 
-  ExpectRead<Import>(
-      Import{"d", "global", GlobalType{ValueType::I32, Mutability::Const}},
-      "\x01\x64\x06global\x03\x7f\x00"_su8);
+  ExpectRead<Import>(Import{"d"_sv, "global"_sv,
+                            GlobalType{ValueType::I32, Mutability::Const}},
+                     "\x01\x64\x06global\x03\x7f\x00"_su8);
 }
 
 TEST(ReadTest, Import_exceptions) {
@@ -1006,7 +1007,8 @@ TEST(ReadTest, ImportType_PastEnd) {
 
 TEST(ReadTest, IndirectNameAssoc) {
   ExpectRead<IndirectNameAssoc>(
-      IndirectNameAssoc{100u, {{0u, "zero"}, {1u, "one"}}},
+      IndirectNameAssoc{100u,
+                        {NameAssoc{0u, "zero"_sv}, NameAssoc{1u, "one"_sv}}},
       "\x64"             // Index.
       "\x02"             // Count.
       "\x00\x04zero"     // 0 "zero"
@@ -1761,7 +1763,7 @@ TEST(ReadTest, Mutability_Unknown) {
 }
 
 TEST(ReadTest, NameAssoc) {
-  ExpectRead<NameAssoc>(NameAssoc{2u, "hi"}, "\x02\x02hi"_su8);
+  ExpectRead<NameAssoc>(NameAssoc{2u, "hi"_sv}, "\x02\x02hi"_su8);
 }
 
 TEST(ReadTest, NameAssoc_PastEnd) {
@@ -2588,7 +2590,7 @@ TEST(ReadTest, Section) {
       Section{KnownSection{SectionId::Type, "\x01\x02\x03"_su8}},
       "\x01\x03\x01\x02\x03"_su8);
 
-  ExpectRead<Section>(Section{CustomSection{"name", "\x04\x05\x06"_su8}},
+  ExpectRead<Section>(Section{CustomSection{"name"_sv, "\x04\x05\x06"_su8}},
                       "\x00\x08\x04name\x04\x05\x06"_su8);
 }
 
@@ -2803,7 +2805,7 @@ TEST(ReadTest, ReadVector_u8) {
   SpanU8 copy = data;
   auto result = ReadVector<u8>(&copy, context, "test");
   ExpectNoErrors(errors);
-  EXPECT_EQ((std::vector<u8>{'h', 'e', 'l', 'l', 'o'}), result);
+  EXPECT_EQ((std::vector<At<u8>>{'h', 'e', 'l', 'l', 'o'}), result);
   EXPECT_EQ(0u, copy.size());
 }
 
@@ -2818,7 +2820,7 @@ TEST(ReadTest, ReadVector_u32) {
   SpanU8 copy = data;
   auto result = ReadVector<u32>(&copy, context, "test");
   ExpectNoErrors(errors);
-  EXPECT_EQ((std::vector<u32>{5, 128, 206412}), result);
+  EXPECT_EQ((std::vector<At<u32>>{5, 128, 206412}), result);
   EXPECT_EQ(0u, copy.size());
 }
 

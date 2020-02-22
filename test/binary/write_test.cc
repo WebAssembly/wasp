@@ -193,14 +193,15 @@ TEST(WriteTest, EventType) {
 
 TEST(WriteTest, Export) {
   ExpectWrite<Export>("\x02hi\x00\x03"_su8,
-                      Export{ExternalKind::Function, "hi", 3});
+                      Export{ExternalKind::Function, "hi"_sv, 3});
   ExpectWrite<Export>("\x00\x01\xe8\x07"_su8,
-                      Export{ExternalKind::Table, "", 1000});
+                      Export{ExternalKind::Table, ""_sv, 1000});
   ExpectWrite<Export>("\x03mem\x02\x00"_su8,
-                      Export{ExternalKind::Memory, "mem", 0});
+                      Export{ExternalKind::Memory, "mem"_sv, 0});
   ExpectWrite<Export>("\x01g\x03\x01"_su8,
-                      Export{ExternalKind::Global, "g", 1});
-  ExpectWrite<Export>("\x01v\x04\x02"_su8, Export{ExternalKind::Event, "v", 2});
+                      Export{ExternalKind::Global, "g"_sv, 1});
+  ExpectWrite<Export>("\x01v\x04\x02"_su8,
+                      Export{ExternalKind::Event, "v"_sv, 2});
 }
 
 TEST(WriteTest, ExternalKind) {

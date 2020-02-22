@@ -377,8 +377,8 @@ bool PopAndPushTypes(StackTypeSpan param_types,
 bool PopAndPushTypes(const FunctionType& function_type,
                      Context& context,
                      Errors& errors) {
-  return PopAndPushTypes(ToStackTypeSpan(function_type.param_types),
-                         ToStackTypeSpan(function_type.result_types), context,
+  return PopAndPushTypes(ToStackTypes(function_type.param_types),
+                         ToStackTypes(function_type.result_types), context,
                          errors);
 }
 
@@ -401,8 +401,8 @@ bool PushLabel(LabelType label_type,
                const FunctionType& type,
                Context& context,
                Errors& errors) {
-  auto stack_param_types = ToStackTypeSpan(type.param_types);
-  auto stack_result_types = ToStackTypeSpan(type.result_types);
+  auto stack_param_types = ToStackTypes(type.param_types);
+  auto stack_result_types = ToStackTypes(type.result_types);
   bool valid = PopTypes(stack_param_types, context, errors);
   context.label_stack.emplace_back(label_type, stack_param_types,
                                    stack_result_types,
@@ -581,7 +581,7 @@ bool SelectT(const ValueTypes& value_types, Context& context, Errors& errors) {
         value_types.size()));
     return false;
   }
-  StackTypeSpan stack_types = ToStackTypeSpan(value_types);
+  StackTypes stack_types = ToStackTypes(value_types);
   StackType type = stack_types[0];
   const StackType pop_types[] = {type, type};
   const StackType push_type[] = {type};
@@ -608,7 +608,7 @@ bool LocalTee(Index index, Context& context, Errors& errors) {
 
 bool GlobalGet(Index index, Context& context, Errors& errors) {
   auto global_type = GetGlobalType(index, context, errors);
-  PushType(StackType(MaybeDefault(global_type).valtype), context);
+  PushType(StackType(*MaybeDefault(global_type).valtype), context);
   return AllTrue(global_type);
 }
 
@@ -621,7 +621,7 @@ bool GlobalSet(Index index, Context& context, Errors& errors) {
         format("global.set is invalid on immutable global {}", index));
     valid = false;
   }
-  return AllTrue(valid, PopType(StackType(type.valtype), context, errors));
+  return AllTrue(valid, PopType(StackType(*type.valtype), context, errors));
 }
 
 bool TableGet(Index index, Context& context, Errors& errors) {
@@ -640,7 +640,7 @@ bool TableSet(Index index, Context& context, Errors& errors) {
 bool CheckAlignment(const Instruction& instruction,
                     u32 max_align,
                     Errors& errors) {
-  if (instruction.mem_arg_immediate().align_log2 > max_align) {
+  if (instruction.mem_arg_immediate()->align_log2 > max_align) {
     errors.OnError(format("Invalid alignment {}", instruction));
     return false;
   }
@@ -791,7 +791,7 @@ bool TableFill(Index index, Context& context, Errors& errors) {
 bool CheckAtomicAlignment(const Instruction& instruction,
                           u32 align,
                           Errors& errors) {
-  if (instruction.mem_arg_immediate().align_log2 != align) {
+  if (instruction.mem_arg_immediate()->align_log2 != align) {
     errors.OnError(format("Invalid atomic alignment {}", instruction));
     return false;
   }
@@ -801,7 +801,7 @@ bool CheckAtomicAlignment(const Instruction& instruction,
 bool CheckSharedMemory(const Instruction& instruction,
                        const optional<MemoryType>& memory_type,
                        Errors& errors) {
-  if (memory_type && memory_type->limits.shared == Shared::No) {
+  if (memory_type && memory_type->limits->shared == Shared::No) {
     errors.OnError(format("Memory must be shared for {}", instruction));
     return false;
   }
@@ -977,10 +977,10 @@ bool ReturnCall(Index function_index, Context& context, Errors& errors) {
   auto function_type =
       GetFunctionType(MaybeDefault(function).type_index, context, errors);
   auto* label = GetLabel(context.label_stack.size() - 1, context, errors);
-  bool valid = CheckResultTypes(
-      ToStackTypeSpan(MaybeDefault(function_type).result_types),
-      MaybeDefault(label).br_types(), errors);
-  valid &= PopTypes(ToStackTypeSpan(MaybeDefault(function_type).param_types),
+  bool valid =
+      CheckResultTypes(ToStackTypes(MaybeDefault(function_type).result_types),
+                       MaybeDefault(label).br_types(), errors);
+  valid &= PopTypes(ToStackTypes(MaybeDefault(function_type).param_types),
                     context, errors);
   SetUnreachable(context);
   return AllTrue(function, function_type, valid);
@@ -992,11 +992,11 @@ bool ReturnCallIndirect(const CallIndirectImmediate& immediate,
   auto table_type = GetTableType(0, context, errors);
   auto function_type = GetFunctionType(immediate.index, context, errors);
   auto* label = GetLabel(context.label_stack.size() - 1, context, errors);
-  bool valid = CheckResultTypes(
-      ToStackTypeSpan(MaybeDefault(function_type).result_types),
-      MaybeDefault(label).br_types(), errors);
+  bool valid =
+      CheckResultTypes(ToStackTypes(MaybeDefault(function_type).result_types),
+                       MaybeDefault(label).br_types(), errors);
   valid &= PopType(StackType::I32, context, errors);
-  valid &= PopTypes(ToStackTypeSpan(MaybeDefault(function_type).param_types),
+  valid &= PopTypes(ToStackTypes(MaybeDefault(function_type).param_types),
                     context, errors);
   SetUnreachable(context);
   return AllTrue(table_type, function_type, valid);
@@ -1006,9 +1006,8 @@ bool Throw(Index index, Context& context, Errors& errors) {
   auto event_type = GetEventType(index, context, errors);
   auto function_type =
       GetFunctionType(MaybeDefault(event_type).type_index, context, errors);
-  bool valid =
-      PopTypes(ToStackTypeSpan(MaybeDefault(function_type).param_types),
-               context, errors);
+  bool valid = PopTypes(ToStackTypes(MaybeDefault(function_type).param_types),
+                        context, errors);
   SetUnreachable(context);
   return AllTrue(event_type, function_type, valid);
 }
@@ -1026,9 +1025,8 @@ bool BrOnExn(const BrOnExnImmediate& immediate,
   auto function_type =
       GetFunctionType(MaybeDefault(event_type).type_index, context, errors);
   auto* label = GetLabel(immediate.target, context, errors);
-  bool valid =
-      TypesMatch(ToStackTypeSpan(MaybeDefault(function_type).param_types),
-                 MaybeDefault(label).br_types());
+  bool valid = TypesMatch(ToStackTypes(MaybeDefault(function_type).param_types),
+                          MaybeDefault(label).br_types());
   valid &= PopAndPushTypes(span_exnref, span_exnref, context, errors);
   return AllTrue(event_type, function_type, label, valid);
 }

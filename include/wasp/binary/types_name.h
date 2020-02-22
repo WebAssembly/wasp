@@ -20,6 +20,7 @@
 #include <functional>
 #include <vector>
 
+#include "wasp/base/at.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
@@ -34,19 +35,19 @@ enum class NameSubsectionId : u8 {
 };
 
 struct NameSubsection {
-  NameSubsectionId id;
+  At<NameSubsectionId> id;
   SpanU8 data;
 };
 
 struct NameAssoc {
-  Index index;
-  string_view name;
+  At<Index> index;
+  At<string_view> name;
 };
 
-using NameMap = std::vector<NameAssoc>;
+using NameMap = std::vector<At<NameAssoc>>;
 
 struct IndirectNameAssoc {
-  Index index;
+  At<Index> index;
   NameMap name_map;
 };
 

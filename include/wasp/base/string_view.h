@@ -38,6 +38,10 @@ using nonstd::operator>=;
 
 using nonstd::operator<<;
 
+inline string_view operator ""_sv(const char* str, size_t N) {
+  return string_view{str, N};
+}
+
 }  // namespace wasp
 
 #endif  // WASP_BASE_STRING_VIEW_H_

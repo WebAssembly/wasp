@@ -121,16 +121,16 @@ void Tool::DoPrepass() {
 
 void Tool::CalculateCallGraph() {
   for (auto section : module.sections) {
-    if (section.is_known()) {
-      auto known = section.known();
-      if (known.id == SectionId::Code) {
+    if (section->is_known()) {
+      auto known = section->known();
+      if (known->id == SectionId::Code) {
         auto section = ReadCodeSection(known, module.context);
         for (auto code : enumerate(section.sequence, imported_function_count)) {
           for (const auto& instr :
-               ReadExpression(code.value.body, module.context)) {
-            if (instr.opcode == Opcode::Call) {
-              assert(instr.has_index_immediate());
-              auto callee_index = instr.index_immediate();
+               ReadExpression(code.value->body, module.context)) {
+            if (instr->opcode == Opcode::Call) {
+              assert(instr->has_index_immediate());
+              auto callee_index = instr->index_immediate();
               call_graph.insert(std::make_pair(code.index, callee_index));
             }
           }

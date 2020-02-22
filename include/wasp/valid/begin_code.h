@@ -45,10 +45,10 @@ inline bool BeginCode(Context& context,
   // Don't validate the index, should have already been validated at this point.
   if (function.type_index < context.types.size()) {
     const binary::TypeEntry& type_entry = context.types[function.type_index];
-    context.AppendLocals(type_entry.type.param_types);
+    context.AppendLocals(type_entry.type->param_types);
     context.label_stack.push_back(
-        Label{LabelType::Function, ToStackTypeSpan(type_entry.type.param_types),
-              ToStackTypeSpan(type_entry.type.result_types), 0});
+        Label{LabelType::Function, ToStackTypes(type_entry.type->param_types),
+              ToStackTypes(type_entry.type->result_types), 0});
     return true;
   } else {
     // Not valid, but try to continue anyway.

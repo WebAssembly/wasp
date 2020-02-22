@@ -33,7 +33,7 @@ class LazySection {
  public:
   explicit LazySection(SpanU8, string_view name, Context&);
 
-  optional<Index> count;
+  OptAt<Index> count;
   LazySequence<T> sequence;
 };
 

@@ -41,44 +41,44 @@ inline bool Import::is_event() const {
   return kind() == ExternalKind::Event;
 }
 
-inline Index& Import::index() {
-  return get<Index>(desc);
+inline At<Index>& Import::index() {
+  return get<At<Index>>(desc);
 }
 
-inline const Index& Import::index() const {
-  return get<Index>(desc);
+inline const At<Index>& Import::index() const {
+  return get<At<Index>>(desc);
 }
 
-inline TableType& Import::table_type() {
-  return get<TableType>(desc);
+inline At<TableType>& Import::table_type() {
+  return get<At<TableType>>(desc);
 }
 
-inline const TableType& Import::table_type() const {
-  return get<TableType>(desc);
+inline const At<TableType>& Import::table_type() const {
+  return get<At<TableType>>(desc);
 }
 
-inline MemoryType& Import::memory_type() {
-  return get<MemoryType>(desc);
+inline At<MemoryType>& Import::memory_type() {
+  return get<At<MemoryType>>(desc);
 }
 
-inline const MemoryType& Import::memory_type() const {
-  return get<MemoryType>(desc);
+inline const At<MemoryType>& Import::memory_type() const {
+  return get<At<MemoryType>>(desc);
 }
 
-inline GlobalType& Import::global_type() {
-  return get<GlobalType>(desc);
+inline At<GlobalType>& Import::global_type() {
+  return get<At<GlobalType>>(desc);
 }
 
-inline const GlobalType& Import::global_type() const {
-  return get<GlobalType>(desc);
+inline const At<GlobalType>& Import::global_type() const {
+  return get<At<GlobalType>>(desc);
 }
 
-inline EventType& Import::event_type() {
-  return get<EventType>(desc);
+inline At<EventType>& Import::event_type() {
+  return get<At<EventType>>(desc);
 }
 
-inline const EventType& Import::event_type() const {
-  return get<EventType>(desc);
+inline const At<EventType>& Import::event_type() const {
+  return get<At<EventType>>(desc);
 }
 
 }  // namespace binary

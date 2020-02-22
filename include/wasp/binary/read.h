@@ -19,6 +19,7 @@
 
 #include <utility>
 
+#include "wasp/base/at.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
@@ -38,133 +39,135 @@ template <typename T>
 struct Tag {};
 
 template <typename T, typename... Args>
-optional<T> Read(SpanU8* data, Context& context, Args&&... args) {
+OptAt<T> Read(SpanU8* data, Context& context, Args&&... args) {
   return Read(data, context, Tag<T>{}, std::forward<Args>(args)...);
 }
 
-optional<BlockType> Read(SpanU8*, Context&, Tag<BlockType>);
+OptAt<BlockType> Read(SpanU8*, Context&, Tag<BlockType>);
 
-optional<BrOnExnImmediate> Read(SpanU8*, Context&, Tag<BrOnExnImmediate>);
+OptAt<BrOnExnImmediate> Read(SpanU8*, Context&, Tag<BrOnExnImmediate>);
 
-optional<BrTableImmediate> Read(SpanU8*, Context&, Tag<BrTableImmediate>);
+OptAt<BrTableImmediate> Read(SpanU8*, Context&, Tag<BrTableImmediate>);
 
-optional<SpanU8> ReadBytesExpected(SpanU8* data,
-                                   SpanU8 expected,
-                                   Context&,
-                                   string_view desc);
-
-optional<SpanU8> ReadBytes(SpanU8* data, SpanU8::index_type N, Context&);
-
-optional<CallIndirectImmediate> Read(SpanU8*,
-                                     Context&,
-                                     Tag<CallIndirectImmediate>);
-
-optional<Index> ReadCheckLength(SpanU8*,
+OptAt<SpanU8> ReadBytesExpected(SpanU8* data,
+                                SpanU8 expected,
                                 Context&,
-                                string_view context_name,
-                                string_view error_name);
+                                string_view desc);
 
-optional<Code> Read(SpanU8*, Context&, Tag<Code>);
+OptAt<SpanU8> ReadBytes(SpanU8* data, SpanU8::index_type N, Context&);
 
-optional<ConstantExpression> Read(SpanU8*, Context&, Tag<ConstantExpression>);
+OptAt<CallIndirectImmediate> Read(SpanU8*,
+                                  Context&,
+                                  Tag<CallIndirectImmediate>);
 
-optional<CopyImmediate> Read(SpanU8* data,
-                             Context&,
-                             Tag<CopyImmediate>,
-                             BulkImmediateKind);
+OptAt<Index> ReadCheckLength(SpanU8*,
+                          Context&,
+                          string_view context_name,
+                          string_view error_name);
 
-optional<Index> ReadCount(SpanU8*, Context&);
+OptAt<Code> Read(SpanU8*, Context&, Tag<Code>);
 
-optional<DataCount> Read(SpanU8*, Context&, Tag<DataCount>);
+OptAt<ConstantExpression> Read(SpanU8*, Context&, Tag<ConstantExpression>);
 
-optional<DataSegment> Read(SpanU8*, Context&, Tag<DataSegment>);
+OptAt<CopyImmediate> Read(SpanU8* data,
+                       Context&,
+                       Tag<CopyImmediate>,
+                       BulkImmediateKind);
 
-optional<ElementExpression> Read(SpanU8*, Context&, Tag<ElementExpression>);
+OptAt<Index> ReadCount(SpanU8*, Context&);
 
-optional<ElementSegment> Read(SpanU8*, Context&, Tag<ElementSegment>);
+OptAt<DataCount> Read(SpanU8*, Context&, Tag<DataCount>);
 
-optional<ElementType> Read(SpanU8*, Context&, Tag<ElementType>);
+OptAt<DataSegment> Read(SpanU8*, Context&, Tag<DataSegment>);
 
-optional<Event> Read(SpanU8*, Context&, Tag<Event>);
+OptAt<ElementExpression> Read(SpanU8*, Context&, Tag<ElementExpression>);
 
-optional<EventAttribute> Read(SpanU8*, Context&, Tag<EventAttribute>);
+OptAt<ElementSegment> Read(SpanU8*, Context&, Tag<ElementSegment>);
 
-optional<EventType> Read(SpanU8*, Context&, Tag<EventType>);
+OptAt<ElementType> Read(SpanU8*, Context&, Tag<ElementType>);
 
-optional<Export> Read(SpanU8*, Context&, Tag<Export>);
+OptAt<Event> Read(SpanU8*, Context&, Tag<Event>);
 
-optional<ExternalKind> Read(SpanU8*, Context&, Tag<ExternalKind>);
+OptAt<EventAttribute> Read(SpanU8*, Context&, Tag<EventAttribute>);
 
-optional<f32> Read(SpanU8*, Context&, Tag<f32>);
+OptAt<EventType> Read(SpanU8*, Context&, Tag<EventType>);
 
-optional<f64> Read(SpanU8*, Context&, Tag<f64>);
+OptAt<Export> Read(SpanU8*, Context&, Tag<Export>);
 
-optional<Function> Read(SpanU8*, Context&, Tag<Function>);
+OptAt<ExternalKind> Read(SpanU8*, Context&, Tag<ExternalKind>);
 
-optional<FunctionType> Read(SpanU8*, Context&, Tag<FunctionType>);
+OptAt<f32> Read(SpanU8*, Context&, Tag<f32>);
 
-optional<Global> Read(SpanU8*, Context&, Tag<Global>);
+OptAt<f64> Read(SpanU8*, Context&, Tag<f64>);
 
-optional<GlobalType> Read(SpanU8*, Context&, Tag<GlobalType>);
+OptAt<Function> Read(SpanU8*, Context&, Tag<Function>);
 
-optional<Import> Read(SpanU8*, Context&, Tag<Import>);
+OptAt<FunctionType> Read(SpanU8*, Context&, Tag<FunctionType>);
 
-optional<Index> ReadIndex(SpanU8*, Context&, string_view desc);
+OptAt<Global> Read(SpanU8*, Context&, Tag<Global>);
 
-optional<InitImmediate> Read(SpanU8*,
-                             Context&,
-                             Tag<InitImmediate>,
-                             BulkImmediateKind);
+OptAt<GlobalType> Read(SpanU8*, Context&, Tag<GlobalType>);
 
-optional<Instruction> Read(SpanU8*, Context&, Tag<Instruction>);
+OptAt<Import> Read(SpanU8*, Context&, Tag<Import>);
 
-optional<Index> ReadLength(SpanU8*, Context&);
+OptAt<Index> ReadIndex(SpanU8*, Context&, string_view desc);
 
-optional<Limits> Read(SpanU8*, Context&, Tag<Limits>);
+OptAt<InitImmediate> Read(SpanU8*,
+                          Context&,
+                          Tag<InitImmediate>,
+                          BulkImmediateKind);
 
-optional<Locals> Read(SpanU8*, Context&, Tag<Locals>);
+OptAt<Instruction> Read(SpanU8*, Context&, Tag<Instruction>);
 
-optional<MemArgImmediate> Read(SpanU8*, Context&, Tag<MemArgImmediate>);
+OptAt<Index> ReadLength(SpanU8*, Context&);
 
-optional<Memory> Read(SpanU8*, Context&, Tag<Memory>);
+OptAt<Limits> Read(SpanU8*, Context&, Tag<Limits>);
 
-optional<MemoryType> Read(SpanU8*, Context&, Tag<MemoryType>);
+OptAt<Locals> Read(SpanU8*, Context&, Tag<Locals>);
 
-optional<Mutability> Read(SpanU8*, Context&, Tag<Mutability>);
+OptAt<MemArgImmediate> Read(SpanU8*, Context&, Tag<MemArgImmediate>);
 
-optional<Opcode> Read(SpanU8*, Context&, Tag<Opcode>);
+OptAt<Memory> Read(SpanU8*, Context&, Tag<Memory>);
 
-optional<u8> ReadReserved(SpanU8*, Context&);
+OptAt<MemoryType> Read(SpanU8*, Context&, Tag<MemoryType>);
 
-optional<s32> Read(SpanU8*, Context&, Tag<s32>);
+OptAt<Mutability> Read(SpanU8*, Context&, Tag<Mutability>);
 
-optional<s64> Read(SpanU8*, Context&, Tag<s64>);
+OptAt<Opcode> Read(SpanU8*, Context&, Tag<Opcode>);
 
-optional<Section> Read(SpanU8*, Context&, Tag<Section>);
+OptAt<u8> ReadReserved(SpanU8*, Context&);
 
-optional<SectionId> Read(SpanU8*, Context&, Tag<SectionId>);
+OptAt<Index> ReadReservedIndex(SpanU8*, Context&);
 
-optional<ShuffleImmediate> Read(SpanU8*, Context&, Tag<ShuffleImmediate>);
+OptAt<s32> Read(SpanU8*, Context&, Tag<s32>);
 
-optional<Start> Read(SpanU8*, Context&, Tag<Start>);
+OptAt<s64> Read(SpanU8*, Context&, Tag<s64>);
 
-optional<string_view> ReadString(SpanU8*, Context&, string_view desc);
+OptAt<Section> Read(SpanU8*, Context&, Tag<Section>);
 
-optional<string_view> ReadUtf8String(SpanU8*, Context&, string_view desc);
+OptAt<SectionId> Read(SpanU8*, Context&, Tag<SectionId>);
 
-optional<Table> Read(SpanU8*, Context&, Tag<Table>);
+OptAt<ShuffleImmediate> Read(SpanU8*, Context&, Tag<ShuffleImmediate>);
 
-optional<TableType> Read(SpanU8*, Context&, Tag<TableType>);
+OptAt<Start> Read(SpanU8*, Context&, Tag<Start>);
 
-optional<TypeEntry> Read(SpanU8*, Context&, Tag<TypeEntry>);
+OptAt<string_view> ReadString(SpanU8*, Context&, string_view desc);
 
-optional<u32> Read(SpanU8*, Context&, Tag<u32>);
+OptAt<string_view> ReadUtf8String(SpanU8*, Context&, string_view desc);
 
-optional<u8> Read(SpanU8*, Context&, Tag<u8>);
+OptAt<Table> Read(SpanU8*, Context&, Tag<Table>);
 
-optional<v128> Read(SpanU8*, Context&, Tag<v128>);
+OptAt<TableType> Read(SpanU8*, Context&, Tag<TableType>);
 
-optional<ValueType> Read(SpanU8*, Context&, Tag<ValueType>);
+OptAt<TypeEntry> Read(SpanU8*, Context&, Tag<TypeEntry>);
+
+OptAt<u32> Read(SpanU8*, Context&, Tag<u32>);
+
+OptAt<u8> Read(SpanU8*, Context&, Tag<u8>);
+
+OptAt<v128> Read(SpanU8*, Context&, Tag<v128>);
+
+OptAt<ValueType> Read(SpanU8*, Context&, Tag<ValueType>);
 
 }  // namespace binary
 }  // namespace wasp

@@ -20,6 +20,7 @@
 #include <functional>
 #include <vector>
 
+#include "wasp/base/at.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
@@ -59,45 +60,45 @@ enum class SymbolInfoKind : u8 {
 // Relocation section
 //
 struct RelocationEntry {
-  RelocationType type;
-  u32 offset;
-  Index index;
-  optional<s32> addend;
+  At<RelocationType> type;
+  At<u32> offset;
+  At<Index> index;
+  OptAt<s32> addend;
 };
 
 // Linking section
 
 struct LinkingSubsection {
-  LinkingSubsectionId id;
+  At<LinkingSubsectionId> id;
   SpanU8 data;
 };
 
 // Subsection 5: SegmentInfo
 
 struct SegmentInfo {
-  string_view name;
-  u32 align_log2;
-  u32 flags;
+  At<string_view> name;
+  At<u32> align_log2;
+  At<u32> flags;
 };
 
 // Subsection 6: InitFunctions
 
 struct InitFunction {
-  u32 priority;
-  Index index;  // Symbol index.
+  At<u32> priority;
+  At<Index> index;  // Symbol index.
 };
 
 // Subsection 7: ComdatInfo
 
 struct ComdatSymbol {
-  ComdatSymbolKind kind;
-  Index index;
+  At<ComdatSymbolKind> kind;
+  At<Index> index;
 };
 
 struct Comdat {
-  string_view name;
-  u32 flags;
-  std::vector<ComdatSymbol> symbols;
+  At<string_view> name;
+  At<u32> flags;
+  std::vector<At<ComdatSymbol>> symbols;
 };
 
 // Subsection 8: SymbolTable
@@ -109,41 +110,41 @@ struct SymbolInfo {
     enum class Undefined { No, Yes };
     enum class ExplicitName { No, Yes };
 
-    Binding binding;
-    Visibility visibility;
-    Undefined undefined;
-    ExplicitName explicit_name;
+    At<Binding> binding;
+    At<Visibility> visibility;
+    At<Undefined> undefined;
+    At<ExplicitName> explicit_name;
   };
 
   struct Base {
-    SymbolInfoKind kind;
-    Index index;
-    optional<string_view> name;
+    At<SymbolInfoKind> kind;
+    At<Index> index;
+    OptAt<string_view> name;
   };
 
   struct Data {
-    string_view name;
+    At<string_view> name;
 
     struct Defined {
-      Index index;
-      u32 offset;
-      u32 size;
+      At<Index> index;
+      At<u32> offset;
+      At<u32> size;
     };
     optional<Defined> defined;
   };
 
   struct Section {
-    u32 section;
+    At<u32> section;
   };
 
   // Function, Global and Event symbols.
-  SymbolInfo(Flags, const Base&);
+  SymbolInfo(At<Flags>, const Base&);
 
   // Data symbols.
-  SymbolInfo(Flags, const Data&);
+  SymbolInfo(At<Flags>, const Data&);
 
   // Section symbols.
-  SymbolInfo(Flags, const Section&);
+  SymbolInfo(At<Flags>, const Section&);
 
   SymbolInfoKind kind() const;
   bool is_base() const;
@@ -159,7 +160,7 @@ struct SymbolInfo {
 
   optional<string_view> name() const;
 
-  Flags flags;
+  At<Flags> flags;
   variant<Base, Data, Section> desc;
 };
 

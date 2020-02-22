@@ -37,15 +37,12 @@ enum class StackType : s32 {
 using StackTypes = std::vector<StackType>;
 using StackTypeSpan = span<const StackType>;
 
-inline StackTypeSpan ToStackTypeSpan(span<const binary::ValueType> span) {
-  // StackTypes are extensions of ValueTypes, so it's safe to reinterpret_cast.
-  return StackTypeSpan{reinterpret_cast<const StackType*>(span.data()),
-                       span.size()};
-}
-
-inline StackTypes ToStackTypes(binary::ValueTypes value_types) {
-  auto span = ToStackTypeSpan(value_types);
-  return {span.begin(), span.end()};
+inline StackTypes ToStackTypes(const binary::ValueTypes& value_types) {
+  StackTypes result;
+  for (auto value_type : value_types) {
+    result.push_back(StackType(s32(*value_type)));
+  }
+  return result;
 }
 
 }  // namespace valid

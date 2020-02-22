@@ -35,6 +35,7 @@ include_directories(
 )
 
 add_library(wasplib
+  src/base/at.cc
   src/base/features.cc
   src/base/file.cc
   src/base/span.cc

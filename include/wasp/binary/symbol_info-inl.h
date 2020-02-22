@@ -22,7 +22,7 @@ namespace binary {
 inline SymbolInfoKind SymbolInfo::kind() const {
   switch (desc.index()) {
     case 0:
-      return base().kind;
+      return *base().kind;
     case 1:
       return SymbolInfoKind::Data;
     case 2:
@@ -70,9 +70,9 @@ inline const SymbolInfo::Section& SymbolInfo::section() const {
 
 inline optional<string_view> SymbolInfo::name() const {
   if (is_base()) {
-    return base().name;
+    return base().name.value();
   } else if (is_data()) {
-    return data().name;
+    return data().name.value();
   } else {
     return nullopt;
   }

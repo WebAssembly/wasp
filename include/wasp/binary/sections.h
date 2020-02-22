@@ -36,9 +36,9 @@ using LazyMemorySection = LazySection<Memory>;
 using LazyGlobalSection = LazySection<Global>;
 using LazyEventSection = LazySection<Event>;
 using LazyExportSection = LazySection<Export>;
-using StartSection = optional<Start>;
+using StartSection = OptAt<Start>;
 using LazyElementSection = LazySection<ElementSegment>;
-using DataCountSection = optional<DataCount>;
+using DataCountSection = OptAt<DataCount>;
 using LazyCodeSection = LazySection<Code>;
 using LazyDataSection = LazySection<DataSegment>;
 

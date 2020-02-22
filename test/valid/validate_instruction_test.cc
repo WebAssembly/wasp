@@ -1015,8 +1015,8 @@ TEST_F(ValidateInstructionTest, Call_Void_Void) {
 }
 
 TEST_F(ValidateInstructionTest, Call_Params) {
-  auto param_types = {VT::I32, VT::F32};
-  auto result_types = {VT::F64};
+  ValueTypes param_types{VT::I32, VT::F32};
+  ValueTypes result_types{VT::F64};
   auto index = AddFunction(FunctionType{param_types, result_types});
   TestSignature(I{O::Call, Index{index}}, param_types, result_types);
 }
@@ -1037,8 +1037,8 @@ TEST_F(ValidateInstructionTest, Call_TypeIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, Call_MultiResult) {
-  auto param_types = {VT::F32};
-  auto result_types = {VT::I32, VT::I32};
+  ValueTypes param_types{VT::F32};
+  ValueTypes result_types{VT::I32, VT::I32};
   auto index = AddFunction(FunctionType{param_types, result_types});
   TestSignature(I{O::Call, Index{index}}, param_types, result_types);
 }

@@ -39,7 +39,8 @@ void ExpectRead(const T& expected,
   auto result =
       wasp::binary::Read<T>(&data, context, std::forward<Args>(args)...);
   wasp::binary::test::ExpectNoErrors(errors);
-  EXPECT_EQ(expected, result);
+  EXPECT_NE(nullptr, result->loc());
+  EXPECT_EQ(expected, **result);
   EXPECT_EQ(0u, data.size());
 }
 

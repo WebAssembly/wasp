@@ -801,8 +801,8 @@ typename Ctx::iterator formatter<::wasp::binary::SymbolInfo>::format(
     const ::wasp::binary::SymbolInfo& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{{{} {} {} {}", self.flags.binding, self.flags.visibility,
-            self.flags.undefined, self.flags.explicit_name);
+  format_to(buf, "{{{} {} {} {}", self.flags->binding, self.flags->visibility,
+            self.flags->undefined, self.flags->explicit_name);
 
   if (self.is_base()) {
     const auto& base = self.base();

@@ -22,8 +22,8 @@
 namespace wasp {
 namespace binary {
 
-DataSegment::DataSegment(Index memory_index,
-                         ConstantExpression offset,
+DataSegment::DataSegment(OptAt<Index> memory_index,
+                         OptAt<ConstantExpression> offset,
                          SpanU8 init)
     : type{SegmentType::Active},
       memory_index{memory_index},
@@ -33,18 +33,18 @@ DataSegment::DataSegment(Index memory_index,
 DataSegment::DataSegment(SpanU8 init)
     : type{SegmentType::Passive}, init{init} {}
 
-ElementSegment::ElementSegment(Index table_index,
-                               ConstantExpression offset,
-                               ExternalKind kind,
-                               const std::vector<Index>& init)
+ElementSegment::ElementSegment(At<Index> table_index,
+                               At<ConstantExpression> offset,
+                               At<ExternalKind> kind,
+                               const Indexes& init)
     : type{SegmentType::Active},
       table_index{table_index},
       offset{offset},
       desc{IndexesInit{kind, init}} {}
 
-ElementSegment::ElementSegment(Index table_index,
-                               ConstantExpression offset,
-                               ElementType element_type,
+ElementSegment::ElementSegment(At<Index> table_index,
+                               At<ConstantExpression> offset,
+                               At<ElementType> element_type,
                                const ElementExpressions& init)
     : type{SegmentType::Active},
       table_index{table_index},
@@ -52,16 +52,110 @@ ElementSegment::ElementSegment(Index table_index,
       desc{ExpressionsInit{element_type, init}} {}
 
 ElementSegment::ElementSegment(SegmentType type,
-                               ExternalKind kind,
+                               At<ExternalKind> kind,
                                const Indexes& init)
     : type{type}, desc{IndexesInit{kind, init}} {
   assert(type == SegmentType::Passive || type == SegmentType::Active);
 }
 
 ElementSegment::ElementSegment(SegmentType type,
-                               ElementType element_type,
+                               At<ElementType> element_type,
                                const ElementExpressions& init)
     : type{type}, desc{ExpressionsInit{element_type, init}} {}
+
+Export::Export(At<ExternalKind> kind, At<string_view> name, At<Index> index)
+    : kind{kind}, name{name}, index{index} {}
+
+Export::Export(ExternalKind kind, string_view name, Index index)
+    : kind{kind}, name{name}, index{index} {}
+
+Import::Import(At<string_view> module, At<string_view> name, At<Index> desc)
+    : module{module}, name{name}, desc{desc} {}
+
+Import::Import(At<string_view> module, At<string_view> name, At<TableType> desc)
+    : module{module}, name{name}, desc{desc} {}
+
+Import::Import(At<string_view> module,
+               At<string_view> name,
+               At<MemoryType> desc)
+    : module{module}, name{name}, desc{desc} {}
+
+Import::Import(At<string_view> module,
+               At<string_view> name,
+               At<GlobalType> desc)
+    : module{module}, name{name}, desc{desc} {}
+
+Import::Import(At<string_view> module, At<string_view> name, At<EventType> desc)
+    : module{module}, name{name}, desc{desc} {}
+
+Import::Import(string_view module, string_view name, Index desc)
+    : module{module}, name{name}, desc{desc} {}
+
+Import::Import(string_view module, string_view name, TableType desc)
+    : module{module}, name{name}, desc{desc} {}
+
+Import::Import(string_view module, string_view name, MemoryType desc)
+    : module{module}, name{name}, desc{desc} {}
+
+Import::Import(string_view module, string_view name, GlobalType desc)
+    : module{module}, name{name}, desc{desc} {}
+
+Import::Import(string_view module, string_view name, EventType desc)
+    : module{module}, name{name}, desc{desc} {}
+
+Instruction::Instruction(At<Opcode> opcode)
+    : opcode(opcode), immediate(EmptyImmediate{}) {}
+
+Instruction::Instruction(At<Opcode> opcode, EmptyImmediate immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<BlockType> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<Index> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<CallIndirectImmediate> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<BrTableImmediate> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<BrOnExnImmediate> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<u8> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<MemArgImmediate> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<s32> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<s64> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<f32> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<f64> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<v128> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<InitImmediate> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<CopyImmediate> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<ShuffleImmediate> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, const ValueTypes& immediate)
+    : opcode(opcode), immediate(immediate) {}
 
 Instruction::Instruction(Opcode opcode)
     : opcode(opcode), immediate(EmptyImmediate{}) {}
@@ -70,60 +164,68 @@ Instruction::Instruction(Opcode opcode, EmptyImmediate immediate)
     : opcode(opcode), immediate(immediate) {}
 
 Instruction::Instruction(Opcode opcode, BlockType immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, Index immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, CallIndirectImmediate immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, BrTableImmediate immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, BrOnExnImmediate immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, u8 immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, MemArgImmediate immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, s32 immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, s64 immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, f32 immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, f64 immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, v128 immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, InitImmediate immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, CopyImmediate immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, ShuffleImmediate immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, const ValueTypes& immediate)
     : opcode(opcode), immediate(immediate) {}
 
-Limits::Limits(u32 min) : min{min}, shared{Shared::No} {}
+Limits::Limits(At<u32> min) : min{min}, shared{Shared::No} {}
 
-Limits::Limits(u32 min, u32 max) : min{min}, max{max}, shared{Shared::No} {}
+Limits::Limits(At<u32> min, OptAt<u32> max)
+    : min{min}, max{max}, shared{Shared::No} {}
 
-Limits::Limits(u32 min, u32 max, Shared shared)
+Limits::Limits(At<u32> min, OptAt<u32> max, At<Shared> shared)
     : min{min}, max{max}, shared{shared} {}
 
+Section::Section(At<KnownSection> contents) : contents{contents} {}
+
+Section::Section(At<CustomSection> contents) : contents{contents} {}
+
+Section::Section(KnownSection contents) : contents{contents} {}
+
+Section::Section(CustomSection contents) : contents{contents} {}
 
 WASP_OPERATOR_EQ_NE_2(BrOnExnImmediate, target, event_index)
 WASP_OPERATOR_EQ_NE_2(BrTableImmediate, targets, default_target)

@@ -26,12 +26,12 @@ using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
 TEST(ReadLinkingTest, Comdat) {
-  ExpectRead<Comdat>(
-      Comdat{"name",
-             0,
-             {{ComdatSymbolKind::Data, 2}, {ComdatSymbolKind::Function, 3}}},
-      "\x04name\x00"
-      "\x02\x00\x02\x01\x03"_su8);
+  ExpectRead<Comdat>(Comdat{"name"_sv,
+                            0,
+                            {ComdatSymbol{ComdatSymbolKind::Data, 2},
+                             ComdatSymbol{ComdatSymbolKind::Function, 3}}},
+                     "\x04name\x00"
+                     "\x02\x00\x02\x01\x03"_su8);
 }
 
 TEST(ReadLinkingTest, ComdatSymbol) {
@@ -126,7 +126,7 @@ TEST(ReadLinkingTest, RelocationType) {
 }
 
 TEST(ReadLinkingTest, ReadSegmentInfo) {
-  ExpectRead<SegmentInfo>(SegmentInfo{"name", 1, 2}, "\x04name\x01\x02"_su8);
+  ExpectRead<SegmentInfo>(SegmentInfo{"name"_sv, 1, 2}, "\x04name\x01\x02"_su8);
 }
 
 namespace {
@@ -182,15 +182,16 @@ TEST(ReadLinkingTest, SymbolInfo_Function) {
       SI{undefined_flags, SI::Base{SymbolInfoKind::Function, 0, nullopt}},
       "\x00\x10\x00"_su8);
   ExpectRead<SI>(
-      SI{explicit_name_flags, SI::Base{SymbolInfoKind::Function, 0, "name"}},
+      SI{explicit_name_flags, SI::Base{SymbolInfoKind::Function, 0, "name"_sv}},
       "\x00\x40\x00\x04name"_su8);
 }
 
 TEST(ReadLinkingTest, SymbolInfo_Data) {
   using SI = SymbolInfo;
-  ExpectRead<SI>(SI{zero_flags, SI::Data{"name", SI::Data::Defined{0, 0, 0}}},
-                 "\x01\x00\x04name\x00\x00\x00"_su8);
-  ExpectRead<SI>(SI{undefined_flags, SI::Data{"name", nullopt}},
+  ExpectRead<SI>(
+      SI{zero_flags, SI::Data{"name"_sv, SI::Data::Defined{0, 0, 0}}},
+      "\x01\x00\x04name\x00\x00\x00"_su8);
+  ExpectRead<SI>(SI{undefined_flags, SI::Data{"name"_sv, nullopt}},
                  "\x01\x10\x04name"_su8);
 }
 
@@ -200,7 +201,7 @@ TEST(ReadLinkingTest, SymbolInfo_Global) {
       SI{undefined_flags, SI::Base{SymbolInfoKind::Global, 0, nullopt}},
       "\x02\x10\x00"_su8);
   ExpectRead<SI>(
-      SI{explicit_name_flags, SI::Base{SymbolInfoKind::Global, 0, "name"}},
+      SI{explicit_name_flags, SI::Base{SymbolInfoKind::Global, 0, "name"_sv}},
       "\x02\x40\x00\x04name"_su8);
 }
 
@@ -215,7 +216,7 @@ TEST(ReadLinkingTest, SymbolInfo_Event) {
       SI{undefined_flags, SI::Base{SymbolInfoKind::Event, 0, nullopt}},
       "\x04\x10\x00"_su8);
   ExpectRead<SI>(
-      SI{explicit_name_flags, SI::Base{SymbolInfoKind::Event, 0, "name"}},
+      SI{explicit_name_flags, SI::Base{SymbolInfoKind::Event, 0, "name"_sv}},
       "\x04\x40\x00\x04name"_su8);
 }
 

@@ -76,9 +76,9 @@ struct Tool {
   struct Visitor : visit::SkipVisitor {
     explicit Visitor(Tool&);
 
-    visit::Result OnSection(Section);
+    visit::Result OnSection(At<Section>);
     visit::Result BeginCodeSection(LazyCodeSection);
-    visit::Result OnCode(const Code&);
+    visit::Result OnCode(const At<Code>&);
 
     Tool& tool;
   };
@@ -155,19 +155,19 @@ int Tool::Run() {
 
 Tool::Visitor::Visitor(Tool& tool) : tool{tool} {}
 
-visit::Result Tool::Visitor::OnSection(Section section) {
-  return section.id() == SectionId::Code ? visit::Result::Ok
-                                         : visit::Result::Skip;
+visit::Result Tool::Visitor::OnSection(At<Section> section) {
+  return section->id() == SectionId::Code ? visit::Result::Ok
+                                          : visit::Result::Skip;
 }
 
 visit::Result Tool::Visitor::BeginCodeSection(LazyCodeSection) {
   return visit::Result::Ok;
 }
 
-visit::Result Tool::Visitor::OnCode(const Code& code) {
+visit::Result Tool::Visitor::OnCode(const At<Code>& code) {
   Instructions instructions;
 
-  auto instrs = ReadExpression(code.body, tool.module.context);
+  auto instrs = ReadExpression(code->body, tool.module.context);
   for (auto it = instrs.begin(), end = instrs.end(); it != end; ++it) {
     auto instr = *it;
 #if 0

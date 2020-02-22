@@ -25,13 +25,13 @@ namespace binary {
 
 struct Context;
 
-optional<IndirectNameAssoc> Read(SpanU8*, Context&, Tag<IndirectNameAssoc>);
+OptAt<IndirectNameAssoc> Read(SpanU8*, Context&, Tag<IndirectNameAssoc>);
 
-optional<NameAssoc> Read(SpanU8*, Context&, Tag<NameAssoc>);
+OptAt<NameAssoc> Read(SpanU8*, Context&, Tag<NameAssoc>);
 
-optional<NameSubsection> Read(SpanU8*, Context&, Tag<NameSubsection>);
+OptAt<NameSubsection> Read(SpanU8*, Context&, Tag<NameSubsection>);
 
-optional<NameSubsectionId> Read(SpanU8*, Context&, Tag<NameSubsectionId>);
+OptAt<NameSubsectionId> Read(SpanU8*, Context&, Tag<NameSubsectionId>);
 
 }  // namespace binary
 }  // namespace wasp

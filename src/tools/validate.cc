@@ -104,18 +104,18 @@ struct Tool {
     explicit Visitor(Tool&);
 
     visit::Result EndModule();
-    visit::Result OnType(const TypeEntry&);
-    visit::Result OnImport(const Import&);
-    visit::Result OnFunction(const Function&);
-    visit::Result OnTable(const Table&);
-    visit::Result OnMemory(const Memory&);
-    visit::Result OnGlobal(const Global&);
-    visit::Result OnExport(const Export&);
-    visit::Result OnStart(const Start&);
-    visit::Result OnElement(const ElementSegment&);
-    visit::Result OnDataCount(const DataCount&);
-    visit::Result OnCode(const Code&);
-    visit::Result OnData(const DataSegment&);
+    visit::Result OnType(const At<TypeEntry>&);
+    visit::Result OnImport(const At<Import>&);
+    visit::Result OnFunction(const At<Function>&);
+    visit::Result OnTable(const At<Table>&);
+    visit::Result OnMemory(const At<Memory>&);
+    visit::Result OnGlobal(const At<Global>&);
+    visit::Result OnExport(const At<Export>&);
+    visit::Result OnStart(const At<Start>&);
+    visit::Result OnElement(const At<ElementSegment>&);
+    visit::Result OnDataCount(const At<DataCount>&);
+    visit::Result OnCode(const At<Code>&);
+    visit::Result OnData(const At<DataSegment>&);
 
     visit::Result FailUnless(bool);
 
@@ -201,59 +201,59 @@ visit::Result Tool::Visitor::EndModule() {
   return FailUnless(binary::EndModule(&tool.module.data, tool.module.context));
 }
 
-visit::Result Tool::Visitor::OnType(const TypeEntry& type_entry) {
+visit::Result Tool::Visitor::OnType(const At<TypeEntry>& type_entry) {
   return FailUnless(Validate(type_entry, context, features, errors));
 }
 
-visit::Result Tool::Visitor::OnImport(const Import& import) {
+visit::Result Tool::Visitor::OnImport(const At<Import>& import) {
   return FailUnless(Validate(import, context, features, errors));
 }
 
-visit::Result Tool::Visitor::OnFunction(const Function& function) {
+visit::Result Tool::Visitor::OnFunction(const At<Function>& function) {
   return FailUnless(Validate(function, context, features, errors));
 }
 
-visit::Result Tool::Visitor::OnTable(const Table& table) {
+visit::Result Tool::Visitor::OnTable(const At<Table>& table) {
   return FailUnless(Validate(table, context, features, errors));
 }
 
-visit::Result Tool::Visitor::OnMemory(const Memory& memory) {
+visit::Result Tool::Visitor::OnMemory(const At<Memory>& memory) {
   return FailUnless(Validate(memory, context, features, errors));
 }
 
-visit::Result Tool::Visitor::OnGlobal(const Global& global) {
+visit::Result Tool::Visitor::OnGlobal(const At<Global>& global) {
   return FailUnless(Validate(global, context, features, errors));
 }
 
-visit::Result Tool::Visitor::OnExport(const Export& export_) {
+visit::Result Tool::Visitor::OnExport(const At<Export>& export_) {
   return FailUnless(Validate(export_, context, features, errors));
 }
 
-visit::Result Tool::Visitor::OnStart(const Start& start) {
+visit::Result Tool::Visitor::OnStart(const At<Start>& start) {
   return FailUnless(Validate(start, context, features, errors));
 }
 
-visit::Result Tool::Visitor::OnElement(const ElementSegment& segment) {
+visit::Result Tool::Visitor::OnElement(const At<ElementSegment>& segment) {
   return FailUnless(Validate(segment, context, features, errors));
 }
 
-visit::Result Tool::Visitor::OnDataCount(const DataCount& data_count) {
+visit::Result Tool::Visitor::OnDataCount(const At<DataCount>& data_count) {
   return FailUnless(Validate(data_count, context, features, errors));
 }
 
-visit::Result Tool::Visitor::OnCode(const Code& code) {
+visit::Result Tool::Visitor::OnCode(const At<Code>& code) {
   if (!BeginCode(context, features, errors)) {
     return visit::Result::Fail;
   }
 
-  for (const auto& locals : code.locals) {
+  for (const auto& locals : code->locals) {
     if (!Validate(locals, context, features, errors)) {
       return visit::Result::Fail;
     }
   }
 
   for (const auto& instruction :
-       ReadExpression(code.body, tool.module.context)) {
+       ReadExpression(code->body, tool.module.context)) {
     if (!Validate(instruction, context, features, errors)) {
       return visit::Result::Fail;
     }
@@ -262,7 +262,7 @@ visit::Result Tool::Visitor::OnCode(const Code& code) {
   return visit::Result::Ok;
 }
 
-visit::Result Tool::Visitor::OnData(const DataSegment& segment) {
+visit::Result Tool::Visitor::OnData(const At<DataSegment>& segment) {
   return FailUnless(Validate(segment, context, features, errors));
 }
 
