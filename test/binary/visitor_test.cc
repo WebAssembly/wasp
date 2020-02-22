@@ -63,6 +63,7 @@ const int kTypeCount = 3;
 const int kFunctionCount = 2;
 
 struct VisitorMock {
+  MOCK_METHOD0(EndModule, visit::Result());
   MOCK_METHOD1(OnSection, visit::Result(Section));
   MOCK_METHOD1(BeginTypeSection, visit::Result(LazyTypeSection));
   MOCK_METHOD1(OnType, visit::Result(const TypeEntry&));
@@ -112,8 +113,8 @@ class VisitorTest : public ::testing::Test {
 
   template <typename Visitor>
   visit::Result Visit(Visitor& visitor) {
-    return visit::Visit(ReadModule(SpanU8{kTestModule}, features, errors),
-                        visitor);
+    LazyModule module = ReadModule(SpanU8{kTestModule}, features, errors);
+    return visit::Visit(module, visitor);
   }
 
   VisitorMock v;
@@ -127,6 +128,8 @@ TEST_F(VisitorTest, AllOk) {
   using ::testing::_;
   using ::testing::Return;
   using ::wasp::binary::visit::Result;
+
+  EXPECT_CALL(v, EndModule()).Times(1);
 
   EXPECT_CALL(v, OnSection(_)).Times(kSectionCount);
 
@@ -188,6 +191,7 @@ TEST_F(VisitorTest, AllSkipped) {
   using ::testing::Return;
   using ::wasp::binary::visit::Result;
 
+  EXPECT_CALL(v, EndModule()).Times(1);
   EXPECT_CALL(v, OnSection(_)).Times(kSectionCount);
   EXPECT_CALL(v, BeginTypeSection(_)).WillOnce(Return(Result::Skip));
   EXPECT_CALL(v, BeginImportSection(_)).WillOnce(Return(Result::Skip));

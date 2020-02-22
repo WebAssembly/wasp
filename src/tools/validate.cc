@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+#include "wasp/valid/validate.h"
+
 #include <algorithm>
 #include <array>
 #include <fstream>
@@ -33,12 +35,11 @@
 #include "wasp/binary/errors_nop.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/lazy_expression.h"
+#include "wasp/binary/read/end_module.h"
 #include "wasp/binary/visitor.h"
 #include "wasp/valid/begin_code.h"
 #include "wasp/valid/context.h"
-#include "wasp/valid/end_module.h"
 #include "wasp/valid/errors.h"
-#include "wasp/valid/validate.h"
 
 namespace wasp {
 namespace tools {
@@ -102,7 +103,7 @@ struct Tool {
   struct Visitor : visit::Visitor {
     explicit Visitor(Tool&);
 
-    visit::Result OnSection(Section);
+    visit::Result EndModule();
     visit::Result OnType(const TypeEntry&);
     visit::Result OnImport(const Import&);
     visit::Result OnFunction(const Function&);
@@ -186,7 +187,6 @@ bool Tool::Run() {
   if (module.magic && module.version) {
     Visitor visitor{*this};
     visit::Visit(module, visitor);
-    EndModule(context, options.features, errors);
   }
   return !errors.has_error();
 }
@@ -197,8 +197,8 @@ Tool::Visitor::Visitor(Tool& tool)
       features{tool.options.features},
       errors{tool.errors} {}
 
-visit::Result Tool::Visitor::OnSection(Section section) {
-  return FailUnless(Validate(section, context, features, errors));
+visit::Result Tool::Visitor::EndModule() {
+  return FailUnless(binary::EndModule(&tool.module.data, tool.module.context));
 }
 
 visit::Result Tool::Visitor::OnType(const TypeEntry& type_entry) {

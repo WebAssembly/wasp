@@ -30,7 +30,7 @@ TEST(LazyModuleTest, Basic) {
   auto module = ReadModule(
       "\0asm\x01\0\0\0"
       "\x01\x03\0\0\0"            // Invalid type section.
-      "\x01\x05\0\0\0\0\0"        // Another invalid type section.
+      "\x03\x05\0\0\0\0\0"        // Invalid function section.
       "\x0a\x01\0"                // Code section.
       "\x00\x06\x03yup\0\0"_su8,  // Custom section "yup"
       features, errors);
@@ -40,11 +40,10 @@ TEST(LazyModuleTest, Basic) {
 
   auto it = module.sections.begin(), end = module.sections.end();
 
-  EXPECT_EQ((Section{KnownSection{SectionId::Type, "\0\0\0"_su8}}),
-            *it++);
+  EXPECT_EQ((Section{KnownSection{SectionId::Type, "\0\0\0"_su8}}), *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ((Section{KnownSection{SectionId::Type, "\0\0\0\0\0"_su8}}),
+  EXPECT_EQ((Section{KnownSection{SectionId::Function, "\0\0\0\0\0"_su8}}),
             *it++);
   ASSERT_NE(end, it);
 

@@ -34,17 +34,10 @@ struct Context {
   Errors& errors;
 
   optional<SectionId> last_section_id;
-  Index type_count;
-  Index import_count;
-  Index function_count;
-  Index table_count;
-  Index memory_count;
-  Index global_count;
-  Index export_count;
-  Index element_count;
-  Index data_count_count;
-  Index code_count;
-  Index data_count;
+  Index defined_function_count = 0;
+  optional<Index> declared_data_count;
+  Index code_count = 0;
+  Index data_count = 0;
 };
 
 }  // namespace binary

@@ -74,14 +74,12 @@ struct Context {
   Index imported_function_count = 0;
   Index imported_global_count = 0;
   optional<Index> declared_data_count;
-  Index data_count = 0;
   Index code_count = 0;
   std::vector<Index> locals_partial_sum;
   binary::ValueTypes locals;
   StackTypes type_stack;
   std::vector<Label> label_stack;
   std::set<string_view> export_names;
-  optional<binary::SectionId> last_section_id;
 };
 
 }  // namespace valid

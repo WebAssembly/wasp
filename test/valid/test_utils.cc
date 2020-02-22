@@ -22,6 +22,27 @@ namespace wasp {
 namespace valid {
 namespace test {
 
+std::string ErrorToString(const Error& error) {
+  std::string result;
+  bool first = true;
+  for (auto&& s : error) {
+    if (!first) {
+      result += ": ";
+    }
+    first = false;
+    result += s;
+  }
+  return result;
+}
+
+std::string TestErrorsToString(const TestErrors& errors) {
+  std::string result;
+  for (auto&& error : errors.errors) {
+    result += ErrorToString(error) + "\n";
+  }
+  return result;
+}
+
 void TestErrors::HandlePushContext(string_view desc) {
   context_stack.push_back(desc.to_string());
 }
@@ -38,7 +59,7 @@ void TestErrors::HandleOnError(string_view message) {
 }
 
 void ExpectNoErrors(const TestErrors& errors) {
-  EXPECT_TRUE(errors.errors.empty());
+  EXPECT_TRUE(errors.errors.empty()) << TestErrorsToString(errors);
   EXPECT_TRUE(errors.context_stack.empty());
 }
 

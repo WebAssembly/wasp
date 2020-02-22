@@ -27,6 +27,8 @@ namespace visit {
 enum class Result { Ok, Fail, Skip };
 
 struct Visitor {
+  Result EndModule() { return Result::Ok; }
+
   // All sections, known and custom.
   Result OnSection(Section) { return Result::Ok; }
 
@@ -97,6 +99,7 @@ struct Visitor {
 };
 
 struct SkipVisitor : Visitor {
+  Result EndModule() { return Result::Skip; }
   Result OnSection(Section) { return Result::Skip; }
   Result BeginTypeSection(LazyTypeSection) { return Result::Skip; }
   Result BeginImportSection(LazyImportSection) { return Result::Skip; }
@@ -114,7 +117,7 @@ struct SkipVisitor : Visitor {
 };
 
 template <typename Visitor>
-Result Visit(LazyModule, Visitor&);
+Result Visit(LazyModule&, Visitor&);
 
 #define WASP_CHECK(x)      \
   if (x == Result::Fail) { \
@@ -152,7 +155,7 @@ Result Visit(LazyModule, Visitor&);
   }
 
 template <typename Visitor>
-inline Result Visit(LazyModule module, Visitor& visitor) {
+inline Result Visit(LazyModule& module, Visitor& visitor) {
   for (auto section : module.sections) {
     auto res = visitor.OnSection(section);
     if (res == Result::Skip) {
@@ -181,7 +184,7 @@ inline Result Visit(LazyModule module, Visitor& visitor) {
       }
     }
   }
-  return Result::Ok;
+  return visitor.EndModule();
 }
 
 #undef WASP_CHECK

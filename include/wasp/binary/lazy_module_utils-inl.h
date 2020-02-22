@@ -16,24 +16,26 @@
 
 #include <utility>
 
+#include "wasp/binary/errors_nop.h"
+#include "wasp/binary/read/context.h"
 #include "wasp/binary/sections.h"
 #include "wasp/binary/sections_name.h"
-#include "wasp/binary/read/context.h"
 
 namespace wasp {
 namespace binary {
 
 template <typename F>
-void ForEachFunctionName(LazyModule& module,
-                         F&& f) {
+void ForEachFunctionName(LazyModule& module, F&& f) {
+  ErrorsNop errors;
+  LazyModule copy{module.data, module.context.features, errors};
+
   Index imported_function_count = 0;
   for (auto section : module.sections) {
     if (section.is_known()) {
       auto known = section.known();
       switch (known.id) {
         case SectionId::Import:
-          for (auto import :
-               ReadImportSection(known, module.context).sequence) {
+          for (auto import : ReadImportSection(known, copy.context).sequence) {
             if (import.kind() == ExternalKind::Function) {
               f(IndexNamePair{imported_function_count++, import.name});
             }
@@ -41,8 +43,7 @@ void ForEachFunctionName(LazyModule& module,
           break;
 
         case SectionId::Export:
-          for (auto export_ :
-               ReadExportSection(known, module.context).sequence) {
+          for (auto export_ : ReadExportSection(known, copy.context).sequence) {
             if (export_.kind == ExternalKind::Function) {
               f(IndexNamePair{export_.index, export_.name});
             }
@@ -55,10 +56,10 @@ void ForEachFunctionName(LazyModule& module,
     } else if (section.is_custom()) {
       auto custom = section.custom();
       if (custom.name == "name") {
-        for (auto subsection : ReadNameSection(custom, module.context)) {
+        for (auto subsection : ReadNameSection(custom, copy.context)) {
           if (subsection.id == NameSubsectionId::FunctionNames) {
             for (auto name_assoc :
-                 ReadFunctionNamesSubsection(subsection, module.context)
+                 ReadFunctionNamesSubsection(subsection, copy.context)
                      .sequence) {
               f(IndexNamePair{name_assoc.index, name_assoc.name});
             }
@@ -77,12 +78,15 @@ Iterator CopyFunctionNames(LazyModule& module, Iterator out) {
 }
 
 inline Index GetImportCount(LazyModule& module, ExternalKind kind) {
+  ErrorsNop errors;
+  LazyModule copy{module.data, module.context.features, errors};
+
   Index count = 0;
-  for (auto section : module.sections) {
+  for (auto section : copy.sections) {
     if (section.is_known()) {
       auto known = section.known();
       if (known.id == SectionId::Import) {
-        for (auto import : ReadImportSection(known, module.context).sequence) {
+        for (auto import : ReadImportSection(known, copy.context).sequence) {
           if (import.kind() == kind) {
             count++;
           }

@@ -91,8 +91,6 @@ bool Validate(const binary::Memory&, Context&, const Features&, Errors&);
 
 bool Validate(const binary::MemoryType&, Context&, const Features&, Errors&);
 
-bool Validate(const binary::Section&, Context&, const Features&, Errors&);
-
 bool Validate(const binary::Start& value,
               Context& context,
               const Features& features,

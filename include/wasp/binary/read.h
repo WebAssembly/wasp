@@ -150,6 +150,8 @@ optional<Start> Read(SpanU8*, Context&, Tag<Start>);
 
 optional<string_view> ReadString(SpanU8*, Context&, string_view desc);
 
+optional<string_view> ReadUtf8String(SpanU8*, Context&, string_view desc);
+
 optional<Table> Read(SpanU8*, Context&, Tag<Table>);
 
 optional<TableType> Read(SpanU8*, Context&, Tag<TableType>);

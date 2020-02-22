@@ -20,6 +20,7 @@
 #include "wasp/base/format.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
+#include "wasp/base/utf8.h"
 #include "wasp/binary/encoding.h"  // XXX
 #include "wasp/binary/encoding/block_type_encoding.h"
 #include "wasp/binary/encoding/comdat_symbol_kind_encoding.h"
@@ -142,6 +143,7 @@ optional<Index> ReadCheckLength(SpanU8* data,
 
 optional<Code> Read(SpanU8* data, Context& context, Tag<Code>) {
   ErrorsContextGuard guard{context.errors, *data, "code"};
+  context.code_count++;
   WASP_TRY_READ(body_size, ReadLength(data, context));
   WASP_TRY_READ(body, ReadBytes(data, body_size, context));
   WASP_TRY_READ(locals, ReadVector<Locals>(&body, context, "locals vector"));
@@ -233,11 +235,13 @@ optional<Index> ReadCount(SpanU8* data, Context& context) {
 optional<DataCount> Read(SpanU8* data, Context& context, Tag<DataCount>) {
   ErrorsContextGuard guard{context.errors, *data, "data count"};
   WASP_TRY_READ(count, ReadIndex(data, context, "count"));
+  context.declared_data_count = count;
   return DataCount{count};
 }
 
 optional<DataSegment> Read(SpanU8* data, Context& context, Tag<DataSegment>) {
   ErrorsContextGuard guard{context.errors, *data, "data segment"};
+  context.data_count++;
   auto decoded = encoding::DecodedDataSegmentFlags::MVP();
   if (context.features.bulk_memory_enabled()) {
     WASP_TRY_READ(flags, ReadIndex(data, context, "flags"));
@@ -387,7 +391,7 @@ optional<EventType> Read(SpanU8* data, Context& context, Tag<EventType>) {
 
 optional<Export> Read(SpanU8* data, Context& context, Tag<Export>) {
   ErrorsContextGuard guard{context.errors, *data, "export"};
-  WASP_TRY_READ(name, ReadString(data, context, "name"));
+  WASP_TRY_READ(name, ReadUtf8String(data, context, "name"));
   WASP_TRY_READ(kind, Read<ExternalKind>(data, context));
   WASP_TRY_READ(index, ReadIndex(data, context, "index"));
   return Export{kind, name, index};
@@ -421,6 +425,7 @@ optional<f64> Read(SpanU8* data, Context& context, Tag<f64>) {
 
 optional<Function> Read(SpanU8* data, Context& context, Tag<Function>) {
   ErrorsContextGuard guard{context.errors, *data, "function"};
+  context.defined_function_count++;
   WASP_TRY_READ(type_index, ReadIndex(data, context, "type index"));
   return Function{type_index};
 }
@@ -450,8 +455,8 @@ optional<GlobalType> Read(SpanU8* data, Context& context, Tag<GlobalType>) {
 
 optional<Import> Read(SpanU8* data, Context& context, Tag<Import>) {
   ErrorsContextGuard guard{context.errors, *data, "import"};
-  WASP_TRY_READ(module, ReadString(data, context, "module name"));
-  WASP_TRY_READ(name, ReadString(data, context, "field name"));
+  WASP_TRY_READ(module, ReadUtf8String(data, context, "module name"));
+  WASP_TRY_READ(name, ReadUtf8String(data, context, "field name"));
   WASP_TRY_READ(kind, Read<ExternalKind>(data, context));
   switch (kind) {
     case ExternalKind::Function: {
@@ -1234,9 +1239,16 @@ optional<Section> Read(SpanU8* data, Context& context, Tag<Section>) {
   auto bytes = *ReadBytes(data, length, context);
 
   if (id == SectionId::Custom) {
-    WASP_TRY_READ(name, ReadString(&bytes, context, "custom section name"));
+    WASP_TRY_READ(name, ReadUtf8String(&bytes, context, "custom section name"));
     return Section{CustomSection{name, bytes}};
   } else {
+    if (context.last_section_id && *context.last_section_id >= id) {
+      context.errors.OnError(
+          *data, format("Section out of order: {} cannot occur after {}", id,
+                        *context.last_section_id));
+    }
+    context.last_section_id = id;
+
     return Section{KnownSection{id, bytes}};
   }
 }
@@ -1283,6 +1295,17 @@ optional<string_view> ReadString(SpanU8* data,
   string_view result{reinterpret_cast<const char*>(data->data()), len};
   remove_prefix(data, len);
   return result;
+}
+
+optional<string_view> ReadUtf8String(SpanU8* data,
+                                     Context& context,
+                                     string_view desc) {
+  auto string = ReadString(data, context, desc);
+  if (string && !IsValidUtf8(*string)) {
+    context.errors.OnError(*data, "Invalid UTF-8 encoding");
+    return {};
+  }
+  return string;
 }
 
 optional<SymbolInfo> Read(SpanU8* data, Context& context, Tag<SymbolInfo>) {
