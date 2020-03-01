@@ -30,6 +30,8 @@ struct Context {
   explicit Context(Errors&);
   explicit Context(const Features&, Errors&);
 
+  void Reset();
+
   Features features;
   Errors& errors;
 

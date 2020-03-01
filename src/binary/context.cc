@@ -24,5 +24,13 @@ Context::Context(Errors& errors) : errors(errors) {}
 Context::Context(const Features& features, Errors& errors)
     : features(features), errors(errors) {}
 
+void Context::Reset() {
+  last_section_id.reset();
+  defined_function_count = 0;
+  declared_data_count.reset();
+  code_count = 0;
+  data_count = 0;
+}
+
 }  // namespace binary
 }  // namespace wasp

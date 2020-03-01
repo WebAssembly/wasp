@@ -156,6 +156,7 @@ Result Visit(LazyModule&, Visitor&);
 
 template <typename Visitor>
 inline Result Visit(LazyModule& module, Visitor& visitor) {
+  module.context.Reset();
   for (auto section : module.sections) {
     auto res = visitor.OnSection(section);
     if (res == Result::Skip) {
