@@ -20,10 +20,12 @@
 #include <set>
 #include <vector>
 
+#include "wasp/base/features.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/types.h"
+#include "wasp/valid/errors.h"
 #include "wasp/valid/types.h"
 
 namespace wasp {
@@ -59,10 +61,19 @@ struct Label {
 };
 
 struct Context {
+  Context(Errors&);
+  Context(const Features&, Errors&);
+  Context(const Context&, Errors&);
+
+  void Reset();
+
   Index GetLocalCount() const;
   optional<binary::ValueType> GetLocalType(Index) const;
   bool AppendLocals(Index count, binary::ValueType);
   bool AppendLocals(const binary::ValueTypes&);
+
+  Features features;
+  Errors* errors;
 
   std::vector<binary::TypeEntry> types;
   std::vector<binary::Function> functions;

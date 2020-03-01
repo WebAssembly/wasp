@@ -32,6 +32,20 @@ Label::Label(LabelType label_type,
       type_stack_limit{type_stack_limit},
       unreachable{false} {}
 
+Context::Context(Errors& errors) : errors{&errors} {}
+
+Context::Context(const Features& features, Errors& errors)
+    : features{features}, errors{&errors} {}
+
+Context::Context(const Context& other, Errors& errors) {
+  *this = other;
+  this->errors = &errors;
+}
+
+void Context::Reset() {
+  *this = Context{features, *errors};
+}
+
 Index Context::GetLocalCount() const {
   return locals_partial_sum.empty() ? 0 : locals_partial_sum.back();
 }

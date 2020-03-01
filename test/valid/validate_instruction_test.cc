@@ -36,6 +36,8 @@ class ValidateInstructionTest : public ::testing::Test {
   using VT = ValueType;
   using ST = StackType;
 
+  ValidateInstructionTest() : context{errors} {}
+
   virtual void SetUp() {
     BeginFunction(FunctionType{});
   }
@@ -43,9 +45,9 @@ class ValidateInstructionTest : public ::testing::Test {
   virtual void TearDown() {}
 
   void BeginFunction(const FunctionType& function_type) {
-    context = Context{};
+    context.Reset();
     AddFunction(function_type);
-    EXPECT_TRUE(BeginCode(context, features, errors));
+    EXPECT_TRUE(BeginCode(context));
   }
 
   template <typename T>
@@ -91,21 +93,19 @@ class ValidateInstructionTest : public ::testing::Test {
   }
 
   void Ok(const Instruction& instruction) {
-    EXPECT_TRUE(Validate(instruction, context, features, errors))
-        << format("{}", instruction);
+    EXPECT_TRUE(Validate(instruction, context)) << format("{}", instruction);
   }
 
   void Fail(const Instruction& instruction) {
-    EXPECT_FALSE(Validate(instruction, context, features, errors))
-        << format("{}", instruction);
+    EXPECT_FALSE(Validate(instruction, context)) << format("{}", instruction);
   }
 
   void TestSignature(const Instruction& instruction,
                      const ValueTypes& param_types,
                      const ValueTypes& result_types) {
-    auto saved_context = context;
     ErrorsNop errors_nop;
-    auto& type_stack = context.type_stack;
+    Context valid_context{context};
+    Context invalid_context{context, errors_nop};
     const StackTypes stack_param_types = ToStackTypes(param_types);
     const StackTypes stack_result_types = ToStackTypes(result_types);
 
@@ -114,13 +114,14 @@ class ValidateInstructionTest : public ::testing::Test {
     for (size_t n = 0; n <= param_types.size(); ++n) {
       const StackTypes stack_param_types_slice(stack_param_types.begin() + n,
                                                stack_param_types.end());
-      type_stack = stack_param_types_slice;
+      valid_context.type_stack = stack_param_types_slice;
       if (n == 0) {
-        EXPECT_TRUE(Validate(instruction, context, features, errors))
+        EXPECT_TRUE(Validate(instruction, valid_context))
             << format("{} with stack {}", instruction, stack_param_types_slice);
-        EXPECT_EQ(stack_result_types, type_stack) << format("{}", instruction);
+        EXPECT_EQ(stack_result_types, valid_context.type_stack)
+            << format("{}", instruction);
       } else {
-        EXPECT_FALSE(Validate(instruction, context, features, errors_nop))
+        EXPECT_FALSE(Validate(instruction, invalid_context))
             << format("{} with stack {}", instruction, stack_param_types_slice);
       }
     }
@@ -131,23 +132,20 @@ class ValidateInstructionTest : public ::testing::Test {
       for (auto& stack_type : mismatch_types) {
         stack_type = stack_type == ST::I32 ? ST::F64 : ST::I32;
       }
-      type_stack = mismatch_types;
-      EXPECT_FALSE(Validate(instruction, context, features, errors_nop))
+      invalid_context.type_stack = mismatch_types;
+      EXPECT_FALSE(Validate(instruction, invalid_context))
           << format("{} with stack", instruction, mismatch_types);
     }
 
     // Test that it is valid with an unreachable stack.
-    context.label_stack.back().unreachable = true;
-    type_stack.clear();
-    EXPECT_TRUE(Validate(instruction, context, features, errors))
+    valid_context.label_stack.back().unreachable = true;
+    valid_context.type_stack.clear();
+    EXPECT_TRUE(Validate(instruction, valid_context))
         << format("{}", instruction);
-
-    context = saved_context;
   }
 
-  Context context;
-  Features features;
   TestErrors errors;
+  Context context;
 };
 
 struct ValueTypeInfo {
@@ -938,7 +936,7 @@ TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
 }
 
 TEST_F(ValidateInstructionTest, BrTable_ReferenceTypes) {
-  features.enable_reference_types();
+  context.features.enable_reference_types();
 
   // In the reference types proposal, label types don't have to be the same;
   // just need to be follow normal subtyping relationship.
@@ -950,7 +948,7 @@ TEST_F(ValidateInstructionTest, BrTable_ReferenceTypes) {
 }
 
 TEST_F(ValidateInstructionTest, BrTable_ReferenceTypes_ArityMismatch) {
-  features.enable_reference_types();
+  context.features.enable_reference_types();
 
   Ok(I{O::Block, BlockType::Void});
   Ok(I{O::Block, BlockType::I32});
@@ -962,7 +960,7 @@ TEST_F(ValidateInstructionTest, BrTable_ReferenceTypes_ArityMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, BrTable_References) {
-  features.enable_reference_types();
+  context.features.enable_reference_types();
 
   Ok(I{O::Block, BlockType::Anyref});
   Ok(I{O::Block, BlockType::Funcref});

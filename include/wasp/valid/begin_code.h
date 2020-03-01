@@ -27,13 +27,12 @@
 namespace wasp {
 namespace valid {
 
-inline bool BeginCode(Context& context,
-                      const Features& features,
-                      Errors& errors) {
+inline bool BeginCode(Context& context) {
   Index func_index = context.imported_function_count + context.code_count;
   if (func_index >= context.functions.size()) {
-    errors.OnError(format("Unexpected code index {}, function count is {}",
-                          func_index, context.functions.size()));
+    context.errors->OnError(
+        format("Unexpected code index {}, function count is {}", func_index,
+               context.functions.size()));
     return false;
   }
   context.code_count++;

@@ -181,7 +181,8 @@ Tool::Tool(string_view filename, SpanU8 data, Options options)
       options{options},
       data{data},
       errors{data},
-      module{ReadModule(data, options.features, errors)} {}
+      module{ReadModule(data, options.features, errors)},
+      context{options.features, errors} {}
 
 bool Tool::Run() {
   if (module.magic && module.version) {
@@ -202,59 +203,59 @@ visit::Result Tool::Visitor::EndModule() {
 }
 
 visit::Result Tool::Visitor::OnType(const At<TypeEntry>& type_entry) {
-  return FailUnless(Validate(type_entry, context, features, errors));
+  return FailUnless(Validate(type_entry, context));
 }
 
 visit::Result Tool::Visitor::OnImport(const At<Import>& import) {
-  return FailUnless(Validate(import, context, features, errors));
+  return FailUnless(Validate(import, context));
 }
 
 visit::Result Tool::Visitor::OnFunction(const At<Function>& function) {
-  return FailUnless(Validate(function, context, features, errors));
+  return FailUnless(Validate(function, context));
 }
 
 visit::Result Tool::Visitor::OnTable(const At<Table>& table) {
-  return FailUnless(Validate(table, context, features, errors));
+  return FailUnless(Validate(table, context));
 }
 
 visit::Result Tool::Visitor::OnMemory(const At<Memory>& memory) {
-  return FailUnless(Validate(memory, context, features, errors));
+  return FailUnless(Validate(memory, context));
 }
 
 visit::Result Tool::Visitor::OnGlobal(const At<Global>& global) {
-  return FailUnless(Validate(global, context, features, errors));
+  return FailUnless(Validate(global, context));
 }
 
 visit::Result Tool::Visitor::OnExport(const At<Export>& export_) {
-  return FailUnless(Validate(export_, context, features, errors));
+  return FailUnless(Validate(export_, context));
 }
 
 visit::Result Tool::Visitor::OnStart(const At<Start>& start) {
-  return FailUnless(Validate(start, context, features, errors));
+  return FailUnless(Validate(start, context));
 }
 
 visit::Result Tool::Visitor::OnElement(const At<ElementSegment>& segment) {
-  return FailUnless(Validate(segment, context, features, errors));
+  return FailUnless(Validate(segment, context));
 }
 
 visit::Result Tool::Visitor::OnDataCount(const At<DataCount>& data_count) {
-  return FailUnless(Validate(data_count, context, features, errors));
+  return FailUnless(Validate(data_count, context));
 }
 
 visit::Result Tool::Visitor::OnCode(const At<Code>& code) {
-  if (!BeginCode(context, features, errors)) {
+  if (!BeginCode(context)) {
     return visit::Result::Fail;
   }
 
   for (const auto& locals : code->locals) {
-    if (!Validate(locals, context, features, errors)) {
+    if (!Validate(locals, context)) {
       return visit::Result::Fail;
     }
   }
 
   for (const auto& instruction :
        ReadExpression(code->body, tool.module.context)) {
-    if (!Validate(instruction, context, features, errors)) {
+    if (!Validate(instruction, context)) {
       return visit::Result::Fail;
     }
   }
@@ -263,7 +264,7 @@ visit::Result Tool::Visitor::OnCode(const At<Code>& code) {
 }
 
 visit::Result Tool::Visitor::OnData(const At<DataSegment>& segment) {
-  return FailUnless(Validate(segment, context, features, errors));
+  return FailUnless(Validate(segment, context));
 }
 
 visit::Result Tool::Visitor::FailUnless(bool b) {

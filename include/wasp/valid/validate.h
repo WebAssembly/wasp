@@ -22,91 +22,67 @@
 
 namespace wasp {
 
-class Features;
-
 namespace valid {
 
 struct Context;
 class Errors;
 
-bool Validate(const binary::DataSegment&, Context&, const Features&, Errors&);
+bool Validate(const binary::DataSegment&, Context&);
 
 bool Validate(const binary::ConstantExpression&,
               binary::ValueType expected_type,
               Index max_global_index,
-              Context&,
-              const Features&,
-              Errors&);
+              Context&);
 
-bool Validate(const binary::DataCount&, Context&, const Features&, Errors&);
+bool Validate(const binary::DataCount&, Context&);
 
-bool Validate(const binary::DataSegment&, Context&, const Features&, Errors&);
+bool Validate(const binary::DataSegment&, Context&);
 
-bool Validate(const binary::ElementExpression&,
-              binary::ElementType,
-              Context&,
-              const Features&,
-              Errors&);
+bool Validate(const binary::ElementExpression&, binary::ElementType, Context&);
 
-bool Validate(const binary::ElementSegment&,
-              Context&,
-              const Features&,
-              Errors&);
+bool Validate(const binary::ElementSegment&, Context&);
 
 bool Validate(binary::ElementType actual,
               binary::ElementType expected,
-              Context&,
-              const Features&,
-              Errors&);
+              Context&);
 
-bool Validate(const binary::Export&, Context&, const Features&, Errors&);
+bool Validate(const binary::Export&, Context&);
 
-bool Validate(const binary::Event&, Context&, const Features&, Errors&);
+bool Validate(const binary::Event&, Context&);
 
-bool Validate(const binary::EventType&, Context&, const Features&, Errors&);
+bool Validate(const binary::EventType&, Context&);
 
-bool Validate(const binary::Function&, Context&, const Features&, Errors&);
+bool Validate(const binary::Function&, Context&);
 
-bool Validate(const binary::FunctionType&, Context&, const Features&, Errors&);
+bool Validate(const binary::FunctionType&, Context&);
 
-bool Validate(const binary::Global&, Context&, const Features&, Errors&);
+bool Validate(const binary::Global&, Context&);
 
-bool Validate(const binary::GlobalType&, Context&, const Features&, Errors&);
+bool Validate(const binary::GlobalType&, Context&);
 
-bool Validate(const binary::Import&, Context&, const Features&, Errors&);
+bool Validate(const binary::Import&, Context&);
 
-bool ValidateIndex(Index index, Index max, string_view desc, Errors&);
+bool ValidateIndex(Index index, Index max, string_view desc, Context&);
 
-bool Validate(const binary::Instruction&, Context&, const Features&, Errors&);
+bool Validate(const binary::Instruction&, Context&);
 
-bool Validate(const binary::Limits&,
-              Index max,
-              Context&,
-              const Features&,
-              Errors&);
+bool Validate(const binary::Limits&, Index max, Context&);
 
-bool Validate(const binary::Locals&, Context&, const Features&, Errors&);
+bool Validate(const binary::Locals&, Context&);
 
-bool Validate(const binary::Memory&, Context&, const Features&, Errors&);
+bool Validate(const binary::Memory&, Context&);
 
-bool Validate(const binary::MemoryType&, Context&, const Features&, Errors&);
+bool Validate(const binary::MemoryType&, Context&);
 
-bool Validate(const binary::Start& value,
-              Context& context,
-              const Features& features,
-              Errors& errors);
+bool Validate(const binary::Start& value, Context& context);
 
-bool Validate(const binary::Table&, Context&, const Features&, Errors&);
+bool Validate(const binary::Table&, Context&);
 
-bool Validate(const binary::TableType&, Context&, const Features&, Errors&);
+bool Validate(const binary::TableType&, Context&);
 
-bool Validate(const binary::TypeEntry&, Context&, const Features&, Errors&);
+bool Validate(const binary::TypeEntry&, Context&);
 
-bool Validate(binary::ValueType actual,
-              binary::ValueType expected,
-              Context&,
-              const Features&,
-              Errors&);
+bool Validate(binary::ValueType actual, binary::ValueType expected, Context&);
 
 }  // namespace valid
 }  // namespace wasp

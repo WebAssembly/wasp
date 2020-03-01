@@ -27,33 +27,32 @@ using namespace ::wasp::valid;
 using namespace ::wasp::valid::test;
 
 TEST(ValidateCodeTest, BeginCode) {
-  Context context;
+  TestErrors errors;
+  Context context{errors};
   context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{0});
-  TestErrors errors;
-  EXPECT_TRUE(BeginCode(context, Features{}, errors));
+  EXPECT_TRUE(BeginCode(context));
 }
 
 TEST(ValidateCodeTest, BeginCode_CodeIndexOOB) {
-  Context context;
+  TestErrors errors;
+  Context context{errors};
   context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{0});
   context.code_count = 1;
-  TestErrors errors;
-  EXPECT_FALSE(BeginCode(context, Features{}, errors));
+  EXPECT_FALSE(BeginCode(context));
 }
 
 TEST(ValidateCodeTest, BeginCode_TypeIndexOOB) {
-  Context context;
+  TestErrors errors;
+  Context context{errors};
   context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{1});
-  TestErrors errors;
-  EXPECT_FALSE(BeginCode(context, Features{}, errors));
+  EXPECT_FALSE(BeginCode(context));
 }
 
 TEST(ValidateCodeTest, Locals) {
-  Context context;
   TestErrors errors;
-  EXPECT_TRUE(
-      Validate(Locals{10, ValueType::I32}, context, Features{}, errors));
+  Context context{errors};
+  EXPECT_TRUE(Validate(Locals{10, ValueType::I32}, context));
 }
