@@ -151,12 +151,12 @@ struct SymbolInfo {
   bool is_data() const;
   bool is_section() const;
 
-  Base& base();
-  const Base& base() const;
-  Data& data();
-  const Data& data() const;
-  Section& section();
-  const Section& section() const;
+  auto base() -> Base&;
+  auto base() const -> const Base&;
+  auto data() -> Data&;
+  auto data() const -> const Data&;
+  auto section() -> Section&;
+  auto section() const -> const Section&;
 
   optional<string_view> name() const;
 

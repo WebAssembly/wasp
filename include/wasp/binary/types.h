@@ -152,10 +152,10 @@ struct Section {
   bool is_known() const;
   bool is_custom() const;
 
-  At<KnownSection>& known();
-  const At<KnownSection>& known() const;
-  At<CustomSection>& custom();
-  const At<CustomSection>& custom() const;
+  auto known() -> At<KnownSection>&;
+  auto known() const -> const At<KnownSection>&;
+  auto custom() -> At<CustomSection>&;
+  auto custom() const -> const At<CustomSection>&;
 
   At<SectionId> id() const;
   SpanU8 data() const;
@@ -256,40 +256,40 @@ struct Instruction {
   bool has_shuffle_immediate() const;
   bool has_value_types_immediate() const;
 
-  EmptyImmediate& empty_immediate();
-  const EmptyImmediate& empty_immediate() const;
-  At<BlockType>& block_type_immediate();
-  const At<BlockType>& block_type_immediate() const;
-  At<Index>& index_immediate();
-  const At<Index>& index_immediate() const;
-  At<CallIndirectImmediate>& call_indirect_immediate();
-  const At<CallIndirectImmediate>& call_indirect_immediate() const;
-  At<BrTableImmediate>& br_table_immediate();
-  const At<BrTableImmediate>& br_table_immediate() const;
-  At<BrOnExnImmediate>& br_on_exn_immediate();
-  const At<BrOnExnImmediate>& br_on_exn_immediate() const;
-  At<u8>& u8_immediate();
-  const At<u8>& u8_immediate() const;
-  At<MemArgImmediate>& mem_arg_immediate();
-  const At<MemArgImmediate>& mem_arg_immediate() const;
-  At<s32>& s32_immediate();
-  const At<s32>& s32_immediate() const;
-  At<s64>& s64_immediate();
-  const At<s64>& s64_immediate() const;
-  At<f32>& f32_immediate();
-  const At<f32>& f32_immediate() const;
-  At<f64>& f64_immediate();
-  const At<f64>& f64_immediate() const;
-  At<v128>& v128_immediate();
-  const At<v128>& v128_immediate() const;
-  At<InitImmediate>& init_immediate();
-  const At<InitImmediate>& init_immediate() const;
-  At<CopyImmediate>& copy_immediate();
-  const At<CopyImmediate>& copy_immediate() const;
-  At<ShuffleImmediate>& shuffle_immediate();
-  const At<ShuffleImmediate>& shuffle_immediate() const;
-  ValueTypes& value_types_immediate();
-  const ValueTypes& value_types_immediate() const;
+  auto empty_immediate() -> EmptyImmediate&;
+  auto empty_immediate() const -> const EmptyImmediate&;
+  auto block_type_immediate() -> At<BlockType>&;
+  auto block_type_immediate() const -> const At<BlockType>&;
+  auto index_immediate() -> At<Index>&;
+  auto index_immediate() const -> const At<Index>&;
+  auto call_indirect_immediate() -> At<CallIndirectImmediate>&;
+  auto call_indirect_immediate() const -> const At<CallIndirectImmediate>&;
+  auto br_table_immediate() -> At<BrTableImmediate>&;
+  auto br_table_immediate() const -> const At<BrTableImmediate>&;
+  auto br_on_exn_immediate() -> At<BrOnExnImmediate>&;
+  auto br_on_exn_immediate() const -> const At<BrOnExnImmediate>&;
+  auto u8_immediate() -> At<u8>&;
+  auto u8_immediate() const -> const At<u8>&;
+  auto mem_arg_immediate() -> At<MemArgImmediate>&;
+  auto mem_arg_immediate() const -> const At<MemArgImmediate>&;
+  auto s32_immediate() -> At<s32>&;
+  auto s32_immediate() const -> const At<s32>&;
+  auto s64_immediate() -> At<s64>&;
+  auto s64_immediate() const -> const At<s64>&;
+  auto f32_immediate() -> At<f32>&;
+  auto f32_immediate() const -> const At<f32>&;
+  auto f64_immediate() -> At<f64>&;
+  auto f64_immediate() const -> const At<f64>&;
+  auto v128_immediate() -> At<v128>&;
+  auto v128_immediate() const -> const At<v128>&;
+  auto init_immediate() -> At<InitImmediate>&;
+  auto init_immediate() const -> const At<InitImmediate>&;
+  auto copy_immediate() -> At<CopyImmediate>&;
+  auto copy_immediate() const -> const At<CopyImmediate>&;
+  auto shuffle_immediate() -> At<ShuffleImmediate>&;
+  auto shuffle_immediate() const -> const At<ShuffleImmediate>&;
+  auto value_types_immediate() -> ValueTypes&;
+  auto value_types_immediate() const -> const ValueTypes&;
 
   At<Opcode> opcode;
   variant<EmptyImmediate,
@@ -376,16 +376,16 @@ struct Import {
   bool is_global() const;
   bool is_event() const;
 
-  At<Index>& index();
-  const At<Index>& index() const;
-  At<TableType>& table_type();
-  const At<TableType>& table_type() const;
-  At<MemoryType>& memory_type();
-  const At<MemoryType>& memory_type() const;
-  At<GlobalType>& global_type();
-  const At<GlobalType>& global_type() const;
-  At<EventType>& event_type();
-  const At<EventType>& event_type() const;
+  auto index() -> At<Index>&;
+  auto index() const -> const At<Index>&;
+  auto table_type() -> At<TableType>&;
+  auto table_type() const -> const At<TableType>&;
+  auto memory_type() -> At<MemoryType>&;
+  auto memory_type() const -> const At<MemoryType>&;
+  auto global_type() -> At<GlobalType>&;
+  auto global_type() const -> const At<GlobalType>&;
+  auto event_type() -> At<EventType>&;
+  auto event_type() const -> const At<EventType>&;
 
   At<string_view> module;
   At<string_view> name;
@@ -484,10 +484,10 @@ struct ElementSegment {
   bool has_indexes() const;
   bool has_expressions() const;
 
-  IndexesInit& indexes();
-  const IndexesInit& indexes() const;
-  ExpressionsInit& expressions();
-  const ExpressionsInit& expressions() const;
+  auto indexes() -> IndexesInit&;
+  auto indexes() const -> const IndexesInit&;
+  auto expressions() -> ExpressionsInit&;
+  auto expressions() const -> const ExpressionsInit&;
 
   SegmentType type;
   OptAt<Index> table_index;
