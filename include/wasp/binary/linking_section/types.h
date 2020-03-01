@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_TYPES_LINKING_H_
-#define WASP_BINARY_TYPES_LINKING_H_
+#ifndef WASP_BINARY_LINKING_SECTION_TYPES_H_
+#define WASP_BINARY_LINKING_SECTION_TYPES_H_
 
 #include <functional>
 #include <vector>
@@ -26,34 +26,33 @@
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/base/variant.h"
-#include "wasp/binary/types_linking.h"
 
 namespace wasp {
 namespace binary {
 
 enum class ComdatSymbolKind : u8 {
 #define WASP_V(val, Name, str) Name,
-#include "wasp/binary/comdat_symbol_kind.def"
+#include "wasp/binary/def/comdat_symbol_kind.def"
 #undef WASP_V
 };
 
 enum class LinkingSubsectionId : u8 {
 #define WASP_V(val, Name, str) Name,
-#include "wasp/binary/linking_subsection_id.def"
+#include "wasp/binary/def/linking_subsection_id.def"
 #undef WASP_V
 };
 
 enum class RelocationType : u8 {
 #define WASP_V(val, Name, str) Name,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/relocation_type.def"
+#include "wasp/binary/def/relocation_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
 
 enum class SymbolInfoKind : u8 {
 #define WASP_V(val, Name, str) Name,
-#include "wasp/binary/symbol_info_kind.def"
+#include "wasp/binary/def/symbol_info_kind.def"
 #undef WASP_V
 };
 
@@ -205,6 +204,6 @@ WASP_TYPES(WASP_DECLARE_STD_HASH)
 
 }  // namespace std
 
-#include "wasp/binary/symbol_info-inl.h"
+#include "wasp/binary/linking_section/types-inl.h"
 
-#endif // WASP_BINARY_TYPES_LINKING_H_
+#endif // WASP_BINARY_LINKING_SECTION_TYPES_H_

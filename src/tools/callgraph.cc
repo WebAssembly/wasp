@@ -34,8 +34,8 @@
 #include "wasp/binary/lazy_expression.h"
 #include "wasp/binary/lazy_module.h"
 #include "wasp/binary/lazy_module_utils.h"
+#include "wasp/binary/name_section/sections.h"
 #include "wasp/binary/sections.h"
-#include "wasp/binary/sections_name.h"
 
 namespace wasp {
 namespace tools {

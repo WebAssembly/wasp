@@ -41,11 +41,11 @@
 #include "wasp/binary/errors.h"
 #include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/formatters.h"
+#include "wasp/binary/linking_section/read.h"  // TODO move to read_linking.cc
+#include "wasp/binary/name_section/read.h"     // TODO move to read_name.cc
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read_var_int.h"
 #include "wasp/binary/read/read_vector.h"
-#include "wasp/binary/read_linking.h"  // TODO move to read_linking.cc
-#include "wasp/binary/read_name.h"     // TODO move to read_name.cc
 
 namespace wasp {
 namespace binary {

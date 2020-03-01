@@ -16,8 +16,8 @@
 
 #include "gtest/gtest.h"
 #include "test/binary/test_utils.h"
-#include "wasp/binary/sections_linking.h"
-#include "wasp/binary/types_linking.h"
+#include "wasp/binary/linking_section/sections.h"
+#include "wasp/binary/linking_section/types.h"
 #include "wasp/binary/read/context.h"
 
 using namespace ::wasp;

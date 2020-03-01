@@ -24,7 +24,7 @@
 // Write() functions must be declared here before they can be used by
 // ExpectWrite (defined in write_test_utils.h below).
 #include "wasp/binary/write.h"
-#include "wasp/binary/write_name.h"
+#include "wasp/binary/name_section/write.h"
 
 #include "test/binary/test_utils.h"
 #include "test/binary/write_test_utils.h"

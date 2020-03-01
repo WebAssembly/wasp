@@ -14,16 +14,16 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_SECTIONS_NAME_H_
-#define WASP_BINARY_SECTIONS_NAME_H_
+#ifndef WASP_BINARY_NAME_SECTION_SECTIONS_H_
+#define WASP_BINARY_NAME_SECTION_SECTIONS_H_
 
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/lazy_section.h"
 #include "wasp/binary/lazy_sequence.h"
-#include "wasp/binary/read_name.h"
+#include "wasp/binary/name_section/read.h"
+#include "wasp/binary/name_section/types.h"
 #include "wasp/binary/types.h"
-#include "wasp/binary/types_name.h"
 
 namespace wasp {
 namespace binary {
@@ -49,4 +49,4 @@ LazyLocalNamesSubsection ReadLocalNamesSubsection(NameSubsection, Context&);
 }  // namespace binary
 }  // namespace wasp
 
-#endif // WASP_BINARY_SECTIONS_NAME_H_
+#endif // WASP_BINARY_NAME_SECTION_SECTIONS_H_

@@ -97,7 +97,7 @@ optional<FunctionType> GetBlockTypeSignature(BlockType block_type,
   case BlockType::Name:        \
     return FunctionType{{}, {ValueType::Name}};
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/value_type.def"
+#include "wasp/binary/def/value_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 

@@ -19,7 +19,7 @@
 #include "wasp/binary/errors_nop.h"
 #include "wasp/binary/read/context.h"
 #include "wasp/binary/sections.h"
-#include "wasp/binary/sections_name.h"
+#include "wasp/binary/name_section/sections.h"
 
 namespace wasp {
 namespace binary {

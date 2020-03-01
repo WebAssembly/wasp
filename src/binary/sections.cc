@@ -16,9 +16,9 @@
 
 #include "wasp/binary/errors.h"
 #include "wasp/binary/formatters.h"
+#include "wasp/binary/linking_section/sections.h"
+#include "wasp/binary/name_section/sections.h"
 #include "wasp/binary/sections.h"
-#include "wasp/binary/sections_linking.h"
-#include "wasp/binary/sections_name.h"
 
 namespace wasp {
 namespace binary {

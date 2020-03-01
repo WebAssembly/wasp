@@ -28,7 +28,7 @@ namespace encoding {
 
 struct EventAttribute {
 #define WASP_V(val, Name, str) static constexpr u8 Name = val;
-#include "wasp/binary/event_attribute.def"
+#include "wasp/binary/def/event_attribute.def"
 #undef WASP_V
 
   static u8 Encode(::wasp::binary::EventAttribute);
@@ -41,7 +41,7 @@ inline u8 EventAttribute::Encode(::wasp::binary::EventAttribute decoded) {
 #define WASP_V(val, Name, str)               \
   case ::wasp::binary::EventAttribute::Name: \
     return val;
-#include "wasp/binary/event_attribute.def"
+#include "wasp/binary/def/event_attribute.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -54,7 +54,7 @@ inline optional<::wasp::binary::EventAttribute> EventAttribute::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case Name:                   \
     return ::wasp::binary::EventAttribute::Name;
-#include "wasp/binary/event_attribute.def"
+#include "wasp/binary/def/event_attribute.def"
 #undef WASP_V
     default:
       return nullopt;

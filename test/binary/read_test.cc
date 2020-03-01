@@ -22,9 +22,9 @@
 #include "gtest/gtest.h"
 #include "test/binary/read_test_utils.h"
 #include "test/binary/test_utils.h"
+#include "wasp/binary/name_section/read.h"
 #include "wasp/binary/read/context.h"
 #include "wasp/binary/read/read_vector.h"
-#include "wasp/binary/read_name.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

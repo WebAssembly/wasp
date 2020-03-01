@@ -45,16 +45,15 @@ add_library(wasplib
   src/binary/context.cc
   src/binary/formatters.cc
   src/binary/lazy_expression.cc
+  src/binary/lazy_module.cc
   src/binary/lazy_sequence.cc
-  src/binary/types_name.cc
+  src/binary/linking_section/sections.cc
+  src/binary/linking_section/types.cc
+  src/binary/name_section/sections.cc
+  src/binary/name_section/types.cc
   src/binary/read.cc
-  src/binary/read_linking_subsection.cc
-  src/binary/read_module.cc
-  src/binary/read_name_subsection.cc
-  src/binary/read_section.cc
+  src/binary/sections.cc
   src/binary/types.cc
-  src/binary/types_linking.cc
-  src/binary/types_name.cc
   src/valid/context.cc
   src/valid/formatters.cc
   src/valid/validate.cc

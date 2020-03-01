@@ -30,7 +30,7 @@ namespace encoding {
 struct ExternalKind {
 #define WASP_V(val, Name, str, ...) static constexpr u8 Name = val;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/external_kind.def"
+#include "wasp/binary/def/external_kind.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 
@@ -46,7 +46,7 @@ inline u8 ExternalKind::Encode(::wasp::binary::ExternalKind decoded) {
   case ::wasp::binary::ExternalKind::Name: \
     return val;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/external_kind.def"
+#include "wasp/binary/def/external_kind.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -68,7 +68,7 @@ inline optional<::wasp::binary::ExternalKind> ExternalKind::Decode(
       return ::wasp::binary::ExternalKind::Name; \
     }                                            \
     break;
-#include "wasp/binary/external_kind.def"
+#include "wasp/binary/def/external_kind.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:

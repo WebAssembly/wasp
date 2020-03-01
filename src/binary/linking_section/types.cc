@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/types_linking.h"
+#include "wasp/binary/linking_section/types.h"
 
 #include "src/base/operator_eq_ne_macros.h"
 #include "src/base/std_hash_macros.h"

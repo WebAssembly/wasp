@@ -1,5 +1,5 @@
 //
-// Copyright 2018 WebAssembly Community Group participants
+// Copyright 2020 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,98 @@
 namespace wasp {
 namespace binary {
 
+// ElementSegment
+inline bool ElementSegment::has_indexes() const {
+  return desc.index() == 0;
+}
+
+inline bool ElementSegment::has_expressions() const {
+  return desc.index() == 1;
+}
+
+inline ElementSegment::IndexesInit& ElementSegment::indexes() {
+  return get<IndexesInit>(desc);
+}
+
+inline const ElementSegment::IndexesInit& ElementSegment::indexes() const {
+  return get<IndexesInit>(desc);
+}
+
+inline ElementSegment::ExpressionsInit& ElementSegment::expressions() {
+  return get<ExpressionsInit>(desc);
+}
+
+inline const ElementSegment::ExpressionsInit& ElementSegment::expressions()
+    const {
+  return get<ExpressionsInit>(desc);
+}
+
+// Import
+inline ExternalKind Import::kind() const {
+  return static_cast<ExternalKind>(desc.index());
+}
+
+inline bool Import::is_function() const {
+  return kind() == ExternalKind::Function;
+}
+
+inline bool Import::is_table() const {
+  return kind() == ExternalKind::Table;
+}
+
+inline bool Import::is_memory() const {
+  return kind() == ExternalKind::Memory;
+}
+
+inline bool Import::is_global() const {
+  return kind() == ExternalKind::Global;
+}
+
+inline bool Import::is_event() const {
+  return kind() == ExternalKind::Event;
+}
+
+inline At<Index>& Import::index() {
+  return get<At<Index>>(desc);
+}
+
+inline const At<Index>& Import::index() const {
+  return get<At<Index>>(desc);
+}
+
+inline At<TableType>& Import::table_type() {
+  return get<At<TableType>>(desc);
+}
+
+inline const At<TableType>& Import::table_type() const {
+  return get<At<TableType>>(desc);
+}
+
+inline At<MemoryType>& Import::memory_type() {
+  return get<At<MemoryType>>(desc);
+}
+
+inline const At<MemoryType>& Import::memory_type() const {
+  return get<At<MemoryType>>(desc);
+}
+
+inline At<GlobalType>& Import::global_type() {
+  return get<At<GlobalType>>(desc);
+}
+
+inline const At<GlobalType>& Import::global_type() const {
+  return get<At<GlobalType>>(desc);
+}
+
+inline At<EventType>& Import::event_type() {
+  return get<At<EventType>>(desc);
+}
+
+inline const At<EventType>& Import::event_type() const {
+  return get<At<EventType>>(desc);
+}
+
+// Instruction
 inline bool Instruction::has_empty_immediate() const {
   return holds_alternative<EmptyImmediate>(immediate);
 }
@@ -220,6 +312,39 @@ inline ValueTypes& Instruction::value_types_immediate() {
 
 inline const ValueTypes& Instruction::value_types_immediate() const {
   return get<ValueTypes>(immediate);
+}
+
+// Section
+inline bool Section::is_known() const {
+  return contents.index() == 0;
+}
+
+inline bool Section::is_custom() const {
+  return contents.index() == 1;
+}
+
+inline At<KnownSection>& Section::known() {
+  return get<At<KnownSection>>(contents);
+}
+
+inline const At<KnownSection>& Section::known() const {
+  return get<At<KnownSection>>(contents);
+}
+
+inline At<CustomSection>& Section::custom() {
+  return get<At<CustomSection>>(contents);
+}
+
+inline const At<CustomSection>& Section::custom() const {
+  return get<At<CustomSection>>(contents);
+}
+
+inline At<SectionId> Section::id() const {
+  return is_known() ? known()->id : MakeAt(SectionId::Custom);
+}
+
+inline SpanU8 Section::data() const {
+  return is_known() ? known()->data : custom()->data;
 }
 
 }  // namespace binary

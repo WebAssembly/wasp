@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_READ_LINKING_H_
-#define WASP_BINARY_READ_LINKING_H_
+#ifndef WASP_BINARY_LINKING_SECTION_READ_H_
+#define WASP_BINARY_LINKING_SECTION_READ_H_
 
+#include "wasp/binary/linking_section/types.h"
 #include "wasp/binary/read.h"
-#include "wasp/binary/types_linking.h"
 
 namespace wasp {
 namespace binary {
@@ -40,4 +40,4 @@ auto Read(SpanU8*, Context&, Tag<SymbolInfoKind>) -> OptAt<SymbolInfoKind>;
 }  // namespace binary
 }  // namespace wasp
 
-#endif  // WASP_BINARY_READ_LINKING_H_
+#endif  // WASP_BINARY_LINKING_SECTION_READ_H_

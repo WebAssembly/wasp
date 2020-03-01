@@ -322,7 +322,7 @@ bool Tool::CreateTables() {
   CHECK(Exec("insert into opcode_name values ({}, \"{}\");", count++, str));
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #define WASP_PREFIX_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/opcode.def"
+#include "wasp/binary/def/opcode.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 #undef WASP_PREFIX_V
@@ -331,7 +331,7 @@ bool Tool::CreateTables() {
 #define WASP_V(val, Name, str) \
   CHECK(Exec("insert into value_type_name values ({}, \"{}\");", count++, str));
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/value_type.def"
+#include "wasp/binary/def/value_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 
@@ -339,7 +339,7 @@ bool Tool::CreateTables() {
 #define WASP_V(val, Name, str) \
   CHECK(Exec("insert into section_name values ({}, \"{}\");", count++, str));
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/section_id.def"
+#include "wasp/binary/def/section_id.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 

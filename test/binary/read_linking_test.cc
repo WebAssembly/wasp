@@ -14,12 +14,11 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/read_linking.h"
-
 #include "gtest/gtest.h"
 #include "test/binary/read_test_utils.h"
 #include "test/binary/test_utils.h"
 #include "wasp/binary/encoding/symbol_info_flags_encoding.h"
+#include "wasp/binary/linking_section/read.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 #include "test/binary/test_utils.h"
-#include "wasp/binary/sections_name.h"
+#include "wasp/binary/name_section/sections.h"
 #include "wasp/binary/read/context.h"
 
 using namespace ::wasp;

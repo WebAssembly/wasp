@@ -29,7 +29,7 @@ namespace encoding {
 struct ElementType {
 #define WASP_V(val, Name, str, ...) static constexpr u8 Name = val;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/element_type.def"
+#include "wasp/binary/def/element_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 
@@ -44,7 +44,7 @@ inline u8 ElementType::Encode(::wasp::binary::ElementType decoded) {
   case ::wasp::binary::ElementType::Name: \
     return val;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/element_type.def"
+#include "wasp/binary/def/element_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -66,7 +66,7 @@ inline optional<::wasp::binary::ElementType> ElementType::Decode(
       return ::wasp::binary::ElementType::Name; \
     }                                           \
     break;
-#include "wasp/binary/element_type.def"
+#include "wasp/binary/def/element_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
   }

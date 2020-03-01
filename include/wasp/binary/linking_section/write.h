@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_WRITE_LINKING_H_
-#define WASP_BINARY_WRITE_LINKING_H_
+#ifndef WASP_BINARY_LINKING_SECTION_WRITE_H_
+#define WASP_BINARY_LINKING_SECTION_WRITE_H_
 
 #include "wasp/binary/encoding/comdat_symbol_kind_encoding.h"
 #include "wasp/binary/encoding/linking_subsection_id_encoding.h"
@@ -73,4 +73,4 @@ Iterator Write(SymbolInfoKind value, Iterator out) {
 }  // namespace binary
 }  // namespace wasp
 
-#endif  // WASP_BINARY_WRITE_LINKING_H_
+#endif  // WASP_BINARY_LINKING_SECTION_WRITE_H_

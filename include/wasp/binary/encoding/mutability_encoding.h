@@ -28,7 +28,7 @@ namespace encoding {
 
 struct Mutability {
 #define WASP_V(val, Name, str) static constexpr u8 Name = val;
-#include "wasp/binary/mutability.def"
+#include "wasp/binary/def/mutability.def"
 #undef WASP_V
 
   static u8 Encode(::wasp::binary::Mutability);
@@ -41,7 +41,7 @@ inline u8 Mutability::Encode(::wasp::binary::Mutability decoded) {
 #define WASP_V(val, Name, str)           \
   case ::wasp::binary::Mutability::Name: \
     return val;
-#include "wasp/binary/mutability.def"
+#include "wasp/binary/def/mutability.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -54,7 +54,7 @@ inline optional<::wasp::binary::Mutability> Mutability::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case Name:                   \
     return ::wasp::binary::Mutability::Name;
-#include "wasp/binary/mutability.def"
+#include "wasp/binary/def/mutability.def"
 #undef WASP_V
     default:
       return nullopt;

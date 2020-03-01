@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_TYPES_NAME_H_
-#define WASP_BINARY_TYPES_NAME_H_
+#ifndef WASP_BINARY_NAME_SECTION_TYPES_H_
+#define WASP_BINARY_NAME_SECTION_TYPES_H_
 
 #include <functional>
 #include <vector>
@@ -30,7 +30,7 @@ namespace binary {
 
 enum class NameSubsectionId : u8 {
 #define WASP_V(val, Name, str) Name,
-#include "wasp/binary/name_subsection_id.def"
+#include "wasp/binary/def/name_subsection_id.def"
 #undef WASP_V
 };
 
@@ -82,4 +82,4 @@ WASP_TYPES(WASP_DECLARE_STD_HASH)
 
 }  // namespace std
 
-#endif // WASP_BINARY_TYPES_NAME_H_
+#endif // WASP_BINARY_NAME_SECTION_TYPES_H_

@@ -75,7 +75,7 @@ inline EncodedOpcode Opcode::Encode(::wasp::binary::Opcode decoded) {
 #define WASP_PREFIX_V(prefix, code, Name, str, feature) \
   case ::wasp::binary::Opcode::Name:                    \
     return {prefix, code};
-#include "wasp/binary/opcode.def"
+#include "wasp/binary/def/opcode.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 #undef WASP_PREFIX_V
@@ -99,7 +99,7 @@ inline optional<::wasp::binary::Opcode> Opcode::Decode(
     }                                                    \
     break;
 #define WASP_PREFIX_V(...) /* Invalid. */
-#include "wasp/binary/opcode.def"
+#include "wasp/binary/def/opcode.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 #undef WASP_PREFIX_V
@@ -131,7 +131,7 @@ inline optional<::wasp::binary::Opcode> Opcode::Decode(
       return ::wasp::binary::Opcode::Name;              \
     }                                                   \
     break;
-#include "wasp/binary/opcode.def"
+#include "wasp/binary/def/opcode.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 #undef WASP_PREFIX_V

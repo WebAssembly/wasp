@@ -48,7 +48,7 @@ constexpr s32 ConvertValueTypeToBlockType(u8 value) {
 enum class BlockType : s32 {
 #define WASP_V(val, Name, str) Name = ConvertValueTypeToBlockType(val),
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/block_type.def"
+#include "wasp/binary/def/block_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
@@ -62,7 +62,7 @@ static_assert(s32(BlockType::Void) == -64, "Invalid value for BlockType::Void");
 enum class ElementType : s32 {
 #define WASP_V(val, Name, str) Name,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/element_type.def"
+#include "wasp/binary/def/element_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
@@ -70,20 +70,20 @@ enum class ElementType : s32 {
 enum class ExternalKind : u8 {
 #define WASP_V(val, Name, str) Name,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/external_kind.def"
+#include "wasp/binary/def/external_kind.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
 
 enum class EventAttribute : u8 {
 #define WASP_V(val, Name, str) Name,
-#include "wasp/binary/event_attribute.def"
+#include "wasp/binary/def/event_attribute.def"
 #undef WASP_V
 };
 
 enum class Mutability : u8 {
 #define WASP_V(val, Name, str) Name,
-#include "wasp/binary/mutability.def"
+#include "wasp/binary/def/mutability.def"
 #undef WASP_V
 };
 
@@ -91,7 +91,7 @@ enum class Opcode : u32 {
 #define WASP_V(prefix, val, Name, str, ...) Name,
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #define WASP_PREFIX_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/opcode.def"
+#include "wasp/binary/def/opcode.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 #undef WASP_PREFIX_V
@@ -101,7 +101,7 @@ enum class Opcode : u32 {
 enum class SectionId : u32 {
 #define WASP_V(val, Name, str, ...) Name,
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/section_id.def"
+#include "wasp/binary/def/section_id.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
@@ -120,7 +120,7 @@ enum class Shared {
 enum class ValueType : s32 {
 #define WASP_V(val, Name, str) Name,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/value_type.def"
+#include "wasp/binary/def/value_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
@@ -614,9 +614,6 @@ struct hash<::wasp::binary::ValueTypes> {
 
 }  // namespace std
 
-#include "wasp/binary/element_segment-inl.h"
-#include "wasp/binary/import-inl.h"
-#include "wasp/binary/instruction-inl.h"
-#include "wasp/binary/section-inl.h"
+#include "wasp/binary/types-inl.h"
 
 #endif // WASP_BINARY_TYPES_H_

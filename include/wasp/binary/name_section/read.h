@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_READ_NAME_H_
-#define WASP_BINARY_READ_NAME_H_
+#ifndef WASP_BINARY_NAME_SECTION_READ_H_
+#define WASP_BINARY_NAME_SECTION_READ_H_
 
+#include "wasp/binary/name_section/types.h"
 #include "wasp/binary/read.h"
-#include "wasp/binary/types_name.h"
 
 namespace wasp {
 namespace binary {
@@ -34,4 +34,4 @@ auto Read(SpanU8*, Context&, Tag<NameSubsectionId>) -> OptAt<NameSubsectionId>;
 }  // namespace binary
 }  // namespace wasp
 
-#endif  // WASP_BINARY_READ_NAME_H_
+#endif  // WASP_BINARY_NAME_SECTION_READ_H_

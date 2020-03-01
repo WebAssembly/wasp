@@ -32,7 +32,7 @@ typename Ctx::iterator formatter<::wasp::binary::ValueType>::format(
     result = str;                       \
     break;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/value_type.def"
+#include "wasp/binary/def/value_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -52,7 +52,7 @@ typename Ctx::iterator formatter<::wasp::binary::BlockType>::format(
     result = "[" str "]";               \
     break;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/block_type.def"
+#include "wasp/binary/def/block_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -75,7 +75,7 @@ typename Ctx::iterator formatter<::wasp::binary::ElementType>::format(
     result = str;                         \
     break;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/element_type.def"
+#include "wasp/binary/def/element_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -95,7 +95,7 @@ typename Ctx::iterator formatter<::wasp::binary::ExternalKind>::format(
     result = str;                          \
     break;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/external_kind.def"
+#include "wasp/binary/def/external_kind.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -114,7 +114,7 @@ typename Ctx::iterator formatter<::wasp::binary::EventAttribute>::format(
   case ::wasp::binary::EventAttribute::Name: \
     result = str;                            \
     break;
-#include "wasp/binary/event_attribute.def"
+#include "wasp/binary/def/event_attribute.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -132,7 +132,7 @@ typename Ctx::iterator formatter<::wasp::binary::Mutability>::format(
   case ::wasp::binary::Mutability::Name: \
     result = str;                        \
     break;
-#include "wasp/binary/mutability.def"
+#include "wasp/binary/def/mutability.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -190,7 +190,7 @@ typename Ctx::iterator formatter<::wasp::binary::SectionId>::format(
     result = str;                       \
     break;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/section_id.def"
+#include "wasp/binary/def/section_id.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default: {
@@ -213,7 +213,7 @@ typename Ctx::iterator formatter<::wasp::binary::NameSubsectionId>::format(
   case ::wasp::binary::NameSubsectionId::Name: \
     result = str;                              \
     break;
-#include "wasp/binary/name_subsection_id.def"
+#include "wasp/binary/def/name_subsection_id.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -429,7 +429,7 @@ typename Ctx::iterator formatter<::wasp::binary::Opcode>::format(
     break;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #define WASP_PREFIX_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/opcode.def"
+#include "wasp/binary/def/opcode.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 #undef WASP_PREFIX_V
@@ -719,7 +719,7 @@ typename Ctx::iterator formatter<::wasp::binary::ComdatSymbolKind>::format(
   case ::wasp::binary::ComdatSymbolKind::Name: \
     result = str;                              \
     break;
-#include "wasp/binary/comdat_symbol_kind.def"
+#include "wasp/binary/def/comdat_symbol_kind.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -746,7 +746,7 @@ typename Ctx::iterator formatter<::wasp::binary::LinkingSubsectionId>::format(
   case ::wasp::binary::LinkingSubsectionId::Name: \
     result = str;                                 \
     break;
-#include "wasp/binary/linking_subsection_id.def"
+#include "wasp/binary/def/linking_subsection_id.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -778,7 +778,7 @@ typename Ctx::iterator formatter<::wasp::binary::RelocationType>::format(
   case ::wasp::binary::RelocationType::Name: \
     result = str;                            \
     break;
-#include "wasp/binary/relocation_type.def"
+#include "wasp/binary/def/relocation_type.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -916,7 +916,7 @@ typename Ctx::iterator formatter<::wasp::binary::SymbolInfoKind>::format(
   case ::wasp::binary::SymbolInfoKind::Name: \
     result = str;                            \
     break;
-#include "wasp/binary/symbol_info_kind.def"
+#include "wasp/binary/def/symbol_info_kind.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();

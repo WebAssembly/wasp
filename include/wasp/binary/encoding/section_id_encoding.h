@@ -30,7 +30,7 @@ namespace encoding {
 struct SectionId {
 #define WASP_V(val, Name, str, ...) static constexpr u32 Name = val;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/section_id.def"
+#include "wasp/binary/def/section_id.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 
@@ -46,7 +46,7 @@ inline u32 SectionId::Encode(::wasp::binary::SectionId decoded) {
   case ::wasp::binary::SectionId::Name: \
     return val;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/section_id.def"
+#include "wasp/binary/def/section_id.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -68,7 +68,7 @@ inline optional<::wasp::binary::SectionId> SectionId::Decode(
       return ::wasp::binary::SectionId::Name;   \
     }                                           \
     break;
-#include "wasp/binary/section_id.def"
+#include "wasp/binary/def/section_id.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:

@@ -14,23 +14,30 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_WRITE_NAME_H_
-#define WASP_BINARY_WRITE_NAME_H_
+#include "wasp/binary/name_section/types.h"
 
-#include "wasp/binary/encoding/name_subsection_id_encoding.h"
-#include "wasp/binary/types_name.h"
-#include "wasp/binary/write.h"
+#include "src/base/operator_eq_ne_macros.h"
+#include "src/base/std_hash_macros.h"
 
 namespace wasp {
 namespace binary {
 
-template <typename Iterator>
-Iterator Write(NameSubsectionId value, Iterator out) {
-  return Write(encoding::NameSubsectionId::Encode(value), out);
-}
-
+WASP_OPERATOR_EQ_NE_2(IndirectNameAssoc, index, name_map)
+WASP_OPERATOR_EQ_NE_2(NameAssoc, index, name)
+WASP_OPERATOR_EQ_NE_2(NameSubsection, id, data)
 
 }  // namespace binary
 }  // namespace wasp
 
-#endif  // WASP_BINARY_WRITE_NAME_H_
+WASP_STD_HASH_2(::wasp::binary::NameAssoc, index, name)
+WASP_STD_HASH_2(::wasp::binary::NameSubsection, id, data)
+
+namespace std {
+
+size_t hash<::wasp::binary::IndirectNameAssoc>::operator()(
+    const ::wasp::binary::IndirectNameAssoc& v) const {
+  return ::wasp::HashState::combine(0, v.index,
+                                    ::wasp::HashContainer(v.name_map));
+}
+
+}  // namespace std

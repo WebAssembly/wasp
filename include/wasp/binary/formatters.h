@@ -18,9 +18,9 @@
 #define WASP_BINARY_FORMATTERS_H_
 
 #include "wasp/base/format.h"
+#include "wasp/binary/linking_section/types.h"
+#include "wasp/binary/name_section/types.h"
 #include "wasp/binary/types.h"
-#include "wasp/binary/types_linking.h"
-#include "wasp/binary/types_name.h"
 
 namespace fmt {
 

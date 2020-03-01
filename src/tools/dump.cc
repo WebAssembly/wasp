@@ -33,9 +33,9 @@
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/lazy_expression.h"
 #include "wasp/binary/lazy_module.h"
+#include "wasp/binary/linking_section/sections.h"
+#include "wasp/binary/name_section/sections.h"
 #include "wasp/binary/sections.h"
-#include "wasp/binary/sections_linking.h"
-#include "wasp/binary/sections_name.h"
 #include "wasp/binary/visitor.h"
 
 namespace wasp {

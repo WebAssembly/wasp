@@ -20,7 +20,7 @@
 #include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/types_name.h"
+#include "wasp/binary/name_section/types.h"
 
 namespace wasp {
 namespace binary {
@@ -28,7 +28,7 @@ namespace encoding {
 
 struct NameSubsectionId {
 #define WASP_V(val, Name, str) static constexpr u8 Name = val;
-#include "wasp/binary/name_subsection_id.def"
+#include "wasp/binary/def/name_subsection_id.def"
 #undef WASP_V
 
   static u8 Encode(::wasp::binary::NameSubsectionId);
@@ -41,7 +41,7 @@ inline u8 NameSubsectionId::Encode(::wasp::binary::NameSubsectionId decoded) {
 #define WASP_V(val, Name, str)                 \
   case ::wasp::binary::NameSubsectionId::Name: \
     return val;
-#include "wasp/binary/name_subsection_id.def"
+#include "wasp/binary/def/name_subsection_id.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -55,7 +55,7 @@ inline optional<::wasp::binary::NameSubsectionId> NameSubsectionId::Decode(
 #define WASP_V(val, Name, str) \
   case Name:                   \
     return ::wasp::binary::NameSubsectionId::Name;
-#include "wasp/binary/name_subsection_id.def"
+#include "wasp/binary/def/name_subsection_id.def"
 #undef WASP_V
     default:
       return nullopt;

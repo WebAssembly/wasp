@@ -20,7 +20,7 @@
 #include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/types_linking.h"
+#include "wasp/binary/linking_section/types.h"
 
 namespace wasp {
 namespace binary {
@@ -28,7 +28,7 @@ namespace encoding {
 
 struct ComdatSymbolKind {
 #define WASP_V(val, Name, str) static constexpr u8 Name = val;
-#include "wasp/binary/comdat_symbol_kind.def"
+#include "wasp/binary/def/comdat_symbol_kind.def"
 #undef WASP_V
 
   static u8 Encode(::wasp::binary::ComdatSymbolKind);
@@ -41,7 +41,7 @@ inline u8 ComdatSymbolKind::Encode(::wasp::binary::ComdatSymbolKind decoded) {
 #define WASP_V(val, Name, str)                 \
   case ::wasp::binary::ComdatSymbolKind::Name: \
     return val;
-#include "wasp/binary/comdat_symbol_kind.def"
+#include "wasp/binary/def/comdat_symbol_kind.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -55,7 +55,7 @@ inline optional<::wasp::binary::ComdatSymbolKind> ComdatSymbolKind::Decode(
 #define WASP_V(val, Name, str) \
   case Name:                   \
     return ::wasp::binary::ComdatSymbolKind::Name;
-#include "wasp/binary/comdat_symbol_kind.def"
+#include "wasp/binary/def/comdat_symbol_kind.def"
 #undef WASP_V
     default:
       return nullopt;

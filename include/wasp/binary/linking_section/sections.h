@@ -14,15 +14,15 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_SECTIONS_LINKING_H_
-#define WASP_BINARY_SECTIONS_LINKING_H_
+#ifndef WASP_BINARY_LINKING_SECTION_SECTIONS_H_
+#define WASP_BINARY_LINKING_SECTION_SECTIONS_H_
 
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/lazy_section.h"
-#include "wasp/binary/read_linking.h"
+#include "wasp/binary/linking_section/read.h"
+#include "wasp/binary/linking_section/types.h"
 #include "wasp/binary/types.h"
-#include "wasp/binary/types_linking.h"
 
 namespace wasp {
 namespace binary {
@@ -73,4 +73,4 @@ LazySymbolTableSubsection ReadSymbolTableSubsection(LinkingSubsection,
 }  // namespace binary
 }  // namespace wasp
 
-#endif // WASP_BINARY_SECTIONS_LINKING_H_
+#endif // WASP_BINARY_LINKING_SECTION_SECTIONS_H_
