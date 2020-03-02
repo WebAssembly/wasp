@@ -44,6 +44,7 @@ void remove_prefix(span<T, Extent>* s, span_index_t offset) {
 }
 
 using SpanU8 = span<const u8>;
+using Location = SpanU8;
 
 }  // namespace wasp
 

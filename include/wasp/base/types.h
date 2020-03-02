@@ -34,9 +34,6 @@ using f64 = double;
 
 using Index = u32;
 
-// A byte offset mapping a structure back to its source location.
-using Location = const u8*;
-
 }  // namespace wasp
 
 #endif  // WASP_BASE_TYPES_H_

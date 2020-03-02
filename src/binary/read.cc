@@ -84,7 +84,7 @@ OptAt<SpanU8> ReadBytes(SpanU8* data, SpanU8::index_type N, Context& context) {
 
   SpanU8 result{data->begin(), N};
   remove_prefix(data, N);
-  return MakeAt(result.data(), result);
+  return MakeAt(result, result);
 }
 
 OptAt<SpanU8> ReadBytesExpected(SpanU8* data,
@@ -1229,9 +1229,10 @@ OptAt<u8> Read(SpanU8* data, Context& context, Tag<u8>) {
     return nullopt;
   }
 
+  Location loc = data->subspan(1);
   u8 result{(*data)[0]};
   remove_prefix(data, 1);
-  return MakeAt(data->data() - 1, result);
+  return MakeAt(loc, result);
 }
 
 OptAt<v128> Read(SpanU8* data, Context& context, Tag<v128>) {

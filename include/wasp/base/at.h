@@ -21,7 +21,7 @@
 
 #include "wasp/base/hash.h"
 #include "wasp/base/optional.h"
-#include "wasp/base/types.h"
+#include "wasp/base/span.h"
 
 namespace wasp {
 

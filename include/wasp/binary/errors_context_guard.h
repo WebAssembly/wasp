@@ -40,8 +40,7 @@ class ErrorsContextGuard {
     }
   }
 
-  SpanU8 pos() const { return pos_; }
-  Location loc() const { return pos_.data(); }
+  Location loc() const { return pos_; }
 
  private:
   Errors& errors_;
