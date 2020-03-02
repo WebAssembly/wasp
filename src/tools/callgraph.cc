@@ -29,6 +29,7 @@
 #include "wasp/base/format.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/optional.h"
+#include "wasp/base/str_to_u32.h"
 #include "wasp/base/string_view.h"
 #include "wasp/binary/errors_nop.h"
 #include "wasp/binary/lazy_expression.h"
@@ -43,16 +44,26 @@ namespace callgraph {
 
 using namespace ::wasp::binary;
 
+enum class Mode {
+  All,
+  Calls,
+  Callers,
+};
+
 struct Options {
   Features features;
   string_view output_filename;
+  optional<string_view> function;
+  optional<Index> function_index;
+  Mode mode = Mode::All;
 };
 
 struct Tool {
   explicit Tool(SpanU8 data, Options);
 
-  void Run();
+  int Run();
   void DoPrepass();
+  void GetFunctionIndex();
   void CalculateCallGraph();
   void WriteDotFile();
 
@@ -62,6 +73,7 @@ struct Tool {
   Options options;
   LazyModule module;
   std::map<Index, string_view> function_names;
+  std::map<string_view, Index> name_to_function;
   Index imported_function_count = 0;
   std::set<std::pair<Index, Index>> call_graph;
 };
@@ -77,6 +89,16 @@ int Main(span<string_view> args) {
            [&]() { parser.PrintHelpAndExit(0); })
       .Add('o', "--output", "<filename>", "write DOT file output to <filename>",
            [&](string_view arg) { options.output_filename = arg; })
+      .Add("--calls", "<func>", "find all functions called by func",
+           [&](string_view arg) {
+             options.function = arg;
+             options.mode = Mode::Calls;
+           })
+      .Add("--callers", "<func>", "find all functions that call func",
+           [&](string_view arg) {
+             options.function = arg;
+             options.mode = Mode::Callers;
+           })
       .Add("<filename>", "input wasm file", [&](string_view arg) {
         if (filename.empty()) {
           filename = arg;
@@ -99,27 +121,53 @@ int Main(span<string_view> args) {
 
   SpanU8 data{*optbuf};
   Tool tool{data, options};
-  tool.Run();
-
-  return 0;
+  return tool.Run();
 }
 
 Tool::Tool(SpanU8 data, Options options)
     : options{options}, module{ReadModule(data, options.features, errors)} {}
 
-void Tool::Run() {
+int Tool::Run() {
   DoPrepass();
+  GetFunctionIndex();
+  if (options.mode != Mode::All && !options.function_index) {
+    print(stderr, "Unknown function {}.\n", *options.function);
+    return 1;
+  }
   CalculateCallGraph();
   WriteDotFile();
+  return 0;
 }
 
 void Tool::DoPrepass() {
+  ForEachFunctionName(module, [this](const IndexNamePair& pair) {
+    name_to_function.insert(std::make_pair(pair.second, pair.first));
+  });
+
   CopyFunctionNames(module,
                     std::inserter(function_names, function_names.end()));
   imported_function_count = GetImportCount(module, ExternalKind::Function);
 }
 
+void Tool::GetFunctionIndex() {
+  if (!options.function) {
+    options.function_index = nullopt;
+    return;
+  }
+  // Search by name.
+  auto iter = name_to_function.find(*options.function);
+  if (iter != name_to_function.end()) {
+    options.function_index = iter->second;
+    return;
+  }
+
+  // Try to convert the string to an integer and search by index.
+  options.function_index = StrToU32(*options.function);
+}
+
 void Tool::CalculateCallGraph() {
+  std::multimap<Index, Index> full_graph;
+
   for (auto section : module.sections) {
     if (section->is_known()) {
       auto known = section->known();
@@ -131,11 +179,53 @@ void Tool::CalculateCallGraph() {
             if (instr->opcode == Opcode::Call) {
               assert(instr->has_index_immediate());
               auto callee_index = instr->index_immediate();
-              call_graph.insert(std::make_pair(code.index, callee_index));
+              if (options.mode == Mode::Callers) {
+                full_graph.emplace(callee_index, code.index);
+              } else {
+                full_graph.emplace(code.index, callee_index);
+              }
             }
           }
         }
       }
+    }
+  }
+
+  // Calculate subgraph that only includes calls/callers.
+  switch (options.mode) {
+    case Mode::All:
+      for (auto pair : full_graph) {
+        call_graph.insert(pair);
+      }
+      break;
+
+    case Mode::Calls:
+    case Mode::Callers: {
+      std::set<Index> seen;
+      std::set<Index> next = {*options.function_index};
+      while (!next.empty()) {
+        std::set<Index> new_next;
+        for (auto caller : next) {
+          if (seen.count(caller)) {
+            continue;
+          }
+          seen.insert(caller);
+
+          auto range = full_graph.equal_range(caller);
+          for (auto iter = range.first; iter != range.second; ++iter) {
+            Index callee = iter->second;
+            new_next.insert(callee);
+
+            if (options.mode == Mode::Callers) {
+              call_graph.insert(std::make_pair(callee, caller));
+            } else {
+              call_graph.insert(std::make_pair(caller, callee));
+            }
+          }
+        }
+        next = std::move(new_next);
+      }
+      break;
     }
   }
 }
