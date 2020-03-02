@@ -77,7 +77,7 @@ bool AllTrue(T first, Args... rest) {
   return !!first & AllTrue(rest...);
 }
 
-optional<FunctionType> GetFunctionType(Index index, Context& context) {
+optional<FunctionType> GetFunctionType(At<Index> index, Context& context) {
   if (!ValidateIndex(index, context.types.size(), "type index", context)) {
     return nullopt;
   }
@@ -113,7 +113,7 @@ StackTypeSpan GetTypeStack(Context& context) {
       TopLabel(context).type_stack_limit);
 }
 
-optional<Function> GetFunction(Index index, Context& context) {
+optional<Function> GetFunction(At<Index> index, Context& context) {
   if (!ValidateIndex(index, context.functions.size(), "function index",
                      context)) {
     return nullopt;
@@ -121,7 +121,7 @@ optional<Function> GetFunction(Index index, Context& context) {
   return context.functions[index];
 }
 
-optional<TableType> GetTableType(Index index, Context& context) {
+optional<TableType> GetTableType(At<Index> index, Context& context) {
   if (!ValidateIndex(index, context.tables.size(), "table index", context)) {
     return nullopt;
   }
@@ -144,28 +144,28 @@ optional<StackType> GetTableElementStackType(Index index, Context& context) {
   }
 }
 
-optional<MemoryType> GetMemoryType(Index index, Context& context) {
+optional<MemoryType> GetMemoryType(At<Index> index, Context& context) {
   if (!ValidateIndex(index, context.memories.size(), "memory index", context)) {
     return nullopt;
   }
   return context.memories[index];
 }
 
-optional<GlobalType> GetGlobalType(Index index, Context& context) {
+optional<GlobalType> GetGlobalType(At<Index> index, Context& context) {
   if (!ValidateIndex(index, context.globals.size(), "global index", context)) {
     return nullopt;
   }
   return context.globals[index];
 }
 
-optional<EventType> GetEventType(Index index, Context& context) {
+optional<EventType> GetEventType(At<Index> index, Context& context) {
   if (!ValidateIndex(index, context.events.size(), "event index", context)) {
     return nullopt;
   }
   return context.events[index];
 }
 
-optional<SegmentType> GetElementSegmentType(Index index, Context& context) {
+optional<SegmentType> GetElementSegmentType(At<Index> index, Context& context) {
   if (!ValidateIndex(index, context.element_segments.size(),
                      "element segment index", context)) {
     return nullopt;
@@ -173,7 +173,7 @@ optional<SegmentType> GetElementSegmentType(Index index, Context& context) {
   return context.element_segments[index];
 }
 
-optional<StackType> GetLocalType(Index index, Context& context) {
+optional<StackType> GetLocalType(At<Index> index, Context& context) {
   if (!ValidateIndex(index, context.GetLocalCount(), "local index", context)) {
     return nullopt;
   }
@@ -184,7 +184,7 @@ optional<StackType> GetLocalType(Index index, Context& context) {
   return StackType(*local_type);
 }
 
-bool CheckDataSegment(Index index, Context& context) {
+bool CheckDataSegment(At<Index> index, Context& context) {
   return ValidateIndex(index, context.declared_data_count.value_or(0),
                        "data segment index", context);
 }
@@ -217,11 +217,11 @@ Label MaybeDefault(const Label* value) {
   return value ? *value : Label{LabelType::Block, {}, {}, 0};
 }
 
-optional<StackType> PeekType(Context& context) {
+optional<StackType> PeekType(Location loc, Context& context) {
   auto type_stack = GetTypeStack(context);
   if (type_stack.empty()) {
     if (!TopLabel(context).unreachable) {
-      context.errors->OnError("Expected stack to have 1 value, got 0");
+      context.errors->OnError(loc, "Expected stack to have 1 value, got 0");
       return nullopt;
     }
     return StackType::Any;
@@ -290,7 +290,7 @@ bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual) {
   return true;
 }
 
-bool CheckTypes(StackTypeSpan expected, Context& context) {
+bool CheckTypes(Location loc, StackTypeSpan expected, Context& context) {
   StackTypeSpan full_expected = expected;
   const auto& top_label = TopLabel(context);
   auto type_stack = GetTypeStack(context);
@@ -302,18 +302,20 @@ bool CheckTypes(StackTypeSpan expected, Context& context) {
   if (!TypesMatch(expected, type_stack)) {
     // TODO proper formatting of type stack
     context.errors->OnError(
-        format("Expected stack to contain {}, got {}{}", full_expected,
-               top_label.unreachable ? "..." : "", type_stack));
+        loc, format("Expected stack to contain {}, got {}{}", full_expected,
+                    top_label.unreachable ? "..." : "", type_stack));
     return false;
   }
   return true;
 }
 
-bool CheckResultTypes(StackTypeSpan caller,
+bool CheckResultTypes(Location loc,
+                      StackTypeSpan caller,
                       StackTypeSpan callee,
                       Context& context) {
   if (!TypesMatch(caller, callee)) {
     context.errors->OnError(
+        loc,
         format("Callee's result types {} must equal caller's result types {}",
                callee, caller));
     return false;
@@ -325,14 +327,17 @@ void ResetTypeStackToLimit(Context& context) {
   context.type_stack.resize(TopLabel(context).type_stack_limit);
 }
 
-bool DropTypes(size_t count, Context& context, bool print_errors = true) {
+bool DropTypes(Location loc,
+               size_t count,
+               Context& context,
+               bool print_errors = true) {
   const auto& top_label = TopLabel(context);
   auto type_stack_size = context.type_stack.size() - top_label.type_stack_limit;
   if (count > type_stack_size) {
     if (print_errors) {
       context.errors->OnError(
-          format("Expected stack to contain {} value{}, got {}", count,
-                 count == 1 ? "" : "s", type_stack_size));
+          loc, format("Expected stack to contain {} value{}, got {}", count,
+                      count == 1 ? "" : "s", type_stack_size));
     }
     ResetTypeStackToLimit(context);
     return top_label.unreachable;
@@ -341,26 +346,29 @@ bool DropTypes(size_t count, Context& context, bool print_errors = true) {
   return true;
 }
 
-bool PopTypes(StackTypeSpan expected, Context& context) {
-  bool valid = CheckTypes(expected, context);
-  valid &= DropTypes(expected.size(), context, false);
+bool PopTypes(Location loc, StackTypeSpan expected, Context& context) {
+  bool valid = CheckTypes(loc, expected, context);
+  valid &= DropTypes(loc, expected.size(), context, false);
   return valid;
 }
 
-bool PopType(StackType type, Context& context) {
-  return PopTypes(StackTypeSpan(&type, 1), context);
+bool PopType(Location loc, StackType type, Context& context) {
+  return PopTypes(loc, StackTypeSpan(&type, 1), context);
 }
 
-bool PopAndPushTypes(StackTypeSpan param_types,
+bool PopAndPushTypes(Location loc,
+                     StackTypeSpan param_types,
                      StackTypeSpan result_types,
                      Context& context) {
-  bool valid = PopTypes(param_types, context);
+  bool valid = PopTypes(loc, param_types, context);
   PushTypes(result_types, context);
   return valid;
 }
 
-bool PopAndPushTypes(const FunctionType& function_type, Context& context) {
-  return PopAndPushTypes(ToStackTypes(function_type.param_types),
+bool PopAndPushTypes(Location loc,
+                     const FunctionType& function_type,
+                     Context& context) {
+  return PopAndPushTypes(loc, ToStackTypes(function_type.param_types),
                          ToStackTypes(function_type.result_types), context);
 }
 
@@ -370,21 +378,23 @@ void SetUnreachable(Context& context) {
   ResetTypeStackToLimit(context);
 }
 
-Label* GetLabel(Index depth, Context& context) {
+Label* GetLabel(At<Index> depth, Context& context) {
   if (depth >= context.label_stack.size()) {
-    context.errors->OnError(format("Invalid label {}, must be less than {}",
-                                   depth, context.label_stack.size()));
+    context.errors->OnError(
+        depth.loc(), format("Invalid label {}, must be less than {}", depth,
+                            context.label_stack.size()));
     return nullptr;
   }
   return &context.label_stack[context.label_stack.size() - depth - 1];
 }
 
-bool PushLabel(LabelType label_type,
+bool PushLabel(Location loc,
+               LabelType label_type,
                const FunctionType& type,
                Context& context) {
   auto stack_param_types = ToStackTypes(type.param_types);
   auto stack_result_types = ToStackTypes(type.result_types);
-  bool valid = PopTypes(stack_param_types, context);
+  bool valid = PopTypes(loc, stack_param_types, context);
   context.label_stack.emplace_back(label_type, stack_param_types,
                                    stack_result_types,
                                    context.type_stack.size());
@@ -392,32 +402,35 @@ bool PushLabel(LabelType label_type,
   return valid;
 }
 
-bool PushLabel(LabelType label_type, BlockType block_type, Context& context) {
+bool PushLabel(Location loc,
+               LabelType label_type,
+               BlockType block_type,
+               Context& context) {
   auto sig = GetBlockTypeSignature(block_type, context);
   if (!sig) {
     return false;
   }
-  return PushLabel(label_type, *sig, context);
+  return PushLabel(loc, label_type, *sig, context);
 }
 
-bool CheckTypeStackEmpty(Context& context) {
+bool CheckTypeStackEmpty(Location loc, Context& context) {
   const auto& top_label = TopLabel(context);
   if (context.type_stack.size() != top_label.type_stack_limit) {
     context.errors->OnError(
-        format("Expected empty stack, got {}", GetTypeStack(context)));
+        loc, format("Expected empty stack, got {}", GetTypeStack(context)));
     return false;
   }
   return true;
 }
 
-bool Catch(Context& context) {
+bool Catch(Location loc, Context& context) {
   auto& top_label = TopLabel(context);
   if (top_label.label_type != LabelType::Try) {
-    context.errors->OnError("Got catch instruction without try");
+    context.errors->OnError(loc, "Got catch instruction without try");
     return false;
   }
-  bool valid = PopTypes(top_label.result_types, context);
-  valid &= CheckTypeStackEmpty(context);
+  bool valid = PopTypes(loc, top_label.result_types, context);
+  valid &= CheckTypeStackEmpty(loc, context);
   ResetTypeStackToLimit(context);
   PushTypes(span_exnref, context);
   top_label.label_type = LabelType::Catch;
@@ -425,14 +438,14 @@ bool Catch(Context& context) {
   return valid;
 }
 
-bool Else(Context& context) {
+bool Else(Location loc, Context& context) {
   auto& top_label = TopLabel(context);
   if (top_label.label_type != LabelType::If) {
-    context.errors->OnError("Got else instruction without if");
+    context.errors->OnError(loc, "Got else instruction without if");
     return false;
   }
-  bool valid = PopTypes(top_label.result_types, context);
-  valid &= CheckTypeStackEmpty(context);
+  bool valid = PopTypes(loc, top_label.result_types, context);
+  valid &= CheckTypeStackEmpty(loc, context);
   ResetTypeStackToLimit(context);
   PushTypes(top_label.param_types, context);
   top_label.label_type = LabelType::Else;
@@ -440,40 +453,42 @@ bool Else(Context& context) {
   return valid;
 }
 
-bool End(Context& context) {
+bool End(Location loc, Context& context) {
   auto& top_label = TopLabel(context);
   bool valid = true;
   if (top_label.label_type == LabelType::If) {
-    valid &= Else(context);
+    valid &= Else(loc, context);
   }
-  valid &= PopTypes(top_label.result_types, context);
-  valid &= CheckTypeStackEmpty(context);
+  valid &= PopTypes(loc, top_label.result_types, context);
+  valid &= CheckTypeStackEmpty(loc, context);
   ResetTypeStackToLimit(context);
   PushTypes(top_label.result_types, context);
   context.label_stack.pop_back();
   return valid;
 }
 
-bool Br(Index depth, Context& context) {
+bool Br(Location loc, At<Index> depth, Context& context) {
   const auto* label = GetLabel(depth, context);
-  bool valid = PopTypes(MaybeDefault(label).br_types(), context);
+  bool valid = PopTypes(loc, MaybeDefault(label).br_types(), context);
   SetUnreachable(context);
   return AllTrue(label, valid);
 }
 
-bool BrIf(Index depth, Context& context) {
-  bool valid = PopType(StackType::I32, context);
+bool BrIf(Location loc, At<Index> depth, Context& context) {
+  bool valid = PopType(loc, StackType::I32, context);
   const auto* label = GetLabel(depth, context);
   auto label_ = MaybeDefault(label);
   return AllTrue(
       valid, label,
-      PopAndPushTypes(label_.br_types(), label_.br_types(), context));
+      PopAndPushTypes(loc, label_.br_types(), label_.br_types(), context));
 }
 
-bool BrTable(const BrTableImmediate& immediate, Context& context) {
-  bool valid = PopType(StackType::I32, context);
+bool BrTable(Location loc,
+             const At<BrTableImmediate>& immediate,
+             Context& context) {
+  bool valid = PopType(loc, StackType::I32, context);
   optional<StackTypeSpan> br_types;
-  auto handle_target = [&](Index target) {
+  auto handle_target = [&](At<Index> target) {
     const auto* label = GetLabel(target, context);
     if (label) {
       StackTypeSpan label_br_types{label->br_types()};
@@ -482,6 +497,7 @@ bool BrTable(const BrTableImmediate& immediate, Context& context) {
           // In the reference types proposal, only the arity is checked.
           if (br_types->size() != label_br_types.size()) {
             context.errors->OnError(
+                target.loc(),
                 format("br_table labels must have the same arity; expected "
                        "{}, got {}",
                        br_types->size(), label_br_types.size()));
@@ -490,6 +506,7 @@ bool BrTable(const BrTableImmediate& immediate, Context& context) {
         } else {
           if (*br_types != label_br_types) {
             context.errors->OnError(
+                target.loc(),
                 format("br_table labels must have the same signature; expected "
                        "{}, got {}",
                        *br_types, label_br_types));
@@ -498,133 +515,141 @@ bool BrTable(const BrTableImmediate& immediate, Context& context) {
         }
       } else {
         br_types = label_br_types;
-        valid &= CheckTypes(*br_types, context);
+        valid &= CheckTypes(target.loc(), *br_types, context);
       }
     } else {
       valid = false;
     }
   };
 
-  handle_target(immediate.default_target);
-  for (auto target : immediate.targets) {
+  handle_target(immediate->default_target);
+  for (auto target : immediate->targets) {
     handle_target(target);
   }
   SetUnreachable(context);
   return valid;
 }
 
-bool Call(Index function_index, Context& context) {
+bool Call(Location loc, At<Index> function_index, Context& context) {
   auto function = GetFunction(function_index, context);
   auto function_type =
       GetFunctionType(MaybeDefault(function).type_index, context);
   return AllTrue(function, function_type,
-                 PopAndPushTypes(MaybeDefault(function_type), context));
+                 PopAndPushTypes(loc, MaybeDefault(function_type), context));
 }
 
-bool CallIndirect(const CallIndirectImmediate& immediate, Context& context) {
+bool CallIndirect(Location loc,
+                  const At<CallIndirectImmediate>& immediate,
+                  Context& context) {
   auto table_type = GetTableType(0, context);
-  auto function_type = GetFunctionType(immediate.index, context);
-  bool valid = PopType(StackType::I32, context);
+  auto function_type = GetFunctionType(immediate->index, context);
+  bool valid = PopType(loc, StackType::I32, context);
   return AllTrue(table_type, function_type, valid,
-                 PopAndPushTypes(MaybeDefault(function_type), context));
+                 PopAndPushTypes(loc, MaybeDefault(function_type), context));
 }
 
-bool Select(Context& context) {
-  bool valid = PopType(StackType::I32, context);
-  auto type = MaybeDefault(PeekType(context));
+bool Select(Location loc, Context& context) {
+  bool valid = PopType(loc, StackType::I32, context);
+  auto type = MaybeDefault(PeekType(loc, context));
   if (!(type == StackType::I32 || type == StackType::I64 ||
         type == StackType::F32 || type == StackType::F64 ||
         type == StackType::Any)) {
     context.errors->OnError(
-        format("select instruction without expected type can only be used "
-               "with i32, i64, f32, f64; got {}",
-               type));
+        loc, format("select instruction without expected type can only be used "
+                    "with i32, i64, f32, f64; got {}",
+                    type));
     return false;
   }
   const StackType pop_types[] = {type, type};
   const StackType push_type[] = {type};
-  return AllTrue(valid, PopAndPushTypes(pop_types, push_type, context));
+  return AllTrue(valid, PopAndPushTypes(loc, pop_types, push_type, context));
 }
 
-bool SelectT(const ValueTypes& value_types, Context& context) {
-  bool valid = PopType(StackType::I32, context);
-  if (value_types.size() != 1) {
-    context.errors->OnError(format(
-        "select instruction must have types immediate with size 1, got {}",
-        value_types.size()));
+bool SelectT(Location loc,
+             const At<ValueTypes>& value_types,
+             Context& context) {
+  bool valid = PopType(loc, StackType::I32, context);
+  if (value_types->size() != 1) {
+    context.errors->OnError(
+        value_types.loc(),
+        format(
+            "select instruction must have types immediate with size 1, got {}",
+            value_types->size()));
     return false;
   }
   StackTypes stack_types = ToStackTypes(value_types);
   StackType type = stack_types[0];
   const StackType pop_types[] = {type, type};
   const StackType push_type[] = {type};
-  return AllTrue(valid, PopAndPushTypes(pop_types, push_type, context));
+  return AllTrue(valid, PopAndPushTypes(loc, pop_types, push_type, context));
 }
 
-bool LocalGet(Index index, Context& context) {
+bool LocalGet(At<Index> index, Context& context) {
   auto local_type = GetLocalType(index, context);
   PushType(MaybeDefault(local_type), context);
   return AllTrue(local_type);
 }
 
-bool LocalSet(Index index, Context& context) {
+bool LocalSet(Location loc, At<Index> index, Context& context) {
   auto local_type = GetLocalType(index, context);
   return AllTrue(local_type,
-                 PopType(MaybeDefault(local_type), context));
+                 PopType(loc, MaybeDefault(local_type), context));
 }
 
-bool LocalTee(Index index, Context& context) {
+bool LocalTee(Location loc, At<Index> index, Context& context) {
   auto local_type = GetLocalType(index, context);
   const StackType type[] = {MaybeDefault(local_type)};
-  return AllTrue(local_type, PopAndPushTypes(type, type, context));
+  return AllTrue(local_type, PopAndPushTypes(loc, type, type, context));
 }
 
-bool GlobalGet(Index index, Context& context) {
+bool GlobalGet(At<Index> index, Context& context) {
   auto global_type = GetGlobalType(index, context);
   PushType(StackType(*MaybeDefault(global_type).valtype), context);
   return AllTrue(global_type);
 }
 
-bool GlobalSet(Index index, Context& context) {
+bool GlobalSet(Location loc, At<Index> index, Context& context) {
   auto global_type = GetGlobalType(index, context);
   auto type = MaybeDefault(global_type);
   bool valid = true;
   if (type.mut == Mutability::Const) {
     context.errors->OnError(
+        index.loc(),
         format("global.set is invalid on immutable global {}", index));
     valid = false;
   }
-  return AllTrue(valid, PopType(StackType(*type.valtype), context));
+  return AllTrue(valid, PopType(loc, StackType(*type.valtype), context));
 }
 
-bool TableGet(Index index, Context& context) {
+bool TableGet(Location loc, At<Index> index, Context& context) {
   auto stack_type = GetTableElementStackType(index, context);
   const StackType type[] = {MaybeDefaultElementType(stack_type)};
-  return AllTrue(stack_type, PopAndPushTypes(span_i32, type, context));
+  return AllTrue(stack_type, PopAndPushTypes(loc, span_i32, type, context));
 }
 
-bool TableSet(Index index, Context& context) {
+bool TableSet(Location loc, At<Index> index, Context& context) {
   auto stack_type = GetTableElementStackType(index, context);
   const StackType types[] = {StackType::I32,
                              MaybeDefaultElementType(stack_type)};
-  return AllTrue(stack_type, PopTypes(types, context));
+  return AllTrue(stack_type, PopTypes(loc, types, context));
 }
 
-bool CheckAlignment(const Instruction& instruction,
+bool CheckAlignment(const At<Instruction>& instruction,
                     u32 max_align,
                     Context& context) {
-  if (instruction.mem_arg_immediate()->align_log2 > max_align) {
-    context.errors->OnError(format("Invalid alignment {}", instruction));
+  if (instruction->mem_arg_immediate()->align_log2 > max_align) {
+    context.errors->OnError(instruction.loc(),
+                            format("Invalid alignment {}", instruction));
     return false;
   }
   return true;
 }
 
-bool Load(const Instruction& instruction, Context& context) {
+bool Load(Location loc, const At<Instruction>& instruction, Context& context) {
   auto memory_type = GetMemoryType(0, context);
   StackTypeSpan span;
   u32 max_align;
-  switch (instruction.opcode) {
+  switch (instruction->opcode) {
     case Opcode::I32Load:    span = span_i32; max_align = 2; break;
     case Opcode::I64Load:    span = span_i64; max_align = 3; break;
     case Opcode::F32Load:    span = span_f32; max_align = 2; break;
@@ -655,14 +680,15 @@ bool Load(const Instruction& instruction, Context& context) {
   }
 
   bool valid = CheckAlignment(instruction, max_align, context);
-  return AllTrue(memory_type, valid, PopAndPushTypes(span_i32, span, context));
+  return AllTrue(memory_type, valid,
+                 PopAndPushTypes(loc, span_i32, span, context));
 }
 
-bool Store(const Instruction& instruction, Context& context) {
+bool Store(Location loc, const At<Instruction>& instruction, Context& context) {
   auto memory_type = GetMemoryType(0, context);
   StackTypeSpan span;
   u32 max_align;
-  switch (instruction.opcode) {
+  switch (instruction->opcode) {
     case Opcode::I32Store:   span = span_i32_i32; max_align = 2; break;
     case Opcode::I64Store:   span = span_i32_i64; max_align = 3; break;
     case Opcode::F32Store:   span = span_i32_f32; max_align = 2; break;
@@ -678,7 +704,7 @@ bool Store(const Instruction& instruction, Context& context) {
   }
 
   bool valid = CheckAlignment(instruction, max_align, context);
-  return AllTrue(memory_type, valid, PopTypes(span, context));
+  return AllTrue(memory_type, valid, PopTypes(loc, span, context));
 }
 
 bool MemorySize(Context& context) {
@@ -687,103 +713,117 @@ bool MemorySize(Context& context) {
   return AllTrue(memory_type);
 }
 
-bool MemoryGrow(Context& context) {
+bool MemoryGrow(Location loc, Context& context) {
   auto memory_type = GetMemoryType(0, context);
-  return AllTrue(memory_type, PopAndPushTypes(span_i32, span_i32, context));
+  return AllTrue(memory_type,
+                 PopAndPushTypes(loc, span_i32, span_i32, context));
 }
 
-bool MemoryInit(const InitImmediate& immediate, Context& context) {
+bool MemoryInit(Location loc,
+                const At<InitImmediate>& immediate,
+                Context& context) {
   auto memory_type = GetMemoryType(0, context);
-  bool valid = CheckDataSegment(immediate.segment_index, context);
-  return AllTrue(memory_type, valid, PopTypes(span_i32_i32_i32, context));
+  bool valid = CheckDataSegment(immediate->segment_index, context);
+  return AllTrue(memory_type, valid, PopTypes(loc, span_i32_i32_i32, context));
 }
 
-bool DataDrop(Index segment_index, Context& context) {
+bool DataDrop(At<Index> segment_index, Context& context) {
   return CheckDataSegment(segment_index, context);
 }
 
-bool MemoryCopy(const CopyImmediate& immediate, Context& context) {
+bool MemoryCopy(Location loc,
+                const At<CopyImmediate>& immediate,
+                Context& context) {
   auto memory_type = GetMemoryType(0, context);
-  return AllTrue(memory_type, PopTypes(span_i32_i32_i32, context));
+  return AllTrue(memory_type, PopTypes(loc, span_i32_i32_i32, context));
 }
 
-bool MemoryFill(Context& context) {
+bool MemoryFill(Location loc, Context& context) {
   auto memory_type = GetMemoryType(0, context);
-  return AllTrue(memory_type, PopTypes(span_i32_i32_i32, context));
+  return AllTrue(memory_type, PopTypes(loc, span_i32_i32_i32, context));
 }
 
-bool TableInit(const InitImmediate& immediate, Context& context) {
+bool TableInit(Location loc,
+               const At<InitImmediate>& immediate,
+               Context& context) {
   auto table_type = GetTableType(0, context);
-  auto segment_type = GetElementSegmentType(immediate.segment_index, context);
+  auto segment_type = GetElementSegmentType(immediate->segment_index, context);
   return AllTrue(table_type, segment_type,
-                 PopTypes(span_i32_i32_i32, context));
+                 PopTypes(loc, span_i32_i32_i32, context));
 }
 
-bool ElemDrop(Index segment_index, Context& context) {
+bool ElemDrop(At<Index> segment_index, Context& context) {
   auto segment_type = GetElementSegmentType(segment_index, context);
   return AllTrue(segment_type);
 }
 
-bool TableCopy(const CopyImmediate& immediate, Context& context) {
+bool TableCopy(Location loc,
+               const At<CopyImmediate>& immediate,
+               Context& context) {
   auto table_type = GetTableType(0, context);
-  return AllTrue(table_type, PopTypes(span_i32_i32_i32, context));
+  return AllTrue(table_type, PopTypes(loc, span_i32_i32_i32, context));
 }
 
-bool TableGrow(Index index, Context& context) {
+bool TableGrow(Location loc, At<Index> index, Context& context) {
   auto stack_type = GetTableElementStackType(index, context);
   const StackType types[] = {MaybeDefaultElementType(stack_type),
                              StackType::I32};
-  return AllTrue(stack_type, PopAndPushTypes(types, span_i32, context));
+  return AllTrue(stack_type, PopAndPushTypes(loc, types, span_i32, context));
 }
 
-bool TableSize(Index index, Context& context) {
+bool TableSize(At<Index> index, Context& context) {
   auto table_type = GetTableType(0, context);
   PushTypes(span_i32, context);
   return AllTrue(table_type);
 }
 
-bool TableFill(Index index, Context& context) {
+bool TableFill(Location loc, At<Index> index, Context& context) {
   auto stack_type = GetTableElementStackType(index, context);
   const StackType types[] = {
       StackType::I32, MaybeDefaultElementType(stack_type), StackType::I32};
-  return AllTrue(stack_type, PopTypes(types, context));
+  return AllTrue(stack_type, PopTypes(loc, types, context));
 }
 
-bool CheckAtomicAlignment(const Instruction& instruction,
+bool CheckAtomicAlignment(const At<Instruction>& instruction,
                           u32 align,
                           Context& context) {
-  if (instruction.mem_arg_immediate()->align_log2 != align) {
-    context.errors->OnError(format("Invalid atomic alignment {}", instruction));
+  if (instruction->mem_arg_immediate()->align_log2 != align) {
+    context.errors->OnError(instruction.loc(),
+                            format("Invalid atomic alignment {}", instruction));
     return false;
   }
   return true;
 }
 
-bool CheckSharedMemory(const Instruction& instruction,
+bool CheckSharedMemory(const At<Instruction>& instruction,
                        const optional<MemoryType>& memory_type,
                        Context& context) {
   if (memory_type && memory_type->limits->shared == Shared::No) {
     context.errors->OnError(
-        format("Memory must be shared for {}", instruction));
+        instruction.loc(), format("Memory must be shared for {}", instruction));
     return false;
   }
   return true;
 }
 
-bool AtomicNotify(const Instruction& instruction, Context& context) {
+bool AtomicNotify(Location loc,
+                  const At<Instruction>& instruction,
+                  Context& context) {
   const u32 align = 2;
   auto memory_type = GetMemoryType(0, context);
   bool valid = CheckAtomicAlignment(instruction, align, context);
   valid &= CheckSharedMemory(instruction, memory_type, context);
   return AllTrue(memory_type, valid,
-                 PopAndPushTypes(span_i32_i32, span_i32, context));
+                 PopAndPushTypes(loc, span_i32_i32, span_i32, context));
 }
 
-bool AtomicWait(const Instruction& instruction, Context& context) {
+bool AtomicWait(Location loc,
+                const At<Instruction>& instruction,
+                Context& context) {
   auto memory_type = GetMemoryType(0, context);
   StackTypeSpan span;
   u32 align;
-  switch (instruction.opcode) {
+  switch (instruction->opcode) {
     case Opcode::I32AtomicWait:    span = span_i32_i32_i64; align = 2; break;
     case Opcode::I64AtomicWait:    span = span_i32_i64_i64; align = 3; break;
     default:
@@ -792,14 +832,17 @@ bool AtomicWait(const Instruction& instruction, Context& context) {
 
   bool valid = CheckAtomicAlignment(instruction, align, context);
   valid &= CheckSharedMemory(instruction, memory_type, context);
-  return AllTrue(memory_type, valid, PopAndPushTypes(span, span_i32, context));
+  return AllTrue(memory_type, valid,
+                 PopAndPushTypes(loc, span, span_i32, context));
 }
 
-bool AtomicLoad(const Instruction& instruction, Context& context) {
+bool AtomicLoad(Location loc,
+                const At<Instruction>& instruction,
+                Context& context) {
   auto memory_type = GetMemoryType(0, context);
   StackTypeSpan span;
   u32 align;
-  switch (instruction.opcode) {
+  switch (instruction->opcode) {
     case Opcode::I32AtomicLoad:    span = span_i32; align = 2; break;
     case Opcode::I64AtomicLoad:    span = span_i64; align = 3; break;
     case Opcode::I32AtomicLoad8U:  span = span_i32; align = 0; break;
@@ -813,14 +856,17 @@ bool AtomicLoad(const Instruction& instruction, Context& context) {
 
   bool valid = CheckAtomicAlignment(instruction, align, context);
   valid &= CheckSharedMemory(instruction, memory_type, context);
-  return AllTrue(memory_type, valid, PopAndPushTypes(span_i32, span, context));
+  return AllTrue(memory_type, valid,
+                 PopAndPushTypes(loc, span_i32, span, context));
 }
 
-bool AtomicStore(const Instruction& instruction, Context& context) {
+bool AtomicStore(Location loc,
+                 const At<Instruction>& instruction,
+                 Context& context) {
   auto memory_type = GetMemoryType(0, context);
   StackTypeSpan span;
   u32 align;
-  switch (instruction.opcode) {
+  switch (instruction->opcode) {
     case Opcode::I32AtomicStore:   span = span_i32_i32; align = 2; break;
     case Opcode::I64AtomicStore:   span = span_i32_i64; align = 3; break;
     case Opcode::I32AtomicStore8:  span = span_i32_i32; align = 0; break;
@@ -834,14 +880,16 @@ bool AtomicStore(const Instruction& instruction, Context& context) {
 
   bool valid = CheckAtomicAlignment(instruction, align, context);
   valid &= CheckSharedMemory(instruction, memory_type, context);
-  return AllTrue(memory_type, valid, PopTypes(span, context));
+  return AllTrue(memory_type, valid, PopTypes(loc, span, context));
 }
 
-bool AtomicRmw(const Instruction& instruction, Context& context) {
+bool AtomicRmw(Location loc,
+               const At<Instruction>& instruction,
+               Context& context) {
   auto memory_type = GetMemoryType(0, context);
   StackTypeSpan params, results;
   u32 align;
-  switch (instruction.opcode) {
+  switch (instruction->opcode) {
     case Opcode::I32AtomicRmwAdd:
     case Opcode::I32AtomicRmwSub:
     case Opcode::I32AtomicRmwAnd:
@@ -917,72 +965,77 @@ bool AtomicRmw(const Instruction& instruction, Context& context) {
 
   bool valid = CheckAtomicAlignment(instruction, align, context);
   valid &= CheckSharedMemory(instruction, memory_type, context);
-  return AllTrue(memory_type, valid, PopAndPushTypes(params, results, context));
+  return AllTrue(memory_type, valid,
+                 PopAndPushTypes(loc, params, results, context));
 }
 
-bool ReturnCall(Index function_index, Context& context) {
+bool ReturnCall(Location loc, At<Index> function_index, Context& context) {
   auto function = GetFunction(function_index, context);
   auto function_type =
       GetFunctionType(MaybeDefault(function).type_index, context);
   auto* label = GetLabel(context.label_stack.size() - 1, context);
-  bool valid =
-      CheckResultTypes(ToStackTypes(MaybeDefault(function_type).result_types),
-                       MaybeDefault(label).br_types(), context);
-  valid &=
-      PopTypes(ToStackTypes(MaybeDefault(function_type).param_types), context);
+  bool valid = CheckResultTypes(
+      loc, ToStackTypes(MaybeDefault(function_type).result_types),
+      MaybeDefault(label).br_types(), context);
+  valid &= PopTypes(loc, ToStackTypes(MaybeDefault(function_type).param_types),
+                    context);
   SetUnreachable(context);
   return AllTrue(function, function_type, valid);
 }
 
-bool ReturnCallIndirect(const CallIndirectImmediate& immediate,
+bool ReturnCallIndirect(Location loc,
+                        const At<CallIndirectImmediate>& immediate,
                         Context& context) {
   auto table_type = GetTableType(0, context);
-  auto function_type = GetFunctionType(immediate.index, context);
+  auto function_type = GetFunctionType(immediate->index, context);
   auto* label = GetLabel(context.label_stack.size() - 1, context);
-  bool valid =
-      CheckResultTypes(ToStackTypes(MaybeDefault(function_type).result_types),
-                       MaybeDefault(label).br_types(), context);
-  valid &= PopType(StackType::I32, context);
-  valid &=
-      PopTypes(ToStackTypes(MaybeDefault(function_type).param_types), context);
+  bool valid = CheckResultTypes(
+      loc, ToStackTypes(MaybeDefault(function_type).result_types),
+      MaybeDefault(label).br_types(), context);
+  valid &= PopType(loc, StackType::I32, context);
+  valid &= PopTypes(loc, ToStackTypes(MaybeDefault(function_type).param_types),
+                    context);
   SetUnreachable(context);
   return AllTrue(table_type, function_type, valid);
 }
 
-bool Throw(Index index, Context& context) {
+bool Throw(Location loc, At<Index> index, Context& context) {
   auto event_type = GetEventType(index, context);
   auto function_type =
       GetFunctionType(MaybeDefault(event_type).type_index, context);
-  bool valid =
-      PopTypes(ToStackTypes(MaybeDefault(function_type).param_types), context);
+  bool valid = PopTypes(
+      loc, ToStackTypes(MaybeDefault(function_type).param_types), context);
   SetUnreachable(context);
   return AllTrue(event_type, function_type, valid);
 }
 
-bool Rethrow(Context& context) {
-  bool valid = PopTypes(span_exnref, context);
+bool Rethrow(Location loc, Context& context) {
+  bool valid = PopTypes(loc, span_exnref, context);
   SetUnreachable(context);
   return valid;
 }
 
-bool BrOnExn(const BrOnExnImmediate& immediate, Context& context) {
-  auto event_type = GetEventType(immediate.event_index, context);
+bool BrOnExn(Location loc,
+             const At<BrOnExnImmediate>& immediate,
+             Context& context) {
+  auto event_type = GetEventType(immediate->event_index, context);
   auto function_type =
       GetFunctionType(MaybeDefault(event_type).type_index, context);
-  auto* label = GetLabel(immediate.target, context);
+  auto* label = GetLabel(immediate->target, context);
   bool valid = TypesMatch(ToStackTypes(MaybeDefault(function_type).param_types),
                           MaybeDefault(label).br_types());
-  valid &= PopAndPushTypes(span_exnref, span_exnref, context);
+  valid &= PopAndPushTypes(loc, span_exnref, span_exnref, context);
   return AllTrue(event_type, function_type, label, valid);
 }
 
 }  // namespace
 
 bool Validate(const At<Locals>& value, Context& context) {
-  ErrorsContextGuard guard{*context.errors, "locals"};
+  ErrorsContextGuard guard{*context.errors, value.loc(), "locals"};
   if (!context.AppendLocals(value->count, value->type)) {
     const Index max = std::numeric_limits<Index>::max();
     context.errors->OnError(
+        value.loc(),
         format("Too many locals; max is {}, got {}", max,
                static_cast<u64>(context.GetLocalCount()) + value->count));
     return false;
@@ -991,11 +1044,14 @@ bool Validate(const At<Locals>& value, Context& context) {
 }
 
 bool Validate(const At<Instruction>& value, Context& context) {
-  ErrorsContextGuard guard{*context.errors, "instruction"};
+  ErrorsContextGuard guard{*context.errors, value.loc(), "instruction"};
   if (context.label_stack.empty()) {
-    context.errors->OnError("Unexpected instruction after function end");
+    context.errors->OnError(value.loc(),
+                            "Unexpected instruction after function end");
     return false;
   }
+
+  Location loc = value.loc();
 
   StackTypeSpan params, results;
   switch (value->opcode) {
@@ -1007,86 +1063,89 @@ bool Validate(const At<Instruction>& value, Context& context) {
       return true;
 
     case Opcode::Block:
-      return PushLabel(LabelType::Block, value->block_type_immediate(),
+      return PushLabel(loc, LabelType::Block, value->block_type_immediate(),
                        context);
 
     case Opcode::Loop:
-      return PushLabel(LabelType::Loop, value->block_type_immediate(), context);
+      return PushLabel(loc, LabelType::Loop, value->block_type_immediate(),
+                       context);
 
     case Opcode::If: {
-      bool valid = PopType(StackType::I32, context);
-      valid &= PushLabel(LabelType::If, value->block_type_immediate(), context);
+      bool valid = PopType(loc, StackType::I32, context);
+      valid &=
+          PushLabel(loc, LabelType::If, value->block_type_immediate(), context);
       return valid;
     }
 
     case Opcode::Else:
-      return Else(context);
+      return Else(loc, context);
 
     case Opcode::End:
-      return End(context);
+      return End(loc, context);
 
     case Opcode::Try:
-      return PushLabel(LabelType::Try, value->block_type_immediate(), context);
+      return PushLabel(loc, LabelType::Try, value->block_type_immediate(),
+                       context);
 
     case Opcode::Catch:
-      return Catch(context);
+      return Catch(loc, context);
 
     case Opcode::Throw:
-      return Throw(value->index_immediate(), context);
+      return Throw(loc, value->index_immediate(), context);
 
     case Opcode::Rethrow:
-      return Rethrow(context);
+      return Rethrow(loc, context);
 
     case Opcode::BrOnExn:
-      return BrOnExn(value->br_on_exn_immediate(), context);
+      return BrOnExn(loc, value->br_on_exn_immediate(), context);
 
     case Opcode::Br:
-      return Br(value->index_immediate(), context);
+      return Br(loc, value->index_immediate(), context);
 
     case Opcode::BrIf:
-      return BrIf(value->index_immediate(), context);
+      return BrIf(loc, value->index_immediate(), context);
 
     case Opcode::BrTable:
-      return BrTable(value->br_table_immediate(), context);
+      return BrTable(loc, value->br_table_immediate(), context);
 
     case Opcode::Return:
-      return Br(context.label_stack.size() - 1, context);
+      return Br(loc, context.label_stack.size() - 1, context);
 
     case Opcode::Call:
-      return Call(value->index_immediate(), context);
+      return Call(loc, value->index_immediate(), context);
 
     case Opcode::CallIndirect:
-      return CallIndirect(value->call_indirect_immediate(), context);
+      return CallIndirect(loc, value->call_indirect_immediate(), context);
 
     case Opcode::Drop:
-      return DropTypes(1, context);
+      return DropTypes(loc, 1, context);
 
     case Opcode::Select:
-      return Select(context);
+      return Select(loc, context);
 
     case Opcode::SelectT:
-      return SelectT(value->value_types_immediate(), context);
+      return SelectT(loc, value->value_types_immediate(), context);
 
     case Opcode::LocalGet:
       return LocalGet(value->index_immediate(), context);
 
     case Opcode::LocalSet:
-      return LocalSet(value->index_immediate(), context);
+      return LocalSet(loc, value->index_immediate(), context);
 
     case Opcode::LocalTee:
-      return LocalTee(value->index_immediate(), context);
+      return LocalTee(loc, value->index_immediate(), context);
 
     case Opcode::GlobalGet:
       return GlobalGet(value->index_immediate(), context);
 
     case Opcode::GlobalSet:
-      return GlobalSet(value->index_immediate(), context);
+      return GlobalSet(loc, value->index_immediate(), context);
 
     case Opcode::TableGet:
-      return TableGet(value->index_immediate(), context);
+      return TableGet(loc, value->index_immediate(), context);
 
     case Opcode::TableSet:
-      return TableSet(value->index_immediate(), context);
+      return TableSet(loc, value->index_immediate(), context);
 
     case Opcode::RefNull:
       PushType(StackType::Nullref, context);
@@ -1125,7 +1184,7 @@ bool Validate(const At<Instruction>& value, Context& context) {
     case Opcode::I32X4Load16X4U:
     case Opcode::I64X2Load32X2S:
     case Opcode::I64X2Load32X2U:
-      return Load(value, context);
+      return Load(loc, value, context);
 
     case Opcode::I32Store:
     case Opcode::I64Store:
@@ -1137,13 +1196,13 @@ bool Validate(const At<Instruction>& value, Context& context) {
     case Opcode::I64Store16:
     case Opcode::I64Store32:
     case Opcode::V128Store:
-      return Store(value, context);
+      return Store(loc, value, context);
 
     case Opcode::MemorySize:
       return MemorySize(context);
 
     case Opcode::MemoryGrow:
-      return MemoryGrow(context);
+      return MemoryGrow(loc, context);
 
     case Opcode::I32Const:
       PushType(StackType::I32, context);
@@ -1367,40 +1426,40 @@ bool Validate(const At<Instruction>& value, Context& context) {
       break;
 
     case Opcode::ReturnCall:
-      return ReturnCall(value->index_immediate(), context);
+      return ReturnCall(loc, value->index_immediate(), context);
 
     case Opcode::ReturnCallIndirect:
-      return ReturnCallIndirect(value->call_indirect_immediate(), context);
+      return ReturnCallIndirect(loc, value->call_indirect_immediate(), context);
 
     case Opcode::MemoryInit:
-      return MemoryInit(value->init_immediate(), context);
+      return MemoryInit(loc, value->init_immediate(), context);
 
     case Opcode::DataDrop:
       return DataDrop(value->index_immediate(), context);
 
     case Opcode::MemoryCopy:
-      return MemoryCopy(value->copy_immediate(), context);
+      return MemoryCopy(loc, value->copy_immediate(), context);
 
     case Opcode::MemoryFill:
-      return MemoryFill(context);
+      return MemoryFill(loc, context);
 
     case Opcode::TableInit:
-      return TableInit(value->init_immediate(), context);
+      return TableInit(loc, value->init_immediate(), context);
 
     case Opcode::ElemDrop:
       return ElemDrop(value->index_immediate(), context);
 
     case Opcode::TableCopy:
-      return TableCopy(value->copy_immediate(), context);
+      return TableCopy(loc, value->copy_immediate(), context);
 
     case Opcode::TableGrow:
-      return TableGrow(value->index_immediate(), context);
+      return TableGrow(loc, value->index_immediate(), context);
 
     case Opcode::TableSize:
       return TableSize(value->index_immediate(), context);
 
     case Opcode::TableFill:
-      return TableFill(value->index_immediate(), context);
+      return TableFill(loc, value->index_immediate(), context);
 
     case Opcode::V128Const:
       PushType(StackType::V128, context);
@@ -1611,11 +1670,11 @@ bool Validate(const At<Instruction>& value, Context& context) {
       break;
 
     case Opcode::AtomicNotify:
-      return AtomicNotify(value, context);
+      return AtomicNotify(loc, value, context);
 
     case Opcode::I32AtomicWait:
     case Opcode::I64AtomicWait:
-      return AtomicWait(value, context);
+      return AtomicWait(loc, value, context);
 
     case Opcode::I32AtomicLoad:
     case Opcode::I64AtomicLoad:
@@ -1624,7 +1683,7 @@ bool Validate(const At<Instruction>& value, Context& context) {
     case Opcode::I64AtomicLoad8U:
     case Opcode::I64AtomicLoad16U:
     case Opcode::I64AtomicLoad32U:
-      return AtomicLoad(value, context);
+      return AtomicLoad(loc, value, context);
 
     case Opcode::I32AtomicStore:
     case Opcode::I64AtomicStore:
@@ -1633,7 +1692,7 @@ bool Validate(const At<Instruction>& value, Context& context) {
     case Opcode::I64AtomicStore8:
     case Opcode::I64AtomicStore16:
     case Opcode::I64AtomicStore32:
-      return AtomicStore(value, context);
+      return AtomicStore(loc, value, context);
 
     case Opcode::I32AtomicRmwAdd:
     case Opcode::I32AtomicRmw8AddU:
@@ -1684,14 +1743,15 @@ bool Validate(const At<Instruction>& value, Context& context) {
     case Opcode::I64AtomicRmw8CmpxchgU:
     case Opcode::I64AtomicRmw16CmpxchgU:
     case Opcode::I64AtomicRmw32CmpxchgU:
-      return AtomicRmw(value, context);
+      return AtomicRmw(loc, value, context);
 
     default:
-      context.errors->OnError(format("Unimplemented instruction {}", value));
+      context.errors->OnError(loc,
+                              format("Unimplemented instruction {}", value));
       return false;
   }
 
-  return PopAndPushTypes(params, results, context);
+  return PopAndPushTypes(loc, params, results, context);
 }
 
 }  // namespace valid

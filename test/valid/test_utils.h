@@ -23,27 +23,20 @@
 #include "wasp/base/format.h"
 #include "wasp/valid/errors.h"
 
+#include "test/binary/test_utils.h"
+
 namespace wasp {
 namespace valid {
 namespace test {
 
-using Error = std::vector<std::string>;
+using Error = wasp::binary::test::Error;
+using TestErrors = wasp::binary::test::TestErrors;
+
+// TODO: Support location data in tests?
 using ExpectedError = std::vector<std::string>;
 
-class TestErrors : public Errors {
- public:
-  std::vector<std::string> context_stack;
-  std::vector<Error> errors;
-
- protected:
-  void HandlePushContext(string_view desc);
-  void HandlePopContext();
-  void HandleOnError(string_view message);
-};
-
-void ExpectNoErrors(const TestErrors&);
 void ExpectErrors(const std::vector<ExpectedError>&, TestErrors&);
-void ExpectError(const ExpectedError&, TestErrors&);
+void ExpectError(const ExpectedError& expected, TestErrors&);
 void ExpectErrorSubstr(const ExpectedError&, TestErrors&);
 void ClearErrors(TestErrors&);
 

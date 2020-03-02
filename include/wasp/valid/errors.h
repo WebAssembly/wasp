@@ -17,26 +17,14 @@
 #ifndef WASP_VALID_ERRORS_H_
 #define WASP_VALID_ERRORS_H_
 
-#include "wasp/base/string_view.h"
+#include "wasp/binary/errors.h"
 
 namespace wasp {
 namespace valid {
 
-class Errors {
- public:
-  void PushContext(string_view desc);
-  void PopContext();
-  void OnError(string_view message);
-
- protected:
-  virtual void HandlePushContext(string_view desc) = 0;
-  virtual void HandlePopContext() = 0;
-  virtual void HandleOnError(string_view message) = 0;
-};
+using Errors = binary::Errors;
 
 }  // namespace valid
 }  // namespace wasp
-
-#include "wasp/valid/errors-inl.h"
 
 #endif // WASP_VALID_ERRORS_H_

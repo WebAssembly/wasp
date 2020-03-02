@@ -22,56 +22,26 @@ namespace wasp {
 namespace valid {
 namespace test {
 
-std::string ErrorToString(const Error& error) {
-  std::string result;
-  bool first = true;
-  for (auto&& s : error) {
-    if (!first) {
-      result += ": ";
-    }
-    first = false;
-    result += s;
-  }
-  return result;
-}
-
-std::string TestErrorsToString(const TestErrors& errors) {
-  std::string result;
-  for (auto&& error : errors.errors) {
-    result += ErrorToString(error) + "\n";
-  }
-  return result;
-}
-
-void TestErrors::HandlePushContext(string_view desc) {
-  context_stack.push_back(desc.to_string());
-}
-
-void TestErrors::HandlePopContext() {
-  context_stack.pop_back();
-}
-
-void TestErrors::HandleOnError(string_view message) {
-  errors.emplace_back();
-  auto& error = errors.back();
-  error = context_stack;
-  error.push_back(message.to_string());
-}
-
-void ExpectNoErrors(const TestErrors& errors) {
-  EXPECT_TRUE(errors.errors.empty()) << TestErrorsToString(errors);
-  EXPECT_TRUE(errors.context_stack.empty());
-}
-
 void ExpectErrors(const std::vector<ExpectedError>& expected_errors,
                   TestErrors& errors) {
+  // TODO: Share w/ binary/test_utils.cc
   EXPECT_TRUE(errors.context_stack.empty());
-  EXPECT_EQ(expected_errors, errors.errors);
+  ASSERT_EQ(expected_errors.size(), errors.errors.size());
+  for (size_t j = 0; j < expected_errors.size(); ++j) {
+    const ExpectedError& expected = expected_errors[j];
+    const Error& actual = errors.errors[j];
+    ASSERT_EQ(expected.size(), actual.size());
+    for (size_t i = 0; i < actual.size(); ++i) {
+      EXPECT_EQ(expected[i], actual[i].desc);
+    }
+  }
+
   ClearErrors(errors);
 }
 
 void ExpectError(const ExpectedError& expected,
                  TestErrors& errors) {
+  // TODO: Share w/ binary/test_utils.cc
   ExpectErrors({expected}, errors);
   ClearErrors(errors);
 }
@@ -84,12 +54,13 @@ void ExpectErrorSubstr(const ExpectedError& expected, TestErrors& errors) {
   ASSERT_EQ(1, errors.errors.size());
   ASSERT_EQ(expected.size(), errors.errors[0].size());
   for (size_t i = 0; i < expected.size(); ++i) {
-    EXPECT_PRED2(substr, errors.errors[0][i], expected[i]);
+    EXPECT_PRED2(substr, errors.errors[0][i].desc, expected[i]);
   }
   ClearErrors(errors);
 }
 
 void ClearErrors(TestErrors& errors) {
+  errors.context_stack.clear();
   errors.errors.clear();
 }
 

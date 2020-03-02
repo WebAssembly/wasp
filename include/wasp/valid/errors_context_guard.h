@@ -17,32 +17,12 @@
 #ifndef WASP_VALID_ERRORS_CONTEXT_GUARD_H_
 #define WASP_VALID_ERRORS_CONTEXT_GUARD_H_
 
-#include "wasp/base/string_view.h"
-#include "wasp/valid/errors.h"
+#include "wasp/binary/errors_context_guard.h"
 
 namespace wasp {
 namespace valid {
 
-/// ---
-class ErrorsContextGuard {
- public:
-  explicit ErrorsContextGuard(Errors& errors, string_view desc)
-      : errors_{errors} {
-    errors.PushContext(desc);
-  }
-  ~ErrorsContextGuard() { PopContext(); }
-
-  void PopContext() {
-    if (!popped_context_) {
-      errors_.PopContext();
-      popped_context_ = true;
-    }
-  }
-
- private:
-  Errors& errors_;
-  bool popped_context_ = false;
-};
+using ErrorsContextGuard = binary::ErrorsContextGuard;
 
 }  // namespace valid
 }  // namespace wasp

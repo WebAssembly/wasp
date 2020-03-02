@@ -47,7 +47,7 @@ class ValidateInstructionTest : public ::testing::Test {
   void BeginFunction(const FunctionType& function_type) {
     context.Reset();
     AddFunction(function_type);
-    EXPECT_TRUE(BeginCode(context));
+    EXPECT_TRUE(BeginCode(Location{}, context));
   }
 
   template <typename T>
@@ -919,8 +919,8 @@ TEST_F(ValidateInstructionTest, BrTable_ValueTypeMismatch) {
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrTable, BrTableImmediate{{0}, 0}});
-  ExpectErrors({{"instruction", "Expected stack to contain [i32], got [f32]"}},
-               errors);
+  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
@@ -1347,7 +1347,7 @@ TEST_F(ValidateInstructionTest, TableGet) {
 TEST_F(ValidateInstructionTest, TableGet_IndexOOB) {
   context.type_stack = {ST::I32};
   Fail(I{O::TableGet, Index{0}});
-  ExpectErrors({{"instruction", "Invalid table index 0, must be less than 0"}},
+  ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
                errors);
 }
 
@@ -1361,17 +1361,17 @@ TEST_F(ValidateInstructionTest, TableSet) {
 TEST_F(ValidateInstructionTest, TableSet_IndexOOB) {
   context.type_stack = {ST::I32, ST::Nullref};
   Fail(I{O::TableSet, Index{0}});
-  ExpectErrors({{"instruction", "Invalid table index 0, must be less than 0"}},
-               errors);
+  ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, TableSet_InvalidType) {
   AddTable(TableType{Limits{0}, ElementType::Funcref});
   context.type_stack = {ST::I32, ST::Anyref};
   Fail(I{O::TableSet, Index{0}});
-  ExpectErrors({{"instruction",
-                 "Expected stack to contain [i32 funcref], got [i32 anyref]"}},
-               errors);
+  ExpectError({"instruction",
+               "Expected stack to contain [i32 funcref], got [i32 anyref]"},
+              errors);
 }
 
 

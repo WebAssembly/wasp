@@ -32,7 +32,7 @@
 #include "wasp/base/formatters.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/string_view.h"
-#include "wasp/binary/errors_nop.h"
+#include "wasp/binary/error.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/lazy_expression.h"
 #include "wasp/binary/read/end_module.h"
@@ -47,24 +47,15 @@ namespace validate {
 
 using namespace ::wasp::binary;
 
-struct Message {
-  optional<u32> pos;
-  std::string message;
-};
-
 // TODO: share w/ dump.cc
-class ErrorsBasic : public Errors, public valid::Errors {
+class ErrorsBasic : public Errors {
  public:
   explicit ErrorsBasic(SpanU8 data) : data{data} {}
 
   void Print() {
     for (const auto& error : errors) {
-      if (error.pos) {
-        print(stderr, "{:08x}: {}\n", *error.pos, error.message);
-      } else {
-        // TODO: get error location for validation errors.
-        print(stderr, "????????: {}\n", error.message);
-      }
+      print(stderr, "{:08x}: {}\n", error.loc.data() - data.data(),
+            error.message);
     }
   }
 
@@ -72,22 +63,15 @@ class ErrorsBasic : public Errors, public valid::Errors {
     return !errors.empty();
   }
 
-  using binary::Errors::OnError;
-  using valid::Errors::OnError;
-
  protected:
   void HandlePushContext(SpanU8 pos, string_view desc) override {}
-  void HandlePushContext(string_view desc) override {}
   void HandlePopContext() override {}
-  void HandleOnError(SpanU8 pos, string_view message) override {
-    errors.push_back(Message{pos.data() - data.data(), message.to_string()});
-  }
-  void HandleOnError(string_view message) override {
-    errors.push_back(Message{nullopt, message.to_string()});
+  void HandleOnError(Location loc, string_view message) override {
+    errors.push_back(Error{loc, message.to_string()});
   }
 
   SpanU8 data;
-  std::vector<Message> errors;
+  std::vector<Error> errors;
 };
 
 struct Options {
@@ -243,7 +227,7 @@ visit::Result Tool::Visitor::OnDataCount(const At<DataCount>& data_count) {
 }
 
 visit::Result Tool::Visitor::OnCode(const At<Code>& code) {
-  if (!BeginCode(context)) {
+  if (!BeginCode(code.loc(), context)) {
     return visit::Result::Fail;
   }
 

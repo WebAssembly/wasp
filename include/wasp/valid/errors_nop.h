@@ -17,17 +17,12 @@
 #ifndef WASP_VALID_ERRORS_NOP_H_
 #define WASP_VALID_ERRORS_NOP_H_
 
-#include "wasp/valid/errors.h"
+#include "wasp/binary/errors_nop.h"
 
 namespace wasp {
 namespace valid {
 
-class ErrorsNop : public Errors {
- protected:
-  void HandlePushContext(string_view desc) override {}
-  void HandlePopContext() override {}
-  void HandleOnError(string_view message) override {}
-};
+using ErrorsNop = binary::ErrorsNop;
 
 }  // namespace valid
 }  // namespace wasp

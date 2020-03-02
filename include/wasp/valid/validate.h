@@ -25,7 +25,6 @@ namespace wasp {
 namespace valid {
 
 struct Context;
-class Errors;
 
 bool Validate(const At<binary::DataSegment>&, Context&);
 
@@ -44,7 +43,7 @@ bool Validate(const At<binary::ElementExpression>&,
 
 bool Validate(const At<binary::ElementSegment>&, Context&);
 
-bool Validate(binary::ElementType actual,
+bool Validate(const At<binary::ElementType>& actual,
               binary::ElementType expected,
               Context&);
 
@@ -64,7 +63,10 @@ bool Validate(const At<binary::GlobalType>&, Context&);
 
 bool Validate(const At<binary::Import>&, Context&);
 
-bool ValidateIndex(Index index, Index max, string_view desc, Context&);
+bool ValidateIndex(const At<Index>& index,
+                   Index max,
+                   string_view desc,
+                   Context&);
 
 bool Validate(const At<binary::Instruction>&, Context&);
 
@@ -84,7 +86,9 @@ bool Validate(const At<binary::TableType>&, Context&);
 
 bool Validate(const At<binary::TypeEntry>&, Context&);
 
-bool Validate(binary::ValueType actual, binary::ValueType expected, Context&);
+bool Validate(const At<binary::ValueType>& actual,
+              binary::ValueType expected,
+              Context&);
 
 }  // namespace valid
 }  // namespace wasp
