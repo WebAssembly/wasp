@@ -978,19 +978,19 @@ bool BrOnExn(const BrOnExnImmediate& immediate, Context& context) {
 
 }  // namespace
 
-bool Validate(const Locals& value, Context& context) {
+bool Validate(const At<Locals>& value, Context& context) {
   ErrorsContextGuard guard{*context.errors, "locals"};
-  if (!context.AppendLocals(value.count, value.type)) {
+  if (!context.AppendLocals(value->count, value->type)) {
     const Index max = std::numeric_limits<Index>::max();
     context.errors->OnError(
         format("Too many locals; max is {}, got {}", max,
-               static_cast<u64>(context.GetLocalCount()) + value.count));
+               static_cast<u64>(context.GetLocalCount()) + value->count));
     return false;
   }
   return true;
 }
 
-bool Validate(const Instruction& value, Context& context) {
+bool Validate(const At<Instruction>& value, Context& context) {
   ErrorsContextGuard guard{*context.errors, "instruction"};
   if (context.label_stack.empty()) {
     context.errors->OnError("Unexpected instruction after function end");
@@ -998,7 +998,7 @@ bool Validate(const Instruction& value, Context& context) {
   }
 
   StackTypeSpan params, results;
-  switch (value.opcode) {
+  switch (value->opcode) {
     case Opcode::Unreachable:
       SetUnreachable(context);
       return true;
@@ -1007,14 +1007,15 @@ bool Validate(const Instruction& value, Context& context) {
       return true;
 
     case Opcode::Block:
-      return PushLabel(LabelType::Block, value.block_type_immediate(), context);
+      return PushLabel(LabelType::Block, value->block_type_immediate(),
+                       context);
 
     case Opcode::Loop:
-      return PushLabel(LabelType::Loop, value.block_type_immediate(), context);
+      return PushLabel(LabelType::Loop, value->block_type_immediate(), context);
 
     case Opcode::If: {
       bool valid = PopType(StackType::I32, context);
-      valid &= PushLabel(LabelType::If, value.block_type_immediate(), context);
+      valid &= PushLabel(LabelType::If, value->block_type_immediate(), context);
       return valid;
     }
 
@@ -1025,37 +1026,37 @@ bool Validate(const Instruction& value, Context& context) {
       return End(context);
 
     case Opcode::Try:
-      return PushLabel(LabelType::Try, value.block_type_immediate(), context);
+      return PushLabel(LabelType::Try, value->block_type_immediate(), context);
 
     case Opcode::Catch:
       return Catch(context);
 
     case Opcode::Throw:
-      return Throw(value.index_immediate(), context);
+      return Throw(value->index_immediate(), context);
 
     case Opcode::Rethrow:
       return Rethrow(context);
 
     case Opcode::BrOnExn:
-      return BrOnExn(value.br_on_exn_immediate(), context);
+      return BrOnExn(value->br_on_exn_immediate(), context);
 
     case Opcode::Br:
-      return Br(value.index_immediate(), context);
+      return Br(value->index_immediate(), context);
 
     case Opcode::BrIf:
-      return BrIf(value.index_immediate(), context);
+      return BrIf(value->index_immediate(), context);
 
     case Opcode::BrTable:
-      return BrTable(value.br_table_immediate(), context);
+      return BrTable(value->br_table_immediate(), context);
 
     case Opcode::Return:
       return Br(context.label_stack.size() - 1, context);
 
     case Opcode::Call:
-      return Call(value.index_immediate(), context);
+      return Call(value->index_immediate(), context);
 
     case Opcode::CallIndirect:
-      return CallIndirect(value.call_indirect_immediate(), context);
+      return CallIndirect(value->call_indirect_immediate(), context);
 
     case Opcode::Drop:
       return DropTypes(1, context);
@@ -1064,28 +1065,28 @@ bool Validate(const Instruction& value, Context& context) {
       return Select(context);
 
     case Opcode::SelectT:
-      return SelectT(value.value_types_immediate(), context);
+      return SelectT(value->value_types_immediate(), context);
 
     case Opcode::LocalGet:
-      return LocalGet(value.index_immediate(), context);
+      return LocalGet(value->index_immediate(), context);
 
     case Opcode::LocalSet:
-      return LocalSet(value.index_immediate(), context);
+      return LocalSet(value->index_immediate(), context);
 
     case Opcode::LocalTee:
-      return LocalTee(value.index_immediate(), context);
+      return LocalTee(value->index_immediate(), context);
 
     case Opcode::GlobalGet:
-      return GlobalGet(value.index_immediate(), context);
+      return GlobalGet(value->index_immediate(), context);
 
     case Opcode::GlobalSet:
-      return GlobalSet(value.index_immediate(), context);
+      return GlobalSet(value->index_immediate(), context);
 
     case Opcode::TableGet:
-      return TableGet(value.index_immediate(), context);
+      return TableGet(value->index_immediate(), context);
 
     case Opcode::TableSet:
-      return TableSet(value.index_immediate(), context);
+      return TableSet(value->index_immediate(), context);
 
     case Opcode::RefNull:
       PushType(StackType::Nullref, context);
@@ -1366,40 +1367,40 @@ bool Validate(const Instruction& value, Context& context) {
       break;
 
     case Opcode::ReturnCall:
-      return ReturnCall(value.index_immediate(), context);
+      return ReturnCall(value->index_immediate(), context);
 
     case Opcode::ReturnCallIndirect:
-      return ReturnCallIndirect(value.call_indirect_immediate(), context);
+      return ReturnCallIndirect(value->call_indirect_immediate(), context);
 
     case Opcode::MemoryInit:
-      return MemoryInit(value.init_immediate(), context);
+      return MemoryInit(value->init_immediate(), context);
 
     case Opcode::DataDrop:
-      return DataDrop(value.index_immediate(), context);
+      return DataDrop(value->index_immediate(), context);
 
     case Opcode::MemoryCopy:
-      return MemoryCopy(value.copy_immediate(), context);
+      return MemoryCopy(value->copy_immediate(), context);
 
     case Opcode::MemoryFill:
       return MemoryFill(context);
 
     case Opcode::TableInit:
-      return TableInit(value.init_immediate(), context);
+      return TableInit(value->init_immediate(), context);
 
     case Opcode::ElemDrop:
-      return ElemDrop(value.index_immediate(), context);
+      return ElemDrop(value->index_immediate(), context);
 
     case Opcode::TableCopy:
-      return TableCopy(value.copy_immediate(), context);
+      return TableCopy(value->copy_immediate(), context);
 
     case Opcode::TableGrow:
-      return TableGrow(value.index_immediate(), context);
+      return TableGrow(value->index_immediate(), context);
 
     case Opcode::TableSize:
-      return TableSize(value.index_immediate(), context);
+      return TableSize(value->index_immediate(), context);
 
     case Opcode::TableFill:
-      return TableFill(value.index_immediate(), context);
+      return TableFill(value->index_immediate(), context);
 
     case Opcode::V128Const:
       PushType(StackType::V128, context);

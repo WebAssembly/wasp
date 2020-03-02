@@ -27,60 +27,62 @@ namespace valid {
 struct Context;
 class Errors;
 
-bool Validate(const binary::DataSegment&, Context&);
+bool Validate(const At<binary::DataSegment>&, Context&);
 
-bool Validate(const binary::ConstantExpression&,
+bool Validate(const At<binary::ConstantExpression>&,
               binary::ValueType expected_type,
               Index max_global_index,
               Context&);
 
-bool Validate(const binary::DataCount&, Context&);
+bool Validate(const At<binary::DataCount>&, Context&);
 
-bool Validate(const binary::DataSegment&, Context&);
+bool Validate(const At<binary::DataSegment>&, Context&);
 
-bool Validate(const binary::ElementExpression&, binary::ElementType, Context&);
+bool Validate(const At<binary::ElementExpression>&,
+              binary::ElementType,
+              Context&);
 
-bool Validate(const binary::ElementSegment&, Context&);
+bool Validate(const At<binary::ElementSegment>&, Context&);
 
 bool Validate(binary::ElementType actual,
               binary::ElementType expected,
               Context&);
 
-bool Validate(const binary::Export&, Context&);
+bool Validate(const At<binary::Export>&, Context&);
 
-bool Validate(const binary::Event&, Context&);
+bool Validate(const At<binary::Event>&, Context&);
 
-bool Validate(const binary::EventType&, Context&);
+bool Validate(const At<binary::EventType>&, Context&);
 
-bool Validate(const binary::Function&, Context&);
+bool Validate(const At<binary::Function>&, Context&);
 
-bool Validate(const binary::FunctionType&, Context&);
+bool Validate(const At<binary::FunctionType>&, Context&);
 
-bool Validate(const binary::Global&, Context&);
+bool Validate(const At<binary::Global>&, Context&);
 
-bool Validate(const binary::GlobalType&, Context&);
+bool Validate(const At<binary::GlobalType>&, Context&);
 
-bool Validate(const binary::Import&, Context&);
+bool Validate(const At<binary::Import>&, Context&);
 
 bool ValidateIndex(Index index, Index max, string_view desc, Context&);
 
-bool Validate(const binary::Instruction&, Context&);
+bool Validate(const At<binary::Instruction>&, Context&);
 
-bool Validate(const binary::Limits&, Index max, Context&);
+bool Validate(const At<binary::Limits>&, Index max, Context&);
 
-bool Validate(const binary::Locals&, Context&);
+bool Validate(const At<binary::Locals>&, Context&);
 
-bool Validate(const binary::Memory&, Context&);
+bool Validate(const At<binary::Memory>&, Context&);
 
-bool Validate(const binary::MemoryType&, Context&);
+bool Validate(const At<binary::MemoryType>&, Context&);
 
-bool Validate(const binary::Start& value, Context& context);
+bool Validate(const At<binary::Start>& value, Context& context);
 
-bool Validate(const binary::Table&, Context&);
+bool Validate(const At<binary::Table>&, Context&);
 
-bool Validate(const binary::TableType&, Context&);
+bool Validate(const At<binary::TableType>&, Context&);
 
-bool Validate(const binary::TypeEntry&, Context&);
+bool Validate(const At<binary::TypeEntry>&, Context&);
 
 bool Validate(binary::ValueType actual, binary::ValueType expected, Context&);
 
