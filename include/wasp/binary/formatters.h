@@ -31,7 +31,6 @@ namespace fmt {
     typename Ctx::iterator format(const ::wasp::binary::Name&, Ctx&); \
   } /* No semicolon. */
 
-// TODO separate out linking/name
 WASP_DEFINE_FORMATTER(ValueType);
 WASP_DEFINE_FORMATTER(BlockType);
 WASP_DEFINE_FORMATTER(ElementType);
@@ -41,7 +40,6 @@ WASP_DEFINE_FORMATTER(Mutability);
 WASP_DEFINE_FORMATTER(SegmentType);
 WASP_DEFINE_FORMATTER(Shared);
 WASP_DEFINE_FORMATTER(SectionId);
-WASP_DEFINE_FORMATTER(NameSubsectionId);
 WASP_DEFINE_FORMATTER(MemArgImmediate);
 WASP_DEFINE_FORMATTER(Limits);
 WASP_DEFINE_FORMATTER(Locals);
@@ -77,24 +75,6 @@ WASP_DEFINE_FORMATTER(Code);
 WASP_DEFINE_FORMATTER(DataSegment);
 WASP_DEFINE_FORMATTER(DataCount);
 WASP_DEFINE_FORMATTER(Event);
-WASP_DEFINE_FORMATTER(NameAssoc);
-WASP_DEFINE_FORMATTER(IndirectNameAssoc);
-WASP_DEFINE_FORMATTER(InitFunction);
-WASP_DEFINE_FORMATTER(NameSubsection);
-WASP_DEFINE_FORMATTER(Comdat);
-WASP_DEFINE_FORMATTER(ComdatSymbol);
-WASP_DEFINE_FORMATTER(ComdatSymbolKind);
-WASP_DEFINE_FORMATTER(LinkingSubsection);
-WASP_DEFINE_FORMATTER(LinkingSubsectionId);
-WASP_DEFINE_FORMATTER(RelocationEntry);
-WASP_DEFINE_FORMATTER(RelocationType);
-WASP_DEFINE_FORMATTER(SegmentInfo);
-WASP_DEFINE_FORMATTER(SymbolInfo);
-WASP_DEFINE_FORMATTER(SymbolInfo::Flags::Binding);
-WASP_DEFINE_FORMATTER(SymbolInfo::Flags::Visibility);
-WASP_DEFINE_FORMATTER(SymbolInfo::Flags::Undefined);
-WASP_DEFINE_FORMATTER(SymbolInfo::Flags::ExplicitName);
-WASP_DEFINE_FORMATTER(SymbolInfoKind);
 
 #undef WASP_DEFINE_FORMATTER
 

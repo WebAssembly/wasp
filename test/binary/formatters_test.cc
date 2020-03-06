@@ -17,8 +17,9 @@
 #include "wasp/binary/formatters.h"
 
 #include "gtest/gtest.h"
-
 #include "test/binary/test_utils.h"
+#include "wasp/binary/linking_section/formatters.h"
+#include "wasp/binary/name_section/formatters.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
