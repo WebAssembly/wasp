@@ -150,7 +150,7 @@ int Main(span<string_view> args) {
     SpanU8 data{*optbuf};
     Tool tool{filename, data, options};
     bool valid = tool.Run();
-    if (options.verbose) {
+    if (!valid || options.verbose) {
       print("[{:^4}] {}\n", valid ? "OK" : "FAIL", filename);
       tool.errors.Print();
     }
