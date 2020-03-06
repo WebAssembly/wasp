@@ -24,9 +24,9 @@ namespace binary {
 
 class ErrorsNop : public Errors {
  protected:
-  void HandlePushContext(SpanU8 pos, string_view desc) override {}
+  void HandlePushContext(Location loc, string_view desc) override {}
   void HandlePopContext() override {}
-  void HandleOnError(SpanU8 pos, string_view message) override {}
+  void HandleOnError(Location loc, string_view message) override {}
 };
 
 }  // namespace binary

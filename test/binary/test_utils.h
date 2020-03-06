@@ -34,12 +34,12 @@ struct Expression;
 namespace test {
 
 struct ErrorContext {
-  SpanU8 pos;
+  Location loc;
   std::string desc;
 };
 
 struct ErrorContextLoc {
-  SpanU8::index_type pos;
+  Location::index_type pos;
   std::string desc;
 };
 
@@ -52,9 +52,9 @@ class TestErrors : public Errors {
   std::vector<Error> errors;
 
  protected:
-  void HandlePushContext(SpanU8 pos, string_view desc);
+  void HandlePushContext(Location loc, string_view desc);
   void HandlePopContext();
-  void HandleOnError(SpanU8 pos, string_view message);
+  void HandleOnError(Location loc, string_view message);
 };
 
 // Make SpanU8 from literal string.

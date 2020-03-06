@@ -43,19 +43,19 @@ std::string TestErrorsToString(const TestErrors& errors) {
   return result;
 }
 
-void TestErrors::HandlePushContext(SpanU8 pos, string_view desc) {
-  context_stack.push_back(ErrorContext{pos, desc.to_string()});
+void TestErrors::HandlePushContext(Location loc, string_view desc) {
+  context_stack.push_back(ErrorContext{loc, desc.to_string()});
 }
 
 void TestErrors::HandlePopContext() {
   context_stack.pop_back();
 }
 
-void TestErrors::HandleOnError(SpanU8 pos, string_view message) {
+void TestErrors::HandleOnError(Location loc, string_view message) {
   errors.emplace_back();
   auto& error = errors.back();
   error = context_stack;
-  error.push_back(ErrorContext{pos, message.to_string()});
+  error.push_back(ErrorContext{loc, message.to_string()});
 }
 
 void ExpectNoErrors(const TestErrors& errors) {
@@ -73,7 +73,7 @@ void ExpectErrors(const std::vector<ExpectedError>& expected_errors,
     const Error& actual = errors.errors[j];
     ASSERT_EQ(expected.size(), actual.size());
     for (size_t i = 0; i < actual.size(); ++i) {
-      EXPECT_EQ(expected[i].pos, actual[i].pos.data() - orig_data.data());
+      EXPECT_EQ(expected[i].pos, actual[i].loc.data() - orig_data.data());
       EXPECT_EQ(expected[i].desc, actual[i].desc);
     }
   }
@@ -84,7 +84,6 @@ void ExpectError(const ExpectedError& expected,
                  SpanU8 orig_data) {
   ExpectErrors({expected}, errors, orig_data);
 }
-
 
 }  // namespace test
 }  // namespace binary

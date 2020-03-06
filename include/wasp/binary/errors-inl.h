@@ -17,16 +17,16 @@
 namespace wasp {
 namespace binary {
 
-inline void Errors::PushContext(SpanU8 pos, string_view desc) {
-  HandlePushContext(pos, desc);
+inline void Errors::PushContext(Location loc, string_view desc) {
+  HandlePushContext(loc, desc);
 }
 
 inline void Errors::PopContext() {
   HandlePopContext();
 }
 
-inline void Errors::OnError(SpanU8 pos, string_view message) {
-  HandleOnError(pos, message);
+inline void Errors::OnError(Location loc, string_view message) {
+  HandleOnError(loc, message);
 }
 
 }  // namespace binary

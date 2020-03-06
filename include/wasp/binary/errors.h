@@ -26,14 +26,14 @@ namespace binary {
 class Errors {
  public:
   virtual ~Errors() {}
-  void PushContext(SpanU8 pos, string_view desc);
+  void PushContext(Location loc, string_view desc);
   void PopContext();
-  void OnError(SpanU8 pos, string_view message);
+  void OnError(Location loc, string_view message);
 
  protected:
-  virtual void HandlePushContext(SpanU8 pos, string_view desc) = 0;
+  virtual void HandlePushContext(Location loc, string_view desc) = 0;
   virtual void HandlePopContext() = 0;
-  virtual void HandleOnError(SpanU8 pos, string_view message) = 0;
+  virtual void HandleOnError(Location loc, string_view message) = 0;
 };
 
 }  // namespace binary

@@ -27,9 +27,9 @@ namespace binary {
 /// ---
 class ErrorsContextGuard {
  public:
-  explicit ErrorsContextGuard(Errors& errors, SpanU8 pos, string_view desc)
-      : errors_{errors}, pos_{pos} {
-    errors.PushContext(pos, desc);
+  explicit ErrorsContextGuard(Errors& errors, Location loc, string_view desc)
+      : errors_{errors}, loc_{loc} {
+    errors.PushContext(loc, desc);
   }
   ~ErrorsContextGuard() { PopContext(); }
 
@@ -40,11 +40,11 @@ class ErrorsContextGuard {
     }
   }
 
-  Location loc() const { return pos_; }
+  Location loc() const { return loc_; }
 
  private:
   Errors& errors_;
-  SpanU8 pos_;
+  Location loc_;
   bool popped_context_ = false;
 };
 

@@ -26,7 +26,7 @@ namespace binary {
 
 /// ---
 struct Error {
-  SpanU8 pos;
+  Location loc;
   std::string message;
 };
 
