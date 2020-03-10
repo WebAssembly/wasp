@@ -19,7 +19,7 @@
 #include <utility>
 
 #include "src/tools/argparser.h"
-#include "src/tools/text-errors.h"
+#include "src/tools/text_errors.h"
 #include "wasp/base/enumerate.h"
 #include "wasp/base/error.h"
 #include "wasp/base/features.h"

@@ -179,7 +179,7 @@ TEST(BinaryReadTest, CallIndirectImmediate_BadReserved) {
   ExpectReadFailure<CallIndirectImmediate>(
       {{0, "call_indirect"},
        {1, "reserved"},
-       {2, "Expected reserved byte 0, got 1"}},
+       {1, "Expected reserved byte 0, got 1"}},
       "\x00\x01"_su8);
 }
 
@@ -217,11 +217,11 @@ TEST(BinaryReadTest, Code_PastEnd) {
   ExpectReadFailure<Code>(
       {{0, "code"}, {0, "length"}, {0, "Unable to read u8"}}, ""_su8);
 
-  ExpectReadFailure<Code>({{0, "code"}, {1, "Length extends past end: 1 > 0"}},
+  ExpectReadFailure<Code>({{0, "code"}, {0, "Length extends past end: 1 > 0"}},
                           "\x01"_su8);
 
   ExpectReadFailure<Code>(
-      {{0, "code"}, {1, "locals vector"}, {2, "Count extends past end: 1 > 0"}},
+      {{0, "code"}, {1, "locals vector"}, {1, "Count extends past end: 1 > 0"}},
       "\x01\x01"_su8);
 }
 
@@ -370,12 +370,12 @@ TEST(BinaryReadTest, CopyImmediate_BadReserved) {
   for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
     ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
                                       {0, "reserved"},
-                                      {1, "Expected reserved byte 0, got 1"}},
+                                      {0, "Expected reserved byte 0, got 1"}},
                                      "\x01"_su8, Features{}, kind);
 
     ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
                                       {1, "reserved"},
-                                      {2, "Expected reserved byte 0, got 1"}},
+                                      {1, "Expected reserved byte 0, got 1"}},
                                      "\x00\x01"_su8, Features{}, kind);
   }
 }
@@ -412,12 +412,12 @@ TEST(BinaryReadTest, CopyImmediate_Memory_reference_types) {
 
   ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
                                     {0, "reserved"},
-                                    {1, "Expected reserved byte 0, got 128"}},
+                                    {0, "Expected reserved byte 0, got 128"}},
                                    "\x80\x01\x01"_su8, features,
                                    BulkImmediateKind::Memory);
   ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
                                     {0, "reserved"},
-                                    {1, "Expected reserved byte 0, got 1"}},
+                                    {0, "Expected reserved byte 0, got 1"}},
                                    "\x01\x80\x01"_su8, features,
                                    BulkImmediateKind::Memory);
 }
@@ -455,7 +455,7 @@ TEST(BinaryReadTest, ReadCount_PastEnd) {
   const SpanU8 data = "\x05\x00\x00\x00"_su8;
   SpanU8 copy = data;
   auto result = ReadCount(&copy, context);
-  ExpectError({{1, "Count extends past end: 5 > 3"}}, errors, data);
+  ExpectError({{0, "Count extends past end: 5 > 3"}}, errors, data);
   EXPECT_EQ(nullopt, result);
   EXPECT_EQ(3u, copy.size());
 }
@@ -489,7 +489,7 @@ TEST(BinaryReadTest, DataSegment_MVP_PastEnd) {
       "\x00\x41\x00\x0b"_su8);
 
   ExpectReadFailure<DataSegment>(
-      {{0, "data segment"}, {5, "Length extends past end: 2 > 0"}},
+      {{0, "data segment"}, {4, "Length extends past end: 2 > 0"}},
       "\x00\x41\x00\x0b\x02"_su8);
 }
 
@@ -533,7 +533,7 @@ TEST(BinaryReadTest, DataSegment_BulkMemory_PastEnd) {
       "\x01"_su8, features);
 
   ExpectReadFailure<DataSegment>(
-      {{0, "data segment"}, {2, "Length extends past end: 1 > 0"}},
+      {{0, "data segment"}, {1, "Length extends past end: 1 > 0"}},
       "\x01\x01"_su8, features);
 
   // Active w/ memory index.
@@ -553,7 +553,7 @@ TEST(BinaryReadTest, DataSegment_BulkMemory_PastEnd) {
       "\x02\x00\x41\x00\x0b"_su8, features);
 
   ExpectReadFailure<DataSegment>(
-      {{0, "data segment"}, {6, "Length extends past end: 1 > 0"}},
+      {{0, "data segment"}, {5, "Length extends past end: 1 > 0"}},
       "\x02\x00\x41\x00\x0b\x01"_su8, features);
 }
 
@@ -1018,7 +1018,7 @@ TEST(BinaryReadTest, FunctionType_PastEnd) {
 
   ExpectReadFailure<FunctionType>({{0, "function type"},
                                    {0, "param types"},
-                                   {1, "Count extends past end: 1 > 0"}},
+                                   {0, "Count extends past end: 1 > 0"}},
                                   "\x01"_su8);
 
   ExpectReadFailure<FunctionType>({{0, "function type"},
@@ -1029,7 +1029,7 @@ TEST(BinaryReadTest, FunctionType_PastEnd) {
 
   ExpectReadFailure<FunctionType>({{0, "function type"},
                                    {1, "result types"},
-                                   {2, "Count extends past end: 1 > 0"}},
+                                   {1, "Count extends past end: 1 > 0"}},
                                   "\x00\x01"_su8);
 }
 
@@ -1217,7 +1217,7 @@ TEST(BinaryReadTest, IndirectNameAssoc_PastEnd) {
 
   ExpectReadFailure<IndirectNameAssoc>({{0, "indirect name assoc"},
                                         {1, "name map"},
-                                        {2, "Count extends past end: 1 > 0"}},
+                                        {1, "Count extends past end: 1 > 0"}},
                                        "\x00\x01"_su8);
 }
 
@@ -1236,7 +1236,7 @@ TEST(BinaryReadTest, InitImmediate_BadReserved) {
   for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
     ExpectReadFailure<InitImmediate>({{0, "init immediate"},
                                       {1, "reserved"},
-                                      {2, "Expected reserved byte 0, got 1"}},
+                                      {1, "Expected reserved byte 0, got 1"}},
                                      "\x00\x01"_su8, Features{}, kind);
   }
 }
@@ -1272,12 +1272,12 @@ TEST(BinaryReadTest, InitImmediate_Memory_reference_types) {
 
   ExpectReadFailure<InitImmediate>({{0, "init immediate"},
                                     {1, "reserved"},
-                                    {2, "Expected reserved byte 0, got 1"}},
+                                    {1, "Expected reserved byte 0, got 1"}},
                                    "\x01\x01"_su8, features,
                                    BulkImmediateKind::Memory);
   ExpectReadFailure<InitImmediate>({{0, "init immediate"},
                                     {2, "reserved"},
-                                    {3, "Expected reserved byte 0, got 128"}},
+                                    {2, "Expected reserved byte 0, got 128"}},
                                    "\x80\x01\x80\x01"_su8, features,
                                    BulkImmediateKind::Memory);
 }
@@ -1515,10 +1515,10 @@ TEST(BinaryReadTest, Instruction) {
 
 TEST(BinaryReadTest, Instruction_BadMemoryReserved) {
   ExpectReadFailure<Instruction>(
-      {{1, "reserved"}, {2, "Expected reserved byte 0, got 1"}},
+      {{1, "reserved"}, {1, "Expected reserved byte 0, got 1"}},
       "\x3f\x01"_su8);
   ExpectReadFailure<Instruction>(
-      {{1, "reserved"}, {2, "Expected reserved byte 0, got 1"}},
+      {{1, "reserved"}, {1, "Expected reserved byte 0, got 1"}},
       "\x40\x01"_su8);
 }
 
@@ -1672,11 +1672,11 @@ TEST(BinaryReadTest, Instruction_BadReserved_bulk_memory) {
 
   ExpectReadFailure<I>({{2, "init immediate"},
                         {3, "reserved"},
-                        {4, "Expected reserved byte 0, got 1"}},
+                        {3, "Expected reserved byte 0, got 1"}},
                        "\xfc\x0c\x00\x01"_su8, features);
   ExpectReadFailure<I>({{2, "copy immediate"},
                         {3, "reserved"},
-                        {4, "Expected reserved byte 0, got 1"}},
+                        {3, "Expected reserved byte 0, got 1"}},
                        "\xfc\x0e\x00\x01"_su8, features);
 }
 
@@ -2383,8 +2383,7 @@ void ExpectUnknownOpcode(u8 prefix, u32 orig_code, const Features& features) {
   } while (code > 0);
 
   ExpectReadFailure<Opcode>(
-      {{0, "opcode"},
-       {length, format("Unknown opcode: {} {}", prefix, orig_code)}},
+      {{0, "opcode"}, {0, format("Unknown opcode: {} {}", prefix, orig_code)}},
       SpanU8{data, length}, features);
 }
 
@@ -2982,7 +2981,7 @@ TEST(BinaryReadTest, Section_PastEnd) {
       {{0, "section"}, {1, "length"}, {1, "Unable to read u8"}}, "\x01"_su8);
 
   ExpectReadFailure<Section>(
-      {{0, "section"}, {2, "Length extends past end: 1 > 0"}}, "\x01\x01"_su8);
+      {{0, "section"}, {1, "Length extends past end: 1 > 0"}}, "\x01\x01"_su8);
 }
 
 TEST(BinaryReadTest, Start) {
@@ -3043,7 +3042,7 @@ TEST(BinaryReadTest, ReadString_Fail) {
   const SpanU8 data = "\x06small"_su8;
   SpanU8 copy = data;
   auto result = ReadString(&copy, context, "test");
-  ExpectError({{0, "test"}, {1, "Length extends past end: 6 > 5"}}, errors,
+  ExpectError({{0, "test"}, {0, "Length extends past end: 6 > 5"}}, errors,
               data);
   EXPECT_EQ(nullopt, result);
   EXPECT_EQ(5u, copy.size());
@@ -3110,7 +3109,7 @@ TEST(BinaryReadTest, TypeEntry) {
 
 TEST(BinaryReadTest, TypeEntry_BadForm) {
   ExpectReadFailure<TypeEntry>(
-      {{0, "type entry"}, {1, "Unknown type form: 64"}}, "\x40"_su8);
+      {{0, "type entry"}, {0, "Unknown type form: 64"}}, "\x40"_su8);
 }
 
 TEST(BinaryReadTest, U32) {
@@ -3236,7 +3235,7 @@ TEST(BinaryReadTest, ReadVector_FailLength) {
       "\x05"_su8;
   SpanU8 copy = data;
   auto result = ReadVector<u32>(&copy, context, "test");
-  ExpectError({{0, "test"}, {1, "Count extends past end: 2 > 1"}}, errors,
+  ExpectError({{0, "test"}, {0, "Count extends past end: 2 > 1"}}, errors,
               data);
   EXPECT_EQ(nullopt, result);
   EXPECT_EQ(1u, copy.size());

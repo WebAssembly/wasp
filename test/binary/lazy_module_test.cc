@@ -75,7 +75,7 @@ TEST(BinaryLazyModuleTest, BadMagic) {
   WASP_USE(module);
 
   ExpectError({{0, "magic"},
-               {4, R"(Mismatch: expected "\00\61\73\6d", got "\77\61\73\6d")"}},
+               {0, R"(Mismatch: expected "\00\61\73\6d", got "\77\61\73\6d")"}},
               errors, data);
 }
 
@@ -98,7 +98,7 @@ TEST(BinaryLazyModuleTest, BadVersion) {
   WASP_USE(module);
 
   ExpectError({{4, "version"},
-               {8, R"(Mismatch: expected "\01\00\00\00", got "\02\00\00\00")"}},
+               {4, R"(Mismatch: expected "\01\00\00\00", got "\02\00\00\00")"}},
               errors, data);
 }
 

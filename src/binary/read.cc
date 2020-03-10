@@ -58,7 +58,7 @@ OptAt<BrOnExnImmediate> Read(SpanU8* data,
   LocationGuard guard{data};
   WASP_TRY_READ(target, ReadIndex(data, context, "target"));
   WASP_TRY_READ(event_index, ReadIndex(data, context, "event index"));
-  return MakeAt(guard.loc(), BrOnExnImmediate{target, event_index});
+  return MakeAt(guard.range(data), BrOnExnImmediate{target, event_index});
 }
 
 OptAt<BrTableImmediate> Read(SpanU8* data,
@@ -68,7 +68,7 @@ OptAt<BrTableImmediate> Read(SpanU8* data,
   LocationGuard guard{data};
   WASP_TRY_READ(targets, ReadVector<Index>(data, context, "targets"));
   WASP_TRY_READ(default_target, ReadIndex(data, context, "default target"));
-  return MakeAt(guard.loc(),
+  return MakeAt(guard.range(data),
                 BrTableImmediate{std::move(targets), default_target});
 }
 
@@ -93,7 +93,8 @@ OptAt<SpanU8> ReadBytesExpected(SpanU8* data,
   auto actual = ReadBytes(data, expected.size(), context);
   if (actual && **actual != expected) {
     context.errors.OnError(
-        *data, format("Mismatch: expected {}, got {}", expected, *actual));
+        actual->loc(),
+        format("Mismatch: expected {}, got {}", expected, *actual));
   }
   return actual;
 }
@@ -106,10 +107,10 @@ OptAt<CallIndirectImmediate> Read(SpanU8* data,
   WASP_TRY_READ(index, ReadIndex(data, context, "type index"));
   if (context.features.reference_types_enabled()) {
     WASP_TRY_READ(table_index, ReadIndex(data, context, "table index"));
-    return MakeAt(guard.loc(), CallIndirectImmediate{index, table_index});
+    return MakeAt(guard.range(data), CallIndirectImmediate{index, table_index});
   } else {
     WASP_TRY_READ(reserved, ReadReservedIndex(data, context));
-    return MakeAt(guard.loc(), CallIndirectImmediate{index, reserved});
+    return MakeAt(guard.range(data), CallIndirectImmediate{index, reserved});
   }
 }
 
@@ -122,8 +123,9 @@ OptAt<Index> ReadCheckLength(SpanU8* data,
   // There should be at least one byte per count, so if the data is smaller
   // than that, the module must be malformed.
   if (count > data->size()) {
-    context.errors.OnError(*data, format("{} extends past end: {} > {}",
-                                         error_name, count, data->size()));
+    context.errors.OnError(
+        count.loc(), format("{} extends past end: {} > {}", error_name, count,
+                            data->size()));
     return nullopt;
   }
 
@@ -139,7 +141,7 @@ OptAt<Code> Read(SpanU8* data, Context& context, Tag<Code>) {
   WASP_TRY_READ(locals, ReadVector<Locals>(&*body, context, "locals vector"));
   // Use updated body as Location (i.e. after reading locals).
   auto expression = MakeAt(body, Expression{*body});
-  return MakeAt(guard.loc(), Code{std::move(locals), expression});
+  return MakeAt(guard.range(data), Code{std::move(locals), expression});
 }
 
 OptAt<ConstantExpression> Read(SpanU8* data,
@@ -155,7 +157,7 @@ OptAt<ConstantExpression> Read(SpanU8* data,
     }
     instrs.push_back(instr);
   }
-  return MakeAt(guard.loc(), ConstantExpression{instrs});
+  return MakeAt(guard.range(data), ConstantExpression{instrs});
 }
 
 OptAt<CopyImmediate> Read(SpanU8* data,
@@ -168,11 +170,11 @@ OptAt<CopyImmediate> Read(SpanU8* data,
       context.features.reference_types_enabled()) {
     WASP_TRY_READ(dst_index, ReadIndex(data, context, "dst index"));
     WASP_TRY_READ(src_index, ReadIndex(data, context, "src index"));
-    return MakeAt(guard.loc(), CopyImmediate{dst_index, src_index});
+    return MakeAt(guard.range(data), CopyImmediate{dst_index, src_index});
   } else {
     WASP_TRY_READ(dst_reserved, ReadReservedIndex(data, context));
     WASP_TRY_READ(src_reserved, ReadReservedIndex(data, context));
-    return MakeAt(guard.loc(), CopyImmediate{dst_reserved, src_reserved});
+    return MakeAt(guard.range(data), CopyImmediate{dst_reserved, src_reserved});
   }
 }
 
@@ -185,7 +187,7 @@ OptAt<DataCount> Read(SpanU8* data, Context& context, Tag<DataCount>) {
   LocationGuard guard{data};
   WASP_TRY_READ(count, ReadIndex(data, context, "count"));
   context.declared_data_count = count;
-  return MakeAt(guard.loc(), DataCount{count});
+  return MakeAt(guard.range(data), DataCount{count});
 }
 
 OptAt<DataSegment> Read(SpanU8* data, Context& context, Tag<DataSegment>) {
@@ -211,11 +213,11 @@ OptAt<DataSegment> Read(SpanU8* data, Context& context, Tag<DataSegment>) {
                           "offset");
     WASP_TRY_READ(len, ReadLength(data, context));
     WASP_TRY_READ(init, ReadBytes(data, *len, context));
-    return MakeAt(guard.loc(), DataSegment{memory_index, offset, init});
+    return MakeAt(guard.range(data), DataSegment{memory_index, offset, init});
   } else {
     WASP_TRY_READ(len, ReadLength(data, context));
     WASP_TRY_READ(init, ReadBytes(data, len, context));
-    return MakeAt(guard.loc(), DataSegment{init});
+    return MakeAt(guard.range(data), DataSegment{init});
   }
 }
 
@@ -242,7 +244,7 @@ OptAt<ElementExpression> Read(SpanU8* data,
     }
     instrs.push_back(instr);
   }
-  return MakeAt(guard.loc(), ElementExpression{instrs});
+  return MakeAt(guard.range(data), ElementExpression{instrs});
 }
 
 OptAt<ElementSegment> Read(SpanU8* data,
@@ -283,9 +285,11 @@ OptAt<ElementSegment> Read(SpanU8* data,
 
     ElementListWithExpressions list{elemtype, init};
     if (decoded.segment_type == SegmentType::Active) {
-      return MakeAt(guard.loc(), ElementSegment{table_index, *offset, list});
+      return MakeAt(guard.range(data),
+                    ElementSegment{table_index, *offset, list});
     } else {
-      return MakeAt(guard.loc(), ElementSegment{decoded.segment_type, list});
+      return MakeAt(guard.range(data),
+                    ElementSegment{decoded.segment_type, list});
     }
   } else {
     At<ExternalKind> kind{ExternalKind::Function};
@@ -297,9 +301,11 @@ OptAt<ElementSegment> Read(SpanU8* data,
 
     ElementListWithIndexes list{kind, init};
     if (decoded.segment_type == SegmentType::Active) {
-      return MakeAt(guard.loc(), ElementSegment{table_index, *offset, list});
+      return MakeAt(guard.range(data),
+                    ElementSegment{table_index, *offset, list});
     } else {
-      return MakeAt(guard.loc(), ElementSegment{decoded.segment_type, list});
+      return MakeAt(guard.range(data),
+                    ElementSegment{decoded.segment_type, list});
     }
   }
 }
@@ -316,7 +322,7 @@ OptAt<Event> Read(SpanU8* data, Context& context, Tag<Event>) {
   ErrorsContextGuard error_guard{context.errors, *data, "event"};
   LocationGuard guard{data};
   WASP_TRY_READ(event_type, Read<EventType>(data, context));
-  return MakeAt(guard.loc(), Event{event_type});
+  return MakeAt(guard.range(data), Event{event_type});
 }
 
 OptAt<EventAttribute> Read(SpanU8* data,
@@ -333,7 +339,7 @@ OptAt<EventType> Read(SpanU8* data, Context& context, Tag<EventType>) {
   LocationGuard guard{data};
   WASP_TRY_READ(attribute, Read<EventAttribute>(data, context));
   WASP_TRY_READ(type_index, ReadIndex(data, context, "type index"));
-  return MakeAt(guard.loc(), EventType{attribute, type_index});
+  return MakeAt(guard.range(data), EventType{attribute, type_index});
 }
 
 OptAt<Export> Read(SpanU8* data, Context& context, Tag<Export>) {
@@ -342,7 +348,7 @@ OptAt<Export> Read(SpanU8* data, Context& context, Tag<Export>) {
   WASP_TRY_READ(name, ReadUtf8String(data, context, "name"));
   WASP_TRY_READ(kind, Read<ExternalKind>(data, context));
   WASP_TRY_READ(index, ReadIndex(data, context, "index"));
-  return MakeAt(guard.loc(), Export{kind, name, index});
+  return MakeAt(guard.range(data), Export{kind, name, index});
 }
 
 OptAt<ExternalKind> Read(SpanU8* data, Context& context, Tag<ExternalKind>) {
@@ -377,7 +383,7 @@ OptAt<Function> Read(SpanU8* data, Context& context, Tag<Function>) {
   LocationGuard guard{data};
   context.defined_function_count++;
   WASP_TRY_READ(type_index, ReadIndex(data, context, "type index"));
-  return MakeAt(guard.loc(), Function{type_index});
+  return MakeAt(guard.range(data), Function{type_index});
 }
 
 OptAt<FunctionType> Read(SpanU8* data, Context& context, Tag<FunctionType>) {
@@ -387,7 +393,7 @@ OptAt<FunctionType> Read(SpanU8* data, Context& context, Tag<FunctionType>) {
                       ReadVector<ValueType>(data, context, "param types"));
   WASP_TRY_READ(result_types,
                       ReadVector<ValueType>(data, context, "result types"));
-  return MakeAt(guard.loc(),
+  return MakeAt(guard.range(data),
                 FunctionType{std::move(param_types), std::move(result_types)});
 }
 
@@ -396,7 +402,7 @@ OptAt<Global> Read(SpanU8* data, Context& context, Tag<Global>) {
   LocationGuard guard{data};
   WASP_TRY_READ(global_type, Read<GlobalType>(data, context));
   WASP_TRY_READ(init_expr, Read<ConstantExpression>(data, context));
-  return MakeAt(guard.loc(), Global{global_type, std::move(init_expr)});
+  return MakeAt(guard.range(data), Global{global_type, std::move(init_expr)});
 }
 
 OptAt<GlobalType> Read(SpanU8* data, Context& context, Tag<GlobalType>) {
@@ -404,7 +410,7 @@ OptAt<GlobalType> Read(SpanU8* data, Context& context, Tag<GlobalType>) {
   LocationGuard guard{data};
   WASP_TRY_READ(type, Read<ValueType>(data, context));
   WASP_TRY_READ(mut, Read<Mutability>(data, context));
-  return MakeAt(guard.loc(), GlobalType{type, mut});
+  return MakeAt(guard.range(data), GlobalType{type, mut});
 }
 
 OptAt<Import> Read(SpanU8* data, Context& context, Tag<Import>) {
@@ -416,23 +422,23 @@ OptAt<Import> Read(SpanU8* data, Context& context, Tag<Import>) {
   switch (kind) {
     case ExternalKind::Function: {
       WASP_TRY_READ(type_index, ReadIndex(data, context, "function index"));
-      return MakeAt(guard.loc(), Import{module, name, type_index});
+      return MakeAt(guard.range(data), Import{module, name, type_index});
     }
     case ExternalKind::Table: {
       WASP_TRY_READ(table_type, Read<TableType>(data, context));
-      return MakeAt(guard.loc(), Import{module, name, table_type});
+      return MakeAt(guard.range(data), Import{module, name, table_type});
     }
     case ExternalKind::Memory: {
       WASP_TRY_READ(memory_type, Read<MemoryType>(data, context));
-      return MakeAt(guard.loc(), Import{module, name, memory_type});
+      return MakeAt(guard.range(data), Import{module, name, memory_type});
     }
     case ExternalKind::Global: {
       WASP_TRY_READ(global_type, Read<GlobalType>(data, context));
-      return MakeAt(guard.loc(), Import{module, name, global_type});
+      return MakeAt(guard.range(data), Import{module, name, global_type});
     }
     case ExternalKind::Event: {
       WASP_TRY_READ(event_type, Read<EventType>(data, context));
-      return MakeAt(guard.loc(), Import{module, name, event_type});
+      return MakeAt(guard.range(data), Import{module, name, event_type});
     }
   }
   WASP_UNREACHABLE();
@@ -452,10 +458,10 @@ OptAt<InitImmediate> Read(SpanU8* data,
   if (kind == BulkImmediateKind::Table &&
       context.features.reference_types_enabled()) {
     WASP_TRY_READ(dst_index, ReadIndex(data, context, "table index"));
-    return MakeAt(guard.loc(), InitImmediate{segment_index, dst_index});
+    return MakeAt(guard.range(data), InitImmediate{segment_index, dst_index});
   } else {
     WASP_TRY_READ(reserved, ReadReservedIndex(data, context));
-    return MakeAt(guard.loc(), InitImmediate{segment_index, reserved});
+    return MakeAt(guard.range(data), InitImmediate{segment_index, reserved});
   }
 }
 
@@ -756,13 +762,13 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I8X16Abs:
     case Opcode::I16X8Abs:
     case Opcode::I32X4Abs:
-      return MakeAt(guard.loc(), Instruction{opcode});
+      return MakeAt(guard.range(data), Instruction{opcode});
 
     // Reference type immediate.
     case Opcode::RefNull:
     case Opcode::RefIsNull: {
       WASP_TRY_READ(type, Read<ReferenceType>(data, context));
-      return MakeAt(guard.loc(), Instruction{opcode, type});
+      return MakeAt(guard.range(data), Instruction{opcode, type});
     }
 
     // Block type immediate.
@@ -771,7 +777,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::If:
     case Opcode::Try: {
       WASP_TRY_READ(type, Read<BlockType>(data, context));
-      return MakeAt(guard.loc(), Instruction{opcode, type});
+      return MakeAt(guard.range(data), Instruction{opcode, type});
     }
 
     // Index immediate.
@@ -794,26 +800,27 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::TableSize:
     case Opcode::TableFill: {
       WASP_TRY_READ(index, ReadIndex(data, context, "index"));
-      return MakeAt(guard.loc(), Instruction{opcode, index});
+      return MakeAt(guard.range(data), Instruction{opcode, index});
     }
 
     // Index, Index immediates.
     case Opcode::BrOnExn: {
       WASP_TRY_READ(immediate, Read<BrOnExnImmediate>(data, context));
-      return MakeAt(guard.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.range(data), Instruction{opcode, immediate});
     }
 
     // Index* immediates.
     case Opcode::BrTable: {
       WASP_TRY_READ(immediate, Read<BrTableImmediate>(data, context));
-      return MakeAt(guard.loc(), Instruction{opcode, std::move(immediate)});
+      return MakeAt(guard.range(data),
+                    Instruction{opcode, std::move(immediate)});
     }
 
     // Index, reserved immediates.
     case Opcode::CallIndirect:
     case Opcode::ReturnCallIndirect: {
       WASP_TRY_READ(immediate, Read<CallIndirectImmediate>(data, context));
-      return MakeAt(guard.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.range(data), Instruction{opcode, immediate});
     }
 
     // Memarg (alignment, offset) immediates.
@@ -919,7 +926,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I64AtomicRmw16CmpxchgU:
     case Opcode::I64AtomicRmw32CmpxchgU: {
       WASP_TRY_READ(memarg, Read<MemArgImmediate>(data, context));
-      return MakeAt(guard.loc(), Instruction{opcode, memarg});
+      return MakeAt(guard.range(data), Instruction{opcode, memarg});
     }
 
     // Reserved immediates.
@@ -927,63 +934,63 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::MemoryGrow:
     case Opcode::MemoryFill: {
       WASP_TRY_READ(reserved, ReadReserved(data, context));
-      return MakeAt(guard.loc(), Instruction{opcode, reserved});
+      return MakeAt(guard.range(data), Instruction{opcode, reserved});
     }
 
     // Const immediates.
     case Opcode::I32Const: {
       WASP_TRY_READ_CONTEXT(value, Read<s32>(data, context), "i32 constant");
-      return MakeAt(guard.loc(), Instruction{opcode, value});
+      return MakeAt(guard.range(data), Instruction{opcode, value});
     }
 
     case Opcode::I64Const: {
       WASP_TRY_READ_CONTEXT(value, Read<s64>(data, context), "i64 constant");
-      return MakeAt(guard.loc(), Instruction{opcode, value});
+      return MakeAt(guard.range(data), Instruction{opcode, value});
     }
 
     case Opcode::F32Const: {
       WASP_TRY_READ_CONTEXT(value, Read<f32>(data, context), "f32 constant");
-      return MakeAt(guard.loc(), Instruction{opcode, value});
+      return MakeAt(guard.range(data), Instruction{opcode, value});
     }
 
     case Opcode::F64Const: {
       WASP_TRY_READ_CONTEXT(value, Read<f64>(data, context), "f64 constant");
-      return MakeAt(guard.loc(), Instruction{opcode, value});
+      return MakeAt(guard.range(data), Instruction{opcode, value});
     }
 
     case Opcode::V128Const: {
       WASP_TRY_READ_CONTEXT(value, Read<v128>(data, context), "v128 constant");
-      return MakeAt(guard.loc(), Instruction{opcode, value});
+      return MakeAt(guard.range(data), Instruction{opcode, value});
     }
 
     // Reserved, Index immediates.
     case Opcode::MemoryInit: {
       WASP_TRY_READ(immediate, Read<InitImmediate>(data, context,
                                                    BulkImmediateKind::Memory));
-      return MakeAt(guard.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.range(data), Instruction{opcode, immediate});
     }
     case Opcode::TableInit: {
       WASP_TRY_READ(immediate, Read<InitImmediate>(data, context,
                                                    BulkImmediateKind::Table));
-      return MakeAt(guard.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.range(data), Instruction{opcode, immediate});
     }
 
     // Reserved, reserved immediates.
     case Opcode::MemoryCopy: {
       WASP_TRY_READ(immediate, Read<CopyImmediate>(data, context,
                                                    BulkImmediateKind::Memory));
-      return MakeAt(guard.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.range(data), Instruction{opcode, immediate});
     }
     case Opcode::TableCopy: {
       WASP_TRY_READ(immediate, Read<CopyImmediate>(data, context,
                                                    BulkImmediateKind::Table));
-      return MakeAt(guard.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.range(data), Instruction{opcode, immediate});
     }
 
     // Shuffle immediate.
     case Opcode::V8X16Shuffle: {
       WASP_TRY_READ(immediate, Read<ShuffleImmediate>(data, context));
-      return MakeAt(guard.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.range(data), Instruction{opcode, immediate});
     }
 
     // Select immediate.
@@ -991,8 +998,8 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
       LocationGuard immediate_guard{data};
       WASP_TRY_READ(immediate, ReadVector<ValueType>(data, context, "types"));
       return MakeAt(
-          guard.loc(),
-          Instruction{opcode, MakeAt(immediate_guard.loc(), immediate)});
+          guard.range(data),
+          Instruction{opcode, MakeAt(immediate_guard.range(data), immediate)});
     }
 
     // u8 immediate.
@@ -1011,7 +1018,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::F32X4ReplaceLane:
     case Opcode::F64X2ReplaceLane: {
       WASP_TRY_READ(lane, Read<u8>(data, context));
-      return MakeAt(guard.loc(), Instruction{opcode, lane});
+      return MakeAt(guard.range(data), Instruction{opcode, lane});
     }
   }
   WASP_UNREACHABLE();
@@ -1035,7 +1042,7 @@ OptAt<Limits> Read(SpanU8* data, Context& context, Tag<Limits>) {
     WASP_TRY_READ_CONTEXT(max_, Read<u32>(data, context), "max");
     max = max_;
   }
-  return MakeAt(guard.loc(),
+  return MakeAt(guard.range(data),
                 Limits{min, max, MakeAt(flags.loc(), decoded->shared)});
 }
 
@@ -1044,7 +1051,7 @@ OptAt<Locals> Read(SpanU8* data, Context& context, Tag<Locals>) {
   LocationGuard guard{data};
   WASP_TRY_READ(count, ReadIndex(data, context, "count"));
   WASP_TRY_READ_CONTEXT(type, Read<ValueType>(data, context), "type");
-  return MakeAt(guard.loc(), Locals{count, type});
+  return MakeAt(guard.range(data), Locals{count, type});
 }
 
 OptAt<MemArgImmediate> Read(SpanU8* data,
@@ -1053,7 +1060,7 @@ OptAt<MemArgImmediate> Read(SpanU8* data,
   LocationGuard guard{data};
   WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, context), "align log2");
   WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, context), "offset");
-  return MakeAt(guard.loc(), MemArgImmediate{align_log2, offset});
+  return MakeAt(guard.range(data), MemArgImmediate{align_log2, offset});
 }
 
 OptAt<Memory> Read(SpanU8* data, Context& context, Tag<Memory>) {
@@ -1084,10 +1091,11 @@ OptAt<Opcode> Read(SpanU8* data, Context& context, Tag<Opcode>) {
     WASP_TRY_READ(code, Read<u32>(data, context));
     auto decoded = encoding::Opcode::Decode(val, code, context.features);
     if (!decoded) {
-      context.errors.OnError(*data, format("Unknown opcode: {} {}", val, code));
+      context.errors.OnError(guard.range(data),
+                             format("Unknown opcode: {} {}", val, code));
       return nullopt;
     }
-    return MakeAt(guard.loc(), *decoded);
+    return MakeAt(guard.range(data), *decoded);
   } else {
     WASP_TRY_DECODE_FEATURES(decoded, val, Opcode, "opcode", context.features);
     return decoded;
@@ -1100,7 +1108,7 @@ OptAt<u8> ReadReserved(SpanU8* data, Context& context) {
   WASP_TRY_READ(reserved, Read<u8>(data, context));
   if (reserved != 0) {
     context.errors.OnError(
-        *data, format("Expected reserved byte 0, got {}", reserved));
+        reserved.loc(), format("Expected reserved byte 0, got {}", reserved));
     return nullopt;
   }
   return reserved;
@@ -1132,18 +1140,19 @@ OptAt<Section> Read(SpanU8* data, Context& context, Tag<Section>) {
   if (id == SectionId::Custom) {
     WASP_TRY_READ(name,
                   ReadUtf8String(&*bytes, context, "custom section name"));
-    return MakeAt(guard.loc(),
-                  Section{MakeAt(guard.loc(), CustomSection{name, *bytes})});
+    return MakeAt(
+        guard.range(data),
+        Section{MakeAt(guard.range(data), CustomSection{name, *bytes})});
   } else {
     if (context.last_section_id && *context.last_section_id >= id) {
       context.errors.OnError(
-          *data, format("Section out of order: {} cannot occur after {}", id,
-                        *context.last_section_id));
+          id.loc(), format("Section out of order: {} cannot occur after {}", id,
+                           *context.last_section_id));
     }
     context.last_section_id = id;
 
-    return MakeAt(guard.loc(),
-                  Section{MakeAt(guard.loc(), KnownSection{id, *bytes})});
+    return MakeAt(guard.range(data),
+                  Section{MakeAt(guard.range(data), KnownSection{id, *bytes})});
   }
 }
 
@@ -1165,7 +1174,7 @@ OptAt<ShuffleImmediate> Read(SpanU8* data,
     WASP_TRY_READ(byte, Read<u8>(data, context));
     immediate[i] = byte;
   }
-  return MakeAt(guard.loc(), immediate);
+  return MakeAt(guard.range(data), immediate);
 }
 
 OptAt<Start> Read(SpanU8* data, Context& context, Tag<Start>) {
@@ -1182,7 +1191,7 @@ OptAt<string_view> ReadString(SpanU8* data,
   WASP_TRY_READ(len, ReadLength(data, context));
   string_view result{reinterpret_cast<const char*>(data->data()), len};
   remove_prefix(data, len);
-  return MakeAt(guard.loc(), result);
+  return MakeAt(guard.range(data), result);
 }
 
 OptAt<string_view> ReadUtf8String(SpanU8* data,
@@ -1190,7 +1199,7 @@ OptAt<string_view> ReadUtf8String(SpanU8* data,
                                   string_view desc) {
   auto string = ReadString(data, context, desc);
   if (string && !IsValidUtf8(*string)) {
-    context.errors.OnError(*data, "Invalid UTF-8 encoding");
+    context.errors.OnError(string->loc(), "Invalid UTF-8 encoding");
     return {};
   }
   return string;
@@ -1207,7 +1216,7 @@ OptAt<TableType> Read(SpanU8* data, Context& context, Tag<TableType>) {
   LocationGuard guard{data};
   WASP_TRY_READ(elemtype, Read<ReferenceType>(data, context));
   WASP_TRY_READ(limits, Read<Limits>(data, context));
-  return MakeAt(guard.loc(), TableType{std::move(limits), elemtype});
+  return MakeAt(guard.range(data), TableType{std::move(limits), elemtype});
 }
 
 OptAt<TypeEntry> Read(SpanU8* data, Context& context, Tag<TypeEntry>) {
@@ -1216,12 +1225,12 @@ OptAt<TypeEntry> Read(SpanU8* data, Context& context, Tag<TypeEntry>) {
   WASP_TRY_READ_CONTEXT(form, Read<u8>(data, context), "form");
 
   if (form != encoding::Type::Function) {
-    context.errors.OnError(*data, format("Unknown type form: {}", form));
+    context.errors.OnError(form.loc(), format("Unknown type form: {}", form));
     return nullopt;
   }
 
   WASP_TRY_READ(function_type, Read<FunctionType>(data, context));
-  return MakeAt(guard.loc(), TypeEntry{std::move(function_type)});
+  return MakeAt(guard.range(data), TypeEntry{std::move(function_type)});
 }
 
 OptAt<u32> Read(SpanU8* data, Context& context, Tag<u32>) {

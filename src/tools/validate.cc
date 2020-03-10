@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "src/tools/argparser.h"
+#include "src/tools/binary_errors.h"
 #include "wasp/base/enumerate.h"
 #include "wasp/base/error.h"
 #include "wasp/base/errors.h"
@@ -44,33 +45,6 @@ namespace validate {
 
 using namespace ::wasp::binary;
 
-// TODO: share w/ dump.cc
-class ErrorsBasic : public Errors {
- public:
-  explicit ErrorsBasic(SpanU8 data) : data{data} {}
-
-  void Print() {
-    for (const auto& error : errors) {
-      print(stderr, "{:08x}: {}\n", error.loc.data() - data.data(),
-            error.message);
-    }
-  }
-
-  bool has_error() const {
-    return !errors.empty();
-  }
-
- protected:
-  void HandlePushContext(SpanU8 pos, string_view desc) override {}
-  void HandlePopContext() override {}
-  void HandleOnError(Location loc, string_view message) override {
-    errors.push_back(Error{loc, std::string{message}});
-  }
-
-  SpanU8 data;
-  std::vector<Error> errors;
-};
-
 struct Options {
   Features features;
   bool verbose = false;
@@ -84,7 +58,7 @@ struct Tool {
   std::string filename;
   Options options;
   SpanU8 data;
-  ErrorsBasic errors;
+  BinaryErrors errors;
   LazyModule module;
   valid::ValidateVisitor visitor;
 };
@@ -123,7 +97,7 @@ int Main(span<string_view> args) {
     bool valid = tool.Run();
     if (!valid || options.verbose) {
       print("[{:^4}] {}\n", valid ? "OK" : "FAIL", filename);
-      tool.errors.Print();
+      tool.errors.PrintTo(std::cerr);
     }
     ok &= valid;
   }

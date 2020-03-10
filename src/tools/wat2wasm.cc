@@ -18,7 +18,7 @@
 #include <fstream>
 
 #include "src/tools/argparser.h"
-#include "src/tools/text-errors.h"
+#include "src/tools/text_errors.h"
 #include "wasp/base/buffer.h"
 #include "wasp/base/errors.h"
 #include "wasp/base/features.h"

@@ -24,12 +24,11 @@ namespace wasp {
 namespace binary {
 
 struct LocationGuard {
-  explicit LocationGuard(SpanU8* data) : data_{data}, start_{data->begin()} {}
+  explicit LocationGuard(SpanU8* data) : start_{data->begin()} {}
 
-  Location loc() const { return Location(start_, data_->begin()); }
+  Location range(SpanU8* end) const { return Location{start_, end->begin()}; }
 
  private:
-  SpanU8* data_;
   const u8* start_;
 };
 

@@ -15,9 +15,9 @@
 // limitations under the License.
 //
 
-#include <algorithm>
+#include "src/tools/text_errors.h"
 
-#include "src/tools/text-errors.h"
+#include <algorithm>
 
 #include "wasp/base/enumerate.h"
 #include "wasp/base/format.h"
