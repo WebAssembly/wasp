@@ -17,30 +17,30 @@
 #ifndef WASP_BASE_VARIANT_H_
 #define WASP_BASE_VARIANT_H_
 
-#include "nonstd/variant.hpp"
+#include <variant>
 
 namespace wasp {
 
-using nonstd::bad_variant_access;
-using nonstd::monostate;
-using nonstd::variant;
-using nonstd::variant_alternative;
-using nonstd::variant_alternative_t;
-using nonstd::variant_size;
+using std::bad_variant_access;
+using std::monostate;
+using std::variant;
+using std::variant_alternative;
+using std::variant_alternative_t;
+using std::variant_size;
 
-using nonstd::get;
-using nonstd::get_if;
-using nonstd::holds_alternative;
-using nonstd::visit;
-using nonstd::operator==;
-using nonstd::operator!=;
-using nonstd::operator<;
-using nonstd::operator<=;
-using nonstd::operator>;
-using nonstd::operator>=;
-using nonstd::swap;
+using std::get;
+using std::get_if;
+using std::holds_alternative;
+using std::visit;
+using std::operator==;
+using std::operator!=;
+using std::operator<;
+using std::operator<=;
+using std::operator>;
+using std::operator>=;
+using std::swap;
 
-constexpr auto variant_npos = nonstd::variant_npos;
+constexpr auto variant_npos = std::variant_npos;
 
 }  // namespace wasp
 

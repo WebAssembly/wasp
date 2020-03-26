@@ -76,7 +76,7 @@ TEST(ArgParserTest, BothParam) {
   std::string param;
   ArgParser parser{"prog"};
   parser.Add('p', "--param", "metavar", "help",
-             [&](string_view arg) { param += arg.to_string(); });
+             [&](string_view arg) { param += arg; });
 
   std::vector<string_view> args{{"-p", "hello", "--param", "world"}};
   parser.Parse(args);

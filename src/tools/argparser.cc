@@ -101,7 +101,7 @@ void ArgParser::Parse(span<string_view> args) {
       }
     };
 
-    if (arg.starts_with("--")) {
+    if (starts_with(arg, "--")) {
       if (auto option = FindLongOption(arg)) {
         call(*option);
       } else {

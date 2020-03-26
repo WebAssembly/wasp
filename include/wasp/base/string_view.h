@@ -17,29 +17,41 @@
 #ifndef WASP_BASE_STRING_VIEW_H_
 #define WASP_BASE_STRING_VIEW_H_
 
-#include "nonstd/string_view.hpp"
+#include <string_view>
 
 namespace wasp {
 
-using nonstd::string_view;
+using std::string_view;
 
-using nonstd::string_view;
-using nonstd::wstring_view;
-using nonstd::u16string_view;
-using nonstd::u32string_view;
-using nonstd::basic_string_view;
+using std::string_view;
+using std::wstring_view;
+using std::u16string_view;
+using std::u32string_view;
+using std::basic_string_view;
 
-using nonstd::operator==;
-using nonstd::operator!=;
-using nonstd::operator<;
-using nonstd::operator<=;
-using nonstd::operator>;
-using nonstd::operator>=;
+using std::operator==;
+using std::operator!=;
+using std::operator<;
+using std::operator<=;
+using std::operator>;
+using std::operator>=;
 
-using nonstd::operator<<;
+using std::operator<<;
 
 inline string_view operator ""_sv(const char* str, size_t N) {
   return string_view{str, N};
+}
+
+// Implement c++20 string_view::starts_with, but as a free function.
+template <typename CharT, class Traits = std::char_traits<CharT>>
+inline bool starts_with(basic_string_view<CharT, Traits> sv,
+                        basic_string_view<CharT, Traits> v) {
+  return sv.size() >= v.size() && sv.compare(0, v.size(), v) == 0;
+}
+
+template <typename CharT, class Traits = std::char_traits<CharT>>
+inline bool starts_with(basic_string_view<CharT, Traits> sv, const char* s) {
+  return starts_with(sv, basic_string_view<CharT, Traits>(s));
 }
 
 }  // namespace wasp

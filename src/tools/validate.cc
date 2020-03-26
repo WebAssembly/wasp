@@ -67,7 +67,7 @@ class ErrorsBasic : public Errors {
   void HandlePushContext(SpanU8 pos, string_view desc) override {}
   void HandlePopContext() override {}
   void HandleOnError(Location loc, string_view message) override {
-    errors.push_back(Error{loc, message.to_string()});
+    errors.push_back(Error{loc, std::string{message}});
   }
 
   SpanU8 data;

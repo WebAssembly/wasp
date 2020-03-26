@@ -17,8 +17,8 @@
 #include "wasp/binary/lazy_module.h"
 
 #include "gtest/gtest.h"
-
 #include "test/binary/test_utils.h"
+#include "wasp/base/macros.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
@@ -60,6 +60,7 @@ TEST(LazyModuleTest, BadMagic) {
   TestErrors errors;
   auto data = "wasm\x01\0\0\0"_su8;
   auto module = ReadModule(data, Features{}, errors);
+  WASP_USE(module);
 
   ExpectError({{0, "magic"},
                {4, R"(Mismatch: expected "\00\61\73\6d", got "\77\61\73\6d")"}},
@@ -70,6 +71,7 @@ TEST(LazyModuleTest, Magic_PastEnd) {
   TestErrors errors;
   auto data = "\0as"_su8;
   auto module = ReadModule(data, Features{}, errors);
+  WASP_USE(module);
 
   // TODO(binji): This should produce better errors.
   ExpectErrors({{{0, "magic"}, {0, "Unable to read 4 bytes"}},
@@ -81,6 +83,7 @@ TEST(LazyModuleTest, BadVersion) {
   TestErrors errors;
   auto data = "\0asm\x02\0\0\0"_su8;
   auto module = ReadModule(data, Features{}, errors);
+  WASP_USE(module);
 
   ExpectError({{4, "version"},
                {8, R"(Mismatch: expected "\01\00\00\00", got "\02\00\00\00")"}},
@@ -91,6 +94,7 @@ TEST(LazyModuleTest, Version_PastEnd) {
   TestErrors errors;
   auto data = "\0asm\x01"_su8;
   auto module = ReadModule(data, Features{}, errors);
+  WASP_USE(module);
 
   ExpectError({{4, "version"}, {4, "Unable to read 4 bytes"}}, errors, data);
 }

@@ -20,7 +20,6 @@
 #include <functional>
 
 #include "nonstd/span.hpp"
-
 #include "wasp/base/types.h"
 
 namespace wasp {

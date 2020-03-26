@@ -44,7 +44,7 @@ std::string TestErrorsToString(const TestErrors& errors) {
 }
 
 void TestErrors::HandlePushContext(Location loc, string_view desc) {
-  context_stack.push_back(ErrorContext{loc, desc.to_string()});
+  context_stack.push_back(ErrorContext{loc, std::string{desc}});
 }
 
 void TestErrors::HandlePopContext() {
@@ -55,7 +55,7 @@ void TestErrors::HandleOnError(Location loc, string_view message) {
   errors.emplace_back();
   auto& error = errors.back();
   error = context_stack;
-  error.push_back(ErrorContext{loc, message.to_string()});
+  error.push_back(ErrorContext{loc, std::string{message}});
 }
 
 void ExpectNoErrors(const TestErrors& errors) {

@@ -234,7 +234,7 @@ void Tool::WriteDotFile() {
   std::ofstream fstream;
   std::ostream* stream = &std::cout;
   if (!options.output_filename.empty()) {
-    fstream = std::ofstream{options.output_filename.to_string()};
+    fstream = std::ofstream{std::string{options.output_filename}};
     if (fstream) {
       stream = &fstream;
     }

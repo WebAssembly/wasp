@@ -375,7 +375,7 @@ void Tool::DoPrepass() {
       }
     } else if (section.value->is_custom()) {
       auto custom = section.value->custom();
-      section_names[section.index] = custom->name->to_string();
+      section_names[section.index] = custom->name;
       if (*custom->name == "name") {
         for (auto subsection : ReadNameSection(custom, module.context)) {
           if (subsection->id == NameSubsectionId::FunctionNames) {
@@ -397,7 +397,7 @@ void Tool::DoPrepass() {
               auto symbol = symbol_pair.value;
               auto kind = symbol->kind();
               auto name_opt = symbol->name();
-              auto name = name_opt.value_or("").to_string();
+              auto name = std::string{name_opt.value_or("")};
               if (symbol->is_base()) {
                 auto item_index = symbol->base().index;
                 if (name_opt) {
@@ -417,7 +417,7 @@ void Tool::DoPrepass() {
             }
           }
         }
-      } else if (custom->name->starts_with("reloc.")) {
+      } else if (starts_with(*custom->name, "reloc.")) {
         auto sec = ReadRelocationSection(custom, module.context);
         if (sec.section_index) {
           section_relocations[*sec.section_index] =
@@ -490,7 +490,7 @@ bool Tool::SectionMatches(Section section) const {
   if (section.is_known()) {
     name = format("{}", section.known()->id);
   } else if (section.is_custom()) {
-    name = section.custom()->name->to_string();
+    name = section.custom()->name;
   }
   return StringsAreEqualCaseInsensitive(name, options.section_name);
 }
@@ -511,7 +511,7 @@ void Tool::DoCustomSection(Pass pass,
       } else if (*custom.name == "linking") {
         DoLinkingSection(pass, section_index,
                          ReadLinkingSection(custom, module.context));
-      } else if (custom.name->starts_with("reloc.")) {
+      } else if (starts_with(*custom.name, "reloc.")) {
         DoRelocationSection(pass, section_index,
                             ReadRelocationSection(custom, module.context));
       }
@@ -935,7 +935,7 @@ void Tool::DoLinkingSection(Pass pass,
                 const auto& base = symbol.value->base();
                 // TODO GetEventName.
                 print("  - {}: E <{}> event={}", symbol.index,
-                      base.name.value_or(""), base.index);
+                      base.name.value_or(""_sv), base.index);
                 print_symbol_flags(symbol.value->flags);
                 break;
               }

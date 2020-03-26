@@ -17,24 +17,24 @@
 #ifndef WASP_BASE_OPTIONAL_H_
 #define WASP_BASE_OPTIONAL_H_
 
-#include "nonstd/optional.hpp"
+#include <optional>
 
 namespace wasp {
 
-using nonstd::bad_optional_access;
-using nonstd::optional;
+using std::bad_optional_access;
+using std::optional;
 
-using nonstd::nullopt;
-using nonstd::nullopt_t;
+using std::nullopt;
+using std::nullopt_t;
 
-using nonstd::operator==;
-using nonstd::operator!=;
-using nonstd::operator<;
-using nonstd::operator<=;
-using nonstd::operator>;
-using nonstd::operator>=;
-using nonstd::make_optional;
-using nonstd::swap;
+using std::operator==;
+using std::operator!=;
+using std::operator<;
+using std::operator<=;
+using std::operator>;
+using std::operator>=;
+using std::make_optional;
+using std::swap;
 
 }  // namespace wasp
 

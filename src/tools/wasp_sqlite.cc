@@ -225,7 +225,7 @@ bool Tool::OpenDB() {
 
 template <typename... Args>
 bool Tool::Exec(string_view sql, const Args&... args) {
-  auto fmt_sql = vformat(sql.to_string(), make_format_args(args...));
+  auto fmt_sql = vformat(sql, make_format_args(args...));
   // print(">> Executing \"{}\"\n", fmt_sql);
 
   auto cb = [](void*, int columns, char** values, char** names) {
