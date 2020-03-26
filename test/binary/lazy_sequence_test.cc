@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"
 #include "test/binary/test_utils.h"
-#include "wasp/binary/errors_nop.h"
+#include "wasp/base/errors_nop.h"
 #include "wasp/binary/read.h"
 #include "wasp/binary/read/context.h"
 

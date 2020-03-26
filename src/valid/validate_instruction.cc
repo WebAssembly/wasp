@@ -16,6 +16,9 @@
 
 #include <limits>
 
+#include "wasp/base/errors.h"
+#include "wasp/base/errors_context_guard.h"
+#include "wasp/base/errors_nop.h"
 #include "wasp/base/features.h"
 #include "wasp/base/format.h"
 #include "wasp/base/formatters.h"
@@ -23,9 +26,6 @@
 #include "wasp/base/types.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/valid/context.h"
-#include "wasp/valid/errors.h"
-#include "wasp/valid/errors_context_guard.h"
-#include "wasp/valid/errors_nop.h"
 #include "wasp/valid/formatters.h"
 #include "wasp/valid/validate.h"
 

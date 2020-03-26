@@ -14,11 +14,12 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/errors.h"
+#include "wasp/binary/sections.h"
+
+#include "wasp/base/errors.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/linking_section/sections.h"
 #include "wasp/binary/name_section/sections.h"
-#include "wasp/binary/sections.h"
 
 namespace wasp {
 namespace binary {

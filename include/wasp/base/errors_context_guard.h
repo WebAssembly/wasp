@@ -14,15 +14,14 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_ERRORS_CONTEXT_GUARD_H_
-#define WASP_BINARY_ERRORS_CONTEXT_GUARD_H_
+#ifndef WASP_BASE_ERRORS_CONTEXT_GUARD_H_
+#define WASP_BASE_ERRORS_CONTEXT_GUARD_H_
 
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
-#include "wasp/binary/errors.h"
+#include "wasp/base/errors.h"
 
 namespace wasp {
-namespace binary {
 
 /// ---
 class ErrorsContextGuard {
@@ -48,7 +47,6 @@ class ErrorsContextGuard {
   bool popped_context_ = false;
 };
 
-}  // namespace binary
 }  // namespace wasp
 
-#endif // WASP_BINARY_ERRORS_CONTEXT_GUARD_H_
+#endif // WASP_BASE_ERRORS_CONTEXT_GUARD_H_

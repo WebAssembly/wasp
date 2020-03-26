@@ -16,8 +16,8 @@
 
 #include "wasp/binary/name_section/read.h"
 
+#include "wasp/base/errors_context_guard.h"
 #include "wasp/binary/encoding/name_subsection_id_encoding.h"
-#include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read.h"
 #include "wasp/binary/read/context.h"
 #include "wasp/binary/read/macros.h"

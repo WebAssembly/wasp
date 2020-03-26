@@ -17,10 +17,10 @@
 #ifndef WASP_BINARY_MACROS_H_
 #define WASP_BINARY_MACROS_H_
 
+#include "wasp/base/errors.h"
+#include "wasp/base/errors_context_guard.h"
 #include "wasp/base/format.h"
 #include "wasp/base/span.h"
-#include "wasp/binary/errors.h"
-#include "wasp/binary/errors_context_guard.h"
 
 #define WASP_TRY_READ(var, call) \
   auto opt_##var = call;         \

@@ -24,10 +24,12 @@
 #include "wasp/binary/types.h"
 
 namespace wasp {
+
+class Errors;
+
 namespace binary {
 
 struct Context;
-class Errors;
 
 using IndexNamePair = std::pair<Index, string_view>;
 

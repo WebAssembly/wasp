@@ -15,7 +15,6 @@
 //
 
 namespace wasp {
-namespace binary {
 
 inline void Errors::PushContext(Location loc, string_view desc) {
   HandlePushContext(loc, desc);
@@ -29,5 +28,4 @@ inline void Errors::OnError(Location loc, string_view message) {
   HandleOnError(loc, message);
 }
 
-}  // namespace binary
 }  // namespace wasp

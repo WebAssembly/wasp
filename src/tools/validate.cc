@@ -26,20 +26,20 @@
 
 #include "src/tools/argparser.h"
 #include "wasp/base/enumerate.h"
+#include "wasp/base/error.h"
+#include "wasp/base/errors.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/format.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/string_view.h"
-#include "wasp/binary/error.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/lazy_expression.h"
 #include "wasp/binary/read/end_module.h"
 #include "wasp/binary/visitor.h"
 #include "wasp/valid/begin_code.h"
 #include "wasp/valid/context.h"
-#include "wasp/valid/errors.h"
 
 namespace wasp {
 namespace tools {

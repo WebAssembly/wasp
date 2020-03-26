@@ -22,6 +22,7 @@
 
 #include "src/tools/argparser.h"
 #include "wasp/base/enumerate.h"
+#include "wasp/base/errors.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/formatters.h"
@@ -29,7 +30,6 @@
 #include "wasp/base/str_to_u32.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/errors.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/lazy_expression.h"
 #include "wasp/binary/lazy_module.h"

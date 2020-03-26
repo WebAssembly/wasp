@@ -24,9 +24,10 @@
 #include "wasp/binary/types.h"
 
 namespace wasp {
-namespace binary {
 
 class Errors;
+
+namespace binary {
 
 using LazyTypeSection = LazySection<TypeEntry>;
 using LazyImportSection = LazySection<Import>;

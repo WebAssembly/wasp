@@ -19,11 +19,11 @@
 
 #include <vector>
 
+#include "wasp/base/errors_context_guard.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read.h"
 #include "wasp/binary/read/context.h"
 #include "wasp/binary/read/macros.h"

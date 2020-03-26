@@ -19,6 +19,7 @@
 
 #include <type_traits>
 
+#include "wasp/base/errors_context_guard.h"
 #include "wasp/base/features.h"
 #include "wasp/base/format.h"
 #include "wasp/base/formatters.h"
@@ -26,7 +27,6 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/read.h"
 #include "wasp/binary/read/context.h"
 #include "wasp/binary/read/macros.h"

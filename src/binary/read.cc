@@ -16,6 +16,8 @@
 
 #include "wasp/binary/read.h"
 
+#include "wasp/base/errors.h"
+#include "wasp/base/errors_context_guard.h"
 #include "wasp/base/features.h"
 #include "wasp/base/format.h"
 #include "wasp/base/optional.h"
@@ -32,8 +34,6 @@
 #include "wasp/binary/encoding/section_id_encoding.h"
 #include "wasp/binary/encoding/segment_flags_encoding.h"
 #include "wasp/binary/encoding/value_type_encoding.h"
-#include "wasp/binary/errors.h"
-#include "wasp/binary/errors_context_guard.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read_var_int.h"

@@ -20,12 +20,12 @@
 #include <set>
 #include <vector>
 
+#include "wasp/base/errors.h"
 #include "wasp/base/features.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/types.h"
-#include "wasp/valid/errors.h"
 #include "wasp/valid/types.h"
 
 namespace wasp {

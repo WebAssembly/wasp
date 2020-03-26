@@ -16,8 +16,8 @@
 
 #include "wasp/binary/lazy_sequence.h"
 
+#include "wasp/base/errors.h"
 #include "wasp/base/format.h"
-#include "wasp/binary/errors.h"
 
 namespace wasp {
 namespace binary {

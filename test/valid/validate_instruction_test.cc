@@ -16,11 +16,11 @@
 
 #include "gtest/gtest.h"
 #include "test/valid/test_utils.h"
+#include "wasp/base/errors_nop.h"
 #include "wasp/base/features.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/valid/begin_code.h"
 #include "wasp/valid/context.h"
-#include "wasp/valid/errors_nop.h"
 #include "wasp/valid/formatters.h"
 #include "wasp/valid/validate.h"
 

@@ -20,10 +20,10 @@
 #include <string>
 #include <vector>
 
+#include "wasp/base/errors.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/errors.h"
 
 namespace wasp {
 namespace binary {

@@ -28,10 +28,12 @@
 #include "wasp/binary/read/context.h"
 
 namespace wasp {
+
+class Errors;
+
 namespace binary {
 
 struct Context;
-class Errors;
 
 template <typename Sequence>
 class LazySequenceIterator;

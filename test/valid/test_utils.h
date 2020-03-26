@@ -20,10 +20,9 @@
 #include <string>
 #include <vector>
 
-#include "wasp/base/format.h"
-#include "wasp/valid/errors.h"
-
 #include "test/binary/test_utils.h"
+#include "wasp/base/errors.h"
+#include "wasp/base/format.h"
 
 namespace wasp {
 namespace valid {

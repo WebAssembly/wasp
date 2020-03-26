@@ -17,8 +17,8 @@
 #ifndef WASP_BINARY_END_MODULE_H_
 #define WASP_BINARY_END_MODULE_H_
 
+#include "wasp/base/errors.h"
 #include "wasp/base/format.h"
-#include "wasp/binary/errors.h"
 #include "wasp/binary/read/context.h"
 
 namespace wasp {

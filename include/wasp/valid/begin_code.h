@@ -17,12 +17,12 @@
 #ifndef WASP_VALID_BEGIN_CODE_H_
 #define WASP_VALID_BEGIN_CODE_H_
 
+#include "wasp/base/errors.h"
+#include "wasp/base/errors_context_guard.h"
 #include "wasp/base/features.h"
 #include "wasp/base/format.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/errors.h"
 #include "wasp/valid/context.h"
-#include "wasp/valid/errors_context_guard.h"
 
 namespace wasp {
 namespace valid {

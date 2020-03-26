@@ -14,17 +14,21 @@
 // limitations under the License.
 //
 
-#ifndef WASP_VALID_ERRORS_H_
-#define WASP_VALID_ERRORS_H_
+#ifndef WASP_BASE_ERROR_H_
+#define WASP_BASE_ERROR_H_
 
-#include "wasp/binary/errors.h"
+#include <string>
+
+#include "wasp/base/span.h"
 
 namespace wasp {
-namespace valid {
 
-using Errors = binary::Errors;
+/// ---
+struct Error {
+  Location loc;
+  std::string message;
+};
 
-}  // namespace valid
 }  // namespace wasp
 
-#endif // WASP_VALID_ERRORS_H_
+#endif  // WASP_BASE_ERROR_H_

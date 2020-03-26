@@ -14,13 +14,12 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_ERRORS_NOP_H_
-#define WASP_BINARY_ERRORS_NOP_H_
+#ifndef WASP_BASE_ERRORS_NOP_H_
+#define WASP_BASE_ERRORS_NOP_H_
 
-#include "wasp/binary/errors.h"
+#include "wasp/base/errors.h"
 
 namespace wasp {
-namespace binary {
 
 class ErrorsNop : public Errors {
  protected:
@@ -29,7 +28,6 @@ class ErrorsNop : public Errors {
   void HandleOnError(Location loc, string_view message) override {}
 };
 
-}  // namespace binary
 }  // namespace wasp
 
-#endif // WASP_BINARY_ERRORS_NOP_H_
+#endif // WASP_BASE_ERRORS_NOP_H_
