@@ -327,6 +327,7 @@ auto LexText(SpanU8* data) -> Token {
   MatchChar(data, '"');
   bool has_error = false;
   bool in_string = true;
+  u32 byte_size = 0;
   while (in_string) {
     switch (ReadChar(data)) {
       case -1:
@@ -351,6 +352,7 @@ auto LexText(SpanU8* data) -> Token {
           case '\'':
           case '\\':
             // Valid escape.
+            byte_size++;
             break;
 
           case '0':
@@ -377,6 +379,7 @@ auto LexText(SpanU8* data) -> Token {
           case 'F':  // Hex byte escape.
             if (IsHexDigit(PeekChar(data))) {
               SkipChar(data);
+              byte_size++;
               break;
             }
             // Fallthrough.
@@ -385,14 +388,20 @@ auto LexText(SpanU8* data) -> Token {
             has_error = true;
             break;
         }
+        break;
 
       default:
+        byte_size++;
         break;
     }
   }
 
-  return Token(guard.loc(),
-               has_error ? TokenType::InvalidText : TokenType::Text);
+  Location loc = guard.loc();
+  if (has_error) {
+    return Token(loc, TokenType::InvalidText);
+  }
+
+  return Token(loc, TokenType::Text, Text{ToStringView(loc), byte_size});
 }
 
 auto LexWhitespace(SpanU8* data) -> Token {
@@ -426,7 +435,7 @@ auto LexKeyword(SpanU8* data, string_view sv, TokenType tt) -> Token {
 auto LexKeyword(SpanU8* data, string_view sv, Opcode o) -> Token {
   MatchGuard guard{data};
   if (MatchString(data, sv) && NoTrailingReservedChars(data)) {
-    return Token(guard.loc(), TokenType::PlainInstr, o);
+    return Token(guard.loc(), TokenType::BareInstr, o);
   }
   return LexReserved(guard.Reset());
 }

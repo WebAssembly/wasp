@@ -74,6 +74,7 @@ add_library(wasplib
   src/valid/formatters.cc
   src/valid/validate.cc
   src/valid/validate_instruction.cc
+  src/text/context.cc
   src/text/lex.cc
   src/text/numeric.cc
   src/text/read.cc
@@ -129,6 +130,7 @@ add_executable(wasp_unittests
   test/text/formatters_test.cc
   test/text/lex_test.cc
   test/text/numeric_test.cc
+  test/text/read_test.cc
   test/tools/argparser_test.cc
   test/valid/test_utils.cc
   test/valid/validate_test.cc

@@ -30,9 +30,9 @@ WASP_V(Whitespace)
 // .wat symbols
 WASP_V(AlignEqNat)   // "align=8"
 WASP_V(Binary)       // "binary"
-WASP_V(BlockInstr)   // "block", "loop", etc.
 WASP_V(Catch)        // "catch"
 WASP_V(Data)         // "data"
+WASP_V(Declare)      // "declare"
 WASP_V(Drop)         // "drop"
 WASP_V(Elem)         // "elem"
 WASP_V(Else)         // "else"
@@ -62,7 +62,6 @@ WASP_V(Nat)          // "1234"
 WASP_V(Offset)       // "offset"
 WASP_V(OffsetEqNat)  // "offset=1234"
 WASP_V(Param)        // "param"
-WASP_V(PlainInstr)   // "i32.add", "f32.const", etc.
 WASP_V(Quote)        // "quote"
 WASP_V(Result)       // "result"
 WASP_V(Rpar)         // ")"
@@ -73,6 +72,26 @@ WASP_V(Text)         // "\"hello world\""
 WASP_V(Then)         // "then"
 WASP_V(Type)         // "type"
 WASP_V(ValueType)    // "i32", "f32", etc.
+
+// Plain Instructions.
+WASP_V(BareInstr)          // "i32.add", etc.
+WASP_V(BrOnExnInstr)       // "br_on_exn"
+WASP_V(BrTableInstr)       // "br_table"
+WASP_V(CallIndirectInstr)  // "call_indirect", "return_call_indirect"
+WASP_V(F32ConstInstr)      // "f32.const"
+WASP_V(F64ConstInstr)      // "f64.const"
+WASP_V(I32ConstInstr)      // "i32.const"
+WASP_V(I64ConstInstr)      // "i64.const"
+WASP_V(MemoryInstr)        // "i32.load", "i64.atomic.rmw8.add_u", etc.
+WASP_V(SelectInstr)        // "select"
+WASP_V(SimdConstInstr)     // "v128.const"
+WASP_V(SimdLaneInstr)      // "i8x16.extract_lane_s", "f32.replace_lane", etc.
+WASP_V(SimdShuffleInstr)   // "v128.shuffle"
+WASP_V(TableCopyInstr)     // "table.copy"
+WASP_V(TableInitInstr)     // "table.init"
+WASP_V(VarInstr)           // "br", "table.get", "local.set", etc.
+
+WASP_V(BlockInstr)         // "block", "loop", etc.
 
 // .wast symbols
 WASP_V(AssertExhaustion)  // "assert_exhaustion"

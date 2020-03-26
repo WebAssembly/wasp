@@ -27,15 +27,19 @@ inline auto Tokenizer::count() const -> int {
   return count_;
 }
 
+inline auto Tokenizer::Previous() const -> Token {
+  return previous_token_;
+}
+
 inline auto Tokenizer::Read() -> Token {
   if (count_ == 0) {
-    return LexNoWhitespace(&data_);
+    previous_token_ = LexNoWhitespace(&data_);
   } else {
-    auto token = tokens_[current_];
+    previous_token_ = tokens_[current_];
     current_ = !current_;
     count_--;
-    return token;
   }
+  return previous_token_;
 }
 
 inline auto Tokenizer::Peek(unsigned at) -> Token {
@@ -53,6 +57,21 @@ inline auto Tokenizer::Peek(unsigned at) -> Token {
     }
     return tokens_[!current_];
   }
+}
+
+inline auto Tokenizer::Match(TokenType token_type) -> optional<Token> {
+  if (Peek().type != token_type) {
+    return nullopt;
+  }
+  return Read();
+}
+
+inline auto Tokenizer::MatchLpar(TokenType token_type) -> optional<Token> {
+  if (!(Peek(0).type == TokenType::Lpar && Peek(1).type == token_type)) {
+    return nullopt;
+  }
+  Read();
+  return Read();
 }
 
 }  // namespace text

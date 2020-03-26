@@ -6,30 +6,31 @@ assert_malformed, TokenType::AssertMalformed
 assert_return, TokenType::AssertReturn
 assert_trap, TokenType::AssertTrap
 assert_unlinkable, TokenType::AssertUnlinkable
-atomic.notify, Opcode::AtomicNotify
+atomic.notify, TokenType::MemoryInstr, Opcode::AtomicNotify
 binary, TokenType::Binary
 block, TokenType::BlockInstr, Opcode::Block
-br_if, Opcode::BrIf
-br_on_exn, Opcode::BrOnExn
-br_table, Opcode::BrTable
-br, Opcode::Br
-call_indirect, Opcode::CallIndirect
-call, Opcode::Call
-catch, TokenType::Catch
-data.drop, Opcode::DataDrop
+br_if, TokenType::VarInstr, Opcode::BrIf
+br_on_exn, TokenType::BrOnExnInstr, Opcode::BrOnExn
+br_table, TokenType::BrTableInstr, Opcode::BrTable
+br, TokenType::VarInstr, Opcode::Br
+call_indirect, TokenType::CallIndirectInstr, Opcode::CallIndirect
+call, TokenType::VarInstr, Opcode::Call
+catch, TokenType::Catch, Opcode::Catch
+data.drop, TokenType::VarInstr, Opcode::DataDrop
 data, TokenType::Data
+declare, TokenType::Declare
 drop, Opcode::Drop
-elem.drop, Opcode::ElemDrop
+elem.drop, TokenType::VarInstr, Opcode::ElemDrop
 elem, TokenType::Elem
-else, TokenType::Else
-end, TokenType::End
+else, TokenType::Else, Opcode::Else
+end, TokenType::End, Opcode::End
 event, TokenType::Event
 exnref, ValueType::Exnref
 export, TokenType::Export
 f32.abs, Opcode::F32Abs
 f32.add, Opcode::F32Add
 f32.ceil, Opcode::F32Ceil
-f32.const, Opcode::F32Const
+f32.const, TokenType::F32ConstInstr, Opcode::F32Const
 f32.convert_i32_s, Opcode::F32ConvertI32S
 f32.convert_i32_u, Opcode::F32ConvertI32U
 f32.convert_i64_s, Opcode::F32ConvertI64S
@@ -42,7 +43,7 @@ f32.floor, Opcode::F32Floor
 f32.ge, Opcode::F32Ge
 f32.gt, Opcode::F32Gt
 f32.le, Opcode::F32Le
-f32.load, Opcode::F32Load
+f32.load, TokenType::MemoryInstr, Opcode::F32Load
 f32.lt, Opcode::F32Lt
 f32.max, Opcode::F32Max
 f32.min, Opcode::F32Min
@@ -52,7 +53,7 @@ f32.neg, Opcode::F32Neg
 f32.ne, Opcode::F32Ne
 f32.reinterpret_i32, Opcode::F32ReinterpretI32
 f32.sqrt, Opcode::F32Sqrt
-f32.store, Opcode::F32Store
+f32.store, TokenType::MemoryInstr, Opcode::F32Store
 f32.sub, Opcode::F32Sub
 f32.trunc, Opcode::F32Trunc
 f32, ValueType::F32
@@ -62,7 +63,7 @@ f32x4.convert_i32x4_s, Opcode::F32X4ConvertI32X4S
 f32x4.convert_i32x4_u, Opcode::F32X4ConvertI32X4U
 f32x4.div, Opcode::F32X4Div
 f32x4.eq, Opcode::F32X4Eq
-f32x4.extract_lane, Opcode::F32X4ExtractLane
+f32x4.extract_lane, TokenType::SimdLaneInstr, Opcode::F32X4ExtractLane
 f32x4.ge, Opcode::F32X4Ge
 f32x4.gt, Opcode::F32X4Gt
 f32x4.le, Opcode::F32X4Le
@@ -72,7 +73,7 @@ f32x4.min, Opcode::F32X4Min
 f32x4.mul, Opcode::F32X4Mul
 f32x4.neg, Opcode::F32X4Neg
 f32x4.ne, Opcode::F32X4Ne
-f32x4.replace_lane, Opcode::F32X4ReplaceLane
+f32x4.replace_lane, TokenType::SimdLaneInstr, Opcode::F32X4ReplaceLane
 f32x4.splat, Opcode::F32X4Splat
 f32x4.sqrt, Opcode::F32X4Sqrt
 f32x4.sub, Opcode::F32X4Sub
@@ -80,7 +81,7 @@ f32x4, TokenType::F32X4
 f64.abs, Opcode::F64Abs
 f64.add, Opcode::F64Add
 f64.ceil, Opcode::F64Ceil
-f64.const, Opcode::F64Const
+f64.const, TokenType::F64ConstInstr, Opcode::F64Const
 f64.convert_i32_s, Opcode::F64ConvertI32S
 f64.convert_i32_u, Opcode::F64ConvertI32U
 f64.convert_i64_s, Opcode::F64ConvertI64S
@@ -92,7 +93,7 @@ f64.floor, Opcode::F64Floor
 f64.ge, Opcode::F64Ge
 f64.gt, Opcode::F64Gt
 f64.le, Opcode::F64Le
-f64.load, Opcode::F64Load
+f64.load, TokenType::MemoryInstr, Opcode::F64Load
 f64.lt, Opcode::F64Lt
 f64.max, Opcode::F64Max
 f64.min, Opcode::F64Min
@@ -103,7 +104,7 @@ f64.ne, Opcode::F64Ne
 f64.promote_f32, Opcode::F64PromoteF32
 f64.reinterpret_i64, Opcode::F64ReinterpretI64
 f64.sqrt, Opcode::F64Sqrt
-f64.store, Opcode::F64Store
+f64.store, TokenType::MemoryInstr, Opcode::F64Store
 f64.sub, Opcode::F64Sub
 f64.trunc, Opcode::F64Trunc
 f64, ValueType::F64
@@ -111,7 +112,7 @@ f64x2.abs, Opcode::F64X2Abs
 f64x2.add, Opcode::F64X2Add
 f64x2.div, Opcode::F64X2Div
 f64x2.eq, Opcode::F64X2Eq
-f64x2.extract_lane, Opcode::F64X2ExtractLane
+f64x2.extract_lane, TokenType::SimdLaneInstr, Opcode::F64X2ExtractLane
 f64x2.ge, Opcode::F64X2Ge
 f64x2.gt, Opcode::F64X2Gt
 f64x2.le, Opcode::F64X2Le
@@ -121,7 +122,7 @@ f64x2.min, Opcode::F64X2Min
 f64x2.mul, Opcode::F64X2Mul
 f64x2.neg, Opcode::F64X2Neg
 f64x2.ne, Opcode::F64X2Ne
-f64x2.replace_lane, Opcode::F64X2ReplaceLane
+f64x2.replace_lane, TokenType::SimdLaneInstr, Opcode::F64X2ReplaceLane
 f64x2.splat, Opcode::F64X2Splat
 f64x2.sqrt, Opcode::F64X2Sqrt
 f64x2.sub, Opcode::F64X2Sub
@@ -129,8 +130,8 @@ f64x2, TokenType::F64X2
 funcref, ValueType::Funcref
 func, TokenType::Func
 get, TokenType::Get
-global.get, Opcode::GlobalGet
-global.set, Opcode::GlobalSet
+global.get, TokenType::VarInstr, Opcode::GlobalGet
+global.set, TokenType::VarInstr, Opcode::GlobalSet
 global, TokenType::Global
 i16x8.add_saturate_s, Opcode::I16X8AddSaturateS
 i16x8.add_saturate_u, Opcode::I16X8AddSaturateU
@@ -139,16 +140,16 @@ i16x8.all_true, Opcode::I16X8AllTrue
 i16x8.any_true, Opcode::I16X8AnyTrue
 i16x8.avgr_u, Opcode::I16X8AvgrU
 i16x8.eq, Opcode::I16X8Eq
-i16x8.extract_lane_s, Opcode::I16X8ExtractLaneS
-i16x8.extract_lane_u, Opcode::I16X8ExtractLaneU
+i16x8.extract_lane_s, TokenType::SimdLaneInstr, Opcode::I16X8ExtractLaneS
+i16x8.extract_lane_u, TokenType::SimdLaneInstr, Opcode::I16X8ExtractLaneU
 i16x8.ge_s, Opcode::I16X8GeS
 i16x8.ge_u, Opcode::I16X8GeU
 i16x8.gt_s, Opcode::I16X8GtS
 i16x8.gt_u, Opcode::I16X8GtU
 i16x8.le_s, Opcode::I16X8LeS
 i16x8.le_u, Opcode::I16X8LeU
-i16x8.load8x8_s, Opcode::I16X8Load8X8S
-i16x8.load8x8_u, Opcode::I16X8Load8X8U
+i16x8.load8x8_s, TokenType::MemoryInstr, Opcode::I16X8Load8X8S
+i16x8.load8x8_u, TokenType::MemoryInstr, Opcode::I16X8Load8X8U
 i16x8.lt_s, Opcode::I16X8LtS
 i16x8.lt_u, Opcode::I16X8LtU
 i16x8.max_s, Opcode::I16X8MaxS
@@ -160,7 +161,7 @@ i16x8.narrow_i32x4_s, Opcode::I16X8NarrowI32X4S
 i16x8.narrow_i32x4_u, Opcode::I16X8NarrowI32X4U
 i16x8.neg, Opcode::I16X8Neg
 i16x8.ne, Opcode::I16X8Ne
-i16x8.replace_lane, Opcode::I16X8ReplaceLane
+i16x8.replace_lane, TokenType::SimdLaneInstr, Opcode::I16X8ReplaceLane
 i16x8.shl, Opcode::I16X8Shl
 i16x8.shr_s, Opcode::I16X8ShrS
 i16x8.shr_u, Opcode::I16X8ShrU
@@ -168,43 +169,43 @@ i16x8.splat, Opcode::I16X8Splat
 i16x8.sub_saturate_s, Opcode::I16X8SubSaturateS
 i16x8.sub_saturate_u, Opcode::I16X8SubSaturateU
 i16x8.sub, Opcode::I16X8Sub
-i16x8, TokenType::I16X8
 i16x8.widen_high_i8x16_s, Opcode::I16X8WidenHighI8X16S
 i16x8.widen_high_i8x16_u, Opcode::I16X8WidenHighI8X16U
 i16x8.widen_low_i8x16_s, Opcode::I16X8WidenLowI8X16S
 i16x8.widen_low_i8x16_u, Opcode::I16X8WidenLowI8X16U
+i16x8, TokenType::I16X8
 i32.add, Opcode::I32Add
 i32.and, Opcode::I32And
-i32.atomic.load16_u, Opcode::I32AtomicLoad16U
-i32.atomic.load8_u, Opcode::I32AtomicLoad8U
-i32.atomic.load, Opcode::I32AtomicLoad
-i32.atomic.rmw16.add_u, Opcode::I32AtomicRmw16AddU
-i32.atomic.rmw16.and_u, Opcode::I32AtomicRmw16AndU
-i32.atomic.rmw16.cmpxchg_u, Opcode::I32AtomicRmw16CmpxchgU
-i32.atomic.rmw16.or_u, Opcode::I32AtomicRmw16OrU
-i32.atomic.rmw16.sub_u, Opcode::I32AtomicRmw16SubU
-i32.atomic.rmw16.xchg_u, Opcode::I32AtomicRmw16XchgU
-i32.atomic.rmw16.xor_u, Opcode::I32AtomicRmw16XorU
-i32.atomic.rmw8.add_u, Opcode::I32AtomicRmw8AddU
-i32.atomic.rmw8.and_u, Opcode::I32AtomicRmw8AndU
-i32.atomic.rmw8.cmpxchg_u, Opcode::I32AtomicRmw8CmpxchgU
-i32.atomic.rmw8.or_u, Opcode::I32AtomicRmw8OrU
-i32.atomic.rmw8.sub_u, Opcode::I32AtomicRmw8SubU
-i32.atomic.rmw8.xchg_u, Opcode::I32AtomicRmw8XchgU
-i32.atomic.rmw8.xor_u, Opcode::I32AtomicRmw8XorU
-i32.atomic.rmw.add, Opcode::I32AtomicRmwAdd
-i32.atomic.rmw.and, Opcode::I32AtomicRmwAnd
-i32.atomic.rmw.cmpxchg, Opcode::I32AtomicRmwCmpxchg
-i32.atomic.rmw.or, Opcode::I32AtomicRmwOr
-i32.atomic.rmw.sub, Opcode::I32AtomicRmwSub
-i32.atomic.rmw.xchg, Opcode::I32AtomicRmwXchg
-i32.atomic.rmw.xor, Opcode::I32AtomicRmwXor
-i32.atomic.store16, Opcode::I32AtomicStore16
-i32.atomic.store8, Opcode::I32AtomicStore8
-i32.atomic.store, Opcode::I32AtomicStore
-i32.atomic.wait, Opcode::I32AtomicWait
+i32.atomic.load16_u, TokenType::MemoryInstr, Opcode::I32AtomicLoad16U
+i32.atomic.load8_u, TokenType::MemoryInstr, Opcode::I32AtomicLoad8U
+i32.atomic.load, TokenType::MemoryInstr, Opcode::I32AtomicLoad
+i32.atomic.rmw16.add_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw16AddU
+i32.atomic.rmw16.and_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw16AndU
+i32.atomic.rmw16.cmpxchg_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw16CmpxchgU
+i32.atomic.rmw16.or_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw16OrU
+i32.atomic.rmw16.sub_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw16SubU
+i32.atomic.rmw16.xchg_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw16XchgU
+i32.atomic.rmw16.xor_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw16XorU
+i32.atomic.rmw8.add_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw8AddU
+i32.atomic.rmw8.and_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw8AndU
+i32.atomic.rmw8.cmpxchg_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw8CmpxchgU
+i32.atomic.rmw8.or_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw8OrU
+i32.atomic.rmw8.sub_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw8SubU
+i32.atomic.rmw8.xchg_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw8XchgU
+i32.atomic.rmw8.xor_u, TokenType::MemoryInstr, Opcode::I32AtomicRmw8XorU
+i32.atomic.rmw.add, TokenType::MemoryInstr, Opcode::I32AtomicRmwAdd
+i32.atomic.rmw.and, TokenType::MemoryInstr, Opcode::I32AtomicRmwAnd
+i32.atomic.rmw.cmpxchg, TokenType::MemoryInstr, Opcode::I32AtomicRmwCmpxchg
+i32.atomic.rmw.or, TokenType::MemoryInstr, Opcode::I32AtomicRmwOr
+i32.atomic.rmw.sub, TokenType::MemoryInstr, Opcode::I32AtomicRmwSub
+i32.atomic.rmw.xchg, TokenType::MemoryInstr, Opcode::I32AtomicRmwXchg
+i32.atomic.rmw.xor, TokenType::MemoryInstr, Opcode::I32AtomicRmwXor
+i32.atomic.store16, TokenType::MemoryInstr, Opcode::I32AtomicStore16
+i32.atomic.store8, TokenType::MemoryInstr, Opcode::I32AtomicStore8
+i32.atomic.store, TokenType::MemoryInstr, Opcode::I32AtomicStore
+i32.atomic.wait, TokenType::MemoryInstr, Opcode::I32AtomicWait
 i32.clz, Opcode::I32Clz
-i32.const, Opcode::I32Const
+i32.const, TokenType::I32ConstInstr, Opcode::I32Const
 i32.ctz, Opcode::I32Ctz
 i32.div_s, Opcode::I32DivS
 i32.div_u, Opcode::I32DivU
@@ -218,11 +219,11 @@ i32.gt_s, Opcode::I32GtS
 i32.gt_u, Opcode::I32GtU
 i32.le_s, Opcode::I32LeS
 i32.le_u, Opcode::I32LeU
-i32.load16_s, Opcode::I32Load16S
-i32.load16_u, Opcode::I32Load16U
-i32.load8_s, Opcode::I32Load8S
-i32.load8_u, Opcode::I32Load8U
-i32.load, Opcode::I32Load
+i32.load16_s, TokenType::MemoryInstr, Opcode::I32Load16S
+i32.load16_u, TokenType::MemoryInstr, Opcode::I32Load16U
+i32.load8_s, TokenType::MemoryInstr, Opcode::I32Load8S
+i32.load8_u, TokenType::MemoryInstr, Opcode::I32Load8U
+i32.load, TokenType::MemoryInstr, Opcode::I32Load
 i32.lt_s, Opcode::I32LtS
 i32.lt_u, Opcode::I32LtU
 i32.mul, Opcode::I32Mul
@@ -237,9 +238,9 @@ i32.rotr, Opcode::I32Rotr
 i32.shl, Opcode::I32Shl
 i32.shr_s, Opcode::I32ShrS
 i32.shr_u, Opcode::I32ShrU
-i32.store16, Opcode::I32Store16
-i32.store8, Opcode::I32Store8
-i32.store, Opcode::I32Store
+i32.store16, TokenType::MemoryInstr, Opcode::I32Store16
+i32.store8, TokenType::MemoryInstr, Opcode::I32Store8
+i32.store, TokenType::MemoryInstr, Opcode::I32Store
 i32.sub, Opcode::I32Sub
 i32.trunc_f32_s, Opcode::I32TruncF32S
 i32.trunc_f32_u, Opcode::I32TruncF32U
@@ -255,15 +256,15 @@ i32x4.add, Opcode::I32X4Add
 i32x4.all_true, Opcode::I32X4AllTrue
 i32x4.any_true, Opcode::I32X4AnyTrue
 i32x4.eq, Opcode::I32X4Eq
-i32x4.extract_lane, Opcode::I32X4ExtractLane
+i32x4.extract_lane, TokenType::SimdLaneInstr, Opcode::I32X4ExtractLane
 i32x4.ge_s, Opcode::I32X4GeS
 i32x4.ge_u, Opcode::I32X4GeU
 i32x4.gt_s, Opcode::I32X4GtS
 i32x4.gt_u, Opcode::I32X4GtU
 i32x4.le_s, Opcode::I32X4LeS
 i32x4.le_u, Opcode::I32X4LeU
-i32x4.load16x4_s, Opcode::I32X4Load16X4S
-i32x4.load16x4_u, Opcode::I32X4Load16X4U
+i32x4.load16x4_s, TokenType::MemoryInstr, Opcode::I32X4Load16X4S
+i32x4.load16x4_u, TokenType::MemoryInstr, Opcode::I32X4Load16X4U
 i32x4.lt_s, Opcode::I32X4LtS
 i32x4.lt_u, Opcode::I32X4LtU
 i32x4.max_s, Opcode::I32X4MaxS
@@ -273,61 +274,61 @@ i32x4.min_u, Opcode::I32X4MinU
 i32x4.mul, Opcode::I32X4Mul
 i32x4.neg, Opcode::I32X4Neg
 i32x4.ne, Opcode::I32X4Ne
-i32x4.replace_lane, Opcode::I32X4ReplaceLane
+i32x4.replace_lane, TokenType::SimdLaneInstr, Opcode::I32X4ReplaceLane
 i32x4.shl, Opcode::I32X4Shl
 i32x4.shr_s, Opcode::I32X4ShrS
 i32x4.shr_u, Opcode::I32X4ShrU
 i32x4.splat, Opcode::I32X4Splat
 i32x4.sub, Opcode::I32X4Sub
-i32x4, TokenType::I32X4
 i32x4.trunc_sat_f32x4_s, Opcode::I32X4TruncSatF32X4S
 i32x4.trunc_sat_f32x4_u, Opcode::I32X4TruncSatF32X4U
 i32x4.widen_high_i16x8_s, Opcode::I32X4WidenHighI16X8S
 i32x4.widen_high_i16x8_u, Opcode::I32X4WidenHighI16X8U
 i32x4.widen_low_i16x8_s, Opcode::I32X4WidenLowI16X8S
 i32x4.widen_low_i16x8_u, Opcode::I32X4WidenLowI16X8U
+i32x4, TokenType::I32X4
 i32.xor, Opcode::I32Xor
 i64.add, Opcode::I64Add
 i64.and, Opcode::I64And
-i64.atomic.load16_u, Opcode::I64AtomicLoad16U
-i64.atomic.load32_u, Opcode::I64AtomicLoad32U
-i64.atomic.load8_u, Opcode::I64AtomicLoad8U
-i64.atomic.load, Opcode::I64AtomicLoad
-i64.atomic.rmw16.add_u, Opcode::I64AtomicRmw16AddU
-i64.atomic.rmw16.and_u, Opcode::I64AtomicRmw16AndU
-i64.atomic.rmw16.cmpxchg_u, Opcode::I64AtomicRmw16CmpxchgU
-i64.atomic.rmw16.or_u, Opcode::I64AtomicRmw16OrU
-i64.atomic.rmw16.sub_u, Opcode::I64AtomicRmw16SubU
-i64.atomic.rmw16.xchg_u, Opcode::I64AtomicRmw16XchgU
-i64.atomic.rmw16.xor_u, Opcode::I64AtomicRmw16XorU
-i64.atomic.rmw32.add_u, Opcode::I64AtomicRmw32AddU
-i64.atomic.rmw32.and_u, Opcode::I64AtomicRmw32AndU
-i64.atomic.rmw32.cmpxchg_u, Opcode::I64AtomicRmw32CmpxchgU
-i64.atomic.rmw32.or_u, Opcode::I64AtomicRmw32OrU
-i64.atomic.rmw32.sub_u, Opcode::I64AtomicRmw32SubU
-i64.atomic.rmw32.xchg_u, Opcode::I64AtomicRmw32XchgU
-i64.atomic.rmw32.xor_u, Opcode::I64AtomicRmw32XorU
-i64.atomic.rmw8.add_u, Opcode::I64AtomicRmw8AddU
-i64.atomic.rmw8.and_u, Opcode::I64AtomicRmw8AndU
-i64.atomic.rmw8.cmpxchg_u, Opcode::I64AtomicRmw8CmpxchgU
-i64.atomic.rmw8.or_u, Opcode::I64AtomicRmw8OrU
-i64.atomic.rmw8.sub_u, Opcode::I64AtomicRmw8SubU
-i64.atomic.rmw8.xchg_u, Opcode::I64AtomicRmw8XchgU
-i64.atomic.rmw8.xor_u, Opcode::I64AtomicRmw8XorU
-i64.atomic.rmw.add, Opcode::I64AtomicRmwAdd
-i64.atomic.rmw.and, Opcode::I64AtomicRmwAnd
-i64.atomic.rmw.cmpxchg, Opcode::I64AtomicRmwCmpxchg
-i64.atomic.rmw.or, Opcode::I64AtomicRmwOr
-i64.atomic.rmw.sub, Opcode::I64AtomicRmwSub
-i64.atomic.rmw.xchg, Opcode::I64AtomicRmwXchg
-i64.atomic.rmw.xor, Opcode::I64AtomicRmwXor
-i64.atomic.store16, Opcode::I64AtomicStore16
-i64.atomic.store32, Opcode::I64AtomicStore32
-i64.atomic.store8, Opcode::I64AtomicStore8
-i64.atomic.store, Opcode::I64AtomicStore
-i64.atomic.wait, Opcode::I64AtomicWait
+i64.atomic.load16_u, TokenType::MemoryInstr, Opcode::I64AtomicLoad16U
+i64.atomic.load32_u, TokenType::MemoryInstr, Opcode::I64AtomicLoad32U
+i64.atomic.load8_u, TokenType::MemoryInstr, Opcode::I64AtomicLoad8U
+i64.atomic.load, TokenType::MemoryInstr, Opcode::I64AtomicLoad
+i64.atomic.rmw16.add_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw16AddU
+i64.atomic.rmw16.and_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw16AndU
+i64.atomic.rmw16.cmpxchg_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw16CmpxchgU
+i64.atomic.rmw16.or_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw16OrU
+i64.atomic.rmw16.sub_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw16SubU
+i64.atomic.rmw16.xchg_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw16XchgU
+i64.atomic.rmw16.xor_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw16XorU
+i64.atomic.rmw32.add_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw32AddU
+i64.atomic.rmw32.and_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw32AndU
+i64.atomic.rmw32.cmpxchg_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw32CmpxchgU
+i64.atomic.rmw32.or_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw32OrU
+i64.atomic.rmw32.sub_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw32SubU
+i64.atomic.rmw32.xchg_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw32XchgU
+i64.atomic.rmw32.xor_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw32XorU
+i64.atomic.rmw8.add_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw8AddU
+i64.atomic.rmw8.and_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw8AndU
+i64.atomic.rmw8.cmpxchg_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw8CmpxchgU
+i64.atomic.rmw8.or_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw8OrU
+i64.atomic.rmw8.sub_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw8SubU
+i64.atomic.rmw8.xchg_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw8XchgU
+i64.atomic.rmw8.xor_u, TokenType::MemoryInstr, Opcode::I64AtomicRmw8XorU
+i64.atomic.rmw.add, TokenType::MemoryInstr, Opcode::I64AtomicRmwAdd
+i64.atomic.rmw.and, TokenType::MemoryInstr, Opcode::I64AtomicRmwAnd
+i64.atomic.rmw.cmpxchg, TokenType::MemoryInstr, Opcode::I64AtomicRmwCmpxchg
+i64.atomic.rmw.or, TokenType::MemoryInstr, Opcode::I64AtomicRmwOr
+i64.atomic.rmw.sub, TokenType::MemoryInstr, Opcode::I64AtomicRmwSub
+i64.atomic.rmw.xchg, TokenType::MemoryInstr, Opcode::I64AtomicRmwXchg
+i64.atomic.rmw.xor, TokenType::MemoryInstr, Opcode::I64AtomicRmwXor
+i64.atomic.store16, TokenType::MemoryInstr, Opcode::I64AtomicStore16
+i64.atomic.store32, TokenType::MemoryInstr, Opcode::I64AtomicStore32
+i64.atomic.store8, TokenType::MemoryInstr, Opcode::I64AtomicStore8
+i64.atomic.store, TokenType::MemoryInstr, Opcode::I64AtomicStore
+i64.atomic.wait, TokenType::MemoryInstr, Opcode::I64AtomicWait
 i64.clz, Opcode::I64Clz
-i64.const, Opcode::I64Const
+i64.const, TokenType::I64ConstInstr, Opcode::I64Const
 i64.ctz, Opcode::I64Ctz
 i64.div_s, Opcode::I64DivS
 i64.div_u, Opcode::I64DivU
@@ -344,13 +345,13 @@ i64.gt_s, Opcode::I64GtS
 i64.gt_u, Opcode::I64GtU
 i64.le_s, Opcode::I64LeS
 i64.le_u, Opcode::I64LeU
-i64.load16_s, Opcode::I64Load16S
-i64.load16_u, Opcode::I64Load16U
-i64.load32_s, Opcode::I64Load32S
-i64.load32_u, Opcode::I64Load32U
-i64.load8_s, Opcode::I64Load8S
-i64.load8_u, Opcode::I64Load8U
-i64.load, Opcode::I64Load
+i64.load16_s, TokenType::MemoryInstr, Opcode::I64Load16S
+i64.load16_u, TokenType::MemoryInstr, Opcode::I64Load16U
+i64.load32_s, TokenType::MemoryInstr, Opcode::I64Load32S
+i64.load32_u, TokenType::MemoryInstr, Opcode::I64Load32U
+i64.load8_s, TokenType::MemoryInstr, Opcode::I64Load8S
+i64.load8_u, TokenType::MemoryInstr, Opcode::I64Load8U
+i64.load, TokenType::MemoryInstr, Opcode::I64Load
 i64.lt_s, Opcode::I64LtS
 i64.lt_u, Opcode::I64LtU
 i64.mul, Opcode::I64Mul
@@ -365,10 +366,10 @@ i64.rotr, Opcode::I64Rotr
 i64.shl, Opcode::I64Shl
 i64.shr_s, Opcode::I64ShrS
 i64.shr_u, Opcode::I64ShrU
-i64.store16, Opcode::I64Store16
-i64.store32, Opcode::I64Store32
-i64.store8, Opcode::I64Store8
-i64.store, Opcode::I64Store
+i64.store16, TokenType::MemoryInstr, Opcode::I64Store16
+i64.store32, TokenType::MemoryInstr, Opcode::I64Store32
+i64.store8, TokenType::MemoryInstr, Opcode::I64Store8
+i64.store, TokenType::MemoryInstr, Opcode::I64Store
 i64.sub, Opcode::I64Sub
 i64.trunc_f32_s, Opcode::I64TruncF32S
 i64.trunc_f32_u, Opcode::I64TruncF32U
@@ -380,12 +381,12 @@ i64.trunc_sat_f64_s, Opcode::I64TruncSatF64S
 i64.trunc_sat_f64_u, Opcode::I64TruncSatF64U
 i64, ValueType::I64
 i64x2.add, Opcode::I64X2Add
-i64x2.extract_lane, Opcode::I64X2ExtractLane
-i64x2.load32x2_s, Opcode::I64X2Load32X2S
-i64x2.load32x2_u, Opcode::I64X2Load32X2U
+i64x2.extract_lane, TokenType::SimdLaneInstr, Opcode::I64X2ExtractLane
+i64x2.load32x2_s, TokenType::MemoryInstr, Opcode::I64X2Load32X2S
+i64x2.load32x2_u, TokenType::MemoryInstr, Opcode::I64X2Load32X2U
 i64x2.mul, Opcode::I64X2Mul
 i64x2.neg, Opcode::I64X2Neg
-i64x2.replace_lane, Opcode::I64X2ReplaceLane
+i64x2.replace_lane, TokenType::SimdLaneInstr, Opcode::I64X2ReplaceLane
 i64x2.shl, Opcode::I64X2Shl
 i64x2.shr_s, Opcode::I64X2ShrS
 i64x2.shr_u, Opcode::I64X2ShrU
@@ -400,8 +401,8 @@ i8x16.all_true, Opcode::I8X16AllTrue
 i8x16.any_true, Opcode::I8X16AnyTrue
 i8x16.avgr_u, Opcode::I8X16AvgrU
 i8x16.eq, Opcode::I8X16Eq
-i8x16.extract_lane_s, Opcode::I8X16ExtractLaneS
-i8x16.extract_lane_u, Opcode::I8X16ExtractLaneU
+i8x16.extract_lane_s, TokenType::SimdLaneInstr, Opcode::I8X16ExtractLaneS
+i8x16.extract_lane_u, TokenType::SimdLaneInstr, Opcode::I8X16ExtractLaneU
 i8x16.ge_s, Opcode::I8X16GeS
 i8x16.ge_u, Opcode::I8X16GeU
 i8x16.gt_s, Opcode::I8X16GtS
@@ -418,7 +419,7 @@ i8x16.narrow_i16x8_s, Opcode::I8X16NarrowI16X8S
 i8x16.narrow_i16x8_u, Opcode::I8X16NarrowI16X8U
 i8x16.neg, Opcode::I8X16Neg
 i8x16.ne, Opcode::I8X16Ne
-i8x16.replace_lane, Opcode::I8X16ReplaceLane
+i8x16.replace_lane, TokenType::SimdLaneInstr, Opcode::I8X16ReplaceLane
 i8x16.shl, Opcode::I8X16Shl
 i8x16.shr_s, Opcode::I8X16ShrS
 i8x16.shr_u, Opcode::I8X16ShrU
@@ -432,15 +433,15 @@ import, TokenType::Import
 inf, TokenType::Float, LiteralKind::Infinity
 invoke, TokenType::Invoke
 item, TokenType::Item
-local.get, Opcode::LocalGet
-local.set, Opcode::LocalSet
-local.tee, Opcode::LocalTee
+local.get, TokenType::VarInstr, Opcode::LocalGet
+local.set, TokenType::VarInstr, Opcode::LocalSet
+local.tee, TokenType::VarInstr, Opcode::LocalTee
 local, TokenType::Local
 loop, TokenType::BlockInstr, Opcode::Loop
 memory.copy, Opcode::MemoryCopy
 memory.fill, Opcode::MemoryFill
 memory.grow, Opcode::MemoryGrow
-memory.init, Opcode::MemoryInit
+memory.init, TokenType::VarInstr, Opcode::MemoryInit
 memory.size, Opcode::MemorySize
 memory, TokenType::Memory
 module, TokenType::Module
@@ -455,47 +456,47 @@ offset, TokenType::Offset
 offset=, TokenType::OffsetEqNat
 param, TokenType::Param
 quote, TokenType::Quote
-ref.func, Opcode::RefFunc
+ref.func, TokenType::VarInstr, Opcode::RefFunc
 ref.host, TokenType::RefHost
 ref.is_null, Opcode::RefIsNull
 ref.null, Opcode::RefNull
 register, TokenType::Register
 result, TokenType::Result
 rethrow, Opcode::Rethrow
-return_call_indirect, Opcode::ReturnCallIndirect
-return_call, Opcode::ReturnCall
+return_call_indirect, TokenType::CallIndirectInstr, Opcode::ReturnCallIndirect
+return_call, TokenType::VarInstr, Opcode::ReturnCall
 return, Opcode::Return
-select, Opcode::Select
+select, TokenType::SelectInstr, Opcode::Select
 shared, TokenType::Shared
 start, TokenType::Start
-table.copy, Opcode::TableCopy
-table.fill, Opcode::TableFill
-table.get, Opcode::TableGet
-table.grow, Opcode::TableGrow
-table.init, Opcode::TableInit
-table.set, Opcode::TableSet
-table.size, Opcode::TableSize
+table.copy, TokenType::TableCopyInstr, Opcode::TableCopy
+table.fill, TokenType::VarInstr, Opcode::TableFill
+table.get, TokenType::VarInstr, Opcode::TableGet
+table.grow, TokenType::VarInstr, Opcode::TableGrow
+table.init, TokenType::TableInitInstr, Opcode::TableInit
+table.set, TokenType::VarInstr, Opcode::TableSet
+table.size, TokenType::VarInstr, Opcode::TableSize
 table, TokenType::Table
 then, TokenType::Then
-throw, Opcode::Throw
+throw, TokenType::VarInstr, Opcode::Throw
 try, TokenType::BlockInstr, Opcode::Try
 type, TokenType::Type
 unreachable, Opcode::Unreachable
 v128.andnot, Opcode::V128Andnot
 v128.and, Opcode::V128And
 v128.bitselect, Opcode::V128BitSelect
-v128.const, Opcode::V128Const
-v128.load, Opcode::V128Load
+v128.const, TokenType::SimdConstInstr, Opcode::V128Const
+v128.load, TokenType::MemoryInstr, Opcode::V128Load
 v128.not, Opcode::V128Not
 v128.or, Opcode::V128Or
-v128.store, Opcode::V128Store
+v128.store, TokenType::MemoryInstr, Opcode::V128Store
 v128, ValueType::V128
 v128.xor, Opcode::V128Xor
-v16x8.load_splat, Opcode::V16X8LoadSplat
-v32x4.load_splat, Opcode::V32X4LoadSplat
-v64x2.load_splat, Opcode::V64X2LoadSplat
-v8x16.load_splat, Opcode::V8X16LoadSplat
-v8x16.shuffle, Opcode::V8X16Shuffle
+v16x8.load_splat, TokenType::MemoryInstr, Opcode::V16X8LoadSplat
+v32x4.load_splat, TokenType::MemoryInstr, Opcode::V32X4LoadSplat
+v64x2.load_splat, TokenType::MemoryInstr, Opcode::V64X2LoadSplat
+v8x16.load_splat, TokenType::MemoryInstr, Opcode::V8X16LoadSplat
+v8x16.shuffle, TokenType::SimdShuffleInstr, Opcode::V8X16Shuffle
 v8x16.swizzle, Opcode::V8X16Swizzle
 # Deprecated names.
 anyfunc, ValueType::Funcref
@@ -512,8 +513,8 @@ f64.convert_u/i32, Opcode::F64ConvertI32U
 f64.convert_u/i64, Opcode::F64ConvertI64U
 f64.promote/f32, Opcode::F64PromoteF32
 f64.reinterpret/i64, Opcode::F64ReinterpretI64
-get_global, Opcode::GlobalGet
-get_local, Opcode::LocalGet
+get_global, TokenType::VarInstr, Opcode::GlobalGet
+get_local, TokenType::VarInstr, Opcode::LocalGet
 grow_memory, Opcode::MemoryGrow
 i32.reinterpret/f32, Opcode::I32ReinterpretF32
 i32.trunc_s/f32, Opcode::I32TruncF32S
@@ -536,6 +537,6 @@ i64.trunc_u/f32, Opcode::I64TruncF32U
 i64.trunc_u/f64, Opcode::I64TruncF64U
 i64.trunc_u:sat/f32, Opcode::I64TruncSatF32U
 i64.trunc_u:sat/f64, Opcode::I64TruncSatF64U
-set_global, Opcode::GlobalSet
-set_local, Opcode::LocalSet
-tee_local, Opcode::LocalTee
+set_global, TokenType::VarInstr, Opcode::GlobalSet
+set_local, TokenType::VarInstr, Opcode::LocalSet
+tee_local, TokenType::VarInstr, Opcode::LocalTee

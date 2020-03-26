@@ -67,16 +67,11 @@ inline LiteralInfo::LiteralInfo(Sign sign,
                                 HasUnderscores has_underscores)
     : sign{sign}, kind{kind}, base{base}, has_underscores{has_underscores} {}
 
-inline bool operator==(const LiteralInfo& lhs, const LiteralInfo& rhs) {
-  return lhs.sign == rhs.sign && lhs.kind == rhs.kind && lhs.base == rhs.base &&
-         lhs.has_underscores == rhs.has_underscores;
+inline At<string_view> Token::string_view() const {
+  return MakeAt(loc, ToStringView(loc));
 }
 
-inline bool operator!=(const LiteralInfo& lhs, const LiteralInfo& rhs) {
-  return !(lhs == rhs);
-}
-
-inline SpanU8 Token::text() const {
+inline SpanU8 Token::span_u8() const {
   return loc;
 }
 
@@ -92,25 +87,24 @@ inline bool Token::has_literal_info() const {
   return immediate.index() == 3;
 }
 
-inline Opcode Token::opcode() const {
-  return get<Opcode>(immediate);
+inline bool Token::has_text() const {
+  return immediate.index() == 4;
 }
 
-inline ValueType Token::value_type() const {
-  return get<ValueType>(immediate);
+inline At<Opcode> Token::opcode() const {
+  return MakeAt(loc, get<Opcode>(immediate));
+}
+
+inline At<ValueType> Token::value_type() const {
+  return MakeAt(loc, get<ValueType>(immediate));
 }
 
 inline LiteralInfo Token::literal_info() const {
   return get<LiteralInfo>(immediate);
 }
 
-inline bool operator==(const Token& lhs, const Token& rhs) {
-  return lhs.loc == rhs.loc && lhs.type == rhs.type &&
-         lhs.immediate == rhs.immediate;
-}
-
-inline bool operator!=(const Token& lhs, const Token& rhs) {
-  return !(lhs == rhs);
+inline Text Token::text() const {
+  return get<Text>(immediate);
 }
 
 }  // namespace text

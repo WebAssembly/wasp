@@ -17,6 +17,7 @@
 #ifndef WASP_TEXT_LEX_H_
 #define WASP_TEXT_LEX_H_
 
+#include "wasp/base/optional.h"
 #include "wasp/binary/types.h"
 #include "wasp/text/types.h"
 
@@ -33,14 +34,34 @@ class Tokenizer {
   bool empty() const;
   auto count() const -> int;
 
+  auto Previous() const -> Token;
   auto Read() -> Token;
   auto Peek(unsigned at = 0) -> Token;
+
+  auto Match(TokenType) -> optional<Token>;
+  auto MatchLpar(TokenType) -> optional<Token>;
 
  private:
   SpanU8 data_;
   int current_ = 0;
   int count_ = 0;
   Token tokens_[2];  // Two tokens of lookahead.
+  Token previous_token_;
+};
+
+class LocationGuard {
+ public:
+  explicit LocationGuard(Tokenizer& tokenizer)
+      : tokenizer_{tokenizer}, start_{tokenizer.Peek().loc.begin()} {}
+
+  Location loc() const {
+    auto* end = tokenizer_.Previous().loc.end();
+    return Location{start_, start_ <= end ? end : start_};
+  }
+
+ private:
+  Tokenizer& tokenizer_;
+  const u8* start_;
 };
 
 }  // namespace text
