@@ -1515,6 +1515,9 @@ bool Validate(const At<Instruction>& value, Context& context) {
     case Opcode::I32X4WidenHighI16X8S:
     case Opcode::I32X4WidenLowI16X8U:
     case Opcode::I32X4WidenHighI16X8U:
+    case Opcode::I8X16Abs:
+    case Opcode::I16X8Abs:
+    case Opcode::I32X4Abs:
       params = span_v128, results = span_v128;
       break;
 

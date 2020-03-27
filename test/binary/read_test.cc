@@ -1596,6 +1596,9 @@ TEST(ReadTest, Instruction_simd) {
   ExpectRead<I>(I{O::V128Andnot}, "\xfd\xd8\x01"_su8, f);
   ExpectRead<I>(I{O::I8X16AvgrU}, "\xfd\xd9\x01"_su8, f);
   ExpectRead<I>(I{O::I16X8AvgrU}, "\xfd\xda\x01"_su8, f);
+  ExpectRead<I>(I{O::I8X16Abs}, "\xfd\xe1\x01"_su8, f);
+  ExpectRead<I>(I{O::I16X8Abs}, "\xfd\xe2\x01"_su8, f);
+  ExpectRead<I>(I{O::I32X4Abs}, "\xfd\xe3\x01"_su8, f);
 }
 
 TEST(ReadTest, Instruction_threads) {
@@ -2329,6 +2332,9 @@ TEST(ReadTest, Opcode_simd) {
   ExpectRead<O>(O::V128Andnot, "\xfd\xd8\x01"_su8, features);
   ExpectRead<O>(O::I8X16AvgrU, "\xfd\xd9\x01"_su8, features);
   ExpectRead<O>(O::I16X8AvgrU, "\xfd\xda\x01"_su8, features);
+  ExpectRead<O>(O::I8X16Abs, "\xfd\xe1\x01"_su8, features);
+  ExpectRead<O>(O::I16X8Abs, "\xfd\xe2\x01"_su8, features);
+  ExpectRead<O>(O::I32X4Abs, "\xfd\xe3\x01"_su8, features);
 }
 
 TEST(ReadTest, Opcode_Unknown_simd_prefix) {

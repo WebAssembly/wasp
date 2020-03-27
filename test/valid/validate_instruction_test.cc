@@ -2087,6 +2087,9 @@ TEST_F(ValidateInstructionTest, SimdUnary) {
       O::I32X4WidenHighI16X8S,
       O::I32X4WidenLowI16X8U,
       O::I32X4WidenHighI16X8U,
+      O::I8X16Abs,
+      O::I16X8Abs,
+      O::I32X4Abs,
   };
 
   for (const auto& opcode: opcodes) {

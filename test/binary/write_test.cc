@@ -817,6 +817,9 @@ TEST(WriteTest, Instruction_simd) {
   ExpectWrite<I>("\xfd\xd8\x01"_su8, I{O::V128Andnot});
   ExpectWrite<I>("\xfd\xd9\x01"_su8, I{O::I8X16AvgrU});
   ExpectWrite<I>("\xfd\xda\x01"_su8, I{O::I16X8AvgrU});
+  ExpectWrite<I>("\xfd\xe1\x01"_su8, I{O::I8X16Abs});
+  ExpectWrite<I>("\xfd\xe2\x01"_su8, I{O::I16X8Abs});
+  ExpectWrite<I>("\xfd\xe3\x01"_su8, I{O::I32X4Abs});
 }
 
 TEST(WriteTest, Instruction_threads) {
@@ -1322,6 +1325,9 @@ TEST(WriteTest, Opcode_simd) {
   ExpectWrite<O>("\xfd\xd8\x01"_su8, O::V128Andnot);
   ExpectWrite<O>("\xfd\xd9\x01"_su8, O::I8X16AvgrU);
   ExpectWrite<O>("\xfd\xda\x01"_su8, O::I16X8AvgrU);
+  ExpectWrite<O>("\xfd\xe1\x01"_su8, O::I8X16Abs);
+  ExpectWrite<O>("\xfd\xe2\x01"_su8, O::I16X8Abs);
+  ExpectWrite<O>("\xfd\xe3\x01"_su8, O::I32X4Abs);
 }
 
 TEST(WriteTest, Opcode_threads) {

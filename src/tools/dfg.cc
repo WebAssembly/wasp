@@ -659,6 +659,9 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::I32X4Load16X4U:
     case Opcode::I64X2Load32X2S:
     case Opcode::I64X2Load32X2U:
+    case Opcode::I8X16Abs:
+    case Opcode::I16X8Abs:
+    case Opcode::I32X4Abs:
     case Opcode::I32AtomicLoad:
     case Opcode::I64AtomicLoad:
     case Opcode::I32AtomicLoad8U:

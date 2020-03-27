@@ -698,6 +698,9 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::V128Andnot:
     case Opcode::I8X16AvgrU:
     case Opcode::I16X8AvgrU:
+    case Opcode::I8X16Abs:
+    case Opcode::I16X8Abs:
+    case Opcode::I32X4Abs:
       return out;
 
     // Type immediate.

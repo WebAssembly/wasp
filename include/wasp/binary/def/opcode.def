@@ -408,6 +408,9 @@ WASP_PREFIX_V(0xfd, 0xd7, I64X2Load32X2U, "i64x4.load32x2_u", simd)
 WASP_PREFIX_V(0xfd, 0xd8, V128Andnot, "v128.andnot", simd)
 WASP_PREFIX_V(0xfd, 0xd9, I8X16AvgrU, "i8x16.avgr_u", simd)
 WASP_PREFIX_V(0xfd, 0xda, I16X8AvgrU, "i16x8.avgr_u", simd)
+WASP_PREFIX_V(0xfd, 0xe1, I8X16Abs, "i8x16.abs", simd)
+WASP_PREFIX_V(0xfd, 0xe2, I16X8Abs, "i16x8.abs", simd)
+WASP_PREFIX_V(0xfd, 0xe3, I32X4Abs, "i32x4.abs", simd)
 
 // Thread opcodes
 WASP_PREFIX_V(0xfe, 0x00, AtomicNotify, "atomic.notify", threads)
