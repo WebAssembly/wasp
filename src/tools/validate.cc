@@ -183,7 +183,8 @@ Tool::Visitor::Visitor(Tool& tool)
       errors{tool.errors} {}
 
 visit::Result Tool::Visitor::EndModule() {
-  return FailUnless(binary::EndModule(&tool.module.data, tool.module.context));
+  return FailUnless(binary::EndModule(&tool.module.data, tool.module.context) &&
+                    valid::EndModule(context));
 }
 
 visit::Result Tool::Visitor::OnType(const At<TypeEntry>& type_entry) {

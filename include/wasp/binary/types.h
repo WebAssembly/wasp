@@ -489,6 +489,8 @@ struct ElementSegment {
   auto expressions() -> ExpressionsInit&;
   auto expressions() const -> const ExpressionsInit&;
 
+  auto elemtype() const -> At<ElementType>;
+
   SegmentType type;
   OptAt<Index> table_index;
   OptAt<ConstantExpression> offset;

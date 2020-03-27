@@ -81,8 +81,8 @@ class ValidateInstructionTest : public ::testing::Test {
     return AddItem(context.events, event_type);
   }
 
-  Index AddElementSegment(const SegmentType& segment_type) {
-    return AddItem(context.element_segments, segment_type);
+  Index AddElementSegment(ElementType elem_type) {
+    return AddItem(context.element_segments, elem_type);
   }
 
   Index AddLocal(const ValueType& value_type) {
@@ -1374,7 +1374,6 @@ TEST_F(ValidateInstructionTest, TableSet_InvalidType) {
               errors);
 }
 
-
 TEST_F(ValidateInstructionTest, Load) {
   const struct {
     Opcode opcode;
@@ -1766,6 +1765,16 @@ TEST_F(ValidateInstructionTest, ReferenceTypes) {
   }
 }
 
+TEST_F(ValidateInstructionTest, RefFunc) {
+  context.declared_functions.insert(0);
+  TestSignature(I{O::RefFunc, Index{0}}, {}, {VT::Funcref});
+}
+
+TEST_F(ValidateInstructionTest, RefFunc_UndeclaredFunctionReference) {
+  Fail(I{O::RefFunc, Index{0}});
+  ExpectError({"instruction", "Undeclared function reference 0"}, errors);
+}
+
 TEST_F(ValidateInstructionTest, SaturatingFloatToInt) {
   const struct {
     Opcode opcode;
@@ -1857,14 +1866,25 @@ TEST_F(ValidateInstructionTest, MemoryFill_MemoryIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableInit) {
-  auto index = AddElementSegment(SegmentType::Passive);
+  auto index = AddElementSegment(ElementType::Funcref);
   AddTable(TableType{Limits{0}, ElementType::Funcref});
   TestSignature(I{O::TableInit, InitImmediate{index, 0}},
                 {VT::I32, VT::I32, VT::I32}, {});
 }
 
+TEST_F(ValidateInstructionTest, TableInit_TypeMismatch) {
+  auto index = AddElementSegment(ElementType::Anyref);
+  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::TableInit, InitImmediate{index, 0}});
+  ExpectError({"instruction", "Expected element type funcref, got anyref"},
+              errors);
+}
+
 TEST_F(ValidateInstructionTest, TableInit_TableIndexOOB) {
-  auto index = AddElementSegment(SegmentType::Passive);
+  auto index = AddElementSegment(ElementType::Funcref);
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1874,7 +1894,7 @@ TEST_F(ValidateInstructionTest, TableInit_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableInit_SegmentIndexOOB) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ElementType::Anyref});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1885,7 +1905,7 @@ TEST_F(ValidateInstructionTest, TableInit_SegmentIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, ElemDrop) {
-  auto index = AddElementSegment(SegmentType::Passive);
+  auto index = AddElementSegment(ElementType::Funcref);
   TestSignature(I{O::ElemDrop, Index{index}}, {}, {});
 }
 
@@ -1902,13 +1922,25 @@ TEST_F(ValidateInstructionTest, TableCopy) {
                 {VT::I32, VT::I32, VT::I32}, {});
 }
 
+TEST_F(ValidateInstructionTest, TableCopy_TypeMismatch) {
+  auto dst_index = AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto src_index = AddTable(TableType{Limits{0}, ElementType::Anyref});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::I32Const, s32{}});
+  Fail(I{O::TableCopy, CopyImmediate{dst_index, src_index}});
+  ExpectError({"instruction", "Expected element type funcref, got anyref"},
+              errors);
+}
+
 TEST_F(ValidateInstructionTest, TableCopy_TableIndexOOB) {
+  auto index = AddTable(TableType{Limits{0}, ElementType::Anyref});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
-  Fail(I{O::TableCopy, CopyImmediate{0, 0}});
-  ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
-               errors);
+  Fail(I{O::TableCopy, CopyImmediate{index, index + 1}});
+  ExpectError({"instruction", "Invalid table index 1, must be less than 1"},
+              errors);
 }
 
 TEST_F(ValidateInstructionTest, TableGrow) {

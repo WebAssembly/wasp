@@ -128,10 +128,12 @@ bool Validate(const At<binary::ElementExpression>& value,
 
     case binary::Opcode::RefFunc: {
       actual_type = binary::ElementType::Funcref;
-      if (!ValidateIndex(value->instruction->index_immediate(),
-                         context.functions.size(), "function index", context)) {
+      auto index = value->instruction->index_immediate();
+      if (!ValidateIndex(index, context.functions.size(), "function index",
+                         context)) {
         valid = false;
       }
+      context.declared_functions.insert(index);
       break;
     }
 
@@ -149,7 +151,7 @@ bool Validate(const At<binary::ElementExpression>& value,
 
 bool Validate(const At<binary::ElementSegment>& value, Context& context) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "element segment"};
-  context.element_segments.push_back(value->type);
+  context.element_segments.push_back(value->elemtype());
   bool valid = true;
   if (value->table_index) {
     valid &= ValidateIndex(*value->table_index, context.tables.size(),
@@ -182,6 +184,9 @@ bool Validate(const At<binary::ElementSegment>& value, Context& context) {
 
     for (auto index : desc.init) {
       valid &= ValidateIndex(index, max_index, "index", context);
+      if (desc.kind == binary::ExternalKind::Function) {
+        context.declared_functions.insert(index);
+      }
     }
   } else if (value->has_expressions()) {
     auto&& desc = value->expressions();
@@ -308,6 +313,12 @@ bool Validate(const At<binary::Global>& value, Context& context) {
   // Only imported globals can be used in a global's constant expression.
   valid &= Validate(value->init, value->global_type->valtype,
                     context.imported_global_count, context);
+  // ref.func indexes cannot be validated until after they are declared in the
+  // element segment.
+  if (value->init->instruction->opcode == binary::Opcode::RefFunc) {
+    context.deferred_function_references.push_back(
+        value->init->instruction->index_immediate());
+  }
   return valid;
 }
 
@@ -519,6 +530,23 @@ bool Validate(const At<binary::ValueType>& actual,
     return false;
   }
   return true;
+}
+
+bool EndModule(Context& context) {
+  // Check that all functions referenced by a ref.func initializer in a global
+  // are declared in an element segment. This can't be done in the global
+  // section since the element section occurs later. It can't be done after the
+  // element section either, since there might not be an element section.
+  bool valid = true;
+  for (auto index : context.deferred_function_references) {
+    if (context.declared_functions.find(index) ==
+        context.declared_functions.end()) {
+      context.errors->OnError(
+          index.loc(), format("Undeclared function reference {}", index));
+      valid = false;
+    }
+  }
+  return valid;
 }
 
 }  // namespace valid

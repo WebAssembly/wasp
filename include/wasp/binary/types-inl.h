@@ -43,6 +43,23 @@ inline const ElementSegment::ExpressionsInit& ElementSegment::expressions()
   return get<ExpressionsInit>(desc);
 }
 
+inline At<ElementType> ElementSegment::elemtype() const {
+  if (has_indexes()) {
+    switch (indexes().kind) {
+      case ExternalKind::Function:
+        return ElementType::Funcref;
+
+      case ExternalKind::Table:
+      case ExternalKind::Memory:
+      case ExternalKind::Global:
+      case ExternalKind::Event:
+        return ElementType::Anyref;
+    }
+  } else {
+    return expressions().element_type;
+  }
+}
+
 // Import
 inline ExternalKind Import::kind() const {
   return static_cast<ExternalKind>(desc.index());

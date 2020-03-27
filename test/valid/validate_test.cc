@@ -288,6 +288,26 @@ TEST(ValidateTest, ElementSegment_Passive) {
   }
 }
 
+TEST(ValidateTest, ElementSegment_Declared) {
+  TestErrors errors;
+  Context context{errors};
+  context.functions.push_back(Function{0});
+
+  const ElementSegment tests[] = {
+      ElementSegment{SegmentType::Declared, ExternalKind::Function, {0}},
+      ElementSegment{
+          SegmentType::Declared,
+          ElementType::Funcref,
+          {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}},
+  };
+
+  EXPECT_EQ(0u, context.declared_functions.count(0));
+  for (const auto& element_segment : tests) {
+    EXPECT_TRUE(Validate(element_segment, context));
+  }
+  EXPECT_EQ(1u, context.declared_functions.count(0));
+}
+
 TEST(ValidateTest, ElementSegment_Active_TypeMismatch) {
   TestErrors errors;
   Context context{errors};
@@ -900,4 +920,19 @@ TEST(ValidateTest, ValueType_Mismatch) {
       EXPECT_FALSE(Validate(value_type1, value_type2, context));
     }
   }
+}
+
+TEST(ValidateTest, EndModule) {
+  TestErrors errors;
+  Context context{errors};
+  context.deferred_function_references.push_back(0);
+  context.declared_functions.insert(0);
+  EXPECT_TRUE(EndModule(context));
+}
+
+TEST(ValidateTest, EndModule_UndeclaredFunctionReference) {
+  TestErrors errors;
+  Context context{errors};
+  context.deferred_function_references.push_back(0);
+  EXPECT_FALSE(EndModule(context));
 }

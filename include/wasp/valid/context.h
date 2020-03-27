@@ -81,7 +81,7 @@ struct Context {
   std::vector<binary::MemoryType> memories;
   std::vector<binary::GlobalType> globals;
   std::vector<binary::EventType> events;
-  std::vector<binary::SegmentType> element_segments;
+  std::vector<binary::ElementType> element_segments;
   Index imported_function_count = 0;
   Index imported_global_count = 0;
   optional<Index> declared_data_count;
@@ -91,6 +91,8 @@ struct Context {
   StackTypes type_stack;
   std::vector<Label> label_stack;
   std::set<string_view> export_names;
+  std::vector<At<Index>> deferred_function_references;
+  std::set<Index> declared_functions;
 };
 
 }  // namespace valid

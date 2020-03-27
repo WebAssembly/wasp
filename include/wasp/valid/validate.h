@@ -90,6 +90,8 @@ bool Validate(const At<binary::ValueType>& actual,
               binary::ValueType expected,
               Context&);
 
+bool EndModule(Context&);
+
 }  // namespace valid
 }  // namespace wasp
 

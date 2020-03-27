@@ -54,9 +54,7 @@ ElementSegment::ElementSegment(At<Index> table_index,
 ElementSegment::ElementSegment(SegmentType type,
                                At<ExternalKind> kind,
                                const Indexes& init)
-    : type{type}, desc{IndexesInit{kind, init}} {
-  assert(type == SegmentType::Passive || type == SegmentType::Active);
-}
+    : type{type}, desc{IndexesInit{kind, init}} {}
 
 ElementSegment::ElementSegment(SegmentType type,
                                At<ElementType> element_type,
