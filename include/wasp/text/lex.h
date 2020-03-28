@@ -26,7 +26,26 @@ namespace text {
 auto Lex(SpanU8* data) -> Token;
 auto LexNoWhitespace(SpanU8* data) -> Token;
 
+class Tokenizer {
+ public:
+  explicit Tokenizer(SpanU8 data);
+
+  bool empty() const;
+  auto count() const -> int;
+
+  auto Read() -> Token;
+  auto Peek(unsigned at = 0) -> Token;
+
+ private:
+  SpanU8 data_;
+  int current_ = 0;
+  int count_ = 0;
+  Token tokens_[2];  // Two tokens of lookahead.
+};
+
 }  // namespace text
 }  // namespace wasp
+
+#include "wasp/text/lex-inl.h"
 
 #endif  // WASP_TEXT_LEX_H_

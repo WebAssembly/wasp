@@ -1039,3 +1039,36 @@ R"((  module (; a comment ;) (  func  ) ) ))"_su8;
     remove_prefix(&span, pair.gap);
   }
 }
+
+TEST(LexTest, Tokenizer) {
+  auto span = "(module (func (param i32)))"_su8;
+  Tokenizer t{span};
+
+  std::vector<Token> tokens = {
+    {span.subspan(0, 1), TokenType::Lpar},
+    {span.subspan(1, 6), TokenType::Module},
+    {span.subspan(8, 1), TokenType::Lpar},
+    {span.subspan(9, 4), TokenType::Func},
+    {span.subspan(14, 1), TokenType::Lpar},
+    {span.subspan(15, 5), TokenType::Param},
+    {span.subspan(21, 3), TokenType::ValueType, ValueType::I32},
+    {span.subspan(24, 1), TokenType::Rpar},
+    {span.subspan(25, 1), TokenType::Rpar},
+    {span.subspan(26, 1), TokenType::Rpar},
+    {span.subspan(27, 0), TokenType::Eof},
+    {span.subspan(27, 0), TokenType::Eof},
+  };
+
+  EXPECT_EQ(0, t.count());
+
+  for (size_t i = 0; i < tokens.size(); i += 2) {
+    EXPECT_EQ(tokens[i], t.Peek());
+    EXPECT_EQ(1, t.count());
+    EXPECT_EQ(tokens[i + 1], t.Peek(1));
+    EXPECT_EQ(2, t.count());
+    EXPECT_EQ(tokens[i], t.Read());
+    EXPECT_EQ(1, t.count());
+    EXPECT_EQ(tokens[i + 1], t.Read());
+    EXPECT_EQ(0, t.count());
+  }
+}

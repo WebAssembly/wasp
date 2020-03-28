@@ -19,6 +19,8 @@
 namespace wasp {
 namespace text {
 
+Token::Token() : loc{}, type{TokenType::Eof}, immediate{monostate{}} {}
+
 Token::Token(Location loc, TokenType type)
     : loc{loc}, type{type}, immediate{monostate{}} {}
 

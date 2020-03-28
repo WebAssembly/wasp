@@ -58,6 +58,7 @@ enum class LiteralKind { Int, HexInt, Float, HexFloat, Nan, HexNan, Inf };
 struct Token {
   using Immediate = variant<monostate, Opcode, ValueType, LiteralKind>;
 
+  Token();
   Token(Location, TokenType);
   Token(Location, TokenType, Opcode);
   Token(Location, TokenType, ValueType);

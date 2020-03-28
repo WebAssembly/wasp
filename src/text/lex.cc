@@ -21,6 +21,8 @@
 namespace wasp {
 namespace text {
 
+namespace {
+
 struct MatchGuard {
   explicit MatchGuard(SpanU8* data) : data_{data}, orig{*data} {}
 
@@ -67,7 +69,6 @@ bool IsCharClass(int c, CharClass bit) {
 
 bool IsDigit(int c) { return IsCharClass(c, CharClass::Digit); }
 bool IsHexDigit(int c) { return IsCharClass(c, CharClass::HexDigit); }
-bool IsKeyword(int c) { return IsCharClass(c, CharClass::Keyword); }
 bool IsReserved(int c) { return IsCharClass(c, CharClass::Reserved); }
 
 auto PeekChar(SpanU8* data, int offset = 0) -> int {
@@ -435,6 +436,8 @@ auto LexKeyword(SpanU8* data, string_view sv, TokenType tt, LiteralKind lk)
   }
   return LexReserved(guard.Reset());
 }
+
+}  // namespace
 
 auto Lex(SpanU8* data) -> Token {
   MatchGuard guard{data};
