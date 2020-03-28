@@ -76,6 +76,7 @@ add_library(wasplib
   src/valid/validate_instruction.cc
   src/text/lex.cc
   src/text/numeric.cc
+  src/text/read.cc
   src/text/types.cc
 
   third_party/fmt/src/format.cc
