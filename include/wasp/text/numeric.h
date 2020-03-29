@@ -24,13 +24,13 @@ namespace wasp {
 namespace text {
 
 template <typename T>
-auto StrToNat(LiteralKind, SpanU8) -> OptAt<T>;
+auto StrToNat(LiteralInfo, SpanU8) -> OptAt<T>;
 
 template <typename T>
-auto StrToInt(LiteralKind, SpanU8) -> OptAt<T>;
+auto StrToInt(LiteralInfo, SpanU8) -> OptAt<T>;
 
 template <typename T>
-auto StrToFloat(LiteralKind, SpanU8) -> OptAt<T>;
+auto StrToFloat(LiteralInfo, SpanU8) -> OptAt<T>;
 
 }  // namespace text
 }  // namespace wasp

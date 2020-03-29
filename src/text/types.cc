@@ -30,8 +30,8 @@ Token::Token(Location loc, TokenType type, Opcode opcode)
 Token::Token(Location loc, TokenType type, ValueType valtype)
     : loc{loc}, type{type}, immediate{valtype} {}
 
-Token::Token(Location loc, TokenType type, LiteralKind kind)
-    : loc{loc}, type{type}, immediate{kind} {}
+Token::Token(Location loc, TokenType type, LiteralInfo info)
+    : loc{loc}, type{type}, immediate{info} {}
 
 Token::Token(Location loc, TokenType type, Immediate immediate)
     : loc{loc}, type{type}, immediate{immediate} {}

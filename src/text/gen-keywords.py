@@ -86,7 +86,7 @@ class Runner(object):
                                  'TokenType::OffsetEqNat'):
                   self.Print('', ' return LexNameEqNum(data, "{}", {});'.format(
                              key, values[0]))
-                elif values == ('TokenType::Float', 'LiteralKind::HexNan'):
+                elif values == ('TokenType::Float', 'LiteralKind::NanPayload'):
                   self.Print('', ' return LexNan(data);')
                 else:
                   self.Print('', ' return LexKeyword(data, "{}", {});'.format(

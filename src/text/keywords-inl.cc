@@ -1451,7 +1451,7 @@ switch (PeekChar(data, 2)) {
     break;
   case 'f':
     switch (PeekChar(data, 3)) {
-      default: return LexKeyword(data, "inf", TokenType::Float, LiteralKind::Inf);
+      default: return LexKeyword(data, "inf", TokenType::Float, LiteralKind::Infinity);
       case '.':
         switch (PeekChar(data, 7)) {
           case 'c': return LexKeyword(data, "ref.func", Opcode::RefFunc);

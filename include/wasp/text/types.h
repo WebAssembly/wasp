@@ -53,16 +53,40 @@ enum class TokenType {
 #undef WASP_V
 };
 
-enum class LiteralKind { Int, HexInt, Float, HexFloat, Nan, HexNan, Inf };
+enum class Sign { None, Plus, Minus };
+enum class LiteralKind { Normal, Nan, NanPayload, Infinity };
+enum class Base { Decimal, Hex };
+enum class HasUnderscores { No, Yes };
+
+struct LiteralInfo {
+  static LiteralInfo HexNat(HasUnderscores);
+  static LiteralInfo Nat(HasUnderscores);
+  static LiteralInfo Number(Sign, HasUnderscores);
+  static LiteralInfo HexNumber(Sign, HasUnderscores);
+  static LiteralInfo Infinity(Sign);
+  static LiteralInfo Nan(Sign);
+  static LiteralInfo NanPayload(Sign, HasUnderscores);
+
+  explicit LiteralInfo(LiteralKind);
+  explicit LiteralInfo(Sign, LiteralKind, Base, HasUnderscores);
+
+  Sign sign;
+  LiteralKind kind;
+  Base base;
+  HasUnderscores has_underscores;
+};
+
+bool operator==(const LiteralInfo&, const LiteralInfo&);
+bool operator!=(const LiteralInfo&, const LiteralInfo&);
 
 struct Token {
-  using Immediate = variant<monostate, Opcode, ValueType, LiteralKind>;
+  using Immediate = variant<monostate, Opcode, ValueType, LiteralInfo>;
 
   Token();
   Token(Location, TokenType);
   Token(Location, TokenType, Opcode);
   Token(Location, TokenType, ValueType);
-  Token(Location, TokenType, LiteralKind);
+  Token(Location, TokenType, LiteralInfo);
   Token(Location, TokenType, Immediate);
 
   SpanU8 text() const { return loc; }

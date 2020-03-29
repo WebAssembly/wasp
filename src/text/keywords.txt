@@ -429,7 +429,7 @@ i8x16.sub, Opcode::I8X16Sub
 i8x16, TokenType::I8X16
 if, TokenType::BlockInstr, Opcode::If
 import, TokenType::Import
-inf, TokenType::Float, LiteralKind::Inf
+inf, TokenType::Float, LiteralKind::Infinity
 invoke, TokenType::Invoke
 item, TokenType::Item
 local.get, Opcode::LocalGet
@@ -446,7 +446,7 @@ memory, TokenType::Memory
 module, TokenType::Module
 mut, TokenType::Mut
 nan, TokenType::Float, LiteralKind::Nan
-nan:0x, TokenType::Float, LiteralKind::HexNan
+nan:0x, TokenType::Float, LiteralKind::NanPayload
 nan:arithmetic, TokenType::NanArithmetic
 nan:canonical, TokenType::NanCanonical
 nop, Opcode::Nop

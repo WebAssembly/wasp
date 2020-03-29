@@ -23,17 +23,13 @@ namespace text {
 
 namespace {
 
-bool HasUnderscores(SpanU8 span) {
-  return std::find(span.begin(), span.end(), '_') != span.end();
-}
-
 void RemoveUnderscores(SpanU8 span, std::vector<u8>& out) {
   std::copy_if(span.begin(), span.end(), std::back_inserter(out),
                [](u8 c) { return c != '_'; });
 }
 
 struct FixNum {
-  explicit FixNum(SpanU8 orig) : span{orig} {}
+  explicit FixNum(LiteralInfo info, SpanU8 orig) : info{info}, span{orig} {}
 
   using cchar = const char;
 
@@ -42,56 +38,60 @@ struct FixNum {
   cchar* end() const { return reinterpret_cast<cchar*>(span.end()); }
 
   void FixUnderscores() {
-    if (HasUnderscores(span)) {
+    if (info.has_underscores == HasUnderscores::Yes) {
       RemoveUnderscores(span, vec);
       span = vec;
     }
   }
 
+  LiteralInfo info;
   SpanU8 span;
   std::vector<u8> vec;
 };
 
 struct FixNat : FixNum {
-  explicit FixNat(SpanU8 orig) : FixNum{orig} { FixUnderscores(); }
+  explicit FixNat(LiteralInfo info, SpanU8 orig) : FixNum{info, orig} {
+    FixUnderscores();
+  }
 };
 
 struct FixHexNat : FixNum {
-  explicit FixHexNat(SpanU8 orig) : FixNum{orig} {
+  explicit FixHexNat(LiteralInfo info, SpanU8 orig) : FixNum{info, orig} {
     FixUnderscores();
     remove_prefix(&span, 2);  // Skip "0x".
   }
 };
 
 struct FixInt : FixNum {
-  explicit FixInt(SpanU8 orig) : FixNum(orig) {
+  explicit FixInt(LiteralInfo info, SpanU8 orig) : FixNum(info, orig) {
     FixUnderscores();
     assert(orig.size() >= 1);
-    if (orig[0] == '+') {
+    if (info.sign == Sign::Plus) {
       remove_prefix(&span, 1);  // Skip "+", not allowed by std::from_chars.
     }
   }
 };
 
 struct FixHexInt : FixNum {
-  explicit FixHexInt(SpanU8 orig) : FixNum(orig) {
+  explicit FixHexInt(LiteralInfo info, SpanU8 orig) : FixNum(info, orig) {
     assert(orig.size() >= 1);
-    switch (orig[0]) {
-      case '+':
+    switch (info.sign) {
+      case Sign::Plus:
         FixUnderscores();
-        remove_prefix(&span, 1);  // Skip "+", not allowed by std::from_chars.
+        remove_prefix(&span, 3);  // Skip "+0x", not allowed by std::from_chars.
         break;
 
-      case '-':
+      case Sign::Minus:
         // Have to remove "-0x" and replace with "-", but need to keep the "-"
         // at the beginning.
         vec.push_back('-');
-        RemoveUnderscores(orig.subspan(2), vec);
+        RemoveUnderscores(orig.subspan(3), vec);
         span = vec;
         break;
 
       default:
         FixUnderscores();
+        remove_prefix(&span, 2);  // Skip "0x".
         break;
     }
   }
@@ -100,15 +100,15 @@ struct FixHexInt : FixNum {
 }  // namespace
 
 template <typename T>
-auto StrToNat(LiteralKind kind, SpanU8 orig) -> OptAt<T> {
+auto StrToNat(LiteralInfo info, SpanU8 orig) -> OptAt<T> {
   T value;
   std::from_chars_result result = ([&]() {
-    if (kind == LiteralKind::Int) {
-      FixNat str{orig};
+    if (info.base == Base::Decimal) {
+      FixNat str{info, orig};
       return std::from_chars(str.begin(), str.end(), value);
     } else {
-      assert(kind == LiteralKind::HexInt);
-      FixHexNat str{orig};
+      assert(info.base == Base::Hex);
+      FixHexNat str{info, orig};
       return std::from_chars(str.begin(), str.end(), value, 16);
     }
   })();
@@ -120,15 +120,15 @@ auto StrToNat(LiteralKind kind, SpanU8 orig) -> OptAt<T> {
 }
 
 template <typename T>
-auto StrToInt(LiteralKind kind, SpanU8 orig) -> OptAt<T> {
+auto StrToInt(LiteralInfo info, SpanU8 orig) -> OptAt<T> {
   T value;
   std::from_chars_result result = ([&]() {
-    if (kind == LiteralKind::Int) {
-      FixInt str{orig};
+    if (info.base == Base::Decimal) {
+      FixInt str{info, orig};
       return std::from_chars(str.begin(), str.end(), value);
     } else {
-      assert(kind == LiteralKind::HexInt);
-      FixHexInt str{orig};
+      assert(info.base == Base::Hex);
+      FixHexInt str{info, orig};
       return std::from_chars(str.begin(), str.end(), value, 16);
     }
   })();

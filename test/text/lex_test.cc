@@ -26,11 +26,14 @@
 using namespace ::wasp;
 using namespace ::wasp::text;
 
+using LI = LiteralInfo;
+using HU = HasUnderscores;
+
 struct ExpectedToken {
   ExpectedToken(Location::index_type size, TokenType type)
       : size{size}, type{type} {}
-  ExpectedToken(Location::index_type size, TokenType type, LiteralKind kind)
-      : size{size}, type{type}, immediate{kind} {}
+  ExpectedToken(Location::index_type size, TokenType type, LiteralInfo info)
+      : size{size}, type{type}, immediate{info} {}
   ExpectedToken(Location::index_type size, TokenType type, Opcode opcode)
       : size{size}, type{type}, immediate{opcode} {}
   ExpectedToken(Location::index_type size, TokenType type, ValueType value_type)
@@ -38,7 +41,7 @@ struct ExpectedToken {
 
   Location::index_type size;
   TokenType type;
-  variant<monostate, Opcode, ValueType, LiteralKind> immediate;
+  variant<monostate, Opcode, ValueType, LiteralInfo> immediate;
 };
 
 // Make SpanU8 from literal string.
@@ -143,10 +146,10 @@ TEST(LexTest, Whitespace) {
 }
 
 TEST(LexTest, AlignEqNat) {
-  ExpectLex({9, TT::AlignEqNat, LiteralKind::Int}, "align=123"_su8);
-  ExpectLex({11, TT::AlignEqNat, LiteralKind::Int}, "align=1_234"_su8);
-  ExpectLex({11, TT::AlignEqNat, LiteralKind::HexInt}, "align=0xabc"_su8);
-  ExpectLex({12, TT::AlignEqNat, LiteralKind::HexInt}, "align=0xa_bc"_su8);
+  ExpectLex({9, TT::AlignEqNat, LI::Nat(HU::No)}, "align=123"_su8);
+  ExpectLex({11, TT::AlignEqNat, LI::Nat(HU::Yes)}, "align=1_234"_su8);
+  ExpectLex({11, TT::AlignEqNat, LI::HexNat(HU::No)}, "align=0xabc"_su8);
+  ExpectLex({12, TT::AlignEqNat, LI::HexNat(HU::Yes)}, "align=0xa_bc"_su8);
 
   ExpectLex({6, TT::Reserved}, "align="_su8);
   ExpectLex({8, TT::Reserved}, "align=1x"_su8);
@@ -156,10 +159,10 @@ TEST(LexTest, AlignEqNat) {
 }
 
 TEST(LexTest, OffsetEqNat) {
-  ExpectLex({10, TT::OffsetEqNat, LiteralKind::Int}, "offset=123"_su8);
-  ExpectLex({12, TT::OffsetEqNat, LiteralKind::Int}, "offset=1_234"_su8);
-  ExpectLex({12, TT::OffsetEqNat, LiteralKind::HexInt}, "offset=0xabc"_su8);
-  ExpectLex({13, TT::OffsetEqNat, LiteralKind::HexInt}, "offset=0xa_bc"_su8);
+  ExpectLex({10, TT::OffsetEqNat, LI::Nat(HU::No)}, "offset=123"_su8);
+  ExpectLex({12, TT::OffsetEqNat, LI::Nat(HU::Yes)}, "offset=1_234"_su8);
+  ExpectLex({12, TT::OffsetEqNat, LI::HexNat(HU::No)}, "offset=0xabc"_su8);
+  ExpectLex({13, TT::OffsetEqNat, LI::HexNat(HU::Yes)}, "offset=0xa_bc"_su8);
 
   ExpectLex({7, TT::Reserved}, "offset="_su8);
   ExpectLex({9, TT::Reserved}, "offset=1x"_su8);
@@ -737,119 +740,119 @@ TEST(LexTest, PlainInstr) {
 TEST(LexTest, Float) {
   struct {
     SpanU8 span;
-    LiteralKind kind;
+    LiteralInfo info;
   } tests[] = {
-      {"3."_su8, LiteralKind::Float},
-      {"3e5"_su8, LiteralKind::Float},
-      {"3E5"_su8, LiteralKind::Float},
-      {"3e+14"_su8, LiteralKind::Float},
-      {"3E+14"_su8, LiteralKind::Float},
-      {"3e-14"_su8, LiteralKind::Float},
-      {"3E-14"_su8, LiteralKind::Float},
-      {"3.14"_su8, LiteralKind::Float},
-      {"3.14e15"_su8, LiteralKind::Float},
-      {"3.14E15"_su8, LiteralKind::Float},
-      {"3.14e+15"_su8, LiteralKind::Float},
-      {"3.14E+15"_su8, LiteralKind::Float},
-      {"3.14e-15"_su8, LiteralKind::Float},
-      {"3.14E-15"_su8, LiteralKind::Float},
-      {"+3."_su8, LiteralKind::Float},
-      {"+3e5"_su8, LiteralKind::Float},
-      {"+3E5"_su8, LiteralKind::Float},
-      {"+3e+14"_su8, LiteralKind::Float},
-      {"+3E+14"_su8, LiteralKind::Float},
-      {"+3e-14"_su8, LiteralKind::Float},
-      {"+3E-14"_su8, LiteralKind::Float},
-      {"+3.14"_su8, LiteralKind::Float},
-      {"+3.14e15"_su8, LiteralKind::Float},
-      {"+3.14E15"_su8, LiteralKind::Float},
-      {"+3.14e+15"_su8, LiteralKind::Float},
-      {"+3.14E+15"_su8, LiteralKind::Float},
-      {"+3.14e-15"_su8, LiteralKind::Float},
-      {"+3.14E-15"_su8, LiteralKind::Float},
-      {"-3."_su8, LiteralKind::Float},
-      {"-3e5"_su8, LiteralKind::Float},
-      {"-3E5"_su8, LiteralKind::Float},
-      {"-3e+14"_su8, LiteralKind::Float},
-      {"-3E+14"_su8, LiteralKind::Float},
-      {"-3e-14"_su8, LiteralKind::Float},
-      {"-3E-14"_su8, LiteralKind::Float},
-      {"-3.14"_su8, LiteralKind::Float},
-      {"-3.14e15"_su8, LiteralKind::Float},
-      {"-3.14E15"_su8, LiteralKind::Float},
-      {"-3.14e+15"_su8, LiteralKind::Float},
-      {"-3.14E+15"_su8, LiteralKind::Float},
-      {"-3.14e-15"_su8, LiteralKind::Float},
-      {"-3.14E-15"_su8, LiteralKind::Float},
+      {"3."_su8, LI::Number(Sign::None, HU::No)},
+      {"3e5"_su8, LI::Number(Sign::None, HU::No)},
+      {"3E5"_su8, LI::Number(Sign::None, HU::No)},
+      {"3e+14"_su8, LI::Number(Sign::None, HU::No)},
+      {"3E+14"_su8, LI::Number(Sign::None, HU::No)},
+      {"3e-14"_su8, LI::Number(Sign::None, HU::No)},
+      {"3E-14"_su8, LI::Number(Sign::None, HU::No)},
+      {"3.14"_su8, LI::Number(Sign::None, HU::No)},
+      {"3.14e15"_su8, LI::Number(Sign::None, HU::No)},
+      {"3.14E15"_su8, LI::Number(Sign::None, HU::No)},
+      {"3.14e+15"_su8, LI::Number(Sign::None, HU::No)},
+      {"3.14E+15"_su8, LI::Number(Sign::None, HU::No)},
+      {"3.14e-15"_su8, LI::Number(Sign::None, HU::No)},
+      {"3.14E-15"_su8, LI::Number(Sign::None, HU::No)},
+      {"+3."_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3e5"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3E5"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3e+14"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3E+14"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3e-14"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3E-14"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3.14"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3.14e15"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3.14E15"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3.14e+15"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3.14E+15"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3.14e-15"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"+3.14E-15"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"-3."_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3e5"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3E5"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3e+14"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3E+14"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3e-14"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3E-14"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3.14"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3.14e15"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3.14E15"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3.14e+15"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3.14E+15"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3.14e-15"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"-3.14E-15"_su8, LI::Number(Sign::Minus, HU::No)},
 
-      {"0x3."_su8, LiteralKind::HexFloat},
-      {"0x3p5"_su8, LiteralKind::HexFloat},
-      {"0x3P5"_su8, LiteralKind::HexFloat},
-      {"0x3p+14"_su8, LiteralKind::HexFloat},
-      {"0x3P+14"_su8, LiteralKind::HexFloat},
-      {"0x3p-14"_su8, LiteralKind::HexFloat},
-      {"0x3P-14"_su8, LiteralKind::HexFloat},
-      {"0x3.1a"_su8, LiteralKind::HexFloat},
-      {"0x3.1ap15"_su8, LiteralKind::HexFloat},
-      {"0x3.1aP15"_su8, LiteralKind::HexFloat},
-      {"0x3.1ap+15"_su8, LiteralKind::HexFloat},
-      {"0x3.1aP+15"_su8, LiteralKind::HexFloat},
-      {"0x3.1ap-15"_su8, LiteralKind::HexFloat},
-      {"0x3.1aP-15"_su8, LiteralKind::HexFloat},
-      {"+0x3."_su8, LiteralKind::HexFloat},
-      {"+0x3p5"_su8, LiteralKind::HexFloat},
-      {"+0x3P5"_su8, LiteralKind::HexFloat},
-      {"+0x3p+14"_su8, LiteralKind::HexFloat},
-      {"+0x3P+14"_su8, LiteralKind::HexFloat},
-      {"+0x3p-14"_su8, LiteralKind::HexFloat},
-      {"+0x3P-14"_su8, LiteralKind::HexFloat},
-      {"+0x3.1a"_su8, LiteralKind::HexFloat},
-      {"+0x3.1ap15"_su8, LiteralKind::HexFloat},
-      {"+0x3.1aP15"_su8, LiteralKind::HexFloat},
-      {"+0x3.1ap+15"_su8, LiteralKind::HexFloat},
-      {"+0x3.1aP+15"_su8, LiteralKind::HexFloat},
-      {"+0x3.1ap-15"_su8, LiteralKind::HexFloat},
-      {"+0x3.1aP-15"_su8, LiteralKind::HexFloat},
-      {"-0x3."_su8, LiteralKind::HexFloat},
-      {"-0x3p5"_su8, LiteralKind::HexFloat},
-      {"-0x3P5"_su8, LiteralKind::HexFloat},
-      {"-0x3p+14"_su8, LiteralKind::HexFloat},
-      {"-0x3P+14"_su8, LiteralKind::HexFloat},
-      {"-0x3p-14"_su8, LiteralKind::HexFloat},
-      {"-0x3P-14"_su8, LiteralKind::HexFloat},
-      {"-0x3.1a"_su8, LiteralKind::HexFloat},
-      {"-0x3.1ap15"_su8, LiteralKind::HexFloat},
-      {"-0x3.1aP15"_su8, LiteralKind::HexFloat},
-      {"-0x3.1ap+15"_su8, LiteralKind::HexFloat},
-      {"-0x3.1aP+15"_su8, LiteralKind::HexFloat},
-      {"-0x3.1ap-15"_su8, LiteralKind::HexFloat},
-      {"-0x3.1aP-15"_su8, LiteralKind::HexFloat},
+      {"0x3."_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3p5"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3P5"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3p+14"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3P+14"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3p-14"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3P-14"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3.1a"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3.1ap15"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3.1aP15"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3.1ap+15"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3.1aP+15"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3.1ap-15"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"0x3.1aP-15"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"+0x3."_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3p5"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3P5"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3p+14"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3P+14"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3p-14"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3P-14"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3.1a"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3.1ap15"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3.1aP15"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3.1ap+15"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3.1aP+15"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3.1ap-15"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"+0x3.1aP-15"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"-0x3."_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3p5"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3P5"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3p+14"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3P+14"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3p-14"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3P-14"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3.1a"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3.1ap15"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3.1aP15"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3.1ap+15"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3.1aP+15"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3.1ap-15"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"-0x3.1aP-15"_su8, LI::HexNumber(Sign::Minus, HU::No)},
 
-      {"inf"_su8, LiteralKind::Inf},
-      {"+inf"_su8, LiteralKind::Inf},
-      {"-inf"_su8, LiteralKind::Inf},
+      {"inf"_su8, LI::Infinity(Sign::None)},
+      {"+inf"_su8, LI::Infinity(Sign::Plus)},
+      {"-inf"_su8, LI::Infinity(Sign::Minus)},
 
-      {"nan"_su8, LiteralKind::Nan},
-      {"+nan"_su8, LiteralKind::Nan},
-      {"-nan"_su8, LiteralKind::Nan},
+      {"nan"_su8, LI::Nan(Sign::None)},
+      {"+nan"_su8, LI::Nan(Sign::Plus)},
+      {"-nan"_su8, LI::Nan(Sign::Minus)},
 
-      {"nan:0x1"_su8, LiteralKind::HexNan},
-      {"nan:0x123"_su8, LiteralKind::HexNan},
-      {"nan:0x123abc"_su8, LiteralKind::HexNan},
-      {"+nan:0x1"_su8, LiteralKind::HexNan},
-      {"+nan:0x123"_su8, LiteralKind::HexNan},
-      {"+nan:0x123abc"_su8, LiteralKind::HexNan},
-      {"-nan:0x1"_su8, LiteralKind::HexNan},
-      {"-nan:0x123"_su8, LiteralKind::HexNan},
-      {"-nan:0x123abc"_su8, LiteralKind::HexNan},
+      {"nan:0x1"_su8, LI::NanPayload(Sign::None, HU::No)},
+      {"nan:0x123"_su8, LI::NanPayload(Sign::None, HU::No)},
+      {"nan:0x123abc"_su8, LI::NanPayload(Sign::None, HU::No)},
+      {"+nan:0x1"_su8, LI::NanPayload(Sign::Plus, HU::No)},
+      {"+nan:0x123"_su8, LI::NanPayload(Sign::Plus, HU::No)},
+      {"+nan:0x123abc"_su8, LI::NanPayload(Sign::Plus, HU::No)},
+      {"-nan:0x1"_su8, LI::NanPayload(Sign::Minus, HU::No)},
+      {"-nan:0x123"_su8, LI::NanPayload(Sign::Minus, HU::No)},
+      {"-nan:0x123abc"_su8, LI::NanPayload(Sign::Minus, HU::No)},
 
       // A single underscore is allowed between any two digits.
-      {"3_1.4_1"_su8, LiteralKind::Float},
-      {"-3_1.4_1e5_9"_su8, LiteralKind::Float},
-      {"+0xab_c.c_dep+0_1"_su8, LiteralKind::HexFloat},
+      {"3_1.4_1"_su8, LI::Number(Sign::None, HU::Yes)},
+      {"-3_1.4_1e5_9"_su8, LI::Number(Sign::Minus, HU::Yes)},
+      {"+0xab_c.c_dep+0_1"_su8, LI::HexNumber(Sign::Plus, HU::Yes)},
   };
   for (auto test : tests) {
-    ExpectLex({test.span.size(), TokenType::Float, test.kind}, test.span);
+    ExpectLex({test.span.size(), TokenType::Float, test.info}, test.span);
   }
 }
 
@@ -862,29 +865,29 @@ TEST(LexTest, Id) {
 TEST(LexTest, Int) {
   struct {
     SpanU8 span;
-    LiteralKind kind;
+    LI kind;
   } tests[] = {
-      {"-0"_su8, LiteralKind::Int},
-      {"+0"_su8, LiteralKind::Int},
-      {"-123"_su8, LiteralKind::Int},
-      {"+123"_su8, LiteralKind::Int},
+      {"-0"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"+0"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"-123"_su8, LI::Number(Sign::Minus, HU::No)},
+      {"+123"_su8, LI::Number(Sign::Plus, HU::No)},
 
-      {"-0x123"_su8, LiteralKind::HexInt},
-      {"+0x123"_su8, LiteralKind::HexInt},
-      {"-0x123abcdef"_su8, LiteralKind::HexInt},
-      {"+0x123abcdef"_su8, LiteralKind::HexInt},
+      {"-0x123"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"+0x123"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"-0x123abcdef"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+      {"+0x123abcdef"_su8, LI::HexNumber(Sign::Plus, HU::No)},
 
       // A single underscore is allowed between any two digits.
-      {"-0_0"_su8, LiteralKind::Int},
-      {"+0_0"_su8, LiteralKind::Int},
-      {"-12_3"_su8, LiteralKind::Int},
-      {"+1_23"_su8, LiteralKind::Int},
-      {"-12_34_56"_su8, LiteralKind::Int},
-      {"+123_456"_su8, LiteralKind::Int},
-      {"-0x12_3"_su8, LiteralKind::HexInt},
-      {"+0x1_23"_su8, LiteralKind::HexInt},
-      {"-0x12_3ab_cde_f"_su8, LiteralKind::HexInt},
-      {"+0x123_a_b_cde_f"_su8, LiteralKind::HexInt},
+      {"-0_0"_su8, LI::Number(Sign::Minus, HU::Yes)},
+      {"+0_0"_su8, LI::Number(Sign::Plus, HU::Yes)},
+      {"-12_3"_su8, LI::Number(Sign::Minus, HU::Yes)},
+      {"+1_23"_su8, LI::Number(Sign::Plus, HU::Yes)},
+      {"-12_34_56"_su8, LI::Number(Sign::Minus, HU::Yes)},
+      {"+123_456"_su8, LI::Number(Sign::Plus, HU::Yes)},
+      {"-0x12_3"_su8, LI::HexNumber(Sign::Minus, HU::Yes)},
+      {"+0x1_23"_su8, LI::HexNumber(Sign::Plus, HU::Yes)},
+      {"-0x12_3ab_cde_f"_su8, LI::HexNumber(Sign::Minus, HU::Yes)},
+      {"+0x123_a_b_cde_f"_su8, LI::HexNumber(Sign::Plus, HU::Yes)},
   };
   for (auto test : tests) {
     ExpectLex({test.span.size(), TokenType::Int, test.kind}, test.span);
@@ -894,19 +897,19 @@ TEST(LexTest, Int) {
 TEST(LexTest, Nat) {
   struct {
     SpanU8 span;
-    LiteralKind kind;
+    LI kind;
   } tests[] = {
-      {"0"_su8, LiteralKind::Int},
-      {"123"_su8, LiteralKind::Int},
+      {"0"_su8, LI::Nat(HU::No)},
+      {"123"_su8, LI::Nat(HU::No)},
 
-      {"0x123"_su8, LiteralKind::HexInt},
-      {"0x123abcdef"_su8, LiteralKind::HexInt},
+      {"0x123"_su8, LI::HexNat(HU::No)},
+      {"0x123abcdef"_su8, LI::HexNat(HU::No)},
 
       // A single underscore is allowed between any two digits.
-      {"0_0"_su8, LiteralKind::Int},
-      {"123_456"_su8, LiteralKind::Int},
-      {"0x1_23_456"_su8, LiteralKind::HexInt},
-      {"0x12_3a_bcd_ef"_su8, LiteralKind::HexInt},
+      {"0_0"_su8, LI::Nat(HU::Yes)},
+      {"123_456"_su8, LI::Nat(HU::Yes)},
+      {"0x1_23_456"_su8, LI::HexNat(HU::Yes)},
+      {"0x12_3a_bcd_ef"_su8, LI::HexNat(HU::Yes)},
   };
   for (auto test : tests) {
     ExpectLex({test.span.size(), TokenType::Nat, test.kind}, test.span);
@@ -1001,13 +1004,13 @@ R"((module
       {1, TokenType::Lpar},
       {9, TokenType::PlainInstr, Opcode::LocalGet},
       {1, TokenType::Whitespace},
-      {1, TokenType::Nat, LiteralKind::Int},
+      {1, TokenType::Nat, LI::Nat(HU::No)},
       {1, TokenType::Rpar},
       {1, TokenType::Whitespace},
       {1, TokenType::Lpar},
       {9, TokenType::PlainInstr, Opcode::LocalGet},
       {1, TokenType::Whitespace},
-      {1, TokenType::Nat, LiteralKind::Int},
+      {1, TokenType::Nat, LI::Nat(HU::No)},
       {1, TokenType::Rpar},
       {1, TokenType::Rpar},
       {1, TokenType::Rpar},

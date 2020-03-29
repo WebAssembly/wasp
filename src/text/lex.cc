@@ -112,8 +112,14 @@ bool MatchChar(SpanU8* data, char c) {
   return false;
 }
 
-bool MatchSign(SpanU8* data) {
-  return MatchChar(data, '+') || MatchChar(data, '-');
+Sign MatchSign(SpanU8* data) {
+  if (MatchChar(data, '+')) {
+    return Sign::Plus;
+  } else if (MatchChar(data, '-')) {
+    return Sign::Minus;
+  } else {
+    return Sign::None;
+  }
 }
 
 bool MatchString(SpanU8* data, string_view sv) {
@@ -127,23 +133,33 @@ bool MatchString(SpanU8* data, string_view sv) {
   return true;
 }
 
-bool MatchNum(SpanU8* data) {
+bool MatchNum(SpanU8* data, HasUnderscores& has_underscores) {
   MatchGuard guard{data};
   bool ok = false;
   while (IsDigit(PeekChar(data))) {
     SkipChar(data);
-    ok = !MatchChar(data, '_');
+    if (MatchChar(data, '_')) {
+      ok = false;
+      has_underscores = HasUnderscores::Yes;
+    } else {
+      ok = true;
+    }
   }
   guard.ResetUnless(ok);
   return ok;
 }
 
-bool MatchHexNum(SpanU8* data) {
+bool MatchHexNum(SpanU8* data, HasUnderscores& has_underscores) {
   MatchGuard guard{data};
   bool ok = false;
   while (IsHexDigit(PeekChar(data))) {
     SkipChar(data);
-    ok = !MatchChar(data, '_');
+    if (MatchChar(data, '_')) {
+      ok = false;
+      has_underscores = HasUnderscores::Yes;
+    } else {
+      ok = true;
+    }
   }
   guard.ResetUnless(ok);
   return ok;
@@ -214,12 +230,15 @@ auto LexLineComment(SpanU8* data) -> Token {
 auto LexNameEqNum(SpanU8* data, string_view sv, TokenType tt) -> Token {
   MatchGuard guard{data};
   if (MatchString(data, sv)) {
+    HasUnderscores underscores{};
     if (MatchString(data, "0x")) {
-      if (MatchHexNum(data) && NoTrailingReservedChars(data)) {
-        return Token(guard.loc(), tt, LiteralKind::HexInt);
+      if (MatchHexNum(data, underscores) && NoTrailingReservedChars(data)) {
+        return Token(guard.loc(), tt, LiteralInfo::HexNat(underscores));
       }
-    } else if (MatchNum(data) && NoTrailingReservedChars(data)) {
-      return Token(guard.loc(), tt, LiteralKind::Int);
+    } else {
+      if (MatchNum(data, underscores) && NoTrailingReservedChars(data)) {
+        return Token(guard.loc(), tt, LiteralInfo::Nat(underscores));
+      }
     }
   }
   return LexReserved(guard.Reset());
@@ -227,24 +246,26 @@ auto LexNameEqNum(SpanU8* data, string_view sv, TokenType tt) -> Token {
 
 auto LexInf(SpanU8* data) -> Token {
   MatchGuard guard{data};
-  MatchSign(data);
+  auto sign = MatchSign(data);
   if (MatchString(data, "inf") && NoTrailingReservedChars(data)) {
-    return Token(guard.loc(), TokenType::Float, LiteralKind::Inf);
+    return Token(guard.loc(), TokenType::Float, LiteralInfo::Infinity(sign));
   }
   return LexReserved(data);
 }
 
 auto LexNan(SpanU8* data) -> Token {
   MatchGuard guard{data};
-  MatchSign(data);
+  auto sign = MatchSign(data);
   if (MatchString(data, "nan")) {
     if (MatchChar(data, ':')) {
-      if (MatchString(data, "0x") && MatchHexNum(data) &&
+      HasUnderscores underscores{};
+      if (MatchString(data, "0x") && MatchHexNum(data, underscores) &&
           NoTrailingReservedChars(data)) {
-        return Token(guard.loc(), TokenType::Float, LiteralKind::HexNan);
+        return Token(guard.loc(), TokenType::Float,
+                     LiteralInfo::NanPayload(sign, underscores));
       }
     } else if (NoTrailingReservedChars(data)) {
-      return Token(guard.loc(), TokenType::Float, LiteralKind::Nan);
+      return Token(guard.loc(), TokenType::Float, LiteralInfo::Nan(sign));
     }
   }
   return LexReserved(data);
@@ -252,25 +273,24 @@ auto LexNan(SpanU8* data) -> Token {
 
 auto LexNumber(SpanU8* data, TokenType tt) -> Token {
   MatchGuard guard{data};
-  MatchSign(data);
-  if (MatchNum(data)) {
+  auto sign = MatchSign(data);
+  HasUnderscores underscores{};
+  if (MatchNum(data, underscores)) {
     if (MatchChar(data, '.')) {
       tt = TokenType::Float;
-      if (IsDigit(PeekChar(data)) && !MatchNum(data)) {
+      if (IsDigit(PeekChar(data)) && !MatchNum(data, underscores)) {
         return LexReserved(guard.Reset());
       }
     }
     if (MatchChar(data, 'e') || MatchChar(data, 'E')) {
       tt = TokenType::Float;
       MatchSign(data);
-      if (!MatchNum(data)) {
+      if (!MatchNum(data, underscores)) {
         return LexReserved(guard.Reset());
       }
     }
     if (NoTrailingReservedChars(data)) {
-      return Token(
-          guard.loc(), tt,
-          tt == TokenType::Float ? LiteralKind::Float : LiteralKind::Int);
+      return Token(guard.loc(), tt, LiteralInfo::Number(sign, underscores));
     }
   }
   return LexReserved(guard.Reset());
@@ -278,26 +298,25 @@ auto LexNumber(SpanU8* data, TokenType tt) -> Token {
 
 auto LexHexNumber(SpanU8* data, TokenType tt) -> Token {
   MatchGuard guard{data};
-  MatchSign(data);
+  auto sign = MatchSign(data);
+  HasUnderscores underscores{};
   MatchString(data, "0x");
-  if (MatchHexNum(data)) {
+  if (MatchHexNum(data, underscores)) {
     if (MatchChar(data, '.')) {
       tt = TokenType::Float;
-      if (IsHexDigit(PeekChar(data)) && !MatchHexNum(data)) {
+      if (IsHexDigit(PeekChar(data)) && !MatchHexNum(data, underscores)) {
         return LexReserved(guard.Reset());
       }
     }
     if (MatchChar(data, 'p') || MatchChar(data, 'P')) {
       tt = TokenType::Float;
       MatchSign(data);
-      if (!MatchNum(data)) {
+      if (!MatchNum(data, underscores)) {
         return LexReserved(guard.Reset());
       }
     }
     if (NoTrailingReservedChars(data)) {
-      return Token(
-          guard.loc(), tt,
-          tt == TokenType::Float ? LiteralKind::HexFloat : LiteralKind::HexInt);
+      return Token(guard.loc(), tt, LiteralInfo::HexNumber(sign, underscores));
     }
   }
   return LexReserved(guard.Reset());
@@ -432,7 +451,7 @@ auto LexKeyword(SpanU8* data, string_view sv, TokenType tt, LiteralKind lk)
     -> Token {
   MatchGuard guard{data};
   if (MatchString(data, sv) && NoTrailingReservedChars(data)) {
-    return Token(guard.loc(), tt, lk);
+    return Token(guard.loc(), tt, LiteralInfo{lk});
   }
   return LexReserved(guard.Reset());
 }
