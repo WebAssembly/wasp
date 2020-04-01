@@ -44,21 +44,14 @@ struct ExpectedToken {
   variant<monostate, Opcode, ValueType, LiteralInfo> immediate;
 };
 
-// Make SpanU8 from literal string.
-inline SpanU8 operator"" _su8(const char* str, size_t N) {
-  return SpanU8{reinterpret_cast<const u8*>(str),
-                static_cast<SpanU8::index_type>(N)};
-}
-
 using TT = TokenType;
 
 SpanU8 ExpectLex(ExpectedToken et, SpanU8 data) {
-  string_view str{reinterpret_cast<const char*>(data.data()),
-                  static_cast<size_t>(et.size)};
   Token expected{Location{data.begin(), et.size}, et.type, et.immediate};
   auto actual = Lex(&data);
-  EXPECT_EQ(actual, expected) << format("expected: {} actual: {} (\"{}\")",
-                                        expected.loc, actual.loc, str);
+  EXPECT_EQ(actual, expected)
+      << format("expected: {} actual: {} (\"{}\")", expected.loc, actual.loc,
+                ToStringView(data));
   return data;
 }
 

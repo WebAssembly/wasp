@@ -57,9 +57,6 @@ class TestErrors : public Errors {
   void HandleOnError(Location loc, string_view message);
 };
 
-// Make SpanU8 from literal string.
-SpanU8 operator"" _su8(const char* str, size_t N);
-
 // Make Expression from literal string.
 Expression operator"" _expr(const char* str, size_t N);
 

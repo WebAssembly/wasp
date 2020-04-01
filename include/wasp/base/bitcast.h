@@ -1,5 +1,5 @@
 //
-// Copyright 2018 WebAssembly Community Group participants
+// Copyright 2020 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,16 +14,21 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/types.h"
+#ifndef WASP_BASE_BITCAST_H_
+#define WASP_BASE_BITCAST_H_
+
+#include <cstring>
 
 namespace wasp {
-namespace binary {
-namespace test {
 
-inline Expression operator"" _expr(const char* str, size_t N) {
-  return Expression{operator"" _su8(str, N)};
+template <typename T, typename U>
+T Bitcast(const U& value) {
+  static_assert(sizeof(U) == sizeof(T), "size mismatch");
+  T result;
+  memcpy(&result, &value, sizeof(result));
+  return result;
 }
 
-}  // namespace test
-}  // namespace binary
 }  // namespace wasp
+
+#endif  // WASP_BASE_BITCAST_H_

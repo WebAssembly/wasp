@@ -26,12 +26,25 @@ add_subdirectory(third_party/gtest)
 include_directories(
   ${wasp_SOURCE_DIR}
   ${wasp_SOURCE_DIR}/include
+  ${wasp_SOURCE_DIR}/include/gdtoa
   ${wasp_SOURCE_DIR}/third_party/fmt/include
   ${wasp_SOURCE_DIR}/third_party/optional-lite/include
   ${wasp_SOURCE_DIR}/third_party/span-lite/include
   ${wasp_SOURCE_DIR}/third_party/string-view-lite/include
   ${wasp_SOURCE_DIR}/third_party/variant-lite/include
   ${wasp_SOURCE_DIR}/third_party/parallel-hashmap
+)
+
+set(gdtoa_files
+  third_party/gdtoa/strtorf.c
+  third_party/gdtoa/strtord.c
+  third_party/gdtoa/strtodg.c
+  third_party/gdtoa/misc.c
+  third_party/gdtoa/gmisc.c
+  third_party/gdtoa/smisc.c
+  third_party/gdtoa/gethex.c
+  third_party/gdtoa/sum.c
+  third_party/gdtoa/hd_init.c
 )
 
 add_library(wasplib
@@ -65,6 +78,13 @@ add_library(wasplib
   src/text/types.cc
 
   third_party/fmt/src/format.cc
+  ${gdtoa_files}
+)
+
+set_source_files_properties(
+  ${gdtoa_files}
+  PROPERTIES
+  COMPILE_FLAGS "-Wno-parentheses -Wno-implicit-fallthrough -Wno-unused-label -Wno-sign-compare"
 )
 
 add_executable(wasp
@@ -123,6 +143,17 @@ add_executable(wasp_sqlite
   src/tools/argparser.cc
   src/tools/wasp_sqlite.cc
   third_party/sqlite/sqlite3.c
+)
+
+set(sqlite_flags "-Wno-implicit-fallthrough")
+if (CMAKE_C_COMPILER_ID MATCHES "GNU")
+  set(sqlite_flags "${sqlite_flags} -Wno-cast-function-type")
+endif ()
+
+set_source_files_properties(
+  third_party/sqlite/sqlite3.c
+  PROPERTIES
+  COMPILE_FLAGS "${sqlite_flags}"
 )
 
 target_link_libraries(wasp_sqlite

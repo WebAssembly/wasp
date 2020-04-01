@@ -16,19 +16,16 @@
 
 #include "wasp/text/numeric.h"
 
+#include <cstring>
+
 #include "gtest/gtest.h"
+#include "wasp/base/bitcast.h"
 
 using namespace ::wasp;
 using namespace ::wasp::text;
 
 using LI = LiteralInfo;
 using HU = HasUnderscores;
-
-// Make SpanU8 from literal string.
-inline SpanU8 operator"" _su8(const char* str, size_t N) {
-  return SpanU8{reinterpret_cast<const u8*>(str),
-                static_cast<SpanU8::index_type>(N)};
-}
 
 TEST(NumericTest, StrToNat_u8) {
   struct {
@@ -215,5 +212,206 @@ TEST(NumericTest, StrToInt_s32) {
   };
   for (auto test : tests) {
     EXPECT_EQ(test.value, StrToInt<s32>(test.info, test.span));
+  }
+}
+
+template <typename Float, typename Int>
+void ExpectFloat(SpanU8 span, LiteralInfo info, Int expected) {
+  static_assert(sizeof(Float) == sizeof(Int), "size mismatch");
+  auto value_opt = StrToFloat<Float>(info, span);
+  ASSERT_TRUE(value_opt.has_value());
+  Int actual = Bitcast<Int>(value_opt->value());
+  EXPECT_EQ(expected, actual) << "expected " << expected << " got " << actual
+                              << " (\"" << ToStringView(span) << "\")";
+}
+
+TEST(NumericTest, StrToFloat_f32) {
+  struct {
+    SpanU8 span;
+    LiteralInfo info;
+    u32 value_bits;
+  } tests[] = {
+      {"0"_su8, LI::Number(Sign::None, HU::No), 0x00000000},
+      {"+0"_su8, LI::Number(Sign::Plus, HU::No), 0x00000000},
+      {"-0"_su8, LI::Number(Sign::Minus, HU::No), 0x80000000},
+      {"0.0"_su8, LI::Number(Sign::None, HU::No), 0x00000000},
+      {"+0.0"_su8, LI::Number(Sign::Plus, HU::No), 0x00000000},
+      {"-0.0"_su8, LI::Number(Sign::Minus, HU::No), 0x80000000},
+      {"0.0e0"_su8, LI::Number(Sign::None, HU::No), 0x00000000},
+      {"+0.0e0"_su8, LI::Number(Sign::Plus, HU::No), 0x00000000},
+      {"-0.0e0"_su8, LI::Number(Sign::Minus, HU::No), 0x80000000},
+      {"0.0e+0"_su8, LI::Number(Sign::None, HU::No), 0x00000000},
+      {"+0.0e+0"_su8, LI::Number(Sign::Plus, HU::No), 0x00000000},
+      {"-0.0e+0"_su8, LI::Number(Sign::Minus, HU::No), 0x80000000},
+      {"0.0e-0"_su8, LI::Number(Sign::None, HU::No), 0x00000000},
+      {"+0.0e-0"_su8, LI::Number(Sign::Plus, HU::No), 0x00000000},
+      {"-0.0e-0"_su8, LI::Number(Sign::Minus, HU::No), 0x80000000},
+      {"0.0E0"_su8, LI::Number(Sign::None, HU::No), 0x00000000},
+      {"+0.0E+0"_su8, LI::Number(Sign::Plus, HU::No), 0x00000000},
+      {"-0.0E-0"_su8, LI::Number(Sign::Minus, HU::No), 0x80000000},
+
+      {"1234.5"_su8, LI::Number(Sign::None, HU::No), 0x449a5000},
+      {"+1234.5"_su8, LI::Number(Sign::Plus, HU::No), 0x449a5000},
+      {"-1234.5"_su8, LI::Number(Sign::Minus, HU::No), 0xc49a5000},
+      {"1.5e1"_su8, LI::Number(Sign::None, HU::No), 0x41700000},
+      {"+1.5e1"_su8, LI::Number(Sign::Plus, HU::No), 0x41700000},
+      {"-1.5e1"_su8, LI::Number(Sign::Minus, HU::No), 0xc1700000},
+      {"1.4013e-45"_su8, LI::Number(Sign::None, HU::No), 0x00000001},
+      {"+1.4013e-45"_su8, LI::Number(Sign::Plus, HU::No), 0x00000001},
+      {"-1.4013e-45"_su8, LI::Number(Sign::Minus, HU::No), 0x80000001},
+      {"1.1754944e-38"_su8, LI::Number(Sign::None, HU::No), 0x00800000},
+      {"+1.1754944e-38"_su8, LI::Number(Sign::Plus, HU::No), 0x00800000},
+      {"-1.1754944e-38"_su8, LI::Number(Sign::Minus, HU::No), 0x80800000},
+      {"1.1754942e-38"_su8, LI::Number(Sign::None, HU::No), 0x007fffff},
+      {"+1.1754942e-38"_su8, LI::Number(Sign::Plus, HU::No), 0x007fffff},
+      {"-1.1754942e-38"_su8, LI::Number(Sign::Minus, HU::No), 0x807fffff},
+      {"3.4028234e+38"_su8, LI::Number(Sign::None, HU::No), 0x7f7fffff},
+      {"+3.4028234e+38"_su8, LI::Number(Sign::Plus, HU::No), 0x7f7fffff},
+      {"-3.4028234e+38"_su8, LI::Number(Sign::Minus, HU::No), 0xff7fffff},
+
+      {"0x1.5"_su8, LI::HexNumber(Sign::None, HU::No), 0x3fa80000},
+      {"+0x1.5"_su8, LI::HexNumber(Sign::Plus, HU::No), 0x3fa80000},
+      {"-0x1.5"_su8, LI::HexNumber(Sign::Minus, HU::No), 0xbfa80000},
+      {"0x9.a5p+7"_su8, LI::HexNumber(Sign::None, HU::No), 0x449a5000},
+      {"+0x9.a5p+7"_su8, LI::HexNumber(Sign::Plus, HU::No), 0x449a5000},
+      {"-0x9.a5p+7"_su8, LI::HexNumber(Sign::Minus, HU::No), 0xc49a5000},
+      {"0x9.a5P7"_su8, LI::HexNumber(Sign::None, HU::No), 0x449a5000},
+      {"+0x9.a5P+7"_su8, LI::HexNumber(Sign::Plus, HU::No), 0x449a5000},
+      {"-0x9.a5P+7"_su8, LI::HexNumber(Sign::Minus, HU::No), 0xc49a5000},
+      {"0x1p-149"_su8, LI::HexNumber(Sign::None, HU::No), 0x00000001},
+      {"+0x1p-149"_su8, LI::HexNumber(Sign::Plus, HU::No), 0x00000001},
+      {"-0x1p-149"_su8, LI::HexNumber(Sign::Minus, HU::No), 0x80000001},
+      {"0x1p-126"_su8, LI::HexNumber(Sign::None, HU::No), 0x00800000},
+      {"+0x1p-126"_su8, LI::HexNumber(Sign::Plus, HU::No), 0x00800000},
+      {"-0x1p-126"_su8, LI::HexNumber(Sign::Minus, HU::No), 0x80800000},
+      {"0x1.fffffep+127"_su8, LI::HexNumber(Sign::None, HU::No), 0x7f7fffff},
+      {"+0x1.fffffep+127"_su8, LI::HexNumber(Sign::Plus, HU::No), 0x7f7fffff},
+      {"-0x1.fffffep+127"_su8, LI::HexNumber(Sign::Minus, HU::No), 0xff7fffff},
+
+      {"0_0_0_0"_su8, LI::Number(Sign::None, HU::Yes), 0x00000000},
+      {"00_0.0_00"_su8, LI::Number(Sign::None, HU::Yes), 0x00000000},
+      {"0_0.0_0e0_0"_su8, LI::Number(Sign::None, HU::Yes), 0x00000000},
+      {"0.00_0e00_00"_su8, LI::Number(Sign::None, HU::Yes), 0x00000000},
+      {"0x0_0.0_0p0_0"_su8, LI::Number(Sign::None, HU::Yes), 0x00000000},
+
+      {"inf"_su8, LI::Infinity(Sign::None), 0x7f800000},
+      {"+inf"_su8, LI::Infinity(Sign::Plus), 0x7f800000},
+      {"-inf"_su8, LI::Infinity(Sign::Minus), 0xff800000},
+
+      {"nan"_su8, LI::Nan(Sign::None), 0x7fc00000},
+      {"+nan"_su8, LI::Nan(Sign::Plus), 0x7fc00000},
+      {"-nan"_su8, LI::Nan(Sign::Minus), 0xffc00000},
+
+      {"nan:0x1"_su8, LI::NanPayload(Sign::None, HU::No), 0x7f800001},
+      {"+nan:0x1"_su8, LI::NanPayload(Sign::Plus, HU::No), 0x7f800001},
+      {"-nan:0x1"_su8, LI::NanPayload(Sign::Minus, HU::No), 0xff800001},
+
+      {"nan:0x123456"_su8, LI::NanPayload(Sign::None, HU::No), 0x7f923456},
+      {"+nan:0x123456"_su8, LI::NanPayload(Sign::Plus, HU::No), 0x7f923456},
+      {"-nan:0x123456"_su8, LI::NanPayload(Sign::Minus, HU::No), 0xff923456},
+  };
+  for (auto test : tests) {
+    ExpectFloat<f32, u32>(test.span, test.info, test.value_bits);
+  }
+}
+
+TEST(NumericTest, StrToFloat_f64) {
+  const auto none = LI::Number(Sign::None, HU::No);
+  const auto plus = LI::Number(Sign::Plus, HU::No);
+  const auto minus = LI::Number(Sign::Minus, HU::No);
+  const auto hex_none = LI::HexNumber(Sign::None, HU::No);
+  const auto hex_plus = LI::HexNumber(Sign::Plus, HU::No);
+  const auto hex_minus = LI::HexNumber(Sign::Minus, HU::No);
+  const auto none_hu = LI::Number(Sign::None, HU::Yes);
+
+  struct {
+    SpanU8 span;
+    LiteralInfo info;
+    u64 value_bits;
+  } tests[] = {
+      {"0"_su8, none, 0x00000000'00000000ull},
+      {"+0"_su8, plus, 0x00000000'00000000ull},
+      {"-0"_su8, minus, 0x80000000'00000000ull},
+      {"0.0"_su8, none, 0x00000000'00000000ull},
+      {"+0.0"_su8, plus, 0x00000000'00000000ull},
+      {"-0.0"_su8, minus, 0x80000000'00000000ull},
+      {"0.0e0"_su8, none, 0x00000000'00000000ull},
+      {"+0.0e0"_su8, plus, 0x00000000'00000000ull},
+      {"-0.0e0"_su8, minus, 0x80000000'00000000ull},
+      {"0.0e+0"_su8, none, 0x00000000'00000000ull},
+      {"+0.0e+0"_su8, plus, 0x00000000'00000000ull},
+      {"-0.0e+0"_su8, minus, 0x80000000'00000000ull},
+      {"0.0e-0"_su8, none, 0x00000000'00000000ull},
+      {"+0.0e-0"_su8, plus, 0x00000000'00000000ull},
+      {"-0.0e-0"_su8, minus, 0x80000000'00000000ull},
+      {"0.0E0"_su8, none, 0x00000000'00000000ull},
+      {"+0.0E+0"_su8, plus, 0x00000000'00000000ull},
+      {"-0.0E-0"_su8, minus, 0x80000000'00000000ull},
+
+      {"1234.5"_su8, none, 0x40934a00'00000000ull},
+      {"+1234.5"_su8, plus, 0x40934a00'00000000ull},
+      {"-1234.5"_su8, minus, 0xc0934a00'00000000ull},
+      {"1.5e1"_su8, none, 0x402e0000'00000000ull},
+      {"+1.5e1"_su8, plus, 0x402e0000'00000000ull},
+      {"-1.5e1"_su8, minus, 0xc02e0000'00000000ull},
+      {"4.94066e-324"_su8, none, 0x00000000'00000001ull},
+      {"+4.94066e-324"_su8, plus, 0x00000000'00000001ull},
+      {"-4.94066e-324"_su8, minus, 0x80000000'00000001ull},
+      {"2.2250738585072012e-308"_su8, none, 0x00100000'00000000ull},
+      {"+2.2250738585072012e-308"_su8, plus, 0x00100000'00000000ull},
+      {"-2.2250738585072012e-308"_su8, minus, 0x80100000'00000000ull},
+      {"2.2250738585072011e-308"_su8, none, 0x000fffff'ffffffffull},
+      {"+2.2250738585072011e-308"_su8, plus, 0x000fffff'ffffffffull},
+      {"-2.2250738585072011e-308"_su8, minus, 0x800fffff'ffffffffull},
+      {"1.7976931348623157e+308"_su8, none, 0x7fefffff'ffffffffull},
+      {"+1.7976931348623157e+308"_su8, plus, 0x7fefffff'ffffffffull},
+      {"-1.7976931348623157e+308"_su8, minus, 0xffefffff'ffffffffull},
+
+      {"0x1.5"_su8, hex_none, 0x3ff50000'00000000ull},
+      {"+0x1.5"_su8, hex_plus, 0x3ff50000'00000000ull},
+      {"-0x1.5"_su8, hex_minus, 0xbff50000'00000000ull},
+      {"0x9.a5p+7"_su8, hex_none, 0x40934a00'00000000ull},
+      {"+0x9.a5p+7"_su8, hex_plus, 0x40934a00'00000000ull},
+      {"-0x9.a5p+7"_su8, hex_minus, 0xc0934a00'00000000ull},
+      {"0x9.a5P7"_su8, hex_none, 0x40934a00'00000000ull},
+      {"+0x9.a5P+7"_su8, hex_plus, 0x40934a00'00000000ull},
+      {"-0x9.a5P+7"_su8, hex_minus, 0xc0934a00'00000000ull},
+      {"0x0.0000000000001p-1022"_su8, hex_none, 0x00000000'00000001ull},
+      {"+0x0.0000000000001p-1022"_su8, hex_plus, 0x00000000'00000001ull},
+      {"-0x0.0000000000001p-1022"_su8, hex_minus, 0x80000000'00000001ull},
+      {"0x1p-1022"_su8, hex_none, 0x00100000'00000000ull},
+      {"+0x1p-1022"_su8, hex_plus, 0x00100000'00000000ull},
+      {"-0x1p-1022"_su8, hex_minus, 0x80100000'00000000ull},
+      {"0x0.fffffffffffffp-1022"_su8, hex_none, 0x000fffff'ffffffffull},
+      {"+0x0.fffffffffffffp-1022"_su8, hex_plus, 0x000fffff'ffffffffull},
+      {"-0x0.fffffffffffffp-1022"_su8, hex_minus, 0x800fffff'ffffffffull},
+      {"0x1.fffffffffffffp+1023"_su8, hex_none, 0x7fefffff'ffffffffull},
+      {"+0x1.fffffffffffffp+1023"_su8, hex_plus, 0x7fefffff'ffffffffull},
+      {"-0x1.fffffffffffffp+1023"_su8, hex_minus, 0xffefffff'ffffffffull},
+
+      {"0_0_0_0"_su8, none_hu, 0x00000000'00000000ull},
+      {"00_0.0_00"_su8, none_hu, 0x00000000'00000000ull},
+      {"0_0.0_0e0_0"_su8, none_hu, 0x00000000'00000000ull},
+      {"0.00_0e00_00"_su8, none_hu, 0x00000000'00000000ull},
+      {"0x0_0.0_0p0_0"_su8, none_hu, 0x00000000'00000000ull},
+
+      {"inf"_su8, LI::Infinity(Sign::None), 0x7ff00000'00000000ull},
+      {"+inf"_su8, LI::Infinity(Sign::Plus), 0x7ff00000'00000000ull},
+      {"-inf"_su8, LI::Infinity(Sign::Minus), 0xfff00000'00000000ull},
+
+      {"nan"_su8, LI::Nan(Sign::None), 0x7ff80000'00000000ull},
+      {"+nan"_su8, LI::Nan(Sign::Plus), 0x7ff80000'00000000ull},
+      {"-nan"_su8, LI::Nan(Sign::Minus), 0xfff80000'00000000ull},
+
+      {"nan:0x1"_su8, LI::NanPayload(Sign::None, HU::No), 0x7ff00000'00000001ull},
+      {"+nan:0x1"_su8, LI::NanPayload(Sign::Plus, HU::No), 0x7ff00000'00000001ull},
+      {"-nan:0x1"_su8, LI::NanPayload(Sign::Minus, HU::No), 0xfff00000'00000001ull},
+
+      {"nan:0x123456789abcd"_su8, LI::NanPayload(Sign::None, HU::No), 0x7ff12345'6789abcdull},
+      {"+nan:0x123456789abcd"_su8, LI::NanPayload(Sign::Plus, HU::No), 0x7ff12345'6789abcdull},
+      {"-nan:0x123456789abcd"_su8, LI::NanPayload(Sign::Minus, HU::No), 0xfff12345'6789abcdull},
+  };
+  for (auto test : tests) {
+    ExpectFloat<f64, u64>(test.span, test.info, test.value_bits);
   }
 }

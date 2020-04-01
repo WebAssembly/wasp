@@ -10,3 +10,6 @@
 [submodule "third_party/parallel-hashmap"]
 	path = third_party/parallel-hashmap
 	url = https://github.com/greg7mdp/parallel-hashmap
+[submodule "third_party/gdtoa"]
+	path = third_party/gdtoa
+	url = https://github.com/jwiegley/gdtoa

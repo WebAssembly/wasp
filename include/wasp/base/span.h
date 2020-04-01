@@ -20,6 +20,7 @@
 #include <functional>
 
 #include "nonstd/span.hpp"
+#include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 
 namespace wasp {
@@ -44,6 +45,17 @@ void remove_prefix(span<T, Extent>* s, span_index_t offset) {
 
 using SpanU8 = span<const u8>;
 using Location = SpanU8;
+
+// Make SpanU8 from literal string.
+inline SpanU8 operator"" _su8(const char* str, size_t N) {
+  return SpanU8{reinterpret_cast<const u8*>(str),
+                static_cast<SpanU8::index_type>(N)};
+}
+
+inline string_view ToStringView(SpanU8 span) {
+  return string_view{reinterpret_cast<const char*>(span.data()),
+                     static_cast<size_t>(span.size())};
+}
 
 }  // namespace wasp
 
