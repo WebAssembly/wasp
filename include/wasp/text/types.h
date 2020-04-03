@@ -27,26 +27,6 @@
 namespace wasp {
 namespace text {
 
-// TODO: move these def files to be shared between text and binary? Or share
-// the enums themselves?
-enum class Opcode {
-#define WASP_V(prefix, val, Name, str, ...) Name,
-#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#define WASP_PREFIX_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/def/opcode.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-#undef WASP_PREFIX_V
-};
-
-enum class ValueType {
-#define WASP_V(val, Name, str) Name,
-#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/def/value_type.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-};
-
 enum class TokenType {
 #define WASP_V(Name) Name,
 #include "wasp/text/token_type.def"

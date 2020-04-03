@@ -30,22 +30,22 @@ namespace encoding {
 struct ValueType {
 #define WASP_V(val, Name, str, ...) static constexpr u8 Name = val;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/def/value_type.def"
+#include "wasp/base/def/value_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 
-  static u8 Encode(::wasp::binary::ValueType);
-  static optional<::wasp::binary::ValueType> Decode(u8, const Features&);
+  static u8 Encode(::wasp::ValueType);
+  static optional<::wasp::ValueType> Decode(u8, const Features&);
 };
 
 // static
-inline u8 ValueType::Encode(::wasp::binary::ValueType decoded) {
+inline u8 ValueType::Encode(::wasp::ValueType decoded) {
   switch (decoded) {
-#define WASP_V(val, Name, str, ...)     \
-  case ::wasp::binary::ValueType::Name: \
+#define WASP_V(val, Name, str, ...) \
+  case ::wasp::ValueType::Name:     \
     return val;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/def/value_type.def"
+#include "wasp/base/def/value_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -54,20 +54,19 @@ inline u8 ValueType::Encode(::wasp::binary::ValueType decoded) {
 }
 
 // static
-inline optional<::wasp::binary::ValueType> ValueType::Decode(
-    u8 val,
-    const Features& features) {
+inline optional<::wasp::ValueType> ValueType::Decode(u8 val,
+                                                     const Features& features) {
   switch (val) {
 #define WASP_V(val, Name, str) \
   case Name:                   \
-    return ::wasp::binary::ValueType::Name;
+    return ::wasp::ValueType::Name;
 #define WASP_FEATURE_V(val, Name, str, feature) \
   case Name:                                    \
     if (features.feature##_enabled()) {         \
-      return ::wasp::binary::ValueType::Name;   \
+      return ::wasp::ValueType::Name;           \
     }                                           \
     break;
-#include "wasp/binary/def/value_type.def"
+#include "wasp/base/def/value_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:

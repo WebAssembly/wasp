@@ -40,11 +40,6 @@ namespace wasp {
 namespace binary {
 
 template <typename Iterator>
-Iterator WriteBytes(SpanU8 value, Iterator out) {
-  return std::copy(value.begin(), value.end(), out);
-}
-
-template <typename Iterator>
 Iterator Write(u8 value, Iterator out) {
   *out++ = value;
   return out;
@@ -93,6 +88,26 @@ typename std::enable_if<std::is_signed<T>::value, Iterator>::type WriteVarInt(
 template <typename Iterator>
 Iterator Write(u32 value, Iterator out) {
   return WriteVarInt(value, out);
+}
+
+template <typename Iterator>
+Iterator Write(Opcode value, Iterator out) {
+  auto encoded = encoding::Opcode::Encode(value);
+  out = Write(encoded.u8_code, out);
+  if (encoded.u32_code) {
+    out = Write(*encoded.u32_code, out);
+  }
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(ValueType value, Iterator out) {
+  return Write(encoding::ValueType::Encode(value), out);
+}
+
+template <typename Iterator>
+Iterator WriteBytes(SpanU8 value, Iterator out) {
+  return std::copy(value.begin(), value.end(), out);
 }
 
 template <typename Iterator>
@@ -949,16 +964,6 @@ Iterator Write(Mutability value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(Opcode value, Iterator out) {
-  auto encoded = encoding::Opcode::Encode(value);
-  out = Write(encoded.u8_code, out);
-  if (encoded.u32_code) {
-    out = Write(*encoded.u32_code, out);
-  }
-  return out;
-}
-
-template <typename Iterator>
 Iterator Write(SectionId value, Iterator out) {
   return Write(encoding::SectionId::Encode(value), out);
 }
@@ -984,12 +989,6 @@ Iterator Write(const TypeEntry& value, Iterator out) {
   out = Write(encoding::Type::Function, out);
   return Write(value.type, out);
 }
-
-template <typename Iterator>
-Iterator Write(ValueType value, Iterator out) {
-  return Write(encoding::ValueType::Encode(value), out);
-}
-
 
 }  // namespace binary
 }  // namespace wasp

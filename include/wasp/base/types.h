@@ -18,6 +18,7 @@
 #define WASP_BASE_TYPES_H_
 
 #include <cstdint>
+#include <vector>
 
 namespace wasp {
 
@@ -33,6 +34,24 @@ using f32 = float;
 using f64 = double;
 
 using Index = u32;
+
+enum class Opcode : u32 {
+#define WASP_V(prefix, val, Name, str, ...) Name,
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
+#define WASP_PREFIX_V(...) WASP_V(__VA_ARGS__)
+#include "wasp/base/def/opcode.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+#undef WASP_PREFIX_V
+};
+
+enum class ValueType : s32 {
+#define WASP_V(val, Name, str) Name,
+#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
+#include "wasp/base/def/value_type.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+};
 
 }  // namespace wasp
 

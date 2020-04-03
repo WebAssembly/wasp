@@ -29,7 +29,7 @@ struct Context;
 bool Validate(const At<binary::DataSegment>&, Context&);
 
 bool Validate(const At<binary::ConstantExpression>&,
-              binary::ValueType expected_type,
+              ValueType expected_type,
               Index max_global_index,
               Context&);
 
@@ -86,9 +86,7 @@ bool Validate(const At<binary::TableType>&, Context&);
 
 bool Validate(const At<binary::TypeEntry>&, Context&);
 
-bool Validate(const At<binary::ValueType>& actual,
-              binary::ValueType expected,
-              Context&);
+bool Validate(const At<ValueType>& actual, ValueType expected, Context&);
 
 bool EndModule(Context&);
 

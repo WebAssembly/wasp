@@ -31,7 +31,6 @@ namespace fmt {
     typename Ctx::iterator format(const ::wasp::binary::Name&, Ctx&); \
   } /* No semicolon. */
 
-WASP_DEFINE_FORMATTER(ValueType);
 WASP_DEFINE_FORMATTER(BlockType);
 WASP_DEFINE_FORMATTER(ElementType);
 WASP_DEFINE_FORMATTER(ExternalKind);
@@ -57,7 +56,6 @@ WASP_DEFINE_FORMATTER(Export);
 WASP_DEFINE_FORMATTER(Expression);
 WASP_DEFINE_FORMATTER(ConstantExpression);
 WASP_DEFINE_FORMATTER(ElementExpression);
-WASP_DEFINE_FORMATTER(Opcode);
 WASP_DEFINE_FORMATTER(CallIndirectImmediate);
 WASP_DEFINE_FORMATTER(BrTableImmediate);
 WASP_DEFINE_FORMATTER(BrOnExnImmediate);

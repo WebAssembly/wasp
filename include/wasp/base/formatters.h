@@ -68,6 +68,18 @@ struct formatter<::wasp::v128> : formatter<string_view> {
   typename Ctx::iterator format(::wasp::v128, Ctx&);
 };
 
+#define WASP_DEFINE_FORMATTER(Name)                           \
+  template <>                                                 \
+  struct formatter<::wasp::Name> : formatter<string_view> {   \
+    template <typename Ctx>                                   \
+    typename Ctx::iterator format(const ::wasp::Name&, Ctx&); \
+  } /* No semicolon. */
+
+WASP_DEFINE_FORMATTER(Opcode);
+WASP_DEFINE_FORMATTER(ValueType);
+
+#undef WASP_DEFINE_FORMATTER
+
 }  // namespace fmt
 
 #include "wasp/base/formatters-inl.h"

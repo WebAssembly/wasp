@@ -14,5 +14,5 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/def/value_type.def"
+#include "wasp/base/def/value_type.def"
 WASP_V(0x40, Void, "")

@@ -22,26 +22,6 @@
 namespace fmt {
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::ValueType>::format(
-    const ::wasp::binary::ValueType& self,
-    Ctx& ctx) {
-  string_view result;
-  switch (self) {
-#define WASP_V(val, Name, str, ...)     \
-  case ::wasp::binary::ValueType::Name: \
-    result = str;                       \
-    break;
-#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/def/value_type.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-    default:
-      WASP_UNREACHABLE();
-  }
-  return formatter<string_view>::format(result, ctx);
-}
-
-template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::BlockType>::format(
     const ::wasp::binary::BlockType& self,
     Ctx& ctx) {
@@ -397,32 +377,6 @@ typename Ctx::iterator formatter<::wasp::binary::ElementExpression>::format(
   memory_buffer buf;
   format_to(buf, "{} end", self.instruction);
   return formatter<string_view>::format(to_string_view(buf), ctx);
-}
-
-template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Opcode>::format(
-    const ::wasp::binary::Opcode& self,
-    Ctx& ctx) {
-  string_view result;
-  switch (self) {
-#define WASP_V(prefix, val, Name, str, ...) \
-  case ::wasp::binary::Opcode::Name:        \
-    result = str;                           \
-    break;
-#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#define WASP_PREFIX_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/def/opcode.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-#undef WASP_PREFIX_V
-    default: {
-      // Special case for opcodes with unknown ids.
-      memory_buffer buf;
-      format_to(buf, "<unknown:{}>", static_cast<::wasp::u32>(self));
-      return formatter<string_view>::format(to_string_view(buf), ctx);
-    }
-  }
-  return formatter<string_view>::format(result, ctx);
 }
 
 template <typename Ctx>

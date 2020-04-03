@@ -29,30 +29,30 @@ namespace wasp {
 namespace valid {
 
 bool Validate(const At<binary::ConstantExpression>& value,
-              binary::ValueType expected_type,
+              ValueType expected_type,
               Index max_global_index,
               Context& context) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "constant_expression"};
   bool valid = true;
-  binary::ValueType actual_type;
+  ValueType actual_type;
   switch (value->instruction->opcode) {
-    case binary::Opcode::I32Const:
-      actual_type = binary::ValueType::I32;
+    case Opcode::I32Const:
+      actual_type = ValueType::I32;
       break;
 
-    case binary::Opcode::I64Const:
-      actual_type = binary::ValueType::I64;
+    case Opcode::I64Const:
+      actual_type = ValueType::I64;
       break;
 
-    case binary::Opcode::F32Const:
-      actual_type = binary::ValueType::F32;
+    case Opcode::F32Const:
+      actual_type = ValueType::F32;
       break;
 
-    case binary::Opcode::F64Const:
-      actual_type = binary::ValueType::F64;
+    case Opcode::F64Const:
+      actual_type = ValueType::F64;
       break;
 
-    case binary::Opcode::GlobalGet: {
+    case Opcode::GlobalGet: {
       auto index = value->instruction->index_immediate();
       if (!ValidateIndex(index, max_global_index, "global index", context)) {
         return false;
@@ -70,17 +70,17 @@ bool Validate(const At<binary::ConstantExpression>& value,
       break;
     }
 
-    case binary::Opcode::RefNull:
-      actual_type = binary::ValueType::Nullref;
+    case Opcode::RefNull:
+      actual_type = ValueType::Nullref;
       break;
 
-    case binary::Opcode::RefFunc: {
+    case Opcode::RefFunc: {
       auto index = value->instruction->index_immediate();
       if (!ValidateIndex(index, context.functions.size(), "func index",
                          context)) {
         return false;
       }
-      actual_type = binary::ValueType::Funcref;
+      actual_type = ValueType::Funcref;
       break;
     }
 
@@ -109,8 +109,8 @@ bool Validate(const At<binary::DataSegment>& value, Context& context) {
                            "memory index", context);
   }
   if (value->offset) {
-    valid &= Validate(*value->offset, binary::ValueType::I32,
-                      context.globals.size(), context);
+    valid &= Validate(*value->offset, ValueType::I32, context.globals.size(),
+                      context);
   }
   return valid;
 }
@@ -122,11 +122,11 @@ bool Validate(const At<binary::ElementExpression>& value,
   bool valid = true;
   binary::ElementType actual_type;
   switch (value->instruction->opcode) {
-    case binary::Opcode::RefNull:
+    case Opcode::RefNull:
       actual_type = binary::ElementType::Funcref;
       break;
 
-    case binary::Opcode::RefFunc: {
+    case Opcode::RefFunc: {
       actual_type = binary::ElementType::Funcref;
       auto index = value->instruction->index_immediate();
       if (!ValidateIndex(index, context.functions.size(), "function index",
@@ -158,8 +158,8 @@ bool Validate(const At<binary::ElementSegment>& value, Context& context) {
                            "table index", context);
   }
   if (value->offset) {
-    valid &= Validate(*value->offset, binary::ValueType::I32,
-                      context.globals.size(), context);
+    valid &= Validate(*value->offset, ValueType::I32, context.globals.size(),
+                      context);
   }
   if (value->has_indexes()) {
     auto&& desc = value->indexes();
@@ -315,7 +315,7 @@ bool Validate(const At<binary::Global>& value, Context& context) {
                     context.imported_global_count, context);
   // ref.func indexes cannot be validated until after they are declared in the
   // element segment.
-  if (value->init->instruction->opcode == binary::Opcode::RefFunc) {
+  if (value->init->instruction->opcode == Opcode::RefFunc) {
     context.deferred_function_references.push_back(
         value->init->instruction->index_immediate());
   }
@@ -491,27 +491,26 @@ bool Validate(const At<binary::TypeEntry>& value, Context& context) {
 
 namespace {
 
-bool IsReferenceType(binary::ValueType type) {
-  return type == binary::ValueType::Anyref ||
-         type == binary::ValueType::Funcref ||
-         type == binary::ValueType::Nullref;
+bool IsReferenceType(ValueType type) {
+  return type == ValueType::Anyref || type == ValueType::Funcref ||
+         type == ValueType::Nullref;
 }
 
 // TODO: Almost the same as in TypesMatch (minus StackType::Any); how to
 // share?
-bool TypesMatch(binary::ValueType expected, binary::ValueType actual) {
+bool TypesMatch(ValueType expected, ValueType actual) {
   // Types are the same.
   if (expected == actual) {
     return true;
   }
 
   // Anyref is a super type of all reference types.
-  if (expected == binary::ValueType::Anyref && IsReferenceType(actual)) {
+  if (expected == ValueType::Anyref && IsReferenceType(actual)) {
     return true;
   }
 
   // Nullref is a subtype of all reference types.
-  if (IsReferenceType(expected) && actual == binary::ValueType::Nullref) {
+  if (IsReferenceType(expected) && actual == ValueType::Nullref) {
     return true;
   }
 
@@ -520,8 +519,8 @@ bool TypesMatch(binary::ValueType expected, binary::ValueType actual) {
 
 }  // namespace
 
-bool Validate(const At<binary::ValueType>& actual,
-              binary::ValueType expected,
+bool Validate(const At<ValueType>& actual,
+              ValueType expected,
               Context& context) {
   if (!TypesMatch(expected, actual)) {
     context.errors->OnError(

@@ -41,7 +41,7 @@ enum class LabelType {
   Catch,
 };
 
-using ValueTypeSpan = span<const binary::ValueType>;
+using ValueTypeSpan = span<const ValueType>;
 
 struct Label {
   Label(LabelType,
@@ -68,8 +68,8 @@ struct Context {
   void Reset();
 
   Index GetLocalCount() const;
-  optional<binary::ValueType> GetLocalType(Index) const;
-  bool AppendLocals(Index count, binary::ValueType);
+  optional<ValueType> GetLocalType(Index) const;
+  bool AppendLocals(Index count, ValueType);
   bool AppendLocals(const binary::ValueTypes&);
 
   Features features;

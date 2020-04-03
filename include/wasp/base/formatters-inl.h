@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+#include "wasp/base/macros.h"
+
 namespace fmt {
 
 template <typename T, std::size_t SIZE, typename Allocator>
@@ -85,6 +87,52 @@ typename Ctx::iterator formatter<::wasp::v128>::format(::wasp::v128 self,
     space = " ";
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::Opcode>::format(
+    const ::wasp::Opcode& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+#define WASP_V(prefix, val, Name, str, ...) \
+  case ::wasp::Opcode::Name:                \
+    result = str;                           \
+    break;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
+#define WASP_PREFIX_V(...) WASP_V(__VA_ARGS__)
+#include "wasp/base/def/opcode.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+#undef WASP_PREFIX_V
+    default: {
+      // Special case for opcodes with unknown ids.
+      memory_buffer buf;
+      format_to(buf, "<unknown:{}>", static_cast<::wasp::u32>(self));
+      return formatter<string_view>::format(to_string_view(buf), ctx);
+    }
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::ValueType>::format(
+    const ::wasp::ValueType& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+#define WASP_V(val, Name, str, ...) \
+  case ::wasp::ValueType::Name:     \
+    result = str;                   \
+    break;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
+#include "wasp/base/def/value_type.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
 }
 
 }  // namespace fmt
