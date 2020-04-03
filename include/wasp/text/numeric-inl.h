@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cassert>
 #include <charconv>
+#include <limits>
 
 #include "third_party/gdtoa/gdtoa.h"
 #include "wasp/base/bitcast.h"
@@ -24,148 +25,125 @@
 namespace wasp {
 namespace text {
 
-namespace {
+template <int base>
+bool IsDigit(u8 c);
+
+template <>
+bool IsDigit<10>(u8 c) {
+  return c >= '0' && c <= '9';
+}
+
+template <>
+bool IsDigit<16>(u8 c) {
+  return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
+         (c >= 'A' && c <= 'F');
+}
+
+template <typename T, int base>
+auto ParseInteger(SpanU8 span) -> OptAt<T> {
+  static constexpr const u8 DigitToValue[256] = {
+      0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,  //
+      0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,  //
+      0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,  //
+      0, 1,  2,  3,  4,  5,  6,  7, 8, 9, 0, 0, 0, 0, 0, 0,  //
+      0, 10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //
+      0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,  //
+      0, 10, 11, 12, 13, 14, 15,
+  };
+
+  constexpr const T max_div_base = std::numeric_limits<T>::max() / base;
+  constexpr const T max_mod_base = std::numeric_limits<T>::max() % base;
+  T value = 0;
+  for (auto c : span) {
+    if (c == '_') {
+      continue;
+    }
+    assert(IsDigit<base>(c));
+    T digit = DigitToValue[c];
+    if (value > max_div_base ||
+        (value == max_div_base && digit > max_mod_base)) {
+      return nullopt;
+    }
+    value = value * base + digit;
+  }
+  return MakeAt(span, value);
+}
+
+template <typename T>
+auto StrToNat(LiteralInfo info, SpanU8 span) -> OptAt<T> {
+  static_assert(!std::is_signed<T>::value, "T must be unsigned");
+  if (info.base == Base::Decimal) {
+    return ParseInteger<T, 10>(span);
+  } else {
+    auto is_hex_prefix = [](SpanU8 span) {
+      return span.size() > 2 && span[0] == '0' &&
+             (span[1] == 'x' || span[1] == 'X');
+    };
+
+    assert(info.base == Base::Hex && is_hex_prefix(span));
+    return ParseInteger<T, 16>(span.subspan(2));
+  }
+}
+
+void RemoveSign(SpanU8& span, Sign sign) {
+  if (sign != Sign::None) {
+    remove_prefix(&span, 1);  // Remove + or -.
+  }
+}
+
+template <typename T>
+auto StrToInt(LiteralInfo info, SpanU8 span) -> OptAt<T> {
+  using U = typename std::make_unsigned<T>::type;
+  using S = typename std::make_signed<T>::type;
+
+  RemoveSign(span, info.sign);
+
+  auto value_opt = StrToNat<U>(info, span);
+  if (!value_opt) {
+    return nullopt;
+  }
+  U value = *value_opt;
+
+  // The signed range is [-2**N, 2**N-1], so the maximum is larger for negative
+  // numbers than positive numbers.
+  auto max =
+      U{std::numeric_limits<S>::max()} + (info.sign == Sign::Minus ? 1 : 0);
+  if (value > max) {
+    return nullopt;
+  }
+  if (info.sign == Sign::Minus) {
+    value = ~value + 1;  // ~N + 1 is equivalent to -N.
+  }
+  return MakeAt(span, T(value));
+}
 
 void RemoveUnderscores(SpanU8 span, std::vector<u8>& out) {
   std::copy_if(span.begin(), span.end(), std::back_inserter(out),
                [](u8 c) { return c != '_'; });
 }
 
-struct FixNum {
-  explicit FixNum(LiteralInfo info, SpanU8 orig) : info{info}, span{orig} {}
-
-  size_t size() const { return span.size(); }
-  const char* begin() const { return ToStringView(span).begin(); }
-  const char* end() const { return ToStringView(span).end(); }
-
-  bool FixUnderscores() {
-    if (info.has_underscores == HasUnderscores::Yes) {
-      RemoveUnderscores(span, vec);
-      span = vec;
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  LiteralInfo info;
-  SpanU8 span;
-  std::vector<u8> vec;
-};
-
-struct FixNat : FixNum {
-  explicit FixNat(LiteralInfo info, SpanU8 orig) : FixNum{info, orig} {
-    FixUnderscores();
-  }
-};
-
-struct FixHexNat : FixNum {
-  explicit FixHexNat(LiteralInfo info, SpanU8 orig) : FixNum{info, orig} {
-    FixUnderscores();
-    remove_prefix(&span, 2);  // Skip "0x".
-  }
-};
-
-struct FixInt : FixNum {
-  explicit FixInt(LiteralInfo info, SpanU8 orig) : FixNum(info, orig) {
-    FixUnderscores();
-    assert(orig.size() >= 1);
-    if (info.sign == Sign::Plus) {
-      remove_prefix(&span, 1);  // Skip "+", not allowed by std::from_chars.
-    }
-  }
-};
-
-struct FixHexInt : FixNum {
-  explicit FixHexInt(LiteralInfo info, SpanU8 orig) : FixNum(info, orig) {
-    assert(orig.size() >= 1);
-    switch (info.sign) {
-      case Sign::Plus:
-        FixUnderscores();
-        remove_prefix(&span, 3);  // Skip "+0x", not allowed by std::from_chars.
-        break;
-
-      case Sign::Minus:
-        // Have to remove "-0x" and replace with "-", but need to keep the "-"
-        // at the beginning.
-        vec.push_back('-');
-        RemoveUnderscores(orig.subspan(3), vec);
-        span = vec;
-        break;
-
-      default:
-        FixUnderscores();
-        remove_prefix(&span, 2);  // Skip "0x".
-        break;
-    }
-  }
-};
-
-struct FixFloat : FixNum {
-  explicit FixFloat(LiteralInfo info, SpanU8 orig) : FixNum(info, orig) {
-    if (!FixUnderscores()) {
-      // Copy to vec to null-terminate.
-      std::copy(orig.begin(), orig.end(), std::back_inserter(vec));
-    }
-    // Null-terminate.
-    vec.push_back(0);
-    span = vec;
-  }
-};
-
-}  // namespace
-
 template <typename T>
-auto StrToNat(LiteralInfo info, SpanU8 orig) -> OptAt<T> {
-  T value;
-  std::from_chars_result result = ([&]() {
-    if (info.base == Base::Decimal) {
-      FixNat str{info, orig};
-      return std::from_chars(str.begin(), str.end(), value);
-    } else {
-      assert(info.base == Base::Hex);
-      FixHexNat str{info, orig};
-      return std::from_chars(str.begin(), str.end(), value, 16);
-    }
-  })();
-
-  if (result.ec != std::errc{}) {
-    return {};
-  }
-  return MakeAt(orig, value);
-}
-
-template <typename T>
-auto StrToInt(LiteralInfo info, SpanU8 orig) -> OptAt<T> {
-  T value;
-  std::from_chars_result result = ([&]() {
-    if (info.base == Base::Decimal) {
-      FixInt str{info, orig};
-      return std::from_chars(str.begin(), str.end(), value);
-    } else {
-      assert(info.base == Base::Hex);
-      FixHexInt str{info, orig};
-      return std::from_chars(str.begin(), str.end(), value, 16);
-    }
-  })();
-
-  if (result.ec != std::errc{}) {
-    return {};
-  }
-  return MakeAt(orig, value);
-}
-
-template <typename T>
-auto StrTo(const char* str, char** end, T* value) -> int;
+auto StrToR(const char* str, T* value) -> int;
 
 template <>
-auto StrTo<f32>(const char* str, char** end, f32* value) -> int {
-  return strtorf(str, end, FPI_Round_near, value);
+auto StrToR<f32>(const char* str, f32* value) -> int {
+  return strtorf(str, nullptr, FPI_Round_near, value);
 }
 
 template <>
-auto StrTo<f64>(const char* str, char** end, f64* value) -> int {
-  return strtord(str, end, FPI_Round_near, value);
+auto StrToR<f64>(const char* str, f64* value) -> int {
+  return strtord(str, nullptr, FPI_Round_near, value);
+}
+
+template <typename T>
+auto ParseFloat(SpanU8 span) -> OptAt<T> {
+  T value;
+  int result = StrToR(reinterpret_cast<const char*>(span.begin()), &value);
+  if ((result & STRTOG_Retmask) == STRTOG_NoNumber ||
+      (result & STRTOG_Overflow) != 0) {
+    return nullopt;
+  }
+  return MakeAt(span, value);
 }
 
 template <typename Float>
@@ -227,45 +205,33 @@ auto MakeNanPayload(Sign sign, typename FloatTraits<T>::Int payload) -> T {
 }
 
 template <typename T>
-auto StrToFloat(LiteralInfo info, SpanU8 orig) -> OptAt<T> {
+auto StrToFloat(LiteralInfo info, SpanU8 span) -> OptAt<T> {
   switch (info.kind) {
     case LiteralKind::Normal: {
-      T value;
-      FixFloat str{info, orig};
-      int result = StrTo(str.begin(), nullptr, &value);
-      if ((result & STRTOG_Retmask) == STRTOG_NoNumber ||
-          (result & STRTOG_Overflow) != 0) {
-        return {};
-      }
-      return MakeAt(orig, value);
+      std::vector<u8> vec;
+      RemoveUnderscores(span, vec);  // Always need to copy, to null-terminate.
+      vec.push_back(0);
+      return ParseFloat<T>(vec);
     }
 
     case LiteralKind::Nan:
-      return MakeAt(orig, MakeNan<T>(info.sign));
+      return MakeAt(span, MakeNan<T>(info.sign));
 
     case LiteralKind::NanPayload: {
       using Traits = FloatTraits<T>;
-      typename Traits::Int payload;
-      if (info.sign != Sign::None) {
-        remove_prefix(&orig, 1);  // Remove sign.
+      using Int = typename Traits::Int;
+      RemoveSign(span, info.sign);
+      auto payload = ParseInteger<Int, 16>(span.subspan(6));  // Skip "nan:0x".
+      if (!payload || *payload > Traits::significand_mask) {
+        return nullopt;
       }
-      FixHexNat str{info, orig.subspan(4)};  // Skip "nan:".
-      std::from_chars_result result =
-          std::from_chars(str.begin(), str.end(), payload, 16);
-      if (result.ec != std::errc{}) {
-        return {};
-      }
-      if (payload == 0 || payload > Traits::significand_mask) {
-        return {};
-      }
-      return MakeAt(orig, MakeNanPayload<T>(info.sign, payload));
+      return MakeAt(span, MakeNanPayload<T>(info.sign, *payload));
     }
 
     case LiteralKind::Infinity:
-      return MakeAt(orig, MakeInfinity<T>(info.sign));
+      return MakeAt(span, MakeInfinity<T>(info.sign));
   }
 }
-
 
 }  // namespace text
 }  // namespace wasp
