@@ -29,12 +29,12 @@ template <int base>
 bool IsDigit(u8 c);
 
 template <>
-bool IsDigit<10>(u8 c) {
+inline bool IsDigit<10>(u8 c) {
   return c >= '0' && c <= '9';
 }
 
 template <>
-bool IsDigit<16>(u8 c) {
+inline bool IsDigit<16>(u8 c) {
   return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
          (c >= 'A' && c <= 'F');
 }
@@ -85,7 +85,7 @@ auto StrToNat(LiteralInfo info, SpanU8 span) -> OptAt<T> {
   }
 }
 
-void RemoveSign(SpanU8& span, Sign sign) {
+inline void RemoveSign(SpanU8& span, Sign sign) {
   if (sign != Sign::None) {
     remove_prefix(&span, 1);  // Remove + or -.
   }
@@ -117,7 +117,7 @@ auto StrToInt(LiteralInfo info, SpanU8 span) -> OptAt<T> {
   return MakeAt(span, T(value));
 }
 
-void RemoveUnderscores(SpanU8 span, std::vector<u8>& out) {
+inline void RemoveUnderscores(SpanU8 span, std::vector<u8>& out) {
   std::copy_if(span.begin(), span.end(), std::back_inserter(out),
                [](u8 c) { return c != '_'; });
 }
@@ -126,12 +126,12 @@ template <typename T>
 auto StrToR(const char* str, T* value) -> int;
 
 template <>
-auto StrToR<f32>(const char* str, f32* value) -> int {
+inline auto StrToR<f32>(const char* str, f32* value) -> int {
   return strtorf(str, nullptr, FPI_Round_near, value);
 }
 
 template <>
-auto StrToR<f64>(const char* str, f64* value) -> int {
+inline auto StrToR<f64>(const char* str, f64* value) -> int {
   return strtord(str, nullptr, FPI_Round_near, value);
 }
 
