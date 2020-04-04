@@ -69,7 +69,15 @@ struct Token {
   Token(Location, TokenType, LiteralInfo);
   Token(Location, TokenType, Immediate);
 
-  SpanU8 text() const { return loc; }
+  SpanU8 text() const;
+
+  bool has_opcode() const;
+  bool has_value_type() const;
+  bool has_literal_info() const;
+
+  Opcode opcode() const;
+  ValueType value_type() const;
+  LiteralInfo literal_info() const;
 
   Location loc;
   TokenType type;

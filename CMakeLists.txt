@@ -124,6 +124,7 @@ add_executable(wasp_unittests
   test/binary/test_utils.cc
   test/binary/visitor_test.cc
   test/binary/write_test.cc
+  test/text/formatters_test.cc
   test/text/lex_test.cc
   test/text/numeric_test.cc
   test/tools/argparser_test.cc

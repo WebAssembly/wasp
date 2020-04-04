@@ -76,6 +76,34 @@ inline bool operator!=(const LiteralInfo& lhs, const LiteralInfo& rhs) {
   return !(lhs == rhs);
 }
 
+inline SpanU8 Token::text() const {
+  return loc;
+}
+
+inline bool Token::has_opcode() const {
+  return immediate.index() == 1;
+}
+
+inline bool Token::has_value_type() const {
+  return immediate.index() == 2;
+}
+
+inline bool Token::has_literal_info() const {
+  return immediate.index() == 3;
+}
+
+inline Opcode Token::opcode() const {
+  return get<Opcode>(immediate);
+}
+
+inline ValueType Token::value_type() const {
+  return get<ValueType>(immediate);
+}
+
+inline LiteralInfo Token::literal_info() const {
+  return get<LiteralInfo>(immediate);
+}
+
 inline bool operator==(const Token& lhs, const Token& rhs) {
   return lhs.loc == rhs.loc && lhs.type == rhs.type &&
          lhs.immediate == rhs.immediate;
