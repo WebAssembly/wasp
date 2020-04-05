@@ -14,12 +14,11 @@
 // limitations under the License.
 //
 
-#include "test/binary/test_utils.h"
+#include "test/test_utils.h"
 
 #include "gtest/gtest.h"
 
 namespace wasp {
-namespace binary {
 namespace test {
 
 std::string ErrorToString(const Error& error) {
@@ -86,5 +85,4 @@ void ExpectError(const ExpectedError& expected,
 }
 
 }  // namespace test
-}  // namespace binary
 }  // namespace wasp

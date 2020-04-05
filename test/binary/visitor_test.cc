@@ -14,19 +14,19 @@
 // limitations under the License.
 //
 
+#include "wasp/binary/visitor.h"
+
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
-
-#include "test/binary/test_utils.h"
+#include "gtest/gtest.h"
+#include "test/test_utils.h"
 #include "wasp/base/features.h"
 #include "wasp/binary/lazy_module.h"
-#include "wasp/binary/visitor.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
-using namespace ::wasp::binary::test;
+using namespace ::wasp::test;
 
 namespace {
 

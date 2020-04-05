@@ -21,50 +21,18 @@
 #include <vector>
 
 #include "wasp/base/errors.h"
-#include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 
 namespace wasp {
 namespace binary {
 
-struct ConstantExpression;
 struct Expression;
 
 namespace test {
 
-struct ErrorContext {
-  Location loc;
-  std::string desc;
-};
-
-struct ErrorContextLoc {
-  Location::index_type pos;
-  std::string desc;
-};
-
-using Error = std::vector<ErrorContext>;
-using ExpectedError = std::vector<ErrorContextLoc>;
-
-class TestErrors : public Errors {
- public:
-  std::vector<ErrorContext> context_stack;
-  std::vector<Error> errors;
-
- protected:
-  void HandlePushContext(Location loc, string_view desc);
-  void HandlePopContext();
-  void HandleOnError(Location loc, string_view message);
-};
-
 // Make Expression from literal string.
 Expression operator"" _expr(const char* str, size_t N);
-
-void ExpectNoErrors(const TestErrors&);
-void ExpectErrors(const std::vector<ExpectedError>&,
-                  const TestErrors&,
-                  SpanU8 orig_data);
-void ExpectError(const ExpectedError&, const TestErrors&, SpanU8 orig_data);
 
 }  // namespace test
 }  // namespace binary

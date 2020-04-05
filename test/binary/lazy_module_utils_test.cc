@@ -20,12 +20,11 @@
 #include <map>
 
 #include "gtest/gtest.h"
-
-#include "test/binary/test_utils.h"
+#include "test/test_utils.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
-using namespace ::wasp::binary::test;
+using namespace ::wasp::test;
 
 namespace {
 

@@ -17,12 +17,12 @@
 #include "wasp/binary/lazy_module.h"
 
 #include "gtest/gtest.h"
-#include "test/binary/test_utils.h"
+#include "test/test_utils.h"
 #include "wasp/base/macros.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
-using namespace ::wasp::binary::test;
+using namespace ::wasp::test;
 
 TEST(LazyModuleTest, Basic) {
   Features features;

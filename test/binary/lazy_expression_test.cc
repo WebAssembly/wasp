@@ -15,15 +15,14 @@
 //
 
 #include "wasp/binary/lazy_expression.h"
-#include "wasp/binary/read/context.h"
 
 #include "gtest/gtest.h"
-
-#include "test/binary/test_utils.h"
+#include "test/test_utils.h"
+#include "wasp/binary/read/context.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
-using namespace ::wasp::binary::test;
+using namespace ::wasp::test;
 
 TEST(LazyExprTest, Basic) {
   TestErrors errors;

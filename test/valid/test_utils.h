@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "test/binary/test_utils.h"
+#include "test/test_utils.h"
 #include "wasp/base/errors.h"
 #include "wasp/base/format.h"
 
@@ -28,8 +28,8 @@ namespace wasp {
 namespace valid {
 namespace test {
 
-using Error = wasp::binary::test::Error;
-using TestErrors = wasp::binary::test::TestErrors;
+using Error = wasp::test::Error;
+using TestErrors = wasp::test::TestErrors;
 
 // TODO: Support location data in tests?
 using ExpectedError = std::vector<std::string>;

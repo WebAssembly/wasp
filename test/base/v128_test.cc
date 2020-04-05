@@ -17,8 +17,7 @@
 #include "wasp/base/v128.h"
 
 #include "gtest/gtest.h"
-
-#include "test/binary/test_utils.h"
+#include "test/test_utils.h"
 
 using namespace ::wasp;
 

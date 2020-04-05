@@ -104,6 +104,7 @@ target_link_libraries(wasp
 
 add_executable(wasp_unittests
   src/tools/argparser.cc
+  test/test_utils.cc
   test/base/enumerate_test.cc
   test/base/formatters_test.cc
   test/base/hash_test.cc
@@ -121,7 +122,6 @@ add_executable(wasp_unittests
   test/binary/lazy_sequence_test.cc
   test/binary/read_test.cc
   test/binary/read_linking_test.cc
-  test/binary/test_utils.cc
   test/binary/visitor_test.cc
   test/binary/write_test.cc
   test/text/formatters_test.cc

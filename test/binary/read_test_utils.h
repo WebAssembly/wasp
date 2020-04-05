@@ -18,8 +18,9 @@
 #define WASP_BINARY_READ_TEST_UTILS_H_
 
 #include <utility>
+
 #include "gtest/gtest.h"
-#include "test/binary/test_utils.h"
+#include "test/test_utils.h"
 #include "wasp/base/features.h"
 #include "wasp/base/span.h"
 #include "wasp/binary/read.h"
@@ -34,11 +35,11 @@ void ExpectRead(const T& expected,
                 wasp::SpanU8 data,
                 const wasp::Features& features,
                 Args&&... args) {
-  wasp::binary::test::TestErrors errors;
+  wasp::test::TestErrors errors;
   wasp::binary::Context context{features, errors};
   auto result =
       wasp::binary::Read<T>(&data, context, std::forward<Args>(args)...);
-  wasp::binary::test::ExpectNoErrors(errors);
+  wasp::test::ExpectNoErrors(errors);
   EXPECT_NE(nullptr, result->loc().data());
   EXPECT_EQ(expected, **result);
   EXPECT_EQ(0u, data.size());
@@ -50,21 +51,21 @@ void ExpectRead(const T& expected, wasp::SpanU8 data) {
 }
 
 template <typename T, typename... Args>
-void ExpectReadFailure(const wasp::binary::test::ExpectedError& expected,
+void ExpectReadFailure(const wasp::test::ExpectedError& expected,
                        wasp::SpanU8 data,
                        const wasp::Features& features,
                        Args&&... args) {
-  wasp::binary::test::TestErrors errors;
+  wasp::test::TestErrors errors;
   wasp::binary::Context context{features, errors};
   const wasp::SpanU8 orig_data = data;
   auto result =
       wasp::binary::Read<T>(&data, context, std::forward<Args>(args)...);
-  wasp::binary::test::ExpectError(expected, errors, orig_data);
+  wasp::test::ExpectError(expected, errors, orig_data);
   EXPECT_EQ(wasp::nullopt, result);
 }
 
 template <typename T>
-void ExpectReadFailure(const wasp::binary::test::ExpectedError& expected,
+void ExpectReadFailure(const wasp::test::ExpectedError& expected,
                        wasp::SpanU8 data) {
   ExpectReadFailure<T>(expected, data, Features{});
 }
