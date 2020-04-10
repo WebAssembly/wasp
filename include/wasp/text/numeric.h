@@ -17,20 +17,20 @@
 #ifndef WASP_TEXT_NUMERIC_H_
 #define WASP_TEXT_NUMERIC_H_
 
-#include "wasp/base/at.h"
+#include "wasp/base/optional.h"
 #include "wasp/text/types.h"
 
 namespace wasp {
 namespace text {
 
 template <typename T>
-auto StrToNat(LiteralInfo, SpanU8) -> OptAt<T>;
+auto StrToNat(LiteralInfo, SpanU8) -> optional<T>;
 
 template <typename T>
-auto StrToInt(LiteralInfo, SpanU8) -> OptAt<T>;
+auto StrToInt(LiteralInfo, SpanU8) -> optional<T>;
 
 template <typename T>
-auto StrToFloat(LiteralInfo, SpanU8) -> OptAt<T>;
+auto StrToFloat(LiteralInfo, SpanU8) -> optional<T>;
 
 }  // namespace text
 }  // namespace wasp

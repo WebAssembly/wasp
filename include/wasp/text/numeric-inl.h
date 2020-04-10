@@ -40,7 +40,7 @@ inline bool IsDigit<16>(u8 c) {
 }
 
 template <typename T, int base>
-auto ParseInteger(SpanU8 span) -> OptAt<T> {
+auto ParseInteger(SpanU8 span) -> optional<T> {
   static constexpr const u8 DigitToValue[256] = {
       0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,  //
       0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,  //
@@ -66,11 +66,11 @@ auto ParseInteger(SpanU8 span) -> OptAt<T> {
     }
     value = value * base + digit;
   }
-  return MakeAt(span, value);
+  return value;
 }
 
 template <typename T>
-auto StrToNat(LiteralInfo info, SpanU8 span) -> OptAt<T> {
+auto StrToNat(LiteralInfo info, SpanU8 span) -> optional<T> {
   static_assert(!std::is_signed<T>::value, "T must be unsigned");
   if (info.base == Base::Decimal) {
     return ParseInteger<T, 10>(span);
@@ -92,7 +92,7 @@ inline void RemoveSign(SpanU8& span, Sign sign) {
 }
 
 template <typename T>
-auto StrToInt(LiteralInfo info, SpanU8 span) -> OptAt<T> {
+auto StrToInt(LiteralInfo info, SpanU8 span) -> optional<T> {
   using U = typename std::make_unsigned<T>::type;
   using S = typename std::make_signed<T>::type;
 
@@ -114,7 +114,7 @@ auto StrToInt(LiteralInfo info, SpanU8 span) -> OptAt<T> {
   if (info.sign == Sign::Minus) {
     value = ~value + 1;  // ~N + 1 is equivalent to -N.
   }
-  return MakeAt(span, T(value));
+  return value;
 }
 
 inline void RemoveUnderscores(SpanU8 span, std::vector<u8>& out) {
@@ -136,14 +136,14 @@ inline auto StrToR<f64>(const char* str, f64* value) -> int {
 }
 
 template <typename T>
-auto ParseFloat(SpanU8 span) -> OptAt<T> {
+auto ParseFloat(SpanU8 span) -> optional<T> {
   T value;
   int result = StrToR(reinterpret_cast<const char*>(span.begin()), &value);
   if ((result & STRTOG_Retmask) == STRTOG_NoNumber ||
       (result & STRTOG_Overflow) != 0) {
     return nullopt;
   }
-  return MakeAt(span, value);
+  return value;
 }
 
 template <typename Float>
@@ -205,7 +205,7 @@ auto MakeNanPayload(Sign sign, typename FloatTraits<T>::Int payload) -> T {
 }
 
 template <typename T>
-auto StrToFloat(LiteralInfo info, SpanU8 span) -> OptAt<T> {
+auto StrToFloat(LiteralInfo info, SpanU8 span) -> optional<T> {
   switch (info.kind) {
     case LiteralKind::Normal: {
       std::vector<u8> vec;
@@ -215,7 +215,7 @@ auto StrToFloat(LiteralInfo info, SpanU8 span) -> OptAt<T> {
     }
 
     case LiteralKind::Nan:
-      return MakeAt(span, MakeNan<T>(info.sign));
+      return MakeNan<T>(info.sign);
 
     case LiteralKind::NanPayload: {
       using Traits = FloatTraits<T>;
@@ -225,11 +225,11 @@ auto StrToFloat(LiteralInfo info, SpanU8 span) -> OptAt<T> {
       if (!payload || *payload > Traits::significand_mask) {
         return nullopt;
       }
-      return MakeAt(span, MakeNanPayload<T>(info.sign, *payload));
+      return MakeNanPayload<T>(info.sign, *payload);
     }
 
     case LiteralKind::Infinity:
-      return MakeAt(span, MakeInfinity<T>(info.sign));
+      return MakeInfinity<T>(info.sign);
   }
 }
 

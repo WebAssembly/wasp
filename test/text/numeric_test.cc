@@ -220,7 +220,7 @@ void ExpectFloat(SpanU8 span, LiteralInfo info, Int expected) {
   static_assert(sizeof(Float) == sizeof(Int), "size mismatch");
   auto value_opt = StrToFloat<Float>(info, span);
   ASSERT_TRUE(value_opt.has_value());
-  Int actual = Bitcast<Int>(value_opt->value());
+  Int actual = Bitcast<Int>(*value_opt);
   EXPECT_EQ(expected, actual) << "expected " << expected << " got " << actual
                               << " (\"" << ToStringView(span) << "\")";
 }
