@@ -134,11 +134,12 @@ TEST(NumericTest, StrToNat_u32) {
   }
 }
 
-TEST(NumericTest, StrToInt_s32) {
+template <typename T>
+void Test_StrToInt32() {
   struct {
     SpanU8 span;
     LiteralInfo info;
-    s32 value;
+    T value;
   } tests[] = {
       {"0"_su8, LI::Number(Sign::None, HU::No), 0},
       {"12"_su8, LI::Number(Sign::None, HU::No), 12},
@@ -165,16 +166,16 @@ TEST(NumericTest, StrToInt_s32) {
       {"+2_147_483_647"_su8, LI::Number(Sign::Plus, HU::Yes), 2147483647},
 
       {"-0"_su8, LI::Number(Sign::Minus, HU::No), 0},
-      {"-12"_su8, LI::Number(Sign::Minus, HU::No), -12},
-      {"-2345"_su8, LI::Number(Sign::Minus, HU::No), -2345},
-      {"-345678"_su8, LI::Number(Sign::Minus, HU::No), -345678},
-      {"-45678901"_su8, LI::Number(Sign::Minus, HU::No), -45678901},
-      {"-2147483648"_su8, LI::Number(Sign::Minus, HU::No), -2147483648},
-      {"-1_2"_su8, LI::Number(Sign::Minus, HU::Yes), -12},
-      {"-2_34_5"_su8, LI::Number(Sign::Minus, HU::Yes), -2345},
-      {"-34_56_78"_su8, LI::Number(Sign::Minus, HU::Yes), -345678},
-      {"-4567_8901"_su8, LI::Number(Sign::Minus, HU::Yes), -45678901},
-      {"-2_147_483_648"_su8, LI::Number(Sign::Minus, HU::Yes), -2147483648},
+      {"-12"_su8, LI::Number(Sign::Minus, HU::No), T(-12)},
+      {"-2345"_su8, LI::Number(Sign::Minus, HU::No), T(-2345)},
+      {"-345678"_su8, LI::Number(Sign::Minus, HU::No), T(-345678)},
+      {"-45678901"_su8, LI::Number(Sign::Minus, HU::No), T(-45678901)},
+      {"-2147483648"_su8, LI::Number(Sign::Minus, HU::No), T(-2147483648)},
+      {"-1_2"_su8, LI::Number(Sign::Minus, HU::Yes), T(-12)},
+      {"-2_34_5"_su8, LI::Number(Sign::Minus, HU::Yes), T(-2345)},
+      {"-34_56_78"_su8, LI::Number(Sign::Minus, HU::Yes), T(-345678)},
+      {"-4567_8901"_su8, LI::Number(Sign::Minus, HU::Yes), T(-45678901)},
+      {"-2_147_483_648"_su8, LI::Number(Sign::Minus, HU::Yes), T(-2147483648)},
 
       {"0x123"_su8, LI::HexNumber(Sign::None, HU::No), 0x123},
       {"0x234567"_su8, LI::HexNumber(Sign::None, HU::No), 0x234567},
@@ -198,21 +199,28 @@ TEST(NumericTest, StrToInt_s32) {
       {"+0x7_89a_bcde"_su8, LI::HexNumber(Sign::Plus, HU::Yes), 0x789abcde},
       {"+0x7f_ff_ff_ff"_su8, LI::HexNumber(Sign::Plus, HU::Yes), 0x7fffffff},
 
-      {"-0x123"_su8, LI::HexNumber(Sign::Minus, HU::No), -0x123},
-      {"-0x234567"_su8, LI::HexNumber(Sign::Minus, HU::No), -0x234567},
-      {"-0x3456789a"_su8, LI::HexNumber(Sign::Minus, HU::No), -0x3456789a},
-      {"-0x789abcde"_su8, LI::HexNumber(Sign::Minus, HU::No), -0x789abcde},
-      {"-0x80000000"_su8, LI::HexNumber(Sign::Minus, HU::No), -0x7fffffff - 1},
-      {"-0x1_23"_su8, LI::HexNumber(Sign::Minus, HU::Yes), -0x123},
-      {"-0x23_45_67"_su8, LI::HexNumber(Sign::Minus, HU::Yes), -0x234567},
-      {"-0x345_678_9a"_su8, LI::HexNumber(Sign::Minus, HU::Yes), -0x3456789a},
-      {"-0x7_89a_bcde"_su8, LI::HexNumber(Sign::Minus, HU::Yes), -0x789abcde},
-      {"-0x80_00_00_00"_su8, LI::HexNumber(Sign::Minus, HU::Yes),
-       -0x7fffffff - 1},
+      {"-0x123"_su8, LI::HexNumber(Sign::Minus, HU::No), T(-0x123)},
+      {"-0x234567"_su8, LI::HexNumber(Sign::Minus, HU::No), T(-0x234567)},
+      {"-0x3456789a"_su8, LI::HexNumber(Sign::Minus, HU::No), T(-0x3456789a)},
+      {"-0x789abcde"_su8, LI::HexNumber(Sign::Minus, HU::No), T(-0x789abcde)},
+      {"-0x80000000"_su8, LI::HexNumber(Sign::Minus, HU::No), T(-0x7fffffff - 1)},
+      {"-0x1_23"_su8, LI::HexNumber(Sign::Minus, HU::Yes), T(-0x123)},
+      {"-0x23_45_67"_su8, LI::HexNumber(Sign::Minus, HU::Yes), T(-0x234567)},
+      {"-0x345_678_9a"_su8, LI::HexNumber(Sign::Minus, HU::Yes), T(-0x3456789a)},
+      {"-0x7_89a_bcde"_su8, LI::HexNumber(Sign::Minus, HU::Yes), T(-0x789abcde)},
+      {"-0x80_00_00_00"_su8, LI::HexNumber(Sign::Minus, HU::Yes), T(-0x7fffffff - 1)},
   };
   for (auto test : tests) {
-    EXPECT_EQ(test.value, StrToInt<s32>(test.info, test.span));
+    EXPECT_EQ(test.value, StrToInt<T>(test.info, test.span));
   }
+}
+
+TEST(NumericTest, StrToInt_s32) {
+  Test_StrToInt32<s32>();
+}
+
+TEST(NumericTest, StrToInt_u32) {
+  Test_StrToInt32<u32>();
 }
 
 template <typename Float, typename Int>
