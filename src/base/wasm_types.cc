@@ -1,5 +1,5 @@
 //
-// Copyright 2018 WebAssembly Community Group participants
+// Copyright 2020 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,27 +14,23 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BASE_TYPES_H_
-#define WASP_BASE_TYPES_H_
+#include "wasp/base/wasm_types.h"
 
-#include <cstdint>
-#include <vector>
+#include "src/base/operator_eq_ne_macros.h"
+#include "src/base/std_hash_macros.h"
 
 namespace wasp {
 
-using s8 = int8_t;
-using u8 = uint8_t;
-using s16 = int16_t;
-using u16 = uint16_t;
-using s32 = int32_t;
-using u32 = uint32_t;
-using s64 = int64_t;
-using u64 = uint64_t;
-using f32 = float;
-using f64 = double;
+Limits::Limits(At<u32> min) : min{min}, shared{Shared::No} {}
 
-using Index = u32;
+Limits::Limits(At<u32> min, OptAt<u32> max)
+    : min{min}, max{max}, shared{Shared::No} {}
+
+Limits::Limits(At<u32> min, OptAt<u32> max, At<Shared> shared)
+    : min{min}, max{max}, shared{shared} {}
+
+WASP_OPERATOR_EQ_NE_3(Limits, min, max, shared)
 
 }  // namespace wasp
 
-#endif  // WASP_BASE_TYPES_H_
+WASP_STD_HASH_3(::wasp::Limits, min, max, shared)

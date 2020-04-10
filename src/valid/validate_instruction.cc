@@ -752,8 +752,8 @@ bool MemoryFill(Location loc, Context& context) {
   return AllTrue(memory_type, PopTypes(loc, span_i32_i32_i32, context));
 }
 
-bool CheckElementType(binary::ElementType expected,
-                      At<binary::ElementType> actual,
+bool CheckElementType(ElementType expected,
+                      At<ElementType> actual,
                       Context& context) {
   if (!TypesMatch(ElementTypeToStackType(expected),
                   ElementTypeToStackType(actual))) {

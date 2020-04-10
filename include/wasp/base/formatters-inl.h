@@ -78,7 +78,7 @@ typename Ctx::iterator formatter<std::vector<T>>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::v128>::format(::wasp::v128 self,
+typename Ctx::iterator formatter<::wasp::v128>::format(const ::wasp::v128& self,
                                                        Ctx& ctx) {
   memory_buffer buf;
   string_view space = "";
@@ -133,6 +133,139 @@ typename Ctx::iterator formatter<::wasp::ValueType>::format(
       WASP_UNREACHABLE();
   }
   return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::ElementType>::format(
+    const ::wasp::ElementType& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+#define WASP_V(val, Name, str, ...) \
+  case ::wasp::ElementType::Name:   \
+    result = str;                   \
+    break;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
+#include "wasp/base/def/element_type.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::ExternalKind>::format(
+    const ::wasp::ExternalKind& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+#define WASP_V(val, Name, str, ...) \
+  case ::wasp::ExternalKind::Name:  \
+    result = str;                   \
+    break;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
+#include "wasp/base/def/external_kind.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::EventAttribute>::format(
+    const ::wasp::EventAttribute& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+#define WASP_V(val, Name, str)       \
+  case ::wasp::EventAttribute::Name: \
+    result = str;                    \
+    break;
+#include "wasp/base/def/event_attribute.def"
+#undef WASP_V
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::Mutability>::format(
+    const ::wasp::Mutability& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+#define WASP_V(val, Name, str)   \
+  case ::wasp::Mutability::Name: \
+    result = str;                \
+    break;
+#include "wasp/base/def/mutability.def"
+#undef WASP_V
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::SegmentType>::format(
+    const ::wasp::SegmentType& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+    case ::wasp::SegmentType::Active:
+      result = "active";
+      break;
+    case ::wasp::SegmentType::Passive:
+      result = "passive";
+      break;
+    case ::wasp::SegmentType::Declared:
+      result = "declared";
+      break;
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::Shared>::format(
+    const ::wasp::Shared& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+    case ::wasp::Shared::No:
+      result = "unshared";
+      break;
+    case ::wasp::Shared::Yes:
+      result = "shared";
+      break;
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::Limits>::format(
+    const ::wasp::Limits& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  if (self.max) {
+    if (self.shared == ::wasp::Shared::Yes) {
+      format_to(buf, "{{min {}, max {}, {}}}", self.min, *self.max,
+                self.shared);
+    } else {
+      format_to(buf, "{{min {}, max {}}}", self.min, *self.max);
+    }
+  } else {
+    format_to(buf, "{{min {}}}", self.min);
+  }
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 }  // namespace fmt

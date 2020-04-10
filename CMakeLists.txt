@@ -55,6 +55,7 @@ add_library(wasplib
   src/base/str_to_u32.cc
   src/base/utf8.cc
   src/base/v128.cc
+  src/base/wasm_types.cc
   src/binary/context.cc
   src/binary/formatters.cc
   src/binary/lazy_expression.cc

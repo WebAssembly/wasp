@@ -28,20 +28,20 @@ namespace encoding {
 
 struct EventAttribute {
 #define WASP_V(val, Name, str) static constexpr u8 Name = val;
-#include "wasp/binary/def/event_attribute.def"
+#include "wasp/base/def/event_attribute.def"
 #undef WASP_V
 
-  static u8 Encode(::wasp::binary::EventAttribute);
-  static optional<::wasp::binary::EventAttribute> Decode(u8);
+  static u8 Encode(::wasp::EventAttribute);
+  static optional<::wasp::EventAttribute> Decode(u8);
 };
 
 // static
-inline u8 EventAttribute::Encode(::wasp::binary::EventAttribute decoded) {
+inline u8 EventAttribute::Encode(::wasp::EventAttribute decoded) {
   switch (decoded) {
-#define WASP_V(val, Name, str)               \
-  case ::wasp::binary::EventAttribute::Name: \
+#define WASP_V(val, Name, str)       \
+  case ::wasp::EventAttribute::Name: \
     return val;
-#include "wasp/binary/def/event_attribute.def"
+#include "wasp/base/def/event_attribute.def"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -49,12 +49,12 @@ inline u8 EventAttribute::Encode(::wasp::binary::EventAttribute decoded) {
 }
 
 // static
-inline optional<::wasp::binary::EventAttribute> EventAttribute::Decode(u8 val) {
+inline optional<::wasp::EventAttribute> EventAttribute::Decode(u8 val) {
   switch (val) {
 #define WASP_V(val, Name, str) \
   case Name:                   \
-    return ::wasp::binary::EventAttribute::Name;
-#include "wasp/binary/def/event_attribute.def"
+    return ::wasp::EventAttribute::Name;
+#include "wasp/base/def/event_attribute.def"
 #undef WASP_V
     default:
       return nullopt;

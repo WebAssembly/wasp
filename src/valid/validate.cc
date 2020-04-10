@@ -61,7 +61,7 @@ bool Validate(const At<binary::ConstantExpression>& value,
       const auto& global = context.globals[index];
       actual_type = global.valtype;
 
-      if (context.globals[index].mut == binary::Mutability::Var) {
+      if (context.globals[index].mut == Mutability::Var) {
         context.errors->OnError(
             value->instruction->index_immediate().loc(),
             "A constant expression cannot contain a mutable global");
@@ -116,18 +116,18 @@ bool Validate(const At<binary::DataSegment>& value, Context& context) {
 }
 
 bool Validate(const At<binary::ElementExpression>& value,
-              binary::ElementType element_type,
+              ElementType element_type,
               Context& context) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "element expression"};
   bool valid = true;
-  binary::ElementType actual_type;
+  ElementType actual_type;
   switch (value->instruction->opcode) {
     case Opcode::RefNull:
-      actual_type = binary::ElementType::Funcref;
+      actual_type = ElementType::Funcref;
       break;
 
     case Opcode::RefFunc: {
-      actual_type = binary::ElementType::Funcref;
+      actual_type = ElementType::Funcref;
       auto index = value->instruction->index_immediate();
       if (!ValidateIndex(index, context.functions.size(), "function index",
                          context)) {
@@ -165,26 +165,26 @@ bool Validate(const At<binary::ElementSegment>& value, Context& context) {
     auto&& desc = value->indexes();
     Index max_index;
     switch (desc.kind) {
-      case binary::ExternalKind::Function:
+      case ExternalKind::Function:
         max_index = context.functions.size();
         break;
-      case binary::ExternalKind::Table:
+      case ExternalKind::Table:
         max_index = context.tables.size();
         break;
-      case binary::ExternalKind::Memory:
+      case ExternalKind::Memory:
         max_index = context.memories.size();
         break;
-      case binary::ExternalKind::Global:
+      case ExternalKind::Global:
         max_index = context.globals.size();
         break;
-      case binary::ExternalKind::Event:
+      case ExternalKind::Event:
         max_index = context.events.size();
         break;
     }
 
     for (auto index : desc.init) {
       valid &= ValidateIndex(index, max_index, "index", context);
-      if (desc.kind == binary::ExternalKind::Function) {
+      if (desc.kind == ExternalKind::Function) {
         context.declared_functions.insert(index);
       }
     }
@@ -198,8 +198,8 @@ bool Validate(const At<binary::ElementSegment>& value, Context& context) {
   return valid;
 }
 
-bool Validate(const At<binary::ElementType>& actual,
-              binary::ElementType expected,
+bool Validate(const At<ElementType>& actual,
+              ElementType expected,
               Context& context) {
   if (actual != expected) {
     context.errors->OnError(
@@ -222,26 +222,26 @@ bool Validate(const At<binary::Export>& value, Context& context) {
   context.export_names.insert(value->name);
 
   switch (value->kind) {
-    case binary::ExternalKind::Function:
+    case ExternalKind::Function:
       valid &= ValidateIndex(value->index, context.functions.size(),
                              "function index", context);
       break;
 
-    case binary::ExternalKind::Table:
+    case ExternalKind::Table:
       valid &= ValidateIndex(value->index, context.tables.size(), "table index",
                              context);
       break;
 
-    case binary::ExternalKind::Memory:
+    case ExternalKind::Memory:
       valid &= ValidateIndex(value->index, context.memories.size(),
                              "memory index", context);
       break;
 
-    case binary::ExternalKind::Global:
+    case ExternalKind::Global:
       if (ValidateIndex(value->index, context.globals.size(), "global index",
                         context)) {
         const auto& global = context.globals[value->index];
-        if (global.mut == binary::Mutability::Var &&
+        if (global.mut == Mutability::Var &&
             !context.features.mutable_globals_enabled()) {
           context.errors->OnError(value->index.loc(),
                                   "Mutable globals cannot be exported");
@@ -252,7 +252,7 @@ bool Validate(const At<binary::Export>& value, Context& context) {
       }
       break;
 
-    case binary::ExternalKind::Event:
+    case ExternalKind::Event:
       valid &= ValidateIndex(value->index, context.events.size(), "event index",
                              context);
       break;
@@ -331,24 +331,24 @@ bool Validate(const At<binary::Import>& value, Context& context) {
   bool valid = true;
 
   switch (value->kind()) {
-    case binary::ExternalKind::Function:
+    case ExternalKind::Function:
       valid &= Validate(binary::Function{value->index()}, context);
       context.imported_function_count++;
       break;
 
-    case binary::ExternalKind::Table:
+    case ExternalKind::Table:
       valid &= Validate(binary::Table{value->table_type()}, context);
       break;
 
-    case binary::ExternalKind::Memory:
+    case ExternalKind::Memory:
       valid &= Validate(binary::Memory{value->memory_type()}, context);
       break;
 
-    case binary::ExternalKind::Global:
+    case ExternalKind::Global:
       context.globals.push_back(value->global_type());
       context.imported_global_count++;
       valid &= Validate(value->global_type(), context);
-      if (value->global_type()->mut == binary::Mutability::Var &&
+      if (value->global_type()->mut == Mutability::Var &&
           !context.features.mutable_globals_enabled()) {
         context.errors->OnError(value->global_type().loc(),
                                 "Mutable globals cannot be imported");
@@ -356,7 +356,7 @@ bool Validate(const At<binary::Import>& value, Context& context) {
       }
       break;
 
-    case binary::ExternalKind::Event:
+    case ExternalKind::Event:
       valid &= Validate(binary::Event{value->event_type()}, context);
       break;
 
@@ -380,7 +380,7 @@ bool ValidateIndex(const At<Index>& index,
   return true;
 }
 
-bool Validate(const At<binary::Limits>& value, Index max, Context& context) {
+bool Validate(const At<Limits>& value, Index max, Context& context) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "limits"};
   bool valid = true;
   if (value->min > max) {
@@ -422,7 +422,7 @@ bool Validate(const At<binary::MemoryType>& value, Context& context) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "memory type"};
   constexpr Index kMaxPages = 65536;
   bool valid = Validate(value->limits, kMaxPages, context);
-  if (value->limits->shared == binary::Shared::Yes &&
+  if (value->limits->shared == Shared::Yes &&
       !context.features.threads_enabled()) {
     context.errors->OnError(value.loc(), "Memories cannot be shared");
     valid = false;
@@ -476,7 +476,7 @@ bool Validate(const At<binary::TableType>& value, Context& context) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "table type"};
   constexpr Index kMaxElements = std::numeric_limits<Index>::max();
   bool valid = Validate(value->limits, kMaxElements, context);
-  if (value->limits->shared == binary::Shared::Yes) {
+  if (value->limits->shared == Shared::Yes) {
     context.errors->OnError(value.loc(), "Tables cannot be shared");
     valid = false;
   }

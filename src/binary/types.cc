@@ -209,14 +209,6 @@ Instruction::Instruction(Opcode opcode, ShuffleImmediate immediate)
 Instruction::Instruction(Opcode opcode, const ValueTypes& immediate)
     : opcode(opcode), immediate(immediate) {}
 
-Limits::Limits(At<u32> min) : min{min}, shared{Shared::No} {}
-
-Limits::Limits(At<u32> min, OptAt<u32> max)
-    : min{min}, max{max}, shared{Shared::No} {}
-
-Limits::Limits(At<u32> min, OptAt<u32> max, At<Shared> shared)
-    : min{min}, max{max}, shared{shared} {}
-
 Section::Section(At<KnownSection> contents) : contents{contents} {}
 
 Section::Section(At<CustomSection> contents) : contents{contents} {}
@@ -251,7 +243,6 @@ WASP_OPERATOR_EQ_NE_3(Import, module, name, desc)
 WASP_OPERATOR_EQ_NE_2(InitImmediate, segment_index, dst_index)
 WASP_OPERATOR_EQ_NE_2(Instruction, opcode, immediate)
 WASP_OPERATOR_EQ_NE_2(KnownSection, id, data)
-WASP_OPERATOR_EQ_NE_3(Limits, min, max, shared)
 WASP_OPERATOR_EQ_NE_2(Locals, count, type)
 WASP_OPERATOR_EQ_NE_2(MemArgImmediate, align_log2, offset)
 WASP_OPERATOR_EQ_NE_1(Memory, memory_type)
@@ -286,7 +277,6 @@ WASP_STD_HASH_3(::wasp::binary::Import, module, name, desc)
 WASP_STD_HASH_2(::wasp::binary::InitImmediate, segment_index, dst_index)
 WASP_STD_HASH_2(::wasp::binary::Instruction, opcode, immediate)
 WASP_STD_HASH_2(::wasp::binary::KnownSection, id, data)
-WASP_STD_HASH_3(::wasp::binary::Limits, min, max, shared)
 WASP_STD_HASH_2(::wasp::binary::Locals, count, type)
 WASP_STD_HASH_2(::wasp::binary::MemArgImmediate, align_log2, offset)
 WASP_STD_HASH_1(::wasp::binary::Memory, memory_type)

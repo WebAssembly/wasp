@@ -24,6 +24,7 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/v128.h"
+#include "wasp/base/wasm_types.h"
 
 namespace fmt {
 
@@ -62,12 +63,6 @@ struct formatter<std::vector<T>> : formatter<::wasp::span<const T>> {
   typename Ctx::iterator format(const std::vector<T>&, Ctx&);
 };
 
-template <>
-struct formatter<::wasp::v128> : formatter<string_view> {
-  template <typename Ctx>
-  typename Ctx::iterator format(::wasp::v128, Ctx&);
-};
-
 #define WASP_DEFINE_FORMATTER(Name)                           \
   template <>                                                 \
   struct formatter<::wasp::Name> : formatter<string_view> {   \
@@ -75,8 +70,16 @@ struct formatter<::wasp::v128> : formatter<string_view> {
     typename Ctx::iterator format(const ::wasp::Name&, Ctx&); \
   } /* No semicolon. */
 
+WASP_DEFINE_FORMATTER(v128);
 WASP_DEFINE_FORMATTER(Opcode);
 WASP_DEFINE_FORMATTER(ValueType);
+WASP_DEFINE_FORMATTER(ElementType);
+WASP_DEFINE_FORMATTER(ExternalKind);
+WASP_DEFINE_FORMATTER(EventAttribute);
+WASP_DEFINE_FORMATTER(Mutability);
+WASP_DEFINE_FORMATTER(SegmentType);
+WASP_DEFINE_FORMATTER(Shared);
+WASP_DEFINE_FORMATTER(Limits);
 
 #undef WASP_DEFINE_FORMATTER
 

@@ -37,15 +37,11 @@ bool Validate(const At<binary::DataCount>&, Context&);
 
 bool Validate(const At<binary::DataSegment>&, Context&);
 
-bool Validate(const At<binary::ElementExpression>&,
-              binary::ElementType,
-              Context&);
+bool Validate(const At<binary::ElementExpression>&, ElementType, Context&);
 
 bool Validate(const At<binary::ElementSegment>&, Context&);
 
-bool Validate(const At<binary::ElementType>& actual,
-              binary::ElementType expected,
-              Context&);
+bool Validate(const At<ElementType>& actual, ElementType expected, Context&);
 
 bool Validate(const At<binary::Export>&, Context&);
 
@@ -70,7 +66,7 @@ bool ValidateIndex(const At<Index>& index,
 
 bool Validate(const At<binary::Instruction>&, Context&);
 
-bool Validate(const At<binary::Limits>&, Index max, Context&);
+bool Validate(const At<Limits>&, Index max, Context&);
 
 bool Validate(const At<binary::Locals>&, Context&);
 

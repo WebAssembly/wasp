@@ -22,6 +22,7 @@
 #include <type_traits>
 
 #include "wasp/base/types.h"
+#include "wasp/base/wasm_types.h"
 #include "wasp/binary/encoding.h"  // XXX
 #include "wasp/binary/encoding/block_type_encoding.h"
 #include "wasp/binary/encoding/element_type_encoding.h"
@@ -91,6 +92,11 @@ Iterator Write(u32 value, Iterator out) {
 }
 
 template <typename Iterator>
+Iterator Write(s32 value, Iterator out) {
+  return WriteVarInt(value, out);
+}
+
+template <typename Iterator>
 Iterator Write(Opcode value, Iterator out) {
   auto encoded = encoding::Opcode::Encode(value);
   out = Write(encoded.u8_code, out);
@@ -106,13 +112,43 @@ Iterator Write(ValueType value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator WriteBytes(SpanU8 value, Iterator out) {
-  return std::copy(value.begin(), value.end(), out);
+Iterator Write(BlockType value, Iterator out) {
+  return Write(encoding::BlockType::Encode(value), out);
 }
 
 template <typename Iterator>
-Iterator Write(s32 value, Iterator out) {
-  return WriteVarInt(value, out);
+Iterator Write(ElementType value, Iterator out) {
+  return Write(encoding::ElementType::Encode(value), out);
+}
+
+template <typename Iterator>
+Iterator Write(ExternalKind value, Iterator out) {
+  return Write(encoding::ExternalKind::Encode(value), out);
+}
+
+template <typename Iterator>
+Iterator Write(const EventAttribute& value, Iterator out) {
+  return Write(encoding::EventAttribute::Encode(value), out);
+}
+
+template <typename Iterator>
+Iterator Write(Mutability value, Iterator out) {
+  return Write(encoding::Mutability::Encode(value), out);
+}
+
+template <typename Iterator>
+Iterator Write(const Limits& limits, Iterator out) {
+  out = Write(encoding::LimitsFlags::Encode(limits), out);
+  out = Write(limits.min, out);
+  if (limits.max) {
+    out = Write(*limits.max, out);
+  }
+  return out;
+}
+
+template <typename Iterator>
+Iterator WriteBytes(SpanU8 value, Iterator out) {
+  return std::copy(value.begin(), value.end(), out);
 }
 
 template <typename Iterator>
@@ -123,11 +159,6 @@ Iterator Write(s64 value, Iterator out) {
 template <typename Iterator>
 Iterator WriteIndex(Index value, Iterator out) {
   return Write(value, out);
-}
-
-template <typename Iterator>
-Iterator Write(BlockType value, Iterator out) {
-  return Write(encoding::BlockType::Encode(value), out);
 }
 
 template <typename Iterator>
@@ -264,16 +295,6 @@ Iterator Write(const ElementSegment& value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(ElementType value, Iterator out) {
-  return Write(encoding::ElementType::Encode(value), out);
-}
-
-template <typename Iterator>
-Iterator Write(const EventAttribute& value, Iterator out) {
-  return Write(encoding::EventAttribute::Encode(value), out);
-}
-
-template <typename Iterator>
 Iterator Write(const EventType& value, Iterator out) {
   out = Write(value.attribute, out);
   return Write(value.type_index, out);
@@ -290,11 +311,6 @@ Iterator Write(const Export& value, Iterator out) {
   out = Write(value.name, out);
   out = Write(value.kind, out);
   return WriteIndex(value.index, out);
-}
-
-template <typename Iterator>
-Iterator Write(ExternalKind value, Iterator out) {
-  return Write(encoding::ExternalKind::Encode(value), out);
 }
 
 template <typename Iterator>
@@ -925,16 +941,6 @@ Iterator Write(const Instruction& instr, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(const Limits& limits, Iterator out) {
-  out = Write(encoding::LimitsFlags::Encode(limits), out);
-  out = Write(limits.min, out);
-  if (limits.max) {
-    out = Write(*limits.max, out);
-  }
-  return out;
-}
-
-template <typename Iterator>
 Iterator Write(const Locals& value, Iterator out) {
   out = WriteIndex(value.count, out);
   out = Write(value.type, out);
@@ -956,11 +962,6 @@ Iterator Write(const Memory& value, Iterator out) {
 template <typename Iterator>
 Iterator Write(const MemoryType& value, Iterator out) {
   return Write(value.limits, out);
-}
-
-template <typename Iterator>
-Iterator Write(Mutability value, Iterator out) {
-  return Write(encoding::Mutability::Encode(value), out);
 }
 
 template <typename Iterator>

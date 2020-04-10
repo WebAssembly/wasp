@@ -45,121 +45,6 @@ typename Ctx::iterator formatter<::wasp::binary::BlockType>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::ElementType>::format(
-    const ::wasp::binary::ElementType& self,
-    Ctx& ctx) {
-  string_view result;
-  switch (self) {
-#define WASP_V(val, Name, str, ...)       \
-  case ::wasp::binary::ElementType::Name: \
-    result = str;                         \
-    break;
-#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/def/element_type.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-    default:
-      WASP_UNREACHABLE();
-  }
-  return formatter<string_view>::format(result, ctx);
-}
-
-template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::ExternalKind>::format(
-    const ::wasp::binary::ExternalKind& self,
-    Ctx& ctx) {
-  string_view result;
-  switch (self) {
-#define WASP_V(val, Name, str, ...)        \
-  case ::wasp::binary::ExternalKind::Name: \
-    result = str;                          \
-    break;
-#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/def/external_kind.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-    default:
-      WASP_UNREACHABLE();
-  }
-  return formatter<string_view>::format(result, ctx);
-}
-
-template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::EventAttribute>::format(
-    const ::wasp::binary::EventAttribute& self,
-    Ctx& ctx) {
-  string_view result;
-  switch (self) {
-#define WASP_V(val, Name, str)               \
-  case ::wasp::binary::EventAttribute::Name: \
-    result = str;                            \
-    break;
-#include "wasp/binary/def/event_attribute.def"
-#undef WASP_V
-    default:
-      WASP_UNREACHABLE();
-  }
-  return formatter<string_view>::format(result, ctx);
-}
-
-template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Mutability>::format(
-    const ::wasp::binary::Mutability& self,
-    Ctx& ctx) {
-  string_view result;
-  switch (self) {
-#define WASP_V(val, Name, str)           \
-  case ::wasp::binary::Mutability::Name: \
-    result = str;                        \
-    break;
-#include "wasp/binary/def/mutability.def"
-#undef WASP_V
-    default:
-      WASP_UNREACHABLE();
-  }
-  return formatter<string_view>::format(result, ctx);
-}
-
-template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::SegmentType>::format(
-    const ::wasp::binary::SegmentType& self,
-    Ctx& ctx) {
-  string_view result;
-  switch (self) {
-    case ::wasp::binary::SegmentType::Active:
-      result = "active";
-      break;
-    case ::wasp::binary::SegmentType::Passive:
-      result = "passive";
-      break;
-    case ::wasp::binary::SegmentType::Declared:
-      result = "declared";
-      break;
-    default:
-      WASP_UNREACHABLE();
-  }
-  return formatter<string_view>::format(result, ctx);
-}
-
-template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Shared>::format(
-    const ::wasp::binary::Shared& self,
-    Ctx& ctx) {
-  string_view result;
-  switch (self) {
-    case ::wasp::binary::Shared::No:
-      result = "unshared";
-      break;
-    case ::wasp::binary::Shared::Yes:
-      result = "shared";
-      break;
-    default:
-      WASP_UNREACHABLE();
-  }
-  return formatter<string_view>::format(result, ctx);
-}
-
-template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::SectionId>::format(
     const ::wasp::binary::SectionId& self,
     Ctx& ctx) {
@@ -189,24 +74,6 @@ typename Ctx::iterator formatter<::wasp::binary::MemArgImmediate>::format(
     Ctx& ctx) {
   memory_buffer buf;
   format_to(buf, "{{align {}, offset {}}}", self.align_log2, self.offset);
-  return formatter<string_view>::format(to_string_view(buf), ctx);
-}
-
-template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::Limits>::format(
-    const ::wasp::binary::Limits& self,
-    Ctx& ctx) {
-  memory_buffer buf;
-  if (self.max) {
-    if (self.shared == ::wasp::binary::Shared::Yes) {
-      format_to(buf, "{{min {}, max {}, {}}}", self.min, *self.max,
-                self.shared);
-    } else {
-      format_to(buf, "{{min {}, max {}}}", self.min, *self.max);
-    }
-  } else {
-    format_to(buf, "{{min {}}}", self.min);
-  }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
@@ -315,23 +182,23 @@ typename Ctx::iterator formatter<::wasp::binary::Import>::format(
             self.name, self.kind());
 
   switch (self.kind()) {
-    case ::wasp::binary::ExternalKind::Function:
+    case ::wasp::ExternalKind::Function:
       format_to(buf, " {}}}", self.index());
       break;
 
-    case ::wasp::binary::ExternalKind::Table:
+    case ::wasp::ExternalKind::Table:
       format_to(buf, " {}}}", self.table_type());
       break;
 
-    case ::wasp::binary::ExternalKind::Memory:
+    case ::wasp::ExternalKind::Memory:
       format_to(buf, " {}}}", self.memory_type());
       break;
 
-    case ::wasp::binary::ExternalKind::Global:
+    case ::wasp::ExternalKind::Global:
       format_to(buf, " {}}}", self.global_type());
       break;
 
-    case ::wasp::binary::ExternalKind::Event:
+    case ::wasp::ExternalKind::Event:
       format_to(buf, " {}}}", self.event_type());
       break;
 
@@ -525,16 +392,16 @@ typename Ctx::iterator formatter<::wasp::binary::ElementSegment>::format(
   }
 
   switch (self.type) {
-    case ::wasp::binary::SegmentType::Active:
+    case ::wasp::SegmentType::Active:
       format_to(buf, "mode active {{table {}, offset {}}}}}", *self.table_index,
                 *self.offset);
       break;
 
-    case ::wasp::binary::SegmentType::Passive:
+    case ::wasp::SegmentType::Passive:
       format_to(buf, "mode passive}}");
       break;
 
-    case ::wasp::binary::SegmentType::Declared:
+    case ::wasp::SegmentType::Declared:
       format_to(buf, "mode declared}}");
       break;
   }
@@ -557,16 +424,16 @@ typename Ctx::iterator formatter<::wasp::binary::DataSegment>::format(
   memory_buffer buf;
   format_to(buf, "{{init {}, ", self.init);
   switch (self.type) {
-    case ::wasp::binary::SegmentType::Active:
+    case ::wasp::SegmentType::Active:
       format_to(buf, "mode active {{memory {}, offset {}}}}}",
                 *self.memory_index, *self.offset);
       break;
 
-    case ::wasp::binary::SegmentType::Passive:
+    case ::wasp::SegmentType::Passive:
       format_to(buf, "mode passive}}");
       break;
 
-    case ::wasp::binary::SegmentType::Declared:
+    case ::wasp::SegmentType::Declared:
       WASP_UNREACHABLE();
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);

@@ -28,6 +28,7 @@
 #include "wasp/base/types.h"
 #include "wasp/base/v128.h"
 #include "wasp/base/variant.h"
+#include "wasp/base/wasm_types.h"
 
 namespace wasp {
 namespace binary {
@@ -59,34 +60,6 @@ static_assert(s32(BlockType::F32) == -3, "Invalid value for BlockType::F32");
 static_assert(s32(BlockType::F64) == -4, "Invalid value for BlockType::F64");
 static_assert(s32(BlockType::Void) == -64, "Invalid value for BlockType::Void");
 
-enum class ElementType : s32 {
-#define WASP_V(val, Name, str) Name,
-#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/def/element_type.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-};
-
-enum class ExternalKind : u8 {
-#define WASP_V(val, Name, str) Name,
-#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/def/external_kind.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-};
-
-enum class EventAttribute : u8 {
-#define WASP_V(val, Name, str) Name,
-#include "wasp/binary/def/event_attribute.def"
-#undef WASP_V
-};
-
-enum class Mutability : u8 {
-#define WASP_V(val, Name, str) Name,
-#include "wasp/binary/def/mutability.def"
-#undef WASP_V
-};
-
 // The section ids are ordered by their expected order in the binary format.
 enum class SectionId : u32 {
 #define WASP_V(val, Name, str, ...) Name,
@@ -94,17 +67,6 @@ enum class SectionId : u32 {
 #include "wasp/binary/def/section_id.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
-};
-
-enum class SegmentType {
-  Active,
-  Passive,
-  Declared,
-};
-
-enum class Shared {
-  No,
-  Yes,
 };
 
 using ValueTypes = std::vector<At<ValueType>>;
@@ -306,16 +268,6 @@ struct TypeEntry {
 };
 
 // Section 2: Import
-
-struct Limits {
-  explicit Limits(At<u32> min);
-  explicit Limits(At<u32> min, OptAt<u32> max);
-  explicit Limits(At<u32> min, OptAt<u32> max, At<Shared>);
-
-  At<u32> min;
-  OptAt<u32> max;
-  At<Shared> shared;
-};
 
 struct TableType {
   At<Limits> limits;
@@ -550,7 +502,6 @@ struct Event {
   WASP_V(InitImmediate)                   \
   WASP_V(Instruction)                     \
   WASP_V(KnownSection)                    \
-  WASP_V(Limits)                          \
   WASP_V(Locals)                          \
   WASP_V(MemArgImmediate)                 \
   WASP_V(Memory)                          \

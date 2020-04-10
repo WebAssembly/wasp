@@ -30,23 +30,22 @@ namespace encoding {
 struct ExternalKind {
 #define WASP_V(val, Name, str, ...) static constexpr u8 Name = val;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/def/external_kind.def"
+#include "wasp/base/def/external_kind.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 
-  static u8 Encode(::wasp::binary::ExternalKind);
-  static optional<::wasp::binary::ExternalKind> Decode(u8,
-                                                       const Features& feature);
+  static u8 Encode(::wasp::ExternalKind);
+  static optional<::wasp::ExternalKind> Decode(u8, const Features& feature);
 };
 
 // static
-inline u8 ExternalKind::Encode(::wasp::binary::ExternalKind decoded) {
+inline u8 ExternalKind::Encode(::wasp::ExternalKind decoded) {
   switch (decoded) {
-#define WASP_V(val, Name, str, ...)        \
-  case ::wasp::binary::ExternalKind::Name: \
+#define WASP_V(val, Name, str, ...) \
+  case ::wasp::ExternalKind::Name:  \
     return val;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/def/external_kind.def"
+#include "wasp/base/def/external_kind.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -55,20 +54,20 @@ inline u8 ExternalKind::Encode(::wasp::binary::ExternalKind decoded) {
 }
 
 // static
-inline optional<::wasp::binary::ExternalKind> ExternalKind::Decode(
+inline optional<::wasp::ExternalKind> ExternalKind::Decode(
     u8 val,
     const Features& features) {
   switch (val) {
 #define WASP_V(val, Name, str, ...) \
   case Name:                        \
-    return ::wasp::binary::ExternalKind::Name;
-#define WASP_FEATURE_V(val, Name, str, feature)  \
-  case Name:                                     \
-    if (features.feature##_enabled()) {          \
-      return ::wasp::binary::ExternalKind::Name; \
-    }                                            \
+    return ::wasp::ExternalKind::Name;
+#define WASP_FEATURE_V(val, Name, str, feature) \
+  case Name:                                    \
+    if (features.feature##_enabled()) {         \
+      return ::wasp::ExternalKind::Name;        \
+    }                                           \
     break;
-#include "wasp/binary/def/external_kind.def"
+#include "wasp/base/def/external_kind.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:

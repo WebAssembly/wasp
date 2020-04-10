@@ -21,8 +21,8 @@
 
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
-#include "wasp/base/types.h"
 #include "wasp/base/variant.h"
+#include "wasp/base/wasm_types.h"
 
 namespace wasp {
 namespace text {
