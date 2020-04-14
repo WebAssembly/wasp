@@ -20,6 +20,7 @@
 #include "wasp/binary/encoding/name_subsection_id_encoding.h"
 #include "wasp/binary/read.h"
 #include "wasp/binary/read/context.h"
+#include "wasp/binary/read/location_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read_vector.h"
 
@@ -29,15 +30,16 @@ namespace binary {
 OptAt<IndirectNameAssoc> Read(SpanU8* data,
                               Context& context,
                               Tag<IndirectNameAssoc>) {
-  ErrorsContextGuard guard{context.errors, *data, "indirect name assoc"};
+  ErrorsContextGuard error_guard{context.errors, *data, "indirect name assoc"};
+  LocationGuard guard{data};
   WASP_TRY_READ(index, ReadIndex(data, context, "index"));
-  WASP_TRY_READ(name_map,
-                      ReadVector<NameAssoc>(data, context, "name map"));
+  WASP_TRY_READ(name_map, ReadVector<NameAssoc>(data, context, "name map"));
   return MakeAt(guard.loc(), IndirectNameAssoc{index, std::move(name_map)});
 }
 
 OptAt<NameAssoc> Read(SpanU8* data, Context& context, Tag<NameAssoc>) {
-  ErrorsContextGuard guard{context.errors, *data, "name assoc"};
+  ErrorsContextGuard error_guard{context.errors, *data, "name assoc"};
+  LocationGuard guard{data};
   WASP_TRY_READ(index, ReadIndex(data, context, "index"));
   WASP_TRY_READ(name, ReadString(data, context, "name"));
   return MakeAt(guard.loc(), NameAssoc{index, name});
@@ -46,7 +48,8 @@ OptAt<NameAssoc> Read(SpanU8* data, Context& context, Tag<NameAssoc>) {
 OptAt<NameSubsection> Read(SpanU8* data,
                            Context& context,
                            Tag<NameSubsection>) {
-  ErrorsContextGuard guard{context.errors, *data, "name subsection"};
+  ErrorsContextGuard error_guard{context.errors, *data, "name subsection"};
+  LocationGuard guard{data};
   WASP_TRY_READ(id, Read<NameSubsectionId>(data, context));
   WASP_TRY_READ(length, ReadLength(data, context));
   WASP_TRY_READ(bytes, ReadBytes(data, length, context));
@@ -56,10 +59,11 @@ OptAt<NameSubsection> Read(SpanU8* data,
 OptAt<NameSubsectionId> Read(SpanU8* data,
                              Context& context,
                              Tag<NameSubsectionId>) {
-  ErrorsContextGuard guard{context.errors, *data, "name subsection id"};
+  ErrorsContextGuard error_guard{context.errors, *data, "name subsection id"};
+  LocationGuard guard{data};
   WASP_TRY_READ(val, Read<u8>(data, context));
   WASP_TRY_DECODE(decoded, val, NameSubsectionId, "name subsection id");
-  return decoded;
+  return MakeAt(guard.loc(), decoded);
 }
 
 }  // namespace binary

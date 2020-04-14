@@ -29,7 +29,9 @@ TEST(LazyExprTest, Basic) {
   Context context{errors};
   auto expr = ReadExpression("\x00"_su8, context);
   auto it = expr.begin(), end = expr.end();
-  EXPECT_EQ((Instruction{Opcode::Unreachable}), *it++);
+  EXPECT_EQ(
+      MakeAt("\x00"_su8, Instruction{MakeAt("\x00"_su8, Opcode::Unreachable)}),
+      *it++);
   ASSERT_EQ(end, it);
 }
 
@@ -38,9 +40,11 @@ TEST(LazyExprTest, Multiple) {
   Context context{errors};
   auto expr = ReadExpression("\x01\x01"_su8, context);
   auto it = expr.begin(), end = expr.end();
-  EXPECT_EQ((Instruction{Opcode::Nop}), *it++);
+  EXPECT_EQ(MakeAt("\x01"_su8, Instruction{MakeAt("\x01"_su8, Opcode::Nop)}),
+            *it++);
   ASSERT_NE(end, it);
-  EXPECT_EQ((Instruction{Opcode::Nop}), *it++);
+  EXPECT_EQ(MakeAt("\x01"_su8, Instruction{MakeAt("\x01"_su8, Opcode::Nop)}),
+            *it++);
   ASSERT_EQ(end, it);
 }
 
@@ -52,10 +56,17 @@ TEST(LazyExprTest, SimpleFunction) {
   // i32.add
   auto expr = ReadExpression("\x20\x00\x20\x01\x6a"_su8, context);
   auto it = expr.begin(), end = expr.end();
-  EXPECT_EQ((Instruction{Opcode::LocalGet, Index{0}}), *it++);
+  EXPECT_EQ(
+      MakeAt("\x20\x00"_su8, Instruction{MakeAt("\x20"_su8, Opcode::LocalGet),
+                                         MakeAt("\x00"_su8, Index{0})}),
+      *it++);
   ASSERT_NE(end, it);
-  EXPECT_EQ((Instruction{Opcode::LocalGet, Index{1}}), *it++);
+  EXPECT_EQ(
+      MakeAt("\x20\x01"_su8, Instruction{MakeAt("\x20"_su8, Opcode::LocalGet),
+                                         MakeAt("\x01"_su8, Index{1})}),
+      *it++);
   ASSERT_NE(end, it);
-  EXPECT_EQ((Instruction{Opcode::I32Add}), *it++);
+  EXPECT_EQ(MakeAt("\x6a"_su8, Instruction{MakeAt("\x6a"_su8, Opcode::I32Add)}),
+            *it++);
   ASSERT_EQ(end, it);
 }

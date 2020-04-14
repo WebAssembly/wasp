@@ -50,18 +50,25 @@ TEST(LazyNameSectionTest, NameSection) {
 
   auto it = sec.begin();
 
-  EXPECT_EQ((NameSubsection{NameSubsectionId::ModuleName, "\x01m"_su8}),
-            *it++);
+  EXPECT_EQ(
+      MakeAt("\x00\x02\x01m"_su8,
+             NameSubsection{MakeAt("\x00"_su8, NameSubsectionId::ModuleName),
+                            "\x01m"_su8}),
+      *it++);
   ASSERT_NE(sec.end(), it);
 
-  EXPECT_EQ((NameSubsection{NameSubsectionId::FunctionNames,
+  EXPECT_EQ(
+      MakeAt("\x01\x03\x02\x01g"_su8,
+             NameSubsection{MakeAt("\x01"_su8, NameSubsectionId::FunctionNames),
                             "\x02\x01g"_su8}),
-            *it++);
+      *it++);
   ASSERT_NE(sec.end(), it);
 
-  EXPECT_EQ((NameSubsection{NameSubsectionId::LocalNames,
+  EXPECT_EQ(
+      MakeAt("\x02\x0a\x03\x02\x04\x02g4\x05\x02g5"_su8,
+             NameSubsection{MakeAt("\x02"_su8, NameSubsectionId::LocalNames),
                             "\x03\x02\x04\x02g4\x05\x02g5"_su8}),
-            *it++);
+      *it++);
   ASSERT_EQ(sec.end(), it);
 
   ExpectNoErrors(errors);
@@ -83,12 +90,12 @@ TEST(LazyNameSectionTest, FunctionNamesSubsection) {
       "five"_su8,
       context);
 
-  ExpectSubsection(
-      {
-          NameAssoc{3, "three"_sv},
-          NameAssoc{5, "five"_sv},
-      },
-      sec);
+  ExpectSubsection({NameAssoc{MakeAt("\x03"_su8, Index{3}),
+                              MakeAt("\x05three"_su8, "three"_sv)},
+                    NameAssoc{MakeAt("\x05"_su8, Index{5}), MakeAt("\x04"
+                                                                   "five"_su8,
+                                                                   "five"_sv)}},
+                   sec);
   ExpectNoErrors(errors);
 }
 
@@ -103,11 +110,20 @@ TEST(LazyNameSectionTest, LocalNamesSubsection) {
       context);
 
   ExpectSubsection(
-      {
-          IndirectNameAssoc{2,
-                            {NameAssoc{1, "ichi"_sv}, NameAssoc{3, "san"_sv}}},
-          IndirectNameAssoc{4, {NameAssoc{5, "cinco"_sv}}},
-      },
+      {IndirectNameAssoc{MakeAt("\x02"_su8, Index{2}),
+                         {MakeAt("\x01\x04ichi"_su8,
+                                 NameAssoc{MakeAt("\x01"_su8, Index{1}),
+                                           MakeAt("\x04ichi"_su8, "ichi"_sv)}),
+                          MakeAt("\x03\x03san"_su8,
+                                 NameAssoc{MakeAt("\x03"_su8, Index{3}),
+                                           MakeAt("\x03san"_su8, "san"_sv)})}},
+       IndirectNameAssoc{MakeAt("\x04"_su8, Index{4}),
+                         {MakeAt("\x05\x05"
+                                 "cinco"_su8,
+                                 NameAssoc{MakeAt("\x05"_su8, Index{5}),
+                                           MakeAt("\x05"
+                                                  "cinco"_su8,
+                                                  "cinco"_sv)})}}},
       sec);
   ExpectNoErrors(errors);
 }

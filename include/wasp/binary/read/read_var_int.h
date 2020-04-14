@@ -53,7 +53,8 @@ OptAt<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
   constexpr u8 kLastByteMask = ~((1 << kLastByteMaskBits) - 1);
   constexpr u8 kLastByteOnes = kLastByteMask & kByteMask;
 
-  ErrorsContextGuard guard{context.errors, *data, desc};
+  ErrorsContextGuard error_guard{context.errors, *data, desc};
+  LocationGuard guard{data};
 
   U result{};
   for (int i = 0;;) {

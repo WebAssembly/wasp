@@ -53,9 +53,12 @@ TEST(LazySectionTest, Type) {
 
   ExpectSection(
       {
-          TypeEntry{FunctionType{{}, {}}},
+          TypeEntry{MakeAt("\x00\x00"_su8, FunctionType{{}, {}})},
           TypeEntry{
-              FunctionType{{ValueType::I32, ValueType::I32}, {ValueType::I32}}},
+              MakeAt("\x02\x7f\x7f\x01\x7f"_su8,
+                     FunctionType{{MakeAt("\x07f"_su8, ValueType::I32),
+                                   MakeAt("\x07f"_su8, ValueType::I32)},
+                                  {MakeAt("\x07f"_su8, ValueType::I32)}})},
       },
       sec);
   ExpectNoErrors(errors);
@@ -72,8 +75,15 @@ TEST(LazySectionTest, Import) {
 
   ExpectSection(
       {
-          Import{"w"_sv, "x"_sv, Index{2}},
-          Import{"y"_sv, "z"_sv, MemoryType{Limits{1, 2}}},
+          Import{MakeAt("\x01w"_su8, "w"_sv), MakeAt("\x01x"_su8, "x"_sv),
+                 MakeAt("\x02"_su8, Index{2})},
+          Import{MakeAt("\x01y"_su8, "y"_sv), MakeAt("\x01z"_su8, "z"_sv),
+                 MakeAt("\x01\x01\x02"_su8,
+                        MemoryType{
+                            MakeAt("\x01\x01\x02"_su8,
+                                   Limits{MakeAt("\x01"_su8, u32{1}),
+                                          MakeAt("\x02"_su8, u32{2}),
+                                          MakeAt("\x01"_su8, Shared::No)})})},
       },
       sec);
   ExpectNoErrors(errors);
@@ -87,7 +97,13 @@ TEST(LazySectionTest, Function) {
       "\x02\x80\x01\x02"_su8,  // 2, 128, 2
       context);
 
-  ExpectSection({Function{2}, Function{128}, Function{2}}, sec);
+  ExpectSection(
+      {
+          Function{MakeAt("\x02"_su8, Index{2})},
+          Function{MakeAt("\x80\x01"_su8, Index{128})},
+          Function{MakeAt("\x02"_su8, Index{2})},
+      },
+      sec);
   ExpectNoErrors(errors);
 }
 
@@ -97,15 +113,30 @@ TEST(LazySectionTest, Table) {
   auto sec = ReadTableSection(
       "\x03"                  // Count.
       "\x70\x00\x01"          // (table 1 funcref)
-      "\x70\x01\x00\x80\x01"  // (table 1 128 funcref)
+      "\x70\x01\x00\x80\x01"  // (table 0 128 funcref)
       "\x70\x00\x00"_su8,     // (table 0 funcref)
       context);
 
   ExpectSection(
       {
-          Table{TableType{Limits{1}, ElementType::Funcref}},
-          Table{TableType{Limits{0, 128}, ElementType::Funcref}},
-          Table{TableType{Limits{0}, ElementType::Funcref}},
+          Table{MakeAt(
+              "\x70\x00\x01"_su8,
+              TableType{MakeAt("\x00\x01"_su8,
+                               Limits{MakeAt("\x01"_su8, Index{1}), nullopt,
+                                      MakeAt("\x00"_su8, Shared::No)}),
+                        MakeAt("\x70"_su8, ElementType::Funcref)})},
+          Table{MakeAt("\x70\x01\x00\x80\x01"_su8,
+                       TableType{MakeAt("\x01\x00\x80\x01"_su8,
+                                        Limits{MakeAt("\x00"_su8, u32{0}),
+                                               MakeAt("\x80\x01"_su8, u32{128}),
+                                               MakeAt("\x01"_su8, Shared::No)}),
+                                 MakeAt("\x70"_su8, ElementType::Funcref)})},
+          Table{MakeAt(
+              "\x70\x00\x00"_su8,
+              TableType{MakeAt("\x00\x00"_su8,
+                               Limits{MakeAt("\x00"_su8, u32{0}), nullopt,
+                                      MakeAt("\x00"_su8, Shared::No)}),
+                        MakeAt("\x70"_su8, ElementType::Funcref)})},
       },
       sec);
   ExpectNoErrors(errors);
@@ -117,15 +148,28 @@ TEST(LazySectionTest, Memory) {
   auto sec = ReadMemorySection(
       "\x03"              // Count.
       "\x00\x01"          // (memory 1)
-      "\x01\x00\x80\x01"  // (memory 1 128)
+      "\x01\x00\x80\x01"  // (memory 0 128)
       "\x00\x00"_su8,     // (memory 0)
       context);
 
   ExpectSection(
       {
-          Memory{MemoryType{Limits{1}}},
-          Memory{MemoryType{Limits{0, 128}}},
-          Memory{MemoryType{Limits{0}}},
+          Memory{MakeAt(
+              "\x00\x01"_su8,
+              MemoryType{MakeAt("\x00\x01"_su8,
+                                Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
+                                       MakeAt("\x00"_su8, Shared::No)})})},
+          Memory{MakeAt(
+              "\x01\x00\x80\x01"_su8,
+              MemoryType{MakeAt("\x01\x00\x80\x01"_su8,
+                                Limits{MakeAt("\x00"_su8, u32{0}),
+                                       MakeAt("\x80\x01"_su8, u32{128}),
+                                       MakeAt("\x01"_su8, Shared::No)})})},
+          Memory{MakeAt(
+              "\x00\x00"_su8,
+              MemoryType{MakeAt("\x00\x00"_su8,
+                                Limits{MakeAt("\x00"_su8, u32{0}), nullopt,
+                                       MakeAt("\x00"_su8, Shared::No)})})},
       },
       sec);
   ExpectNoErrors(errors);
@@ -142,10 +186,22 @@ TEST(LazySectionTest, Global) {
 
   ExpectSection(
       {
-          Global{GlobalType{ValueType::I32, Mutability::Var},
-                 ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}},
-          Global{GlobalType{ValueType::I64, Mutability::Const},
-                 ConstantExpression{Instruction{Opcode::I64Const, s64{1}}}},
+          Global{MakeAt("\x7f\x01"_su8,
+                        GlobalType{MakeAt("\x7f"_su8, ValueType::I32),
+                                   MakeAt("\x01"_su8, Mutability::Var)}),
+                 MakeAt("\x41\x00\x0b"_su8,
+                        ConstantExpression{MakeAt(
+                            "\x41\x00"_su8,
+                            Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
+                                        MakeAt("\x00"_su8, s32{0})})})},
+          Global{MakeAt("\x7e\x00"_su8,
+                        GlobalType{MakeAt("\x7e"_su8, ValueType::I64),
+                                   MakeAt("\x00"_su8, Mutability::Const)}),
+                 MakeAt("\x42\x01\x0b"_su8,
+                        ConstantExpression{MakeAt(
+                            "\x42\x01"_su8,
+                            Instruction{MakeAt("\x42"_su8, Opcode::I64Const),
+                                        MakeAt("\x01"_su8, s64{1})})})},
       },
       sec);
   ExpectNoErrors(errors);
@@ -163,9 +219,13 @@ TEST(LazySectionTest, Export) {
 
   ExpectSection(
       {
-          Export{ExternalKind::Function, "one"_sv, 1},
-          Export{ExternalKind::Memory, "two"_sv, 2},
-          Export{ExternalKind::Global, "three"_sv, 2},
+          Export{MakeAt("\x00"_su8, ExternalKind::Function),
+                 MakeAt("\x03one"_su8, "one"_sv), MakeAt("\x01"_su8, Index{1})},
+          Export{MakeAt("\x02"_su8, ExternalKind::Memory),
+                 MakeAt("\x03two"_su8, "two"_sv), MakeAt("\x02"_su8, Index{2})},
+          Export{MakeAt("\x03"_su8, ExternalKind::Global),
+                 MakeAt("\x05three"_su8, "three"_sv),
+                 MakeAt("\x02"_su8, Index{2})},
       },
       sec);
   ExpectNoErrors(errors);
@@ -176,7 +236,7 @@ TEST(LazySectionTest, Start) {
   Context context{errors};
   auto sec = ReadStartSection("\x03"_su8, context);
 
-  EXPECT_EQ(Start{3}, sec);
+  EXPECT_EQ(Start{MakeAt("\x03"_su8, Index{3})}, sec);
   ExpectNoErrors(errors);
 }
 
@@ -192,15 +252,25 @@ TEST(LazySectionTest, Element) {
   ExpectSection(
       {
           ElementSegment{
-              0,
-              ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
+              MakeAt("\x00"_su8, Index{0}),
+              MakeAt("\x41\x00\x0b"_su8,
+                     ConstantExpression{MakeAt(
+                         "\x41\x00"_su8,
+                         Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
+                                     MakeAt("\x00"_su8, s32{0})})}),
               ExternalKind::Function,
-              {0, 1}},
+              {MakeAt("\x00"_su8, Index{0}), MakeAt("\x01"_su8, Index{1})}},
           ElementSegment{
-              0,
-              ConstantExpression{Instruction{Opcode::I32Const, s32{2}}},
+              MakeAt("\x00"_su8, Index{0}),
+              MakeAt("\x41\x02\x0b"_su8,
+                     ConstantExpression{MakeAt(
+                         "\x41\x02"_su8,
+                         Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
+                                     MakeAt("\x02"_su8, s32{2})})}),
               ExternalKind::Function,
-              {3}},
+              {
+                  MakeAt("\x03"_su8, Index{3}),
+              }},
       },
       sec);
   ExpectNoErrors(errors);
@@ -217,8 +287,11 @@ TEST(LazySectionTest, Code) {
 
   ExpectSection(
       {
-          Code{{}, "\x0b"_expr},
-          Code{{Locals{1, ValueType::I32}}, "\x6a\x0b"_expr},
+          Code{{}, MakeAt("\x0b"_su8, "\x0b"_expr)},
+          Code{{MakeAt("\x01\x7f"_su8,
+                       Locals{MakeAt("\x01"_su8, Index{1}),
+                              MakeAt("\x7f"_su8, ValueType::I32)})},
+               MakeAt("\x6a\x0b"_su8, "\x6a\x0b"_expr)},
       },
       sec);
   ExpectNoErrors(errors);
@@ -236,15 +309,31 @@ TEST(LazySectionTest, Data) {
 
   ExpectSection(
       {
-          DataSegment{0,
-                      ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
-                      "hi"_su8},
-          DataSegment{0,
-                      ConstantExpression{Instruction{Opcode::I32Const, s32{2}}},
-                      "see"_su8},
-          DataSegment{0,
-                      ConstantExpression{Instruction{Opcode::I32Const, s32{5}}},
-                      "you"_su8},
+          DataSegment{
+              MakeAt("\x00"_su8, Index{0}),
+              MakeAt("\x41\x00\x0b"_su8,
+                     ConstantExpression{MakeAt(
+                         "\x41\x00"_su8,
+                         Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
+                                     MakeAt("\x00"_su8, s32{0})})}),
+              MakeAt("\x02hi"_su8, "hi"_su8)},
+          DataSegment{
+              MakeAt("\x00"_su8, Index{0}),
+              MakeAt("\x41\x02\x0b"_su8,
+                     ConstantExpression{MakeAt(
+                         "\x41\x02"_su8,
+                         Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
+                                     MakeAt("\x02"_su8, s32{2})})}),
+              MakeAt("\x03see"_su8, "see"_su8)},
+          DataSegment{
+              MakeAt("\x00"_su8, Index{0}),
+              MakeAt("\x41\x05\x0b"_su8,
+                     ConstantExpression{MakeAt(
+                         "\x41\x05"_su8,
+                         Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
+                                     MakeAt("\x05"_su8, s32{5})})}),
+              MakeAt("\x03you"_su8, "you"_su8),
+          },
       },
       sec);
   ExpectNoErrors(errors);
@@ -255,6 +344,6 @@ TEST(LazySectionTest, DataCount) {
   Context context{errors};
   auto sec = ReadDataCountSection("\x03"_su8, context);
 
-  EXPECT_EQ(DataCount{3}, sec);
+  EXPECT_EQ(DataCount{MakeAt("\x03"_su8, Index{3})}, sec);
   ExpectNoErrors(errors);
 }

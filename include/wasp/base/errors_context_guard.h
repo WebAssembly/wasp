@@ -27,7 +27,7 @@ namespace wasp {
 class ErrorsContextGuard {
  public:
   explicit ErrorsContextGuard(Errors& errors, Location loc, string_view desc)
-      : errors_{errors}, loc_{loc} {
+      : errors_{errors} {
     errors.PushContext(loc, desc);
   }
   ~ErrorsContextGuard() { PopContext(); }
@@ -39,11 +39,8 @@ class ErrorsContextGuard {
     }
   }
 
-  Location loc() const { return loc_; }
-
  private:
   Errors& errors_;
-  Location loc_;
   bool popped_context_ = false;
 };
 

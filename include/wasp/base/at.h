@@ -56,36 +56,6 @@ template <typename T>
 using OptAt = optional<At<T>>;
 
 template <typename T>
-inline bool operator==(const At<T>& lhs, const At<T>& rhs) {
-  return lhs.value() == rhs.value();
-}
-
-template <typename T>
-inline bool operator!=(const At<T>& lhs, const At<T>& rhs) {
-  return lhs.value() != rhs.value();
-}
-
-template <typename T>
-inline bool operator<(const At<T>& lhs, const At<T>& rhs) {
-  return lhs.value() < rhs.value();
-}
-
-template <typename T>
-inline bool operator<=(const At<T>& lhs, const At<T>& rhs) {
-  return lhs.value() <= rhs.value();
-}
-
-template <typename T>
-inline bool operator>(const At<T>& lhs, const At<T>& rhs) {
-  return lhs.value() > rhs.value();
-}
-
-template <typename T>
-inline bool operator>=(const At<T>& lhs, const At<T>& rhs) {
-  return lhs.value() >= rhs.value();
-}
-
-template <typename T>
 At<T> MakeAt(T val) {
   return At<T>{val};
 }

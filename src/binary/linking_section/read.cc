@@ -24,6 +24,7 @@
 #include "wasp/binary/encoding/symbol_info_kind_encoding.h"
 #include "wasp/binary/read.h"
 #include "wasp/binary/read/context.h"
+#include "wasp/binary/read/location_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read_vector.h"
 
@@ -31,7 +32,8 @@ namespace wasp {
 namespace binary {
 
 OptAt<Comdat> Read(SpanU8* data, Context& context, Tag<Comdat>) {
-  ErrorsContextGuard guard{context.errors, *data, "comdat"};
+  ErrorsContextGuard error_guard{context.errors, *data, "comdat"};
+  LocationGuard guard{data};
   WASP_TRY_READ(name, ReadString(data, context, "name"));
   WASP_TRY_READ(flags, Read<u32>(data, context));
   WASP_TRY_READ(symbols, ReadVector<ComdatSymbol>(data, context,
@@ -40,7 +42,8 @@ OptAt<Comdat> Read(SpanU8* data, Context& context, Tag<Comdat>) {
 }
 
 OptAt<ComdatSymbol> Read(SpanU8* data, Context& context, Tag<ComdatSymbol>) {
-  ErrorsContextGuard guard{context.errors, *data, "comdat symbol"};
+  ErrorsContextGuard error_guard{context.errors, *data, "comdat symbol"};
+  LocationGuard guard{data};
   WASP_TRY_READ(kind, Read<ComdatSymbolKind>(data, context));
   WASP_TRY_READ(index, ReadIndex(data, context, "index"));
   return MakeAt(guard.loc(), ComdatSymbol{kind, index});
@@ -49,14 +52,16 @@ OptAt<ComdatSymbol> Read(SpanU8* data, Context& context, Tag<ComdatSymbol>) {
 OptAt<ComdatSymbolKind> Read(SpanU8* data,
                              Context& context,
                              Tag<ComdatSymbolKind>) {
-  ErrorsContextGuard guard{context.errors, *data, "comdat symbol kind"};
+  ErrorsContextGuard error_guard{context.errors, *data, "comdat symbol kind"};
+  LocationGuard guard{data};
   WASP_TRY_READ(val, Read<u8>(data, context));
   WASP_TRY_DECODE(decoded, val, ComdatSymbolKind, "comdat symbol kind");
   return decoded;
 }
 
 OptAt<InitFunction> Read(SpanU8* data, Context& context, Tag<InitFunction>) {
-  ErrorsContextGuard guard{context.errors, *data, "init function"};
+  ErrorsContextGuard error_guard{context.errors, *data, "init function"};
+  LocationGuard guard{data};
   WASP_TRY_READ(priority, Read<u32>(data, context));
   WASP_TRY_READ(index, ReadIndex(data, context, "function index"));
   return MakeAt(guard.loc(), InitFunction{priority, index});
@@ -65,7 +70,8 @@ OptAt<InitFunction> Read(SpanU8* data, Context& context, Tag<InitFunction>) {
 OptAt<LinkingSubsection> Read(SpanU8* data,
                               Context& context,
                               Tag<LinkingSubsection>) {
-  ErrorsContextGuard guard{context.errors, *data, "linking subsection"};
+  ErrorsContextGuard error_guard{context.errors, *data, "linking subsection"};
+  LocationGuard guard{data};
   WASP_TRY_READ(id, Read<LinkingSubsectionId>(data, context));
   WASP_TRY_READ(length, ReadLength(data, context));
   auto bytes = *ReadBytes(data, length, context);
@@ -75,7 +81,7 @@ OptAt<LinkingSubsection> Read(SpanU8* data,
 OptAt<LinkingSubsectionId> Read(SpanU8* data,
                                 Context& context,
                                 Tag<LinkingSubsectionId>) {
-  ErrorsContextGuard guard{context.errors, *data, "linking subsection id"};
+  ErrorsContextGuard error_guard{context.errors, *data, "linking subsection id"};
   WASP_TRY_READ(val, Read<u8>(data, context));
   WASP_TRY_DECODE(decoded, val, LinkingSubsectionId, "linking subsection id");
   return decoded;
@@ -84,7 +90,8 @@ OptAt<LinkingSubsectionId> Read(SpanU8* data,
 OptAt<RelocationEntry> Read(SpanU8* data,
                             Context& context,
                             Tag<RelocationEntry>) {
-  ErrorsContextGuard guard{context.errors, *data, "relocation entry"};
+  ErrorsContextGuard error_guard{context.errors, *data, "relocation entry"};
+  LocationGuard guard{data};
   WASP_TRY_READ(type, Read<RelocationType>(data, context));
   WASP_TRY_READ(offset, Read<u32>(data, context));
   WASP_TRY_READ(index, ReadIndex(data, context, "index"));
@@ -106,14 +113,15 @@ OptAt<RelocationEntry> Read(SpanU8* data,
 OptAt<RelocationType> Read(SpanU8* data,
                            Context& context,
                            Tag<RelocationType>) {
-  ErrorsContextGuard guard{context.errors, *data, "relocation type"};
+  ErrorsContextGuard error_guard{context.errors, *data, "relocation type"};
   WASP_TRY_READ(val, Read<u8>(data, context));
   WASP_TRY_DECODE(decoded, val, RelocationType, "relocation type");
   return decoded;
 }
 
 OptAt<SegmentInfo> Read(SpanU8* data, Context& context, Tag<SegmentInfo>) {
-  ErrorsContextGuard guard{context.errors, *data, "segment info"};
+  ErrorsContextGuard error_guard{context.errors, *data, "segment info"};
+  LocationGuard guard{data};
   WASP_TRY_READ(name, ReadString(data, context, "name"));
   WASP_TRY_READ(align_log2, Read<u32>(data, context));
   WASP_TRY_READ(flags, Read<u32>(data, context));
@@ -121,7 +129,8 @@ OptAt<SegmentInfo> Read(SpanU8* data, Context& context, Tag<SegmentInfo>) {
 }
 
 OptAt<SymbolInfo> Read(SpanU8* data, Context& context, Tag<SymbolInfo>) {
-  ErrorsContextGuard guard{context.errors, *data, "symbol info"};
+  ErrorsContextGuard error_guard{context.errors, *data, "symbol info"};
+  LocationGuard guard{data};
   WASP_TRY_READ(kind, Read<SymbolInfoKind>(data, context));
   WASP_TRY_READ(encoded_flags, Read<u32>(data, context));
   WASP_TRY_DECODE(flags, encoded_flags, SymbolInfoFlags, "symbol info flags");
@@ -164,7 +173,7 @@ OptAt<SymbolInfo> Read(SpanU8* data, Context& context, Tag<SymbolInfo>) {
 OptAt<SymbolInfoKind> Read(SpanU8* data,
                            Context& context,
                            Tag<SymbolInfoKind>) {
-  ErrorsContextGuard guard{context.errors, *data, "symbol info kind"};
+  ErrorsContextGuard error_guard{context.errors, *data, "symbol info kind"};
   WASP_TRY_READ(val, Read<u8>(data, context));
   WASP_TRY_DECODE(decoded, val, SymbolInfoKind, "symbol info kind");
   return decoded;

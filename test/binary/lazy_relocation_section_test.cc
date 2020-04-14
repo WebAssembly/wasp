@@ -39,15 +39,23 @@ TEST(RelocationTest, Basic) {
   auto it = sec.entries.begin();
   auto end = sec.entries.end();
 
-  EXPECT_EQ((RelocationEntry{RelocationType::TableIndexSLEB, 2, 3, nullopt}),
+  EXPECT_EQ((RelocationEntry{MakeAt("\x01"_su8, RelocationType::TableIndexSLEB),
+                             MakeAt("\x02"_su8, u32{2}),
+                             MakeAt("\x03"_su8, Index{3}), nullopt}),
             *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ((RelocationEntry{RelocationType::MemoryAddressSLEB, 5, 6, 7}),
-            *it++);
+  EXPECT_EQ(
+      (RelocationEntry{MakeAt("\x04"_su8, RelocationType::MemoryAddressSLEB),
+                       MakeAt("\x05"_su8, u32{5}), MakeAt("\x06"_su8, Index{6}),
+                       MakeAt("\x07"_su8, s32{7})}),
+      *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ((RelocationEntry{RelocationType::FunctionOffsetI32, 9, 10, 11}),
+  EXPECT_EQ((RelocationEntry{
+                MakeAt("\x08"_su8, RelocationType::FunctionOffsetI32),
+                MakeAt("\x09"_su8, u32{9}), MakeAt("\x0a"_su8, Index{10}),
+                MakeAt("\x0b"_su8, s32{11})}),
             *it++);
   ASSERT_EQ(end, it);
 

@@ -35,6 +35,7 @@
 #include "wasp/binary/encoding/segment_flags_encoding.h"
 #include "wasp/binary/encoding/value_type_encoding.h"
 #include "wasp/binary/formatters.h"
+#include "wasp/binary/read/location_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read_var_int.h"
 #include "wasp/binary/read/read_vector.h"
@@ -43,7 +44,8 @@ namespace wasp {
 namespace binary {
 
 OptAt<BlockType> Read(SpanU8* data, Context& context, Tag<BlockType>) {
-  ErrorsContextGuard guard{context.errors, *data, "block type"};
+  ErrorsContextGuard error_guard{context.errors, *data, "block type"};
+  LocationGuard guard{data};
   if (context.features.multi_value_enabled()) {
     WASP_TRY_READ(val, Read<s32>(data, context));
     WASP_TRY_DECODE_FEATURES(decoded, val, BlockType, "block type",
@@ -60,7 +62,8 @@ OptAt<BlockType> Read(SpanU8* data, Context& context, Tag<BlockType>) {
 OptAt<BrOnExnImmediate> Read(SpanU8* data,
                              Context& context,
                              Tag<BrOnExnImmediate>) {
-  ErrorsContextGuard guard{context.errors, *data, "br_on_exn"};
+  ErrorsContextGuard error_guard{context.errors, *data, "br_on_exn"};
+  LocationGuard guard{data};
   WASP_TRY_READ(target, ReadIndex(data, context, "target"));
   WASP_TRY_READ(event_index, ReadIndex(data, context, "event index"));
   return MakeAt(guard.loc(), BrOnExnImmediate{target, event_index});
@@ -69,7 +72,8 @@ OptAt<BrOnExnImmediate> Read(SpanU8* data,
 OptAt<BrTableImmediate> Read(SpanU8* data,
                              Context& context,
                              Tag<BrTableImmediate>) {
-  ErrorsContextGuard guard{context.errors, *data, "br_table"};
+  ErrorsContextGuard error_guard{context.errors, *data, "br_table"};
+  LocationGuard guard{data};
   WASP_TRY_READ(targets, ReadVector<Index>(data, context, "targets"));
   WASP_TRY_READ(default_target, ReadIndex(data, context, "default target"));
   return MakeAt(guard.loc(),
@@ -91,7 +95,8 @@ OptAt<SpanU8> ReadBytesExpected(SpanU8* data,
                                 SpanU8 expected,
                                 Context& context,
                                 string_view desc) {
-  ErrorsContextGuard guard{context.errors, *data, desc};
+  ErrorsContextGuard error_guard{context.errors, *data, desc};
+  LocationGuard guard{data};
 
   auto actual = ReadBytes(data, expected.size(), context);
   if (actual && **actual != expected) {
@@ -104,7 +109,8 @@ OptAt<SpanU8> ReadBytesExpected(SpanU8* data,
 OptAt<CallIndirectImmediate> Read(SpanU8* data,
                                   Context& context,
                                   Tag<CallIndirectImmediate>) {
-  ErrorsContextGuard guard{context.errors, *data, "call_indirect"};
+  ErrorsContextGuard error_guard{context.errors, *data, "call_indirect"};
+  LocationGuard guard{data};
   WASP_TRY_READ(index, ReadIndex(data, context, "type index"));
   if (context.features.reference_types_enabled()) {
     WASP_TRY_READ(table_index, ReadIndex(data, context, "table index"));
@@ -133,19 +139,22 @@ OptAt<Index> ReadCheckLength(SpanU8* data,
 }
 
 OptAt<Code> Read(SpanU8* data, Context& context, Tag<Code>) {
-  ErrorsContextGuard guard{context.errors, *data, "code"};
+  ErrorsContextGuard error_guard{context.errors, *data, "code"};
+  LocationGuard guard{data};
   context.code_count++;
   WASP_TRY_READ(body_size, ReadLength(data, context));
   WASP_TRY_READ(body, ReadBytes(data, body_size, context));
   WASP_TRY_READ(locals, ReadVector<Locals>(&*body, context, "locals vector"));
-  return MakeAt(guard.loc(),
-                Code{std::move(locals), MakeAt(Expression{std::move(*body)})});
+  // Use updated body as Location (i.e. after reading locals).
+  auto expression = MakeAt(body, Expression{*body});
+  return MakeAt(guard.loc(), Code{std::move(locals), expression});
 }
 
 OptAt<ConstantExpression> Read(SpanU8* data,
                                Context& context,
                                Tag<ConstantExpression>) {
-  ErrorsContextGuard guard{context.errors, *data, "constant expression"};
+  ErrorsContextGuard error_guard{context.errors, *data, "constant expression"};
+  LocationGuard guard{data};
   WASP_TRY_READ(instr, Read<Instruction>(data, context));
   switch (instr->opcode) {
     case Opcode::I32Const:
@@ -182,7 +191,8 @@ OptAt<CopyImmediate> Read(SpanU8* data,
                           Context& context,
                           Tag<CopyImmediate>,
                           BulkImmediateKind kind) {
-  ErrorsContextGuard guard{context.errors, *data, "copy immediate"};
+  ErrorsContextGuard error_guard{context.errors, *data, "copy immediate"};
+  LocationGuard guard{data};
   if (kind == BulkImmediateKind::Table &&
       context.features.reference_types_enabled()) {
     WASP_TRY_READ(dst_index, ReadIndex(data, context, "dst index"));
@@ -200,14 +210,16 @@ OptAt<Index> ReadCount(SpanU8* data, Context& context) {
 }
 
 OptAt<DataCount> Read(SpanU8* data, Context& context, Tag<DataCount>) {
-  ErrorsContextGuard guard{context.errors, *data, "data count"};
+  ErrorsContextGuard error_guard{context.errors, *data, "data count"};
+  LocationGuard guard{data};
   WASP_TRY_READ(count, ReadIndex(data, context, "count"));
   context.declared_data_count = count;
   return MakeAt(guard.loc(), DataCount{count});
 }
 
 OptAt<DataSegment> Read(SpanU8* data, Context& context, Tag<DataSegment>) {
-  ErrorsContextGuard guard{context.errors, *data, "data segment"};
+  ErrorsContextGuard error_guard{context.errors, *data, "data segment"};
+  LocationGuard guard{data};
   context.data_count++;
   auto decoded = encoding::DecodedDataSegmentFlags::MVP();
   if (context.features.bulk_memory_enabled()) {
@@ -239,7 +251,8 @@ OptAt<DataSegment> Read(SpanU8* data, Context& context, Tag<DataSegment>) {
 OptAt<ElementExpression> Read(SpanU8* data,
                               Context& context,
                               Tag<ElementExpression>) {
-  ErrorsContextGuard guard{context.errors, *data, "element expression"};
+  ErrorsContextGuard error_guard{context.errors, *data, "element expression"};
+  LocationGuard guard{data};
   // Element expressions were first added in the bulk memory proposal, so it
   // shouldn't be read (and this function shouldn't be called) if that feature
   // is not enabled.
@@ -274,7 +287,8 @@ OptAt<ElementExpression> Read(SpanU8* data,
 OptAt<ElementSegment> Read(SpanU8* data,
                            Context& context,
                            Tag<ElementSegment>) {
-  ErrorsContextGuard guard{context.errors, *data, "element segment"};
+  ErrorsContextGuard error_guard{context.errors, *data, "element segment"};
+  LocationGuard guard{data};
   auto decoded = encoding::DecodedElemSegmentFlags::MVP();
   if (context.features.bulk_memory_enabled()) {
     WASP_TRY_READ(flags, ReadIndex(data, context, "flags"));
@@ -331,7 +345,7 @@ OptAt<ElementSegment> Read(SpanU8* data,
 }
 
 OptAt<ElementType> Read(SpanU8* data, Context& context, Tag<ElementType>) {
-  ErrorsContextGuard guard{context.errors, *data, "element type"};
+  ErrorsContextGuard error_guard{context.errors, *data, "element type"};
   WASP_TRY_READ(val, Read<u8>(data, context));
   WASP_TRY_DECODE_FEATURES(decoded, val, ElementType, "element type",
                            context.features);
@@ -339,7 +353,8 @@ OptAt<ElementType> Read(SpanU8* data, Context& context, Tag<ElementType>) {
 }
 
 OptAt<Event> Read(SpanU8* data, Context& context, Tag<Event>) {
-  ErrorsContextGuard guard{context.errors, *data, "event"};
+  ErrorsContextGuard error_guard{context.errors, *data, "event"};
+  LocationGuard guard{data};
   WASP_TRY_READ(event_type, Read<EventType>(data, context));
   return MakeAt(guard.loc(), Event{event_type});
 }
@@ -347,21 +362,23 @@ OptAt<Event> Read(SpanU8* data, Context& context, Tag<Event>) {
 OptAt<EventAttribute> Read(SpanU8* data,
                            Context& context,
                            Tag<EventAttribute>) {
-  ErrorsContextGuard guard{context.errors, *data, "event attribute"};
+  ErrorsContextGuard error_guard{context.errors, *data, "event attribute"};
   WASP_TRY_READ(val, Read<u32>(data, context));
   WASP_TRY_DECODE(decoded, val, EventAttribute, "event attribute");
   return decoded;
 }
 
 OptAt<EventType> Read(SpanU8* data, Context& context, Tag<EventType>) {
-  ErrorsContextGuard guard{context.errors, *data, "event type"};
+  ErrorsContextGuard error_guard{context.errors, *data, "event type"};
+  LocationGuard guard{data};
   WASP_TRY_READ(attribute, Read<EventAttribute>(data, context));
   WASP_TRY_READ(type_index, ReadIndex(data, context, "type index"));
   return MakeAt(guard.loc(), EventType{attribute, type_index});
 }
 
 OptAt<Export> Read(SpanU8* data, Context& context, Tag<Export>) {
-  ErrorsContextGuard guard{context.errors, *data, "export"};
+  ErrorsContextGuard error_guard{context.errors, *data, "export"};
+  LocationGuard guard{data};
   WASP_TRY_READ(name, ReadUtf8String(data, context, "name"));
   WASP_TRY_READ(kind, Read<ExternalKind>(data, context));
   WASP_TRY_READ(index, ReadIndex(data, context, "index"));
@@ -369,7 +386,7 @@ OptAt<Export> Read(SpanU8* data, Context& context, Tag<Export>) {
 }
 
 OptAt<ExternalKind> Read(SpanU8* data, Context& context, Tag<ExternalKind>) {
-  ErrorsContextGuard guard{context.errors, *data, "external kind"};
+  ErrorsContextGuard error_guard{context.errors, *data, "external kind"};
   WASP_TRY_READ(val, Read<u8>(data, context));
   WASP_TRY_DECODE_FEATURES(decoded, val, ExternalKind, "external kind",
                            context.features);
@@ -378,7 +395,7 @@ OptAt<ExternalKind> Read(SpanU8* data, Context& context, Tag<ExternalKind>) {
 
 OptAt<f32> Read(SpanU8* data, Context& context, Tag<f32>) {
   static_assert(sizeof(f32) == 4, "sizeof(f32) != 4");
-  ErrorsContextGuard guard{context.errors, *data, "f32"};
+  ErrorsContextGuard error_guard{context.errors, *data, "f32"};
   WASP_TRY_READ(bytes, ReadBytes(data, sizeof(f32), context));
   f32 result;
   memcpy(&result, bytes->data(), sizeof(f32));
@@ -388,7 +405,7 @@ OptAt<f32> Read(SpanU8* data, Context& context, Tag<f32>) {
 
 OptAt<f64> Read(SpanU8* data, Context& context, Tag<f64>) {
   static_assert(sizeof(f64) == 8, "sizeof(f64) != 8");
-  ErrorsContextGuard guard{context.errors, *data, "f64"};
+  ErrorsContextGuard error_guard{context.errors, *data, "f64"};
   WASP_TRY_READ(bytes, ReadBytes(data, sizeof(f64), context));
   f64 result;
   memcpy(&result, bytes->data(), sizeof(f64));
@@ -396,14 +413,16 @@ OptAt<f64> Read(SpanU8* data, Context& context, Tag<f64>) {
 }
 
 OptAt<Function> Read(SpanU8* data, Context& context, Tag<Function>) {
-  ErrorsContextGuard guard{context.errors, *data, "function"};
+  ErrorsContextGuard error_guard{context.errors, *data, "function"};
+  LocationGuard guard{data};
   context.defined_function_count++;
   WASP_TRY_READ(type_index, ReadIndex(data, context, "type index"));
   return MakeAt(guard.loc(), Function{type_index});
 }
 
 OptAt<FunctionType> Read(SpanU8* data, Context& context, Tag<FunctionType>) {
-  ErrorsContextGuard guard{context.errors, *data, "function type"};
+  ErrorsContextGuard error_guard{context.errors, *data, "function type"};
+  LocationGuard guard{data};
   WASP_TRY_READ(param_types,
                       ReadVector<ValueType>(data, context, "param types"));
   WASP_TRY_READ(result_types,
@@ -413,21 +432,24 @@ OptAt<FunctionType> Read(SpanU8* data, Context& context, Tag<FunctionType>) {
 }
 
 OptAt<Global> Read(SpanU8* data, Context& context, Tag<Global>) {
-  ErrorsContextGuard guard{context.errors, *data, "global"};
+  ErrorsContextGuard error_guard{context.errors, *data, "global"};
+  LocationGuard guard{data};
   WASP_TRY_READ(global_type, Read<GlobalType>(data, context));
   WASP_TRY_READ(init_expr, Read<ConstantExpression>(data, context));
   return MakeAt(guard.loc(), Global{global_type, std::move(init_expr)});
 }
 
 OptAt<GlobalType> Read(SpanU8* data, Context& context, Tag<GlobalType>) {
-  ErrorsContextGuard guard{context.errors, *data, "global type"};
+  ErrorsContextGuard error_guard{context.errors, *data, "global type"};
+  LocationGuard guard{data};
   WASP_TRY_READ(type, Read<ValueType>(data, context));
   WASP_TRY_READ(mut, Read<Mutability>(data, context));
   return MakeAt(guard.loc(), GlobalType{type, mut});
 }
 
 OptAt<Import> Read(SpanU8* data, Context& context, Tag<Import>) {
-  ErrorsContextGuard guard{context.errors, *data, "import"};
+  ErrorsContextGuard error_guard{context.errors, *data, "import"};
+  LocationGuard guard{data};
   WASP_TRY_READ(module, ReadUtf8String(data, context, "module name"));
   WASP_TRY_READ(name, ReadUtf8String(data, context, "field name"));
   WASP_TRY_READ(kind, Read<ExternalKind>(data, context));
@@ -464,7 +486,8 @@ OptAt<InitImmediate> Read(SpanU8* data,
                           Context& context,
                           Tag<InitImmediate>,
                           BulkImmediateKind kind) {
-  ErrorsContextGuard guard{context.errors, *data, "init immediate"};
+  ErrorsContextGuard error_guard{context.errors, *data, "init immediate"};
+  LocationGuard guard{data};
   WASP_TRY_READ(segment_index, ReadIndex(data, context, "segment index"));
   if (kind == BulkImmediateKind::Table &&
       context.features.reference_types_enabled()) {
@@ -477,6 +500,7 @@ OptAt<InitImmediate> Read(SpanU8* data,
 }
 
 OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
+  LocationGuard guard{data};
   WASP_TRY_READ(opcode, Read<Opcode>(data, context));
   switch (opcode) {
     // No immediates:
@@ -774,7 +798,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I8X16Abs:
     case Opcode::I16X8Abs:
     case Opcode::I32X4Abs:
-      return MakeAt(opcode.loc(), Instruction{opcode});
+      return MakeAt(guard.loc(), Instruction{opcode});
 
     // Type immediate.
     case Opcode::Block:
@@ -782,7 +806,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::If:
     case Opcode::Try: {
       WASP_TRY_READ(type, Read<BlockType>(data, context));
-      return MakeAt(opcode.loc(), Instruction{opcode, type});
+      return MakeAt(guard.loc(), Instruction{opcode, type});
     }
 
     // Index immediate.
@@ -805,26 +829,26 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::TableSize:
     case Opcode::TableFill: {
       WASP_TRY_READ(index, ReadIndex(data, context, "index"));
-      return MakeAt(opcode.loc(), Instruction{opcode, index});
+      return MakeAt(guard.loc(), Instruction{opcode, index});
     }
 
     // Index, Index immediates.
     case Opcode::BrOnExn: {
       WASP_TRY_READ(immediate, Read<BrOnExnImmediate>(data, context));
-      return MakeAt(opcode.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.loc(), Instruction{opcode, immediate});
     }
 
     // Index* immediates.
     case Opcode::BrTable: {
       WASP_TRY_READ(immediate, Read<BrTableImmediate>(data, context));
-      return MakeAt(opcode.loc(), Instruction{opcode, std::move(immediate)});
+      return MakeAt(guard.loc(), Instruction{opcode, std::move(immediate)});
     }
 
     // Index, reserved immediates.
     case Opcode::CallIndirect:
     case Opcode::ReturnCallIndirect: {
       WASP_TRY_READ(immediate, Read<CallIndirectImmediate>(data, context));
-      return MakeAt(opcode.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.loc(), Instruction{opcode, immediate});
     }
 
     // Memarg (alignment, offset) immediates.
@@ -930,7 +954,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I64AtomicRmw16CmpxchgU:
     case Opcode::I64AtomicRmw32CmpxchgU: {
       WASP_TRY_READ(memarg, Read<MemArgImmediate>(data, context));
-      return MakeAt(opcode.loc(), Instruction{opcode, memarg});
+      return MakeAt(guard.loc(), Instruction{opcode, memarg});
     }
 
     // Reserved immediates.
@@ -938,69 +962,69 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::MemoryGrow:
     case Opcode::MemoryFill: {
       WASP_TRY_READ(reserved, ReadReserved(data, context));
-      return MakeAt(opcode.loc(), Instruction{opcode, reserved});
+      return MakeAt(guard.loc(), Instruction{opcode, reserved});
     }
 
     // Const immediates.
     case Opcode::I32Const: {
       WASP_TRY_READ_CONTEXT(value, Read<s32>(data, context), "i32 constant");
-      return MakeAt(opcode.loc(), Instruction{opcode, value});
+      return MakeAt(guard.loc(), Instruction{opcode, value});
     }
 
     case Opcode::I64Const: {
       WASP_TRY_READ_CONTEXT(value, Read<s64>(data, context), "i64 constant");
-      return MakeAt(opcode.loc(), Instruction{opcode, value});
+      return MakeAt(guard.loc(), Instruction{opcode, value});
     }
 
     case Opcode::F32Const: {
       WASP_TRY_READ_CONTEXT(value, Read<f32>(data, context), "f32 constant");
-      return MakeAt(opcode.loc(), Instruction{opcode, value});
+      return MakeAt(guard.loc(), Instruction{opcode, value});
     }
 
     case Opcode::F64Const: {
       WASP_TRY_READ_CONTEXT(value, Read<f64>(data, context), "f64 constant");
-      return MakeAt(opcode.loc(), Instruction{opcode, value});
+      return MakeAt(guard.loc(), Instruction{opcode, value});
     }
 
     case Opcode::V128Const: {
       WASP_TRY_READ_CONTEXT(value, Read<v128>(data, context), "v128 constant");
-      return MakeAt(opcode.loc(), Instruction{opcode, value});
+      return MakeAt(guard.loc(), Instruction{opcode, value});
     }
 
     // Reserved, Index immediates.
     case Opcode::MemoryInit: {
       WASP_TRY_READ(immediate, Read<InitImmediate>(data, context,
                                                    BulkImmediateKind::Memory));
-      return MakeAt(opcode.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.loc(), Instruction{opcode, immediate});
     }
     case Opcode::TableInit: {
       WASP_TRY_READ(immediate, Read<InitImmediate>(data, context,
                                                    BulkImmediateKind::Table));
-      return MakeAt(opcode.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.loc(), Instruction{opcode, immediate});
     }
 
     // Reserved, reserved immediates.
     case Opcode::MemoryCopy: {
       WASP_TRY_READ(immediate, Read<CopyImmediate>(data, context,
                                                    BulkImmediateKind::Memory));
-      return MakeAt(opcode.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.loc(), Instruction{opcode, immediate});
     }
     case Opcode::TableCopy: {
       WASP_TRY_READ(immediate, Read<CopyImmediate>(data, context,
                                                    BulkImmediateKind::Table));
-      return MakeAt(opcode.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.loc(), Instruction{opcode, immediate});
     }
 
     // Shuffle immediate.
     case Opcode::V8X16Shuffle: {
       WASP_TRY_READ(immediate, Read<ShuffleImmediate>(data, context));
-      return MakeAt(opcode.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.loc(), Instruction{opcode, immediate});
     }
 
     // ValueTypes immediate.
     case Opcode::SelectT: {
       WASP_TRY_READ(immediate, ReadVector<ValueType>(data, context, "types"));
-      return MakeAt(opcode.loc(), Instruction{opcode, immediate});
+      return MakeAt(guard.loc(), Instruction{opcode, immediate});
     }
 
     // u8 immediate.
@@ -1019,7 +1043,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::F32X4ReplaceLane:
     case Opcode::F64X2ReplaceLane: {
       WASP_TRY_READ(lane, Read<u8>(data, context));
-      return MakeAt(opcode.loc(), Instruction{opcode, lane});
+      return MakeAt(guard.loc(), Instruction{opcode, lane});
     }
   }
   WASP_UNREACHABLE();
@@ -1030,24 +1054,26 @@ OptAt<Index> ReadLength(SpanU8* data, Context& context) {
 }
 
 OptAt<Limits> Read(SpanU8* data, Context& context, Tag<Limits>) {
-  ErrorsContextGuard guard{context.errors, *data, "limits"};
+  ErrorsContextGuard error_guard{context.errors, *data, "limits"};
+  LocationGuard guard{data};
   WASP_TRY_READ_CONTEXT(flags, Read<u8>(data, context), "flags");
   WASP_TRY_DECODE_FEATURES(decoded, flags, LimitsFlags, "flags value",
                            context.features);
 
   WASP_TRY_READ_CONTEXT(min, Read<u32>(data, context), "min");
 
-  if (decoded->has_max == encoding::HasMax::No) {
-    return MakeAt(guard.loc(), Limits{min});
-  } else {
-    WASP_TRY_READ_CONTEXT(max, Read<u32>(data, context), "max");
-    return MakeAt(guard.loc(),
-                  Limits{min, max, MakeAt(flags.loc(), decoded->shared)});
+  OptAt<u32> max;
+  if (decoded->has_max == encoding::HasMax::Yes) {
+    WASP_TRY_READ_CONTEXT(max_, Read<u32>(data, context), "max");
+    max = max_;
   }
+  return MakeAt(guard.loc(),
+                Limits{min, max, MakeAt(flags.loc(), decoded->shared)});
 }
 
 OptAt<Locals> Read(SpanU8* data, Context& context, Tag<Locals>) {
-  ErrorsContextGuard guard{context.errors, *data, "locals"};
+  ErrorsContextGuard error_guard{context.errors, *data, "locals"};
+  LocationGuard guard{data};
   WASP_TRY_READ(count, ReadIndex(data, context, "count"));
   WASP_TRY_READ_CONTEXT(type, Read<ValueType>(data, context), "type");
   return MakeAt(guard.loc(), Locals{count, type});
@@ -1056,32 +1082,34 @@ OptAt<Locals> Read(SpanU8* data, Context& context, Tag<Locals>) {
 OptAt<MemArgImmediate> Read(SpanU8* data,
                             Context& context,
                             Tag<MemArgImmediate>) {
+  LocationGuard guard{data};
   WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, context), "align log2");
   WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, context), "offset");
-  return MakeAt(align_log2.loc(), MemArgImmediate{align_log2, offset});
+  return MakeAt(guard.loc(), MemArgImmediate{align_log2, offset});
 }
 
 OptAt<Memory> Read(SpanU8* data, Context& context, Tag<Memory>) {
-  ErrorsContextGuard guard{context.errors, *data, "memory"};
+  ErrorsContextGuard error_guard{context.errors, *data, "memory"};
   WASP_TRY_READ(memory_type, Read<MemoryType>(data, context));
-  return MakeAt(guard.loc(), Memory{memory_type});
+  return MakeAt(memory_type.loc(), Memory{memory_type});
 }
 
 OptAt<MemoryType> Read(SpanU8* data, Context& context, Tag<MemoryType>) {
-  ErrorsContextGuard guard{context.errors, *data, "memory type"};
+  ErrorsContextGuard error_guard{context.errors, *data, "memory type"};
   WASP_TRY_READ(limits, Read<Limits>(data, context));
-  return MakeAt(guard.loc(), MemoryType{limits});
+  return MakeAt(limits.loc(), MemoryType{limits});
 }
 
 OptAt<Mutability> Read(SpanU8* data, Context& context, Tag<Mutability>) {
-  ErrorsContextGuard guard{context.errors, *data, "mutability"};
+  ErrorsContextGuard error_guard{context.errors, *data, "mutability"};
   WASP_TRY_READ(val, Read<u8>(data, context));
   WASP_TRY_DECODE(decoded, val, Mutability, "mutability");
   return decoded;
 }
 
 OptAt<Opcode> Read(SpanU8* data, Context& context, Tag<Opcode>) {
-  ErrorsContextGuard guard{context.errors, *data, "opcode"};
+  ErrorsContextGuard error_guard{context.errors, *data, "opcode"};
+  LocationGuard guard{data};
   WASP_TRY_READ(val, Read<u8>(data, context));
 
   if (encoding::Opcode::IsPrefixByte(*val, context.features)) {
@@ -1091,7 +1119,7 @@ OptAt<Opcode> Read(SpanU8* data, Context& context, Tag<Opcode>) {
       context.errors.OnError(*data, format("Unknown opcode: {} {}", val, code));
       return nullopt;
     }
-    return MakeAt(val.loc(), *decoded);
+    return MakeAt(guard.loc(), *decoded);
   } else {
     WASP_TRY_DECODE_FEATURES(decoded, val, Opcode, "opcode", context.features);
     return decoded;
@@ -1099,7 +1127,8 @@ OptAt<Opcode> Read(SpanU8* data, Context& context, Tag<Opcode>) {
 }
 
 OptAt<u8> ReadReserved(SpanU8* data, Context& context) {
-  ErrorsContextGuard guard{context.errors, *data, "reserved"};
+  ErrorsContextGuard error_guard{context.errors, *data, "reserved"};
+  LocationGuard guard{data};
   WASP_TRY_READ(reserved, Read<u8>(data, context));
   if (reserved != 0) {
     context.errors.OnError(
@@ -1126,7 +1155,8 @@ OptAt<s64> Read(SpanU8* data, Context& context, Tag<s64>) {
 }
 
 OptAt<Section> Read(SpanU8* data, Context& context, Tag<Section>) {
-  ErrorsContextGuard guard{context.errors, *data, "section"};
+  ErrorsContextGuard error_guard{context.errors, *data, "section"};
+  LocationGuard guard{data};
   WASP_TRY_READ(id, Read<SectionId>(data, context));
   WASP_TRY_READ(length, ReadLength(data, context));
   WASP_TRY_READ(bytes, ReadBytes(data, length, context));
@@ -1160,7 +1190,8 @@ OptAt<SectionId> Read(SpanU8* data, Context& context, Tag<SectionId>) {
 OptAt<ShuffleImmediate> Read(SpanU8* data,
                              Context& context,
                              Tag<ShuffleImmediate>) {
-  ErrorsContextGuard guard{context.errors, *data, "shuffle immediate"};
+  ErrorsContextGuard error_guard{context.errors, *data, "shuffle immediate"};
+  LocationGuard guard{data};
   ShuffleImmediate immediate;
   for (int i = 0; i < 16; ++i) {
     WASP_TRY_READ(byte, Read<u8>(data, context));
@@ -1172,13 +1203,14 @@ OptAt<ShuffleImmediate> Read(SpanU8* data,
 OptAt<Start> Read(SpanU8* data, Context& context, Tag<Start>) {
   ErrorsContextGuard guard{context.errors, *data, "start"};
   WASP_TRY_READ(index, ReadIndex(data, context, "function index"));
-  return MakeAt(guard.loc(), Start{index});
+  return MakeAt(index.loc(), Start{index});
 }
 
 OptAt<string_view> ReadString(SpanU8* data,
                               Context& context,
                               string_view desc) {
-  ErrorsContextGuard guard{context.errors, *data, desc};
+  ErrorsContextGuard error_guard{context.errors, *data, desc};
+  LocationGuard guard{data};
   WASP_TRY_READ(len, ReadLength(data, context));
   string_view result{reinterpret_cast<const char*>(data->data()), len};
   remove_prefix(data, len);
@@ -1197,20 +1229,22 @@ OptAt<string_view> ReadUtf8String(SpanU8* data,
 }
 
 OptAt<Table> Read(SpanU8* data, Context& context, Tag<Table>) {
-  ErrorsContextGuard guard{context.errors, *data, "table"};
+  ErrorsContextGuard error_guard{context.errors, *data, "table"};
   WASP_TRY_READ(table_type, Read<TableType>(data, context));
-  return MakeAt(guard.loc(), Table{table_type});
+  return MakeAt(table_type.loc(), Table{table_type});
 }
 
 OptAt<TableType> Read(SpanU8* data, Context& context, Tag<TableType>) {
-  ErrorsContextGuard guard{context.errors, *data, "table type"};
+  ErrorsContextGuard error_guard{context.errors, *data, "table type"};
+  LocationGuard guard{data};
   WASP_TRY_READ(elemtype, Read<ElementType>(data, context));
   WASP_TRY_READ(limits, Read<Limits>(data, context));
   return MakeAt(guard.loc(), TableType{std::move(limits), elemtype});
 }
 
 OptAt<TypeEntry> Read(SpanU8* data, Context& context, Tag<TypeEntry>) {
-  ErrorsContextGuard guard{context.errors, *data, "type entry"};
+  ErrorsContextGuard error_guard{context.errors, *data, "type entry"};
+  LocationGuard guard{data};
   WASP_TRY_READ_CONTEXT(form, Read<u8>(data, context), "form");
 
   if (form != encoding::Type::Function) {
@@ -1232,7 +1266,7 @@ OptAt<u8> Read(SpanU8* data, Context& context, Tag<u8>) {
     return nullopt;
   }
 
-  Location loc = data->subspan(1);
+  Location loc = data->subspan(0, 1);
   u8 result{(*data)[0]};
   remove_prefix(data, 1);
   return MakeAt(loc, result);
@@ -1244,7 +1278,7 @@ OptAt<v128> Read(SpanU8* data, Context& context, Tag<v128>) {
   WASP_TRY_READ(bytes, ReadBytes(data, sizeof(v128), context));
   v128 result;
   memcpy(&result, bytes->data(), sizeof(v128));
-  return MakeAt(guard.loc(), result);
+  return MakeAt(bytes.loc(), result);
 }
 
 OptAt<ValueType> Read(SpanU8* data, Context& context, Tag<ValueType>) {

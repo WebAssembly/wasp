@@ -109,10 +109,10 @@ struct SymbolInfo {
     enum class Undefined { No, Yes };
     enum class ExplicitName { No, Yes };
 
-    At<Binding> binding;
-    At<Visibility> visibility;
-    At<Undefined> undefined;
-    At<ExplicitName> explicit_name;
+    Binding binding;
+    Visibility visibility;
+    Undefined undefined;
+    ExplicitName explicit_name;
   };
 
   struct Base {

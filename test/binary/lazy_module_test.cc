@@ -40,17 +40,29 @@ TEST(LazyModuleTest, Basic) {
 
   auto it = module.sections.begin(), end = module.sections.end();
 
-  EXPECT_EQ((Section{KnownSection{SectionId::Type, "\0\0\0"_su8}}), *it++);
-  ASSERT_NE(end, it);
-
-  EXPECT_EQ((Section{KnownSection{SectionId::Function, "\0\0\0\0\0"_su8}}),
+  EXPECT_EQ((Section{MakeAt("\x01\03\0\0\0"_su8,
+                            KnownSection{MakeAt("\x01"_su8, SectionId::Type),
+                                         "\0\0\0"_su8})}),
             *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ((Section{KnownSection{SectionId::Code, "\0"_su8}}), *it++);
+  EXPECT_EQ(
+      (Section{MakeAt("\x03\x05\0\0\0\0\0"_su8,
+                      KnownSection{MakeAt("\x03"_su8, SectionId::Function),
+                                   "\0\0\0\0\0"_su8})}),
+      *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ((Section{CustomSection{"yup"_sv, "\0\0"_su8}}), *it++);
+  EXPECT_EQ((Section{MakeAt(
+                "\x0a\x01\0"_su8,
+                KnownSection{MakeAt("\x0a"_su8, SectionId::Code), "\0"_su8})}),
+            *it++);
+  ASSERT_NE(end, it);
+
+  EXPECT_EQ((Section{MakeAt(
+                "\x00\x06\x03yup\0\0"_su8,
+                CustomSection{MakeAt("\x03yup"_su8, "yup"_sv), "\0\0"_su8})}),
+            *it++);
   ASSERT_EQ(end, it);
 
   ExpectNoErrors(errors);
