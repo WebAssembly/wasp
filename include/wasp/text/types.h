@@ -76,7 +76,7 @@ struct Token {
   Token(Location, TokenType, Immediate);
 
   SpanU8 span_u8() const;
-  At<string_view> string_view() const;
+  string_view as_string_view() const;
 
   bool has_opcode() const;
   bool has_value_type() const;

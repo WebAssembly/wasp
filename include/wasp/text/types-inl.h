@@ -67,8 +67,8 @@ inline LiteralInfo::LiteralInfo(Sign sign,
                                 HasUnderscores has_underscores)
     : sign{sign}, kind{kind}, base{base}, has_underscores{has_underscores} {}
 
-inline At<string_view> Token::string_view() const {
-  return MakeAt(loc, ToStringView(loc));
+inline string_view Token::as_string_view() const {
+  return ToStringView(loc);
 }
 
 inline SpanU8 Token::span_u8() const {

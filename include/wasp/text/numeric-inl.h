@@ -75,10 +75,12 @@ auto StrToNat(LiteralInfo info, SpanU8 span) -> optional<T> {
   if (info.base == Base::Decimal) {
     return ParseInteger<T, 10>(span);
   } else {
+#ifndef NDEBUG
     auto is_hex_prefix = [](SpanU8 span) {
       return span.size() > 2 && span[0] == '0' &&
              (span[1] == 'x' || span[1] == 'X');
     };
+#endif
 
     assert(info.base == Base::Hex && is_hex_prefix(span));
     return ParseInteger<T, 16>(span.subspan(2));
@@ -230,7 +232,9 @@ auto StrToFloat(LiteralInfo info, SpanU8 span) -> optional<T> {
 
     case LiteralKind::Infinity:
       return MakeInfinity<T>(info.sign);
+
   }
+  return nullopt;
 }
 
 }  // namespace text

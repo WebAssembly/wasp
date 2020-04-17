@@ -212,6 +212,7 @@ StackType ElementTypeToStackType(ElementType elemtype) {
     case ElementType::Nullref: return StackType::Nullref;
     case ElementType::Exnref: return StackType::Exnref;
   }
+  WASP_UNREACHABLE();
 }
 
 optional<StackType> PeekType(Location loc, Context& context) {

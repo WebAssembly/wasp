@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+#include "wasp/base/macros.h"
+
 namespace wasp {
 namespace binary {
 
@@ -58,6 +60,7 @@ inline At<ElementType> ElementSegment::elemtype() const {
   } else {
     return expressions().element_type;
   }
+  WASP_UNREACHABLE();
 }
 
 // Import

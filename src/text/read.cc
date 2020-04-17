@@ -130,7 +130,7 @@ auto ReadVarOpt(Tokenizer& tokenizer, Context& context) -> OptAt<Var> {
   auto token = tokenizer.Peek();
   if (token.type == TokenType::Id) {
     tokenizer.Read();
-    return MakeAt(token.loc, Var{token.string_view()});
+    return MakeAt(token.loc, Var{token.as_string_view()});
   } else if (token.type == TokenType::Nat) {
     auto nat = ReadNat32(tokenizer, context);
     return MakeAt(nat.loc(), Var{nat.value()});
@@ -196,7 +196,7 @@ auto ReadBindVarOpt(Tokenizer& tokenizer, Context& context) -> OptAt<BindVar> {
   if (!token_opt) {
     return nullopt;
   }
-  return MakeAt(token_opt->loc, BindVar{token_opt->string_view()});
+  return MakeAt(token_opt->loc, BindVar{token_opt->as_string_view()});
 }
 
 auto ReadBoundValueTypeList(Tokenizer& tokenizer,
