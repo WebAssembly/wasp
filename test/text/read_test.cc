@@ -942,6 +942,8 @@ TEST_F(TextReadTest, BlockInstruction_Try) {
   using I = Instruction;
   using O = Opcode;
 
+  context.features.enable_exceptions();
+
   // try/catch.
   ExpectReadVector(
       ReadBlockInstruction_ForTesting,
@@ -1278,6 +1280,8 @@ TEST_F(TextReadTest, Expression_If) {
 TEST_F(TextReadTest, Expression_Try) {
   using I = Instruction;
   using O = Opcode;
+
+  context.features.enable_exceptions();
 
   // Try catch.
   ExpectReadVector(
@@ -1901,6 +1905,12 @@ TEST_F(TextReadTest, Import) {
                                               Mutability::Const})}},
       "(import \"m\" \"n\" (global i32))"_su8);
 
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, Import_exceptions) {
+  context.features.enable_exceptions();
+
   // Event.
   ExpectRead(ReadImport,
              Import{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
@@ -1938,6 +1948,10 @@ TEST_F(TextReadTest, Export) {
                     MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
                     MakeAt("0"_su8, Var{Index{0}})},
              "(export \"m\" (global 0))"_su8);
+}
+
+TEST_F(TextReadTest, Export_exceptions) {
+  context.features.enable_exceptions();
 
   // Event.
   ExpectRead(ReadExport,
@@ -2478,7 +2492,12 @@ TEST_F(TextReadTest, Const) {
   // f64.const
   ExpectRead(ReadConst, Const{f64{0}}, "(f64.const 0)"_su8);
 
-  // v128.const
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, Const_simd) {
+  context.features.enable_simd();
+
   ExpectRead(ReadConst, Const{v128{}}, "(v128.const i32x4 0 0 0 0)"_su8);
 
   ExpectNoErrors(errors);
@@ -2634,6 +2653,12 @@ TEST_F(TextReadTest, ReturnResult) {
              "(f64.const nan:arithmetic)"_su8);
   ExpectRead(ReadReturnResult, ReturnResult{F64Result{NanKind::Canonical}},
              "(f64.const nan:canonical)"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, ReturnResult_simd) {
+  context.features.enable_simd();
 
   ExpectRead(ReadReturnResult, ReturnResult{v128{}},
              "(v128.const i8x16 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0)"_su8);

@@ -367,7 +367,9 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> At<Import> {
     }
 
     case TokenType::Event: {
-      // TODO: check for exception-handling feature.
+      if (!context.features.exceptions_enabled()) {
+        context.errors.OnError(token.loc, "Events not allowed");
+      }
       tokenizer.Read();
       auto name = ReadBindVarOpt(tokenizer, context);
       auto type = ReadEventType(tokenizer, context);
@@ -670,7 +672,9 @@ auto ReadExport(Tokenizer& tokenizer, Context& context) -> At<Export> {
       break;
 
     case TokenType::Event:
-      // TODO: check for exception-handling feature.
+      if (!context.features.exceptions_enabled()) {
+        context.errors.OnError(token.loc, "Events not allowed");
+      }
       kind = MakeAt(token.loc, ExternalKind::Event);
       break;
 
@@ -859,7 +863,6 @@ auto ReadNameEqNatOpt(Tokenizer& tokenizer,
     return nullopt;
   }
 
-  // TODO: StrToNat should just return optional<T> not OptAt<T>
   auto nat_opt = StrToNat<u32>(token_opt->literal_info(),
                                token_opt->span_u8().subspan(offset));
   if (!nat_opt) {
@@ -1226,7 +1229,9 @@ void ReadBlockInstruction(Tokenizer& tokenizer,
       break;
 
     case Opcode::Try:
-      // TODO: Check that instruction is allowed by current feature set.
+      if (!context.features.exceptions_enabled()) {
+        context.errors.OnError(token_opt->loc, "Try instruction not allowed");
+      }
       ExpectOpcode(tokenizer, context, instructions, TokenType::Catch);
       ReadEndLabelOpt(tokenizer, context, block->label);
       ReadInstructionList(tokenizer, context, instructions);
@@ -1318,7 +1323,9 @@ void ReadExpression(Tokenizer& tokenizer,
         break;
 
       case Opcode::Try:
-        // TODO: Check that instruction is allowed by current feature set.
+        if (!context.features.exceptions_enabled()) {
+          context.errors.OnError(token.loc, "Try instruction not allowed");
+        }
         instructions.push_back(block_instr);
         ReadInstructionList(tokenizer, context, instructions);
 
@@ -1593,7 +1600,9 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> At<Const> {
     }
 
     case TokenType::SimdConstInstr: {
-      // TODO: Check for simd feature.
+      if (!context.features.simd_enabled()) {
+        context.errors.OnError(token.loc, "Simd values not allowed");
+      }
       tokenizer.Read();
       auto simd_token = tokenizer.Peek();
 
@@ -1786,7 +1795,9 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
     }
 
     case TokenType::SimdConstInstr: {
-      // TODO: Check for simd feature.
+      if (!context.features.simd_enabled()) {
+        context.errors.OnError(token.loc, "Simd values not allowed");
+      }
       tokenizer.Read();
       auto simd_token = tokenizer.Peek();
 
