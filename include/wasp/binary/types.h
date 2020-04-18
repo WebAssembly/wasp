@@ -19,6 +19,7 @@
 
 #include <array>
 #include <functional>
+#include <iosfwd>
 #include <vector>
 
 #include "wasp/base/at.h"
@@ -109,8 +110,6 @@ struct Section {
 
 // Instruction
 
-struct EmptyImmediate {};
-
 struct CallIndirectImmediate {
   At<Index> index;
   At<Index> table_index;
@@ -143,7 +142,6 @@ struct CopyImmediate {
 
 struct Instruction {
   explicit Instruction(At<Opcode>);
-  explicit Instruction(At<Opcode>, EmptyImmediate);
   explicit Instruction(At<Opcode>, At<BlockType>);
   explicit Instruction(At<Opcode>, At<Index>);
   explicit Instruction(At<Opcode>, At<CallIndirectImmediate>);
@@ -163,7 +161,6 @@ struct Instruction {
 
   // Convenience constructors w/ no Location.
   explicit Instruction(Opcode);
-  explicit Instruction(Opcode, EmptyImmediate);
   explicit Instruction(Opcode, BlockType);
   explicit Instruction(Opcode, Index);
   explicit Instruction(Opcode, CallIndirectImmediate);
@@ -181,7 +178,7 @@ struct Instruction {
   explicit Instruction(Opcode, ShuffleImmediate);
   explicit Instruction(Opcode, const ValueTypes&);
 
-  bool has_empty_immediate() const;
+  bool has_no_immediate() const;
   bool has_block_type_immediate() const;
   bool has_index_immediate() const;
   bool has_call_indirect_immediate() const;
@@ -199,8 +196,6 @@ struct Instruction {
   bool has_shuffle_immediate() const;
   bool has_value_types_immediate() const;
 
-  auto empty_immediate() -> EmptyImmediate&;
-  auto empty_immediate() const -> const EmptyImmediate&;
   auto block_type_immediate() -> At<BlockType>&;
   auto block_type_immediate() const -> const At<BlockType>&;
   auto index_immediate() -> At<Index>&;
@@ -235,7 +230,7 @@ struct Instruction {
   auto value_types_immediate() const -> const ValueTypes&;
 
   At<Opcode> opcode;
-  variant<EmptyImmediate,
+  variant<monostate,
           At<BlockType>,
           At<Index>,
           At<CallIndirectImmediate>,
@@ -475,7 +470,7 @@ struct Event {
   At<EventType> event_type;
 };
 
-#define WASP_TYPES(WASP_V)                \
+#define WASP_BINARY_TYPES(WASP_V)         \
   WASP_V(BrOnExnImmediate)                \
   WASP_V(BrTableImmediate)                \
   WASP_V(CallIndirectImmediate)           \
@@ -489,7 +484,6 @@ struct Event {
   WASP_V(ElementSegment)                  \
   WASP_V(ElementSegment::IndexesInit)     \
   WASP_V(ElementSegment::ExpressionsInit) \
-  WASP_V(EmptyImmediate)                  \
   WASP_V(Event)                           \
   WASP_V(EventType)                       \
   WASP_V(Export)                          \
@@ -516,9 +510,18 @@ struct Event {
   bool operator==(const Type&, const Type&); \
   bool operator!=(const Type&, const Type&);
 
-WASP_TYPES(WASP_DECLARE_OPERATOR_EQ_NE)
+WASP_BINARY_TYPES(WASP_DECLARE_OPERATOR_EQ_NE)
 
 #undef WASP_DECLARE_OPERATOR_EQ_NE
+
+// Used for gtest.
+
+void PrintTo(const BlockType&, std::ostream*);
+void PrintTo(const SectionId&, std::ostream*);
+
+#define WASP_DECLARE_PRINT_TO(Type) void PrintTo(const Type&, std::ostream*);
+WASP_BINARY_TYPES(WASP_DECLARE_PRINT_TO)
+#undef WASP_DECLARE_PRINT_TO
 
 }  // namespace binary
 }  // namespace wasp
@@ -531,10 +534,9 @@ namespace std {
     size_t operator()(const ::wasp::binary::Type&) const; \
   };
 
-WASP_TYPES(WASP_DECLARE_STD_HASH)
+WASP_BINARY_TYPES(WASP_DECLARE_STD_HASH)
 
 #undef WASP_DECLARE_STD_HASH
-#undef WASP_TYPES
 
 template <>
 struct hash<::wasp::binary::ShuffleImmediate> {

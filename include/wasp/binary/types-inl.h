@@ -129,8 +129,8 @@ inline const At<EventType>& Import::event_type() const {
 }
 
 // Instruction
-inline bool Instruction::has_empty_immediate() const {
-  return holds_alternative<EmptyImmediate>(immediate);
+inline bool Instruction::has_no_immediate() const {
+  return holds_alternative<monostate>(immediate);
 }
 
 inline bool Instruction::has_block_type_immediate() const {
@@ -195,14 +195,6 @@ inline bool Instruction::has_shuffle_immediate() const {
 
 inline bool Instruction::has_value_types_immediate() const {
   return holds_alternative<ValueTypes>(immediate);
-}
-
-inline EmptyImmediate& Instruction::empty_immediate() {
-  return get<EmptyImmediate>(immediate);
-}
-
-inline const EmptyImmediate& Instruction::empty_immediate() const {
-  return get<EmptyImmediate>(immediate);
 }
 
 inline At<BlockType>& Instruction::block_type_immediate() {

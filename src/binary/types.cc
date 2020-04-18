@@ -102,10 +102,7 @@ Import::Import(string_view module, string_view name, EventType desc)
     : module{module}, name{name}, desc{desc} {}
 
 Instruction::Instruction(At<Opcode> opcode)
-    : opcode(opcode), immediate(EmptyImmediate{}) {}
-
-Instruction::Instruction(At<Opcode> opcode, EmptyImmediate immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate() {}
 
 Instruction::Instruction(At<Opcode> opcode, At<BlockType> immediate)
     : opcode(opcode), immediate(immediate) {}
@@ -156,10 +153,7 @@ Instruction::Instruction(At<Opcode> opcode, const ValueTypes& immediate)
     : opcode(opcode), immediate(immediate) {}
 
 Instruction::Instruction(Opcode opcode)
-    : opcode(opcode), immediate(EmptyImmediate{}) {}
-
-Instruction::Instruction(Opcode opcode, EmptyImmediate immediate)
-    : opcode(opcode), immediate(immediate) {}
+    : opcode(opcode), immediate() {}
 
 Instruction::Instruction(Opcode opcode, BlockType immediate)
     : opcode(opcode), immediate(MakeAt(immediate)) {}
@@ -230,7 +224,6 @@ WASP_OPERATOR_EQ_NE_1(ElementExpression, instruction)
 WASP_OPERATOR_EQ_NE_4(ElementSegment, type, table_index, offset, desc)
 WASP_OPERATOR_EQ_NE_2(ElementSegment::IndexesInit, kind, init)
 WASP_OPERATOR_EQ_NE_2(ElementSegment::ExpressionsInit, element_type, init)
-WASP_OPERATOR_EQ_NE_0(EmptyImmediate)
 WASP_OPERATOR_EQ_NE_1(Event, event_type)
 WASP_OPERATOR_EQ_NE_2(EventType, attribute, type_index)
 WASP_OPERATOR_EQ_NE_3(Export, kind, name, index)
@@ -265,7 +258,6 @@ WASP_STD_HASH_1(::wasp::binary::DataCount, count)
 WASP_STD_HASH_4(::wasp::binary::DataSegment, type, memory_index, offset, init)
 WASP_STD_HASH_1(::wasp::binary::ElementExpression, instruction)
 WASP_STD_HASH_4(::wasp::binary::ElementSegment, type, table_index, offset, desc)
-WASP_STD_HASH_0(::wasp::binary::EmptyImmediate)
 WASP_STD_HASH_1(::wasp::binary::Event, event_type)
 WASP_STD_HASH_2(::wasp::binary::EventType, attribute, type_index)
 WASP_STD_HASH_3(::wasp::binary::Export, kind, name, index)

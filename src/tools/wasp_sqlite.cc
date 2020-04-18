@@ -566,7 +566,7 @@ void Tool::DoCodeSection(LazyCodeSection section) {
       const auto& instr = *it;
       auto opcode_val = static_cast<int>(*instr->opcode);
 
-      if (instr->has_empty_immediate()) {
+      if (instr->has_no_immediate()) {
         sqlite3_bind_null(stmt, 6);
       } else if (instr->has_block_type_immediate()) {
         sqlite3_bind_int(stmt, 6,

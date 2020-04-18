@@ -17,6 +17,8 @@
 #ifndef WASP_BASE_WASM_TYPES_H_
 #define WASP_BASE_WASM_TYPES_H_
 
+#include <iosfwd>
+
 #include "wasp/base/at.h"
 #include "wasp/base/types.h"
 
@@ -89,16 +91,30 @@ struct Limits {
   At<Shared> shared;
 };
 
-#define WASP_TYPES(WASP_V)                \
-  WASP_V(Limits)                          \
+#define WASP_BASE_WASM_TYPES(WASP_V) WASP_V(Limits)
 
 #define WASP_DECLARE_OPERATOR_EQ_NE(Type)    \
   bool operator==(const Type&, const Type&); \
   bool operator!=(const Type&, const Type&);
 
-WASP_TYPES(WASP_DECLARE_OPERATOR_EQ_NE)
+WASP_BASE_WASM_TYPES(WASP_DECLARE_OPERATOR_EQ_NE)
 
 #undef WASP_DECLARE_OPERATOR_EQ_NE
+
+// Used for gtest.
+
+void PrintTo(const Opcode&, std::ostream*);
+void PrintTo(const ValueType&, std::ostream*);
+void PrintTo(const ElementType&, std::ostream*);
+void PrintTo(const ExternalKind&, std::ostream*);
+void PrintTo(const EventAttribute&, std::ostream*);
+void PrintTo(const Mutability&, std::ostream*);
+void PrintTo(const SegmentType&, std::ostream*);
+void PrintTo(const Shared&, std::ostream*);
+
+#define WASP_DECLARE_PRINT_TO(Type) void PrintTo(const Type&, std::ostream*);
+WASP_BASE_WASM_TYPES(WASP_DECLARE_PRINT_TO)
+#undef WASP_DECLARE_PRINT_TO
 
 }  // namespace wasp
 
@@ -110,10 +126,9 @@ namespace std {
     size_t operator()(const ::wasp::Type&) const; \
   };
 
-WASP_TYPES(WASP_DECLARE_STD_HASH)
+WASP_BASE_WASM_TYPES(WASP_DECLARE_STD_HASH)
 
 #undef WASP_DECLARE_STD_HASH
-#undef WASP_TYPES
 
 }  // namespace std
 

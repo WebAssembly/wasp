@@ -51,6 +51,7 @@ add_library(wasplib
   src/base/at.cc
   src/base/features.cc
   src/base/file.cc
+  src/base/print_to.cc
   src/base/span.cc
   src/base/str_to_u32.cc
   src/base/utf8.cc
@@ -67,6 +68,7 @@ add_library(wasplib
   src/binary/name_section/read.cc
   src/binary/name_section/sections.cc
   src/binary/name_section/types.cc
+  src/binary/print_to.cc
   src/binary/read.cc
   src/binary/sections.cc
   src/binary/types.cc

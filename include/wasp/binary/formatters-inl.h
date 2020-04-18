@@ -409,6 +409,26 @@ typename Ctx::iterator formatter<::wasp::binary::ElementSegment>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator
+formatter<::wasp::binary::ElementSegment::IndexesInit>::format(
+    const ::wasp::binary::ElementSegment::IndexesInit& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{type {}, init {}}}", self.kind, self.init);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator
+formatter<::wasp::binary::ElementSegment::ExpressionsInit>::format(
+    const ::wasp::binary::ElementSegment::ExpressionsInit& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{type {}, init {}}}", self.element_type, self.init);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::Code>::format(
     const ::wasp::binary::Code& self,
     Ctx& ctx) {
