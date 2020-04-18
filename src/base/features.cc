@@ -18,16 +18,35 @@
 
 namespace wasp {
 
+Features::Features() {
+#define WASP_V(enum_, variable, flag, default_) \
+  set_##variable##_enabled(default_);
+#include "wasp/base/features.def"
+#undef WASP_V
+}
+
+Features::Features(Bits bits) : bits_{bits} {
+  UpdateDependencies();
+}
+
 void Features::EnableAll() {
-#define WASP_V(variable, flag, default_) enable_##variable();
+#define WASP_V(enum_, variable, flag, default_) enable_##variable();
 #include "wasp/base/features.def"
 #undef WASP_V
 }
 
 void Features::UpdateDependencies(){
-  if (reference_types_enabled_) {
-    bulk_memory_enabled_ = true;
+  if (bits_ & ReferenceTypes) {
+    bits_ |= BulkMemory;
   }
+}
+
+bool operator==(const Features& lhs, const Features& rhs) {
+  return lhs.bits_ == rhs.bits_;
+}
+
+bool operator!=(const Features& lhs, const Features& rhs) {
+  return !(lhs == rhs);
 }
 
 }  // namespace wasp

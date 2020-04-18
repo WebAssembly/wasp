@@ -67,6 +67,11 @@ inline LiteralInfo::LiteralInfo(Sign sign,
                                 HasUnderscores has_underscores)
     : sign{sign}, kind{kind}, base{base}, has_underscores{has_underscores} {}
 
+inline OpcodeInfo::OpcodeInfo(Opcode opcode) : opcode{opcode}, features{0} {}
+
+inline OpcodeInfo::OpcodeInfo(Opcode opcode, Features features)
+    : opcode{opcode}, features{features} {}
+
 inline string_view Token::as_string_view() const {
   return ToStringView(loc);
 }
@@ -92,7 +97,11 @@ inline bool Token::has_text() const {
 }
 
 inline At<Opcode> Token::opcode() const {
-  return MakeAt(loc, get<Opcode>(immediate));
+  return MakeAt(loc, get<OpcodeInfo>(immediate).opcode);
+}
+
+inline Features Token::opcode_features() const {
+  return get<OpcodeInfo>(immediate).features;
 }
 
 inline At<ValueType> Token::value_type() const {

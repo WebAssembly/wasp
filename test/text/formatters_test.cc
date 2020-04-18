@@ -59,9 +59,9 @@ TEST(FormattersTest, Token) {
   EXPECT_EQ(R"({loc "\28", type Lpar})",
             format("{}", Token{"("_su8, TokenType::Lpar}));
 
-  EXPECT_EQ(
-      R"({loc "\69\33\32\2e\61\64\64", type BareInstr, opcode i32.add})",
-      format("{}", Token{"i32.add"_su8, TokenType::BareInstr, Opcode::I32Add}));
+  EXPECT_EQ(R"({loc "\69\33\32\2e\61\64\64", type BareInstr, opcode i32.add})",
+            format("{}", Token{"i32.add"_su8, TokenType::BareInstr,
+                               OpcodeInfo{Opcode::I32Add, Features{0}}}));
 
   EXPECT_EQ(
       R"({loc "\69\33\32", type ValueType, value_type i32})",

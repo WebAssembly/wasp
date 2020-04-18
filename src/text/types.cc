@@ -28,8 +28,8 @@ Token::Token() : loc{}, type{TokenType::Eof}, immediate{monostate{}} {}
 Token::Token(Location loc, TokenType type)
     : loc{loc}, type{type}, immediate{monostate{}} {}
 
-Token::Token(Location loc, TokenType type, Opcode opcode)
-    : loc{loc}, type{type}, immediate{opcode} {}
+Token::Token(Location loc, TokenType type, OpcodeInfo info)
+    : loc{loc}, type{type}, immediate{info} {}
 
 Token::Token(Location loc, TokenType type, ValueType valtype)
     : loc{loc}, type{type}, immediate{valtype} {}
@@ -116,6 +116,7 @@ DataSegment::DataSegment(OptAt<BindVar> name, const TextList& data)
     : name{name}, type{SegmentType::Passive}, data{data} {}
 
 WASP_OPERATOR_EQ_NE_4(LiteralInfo, sign, kind, base, has_underscores)
+WASP_OPERATOR_EQ_NE_2(OpcodeInfo, opcode, features)
 WASP_OPERATOR_EQ_NE_2(Text, text, byte_size)
 WASP_OPERATOR_EQ_NE_3(Token, loc, type, immediate)
 WASP_OPERATOR_EQ_NE_2(BoundValueType, name, type)

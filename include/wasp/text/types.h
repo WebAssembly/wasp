@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "wasp/base/at.h"
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
@@ -59,17 +60,26 @@ struct LiteralInfo {
   HasUnderscores has_underscores;
 };
 
+struct OpcodeInfo {
+  OpcodeInfo(Opcode);
+  OpcodeInfo(Opcode, Features);
+
+  Opcode opcode;
+  Features features;
+};
+
 struct Text {
   string_view text;
   u32 byte_size;
 };
 
 struct Token {
-  using Immediate = variant<monostate, Opcode, ValueType, LiteralInfo, Text>;
+  using Immediate =
+      variant<monostate, OpcodeInfo, ValueType, LiteralInfo, Text>;
 
   Token();
   Token(Location, TokenType);
-  Token(Location, TokenType, Opcode);
+  Token(Location, TokenType, OpcodeInfo);
   Token(Location, TokenType, ValueType);
   Token(Location, TokenType, LiteralInfo);
   Token(Location, TokenType, Text);
@@ -84,6 +94,7 @@ struct Token {
   bool has_text() const;
 
   At<Opcode> opcode() const;
+  Features opcode_features() const;
   At<ValueType> value_type() const;
   LiteralInfo literal_info() const;
   Text text() const;

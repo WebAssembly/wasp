@@ -432,18 +432,23 @@ auto LexKeyword(SpanU8* data, string_view sv, TokenType tt) -> Token {
   return LexReserved(guard.Reset());
 }
 
-auto LexKeyword(SpanU8* data, string_view sv, Opcode o) -> Token {
+auto LexKeyword(SpanU8* data, string_view sv, Opcode o, Features::Bits f = 0)
+    -> Token {
   MatchGuard guard{data};
   if (MatchString(data, sv) && NoTrailingReservedChars(data)) {
-    return Token(guard.loc(), TokenType::BareInstr, o);
+    return Token(guard.loc(), TokenType::BareInstr, OpcodeInfo{o, Features{f}});
   }
   return LexReserved(guard.Reset());
 }
 
-auto LexKeyword(SpanU8* data, string_view sv, TokenType tt, Opcode o) -> Token {
+auto LexKeyword(SpanU8* data,
+                string_view sv,
+                TokenType tt,
+                Opcode o,
+                Features::Bits f = 0) -> Token {
   MatchGuard guard{data};
   if (MatchString(data, sv) && NoTrailingReservedChars(data)) {
-    return Token(guard.loc(), tt, o);
+    return Token(guard.loc(), tt, OpcodeInfo{o, Features{f}});
   }
   return LexReserved(guard.Reset());
 }

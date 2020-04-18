@@ -73,7 +73,7 @@ ArgParser& ArgParser::AddRaw(const Option& option) {
 }
 
 ArgParser& ArgParser::AddFeatureFlags(Features& features) {
-#define WASP_V(variable, flag, default_)                                \
+#define WASP_V(enum_, variable, flag, default_)                         \
   Add("--disable-" flag, "", [&]() { features.disable_##variable(); }); \
   Add("--enable-" flag, "", [&]() { features.enable_##variable(); });
 #include "wasp/base/features.def"

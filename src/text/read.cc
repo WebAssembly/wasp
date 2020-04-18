@@ -967,17 +967,26 @@ bool IsElementExpression(Tokenizer& tokenizer) {
                                      tokenizer.Peek(1).type == TokenType::Item);
 }
 
+void CheckOpcodeEnabled(Token token, Context& context) {
+  assert(token.has_opcode());
+  if (!context.features.HasFeatures(token.opcode_features())) {
+    context.errors.OnError(
+        token.loc, format("{} instruction not allowed", token.opcode()));
+  }
+}
+
 auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     -> At<Instruction> {
-  // TODO: Check that instruction is allowed by current feature set.
   LocationGuard guard{tokenizer};
   auto token = tokenizer.Peek();
   switch (token.type) {
     case TokenType::BareInstr:
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       return MakeAt(token.loc, Instruction{token.opcode()});
 
     case TokenType::BrOnExnInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
       auto label_var = ReadVar(tokenizer, context);
@@ -988,6 +997,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     }
 
     case TokenType::BrTableInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
       auto var_list = ReadVarList(tokenizer, context);
@@ -999,6 +1009,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     }
 
     case TokenType::CallIndirectInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
       OptAt<Var> table_var_opt;
@@ -1012,30 +1023,35 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     }
 
     case TokenType::F32ConstInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       auto immediate = ReadFloat<f32>(tokenizer, context);
       return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
     }
 
     case TokenType::F64ConstInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       auto immediate = ReadFloat<f64>(tokenizer, context);
       return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
     }
 
     case TokenType::I32ConstInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       auto immediate = ReadInt<u32>(tokenizer, context);
       return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
     }
 
     case TokenType::I64ConstInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       auto immediate = ReadInt<u64>(tokenizer, context);
       return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
     }
 
     case TokenType::MemoryInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
       auto offset_opt = ReadOffsetOpt(tokenizer, context);
@@ -1046,6 +1062,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     }
 
     case TokenType::SelectInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       At<ValueTypeList> immediate;
       if (context.features.reference_types_enabled()) {
@@ -1057,6 +1074,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     }
 
     case TokenType::SimdConstInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       auto simd_token = tokenizer.Peek();
 
@@ -1103,12 +1121,14 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     }
 
     case TokenType::SimdLaneInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       auto immediate = ReadSimdLane(tokenizer, context);
       return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
     }
 
     case TokenType::TableCopyInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
       At<CopyImmediate> immediate;
@@ -1124,6 +1144,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     }
 
     case TokenType::TableInitInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
       auto segment_var = ReadVar(tokenizer, context);
@@ -1142,6 +1163,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     }
 
     case TokenType::VarInstr: {
+      CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       auto var = ReadVar(tokenizer, context);
       return MakeAt(guard.loc(), Instruction{token.opcode(), var});
@@ -1230,7 +1252,7 @@ void ReadBlockInstruction(Tokenizer& tokenizer,
 
     case Opcode::Try:
       if (!context.features.exceptions_enabled()) {
-        context.errors.OnError(token_opt->loc, "Try instruction not allowed");
+        context.errors.OnError(token_opt->loc, "try instruction not allowed");
       }
       ExpectOpcode(tokenizer, context, instructions, TokenType::Catch);
       ReadEndLabelOpt(tokenizer, context, block->label);
@@ -1324,7 +1346,7 @@ void ReadExpression(Tokenizer& tokenizer,
 
       case Opcode::Try:
         if (!context.features.exceptions_enabled()) {
-          context.errors.OnError(token.loc, "Try instruction not allowed");
+          context.errors.OnError(token.loc, "try instruction not allowed");
         }
         instructions.push_back(block_instr);
         ReadInstructionList(tokenizer, context, instructions);

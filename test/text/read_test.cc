@@ -425,6 +425,8 @@ TEST_F(TextReadTest, PlainInstruction_BrOnExn) {
   using I = Instruction;
   using O = Opcode;
 
+  context.features.enable_exceptions();
+
   ExpectRead(
       ReadPlainInstruction,
       I{MakeAt("br_on_exn"_su8, O::BrOnExn),
@@ -620,6 +622,8 @@ TEST_F(TextReadTest, PlainInstruction_SimdConst) {
   using I = Instruction;
   using O = Opcode;
 
+  context.features.enable_simd();
+
   // i8x16
   ExpectRead(
       ReadPlainInstruction,
@@ -667,6 +671,8 @@ TEST_F(TextReadTest, PlainInstruction_SimdLane) {
   using I = Instruction;
   using O = Opcode;
 
+  context.features.enable_simd();
+
   ExpectRead(ReadPlainInstruction,
              I{MakeAt("i8x16.extract_lane_s"_su8, O::I8X16ExtractLaneS),
                MakeAt("9"_su8, u32{9})},
@@ -681,6 +687,8 @@ TEST_F(TextReadTest, PlainInstruction_SimdLane) {
 TEST_F(TextReadTest, PlainInstruction_TableCopy) {
   using I = Instruction;
   using O = Opcode;
+
+  context.features.enable_bulk_memory();
 
   // table.copy w/o dst and src.
   ExpectRead(ReadPlainInstruction,
@@ -715,6 +723,8 @@ TEST_F(TextReadTest, PlainInstruction_TableCopy_reference_types) {
 TEST_F(TextReadTest, PlainInstruction_TableInit) {
   using I = Instruction;
   using O = Opcode;
+
+  context.features.enable_bulk_memory();
 
   // table.init w/ segment index and table index.
   ExpectRead(
@@ -1034,18 +1044,6 @@ TEST_F(TextReadTest, Expression_Plain) {
                    },
                    "(nop)"_su8);
 
-  // BrOnExn immediate.
-  ExpectReadVector(
-      ReadExpression_ForTesting,
-      InstructionList{
-          MakeAt("br_on_exn 0 0"_su8,
-                 I{MakeAt("br_on_exn"_su8, O::BrOnExn),
-                   MakeAt("0 0"_su8,
-                          BrOnExnImmediate{MakeAt("0"_su8, Var{Index{0}}),
-                                           MakeAt("0"_su8, Var{Index{0}})})}),
-      },
-      "(br_on_exn 0 0)"_su8);
-
   // BrTable immediate.
   ExpectReadVector(
       ReadExpression_ForTesting,
@@ -1121,6 +1119,44 @@ TEST_F(TextReadTest, Expression_Plain) {
       },
       "(i32.load align=1)"_su8);
 
+  // Var immediate.
+  ExpectReadVector(ReadExpression_ForTesting,
+                   InstructionList{
+                       MakeAt("br 0"_su8, I{MakeAt("br"_su8, O::Br),
+                                            MakeAt("0"_su8, Var{Index{0}})}),
+                   },
+                   "(br 0)"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, Expression_Plain_exceptions) {
+  using I = Instruction;
+  using O = Opcode;
+
+  context.features.enable_exceptions();
+
+  // BrOnExn immediate.
+  ExpectReadVector(
+      ReadExpression_ForTesting,
+      InstructionList{
+          MakeAt("br_on_exn 0 0"_su8,
+                 I{MakeAt("br_on_exn"_su8, O::BrOnExn),
+                   MakeAt("0 0"_su8,
+                          BrOnExnImmediate{MakeAt("0"_su8, Var{Index{0}}),
+                                           MakeAt("0"_su8, Var{Index{0}})})}),
+      },
+      "(br_on_exn 0 0)"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, Expression_Plain_simd) {
+  using I = Instruction;
+  using O = Opcode;
+
+  context.features.enable_simd();
+
   // v128 immediate.
   ExpectReadVector(
       ReadExpression_ForTesting,
@@ -1141,6 +1177,15 @@ TEST_F(TextReadTest, Expression_Plain) {
       },
       "(f32x4.replace_lane 3)"_su8);
 
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, Expression_Plain_bulk_memory) {
+  using I = Instruction;
+  using O = Opcode;
+
+  context.features.enable_bulk_memory();
+
   // Init immediate.
   ExpectReadVector(
       ReadExpression_ForTesting,
@@ -1152,16 +1197,18 @@ TEST_F(TextReadTest, Expression_Plain) {
       },
       "(table.init 0)"_su8);
 
-  // Var immediate.
-  ExpectReadVector(ReadExpression_ForTesting,
-                   InstructionList{
-                       MakeAt("br 0"_su8, I{MakeAt("br"_su8, O::Br),
-                                            MakeAt("0"_su8, Var{Index{0}})}),
-                   },
-                   "(br 0)"_su8);
+  // Copy immediate.
+  ExpectReadVector(
+      ReadExpression_ForTesting,
+      InstructionList{
+          MakeAt("table.copy"_su8,
+                 I{MakeAt("table.copy"_su8, O::TableCopy), CopyImmediate{}}),
+      },
+      "(table.copy)"_su8);
 
   ExpectNoErrors(errors);
 }
+
 
 TEST_F(TextReadTest, Expression_PlainFolded) {
   using I = Instruction;
