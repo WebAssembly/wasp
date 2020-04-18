@@ -405,6 +405,93 @@ using ModuleItem = variant<TypeEntry,
 
 using Module = std::vector<At<ModuleItem>>;
 
+// Script
+
+using ModuleVar = string_view;
+
+enum class ScriptModuleKind {
+  Binary,  // (module bin "...")
+  Text,    // (module ...)
+  Quote    // (module quote "...")
+};
+
+struct ScriptModule {
+  OptAt<BindVar> name;
+  ScriptModuleKind kind;
+  variant<Module, TextList> module;
+};
+
+// TODO: Add ref.null and ref.host
+using Const = variant<u32, u64, f32, f64, v128>;
+using ConstList = std::vector<At<Const>>;
+
+struct InvokeAction {
+  OptAt<ModuleVar> module;
+  At<Text> name;
+  ConstList consts;
+};
+
+struct GetAction {
+  OptAt<ModuleVar> module;
+  At<Text> name;
+};
+
+using Action = variant<InvokeAction, GetAction>;
+
+enum class AssertionKind {
+  Malformed,
+  Invalid,
+  Unlinkable,
+  ActionTrap,
+  Return,
+  ModuleTrap,
+  Exhaustion,
+};
+
+struct ModuleAssertion {
+  At<ScriptModule> module;
+  At<Text> message;
+};
+
+struct ActionAssertion {
+  At<Action> action;
+  At<Text> message;
+};
+
+enum class NanKind { Canonical, Arithmetic };
+
+template <typename T>
+using FloatResult = variant<T, NanKind>;
+using F32Result = FloatResult<f32>;
+using F64Result = FloatResult<f64>;
+
+using F32x4Result = std::array<F32Result, 4>;
+using F64x2Result = std::array<F64Result, 2>;
+
+// TODO: Add (ref.any) and (ref.func)
+using ReturnResult =
+    variant<u32, u64, v128, F32Result, F64Result, F32x4Result, F64x2Result>;
+using ReturnResultList = std::vector<At<ReturnResult>>;
+
+struct ReturnAssertion {
+  At<Action> action;
+  ReturnResultList results;
+};
+
+struct Assertion {
+  AssertionKind kind;
+  variant<ModuleAssertion, ActionAssertion, ReturnAssertion> desc;
+};
+
+struct Register {
+  At<Text> name;
+  OptAt<ModuleVar> module;
+};
+
+using Command = variant<ScriptModule, Register, Action, Assertion>;
+
+using Script = std::vector<At<Command>>;
+
 #define WASP_TYPES(WASP_V)           \
   WASP_V(LiteralInfo)                \
   WASP_V(Text)                       \
@@ -446,7 +533,18 @@ using Module = std::vector<At<ModuleItem>>;
   WASP_V(ElementListWithExpressions) \
   WASP_V(ElementListWithVars)        \
   WASP_V(ElementSegment)             \
-  WASP_V(DataSegment)
+  WASP_V(DataSegment)                \
+  WASP_V(ScriptModule)               \
+  WASP_V(Module)                     \
+  WASP_V(ConstList)                  \
+  WASP_V(InvokeAction)               \
+  WASP_V(GetAction)                  \
+  WASP_V(ModuleAssertion)            \
+  WASP_V(ActionAssertion)            \
+  WASP_V(ReturnResultList)           \
+  WASP_V(ReturnAssertion)            \
+  WASP_V(Assertion)                  \
+  WASP_V(Register)
 
 #define WASP_DECLARE_OPERATOR_EQ_NE(Type)    \
   bool operator==(const Type&, const Type&); \
@@ -455,6 +553,14 @@ using Module = std::vector<At<ModuleItem>>;
 WASP_TYPES(WASP_DECLARE_OPERATOR_EQ_NE)
 
 #undef WASP_DECLARE_OPERATOR_EQ_NE
+
+template <typename T, size_t N>
+bool operator==(const std::array<FloatResult<T>, N>&,
+                const std::array<FloatResult<T>, N>&);
+
+template <typename T, size_t N>
+bool operator!=(const std::array<FloatResult<T>, N>&,
+                const std::array<FloatResult<T>, N>&);
 
 }  // namespace text
 }  // namespace wasp

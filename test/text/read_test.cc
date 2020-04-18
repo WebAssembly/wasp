@@ -2400,24 +2400,456 @@ TEST_F(TextReadTest, ModuleItem) {
 }
 
 TEST_F(TextReadTest, Module) {
-  ExpectReadVector(
-      ReadModule,
-      Module{
-          MakeAt("(type (func))"_su8,
-                 ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}}),
-          MakeAt(
-              "(func nop)"_su8,
-              ModuleItem{Function{
-                  FunctionDesc{},
-                  {},
-                  InstructionList{MakeAt(
-                      "nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})},
-                  nullopt,
-                  {}
+  ExpectRead(ReadModule,
+             Module{MakeAt("(type (func))"_su8,
+                           ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}}),
+                    MakeAt("(func nop)"_su8,
+                           ModuleItem{Function{
+                               FunctionDesc{},
+                               {},
+                               InstructionList{MakeAt(
+                                   "nop"_su8, Instruction{MakeAt(
+                                                  "nop"_su8, Opcode::Nop)})},
+                               nullopt,
+                               {}
 
-              }}),
-          MakeAt("(start 0)"_su8,
-                 ModuleItem{Start{MakeAt("0"_su8, Var{Index{0}})}})},
-      "(type (func)) (func nop) (start 0)"_su8);
+                           }}),
+                    MakeAt("(start 0)"_su8,
+                           ModuleItem{Start{MakeAt("0"_su8, Var{Index{0}})}})},
+             "(type (func)) (func nop) (start 0)"_su8);
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, ModuleVarOpt) {
+  ExpectRead(ReadModuleVarOpt, ModuleVar{"$m"_sv}, "$m"_su8);
+  ExpectRead(ReadModuleVarOpt, nullopt, ""_su8);
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, ScriptModule) {
+  // Text module.
+  ExpectRead(ReadScriptModule,
+             ScriptModule{nullopt, ScriptModuleKind::Text, Module{}},
+             "(module)"_su8);
+
+  // Binary module.
+  ExpectRead(ReadScriptModule,
+             ScriptModule{nullopt, ScriptModuleKind::Binary,
+                          TextList{MakeAt("\"\""_su8, Text{"\"\""_sv, 0})}},
+             "(module binary \"\")"_su8);
+
+  // Quote module.
+  ExpectRead(ReadScriptModule,
+             ScriptModule{nullopt, ScriptModuleKind::Quote,
+                          TextList{MakeAt("\"\""_su8, Text{"\"\""_sv, 0})}},
+             "(module quote \"\")"_su8);
+
+  // Text module w/ Name.
+  ExpectRead(
+      ReadScriptModule,
+      ScriptModule{MakeAt("$m"_su8, "$m"_sv), ScriptModuleKind::Text, Module{}},
+      "(module $m)"_su8);
+
+  // Binary module w/ Name.
+  ExpectRead(ReadScriptModule,
+             ScriptModule{MakeAt("$m"_su8, "$m"_sv), ScriptModuleKind::Binary,
+                          TextList{MakeAt("\"\""_su8, Text{"\"\""_sv, 0})}},
+             "(module $m binary \"\")"_su8);
+
+  // Quote module w/ Name.
+  ExpectRead(ReadScriptModule,
+             ScriptModule{MakeAt("$m"_su8, "$m"_sv), ScriptModuleKind::Quote,
+                          TextList{MakeAt("\"\""_su8, Text{"\"\""_sv, 0})}},
+             "(module $m quote \"\")"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, Const) {
+  // i32.const
+  ExpectRead(ReadConst, Const{u32{0}}, "(i32.const 0)"_su8);
+
+  // i64.const
+  ExpectRead(ReadConst, Const{u64{0}}, "(i64.const 0)"_su8);
+
+  // f32.const
+  ExpectRead(ReadConst, Const{f32{0}}, "(f32.const 0)"_su8);
+
+  // f64.const
+  ExpectRead(ReadConst, Const{f64{0}}, "(f64.const 0)"_su8);
+
+  // v128.const
+  ExpectRead(ReadConst, Const{v128{}}, "(v128.const i32x4 0 0 0 0)"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, ConstList) {
+  ExpectReadVector(ReadConstList, ConstList{}, ""_su8);
+
+  ExpectReadVector(ReadConstList,
+                   ConstList{
+                       MakeAt("(i32.const 0)"_su8, Const{u32{0}}),
+                       MakeAt("(i64.const 1)"_su8, Const{u64{1}}),
+                   },
+                   "(i32.const 0) (i64.const 1)"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, InvokeAction) {
+  // Name.
+  ExpectRead(
+      ReadInvokeAction,
+      InvokeAction{nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}), {}},
+      "(invoke \"a\")"_su8);
+
+  // Module.
+  ExpectRead(ReadInvokeAction,
+             InvokeAction{MakeAt("$m"_su8, "$m"_sv),
+                          MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
+                          {}},
+             "(invoke $m \"a\")"_su8);
+
+  // Const list.
+  ExpectRead(
+      ReadInvokeAction,
+      InvokeAction{nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
+                   ConstList{MakeAt("(i32.const 0)"_su8, Const{u32{0}})}},
+      "(invoke \"a\" (i32.const 0))"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, GetAction) {
+  // Name.
+  ExpectRead(ReadGetAction,
+             GetAction{nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1})},
+             "(get \"a\")"_su8);
+
+  // Module.
+  ExpectRead(ReadGetAction,
+             GetAction{MakeAt("$m"_su8, "$m"_sv),
+                       MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1})},
+             "(get $m \"a\")"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, Action) {
+  // Get action.
+  ExpectRead(
+      ReadAction,
+      Action{GetAction{nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1})}},
+      "(get \"a\")"_su8);
+
+  // Invoke action.
+  ExpectRead(ReadAction,
+             Action{InvokeAction{
+                 nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}), {}}},
+             "(invoke \"a\")"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, ModuleAssertion) {
+  ExpectRead(
+      ReadModuleAssertion,
+      ModuleAssertion{
+          MakeAt("(module)"_su8,
+                 ScriptModule{nullopt, ScriptModuleKind::Text, Module{}}),
+          MakeAt("\"msg\""_su8, Text{"\"msg\"", 3})},
+      "(module) \"msg\""_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, FloatResult) {
+  ExpectRead(ReadFloatResult<f32>, F32Result{f32{0}}, "0"_su8);
+  ExpectRead(ReadFloatResult<f32>, F32Result{NanKind::Arithmetic},
+             "nan:arithmetic"_su8);
+  ExpectRead(ReadFloatResult<f32>, F32Result{NanKind::Canonical},
+             "nan:canonical"_su8);
+
+  ExpectRead(ReadFloatResult<f64>, F64Result{f64{0}}, "0"_su8);
+  ExpectRead(ReadFloatResult<f64>, F64Result{NanKind::Arithmetic},
+             "nan:arithmetic"_su8);
+  ExpectRead(ReadFloatResult<f64>, F64Result{NanKind::Canonical},
+             "nan:canonical"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, ReadSimdFloatResult) {
+  ExpectRead(ReadSimdFloatResult<f32, 4>,
+             ReturnResult{F32x4Result{
+                 F32Result{f32{0}},
+                 F32Result{f32{0}},
+                 F32Result{f32{0}},
+                 F32Result{f32{0}},
+             }},
+             "0 0 0 0"_su8);
+
+  ExpectRead(ReadSimdFloatResult<f32, 4>,
+             ReturnResult{F32x4Result{
+                 F32Result{f32{0}},
+                 F32Result{NanKind::Arithmetic},
+                 F32Result{f32{0}},
+                 F32Result{NanKind::Canonical},
+             }},
+             "0 nan:arithmetic 0 nan:canonical"_su8);
+
+  ExpectRead(ReadSimdFloatResult<f64, 2>,
+             ReturnResult{F64x2Result{
+                 F64Result{f64{0}},
+                 F64Result{f64{0}},
+             }},
+             "0 0"_su8);
+
+  ExpectRead(ReadSimdFloatResult<f64, 2>,
+             ReturnResult{F64x2Result{
+                 F64Result{NanKind::Arithmetic},
+                 F64Result{f64{0}},
+             }},
+             "nan:arithmetic 0"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, ReturnResult) {
+  ExpectRead(ReadReturnResult, ReturnResult{u32{0}}, "(i32.const 0)"_su8);
+
+  ExpectRead(ReadReturnResult, ReturnResult{u64{0}}, "(i64.const 0)"_su8);
+
+  ExpectRead(ReadReturnResult, ReturnResult{F32Result{f32{0}}},
+             "(f32.const 0)"_su8);
+  ExpectRead(ReadReturnResult, ReturnResult{F32Result{NanKind::Arithmetic}},
+             "(f32.const nan:arithmetic)"_su8);
+  ExpectRead(ReadReturnResult, ReturnResult{F32Result{NanKind::Canonical}},
+             "(f32.const nan:canonical)"_su8);
+
+  ExpectRead(ReadReturnResult, ReturnResult{F64Result{f64{0}}},
+             "(f64.const 0)"_su8);
+  ExpectRead(ReadReturnResult, ReturnResult{F64Result{NanKind::Arithmetic}},
+             "(f64.const nan:arithmetic)"_su8);
+  ExpectRead(ReadReturnResult, ReturnResult{F64Result{NanKind::Canonical}},
+             "(f64.const nan:canonical)"_su8);
+
+  ExpectRead(ReadReturnResult, ReturnResult{v128{}},
+             "(v128.const i8x16 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0)"_su8);
+  ExpectRead(ReadReturnResult, ReturnResult{v128{}},
+             "(v128.const i16x8 0 0 0 0  0 0 0 0)"_su8);
+  ExpectRead(ReadReturnResult, ReturnResult{v128{}},
+             "(v128.const i32x4 0 0 0 0)"_su8);
+  ExpectRead(ReadReturnResult, ReturnResult{v128{}},
+             "(v128.const i64x2 0 0)"_su8);
+  ExpectRead(ReadReturnResult, ReturnResult{F32x4Result{}},
+             "(v128.const f32x4 0 0 0 0)"_su8);
+  ExpectRead(ReadReturnResult, ReturnResult{F64x2Result{}},
+             "(v128.const f64x2 0 0)"_su8);
+
+  ExpectRead(ReadReturnResult,
+             ReturnResult{F32x4Result{
+                 F32Result{0},
+                 F32Result{NanKind::Arithmetic},
+                 F32Result{0},
+                 F32Result{NanKind::Canonical},
+             }},
+             "(v128.const f32x4 0 nan:arithmetic 0 nan:canonical)"_su8);
+
+  ExpectRead(ReadReturnResult,
+             ReturnResult{F64x2Result{
+                 F64Result{0},
+                 F64Result{NanKind::Arithmetic},
+             }},
+             "(v128.const f64x2 0 nan:arithmetic)"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, ReturnResultList) {
+  ExpectRead(ReadReturnResultList, ReturnResultList{}, ""_su8);
+
+  ExpectRead(ReadReturnResultList,
+             ReturnResultList{
+                 MakeAt("(i32.const 0)"_su8, ReturnResult{u32{0}}),
+                 MakeAt("(f32.const nan:canonical)"_su8,
+                        ReturnResult{F32Result{NanKind::Canonical}}),
+             },
+             "(i32.const 0) (f32.const nan:canonical)"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, ReturnAssertion) {
+  ExpectRead(
+      ReadReturnAssertion,
+      ReturnAssertion{
+          MakeAt("(invoke \"a\")"_su8,
+                 Action{InvokeAction{
+                     nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}), {}}}),
+          {}},
+      "(invoke \"a\")"_su8);
+
+  ExpectRead(
+      ReadReturnAssertion,
+      ReturnAssertion{
+          MakeAt("(invoke \"a\" (i32.const 0))"_su8,
+                 Action{InvokeAction{
+                     nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
+                     ConstList{MakeAt("(i32.const 0)"_su8, Const{u32{0}})}}}),
+          ReturnResultList{MakeAt("(i32.const 1)"_su8, ReturnResult{u32{1}})}},
+      "(invoke \"a\" (i32.const 0)) (i32.const 1)"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, Assertion) {
+  // assert_malformed
+  ExpectRead(
+      ReadAssertion,
+      Assertion{AssertionKind::Malformed,
+                ModuleAssertion{
+                    MakeAt("(module)"_su8,
+                           ScriptModule{nullopt, ScriptModuleKind::Text, {}}),
+                    MakeAt("\"msg\""_su8, Text{"\"msg\"", 3})}},
+      "(assert_malformed (module) \"msg\")"_su8);
+
+  // assert_invalid
+  ExpectRead(
+      ReadAssertion,
+      Assertion{AssertionKind::Invalid,
+                ModuleAssertion{
+                    MakeAt("(module)"_su8,
+                           ScriptModule{nullopt, ScriptModuleKind::Text, {}}),
+                    MakeAt("\"msg\""_su8, Text{"\"msg\"", 3})}},
+      "(assert_invalid (module) \"msg\")"_su8);
+
+  // assert_unlinkable
+  ExpectRead(
+      ReadAssertion,
+      Assertion{AssertionKind::Unlinkable,
+                ModuleAssertion{
+                    MakeAt("(module)"_su8,
+                           ScriptModule{nullopt, ScriptModuleKind::Text, {}}),
+                    MakeAt("\"msg\""_su8, Text{"\"msg\"", 3})}},
+      "(assert_unlinkable (module) \"msg\")"_su8);
+
+  // assert_trap (module)
+  ExpectRead(
+      ReadAssertion,
+      Assertion{AssertionKind::ModuleTrap,
+                ModuleAssertion{
+                    MakeAt("(module)"_su8,
+                           ScriptModule{nullopt, ScriptModuleKind::Text, {}}),
+                    MakeAt("\"msg\""_su8, Text{"\"msg\"", 3})}},
+      "(assert_trap (module) \"msg\")"_su8);
+
+  // assert_return
+  ExpectRead(
+      ReadAssertion,
+      Assertion{
+          AssertionKind::Return,
+          ReturnAssertion{
+              MakeAt(
+                  "(invoke \"a\")"_su8,
+                  Action{InvokeAction{
+                      nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}), {}}}),
+              {}}},
+      "(assert_return (invoke \"a\"))"_su8);
+
+  // assert_trap (action)
+  ExpectRead(
+      ReadAssertion,
+      Assertion{
+          AssertionKind::ActionTrap,
+          ActionAssertion{
+              MakeAt(
+                  "(invoke \"a\")"_su8,
+                  Action{InvokeAction{
+                      nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}), {}}}),
+              MakeAt("\"msg\""_su8, Text{"\"msg\""_sv, 3})}},
+      "(assert_trap (invoke \"a\") \"msg\")"_su8);
+
+  // assert_exhaustion
+  ExpectRead(
+      ReadAssertion,
+      Assertion{
+          AssertionKind::Exhaustion,
+          ActionAssertion{
+              MakeAt(
+                  "(invoke \"a\")"_su8,
+                  Action{InvokeAction{
+                      nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}), {}}}),
+              MakeAt("\"msg\""_su8, Text{"\"msg\""_sv, 3})}},
+      "(assert_exhaustion (invoke \"a\") \"msg\")"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, Register) {
+  ExpectRead(ReadRegister,
+             Register{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}), nullopt},
+             "(register \"a\")"_su8);
+
+  ExpectRead(ReadRegister,
+             Register{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
+                      MakeAt("$m"_su8, "$m"_sv)},
+             "(register \"a\" $m)"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, Command) {
+  // Module.
+  ExpectRead(ReadCommand,
+             Command{ScriptModule{nullopt, ScriptModuleKind::Text, {}}},
+             "(module)"_su8);
+
+  // Action.
+  ExpectRead(ReadCommand,
+             Command{InvokeAction{
+                 nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}), {}}},
+             "(invoke \"a\")"_su8);
+
+  // Assertion.
+  ExpectRead(ReadCommand,
+             Command{Assertion{
+                 AssertionKind::Invalid,
+                 ModuleAssertion{
+                     MakeAt("(module)"_su8,
+                            ScriptModule{nullopt, ScriptModuleKind::Text, {}}),
+                     MakeAt("\"msg\""_su8, Text{"\"msg\"", 3})}}},
+             "(assert_invalid (module) \"msg\")"_su8);
+
+  // Register.
+  ExpectRead(
+      ReadCommand,
+      Command{Register{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}), nullopt}},
+      "(register \"a\")"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, Script) {
+  ExpectReadVector(
+      ReadScript,
+      Script{
+          MakeAt("(module)"_su8,
+                 Command{ScriptModule{nullopt, ScriptModuleKind::Text, {}}}),
+          MakeAt("(invoke \"a\")"_su8,
+                 Command{InvokeAction{
+                     nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}), {}}}),
+          MakeAt(
+              "(assert_invalid (module) \"msg\")"_su8,
+              Command{Assertion{
+                  AssertionKind::Invalid,
+                  ModuleAssertion{
+                      MakeAt("(module)"_su8,
+                             ScriptModule{nullopt, ScriptModuleKind::Text, {}}),
+                      MakeAt("\"msg\""_su8, Text{"\"msg\"", 3})}}}),
+      },
+      "(module) (invoke \"a\") (assert_invalid (module) \"msg\")"_su8);
+
   ExpectNoErrors(errors);
 }

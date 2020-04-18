@@ -152,6 +152,14 @@ WASP_OPERATOR_EQ_NE_2(ElementListWithVars, kind, list)
 WASP_OPERATOR_EQ_NE_2(ElementListWithExpressions, elemtype, list)
 WASP_OPERATOR_EQ_NE_5(ElementSegment, name, type, table, offset, elements)
 WASP_OPERATOR_EQ_NE_4(DataSegment, name, memory, offset, data)
+WASP_OPERATOR_EQ_NE_3(ScriptModule, name, kind, module)
+WASP_OPERATOR_EQ_NE_3(InvokeAction, module, name, consts)
+WASP_OPERATOR_EQ_NE_2(GetAction, module, name)
+WASP_OPERATOR_EQ_NE_1(ModuleAssertion, module)
+WASP_OPERATOR_EQ_NE_2(ActionAssertion, action, message)
+WASP_OPERATOR_EQ_NE_2(ReturnAssertion, action, results)
+WASP_OPERATOR_EQ_NE_2(Assertion, kind, desc)
+WASP_OPERATOR_EQ_NE_2(Register, name, module)
 
 bool operator==(const VarList& lhs, const VarList& rhs) {
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
@@ -195,6 +203,42 @@ bool operator==(const InstructionList& lhs, const InstructionList& rhs) {
 }
 
 bool operator!=(const InstructionList& lhs, const InstructionList& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const Module& lhs, const Module& rhs) {
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+}
+
+bool operator!=(const Module& lhs, const Module& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const ConstList& lhs, const ConstList& rhs) {
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+}
+
+bool operator!=(const ConstList& lhs, const ConstList& rhs) {
+  return !(lhs == rhs);
+}
+
+bool operator==(const ReturnResultList& lhs, const ReturnResultList& rhs) {
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+}
+
+bool operator!=(const ReturnResultList& lhs, const ReturnResultList& rhs) {
+  return !(lhs == rhs);
+}
+
+template <typename T, size_t N>
+bool operator==(const std::array<FloatResult<T>, N>& lhs,
+                const std::array<FloatResult<T>, N>& rhs) {
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+}
+
+template <typename T, size_t N>
+bool operator!=(const std::array<FloatResult<T>, N>& lhs,
+                const std::array<FloatResult<T>, N>& rhs) {
   return !(lhs == rhs);
 }
 

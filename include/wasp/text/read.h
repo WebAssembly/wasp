@@ -158,6 +158,35 @@ auto ReadEvent(Tokenizer&, Context&) -> At<Event>;
 auto ReadModuleItem(Tokenizer&, Context&) -> At<ModuleItem>;
 auto ReadModule(Tokenizer&, Context&) -> Module;
 
+// Script
+
+auto ReadModuleVarOpt(Tokenizer&, Context&) -> OptAt<ModuleVar>;
+auto ReadScriptModule(Tokenizer&, Context&) -> At<ScriptModule>;
+
+// Action
+auto ReadConst(Tokenizer&, Context&) -> At<Const>;
+auto ReadConstList(Tokenizer&, Context&) -> ConstList;
+auto ReadInvokeAction(Tokenizer&, Context&) -> At<InvokeAction>;
+auto ReadGetAction(Tokenizer&, Context&) -> At<GetAction>;
+auto ReadAction(Tokenizer&, Context&) -> At<Action>;
+
+// Assertion
+auto ReadModuleAssertion(Tokenizer&, Context&) -> At<ModuleAssertion>;
+auto ReadActionAssertion(Tokenizer&, Context&) -> At<ActionAssertion>;
+template <typename T>
+auto ReadFloatResult(Tokenizer&, Context&) -> At<FloatResult<T>>;
+template <typename T, size_t N>
+auto ReadSimdFloatResult(Tokenizer&, Context&) -> At<ReturnResult>;
+auto ReadReturnResult(Tokenizer&, Context&) -> At<ReturnResult>;
+auto ReadReturnResultList(Tokenizer&, Context&) -> ReturnResultList;
+auto ReadReturnAssertion(Tokenizer&, Context&) -> At<ReturnAssertion>;
+auto ReadAssertion(Tokenizer&, Context&) -> At<Assertion>;
+
+auto ReadRegister(Tokenizer&, Context&) -> At<Register>;
+
+auto ReadCommand(Tokenizer&, Context&) -> At<Command>;
+auto ReadScript(Tokenizer&, Context&) -> Script;
+
 }
 }
 
