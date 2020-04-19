@@ -63,18 +63,16 @@ Iterator WriteVarIntLoop(T value, Iterator out, Cond&& end_cond) {
 
 // Unsigned integers.
 template <typename T, typename Iterator>
-typename std::enable_if<!std::is_signed<T>::value, Iterator>::type WriteVarInt(
-    T value,
-    Iterator out) {
+std::enable_if_t<!std::is_signed_v<T>, Iterator> WriteVarInt(T value,
+                                                             Iterator out) {
   return WriteVarIntLoop(value, out,
                          [](T value, u8 byte) { return value == 0; });
 }
 
 // Signed integers.
 template <typename T, typename Iterator>
-typename std::enable_if<std::is_signed<T>::value, Iterator>::type WriteVarInt(
-    T value,
-    Iterator out) {
+std::enable_if_t<std::is_signed_v<T>, Iterator> WriteVarInt(T value,
+                                                            Iterator out) {
   if (value < 0) {
     return WriteVarIntLoop(value, out, [](T value, u8 byte) {
       return value == -1 && (byte & VarInt<T>::kSignBit) != 0;
@@ -331,7 +329,7 @@ Iterator Write(f64 value, Iterator out) {
 
 // Unsigned integers.
 template <typename T, typename Iterator>
-typename std::enable_if<!std::is_signed<T>::value, Iterator>::type
+std::enable_if_t<!std::is_signed_v<T>, Iterator>
 WriteFixedVarInt(T value, Iterator out, size_t length = VarInt<T>::kMaxBytes) {
   using V = VarInt<T>;
   assert(length <= V::kMaxBytes);
@@ -346,7 +344,7 @@ WriteFixedVarInt(T value, Iterator out, size_t length = VarInt<T>::kMaxBytes) {
 
 // Signed integers.
 template <typename T, typename Iterator>
-typename std::enable_if<std::is_signed<T>::value, Iterator>::type
+std::enable_if_t<std::is_signed_v<T>, Iterator>
 WriteFixedVarInt(T value, Iterator out, size_t length = VarInt<T>::kMaxBytes) {
   using V = VarInt<T>;
   assert(length <= V::kMaxBytes);

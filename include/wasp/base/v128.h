@@ -36,28 +36,20 @@ using u16x8 = std::array<u16, 8>;
 using s8x16 = std::array<s8, 16>;
 using u8x16 = std::array<u8, 16>;
 
-// disjunction implementation from
-// https://en.cppreference.com/w/cpp/types/disjunction
-template<class...> struct disjunction : std::false_type { };
-template<class B1> struct disjunction<B1> : B1 { };
-template <class B1, class... Bn>
-struct disjunction<B1, Bn...>
-    : std::conditional<bool(B1::value), B1, disjunction<Bn...>>::type {};
+template <typename T>
+struct IsV128Type : std::disjunction<std::is_same<T, s64x2>,
+                                     std::is_same<T, u64x2>,
+                                     std::is_same<T, f64x2>,
+                                     std::is_same<T, s32x4>,
+                                     std::is_same<T, u32x4>,
+                                     std::is_same<T, f32x4>,
+                                     std::is_same<T, s16x8>,
+                                     std::is_same<T, u16x8>,
+                                     std::is_same<T, s8x16>,
+                                     std::is_same<T, u8x16>> {};
 
 template <typename T>
-struct IsV128Type : disjunction<typename std::is_same<T, s64x2>::type,
-                                typename std::is_same<T, u64x2>::type,
-                                typename std::is_same<T, f64x2>::type,
-                                typename std::is_same<T, s32x4>::type,
-                                typename std::is_same<T, u32x4>::type,
-                                typename std::is_same<T, f32x4>::type,
-                                typename std::is_same<T, s16x8>::type,
-                                typename std::is_same<T, u16x8>::type,
-                                typename std::is_same<T, s8x16>::type,
-                                typename std::is_same<T, u8x16>::type> {};
-
-template <typename T>
-using GetV128Type = typename std::enable_if<IsV128Type<T>::value, T>::type;
+using GetV128Type = std::enable_if_t<IsV128Type<T>::value, T>;
 
 struct v128 {
   explicit v128();

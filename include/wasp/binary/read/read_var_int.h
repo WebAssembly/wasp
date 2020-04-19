@@ -38,15 +38,15 @@ namespace binary {
 struct Context;
 
 template <typename S>
-S SignExtend(typename std::make_unsigned<S>::type x, int N) {
+S SignExtend(std::make_unsigned_t<S> x, int N) {
   constexpr size_t kNumBits = sizeof(S) * 8;
   return static_cast<S>(x << (kNumBits - N - 1)) >> (kNumBits - N - 1);
 }
 
 template <typename T>
 OptAt<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
-  using U = typename std::make_unsigned<T>::type;
-  constexpr bool is_signed = std::is_signed<T>::value;
+  using U = std::make_unsigned_t<T>;
+  constexpr bool is_signed = std::is_signed_v<T>;
   constexpr int kByteMask = VarInt<T>::kByteMask;
   constexpr int kLastByteMaskBits =
       VarInt<T>::kUsedBitsInLastByte - (is_signed ? 1 : 0);

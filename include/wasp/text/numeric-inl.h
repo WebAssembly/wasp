@@ -71,7 +71,7 @@ auto ParseInteger(SpanU8 span) -> optional<T> {
 
 template <typename T>
 auto StrToNat(LiteralInfo info, SpanU8 span) -> optional<T> {
-  static_assert(!std::is_signed<T>::value, "T must be unsigned");
+  static_assert(!std::is_signed_v<T>, "T must be unsigned");
   if (info.base == Base::Decimal) {
     return ParseInteger<T, 10>(span);
   } else {
@@ -95,8 +95,8 @@ inline void RemoveSign(SpanU8& span, Sign sign) {
 
 template <typename T>
 auto StrToInt(LiteralInfo info, SpanU8 span) -> optional<T> {
-  using U = typename std::make_unsigned<T>::type;
-  using S = typename std::make_signed<T>::type;
+  using U = std::make_unsigned_t<T>;
+  using S = std::make_signed_t<T>;
 
   RemoveSign(span, info.sign);
 

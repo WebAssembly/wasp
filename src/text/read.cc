@@ -944,7 +944,7 @@ auto ReadSimdValues(Tokenizer& tokenizer, Context& context) -> At<v128> {
   LocationGuard guard{tokenizer};
   std::array<T, N> result;
   for (size_t lane = 0; lane < N; ++lane) {
-    if constexpr (std::is_floating_point<T>::value) {
+    if constexpr (std::is_floating_point_v<T>) {
       result[lane] = ReadFloat<T>(tokenizer, context).value();
     } else {
       result[lane] = ReadInt<T>(tokenizer, context).value();
@@ -1829,7 +1829,7 @@ auto ReadFloatResult(Tokenizer& tokenizer, Context& context)
 template <typename T, size_t N>
 auto ReadSimdFloatResult(Tokenizer& tokenizer, Context& context)
     -> At<ReturnResult> {
-  static_assert(std::is_floating_point<T>::value, "T must be floating point.");
+  static_assert(std::is_floating_point_v<T>, "T must be floating point.");
   LocationGuard guard{tokenizer};
   std::array<FloatResult<T>, N> result;
   for (size_t lane = 0; lane < N; ++lane) {
