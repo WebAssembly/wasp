@@ -17,26 +17,12 @@
 #include <iostream>
 
 #include "wasp/base/formatters.h"
+#include "wasp/base/print_to_macros.h"
 #include "wasp/base/wasm_types.h"
 
 namespace wasp {
 
-#define WASP_DEFINE_PRINT_TO(Type)                    \
-  void PrintTo(const Type& value, std::ostream* os) { \
-    *os << format("{}", value);                       \
-  }
-
-WASP_DEFINE_PRINT_TO(Opcode)
-WASP_DEFINE_PRINT_TO(ValueType)
-WASP_DEFINE_PRINT_TO(ElementType)
-WASP_DEFINE_PRINT_TO(ExternalKind)
-WASP_DEFINE_PRINT_TO(EventAttribute)
-WASP_DEFINE_PRINT_TO(Mutability)
-WASP_DEFINE_PRINT_TO(SegmentType)
-WASP_DEFINE_PRINT_TO(Shared)
-
-WASP_BASE_WASM_TYPES(WASP_DEFINE_PRINT_TO)
-
-#undef WASP_DEFINE_PRINT_TO
+WASP_BASE_WASM_ENUMS(WASP_DEFINE_PRINT_TO)
+WASP_BASE_WASM_STRUCTS(WASP_DEFINE_PRINT_TO)
 
 }  // namespace wasp

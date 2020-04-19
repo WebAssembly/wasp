@@ -16,8 +16,8 @@
 
 #include "wasp/base/wasm_types.h"
 
-#include "src/base/operator_eq_ne_macros.h"
-#include "src/base/std_hash_macros.h"
+#include "wasp/base/operator_eq_ne_macros.h"
+#include "wasp/base/std_hash_macros.h"
 
 namespace wasp {
 
@@ -29,8 +29,8 @@ Limits::Limits(At<u32> min, OptAt<u32> max)
 Limits::Limits(At<u32> min, OptAt<u32> max, At<Shared> shared)
     : min{min}, max{max}, shared{shared} {}
 
-WASP_OPERATOR_EQ_NE_3(Limits, min, max, shared)
+WASP_BASE_WASM_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 
 }  // namespace wasp
 
-WASP_STD_HASH_3(::wasp::Limits, min, max, shared)
+WASP_BASE_WASM_STRUCTS(WASP_STD_HASH_VARGS)

@@ -16,8 +16,8 @@
 
 #include "wasp/binary/types.h"
 
-#include "src/base/operator_eq_ne_macros.h"
-#include "src/base/std_hash_macros.h"
+#include "wasp/base/operator_eq_ne_macros.h"
+#include "wasp/base/std_hash_macros.h"
 
 namespace wasp {
 namespace binary {
@@ -211,111 +211,11 @@ Section::Section(KnownSection contents) : contents{contents} {}
 
 Section::Section(CustomSection contents) : contents{contents} {}
 
-WASP_OPERATOR_EQ_NE_2(BrOnExnImmediate, target, event_index)
-WASP_OPERATOR_EQ_NE_2(BrTableImmediate, targets, default_target)
-WASP_OPERATOR_EQ_NE_2(CallIndirectImmediate, index, table_index)
-WASP_OPERATOR_EQ_NE_2(Code, locals, body)
-WASP_OPERATOR_EQ_NE_1(ConstantExpression, instruction)
-WASP_OPERATOR_EQ_NE_2(CopyImmediate, src_index, dst_index)
-WASP_OPERATOR_EQ_NE_2(CustomSection, name, data)
-WASP_OPERATOR_EQ_NE_1(DataCount, count)
-WASP_OPERATOR_EQ_NE_4(DataSegment, type, memory_index, offset, init)
-WASP_OPERATOR_EQ_NE_1(ElementExpression, instruction)
-WASP_OPERATOR_EQ_NE_4(ElementSegment, type, table_index, offset, desc)
-WASP_OPERATOR_EQ_NE_2(ElementSegment::IndexesInit, kind, init)
-WASP_OPERATOR_EQ_NE_2(ElementSegment::ExpressionsInit, element_type, init)
-WASP_OPERATOR_EQ_NE_1(Event, event_type)
-WASP_OPERATOR_EQ_NE_2(EventType, attribute, type_index)
-WASP_OPERATOR_EQ_NE_3(Export, kind, name, index)
-WASP_OPERATOR_EQ_NE_1(Expression, data)
-WASP_OPERATOR_EQ_NE_1(Function, type_index)
-WASP_OPERATOR_EQ_NE_2(FunctionType, param_types, result_types)
-WASP_OPERATOR_EQ_NE_2(Global, global_type, init)
-WASP_OPERATOR_EQ_NE_2(GlobalType, valtype, mut)
-WASP_OPERATOR_EQ_NE_3(Import, module, name, desc)
-WASP_OPERATOR_EQ_NE_2(InitImmediate, segment_index, dst_index)
-WASP_OPERATOR_EQ_NE_2(Instruction, opcode, immediate)
-WASP_OPERATOR_EQ_NE_2(KnownSection, id, data)
-WASP_OPERATOR_EQ_NE_2(Locals, count, type)
-WASP_OPERATOR_EQ_NE_2(MemArgImmediate, align_log2, offset)
-WASP_OPERATOR_EQ_NE_1(Memory, memory_type)
-WASP_OPERATOR_EQ_NE_1(MemoryType, limits)
-WASP_OPERATOR_EQ_NE_1(Section, contents)
-WASP_OPERATOR_EQ_NE_1(Start, func_index)
-WASP_OPERATOR_EQ_NE_1(Table, table_type)
-WASP_OPERATOR_EQ_NE_2(TableType, limits, elemtype)
-WASP_OPERATOR_EQ_NE_1(TypeEntry, type)
+WASP_BINARY_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
+WASP_BINARY_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
 
 }  // namespace binary
 }  // namespace wasp
 
-WASP_STD_HASH_2(::wasp::binary::BrOnExnImmediate, target, event_index);
-WASP_STD_HASH_2(::wasp::binary::CallIndirectImmediate, index, table_index)
-WASP_STD_HASH_1(::wasp::binary::ConstantExpression, instruction)
-WASP_STD_HASH_2(::wasp::binary::CopyImmediate, src_index, dst_index)
-WASP_STD_HASH_2(::wasp::binary::CustomSection, name, data)
-WASP_STD_HASH_1(::wasp::binary::DataCount, count)
-WASP_STD_HASH_4(::wasp::binary::DataSegment, type, memory_index, offset, init)
-WASP_STD_HASH_1(::wasp::binary::ElementExpression, instruction)
-WASP_STD_HASH_4(::wasp::binary::ElementSegment, type, table_index, offset, desc)
-WASP_STD_HASH_1(::wasp::binary::Event, event_type)
-WASP_STD_HASH_2(::wasp::binary::EventType, attribute, type_index)
-WASP_STD_HASH_3(::wasp::binary::Export, kind, name, index)
-WASP_STD_HASH_1(::wasp::binary::Expression, data)
-WASP_STD_HASH_1(::wasp::binary::Function, type_index)
-WASP_STD_HASH_2(::wasp::binary::Global, global_type, init)
-WASP_STD_HASH_2(::wasp::binary::GlobalType, valtype, mut)
-WASP_STD_HASH_3(::wasp::binary::Import, module, name, desc)
-WASP_STD_HASH_2(::wasp::binary::InitImmediate, segment_index, dst_index)
-WASP_STD_HASH_2(::wasp::binary::Instruction, opcode, immediate)
-WASP_STD_HASH_2(::wasp::binary::KnownSection, id, data)
-WASP_STD_HASH_2(::wasp::binary::Locals, count, type)
-WASP_STD_HASH_2(::wasp::binary::MemArgImmediate, align_log2, offset)
-WASP_STD_HASH_1(::wasp::binary::Memory, memory_type)
-WASP_STD_HASH_1(::wasp::binary::MemoryType, limits)
-WASP_STD_HASH_1(::wasp::binary::Section, contents)
-WASP_STD_HASH_1(::wasp::binary::Start, func_index)
-WASP_STD_HASH_1(::wasp::binary::Table, table_type)
-WASP_STD_HASH_2(::wasp::binary::TableType, limits, elemtype)
-WASP_STD_HASH_1(::wasp::binary::TypeEntry, type)
-
-namespace std {
-size_t hash<::wasp::binary::BrTableImmediate>::operator()(
-    const ::wasp::binary::BrTableImmediate& v) const {
-  return ::wasp::HashState::combine(0, ::wasp::HashContainer(v.targets),
-                                    v.default_target);
-}
-
-size_t hash<::wasp::binary::Code>::operator()(
-    const ::wasp::binary::Code& v) const {
-  return ::wasp::HashState::combine(0, ::wasp::HashContainer(v.locals), v.body);
-}
-
-size_t hash<::wasp::binary::ElementSegment::IndexesInit>::operator()(
-    const ::wasp::binary::ElementSegment::IndexesInit& v) const {
-  return ::wasp::HashState::combine(0, v.kind, ::wasp::HashContainer(v.init));
-}
-
-size_t hash<::wasp::binary::ElementSegment::ExpressionsInit>::operator()(
-    const ::wasp::binary::ElementSegment::ExpressionsInit& v) const {
-  return ::wasp::HashState::combine(0, v.element_type,
-                                    ::wasp::HashContainer(v.init));
-}
-
-size_t hash<::wasp::binary::FunctionType>::operator()(
-    const ::wasp::binary::FunctionType& v) const {
-  return ::wasp::HashState::combine(0, ::wasp::HashContainer(v.param_types),
-                                    ::wasp::HashContainer(v.result_types));
-}
-
-size_t hash<::wasp::binary::ShuffleImmediate>::operator()(
-    const ::wasp::binary::ShuffleImmediate& v) const {
-  return ::wasp::HashContainer(v);
-}
-
-size_t hash<::wasp::binary::ValueTypes>::operator()(
-    const ::wasp::binary::ValueTypes& v) const {
-  return ::wasp::HashContainer(v);
-}
-
-}  // namespace std
+WASP_BINARY_STRUCTS(WASP_STD_HASH_VARGS)
+WASP_BINARY_CONTAINERS(WASP_STD_HASH_CONTAINER)

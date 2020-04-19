@@ -168,6 +168,63 @@ typename Ctx::iterator formatter<::wasp::binary::SymbolInfo>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::SymbolInfo::Base>::format(
+    const ::wasp::binary::SymbolInfo::Base& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{kind {}, index {}", self.kind, self.index);
+  if (self.name) {
+    format_to(buf, ", name {}", *self.name);
+  }
+  format_to(buf, "}}");
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::SymbolInfo::Data>::format(
+    const ::wasp::binary::SymbolInfo::Data& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{name {}", self.name);
+  if (self.defined) {
+    format_to(buf, ", index {}, offset {}, size {}", self.defined->index,
+              self.defined->offset, self.defined->size);
+  }
+  format_to(buf, "}}");
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator
+formatter<::wasp::binary::SymbolInfo::Data::Defined>::format(
+    const ::wasp::binary::SymbolInfo::Data::Defined& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{index {}, offset {}, size {}}}", self.index, self.offset,
+            self.size);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::SymbolInfo::Flags>::format(
+    const ::wasp::binary::SymbolInfo::Flags& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{{} {} {} {}}}", self.binding, self.visibility,
+            self.undefined, self.explicit_name);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::SymbolInfo::Section>::format(
+    const ::wasp::binary::SymbolInfo::Section& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{section {}}}", self.section);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator
 formatter<::wasp::binary::SymbolInfo::Flags::Binding>::format(
     const ::wasp::binary::SymbolInfo::Flags::Binding& self,

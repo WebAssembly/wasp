@@ -17,14 +17,14 @@
 #include <iostream>
 
 #include "wasp/base/print_to_macros.h"
-#include "wasp/binary/formatters.h"
-#include "wasp/binary/types.h"
+#include "wasp/binary/name_section/formatters.h"
+#include "wasp/binary/name_section/types.h"
 
 namespace wasp {
 namespace binary {
 
-WASP_BINARY_ENUMS(WASP_DEFINE_PRINT_TO)
-WASP_BINARY_STRUCTS(WASP_DEFINE_PRINT_TO)
+WASP_BINARY_NAME_ENUMS(WASP_DEFINE_PRINT_TO)
+WASP_BINARY_NAME_STRUCTS(WASP_DEFINE_PRINT_TO)
 
 }  // namespace binary
 }  // namespace wasp

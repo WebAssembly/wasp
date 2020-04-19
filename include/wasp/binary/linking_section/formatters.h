@@ -17,6 +17,9 @@
 #ifndef WASP_BINARY_LINKING_SECTION_FORMATTERS_H_
 #define WASP_BINARY_LINKING_SECTION_FORMATTERS_H_
 
+#include "wasp/base/format.h"
+#include "wasp/binary/linking_section/types.h"
+
 namespace fmt {
 
 #define WASP_DEFINE_FORMATTER(Name)                                   \
@@ -36,6 +39,11 @@ WASP_DEFINE_FORMATTER(InitFunction);
 WASP_DEFINE_FORMATTER(RelocationType);
 WASP_DEFINE_FORMATTER(SegmentInfo);
 WASP_DEFINE_FORMATTER(SymbolInfo);
+WASP_DEFINE_FORMATTER(SymbolInfo::Base);
+WASP_DEFINE_FORMATTER(SymbolInfo::Data);
+WASP_DEFINE_FORMATTER(SymbolInfo::Data::Defined);
+WASP_DEFINE_FORMATTER(SymbolInfo::Section);
+WASP_DEFINE_FORMATTER(SymbolInfo::Flags);
 WASP_DEFINE_FORMATTER(SymbolInfo::Flags::Binding);
 WASP_DEFINE_FORMATTER(SymbolInfo::Flags::Visibility);
 WASP_DEFINE_FORMATTER(SymbolInfo::Flags::Undefined);

@@ -16,28 +16,17 @@
 
 #include "wasp/binary/name_section/types.h"
 
-#include "src/base/operator_eq_ne_macros.h"
-#include "src/base/std_hash_macros.h"
+#include "wasp/base/operator_eq_ne_macros.h"
+#include "wasp/base/std_hash_macros.h"
 
 namespace wasp {
 namespace binary {
 
-WASP_OPERATOR_EQ_NE_2(IndirectNameAssoc, index, name_map)
-WASP_OPERATOR_EQ_NE_2(NameAssoc, index, name)
-WASP_OPERATOR_EQ_NE_2(NameSubsection, id, data)
+WASP_BINARY_NAME_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
+WASP_BINARY_NAME_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
 
 }  // namespace binary
 }  // namespace wasp
 
-WASP_STD_HASH_2(::wasp::binary::NameAssoc, index, name)
-WASP_STD_HASH_2(::wasp::binary::NameSubsection, id, data)
-
-namespace std {
-
-size_t hash<::wasp::binary::IndirectNameAssoc>::operator()(
-    const ::wasp::binary::IndirectNameAssoc& v) const {
-  return ::wasp::HashState::combine(0, v.index,
-                                    ::wasp::HashContainer(v.name_map));
-}
-
-}  // namespace std
+WASP_BINARY_NAME_STRUCTS(WASP_STD_HASH_VARGS)
+WASP_BINARY_NAME_CONTAINERS(WASP_STD_HASH_CONTAINER)

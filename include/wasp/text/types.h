@@ -21,8 +21,10 @@
 
 #include "wasp/base/at.h"
 #include "wasp/base/features.h"
+#include "wasp/base/operator_eq_ne_macros.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
+#include "wasp/base/std_hash_macros.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/v128.h"
 #include "wasp/base/variant.h"
@@ -503,67 +505,76 @@ using Command = variant<ScriptModule, Register, Action, Assertion>;
 
 using Script = std::vector<At<Command>>;
 
-#define WASP_TYPES(WASP_V)           \
-  WASP_V(LiteralInfo)                \
-  WASP_V(Text)                       \
-  WASP_V(Token)                      \
-  WASP_V(BoundValueType)             \
-  WASP_V(BoundFunctionType)          \
-  WASP_V(FunctionType)               \
-  WASP_V(FunctionTypeUse)            \
-  WASP_V(FunctionDesc)               \
-  WASP_V(TypeEntry)                  \
-  WASP_V(Instruction)                \
-  WASP_V(BlockImmediate)             \
-  WASP_V(BrOnExnImmediate)           \
-  WASP_V(BrTableImmediate)           \
-  WASP_V(CallIndirectImmediate)      \
-  WASP_V(CopyImmediate)              \
-  WASP_V(InitImmediate)              \
-  WASP_V(MemArgImmediate)            \
-  WASP_V(TableType)                  \
-  WASP_V(TableDesc)                  \
-  WASP_V(MemoryType)                 \
-  WASP_V(MemoryDesc)                 \
-  WASP_V(GlobalType)                 \
-  WASP_V(GlobalDesc)                 \
-  WASP_V(EventType)                  \
-  WASP_V(EventDesc)                  \
-  WASP_V(InlineImport)               \
-  WASP_V(InlineExport)               \
-  WASP_V(InlineExportList)           \
-  WASP_V(Function)                   \
-  WASP_V(Table)                      \
-  WASP_V(Memory)                     \
-  WASP_V(Global)                     \
-  WASP_V(Event)                      \
-  WASP_V(Import)                     \
-  WASP_V(Export)                     \
-  WASP_V(Start)                      \
-  WASP_V(InstructionList)            \
-  WASP_V(ElementListWithExpressions) \
-  WASP_V(ElementListWithVars)        \
-  WASP_V(ElementSegment)             \
-  WASP_V(DataSegment)                \
-  WASP_V(ScriptModule)               \
-  WASP_V(Module)                     \
-  WASP_V(ConstList)                  \
-  WASP_V(InvokeAction)               \
-  WASP_V(GetAction)                  \
-  WASP_V(ModuleAssertion)            \
-  WASP_V(ActionAssertion)            \
-  WASP_V(ReturnResultList)           \
-  WASP_V(ReturnAssertion)            \
-  WASP_V(Assertion)                  \
-  WASP_V(Register)
+#define WASP_TEXT_ENUMS(WASP_V) \
+  WASP_V(text::TokenType)             \
+  WASP_V(text::Sign)                  \
+  WASP_V(text::LiteralKind)           \
+  WASP_V(text::Base)                  \
+  WASP_V(text::HasUnderscores)        \
+  WASP_V(text::ScriptModuleKind)      \
+  WASP_V(text::AssertionKind)         \
+  WASP_V(text::NanKind)
 
-#define WASP_DECLARE_OPERATOR_EQ_NE(Type)    \
-  bool operator==(const Type&, const Type&); \
-  bool operator!=(const Type&, const Type&);
+#define WASP_TEXT_STRUCTS(WASP_V)                                        \
+  WASP_V(text::LiteralInfo, 4, sign, kind, base, has_underscores)        \
+  WASP_V(text::OpcodeInfo, 2, opcode, features)                          \
+  WASP_V(text::Text, 2, text, byte_size)                                 \
+  WASP_V(text::Token, 3, loc, type, immediate)                           \
+  WASP_V(text::BoundValueType, 2, name, type)                            \
+  WASP_V(text::BoundFunctionType, 2, params, results)                    \
+  WASP_V(text::FunctionType, 2, params, results)                         \
+  WASP_V(text::FunctionTypeUse, 2, type_use, type)                       \
+  WASP_V(text::FunctionDesc, 3, name, type_use, type)                    \
+  WASP_V(text::TypeEntry, 1, type)                                       \
+  WASP_V(text::Instruction, 2, opcode, immediate)                        \
+  WASP_V(text::BlockImmediate, 2, label, type)                           \
+  WASP_V(text::BrOnExnImmediate, 2, target, event)                       \
+  WASP_V(text::BrTableImmediate, 2, targets, default_target)             \
+  WASP_V(text::CallIndirectImmediate, 2, table, type)                    \
+  WASP_V(text::CopyImmediate, 2, dst, src)                               \
+  WASP_V(text::InitImmediate, 2, segment, dst)                           \
+  WASP_V(text::MemArgImmediate, 2, align, offset)                        \
+  WASP_V(text::TableType, 2, limits, elemtype)                           \
+  WASP_V(text::TableDesc, 2, name, type)                                 \
+  WASP_V(text::MemoryType, 1, limits)                                    \
+  WASP_V(text::MemoryDesc, 2, name, type)                                \
+  WASP_V(text::GlobalType, 2, valtype, mut)                              \
+  WASP_V(text::GlobalDesc, 2, name, type)                                \
+  WASP_V(text::EventType, 2, attribute, type)                            \
+  WASP_V(text::EventDesc, 2, name, type)                                 \
+  WASP_V(text::InlineImport, 2, module, name)                            \
+  WASP_V(text::InlineExport, 1, name)                                    \
+  WASP_V(text::Function, 5, desc, locals, instructions, import, exports) \
+  WASP_V(text::Table, 4, desc, import, exports, elements)                \
+  WASP_V(text::Memory, 3, desc, import, exports)                         \
+  WASP_V(text::Global, 3, desc, import, exports)                         \
+  WASP_V(text::Event, 3, desc, import, exports)                          \
+  WASP_V(text::Import, 3, module, name, desc)                            \
+  WASP_V(text::Export, 3, kind, name, var)                               \
+  WASP_V(text::Start, 1, var)                                            \
+  WASP_V(text::ElementListWithExpressions, 2, elemtype, list)            \
+  WASP_V(text::ElementListWithVars, 2, kind, list)                       \
+  WASP_V(text::ElementSegment, 5, name, type, table, offset, elements)   \
+  WASP_V(text::DataSegment, 4, name, memory, offset, data)               \
+  WASP_V(text::ScriptModule, 3, name, kind, module)                      \
+  WASP_V(text::InvokeAction, 3, module, name, consts)                    \
+  WASP_V(text::GetAction, 2, module, name)                               \
+  WASP_V(text::ModuleAssertion, 1, module)                               \
+  WASP_V(text::ActionAssertion, 2, action, message)                      \
+  WASP_V(text::ReturnAssertion, 2, action, results)                      \
+  WASP_V(text::Assertion, 2, kind, desc)                                 \
+  WASP_V(text::Register, 2, name, module)
 
-WASP_TYPES(WASP_DECLARE_OPERATOR_EQ_NE)
+#define WASP_TEXT_CONTAINERS(WASP_V) \
+  WASP_V(text::VarList)              \
+  WASP_V(text::InlineExportList)     \
+  WASP_V(text::InstructionList)      \
+  WASP_V(text::Module)               \
+  WASP_V(text::ConstList)            \
+  WASP_V(text::ReturnResultList)
 
-#undef WASP_DECLARE_OPERATOR_EQ_NE
+WASP_TEXT_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
+WASP_TEXT_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 
 template <typename T, size_t N>
 bool operator==(const std::array<FloatResult<T>, N>&,
@@ -575,6 +586,9 @@ bool operator!=(const std::array<FloatResult<T>, N>&,
 
 }  // namespace text
 }  // namespace wasp
+
+WASP_TEXT_STRUCTS(WASP_DECLARE_STD_HASH)
+WASP_TEXT_CONTAINERS(WASP_DECLARE_STD_HASH)
 
 #include "wasp/text/types-inl.h"
 

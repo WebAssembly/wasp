@@ -14,17 +14,15 @@
 // limitations under the License.
 //
 
-#include <iostream>
+#ifndef WASP_BASE_PRINT_TO_MACROS_H_
+#define WASP_BASE_PRINT_TO_MACROS_H_
 
-#include "wasp/base/print_to_macros.h"
-#include "wasp/binary/formatters.h"
-#include "wasp/binary/types.h"
+#define WASP_DECLARE_PRINT_TO(Type, ...) \
+  void PrintTo(const Type&, std::ostream*);
 
-namespace wasp {
-namespace binary {
+#define WASP_DEFINE_PRINT_TO(Type, ...)               \
+  void PrintTo(const Type& value, std::ostream* os) { \
+    *os << format("{}", value);                       \
+  }
 
-WASP_BINARY_ENUMS(WASP_DEFINE_PRINT_TO)
-WASP_BINARY_STRUCTS(WASP_DEFINE_PRINT_TO)
-
-}  // namespace binary
-}  // namespace wasp
+#endif  // WASP_BASE_PRINT_TO_MACROS_H_

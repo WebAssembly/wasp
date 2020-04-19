@@ -20,6 +20,9 @@
 #include <iosfwd>
 
 #include "wasp/base/at.h"
+#include "wasp/base/operator_eq_ne_macros.h"
+#include "wasp/base/print_to_macros.h"
+#include "wasp/base/std_hash_macros.h"
 #include "wasp/base/types.h"
 
 namespace wasp {
@@ -91,45 +94,28 @@ struct Limits {
   At<Shared> shared;
 };
 
-#define WASP_BASE_WASM_TYPES(WASP_V) WASP_V(Limits)
+#define WASP_BASE_WASM_ENUMS(WASP_V) \
+  WASP_V(Opcode)                  \
+  WASP_V(ValueType)               \
+  WASP_V(ElementType)             \
+  WASP_V(ExternalKind)            \
+  WASP_V(EventAttribute)          \
+  WASP_V(Mutability)              \
+  WASP_V(SegmentType)             \
+  WASP_V(Shared)
 
-#define WASP_DECLARE_OPERATOR_EQ_NE(Type)    \
-  bool operator==(const Type&, const Type&); \
-  bool operator!=(const Type&, const Type&);
+#define WASP_BASE_WASM_STRUCTS(WASP_V) \
+  WASP_V(Limits, 3, min, max, shared)
 
-WASP_BASE_WASM_TYPES(WASP_DECLARE_OPERATOR_EQ_NE)
-
-#undef WASP_DECLARE_OPERATOR_EQ_NE
+WASP_BASE_WASM_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 
 // Used for gtest.
 
-void PrintTo(const Opcode&, std::ostream*);
-void PrintTo(const ValueType&, std::ostream*);
-void PrintTo(const ElementType&, std::ostream*);
-void PrintTo(const ExternalKind&, std::ostream*);
-void PrintTo(const EventAttribute&, std::ostream*);
-void PrintTo(const Mutability&, std::ostream*);
-void PrintTo(const SegmentType&, std::ostream*);
-void PrintTo(const Shared&, std::ostream*);
-
-#define WASP_DECLARE_PRINT_TO(Type) void PrintTo(const Type&, std::ostream*);
-WASP_BASE_WASM_TYPES(WASP_DECLARE_PRINT_TO)
-#undef WASP_DECLARE_PRINT_TO
+WASP_BASE_WASM_ENUMS(WASP_DECLARE_PRINT_TO)
+WASP_BASE_WASM_STRUCTS(WASP_DECLARE_PRINT_TO)
 
 }  // namespace wasp
 
-namespace std {
-
-#define WASP_DECLARE_STD_HASH(Type)               \
-  template <>                                     \
-  struct hash<::wasp::Type> {                     \
-    size_t operator()(const ::wasp::Type&) const; \
-  };
-
-WASP_BASE_WASM_TYPES(WASP_DECLARE_STD_HASH)
-
-#undef WASP_DECLARE_STD_HASH
-
-}  // namespace std
+WASP_BASE_WASM_STRUCTS(WASP_DECLARE_STD_HASH)
 
 #endif // WASP_BASE_WASM_TYPES_H_

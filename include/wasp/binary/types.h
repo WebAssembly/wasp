@@ -23,8 +23,11 @@
 #include <vector>
 
 #include "wasp/base/at.h"
+#include "wasp/base/operator_eq_ne_macros.h"
 #include "wasp/base/optional.h"
+#include "wasp/base/print_to_macros.h"
 #include "wasp/base/span.h"
+#include "wasp/base/std_hash_macros.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/base/v128.h"
@@ -72,6 +75,7 @@ enum class SectionId : u32 {
 
 using ValueTypes = std::vector<At<ValueType>>;
 using ShuffleImmediate = std::array<u8, 16>;
+using Indexes = std::vector<At<Index>>;
 
 // Section
 
@@ -121,7 +125,7 @@ struct BrOnExnImmediate {
 };
 
 struct BrTableImmediate {
-  std::vector<At<Index>> targets;
+  Indexes targets;
   At<Index> default_target;
 };
 
@@ -379,10 +383,9 @@ struct ElementExpression {
   At<Instruction> instruction;
 };
 
-struct ElementSegment {
-  using Indexes = std::vector<At<Index>>;
-  using ElementExpressions = std::vector<At<ElementExpression>>;
+using ElementExpressions = std::vector<At<ElementExpression>>;
 
+struct ElementSegment {
   struct IndexesInit {
     At<ExternalKind> kind;
     Indexes init;
@@ -432,12 +435,14 @@ struct Locals {
   At<ValueType> type;
 };
 
+using LocalsList = std::vector<At<Locals>>;
+
 struct Expression {
   SpanU8 data;
 };
 
 struct Code {
-  std::vector<At<Locals>> locals;
+  LocalsList locals;
   At<Expression> body;
 };
 
@@ -470,85 +475,66 @@ struct Event {
   At<EventType> event_type;
 };
 
-#define WASP_BINARY_TYPES(WASP_V)         \
-  WASP_V(BrOnExnImmediate)                \
-  WASP_V(BrTableImmediate)                \
-  WASP_V(CallIndirectImmediate)           \
-  WASP_V(Code)                            \
-  WASP_V(ConstantExpression)              \
-  WASP_V(CopyImmediate)                   \
-  WASP_V(CustomSection)                   \
-  WASP_V(DataCount)                       \
-  WASP_V(DataSegment)                     \
-  WASP_V(ElementExpression)               \
-  WASP_V(ElementSegment)                  \
-  WASP_V(ElementSegment::IndexesInit)     \
-  WASP_V(ElementSegment::ExpressionsInit) \
-  WASP_V(Event)                           \
-  WASP_V(EventType)                       \
-  WASP_V(Export)                          \
-  WASP_V(Expression)                      \
-  WASP_V(Function)                        \
-  WASP_V(FunctionType)                    \
-  WASP_V(Global)                          \
-  WASP_V(GlobalType)                      \
-  WASP_V(Import)                          \
-  WASP_V(InitImmediate)                   \
-  WASP_V(Instruction)                     \
-  WASP_V(KnownSection)                    \
-  WASP_V(Locals)                          \
-  WASP_V(MemArgImmediate)                 \
-  WASP_V(Memory)                          \
-  WASP_V(MemoryType)                      \
-  WASP_V(Section)                         \
-  WASP_V(Start)                           \
-  WASP_V(Table)                           \
-  WASP_V(TableType)                       \
-  WASP_V(TypeEntry)
+#define WASP_BINARY_ENUMS(WASP_V) \
+  WASP_V(binary::BlockType)       \
+  WASP_V(binary::SectionId)
 
-#define WASP_DECLARE_OPERATOR_EQ_NE(Type)    \
-  bool operator==(const Type&, const Type&); \
-  bool operator!=(const Type&, const Type&);
+#define WASP_BINARY_STRUCTS(WASP_V)                                      \
+  WASP_V(binary::BrOnExnImmediate, 2, target, event_index)               \
+  WASP_V(binary::BrTableImmediate, 2, targets, default_target)           \
+  WASP_V(binary::CallIndirectImmediate, 2, index, table_index)           \
+  WASP_V(binary::Code, 2, locals, body)                                  \
+  WASP_V(binary::ConstantExpression, 1, instruction)                     \
+  WASP_V(binary::CopyImmediate, 2, src_index, dst_index)                 \
+  WASP_V(binary::CustomSection, 2, name, data)                           \
+  WASP_V(binary::DataCount, 1, count)                                    \
+  WASP_V(binary::DataSegment, 4, type, memory_index, offset, init)       \
+  WASP_V(binary::ElementExpression, 1, instruction)                      \
+  WASP_V(binary::ElementSegment, 4, type, table_index, offset, desc)     \
+  WASP_V(binary::ElementSegment::IndexesInit, 2, kind, init)             \
+  WASP_V(binary::ElementSegment::ExpressionsInit, 2, element_type, init) \
+  WASP_V(binary::Event, 1, event_type)                                   \
+  WASP_V(binary::EventType, 2, attribute, type_index)                    \
+  WASP_V(binary::Export, 3, kind, name, index)                           \
+  WASP_V(binary::Expression, 1, data)                                    \
+  WASP_V(binary::Function, 1, type_index)                                \
+  WASP_V(binary::FunctionType, 2, param_types, result_types)             \
+  WASP_V(binary::Global, 2, global_type, init)                           \
+  WASP_V(binary::GlobalType, 2, valtype, mut)                            \
+  WASP_V(binary::Import, 3, module, name, desc)                          \
+  WASP_V(binary::InitImmediate, 2, segment_index, dst_index)             \
+  WASP_V(binary::Instruction, 2, opcode, immediate)                      \
+  WASP_V(binary::KnownSection, 2, id, data)                              \
+  WASP_V(binary::Locals, 2, count, type)                                 \
+  WASP_V(binary::MemArgImmediate, 2, align_log2, offset)                 \
+  WASP_V(binary::Memory, 1, memory_type)                                 \
+  WASP_V(binary::MemoryType, 1, limits)                                  \
+  WASP_V(binary::Section, 1, contents)                                   \
+  WASP_V(binary::Start, 1, func_index)                                   \
+  WASP_V(binary::Table, 1, table_type)                                   \
+  WASP_V(binary::TableType, 2, limits, elemtype)                         \
+  WASP_V(binary::TypeEntry, 1, type)
 
-WASP_BINARY_TYPES(WASP_DECLARE_OPERATOR_EQ_NE)
+#define WASP_BINARY_CONTAINERS(WASP_V) \
+  WASP_V(binary::Indexes)              \
+  WASP_V(binary::LocalsList)           \
+  WASP_V(binary::ElementExpressions)   \
+  WASP_V(binary::ShuffleImmediate)     \
+  WASP_V(binary::ValueTypes)
 
-#undef WASP_DECLARE_OPERATOR_EQ_NE
+WASP_BINARY_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
+WASP_BINARY_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 
 // Used for gtest.
 
-void PrintTo(const BlockType&, std::ostream*);
-void PrintTo(const SectionId&, std::ostream*);
-
-#define WASP_DECLARE_PRINT_TO(Type) void PrintTo(const Type&, std::ostream*);
-WASP_BINARY_TYPES(WASP_DECLARE_PRINT_TO)
-#undef WASP_DECLARE_PRINT_TO
+WASP_BINARY_ENUMS(WASP_DECLARE_PRINT_TO)
+WASP_BINARY_STRUCTS(WASP_DECLARE_PRINT_TO)
 
 }  // namespace binary
 }  // namespace wasp
 
-namespace std {
-
-#define WASP_DECLARE_STD_HASH(Type)                       \
-  template <>                                             \
-  struct hash<::wasp::binary::Type> {                     \
-    size_t operator()(const ::wasp::binary::Type&) const; \
-  };
-
-WASP_BINARY_TYPES(WASP_DECLARE_STD_HASH)
-
-#undef WASP_DECLARE_STD_HASH
-
-template <>
-struct hash<::wasp::binary::ShuffleImmediate> {
-  size_t operator()(const ::wasp::binary::ShuffleImmediate&) const;
-};
-
-template <>
-struct hash<::wasp::binary::ValueTypes> {
-  size_t operator()(const ::wasp::binary::ValueTypes&) const;
-};
-
-}  // namespace std
+WASP_BINARY_STRUCTS(WASP_DECLARE_STD_HASH)
+WASP_BINARY_CONTAINERS(WASP_DECLARE_STD_HASH)
 
 #include "wasp/binary/types-inl.h"
 

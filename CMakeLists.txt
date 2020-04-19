@@ -62,9 +62,11 @@ add_library(wasplib
   src/binary/lazy_expression.cc
   src/binary/lazy_module.cc
   src/binary/lazy_sequence.cc
+  src/binary/linking_section/print_to.cc
   src/binary/linking_section/read.cc
   src/binary/linking_section/sections.cc
   src/binary/linking_section/types.cc
+  src/binary/name_section/print_to.cc
   src/binary/name_section/read.cc
   src/binary/name_section/sections.cc
   src/binary/name_section/types.cc

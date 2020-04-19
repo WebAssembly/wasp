@@ -21,8 +21,11 @@
 #include <vector>
 
 #include "wasp/base/at.h"
+#include "wasp/base/operator_eq_ne_macros.h"
 #include "wasp/base/optional.h"
+#include "wasp/base/print_to_macros.h"
 #include "wasp/base/span.h"
+#include "wasp/base/std_hash_macros.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/base/variant.h"
@@ -94,10 +97,12 @@ struct ComdatSymbol {
   At<Index> index;
 };
 
+using ComdatSymbols = std::vector<At<ComdatSymbol>>;
+
 struct Comdat {
   At<string_view> name;
   At<u32> flags;
-  std::vector<At<ComdatSymbol>> symbols;
+  ComdatSymbols symbols;
 };
 
 // Subsection 8: SymbolTable
@@ -163,46 +168,43 @@ struct SymbolInfo {
   variant<Base, Data, Section> desc;
 };
 
+#define WASP_BINARY_LINKING_ENUMS(WASP_V) \
+  WASP_V(binary::ComdatSymbolKind)        \
+  WASP_V(binary::LinkingSubsectionId)     \
+  WASP_V(binary::RelocationType)          \
+  WASP_V(binary::SymbolInfoKind)
 
-#define WASP_TYPES(WASP_V)          \
-  WASP_V(Comdat)                    \
-  WASP_V(ComdatSymbol)              \
-  WASP_V(InitFunction)              \
-  WASP_V(LinkingSubsection)         \
-  WASP_V(RelocationEntry)           \
-  WASP_V(SegmentInfo)               \
-  WASP_V(SymbolInfo)                \
-  WASP_V(SymbolInfo::Flags)         \
-  WASP_V(SymbolInfo::Base)          \
-  WASP_V(SymbolInfo::Data)          \
-  WASP_V(SymbolInfo::Data::Defined) \
-  WASP_V(SymbolInfo::Section) \
+#define WASP_BINARY_LINKING_STRUCTS(WASP_V)                            \
+  WASP_V(binary::Comdat, 3, name, flags, symbols)                      \
+  WASP_V(binary::ComdatSymbol, 2, kind, index)                         \
+  WASP_V(binary::InitFunction, 2, priority, index)                     \
+  WASP_V(binary::LinkingSubsection, 2, id, data)                       \
+  WASP_V(binary::RelocationEntry, 4, type, offset, index, addend)      \
+  WASP_V(binary::SegmentInfo, 3, name, align_log2, flags)              \
+  WASP_V(binary::SymbolInfo, 2, flags, desc)                           \
+  WASP_V(binary::SymbolInfo::Flags, 4, binding, visibility, undefined, \
+         explicit_name)                                                \
+  WASP_V(binary::SymbolInfo::Base, 3, kind, index, name)               \
+  WASP_V(binary::SymbolInfo::Data, 2, name, defined)                   \
+  WASP_V(binary::SymbolInfo::Data::Defined, 3, index, offset, size)    \
+  WASP_V(binary::SymbolInfo::Section, 1, section)
 
-#define WASP_DECLARE_OPERATOR_EQ_NE(Type)    \
-  bool operator==(const Type&, const Type&); \
-  bool operator!=(const Type&, const Type&);
+#define WASP_BINARY_LINKING_CONTAINERS(WASP_V) \
+  WASP_V(binary::ComdatSymbols)
 
-WASP_TYPES(WASP_DECLARE_OPERATOR_EQ_NE)
+WASP_BINARY_LINKING_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
+WASP_BINARY_LINKING_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 
-#undef WASP_DECLARE_OPERATOR_EQ_NE
+// Used for gtest.
+
+WASP_BINARY_LINKING_ENUMS(WASP_DECLARE_PRINT_TO)
+WASP_BINARY_LINKING_STRUCTS(WASP_DECLARE_PRINT_TO)
 
 }  // namespace binary
 }  // namespace wasp
 
-namespace std {
-
-#define WASP_DECLARE_STD_HASH(Type)                       \
-  template <>                                             \
-  struct hash<::wasp::binary::Type> {                     \
-    size_t operator()(const ::wasp::binary::Type&) const; \
-  };
-
-WASP_TYPES(WASP_DECLARE_STD_HASH)
-
-#undef WASP_DECLARE_STD_HASH
-#undef WASP_TYPES
-
-}  // namespace std
+WASP_BINARY_LINKING_STRUCTS(WASP_DECLARE_STD_HASH)
+WASP_BINARY_LINKING_CONTAINERS(WASP_DECLARE_STD_HASH)
 
 #include "wasp/binary/linking_section/types-inl.h"
 

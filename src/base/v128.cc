@@ -18,8 +18,8 @@
 
 #include <cstring>
 
-#include "src/base/operator_eq_ne_macros.h"
 #include "wasp/base/hash.h"
+#include "wasp/base/operator_eq_ne_macros.h"
 
 namespace wasp {
 

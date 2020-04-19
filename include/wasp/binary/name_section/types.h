@@ -21,7 +21,10 @@
 #include <vector>
 
 #include "wasp/base/at.h"
+#include "wasp/base/operator_eq_ne_macros.h"
+#include "wasp/base/print_to_macros.h"
 #include "wasp/base/span.h"
+#include "wasp/base/std_hash_macros.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 
@@ -51,35 +54,29 @@ struct IndirectNameAssoc {
   NameMap name_map;
 };
 
-#define WASP_TYPES(WASP_V)  \
-  WASP_V(IndirectNameAssoc) \
-  WASP_V(NameAssoc)         \
-  WASP_V(NameSubsection)
+#define WASP_BINARY_NAME_ENUMS(WASP_V) \
+  WASP_V(binary::NameSubsectionId)
 
-#define WASP_DECLARE_OPERATOR_EQ_NE(Type)    \
-  bool operator==(const Type&, const Type&); \
-  bool operator!=(const Type&, const Type&);
+#define WASP_BINARY_NAME_STRUCTS(WASP_V)                \
+  WASP_V(binary::IndirectNameAssoc, 2, index, name_map) \
+  WASP_V(binary::NameAssoc, 2, index, name)             \
+  WASP_V(binary::NameSubsection, 2, id, data)
 
-WASP_TYPES(WASP_DECLARE_OPERATOR_EQ_NE)
+#define WASP_BINARY_NAME_CONTAINERS(WASP_V) \
+  WASP_V(binary::NameMap)
 
-#undef WASP_DECLARE_OPERATOR_EQ_NE
+WASP_BINARY_NAME_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
+WASP_BINARY_NAME_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
+
+// Used for gtest.
+
+WASP_BINARY_NAME_ENUMS(WASP_DECLARE_PRINT_TO)
+WASP_BINARY_NAME_STRUCTS(WASP_DECLARE_PRINT_TO)
 
 }  // namespace binary
 }  // namespace wasp
 
-namespace std {
-
-#define WASP_DECLARE_STD_HASH(Type)                       \
-  template <>                                             \
-  struct hash<::wasp::binary::Type> {                     \
-    size_t operator()(const ::wasp::binary::Type&) const; \
-  };
-
-WASP_TYPES(WASP_DECLARE_STD_HASH)
-
-#undef WASP_DECLARE_STD_HASH
-#undef WASP_TYPES
-
-}  // namespace std
+WASP_BINARY_NAME_STRUCTS(WASP_DECLARE_STD_HASH)
+WASP_BINARY_NAME_CONTAINERS(WASP_DECLARE_STD_HASH)
 
 #endif // WASP_BINARY_NAME_SECTION_TYPES_H_

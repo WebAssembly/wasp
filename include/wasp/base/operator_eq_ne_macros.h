@@ -17,6 +17,13 @@
 #ifndef WASP_BASE_OPERATOR_EQ_NE_MACROS_H_
 #define WASP_BASE_OPERATOR_EQ_NE_MACROS_H_
 
+#define WASP_DECLARE_OPERATOR_EQ_NE(Type, ...) \
+  bool operator==(const Type&, const Type&);   \
+  bool operator!=(const Type&, const Type&);
+
+#define WASP_OPERATOR_EQ_NE_VARGS(Name, Count, ...) \
+  WASP_OPERATOR_EQ_NE_##Count(Name, __VA_ARGS__)
+
 #define WASP_OPERATOR_EQ_NE_0(Name)                                  \
   bool operator==(const Name& lhs, const Name& rhs) { return true; } \
   bool operator!=(const Name& lhs, const Name& rhs) { return false; }
@@ -50,6 +57,12 @@
   bool operator==(const Name& lhs, const Name& rhs) {                  \
     return lhs.f1 == rhs.f1 && lhs.f2 == rhs.f2 && lhs.f3 == rhs.f3 && \
            lhs.f4 == rhs.f4 && lhs.f5 == rhs.f5;                       \
+  }                                                                    \
+  bool operator!=(const Name& lhs, const Name& rhs) { return !(lhs == rhs); }
+
+#define WASP_OPERATOR_EQ_NE_CONTAINER(Name)                                  \
+  bool operator==(const Name& lhs, const Name& rhs) {                  \
+    return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end()); \
   }                                                                    \
   bool operator!=(const Name& lhs, const Name& rhs) { return !(lhs == rhs); }
 

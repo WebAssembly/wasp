@@ -17,6 +17,9 @@
 #ifndef WASP_BINARY_NAME_SECTION_FORMATTERS_H_
 #define WASP_BINARY_NAME_SECTION_FORMATTERS_H_
 
+#include "wasp/base/format.h"
+#include "wasp/binary/name_section/types.h"
+
 namespace fmt {
 
 #define WASP_DEFINE_FORMATTER(Name)                                   \
