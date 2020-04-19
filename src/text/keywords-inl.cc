@@ -1455,11 +1455,11 @@ switch (PeekChar(data, 2)) {
       default: return LexKeyword(data, "inf", TokenType::Float, LiteralKind::Infinity);
       case '.':
         switch (PeekChar(data, 7)) {
-          case 'c': return LexKeyword(data, "ref.func", TokenType::VarInstr, Opcode::RefFunc, Features::ReferenceTypes);
-          case 'l': return LexKeyword(data, "ref.null", Opcode::RefNull, Features::ReferenceTypes);
+          default: return LexKeyword(data, "ref.any", TokenType::RefAny);
+          case 'c': return LexKeyword(data, "ref.func", TokenType::RefFuncInstr, Opcode::RefFunc, Features::ReferenceTypes);
+          case 'l': return LexKeyword(data, "ref.null", TokenType::RefNullInstr, Opcode::RefNull, Features::ReferenceTypes);
           case 'n': return LexKeyword(data, "ref.is_null", Opcode::RefIsNull, Features::ReferenceTypes);
           case 't': return LexKeyword(data, "ref.host", TokenType::RefHost);
-          default: break;
         }
         break;
       case 's':

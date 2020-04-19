@@ -24,7 +24,8 @@
 #define WASP_OPERATOR_EQ_NE_VARGS(Name, Count, ...) \
   WASP_OPERATOR_EQ_NE_##Count(Name, __VA_ARGS__)
 
-#define WASP_OPERATOR_EQ_NE_0(Name)                                  \
+// Use ... here so WASP_OPERATOR_EQ_NE_VARGS works.
+#define WASP_OPERATOR_EQ_NE_0(Name, ...)                             \
   bool operator==(const Name& lhs, const Name& rhs) { return true; } \
   bool operator!=(const Name& lhs, const Name& rhs) { return false; }
 

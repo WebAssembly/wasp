@@ -434,8 +434,13 @@ struct ScriptModule {
   variant<Module, TextList> module;
 };
 
-// TODO: Add ref.null and ref.host
-using Const = variant<u32, u64, f32, f64, v128>;
+struct RefNullConst {};
+
+struct RefHostConst {
+  At<u32> var;
+};
+
+using Const = variant<u32, u64, f32, f64, v128, RefNullConst, RefHostConst>;
 using ConstList = std::vector<At<Const>>;
 
 struct InvokeAction {
@@ -481,9 +486,18 @@ using F64Result = FloatResult<f64>;
 using F32x4Result = std::array<F32Result, 4>;
 using F64x2Result = std::array<F64Result, 2>;
 
-// TODO: Add (ref.any) and (ref.func)
-using ReturnResult =
-    variant<u32, u64, v128, F32Result, F64Result, F32x4Result, F64x2Result>;
+struct RefAnyResult {};
+struct RefFuncResult {};
+
+using ReturnResult = variant<u32,
+                             u64,
+                             v128,
+                             F32Result,
+                             F64Result,
+                             F32x4Result,
+                             F64x2Result,
+                             RefAnyResult,
+                             RefFuncResult>;
 using ReturnResultList = std::vector<At<ReturnResult>>;
 
 struct ReturnAssertion {
@@ -557,10 +571,14 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::ElementSegment, 5, name, type, table, offset, elements)   \
   WASP_V(text::DataSegment, 4, name, memory, offset, data)               \
   WASP_V(text::ScriptModule, 3, name, kind, module)                      \
+  WASP_V(text::RefNullConst, 0)                                          \
+  WASP_V(text::RefHostConst, 1, var)                                     \
   WASP_V(text::InvokeAction, 3, module, name, consts)                    \
   WASP_V(text::GetAction, 2, module, name)                               \
   WASP_V(text::ModuleAssertion, 1, module)                               \
   WASP_V(text::ActionAssertion, 2, action, message)                      \
+  WASP_V(text::RefAnyResult, 0)                                          \
+  WASP_V(text::RefFuncResult, 0)                                         \
   WASP_V(text::ReturnAssertion, 2, action, results)                      \
   WASP_V(text::Assertion, 2, kind, desc)                                 \
   WASP_V(text::Register, 2, name, module)

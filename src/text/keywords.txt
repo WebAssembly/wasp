@@ -456,10 +456,11 @@ offset, TokenType::Offset
 offset=, TokenType::OffsetEqNat
 param, TokenType::Param
 quote, TokenType::Quote
-ref.func, TokenType::VarInstr, Opcode::RefFunc, Features::ReferenceTypes
+ref.any, TokenType::RefAny
+ref.func, TokenType::RefFuncInstr, Opcode::RefFunc, Features::ReferenceTypes
 ref.host, TokenType::RefHost
 ref.is_null, Opcode::RefIsNull, Features::ReferenceTypes
-ref.null, Opcode::RefNull, Features::ReferenceTypes
+ref.null, TokenType::RefNullInstr, Opcode::RefNull, Features::ReferenceTypes
 register, TokenType::Register
 result, TokenType::Result
 rethrow, Opcode::Rethrow, Features::Exceptions

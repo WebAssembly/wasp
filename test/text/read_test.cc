@@ -2571,6 +2571,16 @@ TEST_F(TextReadTest, Const_simd) {
   ExpectNoErrors(errors);
 }
 
+TEST_F(TextReadTest, Const_reference_types) {
+  context.features.enable_reference_types();
+
+  ExpectRead(ReadConst, Const{RefNullConst{}}, "(ref.null)"_su8);
+  ExpectRead(ReadConst, Const{RefHostConst{MakeAt("0"_su8, u32{0})}},
+             "(ref.host 0)"_su8);
+
+  ExpectNoErrors(errors);
+}
+
 TEST_F(TextReadTest, ConstList) {
   ExpectReadVector(ReadConstList, ConstList{}, ""_su8);
 
@@ -2756,6 +2766,15 @@ TEST_F(TextReadTest, ReturnResult_simd) {
                  F64Result{NanKind::Arithmetic},
              }},
              "(v128.const f64x2 0 nan:arithmetic)"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, ReturnResult_reference_types) {
+  context.features.enable_reference_types();
+
+  ExpectRead(ReadReturnResult, ReturnResult{RefAnyResult{}}, "(ref.any)"_su8);
+  ExpectRead(ReadReturnResult, ReturnResult{RefFuncResult{}}, "(ref.func)"_su8);
 
   ExpectNoErrors(errors);
 }

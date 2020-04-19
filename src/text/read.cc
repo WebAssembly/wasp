@@ -965,6 +965,8 @@ bool IsPlainInstruction(Token token) {
     case TokenType::I32ConstInstr:
     case TokenType::I64ConstInstr:
     case TokenType::MemoryInstr:
+    case TokenType::RefFuncInstr:
+    case TokenType::RefNullInstr:
     case TokenType::SelectInstr:
     case TokenType::SimdConstInstr:
     case TokenType::SimdLaneInstr:
@@ -1014,6 +1016,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
   auto token = tokenizer.Peek();
   switch (token.type) {
     case TokenType::BareInstr:
+    case TokenType::RefNullInstr:
       CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       return MakeAt(token.loc, Instruction{token.opcode()});
@@ -1195,7 +1198,8 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
     }
 
-    case TokenType::VarInstr: {
+    case TokenType::VarInstr:
+    case TokenType::RefFuncInstr: {
       CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       auto var = ReadVar(tokenizer, context);
@@ -1706,6 +1710,24 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> At<Const> {
       return MakeAt(guard.loc(), Const{literal.value()});
     }
 
+    case TokenType::RefNullInstr:
+      if (!context.features.reference_types_enabled()) {
+        context.errors.OnError(token.loc, "ref.null not allowed");
+      }
+      tokenizer.Read();
+      Expect(tokenizer, context, TokenType::Rpar);
+      return MakeAt(guard.loc(), Const{RefNullConst{}});
+
+    case TokenType::RefHost: {
+      if (!context.features.reference_types_enabled()) {
+        context.errors.OnError(token.loc, "ref.host not allowed");
+      }
+      tokenizer.Read();
+      auto nat = ReadNat32(tokenizer, context);
+      Expect(tokenizer, context, TokenType::Rpar);
+      return MakeAt(guard.loc(), Const{RefHostConst{nat}});
+    }
+
     default:
       context.errors.OnError(token.loc,
                              format("Invalid constant, got {}", token));
@@ -1900,6 +1922,22 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
       Expect(tokenizer, context, TokenType::Rpar);
       return MakeAt(guard.loc(), ReturnResult{result.value()});
     }
+
+    case TokenType::RefAny:
+      if (!context.features.reference_types_enabled()) {
+        context.errors.OnError(token.loc, "ref.any not allowed");
+      }
+      tokenizer.Read();
+      Expect(tokenizer, context, TokenType::Rpar);
+      return MakeAt(guard.loc(), ReturnResult{RefAnyResult{}});
+
+    case TokenType::RefFuncInstr:
+      if (!context.features.reference_types_enabled()) {
+        context.errors.OnError(token.loc, "ref.func not allowed");
+      }
+      tokenizer.Read();
+      Expect(tokenizer, context, TokenType::Rpar);
+      return MakeAt(guard.loc(), ReturnResult{RefFuncResult{}});
 
     default:
       context.errors.OnError(token.loc,
