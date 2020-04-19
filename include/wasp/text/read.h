@@ -44,6 +44,7 @@ auto ReadTypeUseOpt(Tokenizer&, Context&) -> OptAt<Var>;
 auto ReadFunctionTypeUse(Tokenizer&, Context&) -> FunctionTypeUse;
 
 auto ReadText(Tokenizer&, Context&) -> At<Text>;
+auto ReadUtf8Text(Tokenizer&, Context&) -> At<Text>;
 auto ReadTextList(Tokenizer&, Context&) -> TextList;
 
 // Section 1: Type

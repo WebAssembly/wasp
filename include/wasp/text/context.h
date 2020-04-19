@@ -32,6 +32,9 @@ struct Context {
 
   Features features;
   Errors& errors;
+
+  bool seen_non_import = false;
+  bool seen_start = false;
 };
 
 }  // namespace text

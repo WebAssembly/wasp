@@ -1423,7 +1423,7 @@ TEST_F(TextReadTest, EventType) {
   ExpectNoErrors(errors);
 }
 
-TEST_F(TextReadTest, ReadFunction) {
+TEST_F(TextReadTest, Function) {
   using I = Instruction;
   using O = Opcode;
 
@@ -1448,18 +1448,6 @@ TEST_F(TextReadTest, ReadFunction) {
                    "(export \"e\")"_su8,
                    InlineExport{MakeAt("\"e\""_su8, Text{"\"e\""_sv, 1})})}},
       "(func (export \"e\"))"_su8);
-
-  // Import.
-  ExpectRead(
-      ReadFunction,
-      Function{{},
-               {},
-               {},
-               MakeAt("(import \"m\" \"n\")"_su8,
-                      InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-                                   MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
-               {}},
-      "(func (import \"m\" \"n\"))"_su8);
 
   // Locals.
   ExpectRead(
@@ -1505,6 +1493,22 @@ TEST_F(TextReadTest, ReadFunction) {
                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
       "(func $f (export \"m\") (local i32) nop)"_su8);
 
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, FunctionInlineImport) {
+  // Import.
+  ExpectRead(
+      ReadFunction,
+      Function{{},
+               {},
+               {},
+               MakeAt("(import \"m\" \"n\")"_su8,
+                      InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
+                                   MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
+               {}},
+      "(func (import \"m\" \"n\"))"_su8);
+
   // Everything for imported Function.
   ExpectRead(
       ReadFunction,
@@ -1531,7 +1535,7 @@ TEST_F(TextReadTest, ReadFunction) {
   ExpectNoErrors(errors);
 }
 
-TEST_F(TextReadTest, ReadTable) {
+TEST_F(TextReadTest, Table) {
   // Simplest table.
   ExpectRead(
       ReadTable,
@@ -1592,6 +1596,26 @@ TEST_F(TextReadTest, ReadTable) {
           {}},
       "(table $t (export \"m\") 0 funcref)"_su8);
 
+  // Inline element var list.
+  ExpectRead(
+      ReadTable,
+      Table{TableDesc{{},
+                      TableType{Limits{u32{3}, u32{3}},
+                                MakeAt("funcref"_su8, ElementType::Funcref)}},
+            nullopt,
+            {},
+            ElementListWithVars{ExternalKind::Function,
+                                VarList{
+                                    MakeAt("0"_su8, Var{Index{0}}),
+                                    MakeAt("1"_su8, Var{Index{1}}),
+                                    MakeAt("2"_su8, Var{Index{2}}),
+                                }}},
+      "(table funcref (elem 0 1 2))"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, TableInlineImport) {
   // Inline import.
   ExpectRead(
       ReadTable,
@@ -1626,26 +1650,11 @@ TEST_F(TextReadTest, ReadTable) {
           {}},
       "(table $t (export \"m\") (import \"a\" \"b\") 0 funcref)"_su8);
 
-  // Inline element var list.
-  ExpectRead(
-      ReadTable,
-      Table{TableDesc{{},
-                      TableType{Limits{u32{3}, u32{3}},
-                                MakeAt("funcref"_su8, ElementType::Funcref)}},
-            nullopt,
-            {},
-            ElementListWithVars{ExternalKind::Function,
-                                VarList{
-                                    MakeAt("0"_su8, Var{Index{0}}),
-                                    MakeAt("1"_su8, Var{Index{1}}),
-                                    MakeAt("2"_su8, Var{Index{2}}),
-                                }}},
-      "(table funcref (elem 0 1 2))"_su8);
 
   ExpectNoErrors(errors);
 }
 
-TEST_F(TextReadTest, ReadTable_bulk_memory) {
+TEST_F(TextReadTest, Table_bulk_memory) {
   using I = Instruction;
   using O = Opcode;
 
@@ -1672,7 +1681,7 @@ TEST_F(TextReadTest, ReadTable_bulk_memory) {
   ExpectNoErrors(errors);
 }
 
-TEST_F(TextReadTest, ReadMemory) {
+TEST_F(TextReadTest, Memory) {
   // Simplest memory.
   ExpectRead(
       ReadMemory,
@@ -1725,6 +1734,21 @@ TEST_F(TextReadTest, ReadMemory) {
              {}},
       "(memory $t (export \"m\") 0)"_su8);
 
+  // Inline data segment.
+  ExpectRead(ReadMemory,
+             Memory{MemoryDesc{{}, MemoryType{Limits{u32{10}, u32{10}}}},
+                    nullopt,
+                    {},
+                    TextList{
+                        MakeAt("\"hello\""_su8, Text{"\"hello\""_sv, 5}),
+                        MakeAt("\"world\""_su8, Text{"\"world\""_sv, 5}),
+                    }},
+             "(memory (data \"hello\" \"world\"))"_su8);
+
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, MemoryInlineImport) {
   // Inline import.
   ExpectRead(
       ReadMemory,
@@ -1755,21 +1779,10 @@ TEST_F(TextReadTest, ReadMemory) {
              {}},
       "(memory $t (export \"m\") (import \"a\" \"b\") 0)"_su8);
 
-  // Inline data segment.
-  ExpectRead(ReadMemory,
-             Memory{MemoryDesc{{}, MemoryType{Limits{u32{10}, u32{10}}}},
-                    nullopt,
-                    {},
-                    TextList{
-                        MakeAt("\"hello\""_su8, Text{"\"hello\""_sv, 5}),
-                        MakeAt("\"world\""_su8, Text{"\"world\""_sv, 5}),
-                    }},
-             "(memory (data \"hello\" \"world\"))"_su8);
-
   ExpectNoErrors(errors);
 }
 
-TEST_F(TextReadTest, ReadGlobal) {
+TEST_F(TextReadTest, Global) {
   using I = Instruction;
   using O = Opcode;
 
@@ -1825,6 +1838,10 @@ TEST_F(TextReadTest, ReadGlobal) {
                  InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
       "(global $g (export \"m\") i32 nop)"_su8);
 
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, GlobalInlineImport) {
   // Inline import.
   ExpectRead(
       ReadGlobal,
@@ -1884,6 +1901,10 @@ TEST_F(TextReadTest, Event) {
                 InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
       "(event $e (export \"m\"))"_su8);
 
+  ExpectNoErrors(errors);
+}
+
+TEST_F(TextReadTest, EventInlineImport) {
   // Inline import.
   ExpectRead(
       ReadEvent,
@@ -2646,7 +2667,7 @@ TEST_F(TextReadTest, FloatResult) {
   ExpectNoErrors(errors);
 }
 
-TEST_F(TextReadTest, ReadSimdFloatResult) {
+TEST_F(TextReadTest, SimdFloatResult) {
   ExpectRead(ReadSimdFloatResult<f32, 4>,
              ReturnResult{F32x4Result{
                  F32Result{f32{0}},

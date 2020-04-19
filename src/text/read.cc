@@ -23,6 +23,7 @@
 
 #include "wasp/base/errors.h"
 #include "wasp/base/format.h"
+#include "wasp/base/utf8.h"
 #include "wasp/text/context.h"
 #include "wasp/text/formatters.h"
 #include "wasp/text/numeric.h"
@@ -181,6 +182,14 @@ auto ReadText(Tokenizer& tokenizer, Context& context) -> At<Text> {
   return MakeAt(token_opt->loc, token_opt->text());
 }
 
+auto ReadUtf8Text(Tokenizer& tokenizer, Context& context) -> At<Text> {
+  auto text = ReadText(tokenizer, context);
+  if (!IsValidUtf8(text->text)) {
+    context.errors.OnError(text.loc(), "Invalid UTF-8 encoding");
+  }
+  return text;
+}
+
 auto ReadTextList(Tokenizer& tokenizer, Context& context) -> TextList {
   TextList result;
   while (tokenizer.Peek().type == TokenType::Text) {
@@ -311,23 +320,35 @@ auto ReadTypeEntry(Tokenizer& tokenizer, Context& context) -> At<TypeEntry> {
 auto ReadInlineImportOpt(Tokenizer& tokenizer, Context& context)
     -> OptAt<InlineImport> {
   LocationGuard guard{tokenizer};
-  if (!tokenizer.MatchLpar(TokenType::Import)) {
+  auto import_token = tokenizer.MatchLpar(TokenType::Import);
+  if (!import_token) {
     return nullopt;
   }
-  auto module = ReadText(tokenizer, context);
-  auto name = ReadText(tokenizer, context);
+
+  if (context.seen_non_import) {
+    context.errors.OnError(
+        import_token->loc,
+        "Imports must occur before all non-import definitions");
+  }
+  auto module = ReadUtf8Text(tokenizer, context);
+  auto name = ReadUtf8Text(tokenizer, context);
   Expect(tokenizer, context, TokenType::Rpar);
   return MakeAt(guard.loc(), InlineImport{module, name});
 }
 
 auto ReadImport(Tokenizer& tokenizer, Context& context) -> At<Import> {
   LocationGuard guard{tokenizer};
-  ExpectLpar(tokenizer, context, TokenType::Import);
+  auto import_token = ExpectLpar(tokenizer, context, TokenType::Import);
+
+  if (context.seen_non_import) {
+    context.errors.OnError(
+        import_token->loc,
+        "Imports must occur before all non-import definitions");
+  }
 
   Import result;
-
-  result.module = ReadText(tokenizer, context);
-  result.name = ReadText(tokenizer, context);
+  result.module = ReadUtf8Text(tokenizer, context);
+  result.name = ReadUtf8Text(tokenizer, context);
 
   Expect(tokenizer, context, TokenType::Lpar);
 
@@ -413,6 +434,8 @@ auto ReadFunction(Tokenizer& tokenizer, Context& context) -> At<Function> {
   auto name = ReadBindVarOpt(tokenizer, context);
   auto exports = ReadInlineExportList(tokenizer, context);
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
+  context.seen_non_import |= !import_opt;
+
   auto type_use = ReadTypeUseOpt(tokenizer, context);
   auto type = ReadBoundFunctionType(tokenizer, context);
   if (!import_opt) {
@@ -512,6 +535,7 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> At<Table> {
   auto name = ReadBindVarOpt(tokenizer, context);
   auto exports = ReadInlineExportList(tokenizer, context);
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
+  context.seen_non_import |= !import_opt;
 
   auto elemtype_opt = ReadElementTypeOpt(tokenizer, context);
   if (!import_opt && elemtype_opt) {
@@ -562,6 +586,8 @@ auto ReadMemory(Tokenizer& tokenizer, Context& context) -> At<Memory> {
   auto name = ReadBindVarOpt(tokenizer, context);
   auto exports = ReadInlineExportList(tokenizer, context);
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
+  context.seen_non_import |= !import_opt;
+
   if (tokenizer.MatchLpar(TokenType::Data)) {
     // Inline data segment.
     auto data = ReadTextList(tokenizer, context);
@@ -611,6 +637,8 @@ auto ReadGlobal(Tokenizer& tokenizer, Context& context) -> At<Global> {
   auto name = ReadBindVarOpt(tokenizer, context);
   auto exports = ReadInlineExportList(tokenizer, context);
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
+  context.seen_non_import |= !import_opt;
+
   auto type = ReadGlobalType(tokenizer, context);
   if (!import_opt) {
     ReadInstructionList(tokenizer, context, init);
@@ -629,7 +657,7 @@ auto ReadInlineExportOpt(Tokenizer& tokenizer, Context& context)
   if (!tokenizer.MatchLpar(TokenType::Export)) {
     return nullopt;
   }
-  auto name = ReadText(tokenizer, context);
+  auto name = ReadUtf8Text(tokenizer, context);
   Expect(tokenizer, context, TokenType::Rpar);
   return MakeAt(guard.loc(), InlineExport{name});
 }
@@ -648,7 +676,7 @@ auto ReadExport(Tokenizer& tokenizer, Context& context) -> At<Export> {
   LocationGuard guard{tokenizer};
   ExpectLpar(tokenizer, context, TokenType::Export);
 
-  auto name = ReadText(tokenizer, context);
+  auto name = ReadUtf8Text(tokenizer, context);
 
   At<ExternalKind> kind;
 
@@ -697,7 +725,12 @@ auto ReadExport(Tokenizer& tokenizer, Context& context) -> At<Export> {
 
 auto ReadStart(Tokenizer& tokenizer, Context& context) -> At<Start> {
   LocationGuard guard{tokenizer};
-  ExpectLpar(tokenizer, context, TokenType::Start);
+  auto start_token = ExpectLpar(tokenizer, context, TokenType::Start);
+
+  if (context.seen_start) {
+    context.errors.OnError(start_token->loc, "Multiple start sections");
+  }
+
   auto var = ReadVar(tokenizer, context);
   Expect(tokenizer, context, TokenType::Rpar);
   return MakeAt(guard.loc(), Start{var});
@@ -1449,6 +1482,8 @@ auto ReadEvent(Tokenizer& tokenizer, Context& context) -> At<Event> {
   auto name = ReadBindVarOpt(tokenizer, context);
   auto exports = ReadInlineExportList(tokenizer, context);
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
+  context.seen_non_import |= !import_opt;
+
   auto type = ReadEventType(tokenizer, context);
 
   Expect(tokenizer, context, TokenType::Rpar);
@@ -1692,7 +1727,7 @@ auto ReadInvokeAction(Tokenizer& tokenizer, Context& context)
   LocationGuard guard{tokenizer};
   ExpectLpar(tokenizer, context, TokenType::Invoke);
   auto module_opt = ReadModuleVarOpt(tokenizer, context);
-  auto name = ReadText(tokenizer, context);
+  auto name = ReadUtf8Text(tokenizer, context);
   auto const_list = ReadConstList(tokenizer, context);
   Expect(tokenizer, context, TokenType::Rpar);
   return MakeAt(guard.loc(), InvokeAction{module_opt, name, const_list});
@@ -1702,7 +1737,7 @@ auto ReadGetAction(Tokenizer& tokenizer, Context& context) -> At<GetAction> {
   LocationGuard guard{tokenizer};
   ExpectLpar(tokenizer, context, TokenType::Get);
   auto module_opt = ReadModuleVarOpt(tokenizer, context);
-  auto name = ReadText(tokenizer, context);
+  auto name = ReadUtf8Text(tokenizer, context);
   Expect(tokenizer, context, TokenType::Rpar);
   return MakeAt(guard.loc(), GetAction{module_opt, name});
 }
