@@ -16,6 +16,8 @@
 
 #include "wasp/base/formatters.h"
 
+#include "wasp/base/variant.h"
+
 #include "gtest/gtest.h"
 
 using namespace ::wasp;
@@ -44,6 +46,12 @@ struct formatter<Point> {
 };
 
 }  // namespace fmt
+
+namespace wasp {
+
+WASP_DEFINE_VARIANT_NAME(Point, "Point")
+
+}  // namespace wasp
 
 TEST(FormattersTest, U32) {
   EXPECT_EQ("100", format("{}", u32{100u}));
@@ -84,4 +92,11 @@ TEST(FormattersTest, VectorPoint) {
 TEST(FormattersTest, V128) {
   EXPECT_EQ(R"(0x1 0x0 0x2 0x0)", format("{}", v128{u64{1}, u64{2}}));
   EXPECT_EQ(R"(  0x0 0x0 0x0 0x0)", format("{:>17}", v128{}));
+}
+
+TEST(FormattersTest, Variant) {
+  using MyVariant = variant<u32, Point>;
+
+  EXPECT_EQ(R"(u32 123)", format("{}", MyVariant{u32{123}}));
+  EXPECT_EQ(R"(Point {x:1, y:2})", format("{}", MyVariant{Point{1, 2}}));
 }

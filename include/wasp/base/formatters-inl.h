@@ -16,6 +16,8 @@
 
 #include "wasp/base/macros.h"
 
+#include <type_traits>
+
 namespace fmt {
 
 template <typename T, std::size_t SIZE, typename Allocator>
@@ -75,6 +77,21 @@ typename Ctx::iterator formatter<std::vector<T>>::format(
     Ctx& ctx) {
   return formatter<::wasp::span<const T>>::format(::wasp::span<const T>{self},
                                                   ctx);
+}
+
+template <typename... Ts>
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::variant<Ts...>>::format(
+    const ::wasp::variant<Ts...>& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  std::visit(
+      [&](auto&& arg) {
+        using Type = std::remove_cv_t<std::remove_reference_t<decltype(arg)>>;
+        format_to(buf, "{} {}", ::wasp::VariantName<Type>().GetName(), arg);
+      },
+      self);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>

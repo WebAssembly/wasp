@@ -24,6 +24,7 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/v128.h"
+#include "wasp/base/variant.h"
 #include "wasp/base/wasm_types.h"
 
 namespace fmt {
@@ -83,7 +84,40 @@ WASP_DEFINE_FORMATTER(Limits);
 
 #undef WASP_DEFINE_FORMATTER
 
+// Formatting variants.
+
+template <typename... Ts>
+struct formatter<::wasp::variant<Ts...>> : formatter<string_view> {
+  template <typename Ctx>
+  typename Ctx::iterator format(const ::wasp::variant<Ts...>&, Ctx&);
+};
+
+
 }  // namespace fmt
+
+namespace wasp {
+
+template <typename T>
+struct VariantName { const char* GetName() const; };
+
+#define WASP_DEFINE_VARIANT_NAME(Type, Name)     \
+  template <>                                    \
+  struct VariantName<Type> {                     \
+    const char* GetName() const { return Name; } \
+  };
+
+WASP_DEFINE_VARIANT_NAME(u8, "u8")
+WASP_DEFINE_VARIANT_NAME(u16, "u16")
+WASP_DEFINE_VARIANT_NAME(u32, "u32")
+WASP_DEFINE_VARIANT_NAME(u64, "u64")
+WASP_DEFINE_VARIANT_NAME(s8, "s8")
+WASP_DEFINE_VARIANT_NAME(s16, "s16")
+WASP_DEFINE_VARIANT_NAME(s32, "s32")
+WASP_DEFINE_VARIANT_NAME(s64, "s64")
+WASP_DEFINE_VARIANT_NAME(f32, "f32")
+WASP_DEFINE_VARIANT_NAME(f64, "f64")
+
+}  // namespace wasp
 
 #include "wasp/base/formatters-inl.h"
 
