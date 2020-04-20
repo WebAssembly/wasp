@@ -34,14 +34,6 @@ typename Ctx::iterator formatter<::wasp::At<T>>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::string_view>::format(
-    const ::wasp::string_view& self,
-    Ctx& ctx) {
-  return formatter<string_view>::format(string_view(self.data(), self.size()),
-                                        ctx);
-}
-
-template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::SpanU8>::format(
     const ::wasp::SpanU8& self,
     Ctx& ctx) {

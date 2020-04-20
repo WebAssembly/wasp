@@ -83,7 +83,6 @@ struct formatter<::wasp::optional<T>> : formatter<string_view> {
 WASP_BASE_WASM_ENUMS(WASP_DECLARE_FORMATTER)
 WASP_BASE_WASM_STRUCTS(WASP_DECLARE_FORMATTER)
 
-WASP_DECLARE_FORMATTER(string_view)
 WASP_DECLARE_FORMATTER(SpanU8)
 WASP_DECLARE_FORMATTER(v128);
 WASP_DECLARE_FORMATTER(Features);
@@ -95,6 +94,12 @@ namespace wasp {
 
 template <typename T>
 struct VariantName { const char* GetName() const; };
+
+// At<T>
+template <typename T>
+struct VariantName<At<T>> {
+  const char* GetName() const { return VariantName<T>().GetName(); };
+};
 
 #define WASP_DEFINE_VARIANT_NAME(Type, Name)     \
   template <>                                    \
@@ -113,7 +118,10 @@ WASP_DEFINE_VARIANT_NAME(s64, "s64")
 WASP_DEFINE_VARIANT_NAME(f32, "f32")
 WASP_DEFINE_VARIANT_NAME(f64, "f64")
 
+WASP_DEFINE_VARIANT_NAME(v128, "v128")
+
 WASP_DEFINE_VARIANT_NAME(ValueType, "value_type")
+WASP_DEFINE_VARIANT_NAME(string_view, "string_view")
 
 // TODO: More base types.
 

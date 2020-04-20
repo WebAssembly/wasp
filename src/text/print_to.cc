@@ -14,23 +14,18 @@
 // limitations under the License.
 //
 
-#ifndef WASP_TEXT_FORMATTERS_H_
-#define WASP_TEXT_FORMATTERS_H_
+#include <iostream>
 
-#include "wasp/base/format.h"
-#include "wasp/base/formatter_macros.h"
+#include "wasp/base/print_to_macros.h"
+#include "wasp/text/formatters.h"
 #include "wasp/text/types.h"
 
-namespace fmt {
+namespace wasp {
+namespace text {
 
-WASP_TEXT_ENUMS(WASP_DECLARE_FORMATTER)
-WASP_TEXT_STRUCTS(WASP_DECLARE_FORMATTER)
+WASP_TEXT_ENUMS(WASP_DEFINE_PRINT_TO)
+WASP_TEXT_STRUCTS(WASP_DEFINE_PRINT_TO)
+WASP_TEXT_CONTAINERS(WASP_DEFINE_PRINT_TO)
 
-// Special case for Var.
-WASP_DECLARE_FORMATTER(text::Var)
-
-}  // namespace fmt
-
-#include "wasp/text/formatters-inl.h"
-
-#endif  // WASP_TEXT_FORMATTERS_H_
+}  // namespace text
+}  // namespace wasp

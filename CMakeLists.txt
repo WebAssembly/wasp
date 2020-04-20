@@ -81,6 +81,7 @@ add_library(wasplib
   src/text/context.cc
   src/text/lex.cc
   src/text/numeric.cc
+  src/text/print_to.cc
   src/text/read.cc
   src/text/types.cc
 

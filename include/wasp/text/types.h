@@ -17,6 +17,7 @@
 #ifndef WASP_TEXT_TYPES_H_
 #define WASP_TEXT_TYPES_H_
 
+#include <iosfwd>
 #include <utility>
 
 #include "wasp/base/at.h"
@@ -539,7 +540,7 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::FunctionType, 2, params, results)                         \
   WASP_V(text::FunctionTypeUse, 2, type_use, type)                       \
   WASP_V(text::FunctionDesc, 3, name, type_use, type)                    \
-  WASP_V(text::TypeEntry, 1, type)                                       \
+  WASP_V(text::TypeEntry, 2, bind_var, type)                             \
   WASP_V(text::Instruction, 2, opcode, immediate)                        \
   WASP_V(text::BlockImmediate, 2, label, type)                           \
   WASP_V(text::BrOnExnImmediate, 2, target, event)                       \
@@ -560,7 +561,7 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::InlineExport, 1, name)                                    \
   WASP_V(text::Function, 5, desc, locals, instructions, import, exports) \
   WASP_V(text::Table, 4, desc, import, exports, elements)                \
-  WASP_V(text::Memory, 3, desc, import, exports)                         \
+  WASP_V(text::Memory, 4, desc, import, exports, data)                   \
   WASP_V(text::Global, 3, desc, import, exports)                         \
   WASP_V(text::Event, 3, desc, import, exports)                          \
   WASP_V(text::Import, 3, module, name, desc)                            \
@@ -569,13 +570,13 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::ElementListWithExpressions, 2, elemtype, list)            \
   WASP_V(text::ElementListWithVars, 2, kind, list)                       \
   WASP_V(text::ElementSegment, 5, name, type, table, offset, elements)   \
-  WASP_V(text::DataSegment, 4, name, memory, offset, data)               \
+  WASP_V(text::DataSegment, 5, name, type, memory, offset, data)         \
   WASP_V(text::ScriptModule, 3, name, kind, module)                      \
   WASP_V(text::RefNullConst, 0)                                          \
   WASP_V(text::RefHostConst, 1, var)                                     \
   WASP_V(text::InvokeAction, 3, module, name, consts)                    \
   WASP_V(text::GetAction, 2, module, name)                               \
-  WASP_V(text::ModuleAssertion, 1, module)                               \
+  WASP_V(text::ModuleAssertion, 2, module, message)                      \
   WASP_V(text::ActionAssertion, 2, action, message)                      \
   WASP_V(text::RefAnyResult, 0)                                          \
   WASP_V(text::RefFuncResult, 0)                                         \
@@ -601,6 +602,12 @@ bool operator==(const std::array<FloatResult<T>, N>&,
 template <typename T, size_t N>
 bool operator!=(const std::array<FloatResult<T>, N>&,
                 const std::array<FloatResult<T>, N>&);
+
+// Used for gtest.
+
+WASP_TEXT_ENUMS(WASP_DECLARE_PRINT_TO)
+WASP_TEXT_STRUCTS(WASP_DECLARE_PRINT_TO)
+WASP_TEXT_CONTAINERS(WASP_DECLARE_PRINT_TO)
 
 }  // namespace text
 }  // namespace wasp
