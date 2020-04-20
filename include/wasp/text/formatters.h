@@ -18,26 +18,13 @@
 #define WASP_TEXT_FORMATTERS_H_
 
 #include "wasp/base/format.h"
+#include "wasp/base/formatter_macros.h"
 #include "wasp/text/types.h"
 
 namespace fmt {
 
-#define WASP_DEFINE_FORMATTER(Name)                                 \
-  template <>                                                       \
-  struct formatter<::wasp::text::Name> : formatter<string_view> {   \
-    template <typename Ctx>                                         \
-    typename Ctx::iterator format(const ::wasp::text::Name&, Ctx&); \
-  } /* No semicolon. */
-
-WASP_DEFINE_FORMATTER(TokenType);
-WASP_DEFINE_FORMATTER(Sign);
-WASP_DEFINE_FORMATTER(LiteralKind);
-WASP_DEFINE_FORMATTER(Base);
-WASP_DEFINE_FORMATTER(HasUnderscores);
-WASP_DEFINE_FORMATTER(LiteralInfo);
-WASP_DEFINE_FORMATTER(Token);
-
-#undef WASP_DEFINE_FORMATTER
+WASP_TEXT_ENUMS(WASP_DECLARE_FORMATTER)
+WASP_TEXT_STRUCTS(WASP_DECLARE_FORMATTER)
 
 }  // namespace fmt
 

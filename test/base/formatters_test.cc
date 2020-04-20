@@ -94,6 +94,13 @@ TEST(FormattersTest, V128) {
   EXPECT_EQ(R"(  0x0 0x0 0x0 0x0)", format("{:>17}", v128{}));
 }
 
+TEST(FormattersTest, Optional) {
+  using OptU32 = optional<u32>;
+
+  EXPECT_EQ(R"(none)", format("{}", OptU32{}));
+  EXPECT_EQ(R"(1)", format("{}", OptU32{1}));
+}
+
 TEST(FormattersTest, Variant) {
   using MyVariant = variant<u32, Point>;
 

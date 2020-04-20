@@ -88,10 +88,29 @@ typename Ctx::iterator formatter<::wasp::variant<Ts...>>::format(
   std::visit(
       [&](auto&& arg) {
         using Type = std::remove_cv_t<std::remove_reference_t<decltype(arg)>>;
-        format_to(buf, "{} {}", ::wasp::VariantName<Type>().GetName(), arg);
+        if constexpr (std::is_same_v<Type, ::wasp::monostate>) {
+          format_to(buf, "empty");
+        } else {
+          format_to(buf, "{} {}", ::wasp::VariantName<Type>().GetName(), arg);
+        }
       },
       self);
   return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename T>
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::optional<T>>::format(
+    const ::wasp::optional<T>& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  if (self.has_value()) {
+    memory_buffer buf;
+    format_to(buf, "{}", *self);
+    return formatter<string_view>::format(to_string_view(buf), ctx);
+  } else {
+    return formatter<string_view>::format("none", ctx);
+  }
 }
 
 template <typename Ctx>
@@ -250,6 +269,27 @@ typename Ctx::iterator formatter<::wasp::SegmentType>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::Features>::format(
+    const ::wasp::Features& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  string_view separator;
+#define WASP_V(enum_, variable, flag, default_) \
+  if (self.variable##_enabled()) {              \
+    format_to(buf, "{}" #variable, separator);  \
+    separator = "|";                            \
+  }
+#include "wasp/base/features.def"
+#undef WASP_V
+
+  if (separator.size() == 0) {
+    return formatter<string_view>::format("none", ctx);
+  } else {
+    return formatter<string_view>::format(to_string_view(buf), ctx);
+  }
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::Shared>::format(
     const ::wasp::Shared& self,
     Ctx& ctx) {
@@ -283,6 +323,13 @@ typename Ctx::iterator formatter<::wasp::Limits>::format(
     format_to(buf, "{{min {}}}", self.min);
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::monostate>::format(
+    const ::wasp::monostate& self,
+    Ctx& ctx) {
+  return formatter<string_view>::format("", ctx);
 }
 
 }  // namespace fmt

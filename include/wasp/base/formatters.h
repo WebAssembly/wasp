@@ -20,7 +20,10 @@
 #include <vector>
 
 #include "wasp/base/at.h"
+#include "wasp/base/features.h"
 #include "wasp/base/format.h"
+#include "wasp/base/formatter_macros.h"
+#include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/v128.h"
@@ -34,64 +37,55 @@ namespace fmt {
 template <typename T, std::size_t SIZE, typename Allocator>
 string_view to_string_view(const basic_memory_buffer<T, SIZE, Allocator>&);
 
+// At<T>
 template <typename T>
 struct formatter<::wasp::At<T>> : formatter<T> {
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::At<T>&, Ctx&);
 };
 
-template <>
-struct formatter<::wasp::string_view> : formatter<string_view> {
-  template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::string_view&, Ctx&);
-};
-
-template <>
-struct formatter<::wasp::SpanU8> : formatter<string_view> {
-  template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::SpanU8&, Ctx&);
-};
-
+// span<const T>
 template <typename T>
 struct formatter<::wasp::span<const T>> : formatter<string_view> {
   template <typename Ctx>
   typename Ctx::iterator format(::wasp::span<const T>, Ctx&);
 };
 
+// std::vector<T>
 template <typename T>
 struct formatter<std::vector<T>> : formatter<::wasp::span<const T>> {
   template <typename Ctx>
   typename Ctx::iterator format(const std::vector<T>&, Ctx&);
 };
 
-#define WASP_DEFINE_FORMATTER(Name)                           \
-  template <>                                                 \
-  struct formatter<::wasp::Name> : formatter<string_view> {   \
-    template <typename Ctx>                                   \
-    typename Ctx::iterator format(const ::wasp::Name&, Ctx&); \
-  } /* No semicolon. */
-
-WASP_DEFINE_FORMATTER(v128);
-WASP_DEFINE_FORMATTER(Opcode);
-WASP_DEFINE_FORMATTER(ValueType);
-WASP_DEFINE_FORMATTER(ElementType);
-WASP_DEFINE_FORMATTER(ExternalKind);
-WASP_DEFINE_FORMATTER(EventAttribute);
-WASP_DEFINE_FORMATTER(Mutability);
-WASP_DEFINE_FORMATTER(SegmentType);
-WASP_DEFINE_FORMATTER(Shared);
-WASP_DEFINE_FORMATTER(Limits);
-
-#undef WASP_DEFINE_FORMATTER
-
-// Formatting variants.
-
+// variant<Ts...>
 template <typename... Ts>
 struct formatter<::wasp::variant<Ts...>> : formatter<string_view> {
   template <typename Ctx>
   typename Ctx::iterator format(const ::wasp::variant<Ts...>&, Ctx&);
 };
 
+// optional<T>
+template <typename T>
+struct formatter<::wasp::optional<T>> : formatter<string_view> {
+  template <typename Ctx>
+  typename Ctx::iterator format(const ::wasp::optional<T>&, Ctx&);
+};
+
+WASP_DECLARE_FORMATTER(string_view)
+WASP_DECLARE_FORMATTER(SpanU8)
+WASP_DECLARE_FORMATTER(v128);
+WASP_DECLARE_FORMATTER(Opcode);
+WASP_DECLARE_FORMATTER(ValueType);
+WASP_DECLARE_FORMATTER(ElementType);
+WASP_DECLARE_FORMATTER(ExternalKind);
+WASP_DECLARE_FORMATTER(EventAttribute);
+WASP_DECLARE_FORMATTER(Mutability);
+WASP_DECLARE_FORMATTER(SegmentType);
+WASP_DECLARE_FORMATTER(Shared);
+WASP_DECLARE_FORMATTER(Limits);
+WASP_DECLARE_FORMATTER(Features);
+WASP_DECLARE_FORMATTER(monostate);
 
 }  // namespace fmt
 
@@ -116,6 +110,10 @@ WASP_DEFINE_VARIANT_NAME(s32, "s32")
 WASP_DEFINE_VARIANT_NAME(s64, "s64")
 WASP_DEFINE_VARIANT_NAME(f32, "f32")
 WASP_DEFINE_VARIANT_NAME(f64, "f64")
+
+WASP_DEFINE_VARIANT_NAME(ValueType, "value_type")
+
+// TODO: More base types.
 
 }  // namespace wasp
 

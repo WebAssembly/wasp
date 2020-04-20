@@ -18,21 +18,13 @@
 #define WASP_VALID_FORMATTERS_H_
 
 #include "wasp/base/format.h"
+#include "wasp/base/formatter_macros.h"
 #include "wasp/base/macros.h"
 #include "wasp/valid/types.h"
 
 namespace fmt {
 
-#define WASP_DEFINE_FORMATTER(Name)                                  \
-  template <>                                                        \
-  struct formatter<::wasp::valid::Name> : formatter<string_view> {   \
-    template <typename Ctx>                                          \
-    typename Ctx::iterator format(const ::wasp::valid::Name&, Ctx&); \
-  } /* No semicolon. */
-
-WASP_DEFINE_FORMATTER(StackType);
-
-#undef WASP_DEFINE_FORMATTER
+WASP_DECLARE_FORMATTER(valid::StackType);
 
 }  // namespace fmt
 

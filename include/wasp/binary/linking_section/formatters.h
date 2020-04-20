@@ -18,39 +18,31 @@
 #define WASP_BINARY_LINKING_SECTION_FORMATTERS_H_
 
 #include "wasp/base/format.h"
+#include "wasp/base/formatter_macros.h"
 #include "wasp/binary/linking_section/types.h"
 
 namespace fmt {
 
-#define WASP_DEFINE_FORMATTER(Name)                                   \
-  template <>                                                         \
-  struct formatter<::wasp::binary::Name> : formatter<string_view> {   \
-    template <typename Ctx>                                           \
-    typename Ctx::iterator format(const ::wasp::binary::Name&, Ctx&); \
-  } /* No semicolon. */
-
-WASP_DEFINE_FORMATTER(Comdat);
-WASP_DEFINE_FORMATTER(ComdatSymbol);
-WASP_DEFINE_FORMATTER(ComdatSymbolKind);
-WASP_DEFINE_FORMATTER(LinkingSubsection);
-WASP_DEFINE_FORMATTER(LinkingSubsectionId);
-WASP_DEFINE_FORMATTER(RelocationEntry);
-WASP_DEFINE_FORMATTER(InitFunction);
-WASP_DEFINE_FORMATTER(RelocationType);
-WASP_DEFINE_FORMATTER(SegmentInfo);
-WASP_DEFINE_FORMATTER(SymbolInfo);
-WASP_DEFINE_FORMATTER(SymbolInfo::Base);
-WASP_DEFINE_FORMATTER(SymbolInfo::Data);
-WASP_DEFINE_FORMATTER(SymbolInfo::Data::Defined);
-WASP_DEFINE_FORMATTER(SymbolInfo::Section);
-WASP_DEFINE_FORMATTER(SymbolInfo::Flags);
-WASP_DEFINE_FORMATTER(SymbolInfo::Flags::Binding);
-WASP_DEFINE_FORMATTER(SymbolInfo::Flags::Visibility);
-WASP_DEFINE_FORMATTER(SymbolInfo::Flags::Undefined);
-WASP_DEFINE_FORMATTER(SymbolInfo::Flags::ExplicitName);
-WASP_DEFINE_FORMATTER(SymbolInfoKind);
-
-#undef WASP_DEFINE_FORMATTER
+WASP_DECLARE_FORMATTER(binary::Comdat);
+WASP_DECLARE_FORMATTER(binary::ComdatSymbol);
+WASP_DECLARE_FORMATTER(binary::ComdatSymbolKind);
+WASP_DECLARE_FORMATTER(binary::LinkingSubsection);
+WASP_DECLARE_FORMATTER(binary::LinkingSubsectionId);
+WASP_DECLARE_FORMATTER(binary::RelocationEntry);
+WASP_DECLARE_FORMATTER(binary::InitFunction);
+WASP_DECLARE_FORMATTER(binary::RelocationType);
+WASP_DECLARE_FORMATTER(binary::SegmentInfo);
+WASP_DECLARE_FORMATTER(binary::SymbolInfo);
+WASP_DECLARE_FORMATTER(binary::SymbolInfo::Base);
+WASP_DECLARE_FORMATTER(binary::SymbolInfo::Data);
+WASP_DECLARE_FORMATTER(binary::SymbolInfo::Data::Defined);
+WASP_DECLARE_FORMATTER(binary::SymbolInfo::Section);
+WASP_DECLARE_FORMATTER(binary::SymbolInfo::Flags);
+WASP_DECLARE_FORMATTER(binary::SymbolInfo::Flags::Binding);
+WASP_DECLARE_FORMATTER(binary::SymbolInfo::Flags::Visibility);
+WASP_DECLARE_FORMATTER(binary::SymbolInfo::Flags::Undefined);
+WASP_DECLARE_FORMATTER(binary::SymbolInfo::Flags::ExplicitName);
+WASP_DECLARE_FORMATTER(binary::SymbolInfoKind);
 
 }  // namespace fmt
 

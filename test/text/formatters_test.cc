@@ -47,28 +47,34 @@ TEST(FormattersTest, HasUnderscores) {
 }
 
 TEST(FormattersTest, LiteralInfo) {
-  EXPECT_EQ(R"({sign None, kind NanPayload, base Hex, underscores No})",
+  EXPECT_EQ(R"({sign None, kind NanPayload, base Hex, has_underscores No})",
             format("{}", LiteralInfo{Sign::None, LiteralKind::NanPayload,
                                      Base::Hex, HasUnderscores::No}));
-  EXPECT_EQ(R"(  {sign Plus, kind Normal, base Decimal, underscores Yes})",
-            format("{:>57s}", LiteralInfo{Sign::Plus, LiteralKind::Normal,
-                                         Base::Decimal, HasUnderscores::Yes}));
+  EXPECT_EQ(R"(  {sign Plus, kind Normal, base Decimal, has_underscores Yes})",
+            format("{:>61s}", LiteralInfo{Sign::Plus, LiteralKind::Normal,
+                                          Base::Decimal, HasUnderscores::Yes}));
 }
 
 TEST(FormattersTest, Token) {
-  EXPECT_EQ(R"({loc "\28", type Lpar})",
+  EXPECT_EQ(R"({loc "\28", type Lpar, immediate empty})",
             format("{}", Token{"("_su8, TokenType::Lpar}));
 
-  EXPECT_EQ(R"({loc "\69\33\32\2e\61\64\64", type BareInstr, opcode i32.add})",
-            format("{}", Token{"i32.add"_su8, TokenType::BareInstr,
-                               OpcodeInfo{Opcode::I32Add, Features{0}}}));
+  EXPECT_EQ(
+      R"({loc "\69\33\32\2e\61\64\64", type BareInstr, immediate opcode_info {opcode i32.add, features none}})",
+      format("{}", Token{"i32.add"_su8, TokenType::BareInstr,
+                         OpcodeInfo{Opcode::I32Add, Features{0}}}));
 
   EXPECT_EQ(
-      R"({loc "\69\33\32", type ValueType, value_type i32})",
+      R"({loc "\69\33\32", type ValueType, immediate value_type i32})",
       format("{}", Token{"i32"_su8, TokenType::ValueType, ValueType::I32}));
 
   EXPECT_EQ(
-      R"({loc "\31\32\33", type Nat, literal_info {sign None, kind Normal, base Decimal, underscores No}})",
+      R"({loc "\31\32\33", type Nat, immediate literal_info {sign None, kind Normal, base Decimal, has_underscores No}})",
       format("{}", Token{"123"_su8, TokenType::Nat,
                          LiteralInfo::Nat(HasUnderscores::No)}));
+}
+
+TEST(FormattersTest, BoundValueType) {
+  EXPECT_EQ(R"({name none, type i32})",
+            format("{}", BoundValueType{nullopt, ValueType::I32}));
 }

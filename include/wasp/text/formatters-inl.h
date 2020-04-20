@@ -16,10 +16,21 @@
 
 #include "wasp/text/formatters.h"
 
+#include "wasp/base/formatter_macros.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/macros.h"
 
+namespace wasp {
+
+WASP_DEFINE_VARIANT_NAME(text::OpcodeInfo, "opcode_info")
+WASP_DEFINE_VARIANT_NAME(text::LiteralInfo, "literal_info")
+WASP_DEFINE_VARIANT_NAME(text::Text, "text")
+
+}  // namespace wasp
+
 namespace fmt {
+
+WASP_TEXT_STRUCTS(WASP_FORMATTER_VARGS)
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::text::TokenType>::format(
@@ -96,45 +107,6 @@ typename Ctx::iterator formatter<::wasp::text::HasUnderscores>::format(
       WASP_UNREACHABLE();
   }
   return formatter<string_view>::format(result, ctx);
-}
-
-template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::text::LiteralInfo>::format(
-    const ::wasp::text::LiteralInfo& self,
-    Ctx& ctx) {
-  memory_buffer buf;
-  format_to(buf, "{{sign {}, kind {}, base {}, underscores {}}}", self.sign,
-            self.kind, self.base, self.has_underscores);
-  return formatter<string_view>::format(to_string_view(buf), ctx);
-}
-
-template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::text::Token>::format(
-    const ::wasp::text::Token& self,
-    Ctx& ctx) {
-  memory_buffer buf;
-  format_to(buf, "{{loc {}, type {}", self.loc, self.type);
-  switch (self.immediate.index()) {
-    case 0:  // monostate.
-      format_to(buf, "}}");
-      break;
-
-    case 1:  // Opcode.
-      format_to(buf, ", opcode {}}}", self.opcode());
-      break;
-
-    case 2:  // ValueType.
-      format_to(buf, ", value_type {}}}", self.value_type());
-      break;
-
-    case 3:  // LiteralInfo.
-      format_to(buf, ", literal_info {}}}", self.literal_info());
-      break;
-
-    default:
-      WASP_UNREACHABLE();
-  }
-  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 }  // namespace fmt

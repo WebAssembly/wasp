@@ -18,23 +18,15 @@
 #define WASP_BINARY_NAME_SECTION_FORMATTERS_H_
 
 #include "wasp/base/format.h"
+#include "wasp/base/formatter_macros.h"
 #include "wasp/binary/name_section/types.h"
 
 namespace fmt {
 
-#define WASP_DEFINE_FORMATTER(Name)                                   \
-  template <>                                                         \
-  struct formatter<::wasp::binary::Name> : formatter<string_view> {   \
-    template <typename Ctx>                                           \
-    typename Ctx::iterator format(const ::wasp::binary::Name&, Ctx&); \
-  } /* No semicolon. */
-
-WASP_DEFINE_FORMATTER(NameSubsectionId);
-WASP_DEFINE_FORMATTER(NameAssoc);
-WASP_DEFINE_FORMATTER(IndirectNameAssoc);
-WASP_DEFINE_FORMATTER(NameSubsection);
-
-#undef WASP_DEFINE_FORMATTER
+WASP_DECLARE_FORMATTER(binary::NameSubsectionId);
+WASP_DECLARE_FORMATTER(binary::NameAssoc);
+WASP_DECLARE_FORMATTER(binary::IndirectNameAssoc);
+WASP_DECLARE_FORMATTER(binary::NameSubsection);
 
 }  // namespace fmt
 

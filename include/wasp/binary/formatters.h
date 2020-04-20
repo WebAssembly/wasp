@@ -18,56 +18,48 @@
 #define WASP_BINARY_FORMATTERS_H_
 
 #include "wasp/base/format.h"
+#include "wasp/base/formatter_macros.h"
 #include "wasp/binary/types.h"
 
 namespace fmt {
 
-#define WASP_DEFINE_FORMATTER(Name)                                   \
-  template <>                                                         \
-  struct formatter<::wasp::binary::Name> : formatter<string_view> {   \
-    template <typename Ctx>                                           \
-    typename Ctx::iterator format(const ::wasp::binary::Name&, Ctx&); \
-  } /* No semicolon. */
-
-WASP_DEFINE_FORMATTER(BlockType);
-WASP_DEFINE_FORMATTER(SectionId);
-WASP_DEFINE_FORMATTER(MemArgImmediate);
-WASP_DEFINE_FORMATTER(Locals);
-WASP_DEFINE_FORMATTER(Section);
-WASP_DEFINE_FORMATTER(KnownSection);
-WASP_DEFINE_FORMATTER(CustomSection);
-WASP_DEFINE_FORMATTER(TypeEntry);
-WASP_DEFINE_FORMATTER(FunctionType);
-WASP_DEFINE_FORMATTER(TableType);
-WASP_DEFINE_FORMATTER(MemoryType);
-WASP_DEFINE_FORMATTER(GlobalType);
-WASP_DEFINE_FORMATTER(EventType);
-WASP_DEFINE_FORMATTER(Import);
-WASP_DEFINE_FORMATTER(Export);
-WASP_DEFINE_FORMATTER(Expression);
-WASP_DEFINE_FORMATTER(ConstantExpression);
-WASP_DEFINE_FORMATTER(ElementExpression);
-WASP_DEFINE_FORMATTER(CallIndirectImmediate);
-WASP_DEFINE_FORMATTER(BrTableImmediate);
-WASP_DEFINE_FORMATTER(BrOnExnImmediate);
-WASP_DEFINE_FORMATTER(InitImmediate);
-WASP_DEFINE_FORMATTER(CopyImmediate);
-WASP_DEFINE_FORMATTER(ShuffleImmediate);
-WASP_DEFINE_FORMATTER(Instruction);
-WASP_DEFINE_FORMATTER(Function);
-WASP_DEFINE_FORMATTER(Table);
-WASP_DEFINE_FORMATTER(Memory);
-WASP_DEFINE_FORMATTER(Global);
-WASP_DEFINE_FORMATTER(Start);
-WASP_DEFINE_FORMATTER(ElementSegment);
-WASP_DEFINE_FORMATTER(ElementSegment::IndexesInit);
-WASP_DEFINE_FORMATTER(ElementSegment::ExpressionsInit);
-WASP_DEFINE_FORMATTER(Code);
-WASP_DEFINE_FORMATTER(DataSegment);
-WASP_DEFINE_FORMATTER(DataCount);
-WASP_DEFINE_FORMATTER(Event);
-
-#undef WASP_DEFINE_FORMATTER
+WASP_DECLARE_FORMATTER(binary::BlockType);
+WASP_DECLARE_FORMATTER(binary::SectionId);
+WASP_DECLARE_FORMATTER(binary::MemArgImmediate);
+WASP_DECLARE_FORMATTER(binary::Locals);
+WASP_DECLARE_FORMATTER(binary::Section);
+WASP_DECLARE_FORMATTER(binary::KnownSection);
+WASP_DECLARE_FORMATTER(binary::CustomSection);
+WASP_DECLARE_FORMATTER(binary::TypeEntry);
+WASP_DECLARE_FORMATTER(binary::FunctionType);
+WASP_DECLARE_FORMATTER(binary::TableType);
+WASP_DECLARE_FORMATTER(binary::MemoryType);
+WASP_DECLARE_FORMATTER(binary::GlobalType);
+WASP_DECLARE_FORMATTER(binary::EventType);
+WASP_DECLARE_FORMATTER(binary::Import);
+WASP_DECLARE_FORMATTER(binary::Export);
+WASP_DECLARE_FORMATTER(binary::Expression);
+WASP_DECLARE_FORMATTER(binary::ConstantExpression);
+WASP_DECLARE_FORMATTER(binary::ElementExpression);
+WASP_DECLARE_FORMATTER(binary::CallIndirectImmediate);
+WASP_DECLARE_FORMATTER(binary::BrTableImmediate);
+WASP_DECLARE_FORMATTER(binary::BrOnExnImmediate);
+WASP_DECLARE_FORMATTER(binary::InitImmediate);
+WASP_DECLARE_FORMATTER(binary::CopyImmediate);
+WASP_DECLARE_FORMATTER(binary::ShuffleImmediate);
+WASP_DECLARE_FORMATTER(binary::Instruction);
+WASP_DECLARE_FORMATTER(binary::Function);
+WASP_DECLARE_FORMATTER(binary::Table);
+WASP_DECLARE_FORMATTER(binary::Memory);
+WASP_DECLARE_FORMATTER(binary::Global);
+WASP_DECLARE_FORMATTER(binary::Start);
+WASP_DECLARE_FORMATTER(binary::ElementSegment);
+WASP_DECLARE_FORMATTER(binary::ElementSegment::IndexesInit);
+WASP_DECLARE_FORMATTER(binary::ElementSegment::ExpressionsInit);
+WASP_DECLARE_FORMATTER(binary::Code);
+WASP_DECLARE_FORMATTER(binary::DataSegment);
+WASP_DECLARE_FORMATTER(binary::DataCount);
+WASP_DECLARE_FORMATTER(binary::Event);
 
 }  // namespace fmt
 
