@@ -268,11 +268,11 @@ TEST(FormattersTest, CopyImmediate) {
 }
 
 TEST(FormattersTest, ShuffleImmediate) {
-  EXPECT_EQ(R"(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)",
+  EXPECT_EQ(R"([0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15])",
             format("{}", ShuffleImmediate{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
                                            12, 13, 14, 15}}));
-  EXPECT_EQ(R"(  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)",
-            format("{:>33s}", ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  EXPECT_EQ(R"(  [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])",
+            format("{:>35s}", ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                                 0, 0, 0, 0, 0}}));
 }
 
@@ -327,7 +327,7 @@ TEST(FormattersTest, Instruction) {
             format("{}", Instruction{Opcode::MemoryCopy, CopyImmediate{1, 2}}));
   // v8x16.shuffle
   EXPECT_EQ(
-      R"(v8x16.shuffle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16)",
+      R"(v8x16.shuffle [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16])",
       format("{}", Instruction{Opcode::V8X16Shuffle,
                                ShuffleImmediate{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
                                                  11, 12, 13, 14, 15, 16}}}));

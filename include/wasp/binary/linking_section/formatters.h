@@ -23,26 +23,8 @@
 
 namespace fmt {
 
-WASP_DECLARE_FORMATTER(binary::Comdat);
-WASP_DECLARE_FORMATTER(binary::ComdatSymbol);
-WASP_DECLARE_FORMATTER(binary::ComdatSymbolKind);
-WASP_DECLARE_FORMATTER(binary::LinkingSubsection);
-WASP_DECLARE_FORMATTER(binary::LinkingSubsectionId);
-WASP_DECLARE_FORMATTER(binary::RelocationEntry);
-WASP_DECLARE_FORMATTER(binary::InitFunction);
-WASP_DECLARE_FORMATTER(binary::RelocationType);
-WASP_DECLARE_FORMATTER(binary::SegmentInfo);
-WASP_DECLARE_FORMATTER(binary::SymbolInfo);
-WASP_DECLARE_FORMATTER(binary::SymbolInfo::Base);
-WASP_DECLARE_FORMATTER(binary::SymbolInfo::Data);
-WASP_DECLARE_FORMATTER(binary::SymbolInfo::Data::Defined);
-WASP_DECLARE_FORMATTER(binary::SymbolInfo::Section);
-WASP_DECLARE_FORMATTER(binary::SymbolInfo::Flags);
-WASP_DECLARE_FORMATTER(binary::SymbolInfo::Flags::Binding);
-WASP_DECLARE_FORMATTER(binary::SymbolInfo::Flags::Visibility);
-WASP_DECLARE_FORMATTER(binary::SymbolInfo::Flags::Undefined);
-WASP_DECLARE_FORMATTER(binary::SymbolInfo::Flags::ExplicitName);
-WASP_DECLARE_FORMATTER(binary::SymbolInfoKind);
+WASP_BINARY_LINKING_ENUMS(WASP_DECLARE_FORMATTER)
+WASP_BINARY_LINKING_STRUCTS(WASP_DECLARE_FORMATTER)
 
 }  // namespace fmt
 

@@ -168,11 +168,15 @@ struct SymbolInfo {
   variant<Base, Data, Section> desc;
 };
 
-#define WASP_BINARY_LINKING_ENUMS(WASP_V) \
-  WASP_V(binary::ComdatSymbolKind)        \
-  WASP_V(binary::LinkingSubsectionId)     \
-  WASP_V(binary::RelocationType)          \
-  WASP_V(binary::SymbolInfoKind)
+#define WASP_BINARY_LINKING_ENUMS(WASP_V)       \
+  WASP_V(binary::ComdatSymbolKind)              \
+  WASP_V(binary::LinkingSubsectionId)           \
+  WASP_V(binary::RelocationType)                \
+  WASP_V(binary::SymbolInfoKind)                \
+  WASP_V(binary::SymbolInfo::Flags::Binding)    \
+  WASP_V(binary::SymbolInfo::Flags::Visibility) \
+  WASP_V(binary::SymbolInfo::Flags::Undefined)  \
+  WASP_V(binary::SymbolInfo::Flags::ExplicitName)
 
 #define WASP_BINARY_LINKING_STRUCTS(WASP_V)                            \
   WASP_V(binary::Comdat, 3, name, flags, symbols)                      \

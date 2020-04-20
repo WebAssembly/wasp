@@ -17,6 +17,7 @@
 #ifndef WASP_BASE_FORMATTERS_H_
 #define WASP_BASE_FORMATTERS_H_
 
+#include <array>
 #include <vector>
 
 #include "wasp/base/at.h"
@@ -51,6 +52,13 @@ struct formatter<::wasp::span<const T>> : formatter<string_view> {
   typename Ctx::iterator format(::wasp::span<const T>, Ctx&);
 };
 
+// std::array<T, N>
+template <typename T, size_t N>
+struct formatter<std::array<T, N>> : formatter<string_view> {
+  template <typename Ctx>
+  typename Ctx::iterator format(const std::array<T, N>&, Ctx&);
+};
+
 // std::vector<T>
 template <typename T>
 struct formatter<std::vector<T>> : formatter<::wasp::span<const T>> {
@@ -72,18 +80,12 @@ struct formatter<::wasp::optional<T>> : formatter<string_view> {
   typename Ctx::iterator format(const ::wasp::optional<T>&, Ctx&);
 };
 
+WASP_BASE_WASM_ENUMS(WASP_DECLARE_FORMATTER)
+WASP_BASE_WASM_STRUCTS(WASP_DECLARE_FORMATTER)
+
 WASP_DECLARE_FORMATTER(string_view)
 WASP_DECLARE_FORMATTER(SpanU8)
 WASP_DECLARE_FORMATTER(v128);
-WASP_DECLARE_FORMATTER(Opcode);
-WASP_DECLARE_FORMATTER(ValueType);
-WASP_DECLARE_FORMATTER(ElementType);
-WASP_DECLARE_FORMATTER(ExternalKind);
-WASP_DECLARE_FORMATTER(EventAttribute);
-WASP_DECLARE_FORMATTER(Mutability);
-WASP_DECLARE_FORMATTER(SegmentType);
-WASP_DECLARE_FORMATTER(Shared);
-WASP_DECLARE_FORMATTER(Limits);
 WASP_DECLARE_FORMATTER(Features);
 WASP_DECLARE_FORMATTER(monostate);
 

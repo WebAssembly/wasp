@@ -23,10 +23,8 @@
 
 namespace fmt {
 
-WASP_DECLARE_FORMATTER(binary::NameSubsectionId);
-WASP_DECLARE_FORMATTER(binary::NameAssoc);
-WASP_DECLARE_FORMATTER(binary::IndirectNameAssoc);
-WASP_DECLARE_FORMATTER(binary::NameSubsection);
+WASP_BINARY_NAME_ENUMS(WASP_DECLARE_FORMATTER)
+WASP_BINARY_NAME_STRUCTS(WASP_DECLARE_FORMATTER)
 
 }  // namespace fmt
 

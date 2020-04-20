@@ -70,6 +70,22 @@ typename Ctx::iterator formatter<::wasp::span<const T>>::format(
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
+template <typename T, size_t N>
+template <typename Ctx>
+typename Ctx::iterator formatter<std::array<T, N>>::format(
+    const std::array<T, N>& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  string_view space = "";
+  format_to(buf, "[");
+  for (const auto& x : self) {
+    format_to(buf, "{}{}", space, x);
+    space = " ";
+  }
+  format_to(buf, "]");
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
 template <typename T>
 template <typename Ctx>
 typename Ctx::iterator formatter<std::vector<T>>::format(
