@@ -119,18 +119,6 @@ DataSegment::DataSegment(OptAt<BindVar> name, const TextList& data)
 WASP_TEXT_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_TEXT_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
 
-template <typename T, size_t N>
-bool operator==(const std::array<FloatResult<T>, N>& lhs,
-                const std::array<FloatResult<T>, N>& rhs) {
-  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
-}
-
-template <typename T, size_t N>
-bool operator!=(const std::array<FloatResult<T>, N>& lhs,
-                const std::array<FloatResult<T>, N>& rhs) {
-  return !(lhs == rhs);
-}
-
 }  // namespace text
 }  // namespace wasp
 

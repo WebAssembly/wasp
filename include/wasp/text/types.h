@@ -590,18 +590,12 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::InstructionList)      \
   WASP_V(text::Module)               \
   WASP_V(text::ConstList)            \
+  WASP_V(text::F32x4Result)          \
+  WASP_V(text::F64x2Result)          \
   WASP_V(text::ReturnResultList)
 
 WASP_TEXT_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
-
-template <typename T, size_t N>
-bool operator==(const std::array<FloatResult<T>, N>&,
-                const std::array<FloatResult<T>, N>&);
-
-template <typename T, size_t N>
-bool operator!=(const std::array<FloatResult<T>, N>&,
-                const std::array<FloatResult<T>, N>&);
 
 // Used for gtest.
 
