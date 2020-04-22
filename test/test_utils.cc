@@ -42,6 +42,11 @@ std::string TestErrorsToString(const TestErrors& errors) {
   return result;
 }
 
+void TestErrors::Clear() {
+  context_stack.clear();
+  errors.clear();
+}
+
 void TestErrors::HandlePushContext(Location loc, string_view desc) {
   context_stack.push_back(ErrorContext{loc, std::string{desc}});
 }

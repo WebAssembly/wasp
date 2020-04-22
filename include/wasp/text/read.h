@@ -21,13 +21,12 @@
 
 #include "wasp/base/at.h"
 #include "wasp/base/optional.h"
+#include "wasp/text/context.h"
 #include "wasp/text/lex.h"
 #include "wasp/text/types.h"
 
 namespace wasp {
 namespace text {
-
-struct Context;
 
 auto ReadNat32(Tokenizer&, Context&) -> At<u32>;
 template <typename T>
@@ -49,11 +48,11 @@ auto ReadTextList(Tokenizer&, Context&) -> TextList;
 
 // Section 1: Type
 
-auto ReadBindVarOpt(Tokenizer&, Context&) -> OptAt<BindVar>;
+auto ReadBindVarOpt(Tokenizer&, Context&, NameMap&) -> OptAt<BindVar>;
 
-auto ReadBoundValueTypeList(Tokenizer&, Context&, TokenType)
+auto ReadBoundValueTypeList(Tokenizer&, Context&, NameMap&, TokenType)
     -> BoundValueTypeList;
-auto ReadBoundParamList(Tokenizer&, Context&) -> BoundValueTypeList;
+auto ReadBoundParamList(Tokenizer&, Context&, NameMap&) -> BoundValueTypeList;
 
 auto ReadUnboundValueTypeList(Tokenizer&, Context&, TokenType) -> ValueTypeList;
 auto ReadParamList(Tokenizer&, Context&) -> ValueTypeList;
@@ -62,7 +61,8 @@ auto ReadResultList(Tokenizer&, Context&) -> ValueTypeList;
 auto ReadValueType(Tokenizer&, Context&) -> At<ValueType>;
 auto ReadValueTypeList(Tokenizer&, Context&) -> ValueTypeList;
 
-auto ReadBoundFunctionType(Tokenizer&, Context&) -> At<BoundFunctionType>;
+auto ReadBoundFunctionType(Tokenizer&, Context&, NameMap&)
+    -> At<BoundFunctionType>;
 auto ReadTypeEntry(Tokenizer&, Context&) -> At<TypeEntry>;
 
 // Section 2: Import
@@ -72,7 +72,7 @@ auto ReadImport(Tokenizer&, Context&) -> At<Import>;
 
 // Section 3: Function
 
-auto ReadLocalList(Tokenizer&, Context&) -> BoundValueTypeList;
+auto ReadLocalList(Tokenizer&, Context&, NameMap&) -> BoundValueTypeList;
 auto ReadFunctionType(Tokenizer&, Context&) -> At<FunctionType>;
 auto ReadFunction(Tokenizer&, Context&) -> At<Function>;
 
@@ -133,6 +133,7 @@ auto ReadPlainInstruction(Tokenizer&, Context&) -> At<Instruction>;
 auto ReadLabelOpt(Tokenizer&, Context&) -> OptAt<BindVar>;
 void ReadEndLabelOpt(Tokenizer&, Context&, OptAt<BindVar>);
 auto ReadBlockImmediate(Tokenizer&, Context&) -> At<BlockImmediate>;
+void EndBlock(Context&);
 
 bool ReadOpcodeOpt(Tokenizer&, Context&, InstructionList&, TokenType);
 void ExpectOpcode(Tokenizer&, Context&, InstructionList&, TokenType);

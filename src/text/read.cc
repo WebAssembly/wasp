@@ -120,8 +120,8 @@ auto ReadVar(Tokenizer& tokenizer, Context& context) -> At<Var> {
   auto token = tokenizer.Peek();
   auto var_opt = ReadVarOpt(tokenizer, context);
   if (!var_opt) {
-    context.errors.OnError(
-        token.loc, format("Expected a variable, got {}", token));
+    context.errors.OnError(token.loc,
+                           format("Expected a variable, got {}", token.type));
     return MakeAt(token.loc, Var{u32{0}});
   }
   return *var_opt;
@@ -200,26 +200,42 @@ auto ReadTextList(Tokenizer& tokenizer, Context& context) -> TextList {
 
 // Section 1: Type
 
-auto ReadBindVarOpt(Tokenizer& tokenizer, Context& context) -> OptAt<BindVar> {
+auto ReadBindVarOpt(Tokenizer& tokenizer, Context& context, NameMap& name_map)
+    -> OptAt<BindVar> {
   auto token_opt = tokenizer.Match(TokenType::Id);
   if (!token_opt) {
+    name_map.NewUnbound();
     return nullopt;
   }
-  return MakeAt(token_opt->loc, BindVar{token_opt->as_string_view()});
+
+  auto name = token_opt->as_string_view();
+  if (name_map.Has(name)) {
+    context.errors.OnError(
+        token_opt->loc, format("Variable {} is already bound to index {}", name,
+                               name_map.Get(name)));
+
+    // Use the previous name and treat this object as unbound.
+    name_map.NewUnbound();
+    return nullopt;
+  }
+
+  name_map.NewBound(name);
+  return MakeAt(token_opt->loc, BindVar{name});
 }
 
 auto ReadBoundValueTypeList(Tokenizer& tokenizer,
                             Context& context,
+                            NameMap& name_map,
                             TokenType token_type)
     -> BoundValueTypeList {
   BoundValueTypeList result;
   while (tokenizer.MatchLpar(token_type)) {
     if (tokenizer.Peek().type == TokenType::Id) {
       LocationGuard guard{tokenizer};
-      auto bind_var_opt = ReadBindVarOpt(tokenizer, context);
+      auto bind_var_opt = ReadBindVarOpt(tokenizer, context, name_map);
       auto value_type = ReadValueType(tokenizer, context);
-      result.push_back(MakeAt(
-          guard.loc(), BoundValueType{bind_var_opt.value(), value_type}));
+      result.push_back(
+          MakeAt(guard.loc(), BoundValueType{bind_var_opt, value_type}));
     } else {
       for (auto& value_type : ReadValueTypeList(tokenizer, context)) {
         result.push_back(
@@ -231,9 +247,10 @@ auto ReadBoundValueTypeList(Tokenizer& tokenizer,
   return result;
 }
 
-auto ReadBoundParamList(Tokenizer& tokenizer, Context& context)
-    -> BoundValueTypeList {
-  return ReadBoundValueTypeList(tokenizer, context, TokenType::Param);
+auto ReadBoundParamList(Tokenizer& tokenizer,
+                        Context& context,
+                        NameMap& name_map) -> BoundValueTypeList {
+  return ReadBoundValueTypeList(tokenizer, context, name_map, TokenType::Param);
 }
 
 auto ReadUnboundValueTypeList(Tokenizer& tokenizer,
@@ -296,10 +313,11 @@ auto ReadValueTypeList(Tokenizer& tokenizer, Context& context)
   return result;
 }
 
-auto ReadBoundFunctionType(Tokenizer& tokenizer, Context& context)
-    -> At<BoundFunctionType> {
+auto ReadBoundFunctionType(Tokenizer& tokenizer,
+                           Context& context,
+                           NameMap& name_map) -> At<BoundFunctionType> {
   LocationGuard guard{tokenizer};
-  auto params = ReadBoundParamList(tokenizer, context);
+  auto params = ReadBoundParamList(tokenizer, context, name_map);
   auto results = ReadResultList(tokenizer, context);
   return MakeAt(guard.loc(), BoundFunctionType{params, results});
 }
@@ -307,9 +325,10 @@ auto ReadBoundFunctionType(Tokenizer& tokenizer, Context& context)
 auto ReadTypeEntry(Tokenizer& tokenizer, Context& context) -> At<TypeEntry> {
   LocationGuard guard{tokenizer};
   ExpectLpar(tokenizer, context, TokenType::Type);
-  auto bind_var = ReadBindVarOpt(tokenizer, context);
+  auto bind_var = ReadBindVarOpt(tokenizer, context, context.type_names);
   ExpectLpar(tokenizer, context, TokenType::Func);
-  auto type = ReadBoundFunctionType(tokenizer, context);
+  NameMap dummy_name_map;  // Bound names are not used.
+  auto type = ReadBoundFunctionType(tokenizer, context, dummy_name_map);
   Expect(tokenizer, context, TokenType::Rpar);
   Expect(tokenizer, context, TokenType::Rpar);
   return MakeAt(guard.loc(), TypeEntry{bind_var, type});
@@ -356,16 +375,17 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> At<Import> {
   switch (token.type) {
     case TokenType::Func: {
       tokenizer.Read();
-      auto name = ReadBindVarOpt(tokenizer, context);
+      auto name = ReadBindVarOpt(tokenizer, context, context.function_names);
       auto type_use = ReadTypeUseOpt(tokenizer, context);
-      auto type = ReadBoundFunctionType(tokenizer, context);
+      NameMap dummy_name_map;  // Bound names are not used.
+      auto type = ReadBoundFunctionType(tokenizer, context, dummy_name_map);
       result.desc = FunctionDesc{name, type_use, type};
       break;
     }
 
     case TokenType::Table: {
       tokenizer.Read();
-      auto name = ReadBindVarOpt(tokenizer, context);
+      auto name = ReadBindVarOpt(tokenizer, context, context.table_names);
       auto type = ReadTableType(tokenizer, context);
       result.desc = TableDesc{name, type};
       break;
@@ -373,7 +393,7 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> At<Import> {
 
     case TokenType::Memory: {
       tokenizer.Read();
-      auto name = ReadBindVarOpt(tokenizer, context);
+      auto name = ReadBindVarOpt(tokenizer, context, context.memory_names);
       auto type = ReadMemoryType(tokenizer, context);
       result.desc = MemoryDesc{name, type};
       break;
@@ -381,7 +401,7 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> At<Import> {
 
     case TokenType::Global: {
       tokenizer.Read();
-      auto name = ReadBindVarOpt(tokenizer, context);
+      auto name = ReadBindVarOpt(tokenizer, context, context.global_names);
       auto type = ReadGlobalType(tokenizer, context);
       result.desc = GlobalDesc{name, type};
       break;
@@ -392,7 +412,7 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> At<Import> {
         context.errors.OnError(token.loc, "Events not allowed");
       }
       tokenizer.Read();
-      auto name = ReadBindVarOpt(tokenizer, context);
+      auto name = ReadBindVarOpt(tokenizer, context, context.event_names);
       auto type = ReadEventType(tokenizer, context);
       result.desc = EventDesc{name, type};
       break;
@@ -411,9 +431,9 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> At<Import> {
 
 // Section 3: Function
 
-auto ReadLocalList(Tokenizer& tokenizer, Context& context)
+auto ReadLocalList(Tokenizer& tokenizer, Context& context, NameMap& name_map)
     -> BoundValueTypeList {
-  return ReadBoundValueTypeList(tokenizer, context, TokenType::Local);
+  return ReadBoundValueTypeList(tokenizer, context, name_map, TokenType::Local);
 }
 
 auto ReadFunctionType(Tokenizer& tokenizer, Context& context)
@@ -431,15 +451,17 @@ auto ReadFunction(Tokenizer& tokenizer, Context& context) -> At<Function> {
   BoundValueTypeList locals;
   InstructionList instructions;
 
-  auto name = ReadBindVarOpt(tokenizer, context);
+  auto name = ReadBindVarOpt(tokenizer, context, context.function_names);
   auto exports = ReadInlineExportList(tokenizer, context);
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
 
+  context.local_names.Reset();
+
   auto type_use = ReadTypeUseOpt(tokenizer, context);
-  auto type = ReadBoundFunctionType(tokenizer, context);
+  auto type = ReadBoundFunctionType(tokenizer, context, context.local_names);
   if (!import_opt) {
-    locals = ReadLocalList(tokenizer, context);
+    locals = ReadLocalList(tokenizer, context, context.local_names);
     ReadInstructionList(tokenizer, context, instructions);
   }
 
@@ -476,7 +498,7 @@ auto ReadElementType(Tokenizer& tokenizer, Context& context)
   auto element_type = ReadElementTypeOpt(tokenizer, context);
   if (!element_type) {
     context.errors.OnError(token.loc,
-                           format("Expected element type, got {}", token));
+                           format("Expected element type, got {}", token.type));
     return MakeAt(token.loc, ElementType::Funcref);
   }
 
@@ -532,7 +554,7 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> At<Table> {
   LocationGuard guard{tokenizer};
   ExpectLpar(tokenizer, context, TokenType::Table);
 
-  auto name = ReadBindVarOpt(tokenizer, context);
+  auto name = ReadBindVarOpt(tokenizer, context, context.table_names);
   auto exports = ReadInlineExportList(tokenizer, context);
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
@@ -583,7 +605,7 @@ auto ReadMemory(Tokenizer& tokenizer, Context& context) -> At<Memory> {
   LocationGuard guard{tokenizer};
   ExpectLpar(tokenizer, context, TokenType::Memory);
 
-  auto name = ReadBindVarOpt(tokenizer, context);
+  auto name = ReadBindVarOpt(tokenizer, context, context.memory_names);
   auto exports = ReadInlineExportList(tokenizer, context);
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
@@ -634,7 +656,7 @@ auto ReadGlobal(Tokenizer& tokenizer, Context& context) -> At<Global> {
 
   InstructionList init;
 
-  auto name = ReadBindVarOpt(tokenizer, context);
+  auto name = ReadBindVarOpt(tokenizer, context, context.global_names);
   auto exports = ReadInlineExportList(tokenizer, context);
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
@@ -708,7 +730,8 @@ auto ReadExport(Tokenizer& tokenizer, Context& context) -> At<Export> {
 
     default:
       context.errors.OnError(
-          token.loc, format("Expected an import external kind, got {}", token));
+          token.loc,
+          format("Expected an import external kind, got {}", token.type));
       break;
   }
 
@@ -728,7 +751,7 @@ auto ReadStart(Tokenizer& tokenizer, Context& context) -> At<Start> {
   auto start_token = ExpectLpar(tokenizer, context, TokenType::Start);
 
   if (context.seen_start) {
-    context.errors.OnError(start_token->loc, "Multiple start sections");
+    context.errors.OnError(start_token->loc, "Multiple start functions");
   }
 
   auto var = ReadVar(tokenizer, context);
@@ -750,7 +773,7 @@ auto ReadOffsetExpression(Tokenizer& tokenizer, Context& context)
   } else {
     auto token = tokenizer.Peek();
     context.errors.OnError(
-        token.loc, format("Expected offset expression, got {}", token));
+        token.loc, format("Expected offset expression, got {}", token.type));
   }
   return instructions;
 }
@@ -767,7 +790,7 @@ auto ReadElementExpression(Tokenizer& tokenizer, Context& context)
   } else {
     auto token = tokenizer.Peek();
     context.errors.OnError(
-        token.loc, format("Expected element expression, got {}", token));
+        token.loc, format("Expected element expression, got {}", token.type));
   }
   return expression;
 }
@@ -796,7 +819,8 @@ auto ReadElementSegment(Tokenizer& tokenizer, Context& context)
     // LPAR ELEM * bind_var_opt DECLARE elem_list RPAR
     // LPAR ELEM * bind_var_opt offset elem_list RPAR  /* Sugar */
     // LPAR ELEM * bind_var_opt offset elem_var_list RPAR  /* Sugar */
-    auto name = ReadBindVarOpt(tokenizer, context);
+    auto name =
+        ReadBindVarOpt(tokenizer, context, context.element_segment_names);
     auto table_use_opt = ReadTableUseOpt(tokenizer, context);
 
     SegmentType segment_type;
@@ -900,7 +924,8 @@ auto ReadNameEqNatOpt(Tokenizer& tokenizer,
                                token_opt->span_u8().subspan(offset));
   if (!nat_opt) {
     context.errors.OnError(
-        token_opt->loc, format("Invalid natural number, got {}", *token_opt));
+        token_opt->loc,
+        format("Invalid natural number, got {}", token_opt->type));
     return nullopt;
   }
 
@@ -934,7 +959,7 @@ auto ReadSimdLane(Tokenizer& tokenizer, Context& context) -> At<u32> {
   auto lane = ReadInt<u32>(tokenizer, context);
   if (lane > 255) {
     context.errors.OnError(token.loc,
-                           format("Invalid lane number, got {}", token));
+                           format("Invalid lane number, got {}", token.type));
   }
   return lane;
 }
@@ -1149,7 +1174,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
         default:
           context.errors.OnError(
               token.loc,
-              format("Invalid SIMD constant token, got {}", simd_token));
+              format("Invalid SIMD constant token, got {}", simd_token.type));
           return MakeAt(guard.loc(), Instruction{Opcode::Nop});
       }
 
@@ -1208,23 +1233,26 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
 
     default:
       context.errors.OnError(
-          token.loc, format("Expected plain instruction, got {}", token));
+          token.loc, format("Expected plain instruction, got {}", token.type));
       return MakeAt(token.loc, Instruction{Opcode::Nop});
   }
 }
 
 auto ReadLabelOpt(Tokenizer& tokenizer, Context& context) -> OptAt<BindVar> {
-  return ReadBindVarOpt(tokenizer, context);
+  auto bind_var = ReadBindVarOpt(tokenizer, context, context.label_names);
+  context.label_name_stack.push_back(bind_var);
+  return bind_var;
 }
 
 void ReadEndLabelOpt(Tokenizer& tokenizer,
                      Context& context,
                      OptAt<BindVar> label) {
-  auto end_label = ReadBindVarOpt(tokenizer, context);
+  NameMap dummy_name_map;
+  auto end_label = ReadBindVarOpt(tokenizer, context, dummy_name_map);
   if (end_label) {
     if (!label) {
       context.errors.OnError(end_label->loc(),
-                             format("Unexpected label {}", *end_label));
+                             format("Unexpected label {}", end_label));
     } else if (*label != *end_label) {
       context.errors.OnError(
           end_label->loc(),
@@ -1239,6 +1267,14 @@ auto ReadBlockImmediate(Tokenizer& tokenizer, Context& context)
   auto label = ReadLabelOpt(tokenizer, context);
   auto type = ReadFunctionTypeUse(tokenizer, context);
   return MakeAt(guard.loc(), BlockImmediate{label, type});
+}
+
+void EndBlock(Context& context) {
+  assert(!context.label_name_stack.empty());
+  auto name_opt = context.label_name_stack.back();
+  if (name_opt) {
+    context.label_names.Delete(*name_opt);
+  }
 }
 
 bool ReadOpcodeOpt(Tokenizer& tokenizer,
@@ -1260,8 +1296,8 @@ void ExpectOpcode(Tokenizer& tokenizer,
                   TokenType token_type) {
   auto token = tokenizer.Peek();
   if (!ReadOpcodeOpt(tokenizer, context, instructions, token_type)) {
-    context.errors.OnError(token.loc,
-                           format("Expected {}, got {}", token_type, token));
+    context.errors.OnError(
+        token.loc, format("Expected {}, got {}", token_type, token.type));
     instructions.push_back(MakeAt(token.loc, Instruction{token.opcode()}));
   }
 }
@@ -1306,6 +1342,7 @@ void ReadBlockInstruction(Tokenizer& tokenizer,
 
   ExpectOpcode(tokenizer, context, instructions, TokenType::End);
   ReadEndLabelOpt(tokenizer, context, block->label);
+  EndBlock(context);
 }
 
 void ReadInstruction(Tokenizer& tokenizer,
@@ -1320,7 +1357,7 @@ void ReadInstruction(Tokenizer& tokenizer,
     ReadExpression(tokenizer, context, instructions);
   } else {
     context.errors.OnError(token.loc,
-                           format("Expected instruction, got {}", token));
+                           format("Expected instruction, got {}", token.type));
   }
 }
 
@@ -1405,9 +1442,10 @@ void ReadExpression(Tokenizer& tokenizer,
     Expect(tokenizer, context, TokenType::Rpar);
     instructions.push_back(
         MakeAt(rpar.loc, Instruction{MakeAt(rpar.loc, Opcode::End)}));
+    EndBlock(context);
   } else {
     context.errors.OnError(token.loc,
-                           format("Expected expression, got {}", token));
+                           format("Expected expression, got {}", token.type));
   }
 }
 
@@ -1434,7 +1472,7 @@ auto ReadDataSegment(Tokenizer& tokenizer, Context& context)
     // LPAR DATA * bind_var_opt string_list RPAR
     // LPAR DATA * bind_var_opt memory_use offset string_list RPAR
     // LPAR DATA * bind_var_opt offset string_list RPAR  /* Sugar */
-    auto name = ReadBindVarOpt(tokenizer, context);
+    auto name = ReadBindVarOpt(tokenizer, context, context.data_segment_names);
     auto memory_use_opt = ReadMemoryUseOpt(tokenizer, context);
 
     SegmentType segment_type;
@@ -1481,9 +1519,14 @@ auto ReadEventType(Tokenizer& tokenizer, Context& context) -> At<EventType> {
 
 auto ReadEvent(Tokenizer& tokenizer, Context& context) -> At<Event> {
   LocationGuard guard{tokenizer};
+  auto token = tokenizer.Peek();
   ExpectLpar(tokenizer, context, TokenType::Event);
 
-  auto name = ReadBindVarOpt(tokenizer, context);
+  if (!context.features.exceptions_enabled()) {
+    context.errors.OnError(token.loc, "Events not allowed");
+  }
+
+  auto name = ReadBindVarOpt(tokenizer, context, context.event_names);
   auto exports = ReadInlineExportList(tokenizer, context);
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
@@ -1500,7 +1543,8 @@ auto ReadModuleItem(Tokenizer& tokenizer, Context& context)
     -> At<ModuleItem> {
   auto token = tokenizer.Peek();
   if (token.type != TokenType::Lpar) {
-    context.errors.OnError(token.loc, format("Expected '(', got {}", token));
+    context.errors.OnError(token.loc,
+                           format("Expected '(', got {}", token.type));
     return MakeAt(token.loc, ModuleItem{});
   }
 
@@ -1567,7 +1611,7 @@ auto ReadModuleItem(Tokenizer& tokenizer, Context& context)
           format(
               "Expected 'type', 'import', 'func', 'table', 'memory', 'global', "
               "'export', 'start', 'elem', 'data', or 'event', got {}",
-              token));
+              token.type));
       return MakeAt(token.loc, ModuleItem{});
   }
 }
@@ -1701,8 +1745,8 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> At<Const> {
 
         default:
           context.errors.OnError(
-              token.loc,
-              format("Invalid SIMD constant token, got {}", simd_token));
+              simd_token.loc,
+              format("Invalid SIMD constant token, got {}", simd_token.type));
           return MakeAt(guard.loc(), Const{});
       }
 
@@ -1730,7 +1774,7 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> At<Const> {
 
     default:
       context.errors.OnError(token.loc,
-                             format("Invalid constant, got {}", token));
+                             format("Invalid constant, got {}", token.type));
       return MakeAt(guard.loc(), Const{});
   }
 }
@@ -1767,7 +1811,8 @@ auto ReadGetAction(Tokenizer& tokenizer, Context& context) -> At<GetAction> {
 auto ReadAction(Tokenizer& tokenizer, Context& context) -> At<Action> {
   auto token = tokenizer.Peek();
   if (token.type != TokenType::Lpar) {
-    context.errors.OnError(token.loc, format("Expected '(', got {}", token));
+    context.errors.OnError(token.loc,
+                           format("Expected '(', got {}", token.type));
     return MakeAt(token.loc, Action{});
   }
 
@@ -1785,7 +1830,7 @@ auto ReadAction(Tokenizer& tokenizer, Context& context) -> At<Action> {
 
     default:
       context.errors.OnError(token.loc,
-                             format("Invalid action type, got {}", token));
+                             format("Invalid action type, got {}", token.type));
       return MakeAt(token.loc, Action{});
   }
 }
@@ -1914,8 +1959,8 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
 
         default:
           context.errors.OnError(
-              token.loc,
-              format("Invalid SIMD constant token, got {}", simd_token));
+              simd_token.loc,
+              format("Invalid SIMD constant token, got {}", simd_token.type));
           return MakeAt(guard.loc(), ReturnResult{});
       }
 
@@ -1941,7 +1986,7 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
 
     default:
       context.errors.OnError(token.loc,
-                             format("Invalid result, got {}", token));
+                             format("Invalid result, got {}", token.type));
       return MakeAt(guard.loc(), ReturnResult{});
   }
 }
@@ -2023,7 +2068,7 @@ auto ReadAssertion(Tokenizer& tokenizer, Context& context) -> At<Assertion> {
 
     default:
       context.errors.OnError(token.loc,
-                             format("Invalid action type, got {}", token));
+                             format("Invalid action type, got {}", token.type));
       return MakeAt(token.loc, Assertion{});
   }
 }
@@ -2040,7 +2085,8 @@ auto ReadRegister(Tokenizer& tokenizer, Context& context) -> At<Register> {
 auto ReadCommand(Tokenizer& tokenizer, Context& context) -> At<Command> {
   auto token = tokenizer.Peek();
   if (token.type != TokenType::Lpar) {
-    context.errors.OnError(token.loc, format("Expected '(', got {}", token));
+    context.errors.OnError(token.loc,
+                           format("Expected '(', got {}", token.type));
     return MakeAt(token.loc, Command{});
   }
 
@@ -2074,7 +2120,7 @@ auto ReadCommand(Tokenizer& tokenizer, Context& context) -> At<Command> {
 
     default:
       context.errors.OnError(token.loc,
-                             format("Invalid command, got {}", token));
+                             format("Invalid command, got {}", token.type));
       return MakeAt(token.loc, Command{});
   }
 }

@@ -45,6 +45,8 @@ class TestErrors : public Errors {
   std::vector<ErrorContext> context_stack;
   std::vector<Error> errors;
 
+  void Clear();
+
  protected:
   void HandlePushContext(Location loc, string_view desc);
   void HandlePopContext();

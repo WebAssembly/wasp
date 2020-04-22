@@ -16,6 +16,8 @@
 
 #include "wasp/text/context.h"
 
+#include <cassert>
+
 namespace wasp {
 namespace text {
 
@@ -23,6 +25,35 @@ Context::Context(Errors& errors) : errors{errors} {}
 
 Context::Context(const Features& features, Errors& errors)
     : features{features}, errors{errors} {}
+
+void NameMap::Reset() {
+  map.clear();
+  next_index = 0;
+}
+
+void NameMap::NewUnbound() {
+  next_index++;
+}
+
+void NameMap::NewBound(BindVar var) {
+  assert(!Has(var));
+  map.emplace(var, next_index++);
+}
+
+void NameMap::Delete(BindVar var) {
+  assert(Has(var));
+  map.erase(var);
+}
+
+bool NameMap::Has(BindVar var) const {
+  return map.find(var) != map.end();
+}
+
+Index NameMap::Get(BindVar var) const {
+  auto iter = map.find(var);
+  assert(iter != map.end());
+  return iter->second;
+}
 
 }  // namespace text
 }  // namespace wasp
