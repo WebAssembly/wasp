@@ -168,7 +168,10 @@ auto ReadFunctionTypeUse(Tokenizer& tokenizer, Context& context)
     -> FunctionTypeUse {
   auto type_use = ReadTypeUseOpt(tokenizer, context);
   auto type = ReadFunctionType(tokenizer, context);
-  return FunctionTypeUse{type_use, type};
+  auto result = FunctionTypeUse{type_use, type};
+
+  context.function_type_map.Use(result);
+  return result;
 }
 
 auto ReadText(Tokenizer& tokenizer, Context& context) -> At<Text> {
@@ -327,8 +330,11 @@ auto ReadTypeEntry(Tokenizer& tokenizer, Context& context) -> At<TypeEntry> {
   ExpectLpar(tokenizer, context, TokenType::Type);
   auto bind_var = ReadBindVarOpt(tokenizer, context, context.type_names);
   ExpectLpar(tokenizer, context, TokenType::Func);
+
   NameMap dummy_name_map;  // Bound names are not used.
   auto type = ReadBoundFunctionType(tokenizer, context, dummy_name_map);
+  context.function_type_map.Define(type);
+
   Expect(tokenizer, context, TokenType::Rpar);
   Expect(tokenizer, context, TokenType::Rpar);
   return MakeAt(guard.loc(), TypeEntry{bind_var, type});
@@ -379,6 +385,7 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> At<Import> {
       auto type_use = ReadTypeUseOpt(tokenizer, context);
       NameMap dummy_name_map;  // Bound names are not used.
       auto type = ReadBoundFunctionType(tokenizer, context, dummy_name_map);
+      context.function_type_map.Use(type_use, type);
       result.desc = FunctionDesc{name, type_use, type};
       break;
     }
@@ -460,6 +467,7 @@ auto ReadFunction(Tokenizer& tokenizer, Context& context) -> At<Function> {
 
   auto type_use = ReadTypeUseOpt(tokenizer, context);
   auto type = ReadBoundFunctionType(tokenizer, context, context.local_names);
+  context.function_type_map.Use(type_use, type);
   if (!import_opt) {
     locals = ReadLocalList(tokenizer, context, context.local_names);
     ReadInstructionList(tokenizer, context, instructions);
@@ -1029,7 +1037,7 @@ bool IsElementExpression(Tokenizer& tokenizer) {
 
 void CheckOpcodeEnabled(Token token, Context& context) {
   assert(token.has_opcode());
-  if (!context.features.HasFeatures(token.opcode_features())) {
+  if (!context.features.HasFeatures(Features{token.opcode_features()})) {
     context.errors.OnError(
         token.loc, format("{} instruction not allowed", token.opcode()));
   }
@@ -1269,14 +1277,6 @@ auto ReadBlockImmediate(Tokenizer& tokenizer, Context& context)
   return MakeAt(guard.loc(), BlockImmediate{label, type});
 }
 
-void EndBlock(Context& context) {
-  assert(!context.label_name_stack.empty());
-  auto name_opt = context.label_name_stack.back();
-  if (name_opt) {
-    context.label_names.Delete(*name_opt);
-  }
-}
-
 bool ReadOpcodeOpt(Tokenizer& tokenizer,
                    Context& context,
                    InstructionList& instructions,
@@ -1342,7 +1342,7 @@ void ReadBlockInstruction(Tokenizer& tokenizer,
 
   ExpectOpcode(tokenizer, context, instructions, TokenType::End);
   ReadEndLabelOpt(tokenizer, context, block->label);
-  EndBlock(context);
+  context.EndBlock();
 }
 
 void ReadInstruction(Tokenizer& tokenizer,
@@ -1442,7 +1442,7 @@ void ReadExpression(Tokenizer& tokenizer,
     Expect(tokenizer, context, TokenType::Rpar);
     instructions.push_back(
         MakeAt(rpar.loc, Instruction{MakeAt(rpar.loc, Opcode::End)}));
-    EndBlock(context);
+    context.EndBlock();
   } else {
     context.errors.OnError(token.loc,
                            format("Expected expression, got {}", token.type));
@@ -1617,10 +1617,12 @@ auto ReadModuleItem(Tokenizer& tokenizer, Context& context)
 }
 
 auto ReadModule(Tokenizer& tokenizer, Context& context) -> Module {
+  context.BeginModule();
   Module module;
   while (tokenizer.Peek().type == TokenType::Lpar) {
     module.push_back(ReadModuleItem(tokenizer, context));
   }
+  context.EndModule();
   return module;
 }
 

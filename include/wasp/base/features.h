@@ -51,6 +51,8 @@ class Features {
     return (bits_ & features.bits_) == features.bits_;
   }
 
+  Features::Bits bits() const { return bits_; }
+
 #define WASP_V(enum_, variable, flag, default_)                  \
   bool variable##_enabled() const { return bits_ & enum_; }      \
   void enable_##variable() { set_##variable##_enabled(true); }   \
@@ -77,5 +79,12 @@ class Features {
 
 
 }  // namespace wasp
+
+namespace std {
+template <>
+struct hash<::wasp::Features> {
+  size_t operator()(const ::wasp::Features&) const;
+};
+}  // namespace std
 
 #endif  // WASP_BASE_FEATURES_H_

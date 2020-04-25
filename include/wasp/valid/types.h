@@ -37,7 +37,7 @@ enum class StackType : s32 {
 using StackTypes = std::vector<StackType>;
 using StackTypeSpan = span<const StackType>;
 
-inline StackTypes ToStackTypes(const binary::ValueTypes& value_types) {
+inline StackTypes ToStackTypes(const ValueTypes& value_types) {
   StackTypes result;
   for (auto value_type : value_types) {
     result.push_back(StackType(s32(*value_type)));

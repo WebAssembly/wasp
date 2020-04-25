@@ -28,6 +28,14 @@ using namespace ::wasp::test;
 
 class TextReadTest : public ::testing::Test {
  protected:
+  // Read without checking the expected result.
+  template <typename Func, typename... Args>
+  void Read(Func&& func, SpanU8 span, Args&&... args) {
+    Tokenizer tokenizer{span};
+    func(tokenizer, context, std::forward<Args>(args)...);
+    ExpectNoErrors(errors);
+  }
+
   template <typename Func, typename T, typename... Args>
   void OK(Func&& func, const T& expected, SpanU8 span, Args&&... args) {
     Tokenizer tokenizer{span};
@@ -73,6 +81,30 @@ class TextReadTest : public ::testing::Test {
   TestErrors errors;
   Context context{errors};
 };
+
+// Helpers for handling InstructionList functions.
+
+auto ReadBlockInstruction_ForTesting(Tokenizer& tokenizer, Context& context)
+    -> InstructionList {
+  InstructionList result;
+  ReadBlockInstruction(tokenizer, context, result);
+  return result;
+}
+
+auto ReadInstructionList_ForTesting(Tokenizer& tokenizer, Context& context)
+    -> InstructionList {
+  InstructionList result;
+  ReadInstructionList(tokenizer, context, result);
+  return result;
+}
+
+auto ReadExpressionList_ForTesting(Tokenizer& tokenizer, Context& context)
+    -> InstructionList {
+  InstructionList result;
+  ReadExpressionList(tokenizer, context, result);
+  return result;
+}
+
 
 TEST_F(TextReadTest, Nat32) {
   OK(ReadNat32, u32{123}, "123"_su8);
@@ -283,6 +315,34 @@ TEST_F(TextReadTest, FunctionTypeUse) {
      "(type $t) (result i32)"_su8);
 }
 
+TEST_F(TextReadTest, FunctionTypeUse_ReuseType) {
+  context.function_type_map.Define(
+      BoundFunctionType{{BoundValueType{nullopt, ValueType::I32}}, {}});
+
+  Read(ReadFunctionTypeUse, "(param i32)"_su8);
+
+  ASSERT_EQ(1u, context.function_type_map.Size());
+}
+
+TEST_F(TextReadTest, FunctionTypeUse_DeferType) {
+  using VT = ValueType;
+  using BVT = BoundValueType;
+
+  FunctionTypeMap& ftm = context.function_type_map;
+
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+  Read(ReadFunctionTypeUse, "(param f32)"_su8);
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64}}, {}});
+  ftm.EndModule();
+
+  ASSERT_EQ(3u, ftm.Size());
+  EXPECT_EQ((FunctionType{{VT::I32}, {}}), ftm.Get(0));
+  EXPECT_EQ((FunctionType{{VT::I64}, {}}), ftm.Get(1));
+
+  // Implicitly defined after other explicitly defined types.
+  EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT::F32)}, {}}), ftm.Get(2));
+}
+
 TEST_F(TextReadTest, InlineImport) {
   OK(ReadInlineImportOpt,
      InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
@@ -374,6 +434,13 @@ TEST_F(TextReadTest, TypeEntry_DuplicateName) {
 
   Fail(ReadTypeEntry, {{6, "Variable $t is already bound to index 0"}},
        "(type $t (func))"_su8);
+}
+
+TEST_F(TextReadTest, TypeEntry_DistinctTypes) {
+  Read(ReadTypeEntry, "(type $a (func))"_su8);
+  Read(ReadTypeEntry, "(type $b (func))"_su8);
+
+  ASSERT_EQ(2u, context.function_type_map.Size());
 }
 
 TEST_F(TextReadTest, AlignOpt) {
@@ -739,13 +806,6 @@ TEST_F(TextReadTest, PlainInstruction_TableInit) {
      "table.init 2"_su8);
 }
 
-auto ReadBlockInstruction_ForTesting(Tokenizer& tokenizer, Context& context)
-    -> InstructionList {
-  InstructionList result;
-  ReadBlockInstruction(tokenizer, context, result);
-  return result;
-}
-
 TEST_F(TextReadTest, BlockInstruction_Block) {
   using I = Instruction;
   using O = Opcode;
@@ -1059,8 +1119,30 @@ TEST_F(TextReadTest, BlockInstruction_Try_MismatchedLabels) {
        "try $l catch $l2 end $l"_su8);
 }
 
+TEST_F(TextReadTest, Label_ReuseNames) {
+  using I = Instruction;
+  using O = Opcode;
+
+  OK(ReadInstructionList_ForTesting,
+     InstructionList{
+         MakeAt(
+             "block $l"_su8,
+             I{MakeAt("block"_su8, O::Block),
+               MakeAt("$l"_su8,
+                      BlockImmediate{MakeAt("$l"_su8, BindVar{"$l"_sv}), {}})}),
+         MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+         MakeAt(
+             "block $l"_su8,
+             I{MakeAt("block"_su8, O::Block),
+               MakeAt("$l"_su8,
+                      BlockImmediate{MakeAt("$l"_su8, BindVar{"$l"_sv}), {}})}),
+         MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+     },
+     "block $l end block $l end"_su8);
+}
+
 TEST_F(TextReadTest, Label_DuplicateNames) {
-  Fail(ReadBlockInstruction_ForTesting,
+  Fail(ReadInstructionList_ForTesting,
        {{15, "Variable $b is already bound to index 0"}},
        "block $b block $b end end"_su8);
 }
@@ -1378,13 +1460,6 @@ TEST_F(TextReadTest, Expression_Try) {
       "(try (nop) (catch (nop)))"_su8);
 }
 
-auto ReadExpressionList_ForTesting(Tokenizer& tokenizer, Context& context)
-    -> InstructionList {
-  InstructionList result;
-  ReadExpressionList(tokenizer, context, result);
-  return result;
-}
-
 TEST_F(TextReadTest, ExpressionList) {
   using I = Instruction;
   using O = Opcode;
@@ -1553,6 +1628,25 @@ TEST_F(TextReadTest, FunctionInlineImport) {
              MakeAt("(export \"m\")"_su8,
                     InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(func $f (export \"m\") (import \"a\" \"b\") (param i32))"_su8);
+}
+
+TEST_F(TextReadTest, Function_DeferType) {
+  using VT = ValueType;
+  using BVT = BoundValueType;
+
+  FunctionTypeMap& ftm = context.function_type_map;
+
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+  Read(ReadFunction, "(func (param f32))"_su8);
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64}}, {}});
+  ftm.EndModule();
+
+  ASSERT_EQ(3u, ftm.Size());
+  EXPECT_EQ((FunctionType{{VT::I32}, {}}), ftm.Get(0));
+  EXPECT_EQ((FunctionType{{VT::I64}, {}}), ftm.Get(1));
+
+  // Implicitly defined after other explicitly defined types.
+  EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT::F32)}, {}}), ftm.Get(2));
 }
 
 TEST_F(TextReadTest, Table) {
@@ -1997,6 +2091,25 @@ TEST_F(TextReadTest, Import_AfterNonImport) {
   Fail(ReadImport,
        {{1, "Imports must occur before all non-import definitions"}},
        "(import \"m\" \"n\" (func))"_su8);
+}
+
+TEST_F(TextReadTest, Import_FunctionDeferType) {
+  using VT = ValueType;
+  using BVT = BoundValueType;
+
+  FunctionTypeMap& ftm = context.function_type_map;
+
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+  Read(ReadImport, "(import \"m\" \"n\" (func (param f32)))"_su8);
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64}}, {}});
+  ftm.EndModule();
+
+  ASSERT_EQ(3u, ftm.Size());
+  EXPECT_EQ((FunctionType{{VT::I32}, {}}), ftm.Get(0));
+  EXPECT_EQ((FunctionType{{VT::I64}, {}}), ftm.Get(1));
+
+  // Implicitly defined after other explicitly defined types.
+  EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT::F32)}, {}}), ftm.Get(2));
 }
 
 TEST_F(TextReadTest, Import_exceptions) {

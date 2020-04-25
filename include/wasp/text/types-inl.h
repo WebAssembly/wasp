@@ -34,7 +34,8 @@ inline LiteralInfo LiteralInfo::Number(Sign sign, HasUnderscores underscores) {
 }
 
 // static
-inline LiteralInfo LiteralInfo::HexNumber(Sign sign, HasUnderscores underscores) {
+inline LiteralInfo LiteralInfo::HexNumber(Sign sign,
+                                          HasUnderscores underscores) {
   return LiteralInfo{sign, LiteralKind::Normal, Base::Hex, underscores};
 }
 

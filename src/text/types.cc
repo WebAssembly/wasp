@@ -119,11 +119,17 @@ DataSegment::DataSegment(OptAt<BindVar> name, const TextList& data)
 WASP_TEXT_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_TEXT_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
 
+bool operator==(const BoundValueTypeList& lhs, const ValueTypeList& rhs) {
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
+                    [](auto&& lhs, auto&& rhs) { return lhs->type == rhs; });
+}
+
+bool operator!=(const BoundValueTypeList& lhs, const ValueTypeList& rhs) {
+  return !(lhs == rhs);
+}
+
 }  // namespace text
 }  // namespace wasp
 
-// TODO: This doesn't quite work yet.
-#if 0
 WASP_TEXT_STRUCTS(WASP_STD_HASH_VARGS)
 WASP_TEXT_CONTAINERS(WASP_STD_HASH_CONTAINER)
-#endif

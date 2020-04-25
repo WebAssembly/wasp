@@ -73,7 +73,7 @@ bool Context::AppendLocals(Index count, ValueType value_type) {
   return true;
 }
 
-bool Context::AppendLocals(const binary::ValueTypes& value_types) {
+bool Context::AppendLocals(const ValueTypes& value_types) {
   if (value_types.empty()) {
     return true;
   }

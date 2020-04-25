@@ -403,7 +403,7 @@ TEST(TextFormattersTest, Memory) {
 
 TEST(TextFormattersTest, Global) {
   EXPECT_EQ(
-      R"({desc {name none, type {valtype i32, mut const}}, import none, exports []})",
+      R"({desc {name none, type {valtype i32, mut const}}, init [], import none, exports []})",
       format("{}", Global{GlobalDesc{nullopt, GlobalType{ValueType::I32,
                                                          Mutability::Const}},
                           {},
@@ -477,7 +477,7 @@ TEST(TextFormattersTest, ModuleItem) {
 
   // Global
   EXPECT_EQ(
-      R"(global {desc {name none, type {valtype i32, mut const}}, import none, exports []})",
+      R"(global {desc {name none, type {valtype i32, mut const}}, init [], import none, exports []})",
       format("{}", ModuleItem{Global{
                        GlobalDesc{nullopt, GlobalType{ValueType::I32,
                                                       Mutability::Const}},

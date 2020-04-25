@@ -83,6 +83,7 @@ add_library(wasplib
   src/text/numeric.cc
   src/text/print_to.cc
   src/text/read.cc
+  src/text/resolve.cc
   src/text/types.cc
 
   third_party/fmt/src/format.cc
@@ -136,6 +137,7 @@ add_executable(wasp_unittests
   test/text/lex_test.cc
   test/text/numeric_test.cc
   test/text/read_test.cc
+  test/text/resolve_test.cc
   test/tools/argparser_test.cc
   test/valid/test_utils.cc
   test/valid/validate_test.cc

@@ -28,7 +28,7 @@
 #define WASP_STD_HASH_VARGS(Name, Count, ...) \
   WASP_STD_HASH_##Count(Name, __VA_ARGS__)
 
-#define WASP_STD_HASH_0(Name)                                          \
+#define WASP_STD_HASH_0(Name, ...)                                     \
   namespace std {                                                      \
   size_t hash<::wasp::Name>::operator()(const ::wasp::Name& v) const { \
     return 0;                                                          \

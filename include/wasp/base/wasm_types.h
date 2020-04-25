@@ -18,6 +18,7 @@
 #define WASP_BASE_WASM_TYPES_H_
 
 #include <iosfwd>
+#include <vector>
 
 #include "wasp/base/at.h"
 #include "wasp/base/operator_eq_ne_macros.h"
@@ -44,6 +45,8 @@ enum class ValueType : s32 {
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
+
+using ValueTypes = std::vector<At<ValueType>>;
 
 enum class ElementType : s32 {
 #define WASP_V(val, Name, str) Name,
@@ -107,7 +110,11 @@ struct Limits {
 #define WASP_BASE_WASM_STRUCTS(WASP_V) \
   WASP_V(Limits, 3, min, max, shared)
 
+#define WASP_BASE_WASM_CONTAINERS(WASP_V) \
+  WASP_V(ValueTypes)
+
 WASP_BASE_WASM_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
+WASP_BASE_WASM_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 
 // Used for gtest.
 
@@ -117,5 +124,6 @@ WASP_BASE_WASM_STRUCTS(WASP_DECLARE_PRINT_TO)
 }  // namespace wasp
 
 WASP_BASE_WASM_STRUCTS(WASP_DECLARE_STD_HASH)
+WASP_BASE_WASM_CONTAINERS(WASP_DECLARE_STD_HASH)
 
 #endif // WASP_BASE_WASM_TYPES_H_

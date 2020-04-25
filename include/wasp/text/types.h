@@ -113,7 +113,8 @@ using BindVar = string_view;
 
 using TextList = std::vector<At<Text>>;
 
-using ValueTypeList = std::vector<At<ValueType>>;
+// TODO: Rename?
+using ValueTypeList = wasp::ValueTypes;
 
 struct FunctionType {
   ValueTypeList params;
@@ -562,7 +563,7 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::Function, 5, desc, locals, instructions, import, exports) \
   WASP_V(text::Table, 4, desc, import, exports, elements)                \
   WASP_V(text::Memory, 4, desc, import, exports, data)                   \
-  WASP_V(text::Global, 3, desc, import, exports)                         \
+  WASP_V(text::Global, 4, desc, init, import, exports)                   \
   WASP_V(text::Event, 3, desc, import, exports)                          \
   WASP_V(text::Import, 3, module, name, desc)                            \
   WASP_V(text::Export, 3, kind, name, var)                               \
@@ -584,18 +585,27 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::Assertion, 2, kind, desc)                                 \
   WASP_V(text::Register, 2, name, module)
 
-#define WASP_TEXT_CONTAINERS(WASP_V) \
-  WASP_V(text::VarList)              \
-  WASP_V(text::InlineExportList)     \
-  WASP_V(text::InstructionList)      \
-  WASP_V(text::Module)               \
-  WASP_V(text::ConstList)            \
-  WASP_V(text::F32x4Result)          \
-  WASP_V(text::F64x2Result)          \
-  WASP_V(text::ReturnResultList)
+#define WASP_TEXT_CONTAINERS(WASP_V)  \
+  WASP_V(text::VarList)               \
+  WASP_V(text::TextList)              \
+  WASP_V(text::InstructionList)       \
+  WASP_V(text::BoundValueTypeList)    \
+  WASP_V(text::InlineExportList)      \
+  WASP_V(text::ElementExpressionList) \
+  WASP_V(text::Module)                \
+  WASP_V(text::ConstList)             \
+  WASP_V(text::F32x4Result)           \
+  WASP_V(text::F64x2Result)           \
+  WASP_V(text::ReturnResultList)      \
+  WASP_V(text::Script)
 
 WASP_TEXT_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
+
+bool operator==(const BoundValueTypeList& lhs, const ValueTypeList& rhs);
+bool operator==(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
+bool operator!=(const BoundValueTypeList& lhs, const ValueTypeList& rhs);
+bool operator!=(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
 
 // Used for gtest.
 

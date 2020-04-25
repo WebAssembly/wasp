@@ -30,30 +30,82 @@ class Errors;
 
 namespace text {
 
+enum class NameMapKind {
+  Forward,  // The oldest object has the lowest index (e.g. Functions).
+  Reverse,  // The most recent object has the lowest index (e.g. Labels).
+};
+
 struct NameMap {
   using Map = flat_hash_map<BindVar, Index>;
+
+  explicit NameMap(NameMapKind = NameMapKind::Forward);
 
   void Reset();
   void NewUnbound();
   void NewBound(BindVar);
+  void New(OptAt<BindVar>);
   void Delete(BindVar);
 
   bool Has(BindVar) const;
   Index Get(BindVar) const;
 
-  Map map;
-  Index next_index = 0;
+ private:
+  Map map_;
+  Index next_index_ = 0;
+  NameMapKind kind_;
 };
 
 using LabelNameStack = std::vector<OptAt<BindVar>>;
+
+// In all places function types are used, they can be specified with:
+//   a type use:    `(type $var)`
+//   or explicitly: `(param i32) (result i32)`
+//   or both:       `(type $var) (param i32) (result i32)`
+//
+// If both are given, then the type variable will be looked-up, and checked
+// against the explicit type params/results, and an error will be given if
+// they don't match.
+//
+// If the type is given explicitly without a type use, then it will be added
+// after all defined function types. It's as if they were added to the end of
+// the module, in the order they were used. That's the purpose of the
+// `deferred_set_` set below.
+struct FunctionTypeMap {
+  using List = std::vector<FunctionType>;
+
+  void BeginModule();
+  void Define(BoundFunctionType);
+  void Use(FunctionTypeUse);
+  void Use(OptAt<Var> type_use, BoundFunctionType);
+
+  void EndModule();
+
+  Index Size() const;
+  optional<FunctionType> Get(Index) const;
+
+ private:
+  FunctionType ToFunctionType(BoundFunctionType);
+
+  List list_;
+  List deferred_list_;
+};
 
 struct Context {
   explicit Context(Errors&);
   explicit Context(const Features&, Errors&);
 
+  void BeginModule();    // Reset all module-specific context.
+  void BeginFunction();  // Reset all function-specific context.
+  void EndBlock();
+  void EndModule();
+
   Features features;
   Errors& errors;
 
+  // Script context.
+  NameMap module_names;
+
+  // Module context.
   bool seen_non_import = false;
   bool seen_start = false;
 
@@ -65,9 +117,11 @@ struct Context {
   NameMap event_names;
   NameMap element_segment_names;
   NameMap data_segment_names;
-  NameMap module_names;
+  FunctionTypeMap function_type_map;
+
+  // Function context.
   NameMap local_names;  // Includes params.
-  NameMap label_names;
+  NameMap label_names{NameMapKind::Reverse};
   LabelNameStack label_name_stack;
 };
 

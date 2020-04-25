@@ -70,7 +70,7 @@ struct Context {
   Index GetLocalCount() const;
   optional<ValueType> GetLocalType(Index) const;
   bool AppendLocals(Index count, ValueType);
-  bool AppendLocals(const binary::ValueTypes&);
+  bool AppendLocals(const ValueTypes&);
 
   Features features;
   Errors* errors;
@@ -87,7 +87,7 @@ struct Context {
   optional<Index> declared_data_count;
   Index code_count = 0;
   std::vector<Index> locals_partial_sum;
-  binary::ValueTypes locals;
+  ValueTypes locals;
   StackTypes type_stack;
   std::vector<Label> label_stack;
   std::set<string_view> export_names;
