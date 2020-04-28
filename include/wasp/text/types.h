@@ -500,6 +500,8 @@ using ReturnResult = variant<u32,
                              F64Result,
                              F32x4Result,
                              F64x2Result,
+                             RefNullConst,
+                             RefHostConst,
                              RefAnyResult,
                              RefFuncResult>;
 using ReturnResultList = std::vector<At<ReturnResult>>;

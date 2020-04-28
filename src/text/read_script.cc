@@ -317,7 +317,8 @@ bool IsReturnResult(Tokenizer& tokenizer) {
          token.type == TokenType::I32ConstInstr ||
          token.type == TokenType::I64ConstInstr ||
          token.type == TokenType::SimdConstInstr ||
-         token.type == TokenType::RefAny ||
+         token.type == TokenType::RefNullInstr ||
+         token.type == TokenType::RefHost || token.type == TokenType::RefAny ||
          token.type == TokenType::RefFuncInstr;
 }
 
@@ -404,6 +405,24 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
 
       Expect(tokenizer, context, TokenType::Rpar);
       return MakeAt(guard.loc(), ReturnResult{result.value()});
+    }
+
+    case TokenType::RefNullInstr:
+      if (!context.features.reference_types_enabled()) {
+        context.errors.OnError(token.loc, "ref.null not allowed");
+      }
+      tokenizer.Read();
+      Expect(tokenizer, context, TokenType::Rpar);
+      return MakeAt(guard.loc(), ReturnResult{RefNullConst{}});
+
+    case TokenType::RefHost: {
+      if (!context.features.reference_types_enabled()) {
+        context.errors.OnError(token.loc, "ref.host not allowed");
+      }
+      tokenizer.Read();
+      auto nat = ReadNat32(tokenizer, context);
+      Expect(tokenizer, context, TokenType::Rpar);
+      return MakeAt(guard.loc(), ReturnResult{RefHostConst{nat}});
     }
 
     case TokenType::RefAny:

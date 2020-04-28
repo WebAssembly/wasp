@@ -2933,11 +2933,16 @@ TEST_F(TextReadTest, ReturnResult_simd) {
 }
 
 TEST_F(TextReadTest, ReturnResult_reference_types) {
+  Fail(ReadReturnResult, {{1, "ref.null not allowed"}}, "(ref.null)"_su8);
+  Fail(ReadReturnResult, {{1, "ref.host not allowed"}}, "(ref.host 0)"_su8);
   Fail(ReadReturnResult, {{1, "ref.any not allowed"}}, "(ref.any)"_su8);
   Fail(ReadReturnResult, {{1, "ref.func not allowed"}}, "(ref.func)"_su8);
 
   context.features.enable_reference_types();
 
+  OK(ReadReturnResult, ReturnResult{RefNullConst{}}, "(ref.null)"_su8);
+  OK(ReadReturnResult, ReturnResult{RefHostConst{MakeAt("0"_su8, u32{0})}},
+     "(ref.host 0)"_su8);
   OK(ReadReturnResult, ReturnResult{RefAnyResult{}}, "(ref.any)"_su8);
   OK(ReadReturnResult, ReturnResult{RefFuncResult{}}, "(ref.func)"_su8);
 }
