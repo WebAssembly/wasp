@@ -272,7 +272,6 @@ TEST(LexTest, PlainInstr) {
     O opcode;
     F::Bits features;
   } tests[] = {
-      {"atomic.notify"_su8, TT::MemoryInstr, O::AtomicNotify, F::Threads},
       {"br_if"_su8, TT::VarInstr, O::BrIf, 0},
       {"br_on_exn"_su8, TT::BrOnExnInstr, O::BrOnExn, F::Exceptions},
       {"br_table"_su8, TT::BrTableInstr, O::BrTable, 0},
@@ -449,7 +448,6 @@ TEST(LexTest, PlainInstr) {
       {"i32.atomic.store16"_su8, TT::MemoryInstr, O::I32AtomicStore16, F::Threads},
       {"i32.atomic.store8"_su8, TT::MemoryInstr, O::I32AtomicStore8, F::Threads},
       {"i32.atomic.store"_su8, TT::MemoryInstr, O::I32AtomicStore, F::Threads},
-      {"i32.atomic.wait"_su8, TT::MemoryInstr, O::I32AtomicWait, F::Threads},
       {"i32.clz"_su8, TT::BareInstr, O::I32Clz, 0},
       {"i32.const"_su8, TT::I32ConstInstr, O::I32Const, 0},
       {"i32.ctz"_su8, TT::BareInstr, O::I32Ctz, 0},
@@ -570,7 +568,6 @@ TEST(LexTest, PlainInstr) {
       {"i64.atomic.store32"_su8, TT::MemoryInstr, O::I64AtomicStore32, F::Threads},
       {"i64.atomic.store8"_su8, TT::MemoryInstr, O::I64AtomicStore8, F::Threads},
       {"i64.atomic.store"_su8, TT::MemoryInstr, O::I64AtomicStore, F::Threads},
-      {"i64.atomic.wait"_su8, TT::MemoryInstr, O::I64AtomicWait, F::Threads},
       {"i64.clz"_su8, TT::BareInstr, O::I64Clz, 0},
       {"i64.const"_su8, TT::I64ConstInstr, O::I64Const, 0},
       {"i64.ctz"_su8, TT::BareInstr, O::I64Ctz, 0},
@@ -672,6 +669,9 @@ TEST(LexTest, PlainInstr) {
       {"local.get"_su8, TT::VarInstr, O::LocalGet, 0},
       {"local.set"_su8, TT::VarInstr, O::LocalSet, 0},
       {"local.tee"_su8, TT::VarInstr, O::LocalTee, 0},
+      {"memory.atomic.notify"_su8, TT::MemoryInstr, O::MemoryAtomicNotify, F::Threads},
+      {"memory.atomic.wait32"_su8, TT::MemoryInstr, O::MemoryAtomicWait32, F::Threads},
+      {"memory.atomic.wait64"_su8, TT::MemoryInstr, O::MemoryAtomicWait64, F::Threads},
       {"memory.copy"_su8, TT::BareInstr, O::MemoryCopy, F::BulkMemory},
       {"memory.fill"_su8, TT::BareInstr, O::MemoryFill, F::BulkMemory},
       {"memory.grow"_su8, TT::BareInstr, O::MemoryGrow, 0},

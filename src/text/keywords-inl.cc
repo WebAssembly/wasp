@@ -258,13 +258,7 @@ switch (PeekChar(data, 2)) {
               case '8': return LexKeyword(data, "i32.store8", TokenType::MemoryInstr, Opcode::I32Store8);
               case 'c':
                 switch (PeekChar(data, 15)) {
-                  default:
-                    switch (PeekChar(data, 14)) {
-                      case 'd': return LexKeyword(data, "i32.atomic.load", TokenType::MemoryInstr, Opcode::I32AtomicLoad, Features::Threads);
-                      case 't': return LexKeyword(data, "i32.atomic.wait", TokenType::MemoryInstr, Opcode::I32AtomicWait, Features::Threads);
-                      default: break;
-                    }
-                    break;
+                  default: return LexKeyword(data, "i32.atomic.load", TokenType::MemoryInstr, Opcode::I32AtomicLoad, Features::Threads);
                   case '.':
                     switch (PeekChar(data, 17)) {
                       case 'c': return LexKeyword(data, "i32.atomic.rmw8.xchg_u", TokenType::MemoryInstr, Opcode::I32AtomicRmw8XchgU, Features::Threads);
@@ -916,13 +910,7 @@ switch (PeekChar(data, 2)) {
               case '8': return LexKeyword(data, "i64.store8", TokenType::MemoryInstr, Opcode::I64Store8);
               case 'c':
                 switch (PeekChar(data, 15)) {
-                  default:
-                    switch (PeekChar(data, 14)) {
-                      case 'd': return LexKeyword(data, "i64.atomic.load", TokenType::MemoryInstr, Opcode::I64AtomicLoad, Features::Threads);
-                      case 't': return LexKeyword(data, "i64.atomic.wait", TokenType::MemoryInstr, Opcode::I64AtomicWait, Features::Threads);
-                      default: break;
-                    }
-                    break;
+                  default: return LexKeyword(data, "i64.atomic.load", TokenType::MemoryInstr, Opcode::I64AtomicLoad, Features::Threads);
                   case '.':
                     switch (PeekChar(data, 17)) {
                       case 'c': return LexKeyword(data, "i64.atomic.rmw8.xchg_u", TokenType::MemoryInstr, Opcode::I64AtomicRmw8XchgU, Features::Threads);
@@ -1489,6 +1477,14 @@ switch (PeekChar(data, 2)) {
         switch (PeekChar(data, 10)) {
           case 'e': return LexKeyword(data, "memory.size", Opcode::MemorySize);
           case 'l': return LexKeyword(data, "memory.fill", Opcode::MemoryFill, Features::BulkMemory);
+          case 'm':
+            switch (PeekChar(data, 19)) {
+              case '2': return LexKeyword(data, "memory.atomic.wait32", TokenType::MemoryInstr, Opcode::MemoryAtomicWait32, Features::Threads);
+              case '4': return LexKeyword(data, "memory.atomic.wait64", TokenType::MemoryInstr, Opcode::MemoryAtomicWait64, Features::Threads);
+              case 'y': return LexKeyword(data, "memory.atomic.notify", TokenType::MemoryInstr, Opcode::MemoryAtomicNotify, Features::Threads);
+              default: break;
+            }
+            break;
           case 't': return LexKeyword(data, "memory.init", TokenType::VarInstr, Opcode::MemoryInit, Features::BulkMemory);
           case 'w': return LexKeyword(data, "memory.grow", Opcode::MemoryGrow);
           case 'y': return LexKeyword(data, "memory.copy", Opcode::MemoryCopy, Features::BulkMemory);
@@ -1540,7 +1536,6 @@ switch (PeekChar(data, 2)) {
         }
         break;
       case 'e': return LexKeyword(data, "quote", TokenType::Quote);
-      case 'i': return LexKeyword(data, "atomic.notify", TokenType::MemoryInstr, Opcode::AtomicNotify, Features::Threads);
       case 'k': return LexKeyword(data, "block", TokenType::BlockInstr, Opcode::Block);
     }
     break;

@@ -413,9 +413,9 @@ WASP_PREFIX_V(0xfd, 0xe2, I16X8Abs, "i16x8.abs", simd)
 WASP_PREFIX_V(0xfd, 0xe3, I32X4Abs, "i32x4.abs", simd)
 
 // Thread opcodes
-WASP_PREFIX_V(0xfe, 0x00, AtomicNotify, "atomic.notify", threads)
-WASP_PREFIX_V(0xfe, 0x01, I32AtomicWait, "i32.atomic.wait", threads)
-WASP_PREFIX_V(0xfe, 0x02, I64AtomicWait, "i64.atomic.wait", threads)
+WASP_PREFIX_V(0xfe, 0x00, MemoryAtomicNotify, "memory.atomic.notify", threads)
+WASP_PREFIX_V(0xfe, 0x01, MemoryAtomicWait32, "memory.atomic.wait32", threads)
+WASP_PREFIX_V(0xfe, 0x02, MemoryAtomicWait64, "memory.atomic.wait64", threads)
 WASP_PREFIX_V(0xfe, 0x10, I32AtomicLoad, "i32.atomic.load", threads)
 WASP_PREFIX_V(0xfe, 0x11, I64AtomicLoad, "i64.atomic.load", threads)
 WASP_PREFIX_V(0xfe, 0x12, I32AtomicLoad8U, "i32.atomic.load8_u", threads)

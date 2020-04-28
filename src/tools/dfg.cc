@@ -505,8 +505,8 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::Select:
     case Opcode::SelectT:
     case Opcode::V128BitSelect:
-    case Opcode::I32AtomicWait:
-    case Opcode::I64AtomicWait:
+    case Opcode::MemoryAtomicWait32:
+    case Opcode::MemoryAtomicWait64:
     case Opcode::I32AtomicRmwCmpxchg:
     case Opcode::I64AtomicRmwCmpxchg:
     case Opcode::I32AtomicRmw8CmpxchgU:
@@ -883,7 +883,7 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::V128Andnot:
     case Opcode::I8X16AvgrU:
     case Opcode::I16X8AvgrU:
-    case Opcode::AtomicNotify:
+    case Opcode::MemoryAtomicNotify:
     case Opcode::I32AtomicRmwAdd:
     case Opcode::I64AtomicRmwAdd:
     case Opcode::I32AtomicRmw8AddU:

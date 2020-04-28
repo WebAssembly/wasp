@@ -887,9 +887,9 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I32X4Load16X4U:
     case Opcode::I64X2Load32X2S:
     case Opcode::I64X2Load32X2U:
-    case Opcode::AtomicNotify:
-    case Opcode::I32AtomicWait:
-    case Opcode::I64AtomicWait:
+    case Opcode::MemoryAtomicNotify:
+    case Opcode::MemoryAtomicWait32:
+    case Opcode::MemoryAtomicWait64:
     case Opcode::I32AtomicLoad:
     case Opcode::I64AtomicLoad:
     case Opcode::I32AtomicLoad8U:

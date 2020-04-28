@@ -6,7 +6,6 @@ assert_malformed, TokenType::AssertMalformed
 assert_return, TokenType::AssertReturn
 assert_trap, TokenType::AssertTrap
 assert_unlinkable, TokenType::AssertUnlinkable
-atomic.notify, TokenType::MemoryInstr, Opcode::AtomicNotify, Features::Threads
 binary, TokenType::Binary
 block, TokenType::BlockInstr, Opcode::Block
 br_if, TokenType::VarInstr, Opcode::BrIf
@@ -204,7 +203,6 @@ i32.atomic.rmw.xor, TokenType::MemoryInstr, Opcode::I32AtomicRmwXor, Features::T
 i32.atomic.store16, TokenType::MemoryInstr, Opcode::I32AtomicStore16, Features::Threads
 i32.atomic.store8, TokenType::MemoryInstr, Opcode::I32AtomicStore8, Features::Threads
 i32.atomic.store, TokenType::MemoryInstr, Opcode::I32AtomicStore, Features::Threads
-i32.atomic.wait, TokenType::MemoryInstr, Opcode::I32AtomicWait, Features::Threads
 i32.clz, Opcode::I32Clz
 i32.const, TokenType::I32ConstInstr, Opcode::I32Const
 i32.ctz, Opcode::I32Ctz
@@ -328,7 +326,6 @@ i64.atomic.store16, TokenType::MemoryInstr, Opcode::I64AtomicStore16, Features::
 i64.atomic.store32, TokenType::MemoryInstr, Opcode::I64AtomicStore32, Features::Threads
 i64.atomic.store8, TokenType::MemoryInstr, Opcode::I64AtomicStore8, Features::Threads
 i64.atomic.store, TokenType::MemoryInstr, Opcode::I64AtomicStore, Features::Threads
-i64.atomic.wait, TokenType::MemoryInstr, Opcode::I64AtomicWait, Features::Threads
 i64.clz, Opcode::I64Clz
 i64.const, TokenType::I64ConstInstr, Opcode::I64Const
 i64.ctz, Opcode::I64Ctz
@@ -441,6 +438,9 @@ local.set, TokenType::VarInstr, Opcode::LocalSet
 local.tee, TokenType::VarInstr, Opcode::LocalTee
 local, TokenType::Local
 loop, TokenType::BlockInstr, Opcode::Loop
+memory.atomic.notify, TokenType::MemoryInstr, Opcode::MemoryAtomicNotify, Features::Threads
+memory.atomic.wait32, TokenType::MemoryInstr, Opcode::MemoryAtomicWait32, Features::Threads
+memory.atomic.wait64, TokenType::MemoryInstr, Opcode::MemoryAtomicWait64, Features::Threads
 memory.copy, Opcode::MemoryCopy, Features::BulkMemory
 memory.fill, Opcode::MemoryFill, Features::BulkMemory
 memory.grow, Opcode::MemoryGrow

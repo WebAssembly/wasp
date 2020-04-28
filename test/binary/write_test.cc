@@ -828,9 +828,9 @@ TEST(WriteTest, Instruction_threads) {
 
   const MemArgImmediate m{0, 0};
 
-  ExpectWrite<I>("\xfe\x00\x00\x00"_su8, I{O::AtomicNotify, m});
-  ExpectWrite<I>("\xfe\x01\x00\x00"_su8, I{O::I32AtomicWait, m});
-  ExpectWrite<I>("\xfe\x02\x00\x00"_su8, I{O::I64AtomicWait, m});
+  ExpectWrite<I>("\xfe\x00\x00\x00"_su8, I{O::MemoryAtomicNotify, m});
+  ExpectWrite<I>("\xfe\x01\x00\x00"_su8, I{O::MemoryAtomicWait32, m});
+  ExpectWrite<I>("\xfe\x02\x00\x00"_su8, I{O::MemoryAtomicWait64, m});
   ExpectWrite<I>("\xfe\x10\x00\x00"_su8, I{O::I32AtomicLoad, m});
   ExpectWrite<I>("\xfe\x11\x00\x00"_su8, I{O::I64AtomicLoad, m});
   ExpectWrite<I>("\xfe\x12\x00\x00"_su8, I{O::I32AtomicLoad8U, m});
@@ -1333,9 +1333,9 @@ TEST(WriteTest, Opcode_simd) {
 TEST(WriteTest, Opcode_threads) {
   using O = Opcode;
 
-  ExpectWrite<O>("\xfe\x00"_su8, O::AtomicNotify);
-  ExpectWrite<O>("\xfe\x01"_su8, O::I32AtomicWait);
-  ExpectWrite<O>("\xfe\x02"_su8, O::I64AtomicWait);
+  ExpectWrite<O>("\xfe\x00"_su8, O::MemoryAtomicNotify);
+  ExpectWrite<O>("\xfe\x01"_su8, O::MemoryAtomicWait32);
+  ExpectWrite<O>("\xfe\x02"_su8, O::MemoryAtomicWait64);
   ExpectWrite<O>("\xfe\x10"_su8, O::I32AtomicLoad);
   ExpectWrite<O>("\xfe\x11"_su8, O::I64AtomicLoad);
   ExpectWrite<O>("\xfe\x12"_su8, O::I32AtomicLoad8U);

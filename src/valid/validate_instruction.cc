@@ -835,9 +835,9 @@ bool CheckSharedMemory(const At<Instruction>& instruction,
   return true;
 }
 
-bool AtomicNotify(Location loc,
-                  const At<Instruction>& instruction,
-                  Context& context) {
+bool MemoryAtomicNotify(Location loc,
+                        const At<Instruction>& instruction,
+                        Context& context) {
   const u32 align = 2;
   auto memory_type = GetMemoryType(0, context);
   bool valid = CheckAtomicAlignment(instruction, align, context);
@@ -846,15 +846,15 @@ bool AtomicNotify(Location loc,
                  PopAndPushTypes(loc, span_i32_i32, span_i32, context));
 }
 
-bool AtomicWait(Location loc,
-                const At<Instruction>& instruction,
-                Context& context) {
+bool MemoryAtomicWait(Location loc,
+                      const At<Instruction>& instruction,
+                      Context& context) {
   auto memory_type = GetMemoryType(0, context);
   StackTypeSpan span;
   u32 align;
   switch (instruction->opcode) {
-    case Opcode::I32AtomicWait:    span = span_i32_i32_i64; align = 2; break;
-    case Opcode::I64AtomicWait:    span = span_i32_i64_i64; align = 3; break;
+    case Opcode::MemoryAtomicWait32: span = span_i32_i32_i64; align = 2; break;
+    case Opcode::MemoryAtomicWait64: span = span_i32_i64_i64; align = 3; break;
     default:
       WASP_UNREACHABLE();
   }
@@ -1700,12 +1700,12 @@ bool Validate(const At<Instruction>& value, Context& context) {
       params = span_v128_f64, results = span_v128;
       break;
 
-    case Opcode::AtomicNotify:
-      return AtomicNotify(loc, value, context);
+    case Opcode::MemoryAtomicNotify:
+      return MemoryAtomicNotify(loc, value, context);
 
-    case Opcode::I32AtomicWait:
-    case Opcode::I64AtomicWait:
-      return AtomicWait(loc, value, context);
+    case Opcode::MemoryAtomicWait32:
+    case Opcode::MemoryAtomicWait64:
+      return MemoryAtomicWait(loc, value, context);
 
     case Opcode::I32AtomicLoad:
     case Opcode::I64AtomicLoad:

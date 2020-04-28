@@ -2217,11 +2217,11 @@ TEST_F(ValidateInstructionTest, SimdShifts) {
 
 TEST_F(ValidateInstructionTest, AtomicNotifyAndWait) {
   AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
-  TestSignature(I{O::AtomicNotify, MemArgImmediate{2, 0}}, {VT::I32, VT::I32},
-                {VT::I32});
-  TestSignature(I{O::I32AtomicWait, MemArgImmediate{2, 0}},
+  TestSignature(I{O::MemoryAtomicNotify, MemArgImmediate{2, 0}},
+                {VT::I32, VT::I32}, {VT::I32});
+  TestSignature(I{O::MemoryAtomicWait32, MemArgImmediate{2, 0}},
                 {VT::I32, VT::I32, VT::I64}, {VT::I32});
-  TestSignature(I{O::I64AtomicWait, MemArgImmediate{3, 0}},
+  TestSignature(I{O::MemoryAtomicWait64, MemArgImmediate{3, 0}},
                 {VT::I32, VT::I64, VT::I64}, {VT::I32});
 }
 
@@ -2229,8 +2229,9 @@ TEST_F(ValidateInstructionTest, AtomicNotifyAndWait_Alignment) {
   const struct {
     Opcode opcode;
     u32 align;
-  } infos[] = {
-      {O::AtomicNotify, 2}, {O::I32AtomicWait, 2}, {O::I64AtomicWait, 3}};
+  } infos[] = {{O::MemoryAtomicNotify, 2},
+               {O::MemoryAtomicWait32, 2},
+               {O::MemoryAtomicWait64, 3}};
 
   AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
   Ok(I{O::Unreachable});

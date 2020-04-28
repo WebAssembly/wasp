@@ -1977,11 +1977,11 @@ TEST(ReadTest, Instruction_threads) {
       "\x01\x02"_su8,
       MemArgImmediate{MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, u32{2})});
 
-  ExpectRead<I>(I{MakeAt("\xfe\x00"_su8, O::AtomicNotify), memarg},
+  ExpectRead<I>(I{MakeAt("\xfe\x00"_su8, O::MemoryAtomicNotify), memarg},
                 "\xfe\x00\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfe\x01"_su8, O::I32AtomicWait), memarg},
+  ExpectRead<I>(I{MakeAt("\xfe\x01"_su8, O::MemoryAtomicWait32), memarg},
                 "\xfe\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfe\x02"_su8, O::I64AtomicWait), memarg},
+  ExpectRead<I>(I{MakeAt("\xfe\x02"_su8, O::MemoryAtomicWait64), memarg},
                 "\xfe\x02\x01\x02"_su8, f);
   ExpectRead<I>(I{MakeAt("\xfe\x10"_su8, O::I32AtomicLoad), memarg},
                 "\xfe\x10\x01\x02"_su8, f);
@@ -2833,9 +2833,9 @@ TEST(ReadTest, Opcode_threads) {
   Features features;
   features.enable_threads();
 
-  ExpectRead<O>(MakeAt("\xfe\x00"_su8, O::AtomicNotify), "\xfe\x00"_su8, features);
-  ExpectRead<O>(MakeAt("\xfe\x01"_su8, O::I32AtomicWait), "\xfe\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfe\x02"_su8, O::I64AtomicWait), "\xfe\x02"_su8, features);
+  ExpectRead<O>(MakeAt("\xfe\x00"_su8, O::MemoryAtomicNotify), "\xfe\x00"_su8, features);
+  ExpectRead<O>(MakeAt("\xfe\x01"_su8, O::MemoryAtomicWait32), "\xfe\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfe\x02"_su8, O::MemoryAtomicWait64), "\xfe\x02"_su8, features);
   ExpectRead<O>(MakeAt("\xfe\x10"_su8, O::I32AtomicLoad), "\xfe\x10"_su8, features);
   ExpectRead<O>(MakeAt("\xfe\x11"_su8, O::I64AtomicLoad), "\xfe\x11"_su8, features);
   ExpectRead<O>(MakeAt("\xfe\x12"_su8, O::I32AtomicLoad8U), "\xfe\x12"_su8, features);
