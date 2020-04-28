@@ -192,7 +192,7 @@ void Resolve(Context& context, Instruction& instruction) {
           context, context.element_segment_names, context.table_names,
           std::get<At<InitImmediate>>(instruction.immediate).value());
 
-    case 14: { // Var
+    case 15: { // Var
       auto& immediate = std::get<At<Var>>(instruction.immediate);
       switch (instruction.opcode) {
         // Function.

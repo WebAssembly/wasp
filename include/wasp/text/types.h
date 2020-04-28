@@ -178,6 +178,7 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<InitImmediate>);
   explicit Instruction(At<Opcode>, At<MemArgImmediate>);
   explicit Instruction(At<Opcode>, At<SelectImmediate>);
+  explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
   explicit Instruction(At<Opcode>, At<Var>);
 
   At<Opcode> opcode;
@@ -195,6 +196,7 @@ struct Instruction {
           At<InitImmediate>,
           At<MemArgImmediate>,
           At<SelectImmediate>,
+          At<ShuffleImmediate>,
           At<Var>>
       immediate;
 };

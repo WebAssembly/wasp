@@ -97,6 +97,8 @@ struct Limits {
   At<Shared> shared;
 };
 
+using ShuffleImmediate = std::array<u8, 16>;
+
 #define WASP_BASE_WASM_ENUMS(WASP_V) \
   WASP_V(Opcode)                  \
   WASP_V(ValueType)               \
@@ -111,6 +113,7 @@ struct Limits {
   WASP_V(Limits, 3, min, max, shared)
 
 #define WASP_BASE_WASM_CONTAINERS(WASP_V) \
+  WASP_V(ShuffleImmediate)                \
   WASP_V(ValueTypes)
 
 WASP_BASE_WASM_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)

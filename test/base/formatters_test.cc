@@ -107,3 +107,12 @@ TEST(FormattersTest, Variant) {
   EXPECT_EQ(R"(u32 123)", format("{}", MyVariant{u32{123}}));
   EXPECT_EQ(R"(Point {x:1, y:2})", format("{}", MyVariant{Point{1, 2}}));
 }
+
+TEST(FormattersTest, ShuffleImmediate) {
+  EXPECT_EQ(R"([0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15])",
+            format("{}", ShuffleImmediate{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                                           12, 13, 14, 15}}));
+  EXPECT_EQ(R"(  [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])",
+            format("{:>35s}", ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0}}));
+}

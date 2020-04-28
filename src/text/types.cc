@@ -85,6 +85,9 @@ Instruction::Instruction(At<Opcode> opcode, At<MemArgImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<SelectImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
+Instruction::Instruction(At<Opcode> opcode, At<ShuffleImmediate> immediate)
+    : opcode{opcode}, immediate{immediate} {}
+
 Instruction::Instruction(At<Opcode> opcode, At<Var> immediate)
     : opcode{opcode}, immediate{immediate} {}
 

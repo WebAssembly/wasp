@@ -219,6 +219,10 @@ TEST(TextFormattersTest, Instruction) {
   EXPECT_EQ(R"({opcode select, immediate select []})",
             format("{}", Instruction{Opcode::Select, SelectImmediate{}}));
 
+  EXPECT_EQ(
+      R"({opcode v8x16.shuffle, immediate shuffle [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]})",
+      format("{}", Instruction{Opcode::V8X16Shuffle, ShuffleImmediate{}}));
+
   EXPECT_EQ(R"({opcode local.get, immediate var 0})",
             format("{}", Instruction{Opcode::LocalGet, Var{u32{0}}}));
 }

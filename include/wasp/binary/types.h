@@ -73,7 +73,6 @@ enum class SectionId : u32 {
 #undef WASP_FEATURE_V
 };
 
-using ShuffleImmediate = std::array<u8, 16>;
 using Indexes = std::vector<At<Index>>;
 
 // Section
@@ -517,8 +516,7 @@ struct Event {
 #define WASP_BINARY_CONTAINERS(WASP_V) \
   WASP_V(binary::Indexes)              \
   WASP_V(binary::LocalsList)           \
-  WASP_V(binary::ElementExpressions)   \
-  WASP_V(binary::ShuffleImmediate)
+  WASP_V(binary::ElementExpressions)
 
 WASP_BINARY_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_BINARY_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)

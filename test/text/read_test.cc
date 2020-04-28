@@ -750,6 +750,21 @@ TEST_F(TextReadTest, PlainInstruction_SimdLane) {
      "f32x4.replace_lane 3"_su8);
 }
 
+TEST_F(TextReadTest, PlainInstruction_Shuffle) {
+  using I = Instruction;
+  using O = Opcode;
+
+  Fail(ReadPlainInstruction, {{0, "v8x16.shuffle instruction not allowed"}},
+       "v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8);
+
+  context.features.enable_simd();
+
+  OK(ReadPlainInstruction,
+     I{MakeAt("v8x16.shuffle"_su8, O::V8X16Shuffle),
+       MakeAt("0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8, ShuffleImmediate{})},
+     "v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8);
+}
+
 TEST_F(TextReadTest, PlainInstruction_TableCopy) {
   using I = Instruction;
   using O = Opcode;

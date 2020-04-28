@@ -122,6 +122,7 @@ WASP_DEFINE_VARIANT_NAME(v128, "v128")
 
 WASP_DEFINE_VARIANT_NAME(ValueType, "value_type")
 WASP_DEFINE_VARIANT_NAME(string_view, "string_view")
+WASP_DEFINE_VARIANT_NAME(ShuffleImmediate, "shuffle")
 
 // TODO: More base types.
 

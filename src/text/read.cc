@@ -968,6 +968,16 @@ auto ReadSimdLane(Tokenizer& tokenizer, Context& context) -> At<u32> {
   return lane;
 }
 
+auto ReadSimdShuffleImmediate(Tokenizer& tokenizer, Context& context)
+    -> At<ShuffleImmediate> {
+  LocationGuard guard{tokenizer};
+  ShuffleImmediate result;
+  for (size_t lane = 0; lane < result.size(); ++lane) {
+    result[lane] = ReadSimdLane(tokenizer, context).value();
+  }
+  return MakeAt(guard.loc(), result);
+}
+
 template <typename T, size_t N>
 auto ReadSimdValues(Tokenizer& tokenizer, Context& context) -> At<v128> {
   LocationGuard guard{tokenizer};
@@ -1189,6 +1199,13 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       auto immediate = ReadSimdLane(tokenizer, context);
+      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+    }
+
+    case TokenType::SimdShuffleInstr: {
+      CheckOpcodeEnabled(token, context);
+      tokenizer.Read();
+      auto immediate = ReadSimdShuffleImmediate(tokenizer, context);
       return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
     }
 
