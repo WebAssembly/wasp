@@ -31,6 +31,13 @@ commands:
           make << parameters.target >>
           cp << parameters.outdir >>/wasp .
           cp << parameters.outdir >>/wasp_unittests .
+          cp << parameters.outdir >>/run_spec_tests .
+
+  test:
+    description: test the project
+    steps:
+      - run: ./wasp_unittests
+      - run: ./run_spec_tests third_party/testsuite
 
 jobs:
   build-gcc-debug:
@@ -43,7 +50,7 @@ jobs:
       - compile:
           target: gcc-debug
           outdir: out/gcc/Debug
-      - run: ./wasp_unittests
+      - test
 
   build-clang-debug:
     docker:
@@ -55,7 +62,7 @@ jobs:
       - compile:
           target: clang-debug
           outdir: out/clang/Debug
-      - run: ./wasp_unittests
+      - test
 
   build-clang-release:
     docker:
@@ -67,7 +74,7 @@ jobs:
       - compile:
           target: clang-release
           outdir: out/clang/Release
-      - run: ./wasp_unittests
+      - test
 
 workflows:
   version: 2
