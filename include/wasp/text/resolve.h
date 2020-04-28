@@ -53,6 +53,7 @@ void Resolve(Context&, ElementSegment&);
 void Resolve(Context&, DataSegment&);
 void Resolve(Context&, Event&);
 void Resolve(Context&, ModuleItem&);
+void Resolve(Context&, Module&);
 void Resolve(Context&, ScriptModule&);
 
 }  // namespace text

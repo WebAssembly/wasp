@@ -22,6 +22,7 @@
 #include "wasp/base/format.h"
 #include "wasp/text/context.h"
 #include "wasp/text/formatters.h"
+#include "wasp/text/resolve.h"
 
 namespace wasp {
 namespace text {
@@ -61,6 +62,13 @@ auto ReadScriptModule(Tokenizer& tokenizer, Context& context)
 
     default: {
       auto module = ReadModule(tokenizer, context);
+      // Resolve the module; this has to be done since the module resolver
+      // relies on information that is gathered during parsing. If a new module
+      // is read, then this information will be lost.
+      //
+      // TODO: The information needed should be factored out into a separate
+      // object, so the resolve step can be done independent from reading.
+      Resolve(context, module);
       Expect(tokenizer, context, TokenType::Rpar);
       return MakeAt(
           guard.loc(),
