@@ -638,6 +638,7 @@ switch (PeekChar(data, 2)) {
                       default: break;
                     }
                     break;
+                  case 's': return LexKeyword(data, "i32x4.abs", Opcode::I32X4Abs, Features::Simd);
                   case 't': return LexKeyword(data, "i32x4.extract_lane", TokenType::SimdLaneInstr, Opcode::I32X4ExtractLane, Features::Simd);
                   case 'u':
                     switch (PeekChar(data, 22)) {
@@ -1249,6 +1250,7 @@ switch (PeekChar(data, 2)) {
               default: break;
             }
             break;
+          case 'b': return LexKeyword(data, "i16x8.abs", Opcode::I16X8Abs, Features::Simd);
           case 'd':
             switch (PeekChar(data, 9)) {
               default: return LexKeyword(data, "i16x8.add", Opcode::I16X8Add, Features::Simd);
@@ -1741,6 +1743,7 @@ switch (PeekChar(data, 2)) {
               default: break;
             }
             break;
+          case 's': return LexKeyword(data, "i8x16.abs", Opcode::I8X16Abs, Features::Simd);
           case 't':
             switch (PeekChar(data, 19)) {
               case 's': return LexKeyword(data, "i8x16.extract_lane_s", TokenType::SimdLaneInstr, Opcode::I8X16ExtractLaneS, Features::Simd);

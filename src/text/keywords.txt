@@ -133,6 +133,7 @@ get, TokenType::Get
 global.get, TokenType::VarInstr, Opcode::GlobalGet
 global.set, TokenType::VarInstr, Opcode::GlobalSet
 global, TokenType::Global
+i16x8.abs, Opcode::I16X8Abs, Features::Simd
 i16x8.add_saturate_s, Opcode::I16X8AddSaturateS, Features::Simd
 i16x8.add_saturate_u, Opcode::I16X8AddSaturateU, Features::Simd
 i16x8.add, Opcode::I16X8Add, Features::Simd
@@ -252,6 +253,7 @@ i32.trunc_sat_f64_s, Opcode::I32TruncSatF64S, Features::SaturatingFloatToInt
 i32.trunc_sat_f64_u, Opcode::I32TruncSatF64U, Features::SaturatingFloatToInt
 i32, ValueType::I32
 i32.wrap_i64, Opcode::I32WrapI64
+i32x4.abs, Opcode::I32X4Abs, Features::Simd
 i32x4.add, Opcode::I32X4Add, Features::Simd
 i32x4.all_true, Opcode::I32X4AllTrue, Features::Simd
 i32x4.any_true, Opcode::I32X4AnyTrue, Features::Simd
@@ -394,6 +396,7 @@ i64x2.splat, Opcode::I64X2Splat, Features::Simd
 i64x2.sub, Opcode::I64X2Sub, Features::Simd
 i64x2, TokenType::I64X2
 i64.xor, Opcode::I64Xor
+i8x16.abs, Opcode::I8X16Abs, Features::Simd
 i8x16.add_saturate_s, Opcode::I8X16AddSaturateS, Features::Simd
 i8x16.add_saturate_u, Opcode::I8X16AddSaturateU, Features::Simd
 i8x16.add, Opcode::I8X16Add, Features::Simd
