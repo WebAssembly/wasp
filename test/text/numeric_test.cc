@@ -147,11 +147,13 @@ void Test_StrToInt32() {
       {"345678"_su8, LI::Number(Sign::None, HU::No), 345678},
       {"45678901"_su8, LI::Number(Sign::None, HU::No), 45678901},
       {"2147483647"_su8, LI::Number(Sign::None, HU::No), 2147483647},
+      {"4294967295"_su8, LI::Number(Sign::None, HU::No), T(-1)},
       {"1_2"_su8, LI::Number(Sign::None, HU::Yes), 12},
       {"2_34_5"_su8, LI::Number(Sign::None, HU::Yes), 2345},
       {"34_56_78"_su8, LI::Number(Sign::None, HU::Yes), 345678},
       {"4567_8901"_su8, LI::Number(Sign::None, HU::Yes), 45678901},
       {"2_147_483_647"_su8, LI::Number(Sign::None, HU::Yes), 2147483647},
+      {"4_294_967_295"_su8, LI::Number(Sign::None, HU::Yes), T(-1)},
 
       {"+0"_su8, LI::Number(Sign::Plus, HU::No), 0},
       {"+12"_su8, LI::Number(Sign::Plus, HU::No), 12},
@@ -159,11 +161,13 @@ void Test_StrToInt32() {
       {"+345678"_su8, LI::Number(Sign::Plus, HU::No), 345678},
       {"+45678901"_su8, LI::Number(Sign::Plus, HU::No), 45678901},
       {"+2147483647"_su8, LI::Number(Sign::Plus, HU::No), 2147483647},
+      {"+4294967295"_su8, LI::Number(Sign::Plus, HU::No), T(-1)},
       {"+1_2"_su8, LI::Number(Sign::Plus, HU::Yes), 12},
       {"+2_34_5"_su8, LI::Number(Sign::Plus, HU::Yes), 2345},
       {"+34_56_78"_su8, LI::Number(Sign::Plus, HU::Yes), 345678},
       {"+4567_8901"_su8, LI::Number(Sign::Plus, HU::Yes), 45678901},
       {"+2_147_483_647"_su8, LI::Number(Sign::Plus, HU::Yes), 2147483647},
+      {"+4_294_967_295"_su8, LI::Number(Sign::Plus, HU::Yes), T(-1)},
 
       {"-0"_su8, LI::Number(Sign::Minus, HU::No), 0},
       {"-12"_su8, LI::Number(Sign::Minus, HU::No), T(-12)},
@@ -187,6 +191,7 @@ void Test_StrToInt32() {
       {"0x345_678_9a"_su8, LI::HexNumber(Sign::None, HU::Yes), 0x3456789a},
       {"0x7_89a_bcde"_su8, LI::HexNumber(Sign::None, HU::Yes), 0x789abcde},
       {"0x7f_ff_ff_ff"_su8, LI::HexNumber(Sign::None, HU::Yes), 0x7fffffff},
+      {"0xff_ff_ff_ff"_su8, LI::HexNumber(Sign::None, HU::Yes), T(-1)},
 
       {"+0x123"_su8, LI::HexNumber(Sign::Plus, HU::No), 0x123},
       {"+0x234567"_su8, LI::HexNumber(Sign::Plus, HU::No), 0x234567},
@@ -198,6 +203,7 @@ void Test_StrToInt32() {
       {"+0x345_678_9a"_su8, LI::HexNumber(Sign::Plus, HU::Yes), 0x3456789a},
       {"+0x7_89a_bcde"_su8, LI::HexNumber(Sign::Plus, HU::Yes), 0x789abcde},
       {"+0x7f_ff_ff_ff"_su8, LI::HexNumber(Sign::Plus, HU::Yes), 0x7fffffff},
+      {"+0xff_ff_ff_ff"_su8, LI::HexNumber(Sign::Plus, HU::Yes), T(-1)},
 
       {"-0x123"_su8, LI::HexNumber(Sign::Minus, HU::No), T(-0x123)},
       {"-0x234567"_su8, LI::HexNumber(Sign::Minus, HU::No), T(-0x234567)},

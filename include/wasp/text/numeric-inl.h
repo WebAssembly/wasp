@@ -106,14 +106,13 @@ auto StrToInt(LiteralInfo info, SpanU8 span) -> optional<T> {
   }
   U value = *value_opt;
 
-  // The signed range is [-2**N, 2**N-1], so the maximum is larger for negative
-  // numbers than positive numbers.
-  auto max =
-      U{std::numeric_limits<S>::max()} + (info.sign == Sign::Minus ? 1 : 0);
-  if (value > max) {
-    return nullopt;
-  }
   if (info.sign == Sign::Minus) {
+    // The signed range is [-2**N, 2**N-1], so the maximum is larger for
+    // negative numbers than positive numbers.
+    auto max = U{std::numeric_limits<S>::max()} + 1;
+    if (value > max) {
+      return nullopt;
+    }
     value = ~value + 1;  // ~N + 1 is equivalent to -N.
   }
   return value;
