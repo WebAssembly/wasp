@@ -1260,9 +1260,18 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
 }
 
 auto ReadLabelOpt(Tokenizer& tokenizer, Context& context) -> OptAt<BindVar> {
-  auto bind_var = ReadBindVarOpt(tokenizer, context, context.label_names);
+  // Unlike ReadBindVarOpt, labels can be shadowed; don't check for duplicates.
+  auto token_opt = tokenizer.Match(TokenType::Id);
+  if (!token_opt) {
+    context.label_names.NewUnbound();
+    context.label_name_stack.push_back(nullopt);
+    return nullopt;
+  }
+
+  BindVar bind_var{token_opt->as_string_view()};
+  context.label_names.ReplaceBound(bind_var);
   context.label_name_stack.push_back(bind_var);
-  return bind_var;
+  return MakeAt(token_opt->loc, bind_var);
 }
 
 void ReadEndLabelOpt(Tokenizer& tokenizer,

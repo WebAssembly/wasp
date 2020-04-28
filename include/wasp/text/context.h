@@ -43,6 +43,7 @@ struct NameMap {
   void Reset();
   void NewUnbound();
   void NewBound(BindVar);
+  void ReplaceBound(BindVar);
   void New(OptAt<BindVar>);
   void Delete(BindVar);
 

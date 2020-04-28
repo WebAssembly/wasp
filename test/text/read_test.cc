@@ -1157,9 +1157,23 @@ TEST_F(TextReadTest, Label_ReuseNames) {
 }
 
 TEST_F(TextReadTest, Label_DuplicateNames) {
-  Fail(ReadInstructionList_ForTesting,
-       {{15, "Variable $b is already bound to index 0"}},
-       "block $b block $b end end"_su8);
+  using I = Instruction;
+  using O = Opcode;
+
+  OK(ReadInstructionList_ForTesting,
+     InstructionList{
+         MakeAt("block $b"_su8,
+                I{MakeAt("block"_su8, O::Block),
+                  MakeAt("$b"_su8,
+                         BlockImmediate{MakeAt("$b"_su8, "$b"_sv), {}})}),
+         MakeAt("block $b"_su8,
+                I{MakeAt("block"_su8, O::Block),
+                  MakeAt("$b"_su8,
+                         BlockImmediate{MakeAt("$b"_su8, "$b"_sv), {}})}),
+         MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+         MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+     },
+     "block $b block $b end end"_su8);
 }
 
 auto ReadExpression_ForTesting(Tokenizer& tokenizer, Context& context)

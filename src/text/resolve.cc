@@ -154,7 +154,7 @@ void Resolve(Context& context, Instruction& instruction) {
       auto& immediate = std::get<At<BlockImmediate>>(instruction.immediate);
       // TODO: share w/ code in read.cc
       if (immediate->label) {
-        context.label_names.NewBound(*immediate->label);
+        context.label_names.ReplaceBound(*immediate->label);
       } else {
         context.label_names.NewUnbound();
       }

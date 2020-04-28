@@ -80,6 +80,10 @@ void NameMap::NewBound(BindVar var) {
   map_.emplace(var, next_index_++);
 }
 
+void NameMap::ReplaceBound(BindVar var) {
+  map_.emplace(var, next_index_++);
+}
+
 void NameMap::New(OptAt<BindVar> var) {
   if (var) {
     NewBound(*var);
@@ -89,7 +93,6 @@ void NameMap::New(OptAt<BindVar> var) {
 }
 
 void NameMap::Delete(BindVar var) {
-  assert(Has(var));
   map_.erase(var);
 }
 
