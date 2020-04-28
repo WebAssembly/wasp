@@ -160,6 +160,7 @@ auto ReadEvent(Tokenizer&, Context&) -> At<Event>;
 
 // Module
 
+bool IsModuleItem(Tokenizer&);
 auto ReadModuleItem(Tokenizer&, Context&) -> At<ModuleItem>;
 auto ReadModule(Tokenizer&, Context&) -> Module;
 
@@ -169,6 +170,7 @@ auto ReadModuleVarOpt(Tokenizer&, Context&) -> OptAt<ModuleVar>;
 auto ReadScriptModule(Tokenizer&, Context&) -> At<ScriptModule>;
 
 // Action
+bool IsConst(Tokenizer&);
 auto ReadConst(Tokenizer&, Context&) -> At<Const>;
 auto ReadConstList(Tokenizer&, Context&) -> ConstList;
 auto ReadInvokeAction(Tokenizer&, Context&) -> At<InvokeAction>;
@@ -182,6 +184,8 @@ template <typename T>
 auto ReadFloatResult(Tokenizer&, Context&) -> At<FloatResult<T>>;
 template <typename T, size_t N>
 auto ReadSimdFloatResult(Tokenizer&, Context&) -> At<ReturnResult>;
+
+bool IsReturnResult(Tokenizer&);
 auto ReadReturnResult(Tokenizer&, Context&) -> At<ReturnResult>;
 auto ReadReturnResultList(Tokenizer&, Context&) -> ReturnResultList;
 auto ReadReturnAssertion(Tokenizer&, Context&) -> At<ReturnAssertion>;
@@ -189,6 +193,7 @@ auto ReadAssertion(Tokenizer&, Context&) -> At<Assertion>;
 
 auto ReadRegister(Tokenizer&, Context&) -> At<Register>;
 
+bool IsCommand(Tokenizer&);
 auto ReadCommand(Tokenizer&, Context&) -> At<Command>;
 auto ReadScript(Tokenizer&, Context&) -> Script;
 

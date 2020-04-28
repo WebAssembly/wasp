@@ -77,6 +77,21 @@ auto ReadScriptModule(Tokenizer& tokenizer, Context& context)
   }
 }
 
+bool IsConst(Tokenizer& tokenizer) {
+  if (tokenizer.Peek().type != TokenType::Lpar) {
+    return false;
+  }
+
+  auto token = tokenizer.Peek(1);
+  return token.type == TokenType::F32ConstInstr ||
+         token.type == TokenType::F64ConstInstr ||
+         token.type == TokenType::I32ConstInstr ||
+         token.type == TokenType::I64ConstInstr ||
+         token.type == TokenType::SimdConstInstr ||
+         token.type == TokenType::RefNullInstr ||
+         token.type == TokenType::RefHost;
+}
+
 auto ReadConst(Tokenizer& tokenizer, Context& context) -> At<Const> {
   // TODO: Share with ReadPlainInstruction above?
   LocationGuard guard{tokenizer};
@@ -190,7 +205,7 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> At<Const> {
 auto ReadConstList(Tokenizer& tokenizer, Context& context)
     -> ConstList {
   ConstList result;
-  while (tokenizer.Peek().type == TokenType::Lpar) {
+  while (IsConst(tokenizer)) {
     result.push_back(ReadConst(tokenizer, context));
   }
   return result;
@@ -289,6 +304,21 @@ auto ReadSimdFloatResult(Tokenizer& tokenizer, Context& context)
     result[lane] = ReadFloatResult<T>(tokenizer, context).value();
   }
   return MakeAt(guard.loc(), ReturnResult{result});
+}
+
+bool IsReturnResult(Tokenizer& tokenizer) {
+  if (tokenizer.Peek().type != TokenType::Lpar) {
+    return false;
+  }
+
+  auto token = tokenizer.Peek(1);
+  return token.type == TokenType::F32ConstInstr ||
+         token.type == TokenType::F64ConstInstr ||
+         token.type == TokenType::I32ConstInstr ||
+         token.type == TokenType::I64ConstInstr ||
+         token.type == TokenType::SimdConstInstr ||
+         token.type == TokenType::RefAny ||
+         token.type == TokenType::RefFuncInstr;
 }
 
 auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
@@ -402,7 +432,7 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
 auto ReadReturnResultList(Tokenizer& tokenizer, Context& context)
     -> ReturnResultList {
   ReturnResultList result;
-  while (tokenizer.Peek().type == TokenType::Lpar) {
+  while (IsReturnResult(tokenizer)) {
     result.push_back(ReadReturnResult(tokenizer, context));
   }
   return result;
@@ -490,6 +520,23 @@ auto ReadRegister(Tokenizer& tokenizer, Context& context) -> At<Register> {
   return MakeAt(guard.loc(), Register{name, module_opt});
 }
 
+bool IsCommand(Tokenizer& tokenizer) {
+  if (tokenizer.Peek().type != TokenType::Lpar) {
+    return false;
+  }
+
+  auto token = tokenizer.Peek(1);
+  return IsModuleItem(tokenizer) ||  // For an inline-module.
+         token.type == TokenType::Module || token.type == TokenType::Invoke ||
+         token.type == TokenType::Get || token.type == TokenType::Register ||
+         token.type == TokenType::AssertMalformed ||
+         token.type == TokenType::AssertInvalid ||
+         token.type == TokenType::AssertUnlinkable ||
+         token.type == TokenType::AssertTrap ||
+         token.type == TokenType::AssertReturn ||
+         token.type == TokenType::AssertExhaustion;
+}
+
 auto ReadCommand(Tokenizer& tokenizer, Context& context) -> At<Command> {
   auto token = tokenizer.Peek();
   if (token.type != TokenType::Lpar) {
@@ -526,16 +573,28 @@ auto ReadCommand(Tokenizer& tokenizer, Context& context) -> At<Command> {
       return MakeAt(item.loc(), Command{item.value()});
     }
 
-    default:
-      context.errors.OnError(token.loc,
-                             format("Invalid command, got {}", token.type));
-      return MakeAt(token.loc, Command{});
+    default: {
+      if (IsModuleItem(tokenizer)) {
+        // Read an inline module (one without a wrapping `(module ...)` as a
+        // script.
+        LocationGuard guard{tokenizer};
+        auto module = ReadModule(tokenizer, context);
+        Resolve(context, module);
+        auto script_module = MakeAt(
+            guard.loc(), ScriptModule{nullopt, ScriptModuleKind::Text, module});
+        return MakeAt(script_module.loc(), Command{script_module.value()});
+      } else {
+        context.errors.OnError(token.loc,
+                               format("Invalid command, got {}", token.type));
+        return MakeAt(token.loc, Command{});
+      }
+    }
   }
 }
 
 auto ReadScript(Tokenizer& tokenizer, Context& context) -> Script {
   Script result;
-  while (tokenizer.Peek().type == TokenType::Lpar) {
+  while (IsCommand(tokenizer)) {
     result.push_back(ReadCommand(tokenizer, context));
   }
   return result;

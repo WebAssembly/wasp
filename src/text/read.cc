@@ -1535,6 +1535,20 @@ auto ReadEvent(Tokenizer& tokenizer, Context& context) -> At<Event> {
 
 // Module
 
+bool IsModuleItem(Tokenizer& tokenizer) {
+  if (tokenizer.Peek().type != TokenType::Lpar) {
+    return false;
+  }
+
+  auto token = tokenizer.Peek(1);
+  return token.type == TokenType::Type || token.type == TokenType::Import ||
+         token.type == TokenType::Func || token.type == TokenType::Table ||
+         token.type == TokenType::Memory || token.type == TokenType::Global ||
+         token.type == TokenType::Export || token.type == TokenType::Start ||
+         token.type == TokenType::Elem || token.type == TokenType::Data ||
+         token.type == TokenType::Event;
+}
+
 auto ReadModuleItem(Tokenizer& tokenizer, Context& context)
     -> At<ModuleItem> {
   auto token = tokenizer.Peek();
@@ -1615,7 +1629,7 @@ auto ReadModuleItem(Tokenizer& tokenizer, Context& context)
 auto ReadModule(Tokenizer& tokenizer, Context& context) -> Module {
   context.BeginModule();
   Module module;
-  while (tokenizer.Peek().type == TokenType::Lpar) {
+  while (IsModuleItem(tokenizer)) {
     module.push_back(ReadModuleItem(tokenizer, context));
   }
   context.EndModule();
