@@ -13,3 +13,6 @@
 [submodule "third_party/gdtoa"]
 	path = third_party/gdtoa
 	url = https://github.com/jwiegley/gdtoa
+[submodule "third_party/testsuite"]
+	path = third_party/testsuite
+	url = https://github.com/WebAssembly/testsuite

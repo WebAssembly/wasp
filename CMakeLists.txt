@@ -152,6 +152,15 @@ target_link_libraries(wasp_unittests
   gmock_main
 )
 
+add_executable(run_spec_tests
+  src/tools/argparser.cc
+  test/run_spec_tests.cc
+)
+
+target_link_libraries(run_spec_tests
+  wasplib
+)
+
 add_executable(wasp_sqlite
   src/tools/argparser.cc
   src/tools/wasp_sqlite.cc
