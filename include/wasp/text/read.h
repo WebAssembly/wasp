@@ -28,6 +28,9 @@
 namespace wasp {
 namespace text {
 
+auto Expect(Tokenizer&, Context&, TokenType expected) -> optional<Token>;
+auto ExpectLpar(Tokenizer&, Context&, TokenType expected) -> optional<Token>;
+
 auto ReadNat32(Tokenizer&, Context&) -> At<u32>;
 template <typename T>
 auto ReadInt(Tokenizer&, Context&) -> At<T>;

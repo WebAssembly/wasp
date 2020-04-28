@@ -83,6 +83,7 @@ add_library(wasplib
   src/text/numeric.cc
   src/text/print_to.cc
   src/text/read.cc
+  src/text/read_script.cc
   src/text/resolve.cc
   src/text/types.cc
 
