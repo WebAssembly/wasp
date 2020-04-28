@@ -2211,6 +2211,8 @@ TEST_F(TextReadTest, ElementExpression) {
   using I = Instruction;
   using O = Opcode;
 
+  context.features.enable_bulk_memory();
+
   // Item.
   OK(ReadElementExpression,
      ElementExpression{
@@ -2244,6 +2246,8 @@ TEST_F(TextReadTest, OffsetExpression) {
 TEST_F(TextReadTest, ElementExpressionList) {
   using I = Instruction;
   using O = Opcode;
+
+  context.features.enable_bulk_memory();
 
   // Item list.
   OKVector(
@@ -2390,6 +2394,15 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
          MakeAt("$e2"_su8, "$e2"_sv), SegmentType::Declared,
          ElementListWithVars{MakeAt("func"_su8, ExternalKind::Function), {}}},
      "(elem $e2 declare func)"_su8);
+
+  // Active legacy, empty
+  OK(ReadElementSegment,
+     ElementSegment{
+         nullopt,
+         nullopt,
+         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         {}},
+     "(elem (nop))"_su8);
 
   // Active legacy (i.e. no element type or external kind).
   OK(ReadElementSegment,

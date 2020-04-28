@@ -786,11 +786,22 @@ auto ReadElementExpression(Tokenizer& tokenizer, Context& context)
     -> ElementExpression {
   LocationGuard guard{tokenizer};
   ElementExpression expression;
+
+  // Element expressions were first added in the bulk memory proposal, so it
+  // shouldn't be read (and this function shouldn't be called) if that feature
+  // is not enabled.
+  assert(context.features.bulk_memory_enabled());
+  // The only valid instructions are enabled by the reference types proposal,
+  // but their encoding is still used by the bulk memory proposal.
+  Features new_features;
+  new_features.enable_reference_types();
+  Context new_context{new_features, context.errors};
+
   if (tokenizer.MatchLpar(TokenType::Item)) {
-    ReadInstructionList(tokenizer, context, expression);
+    ReadInstructionList(tokenizer, new_context, expression);
     Expect(tokenizer, context, TokenType::Rpar);
   } else if (IsExpression(tokenizer)) {
-    ReadExpression(tokenizer, context, expression);
+    ReadExpression(tokenizer, new_context, expression);
   } else {
     auto token = tokenizer.Peek();
     context.errors.OnError(
@@ -846,7 +857,8 @@ auto ReadElementSegment(Tokenizer& tokenizer, Context& context)
         offset_opt = ReadOffsetExpression(tokenizer, context);
 
         token = tokenizer.Peek();
-        if (token.type == TokenType::Nat || token.type == TokenType::Id) {
+        if (token.type == TokenType::Nat || token.type == TokenType::Id ||
+            token.type == TokenType::Rpar) {
           // LPAR ELEM bind_var_opt offset * elem_var_list RPAR
           auto init = ReadVarList(tokenizer, context);
           Expect(tokenizer, context, TokenType::Rpar);
