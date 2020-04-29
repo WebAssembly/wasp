@@ -38,7 +38,7 @@ void ExpectSubsection(const std::vector<T>& expected, LazySection<T>& sec) {
 
 }  // namespace
 
-TEST(LazyNameSectionTest, NameSection) {
+TEST(BinaryLazyNameSectionTest, NameSection) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadNameSection(
@@ -74,7 +74,7 @@ TEST(LazyNameSectionTest, NameSection) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazyNameSectionTest, ModuleNameSubsection) {
+TEST(BinaryLazyNameSectionTest, ModuleNameSubsection) {
   TestErrors errors;
   Context context{errors};
   auto name = ReadModuleNameSubsection("\x04name"_su8, context);
@@ -82,7 +82,7 @@ TEST(LazyNameSectionTest, ModuleNameSubsection) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazyNameSectionTest, FunctionNamesSubsection) {
+TEST(BinaryLazyNameSectionTest, FunctionNamesSubsection) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadFunctionNamesSubsection(
@@ -99,7 +99,7 @@ TEST(LazyNameSectionTest, FunctionNamesSubsection) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazyNameSectionTest, LocalNamesSubsection) {
+TEST(BinaryLazyNameSectionTest, LocalNamesSubsection) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadLocalNamesSubsection(

@@ -32,7 +32,7 @@ using namespace ::wasp::binary;
 using namespace ::wasp::test;
 using namespace ::wasp::binary::test;
 
-TEST(ReadTest, BlockType_MVP) {
+TEST(BinaryReadTest, BlockType_MVP) {
   ExpectRead<BlockType>(BlockType::I32, "\x7f"_su8);
   ExpectRead<BlockType>(BlockType::I64, "\x7e"_su8);
   ExpectRead<BlockType>(BlockType::F32, "\x7d"_su8);
@@ -40,7 +40,7 @@ TEST(ReadTest, BlockType_MVP) {
   ExpectRead<BlockType>(BlockType::Void, "\x40"_su8);
 }
 
-TEST(ReadTest, BlockType_Basic_multi_value) {
+TEST(BinaryReadTest, BlockType_Basic_multi_value) {
   Features features;
   features.enable_multi_value();
 
@@ -51,7 +51,7 @@ TEST(ReadTest, BlockType_Basic_multi_value) {
   ExpectRead<BlockType>(BlockType::Void, "\x40"_su8, features);
 }
 
-TEST(ReadTest, BlockType_simd) {
+TEST(BinaryReadTest, BlockType_simd) {
   ExpectReadFailure<BlockType>(
       {{0, "block type"}, {1, "Unknown block type: 123"}}, "\x7b"_su8);
 
@@ -60,14 +60,14 @@ TEST(ReadTest, BlockType_simd) {
   ExpectRead<BlockType>(BlockType::V128, "\x7b"_su8, features);
 }
 
-TEST(ReadTest, BlockType_MultiValueNegative) {
+TEST(BinaryReadTest, BlockType_MultiValueNegative) {
   Features features;
   features.enable_multi_value();
   ExpectReadFailure<BlockType>(
       {{0, "block type"}, {1, "Unknown block type: -9"}}, "\x77"_su8, features);
 }
 
-TEST(ReadTest, BlockType_multi_value) {
+TEST(BinaryReadTest, BlockType_multi_value) {
   ExpectReadFailure<BlockType>(
       {{0, "block type"}, {1, "Unknown block type: 1"}}, "\x01"_su8);
 
@@ -77,7 +77,7 @@ TEST(ReadTest, BlockType_multi_value) {
   ExpectRead<BlockType>(BlockType(448), "\xc0\x03"_su8, features);
 }
 
-TEST(ReadTest, BlockType_reference_types) {
+TEST(BinaryReadTest, BlockType_reference_types) {
   ExpectReadFailure<BlockType>(
       {{0, "block type"}, {1, "Unknown block type: 111"}}, "\x6f"_su8);
 
@@ -86,7 +86,7 @@ TEST(ReadTest, BlockType_reference_types) {
   ExpectRead<BlockType>(BlockType::Anyref, "\x6f"_su8, features);
 }
 
-TEST(ReadTest, BlockType_Unknown) {
+TEST(BinaryReadTest, BlockType_Unknown) {
   ExpectReadFailure<BlockType>(
       {{0, "block type"}, {1, "Unknown block type: 0"}}, "\x00"_su8);
 
@@ -95,13 +95,13 @@ TEST(ReadTest, BlockType_Unknown) {
       {{0, "block type"}, {1, "Unknown block type: 255"}}, "\xff\x7f"_su8);
 }
 
-TEST(ReadTest, BrOnExnImmediate) {
+TEST(BinaryReadTest, BrOnExnImmediate) {
   ExpectRead<BrOnExnImmediate>(BrOnExnImmediate{MakeAt("\x00"_su8, Index{0}),
                                                 MakeAt("\x00"_su8, Index{0})},
                                "\x00\x00"_su8);
 }
 
-TEST(ReadTest, BrOnExnImmediate_PastEnd) {
+TEST(BinaryReadTest, BrOnExnImmediate_PastEnd) {
   ExpectReadFailure<BrOnExnImmediate>(
       {{0, "br_on_exn"}, {0, "target"}, {0, "Unable to read u8"}}, ""_su8);
 
@@ -110,7 +110,7 @@ TEST(ReadTest, BrOnExnImmediate_PastEnd) {
       "\x00"_su8);
 }
 
-TEST(ReadTest, BrTableImmediate) {
+TEST(BinaryReadTest, BrTableImmediate) {
   ExpectRead<BrTableImmediate>(
       BrTableImmediate{{}, MakeAt("\x00"_su8, Index{0})}, "\x00\x00"_su8);
   ExpectRead<BrTableImmediate>(BrTableImmediate{{MakeAt("\x01"_su8, Index{1}),
@@ -119,7 +119,7 @@ TEST(ReadTest, BrTableImmediate) {
                                "\x02\x01\x02\x03"_su8);
 }
 
-TEST(ReadTest, BrTableImmediate_PastEnd) {
+TEST(BinaryReadTest, BrTableImmediate_PastEnd) {
   ExpectReadFailure<BrTableImmediate>(
       {{0, "br_table"}, {0, "targets"}, {0, "count"}, {0, "Unable to read u8"}},
       ""_su8);
@@ -129,7 +129,7 @@ TEST(ReadTest, BrTableImmediate_PastEnd) {
       "\x00"_su8);
 }
 
-TEST(ReadTest, ReadBytes) {
+TEST(BinaryReadTest, ReadBytes) {
   TestErrors errors;
   Context context{errors};
   const SpanU8 data = "\x12\x34\x56"_su8;
@@ -140,7 +140,7 @@ TEST(ReadTest, ReadBytes) {
   EXPECT_EQ(0u, copy.size());
 }
 
-TEST(ReadTest, ReadBytes_Leftovers) {
+TEST(BinaryReadTest, ReadBytes_Leftovers) {
   TestErrors errors;
   Context context{errors};
   const SpanU8 data = "\x12\x34\x56"_su8;
@@ -151,7 +151,7 @@ TEST(ReadTest, ReadBytes_Leftovers) {
   EXPECT_EQ(1u, copy.size());
 }
 
-TEST(ReadTest, ReadBytes_Fail) {
+TEST(BinaryReadTest, ReadBytes_Fail) {
   TestErrors errors;
   Context context{errors};
   const SpanU8 data = "\x12\x34\x56"_su8;
@@ -161,7 +161,7 @@ TEST(ReadTest, ReadBytes_Fail) {
   ExpectError({{0, "Unable to read 4 bytes"}}, errors, data);
 }
 
-TEST(ReadTest, CallIndirectImmediate) {
+TEST(BinaryReadTest, CallIndirectImmediate) {
   ExpectRead<CallIndirectImmediate>(
       CallIndirectImmediate{MakeAt("\x01"_su8, Index{1}),
                             MakeAt("\x00"_su8, Index{0})},
@@ -172,7 +172,7 @@ TEST(ReadTest, CallIndirectImmediate) {
       "\x80\x01\x00"_su8);
 }
 
-TEST(ReadTest, CallIndirectImmediate_BadReserved) {
+TEST(BinaryReadTest, CallIndirectImmediate_BadReserved) {
   ExpectReadFailure<CallIndirectImmediate>(
       {{0, "call_indirect"},
        {1, "reserved"},
@@ -180,7 +180,7 @@ TEST(ReadTest, CallIndirectImmediate_BadReserved) {
       "\x00\x01"_su8);
 }
 
-TEST(ReadTest, CallIndirectImmediate_PastEnd) {
+TEST(BinaryReadTest, CallIndirectImmediate_PastEnd) {
   ExpectReadFailure<CallIndirectImmediate>(
       {{0, "call_indirect"}, {0, "type index"}, {0, "Unable to read u8"}},
       ""_su8);
@@ -190,7 +190,7 @@ TEST(ReadTest, CallIndirectImmediate_PastEnd) {
       "\x00"_su8);
 }
 
-TEST(ReadTest, Code) {
+TEST(BinaryReadTest, Code) {
   // Empty body. This will fail validation, but can still be read.
   ExpectRead<Code>(Code{{}, MakeAt(""_su8, ""_expr)}, "\x01\x00"_su8);
 
@@ -210,7 +210,7 @@ TEST(ReadTest, Code) {
       "\x07\x02\x02\x7f\x03\x7e\x01\x0b"_su8);
 }
 
-TEST(ReadTest, Code_PastEnd) {
+TEST(BinaryReadTest, Code_PastEnd) {
   ExpectReadFailure<Code>(
       {{0, "code"}, {0, "length"}, {0, "Unable to read u8"}}, ""_su8);
 
@@ -222,7 +222,7 @@ TEST(ReadTest, Code_PastEnd) {
       "\x01\x01"_su8);
 }
 
-TEST(ReadTest, ConstantExpression) {
+TEST(BinaryReadTest, ConstantExpression) {
   // i32.const
   ExpectRead<ConstantExpression>(
       ConstantExpression{MakeAt(
@@ -263,7 +263,7 @@ TEST(ReadTest, ConstantExpression) {
       "\x23\x00\x0b"_su8);
 }
 
-TEST(ReadTest, ConstantExpression_ReferenceTypes) {
+TEST(BinaryReadTest, ConstantExpression_ReferenceTypes) {
   // ref.null
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {0, "opcode"}, {1, "Unknown opcode: 208"}},
@@ -291,7 +291,7 @@ TEST(ReadTest, ConstantExpression_ReferenceTypes) {
       "\xd2\x00\x0b"_su8, features);
 }
 
-TEST(ReadTest, ConstantExpression_NoEnd) {
+TEST(BinaryReadTest, ConstantExpression_NoEnd) {
   // i32.const
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
@@ -318,32 +318,32 @@ TEST(ReadTest, ConstantExpression_NoEnd) {
       "\x23\x00"_su8);
 }
 
-TEST(ReadTest, ConstantExpression_TooLong) {
+TEST(BinaryReadTest, ConstantExpression_TooLong) {
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {3, "Expected end instruction"}},
       "\x41\x00\x01\x0b"_su8);
 }
 
-TEST(ReadTest, ConstantExpression_InvalidInstruction) {
+TEST(BinaryReadTest, ConstantExpression_InvalidInstruction) {
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {0, "opcode"}, {1, "Unknown opcode: 6"}},
       "\x06"_su8);
 }
 
-TEST(ReadTest, ConstantExpression_IllegalInstruction) {
+TEST(BinaryReadTest, ConstantExpression_IllegalInstruction) {
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"},
        {1, "Illegal instruction in constant expression: unreachable"}},
       "\x00"_su8);
 }
 
-TEST(ReadTest, ConstantExpression_PastEnd) {
+TEST(BinaryReadTest, ConstantExpression_PastEnd) {
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {0, "opcode"}, {0, "Unable to read u8"}},
       ""_su8);
 }
 
-TEST(ReadTest, CopyImmediate) {
+TEST(BinaryReadTest, CopyImmediate) {
   for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
     ExpectRead<CopyImmediate>(CopyImmediate{MakeAt("\x00"_su8, Index{0}),
                                             MakeAt("\x00"_su8, Index{0})},
@@ -351,7 +351,7 @@ TEST(ReadTest, CopyImmediate) {
   }
 }
 
-TEST(ReadTest, CopyImmediate_BadReserved) {
+TEST(BinaryReadTest, CopyImmediate_BadReserved) {
   for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
     ExpectReadFailure<CopyImmediate>({{0, "copy immediate"},
                                       {0, "reserved"},
@@ -365,7 +365,7 @@ TEST(ReadTest, CopyImmediate_BadReserved) {
   }
 }
 
-TEST(ReadTest, CopyImmediate_PastEnd) {
+TEST(BinaryReadTest, CopyImmediate_PastEnd) {
   for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
     ExpectReadFailure<CopyImmediate>(
         {{0, "copy immediate"}, {0, "reserved"}, {0, "Unable to read u8"}},
@@ -377,7 +377,7 @@ TEST(ReadTest, CopyImmediate_PastEnd) {
   }
 }
 
-TEST(ReadTest, CopyImmediate_Table_reference_types) {
+TEST(BinaryReadTest, CopyImmediate_Table_reference_types) {
   Features features;
   features.enable_reference_types();
 
@@ -391,7 +391,7 @@ TEST(ReadTest, CopyImmediate_Table_reference_types) {
                             BulkImmediateKind::Table);
 }
 
-TEST(ReadTest, CopyImmediate_Memory_reference_types) {
+TEST(BinaryReadTest, CopyImmediate_Memory_reference_types) {
   Features features;
   features.enable_reference_types();
 
@@ -408,13 +408,13 @@ TEST(ReadTest, CopyImmediate_Memory_reference_types) {
 }
 
 
-TEST(ReadTest, ShuffleImmediate) {
+TEST(BinaryReadTest, ShuffleImmediate) {
   ExpectRead<ShuffleImmediate>(
       ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
 }
 
-TEST(ReadTest, ShuffleImmediate_PastEnd) {
+TEST(BinaryReadTest, ShuffleImmediate_PastEnd) {
   ExpectReadFailure<ShuffleImmediate>(
       {{0, "shuffle immediate"}, {0, "Unable to read u8"}}, ""_su8);
 
@@ -423,7 +423,7 @@ TEST(ReadTest, ShuffleImmediate_PastEnd) {
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
 }
 
-TEST(ReadTest, ReadCount) {
+TEST(BinaryReadTest, ReadCount) {
   TestErrors errors;
   Context context{errors};
   const SpanU8 data = "\x01\x00\x00\x00"_su8;
@@ -434,7 +434,7 @@ TEST(ReadTest, ReadCount) {
   EXPECT_EQ(3u, copy.size());
 }
 
-TEST(ReadTest, ReadCount_PastEnd) {
+TEST(BinaryReadTest, ReadCount_PastEnd) {
   TestErrors errors;
   Context context{errors};
   const SpanU8 data = "\x05\x00\x00\x00"_su8;
@@ -445,7 +445,7 @@ TEST(ReadTest, ReadCount_PastEnd) {
   EXPECT_EQ(3u, copy.size());
 }
 
-TEST(ReadTest, DataSegment_MVP) {
+TEST(BinaryReadTest, DataSegment_MVP) {
   ExpectRead<DataSegment>(
       DataSegment{MakeAt("\x01"_su8, Index{1}),
                   MakeAt("\x42\x01\x0b"_su8,
@@ -457,7 +457,7 @@ TEST(ReadTest, DataSegment_MVP) {
       "\x01\x42\x01\x0b\x04wxyz"_su8);
 }
 
-TEST(ReadTest, DataSegment_MVP_PastEnd) {
+TEST(BinaryReadTest, DataSegment_MVP_PastEnd) {
   ExpectReadFailure<DataSegment>(
       {{0, "data segment"}, {0, "memory index"}, {0, "Unable to read u8"}},
       ""_su8);
@@ -478,7 +478,7 @@ TEST(ReadTest, DataSegment_MVP_PastEnd) {
       "\x00\x41\x00\x0b\x02"_su8);
 }
 
-TEST(ReadTest, DataSegment_BulkMemory) {
+TEST(BinaryReadTest, DataSegment_BulkMemory) {
   Features features;
   features.enable_bulk_memory();
 
@@ -496,7 +496,7 @@ TEST(ReadTest, DataSegment_BulkMemory) {
       "\x02\x01\x41\x02\x0b\x03xyz"_su8, features);
 }
 
-TEST(ReadTest, DataSegment_BulkMemory_BadFlags) {
+TEST(BinaryReadTest, DataSegment_BulkMemory_BadFlags) {
   Features features;
   features.enable_bulk_memory();
 
@@ -504,7 +504,7 @@ TEST(ReadTest, DataSegment_BulkMemory_BadFlags) {
                                  "\x03"_su8, features);
 }
 
-TEST(ReadTest, DataSegment_BulkMemory_PastEnd) {
+TEST(BinaryReadTest, DataSegment_BulkMemory_PastEnd) {
   Features features;
   features.enable_bulk_memory();
 
@@ -542,7 +542,7 @@ TEST(ReadTest, DataSegment_BulkMemory_PastEnd) {
       "\x02\x00\x41\x00\x0b\x01"_su8, features);
 }
 
-TEST(ReadTest, ElementExpression) {
+TEST(BinaryReadTest, ElementExpression) {
   Features features;
   features.enable_bulk_memory();
 
@@ -560,7 +560,7 @@ TEST(ReadTest, ElementExpression) {
       "\xd2\x02\x0b"_su8, features);
 }
 
-TEST(ReadTest, ElementExpression_NoEnd) {
+TEST(BinaryReadTest, ElementExpression_NoEnd) {
   Features features;
   features.enable_bulk_memory();
 
@@ -575,7 +575,7 @@ TEST(ReadTest, ElementExpression_NoEnd) {
       "\xd2\x00"_su8, features);
 }
 
-TEST(ReadTest, ElementExpression_TooLong) {
+TEST(BinaryReadTest, ElementExpression_TooLong) {
   Features features;
   features.enable_bulk_memory();
 
@@ -584,7 +584,7 @@ TEST(ReadTest, ElementExpression_TooLong) {
       "\xd0\x00"_su8, features);
 }
 
-TEST(ReadTest, ElementExpression_InvalidInstruction) {
+TEST(BinaryReadTest, ElementExpression_InvalidInstruction) {
   Features features;
   features.enable_bulk_memory();
 
@@ -593,7 +593,7 @@ TEST(ReadTest, ElementExpression_InvalidInstruction) {
       "\x06"_su8, features);
 }
 
-TEST(ReadTest, ElementExpression_IllegalInstruction) {
+TEST(BinaryReadTest, ElementExpression_IllegalInstruction) {
   Features features;
   features.enable_bulk_memory();
 
@@ -603,7 +603,7 @@ TEST(ReadTest, ElementExpression_IllegalInstruction) {
       "\xd1"_su8, features);
 }
 
-TEST(ReadTest, ElementExpression_PastEnd) {
+TEST(BinaryReadTest, ElementExpression_PastEnd) {
   Features features;
   features.enable_bulk_memory();
 
@@ -612,7 +612,7 @@ TEST(ReadTest, ElementExpression_PastEnd) {
       ""_su8, features);
 }
 
-TEST(ReadTest, ElementSegment_MVP) {
+TEST(BinaryReadTest, ElementSegment_MVP) {
   ExpectRead<ElementSegment>(
       ElementSegment{
           MakeAt("\x00"_su8, Index{0}),
@@ -627,7 +627,7 @@ TEST(ReadTest, ElementSegment_MVP) {
       "\x00\x41\x01\x0b\x03\x01\x02\x03"_su8);
 }
 
-TEST(ReadTest, ElementSegment_MVP_PastEnd) {
+TEST(BinaryReadTest, ElementSegment_MVP_PastEnd) {
   ExpectReadFailure<ElementSegment>(
       {{0, "element segment"}, {0, "table index"}, {0, "Unable to read u8"}},
       ""_su8);
@@ -646,7 +646,7 @@ TEST(ReadTest, ElementSegment_MVP_PastEnd) {
                                     "\x00\x23\x00\x0b"_su8);
 }
 
-TEST(ReadTest, ElementSegment_BulkMemory) {
+TEST(BinaryReadTest, ElementSegment_BulkMemory) {
   Features features;
   features.enable_bulk_memory();
 
@@ -721,7 +721,7 @@ TEST(ReadTest, ElementSegment_BulkMemory) {
       "\x06\x02\x41\x08\x0b\x70\x01\xd0\x0b"_su8, features);
 }
 
-TEST(ReadTest, ElementSegment_BulkMemory_BadFlags) {
+TEST(BinaryReadTest, ElementSegment_BulkMemory_BadFlags) {
   Features features;
   features.enable_bulk_memory();
 
@@ -734,7 +734,7 @@ TEST(ReadTest, ElementSegment_BulkMemory_BadFlags) {
       {{0, "element segment"}, {1, "Unknown flags: 7"}}, "\x07"_su8, features);
 }
 
-TEST(ReadTest, ElementSegment_BulkMemory_PastEnd) {
+TEST(BinaryReadTest, ElementSegment_BulkMemory_PastEnd) {
   Features features;
   features.enable_bulk_memory();
 
@@ -771,11 +771,11 @@ TEST(ReadTest, ElementSegment_BulkMemory_PastEnd) {
       "\x06"_su8, features);
 }
 
-TEST(ReadTest, ElementType) {
+TEST(BinaryReadTest, ElementType) {
   ExpectRead<ElementType>(ElementType::Funcref, "\x70"_su8);
 }
 
-TEST(ReadTest, ElementType_ReferenceTypes) {
+TEST(BinaryReadTest, ElementType_ReferenceTypes) {
   ExpectReadFailure<ElementType>(
       {{0, "element type"}, {1, "Unknown element type: 111"}}, "\x6f"_su8);
   ExpectReadFailure<ElementType>(
@@ -788,7 +788,7 @@ TEST(ReadTest, ElementType_ReferenceTypes) {
   ExpectRead<ElementType>(ElementType::Nullref, "\x6e"_su8, features);
 }
 
-TEST(ReadTest, ElementType_Exceptions) {
+TEST(BinaryReadTest, ElementType_Exceptions) {
   ExpectReadFailure<ElementType>(
       {{0, "element type"}, {1, "Unknown element type: 104"}}, "\x68"_su8);
 
@@ -799,7 +799,7 @@ TEST(ReadTest, ElementType_Exceptions) {
 }
 
 
-TEST(ReadTest, ElementType_Unknown) {
+TEST(BinaryReadTest, ElementType_Unknown) {
   ExpectReadFailure<ElementType>(
       {{0, "element type"}, {1, "Unknown element type: 0"}}, "\x00"_su8);
 
@@ -808,7 +808,7 @@ TEST(ReadTest, ElementType_Unknown) {
       {{0, "element type"}, {1, "Unknown element type: 240"}}, "\xf0\x7f"_su8);
 }
 
-TEST(ReadTest, Event) {
+TEST(BinaryReadTest, Event) {
   ExpectRead<Event>(
       Event{MakeAt("\x00\x01"_su8,
                    EventType{MakeAt("\x00"_su8, EventAttribute::Exception),
@@ -816,7 +816,7 @@ TEST(ReadTest, Event) {
       "\x00\x01"_su8);
 }
 
-TEST(ReadTest, Event_PastEnd) {
+TEST(BinaryReadTest, Event_PastEnd) {
   ExpectReadFailure<Event>({{0, "event"},
                             {0, "event type"},
                             {0, "event attribute"},
@@ -831,13 +831,13 @@ TEST(ReadTest, Event_PastEnd) {
                            "\x00"_su8);
 }
 
-TEST(ReadTest, EventType) {
+TEST(BinaryReadTest, EventType) {
   ExpectRead<EventType>(EventType{MakeAt("\x00"_su8, EventAttribute::Exception),
                                   MakeAt("\x01"_su8, Index{1})},
                         "\x00\x01"_su8);
 }
 
-TEST(ReadTest, Export) {
+TEST(BinaryReadTest, Export) {
   ExpectRead<Export>(
       Export{MakeAt("\x00"_su8, ExternalKind::Function),
              MakeAt("\x02hi"_su8, "hi"_sv), MakeAt("\x03"_su8, Index{3})},
@@ -856,7 +856,7 @@ TEST(ReadTest, Export) {
       "\x01g\x03\x01"_su8);
 }
 
-TEST(ReadTest, Export_PastEnd) {
+TEST(BinaryReadTest, Export_PastEnd) {
   ExpectReadFailure<Export>(
       {{0, "export"}, {0, "name"}, {0, "length"}, {0, "Unable to read u8"}},
       ""_su8);
@@ -869,7 +869,7 @@ TEST(ReadTest, Export_PastEnd) {
       {{0, "export"}, {2, "index"}, {2, "Unable to read u8"}}, "\x00\x00"_su8);
 }
 
-TEST(ReadTest, Export_exceptions) {
+TEST(BinaryReadTest, Export_exceptions) {
   ExpectReadFailure<Export>(
       {{0, "export"}, {2, "external kind"}, {3, "Unknown external kind: 4"}},
       "\x01v\x04\x02"_su8);
@@ -882,14 +882,14 @@ TEST(ReadTest, Export_exceptions) {
       "\x01v\x04\x02"_su8, features);
 }
 
-TEST(ReadTest, ExternalKind) {
+TEST(BinaryReadTest, ExternalKind) {
   ExpectRead<ExternalKind>(ExternalKind::Function, "\x00"_su8);
   ExpectRead<ExternalKind>(ExternalKind::Table, "\x01"_su8);
   ExpectRead<ExternalKind>(ExternalKind::Memory, "\x02"_su8);
   ExpectRead<ExternalKind>(ExternalKind::Global, "\x03"_su8);
 }
 
-TEST(ReadTest, ExternalKind_exceptions) {
+TEST(BinaryReadTest, ExternalKind_exceptions) {
   ExpectReadFailure<ExternalKind>(
       {{0, "external kind"}, {1, "Unknown external kind: 4"}}, "\x04"_su8);
 
@@ -899,7 +899,7 @@ TEST(ReadTest, ExternalKind_exceptions) {
   ExpectRead<ExternalKind>(ExternalKind::Event, "\x04"_su8, features);
 }
 
-TEST(ReadTest, ExternalKind_Unknown) {
+TEST(BinaryReadTest, ExternalKind_Unknown) {
   ExpectReadFailure<ExternalKind>(
       {{0, "external kind"}, {1, "Unknown external kind: 5"}}, "\x05"_su8);
 
@@ -909,7 +909,7 @@ TEST(ReadTest, ExternalKind_Unknown) {
       "\x84\x00"_su8);
 }
 
-TEST(ReadTest, F32) {
+TEST(BinaryReadTest, F32) {
   ExpectRead<f32>(0.0f, "\x00\x00\x00\x00"_su8);
   ExpectRead<f32>(-1.0f, "\x00\x00\x80\xbf"_su8);
   ExpectRead<f32>(1234567.0f, "\x38\xb4\x96\x49"_su8);
@@ -929,12 +929,12 @@ TEST(ReadTest, F32) {
   }
 }
 
-TEST(ReadTest, F32_PastEnd) {
+TEST(BinaryReadTest, F32_PastEnd) {
   ExpectReadFailure<f32>({{0, "f32"}, {0, "Unable to read 4 bytes"}},
                          "\x00\x00\x00"_su8);
 }
 
-TEST(ReadTest, F64) {
+TEST(BinaryReadTest, F64) {
   ExpectRead<f64>(0.0, "\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
   ExpectRead<f64>(-1.0, "\x00\x00\x00\x00\x00\x00\xf0\xbf"_su8);
   ExpectRead<f64>(111111111111111, "\xc0\x71\xbc\x93\x84\x43\xd9\x42"_su8);
@@ -954,21 +954,21 @@ TEST(ReadTest, F64) {
   }
 }
 
-TEST(ReadTest, F64_PastEnd) {
+TEST(BinaryReadTest, F64_PastEnd) {
   ExpectReadFailure<f64>({{0, "f64"}, {0, "Unable to read 8 bytes"}},
                          "\x00\x00\x00\x00\x00\x00\x00"_su8);
 }
 
-TEST(ReadTest, Function) {
+TEST(BinaryReadTest, Function) {
   ExpectRead<Function>(Function{MakeAt("\x01"_su8, Index{1})}, "\x01"_su8);
 }
 
-TEST(ReadTest, Function_PastEnd) {
+TEST(BinaryReadTest, Function_PastEnd) {
   ExpectReadFailure<Function>(
       {{0, "function"}, {0, "type index"}, {0, "Unable to read u8"}}, ""_su8);
 }
 
-TEST(ReadTest, FunctionType) {
+TEST(BinaryReadTest, FunctionType) {
   ExpectRead<FunctionType>(FunctionType{{}, {}}, "\x00\x00"_su8);
   ExpectRead<FunctionType>(FunctionType{{MakeAt("\x7f"_su8, ValueType::I32),
                                          MakeAt("\x7e"_su8, ValueType::I64)},
@@ -976,7 +976,7 @@ TEST(ReadTest, FunctionType) {
                            "\x02\x7f\x7e\x01\x7c"_su8);
 }
 
-TEST(ReadTest, FunctionType_PastEnd) {
+TEST(BinaryReadTest, FunctionType_PastEnd) {
   ExpectReadFailure<FunctionType>({{0, "function type"},
                                    {0, "param types"},
                                    {0, "count"},
@@ -1000,7 +1000,7 @@ TEST(ReadTest, FunctionType_PastEnd) {
                                   "\x00\x01"_su8);
 }
 
-TEST(ReadTest, Global) {
+TEST(BinaryReadTest, Global) {
   // i32 global with i64.const constant expression. This will fail validation
   // but still can be successfully parsed.
   ExpectRead<Global>(
@@ -1015,7 +1015,7 @@ TEST(ReadTest, Global) {
       "\x7f\x01\x42\x00\x0b"_su8);
 }
 
-TEST(ReadTest, Global_PastEnd) {
+TEST(BinaryReadTest, Global_PastEnd) {
   ExpectReadFailure<Global>({{0, "global"},
                              {0, "global type"},
                              {0, "value type"},
@@ -1029,7 +1029,7 @@ TEST(ReadTest, Global_PastEnd) {
                             "\x7f\x00"_su8);
 }
 
-TEST(ReadTest, GlobalType) {
+TEST(BinaryReadTest, GlobalType) {
   ExpectRead<GlobalType>(GlobalType{MakeAt("\x7f"_su8, ValueType::I32),
                                     MakeAt("\x00"_su8, Mutability::Const)},
                          "\x7f\x00"_su8);
@@ -1038,7 +1038,7 @@ TEST(ReadTest, GlobalType) {
                          "\x7d\x01"_su8);
 }
 
-TEST(ReadTest, GlobalType_PastEnd) {
+TEST(BinaryReadTest, GlobalType_PastEnd) {
   ExpectReadFailure<GlobalType>(
       {{0, "global type"}, {0, "value type"}, {0, "Unable to read u8"}},
       ""_su8);
@@ -1048,7 +1048,7 @@ TEST(ReadTest, GlobalType_PastEnd) {
       "\x7f"_su8);
 }
 
-TEST(ReadTest, Import) {
+TEST(BinaryReadTest, Import) {
   ExpectRead<Import>(Import{MakeAt("\x01"
                                    "a"_su8,
                                    "a"_sv),
@@ -1099,7 +1099,7 @@ TEST(ReadTest, Import) {
       "\x01\x64\x06global\x03\x7f\x00"_su8);
 }
 
-TEST(ReadTest, Import_exceptions) {
+TEST(BinaryReadTest, Import_exceptions) {
   ExpectReadFailure<Import>(
       {{0, "import"}, {9, "external kind"}, {10, "Unknown external kind: 4"}},
       "\x01v\x06!event\x04\x00\x02"_su8);
@@ -1114,7 +1114,7 @@ TEST(ReadTest, Import_exceptions) {
       "\x01v\x06!event\x04\x00\x02"_su8, features);
 }
 
-TEST(ReadTest, ImportType_PastEnd) {
+TEST(BinaryReadTest, ImportType_PastEnd) {
   ExpectReadFailure<Import>({{0, "import"},
                              {0, "module name"},
                              {0, "length"},
@@ -1155,7 +1155,7 @@ TEST(ReadTest, ImportType_PastEnd) {
                             "\x00\x00\x03"_su8);
 }
 
-TEST(ReadTest, IndirectNameAssoc) {
+TEST(BinaryReadTest, IndirectNameAssoc) {
   ExpectRead<IndirectNameAssoc>(
       IndirectNameAssoc{MakeAt("\x64"_su8, Index{100}),
                         {MakeAt("\x00\x04zero"_su8,
@@ -1171,7 +1171,7 @@ TEST(ReadTest, IndirectNameAssoc) {
   );
 }
 
-TEST(ReadTest, IndirectNameAssoc_PastEnd) {
+TEST(BinaryReadTest, IndirectNameAssoc_PastEnd) {
   ExpectReadFailure<IndirectNameAssoc>(
       {{0, "indirect name assoc"}, {0, "index"}, {0, "Unable to read u8"}},
       ""_su8);
@@ -1188,7 +1188,7 @@ TEST(ReadTest, IndirectNameAssoc_PastEnd) {
                                        "\x00\x01"_su8);
 }
 
-TEST(ReadTest, InitImmediate) {
+TEST(BinaryReadTest, InitImmediate) {
   for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
     ExpectRead<InitImmediate>(InitImmediate{MakeAt("\x01"_su8, Index{1}),
                                             MakeAt("\x00"_su8, Index{0})},
@@ -1199,7 +1199,7 @@ TEST(ReadTest, InitImmediate) {
   }
 }
 
-TEST(ReadTest, InitImmediate_BadReserved) {
+TEST(BinaryReadTest, InitImmediate_BadReserved) {
   for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
     ExpectReadFailure<InitImmediate>({{0, "init immediate"},
                                       {1, "reserved"},
@@ -1208,7 +1208,7 @@ TEST(ReadTest, InitImmediate_BadReserved) {
   }
 }
 
-TEST(ReadTest, InitImmediate_PastEnd) {
+TEST(BinaryReadTest, InitImmediate_PastEnd) {
   for (auto kind : {BulkImmediateKind::Memory, BulkImmediateKind::Table}) {
     ExpectReadFailure<InitImmediate>(
         {{0, "init immediate"}, {0, "segment index"}, {0, "Unable to read u8"}},
@@ -1220,7 +1220,7 @@ TEST(ReadTest, InitImmediate_PastEnd) {
   }
 }
 
-TEST(ReadTest, InitImmediate_Table_reference_types) {
+TEST(BinaryReadTest, InitImmediate_Table_reference_types) {
   Features features;
   features.enable_reference_types();
 
@@ -1233,7 +1233,7 @@ TEST(ReadTest, InitImmediate_Table_reference_types) {
                             BulkImmediateKind::Table);
 }
 
-TEST(ReadTest, InitImmediate_Memory_reference_types) {
+TEST(BinaryReadTest, InitImmediate_Memory_reference_types) {
   Features features;
   features.enable_reference_types();
 
@@ -1250,7 +1250,7 @@ TEST(ReadTest, InitImmediate_Memory_reference_types) {
 }
 
 
-TEST(ReadTest, Instruction) {
+TEST(BinaryReadTest, Instruction) {
   using I = Instruction;
   using O = Opcode;
   using MemArg = MemArgImmediate;
@@ -1482,7 +1482,7 @@ TEST(ReadTest, Instruction) {
   ExpectRead<I>(I{MakeAt("\xbf"_su8, O::F64ReinterpretI64)}, "\xbf"_su8);
 }
 
-TEST(ReadTest, Instruction_BadMemoryReserved) {
+TEST(BinaryReadTest, Instruction_BadMemoryReserved) {
   ExpectReadFailure<Instruction>(
       {{1, "reserved"}, {2, "Expected reserved byte 0, got 1"}},
       "\x3f\x01"_su8);
@@ -1491,7 +1491,7 @@ TEST(ReadTest, Instruction_BadMemoryReserved) {
       "\x40\x01"_su8);
 }
 
-TEST(ReadTest, Instruction_exceptions) {
+TEST(BinaryReadTest, Instruction_exceptions) {
   using I = Instruction;
   using O = Opcode;
 
@@ -1512,7 +1512,7 @@ TEST(ReadTest, Instruction_exceptions) {
       "\x0a\x01\x02"_su8, features);
 }
 
-TEST(ReadTest, Instruction_tail_call) {
+TEST(BinaryReadTest, Instruction_tail_call) {
   using I = Instruction;
   using O = Opcode;
 
@@ -1529,7 +1529,7 @@ TEST(ReadTest, Instruction_tail_call) {
                 "\x13\x08\x00"_su8, features);
 }
 
-TEST(ReadTest, Instruction_sign_extension) {
+TEST(BinaryReadTest, Instruction_sign_extension) {
   using I = Instruction;
   using O = Opcode;
 
@@ -1543,7 +1543,7 @@ TEST(ReadTest, Instruction_sign_extension) {
   ExpectRead<I>(I{MakeAt("\xc4"_su8, O::I64Extend32S)}, "\xc4"_su8, features);
 }
 
-TEST(ReadTest, Instruction_reference_types) {
+TEST(BinaryReadTest, Instruction_reference_types) {
   using I = Instruction;
   using O = Opcode;
 
@@ -1586,7 +1586,7 @@ TEST(ReadTest, Instruction_reference_types) {
                 "\xd2\x00"_su8, features);
 }
 
-TEST(ReadTest, Instruction_saturating_float_to_int) {
+TEST(BinaryReadTest, Instruction_saturating_float_to_int) {
   using I = Instruction;
   using O = Opcode;
 
@@ -1611,7 +1611,7 @@ TEST(ReadTest, Instruction_saturating_float_to_int) {
                 features);
 }
 
-TEST(ReadTest, Instruction_bulk_memory) {
+TEST(BinaryReadTest, Instruction_bulk_memory) {
   using I = Instruction;
   using O = Opcode;
 
@@ -1649,7 +1649,7 @@ TEST(ReadTest, Instruction_bulk_memory) {
       "\xfc\x0e\x00\x00"_su8, features);
 }
 
-TEST(ReadTest, Instruction_BadReserved_bulk_memory) {
+TEST(BinaryReadTest, Instruction_BadReserved_bulk_memory) {
   using I = Instruction;
 
   Features features;
@@ -1665,7 +1665,7 @@ TEST(ReadTest, Instruction_BadReserved_bulk_memory) {
                        "\xfc\x0e\x00\x01"_su8, features);
 }
 
-TEST(ReadTest, Instruction_simd) {
+TEST(BinaryReadTest, Instruction_simd) {
   using I = Instruction;
   using O = Opcode;
 
@@ -1966,7 +1966,7 @@ TEST(ReadTest, Instruction_simd) {
                 f);
 }
 
-TEST(ReadTest, Instruction_threads) {
+TEST(BinaryReadTest, Instruction_threads) {
   using I = Instruction;
   using O = Opcode;
 
@@ -2111,7 +2111,7 @@ TEST(ReadTest, Instruction_threads) {
                 "\xfe\x4e\x01\x02"_su8, f);
 }
 
-TEST(ReadTest, Limits) {
+TEST(BinaryReadTest, Limits) {
   ExpectRead<Limits>(Limits{MakeAt("\x81\x01"_su8, u32{129}), nullopt,
                             MakeAt("\x00"_su8, Shared::No)},
                      "\x00\x81\x01"_su8);
@@ -2121,14 +2121,14 @@ TEST(ReadTest, Limits) {
       "\x01\x02\xe8\x07"_su8);
 }
 
-TEST(ReadTest, Limits_BadFlags) {
+TEST(BinaryReadTest, Limits_BadFlags) {
   ExpectReadFailure<Limits>({{0, "limits"}, {1, "Unknown flags value: 2"}},
                             "\x02\x01"_su8);
   ExpectReadFailure<Limits>({{0, "limits"}, {1, "Unknown flags value: 3"}},
                             "\x03\x01"_su8);
 }
 
-TEST(ReadTest, Limits_threads) {
+TEST(BinaryReadTest, Limits_threads) {
   Features features;
   features.enable_threads();
 
@@ -2138,7 +2138,7 @@ TEST(ReadTest, Limits_threads) {
       "\x03\x02\xe8\x07"_su8, features);
 }
 
-TEST(ReadTest, Limits_PastEnd) {
+TEST(BinaryReadTest, Limits_PastEnd) {
   ExpectReadFailure<Limits>(
       {{0, "limits"}, {1, "min"}, {1, "u32"}, {1, "Unable to read u8"}},
       "\x00"_su8);
@@ -2147,7 +2147,7 @@ TEST(ReadTest, Limits_PastEnd) {
       "\x01\x00"_su8);
 }
 
-TEST(ReadTest, Locals) {
+TEST(BinaryReadTest, Locals) {
   ExpectRead<Locals>(
       Locals{MakeAt("\x02"_su8, u32{2}), MakeAt("\x7f"_su8, ValueType::I32)},
       "\x02\x7f"_su8);
@@ -2156,7 +2156,7 @@ TEST(ReadTest, Locals) {
                      "\xc0\x02\x7c"_su8);
 }
 
-TEST(ReadTest, Locals_PastEnd) {
+TEST(BinaryReadTest, Locals_PastEnd) {
   ExpectReadFailure<Locals>(
       {{0, "locals"}, {0, "count"}, {0, "Unable to read u8"}}, ""_su8);
   ExpectReadFailure<Locals>(
@@ -2164,7 +2164,7 @@ TEST(ReadTest, Locals_PastEnd) {
       "\xc0\x02"_su8);
 }
 
-TEST(ReadTest, MemArgImmediate) {
+TEST(BinaryReadTest, MemArgImmediate) {
   ExpectRead<MemArgImmediate>(
       MemArgImmediate{MakeAt("\x00"_su8, u32{0}), MakeAt("\x00"_su8, u32{0})},
       "\x00\x00"_su8);
@@ -2173,7 +2173,7 @@ TEST(ReadTest, MemArgImmediate) {
                               "\x01\x80\x02"_su8);
 }
 
-TEST(ReadTest, Memory) {
+TEST(BinaryReadTest, Memory) {
   ExpectRead<Memory>(
       Memory{MakeAt(
           "\x01\x01\x02"_su8,
@@ -2184,7 +2184,7 @@ TEST(ReadTest, Memory) {
       "\x01\x01\x02"_su8);
 }
 
-TEST(ReadTest, Memory_PastEnd) {
+TEST(BinaryReadTest, Memory_PastEnd) {
   ExpectReadFailure<Memory>({{0, "memory"},
                              {0, "memory type"},
                              {0, "limits"},
@@ -2193,7 +2193,7 @@ TEST(ReadTest, Memory_PastEnd) {
                             ""_su8);
 }
 
-TEST(ReadTest, MemoryType) {
+TEST(BinaryReadTest, MemoryType) {
   ExpectRead<MemoryType>(
       MemoryType{
           MakeAt("\x00\x01"_su8, Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
@@ -2207,7 +2207,7 @@ TEST(ReadTest, MemoryType) {
       "\x01\x00\x80\x01"_su8);
 }
 
-TEST(ReadTest, MemoryType_PastEnd) {
+TEST(BinaryReadTest, MemoryType_PastEnd) {
   ExpectReadFailure<MemoryType>({{0, "memory type"},
                                  {0, "limits"},
                                  {0, "flags"},
@@ -2215,12 +2215,12 @@ TEST(ReadTest, MemoryType_PastEnd) {
                                 ""_su8);
 }
 
-TEST(ReadTest, Mutability) {
+TEST(BinaryReadTest, Mutability) {
   ExpectRead<Mutability>(Mutability::Const, "\x00"_su8);
   ExpectRead<Mutability>(Mutability::Var, "\x01"_su8);
 }
 
-TEST(ReadTest, Mutability_Unknown) {
+TEST(BinaryReadTest, Mutability_Unknown) {
   ExpectReadFailure<Mutability>(
       {{0, "mutability"}, {1, "Unknown mutability: 4"}}, "\x04"_su8);
 
@@ -2229,13 +2229,13 @@ TEST(ReadTest, Mutability_Unknown) {
       {{0, "mutability"}, {1, "Unknown mutability: 132"}}, "\x84\x00"_su8);
 }
 
-TEST(ReadTest, NameAssoc) {
+TEST(BinaryReadTest, NameAssoc) {
   ExpectRead<NameAssoc>(
       NameAssoc{MakeAt("\x02"_su8, Index{2}), MakeAt("\x02hi"_su8, "hi"_sv)},
       "\x02\x02hi"_su8);
 }
 
-TEST(ReadTest, NameAssoc_PastEnd) {
+TEST(BinaryReadTest, NameAssoc_PastEnd) {
   ExpectReadFailure<NameAssoc>(
       {{0, "name assoc"}, {0, "index"}, {0, "Unable to read u8"}}, ""_su8);
 
@@ -2244,13 +2244,13 @@ TEST(ReadTest, NameAssoc_PastEnd) {
       "\x00"_su8);
 }
 
-TEST(ReadTest, NameSubsectionId) {
+TEST(BinaryReadTest, NameSubsectionId) {
   ExpectRead<NameSubsectionId>(NameSubsectionId::ModuleName, "\x00"_su8);
   ExpectRead<NameSubsectionId>(NameSubsectionId::FunctionNames, "\x01"_su8);
   ExpectRead<NameSubsectionId>(NameSubsectionId::LocalNames, "\x02"_su8);
 }
 
-TEST(ReadTest, NameSubsectionId_Unknown) {
+TEST(BinaryReadTest, NameSubsectionId_Unknown) {
   ExpectReadFailure<NameSubsectionId>(
       {{0, "name subsection id"}, {1, "Unknown name subsection id: 3"}},
       "\x03"_su8);
@@ -2259,7 +2259,7 @@ TEST(ReadTest, NameSubsectionId_Unknown) {
       "\xff"_su8);
 }
 
-TEST(ReadTest, NameSubsection) {
+TEST(BinaryReadTest, NameSubsection) {
   ExpectRead<NameSubsection>(
       NameSubsection{MakeAt("\x00"_su8, NameSubsectionId::ModuleName),
                      "\0"_su8},
@@ -2276,14 +2276,14 @@ TEST(ReadTest, NameSubsection) {
       "\x02\x03\0\0\0"_su8);
 }
 
-TEST(ReadTest, NameSubsection_BadSubsectionId) {
+TEST(BinaryReadTest, NameSubsection_BadSubsectionId) {
   ExpectReadFailure<NameSubsection>({{0, "name subsection"},
                                      {0, "name subsection id"},
                                      {1, "Unknown name subsection id: 3"}},
                                     "\x03"_su8);
 }
 
-TEST(ReadTest, NameSubsection_PastEnd) {
+TEST(BinaryReadTest, NameSubsection_PastEnd) {
   ExpectReadFailure<NameSubsection>({{0, "name subsection"},
                                      {0, "name subsection id"},
                                      {0, "Unable to read u8"}},
@@ -2294,7 +2294,7 @@ TEST(ReadTest, NameSubsection_PastEnd) {
       "\x00"_su8);
 }
 
-TEST(ReadTest, Opcode) {
+TEST(BinaryReadTest, Opcode) {
   ExpectRead<Opcode>(Opcode::Unreachable, "\x00"_su8);
   ExpectRead<Opcode>(Opcode::Nop, "\x01"_su8);
   ExpectRead<Opcode>(Opcode::Block, "\x02"_su8);
@@ -2494,7 +2494,7 @@ void ExpectUnknownOpcode(u8 prefix, u32 orig_code, const Features& features) {
 
 }  // namespace
 
-TEST(ReadTest, Opcode_Unknown) {
+TEST(BinaryReadTest, Opcode_Unknown) {
   const u8 kInvalidOpcodes[] = {
       0x06, 0x07, 0x08, 0x09, 0x0a, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
       0x19, 0x1c, 0x1d, 0x1e, 0x1f, 0x25, 0x26, 0x27, 0xc0, 0xc1, 0xc2, 0xc3,
@@ -2509,7 +2509,7 @@ TEST(ReadTest, Opcode_Unknown) {
   }
 }
 
-TEST(ReadTest, Opcode_exceptions) {
+TEST(BinaryReadTest, Opcode_exceptions) {
   Features features;
   features.enable_exceptions();
 
@@ -2520,7 +2520,7 @@ TEST(ReadTest, Opcode_exceptions) {
   ExpectRead<Opcode>(Opcode::BrOnExn, "\x0a"_su8, features);
 }
 
-TEST(ReadTest, Opcode_tail_call) {
+TEST(BinaryReadTest, Opcode_tail_call) {
   Features features;
   features.enable_tail_call();
 
@@ -2528,7 +2528,7 @@ TEST(ReadTest, Opcode_tail_call) {
   ExpectRead<Opcode>(Opcode::ReturnCallIndirect, "\x13"_su8, features);
 }
 
-TEST(ReadTest, Opcode_sign_extension) {
+TEST(BinaryReadTest, Opcode_sign_extension) {
   Features features;
   features.enable_sign_extension();
 
@@ -2539,7 +2539,7 @@ TEST(ReadTest, Opcode_sign_extension) {
   ExpectRead<Opcode>(Opcode::I64Extend32S, "\xc4"_su8, features);
 }
 
-TEST(ReadTest, Opcode_reference_types) {
+TEST(BinaryReadTest, Opcode_reference_types) {
   Features features;
   features.enable_reference_types();
 
@@ -2554,7 +2554,7 @@ TEST(ReadTest, Opcode_reference_types) {
   ExpectRead<Opcode>(Opcode::RefFunc, "\xd2"_su8, features);
 }
 
-TEST(ReadTest, Opcode_saturating_float_to_int) {
+TEST(BinaryReadTest, Opcode_saturating_float_to_int) {
   Features features;
   features.enable_saturating_float_to_int();
 
@@ -2568,7 +2568,7 @@ TEST(ReadTest, Opcode_saturating_float_to_int) {
   ExpectRead<Opcode>(Opcode::I64TruncSatF64U, "\xfc\x07"_su8, features);
 }
 
-TEST(ReadTest, Opcode_bulk_memory) {
+TEST(BinaryReadTest, Opcode_bulk_memory) {
   Features features;
   features.enable_bulk_memory();
 
@@ -2581,7 +2581,7 @@ TEST(ReadTest, Opcode_bulk_memory) {
   ExpectRead<Opcode>(Opcode::TableCopy, "\xfc\x0e"_su8, features);
 }
 
-TEST(ReadTest, Opcode_disabled_misc_prefix) {
+TEST(BinaryReadTest, Opcode_disabled_misc_prefix) {
   {
     Features features;
     features.enable_saturating_float_to_int();
@@ -2608,7 +2608,7 @@ TEST(ReadTest, Opcode_disabled_misc_prefix) {
   }
 }
 
-TEST(ReadTest, Opcode_Unknown_misc_prefix) {
+TEST(BinaryReadTest, Opcode_Unknown_misc_prefix) {
   Features features;
   features.enable_saturating_float_to_int();
   features.enable_bulk_memory();
@@ -2624,7 +2624,7 @@ TEST(ReadTest, Opcode_Unknown_misc_prefix) {
   ExpectUnknownOpcode(0xfc, 268435456, features);
 }
 
-TEST(ReadTest, Opcode_simd) {
+TEST(BinaryReadTest, Opcode_simd) {
   using O = Opcode;
 
   Features features;
@@ -2807,7 +2807,7 @@ TEST(ReadTest, Opcode_simd) {
   ExpectRead<O>(MakeAt("\xfd\xe3\x01"_su8, O::I32X4Abs), "\xfd\xe3\x01"_su8, features);
 }
 
-TEST(ReadTest, Opcode_Unknown_simd_prefix) {
+TEST(BinaryReadTest, Opcode_Unknown_simd_prefix) {
   Features features;
   features.enable_simd();
 
@@ -2827,7 +2827,7 @@ TEST(ReadTest, Opcode_Unknown_simd_prefix) {
   ExpectUnknownOpcode(0xfd, 268435456, features);
 }
 
-TEST(ReadTest, Opcode_threads) {
+TEST(BinaryReadTest, Opcode_threads) {
   using O = Opcode;
 
   Features features;
@@ -2901,7 +2901,7 @@ TEST(ReadTest, Opcode_threads) {
   ExpectRead<O>(MakeAt("\xfe\x4e"_su8, O::I64AtomicRmw32CmpxchgU), "\xfe\x4e"_su8, features);
 }
 
-TEST(ReadTest, Opcode_Unknown_threads_prefix) {
+TEST(BinaryReadTest, Opcode_Unknown_threads_prefix) {
   Features features;
   features.enable_threads();
 
@@ -2920,7 +2920,7 @@ TEST(ReadTest, Opcode_Unknown_threads_prefix) {
   ExpectUnknownOpcode(0xfe, 268435456, features);
 }
 
-TEST(ReadTest, S32) {
+TEST(BinaryReadTest, S32) {
   ExpectRead<s32>(32, "\x20"_su8);
   ExpectRead<s32>(-16, "\x70"_su8);
   ExpectRead<s32>(448, "\xc0\x03"_su8);
@@ -2933,7 +2933,7 @@ TEST(ReadTest, S32) {
   ExpectRead<s32>(-837011344, "\xf0\xf0\xf0\xf0\x7c"_su8);
 }
 
-TEST(ReadTest, S32_TooLong) {
+TEST(BinaryReadTest, S32_TooLong) {
   ExpectReadFailure<s32>({{0, "s32"},
                           {5,
                            "Last byte of s32 must be sign extension: expected "
@@ -2946,7 +2946,7 @@ TEST(ReadTest, S32_TooLong) {
                          "\xff\xff\xff\xff\x73"_su8);
 }
 
-TEST(ReadTest, S32_PastEnd) {
+TEST(BinaryReadTest, S32_PastEnd) {
   ExpectReadFailure<s32>({{0, "s32"}, {0, "Unable to read u8"}}, ""_su8);
   ExpectReadFailure<s32>({{0, "s32"}, {1, "Unable to read u8"}}, "\xc0"_su8);
   ExpectReadFailure<s32>({{0, "s32"}, {2, "Unable to read u8"}},
@@ -2957,7 +2957,7 @@ TEST(ReadTest, S32_PastEnd) {
                          "\xf0\xf0\xf0\xf0"_su8);
 }
 
-TEST(ReadTest, S64) {
+TEST(BinaryReadTest, S64) {
   ExpectRead<s64>(32, "\x20"_su8);
   ExpectRead<s64>(-16, "\x70"_su8);
   ExpectRead<s64>(448, "\xc0\x03"_su8);
@@ -2982,7 +2982,7 @@ TEST(ReadTest, S64) {
                   "\xfe\xed\xfe\xed\xfe\xed\xfe\xed\x4e"_su8);
 }
 
-TEST(ReadTest, S64_TooLong) {
+TEST(BinaryReadTest, S64_TooLong) {
   ExpectReadFailure<s64>(
       {{0, "s64"},
        {10,
@@ -2997,7 +2997,7 @@ TEST(ReadTest, S64_TooLong) {
       "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"_su8);
 }
 
-TEST(ReadTest, S64_PastEnd) {
+TEST(BinaryReadTest, S64_PastEnd) {
   ExpectReadFailure<s64>({{0, "s64"}, {0, "Unable to read u8"}}, ""_su8);
   ExpectReadFailure<s64>({{0, "s64"}, {1, "Unable to read u8"}}, "\xc0"_su8);
   ExpectReadFailure<s64>({{0, "s64"}, {2, "Unable to read u8"}},
@@ -3018,7 +3018,7 @@ TEST(ReadTest, S64_PastEnd) {
                          "\xfe\xed\xfe\xed\xfe\xed\xfe\xed\xfe"_su8);
 }
 
-TEST(ReadTest, SectionId) {
+TEST(BinaryReadTest, SectionId) {
   ExpectRead<SectionId>(SectionId::Custom, "\x00"_su8);
   ExpectRead<SectionId>(SectionId::Type, "\x01"_su8);
   ExpectRead<SectionId>(SectionId::Import, "\x02"_su8);
@@ -3036,7 +3036,7 @@ TEST(ReadTest, SectionId) {
   ExpectRead<SectionId>(SectionId::Custom, "\x80\x00"_su8);
 }
 
-TEST(ReadTest, SectionId_bulk_memory) {
+TEST(BinaryReadTest, SectionId_bulk_memory) {
   ExpectReadFailure<SectionId>(
       {{0, "section id"}, {1, "Unknown section id: 12"}}, "\x0c"_su8);
 
@@ -3046,7 +3046,7 @@ TEST(ReadTest, SectionId_bulk_memory) {
   ExpectRead<SectionId>(SectionId::DataCount, "\x0c"_su8, features);
 }
 
-TEST(ReadTest, SectionId_exceptions) {
+TEST(BinaryReadTest, SectionId_exceptions) {
   ExpectReadFailure<SectionId>(
       {{0, "section id"}, {1, "Unknown section id: 13"}}, "\x0d"_su8);
 
@@ -3056,12 +3056,12 @@ TEST(ReadTest, SectionId_exceptions) {
   ExpectRead<SectionId>(SectionId::Event, "\x0d"_su8, features);
 }
 
-TEST(ReadTest, SectionId_Unknown) {
+TEST(BinaryReadTest, SectionId_Unknown) {
   ExpectReadFailure<SectionId>(
       {{0, "section id"}, {1, "Unknown section id: 14"}}, "\x0e"_su8);
 }
 
-TEST(ReadTest, Section) {
+TEST(BinaryReadTest, Section) {
   ExpectRead<Section>(
       Section{MakeAt("\x01\x03\x01\x02\x03"_su8,
                      KnownSection{MakeAt("\x01"_su8, SectionId::Type),
@@ -3075,7 +3075,7 @@ TEST(ReadTest, Section) {
       "\x00\x08\x04name\x04\x05\x06"_su8);
 }
 
-TEST(ReadTest, Section_PastEnd) {
+TEST(BinaryReadTest, Section_PastEnd) {
   ExpectReadFailure<Section>(
       {{0, "section"}, {0, "section id"}, {0, "u32"}, {0, "Unable to read u8"}},
       ""_su8);
@@ -3087,11 +3087,11 @@ TEST(ReadTest, Section_PastEnd) {
       {{0, "section"}, {2, "Length extends past end: 1 > 0"}}, "\x01\x01"_su8);
 }
 
-TEST(ReadTest, Start) {
+TEST(BinaryReadTest, Start) {
   ExpectRead<Start>(Start{MakeAt("\x80\x02"_su8, Index{256})}, "\x80\x02"_su8);
 }
 
-TEST(ReadTest, ReadString) {
+TEST(BinaryReadTest, ReadString) {
   TestErrors errors;
   Context context{errors};
   const SpanU8 data = "\x05hello"_su8;
@@ -3102,7 +3102,7 @@ TEST(ReadTest, ReadString) {
   EXPECT_EQ(0u, copy.size());
 }
 
-TEST(ReadTest, ReadString_Leftovers) {
+TEST(BinaryReadTest, ReadString_Leftovers) {
   TestErrors errors;
   Context context{errors};
   const SpanU8 data = "\x01more"_su8;
@@ -3113,7 +3113,7 @@ TEST(ReadTest, ReadString_Leftovers) {
   EXPECT_EQ(3u, copy.size());
 }
 
-TEST(ReadTest, ReadString_BadLength) {
+TEST(BinaryReadTest, ReadString_BadLength) {
   {
     TestErrors errors;
     Context context{errors};
@@ -3139,7 +3139,7 @@ TEST(ReadTest, ReadString_BadLength) {
   }
 }
 
-TEST(ReadTest, ReadString_Fail) {
+TEST(BinaryReadTest, ReadString_Fail) {
   TestErrors errors;
   Context context{errors};
   const SpanU8 data = "\x06small"_su8;
@@ -3151,7 +3151,7 @@ TEST(ReadTest, ReadString_Fail) {
   EXPECT_EQ(5u, copy.size());
 }
 
-TEST(ReadTest, Table) {
+TEST(BinaryReadTest, Table) {
   ExpectRead<Table>(
       Table{MakeAt("\x70\x00\x01"_su8,
                    TableType{MakeAt("\x00\x01"_su8,
@@ -3161,7 +3161,7 @@ TEST(ReadTest, Table) {
       "\x70\x00\x01"_su8);
 }
 
-TEST(ReadTest, Table_PastEnd) {
+TEST(BinaryReadTest, Table_PastEnd) {
   ExpectReadFailure<Table>({{0, "table"},
                             {0, "table type"},
                             {0, "element type"},
@@ -3169,7 +3169,7 @@ TEST(ReadTest, Table_PastEnd) {
                            ""_su8);
 }
 
-TEST(ReadTest, TableType) {
+TEST(BinaryReadTest, TableType) {
   ExpectRead<TableType>(
       TableType{
           MakeAt("\x00\x01"_su8, Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
@@ -3185,13 +3185,13 @@ TEST(ReadTest, TableType) {
       "\x70\x01\x01\x02"_su8);
 }
 
-TEST(ReadTest, TableType_BadElementType) {
+TEST(BinaryReadTest, TableType_BadElementType) {
   ExpectReadFailure<TableType>(
       {{0, "table type"}, {0, "element type"}, {1, "Unknown element type: 0"}},
       "\x00"_su8);
 }
 
-TEST(ReadTest, TableType_PastEnd) {
+TEST(BinaryReadTest, TableType_PastEnd) {
   ExpectReadFailure<TableType>(
       {{0, "table type"}, {0, "element type"}, {0, "Unable to read u8"}},
       ""_su8);
@@ -3203,19 +3203,19 @@ TEST(ReadTest, TableType_PastEnd) {
                                "\x70"_su8);
 }
 
-TEST(ReadTest, TypeEntry) {
+TEST(BinaryReadTest, TypeEntry) {
   ExpectRead<TypeEntry>(
       TypeEntry{MakeAt("\x00\x01\x7f"_su8,
                        FunctionType{{}, {MakeAt("\x7f"_su8, ValueType::I32)}})},
       "\x60\x00\x01\x7f"_su8);
 }
 
-TEST(ReadTest, TypeEntry_BadForm) {
+TEST(BinaryReadTest, TypeEntry_BadForm) {
   ExpectReadFailure<TypeEntry>(
       {{0, "type entry"}, {1, "Unknown type form: 64"}}, "\x40"_su8);
 }
 
-TEST(ReadTest, U32) {
+TEST(BinaryReadTest, U32) {
   ExpectRead<u32>(32u, "\x20"_su8);
   ExpectRead<u32>(448u, "\xc0\x03"_su8);
   ExpectRead<u32>(33360u, "\xd0\x84\x02"_su8);
@@ -3223,14 +3223,14 @@ TEST(ReadTest, U32) {
   ExpectRead<u32>(1042036848u, "\xf0\xf0\xf0\xf0\x03"_su8);
 }
 
-TEST(ReadTest, U32_TooLong) {
+TEST(BinaryReadTest, U32_TooLong) {
   ExpectReadFailure<u32>(
       {{0, "u32"},
        {5, "Last byte of u32 must be zero extension: expected 0x2, got 0x12"}},
       "\xf0\xf0\xf0\xf0\x12"_su8);
 }
 
-TEST(ReadTest, U32_PastEnd) {
+TEST(BinaryReadTest, U32_PastEnd) {
   ExpectReadFailure<u32>({{0, "u32"}, {0, "Unable to read u8"}}, ""_su8);
   ExpectReadFailure<u32>({{0, "u32"}, {1, "Unable to read u8"}}, "\xc0"_su8);
   ExpectReadFailure<u32>({{0, "u32"}, {2, "Unable to read u8"}},
@@ -3241,19 +3241,19 @@ TEST(ReadTest, U32_PastEnd) {
                          "\xf0\xf0\xf0\xf0"_su8);
 }
 
-TEST(ReadTest, U8) {
+TEST(BinaryReadTest, U8) {
   ExpectRead<u8>(32, "\x20"_su8);
   ExpectReadFailure<u8>({{0, "Unable to read u8"}}, ""_su8);
 }
 
-TEST(ReadTest, ValueType_MVP) {
+TEST(BinaryReadTest, ValueType_MVP) {
   ExpectRead<ValueType>(ValueType::I32, "\x7f"_su8);
   ExpectRead<ValueType>(ValueType::I64, "\x7e"_su8);
   ExpectRead<ValueType>(ValueType::F32, "\x7d"_su8);
   ExpectRead<ValueType>(ValueType::F64, "\x7c"_su8);
 }
 
-TEST(ReadTest, ValueType_simd) {
+TEST(BinaryReadTest, ValueType_simd) {
   ExpectReadFailure<ValueType>(
       {{0, "value type"}, {1, "Unknown value type: 123"}}, "\x7b"_su8);
 
@@ -3262,7 +3262,7 @@ TEST(ReadTest, ValueType_simd) {
   ExpectRead<ValueType>(ValueType::V128, "\x7b"_su8, features);
 }
 
-TEST(ReadTest, ValueType_reference_types) {
+TEST(BinaryReadTest, ValueType_reference_types) {
   ExpectReadFailure<ValueType>(
       {{0, "value type"}, {1, "Unknown value type: 112"}}, "\x70"_su8);
   ExpectReadFailure<ValueType>(
@@ -3277,7 +3277,7 @@ TEST(ReadTest, ValueType_reference_types) {
   ExpectRead<ValueType>(ValueType::Nullref, "\x6e"_su8, features);
 }
 
-TEST(ReadTest, ValueType_exceptions) {
+TEST(BinaryReadTest, ValueType_exceptions) {
   ExpectReadFailure<ValueType>(
       {{0, "value type"}, {1, "Unknown value type: 104"}}, "\x68"_su8);
 
@@ -3286,7 +3286,7 @@ TEST(ReadTest, ValueType_exceptions) {
   ExpectRead<ValueType>(ValueType::Exnref, "\x68"_su8, features);
 }
 
-TEST(ReadTest, ValueType_Unknown) {
+TEST(BinaryReadTest, ValueType_Unknown) {
   ExpectReadFailure<ValueType>(
       {{0, "value type"}, {1, "Unknown value type: 16"}}, "\x10"_su8);
 
@@ -3295,7 +3295,7 @@ TEST(ReadTest, ValueType_Unknown) {
       {{0, "value type"}, {1, "Unknown value type: 255"}}, "\xff\x7f"_su8);
 }
 
-TEST(ReadTest, ReadVector_u8) {
+TEST(BinaryReadTest, ReadVector_u8) {
   TestErrors errors;
   Context context{errors};
   const SpanU8 data = "\x05hello"_su8;
@@ -3313,7 +3313,7 @@ TEST(ReadTest, ReadVector_u8) {
   EXPECT_EQ(0u, copy.size());
 }
 
-TEST(ReadTest, ReadVector_u32) {
+TEST(BinaryReadTest, ReadVector_u32) {
   TestErrors errors;
   Context context{errors};
   const SpanU8 data =
@@ -3333,7 +3333,7 @@ TEST(ReadTest, ReadVector_u32) {
   EXPECT_EQ(0u, copy.size());
 }
 
-TEST(ReadTest, ReadVector_FailLength) {
+TEST(BinaryReadTest, ReadVector_FailLength) {
   TestErrors errors;
   Context context{errors};
   const SpanU8 data =
@@ -3347,7 +3347,7 @@ TEST(ReadTest, ReadVector_FailLength) {
   EXPECT_EQ(1u, copy.size());
 }
 
-TEST(ReadTest, ReadVector_PastEnd) {
+TEST(BinaryReadTest, ReadVector_PastEnd) {
   TestErrors errors;
   Context context{errors};
   const SpanU8 data =

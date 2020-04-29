@@ -24,7 +24,7 @@ using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::test;
 
-TEST(LazyExprTest, Basic) {
+TEST(BinaryLazyExprTest, Basic) {
   TestErrors errors;
   Context context{errors};
   auto expr = ReadExpression("\x00"_su8, context);
@@ -35,7 +35,7 @@ TEST(LazyExprTest, Basic) {
   ASSERT_EQ(end, it);
 }
 
-TEST(LazyExprTest, Multiple) {
+TEST(BinaryLazyExprTest, Multiple) {
   TestErrors errors;
   Context context{errors};
   auto expr = ReadExpression("\x01\x01"_su8, context);
@@ -48,7 +48,7 @@ TEST(LazyExprTest, Multiple) {
   ASSERT_EQ(end, it);
 }
 
-TEST(LazyExprTest, SimpleFunction) {
+TEST(BinaryLazyExprTest, SimpleFunction) {
   TestErrors errors;
   Context context{errors};
   // local.get 0

@@ -42,7 +42,7 @@ void ExpectSection(const std::vector<T>& expected, LazySection<T>& sec) {
 
 }  // namespace
 
-TEST(LazySectionTest, Type) {
+TEST(BinaryLazySectionTest, Type) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadTypeSection(
@@ -64,7 +64,7 @@ TEST(LazySectionTest, Type) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazySectionTest, Import) {
+TEST(BinaryLazySectionTest, Import) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadImportSection(
@@ -89,7 +89,7 @@ TEST(LazySectionTest, Import) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazySectionTest, Function) {
+TEST(BinaryLazySectionTest, Function) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadFunctionSection(
@@ -107,7 +107,7 @@ TEST(LazySectionTest, Function) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazySectionTest, Table) {
+TEST(BinaryLazySectionTest, Table) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadTableSection(
@@ -142,7 +142,7 @@ TEST(LazySectionTest, Table) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazySectionTest, Memory) {
+TEST(BinaryLazySectionTest, Memory) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadMemorySection(
@@ -175,7 +175,7 @@ TEST(LazySectionTest, Memory) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazySectionTest, Global) {
+TEST(BinaryLazySectionTest, Global) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadGlobalSection(
@@ -207,7 +207,7 @@ TEST(LazySectionTest, Global) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazySectionTest, Export) {
+TEST(BinaryLazySectionTest, Export) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadExportSection(
@@ -231,7 +231,7 @@ TEST(LazySectionTest, Export) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazySectionTest, Start) {
+TEST(BinaryLazySectionTest, Start) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadStartSection("\x03"_su8, context);
@@ -240,7 +240,7 @@ TEST(LazySectionTest, Start) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazySectionTest, Element) {
+TEST(BinaryLazySectionTest, Element) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadElementSection(
@@ -276,7 +276,7 @@ TEST(LazySectionTest, Element) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazySectionTest, Code) {
+TEST(BinaryLazySectionTest, Code) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadCodeSection(
@@ -297,7 +297,7 @@ TEST(LazySectionTest, Code) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazySectionTest, Data) {
+TEST(BinaryLazySectionTest, Data) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadDataSection(
@@ -339,7 +339,7 @@ TEST(LazySectionTest, Data) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazySectionTest, DataCount) {
+TEST(BinaryLazySectionTest, DataCount) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadDataCountSection("\x03"_su8, context);

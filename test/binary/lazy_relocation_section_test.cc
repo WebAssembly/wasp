@@ -23,7 +23,7 @@ using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::test;
 
-TEST(RelocationTest, Basic) {
+TEST(BinaryRelocationTest, Basic) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadRelocationSection(

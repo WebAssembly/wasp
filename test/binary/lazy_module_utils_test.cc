@@ -43,7 +43,7 @@ SpanU8 GetModuleData() {
 
 }  // namespace
 
-TEST(LazyModuleUtilsTest, ForEachFunctionName) {
+TEST(BinaryLazyModuleUtilsTest, ForEachFunctionName) {
   Features features;
   TestErrors errors;
   auto module = ReadModule(GetModuleData(), features, errors);
@@ -69,7 +69,7 @@ TEST(LazyModuleUtilsTest, ForEachFunctionName) {
   });
 }
 
-TEST(LazyModuleUtilsTest, CopyFunctionNames) {
+TEST(BinaryLazyModuleUtilsTest, CopyFunctionNames) {
   Features features;
   TestErrors errors;
   auto module = ReadModule(GetModuleData(), features, errors);
@@ -85,7 +85,7 @@ TEST(LazyModuleUtilsTest, CopyFunctionNames) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazyModuleUtilsTest, GetImportCount) {
+TEST(BinaryLazyModuleUtilsTest, GetImportCount) {
   Features features;
   TestErrors errors;
   auto data =

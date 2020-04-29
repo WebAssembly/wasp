@@ -25,63 +25,63 @@ using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
-TEST(FormattersTest, ValueType) {
+TEST(BinaryFormattersTest, ValueType) {
   EXPECT_EQ(R"(i32)", format("{}", ValueType::I32));
   EXPECT_EQ(R"(  f32)", format("{:>5s}", ValueType::F32));
 }
 
-TEST(FormattersTest, BlockType) {
+TEST(BinaryFormattersTest, BlockType) {
   EXPECT_EQ(R"([i32])", format("{}", BlockType::I32));
   EXPECT_EQ(R"([])", format("{}", BlockType::Void));
   EXPECT_EQ(R"(type[100])", format("{}", BlockType(100)));
   EXPECT_EQ(R"(   [f64])", format("{:>8s}", BlockType::F64));
 }
 
-TEST(FormattersTest, ElementType) {
+TEST(BinaryFormattersTest, ElementType) {
   EXPECT_EQ(R"(funcref)", format("{}", ElementType::Funcref));
   EXPECT_EQ(R"(   funcref)", format("{:>10s}", ElementType::Funcref));
 }
 
-TEST(FormattersTest, ExternalKind) {
+TEST(BinaryFormattersTest, ExternalKind) {
   EXPECT_EQ(R"(func)", format("{}", ExternalKind::Function));
   EXPECT_EQ(R"(  global)", format("{:>8s}", ExternalKind::Global));
 }
 
-TEST(FormattersTest, EventAttribute) {
+TEST(BinaryFormattersTest, EventAttribute) {
   EXPECT_EQ(R"(exception)", format("{}", EventAttribute::Exception));
   EXPECT_EQ(R"(  exception)", format("{:>11s}", EventAttribute::Exception));
 }
 
-TEST(FormattersTest, Mutability) {
+TEST(BinaryFormattersTest, Mutability) {
   EXPECT_EQ(R"(const)", format("{}", Mutability::Const));
   EXPECT_EQ(R"(   var)", format("{:>6s}", Mutability::Var));
 }
 
-TEST(FormattersTest, SegmentType) {
+TEST(BinaryFormattersTest, SegmentType) {
   EXPECT_EQ(R"(active)", format("{}", SegmentType::Active));
   EXPECT_EQ(R"(passive)", format("{}", SegmentType::Passive));
   EXPECT_EQ(R"(  active)", format("{:>8s}", SegmentType::Active));
   EXPECT_EQ(R"(  passive)", format("{:>9s}", SegmentType::Passive));
 }
 
-TEST(FormattersTest, Shared) {
+TEST(BinaryFormattersTest, Shared) {
   EXPECT_EQ(R"(unshared)", format("{}", Shared::No));
   EXPECT_EQ(R"(shared)", format("{}", Shared::Yes));
   EXPECT_EQ(R"(  unshared)", format("{:>10s}", Shared::No));
   EXPECT_EQ(R"(  shared)", format("{:>8s}", Shared::Yes));
 }
 
-TEST(FormattersTest, NameSubsectionKind) {
+TEST(BinaryFormattersTest, NameSubsectionKind) {
   EXPECT_EQ(R"(locals)", format("{}", NameSubsectionId::LocalNames));
   EXPECT_EQ(R"(  module)", format("{:>8s}", NameSubsectionId::ModuleName));
 }
 
-TEST(FormattersTest, MemArgImmediate) {
+TEST(BinaryFormattersTest, MemArgImmediate) {
   EXPECT_EQ(R"({align 1, offset 2})", format("{}", MemArgImmediate{1, 2}));
   EXPECT_EQ(R"({align 0, offset 0} )", format("{:20s}", MemArgImmediate{0, 0}));
 }
 
-TEST(FormattersTest, Limits) {
+TEST(BinaryFormattersTest, Limits) {
   EXPECT_EQ(R"({min 1})", format("{}", Limits{1}));
   EXPECT_EQ(R"({min 1, max 2})", format("{}", Limits{1, 2}));
   EXPECT_EQ(R"({min 1, max 2, shared})",
@@ -89,12 +89,12 @@ TEST(FormattersTest, Limits) {
   EXPECT_EQ(R"(  {min 0})", format("{:>9s}", Limits{0}));
 }
 
-TEST(FormattersTest, Locals) {
+TEST(BinaryFormattersTest, Locals) {
   EXPECT_EQ(R"(i32 ** 3)", format("{}", Locals{3, ValueType::I32}));
   EXPECT_EQ(R"(  i32 ** 3)", format("{:>10s}", Locals{3, ValueType::I32}));
 }
 
-TEST(FormattersTest, KnownSection) {
+TEST(BinaryFormattersTest, KnownSection) {
   EXPECT_EQ(
       R"({id type, contents "\00\01\02"})",
       format("{}", KnownSection{SectionId::Type, "\x00\x01\x02"_su8}));
@@ -104,7 +104,7 @@ TEST(FormattersTest, KnownSection) {
       format("{:>25s}", KnownSection{SectionId::Code, ""_su8}));
 }
 
-TEST(FormattersTest, CustomSection) {
+TEST(BinaryFormattersTest, CustomSection) {
   EXPECT_EQ(R"({name "custom", contents "\00\01\02"})",
             format("{}", CustomSection{"custom"_sv, "\x00\x01\x02"_su8}));
 
@@ -112,7 +112,7 @@ TEST(FormattersTest, CustomSection) {
             format("{:>25s}", CustomSection{""_sv, ""_su8}));
 }
 
-TEST(FormattersTest, Section) {
+TEST(BinaryFormattersTest, Section) {
   auto span = "\x00\x01\x02"_su8;
   EXPECT_EQ(R"({id type, contents "\00\01\02"})",
             format("{}", Section{KnownSection{SectionId::Type, span}}));
@@ -128,7 +128,7 @@ TEST(FormattersTest, Section) {
             format("{:>25s}", Section{KnownSection{SectionId::Data, ""_su8}}));
 }
 
-TEST(FormattersTest, TypeEntry) {
+TEST(BinaryFormattersTest, TypeEntry) {
   EXPECT_EQ(R"([] -> [])", format("{}", TypeEntry{FunctionType{{}, {}}}));
   EXPECT_EQ(R"([i32] -> [])",
             format("{}", TypeEntry{FunctionType{{ValueType::I32}, {}}}));
@@ -136,7 +136,7 @@ TEST(FormattersTest, TypeEntry) {
             format("{:>10s}", TypeEntry{FunctionType{{}, {}}}));
 }
 
-TEST(FormattersTest, FunctionType) {
+TEST(BinaryFormattersTest, FunctionType) {
   EXPECT_EQ(R"([] -> [])", format("{}", FunctionType{{}, {}}));
   EXPECT_EQ(R"([i32] -> [])", format("{}", FunctionType{{ValueType::I32}, {}}));
   EXPECT_EQ(R"([i32 f32] -> [i64 f64])",
@@ -145,19 +145,19 @@ TEST(FormattersTest, FunctionType) {
   EXPECT_EQ(R"(  [] -> [])", format("{:>10s}", FunctionType{{}, {}}));
 }
 
-TEST(FormattersTest, TableType) {
+TEST(BinaryFormattersTest, TableType) {
   EXPECT_EQ(R"({min 1, max 2} funcref)",
             format("{}", TableType{Limits{1, 2}, ElementType::Funcref}));
   EXPECT_EQ(R"(  {min 0} funcref)",
             format("{:>17s}", TableType{Limits{0}, ElementType::Funcref}));
 }
 
-TEST(FormattersTest, MemoryType) {
+TEST(BinaryFormattersTest, MemoryType) {
   EXPECT_EQ(R"({min 1, max 2})", format("{}", MemoryType{Limits{1, 2}}));
   EXPECT_EQ(R"(   {min 0})", format("{:>10s}", MemoryType{Limits{0}}));
 }
 
-TEST(FormattersTest, GlobalType) {
+TEST(BinaryFormattersTest, GlobalType) {
   EXPECT_EQ(R"(const f32)",
             format("{}", GlobalType{ValueType::F32, Mutability::Const}));
   EXPECT_EQ(R"(var i32)",
@@ -166,14 +166,14 @@ TEST(FormattersTest, GlobalType) {
             format("{:>10s}", GlobalType{ValueType::F64, Mutability::Var}));
 }
 
-TEST(FormattersTest, EventType) {
+TEST(BinaryFormattersTest, EventType) {
   EXPECT_EQ(R"(exception 0)",
             format("{}", EventType{EventAttribute::Exception, 0}));
   EXPECT_EQ(R"(  exception 0)",
             format("{:>13s}", EventType{EventAttribute::Exception, 0}));
 }
 
-TEST(FormattersTest, Import) {
+TEST(BinaryFormattersTest, Import) {
   // Function
   EXPECT_EQ(R"({module "a", name "b", desc func 3})",
             format("{}", Import{"a"_sv, "b"_sv, Index{3}}));
@@ -201,7 +201,7 @@ TEST(FormattersTest, Import) {
             format("{:>35s}", Import{""_sv, ""_sv, Index{0}}));
 }
 
-TEST(FormattersTest, Export) {
+TEST(BinaryFormattersTest, Export) {
   EXPECT_EQ(R"({name "f", desc func 0})",
             format("{}", Export{ExternalKind::Function, "f"_sv, Index{0}}));
   EXPECT_EQ(R"({name "t", desc table 1})",
@@ -216,19 +216,19 @@ TEST(FormattersTest, Export) {
             format("{:>25s}", Export{ExternalKind::Memory, ""_sv, Index{0}}));
 }
 
-TEST(FormattersTest, Expression) {
+TEST(BinaryFormattersTest, Expression) {
   EXPECT_EQ(R"("\00\01\02")", format("{}", Expression{"\00\01\02"_su8}));
   EXPECT_EQ(R"(   "\00")", format("{:>8s}", Expression{"\00"_su8}));
 }
 
-TEST(FormattersTest, ConstantExpression) {
+TEST(BinaryFormattersTest, ConstantExpression) {
   EXPECT_EQ(R"(i32.add end)",
             format("{}", ConstantExpression{Instruction{Opcode::I32Add}}));
   EXPECT_EQ(R"(   nop end)",
             format("{:>10s}", ConstantExpression{Instruction{Opcode::Nop}}));
 }
 
-TEST(FormattersTest, ElementExpression) {
+TEST(BinaryFormattersTest, ElementExpression) {
   EXPECT_EQ(R"(ref.null end)",
             format("{}", ElementExpression{Instruction{Opcode::RefNull}}));
   EXPECT_EQ(R"(   ref.func 0 end)",
@@ -236,38 +236,38 @@ TEST(FormattersTest, ElementExpression) {
                    ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}));
 }
 
-TEST(FormattersTest, Opcode) {
+TEST(BinaryFormattersTest, Opcode) {
   EXPECT_EQ(R"(memory.grow)", format("{}", Opcode::MemoryGrow));
   EXPECT_EQ(R"(   nop)", format("{:>6s}", Opcode::Nop));
 }
 
-TEST(FormattersTest, CallIndirectImmediate) {
+TEST(BinaryFormattersTest, CallIndirectImmediate) {
   EXPECT_EQ(R"(1 0)", format("{}", CallIndirectImmediate{1u, 0}));
   EXPECT_EQ(R"(  10 0)", format("{:>6s}", CallIndirectImmediate{10u, 0}));
 }
 
-TEST(FormattersTest, BrTableImmediate) {
+TEST(BinaryFormattersTest, BrTableImmediate) {
   EXPECT_EQ(R"([] 100)", format("{}", BrTableImmediate{{}, 100}));
   EXPECT_EQ(R"([1 2] 3)", format("{}", BrTableImmediate{{1, 2}, 3}));
   EXPECT_EQ(R"(  [42] 0)", format("{:>8s}", BrTableImmediate{{42}, 0}));
 }
 
-TEST(FormattersTest, BrOnExnImmediate) {
+TEST(BinaryFormattersTest, BrOnExnImmediate) {
   EXPECT_EQ(R"(0 100)", format("{}", BrOnExnImmediate{0, 100}));
   EXPECT_EQ(R"(  42 0)", format("{:>6s}", BrOnExnImmediate{42, 0}));
 }
 
-TEST(FormattersTest, InitImmediate) {
+TEST(BinaryFormattersTest, InitImmediate) {
   EXPECT_EQ(R"(1 0)", format("{}", InitImmediate{1u, 0}));
   EXPECT_EQ(R"(  10 0)", format("{:>6s}", InitImmediate{10u, 0}));
 }
 
-TEST(FormattersTest, CopyImmediate) {
+TEST(BinaryFormattersTest, CopyImmediate) {
   EXPECT_EQ(R"(0 0)", format("{}", CopyImmediate{0, 0}));
   EXPECT_EQ(R"(   0 0)", format("{:>6s}", CopyImmediate{0, 0}));
 }
 
-TEST(FormattersTest, Instruction) {
+TEST(BinaryFormattersTest, Instruction) {
   // nop
   EXPECT_EQ(R"(nop)", format("{}", Instruction{Opcode::Nop}));
   // block (result i32)
@@ -330,12 +330,12 @@ TEST(FormattersTest, Instruction) {
   EXPECT_EQ(R"(   i32.add)", format("{:>10s}", Instruction{Opcode::I32Add}));
 }
 
-TEST(FormattersTest, Function) {
+TEST(BinaryFormattersTest, Function) {
   EXPECT_EQ(R"({type 1})", format("{}", Function{Index{1u}}));
   EXPECT_EQ(R"(  {type 1})", format("{:>10s}", Function{Index{1u}}));
 }
 
-TEST(FormattersTest, Table) {
+TEST(BinaryFormattersTest, Table) {
   EXPECT_EQ(R"({type {min 1} funcref})",
             format("{}", Table{TableType{Limits{1}, ElementType::Funcref}}));
   EXPECT_EQ(
@@ -343,14 +343,14 @@ TEST(FormattersTest, Table) {
       format("{:>25s}", Table{TableType{Limits{1}, ElementType::Funcref}}));
 }
 
-TEST(FormattersTest, Memory) {
+TEST(BinaryFormattersTest, Memory) {
   EXPECT_EQ(R"({type {min 2, max 3}})",
             format("{}", Memory{MemoryType{Limits{2, 3}}}));
   EXPECT_EQ(R"( {type {min 0}})",
             format("{:>15s}", Memory{MemoryType{Limits{0}}}));
 }
 
-TEST(FormattersTest, Global) {
+TEST(BinaryFormattersTest, Global) {
   EXPECT_EQ(R"({type const i32, init i32.const 0 end})",
             format("{}", Global{GlobalType{ValueType::I32, Mutability::Const},
                                 ConstantExpression{
@@ -361,12 +361,12 @@ TEST(FormattersTest, Global) {
                                ConstantExpression{Instruction{Opcode::Nop}}}));
 }
 
-TEST(FormattersTest, Start) {
+TEST(BinaryFormattersTest, Start) {
   EXPECT_EQ(R"({func 1})", format("{}", Start{Index{1u}}));
   EXPECT_EQ(R"(  {func 1})", format("{:>10s}", Start{Index{1u}}));
 }
 
-TEST(FormattersTest, ElementSegment_Active) {
+TEST(BinaryFormattersTest, ElementSegment_Active) {
   EXPECT_EQ(
       R"({type func, init [2 3], mode active {table 1, offset nop end}})",
       format("{}", ElementSegment{Index{1u},
@@ -382,7 +382,7 @@ TEST(FormattersTest, ElementSegment_Active) {
                                   {}}));
 }
 
-TEST(FormattersTest, ElementSegment_Passive) {
+TEST(BinaryFormattersTest, ElementSegment_Passive) {
   EXPECT_EQ(
       R"({type funcref, init [ref.func 2 end ref.null end], mode passive})",
       format("{}",
@@ -398,7 +398,7 @@ TEST(FormattersTest, ElementSegment_Passive) {
              ElementSegment{SegmentType::Passive, ElementType::Funcref, {}}));
 }
 
-TEST(FormattersTest, Code) {
+TEST(BinaryFormattersTest, Code) {
   EXPECT_EQ(
       R"({locals [i32 ** 1], body "\0b"})",
       format("{}", Code{{Locals{1, ValueType::I32}}, Expression{"\x0b"_su8}}));
@@ -408,7 +408,7 @@ TEST(FormattersTest, Code) {
       format("{:>25s}", Code{{}, Expression{""_su8}}));
 }
 
-TEST(FormattersTest, DataSegment_Active) {
+TEST(BinaryFormattersTest, DataSegment_Active) {
   EXPECT_EQ(
       R"({init "\12\34", mode active {memory 0, offset i32.const 0 end}})",
       format("{}", DataSegment{Index{0u},
@@ -423,7 +423,7 @@ TEST(FormattersTest, DataSegment_Active) {
                                ""_su8}));
 }
 
-TEST(FormattersTest, DataSegment_Passive) {
+TEST(BinaryFormattersTest, DataSegment_Passive) {
   EXPECT_EQ(R"({init "\12\34", mode passive})",
             format("{}", DataSegment{"\x12\x34"_su8}));
 
@@ -431,17 +431,17 @@ TEST(FormattersTest, DataSegment_Passive) {
             format("{:>25}", DataSegment{""_su8}));
 }
 
-TEST(FormattersTest, DataCount) {
+TEST(BinaryFormattersTest, DataCount) {
   EXPECT_EQ(R"({count 1})", format("{}", DataCount{1u}));
   EXPECT_EQ(R"( {count 1})", format("{:>10s}", DataCount{1u}));
 }
 
-TEST(FormattersTest, NameAssoc) {
+TEST(BinaryFormattersTest, NameAssoc) {
   EXPECT_EQ(R"(3 "hi")", format("{}", NameAssoc{3u, "hi"_sv}));
   EXPECT_EQ(R"(  0 "")", format("{:>6s}", NameAssoc{0u, ""_sv}));
 }
 
-TEST(FormattersTest, IndirectNameAssoc) {
+TEST(BinaryFormattersTest, IndirectNameAssoc) {
   EXPECT_EQ(R"(0 [1 "first" 2 "second"])",
             format("{}", IndirectNameAssoc{0u,
                                            {NameAssoc{1u, "first"_sv},
@@ -452,7 +452,7 @@ TEST(FormattersTest, IndirectNameAssoc) {
                        1u, {NameAssoc{10u, "a"_sv}, NameAssoc{100u, "b"_sv}}}));
 }
 
-TEST(FormattersTest, NameSubsection) {
+TEST(BinaryFormattersTest, NameSubsection) {
   EXPECT_EQ(
       R"(module "\00\00\00")",
       format("{}", NameSubsection{NameSubsectionId::ModuleName, "\0\0\0"_su8}));

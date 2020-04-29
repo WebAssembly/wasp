@@ -24,7 +24,7 @@ using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::test;
 
-TEST(LazyModuleTest, Basic) {
+TEST(BinaryLazyModuleTest, Basic) {
   Features features;
   TestErrors errors;
   auto module = ReadModule(
@@ -68,7 +68,7 @@ TEST(LazyModuleTest, Basic) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazyModuleTest, BadMagic) {
+TEST(BinaryLazyModuleTest, BadMagic) {
   TestErrors errors;
   auto data = "wasm\x01\0\0\0"_su8;
   auto module = ReadModule(data, Features{}, errors);
@@ -79,7 +79,7 @@ TEST(LazyModuleTest, BadMagic) {
               errors, data);
 }
 
-TEST(LazyModuleTest, Magic_PastEnd) {
+TEST(BinaryLazyModuleTest, Magic_PastEnd) {
   TestErrors errors;
   auto data = "\0as"_su8;
   auto module = ReadModule(data, Features{}, errors);
@@ -91,7 +91,7 @@ TEST(LazyModuleTest, Magic_PastEnd) {
                errors, data);
 }
 
-TEST(LazyModuleTest, BadVersion) {
+TEST(BinaryLazyModuleTest, BadVersion) {
   TestErrors errors;
   auto data = "\0asm\x02\0\0\0"_su8;
   auto module = ReadModule(data, Features{}, errors);
@@ -102,7 +102,7 @@ TEST(LazyModuleTest, BadVersion) {
               errors, data);
 }
 
-TEST(LazyModuleTest, Version_PastEnd) {
+TEST(BinaryLazyModuleTest, Version_PastEnd) {
   TestErrors errors;
   auto data = "\0asm\x01"_su8;
   auto module = ReadModule(data, Features{}, errors);

@@ -33,7 +33,7 @@ using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
-TEST(WriteTest, BlockType) {
+TEST(BinaryWriteTest, BlockType) {
   ExpectWrite<BlockType>("\x7f"_su8, BlockType::I32);
   ExpectWrite<BlockType>("\x7e"_su8, BlockType::I64);
   ExpectWrite<BlockType>("\x7d"_su8, BlockType::F32);
@@ -43,31 +43,31 @@ TEST(WriteTest, BlockType) {
   ExpectWrite<BlockType>("\x40"_su8, BlockType::Void);
 }
 
-TEST(WriteTest, BrOnExnImmediate) {
+TEST(BinaryWriteTest, BrOnExnImmediate) {
   ExpectWrite<BrOnExnImmediate>("\x00\x00"_su8, BrOnExnImmediate{0, 0});
 }
 
-TEST(WriteTest, BrTableImmediate) {
+TEST(BinaryWriteTest, BrTableImmediate) {
   ExpectWrite<BrTableImmediate>("\x00\x00"_su8, BrTableImmediate{{}, 0});
   ExpectWrite<BrTableImmediate>("\x02\x01\x02\x03"_su8,
                                 BrTableImmediate{{1, 2}, 3});
 }
 
-TEST(WriteTest, Bytes) {
+TEST(BinaryWriteTest, Bytes) {
   const std::vector<u8> input{{0x12, 0x34, 0x56}};
   std::vector<u8> output;
   WriteBytes(input, std::back_inserter(output));
   EXPECT_EQ(input, output);
 }
 
-TEST(WriteTest, CallIndirectImmediate) {
+TEST(BinaryWriteTest, CallIndirectImmediate) {
   ExpectWrite<CallIndirectImmediate>("\x01\x00"_su8,
                                      CallIndirectImmediate{1, 0});
   ExpectWrite<CallIndirectImmediate>("\x80\x01\x00"_su8,
                                      CallIndirectImmediate{128, 0});
 }
 
-TEST(WriteTest, ConstantExpression) {
+TEST(BinaryWriteTest, ConstantExpression) {
   // i32.const
   ExpectWrite<ConstantExpression>(
       "\x41\x00\x0b"_su8,
@@ -94,18 +94,18 @@ TEST(WriteTest, ConstantExpression) {
       ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}});
 }
 
-TEST(WriteTest, CopyImmediate) {
+TEST(BinaryWriteTest, CopyImmediate) {
   ExpectWrite<CopyImmediate>("\x00\x00"_su8, CopyImmediate{0, 0});
 }
 
-TEST(WriteTest, DataSegment) {
+TEST(BinaryWriteTest, DataSegment) {
   ExpectWrite<DataSegment>(
       "\x00\x42\x01\x0b\x04wxyz"_su8,
       DataSegment{0, ConstantExpression{Instruction{Opcode::I64Const, s64{1}}},
                   "wxyz"_su8});
 }
 
-TEST(WriteTest, DataSegment_BulkMemory) {
+TEST(BinaryWriteTest, DataSegment_BulkMemory) {
   // Active data segment with non-zero memory index.
   ExpectWrite<DataSegment>(
       "\x02\x01\x42\x01\x0b\x04wxyz"_su8,
@@ -116,7 +116,7 @@ TEST(WriteTest, DataSegment_BulkMemory) {
   ExpectWrite<DataSegment>("\x01\x04wxyz"_su8, DataSegment{"wxyz"_su8});
 }
 
-TEST(WriteTest, ElementExpression) {
+TEST(BinaryWriteTest, ElementExpression) {
   // ref.null
   ExpectWrite<ElementExpression>(
       "\xd0\x0b"_su8, ElementExpression{Instruction{Opcode::RefNull}});
@@ -127,7 +127,7 @@ TEST(WriteTest, ElementExpression) {
       ElementExpression{Instruction{Opcode::RefFunc, Index{2u}}});
 }
 
-TEST(WriteTest, ElementSegment) {
+TEST(BinaryWriteTest, ElementSegment) {
   ExpectWrite<ElementSegment>(
       "\x00\x41\x01\x0b\x03\x01\x02\x03"_su8,
       ElementSegment{0,
@@ -136,7 +136,7 @@ TEST(WriteTest, ElementSegment) {
                      {1, 2, 3}});
 }
 
-TEST(WriteTest, ElementSegment_BulkMemory) {
+TEST(BinaryWriteTest, ElementSegment_BulkMemory) {
   // Flags == 1: Passive, index list
   ExpectWrite<ElementSegment>(
       "\x01\x00\x02\x01\x02"_su8,
@@ -177,21 +177,21 @@ TEST(WriteTest, ElementSegment_BulkMemory) {
                      {ElementExpression{Instruction{Opcode::RefNull}}}});
 }
 
-TEST(WriteTest, ElementType) {
+TEST(BinaryWriteTest, ElementType) {
   ExpectWrite<ElementType>("\x70"_su8, ElementType::Funcref);
 }
 
-TEST(WriteTest, Event) {
+TEST(BinaryWriteTest, Event) {
   ExpectWrite<Event>("\x00\x01"_su8,
                      Event{EventType{EventAttribute::Exception, 1}});
 }
 
-TEST(WriteTest, EventType) {
+TEST(BinaryWriteTest, EventType) {
   ExpectWrite<EventType>("\x00\x01"_su8,
                          EventType{EventAttribute::Exception, 1});
 }
 
-TEST(WriteTest, Export) {
+TEST(BinaryWriteTest, Export) {
   ExpectWrite<Export>("\x02hi\x00\x03"_su8,
                       Export{ExternalKind::Function, "hi"_sv, 3});
   ExpectWrite<Export>("\x00\x01\xe8\x07"_su8,
@@ -204,7 +204,7 @@ TEST(WriteTest, Export) {
                       Export{ExternalKind::Event, "v"_sv, 2});
 }
 
-TEST(WriteTest, ExternalKind) {
+TEST(BinaryWriteTest, ExternalKind) {
   ExpectWrite<ExternalKind>("\x00"_su8, ExternalKind::Function);
   ExpectWrite<ExternalKind>("\x01"_su8, ExternalKind::Table);
   ExpectWrite<ExternalKind>("\x02"_su8, ExternalKind::Memory);
@@ -212,7 +212,7 @@ TEST(WriteTest, ExternalKind) {
   ExpectWrite<ExternalKind>("\x04"_su8, ExternalKind::Event);
 }
 
-TEST(WriteTest, F32) {
+TEST(BinaryWriteTest, F32) {
   ExpectWrite<f32>("\x00\x00\x00\x00"_su8, 0.0f);
   ExpectWrite<f32>("\x00\x00\x80\xbf"_su8, -1.0f);
   ExpectWrite<f32>("\x38\xb4\x96\x49"_su8, 1234567.0f);
@@ -221,7 +221,7 @@ TEST(WriteTest, F32) {
   // TODO: NaN
 }
 
-TEST(WriteTest, F64) {
+TEST(BinaryWriteTest, F64) {
   ExpectWrite<f64>("\x00\x00\x00\x00\x00\x00\x00\x00"_su8, 0.0);
   ExpectWrite<f64>("\x00\x00\x00\x00\x00\x00\xf0\xbf"_su8, -1.0);
   ExpectWrite<f64>("\xc0\x71\xbc\x93\x84\x43\xd9\x42"_su8, 111111111111111);
@@ -244,7 +244,7 @@ void ExpectWriteFixedVarInt(SpanU8 expected, T value, size_t length) {
 
 }  // namespace
 
-TEST(WriteTest, FixedVarInt_u32) {
+TEST(BinaryWriteTest, FixedVarInt_u32) {
   // Naturally 1 byte.
   ExpectWriteFixedVarInt<u32>("\x11"_su8, 0x11, 1);
   ExpectWriteFixedVarInt<u32>("\x91\x00"_su8, 0x11, 2);
@@ -271,7 +271,7 @@ TEST(WriteTest, FixedVarInt_u32) {
   ExpectWriteFixedVarInt<u32>("\x91\xa2\xc4\x88\x01"_su8, 0x11111111, 5);
 }
 
-TEST(WriteTest, FixedVarInt_s32) {
+TEST(BinaryWriteTest, FixedVarInt_s32) {
   // Naturally 1 byte, positive.
   ExpectWriteFixedVarInt<s32>("\x11"_su8, 0x11, 1);
   ExpectWriteFixedVarInt<s32>("\x91\x00"_su8, 0x11, 2);
@@ -323,32 +323,32 @@ TEST(WriteTest, FixedVarInt_s32) {
   ExpectWriteFixedVarInt<s32>("\xef\xdd\xbb\xf7\x7e"_su8, -0x11111111, 5);
 }
 
-TEST(WriteTest, Function) {
+TEST(BinaryWriteTest, Function) {
   ExpectWrite<Function>("\x01"_su8, Function{1});
 }
 
-TEST(WriteTest, FunctionType) {
+TEST(BinaryWriteTest, FunctionType) {
   ExpectWrite<FunctionType>("\x00\x00"_su8, FunctionType{{}, {}});
   ExpectWrite<FunctionType>(
       "\x02\x7f\x7e\x01\x7c"_su8,
       FunctionType{{ValueType::I32, ValueType::I64}, {ValueType::F64}});
 }
 
-TEST(WriteTest, Global) {
+TEST(BinaryWriteTest, Global) {
   ExpectWrite<Global>(
       "\x7f\x01\x41\x00\x0b"_su8,
       Global{GlobalType{ValueType::I32, Mutability::Var},
              ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}});
 }
 
-TEST(WriteTest, GlobalType) {
+TEST(BinaryWriteTest, GlobalType) {
   ExpectWrite<GlobalType>("\x7f\x00"_su8,
                           GlobalType{ValueType::I32, Mutability::Const});
   ExpectWrite<GlobalType>("\x7d\x01"_su8,
                           GlobalType{ValueType::F32, Mutability::Var});
 }
 
-TEST(WriteTest, Import) {
+TEST(BinaryWriteTest, Import) {
   ExpectWrite<Import>("\x01\x61\x04\x66unc\x00\x0b"_su8,
                       Import{"a", "func", 11u});
 
@@ -368,12 +368,12 @@ TEST(WriteTest, Import) {
       Import{"v", "!event", EventType{EventAttribute::Exception, 2}});
 }
 
-TEST(WriteTest, InitImmediate) {
+TEST(BinaryWriteTest, InitImmediate) {
   ExpectWrite<InitImmediate>("\x01\x00"_su8, InitImmediate{1, 0});
   ExpectWrite<InitImmediate>("\x80\x01\x00"_su8, InitImmediate{128, 0});
 }
 
-TEST(WriteTest, Instruction) {
+TEST(BinaryWriteTest, Instruction) {
   using I = Instruction;
   using O = Opcode;
   using MemArg = MemArgImmediate;
@@ -555,7 +555,7 @@ TEST(WriteTest, Instruction) {
   ExpectWrite<I>("\xbf"_su8, I{O::F64ReinterpretI64});
 }
 
-TEST(WriteTest, Instruction_exceptions) {
+TEST(BinaryWriteTest, Instruction_exceptions) {
   using I = Instruction;
   using O = Opcode;
 
@@ -566,7 +566,7 @@ TEST(WriteTest, Instruction_exceptions) {
   ExpectWrite<I>("\x0a\x01\x02"_su8, I{O::BrOnExn, BrOnExnImmediate{1, 2}});
 }
 
-TEST(WriteTest, Instruction_tail_call) {
+TEST(BinaryWriteTest, Instruction_tail_call) {
   using I = Instruction;
   using O = Opcode;
 
@@ -575,7 +575,7 @@ TEST(WriteTest, Instruction_tail_call) {
                  I{O::ReturnCallIndirect, CallIndirectImmediate{8, 0}});
 }
 
-TEST(WriteTest, Instruction_sign_extension) {
+TEST(BinaryWriteTest, Instruction_sign_extension) {
   using I = Instruction;
   using O = Opcode;
 
@@ -586,7 +586,7 @@ TEST(WriteTest, Instruction_sign_extension) {
   ExpectWrite<I>("\xc4"_su8, I{O::I64Extend32S});
 }
 
-TEST(WriteTest, Instruction_reference_types) {
+TEST(BinaryWriteTest, Instruction_reference_types) {
   using I = Instruction;
   using O = Opcode;
 
@@ -601,14 +601,14 @@ TEST(WriteTest, Instruction_reference_types) {
   ExpectWrite<I>("\xd1"_su8, I{O::RefIsNull});
 }
 
-TEST(WriteTest, Instruction_function_references) {
+TEST(BinaryWriteTest, Instruction_function_references) {
   using I = Instruction;
   using O = Opcode;
 
   ExpectWrite<I>("\xd2\x00"_su8, I{O::RefFunc, Index{0}});
 }
 
-TEST(WriteTest, Instruction_saturating_float_to_int) {
+TEST(BinaryWriteTest, Instruction_saturating_float_to_int) {
   using I = Instruction;
   using O = Opcode;
 
@@ -622,7 +622,7 @@ TEST(WriteTest, Instruction_saturating_float_to_int) {
   ExpectWrite<I>("\xfc\x07"_su8, I{O::I64TruncSatF64U});
 }
 
-TEST(WriteTest, Instruction_bulk_memory) {
+TEST(BinaryWriteTest, Instruction_bulk_memory) {
   using I = Instruction;
   using O = Opcode;
 
@@ -635,7 +635,7 @@ TEST(WriteTest, Instruction_bulk_memory) {
   ExpectWrite<I>("\xfc\x0e\x00\x00"_su8, I{O::TableCopy, CopyImmediate{0, 0}});
 }
 
-TEST(WriteTest, Instruction_simd) {
+TEST(BinaryWriteTest, Instruction_simd) {
   using I = Instruction;
   using O = Opcode;
 
@@ -822,7 +822,7 @@ TEST(WriteTest, Instruction_simd) {
   ExpectWrite<I>("\xfd\xe3\x01"_su8, I{O::I32X4Abs});
 }
 
-TEST(WriteTest, Instruction_threads) {
+TEST(BinaryWriteTest, Instruction_threads) {
   using I = Instruction;
   using O = Opcode;
 
@@ -896,42 +896,42 @@ TEST(WriteTest, Instruction_threads) {
   ExpectWrite<I>("\xfe\x4e\x00\x00"_su8, I{O::I64AtomicRmw32CmpxchgU, m});
 }
 
-TEST(WriteTest, Limits) {
+TEST(BinaryWriteTest, Limits) {
   ExpectWrite<Limits>("\x00\x81\x01"_su8, Limits{129});
   ExpectWrite<Limits>("\x01\x02\xe8\x07"_su8, Limits{2, 1000});
 }
 
-TEST(WriteTest, Locals) {
+TEST(BinaryWriteTest, Locals) {
   ExpectWrite<Locals>("\x02\x7f"_su8, Locals{2, ValueType::I32});
   ExpectWrite<Locals>("\xc0\x02\x7c"_su8, Locals{320, ValueType::F64});
 }
 
-TEST(WriteTest, MemArgImmediate) {
+TEST(BinaryWriteTest, MemArgImmediate) {
   ExpectWrite<MemArgImmediate>("\x00\x00"_su8, MemArgImmediate{0, 0});
   ExpectWrite<MemArgImmediate>("\x01\x80\x02"_su8, MemArgImmediate{1, 256});
 }
 
-TEST(WriteTest, Memory) {
+TEST(BinaryWriteTest, Memory) {
   ExpectWrite<Memory>("\x01\x01\x02"_su8, Memory{MemoryType{Limits{1, 2}}});
 }
 
-TEST(WriteTest, MemoryType) {
+TEST(BinaryWriteTest, MemoryType) {
   ExpectWrite<MemoryType>("\x00\x01"_su8, MemoryType{Limits{1}});
   ExpectWrite<MemoryType>("\x01\x00\x80\x01"_su8, MemoryType{Limits{0, 128}});
 }
 
-TEST(WriteTest, Mutability) {
+TEST(BinaryWriteTest, Mutability) {
   ExpectWrite<Mutability>("\x00"_su8, Mutability::Const);
   ExpectWrite<Mutability>("\x01"_su8, Mutability::Var);
 }
 
-TEST(WriteTest, NameSubsectionId) {
+TEST(BinaryWriteTest, NameSubsectionId) {
   ExpectWrite<NameSubsectionId>("\x00"_su8, NameSubsectionId::ModuleName);
   ExpectWrite<NameSubsectionId>("\x01"_su8, NameSubsectionId::FunctionNames);
   ExpectWrite<NameSubsectionId>("\x02"_su8, NameSubsectionId::LocalNames);
 }
 
-TEST(WriteTest, Opcode) {
+TEST(BinaryWriteTest, Opcode) {
   ExpectWrite<Opcode>("\x00"_su8, Opcode::Unreachable);
   ExpectWrite<Opcode>("\x01"_su8, Opcode::Nop);
   ExpectWrite<Opcode>("\x02"_su8, Opcode::Block);
@@ -1106,7 +1106,7 @@ TEST(WriteTest, Opcode) {
   ExpectWrite<Opcode>("\xbf"_su8, Opcode::F64ReinterpretI64);
 }
 
-TEST(WriteTest, Opcode_exceptions) {
+TEST(BinaryWriteTest, Opcode_exceptions) {
   ExpectWrite<Opcode>("\x06"_su8, Opcode::Try);
   ExpectWrite<Opcode>("\x07"_su8, Opcode::Catch);
   ExpectWrite<Opcode>("\x08"_su8, Opcode::Throw);
@@ -1114,12 +1114,12 @@ TEST(WriteTest, Opcode_exceptions) {
   ExpectWrite<Opcode>("\x0a"_su8, Opcode::BrOnExn);
 }
 
-TEST(WriteTest, Opcode_tail_call) {
+TEST(BinaryWriteTest, Opcode_tail_call) {
   ExpectWrite<Opcode>("\x12"_su8, Opcode::ReturnCall);
   ExpectWrite<Opcode>("\x13"_su8, Opcode::ReturnCallIndirect);
 }
 
-TEST(WriteTest, Opcode_sign_extension) {
+TEST(BinaryWriteTest, Opcode_sign_extension) {
   ExpectWrite<Opcode>("\xc0"_su8, Opcode::I32Extend8S);
   ExpectWrite<Opcode>("\xc1"_su8, Opcode::I32Extend16S);
   ExpectWrite<Opcode>("\xc2"_su8, Opcode::I64Extend8S);
@@ -1127,7 +1127,7 @@ TEST(WriteTest, Opcode_sign_extension) {
   ExpectWrite<Opcode>("\xc4"_su8, Opcode::I64Extend32S);
 }
 
-TEST(WriteTest, Opcode_reference_types) {
+TEST(BinaryWriteTest, Opcode_reference_types) {
   ExpectWrite<Opcode>("\x1c"_su8, Opcode::SelectT);
   ExpectWrite<Opcode>("\x25"_su8, Opcode::TableGet);
   ExpectWrite<Opcode>("\x26"_su8, Opcode::TableSet);
@@ -1138,11 +1138,11 @@ TEST(WriteTest, Opcode_reference_types) {
   ExpectWrite<Opcode>("\xd1"_su8, Opcode::RefIsNull);
 }
 
-TEST(WriteTest, Opcode_function_references) {
+TEST(BinaryWriteTest, Opcode_function_references) {
   ExpectWrite<Opcode>("\xd2"_su8, Opcode::RefFunc);
 }
 
-TEST(WriteTest, Opcode_saturating_float_to_int) {
+TEST(BinaryWriteTest, Opcode_saturating_float_to_int) {
   ExpectWrite<Opcode>("\xfc\x00"_su8, Opcode::I32TruncSatF32S);
   ExpectWrite<Opcode>("\xfc\x01"_su8, Opcode::I32TruncSatF32U);
   ExpectWrite<Opcode>("\xfc\x02"_su8, Opcode::I32TruncSatF64S);
@@ -1153,7 +1153,7 @@ TEST(WriteTest, Opcode_saturating_float_to_int) {
   ExpectWrite<Opcode>("\xfc\x07"_su8, Opcode::I64TruncSatF64U);
 }
 
-TEST(WriteTest, Opcode_bulk_memory) {
+TEST(BinaryWriteTest, Opcode_bulk_memory) {
   ExpectWrite<Opcode>("\xfc\x08"_su8, Opcode::MemoryInit);
   ExpectWrite<Opcode>("\xfc\x09"_su8, Opcode::DataDrop);
   ExpectWrite<Opcode>("\xfc\x0a"_su8, Opcode::MemoryCopy);
@@ -1163,7 +1163,7 @@ TEST(WriteTest, Opcode_bulk_memory) {
   ExpectWrite<Opcode>("\xfc\x0e"_su8, Opcode::TableCopy);
 }
 
-TEST(WriteTest, Opcode_simd) {
+TEST(BinaryWriteTest, Opcode_simd) {
   using O = Opcode;
 
   ExpectWrite<O>("\xfd\x00"_su8, O::V128Load);
@@ -1330,7 +1330,7 @@ TEST(WriteTest, Opcode_simd) {
   ExpectWrite<O>("\xfd\xe3\x01"_su8, O::I32X4Abs);
 }
 
-TEST(WriteTest, Opcode_threads) {
+TEST(BinaryWriteTest, Opcode_threads) {
   using O = Opcode;
 
   ExpectWrite<O>("\xfe\x00"_su8, O::MemoryAtomicNotify);
@@ -1401,7 +1401,7 @@ TEST(WriteTest, Opcode_threads) {
   ExpectWrite<O>("\xfe\x4e"_su8, O::I64AtomicRmw32CmpxchgU);
 }
 
-TEST(WriteTest, S32) {
+TEST(BinaryWriteTest, S32) {
   ExpectWrite<s32>("\x20"_su8, 32);
   ExpectWrite<s32>("\x70"_su8, -16);
   ExpectWrite<s32>("\xc0\x03"_su8, 448);
@@ -1414,7 +1414,7 @@ TEST(WriteTest, S32) {
   ExpectWrite<s32>("\xf0\xf0\xf0\xf0\x7c"_su8, -837011344);
 }
 
-TEST(WriteTest, S64) {
+TEST(BinaryWriteTest, S64) {
   ExpectWrite<s64>("\x20"_su8, 32);
   ExpectWrite<s64>("\x70"_su8, -16);
   ExpectWrite<s64>("\xc0\x03"_su8, 448);
@@ -1439,7 +1439,7 @@ TEST(WriteTest, S64) {
                    -3540960223848057090);
 }
 
-TEST(WriteTest, SectionId) {
+TEST(BinaryWriteTest, SectionId) {
   ExpectWrite<SectionId>("\x00"_su8, SectionId::Custom);
   ExpectWrite<SectionId>("\x01"_su8, SectionId::Type);
   ExpectWrite<SectionId>("\x02"_su8, SectionId::Import);
@@ -1456,43 +1456,43 @@ TEST(WriteTest, SectionId) {
   ExpectWrite<SectionId>("\x0d"_su8, SectionId::Event);
 }
 
-TEST(WriteTest, ShuffleImmediate) {
+TEST(BinaryWriteTest, ShuffleImmediate) {
   ExpectWrite<ShuffleImmediate>(
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8,
       ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}});
 }
 
-TEST(WriteTest, Start) {
+TEST(BinaryWriteTest, Start) {
   ExpectWrite<Start>("\x80\x02"_su8, Start{256});
 }
 
-TEST(WriteTest, String) {
+TEST(BinaryWriteTest, String) {
   ExpectWrite<string_view>("\x05hello"_su8, "hello");
   ExpectWrite<string_view>("\x02hi"_su8, std::string{"hi"});
 }
 
-TEST(WriteTest, Table) {
+TEST(BinaryWriteTest, Table) {
   ExpectWrite<Table>("\x70\x00\x01"_su8,
                      Table{TableType{Limits{1}, ElementType::Funcref}});
 }
 
-TEST(WriteTest, TableType) {
+TEST(BinaryWriteTest, TableType) {
   ExpectWrite<TableType>("\x70\x00\x01"_su8,
                          TableType{Limits{1}, ElementType::Funcref});
   ExpectWrite<TableType>("\x70\x01\x01\x02"_su8,
                          TableType{Limits{1, 2}, ElementType::Funcref});
 }
 
-TEST(WriteTest, TypeEntry) {
+TEST(BinaryWriteTest, TypeEntry) {
   ExpectWrite<TypeEntry>("\x60\x00\x01\x7f"_su8,
                          TypeEntry{FunctionType{{}, {ValueType::I32}}});
 }
 
-TEST(WriteTest, U8) {
+TEST(BinaryWriteTest, U8) {
   ExpectWrite<u8>("\x2a"_su8, 42);
 }
 
-TEST(WriteTest, U32) {
+TEST(BinaryWriteTest, U32) {
   ExpectWrite<u32>("\x20"_su8, 32u);
   ExpectWrite<u32>("\xc0\x03"_su8, 448u);
   ExpectWrite<u32>("\xd0\x84\x02"_su8, 33360u);
@@ -1500,7 +1500,7 @@ TEST(WriteTest, U32) {
   ExpectWrite<u32>("\xf0\xf0\xf0\xf0\x03"_su8, 1042036848u);
 }
 
-TEST(WriteTest, ValueType) {
+TEST(BinaryWriteTest, ValueType) {
   ExpectWrite<ValueType>("\x7f"_su8, ValueType::I32);
   ExpectWrite<ValueType>("\x7e"_su8, ValueType::I64);
   ExpectWrite<ValueType>("\x7d"_su8, ValueType::F32);
@@ -1512,7 +1512,7 @@ TEST(WriteTest, ValueType) {
   ExpectWrite<ValueType>("\x68"_su8, ValueType::Exnref);
 }
 
-TEST(WriteTest, WriteVector_u8) {
+TEST(BinaryWriteTest, WriteVector_u8) {
   const auto expected = "\x05hello"_su8;
   const std::vector<u8> input{{'h', 'e', 'l', 'l', 'o'}};
   std::vector<u8> output(expected.size());
@@ -1523,7 +1523,7 @@ TEST(WriteTest, WriteVector_u8) {
   EXPECT_EQ(expected, wasp::SpanU8{output});
 }
 
-TEST(WriteTest, WriteVector_u32) {
+TEST(BinaryWriteTest, WriteVector_u32) {
   const auto expected =
       "\x03"  // Count.
       "\x05"

@@ -39,7 +39,7 @@ void ExpectSubsection(const std::vector<T>& expected, LazySection<T>& sec) {
 
 }  // namespace
 
-TEST(LinkingSectionTest, LinkingSection) {
+TEST(BinaryLinkingSectionTest, LinkingSection) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadLinkingSection(
@@ -80,7 +80,7 @@ TEST(LinkingSectionTest, LinkingSection) {
   ExpectNoErrors(errors);
 }
 
-TEST(LinkingSectionTest, SegmentInfoSubsection) {
+TEST(BinaryLinkingSectionTest, SegmentInfoSubsection) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadSegmentInfoSubsection(
@@ -101,7 +101,7 @@ TEST(LinkingSectionTest, SegmentInfoSubsection) {
   ExpectNoErrors(errors);
 }
 
-TEST(LinkingSectionTest, InitFunctionsSubsection) {
+TEST(BinaryLinkingSectionTest, InitFunctionsSubsection) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadInitFunctionsSubsection(
@@ -117,7 +117,7 @@ TEST(LinkingSectionTest, InitFunctionsSubsection) {
   ExpectNoErrors(errors);
 }
 
-TEST(LinkingSectionTest, ComdatSubsection) {
+TEST(BinaryLinkingSectionTest, ComdatSubsection) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadComdatSubsection(
@@ -137,7 +137,7 @@ TEST(LinkingSectionTest, ComdatSubsection) {
   ExpectNoErrors(errors);
 }
 
-TEST(LinkingSectionTest, SymbolTableSubsection) {
+TEST(BinaryLinkingSectionTest, SymbolTableSubsection) {
   TestErrors errors;
   Context context{errors};
   auto sec = ReadSymbolTableSubsection(

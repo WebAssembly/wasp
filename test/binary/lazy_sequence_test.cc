@@ -26,7 +26,7 @@ using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::test;
 
-TEST(LazySequenceTest, Basic) {
+TEST(BinaryLazySequenceTest, Basic) {
   ErrorsNop errors;
   Context context{errors};
   LazySequence<u32> seq{"\x01\x80\x02\x00\x80\x80\x01"_su8, context};
@@ -45,7 +45,7 @@ TEST(LazySequenceTest, Basic) {
   ASSERT_EQ(seq.end(), it);
 }
 
-TEST(LazySequenceTest, Empty) {
+TEST(BinaryLazySequenceTest, Empty) {
   ErrorsNop errors;
   Context context{errors};
   LazySequence<u8> seq{""_su8, context};
@@ -53,7 +53,7 @@ TEST(LazySequenceTest, Empty) {
   EXPECT_EQ(seq.begin(), seq.end());
 }
 
-TEST(LazySequenceTest, Error) {
+TEST(BinaryLazySequenceTest, Error) {
   TestErrors errors;
   Context context{errors};
   const auto data = "\x40\x30\x80"_su8;
@@ -70,7 +70,7 @@ TEST(LazySequenceTest, Error) {
   ExpectError({{2, "s32"}, {3, "Unable to read u8"}}, errors, data);
 }
 
-TEST(LazySequenceTest, ExpectedCount_Match) {
+TEST(BinaryLazySequenceTest, ExpectedCount_Match) {
   TestErrors errors;
   Context context{errors};
   const auto data = "\x00\x01"_su8;
@@ -82,7 +82,7 @@ TEST(LazySequenceTest, ExpectedCount_Match) {
   ExpectNoErrors(errors);
 }
 
-TEST(LazySequenceTest, ExpectedCount_ActualLess) {
+TEST(BinaryLazySequenceTest, ExpectedCount_ActualLess) {
   TestErrors errors;
   Context context{errors};
   const auto data = "\x00"_su8;
@@ -94,7 +94,7 @@ TEST(LazySequenceTest, ExpectedCount_ActualLess) {
               data);
 }
 
-TEST(LazySequenceTest, ExpectedCount_ActualMore) {
+TEST(BinaryLazySequenceTest, ExpectedCount_ActualMore) {
   TestErrors errors;
   Context context{errors};
   const auto data = "\x00\x01\x02\x03"_su8;

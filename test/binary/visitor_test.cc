@@ -106,7 +106,7 @@ struct VisitorMock {
   MOCK_METHOD1(EndDataSection, visit::Result(LazyDataSection));
 };
 
-class VisitorTest : public ::testing::Test {
+class BinaryVisitorTest : public ::testing::Test {
  protected:
   virtual void SetUp() {}
   virtual void TearDown() {}
@@ -124,7 +124,7 @@ class VisitorTest : public ::testing::Test {
 
 }  // namespace
 
-TEST_F(VisitorTest, AllOk) {
+TEST_F(BinaryVisitorTest, AllOk) {
   using ::testing::_;
   using ::testing::Return;
   using ::wasp::binary::visit::Result;
@@ -186,7 +186,7 @@ TEST_F(VisitorTest, AllOk) {
   EXPECT_EQ(Result::Ok, Visit(v));
 }
 
-TEST_F(VisitorTest, AllSkipped) {
+TEST_F(BinaryVisitorTest, AllSkipped) {
   using ::testing::_;
   using ::testing::Return;
   using ::wasp::binary::visit::Result;
@@ -208,7 +208,7 @@ TEST_F(VisitorTest, AllSkipped) {
   EXPECT_EQ(Result::Ok, Visit(v));
 }
 
-TEST_F(VisitorTest, TypeSectionFailed) {
+TEST_F(BinaryVisitorTest, TypeSectionFailed) {
   using ::testing::_;
   using ::testing::Return;
   using ::wasp::binary::visit::Result;
@@ -218,7 +218,7 @@ TEST_F(VisitorTest, TypeSectionFailed) {
   EXPECT_EQ(Result::Fail, Visit(v));
 }
 
-TEST_F(VisitorTest, OnTypeFailed) {
+TEST_F(BinaryVisitorTest, OnTypeFailed) {
   using ::testing::_;
   using ::testing::Return;
   using ::wasp::binary::visit::Result;
@@ -229,7 +229,7 @@ TEST_F(VisitorTest, OnTypeFailed) {
   EXPECT_EQ(Result::Fail, Visit(v));
 }
 
-TEST_F(VisitorTest, OnTypeFailedAfter1) {
+TEST_F(BinaryVisitorTest, OnTypeFailedAfter1) {
   using ::testing::_;
   using ::testing::Return;
   using ::wasp::binary::visit::Result;
@@ -243,7 +243,7 @@ TEST_F(VisitorTest, OnTypeFailedAfter1) {
   EXPECT_EQ(Result::Fail, Visit(v));
 }
 
-TEST_F(VisitorTest, OkSkipFail) {
+TEST_F(BinaryVisitorTest, OkSkipFail) {
   using ::testing::_;
   using ::testing::Return;
   using ::wasp::binary::visit::Result;

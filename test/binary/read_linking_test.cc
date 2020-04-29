@@ -24,7 +24,7 @@ using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
-TEST(ReadLinkingTest, Comdat) {
+TEST(BinaryReadLinkingTest, Comdat) {
   ExpectRead<Comdat>(
       Comdat{
           MakeAt("\x04name"_su8, "name"_sv),
@@ -38,34 +38,34 @@ TEST(ReadLinkingTest, Comdat) {
       "\x04name\x00\x02\x00\x02\x01\x03"_su8);
 }
 
-TEST(ReadLinkingTest, ComdatSymbol) {
+TEST(BinaryReadLinkingTest, ComdatSymbol) {
   ExpectRead<ComdatSymbol>(
       ComdatSymbol{MakeAt("\x00"_su8, ComdatSymbolKind::Data),
                    MakeAt("\x00"_su8, Index{0})},
       "\x00\x00"_su8);
 }
 
-TEST(ReadLinkingTest, ComdatSymbolKind) {
+TEST(BinaryReadLinkingTest, ComdatSymbolKind) {
   ExpectRead<ComdatSymbolKind>(ComdatSymbolKind::Data, "\x00"_su8);
   ExpectRead<ComdatSymbolKind>(ComdatSymbolKind::Function, "\x01"_su8);
   ExpectRead<ComdatSymbolKind>(ComdatSymbolKind::Global, "\x02"_su8);
   ExpectRead<ComdatSymbolKind>(ComdatSymbolKind::Event, "\x03"_su8);
 }
 
-TEST(ReadLinkingTest, InitFunction) {
+TEST(BinaryReadLinkingTest, InitFunction) {
   ExpectRead<InitFunction>(
       InitFunction{MakeAt("\x0d"_su8, u32{13}), MakeAt("\x0f"_su8, Index{15})},
       "\x0d\x0f"_su8);
 }
 
-TEST(ReadLinkingTest, LinkingSubsection) {
+TEST(BinaryReadLinkingTest, LinkingSubsection) {
   ExpectRead<LinkingSubsection>(
       LinkingSubsection{MakeAt("\x05"_su8, LinkingSubsectionId::SegmentInfo),
                         MakeAt("\x03xyz"_su8, "xyz"_su8)},
       "\x05\x03xyz"_su8);
 }
 
-TEST(ReadLinkingTest, LinkingSubsectionId) {
+TEST(BinaryReadLinkingTest, LinkingSubsectionId) {
   ExpectRead<LinkingSubsectionId>(LinkingSubsectionId::SegmentInfo, "\x05"_su8);
   ExpectRead<LinkingSubsectionId>(LinkingSubsectionId::InitFunctions,
                                   "\x06"_su8);
@@ -73,7 +73,7 @@ TEST(ReadLinkingTest, LinkingSubsectionId) {
   ExpectRead<LinkingSubsectionId>(LinkingSubsectionId::SymbolTable, "\x08"_su8);
 }
 
-TEST(ReadLinkingTest, RelocationEntry) {
+TEST(BinaryReadLinkingTest, RelocationEntry) {
   // Relocation types without addend.
   ExpectRead<RelocationEntry>(
       RelocationEntry{MakeAt("\x00"_su8, RelocationType::FunctionIndexLEB),
@@ -144,7 +144,7 @@ TEST(ReadLinkingTest, RelocationEntry) {
       "\x09\x01\x02\x03"_su8);
 }
 
-TEST(ReadLinkingTest, RelocationType) {
+TEST(BinaryReadLinkingTest, RelocationType) {
   ExpectRead<RelocationType>(RelocationType::FunctionIndexLEB, "\x00"_su8);
   ExpectRead<RelocationType>(RelocationType::TableIndexSLEB, "\x01"_su8);
   ExpectRead<RelocationType>(RelocationType::TableIndexI32, "\x02"_su8);
@@ -160,7 +160,7 @@ TEST(ReadLinkingTest, RelocationType) {
   ExpectRead<RelocationType>(RelocationType::TableIndexRelSLEB, "\x0c"_su8);
 }
 
-TEST(ReadLinkingTest, ReadSegmentInfo) {
+TEST(BinaryReadLinkingTest, ReadSegmentInfo) {
   ExpectRead<SegmentInfo>(
       SegmentInfo{MakeAt("\x04name"_su8, "name"_sv), MakeAt("\x01"_su8, u32{1}),
                   MakeAt("\x02"_su8, u32{2})},
@@ -186,7 +186,7 @@ const SymbolInfo::Flags explicit_name_flags{
 
 }  // namespace
 
-TEST(ReadLinkingTest, SymbolInfo_Flags) {
+TEST(BinaryReadLinkingTest, SymbolInfo_Flags) {
   using SI = SymbolInfo;
   using F = SI::Flags;
   EXPECT_EQ((optional<F>{{F::Binding::Global, F::Visibility::Default,
@@ -214,7 +214,7 @@ TEST(ReadLinkingTest, SymbolInfo_Flags) {
             binary::encoding::SymbolInfoFlags::Decode(0x40));
 }
 
-TEST(ReadLinkingTest, SymbolInfo_Function) {
+TEST(BinaryReadLinkingTest, SymbolInfo_Function) {
   using SI = SymbolInfo;
   ExpectRead<SI>(SI{MakeAt("\x10"_su8, undefined_flags),
                     SI::Base{MakeAt("\x00"_su8, SymbolInfoKind::Function),
@@ -228,7 +228,7 @@ TEST(ReadLinkingTest, SymbolInfo_Function) {
                  "\x00\x40\x00\x04name"_su8);
 }
 
-TEST(ReadLinkingTest, SymbolInfo_Data) {
+TEST(BinaryReadLinkingTest, SymbolInfo_Data) {
   using SI = SymbolInfo;
   ExpectRead<SI>(SI{MakeAt("\x00"_su8, zero_flags),
                     SI::Data{MakeAt("\x04name"_su8, "name"_sv),
@@ -242,7 +242,7 @@ TEST(ReadLinkingTest, SymbolInfo_Data) {
                  "\x01\x10\x04name"_su8);
 }
 
-TEST(ReadLinkingTest, SymbolInfo_Global) {
+TEST(BinaryReadLinkingTest, SymbolInfo_Global) {
   using SI = SymbolInfo;
   ExpectRead<SI>(SI{MakeAt("\x10"_su8, undefined_flags),
                     SI::Base{MakeAt("\x02"_su8, SymbolInfoKind::Global),
@@ -256,14 +256,14 @@ TEST(ReadLinkingTest, SymbolInfo_Global) {
                  "\x02\x40\x00\x04name"_su8);
 }
 
-TEST(ReadLinkingTest, SymbolInfo_Section) {
+TEST(BinaryReadLinkingTest, SymbolInfo_Section) {
   using SI = SymbolInfo;
   ExpectRead<SI>(SI{MakeAt("\x00"_su8, zero_flags),
                     SI::Section{MakeAt("\x00"_su8, u32{0})}},
                  "\x03\x00\x00"_su8);
 }
 
-TEST(ReadLinkingTest, SymbolInfo_Event) {
+TEST(BinaryReadLinkingTest, SymbolInfo_Event) {
   using SI = SymbolInfo;
   ExpectRead<SI>(SI{MakeAt("\x10"_su8, undefined_flags),
                     SI::Base{MakeAt("\x04"_su8, SymbolInfoKind::Event),
@@ -277,7 +277,7 @@ TEST(ReadLinkingTest, SymbolInfo_Event) {
                  "\x04\x40\x00\x04name"_su8);
 }
 
-TEST(ReadLinkingTest, SymbolInfoKind) {
+TEST(BinaryReadLinkingTest, SymbolInfoKind) {
   ExpectRead<SymbolInfoKind>(SymbolInfoKind::Function, "\x00"_su8);
   ExpectRead<SymbolInfoKind>(SymbolInfoKind::Data, "\x01"_su8);
   ExpectRead<SymbolInfoKind>(SymbolInfoKind::Global, "\x02"_su8);

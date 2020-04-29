@@ -27,7 +27,7 @@ using namespace ::wasp::text;
 using LI = LiteralInfo;
 using HU = HasUnderscores;
 
-TEST(NumericTest, StrToNat_u8) {
+TEST(TextNumericTest, StrToNat_u8) {
   struct {
     SpanU8 span;
     LiteralInfo info;
@@ -62,7 +62,7 @@ TEST(NumericTest, StrToNat_u8) {
   }
 }
 
-TEST(NumericTest, StrToNat_u16) {
+TEST(TextNumericTest, StrToNat_u16) {
   struct {
     SpanU8 span;
     LiteralInfo info;
@@ -98,7 +98,7 @@ TEST(NumericTest, StrToNat_u16) {
   }
 }
 
-TEST(NumericTest, StrToNat_u32) {
+TEST(TextNumericTest, StrToNat_u32) {
   struct {
     SpanU8 span;
     LiteralInfo info;
@@ -221,11 +221,11 @@ void Test_StrToInt32() {
   }
 }
 
-TEST(NumericTest, StrToInt_s32) {
+TEST(TextNumericTest, StrToInt_s32) {
   Test_StrToInt32<s32>();
 }
 
-TEST(NumericTest, StrToInt_u32) {
+TEST(TextNumericTest, StrToInt_u32) {
   Test_StrToInt32<u32>();
 }
 
@@ -239,7 +239,7 @@ void ExpectFloat(SpanU8 span, LiteralInfo info, Int expected) {
                               << " (\"" << ToStringView(span) << "\")";
 }
 
-TEST(NumericTest, StrToFloat_f32) {
+TEST(TextNumericTest, StrToFloat_f32) {
   struct {
     SpanU8 span;
     LiteralInfo info;
@@ -329,7 +329,7 @@ TEST(NumericTest, StrToFloat_f32) {
   }
 }
 
-TEST(NumericTest, StrToFloat_f64) {
+TEST(TextNumericTest, StrToFloat_f64) {
   const auto none = LI::Number(Sign::None, HU::No);
   const auto plus = LI::Number(Sign::Plus, HU::No);
   const auto minus = LI::Number(Sign::Minus, HU::No);
