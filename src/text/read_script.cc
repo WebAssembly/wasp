@@ -20,8 +20,9 @@
 
 #include "wasp/base/errors.h"
 #include "wasp/base/format.h"
-#include "wasp/text/context.h"
 #include "wasp/text/formatters.h"
+#include "wasp/text/read/context.h"
+#include "wasp/text/read/location_guard.h"
 #include "wasp/text/resolve.h"
 
 namespace wasp {

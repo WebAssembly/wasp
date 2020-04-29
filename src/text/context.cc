@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "wasp/text/context.h"
+#include "wasp/text/read/context.h"
 
 #include <algorithm>
 #include <cassert>

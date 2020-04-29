@@ -19,8 +19,9 @@
 #include "gtest/gtest.h"
 #include "test/test_utils.h"
 #include "wasp/base/errors.h"
-#include "wasp/text/context.h"
 #include "wasp/text/formatters.h"
+#include "wasp/text/read/context.h"
+#include "wasp/text/read/tokenizer.h"
 
 using namespace ::wasp;
 using namespace ::wasp::text;

@@ -14,18 +14,16 @@
 // limitations under the License.
 //
 
-#ifndef WASP_TEXT_LEX_H_
-#define WASP_TEXT_LEX_H_
+#ifndef WASP_TEXT_READ_TOKENIZER_H_
+#define WASP_TEXT_READ_TOKENIZER_H_
 
 #include "wasp/base/optional.h"
-#include "wasp/binary/types.h"
-#include "wasp/text/types.h"
+#include "wasp/base/span.h"
+#include "wasp/base/types.h"
+#include "wasp/text/read/token.h"
 
 namespace wasp {
 namespace text {
-
-auto Lex(SpanU8* data) -> Token;
-auto LexNoWhitespace(SpanU8* data) -> Token;
 
 class Tokenizer {
  public:
@@ -49,24 +47,9 @@ class Tokenizer {
   Token previous_token_;
 };
 
-class LocationGuard {
- public:
-  explicit LocationGuard(Tokenizer& tokenizer)
-      : tokenizer_{tokenizer}, start_{tokenizer.Peek().loc.begin()} {}
-
-  Location loc() const {
-    auto* end = tokenizer_.Previous().loc.end();
-    return Location{start_, start_ <= end ? end : start_};
-  }
-
- private:
-  Tokenizer& tokenizer_;
-  const u8* start_;
-};
-
 }  // namespace text
 }  // namespace wasp
 
-#include "wasp/text/lex-inl.h"
+#include "wasp/text/read/tokenizer-inl.h"
 
-#endif  // WASP_TEXT_LEX_H_
+#endif // WASP_TEXT_READ_TOKENIZER_H_

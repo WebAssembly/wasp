@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+#include "wasp/text/read/lex.h"
+
 namespace wasp {
 namespace text {
 

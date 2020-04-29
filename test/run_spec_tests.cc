@@ -28,6 +28,8 @@
 #include "wasp/base/format.h"
 #include "wasp/base/hash.h"
 #include "wasp/text/read.h"
+#include "wasp/text/read/context.h"
+#include "wasp/text/read/tokenizer.h"
 
 using namespace ::wasp;
 namespace fs = std::filesystem;

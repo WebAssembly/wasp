@@ -17,16 +17,17 @@
 #ifndef WASP_TEXT_READ_H_
 #define WASP_TEXT_READ_H_
 
-#include <vector>
-
 #include "wasp/base/at.h"
 #include "wasp/base/optional.h"
-#include "wasp/text/context.h"
-#include "wasp/text/lex.h"
+#include "wasp/text/read/token.h"
 #include "wasp/text/types.h"
 
 namespace wasp {
 namespace text {
+
+struct Context;
+struct NameMap;
+class Tokenizer;
 
 auto Expect(Tokenizer&, Context&, TokenType expected) -> optional<Token>;
 auto ExpectLpar(Tokenizer&, Context&, TokenType expected) -> optional<Token>;

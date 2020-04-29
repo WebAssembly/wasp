@@ -24,9 +24,10 @@
 #include "wasp/base/errors.h"
 #include "wasp/base/format.h"
 #include "wasp/base/utf8.h"
-#include "wasp/text/context.h"
 #include "wasp/text/formatters.h"
 #include "wasp/text/numeric.h"
+#include "wasp/text/read/context.h"
+#include "wasp/text/read/location_guard.h"
 
 namespace wasp {
 namespace text {

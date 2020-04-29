@@ -18,10 +18,12 @@
 #define WASP_TEXT_RESOLVE_H_
 
 #include "wasp/text/types.h"
-#include "wasp/text/context.h"
 
 namespace wasp {
 namespace text {
+
+struct Context;
+struct NameMap;
 
 void Resolve(Context&, NameMap&, At<Var>&);
 void Resolve(Context&, NameMap&, OptAt<Var>&);

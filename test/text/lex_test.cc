@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "wasp/text/lex.h"
+#include "wasp/text/read/lex.h"
 
 #include <algorithm>
 #include <vector>
@@ -22,6 +22,8 @@
 #include "gtest/gtest.h"
 #include "wasp/base/format.h"
 #include "wasp/base/formatters.h"
+#include "wasp/text/read/tokenizer.h"
+#include "wasp/text/types.h"
 
 using namespace ::wasp;
 using namespace ::wasp::text;
