@@ -15,23 +15,33 @@
 //
 
 #include <cmath>
-#include <iterator>
 #include <string>
 #include <vector>
 
 #include "gtest/gtest.h"
 
-// Write() functions must be declared here before they can be used by
-// ExpectWrite (defined in write_test_utils.h below).
-#include "wasp/binary/write.h"
-#include "wasp/binary/name_section/write.h"
-
 #include "test/binary/test_utils.h"
-#include "test/binary/write_test_utils.h"
+#include "test/write_test_utils.h"
+#include "wasp/binary/name_section/write.h"
+#include "wasp/binary/write.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
-using namespace ::wasp::binary::test;
+using namespace ::wasp::test;
+
+namespace {
+
+template <typename T>
+void ExpectWrite(wasp::SpanU8 expected, const T& value) {
+  std::vector<wasp::u8> result(expected.size());
+  auto iter = wasp::binary::Write(
+      value, MakeClampedIterator(result.begin(), result.end()));
+  EXPECT_FALSE(iter.overflow());
+  EXPECT_EQ(iter.base(), result.end());
+  EXPECT_EQ(expected, wasp::SpanU8{result});
+}
+
+}  // namespace
 
 TEST(BinaryWriteTest, BlockType) {
   ExpectWrite<BlockType>("\x7f"_su8, BlockType::I32);

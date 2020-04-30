@@ -184,7 +184,7 @@ TEST(BinaryFormattersTest, Import) {
                                 TableType{Limits{1}, ElementType::Funcref}}));
 
   // Memory
-  EXPECT_EQ(R"({module "e", name "f", desc mem {min 0, max 4}})",
+  EXPECT_EQ(R"({module "e", name "f", desc memory {min 0, max 4}})",
             format("{}", Import{"e"_sv, "f"_sv, MemoryType{Limits{0, 4}}}));
 
   // Global
@@ -206,14 +206,14 @@ TEST(BinaryFormattersTest, Export) {
             format("{}", Export{ExternalKind::Function, "f"_sv, Index{0}}));
   EXPECT_EQ(R"({name "t", desc table 1})",
             format("{}", Export{ExternalKind::Table, "t"_sv, Index{1}}));
-  EXPECT_EQ(R"({name "m", desc mem 2})",
+  EXPECT_EQ(R"({name "m", desc memory 2})",
             format("{}", Export{ExternalKind::Memory, "m"_sv, Index{2}}));
   EXPECT_EQ(R"({name "g", desc global 3})",
             format("{}", Export{ExternalKind::Global, "g"_sv, Index{3}}));
   EXPECT_EQ(R"({name "e", desc event 4})",
             format("{}", Export{ExternalKind::Event, "e"_sv, Index{4}}));
-  EXPECT_EQ(R"(    {name "", desc mem 0})",
-            format("{:>25s}", Export{ExternalKind::Memory, ""_sv, Index{0}}));
+  EXPECT_EQ(R"(    {name "", desc memory 0})",
+            format("{:>28s}", Export{ExternalKind::Memory, ""_sv, Index{0}}));
 }
 
 TEST(BinaryFormattersTest, Expression) {

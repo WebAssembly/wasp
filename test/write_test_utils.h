@@ -14,18 +14,12 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_WRITE_TEST_UTILS_H_
-#define WASP_BINARY_WRITE_TEST_UTILS_H_
+#ifndef WASP_WRITE_TEST_UTILS_H_
+#define WASP_WRITE_TEST_UTILS_H_
 
 #include <iterator>
-#include <vector>
-
-#include "wasp/base/span.h"
-
-#include "gtest/gtest.h"
 
 namespace wasp {
-namespace binary {
 namespace test {
 
 template <typename Iterator>
@@ -83,18 +77,7 @@ ClampedIterator<Iterator> MakeClampedIterator(Iterator begin, Iterator end) {
   return ClampedIterator<Iterator>{begin, end};
 }
 
-template <typename T>
-void ExpectWrite(wasp::SpanU8 expected, const T& value) {
-  std::vector<wasp::u8> result(expected.size());
-  auto iter = wasp::binary::Write(
-      value, MakeClampedIterator(result.begin(), result.end()));
-  EXPECT_FALSE(iter.overflow());
-  EXPECT_EQ(iter.base(), result.end());
-  EXPECT_EQ(expected, wasp::SpanU8{result});
-}
-
 }  // namespace test
-}  // namespace binary
 }  // namespace wasp
 
-#endif  // WASP_BINARY_WRITE_TEST_UTILS_H_
+#endif  // WASP_WRITE_TEST_UTILS_H_

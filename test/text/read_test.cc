@@ -2834,6 +2834,17 @@ TEST_F(TextReadTest, ModuleAssertion) {
      "(module) \"msg\""_su8);
 }
 
+TEST_F(TextReadTest, ActionAssertion) {
+  OK(ReadActionAssertion,
+     ActionAssertion{
+         MakeAt("(invoke \"a\")"_su8,
+                Action{InvokeAction{
+                    nullopt, MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}), {}}}),
+         MakeAt("\"msg\""_su8, Text{"\"msg\"", 3}),
+     },
+     "(invoke \"a\") \"msg\""_su8);
+}
+
 TEST_F(TextReadTest, FloatResult) {
   OK(ReadFloatResult<f32>, F32Result{f32{0}}, "0"_su8);
   OK(ReadFloatResult<f32>, F32Result{NanKind::Arithmetic},
