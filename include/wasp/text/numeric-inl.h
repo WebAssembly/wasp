@@ -15,12 +15,14 @@
 //
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <charconv>
 #include <limits>
 
 #include "third_party/gdtoa/gdtoa.h"
 #include "wasp/base/bitcast.h"
+#include "wasp/base/macros.h"
 
 namespace wasp {
 namespace text {
@@ -155,10 +157,11 @@ struct FloatTraits<f32> {
   using Int = u32;
   static constexpr Int signbit = 0x8000'0000u;
   static constexpr int exp_shift = 23;
-  static constexpr int exp_bias = 128;
+  static constexpr int exp_bias = 127;
   static constexpr int exp_min = -exp_bias;
-  static constexpr int exp_max = 127;
+  static constexpr int exp_max = 128;
   static constexpr Int significand_mask = 0x7f'ffff;
+  static constexpr Int exp_mask = 0x7f80'0000;
   static constexpr Int canonical_nan = 0x40'0000;
 };
 
@@ -167,10 +170,11 @@ struct FloatTraits<f64> {
   using Int = u64;
   static constexpr Int signbit = 0x8000'0000'0000'0000ull;
   static constexpr int exp_shift = 52;
-  static constexpr int exp_bias = 1024;
+  static constexpr int exp_bias = 1023;
   static constexpr int exp_min = -exp_bias;
-  static constexpr int exp_max = 1023;
+  static constexpr int exp_max = 1024;
   static constexpr Int significand_mask = 0xf'ffff'ffff'ffffull;
+  static constexpr Int exp_mask = 0x7ff0'0000'0000'0000ull;
   static constexpr Int canonical_nan = 0x8'0000'0000'0000ull;
 };
 
@@ -234,6 +238,171 @@ auto StrToFloat(LiteralInfo info, SpanU8 span) -> optional<T> {
 
   }
   return nullopt;
+}
+
+template <typename T>
+auto NatToStr(T value, Base base) -> std::string {
+  static_assert(!std::is_signed_v<T>, "T must be unsigned");
+  // 2**64-1 = dec 18446744073709551614 (20 chars)
+  // 2**64-1 = hex 0xffffffffffffffff   (18 chars)
+  constexpr size_t max_chars = 20;
+  std::array<char, max_chars> buffer;
+  char* begin = buffer.begin();
+  char* end = buffer.end();
+
+  if (base == Base::Decimal) {
+    begin = std::to_chars(begin, end, value).ptr;
+  } else {
+    *begin++ = '0';
+    *begin++ = 'x';
+    begin = std::to_chars(begin, end, value, 16).ptr;
+  }
+  return std::string(buffer.begin(), begin);
+}
+
+template <typename T>
+auto IntToStr(T value, Base base) -> std::string {
+  using U = std::make_unsigned_t<T>;
+  U unsignedval = U(value);
+  constexpr U signbit = U(1) << (sizeof(U) * 8 - 1);
+
+  // +2**63-1 = dec 9223372036854775807  (19 chars)
+  // -2**63-1 = dec -9223372036854775807 (20 chars)
+  // +2**63-1 = hex 0x7fffffffffffffff   (18 chars)
+  // -2**63-1 = hex -0x7fffffffffffffff  (19 chars)
+  constexpr size_t max_chars = 20;
+  std::array<char, max_chars> buffer;
+  char* begin = buffer.begin();
+  char* end = buffer.end();
+
+  if (unsignedval & signbit) {
+    *begin++ = '-';
+    unsignedval = ~unsignedval + 1;
+  }
+
+  if (base == Base::Decimal) {
+    begin = std::to_chars(begin, end, unsignedval).ptr;
+  } else {
+    *begin++ = '0';
+    *begin++ = 'x';
+    begin = std::to_chars(begin, end, unsignedval, 16).ptr;
+  }
+  return std::string(buffer.begin(), begin);
+}
+
+template <typename T>
+struct FloatInfo {
+  Sign sign;
+  LiteralKind kind;
+  typename FloatTraits<T>::Int payload;  // Set when kind == NanPayload.
+};
+
+template <typename T>
+auto ClassifyFloat(T value) -> FloatInfo<T> {
+  using Traits = FloatTraits<T>;
+  using Int = typename Traits::Int;
+
+  Int bits = Bitcast<Int>(value);
+
+  FloatInfo<T> info{};
+  info.sign = (bits & Traits::signbit) ? Sign::Minus : Sign::Plus;
+
+  if ((bits & Traits::exp_mask) == Traits::exp_mask) {
+    // NaN or infinity.
+    Int sig_bits = bits & Traits::significand_mask;
+    if (sig_bits == 0) {
+      info.kind = LiteralKind::Infinity;
+    } else if (sig_bits == Traits::canonical_nan) {
+      info.kind = LiteralKind::Nan;
+    } else {
+      info.kind = LiteralKind::NanPayload;
+      info.payload = sig_bits;
+    }
+  } else {
+    // Normal.
+    info.kind = LiteralKind::Normal;
+  }
+  return info;
+}
+
+template <typename T>
+auto GFmt(T value, char* first, char* last) -> char*;
+
+template <>
+inline auto GFmt<f32>(f32 value, char* first, char* last) -> char* {
+  return g_ffmt(first, &value, 0, last - first);
+}
+
+template <>
+inline auto GFmt<f64>(f64 value, char* first, char* last) -> char* {
+  return g_dfmt(first, &value, 0, last - first);
+}
+
+template <typename T>
+auto FloatToStr(T value, Base base) -> std::string {
+  // Not sure exactly how many characters are needed, but this should be enough.
+  constexpr size_t max_chars = 40;
+  std::array<char, max_chars> buffer;
+  char* begin = buffer.begin();
+  char* end = buffer.end();
+
+  auto info = ClassifyFloat(value);
+  if (info.kind != LiteralKind::Normal) {
+    if (info.sign == Sign::Minus) {
+      *begin++ = '-';
+    }
+
+    string_view keyword;
+    switch (info.kind) {
+      case LiteralKind::Nan:        keyword = "nan"; break;
+      case LiteralKind::NanPayload: keyword = "nan:0x"; break;
+      case LiteralKind::Infinity:   keyword = "inf"; break;
+      case LiteralKind::Normal:
+        WASP_UNREACHABLE();
+    }
+    begin = std::copy(keyword.begin(), keyword.end(), begin);
+
+    if (info.kind == LiteralKind::NanPayload) {
+      begin = std::to_chars(begin, end, info.payload, 16).ptr;
+    }
+  } else {
+    if (base == Base::Decimal) {
+      begin = GFmt(value, begin, end);
+    } else {
+      // Hex.
+      using Traits = FloatTraits<T>;
+      using Int = typename Traits::Int;
+
+      if (info.sign == Sign::Minus) {
+        *begin++ = '-';
+      }
+      *begin++ = '0';
+      *begin++ = 'x';
+
+      Int bits = Bitcast<Int>(value);
+      Int sig = bits & Traits::significand_mask;
+      int exp = int((bits & ~Traits::signbit) >> Traits::exp_shift) -
+                Traits::exp_bias;
+
+      if (exp != Traits::exp_min) {
+        // Not subnormal, so include implicit 1 in mantissa.
+        sig |= Traits::significand_mask + 1;
+      } else {
+        exp++;
+      }
+
+      // Remove trailing zeroes in mantissa.
+      while ((sig & 1) == 0) {
+        sig >>= 1;
+        exp++;
+      }
+
+      begin = std::to_chars(begin, end, sig, 16).ptr;
+      *begin++ = 'p';
+      begin = std::to_chars(begin, end, exp - Traits::exp_shift).ptr;
+    }
+  }
+  return std::string(buffer.begin(), begin);
 }
 
 }  // namespace text

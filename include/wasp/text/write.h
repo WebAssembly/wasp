@@ -25,6 +25,7 @@
 #include "wasp/base/formatters.h"
 #include "wasp/base/types.h"
 #include "wasp/base/v128.h"
+#include "wasp/text/numeric.h"
 #include "wasp/text/types.h"
 
 namespace wasp {
@@ -41,6 +42,7 @@ struct WriteContext {
 
   std::string separator;
   std::string indent = "\n";
+  Base base = Base::Decimal;
 };
 
 // WriteRaw
@@ -147,24 +149,29 @@ Iterator Write(WriteContext& context, Iterator out, string_view value) {
   return out;
 }
 
+template <typename Iterator, typename T>
+Iterator WriteNat(WriteContext& context, Iterator out, T value) {
+  return Write(context, out, string_view{NatToStr<T>(value, context.base)});
+}
+
 template <typename Iterator,
           typename T,
           typename std::enable_if_t<std::is_integral_v<T>, int> = 0>
 Iterator Write(WriteContext& context, Iterator out, T value) {
-  return WriteFormat(context, out, value);
+  return Write(context, out, string_view{IntToStr<T>(value, context.base)});
 }
 
 template <typename Iterator,
           typename T,
           typename std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
 Iterator Write(WriteContext& context, Iterator out, T value) {
-  return WriteFormat(context, out, value, "{:g}");
+  return Write(context, out, string_view{FloatToStr<T>(value, context.base)});
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context, Iterator out, Var value) {
   if (std::holds_alternative<u32>(value)) {
-    return Write(context, out, std::get<u32>(value));
+    return WriteNat(context, out, std::get<u32>(value));
   } else {
     return Write(context, out, std::get<string_view>(value));
   }
@@ -1166,7 +1173,7 @@ Iterator Write(WriteContext& context, Iterator out, const ReturnResult& value) {
 
     case 8: // RefHostConst
       out = Write(context, out, "ref.host"_sv);
-      out = Write(context, out, std::get<RefHostConst>(value).var);
+      out = WriteNat(context, out, *std::get<RefHostConst>(value).var);
       break;
 
     case 9: // RefAnyResult

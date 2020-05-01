@@ -31,6 +31,8 @@
 #include "wasp/text/read/context.h"
 #include "wasp/text/read/tokenizer.h"
 
+#include "wasp/text/write.h"
+
 using namespace ::wasp;
 namespace fs = std::filesystem;
 
@@ -183,4 +185,12 @@ void DoFile(const fs::path& path, const Features& features) {
   if (errors.has_error()) {
     errors.Print();
   }
+
+#if 0
+  text::WriteContext wcontext;
+  std::string output;
+  text::Write(wcontext, std::back_inserter(output), script);
+
+  print("{}\n", output);
+#endif
 }

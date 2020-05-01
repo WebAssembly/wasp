@@ -39,12 +39,17 @@ set(gdtoa_files
   third_party/gdtoa/strtorf.c
   third_party/gdtoa/strtord.c
   third_party/gdtoa/strtodg.c
+  third_party/gdtoa/dmisc.c
   third_party/gdtoa/misc.c
   third_party/gdtoa/gmisc.c
   third_party/gdtoa/smisc.c
   third_party/gdtoa/gethex.c
   third_party/gdtoa/sum.c
   third_party/gdtoa/hd_init.c
+  third_party/gdtoa/g_ffmt.c
+  third_party/gdtoa/g_dfmt.c
+  third_party/gdtoa/g__fmt.c
+  third_party/gdtoa/gdtoa.c
 )
 
 add_library(wasplib

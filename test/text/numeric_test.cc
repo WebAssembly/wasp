@@ -429,3 +429,236 @@ TEST(TextNumericTest, StrToFloat_f64) {
     ExpectFloat<f64, u64>(test.span, test.info, test.value_bits);
   }
 }
+
+TEST(TextNumericTest, NatToStr_u8) {
+  struct {
+    string_view result;
+    Base base;
+    u8 value;
+  } tests[] = {
+      {"0", Base::Decimal, 0},
+      {"1", Base::Decimal, 1},
+      {"29", Base::Decimal, 29},
+      {"38", Base::Decimal, 38},
+      {"167", Base::Decimal, 167},
+      {"245", Base::Decimal, 245},
+      {"255", Base::Decimal, 255},
+
+      {"0x1", Base::Hex, 0x01},
+      {"0x23", Base::Hex, 0x23},
+      {"0x45", Base::Hex, 0x45},
+      {"0x67", Base::Hex, 0x67},
+      {"0x89", Base::Hex, 0x89},
+      {"0xab", Base::Hex, 0xab},
+      {"0xcd", Base::Hex, 0xcd},
+      {"0xef", Base::Hex, 0xef},
+      {"0xff", Base::Hex, 0xff},
+  };
+  for (auto test : tests) {
+    EXPECT_EQ(test.result, NatToStr<u8>(test.value, test.base));
+  }
+}
+
+TEST(TextNumericTest, NatToStr_u16) {
+  struct {
+    string_view result;
+    Base base;
+    u16 value;
+  } tests[] = {
+      {"0", Base::Decimal, 0},
+      {"1", Base::Decimal, 1},
+      {"23", Base::Decimal, 23},
+      {"345", Base::Decimal, 345},
+      {"4567", Base::Decimal, 4567},
+      {"56789", Base::Decimal, 56789},
+      {"65535", Base::Decimal, 65535},
+
+      {"0x12", Base::Hex, 0x12},
+      {"0x345", Base::Hex, 0x345},
+      {"0x6789", Base::Hex, 0x6789},
+      {"0xabcd", Base::Hex, 0xabcd},
+      {"0xef01", Base::Hex, 0xef01},
+  };
+  for (auto test : tests) {
+    EXPECT_EQ(test.result, NatToStr<u16>(test.value, test.base));
+  }
+}
+
+TEST(TextNumericTest, NatToStr_u32) {
+  struct {
+    string_view result;
+    Base base;
+    u32 value;
+  } tests[] = {
+      {"0", Base::Decimal, 0},
+      {"12", Base::Decimal, 12},
+      {"2345", Base::Decimal, 2345},
+      {"345678", Base::Decimal, 345678},
+      {"45678901", Base::Decimal, 45678901},
+      {"3456789012", Base::Decimal, 3456789012},
+      {"4294967295", Base::Decimal, 4294967295},
+
+      {"0x123", Base::Hex, 0x123},
+      {"0x234567", Base::Hex, 0x234567},
+      {"0x3456789a", Base::Hex, 0x3456789a},
+      {"0x89abcdef", Base::Hex, 0x89abcdef},
+      {"0xffffffff", Base::Hex, 0xffffffff},
+  };
+  for (auto test : tests) {
+    EXPECT_EQ(test.result, NatToStr<u32>(test.value, test.base));
+  }
+}
+
+template <typename T>
+void Test_IntToStr32() {
+  struct {
+    string_view result;
+    Base base;
+    T value;
+  } tests[] = {
+      {"0", Base::Decimal, 0},
+      {"12", Base::Decimal, 12},
+      {"2345", Base::Decimal, 2345},
+      {"345678", Base::Decimal, 345678},
+      {"45678901", Base::Decimal, 45678901},
+      {"2147483647", Base::Decimal, 2147483647},
+
+      {"-1", Base::Decimal, T(-1)},
+      {"-12", Base::Decimal, T(-12)},
+      {"-2345", Base::Decimal, T(-2345)},
+      {"-345678", Base::Decimal, T(-345678)},
+      {"-45678901", Base::Decimal, T(-45678901)},
+      {"-2147483648", Base::Decimal, T(-2147483648)},
+
+      {"0x123", Base::Hex, 0x123},
+      {"0x234567", Base::Hex, 0x234567},
+      {"0x3456789a", Base::Hex, 0x3456789a},
+      {"0x789abcde", Base::Hex, 0x789abcde},
+      {"0x7fffffff", Base::Hex, 0x7fffffff},
+
+      {"-0x123", Base::Hex, T(-0x123)},
+      {"-0x234567", Base::Hex, T(-0x234567)},
+      {"-0x3456789a", Base::Hex, T(-0x3456789a)},
+      {"-0x789abcde", Base::Hex, T(-0x789abcde)},
+      {"-0x80000000", Base::Hex, T(-0x7fffffff - 1)},
+  };
+  for (auto test : tests) {
+    EXPECT_EQ(test.result, IntToStr<T>(test.value, test.base));
+  }
+}
+
+TEST(TextNumericTest, IntToStr_s32) {
+  Test_IntToStr32<s32>();
+}
+
+TEST(TextNumericTest, IntToStr_u32) {
+  Test_IntToStr32<u32>();
+}
+
+template <typename Float, typename Int>
+void ExpectFloat(Int value_bits, Base base, string_view expected) {
+  static_assert(sizeof(Float) == sizeof(Int), "size mismatch");
+  Float value = Bitcast<Float>(value_bits);
+  auto actual = FloatToStr<Float>(value, base);
+  EXPECT_EQ(expected, actual) << "expected " << expected << " got " << actual;
+}
+
+TEST(TextNumericTest, FloatToStr_f32) {
+  struct {
+    string_view result;
+    Base base;
+    u32 value_bits;
+  } tests[] = {
+      {"0", Base::Decimal, 0x00000000},
+      {"-0", Base::Decimal, 0x80000000},
+
+      {"1234.5", Base::Decimal, 0x449a5000},
+      {"-1234.5", Base::Decimal, 0xc49a5000},
+      {"15", Base::Decimal, 0x41700000},
+      {"-15", Base::Decimal, 0xc1700000},
+      {"1e-45", Base::Decimal, 0x00000001},
+      {"-1e-45", Base::Decimal, 0x80000001},
+      {"1.1754944e-38", Base::Decimal, 0x00800000},
+      {"-1.1754944e-38", Base::Decimal, 0x80800000},
+      {"1.1754942e-38", Base::Decimal, 0x007fffff},
+      {"-1.1754942e-38", Base::Decimal, 0x807fffff},
+      {"3.4028235e+38", Base::Decimal, 0x7f7fffff},
+      {"-3.4028235e+38", Base::Decimal, 0xff7fffff},
+
+      {"0x15p-4", Base::Hex, 0x3fa80000},
+      {"-0x15p-4", Base::Hex, 0xbfa80000},
+      {"0x9a5p-1", Base::Hex, 0x449a5000},
+      {"-0x9a5p-1", Base::Hex, 0xc49a5000},
+      {"0x1p-149", Base::Hex, 0x00000001},
+      {"-0x1p-149", Base::Hex, 0x80000001},
+      {"0x1p-126", Base::Hex, 0x00800000},
+      {"-0x1p-126", Base::Hex, 0x80800000},
+      {"0xffffffp104", Base::Hex, 0x7f7fffff},
+      {"-0xffffffp104", Base::Hex, 0xff7fffff},
+
+      {"inf", Base::Decimal, 0x7f800000},
+      {"-inf", Base::Decimal, 0xff800000},
+
+      {"nan", Base::Decimal, 0x7fc00000},
+      {"-nan", Base::Decimal, 0xffc00000},
+
+      {"nan:0x1", Base::Decimal, 0x7f800001},
+      {"-nan:0x1", Base::Decimal, 0xff800001},
+
+      {"nan:0x123456", Base::Decimal, 0x7f923456},
+      {"-nan:0x123456", Base::Decimal, 0xff923456},
+  };
+  for (auto test : tests) {
+    ExpectFloat<f32, u32>(test.value_bits, test.base, test.result);
+  }
+}
+
+TEST(TextNumericTest, FloatToStr_f64) {
+  struct {
+    string_view result;
+    Base base;
+    u64 value_bits;
+  } tests[] = {
+      {"0", Base::Decimal, 0x00000000'00000000ull},
+      {"-0", Base::Decimal, 0x80000000'00000000ull},
+
+      {"1234.5", Base::Decimal, 0x40934a00'00000000ull},
+      {"-1234.5", Base::Decimal, 0xc0934a00'00000000ull},
+      {"15", Base::Decimal, 0x402e0000'00000000ull},
+      {"-15", Base::Decimal, 0xc02e0000'00000000ull},
+      {"5e-324", Base::Decimal, 0x00000000'00000001ull},
+      {"-5e-324", Base::Decimal, 0x80000000'00000001ull},
+      {"2.2250738585072014e-308", Base::Decimal, 0x00100000'00000000ull},
+      {"-2.2250738585072014e-308", Base::Decimal, 0x80100000'00000000ull},
+      {"2.225073858507201e-308", Base::Decimal, 0x000fffff'ffffffffull},
+      {"-2.225073858507201e-308", Base::Decimal, 0x800fffff'ffffffffull},
+      {"1.7976931348623157e+308", Base::Decimal, 0x7fefffff'ffffffffull},
+      {"-1.7976931348623157e+308", Base::Decimal, 0xffefffff'ffffffffull},
+
+      {"0x15p-4", Base::Hex, 0x3ff50000'00000000ull},
+      {"-0x15p-4", Base::Hex, 0xbff50000'00000000ull},
+      {"0x9a5p-1", Base::Hex, 0x40934a00'00000000ull},
+      {"-0x9a5p-1", Base::Hex, 0xc0934a00'00000000ull},
+      {"0x1p-1022", Base::Hex, 0x00100000'00000000ull},
+      {"-0x1p-1022", Base::Hex, 0x80100000'00000000ull},
+      {"0xfffffffffffffp-1074", Base::Hex, 0x000fffff'ffffffffull},
+      {"-0xfffffffffffffp-1074", Base::Hex, 0x800fffff'ffffffffull},
+      {"0x1fffffffffffffp971", Base::Hex, 0x7fefffff'ffffffffull},
+      {"-0x1fffffffffffffp971", Base::Hex, 0xffefffff'ffffffffull},
+
+      {"inf", Base::Decimal, 0x7ff00000'00000000ull},
+      {"-inf", Base::Decimal, 0xfff00000'00000000ull},
+
+      {"nan", Base::Decimal, 0x7ff80000'00000000ull},
+      {"-nan", Base::Decimal, 0xfff80000'00000000ull},
+
+      {"nan:0x1", Base::Decimal, 0x7ff00000'00000001ull},
+      {"-nan:0x1", Base::Decimal, 0xfff00000'00000001ull},
+
+      {"nan:0x123456789abcd", Base::Decimal, 0x7ff12345'6789abcdull},
+      {"-nan:0x123456789abcd", Base::Decimal, 0xfff12345'6789abcdull},
+  };
+  for (auto test : tests) {
+    ExpectFloat<f64, u64>(test.value_bits, test.base, test.result);
+  }
+}

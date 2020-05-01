@@ -17,8 +17,11 @@
 #ifndef WASP_TEXT_NUMERIC_H_
 #define WASP_TEXT_NUMERIC_H_
 
+#include <string>
+
 #include "wasp/base/optional.h"
-#include "wasp/text/types.h"
+#include "wasp/base/span.h"
+#include "wasp/text/read/token.h"
 
 namespace wasp {
 namespace text {
@@ -31,6 +34,15 @@ auto StrToInt(LiteralInfo, SpanU8) -> optional<T>;
 
 template <typename T>
 auto StrToFloat(LiteralInfo, SpanU8) -> optional<T>;
+
+template <typename T>
+auto NatToStr(T, Base) -> std::string;
+
+template <typename T>
+auto IntToStr(T, Base) -> std::string;
+
+template <typename T>
+auto FloatToStr(T, Base) -> std::string;
 
 }  // namespace text
 }  // namespace wasp
