@@ -151,6 +151,18 @@ void FunctionTypeMap::EndModule() {
   deferred_list_.clear();
 }
 
+optional<Index> FunctionTypeMap::Find(FunctionType type) {
+  auto iter = std::find(list_.begin(), list_.end(), type);
+  if (iter == list_.end()) {
+    return nullopt;
+  }
+  return list_.begin() - iter;
+}
+
+optional<Index> FunctionTypeMap::Find(BoundFunctionType type) {
+  return Find(ToFunctionType(type));
+}
+
 Index FunctionTypeMap::Size() const {
   return list_.size();
 }

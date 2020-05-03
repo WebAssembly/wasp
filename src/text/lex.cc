@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "include/wasp/text/read/lex.h"
+#include "wasp/text/read/lex.h"
 
 #include <cassert>
 

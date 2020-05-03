@@ -181,6 +181,14 @@ TEST_F(TextResolveTest, Instruction_BlockImmediate) {
        BlockImmediate{
            nullopt, FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}}},
      I{O::Block, BlockImmediate{nullopt, FunctionTypeUse{Var{"$a"_sv}, {}}}});
+
+  // Populate the type use.
+  OK(I{O::Block,
+       BlockImmediate{
+           nullopt, FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}}},
+     I{O::Block,
+       BlockImmediate{nullopt,
+                      FunctionTypeUse{nullopt, FunctionType{{VT::I32}, {}}}}});
 }
 
 TEST_F(TextResolveTest, Instruction_BrOnExnImmediate) {
@@ -222,6 +230,16 @@ TEST_F(TextResolveTest, Instruction_CallIndirectImmediate) {
            FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}}},
      I{O::CallIndirect,
        CallIndirectImmediate{Var{"$t"_sv}, FunctionTypeUse{Var{"$a"_sv}, {}}}});
+
+  // Populate the type use.
+  OK(I{O::CallIndirect,
+       CallIndirectImmediate{
+           Var{u32{0}},
+           FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}}},
+     I{O::CallIndirect,
+       CallIndirectImmediate{
+           Var{"$t"_sv},
+           FunctionTypeUse{nullopt, FunctionType{{VT::I32}, {}}}}});
 }
 
 TEST_F(TextResolveTest, Instruction_CopyImmediate_Table) {
@@ -364,14 +382,16 @@ TEST_F(TextResolveTest, InstructionList_LabelReuse) {
   using I = Instruction;
   using O = Opcode;
 
+  context.function_type_map.Define(BoundFunctionType{});
+
   OK(
       InstructionList{
-          I{O::Block, BlockImmediate{"$l1"_sv, {}}},
-          I{O::Block, BlockImmediate{"$l0"_sv, {}}},
+          I{O::Block, BlockImmediate{"$l1"_sv, {Var{u32{0}}, {}}}},
+          I{O::Block, BlockImmediate{"$l0"_sv, {Var{u32{0}}, {}}}},
           I{O::Br, Var{u32{0}}},
           I{O::Br, Var{u32{1}}},
           I{O::End},
-          I{O::Block, BlockImmediate{"$l0"_sv, {}}},
+          I{O::Block, BlockImmediate{"$l0"_sv, {Var{u32{0}}, {}}}},
           I{O::Br, Var{u32{0}}},
           I{O::End},
           I{O::End},
@@ -401,6 +421,12 @@ TEST_F(TextResolveTest, FunctionDesc) {
   OK(FunctionDesc{nullopt, Var{u32{0}},
                   BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}},
      FunctionDesc{nullopt, Var{"$a"_sv}, {}});
+
+  // Populate the type use.
+  OK(FunctionDesc{nullopt, Var{u32{0}},
+                  BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}},
+     FunctionDesc{nullopt, nullopt,
+                  BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}});
 }
 
 TEST_F(TextResolveTest, EventType) {
@@ -414,6 +440,12 @@ TEST_F(TextResolveTest, EventType) {
   OK(EventType{EventAttribute::Exception,
                FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}},
      EventType{EventAttribute::Exception, FunctionTypeUse{Var{"$a"_sv}, {}}});
+
+  // Populate the type use.
+  OK(EventType{EventAttribute::Exception,
+               FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}},
+     EventType{EventAttribute::Exception,
+               FunctionTypeUse{nullopt, FunctionType{{VT::I32}, {}}}});
 }
 
 TEST_F(TextResolveTest, EventDesc) {

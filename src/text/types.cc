@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "include/wasp/text/types.h"
+#include "wasp/text/types.h"
 
 #include <algorithm>
 

@@ -78,8 +78,10 @@ struct FunctionTypeMap {
   void Define(BoundFunctionType);
   void Use(FunctionTypeUse);
   void Use(OptAt<Var> type_use, BoundFunctionType);
-
   void EndModule();
+
+  optional<Index> Find(FunctionType);
+  optional<Index> Find(BoundFunctionType);
 
   Index Size() const;
   optional<FunctionType> Get(Index) const;

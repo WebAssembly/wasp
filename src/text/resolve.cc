@@ -74,6 +74,10 @@ void Resolve(Context& context, FunctionTypeUse& function_type_use) {
         function_type_use.type = *type_opt;
       }
     }
+  } else {
+    auto index_opt = context.function_type_map.Find(function_type_use.type);
+    assert(index_opt.has_value());
+    function_type_use.type_use = *index_opt;
   }
 }
 
@@ -108,6 +112,10 @@ void Resolve(Context& context,
         type->results = type_opt->results;
       }
     }
+  } else {
+    auto index_opt = context.function_type_map.Find(type);
+    assert(index_opt.has_value());
+    type_use = *index_opt;
   }
 }
 
