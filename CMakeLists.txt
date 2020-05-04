@@ -90,6 +90,7 @@ add_library(wasplib
   src/text/read.cc
   src/text/read_script.cc
   src/text/resolve.cc
+  src/text/token.cc
   src/text/types.cc
 
   third_party/fmt/src/format.cc
@@ -144,6 +145,7 @@ add_executable(wasp_unittests
   test/text/numeric_test.cc
   test/text/read_test.cc
   test/text/resolve_test.cc
+  test/text/token_test.cc
   test/text/write_test.cc
   test/tools/argparser_test.cc
   test/valid/test_utils.cc

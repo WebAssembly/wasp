@@ -17,6 +17,8 @@
 #ifndef WASP_TEXT_READ_TOKEN_H_
 #define WASP_TEXT_READ_TOKEN_H_
 
+#include <string>
+
 #include "wasp/base/at.h"
 #include "wasp/base/features.h"
 #include "wasp/base/span.h"
@@ -66,6 +68,8 @@ struct OpcodeInfo {
 };
 
 struct Text {
+  auto ToString() const -> std::string;
+
   string_view text;
   u32 byte_size;
 };
