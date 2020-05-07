@@ -363,7 +363,7 @@ TEST(TextFormattersTest, InlineExportList) {
 TEST(TextFormattersTest, Function) {
   EXPECT_EQ(
       R"({desc {name none, type_use none, type {params [], results []}}, locals [], instructions [], import none, exports []})",
-      format("{}", Function{FunctionDesc{}, {}, {}, nullopt, {}}));
+      format("{}", Function{FunctionDesc{}, {}, {}, {}}));
 }
 
 TEST(TextFormattersTest, ElementListWithExpressions) {
@@ -391,18 +391,13 @@ TEST(TextFormattersTest, Table) {
       R"({desc {name none, type {limits {min 1}, elemtype funcref}}, import none, exports [], elements none})",
       format("{}", Table{TableDesc{nullopt,
                                    TableType{Limits{1}, ElementType::Funcref}},
-                         nullopt,
-                         {},
-                         nullopt}));
+                         {}}));
 }
 
 TEST(TextFormattersTest, Memory) {
   EXPECT_EQ(
       R"({desc {name none, type {limits {min 1}}}, import none, exports [], data none})",
-      format("{}", Memory{MemoryDesc{nullopt, MemoryType{Limits{1}}},
-                          nullopt,
-                          {},
-                          nullopt}));
+      format("{}", Memory{MemoryDesc{nullopt, MemoryType{Limits{1}}}, {}}));
 }
 
 TEST(TextFormattersTest, Global) {
@@ -410,8 +405,7 @@ TEST(TextFormattersTest, Global) {
       R"({desc {name none, type {valtype i32, mut const}}, init [], import none, exports []})",
       format("{}", Global{GlobalDesc{nullopt, GlobalType{ValueType::I32,
                                                          Mutability::Const}},
-                          {},
-                          nullopt,
+                          InstructionList{},
                           {}}));
 }
 
@@ -441,7 +435,6 @@ TEST(TextFormattersTest, Event) {
       R"({desc {name none, type {attribute exception, type {type_use none, type {params [], results []}}}}, import none, exports []})",
       format("{}", Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
                                                       FunctionTypeUse{}}},
-                         nullopt,
                          {}}));
 }
 
@@ -459,7 +452,7 @@ TEST(TextFormattersTest, ModuleItem) {
   // Function
   EXPECT_EQ(
       R"(func {desc {name none, type_use none, type {params [], results []}}, locals [], instructions [], import none, exports []})",
-      format("{}", ModuleItem{Function{FunctionDesc{}, {}, {}, nullopt, {}}}));
+      format("{}", ModuleItem{Function{FunctionDesc{}, {}, {}, {}}}));
 
   // Table
   EXPECT_EQ(
@@ -467,17 +460,13 @@ TEST(TextFormattersTest, ModuleItem) {
       format("{}",
              ModuleItem{Table{
                  TableDesc{nullopt, TableType{Limits{1}, ElementType::Funcref}},
-                 nullopt,
-                 {},
-                 nullopt}}));
+                 {}}}));
 
   // Memory
   EXPECT_EQ(
       R"(memory {desc {name none, type {limits {min 1}}}, import none, exports [], data none})",
       format("{}", ModuleItem{Memory{MemoryDesc{nullopt, MemoryType{Limits{1}}},
-                                     nullopt,
-                                     {},
-                                     nullopt}}));
+                                     {}}}));
 
   // Global
   EXPECT_EQ(
@@ -485,8 +474,7 @@ TEST(TextFormattersTest, ModuleItem) {
       format("{}", ModuleItem{Global{
                        GlobalDesc{nullopt, GlobalType{ValueType::I32,
                                                       Mutability::Const}},
-                       {},
-                       nullopt,
+                       InstructionList{},
                        {}}}));
 
   // Export
@@ -514,7 +502,6 @@ TEST(TextFormattersTest, ModuleItem) {
       format("{}", ModuleItem{Event{
                        EventDesc{nullopt, EventType{EventAttribute::Exception,
                                                     FunctionTypeUse{}}},
-                       nullopt,
                        {}}}));
 }
 

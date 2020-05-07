@@ -38,8 +38,6 @@ TEST(TextTypesTest, FunctionToImport) {
   EXPECT_EQ(
       MakeAt("(import \"m\" \"n\")"_su8, Import{module, name, desc}),
       (Function{desc,
-                {},
-                {},
                 MakeAt("(import \"m\" \"n\")"_su8, InlineImport{module, name}),
                 {}})
           .ToImport());
@@ -60,7 +58,6 @@ TEST(TextTypesTest, FunctionToExports) {
             (Function{desc,
                       {},
                       {},
-                      nullopt,
                       InlineExportList{
                           MakeAt("(export \"e1\")"_su8, InlineExport{name1}),
                           MakeAt("(export \"e2\")"_su8, InlineExport{name2}),
@@ -81,8 +78,7 @@ TEST(TextTypesTest, TableToImport) {
       MakeAt("(import \"m\" \"n\")"_su8, Import{module, name, desc}),
       (Table{desc,
              MakeAt("(import \"m\" \"n\")"_su8, InlineImport{module, name}),
-             {},
-             nullopt})
+             {}})
           .ToImport());
 }
 
@@ -102,12 +98,11 @@ TEST(TextTypesTest, TableToExports) {
                 MakeAt("(export \"e2\")"_su8,
                        Export{ExternalKind::Table, name2, Var{this_index}}),
             }),
-            (Table{desc, nullopt,
+            (Table{desc,
                    InlineExportList{
                        MakeAt("(export \"e1\")"_su8, InlineExport{name1}),
                        MakeAt("(export \"e2\")"_su8, InlineExport{name2}),
-                   },
-                   nullopt})
+                   }})
                 .ToExports(this_index));
 }
 
@@ -128,7 +123,7 @@ TEST(TextTypesTest, TableToElementSegment) {
                             InstructionList{Instruction{
                                 MakeAt(Opcode::I32Const), MakeAt(u32{0})}},
                             elements}),
-            (Table{desc, nullopt, {}, elements}).ToElementSegment(this_index));
+            (Table{desc, {}, elements}).ToElementSegment(this_index));
 }
 
 TEST(TextTypesTest, MemoryToImport) {
@@ -142,8 +137,7 @@ TEST(TextTypesTest, MemoryToImport) {
       MakeAt("(import \"m\" \"n\")"_su8, Import{module, name, desc}),
       (Memory{desc,
               MakeAt("(import \"m\" \"n\")"_su8, InlineImport{module, name}),
-              {},
-              nullopt})
+              {}})
           .ToImport());
 }
 
@@ -161,12 +155,11 @@ TEST(TextTypesTest, MemoryToExports) {
                 MakeAt("(export \"e2\")"_su8,
                        Export{ExternalKind::Memory, name2, Var{this_index}}),
             }),
-            (Memory{desc, nullopt,
+            (Memory{desc,
                     InlineExportList{
                         MakeAt("(export \"e1\")"_su8, InlineExport{name1}),
                         MakeAt("(export \"e2\")"_su8, InlineExport{name2}),
-                    },
-                    nullopt})
+                    }})
                 .ToExports(this_index));
 }
 
@@ -182,7 +175,7 @@ TEST(TextTypesTest, MemoryToDataSegment) {
                          InstructionList{Instruction{MakeAt(Opcode::I32Const),
                                                      MakeAt(u32{0})}},
                          data}),
-            (Memory{desc, nullopt, {}, data}).ToDataSegment(this_index));
+            (Memory{desc, {}, data}).ToDataSegment(this_index));
 }
 
 TEST(TextTypesTest, GlobalToImport) {
@@ -195,7 +188,6 @@ TEST(TextTypesTest, GlobalToImport) {
   EXPECT_EQ(
       MakeAt("(import \"m\" \"n\")"_su8, Import{module, name, desc}),
       (Global{desc,
-              {},
               MakeAt("(import \"m\" \"n\")"_su8, InlineImport{module, name}),
               {}})
           .ToImport());
@@ -215,9 +207,7 @@ TEST(TextTypesTest, GlobalToExports) {
                 MakeAt("(export \"e2\")"_su8,
                        Export{ExternalKind::Global, name2, Var{this_index}}),
             }),
-            (Global{desc,
-                    {},
-                    nullopt,
+            (Global{desc, InstructionList{},
                     InlineExportList{
                         MakeAt("(export \"e1\")"_su8, InlineExport{name1}),
                         MakeAt("(export \"e2\")"_su8, InlineExport{name2}),
@@ -266,7 +256,7 @@ TEST(TextTypesTest, EventToExports) {
                 MakeAt("(export \"e2\")"_su8,
                        Export{ExternalKind::Event, name2, Var{this_index}}),
             }),
-            (Event{desc, nullopt,
+            (Event{desc,
                    InlineExportList{
                        MakeAt("(export \"e1\")"_su8, InlineExport{name1}),
                        MakeAt("(export \"e2\")"_su8, InlineExport{name2}),

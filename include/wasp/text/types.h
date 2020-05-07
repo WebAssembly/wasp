@@ -221,6 +221,27 @@ struct Export;
 using ExportList = std::vector<At<Export>>;
 
 struct Function {
+  // Empty function.
+  explicit Function() = default;
+
+  // Defined function.
+  explicit Function(const FunctionDesc&,
+                    const BoundValueTypeList& locals,
+                    const InstructionList&,
+                    const InlineExportList&);
+
+  // Imported function.
+  explicit Function(const FunctionDesc&,
+                    const At<InlineImport>&,
+                    const InlineExportList&);
+
+  // Imported or defined.
+  explicit Function(const FunctionDesc&,
+                    const BoundValueTypeList& locals,
+                    const InstructionList&,
+                    const OptAt<InlineImport>&,
+                    const InlineExportList&);
+
   auto ToImport() -> OptAt<Import>;
   auto ToExports(Index this_index) -> ExportList;
 
@@ -251,6 +272,17 @@ using ElementList = variant<ElementListWithVars, ElementListWithExpressions>;
 struct ElementSegment;
 
 struct Table {
+  // Defined table.
+  explicit Table(const TableDesc&, const InlineExportList&);
+
+  // Defined table with implicit element segment.
+  explicit Table(const TableDesc&, const InlineExportList&, const ElementList&);
+
+  // Imported table.
+  explicit Table(const TableDesc&,
+                 const At<InlineImport>&,
+                 const InlineExportList&);
+
   auto ToImport() -> OptAt<Import>;
   auto ToExports(Index this_index) -> ExportList;
   auto ToElementSegment(Index this_index) -> OptAt<ElementSegment>;
@@ -266,6 +298,17 @@ struct Table {
 struct DataSegment;
 
 struct Memory {
+  // Defined memory.
+  explicit Memory(const MemoryDesc&, const InlineExportList&);
+
+  // Defined memory with implicit data segment.
+  explicit Memory(const MemoryDesc&, const InlineExportList&, const TextList&);
+
+  // Imported memory.
+  explicit Memory(const MemoryDesc&,
+                  const At<InlineImport>&,
+                  const InlineExportList&);
+
   auto ToImport() -> OptAt<Import>;
   auto ToExports(Index this_index) -> ExportList;
   auto ToDataSegment(Index this_index) -> OptAt<DataSegment>;
@@ -279,6 +322,22 @@ struct Memory {
 // Section 6: Global
 
 struct Global {
+  // Defined global.
+  explicit Global(const GlobalDesc&,
+                  const InstructionList& init,
+                  const InlineExportList&);
+
+  // Imported global.
+  explicit Global(const GlobalDesc&,
+                  const At<InlineImport>&,
+                  const InlineExportList&);
+
+  // Imported or defined.
+  explicit Global(const GlobalDesc&,
+                  const InstructionList& init,
+                  const OptAt<InlineImport>&,
+                  const InlineExportList&);
+
   auto ToImport() -> OptAt<Import>;
   auto ToExports(Index this_index) -> ExportList;
 
@@ -349,6 +408,22 @@ struct DataSegment {
 // Section 13: Event
 
 struct Event {
+  // Empty event.
+  explicit Event() = default;
+
+  // Defined event.
+  explicit Event(const EventDesc&, const InlineExportList&);
+
+  // Imported event.
+  explicit Event(const EventDesc&,
+                 const At<InlineImport>&,
+                 const InlineExportList&);
+
+  // Imported or defined.
+  explicit Event(const EventDesc&,
+                 const OptAt<InlineImport>&,
+                 const InlineExportList&);
+
   auto ToImport() -> OptAt<Import>;
   auto ToExports(Index this_index) -> ExportList;
 

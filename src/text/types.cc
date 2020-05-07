@@ -91,6 +91,31 @@ Instruction::Instruction(At<Opcode> opcode, At<ShuffleImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<Var> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
+Function::Function(const FunctionDesc& desc,
+                   const BoundValueTypeList& locals,
+                   const InstructionList& instructions,
+                   const InlineExportList& exports)
+    : desc{desc},
+      locals{locals},
+      instructions{instructions},
+      exports{exports} {}
+
+Function::Function(const FunctionDesc& desc,
+                   const At<InlineImport>& import,
+                   const InlineExportList& exports)
+    : desc{desc}, import{import}, exports{exports} {}
+
+Function::Function(const FunctionDesc& desc,
+                   const BoundValueTypeList& locals,
+                   const InstructionList& instructions,
+                   const OptAt<InlineImport>& import,
+                   const InlineExportList& exports)
+    : desc{desc},
+      locals{locals},
+      instructions{instructions},
+      import{import},
+      exports{exports} {}
+
 auto Function::ToImport() -> OptAt<Import> {
   if (!import) {
     return nullopt;
@@ -115,6 +140,19 @@ auto Function::ToExports(Index this_index) -> ExportList {
   return MakeExportList(ExternalKind::Function, this_index, exports);
 }
 
+Table::Table(const TableDesc& desc, const InlineExportList& exports)
+    : desc{desc}, exports{exports} {}
+
+Table::Table(const TableDesc& desc,
+             const InlineExportList& exports,
+             const ElementList& elements)
+    : desc{desc}, exports{exports}, elements{elements} {}
+
+Table::Table(const TableDesc& desc,
+             const At<InlineImport>& import,
+             const InlineExportList& exports)
+    : desc{desc}, import{import}, exports{exports} {}
+
 auto Table::ToImport() -> OptAt<Import> {
   if (!import) {
     return nullopt;
@@ -136,6 +174,19 @@ auto Table::ToElementSegment(Index this_index) -> OptAt<ElementSegment> {
       InstructionList{Instruction{MakeAt(Opcode::I32Const), MakeAt(u32{0})}},
       *elements};
 }
+
+Memory::Memory(const MemoryDesc& desc, const InlineExportList& exports)
+    : desc{desc}, exports{exports} {}
+
+Memory::Memory(const MemoryDesc& desc,
+               const InlineExportList& exports,
+               const TextList& data)
+    : desc{desc}, exports{exports}, data{data} {}
+
+Memory::Memory(const MemoryDesc& desc,
+               const At<InlineImport>& import,
+               const InlineExportList& exports)
+    : desc{desc}, import{import}, exports{exports} {}
 
 auto Memory::ToImport() -> OptAt<Import> {
   if (!import) {
@@ -159,6 +210,22 @@ auto Memory::ToDataSegment(Index this_index) -> OptAt<DataSegment> {
       *data};
 }
 
+Global::Global(const GlobalDesc& desc,
+               const InstructionList& init,
+               const InlineExportList& exports)
+    : desc{desc}, init{init}, exports{exports} {}
+
+Global::Global(const GlobalDesc& desc,
+               const At<InlineImport>& import,
+               const InlineExportList& exports)
+    : desc{desc}, import{import}, exports{exports} {}
+
+Global::Global(const GlobalDesc& desc,
+               const InstructionList& init,
+               const OptAt<InlineImport>& import,
+               const InlineExportList& exports)
+    : desc{desc}, init{init}, import{import}, exports{exports} {}
+
 auto Global::ToImport() -> OptAt<Import> {
   if (!import) {
     return nullopt;
@@ -170,6 +237,19 @@ auto Global::ToImport() -> OptAt<Import> {
 auto Global::ToExports(Index this_index) -> ExportList {
   return MakeExportList(ExternalKind::Global, this_index, exports);
 }
+
+Event::Event(const EventDesc& desc, const InlineExportList& exports)
+    : desc{desc}, exports{exports} {}
+
+Event::Event(const EventDesc& desc,
+             const At<InlineImport>& import,
+             const InlineExportList& exports)
+    : desc{desc}, import{import}, exports{exports} {}
+
+Event::Event(const EventDesc& desc,
+             const OptAt<InlineImport>& import,
+             const InlineExportList& exports)
+    : desc{desc}, import{import}, exports{exports} {}
 
 auto Event::ToImport() -> OptAt<Import> {
   if (!import) {

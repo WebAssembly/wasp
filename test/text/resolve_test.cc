@@ -535,12 +535,10 @@ TEST_F(TextResolveTest, Function) {
                            BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}},
               {BVT{"$l"_sv, VT::I32}},
               InstructionList{I{O::LocalGet, Var{u32{1}}}},
-              nullopt,
               {}},
      Function{FunctionDesc{nullopt, Var{"$a"_sv}, {}},
               {BVT{"$l"_sv, VT::I32}},
               InstructionList{I{O::LocalGet, Var{"$l"_sv}}},
-              nullopt,
               {}});
 }
 
@@ -637,7 +635,6 @@ TEST_F(TextResolveTest, Table) {
   context.function_names.NewBound("$f"_sv);
 
   OK(Table{TableDesc{nullopt, TableType{Limits{0}, ElementType::Funcref}},
-           nullopt,
            {},
            ElementList{ElementListWithExpressions{
                ElementType::Funcref,
@@ -645,7 +642,6 @@ TEST_F(TextResolveTest, Table) {
                    ElementExpression{I{O::RefFunc, Var{u32{0}}}},
                }}}},
      Table{TableDesc{nullopt, TableType{Limits{0}, ElementType::Funcref}},
-           nullopt,
            {},
            ElementList{ElementListWithExpressions{
                ElementType::Funcref,
@@ -664,13 +660,11 @@ TEST_F(TextResolveTest, Global) {
       Global{
           GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
           InstructionList{I{O::GlobalGet, Var{u32{0}}}},
-          nullopt,
           {},
       },
       Global{
           GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
           InstructionList{I{O::GlobalGet, Var{"$g"_sv}}},
-          nullopt,
           {},
       });
 }
@@ -761,11 +755,9 @@ TEST_F(TextResolveTest, Event) {
                      EventType{EventAttribute::Exception,
                                FunctionTypeUse{Var{u32{0}},
                                                FunctionType{{VT::I32}, {}}}}},
-           nullopt,
            {}},
      Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
                                         FunctionTypeUse{Var{"$a"_sv}, {}}}},
-           nullopt,
            {}});
 }
 
@@ -801,18 +793,15 @@ TEST_F(TextResolveTest, ModuleItem) {
                       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}},
          {BVT{"$l"_sv, VT::I32}},
          InstructionList{I{O::LocalGet, Var{u32{1}}}},
-         nullopt,
          {}}},
      ModuleItem{Function{FunctionDesc{nullopt, Var{"$a"_sv}, {}},
                          {BVT{"$l"_sv, VT::I32}},
                          InstructionList{I{O::LocalGet, Var{"$l"_sv}}},
-                         nullopt,
                          {}}});
 
   // Table.
   OK(ModuleItem{Table{
          TableDesc{nullopt, TableType{Limits{0}, ElementType::Funcref}},
-         nullopt,
          {},
          ElementList{ElementListWithExpressions{
              ElementType::Funcref,
@@ -821,7 +810,6 @@ TEST_F(TextResolveTest, ModuleItem) {
              }}}}},
      ModuleItem{
          Table{TableDesc{nullopt, TableType{Limits{0}, ElementType::Funcref}},
-               nullopt,
                {},
                ElementList{ElementListWithExpressions{
                    ElementType::Funcref,
@@ -830,22 +818,18 @@ TEST_F(TextResolveTest, ModuleItem) {
                    }}}}});
 
   // Memory.
-  OK(ModuleItem{Memory{
-         MemoryDesc{nullopt, MemoryType{Limits{0}}}, nullopt, {}, nullopt}},
-     ModuleItem{Memory{
-         MemoryDesc{nullopt, MemoryType{Limits{0}}}, nullopt, {}, nullopt}});
+  OK(ModuleItem{Memory{MemoryDesc{nullopt, MemoryType{Limits{0}}}, {}}},
+     ModuleItem{Memory{MemoryDesc{nullopt, MemoryType{Limits{0}}}, {}}});
 
   // Global.
   OK(ModuleItem{Global{
          GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
          InstructionList{I{O::GlobalGet, Var{u32{0}}}},
-         nullopt,
          {},
      }},
      ModuleItem{Global{
          GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
          InstructionList{I{O::GlobalGet, Var{"$g"_sv}}},
-         nullopt,
          {},
      }});
 
@@ -883,11 +867,9 @@ TEST_F(TextResolveTest, ModuleItem) {
                    EventType{EventAttribute::Exception,
                              FunctionTypeUse{Var{u32{0}},
                                              FunctionType{{VT::I32}, {}}}}},
-         nullopt,
          {}}},
      ModuleItem{
          Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
                                             FunctionTypeUse{Var{"$a"_sv}, {}}}},
-               nullopt,
                {}}});
 }

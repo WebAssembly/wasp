@@ -1550,14 +1550,12 @@ TEST_F(TextReadTest, Function) {
 
   // Name.
   OK(ReadFunction,
-     Function{
-         FunctionDesc{MakeAt("$f"_su8, "$f"_sv), nullopt, {}}, {}, {}, {}, {}},
+     Function{FunctionDesc{MakeAt("$f"_su8, "$f"_sv), nullopt, {}}, {}, {}, {}},
      "(func $f)"_su8);
 
   // Inline export.
   OK(ReadFunction,
      Function{{},
-              {},
               {},
               {},
               InlineExportList{MakeAt(
@@ -1576,7 +1574,6 @@ TEST_F(TextReadTest, Function) {
                     BoundValueType{nullopt, MakeAt("i64"_su8, ValueType::I64)}),
          },
          {},
-         {},
          {}},
      "(func (local i32 i64))"_su8);
 
@@ -1589,7 +1586,6 @@ TEST_F(TextReadTest, Function) {
                   MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
                   MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
               },
-              {},
               {}},
      "(func nop nop nop)"_su8);
 
@@ -1600,7 +1596,6 @@ TEST_F(TextReadTest, Function) {
                   "i32"_su8,
                   BoundValueType{nullopt, MakeAt("i32"_su8, ValueType::I32)})},
               InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-              {},
               InlineExportList{MakeAt(
                   "(export \"m\")"_su8,
                   InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
@@ -1629,8 +1624,6 @@ TEST_F(TextReadTest, FunctionInlineImport) {
   // Import.
   OK(ReadFunction,
      Function{{},
-              {},
-              {},
               MakeAt("(import \"m\" \"n\")"_su8,
                      InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
                                   MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
@@ -1649,8 +1642,6 @@ TEST_F(TextReadTest, FunctionInlineImport) {
                              BoundValueType{
                                  nullopt, MakeAt("i32"_su8, ValueType::I32)})},
                      {}})},
-         {},
-         {},
          MakeAt("(import \"a\" \"b\")"_su8,
                 InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
                              MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
@@ -1688,8 +1679,6 @@ TEST_F(TextReadTest, Table) {
              MakeAt("0 funcref"_su8,
                     TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
                               MakeAt("funcref"_su8, ElementType::Funcref)})},
-         nullopt,
-         {},
          {}},
      "(table 0 funcref)"_su8);
 
@@ -1701,8 +1690,6 @@ TEST_F(TextReadTest, Table) {
              MakeAt("0 funcref"_su8,
                     TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
                               MakeAt("funcref"_su8, ElementType::Funcref)})},
-         nullopt,
-         {},
          {}},
      "(table $t 0 funcref)"_su8);
 
@@ -1714,11 +1701,9 @@ TEST_F(TextReadTest, Table) {
              MakeAt("0 funcref"_su8,
                     TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
                               MakeAt("funcref"_su8, ElementType::Funcref)})},
-         nullopt,
          InlineExportList{
              MakeAt("(export \"m\")"_su8,
-                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})},
-         {}},
+                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(table (export \"m\") 0 funcref)"_su8);
 
   // Name and inline export.
@@ -1729,11 +1714,9 @@ TEST_F(TextReadTest, Table) {
              MakeAt("0 funcref"_su8,
                     TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
                               MakeAt("funcref"_su8, ElementType::Funcref)})},
-         nullopt,
          InlineExportList{
              MakeAt("(export \"m\")"_su8,
-                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})},
-         {}},
+                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(table $t2 (export \"m\") 0 funcref)"_su8);
 
   // Inline element var list.
@@ -1741,7 +1724,6 @@ TEST_F(TextReadTest, Table) {
      Table{TableDesc{{},
                      TableType{Limits{u32{3}, u32{3}},
                                MakeAt("funcref"_su8, ElementType::Funcref)}},
-           nullopt,
            {},
            ElementListWithVars{ExternalKind::Function,
                                VarList{
@@ -1771,7 +1753,6 @@ TEST_F(TextReadTest, TableInlineImport) {
          MakeAt("(import \"m\" \"n\")"_su8,
                 InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
                              MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
-         {},
          {}},
      "(table (import \"m\" \"n\") 0 funcref)"_su8);
 
@@ -1788,8 +1769,7 @@ TEST_F(TextReadTest, TableInlineImport) {
                              MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
          InlineExportList{
              MakeAt("(export \"m\")"_su8,
-                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})},
-         {}},
+                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(table $t (export \"m\") (import \"a\" \"b\") 0 funcref)"_su8);
 }
 
@@ -1811,7 +1791,6 @@ TEST_F(TextReadTest, Table_bulk_memory) {
      Table{TableDesc{{},
                      TableType{Limits{u32{2}, u32{2}},
                                MakeAt("funcref"_su8, ElementType::Funcref)}},
-           nullopt,
            {},
            ElementListWithExpressions{
                MakeAt("funcref"_su8, ElementType::Funcref),
@@ -1831,8 +1810,6 @@ TEST_F(TextReadTest, Memory) {
                        MakeAt("0"_su8,
                               MemoryType{MakeAt(
                                   "0"_su8, Limits{MakeAt("0"_su8, u32{0})})})},
-            nullopt,
-            {},
             {}},
      "(memory 0)"_su8);
 
@@ -1842,8 +1819,6 @@ TEST_F(TextReadTest, Memory) {
                        MakeAt("0"_su8,
                               MemoryType{MakeAt(
                                   "0"_su8, Limits{MakeAt("0"_su8, u32{0})})})},
-            nullopt,
-            {},
             {}},
      "(memory $m 0)"_su8);
 
@@ -1853,11 +1828,9 @@ TEST_F(TextReadTest, Memory) {
                        MakeAt("0"_su8,
                               MemoryType{MakeAt(
                                   "0"_su8, Limits{MakeAt("0"_su8, u32{0})})})},
-            nullopt,
-            InlineExportList{
-                MakeAt("(export \"m\")"_su8,
-                       InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})},
-            {}},
+            InlineExportList{MakeAt(
+                "(export \"m\")"_su8,
+                InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(memory (export \"m\") 0)"_su8);
 
   // Name and inline export.
@@ -1866,17 +1839,14 @@ TEST_F(TextReadTest, Memory) {
                        MakeAt("0"_su8,
                               MemoryType{MakeAt(
                                   "0"_su8, Limits{MakeAt("0"_su8, u32{0})})})},
-            nullopt,
-            InlineExportList{
-                MakeAt("(export \"m\")"_su8,
-                       InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})},
-            {}},
+            InlineExportList{MakeAt(
+                "(export \"m\")"_su8,
+                InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(memory $t (export \"m\") 0)"_su8);
 
   // Inline data segment.
   OK(ReadMemory,
      Memory{MemoryDesc{{}, MemoryType{Limits{u32{10}, u32{10}}}},
-            nullopt,
             {},
             TextList{
                 MakeAt("\"hello\""_su8, Text{"\"hello\""_sv, 5}),
@@ -1902,7 +1872,6 @@ TEST_F(TextReadTest, MemoryInlineImport) {
             MakeAt("(import \"m\" \"n\")"_su8,
                    InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
                                 MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
-            {},
             {}},
      "(memory (import \"m\" \"n\") 0)"_su8);
 
@@ -1915,10 +1884,9 @@ TEST_F(TextReadTest, MemoryInlineImport) {
             MakeAt("(import \"a\" \"b\")"_su8,
                    InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
                                 MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
-            InlineExportList{
-                MakeAt("(export \"m\")"_su8,
-                       InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})},
-            {}},
+            InlineExportList{MakeAt(
+                "(export \"m\")"_su8,
+                InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(memory $t (export \"m\") (import \"a\" \"b\") 0)"_su8);
 }
 
@@ -1933,7 +1901,6 @@ TEST_F(TextReadTest, Global) {
                 MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
                                              Mutability::Const})},
             InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-            nullopt,
             {}},
      "(global i32 nop)"_su8);
 
@@ -1944,7 +1911,6 @@ TEST_F(TextReadTest, Global) {
                 MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
                                              Mutability::Const})},
             InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-            nullopt,
             {}},
      "(global $g i32 nop)"_su8);
 
@@ -1955,7 +1921,6 @@ TEST_F(TextReadTest, Global) {
                 MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
                                              Mutability::Const})},
             InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-            nullopt,
             InlineExportList{MakeAt(
                 "(export \"m\")"_su8,
                 InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
@@ -1968,7 +1933,6 @@ TEST_F(TextReadTest, Global) {
                 MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
                                              Mutability::Const})},
             InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-            nullopt,
             InlineExportList{MakeAt(
                 "(export \"m\")"_su8,
                 InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
@@ -1989,7 +1953,6 @@ TEST_F(TextReadTest, GlobalInlineImport) {
                 {},
                 MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
                                              Mutability::Const})},
-            {},
             MakeAt("(import \"m\" \"n\")"_su8,
                    InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
                                 MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
@@ -2002,7 +1965,6 @@ TEST_F(TextReadTest, GlobalInlineImport) {
                 MakeAt("$g"_su8, "$g"_sv),
                 MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
                                              Mutability::Const})},
-            {},
             MakeAt("(import \"a\" \"b\")"_su8,
                    InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
                                 MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
@@ -2021,12 +1983,12 @@ TEST_F(TextReadTest, Event) {
   OK(ReadEvent, Event{}, "(event)"_su8);
 
   // Name.
-  OK(ReadEvent, Event{EventDesc{MakeAt("$e"_su8, "$e"_sv), {}}, {}, {}},
+  OK(ReadEvent, Event{EventDesc{MakeAt("$e"_su8, "$e"_sv), {}}, {}},
      "(event $e)"_su8);
 
   // Inline export.
   OK(ReadEvent,
-     Event{EventDesc{}, nullopt,
+     Event{EventDesc{},
            InlineExportList{
                MakeAt("(export \"m\")"_su8,
                       InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
@@ -2034,7 +1996,7 @@ TEST_F(TextReadTest, Event) {
 
   // Name and inline export.
   OK(ReadEvent,
-     Event{EventDesc{MakeAt("$e2"_su8, "$e2"_sv), {}}, nullopt,
+     Event{EventDesc{MakeAt("$e2"_su8, "$e2"_sv), {}},
            InlineExportList{
                MakeAt("(export \"m\")"_su8,
                       InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
@@ -2594,9 +2556,7 @@ TEST_F(TextReadTest, ModuleItem) {
              MakeAt("0 funcref"_su8,
                     TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
                               MakeAt("funcref"_su8, ElementType::Funcref)})},
-         nullopt,
-         {},
-         nullopt}},
+         {}}},
      "(table 0 funcref)"_su8);
 
   // Memory.
@@ -2606,9 +2566,7 @@ TEST_F(TextReadTest, ModuleItem) {
              nullopt,
              MakeAt("0"_su8, MemoryType{MakeAt(
                                  "0"_su8, Limits{MakeAt("0"_su8, u32{0})})})},
-         nullopt,
-         {},
-         nullopt}},
+         {}}},
      "(memory 0)"_su8);
 
   // Global.
@@ -2620,7 +2578,6 @@ TEST_F(TextReadTest, ModuleItem) {
                                           Mutability::Const})},
          InstructionList{
              MakeAt("nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})},
-         nullopt,
          {}}},
      "(global i32 (nop))"_su8);
 
@@ -2668,7 +2625,6 @@ TEST_F(TextReadTest, ModuleItem_exceptions) {
      ModuleItem{
          Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
                                             FunctionTypeUse{nullopt, {}}}},
-               nullopt,
                {}}},
      "(event)"_su8);
 }
@@ -2685,7 +2641,6 @@ TEST_F(TextReadTest, Module) {
                  {},
                  InstructionList{MakeAt(
                      "nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})},
-                 nullopt,
                  {}
 
              }}),

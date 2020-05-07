@@ -565,7 +565,13 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> At<Table> {
   context.seen_non_import |= !import_opt;
 
   auto elemtype_opt = ReadElementTypeOpt(tokenizer, context);
-  if (!import_opt && elemtype_opt) {
+  if (import_opt) {
+    // Imported table.
+    auto type = ReadTableType(tokenizer, context);
+    Expect(tokenizer, context, TokenType::Rpar);
+    return MakeAt(guard.loc(),
+                  Table{TableDesc{name, type}, *import_opt, exports});
+  } else if (elemtype_opt) {
     // Inline element segment.
     ExpectLpar(tokenizer, context, TokenType::Elem);
 
@@ -589,13 +595,12 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> At<Table> {
 
     Expect(tokenizer, context, TokenType::Rpar);
     Expect(tokenizer, context, TokenType::Rpar);
-    return MakeAt(guard.loc(),
-                  Table{TableDesc{name, type}, import_opt, exports, elements});
+    return MakeAt(guard.loc(), Table{TableDesc{name, type}, exports, elements});
   } else {
+    // Defined table.
     auto type = ReadTableType(tokenizer, context);
     Expect(tokenizer, context, TokenType::Rpar);
-    return MakeAt(guard.loc(),
-                  Table{TableDesc{name, type}, import_opt, exports, nullopt});
+    return MakeAt(guard.loc(), Table{TableDesc{name, type}, exports});
   }
 }
 
@@ -615,7 +620,13 @@ auto ReadMemory(Tokenizer& tokenizer, Context& context) -> At<Memory> {
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
 
-  if (tokenizer.MatchLpar(TokenType::Data)) {
+  if (import_opt) {
+    // Imported memory.
+    auto type = ReadMemoryType(tokenizer, context);
+    Expect(tokenizer, context, TokenType::Rpar);
+    return MakeAt(guard.loc(),
+                  Memory{MemoryDesc{name, type}, *import_opt, exports});
+  } else if (tokenizer.MatchLpar(TokenType::Data)) {
     // Inline data segment.
     auto data = ReadTextList(tokenizer, context);
     auto size = std::accumulate(
@@ -628,12 +639,12 @@ auto ReadMemory(Tokenizer& tokenizer, Context& context) -> At<Memory> {
     Expect(tokenizer, context, TokenType::Rpar);
     Expect(tokenizer, context, TokenType::Rpar);
     return MakeAt(guard.loc(),
-                  Memory{MemoryDesc{name, type}, import_opt, exports, data});
+                  Memory{MemoryDesc{name, type}, exports, data});
   } else {
+    // Defined memory.
     auto type = ReadMemoryType(tokenizer, context);
     Expect(tokenizer, context, TokenType::Rpar);
-    return MakeAt(guard.loc(),
-                  Memory{MemoryDesc{name, type}, import_opt, exports, nullopt});
+    return MakeAt(guard.loc(), Memory{MemoryDesc{name, type}, exports});
   }
 }
 

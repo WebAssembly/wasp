@@ -448,19 +448,17 @@ TEST(TextWriteTest, Function) {
   using O = Opcode;
 
   // Empty func.
-  ExpectWrite("(func)"_sv, Function{{}, {}, {}, nullopt, {}});
+  ExpectWrite("(func)"_sv, Function{});
 
   // Name.
-  ExpectWrite(
-      "(func $f)"_sv,
-      Function{FunctionDesc{"$f"_sv, nullopt, {}}, {}, {}, nullopt, {}});
+  ExpectWrite("(func $f)"_sv,
+              Function{FunctionDesc{"$f"_sv, nullopt, {}}, {}, {}, {}});
 
   // Inline export.
   ExpectWrite("(func (export \"e\"))"_sv,
               Function{FunctionDesc{{}, nullopt, {}},
                        {},
                        {},
-                       nullopt,
                        InlineExportList{
                            InlineExport{Text{"\"e\""_sv, 1}},
                        }});
@@ -473,16 +471,12 @@ TEST(TextWriteTest, Function) {
                            BoundValueType{nullopt, ValueType::I64},
                        },
                        {},
-                       nullopt,
                        {}});
 
   // Instruction.
-  ExpectWrite("(func\n  nop\n  nop\n  nop)"_sv,
-              Function{{},
-                       {},
-                       InstructionList{I{O::Nop}, I{O::Nop}, I{O::Nop}},
-                       nullopt,
-                       {}});
+  ExpectWrite(
+      "(func\n  nop\n  nop\n  nop)"_sv,
+      Function{{}, {}, InstructionList{I{O::Nop}, I{O::Nop}, I{O::Nop}}, {}});
 
   // Everything for defined Function.
   ExpectWrite("(func $f (export \"m\") (type 0)\n  (local i32)\n  nop)"_sv,
@@ -490,7 +484,7 @@ TEST(TextWriteTest, Function) {
                        BoundValueTypeList{
                            BoundValueType{nullopt, ValueType::I32},
                        },
-                       InstructionList{I{O::Nop}}, nullopt,
+                       InstructionList{I{O::Nop}},
                        InlineExportList{
                            InlineExport{Text{"\"m\""_sv, 1}},
                        }});
@@ -498,12 +492,9 @@ TEST(TextWriteTest, Function) {
 
 TEST(TextWriteTest, FunctionInlineImport) {
   // Import.
-  ExpectWrite("(func (import \"m\" \"n\"))"_sv,
-              Function{{},
-                       {},
-                       {},
-                       InlineImport{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1}},
-                       {}});
+  ExpectWrite(
+      "(func (import \"m\" \"n\"))"_sv,
+      Function{{}, InlineImport{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1}}, {}});
 
   // Everything for imported Function.
   ExpectWrite(
@@ -511,8 +502,6 @@ TEST(TextWriteTest, FunctionInlineImport) {
       Function{FunctionDesc{"$f"_sv, nullopt,
                             BoundFunctionType{
                                 {BoundValueType{nullopt, ValueType::I32}}, {}}},
-               {},
-               {},
                InlineImport{Text{"\"a\""_sv, 1}, Text{"\"b\""_sv, 1}},
                InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
@@ -571,40 +560,31 @@ TEST(TextWriteTest, Table) {
   ExpectWrite(
       "(table 0 funcref)"_sv,
       Table{TableDesc{{}, TableType{Limits{u32{0}}, ElementType::Funcref}},
-            nullopt,
-            {},
             {}});
 
   // Name.
   ExpectWrite(
       "(table $t 0 funcref)"_sv,
       Table{TableDesc{"$t"_sv, TableType{Limits{u32{0}}, ElementType::Funcref}},
-            nullopt,
-            {},
             {}});
 
   // Inline export.
   ExpectWrite(
       "(table (export \"m\") 0 funcref)"_sv,
       Table{TableDesc{{}, TableType{Limits{u32{0}}, ElementType::Funcref}},
-            nullopt,
-            InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}},
-            {}});
+            InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 
   // Name and inline export.
   ExpectWrite("(table $t2 (export \"m\") 0 funcref)"_sv,
               Table{TableDesc{"$t2"_sv,
                               TableType{Limits{u32{0}}, ElementType::Funcref}},
-                    nullopt,
-                    InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}},
-                    {}});
+                    InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 
   // Inline element var list.
   ExpectWrite(
       "(table funcref (elem 0 1 2))"_sv,
       Table{TableDesc{{},
                       TableType{Limits{u32{3}, u32{3}}, ElementType::Funcref}},
-            nullopt,
             {},
             ElementListWithVars{ExternalKind::Function, VarList{
                                                             Var{Index{0}},
@@ -617,7 +597,6 @@ TEST(TextWriteTest, Table) {
       "(table funcref (elem (nop) (nop)))"_sv,
       Table{TableDesc{{},
                       TableType{Limits{u32{2}, u32{2}}, ElementType::Funcref}},
-            nullopt,
             {},
             ElementListWithExpressions{ElementType::Funcref,
                                        ElementExpressionList{
@@ -632,7 +611,6 @@ TEST(TextWriteTest, TableInlineImport) {
       "(table (import \"m\" \"n\") 0 funcref)"_sv,
       Table{TableDesc{{}, TableType{Limits{u32{0}}, ElementType::Funcref}},
             InlineImport{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1}},
-            {},
             {}});
 
   // Everything for Table import.
@@ -640,39 +618,31 @@ TEST(TextWriteTest, TableInlineImport) {
       "(table $t (export \"m\") (import \"a\" \"b\") 0 funcref)"_sv,
       Table{TableDesc{"$t"_sv, TableType{Limits{u32{0}}, ElementType::Funcref}},
             InlineImport{Text{"\"a\""_sv, 1}, Text{"\"b\""_sv, 1}},
-            InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}},
-            {}});
+            InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
 
 TEST(TextWriteTest, Memory) {
   // Simplest memory.
-  ExpectWrite(
-      "(memory 0)"_sv,
-      Memory{MemoryDesc{{}, MemoryType{Limits{u32{0}}}}, nullopt, {}, {}});
+  ExpectWrite("(memory 0)"_sv,
+              Memory{MemoryDesc{{}, MemoryType{Limits{u32{0}}}}, {}});
 
   // Name.
-  ExpectWrite(
-      "(memory $m 0)"_sv,
-      Memory{MemoryDesc{"$m"_sv, MemoryType{Limits{u32{0}}}}, nullopt, {}, {}});
+  ExpectWrite("(memory $m 0)"_sv,
+              Memory{MemoryDesc{"$m"_sv, MemoryType{Limits{u32{0}}}}, {}});
 
   // Inline export.
   ExpectWrite("(memory (export \"m\") 0)"_sv,
-     Memory{MemoryDesc{{}, MemoryType{Limits{u32{0}}}},
-            nullopt,
-            InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}},
-            {}});
+              Memory{MemoryDesc{{}, MemoryType{Limits{u32{0}}}},
+                     InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 
   // Name and inline export.
   ExpectWrite("(memory $t (export \"m\") 0)"_sv,
               Memory{MemoryDesc{"$t"_sv, MemoryType{Limits{u32{0}}}},
-                     nullopt,
-                     InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}},
-                     {}});
+                     InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 
   // Inline data segment.
   ExpectWrite("(memory (data \"hello\" \"world\"))"_sv,
               Memory{MemoryDesc{{}, MemoryType{Limits{u32{10}, u32{10}}}},
-                     nullopt,
                      {},
                      TextList{
                          Text{"\"hello\""_sv, 5},
@@ -685,15 +655,13 @@ TEST(TextWriteTest, MemoryInlineImport) {
   ExpectWrite("(memory (import \"m\" \"n\") 0)"_sv,
               Memory{MemoryDesc{{}, MemoryType{Limits{u32{0}}}},
                      InlineImport{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1}},
-                     {},
                      {}});
 
   // Everything for Memory import.
   ExpectWrite("(memory $t (export \"m\") (import \"a\" \"b\") 0)"_sv,
               Memory{MemoryDesc{"$t"_sv, MemoryType{Limits{u32{0}}}},
                      InlineImport{Text{"\"a\""_sv, 1}, Text{"\"b\""_sv, 1}},
-                     InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}},
-                     {}});
+                     InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
 
 TEST(TextWriteTest, Global) {
@@ -705,7 +673,6 @@ TEST(TextWriteTest, Global) {
       "(global i32 nop)"_sv,
       Global{GlobalDesc{{}, GlobalType{ValueType::I32, Mutability::Const}},
              InstructionList{I{O::Nop}},
-             nullopt,
              {}});
 
   // Name.
@@ -713,21 +680,20 @@ TEST(TextWriteTest, Global) {
       "(global $g i32 nop)"_sv,
       Global{GlobalDesc{"$g"_sv, GlobalType{ValueType::I32, Mutability::Const}},
              InstructionList{I{O::Nop}},
-             nullopt,
              {}});
 
   // Inline export.
   ExpectWrite(
       "(global (export \"m\") i32 nop)"_sv,
       Global{GlobalDesc{{}, GlobalType{ValueType::I32, Mutability::Const}},
-             InstructionList{I{O::Nop}}, nullopt,
+             InstructionList{I{O::Nop}},
              InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 
   // Name and inline export.
   ExpectWrite("(global $g2 (export \"m\") i32 nop)"_sv,
               Global{GlobalDesc{"$g2"_sv,
                                 GlobalType{ValueType::I32, Mutability::Const}},
-                     InstructionList{I{O::Nop}}, nullopt,
+                     InstructionList{I{O::Nop}},
                      InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
 
@@ -736,7 +702,6 @@ TEST(TextWriteTest, GlobalInlineImport) {
   ExpectWrite(
       "(global (import \"m\" \"n\") i32)"_sv,
       Global{GlobalDesc{{}, GlobalType{ValueType::I32, Mutability::Const}},
-             {},
              InlineImport{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1}},
              {}});
 
@@ -744,7 +709,6 @@ TEST(TextWriteTest, GlobalInlineImport) {
   ExpectWrite(
       "(global $g (export \"m\") (import \"a\" \"b\") i32)"_sv,
       Global{GlobalDesc{"$g"_sv, GlobalType{ValueType::I32, Mutability::Const}},
-             {},
              InlineImport{Text{"\"a\""_sv, 1}, Text{"\"b\""_sv, 1}},
              InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
@@ -944,17 +908,16 @@ TEST(TextWriteTest, Event) {
   ExpectWrite("(event)"_sv, Event{});
 
   // Name.
-  ExpectWrite("(event $e)"_sv,
-              Event{EventDesc{"$e"_sv, {}}, {}, {}});
+  ExpectWrite("(event $e)"_sv, Event{EventDesc{"$e"_sv, {}}, {}});
 
   // Inline export.
-  ExpectWrite("(event (export \"m\"))"_sv,
-              Event{EventDesc{}, nullopt,
-                    InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
+  ExpectWrite(
+      "(event (export \"m\"))"_sv,
+      Event{EventDesc{}, InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 
   // Name and inline export.
   ExpectWrite("(event $e2 (export \"m\"))"_sv,
-              Event{EventDesc{"$e2"_sv, {}}, nullopt,
+              Event{EventDesc{"$e2"_sv, {}},
                     InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
 
@@ -976,16 +939,12 @@ TEST(TextWriteTest, ModuleItem) {
       "(table 0 funcref)"_sv,
       ModuleItem{Table{
           TableDesc{nullopt, TableType{Limits{u32{0}}, ElementType::Funcref}},
-          nullopt,
-          {},
-          nullopt}});
+          {}}});
 
   // Memory.
-  ExpectWrite("(memory 0)"_sv,
-              ModuleItem{Memory{MemoryDesc{nullopt, MemoryType{Limits{u32{0}}}},
-                                nullopt,
-                                {},
-                                nullopt}});
+  ExpectWrite(
+      "(memory 0)"_sv,
+      ModuleItem{Memory{MemoryDesc{nullopt, MemoryType{Limits{u32{0}}}}, {}}});
 
   // Global.
   ExpectWrite(
@@ -993,7 +952,6 @@ TEST(TextWriteTest, ModuleItem) {
       ModuleItem{Global{
           GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
           InstructionList{Instruction{Opcode::Nop}},
-          nullopt,
           {}}});
 
   // Export.
@@ -1023,7 +981,6 @@ TEST(TextWriteTest, ModuleItem) {
               ModuleItem{Event{
                   EventDesc{nullopt, EventType{EventAttribute::Exception,
                                                FunctionTypeUse{nullopt, {}}}},
-                  nullopt,
                   {}}});
 }
 
@@ -1034,7 +991,6 @@ TEST(TextWriteTest, Module) {
              ModuleItem{Function{FunctionDesc{},
                                  {},
                                  InstructionList{Instruction{Opcode::Nop}},
-                                 nullopt,
                                  {}}},
              ModuleItem{Start{Var{Index{0}}}}});
 }
