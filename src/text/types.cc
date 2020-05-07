@@ -91,6 +91,98 @@ Instruction::Instruction(At<Opcode> opcode, At<ShuffleImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<Var> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
+auto Function::ToImport() -> OptAt<Import> {
+  if (!import) {
+    return nullopt;
+  }
+  return MakeAt(import->loc(),
+                Import{import.value()->module, import.value()->name, desc});
+}
+
+auto MakeExportList(ExternalKind kind,
+                    Index this_index,
+                    const InlineExportList& inline_exports) -> ExportList {
+  ExportList result;
+  for (auto& inline_export : inline_exports) {
+    result.push_back(
+        MakeAt(inline_export.loc(),
+               Export{kind, inline_export->name, Var{this_index}}));
+  }
+  return result;
+}
+
+auto Function::ToExports(Index this_index) -> ExportList {
+  return MakeExportList(ExternalKind::Function, this_index, exports);
+}
+
+auto Table::ToImport() -> OptAt<Import> {
+  if (!import) {
+    return nullopt;
+  }
+  return MakeAt(import->loc(),
+                Import{import->value().module, import->value().name, desc});
+}
+
+auto Table::ToExports(Index this_index) -> ExportList {
+  return MakeExportList(ExternalKind::Table, this_index, exports);
+}
+
+auto Table::ToElementSegment(Index this_index) -> OptAt<ElementSegment> {
+  if (!elements) {
+    return nullopt;
+  }
+  return ElementSegment{
+      nullopt, Var{this_index},
+      InstructionList{Instruction{MakeAt(Opcode::I32Const), MakeAt(u32{0})}},
+      *elements};
+}
+
+auto Memory::ToImport() -> OptAt<Import> {
+  if (!import) {
+    return nullopt;
+  }
+  return MakeAt(import->loc(),
+                Import{import->value().module, import->value().name, desc});
+}
+
+auto Memory::ToExports(Index this_index) -> ExportList {
+  return MakeExportList(ExternalKind::Memory, this_index, exports);
+}
+
+auto Memory::ToDataSegment(Index this_index) -> OptAt<DataSegment> {
+  if (!data) {
+    return nullopt;
+  }
+  return DataSegment{
+      nullopt, Var{this_index},
+      InstructionList{Instruction{MakeAt(Opcode::I32Const), MakeAt(u32{0})}},
+      *data};
+}
+
+auto Global::ToImport() -> OptAt<Import> {
+  if (!import) {
+    return nullopt;
+  }
+  return MakeAt(import->loc(),
+                Import{import->value().module, import->value().name, desc});
+}
+
+auto Global::ToExports(Index this_index) -> ExportList {
+  return MakeExportList(ExternalKind::Global, this_index, exports);
+}
+
+auto Event::ToImport() -> OptAt<Import> {
+  if (!import) {
+    return nullopt;
+  }
+  return MakeAt(import->loc(),
+                Import{import->value().module, import->value().name, desc});
+}
+
+auto Event::ToExports(Index this_index) -> ExportList {
+  return MakeExportList(ExternalKind::Event, this_index, exports);
+}
+
 ElementSegment::ElementSegment(OptAt<BindVar> name,
                                OptAt<Var> table,
                                const InstructionList& offset,

@@ -146,6 +146,7 @@ add_executable(wasp_unittests
   test/text/read_test.cc
   test/text/resolve_test.cc
   test/text/token_test.cc
+  test/text/types_test.cc
   test/text/write_test.cc
   test/tools/argparser_test.cc
   test/valid/test_utils.cc

@@ -216,7 +216,14 @@ struct InlineExport {
 
 using InlineExportList = std::vector<At<InlineExport>>;
 
+struct Export;
+
+using ExportList = std::vector<At<Export>>;
+
 struct Function {
+  auto ToImport() -> OptAt<Import>;
+  auto ToExports(Index this_index) -> ExportList;
+
   FunctionDesc desc;
   BoundValueTypeList locals;
   InstructionList instructions;
@@ -241,7 +248,13 @@ struct ElementListWithVars {
 
 using ElementList = variant<ElementListWithVars, ElementListWithExpressions>;
 
+struct ElementSegment;
+
 struct Table {
+  auto ToImport() -> OptAt<Import>;
+  auto ToExports(Index this_index) -> ExportList;
+  auto ToElementSegment(Index this_index) -> OptAt<ElementSegment>;
+
   TableDesc desc;
   OptAt<InlineImport> import;
   InlineExportList exports;
@@ -250,7 +263,13 @@ struct Table {
 
 // Section 5: Memory
 
+struct DataSegment;
+
 struct Memory {
+  auto ToImport() -> OptAt<Import>;
+  auto ToExports(Index this_index) -> ExportList;
+  auto ToDataSegment(Index this_index) -> OptAt<DataSegment>;
+
   MemoryDesc desc;
   OptAt<InlineImport> import;
   InlineExportList exports;
@@ -260,6 +279,9 @@ struct Memory {
 // Section 6: Global
 
 struct Global {
+  auto ToImport() -> OptAt<Import>;
+  auto ToExports(Index this_index) -> ExportList;
+
   GlobalDesc desc;
   InstructionList init;
   OptAt<InlineImport> import;
@@ -327,6 +349,9 @@ struct DataSegment {
 // Section 13: Event
 
 struct Event {
+  auto ToImport() -> OptAt<Import>;
+  auto ToExports(Index this_index) -> ExportList;
+
   EventDesc desc;
   OptAt<InlineImport> import;
   InlineExportList exports;
