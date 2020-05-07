@@ -124,19 +124,19 @@ TEST(BinaryLazySectionTest, Table) {
               TableType{MakeAt("\x00\x01"_su8,
                                Limits{MakeAt("\x01"_su8, Index{1}), nullopt,
                                       MakeAt("\x00"_su8, Shared::No)}),
-                        MakeAt("\x70"_su8, ElementType::Funcref)})},
+                        MakeAt("\x70"_su8, ReferenceType::Funcref)})},
           Table{MakeAt("\x70\x01\x00\x80\x01"_su8,
                        TableType{MakeAt("\x01\x00\x80\x01"_su8,
                                         Limits{MakeAt("\x00"_su8, u32{0}),
                                                MakeAt("\x80\x01"_su8, u32{128}),
                                                MakeAt("\x01"_su8, Shared::No)}),
-                                 MakeAt("\x70"_su8, ElementType::Funcref)})},
+                                 MakeAt("\x70"_su8, ReferenceType::Funcref)})},
           Table{MakeAt(
               "\x70\x00\x00"_su8,
               TableType{MakeAt("\x00\x00"_su8,
                                Limits{MakeAt("\x00"_su8, u32{0}), nullopt,
                                       MakeAt("\x00"_su8, Shared::No)}),
-                        MakeAt("\x70"_su8, ElementType::Funcref)})},
+                        MakeAt("\x70"_su8, ReferenceType::Funcref)})},
       },
       sec);
   ExpectNoErrors(errors);

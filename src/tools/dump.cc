@@ -715,7 +715,7 @@ visit::Result Tool::Visitor::OnElement(const At<ElementSegment>& segment) {
     print(" kind={} count={}", segment->indexes().kind,
           segment->indexes().init.size());
   } else if (segment->has_expressions()) {
-    print(" element_type={} count={}", segment->expressions().element_type,
+    print(" elemtype={} count={}", segment->expressions().elemtype,
           segment->expressions().init.size());
   }
 

@@ -44,12 +44,12 @@ ElementSegment::ElementSegment(At<Index> table_index,
 
 ElementSegment::ElementSegment(At<Index> table_index,
                                At<ConstantExpression> offset,
-                               At<ElementType> element_type,
+                               At<ReferenceType> elemtype,
                                const ElementExpressions& init)
     : type{SegmentType::Active},
       table_index{table_index},
       offset{offset},
-      desc{ExpressionsInit{element_type, init}} {}
+      desc{ExpressionsInit{elemtype, init}} {}
 
 ElementSegment::ElementSegment(SegmentType type,
                                At<ExternalKind> kind,
@@ -57,9 +57,9 @@ ElementSegment::ElementSegment(SegmentType type,
     : type{type}, desc{IndexesInit{kind, init}} {}
 
 ElementSegment::ElementSegment(SegmentType type,
-                               At<ElementType> element_type,
+                               At<ReferenceType> elemtype,
                                const ElementExpressions& init)
-    : type{type}, desc{ExpressionsInit{element_type, init}} {}
+    : type{type}, desc{ExpressionsInit{elemtype, init}} {}
 
 Export::Export(At<ExternalKind> kind, At<string_view> name, At<Index> index)
     : kind{kind}, name{name}, index{index} {}

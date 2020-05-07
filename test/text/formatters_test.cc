@@ -265,13 +265,13 @@ TEST(TextFormattersTest, FunctionDesc) {
 
 TEST(TextFormattersTest, TableType) {
   EXPECT_EQ(R"({limits {min 1}, elemtype funcref})",
-            format("{}", TableType{Limits{1}, ElementType::Funcref}));
+            format("{}", TableType{Limits{1}, ReferenceType::Funcref}));
 }
 
 TEST(TextFormattersTest, TableDesc) {
   EXPECT_EQ(R"({name none, type {limits {min 1}, elemtype funcref}})",
             format("{}", TableDesc{nullopt, TableType{Limits{1},
-                                                      ElementType::Funcref}}));
+                                                      ReferenceType::Funcref}}));
 }
 
 TEST(TextFormattersTest, MemoryType) {
@@ -319,7 +319,7 @@ TEST(TextFormattersTest, Import) {
       format("{}",
              Import{Text{"$a"_sv, 1}, Text{"$b"_sv, 1},
                     TableDesc{nullopt,
-                              TableType{Limits{1}, ElementType::Funcref}}}));
+                              TableType{Limits{1}, ReferenceType::Funcref}}}));
 
   // Memory
   EXPECT_EQ(
@@ -368,7 +368,7 @@ TEST(TextFormattersTest, Function) {
 
 TEST(TextFormattersTest, ElementListWithExpressions) {
   EXPECT_EQ(R"({elemtype funcref, list []})",
-            format("{}", ElementListWithExpressions{ElementType::Funcref, {}}));
+            format("{}", ElementListWithExpressions{ReferenceType::Funcref, {}}));
 }
 
 TEST(TextFormattersTest, ElementListWithVars) {
@@ -379,7 +379,7 @@ TEST(TextFormattersTest, ElementListWithVars) {
 TEST(TextFormattersTest, ElementList) {
   EXPECT_EQ(R"(expression {elemtype funcref, list []})",
             format("{}", ElementList{ElementListWithExpressions{
-                             ElementType::Funcref, {}}}));
+                             ReferenceType::Funcref, {}}}));
 
   EXPECT_EQ(R"(var {kind func, list []})",
             format("{}", ElementList{
@@ -390,7 +390,7 @@ TEST(TextFormattersTest, Table) {
   EXPECT_EQ(
       R"({desc {name none, type {limits {min 1}, elemtype funcref}}, import none, exports [], elements none})",
       format("{}", Table{TableDesc{nullopt,
-                                   TableType{Limits{1}, ElementType::Funcref}},
+                                   TableType{Limits{1}, ReferenceType::Funcref}},
                          {}}));
 }
 
@@ -459,7 +459,7 @@ TEST(TextFormattersTest, ModuleItem) {
       R"(table {desc {name none, type {limits {min 1}, elemtype funcref}}, import none, exports [], elements none})",
       format("{}",
              ModuleItem{Table{
-                 TableDesc{nullopt, TableType{Limits{1}, ElementType::Funcref}},
+                 TableDesc{nullopt, TableType{Limits{1}, ReferenceType::Funcref}},
                  {}}}));
 
   // Memory

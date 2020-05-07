@@ -180,17 +180,17 @@ typename Ctx::iterator formatter<::wasp::ValueType>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::ElementType>::format(
-    const ::wasp::ElementType& self,
+typename Ctx::iterator formatter<::wasp::ReferenceType>::format(
+    const ::wasp::ReferenceType& self,
     Ctx& ctx) {
   string_view result;
   switch (self) {
 #define WASP_V(val, Name, str, ...) \
-  case ::wasp::ElementType::Name:   \
+  case ::wasp::ReferenceType::Name: \
     result = str;                   \
     break;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/base/def/element_type.def"
+#include "wasp/base/def/reference_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:

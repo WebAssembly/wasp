@@ -497,61 +497,75 @@ auto ReadLimits(Tokenizer& tokenizer, Context& context) -> At<Limits> {
   return MakeAt(guard.loc(), Limits{min, max_opt, shared});
 }
 
-auto ReadElementType(Tokenizer& tokenizer, Context& context)
-    -> At<ElementType> {
+auto ReadReferenceKind(Tokenizer& tokenizer, Context& context)
+    -> At<ReferenceType> {
   auto token = tokenizer.Peek();
-  auto element_type = ReadElementTypeOpt(tokenizer, context);
-  if (!element_type) {
-    context.errors.OnError(token.loc,
-                           format("Expected element type, got {}", token.type));
-    return MakeAt(token.loc, ElementType::Funcref);
+  if (!token.has_reference_type()) {
+    context.errors.OnError(
+        token.loc, format("Expected element type, got {}", token.type));
+    return MakeAt(token.loc, ReferenceType::Funcref);
   }
 
-  return *element_type;
+  tokenizer.Read();
+  return token.reference_type();
 }
 
-auto ReadElementTypeOpt(Tokenizer& tokenizer, Context& context)
-    -> OptAt<ElementType> {
+auto ReadReferenceType(Tokenizer& tokenizer, Context& context)
+    -> At<ReferenceType> {
+  auto token = tokenizer.Peek();
+  auto reftype = ReadReferenceTypeOpt(tokenizer, context);
+  if (!reftype) {
+    context.errors.OnError(
+        token.loc, format("Expected reference type, got {}", token.type));
+    return MakeAt(token.loc, ReferenceType::Funcref);
+  }
+
+  return *reftype;
+}
+
+auto ReadReferenceTypeOpt(Tokenizer& tokenizer, Context& context)
+    -> OptAt<ReferenceType> {
   auto token_opt = tokenizer.Match(TokenType::ValueType);
   if (!token_opt) {
     return nullopt;
   }
 
   bool allowed = true;
-  ElementType element_type;
+  ReferenceType reftype;
 
   switch (token_opt->value_type()) {
-#define WASP_V(val, Name, str)        \
-  case ValueType::Name:               \
-    element_type = ElementType::Name; \
+#define WASP_V(val, Name, str)     \
+  case ValueType::Name:            \
+    reftype = ReferenceType::Name; \
     break;
 #define WASP_FEATURE_V(val, Name, str, feature)  \
   case ValueType::Name:                          \
-    element_type = ElementType::Name;            \
+    reftype = ReferenceType::Name;               \
     if (!context.features.feature##_enabled()) { \
       allowed = false;                           \
     }                                            \
     break;
-#include "wasp/base/def/element_type.def"
+#include "wasp/base/def/reference_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
-      context.errors.OnError(token_opt->loc, format("{} is not an element type",
-                                                    token_opt->value_type()));
+      context.errors.OnError(
+          token_opt->loc,
+          format("{} is not a reference type", token_opt->value_type()));
       return nullopt;
   }
   if (!allowed) {
     context.errors.OnError(token_opt->loc,
-                           format("element type {} not allowed", element_type));
+                           format("reference type {} not allowed", reftype));
     // Print error, but use it anyway.
   }
-  return MakeAt(token_opt->loc, element_type);
+  return MakeAt(token_opt->loc, reftype);
 }
 
 auto ReadTableType(Tokenizer& tokenizer, Context& context) -> At<TableType> {
   LocationGuard guard{tokenizer};
   auto limits = ReadLimits(tokenizer, context);
-  auto element = ReadElementType(tokenizer, context);
+  auto element = ReadReferenceType(tokenizer, context);
   return MakeAt(guard.loc(), TableType{limits, element});
 }
 
@@ -564,7 +578,7 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> At<Table> {
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
 
-  auto elemtype_opt = ReadElementTypeOpt(tokenizer, context);
+  auto elemtype_opt = ReadReferenceTypeOpt(tokenizer, context);
   if (import_opt) {
     // Imported table.
     auto type = ReadTableType(tokenizer, context);
@@ -907,7 +921,7 @@ auto ReadElementSegment(Tokenizer& tokenizer, Context& context)
       }
     } else {
       // * ref_type elem_expr_list
-      auto elemtype = ReadElementType(tokenizer, context);
+      auto elemtype = ReadReferenceType(tokenizer, context);
       auto init = ReadElementExpressionList(tokenizer, context);
       Expect(tokenizer, context, TokenType::Rpar);
 

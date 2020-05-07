@@ -37,9 +37,9 @@ TEST(BinaryFormattersTest, BlockType) {
   EXPECT_EQ(R"(   [f64])", format("{:>8s}", BlockType::F64));
 }
 
-TEST(BinaryFormattersTest, ElementType) {
-  EXPECT_EQ(R"(funcref)", format("{}", ElementType::Funcref));
-  EXPECT_EQ(R"(   funcref)", format("{:>10s}", ElementType::Funcref));
+TEST(BinaryFormattersTest, ReferenceType) {
+  EXPECT_EQ(R"(funcref)", format("{}", ReferenceType::Funcref));
+  EXPECT_EQ(R"(   funcref)", format("{:>10s}", ReferenceType::Funcref));
 }
 
 TEST(BinaryFormattersTest, ExternalKind) {
@@ -147,9 +147,9 @@ TEST(BinaryFormattersTest, FunctionType) {
 
 TEST(BinaryFormattersTest, TableType) {
   EXPECT_EQ(R"({min 1, max 2} funcref)",
-            format("{}", TableType{Limits{1, 2}, ElementType::Funcref}));
+            format("{}", TableType{Limits{1, 2}, ReferenceType::Funcref}));
   EXPECT_EQ(R"(  {min 0} funcref)",
-            format("{:>17s}", TableType{Limits{0}, ElementType::Funcref}));
+            format("{:>17s}", TableType{Limits{0}, ReferenceType::Funcref}));
 }
 
 TEST(BinaryFormattersTest, MemoryType) {
@@ -181,7 +181,7 @@ TEST(BinaryFormattersTest, Import) {
   // Table
   EXPECT_EQ(R"({module "c", name "d", desc table {min 1} funcref})",
             format("{}", Import{"c"_sv, "d"_sv,
-                                TableType{Limits{1}, ElementType::Funcref}}));
+                                TableType{Limits{1}, ReferenceType::Funcref}}));
 
   // Memory
   EXPECT_EQ(R"({module "e", name "f", desc memory {min 0, max 4}})",
@@ -337,10 +337,10 @@ TEST(BinaryFormattersTest, Function) {
 
 TEST(BinaryFormattersTest, Table) {
   EXPECT_EQ(R"({type {min 1} funcref})",
-            format("{}", Table{TableType{Limits{1}, ElementType::Funcref}}));
+            format("{}", Table{TableType{Limits{1}, ReferenceType::Funcref}}));
   EXPECT_EQ(
       R"(   {type {min 1} funcref})",
-      format("{:>25s}", Table{TableType{Limits{1}, ElementType::Funcref}}));
+      format("{:>25s}", Table{TableType{Limits{1}, ReferenceType::Funcref}}));
 }
 
 TEST(BinaryFormattersTest, Memory) {
@@ -388,14 +388,14 @@ TEST(BinaryFormattersTest, ElementSegment_Passive) {
       format("{}",
              ElementSegment{
                  SegmentType::Passive,
-                 ElementType::Funcref,
+                 ReferenceType::Funcref,
                  {ElementExpression{Instruction{Opcode::RefFunc, Index{2u}}},
                   ElementExpression{Instruction{Opcode::RefNull}}}}));
 
   EXPECT_EQ(
       R"( {type funcref, init [], mode passive})",
       format("{:>38s}",
-             ElementSegment{SegmentType::Passive, ElementType::Funcref, {}}));
+             ElementSegment{SegmentType::Passive, ReferenceType::Funcref, {}}));
 }
 
 TEST(BinaryFormattersTest, Code) {

@@ -25,7 +25,7 @@
 #include "wasp/base/utf8.h"
 #include "wasp/binary/encoding.h"  // XXX
 #include "wasp/binary/encoding/block_type_encoding.h"
-#include "wasp/binary/encoding/element_type_encoding.h"
+#include "wasp/binary/encoding/reference_type_encoding.h"
 #include "wasp/binary/encoding/event_attribute_encoding.h"
 #include "wasp/binary/encoding/external_kind_encoding.h"
 #include "wasp/binary/encoding/limits_flags_encoding.h"
@@ -312,19 +312,19 @@ OptAt<ElementSegment> Read(SpanU8* data,
   }
 
   if (decoded.has_expressions == encoding::HasExpressions::Yes) {
-    At<ElementType> element_type{ElementType::Funcref};
+    At<ReferenceType> elemtype{ReferenceType::Funcref};
     if (!decoded.is_legacy_active()) {
-      WASP_TRY_READ(element_type_, Read<ElementType>(data, context));
-      element_type = element_type_;
+      WASP_TRY_READ(elemtype_, Read<ReferenceType>(data, context));
+      elemtype = elemtype_;
     }
     WASP_TRY_READ(
         init, ReadVector<ElementExpression>(data, context, "initializers"));
     if (decoded.segment_type == SegmentType::Active) {
       return MakeAt(guard.loc(),
-                    ElementSegment{table_index, *offset, element_type, init});
+                    ElementSegment{table_index, *offset, elemtype, init});
     } else {
       return MakeAt(guard.loc(),
-                    ElementSegment{decoded.segment_type, element_type, init});
+                    ElementSegment{decoded.segment_type, elemtype, init});
     }
   } else {
     At<ExternalKind> kind{ExternalKind::Function};
@@ -344,10 +344,10 @@ OptAt<ElementSegment> Read(SpanU8* data,
   }
 }
 
-OptAt<ElementType> Read(SpanU8* data, Context& context, Tag<ElementType>) {
+OptAt<ReferenceType> Read(SpanU8* data, Context& context, Tag<ReferenceType>) {
   ErrorsContextGuard error_guard{context.errors, *data, "element type"};
   WASP_TRY_READ(val, Read<u8>(data, context));
-  WASP_TRY_DECODE_FEATURES(decoded, val, ElementType, "element type",
+  WASP_TRY_DECODE_FEATURES(decoded, val, ReferenceType, "element type",
                            context.features);
   return decoded;
 }
@@ -1237,7 +1237,7 @@ OptAt<Table> Read(SpanU8* data, Context& context, Tag<Table>) {
 OptAt<TableType> Read(SpanU8* data, Context& context, Tag<TableType>) {
   ErrorsContextGuard error_guard{context.errors, *data, "table type"};
   LocationGuard guard{data};
-  WASP_TRY_READ(elemtype, Read<ElementType>(data, context));
+  WASP_TRY_READ(elemtype, Read<ReferenceType>(data, context));
   WASP_TRY_READ(limits, Read<Limits>(data, context));
   return MakeAt(guard.loc(), TableType{std::move(limits), elemtype});
 }

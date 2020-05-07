@@ -529,7 +529,7 @@ Iterator Write(WriteContext& context,
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, ElementType value) {
+Iterator Write(WriteContext& context, Iterator out, ReferenceType value) {
   return WriteFormat(context, out, value);
 }
 
@@ -748,7 +748,8 @@ Iterator Write(WriteContext& context, Iterator out, const Table& value) {
     // element segment length.
     out = Write(context, out, value.desc.type->elemtype);
     out = WriteLpar(context, out, "elem");
-    // Only write the list of elements, without the ExternalKind or ElementType.
+    // Only write the list of elements, without the ExternalKind or
+    // ReferenceType.
     if (std::holds_alternative<ElementListWithVars>(*value.elements)) {
       out = Write(context, out,
                   std::get<ElementListWithVars>(*value.elements).list);

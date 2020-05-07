@@ -37,11 +37,13 @@ bool Validate(const At<binary::DataCount>&, Context&);
 
 bool Validate(const At<binary::DataSegment>&, Context&);
 
-bool Validate(const At<binary::ElementExpression>&, ElementType, Context&);
+bool Validate(const At<binary::ElementExpression>&, ReferenceType, Context&);
 
 bool Validate(const At<binary::ElementSegment>&, Context&);
 
-bool Validate(const At<ElementType>& actual, ElementType expected, Context&);
+bool Validate(const At<ReferenceType>& actual,
+              ReferenceType expected,
+              Context&);
 
 bool Validate(const At<binary::Export>&, Context&);
 

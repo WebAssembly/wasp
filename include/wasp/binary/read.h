@@ -89,7 +89,6 @@ auto Read(SpanU8*, Context&, Tag<DataSegment>) -> OptAt<DataSegment>;
 auto Read(SpanU8*, Context&, Tag<ElementExpression>)
     -> OptAt<ElementExpression>;
 auto Read(SpanU8*, Context&, Tag<ElementSegment>) -> OptAt<ElementSegment>;
-auto Read(SpanU8*, Context&, Tag<ElementType>) -> OptAt<ElementType>;
 auto Read(SpanU8*, Context&, Tag<EventAttribute>) -> OptAt<EventAttribute>;
 auto Read(SpanU8*, Context&, Tag<Event>) -> OptAt<Event>;
 auto Read(SpanU8*, Context&, Tag<EventType>) -> OptAt<EventType>;
@@ -114,6 +113,7 @@ auto Read(SpanU8*, Context&, Tag<Mutability>) -> OptAt<Mutability>;
 auto Read(SpanU8*, Context&, Tag<Opcode>) -> OptAt<Opcode>;
 auto Read(SpanU8*, Context&, Tag<s32>) -> OptAt<s32>;
 auto Read(SpanU8*, Context&, Tag<s64>) -> OptAt<s64>;
+auto Read(SpanU8*, Context&, Tag<ReferenceType>) -> OptAt<ReferenceType>;
 auto Read(SpanU8*, Context&, Tag<SectionId>) -> OptAt<SectionId>;
 auto Read(SpanU8*, Context&, Tag<Section>) -> OptAt<Section>;
 auto Read(SpanU8*, Context&, Tag<ShuffleImmediate>) -> OptAt<ShuffleImmediate>;

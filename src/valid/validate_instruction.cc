@@ -149,7 +149,8 @@ optional<EventType> GetEventType(At<Index> index, Context& context) {
   return context.events[index];
 }
 
-optional<ElementType> GetElementSegmentType(At<Index> index, Context& context) {
+optional<ReferenceType> GetElementSegmentType(At<Index> index,
+                                              Context& context) {
   if (!ValidateIndex(index, context.element_segments.size(),
                      "element segment index", context)) {
     return nullopt;
@@ -186,7 +187,7 @@ FunctionType MaybeDefault(optional<FunctionType> value) {
 }
 
 TableType MaybeDefault(optional<TableType> value) {
-  return value.value_or(TableType{Limits{0}, ElementType::Funcref});
+  return value.value_or(TableType{Limits{0}, ReferenceType::Funcref});
 }
 
 GlobalType MaybeDefault(optional<GlobalType> value) {
@@ -197,20 +198,20 @@ EventType MaybeDefault(optional<EventType> value) {
   return value.value_or(EventType{EventAttribute::Exception, 0});
 }
 
-ElementType MaybeDefault(optional<ElementType> value) {
-  return value.value_or(ElementType::Anyref);
+ReferenceType MaybeDefault(optional<ReferenceType> value) {
+  return value.value_or(ReferenceType::Anyref);
 }
 
 Label MaybeDefault(const Label* value) {
   return value ? *value : Label{LabelType::Block, {}, {}, 0};
 }
 
-StackType ElementTypeToStackType(ElementType elemtype) {
-  switch (elemtype) {
-    case ElementType::Funcref: return StackType::Funcref;
-    case ElementType::Anyref: return StackType::Anyref;
-    case ElementType::Nullref: return StackType::Nullref;
-    case ElementType::Exnref: return StackType::Exnref;
+StackType ReferenceTypeToStackType(ReferenceType reftype) {
+  switch (reftype) {
+    case ReferenceType::Funcref: return StackType::Funcref;
+    case ReferenceType::Anyref: return StackType::Anyref;
+    case ReferenceType::Nullref: return StackType::Nullref;
+    case ReferenceType::Exnref: return StackType::Exnref;
   }
   WASP_UNREACHABLE();
 }
@@ -621,14 +622,14 @@ bool GlobalSet(Location loc, At<Index> index, Context& context) {
 
 bool TableGet(Location loc, At<Index> index, Context& context) {
   auto table_type = GetTableType(index, context);
-  auto stack_type = ElementTypeToStackType(MaybeDefault(table_type).elemtype);
+  auto stack_type = ReferenceTypeToStackType(MaybeDefault(table_type).elemtype);
   const StackType type[] = {stack_type};
   return AllTrue(table_type, PopAndPushTypes(loc, span_i32, type, context));
 }
 
 bool TableSet(Location loc, At<Index> index, Context& context) {
   auto table_type = GetTableType(index, context);
-  auto stack_type = ElementTypeToStackType(MaybeDefault(table_type).elemtype);
+  auto stack_type = ReferenceTypeToStackType(MaybeDefault(table_type).elemtype);
   const StackType types[] = {StackType::I32, stack_type};
   return AllTrue(table_type, PopTypes(loc, types, context));
 }
@@ -753,14 +754,14 @@ bool MemoryFill(Location loc, Context& context) {
   return AllTrue(memory_type, PopTypes(loc, span_i32_i32_i32, context));
 }
 
-bool CheckElementType(ElementType expected,
-                      At<ElementType> actual,
-                      Context& context) {
-  if (!TypesMatch(ElementTypeToStackType(expected),
-                  ElementTypeToStackType(actual))) {
+bool CheckReferenceType(ReferenceType expected,
+                        At<ReferenceType> actual,
+                        Context& context) {
+  if (!TypesMatch(ReferenceTypeToStackType(expected),
+                  ReferenceTypeToStackType(actual))) {
     context.errors->OnError(
         actual.loc(),
-        format("Expected element type {}, got {}", expected, actual));
+        format("Expected reference type {}, got {}", expected, actual));
     return false;
   }
   return true;
@@ -771,8 +772,8 @@ bool TableInit(Location loc,
                Context& context) {
   auto table_type = GetTableType(immediate->dst_index, context);
   auto elemtype = GetElementSegmentType(immediate->segment_index, context);
-  bool valid = CheckElementType(MaybeDefault(table_type).elemtype,
-                                MaybeDefault(elemtype), context);
+  bool valid = CheckReferenceType(MaybeDefault(table_type).elemtype,
+                                  MaybeDefault(elemtype), context);
   return AllTrue(table_type, elemtype, valid,
                  PopTypes(loc, span_i32_i32_i32, context));
 }
@@ -787,15 +788,16 @@ bool TableCopy(Location loc,
                Context& context) {
   auto dst_table_type = GetTableType(immediate->dst_index, context);
   auto src_table_type = GetTableType(immediate->src_index, context);
-  bool valid = CheckElementType(MaybeDefault(dst_table_type).elemtype,
-                                MaybeDefault(src_table_type).elemtype, context);
+  bool valid =
+      CheckReferenceType(MaybeDefault(dst_table_type).elemtype,
+                         MaybeDefault(src_table_type).elemtype, context);
   return AllTrue(dst_table_type, src_table_type, valid,
                  PopTypes(loc, span_i32_i32_i32, context));
 }
 
 bool TableGrow(Location loc, At<Index> index, Context& context) {
   auto table_type = GetTableType(index, context);
-  auto stack_type = ElementTypeToStackType(MaybeDefault(table_type).elemtype);
+  auto stack_type = ReferenceTypeToStackType(MaybeDefault(table_type).elemtype);
   const StackType types[] = {stack_type, StackType::I32};
   return AllTrue(table_type, PopAndPushTypes(loc, types, span_i32, context));
 }
@@ -808,7 +810,7 @@ bool TableSize(At<Index> index, Context& context) {
 
 bool TableFill(Location loc, At<Index> index, Context& context) {
   auto table_type = GetTableType(index, context);
-  auto stack_type = ElementTypeToStackType(MaybeDefault(table_type).elemtype);
+  auto stack_type = ReferenceTypeToStackType(MaybeDefault(table_type).elemtype);
   const StackType types[] = {StackType::I32, stack_type, StackType::I32};
   return AllTrue(table_type, PopTypes(loc, types, context));
 }

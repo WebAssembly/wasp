@@ -48,10 +48,10 @@ enum class ValueType : s32 {
 
 using ValueTypes = std::vector<At<ValueType>>;
 
-enum class ElementType : s32 {
+enum class ReferenceType : s32 {
 #define WASP_V(val, Name, str) Name,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/base/def/element_type.def"
+#include "wasp/base/def/reference_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
@@ -100,13 +100,13 @@ struct Limits {
 using ShuffleImmediate = std::array<u8, 16>;
 
 #define WASP_BASE_WASM_ENUMS(WASP_V) \
-  WASP_V(Opcode)                  \
-  WASP_V(ValueType)               \
-  WASP_V(ElementType)             \
-  WASP_V(ExternalKind)            \
-  WASP_V(EventAttribute)          \
-  WASP_V(Mutability)              \
-  WASP_V(SegmentType)             \
+  WASP_V(Opcode)                     \
+  WASP_V(ValueType)                  \
+  WASP_V(ReferenceType)              \
+  WASP_V(ExternalKind)               \
+  WASP_V(EventAttribute)             \
+  WASP_V(Mutability)                 \
+  WASP_V(SegmentType)                \
   WASP_V(Shared)
 
 #define WASP_BASE_WASM_STRUCTS(WASP_V) \

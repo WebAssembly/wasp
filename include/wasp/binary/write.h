@@ -25,7 +25,7 @@
 #include "wasp/base/wasm_types.h"
 #include "wasp/binary/encoding.h"  // XXX
 #include "wasp/binary/encoding/block_type_encoding.h"
-#include "wasp/binary/encoding/element_type_encoding.h"
+#include "wasp/binary/encoding/reference_type_encoding.h"
 #include "wasp/binary/encoding/event_attribute_encoding.h"
 #include "wasp/binary/encoding/external_kind_encoding.h"
 #include "wasp/binary/encoding/limits_flags_encoding.h"
@@ -115,8 +115,8 @@ Iterator Write(BlockType value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(ElementType value, Iterator out) {
-  return Write(encoding::ElementType::Encode(value), out);
+Iterator Write(ReferenceType value, Iterator out) {
+  return Write(encoding::ReferenceType::Encode(value), out);
 }
 
 template <typename Iterator>
@@ -279,7 +279,7 @@ Iterator Write(const ElementSegment& value, Iterator out) {
   if (flags.has_expressions == encoding::HasExpressions::Yes) {
     const auto& desc = value.expressions();
     if (!flags.is_legacy_active()) {
-      out = Write(desc.element_type, out);
+      out = Write(desc.elemtype, out);
     }
     out = WriteVector(desc.init.begin(), desc.init.end(), out);
   } else {

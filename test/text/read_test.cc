@@ -203,15 +203,15 @@ TEST_F(TextReadTest, ValueTypeList) {
   OKVector(ReadValueTypeList, expected, span);
 }
 
-TEST_F(TextReadTest, ElementType) {
-  OK(ReadElementType, ElementType::Funcref, "funcref"_su8);
+TEST_F(TextReadTest, ReferenceType) {
+  OK(ReadReferenceType, ReferenceType::Funcref, "funcref"_su8);
 }
 
-TEST_F(TextReadTest, ElementType_reference_types) {
+TEST_F(TextReadTest, ReferenceType_reference_types) {
   context.features.enable_reference_types();
-  OK(ReadElementType, ElementType::Funcref, "funcref"_su8);
-  OK(ReadElementType, ElementType::Anyref, "anyref"_su8);
-  OK(ReadElementType, ElementType::Nullref, "nullref"_su8);
+  OK(ReadReferenceType, ReferenceType::Funcref, "funcref"_su8);
+  OK(ReadReferenceType, ReferenceType::Anyref, "anyref"_su8);
+  OK(ReadReferenceType, ReferenceType::Nullref, "nullref"_su8);
 }
 
 TEST_F(TextReadTest, BoundParamList) {
@@ -1507,7 +1507,7 @@ TEST_F(TextReadTest, TableType) {
   OK(ReadTableType,
      TableType{MakeAt("1 2"_su8,
                       Limits{MakeAt("1"_su8, u32{1}), MakeAt("2"_su8, u32{2})}),
-               MakeAt("funcref"_su8, ElementType::Funcref)},
+               MakeAt("funcref"_su8, ReferenceType::Funcref)},
      "1 2 funcref"_su8);
 }
 
@@ -1678,7 +1678,7 @@ TEST_F(TextReadTest, Table) {
              {},
              MakeAt("0 funcref"_su8,
                     TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ElementType::Funcref)})},
+                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
          {}},
      "(table 0 funcref)"_su8);
 
@@ -1689,7 +1689,7 @@ TEST_F(TextReadTest, Table) {
              MakeAt("$t"_su8, "$t"_sv),
              MakeAt("0 funcref"_su8,
                     TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ElementType::Funcref)})},
+                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
          {}},
      "(table $t 0 funcref)"_su8);
 
@@ -1700,7 +1700,7 @@ TEST_F(TextReadTest, Table) {
              {},
              MakeAt("0 funcref"_su8,
                     TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ElementType::Funcref)})},
+                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
          InlineExportList{
              MakeAt("(export \"m\")"_su8,
                     InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
@@ -1713,7 +1713,7 @@ TEST_F(TextReadTest, Table) {
              MakeAt("$t2"_su8, "$t2"_sv),
              MakeAt("0 funcref"_su8,
                     TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ElementType::Funcref)})},
+                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
          InlineExportList{
              MakeAt("(export \"m\")"_su8,
                     InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
@@ -1723,7 +1723,7 @@ TEST_F(TextReadTest, Table) {
   OK(ReadTable,
      Table{TableDesc{{},
                      TableType{Limits{u32{3}, u32{3}},
-                               MakeAt("funcref"_su8, ElementType::Funcref)}},
+                               MakeAt("funcref"_su8, ReferenceType::Funcref)}},
            {},
            ElementListWithVars{ExternalKind::Function,
                                VarList{
@@ -1749,7 +1749,7 @@ TEST_F(TextReadTest, TableInlineImport) {
              {},
              MakeAt("0 funcref"_su8,
                     TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ElementType::Funcref)})},
+                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
          MakeAt("(import \"m\" \"n\")"_su8,
                 InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
                              MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
@@ -1763,7 +1763,7 @@ TEST_F(TextReadTest, TableInlineImport) {
              MakeAt("$t"_su8, "$t"_sv),
              MakeAt("0 funcref"_su8,
                     TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ElementType::Funcref)})},
+                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
          MakeAt("(import \"a\" \"b\")"_su8,
                 InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
                              MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
@@ -1790,10 +1790,10 @@ TEST_F(TextReadTest, Table_bulk_memory) {
   OK(ReadTable,
      Table{TableDesc{{},
                      TableType{Limits{u32{2}, u32{2}},
-                               MakeAt("funcref"_su8, ElementType::Funcref)}},
+                               MakeAt("funcref"_su8, ReferenceType::Funcref)}},
            {},
            ElementListWithExpressions{
-               MakeAt("funcref"_su8, ElementType::Funcref),
+               MakeAt("funcref"_su8, ReferenceType::Funcref),
                ElementExpressionList{
                    ElementExpression{
                        MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
@@ -2054,7 +2054,7 @@ TEST_F(TextReadTest, Import) {
              nullopt,
              MakeAt("1 funcref"_su8,
                     TableType{MakeAt("1"_su8, Limits{MakeAt("1"_su8, u32{1})}),
-                              MakeAt("funcref"_su8, ElementType::Funcref)})}},
+                              MakeAt("funcref"_su8, ReferenceType::Funcref)})}},
      "(import \"m\" \"n\" (table 1 funcref))"_su8);
 
   // Memory.
@@ -2300,7 +2300,7 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
   OK(ReadElementSegment,
      ElementSegment{nullopt, SegmentType::Passive,
                     ElementListWithExpressions{
-                        MakeAt("funcref"_su8, ElementType::Funcref),
+                        MakeAt("funcref"_su8, ReferenceType::Funcref),
                         ElementExpressionList{
                             ElementExpression{MakeAt(
                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
@@ -2331,7 +2331,7 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
   OK(ReadElementSegment,
      ElementSegment{nullopt, SegmentType::Declared,
                     ElementListWithExpressions{
-                        MakeAt("funcref"_su8, ElementType::Funcref),
+                        MakeAt("funcref"_su8, ReferenceType::Funcref),
                         ElementExpressionList{
                             ElementExpression{MakeAt(
                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
@@ -2397,7 +2397,7 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
          nullopt, nullopt,
          InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
          ElementListWithExpressions{
-             MakeAt("funcref"_su8, ElementType::Funcref),
+             MakeAt("funcref"_su8, ReferenceType::Funcref),
              ElementExpressionList{
                  ElementExpression{
                      MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
@@ -2555,7 +2555,7 @@ TEST_F(TextReadTest, ModuleItem) {
              nullopt,
              MakeAt("0 funcref"_su8,
                     TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ElementType::Funcref)})},
+                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
          {}}},
      "(table 0 funcref)"_su8);
 

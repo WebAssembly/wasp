@@ -374,7 +374,7 @@ typename Ctx::iterator formatter<::wasp::binary::ElementSegment>::format(
     format_to(buf, "{{type {}, init {}, ", self.indexes().kind,
               self.indexes().init);
   } else if (self.has_expressions()) {
-    format_to(buf, "{{type {}, init {}, ", self.expressions().element_type,
+    format_to(buf, "{{type {}, init {}, ", self.expressions().elemtype,
               self.expressions().init);
   }
 
@@ -411,7 +411,7 @@ formatter<::wasp::binary::ElementSegment::ExpressionsInit>::format(
     const ::wasp::binary::ElementSegment::ExpressionsInit& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{{type {}, init {}}}", self.element_type, self.init);
+  format_to(buf, "{{type {}, init {}}}", self.elemtype, self.init);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 

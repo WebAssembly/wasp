@@ -166,7 +166,7 @@ TEST(BinaryWriteTest, ElementSegment_BulkMemory) {
       ElementSegment{
           0u,
           ConstantExpression{Instruction{Opcode::I32Const, s32{5}}},
-          ElementType::Funcref,
+          ReferenceType::Funcref,
           {ElementExpression{Instruction{Opcode::RefFunc, Index{6u}}}}});
 
   // Flags == 5: Passive, expression list
@@ -174,7 +174,7 @@ TEST(BinaryWriteTest, ElementSegment_BulkMemory) {
       "\x05\x70\x02\xd2\x07\x0b\xd0\x0b"_su8,
       ElementSegment{
           SegmentType::Passive,
-          ElementType::Funcref,
+          ReferenceType::Funcref,
           {ElementExpression{Instruction{Opcode::RefFunc, Index{7u}}},
            ElementExpression{Instruction{Opcode::RefNull}}}});
 
@@ -183,12 +183,12 @@ TEST(BinaryWriteTest, ElementSegment_BulkMemory) {
       "\x06\x02\x41\x08\x0b\x70\x01\xd0\x0b"_su8,
       ElementSegment{2u,
                      ConstantExpression{Instruction{Opcode::I32Const, s32{8}}},
-                     ElementType::Funcref,
+                     ReferenceType::Funcref,
                      {ElementExpression{Instruction{Opcode::RefNull}}}});
 }
 
-TEST(BinaryWriteTest, ElementType) {
-  ExpectWrite<ElementType>("\x70"_su8, ElementType::Funcref);
+TEST(BinaryWriteTest, ReferenceType) {
+  ExpectWrite<ReferenceType>("\x70"_su8, ReferenceType::Funcref);
 }
 
 TEST(BinaryWriteTest, Event) {
@@ -364,7 +364,7 @@ TEST(BinaryWriteTest, Import) {
 
   ExpectWrite<Import>(
       "\x01\x62\x05table\x01\x70\x00\x01"_su8,
-      Import{"b", "table", TableType{Limits{1}, ElementType::Funcref}});
+      Import{"b", "table", TableType{Limits{1}, ReferenceType::Funcref}});
 
   ExpectWrite<Import>("\x01\x63\x06memory\x02\x01\x00\x02"_su8,
                       Import{"c", "memory", MemoryType{Limits{0, 2}}});
@@ -1495,14 +1495,14 @@ TEST(BinaryWriteTest, String) {
 
 TEST(BinaryWriteTest, Table) {
   ExpectWrite<Table>("\x70\x00\x01"_su8,
-                     Table{TableType{Limits{1}, ElementType::Funcref}});
+                     Table{TableType{Limits{1}, ReferenceType::Funcref}});
 }
 
 TEST(BinaryWriteTest, TableType) {
   ExpectWrite<TableType>("\x70\x00\x01"_su8,
-                         TableType{Limits{1}, ElementType::Funcref});
+                         TableType{Limits{1}, ReferenceType::Funcref});
   ExpectWrite<TableType>("\x70\x01\x01\x02"_su8,
-                         TableType{Limits{1, 2}, ElementType::Funcref});
+                         TableType{Limits{1, 2}, ReferenceType::Funcref});
 }
 
 TEST(BinaryWriteTest, TypeEntry) {

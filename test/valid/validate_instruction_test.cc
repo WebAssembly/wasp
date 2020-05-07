@@ -81,7 +81,7 @@ class ValidateInstructionTest : public ::testing::Test {
     return AddItem(context.events, event_type);
   }
 
-  Index AddElementSegment(ElementType elem_type) {
+  Index AddElementSegment(ReferenceType elem_type) {
     return AddItem(context.element_segments, elem_type);
   }
 
@@ -1042,7 +1042,7 @@ TEST_F(ValidateInstructionTest, Call_MultiResult) {
 }
 
 TEST_F(ValidateInstructionTest, CallIndirect) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   auto index = AddFunctionType(FunctionType{});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::CallIndirect, CallIndirectImmediate{index, 0}});
@@ -1050,14 +1050,14 @@ TEST_F(ValidateInstructionTest, CallIndirect) {
 }
 
 TEST_F(ValidateInstructionTest, CallIndirect_Params) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   auto index = AddFunctionType(FunctionType{{VT::F32, VT::I64}, {}});
   TestSignature(I{O::CallIndirect, CallIndirectImmediate{index, 0}},
                 {VT::F32, VT::I64, VT::I32}, {});
 }
 
 TEST_F(ValidateInstructionTest, CallIndirect_MultiResult) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   auto index = AddFunctionType(FunctionType{{}, {VT::I64, VT::F32}});
   TestSignature(I{O::CallIndirect, CallIndirectImmediate{index, 0}}, {VT::I32},
                 {VT::I64, VT::F32});
@@ -1072,7 +1072,7 @@ TEST_F(ValidateInstructionTest, CallIndirect_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, CallIndirect_TypeIndexOOB) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::CallIndirect, CallIndirectImmediate{100, 0}});
   ExpectError({"instruction", "Invalid type index 100, must be less than 1"},
@@ -1081,8 +1081,8 @@ TEST_F(ValidateInstructionTest, CallIndirect_TypeIndexOOB) {
 
 TEST_F(ValidateInstructionTest, CallIndirect_NonZeroTableIndex_ReferenceTypes) {
   auto index = AddFunctionType(FunctionType{});
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::CallIndirect, CallIndirectImmediate{index, 1}});
 }
@@ -1340,7 +1340,7 @@ TEST_F(ValidateInstructionTest, GlobalSet_Immutable) {
 }
 
 TEST_F(ValidateInstructionTest, TableGet) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   TestSignature(I{O::TableGet, Index{0}}, {VT::I32}, {VT::Funcref});
 }
 
@@ -1352,7 +1352,7 @@ TEST_F(ValidateInstructionTest, TableGet_IndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableSet) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   for (auto ref_type : {VT::Funcref, VT::Nullref}) {
     TestSignature(I{O::TableSet, Index{0}}, {VT::I32, ref_type}, {});
   }
@@ -1366,7 +1366,7 @@ TEST_F(ValidateInstructionTest, TableSet_IndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableSet_InvalidType) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   context.type_stack = {ST::I32, ST::Anyref};
   Fail(I{O::TableSet, Index{0}});
   ExpectError({"instruction",
@@ -1672,7 +1672,7 @@ TEST_F(ValidateInstructionTest, ReturnCall_ResultTypeMismatch) {
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect) {
   BeginFunction(FunctionType{{}, {VT::F32}});
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   auto index = AddFunctionType(FunctionType{{VT::I64}, {VT::F32}});
   Ok(I{O::I64Const, s64{}});  // Param.
   Ok(I{O::I32Const, s32{}});  // call_indirect key.
@@ -1682,7 +1682,7 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect) {
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_Unreachable) {
   BeginFunction(FunctionType{{}, {}});
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   auto index = AddFunctionType(FunctionType{{VT::I64}, {}});
 
   Ok(I{O::Block, BlockType::I32});
@@ -1706,7 +1706,7 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_TypeIndexOOB) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{100, 0}});
   ExpectError({"instruction", "Invalid type index 100, must be less than 1"},
@@ -1714,7 +1714,7 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect_TypeIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_NoKey) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   auto index = AddFunction(FunctionType{{}, {}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
   ExpectError({"instruction", "Expected stack to contain [i32], got []"},
@@ -1722,7 +1722,7 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect_NoKey) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_ParamTypeMismatch) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   auto index = AddFunction(FunctionType{{VT::I32}, {}});
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1733,7 +1733,7 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect_ParamTypeMismatch) {
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_ResultTypeMismatch) {
   BeginFunction(FunctionType{{}, {VT::F32}});
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   auto index = AddFunction(FunctionType{{}, {VT::I32}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
@@ -1866,25 +1866,25 @@ TEST_F(ValidateInstructionTest, MemoryFill_MemoryIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableInit) {
-  auto index = AddElementSegment(ElementType::Funcref);
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index = AddElementSegment(ReferenceType::Funcref);
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   TestSignature(I{O::TableInit, InitImmediate{index, 0}},
                 {VT::I32, VT::I32, VT::I32}, {});
 }
 
 TEST_F(ValidateInstructionTest, TableInit_TypeMismatch) {
-  auto index = AddElementSegment(ElementType::Anyref);
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  auto index = AddElementSegment(ReferenceType::Anyref);
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::TableInit, InitImmediate{index, 0}});
-  ExpectError({"instruction", "Expected element type funcref, got anyref"},
+  ExpectError({"instruction", "Expected reference type funcref, got anyref"},
               errors);
 }
 
 TEST_F(ValidateInstructionTest, TableInit_TableIndexOOB) {
-  auto index = AddElementSegment(ElementType::Funcref);
+  auto index = AddElementSegment(ReferenceType::Funcref);
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1894,7 +1894,7 @@ TEST_F(ValidateInstructionTest, TableInit_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableInit_SegmentIndexOOB) {
-  AddTable(TableType{Limits{0}, ElementType::Anyref});
+  AddTable(TableType{Limits{0}, ReferenceType::Anyref});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1905,7 +1905,7 @@ TEST_F(ValidateInstructionTest, TableInit_SegmentIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, ElemDrop) {
-  auto index = AddElementSegment(ElementType::Funcref);
+  auto index = AddElementSegment(ReferenceType::Funcref);
   TestSignature(I{O::ElemDrop, Index{index}}, {}, {});
 }
 
@@ -1917,24 +1917,24 @@ TEST_F(ValidateInstructionTest, ElemDrop_SegmentIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableCopy) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   TestSignature(I{O::TableCopy, CopyImmediate{0, 0}},
                 {VT::I32, VT::I32, VT::I32}, {});
 }
 
 TEST_F(ValidateInstructionTest, TableCopy_TypeMismatch) {
-  auto dst_index = AddTable(TableType{Limits{0}, ElementType::Funcref});
-  auto src_index = AddTable(TableType{Limits{0}, ElementType::Anyref});
+  auto dst_index = AddTable(TableType{Limits{0}, ReferenceType::Funcref});
+  auto src_index = AddTable(TableType{Limits{0}, ReferenceType::Anyref});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::TableCopy, CopyImmediate{dst_index, src_index}});
-  ExpectError({"instruction", "Expected element type funcref, got anyref"},
+  ExpectError({"instruction", "Expected reference type funcref, got anyref"},
               errors);
 }
 
 TEST_F(ValidateInstructionTest, TableCopy_TableIndexOOB) {
-  auto index = AddTable(TableType{Limits{0}, ElementType::Anyref});
+  auto index = AddTable(TableType{Limits{0}, ReferenceType::Anyref});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1944,7 +1944,7 @@ TEST_F(ValidateInstructionTest, TableCopy_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableGrow) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   TestSignature(I{O::TableGrow, Index{0}}, {VT::Funcref, VT::I32}, {VT::I32});
 }
 
@@ -1956,7 +1956,7 @@ TEST_F(ValidateInstructionTest, TableGrow_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableSize) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   TestSignature(I{O::TableSize, Index{0}}, {}, {VT::I32});
 }
 
@@ -1967,7 +1967,7 @@ TEST_F(ValidateInstructionTest, TableSize_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableFill) {
-  AddTable(TableType{Limits{0}, ElementType::Funcref});
+  AddTable(TableType{Limits{0}, ReferenceType::Funcref});
   TestSignature(I{O::TableFill, Index{0}}, {VT::I32, VT::Funcref, VT::I32}, {});
 }
 

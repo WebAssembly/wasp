@@ -159,7 +159,7 @@ struct FunctionDesc {
 
 struct TableType {
   At<Limits> limits;
-  At<ElementType> elemtype;
+  At<ReferenceType> elemtype;
 };
 
 struct TableDesc {
@@ -258,7 +258,7 @@ using ElementExpression = InstructionList;
 using ElementExpressionList = std::vector<ElementExpression>;
 
 struct ElementListWithExpressions {
-  At<ElementType> elemtype;
+  At<ReferenceType> elemtype;
   ElementExpressionList list;
 };
 

@@ -680,7 +680,7 @@ TEST(BinaryReadTest, ElementSegment_BulkMemory) {
                      MakeAt("\x41\x05"_su8,
                             Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
                                         MakeAt("\x05"_su8, s32{5})})}),
-          ElementType::Funcref,
+          ReferenceType::Funcref,
           {MakeAt("\xd2\x06\x0b"_su8,
                   ElementExpression{
                       MakeAt("\xd2\x06"_su8,
@@ -692,7 +692,7 @@ TEST(BinaryReadTest, ElementSegment_BulkMemory) {
   ExpectRead<ElementSegment>(
       ElementSegment{
           SegmentType::Passive,
-          MakeAt("\x70"_su8, ElementType::Funcref),
+          MakeAt("\x70"_su8, ReferenceType::Funcref),
           {MakeAt("\xd2\x07\x0b"_su8,
                   ElementExpression{
                       MakeAt("\xd2\x07"_su8,
@@ -713,7 +713,7 @@ TEST(BinaryReadTest, ElementSegment_BulkMemory) {
                      MakeAt("\x41\x08"_su8,
                             Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
                                         MakeAt("\x08"_su8, s32{8})})}),
-          MakeAt("\x70"_su8, ElementType::Funcref),
+          MakeAt("\x70"_su8, ReferenceType::Funcref),
           {MakeAt("\xd0\x0b"_su8,
                   ElementExpression{MakeAt(
                       "\xd0"_su8,
@@ -771,40 +771,40 @@ TEST(BinaryReadTest, ElementSegment_BulkMemory_PastEnd) {
       "\x06"_su8, features);
 }
 
-TEST(BinaryReadTest, ElementType) {
-  ExpectRead<ElementType>(ElementType::Funcref, "\x70"_su8);
+TEST(BinaryReadTest, ReferenceType) {
+  ExpectRead<ReferenceType>(ReferenceType::Funcref, "\x70"_su8);
 }
 
-TEST(BinaryReadTest, ElementType_ReferenceTypes) {
-  ExpectReadFailure<ElementType>(
+TEST(BinaryReadTest, ReferenceType_ReferenceTypes) {
+  ExpectReadFailure<ReferenceType>(
       {{0, "element type"}, {1, "Unknown element type: 111"}}, "\x6f"_su8);
-  ExpectReadFailure<ElementType>(
+  ExpectReadFailure<ReferenceType>(
       {{0, "element type"}, {1, "Unknown element type: 110"}}, "\x6e"_su8);
 
   Features features;
   features.enable_reference_types();
 
-  ExpectRead<ElementType>(ElementType::Anyref, "\x6f"_su8, features);
-  ExpectRead<ElementType>(ElementType::Nullref, "\x6e"_su8, features);
+  ExpectRead<ReferenceType>(ReferenceType::Anyref, "\x6f"_su8, features);
+  ExpectRead<ReferenceType>(ReferenceType::Nullref, "\x6e"_su8, features);
 }
 
-TEST(BinaryReadTest, ElementType_Exceptions) {
-  ExpectReadFailure<ElementType>(
+TEST(BinaryReadTest, ReferenceType_Exceptions) {
+  ExpectReadFailure<ReferenceType>(
       {{0, "element type"}, {1, "Unknown element type: 104"}}, "\x68"_su8);
 
   Features features;
   features.enable_exceptions();
 
-  ExpectRead<ElementType>(ElementType::Exnref, "\x68"_su8, features);
+  ExpectRead<ReferenceType>(ReferenceType::Exnref, "\x68"_su8, features);
 }
 
 
-TEST(BinaryReadTest, ElementType_Unknown) {
-  ExpectReadFailure<ElementType>(
+TEST(BinaryReadTest, ReferenceType_Unknown) {
+  ExpectReadFailure<ReferenceType>(
       {{0, "element type"}, {1, "Unknown element type: 0"}}, "\x00"_su8);
 
   // Overlong encoding is not allowed.
-  ExpectReadFailure<ElementType>(
+  ExpectReadFailure<ReferenceType>(
       {{0, "element type"}, {1, "Unknown element type: 240"}}, "\xf0\x7f"_su8);
 }
 
@@ -1069,7 +1069,7 @@ TEST(BinaryReadTest, Import) {
                     TableType{MakeAt("\x00\x01"_su8,
                                      Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
                                             MakeAt("\x00"_su8, Shared::No)}),
-                              MakeAt("\x70"_su8, ElementType::Funcref)})},
+                              MakeAt("\x70"_su8, ReferenceType::Funcref)})},
       "\x01"
       "b\x05table\x01\x70\x00\x01"_su8);
 
@@ -3046,7 +3046,7 @@ TEST(BinaryReadTest, Table) {
                    TableType{MakeAt("\x00\x01"_su8,
                                     Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
                                            MakeAt("\x00"_su8, Shared::No)}),
-                             MakeAt("\x70"_su8, ElementType::Funcref)})},
+                             MakeAt("\x70"_su8, ReferenceType::Funcref)})},
       "\x70\x00\x01"_su8);
 }
 
@@ -3063,18 +3063,18 @@ TEST(BinaryReadTest, TableType) {
       TableType{
           MakeAt("\x00\x01"_su8, Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
                                         MakeAt("\x00"_su8, Shared::No)}),
-          MakeAt("\x70"_su8, ElementType::Funcref)},
+          MakeAt("\x70"_su8, ReferenceType::Funcref)},
       "\x70\x00\x01"_su8);
   ExpectRead<TableType>(
       TableType{
           MakeAt("\x01\x01\x02"_su8,
                  Limits{MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, u32{2}),
                         MakeAt("\x01"_su8, Shared::No)}),
-          MakeAt("\x70"_su8, ElementType::Funcref)},
+          MakeAt("\x70"_su8, ReferenceType::Funcref)},
       "\x70\x01\x01\x02"_su8);
 }
 
-TEST(BinaryReadTest, TableType_BadElementType) {
+TEST(BinaryReadTest, TableType_BadReferenceType) {
   ExpectReadFailure<TableType>(
       {{0, "table type"}, {0, "element type"}, {1, "Unknown element type: 0"}},
       "\x00"_su8);

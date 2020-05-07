@@ -72,7 +72,7 @@ TEST(TextTypesTest, TableToImport) {
       nullopt,
       MakeAt("1 funcref"_su8,
              TableType{MakeAt("1"_su8, Limits{MakeAt("1"_su8, u32{1})}),
-                       MakeAt("funcref"_su8, ElementType::Funcref)})};
+                       MakeAt("funcref"_su8, ReferenceType::Funcref)})};
 
   EXPECT_EQ(
       MakeAt("(import \"m\" \"n\")"_su8, Import{module, name, desc}),
@@ -89,7 +89,7 @@ TEST(TextTypesTest, TableToExports) {
       nullopt,
       MakeAt("1 funcref"_su8,
              TableType{MakeAt("1"_su8, Limits{MakeAt("1"_su8, u32{1})}),
-                       MakeAt("funcref"_su8, ElementType::Funcref)})};
+                       MakeAt("funcref"_su8, ReferenceType::Funcref)})};
   Index this_index = 13;
 
   EXPECT_EQ((ExportList{
@@ -114,9 +114,10 @@ TEST(TextTypesTest, TableToElementSegment) {
                               MakeAt("$a"_su8, Var{"$a"_sv}),
                           }}};
   auto desc = TableDesc{
-      nullopt, MakeAt("funcref"_su8,
-                      TableType{Limits{u32{2}},
-                                MakeAt("funcref"_su8, ElementType::Funcref)})};
+      nullopt,
+      MakeAt("funcref"_su8,
+             TableType{Limits{u32{2}},
+                       MakeAt("funcref"_su8, ReferenceType::Funcref)})};
   Index this_index = 13;
 
   EXPECT_EQ((ElementSegment{nullopt, Var{this_index},

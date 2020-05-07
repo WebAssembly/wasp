@@ -209,7 +209,7 @@ TEST(ValidateTest, ElementExpression) {
   };
 
   for (const auto& instr : tests) {
-    EXPECT_TRUE(Validate(ElementExpression{instr}, ElementType::Funcref,
+    EXPECT_TRUE(Validate(ElementExpression{instr}, ReferenceType::Funcref,
                          context));
   }
 }
@@ -230,7 +230,7 @@ TEST(ValidateTest, ElementExpression_InvalidOpcode) {
   for (const auto& instr : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_FALSE(Validate(ElementExpression{instr}, ElementType::Funcref,
+    EXPECT_FALSE(Validate(ElementExpression{instr}, ReferenceType::Funcref,
                           context));
   }
 }
@@ -241,7 +241,7 @@ TEST(ValidateTest, ElementExpression_FunctionIndexOOB) {
   context.functions.push_back(Function{0});
   EXPECT_FALSE(
       Validate(ElementExpression{Instruction{Opcode::RefFunc, Index{1}}},
-               ElementType::Funcref, context));
+               ReferenceType::Funcref, context));
 }
 
 TEST(ValidateTest, ElementSegment_Active) {
@@ -249,7 +249,7 @@ TEST(ValidateTest, ElementSegment_Active) {
   Context context{errors};
   context.functions.push_back(Function{0});
   context.functions.push_back(Function{0});
-  context.tables.push_back(TableType{Limits{0}, ElementType::Funcref});
+  context.tables.push_back(TableType{Limits{0}, ReferenceType::Funcref});
   context.globals.push_back(GlobalType{ValueType::I32, Mutability::Const});
 
   const ElementSegment tests[] = {
@@ -275,10 +275,10 @@ TEST(ValidateTest, ElementSegment_Passive) {
   context.functions.push_back(Function{0});
 
   const ElementSegment tests[] = {
-      ElementSegment{SegmentType::Passive, ElementType::Funcref, {}},
+      ElementSegment{SegmentType::Passive, ReferenceType::Funcref, {}},
       ElementSegment{
           SegmentType::Passive,
-          ElementType::Funcref,
+          ReferenceType::Funcref,
           {ElementExpression{Instruction{Opcode::RefNull}},
            ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}},
   };
@@ -297,7 +297,7 @@ TEST(ValidateTest, ElementSegment_Declared) {
       ElementSegment{SegmentType::Declared, ExternalKind::Function, {0}},
       ElementSegment{
           SegmentType::Declared,
-          ElementType::Funcref,
+          ReferenceType::Funcref,
           {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}},
   };
 
@@ -312,7 +312,7 @@ TEST(ValidateTest, ElementSegment_Active_TypeMismatch) {
   TestErrors errors;
   Context context{errors};
   context.functions.push_back(Function{0});
-  context.tables.push_back(TableType{Limits{0}, ElementType::Funcref});
+  context.tables.push_back(TableType{Limits{0}, ReferenceType::Funcref});
   context.globals.push_back(GlobalType{ValueType::F32, Mutability::Const});
 
   const ElementSegment tests[] = {
@@ -347,7 +347,7 @@ TEST(ValidateTest, ElementSegment_Active_TableIndexOOB) {
 TEST(ValidateTest, ElementSegment_Active_GlobalIndexOOB) {
   TestErrors errors;
   Context context{errors};
-  context.tables.push_back(TableType{Limits{0}, ElementType::Funcref});
+  context.tables.push_back(TableType{Limits{0}, ReferenceType::Funcref});
   const ElementSegment element_segment{
       0,
       ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
@@ -359,7 +359,7 @@ TEST(ValidateTest, ElementSegment_Active_GlobalIndexOOB) {
 TEST(ValidateTest, ElementSegment_Active_FunctionIndexOOB) {
   TestErrors errors;
   Context context{errors};
-  context.tables.push_back(TableType{Limits{0}, ElementType::Funcref});
+  context.tables.push_back(TableType{Limits{0}, ReferenceType::Funcref});
   const ElementSegment element_segment{
       0,
       ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
@@ -373,15 +373,15 @@ TEST(ValidateTest, ElementSegment_Passive_FunctionIndexOOB) {
   Context context{errors};
   const ElementSegment element_segment{
       SegmentType::Passive,
-      ElementType::Funcref,
+      ReferenceType::Funcref,
       {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}};
   EXPECT_FALSE(Validate(element_segment, context));
 }
 
-TEST(ValidateTest, ElementType) {
+TEST(ValidateTest, ReferenceType) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_TRUE(Validate(ElementType::Funcref, ElementType::Funcref, context));
+  EXPECT_TRUE(Validate(ReferenceType::Funcref, ReferenceType::Funcref, context));
 }
 
 TEST(ValidateTest, Export) {
@@ -389,7 +389,7 @@ TEST(ValidateTest, Export) {
   Context context{errors};
   context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{0});
-  context.tables.push_back(TableType{Limits{1}, ElementType::Funcref});
+  context.tables.push_back(TableType{Limits{1}, ReferenceType::Funcref});
   context.memories.push_back(MemoryType{Limits{1}});
   context.globals.push_back(GlobalType{ValueType::I32, Mutability::Const});
   context.events.push_back(EventType{EventAttribute::Exception, Index{0}});
@@ -653,7 +653,7 @@ TEST(ValidateTest, Import) {
 
   const Import tests[] = {
       Import{"", "", Index{0}},
-      Import{"", "", TableType{Limits{0}, ElementType::Funcref}},
+      Import{"", "", TableType{Limits{0}, ReferenceType::Funcref}},
       Import{"", "", MemoryType{Limits{0}}},
       Import{"", "", GlobalType{ValueType::I32, Mutability::Const}},
       Import{"", "", EventType{EventAttribute::Exception, Index{0}}},
@@ -673,7 +673,7 @@ TEST(ValidateTest, Import_FunctionIndexOOB) {
 TEST(ValidateTest, Import_TooManyTables) {
   TestErrors errors;
   Context context{errors};
-  const TableType table_type{Limits{0}, ElementType::Funcref};
+  const TableType table_type{Limits{0}, ReferenceType::Funcref};
   context.tables.push_back(table_type);
 
   EXPECT_FALSE(
@@ -844,8 +844,8 @@ TEST(ValidateTest, Start_InvalidResultCount) {
 
 TEST(ValidateTest, Table) {
   const Table tests[] = {
-      Table{TableType{Limits{0}, ElementType::Funcref}},
-      Table{TableType{Limits{1, 10}, ElementType::Funcref}},
+      Table{TableType{Limits{0}, ReferenceType::Funcref}},
+      Table{TableType{Limits{1, 10}, ReferenceType::Funcref}},
   };
 
   for (const auto& table : tests) {
@@ -858,17 +858,17 @@ TEST(ValidateTest, Table) {
 TEST(ValidateTest, Table_TooManyTables) {
   TestErrors errors;
   Context context{errors};
-  const TableType table_type{Limits{0}, ElementType::Funcref};
+  const TableType table_type{Limits{0}, ReferenceType::Funcref};
   context.tables.push_back(table_type);
   EXPECT_FALSE(Validate(Table{table_type}, context));
 }
 
 TEST(ValidateTest, TableType) {
   const TableType tests[] = {
-      TableType{Limits{0}, ElementType::Funcref},
-      TableType{Limits{1000}, ElementType::Funcref},
-      TableType{Limits{100, 12345}, ElementType::Funcref},
-      TableType{Limits{0, 0xffffffff}, ElementType::Funcref},
+      TableType{Limits{0}, ReferenceType::Funcref},
+      TableType{Limits{1000}, ReferenceType::Funcref},
+      TableType{Limits{100, 12345}, ReferenceType::Funcref},
+      TableType{Limits{0, 0xffffffff}, ReferenceType::Funcref},
   };
 
   for (const auto& table_type : tests) {
@@ -882,7 +882,7 @@ TEST(ValidateTest, TableType_Shared) {
   TestErrors errors;
   Context context{errors};
   EXPECT_FALSE(Validate(
-      TableType{Limits{0, 100, Shared::Yes}, ElementType::Funcref}, context));
+      TableType{Limits{0, 100, Shared::Yes}, ReferenceType::Funcref}, context));
 }
 
 TEST(ValidateTest, TypeEntry) {

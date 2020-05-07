@@ -81,7 +81,7 @@ struct Context {
   std::vector<binary::MemoryType> memories;
   std::vector<binary::GlobalType> globals;
   std::vector<binary::EventType> events;
-  std::vector<ElementType> element_segments;
+  std::vector<ReferenceType> element_segments;
   Index imported_function_count = 0;
   Index imported_global_count = 0;
   optional<Index> declared_data_count;

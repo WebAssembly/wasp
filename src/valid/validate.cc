@@ -116,18 +116,18 @@ bool Validate(const At<binary::DataSegment>& value, Context& context) {
 }
 
 bool Validate(const At<binary::ElementExpression>& value,
-              ElementType element_type,
+              ReferenceType reftype,
               Context& context) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "element expression"};
   bool valid = true;
-  ElementType actual_type;
+  ReferenceType actual_type;
   switch (value->instruction->opcode) {
     case Opcode::RefNull:
-      actual_type = ElementType::Funcref;
+      actual_type = ReferenceType::Funcref;
       break;
 
     case Opcode::RefFunc: {
-      actual_type = ElementType::Funcref;
+      actual_type = ReferenceType::Funcref;
       auto index = value->instruction->index_immediate();
       if (!ValidateIndex(index, context.functions.size(), "function index",
                          context)) {
@@ -145,7 +145,7 @@ bool Validate(const At<binary::ElementExpression>& value,
       return false;
   }
 
-  valid &= Validate(MakeAt(value.loc(), actual_type), element_type, context);
+  valid &= Validate(MakeAt(value.loc(), actual_type), reftype, context);
   return valid;
 }
 
@@ -192,14 +192,14 @@ bool Validate(const At<binary::ElementSegment>& value, Context& context) {
     auto&& desc = value->expressions();
 
     for (const auto& expr : desc.init) {
-      valid &= Validate(expr, desc.element_type, context);
+      valid &= Validate(expr, desc.elemtype, context);
     }
   }
   return valid;
 }
 
-bool Validate(const At<ElementType>& actual,
-              ElementType expected,
+bool Validate(const At<ReferenceType>& actual,
+              ReferenceType expected,
               Context& context) {
   if (actual != expected) {
     context.errors->OnError(

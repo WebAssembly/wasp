@@ -482,9 +482,9 @@ TEST_F(TextResolveTest, Import_Function) {
 
 TEST_F(TextResolveTest, Import_Table) {
   OK(Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-            TableDesc{nullopt, TableType{Limits{0}, ElementType::Funcref}}},
+            TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}}},
      Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-            TableDesc{nullopt, TableType{Limits{0}, ElementType::Funcref}}});
+            TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}}});
 }
 
 TEST_F(TextResolveTest, Import_Memory) {
@@ -567,13 +567,13 @@ TEST_F(TextResolveTest, ElementListWithExpressions) {
 
   OK(
       ElementListWithExpressions{
-          ElementType::Funcref,
+          ReferenceType::Funcref,
           ElementExpressionList{
               ElementExpression{I{O::RefNull}},
               ElementExpression{I{O::RefFunc, Var{u32{0}}}},
           }},
       ElementListWithExpressions{
-          ElementType::Funcref,
+          ReferenceType::Funcref,
           ElementExpressionList{
               ElementExpression{I{O::RefNull}},
               ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
@@ -604,13 +604,13 @@ TEST_F(TextResolveTest, ElementList) {
 
   // Expressions.
   OK(ElementList{ElementListWithExpressions{
-         ElementType::Funcref,
+         ReferenceType::Funcref,
          ElementExpressionList{
              ElementExpression{I{O::RefNull}},
              ElementExpression{I{O::RefFunc, Var{u32{0}}}},
          }}},
      ElementList{ElementListWithExpressions{
-         ElementType::Funcref,
+         ReferenceType::Funcref,
          ElementExpressionList{
              ElementExpression{I{O::RefNull}},
              ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
@@ -634,17 +634,17 @@ TEST_F(TextResolveTest, Table) {
 
   context.function_names.NewBound("$f"_sv);
 
-  OK(Table{TableDesc{nullopt, TableType{Limits{0}, ElementType::Funcref}},
+  OK(Table{TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}},
            {},
            ElementList{ElementListWithExpressions{
-               ElementType::Funcref,
+               ReferenceType::Funcref,
                ElementExpressionList{
                    ElementExpression{I{O::RefFunc, Var{u32{0}}}},
                }}}},
-     Table{TableDesc{nullopt, TableType{Limits{0}, ElementType::Funcref}},
+     Table{TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}},
            {},
            ElementList{ElementListWithExpressions{
-               ElementType::Funcref,
+               ReferenceType::Funcref,
                ElementExpressionList{
                    ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
                }}}});
@@ -801,18 +801,18 @@ TEST_F(TextResolveTest, ModuleItem) {
 
   // Table.
   OK(ModuleItem{Table{
-         TableDesc{nullopt, TableType{Limits{0}, ElementType::Funcref}},
+         TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}},
          {},
          ElementList{ElementListWithExpressions{
-             ElementType::Funcref,
+             ReferenceType::Funcref,
              ElementExpressionList{
                  ElementExpression{I{O::RefFunc, Var{u32{0}}}},
              }}}}},
      ModuleItem{
-         Table{TableDesc{nullopt, TableType{Limits{0}, ElementType::Funcref}},
+         Table{TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}},
                {},
                ElementList{ElementListWithExpressions{
-                   ElementType::Funcref,
+                   ReferenceType::Funcref,
                    ElementExpressionList{
                        ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
                    }}}}});

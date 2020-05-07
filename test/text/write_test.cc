@@ -339,23 +339,23 @@ TEST(TextWriteTest, Limits) {
   ExpectWrite("0 0 shared"_sv, Limits{0, 0, Shared::Yes});
 }
 
-TEST(TextWriteTest, ElementType) {
-  ExpectWrite("anyref"_sv, ElementType::Anyref);
-  ExpectWrite("funcref"_sv, ElementType::Funcref);
-  ExpectWrite("nullref"_sv, ElementType::Nullref);
-  ExpectWrite("exnref"_sv, ElementType::Exnref);
+TEST(TextWriteTest, ReferenceType) {
+  ExpectWrite("anyref"_sv, ReferenceType::Anyref);
+  ExpectWrite("funcref"_sv, ReferenceType::Funcref);
+  ExpectWrite("nullref"_sv, ReferenceType::Nullref);
+  ExpectWrite("exnref"_sv, ReferenceType::Exnref);
 }
 
 TEST(TextWriteTest, TableType) {
-  ExpectWrite("0 funcref"_sv, TableType{Limits{0}, ElementType::Funcref});
+  ExpectWrite("0 funcref"_sv, TableType{Limits{0}, ReferenceType::Funcref});
 }
 
 TEST(TextWriteTest, TableDesc) {
   ExpectWrite("table 0 funcref"_sv,
-              TableDesc{nullopt, TableType{Limits{0}, ElementType::Funcref}});
+              TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}});
 
   ExpectWrite("table $t 1 funcref"_sv,
-              TableDesc{"$t"_sv, TableType{Limits{1}, ElementType::Funcref}});
+              TableDesc{"$t"_sv, TableType{Limits{1}, ReferenceType::Funcref}});
 }
 
 TEST(TextWriteTest, MemoryType) {
@@ -404,7 +404,7 @@ TEST(TextWriteTest, Import) {
   ExpectWrite(
       "(import \"a\" \"b\" (table 0 funcref))"_sv,
       Import{Text{"\"a\"", 1}, Text{"\"b\"", 1},
-             TableDesc{nullopt, TableType{Limits{0}, ElementType::Funcref}}});
+             TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}}});
 
   // Memory
   ExpectWrite("(import \"a\" \"b\" (memory 0))"_sv,
@@ -525,10 +525,10 @@ TEST(TextWriteTest, ElementListWithExpressions) {
   using O = Opcode;
 
   ExpectWrite("funcref"_sv,
-              ElementListWithExpressions{ElementType::Funcref, {}});
+              ElementListWithExpressions{ReferenceType::Funcref, {}});
 
   ExpectWrite("funcref (ref.null)"_sv,
-              ElementListWithExpressions{ElementType::Funcref,
+              ElementListWithExpressions{ReferenceType::Funcref,
                                          ElementExpressionList{
                                              ElementExpression{I{O::RefNull}},
                                          }});
@@ -546,7 +546,7 @@ TEST(TextWriteTest, ElementListWithVars) {
 
 TEST(TextWriteTest, ElementList) {
   ExpectWrite("funcref"_sv, ElementList{ElementListWithExpressions{
-                                ElementType::Funcref, {}}});
+                                ReferenceType::Funcref, {}}});
 
   ExpectWrite("func 0"_sv, ElementList{ElementListWithVars{
                                ExternalKind::Function, VarList{Var{u32{0}}}}});
@@ -559,32 +559,32 @@ TEST(TextWriteTest, Table) {
   // Simplest table.
   ExpectWrite(
       "(table 0 funcref)"_sv,
-      Table{TableDesc{{}, TableType{Limits{u32{0}}, ElementType::Funcref}},
+      Table{TableDesc{{}, TableType{Limits{u32{0}}, ReferenceType::Funcref}},
             {}});
 
   // Name.
-  ExpectWrite(
-      "(table $t 0 funcref)"_sv,
-      Table{TableDesc{"$t"_sv, TableType{Limits{u32{0}}, ElementType::Funcref}},
-            {}});
+  ExpectWrite("(table $t 0 funcref)"_sv,
+              Table{TableDesc{"$t"_sv, TableType{Limits{u32{0}},
+                                                 ReferenceType::Funcref}},
+                    {}});
 
   // Inline export.
   ExpectWrite(
       "(table (export \"m\") 0 funcref)"_sv,
-      Table{TableDesc{{}, TableType{Limits{u32{0}}, ElementType::Funcref}},
+      Table{TableDesc{{}, TableType{Limits{u32{0}}, ReferenceType::Funcref}},
             InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 
   // Name and inline export.
   ExpectWrite("(table $t2 (export \"m\") 0 funcref)"_sv,
-              Table{TableDesc{"$t2"_sv,
-                              TableType{Limits{u32{0}}, ElementType::Funcref}},
+              Table{TableDesc{"$t2"_sv, TableType{Limits{u32{0}},
+                                                  ReferenceType::Funcref}},
                     InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 
   // Inline element var list.
   ExpectWrite(
       "(table funcref (elem 0 1 2))"_sv,
-      Table{TableDesc{{},
-                      TableType{Limits{u32{3}, u32{3}}, ElementType::Funcref}},
+      Table{TableDesc{
+                {}, TableType{Limits{u32{3}, u32{3}}, ReferenceType::Funcref}},
             {},
             ElementListWithVars{ExternalKind::Function, VarList{
                                                             Var{Index{0}},
@@ -595,10 +595,10 @@ TEST(TextWriteTest, Table) {
   // Inline element var list.
   ExpectWrite(
       "(table funcref (elem (nop) (nop)))"_sv,
-      Table{TableDesc{{},
-                      TableType{Limits{u32{2}, u32{2}}, ElementType::Funcref}},
+      Table{TableDesc{
+                {}, TableType{Limits{u32{2}, u32{2}}, ReferenceType::Funcref}},
             {},
-            ElementListWithExpressions{ElementType::Funcref,
+            ElementListWithExpressions{ReferenceType::Funcref,
                                        ElementExpressionList{
                                            ElementExpression{I{O::Nop}},
                                            ElementExpression{I{O::Nop}},
@@ -609,16 +609,16 @@ TEST(TextWriteTest, TableInlineImport) {
   // Inline import.
   ExpectWrite(
       "(table (import \"m\" \"n\") 0 funcref)"_sv,
-      Table{TableDesc{{}, TableType{Limits{u32{0}}, ElementType::Funcref}},
+      Table{TableDesc{{}, TableType{Limits{u32{0}}, ReferenceType::Funcref}},
             InlineImport{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1}},
             {}});
 
   // Everything for Table import.
-  ExpectWrite(
-      "(table $t (export \"m\") (import \"a\" \"b\") 0 funcref)"_sv,
-      Table{TableDesc{"$t"_sv, TableType{Limits{u32{0}}, ElementType::Funcref}},
-            InlineImport{Text{"\"a\""_sv, 1}, Text{"\"b\""_sv, 1}},
-            InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
+  ExpectWrite("(table $t (export \"m\") (import \"a\" \"b\") 0 funcref)"_sv,
+              Table{TableDesc{"$t"_sv, TableType{Limits{u32{0}},
+                                                 ReferenceType::Funcref}},
+                    InlineImport{Text{"\"a\""_sv, 1}, Text{"\"b\""_sv, 1}},
+                    InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
 
 TEST(TextWriteTest, Memory) {
@@ -772,7 +772,7 @@ TEST(TextWriteTest, ElementSegment) {
       "(elem funcref (nop) (nop))"_sv,
       ElementSegment{nullopt, SegmentType::Passive,
                      ElementListWithExpressions{
-                         ElementType::Funcref, ElementExpressionList{
+                         ReferenceType::Funcref, ElementExpressionList{
                                                    ElementExpression{I{O::Nop}},
                                                    ElementExpression{I{O::Nop}},
                                                }}});
@@ -796,7 +796,7 @@ TEST(TextWriteTest, ElementSegment) {
       "(elem declare funcref (nop) (nop))"_sv,
       ElementSegment{nullopt, SegmentType::Declared,
                      ElementListWithExpressions{
-                         ElementType::Funcref, ElementExpressionList{
+                         ReferenceType::Funcref, ElementExpressionList{
                                                    ElementExpression{I{O::Nop}},
                                                    ElementExpression{I{O::Nop}},
                                                }}});
@@ -833,7 +833,7 @@ TEST(TextWriteTest, ElementSegment) {
       "(elem (offset nop) funcref (nop) (nop))"_sv,
       ElementSegment{nullopt, nullopt, InstructionList{I{O::Nop}},
                      ElementListWithExpressions{
-                         ElementType::Funcref, ElementExpressionList{
+                         ReferenceType::Funcref, ElementExpressionList{
                                                    ElementExpression{I{O::Nop}},
                                                    ElementExpression{I{O::Nop}},
                                                }}});
@@ -938,7 +938,7 @@ TEST(TextWriteTest, ModuleItem) {
   ExpectWrite(
       "(table 0 funcref)"_sv,
       ModuleItem{Table{
-          TableDesc{nullopt, TableType{Limits{u32{0}}, ElementType::Funcref}},
+          TableDesc{nullopt, TableType{Limits{u32{0}}, ReferenceType::Funcref}},
           {}}});
 
   // Memory.

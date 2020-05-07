@@ -45,20 +45,20 @@ inline const ElementSegment::ExpressionsInit& ElementSegment::expressions()
   return get<ExpressionsInit>(desc);
 }
 
-inline At<ElementType> ElementSegment::elemtype() const {
+inline At<ReferenceType> ElementSegment::elemtype() const {
   if (has_indexes()) {
     switch (indexes().kind) {
       case ExternalKind::Function:
-        return ElementType::Funcref;
+        return ReferenceType::Funcref;
 
       case ExternalKind::Table:
       case ExternalKind::Memory:
       case ExternalKind::Global:
       case ExternalKind::Event:
-        return ElementType::Anyref;
+        return ReferenceType::Anyref;
     }
   } else {
-    return expressions().element_type;
+    return expressions().elemtype;
   }
   WASP_UNREACHABLE();
 }
