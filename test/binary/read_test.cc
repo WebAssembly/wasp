@@ -1676,294 +1676,181 @@ TEST(BinaryReadTest, Instruction_simd) {
       "\x01\x02"_su8,
       MemArgImmediate{MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, u32{2})});
 
-  ExpectRead<I>(I{MakeAt("\xfd\x00"_su8, O::V128Load), memarg},
-                "\xfd\x00\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x01"_su8, O::V128Store), memarg},
-                "\xfd\x01\x01\x02"_su8, f);
-  ExpectRead<I>(
-      I{MakeAt("\xfd\x02"_su8, O::V128Const),
-        MakeAt(
-            "\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00"_su8,
-            v128{u64{5}, u64{6}})},
-      "\xfd\x02\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00"_su8,
-      f);
-  ExpectRead<I>(I{MakeAt("\xfd\x04"_su8, O::I8X16Splat)}, "\xfd\x04"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x05"_su8, O::I8X16ExtractLaneS),
-                  MakeAt("\x00"_su8, u8{0})},
-                "\xfd\x05\x00"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x06"_su8, O::I8X16ExtractLaneU),
-                  MakeAt("\x00"_su8, u8{0})},
-                "\xfd\x06\x00"_su8, f);
-  ExpectRead<I>(
-      I{MakeAt("\xfd\x07"_su8, O::I8X16ReplaceLane), MakeAt("\x00"_su8, u8{0})},
-      "\xfd\x07\x00"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x08"_su8, O::I16X8Splat)}, "\xfd\x08"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x09"_su8, O::I16X8ExtractLaneS),
-                  MakeAt("\x00"_su8, u8{0})},
-                "\xfd\x09\x00"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x0a"_su8, O::I16X8ExtractLaneU),
-                  MakeAt("\x00"_su8, u8{0})},
-                "\xfd\x0a\x00"_su8, f);
-  ExpectRead<I>(
-      I{MakeAt("\xfd\x0b"_su8, O::I16X8ReplaceLane), MakeAt("\x00"_su8, u8{0})},
-      "\xfd\x0b\x00"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x0c"_su8, O::I32X4Splat)}, "\xfd\x0c"_su8, f);
-  ExpectRead<I>(
-      I{MakeAt("\xfd\x0d"_su8, O::I32X4ExtractLane), MakeAt("\x00"_su8, u8{0})},
-      "\xfd\x0d\x00"_su8, f);
-  ExpectRead<I>(
-      I{MakeAt("\xfd\x0e"_su8, O::I32X4ReplaceLane), MakeAt("\x00"_su8, u8{0})},
-      "\xfd\x0e\x00"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x0f"_su8, O::I64X2Splat)}, "\xfd\x0f"_su8, f);
-  ExpectRead<I>(
-      I{MakeAt("\xfd\x10"_su8, O::I64X2ExtractLane), MakeAt("\x00"_su8, u8{0})},
-      "\xfd\x10\x00"_su8, f);
-  ExpectRead<I>(
-      I{MakeAt("\xfd\x11"_su8, O::I64X2ReplaceLane), MakeAt("\x00"_su8, u8{0})},
-      "\xfd\x11\x00"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x12"_su8, O::F32X4Splat)}, "\xfd\x12"_su8, f);
-  ExpectRead<I>(
-      I{MakeAt("\xfd\x13"_su8, O::F32X4ExtractLane), MakeAt("\x00"_su8, u8{0})},
-      "\xfd\x13\x00"_su8, f);
-  ExpectRead<I>(
-      I{MakeAt("\xfd\x14"_su8, O::F32X4ReplaceLane), MakeAt("\x00"_su8, u8{0})},
-      "\xfd\x14\x00"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x15"_su8, O::F64X2Splat)}, "\xfd\x15"_su8, f);
-  ExpectRead<I>(
-      I{MakeAt("\xfd\x16"_su8, O::F64X2ExtractLane), MakeAt("\x00"_su8, u8{0})},
-      "\xfd\x16\x00"_su8, f);
-  ExpectRead<I>(
-      I{MakeAt("\xfd\x17"_su8, O::F64X2ReplaceLane), MakeAt("\x00"_su8, u8{0})},
-      "\xfd\x17\x00"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x18"_su8, O::I8X16Eq)}, "\xfd\x18"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x19"_su8, O::I8X16Ne)}, "\xfd\x19"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x1a"_su8, O::I8X16LtS)}, "\xfd\x1a"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x1b"_su8, O::I8X16LtU)}, "\xfd\x1b"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x1c"_su8, O::I8X16GtS)}, "\xfd\x1c"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x1d"_su8, O::I8X16GtU)}, "\xfd\x1d"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x1e"_su8, O::I8X16LeS)}, "\xfd\x1e"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x1f"_su8, O::I8X16LeU)}, "\xfd\x1f"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x20"_su8, O::I8X16GeS)}, "\xfd\x20"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x21"_su8, O::I8X16GeU)}, "\xfd\x21"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x22"_su8, O::I16X8Eq)}, "\xfd\x22"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x23"_su8, O::I16X8Ne)}, "\xfd\x23"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x24"_su8, O::I16X8LtS)}, "\xfd\x24"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x25"_su8, O::I16X8LtU)}, "\xfd\x25"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x26"_su8, O::I16X8GtS)}, "\xfd\x26"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x27"_su8, O::I16X8GtU)}, "\xfd\x27"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x28"_su8, O::I16X8LeS)}, "\xfd\x28"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x29"_su8, O::I16X8LeU)}, "\xfd\x29"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x2a"_su8, O::I16X8GeS)}, "\xfd\x2a"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x2b"_su8, O::I16X8GeU)}, "\xfd\x2b"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x2c"_su8, O::I32X4Eq)}, "\xfd\x2c"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x2d"_su8, O::I32X4Ne)}, "\xfd\x2d"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x2e"_su8, O::I32X4LtS)}, "\xfd\x2e"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x2f"_su8, O::I32X4LtU)}, "\xfd\x2f"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x30"_su8, O::I32X4GtS)}, "\xfd\x30"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x31"_su8, O::I32X4GtU)}, "\xfd\x31"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x32"_su8, O::I32X4LeS)}, "\xfd\x32"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x33"_su8, O::I32X4LeU)}, "\xfd\x33"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x34"_su8, O::I32X4GeS)}, "\xfd\x34"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x35"_su8, O::I32X4GeU)}, "\xfd\x35"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x40"_su8, O::F32X4Eq)}, "\xfd\x40"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x41"_su8, O::F32X4Ne)}, "\xfd\x41"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x42"_su8, O::F32X4Lt)}, "\xfd\x42"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x43"_su8, O::F32X4Gt)}, "\xfd\x43"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x44"_su8, O::F32X4Le)}, "\xfd\x44"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x45"_su8, O::F32X4Ge)}, "\xfd\x45"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x46"_su8, O::F64X2Eq)}, "\xfd\x46"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x47"_su8, O::F64X2Ne)}, "\xfd\x47"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x48"_su8, O::F64X2Lt)}, "\xfd\x48"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x49"_su8, O::F64X2Gt)}, "\xfd\x49"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x4a"_su8, O::F64X2Le)}, "\xfd\x4a"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x4b"_su8, O::F64X2Ge)}, "\xfd\x4b"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x4c"_su8, O::V128Not)}, "\xfd\x4c"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x4d"_su8, O::V128And)}, "\xfd\x4d"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x4e"_su8, O::V128Or)}, "\xfd\x4e"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x4f"_su8, O::V128Xor)}, "\xfd\x4f"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x50"_su8, O::V128BitSelect)}, "\xfd\x50"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x51"_su8, O::I8X16Neg)}, "\xfd\x51"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x52"_su8, O::I8X16AnyTrue)}, "\xfd\x52"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x53"_su8, O::I8X16AllTrue)}, "\xfd\x53"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x54"_su8, O::I8X16Shl)}, "\xfd\x54"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x55"_su8, O::I8X16ShrS)}, "\xfd\x55"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x56"_su8, O::I8X16ShrU)}, "\xfd\x56"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x57"_su8, O::I8X16Add)}, "\xfd\x57"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x58"_su8, O::I8X16AddSaturateS)}, "\xfd\x58"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x59"_su8, O::I8X16AddSaturateU)}, "\xfd\x59"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x5a"_su8, O::I8X16Sub)}, "\xfd\x5a"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x5b"_su8, O::I8X16SubSaturateS)}, "\xfd\x5b"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x5c"_su8, O::I8X16SubSaturateU)}, "\xfd\x5c"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x5e"_su8, O::I8X16MinS)}, "\xfd\x5e"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x5f"_su8, O::I8X16MinU)}, "\xfd\x5f"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x60"_su8, O::I8X16MaxS)}, "\xfd\x60"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x61"_su8, O::I8X16MaxU)}, "\xfd\x61"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x62"_su8, O::I16X8Neg)}, "\xfd\x62"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x63"_su8, O::I16X8AnyTrue)}, "\xfd\x63"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x64"_su8, O::I16X8AllTrue)}, "\xfd\x64"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x65"_su8, O::I16X8Shl)}, "\xfd\x65"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x66"_su8, O::I16X8ShrS)}, "\xfd\x66"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x67"_su8, O::I16X8ShrU)}, "\xfd\x67"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x68"_su8, O::I16X8Add)}, "\xfd\x68"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x69"_su8, O::I16X8AddSaturateS)}, "\xfd\x69"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x6a"_su8, O::I16X8AddSaturateU)}, "\xfd\x6a"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x6b"_su8, O::I16X8Sub)}, "\xfd\x6b"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x6c"_su8, O::I16X8SubSaturateS)}, "\xfd\x6c"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x6d"_su8, O::I16X8SubSaturateU)}, "\xfd\x6d"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x6e"_su8, O::I16X8Mul)}, "\xfd\x6e"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x6f"_su8, O::I16X8MinS)}, "\xfd\x6f"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x70"_su8, O::I16X8MinU)}, "\xfd\x70"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x71"_su8, O::I16X8MaxS)}, "\xfd\x71"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x72"_su8, O::I16X8MaxU)}, "\xfd\x72"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x73"_su8, O::I32X4Neg)}, "\xfd\x73"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x74"_su8, O::I32X4AnyTrue)}, "\xfd\x74"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x75"_su8, O::I32X4AllTrue)}, "\xfd\x75"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x76"_su8, O::I32X4Shl)}, "\xfd\x76"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x77"_su8, O::I32X4ShrS)}, "\xfd\x77"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x78"_su8, O::I32X4ShrU)}, "\xfd\x78"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x79"_su8, O::I32X4Add)}, "\xfd\x79"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x7c"_su8, O::I32X4Sub)}, "\xfd\x7c"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x7f"_su8, O::I32X4Mul)}, "\xfd\x7f"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\x80\x01"_su8, O::I32X4MinS)}, "\xfd\x80\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x81\x01"_su8, O::I32X4MinU)}, "\xfd\x81\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x82\x01"_su8, O::I32X4MaxS)}, "\xfd\x82\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x83\x01"_su8, O::I32X4MaxU)}, "\xfd\x83\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x84\x01"_su8, O::I64X2Neg)}, "\xfd\x84\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x87\x01"_su8, O::I64X2Shl)}, "\xfd\x87\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x88\x01"_su8, O::I64X2ShrS)}, "\xfd\x88\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x89\x01"_su8, O::I64X2ShrU)}, "\xfd\x89\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x8a\x01"_su8, O::I64X2Add)}, "\xfd\x8a\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x8d\x01"_su8, O::I64X2Sub)}, "\xfd\x8d\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x90\x01"_su8, O::I64X2Mul)}, "\xfd\x90\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x95\x01"_su8, O::F32X4Abs)}, "\xfd\x95\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x96\x01"_su8, O::F32X4Neg)}, "\xfd\x96\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x97\x01"_su8, O::F32X4Sqrt)}, "\xfd\x97\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x9a\x01"_su8, O::F32X4Add)}, "\xfd\x9a\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x9b\x01"_su8, O::F32X4Sub)}, "\xfd\x9b\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x9c\x01"_su8, O::F32X4Mul)}, "\xfd\x9c\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x9d\x01"_su8, O::F32X4Div)}, "\xfd\x9d\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x9e\x01"_su8, O::F32X4Min)}, "\xfd\x9e\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\x9f\x01"_su8, O::F32X4Max)}, "\xfd\x9f\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\xa0\x01"_su8, O::F64X2Abs)}, "\xfd\xa0\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\xa1\x01"_su8, O::F64X2Neg)}, "\xfd\xa1\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\xa2\x01"_su8, O::F64X2Sqrt)}, "\xfd\xa2\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\xa5\x01"_su8, O::F64X2Add)}, "\xfd\xa5\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\xa6\x01"_su8, O::F64X2Sub)}, "\xfd\xa6\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\xa7\x01"_su8, O::F64X2Mul)}, "\xfd\xa7\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\xa8\x01"_su8, O::F64X2Div)}, "\xfd\xa8\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\xa9\x01"_su8, O::F64X2Min)}, "\xfd\xa9\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\xaa\x01"_su8, O::F64X2Max)}, "\xfd\xaa\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\xab\x01"_su8, O::I32X4TruncSatF32X4S)},
-                "\xfd\xab\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xac\x01"_su8, O::I32X4TruncSatF32X4U)},
-                "\xfd\xac\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xaf\x01"_su8, O::F32X4ConvertI32X4S)},
-                "\xfd\xaf\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xb0\x01"_su8, O::F32X4ConvertI32X4U)},
-                "\xfd\xb0\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xc0\x01"_su8, O::V8X16Swizzle)},
-                "\xfd\xc0\x01"_su8, f);
-  ExpectRead<I>(
-      I{MakeAt("\xfd\xc1\x01"_su8, O::V8X16Shuffle),
-        MakeAt(
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8,
-            ShuffleImmediate{
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}})},
-      "\xfd\xc1\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8,
-      f);
-  ExpectRead<I>(I{MakeAt("\xfd\xc2\x01"_su8, O::V8X16LoadSplat), memarg},
-                "\xfd\xc2\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xc3\x01"_su8, O::V16X8LoadSplat), memarg},
-                "\xfd\xc3\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xc4\x01"_su8, O::V32X4LoadSplat), memarg},
-                "\xfd\xc4\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xc5\x01"_su8, O::V64X2LoadSplat), memarg},
-                "\xfd\xc5\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xc6\x01"_su8, O::I8X16NarrowI16X8S)},
-                "\xfd\xc6\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xc7\x01"_su8, O::I8X16NarrowI16X8U)},
-                "\xfd\xc7\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xc8\x01"_su8, O::I16X8NarrowI32X4S)},
-                "\xfd\xc8\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xc9\x01"_su8, O::I16X8NarrowI32X4U)},
-                "\xfd\xc9\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xca\x01"_su8, O::I16X8WidenLowI8X16S)},
-                "\xfd\xca\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xcb\x01"_su8, O::I16X8WidenHighI8X16S)},
-                "\xfd\xcb\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xcc\x01"_su8, O::I16X8WidenLowI8X16U)},
-                "\xfd\xcc\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xcd\x01"_su8, O::I16X8WidenHighI8X16U)},
-                "\xfd\xcd\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xce\x01"_su8, O::I32X4WidenLowI16X8S)},
-                "\xfd\xce\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xcf\x01"_su8, O::I32X4WidenHighI16X8S)},
-                "\xfd\xcf\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xd0\x01"_su8, O::I32X4WidenLowI16X8U)},
-                "\xfd\xd0\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xd1\x01"_su8, O::I32X4WidenHighI16X8U)},
-                "\xfd\xd1\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xd2\x01"_su8, O::I16X8Load8X8S), memarg},
-                "\xfd\xd2\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xd3\x01"_su8, O::I16X8Load8X8U), memarg},
-                "\xfd\xd3\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xd4\x01"_su8, O::I32X4Load16X4S), memarg},
-                "\xfd\xd4\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xd5\x01"_su8, O::I32X4Load16X4U), memarg},
-                "\xfd\xd5\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xd6\x01"_su8, O::I64X2Load32X2S), memarg},
-                "\xfd\xd6\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xd7\x01"_su8, O::I64X2Load32X2U), memarg},
-                "\xfd\xd7\x01\x01\x02"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xd8\x01"_su8, O::V128Andnot)},
-                "\xfd\xd8\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xd9\x01"_su8, O::I8X16AvgrU)},
-                "\xfd\xd9\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xda\x01"_su8, O::I16X8AvgrU)},
-                "\xfd\xda\x01"_su8, f);
-  ExpectRead<I>(I{MakeAt("\xfd\xe1\x01"_su8, O::I8X16Abs)}, "\xfd\xe1\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\xe2\x01"_su8, O::I16X8Abs)}, "\xfd\xe2\x01"_su8,
-                f);
-  ExpectRead<I>(I{MakeAt("\xfd\xe3\x01"_su8, O::I32X4Abs)}, "\xfd\xe3\x01"_su8,
-                f);
+  ExpectRead<I>(I{MakeAt("\xfd\x00"_su8, O::V128Load), memarg}, "\xfd\x00\x01\x02"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x01"_su8, O::I16X8Load8X8S), memarg}, "\xfd\x01\x01\x02"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x02"_su8, O::I16X8Load8X8U), memarg}, "\xfd\x02\x01\x02"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x03"_su8, O::I32X4Load16X4S), memarg}, "\xfd\x03\x01\x02"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x04"_su8, O::I32X4Load16X4U), memarg}, "\xfd\x04\x01\x02"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x05"_su8, O::I64X2Load32X2S), memarg}, "\xfd\x05\x01\x02"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x06"_su8, O::I64X2Load32X2U), memarg}, "\xfd\x06\x01\x02"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x07"_su8, O::V8X16LoadSplat), memarg}, "\xfd\x07\x01\x02"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x08"_su8, O::V16X8LoadSplat), memarg}, "\xfd\x08\x01\x02"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x09"_su8, O::V32X4LoadSplat), memarg}, "\xfd\x09\x01\x02"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x0a"_su8, O::V64X2LoadSplat), memarg}, "\xfd\x0a\x01\x02"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x0b"_su8, O::V128Store), memarg}, "\xfd\x0b\x01\x02"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x0c"_su8, O::V128Const), MakeAt( "\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00"_su8, v128{u64{5}, u64{6}})}, "\xfd\x0c\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x0d"_su8, O::V8X16Shuffle), MakeAt( "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8, ShuffleImmediate{ {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}})}, "\xfd\x0d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x0e"_su8, O::V8X16Swizzle)}, "\xfd\x0e"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x0f"_su8, O::I8X16Splat)}, "\xfd\x0f"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x10"_su8, O::I16X8Splat)}, "\xfd\x10"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x11"_su8, O::I32X4Splat)}, "\xfd\x11"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x12"_su8, O::I64X2Splat)}, "\xfd\x12"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x13"_su8, O::F32X4Splat)}, "\xfd\x13"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x14"_su8, O::F64X2Splat)}, "\xfd\x14"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x15"_su8, O::I8X16ExtractLaneS), MakeAt("\x00"_su8, u8{0})}, "\xfd\x15\x00"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x16"_su8, O::I8X16ExtractLaneU), MakeAt("\x00"_su8, u8{0})}, "\xfd\x16\x00"_su8, f);
+  ExpectRead<I>( I{MakeAt("\xfd\x17"_su8, O::I8X16ReplaceLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x17\x00"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x18"_su8, O::I16X8ExtractLaneS), MakeAt("\x00"_su8, u8{0})}, "\xfd\x18\x00"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x19"_su8, O::I16X8ExtractLaneU), MakeAt("\x00"_su8, u8{0})}, "\xfd\x19\x00"_su8, f);
+  ExpectRead<I>( I{MakeAt("\xfd\x1a"_su8, O::I16X8ReplaceLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x1a\x00"_su8, f);
+  ExpectRead<I>( I{MakeAt("\xfd\x1b"_su8, O::I32X4ExtractLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x1b\x00"_su8, f);
+  ExpectRead<I>( I{MakeAt("\xfd\x1c"_su8, O::I32X4ReplaceLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x1c\x00"_su8, f);
+  ExpectRead<I>( I{MakeAt("\xfd\x1d"_su8, O::I64X2ExtractLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x1d\x00"_su8, f);
+  ExpectRead<I>( I{MakeAt("\xfd\x1e"_su8, O::I64X2ReplaceLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x1e\x00"_su8, f);
+  ExpectRead<I>( I{MakeAt("\xfd\x1f"_su8, O::F32X4ExtractLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x1f\x00"_su8, f);
+  ExpectRead<I>( I{MakeAt("\xfd\x20"_su8, O::F32X4ReplaceLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x20\x00"_su8, f);
+  ExpectRead<I>( I{MakeAt("\xfd\x21"_su8, O::F64X2ExtractLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x21\x00"_su8, f);
+  ExpectRead<I>( I{MakeAt("\xfd\x22"_su8, O::F64X2ReplaceLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x22\x00"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x23"_su8, O::I8X16Eq)}, "\xfd\x23"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x24"_su8, O::I8X16Ne)}, "\xfd\x24"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x25"_su8, O::I8X16LtS)}, "\xfd\x25"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x26"_su8, O::I8X16LtU)}, "\xfd\x26"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x27"_su8, O::I8X16GtS)}, "\xfd\x27"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x28"_su8, O::I8X16GtU)}, "\xfd\x28"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x29"_su8, O::I8X16LeS)}, "\xfd\x29"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x2a"_su8, O::I8X16LeU)}, "\xfd\x2a"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x2b"_su8, O::I8X16GeS)}, "\xfd\x2b"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x2c"_su8, O::I8X16GeU)}, "\xfd\x2c"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x2d"_su8, O::I16X8Eq)}, "\xfd\x2d"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x2e"_su8, O::I16X8Ne)}, "\xfd\x2e"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x2f"_su8, O::I16X8LtS)}, "\xfd\x2f"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x30"_su8, O::I16X8LtU)}, "\xfd\x30"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x31"_su8, O::I16X8GtS)}, "\xfd\x31"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x32"_su8, O::I16X8GtU)}, "\xfd\x32"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x33"_su8, O::I16X8LeS)}, "\xfd\x33"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x34"_su8, O::I16X8LeU)}, "\xfd\x34"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x35"_su8, O::I16X8GeS)}, "\xfd\x35"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x36"_su8, O::I16X8GeU)}, "\xfd\x36"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x37"_su8, O::I32X4Eq)}, "\xfd\x37"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x38"_su8, O::I32X4Ne)}, "\xfd\x38"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x39"_su8, O::I32X4LtS)}, "\xfd\x39"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x3a"_su8, O::I32X4LtU)}, "\xfd\x3a"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x3b"_su8, O::I32X4GtS)}, "\xfd\x3b"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x3c"_su8, O::I32X4GtU)}, "\xfd\x3c"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x3d"_su8, O::I32X4LeS)}, "\xfd\x3d"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x3e"_su8, O::I32X4LeU)}, "\xfd\x3e"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x3f"_su8, O::I32X4GeS)}, "\xfd\x3f"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x40"_su8, O::I32X4GeU)}, "\xfd\x40"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x41"_su8, O::F32X4Eq)}, "\xfd\x41"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x42"_su8, O::F32X4Ne)}, "\xfd\x42"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x43"_su8, O::F32X4Lt)}, "\xfd\x43"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x44"_su8, O::F32X4Gt)}, "\xfd\x44"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x45"_su8, O::F32X4Le)}, "\xfd\x45"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x46"_su8, O::F32X4Ge)}, "\xfd\x46"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x47"_su8, O::F64X2Eq)}, "\xfd\x47"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x48"_su8, O::F64X2Ne)}, "\xfd\x48"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x49"_su8, O::F64X2Lt)}, "\xfd\x49"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x4a"_su8, O::F64X2Gt)}, "\xfd\x4a"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x4b"_su8, O::F64X2Le)}, "\xfd\x4b"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x4c"_su8, O::F64X2Ge)}, "\xfd\x4c"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x4d"_su8, O::V128Not)}, "\xfd\x4d"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x4e"_su8, O::V128And)}, "\xfd\x4e"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x4f"_su8, O::V128Andnot)}, "\xfd\x4f"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x50"_su8, O::V128Or)}, "\xfd\x50"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x51"_su8, O::V128Xor)}, "\xfd\x51"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x52"_su8, O::V128BitSelect)}, "\xfd\x52"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x60"_su8, O::I8X16Abs)}, "\xfd\x60"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x61"_su8, O::I8X16Neg)}, "\xfd\x61"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x62"_su8, O::I8X16AnyTrue)}, "\xfd\x62"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x63"_su8, O::I8X16AllTrue)}, "\xfd\x63"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x65"_su8, O::I8X16NarrowI16X8S)}, "\xfd\x65"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x66"_su8, O::I8X16NarrowI16X8U)}, "\xfd\x66"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x6b"_su8, O::I8X16Shl)}, "\xfd\x6b"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x6c"_su8, O::I8X16ShrS)}, "\xfd\x6c"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x6d"_su8, O::I8X16ShrU)}, "\xfd\x6d"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x6e"_su8, O::I8X16Add)}, "\xfd\x6e"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x6f"_su8, O::I8X16AddSaturateS)}, "\xfd\x6f"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x70"_su8, O::I8X16AddSaturateU)}, "\xfd\x70"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x71"_su8, O::I8X16Sub)}, "\xfd\x71"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x72"_su8, O::I8X16SubSaturateS)}, "\xfd\x72"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x73"_su8, O::I8X16SubSaturateU)}, "\xfd\x73"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x76"_su8, O::I8X16MinS)}, "\xfd\x76"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x77"_su8, O::I8X16MinU)}, "\xfd\x77"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x78"_su8, O::I8X16MaxS)}, "\xfd\x78"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x79"_su8, O::I8X16MaxU)}, "\xfd\x79"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x7b"_su8, O::I8X16AvgrU)}, "\xfd\x7b"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x80\x01"_su8, O::I16X8Abs)}, "\xfd\x80\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x81\x01"_su8, O::I16X8Neg)}, "\xfd\x81\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x82\x01"_su8, O::I16X8AnyTrue)}, "\xfd\x82\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x83\x01"_su8, O::I16X8AllTrue)}, "\xfd\x83\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x85\x01"_su8, O::I16X8NarrowI32X4S)}, "\xfd\x85\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x86\x01"_su8, O::I16X8NarrowI32X4U)}, "\xfd\x86\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x87\x01"_su8, O::I16X8WidenLowI8X16S)}, "\xfd\x87\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x88\x01"_su8, O::I16X8WidenHighI8X16S)}, "\xfd\x88\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x89\x01"_su8, O::I16X8WidenLowI8X16U)}, "\xfd\x89\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x8a\x01"_su8, O::I16X8WidenHighI8X16U)}, "\xfd\x8a\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x8b\x01"_su8, O::I16X8Shl)}, "\xfd\x8b\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x8c\x01"_su8, O::I16X8ShrS)}, "\xfd\x8c\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x8d\x01"_su8, O::I16X8ShrU)}, "\xfd\x8d\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x8e\x01"_su8, O::I16X8Add)}, "\xfd\x8e\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x8f\x01"_su8, O::I16X8AddSaturateS)}, "\xfd\x8f\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x90\x01"_su8, O::I16X8AddSaturateU)}, "\xfd\x90\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x91\x01"_su8, O::I16X8Sub)}, "\xfd\x91\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x92\x01"_su8, O::I16X8SubSaturateS)}, "\xfd\x92\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x93\x01"_su8, O::I16X8SubSaturateU)}, "\xfd\x93\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x95\x01"_su8, O::I16X8Mul)}, "\xfd\x95\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x96\x01"_su8, O::I16X8MinS)}, "\xfd\x96\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x97\x01"_su8, O::I16X8MinU)}, "\xfd\x97\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x98\x01"_su8, O::I16X8MaxS)}, "\xfd\x98\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x99\x01"_su8, O::I16X8MaxU)}, "\xfd\x99\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\x9b\x01"_su8, O::I16X8AvgrU)}, "\xfd\x9b\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xa0\x01"_su8, O::I32X4Abs)}, "\xfd\xa0\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xa1\x01"_su8, O::I32X4Neg)}, "\xfd\xa1\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xa2\x01"_su8, O::I32X4AnyTrue)}, "\xfd\xa2\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xa3\x01"_su8, O::I32X4AllTrue)}, "\xfd\xa3\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xa7\x01"_su8, O::I32X4WidenLowI16X8S)}, "\xfd\xa7\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xa8\x01"_su8, O::I32X4WidenHighI16X8S)}, "\xfd\xa8\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xa9\x01"_su8, O::I32X4WidenLowI16X8U)}, "\xfd\xa9\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xaa\x01"_su8, O::I32X4WidenHighI16X8U)}, "\xfd\xaa\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xab\x01"_su8, O::I32X4Shl)}, "\xfd\xab\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xac\x01"_su8, O::I32X4ShrS)}, "\xfd\xac\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xad\x01"_su8, O::I32X4ShrU)}, "\xfd\xad\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xae\x01"_su8, O::I32X4Add)}, "\xfd\xae\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xb1\x01"_su8, O::I32X4Sub)}, "\xfd\xb1\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xb5\x01"_su8, O::I32X4Mul)}, "\xfd\xb5\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xb6\x01"_su8, O::I32X4MinS)}, "\xfd\xb6\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xb7\x01"_su8, O::I32X4MinU)}, "\xfd\xb7\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xb8\x01"_su8, O::I32X4MaxS)}, "\xfd\xb8\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xb9\x01"_su8, O::I32X4MaxU)}, "\xfd\xb9\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xc1\x01"_su8, O::I64X2Neg)}, "\xfd\xc1\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xcb\x01"_su8, O::I64X2Shl)}, "\xfd\xcb\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xcc\x01"_su8, O::I64X2ShrS)}, "\xfd\xcc\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xcd\x01"_su8, O::I64X2ShrU)}, "\xfd\xcd\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xce\x01"_su8, O::I64X2Add)}, "\xfd\xce\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xd1\x01"_su8, O::I64X2Sub)}, "\xfd\xd1\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xd5\x01"_su8, O::I64X2Mul)}, "\xfd\xd5\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xe0\x01"_su8, O::F32X4Abs)}, "\xfd\xe0\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xe1\x01"_su8, O::F32X4Neg)}, "\xfd\xe1\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xe3\x01"_su8, O::F32X4Sqrt)}, "\xfd\xe3\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xe4\x01"_su8, O::F32X4Add)}, "\xfd\xe4\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xe5\x01"_su8, O::F32X4Sub)}, "\xfd\xe5\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xe6\x01"_su8, O::F32X4Mul)}, "\xfd\xe6\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xe7\x01"_su8, O::F32X4Div)}, "\xfd\xe7\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xe8\x01"_su8, O::F32X4Min)}, "\xfd\xe8\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xe9\x01"_su8, O::F32X4Max)}, "\xfd\xe9\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xec\x01"_su8, O::F64X2Abs)}, "\xfd\xec\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xed\x01"_su8, O::F64X2Neg)}, "\xfd\xed\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xef\x01"_su8, O::F64X2Sqrt)}, "\xfd\xef\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xf0\x01"_su8, O::F64X2Add)}, "\xfd\xf0\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xf1\x01"_su8, O::F64X2Sub)}, "\xfd\xf1\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xf2\x01"_su8, O::F64X2Mul)}, "\xfd\xf2\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xf3\x01"_su8, O::F64X2Div)}, "\xfd\xf3\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xf4\x01"_su8, O::F64X2Min)}, "\xfd\xf4\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xf5\x01"_su8, O::F64X2Max)}, "\xfd\xf5\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xf8\x01"_su8, O::I32X4TruncSatF32X4S)}, "\xfd\xf8\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xf9\x01"_su8, O::I32X4TruncSatF32X4U)}, "\xfd\xf9\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xfa\x01"_su8, O::F32X4ConvertI32X4S)}, "\xfd\xfa\x01"_su8, f);
+  ExpectRead<I>(I{MakeAt("\xfd\xfb\x01"_su8, O::F32X4ConvertI32X4U)}, "\xfd\xfb\x01"_su8, f);
 }
 
 TEST(BinaryReadTest, Instruction_threads) {
@@ -2631,180 +2518,180 @@ TEST(BinaryReadTest, Opcode_simd) {
   features.enable_simd();
 
   ExpectRead<O>(MakeAt("\xfd\x00"_su8, O::V128Load), "\xfd\x00"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x01"_su8, O::V128Store), "\xfd\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x02"_su8, O::V128Const), "\xfd\x02"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x04"_su8, O::I8X16Splat), "\xfd\x04"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x05"_su8, O::I8X16ExtractLaneS), "\xfd\x05"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x06"_su8, O::I8X16ExtractLaneU), "\xfd\x06"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x07"_su8, O::I8X16ReplaceLane), "\xfd\x07"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x08"_su8, O::I16X8Splat), "\xfd\x08"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x09"_su8, O::I16X8ExtractLaneS), "\xfd\x09"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x0a"_su8, O::I16X8ExtractLaneU), "\xfd\x0a"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x0b"_su8, O::I16X8ReplaceLane), "\xfd\x0b"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x0c"_su8, O::I32X4Splat), "\xfd\x0c"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x0d"_su8, O::I32X4ExtractLane), "\xfd\x0d"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x0e"_su8, O::I32X4ReplaceLane), "\xfd\x0e"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x0f"_su8, O::I64X2Splat), "\xfd\x0f"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x10"_su8, O::I64X2ExtractLane), "\xfd\x10"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x11"_su8, O::I64X2ReplaceLane), "\xfd\x11"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x12"_su8, O::F32X4Splat), "\xfd\x12"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x13"_su8, O::F32X4ExtractLane), "\xfd\x13"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x14"_su8, O::F32X4ReplaceLane), "\xfd\x14"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x15"_su8, O::F64X2Splat), "\xfd\x15"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x16"_su8, O::F64X2ExtractLane), "\xfd\x16"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x17"_su8, O::F64X2ReplaceLane), "\xfd\x17"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x18"_su8, O::I8X16Eq), "\xfd\x18"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x19"_su8, O::I8X16Ne), "\xfd\x19"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x1a"_su8, O::I8X16LtS), "\xfd\x1a"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x1b"_su8, O::I8X16LtU), "\xfd\x1b"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x1c"_su8, O::I8X16GtS), "\xfd\x1c"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x1d"_su8, O::I8X16GtU), "\xfd\x1d"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x1e"_su8, O::I8X16LeS), "\xfd\x1e"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x1f"_su8, O::I8X16LeU), "\xfd\x1f"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x20"_su8, O::I8X16GeS), "\xfd\x20"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x21"_su8, O::I8X16GeU), "\xfd\x21"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x22"_su8, O::I16X8Eq), "\xfd\x22"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x23"_su8, O::I16X8Ne), "\xfd\x23"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x24"_su8, O::I16X8LtS), "\xfd\x24"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x25"_su8, O::I16X8LtU), "\xfd\x25"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x26"_su8, O::I16X8GtS), "\xfd\x26"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x27"_su8, O::I16X8GtU), "\xfd\x27"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x28"_su8, O::I16X8LeS), "\xfd\x28"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x29"_su8, O::I16X8LeU), "\xfd\x29"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x2a"_su8, O::I16X8GeS), "\xfd\x2a"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x2b"_su8, O::I16X8GeU), "\xfd\x2b"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x2c"_su8, O::I32X4Eq), "\xfd\x2c"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x2d"_su8, O::I32X4Ne), "\xfd\x2d"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x2e"_su8, O::I32X4LtS), "\xfd\x2e"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x2f"_su8, O::I32X4LtU), "\xfd\x2f"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x30"_su8, O::I32X4GtS), "\xfd\x30"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x31"_su8, O::I32X4GtU), "\xfd\x31"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x32"_su8, O::I32X4LeS), "\xfd\x32"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x33"_su8, O::I32X4LeU), "\xfd\x33"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x34"_su8, O::I32X4GeS), "\xfd\x34"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x35"_su8, O::I32X4GeU), "\xfd\x35"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x40"_su8, O::F32X4Eq), "\xfd\x40"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x41"_su8, O::F32X4Ne), "\xfd\x41"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x42"_su8, O::F32X4Lt), "\xfd\x42"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x43"_su8, O::F32X4Gt), "\xfd\x43"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x44"_su8, O::F32X4Le), "\xfd\x44"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x45"_su8, O::F32X4Ge), "\xfd\x45"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x46"_su8, O::F64X2Eq), "\xfd\x46"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x47"_su8, O::F64X2Ne), "\xfd\x47"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x48"_su8, O::F64X2Lt), "\xfd\x48"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x49"_su8, O::F64X2Gt), "\xfd\x49"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x4a"_su8, O::F64X2Le), "\xfd\x4a"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x4b"_su8, O::F64X2Ge), "\xfd\x4b"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x4c"_su8, O::V128Not), "\xfd\x4c"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x4d"_su8, O::V128And), "\xfd\x4d"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x4e"_su8, O::V128Or), "\xfd\x4e"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x4f"_su8, O::V128Xor), "\xfd\x4f"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x50"_su8, O::V128BitSelect), "\xfd\x50"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x51"_su8, O::I8X16Neg), "\xfd\x51"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x52"_su8, O::I8X16AnyTrue), "\xfd\x52"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x53"_su8, O::I8X16AllTrue), "\xfd\x53"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x54"_su8, O::I8X16Shl), "\xfd\x54"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x55"_su8, O::I8X16ShrS), "\xfd\x55"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x56"_su8, O::I8X16ShrU), "\xfd\x56"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x57"_su8, O::I8X16Add), "\xfd\x57"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x58"_su8, O::I8X16AddSaturateS), "\xfd\x58"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x59"_su8, O::I8X16AddSaturateU), "\xfd\x59"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x5a"_su8, O::I8X16Sub), "\xfd\x5a"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x5b"_su8, O::I8X16SubSaturateS), "\xfd\x5b"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x5c"_su8, O::I8X16SubSaturateU), "\xfd\x5c"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x5e"_su8, O::I8X16MinS), "\xfd\x5e"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x5f"_su8, O::I8X16MinU), "\xfd\x5f"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x60"_su8, O::I8X16MaxS), "\xfd\x60"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x61"_su8, O::I8X16MaxU), "\xfd\x61"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x62"_su8, O::I16X8Neg), "\xfd\x62"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x63"_su8, O::I16X8AnyTrue), "\xfd\x63"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x64"_su8, O::I16X8AllTrue), "\xfd\x64"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x65"_su8, O::I16X8Shl), "\xfd\x65"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x66"_su8, O::I16X8ShrS), "\xfd\x66"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x67"_su8, O::I16X8ShrU), "\xfd\x67"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x68"_su8, O::I16X8Add), "\xfd\x68"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x69"_su8, O::I16X8AddSaturateS), "\xfd\x69"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x6a"_su8, O::I16X8AddSaturateU), "\xfd\x6a"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x6b"_su8, O::I16X8Sub), "\xfd\x6b"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x6c"_su8, O::I16X8SubSaturateS), "\xfd\x6c"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x6d"_su8, O::I16X8SubSaturateU), "\xfd\x6d"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x6e"_su8, O::I16X8Mul), "\xfd\x6e"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x6f"_su8, O::I16X8MinS), "\xfd\x6f"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x70"_su8, O::I16X8MinU), "\xfd\x70"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x71"_su8, O::I16X8MaxS), "\xfd\x71"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x72"_su8, O::I16X8MaxU), "\xfd\x72"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x73"_su8, O::I32X4Neg), "\xfd\x73"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x74"_su8, O::I32X4AnyTrue), "\xfd\x74"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x75"_su8, O::I32X4AllTrue), "\xfd\x75"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x76"_su8, O::I32X4Shl), "\xfd\x76"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x77"_su8, O::I32X4ShrS), "\xfd\x77"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x78"_su8, O::I32X4ShrU), "\xfd\x78"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x79"_su8, O::I32X4Add), "\xfd\x79"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x7c"_su8, O::I32X4Sub), "\xfd\x7c"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x7f"_su8, O::I32X4Mul), "\xfd\x7f"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x80\x01"_su8, O::I32X4MinS), "\xfd\x80\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x81\x01"_su8, O::I32X4MinU), "\xfd\x81\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x82\x01"_su8, O::I32X4MaxS), "\xfd\x82\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x83\x01"_su8, O::I32X4MaxU), "\xfd\x83\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x84\x01"_su8, O::I64X2Neg), "\xfd\x84\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x87\x01"_su8, O::I64X2Shl), "\xfd\x87\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x88\x01"_su8, O::I64X2ShrS), "\xfd\x88\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x89\x01"_su8, O::I64X2ShrU), "\xfd\x89\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x8a\x01"_su8, O::I64X2Add), "\xfd\x8a\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x8d\x01"_su8, O::I64X2Sub), "\xfd\x8d\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x90\x01"_su8, O::I64X2Mul), "\xfd\x90\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x95\x01"_su8, O::F32X4Abs), "\xfd\x95\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x96\x01"_su8, O::F32X4Neg), "\xfd\x96\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x97\x01"_su8, O::F32X4Sqrt), "\xfd\x97\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x9a\x01"_su8, O::F32X4Add), "\xfd\x9a\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x9b\x01"_su8, O::F32X4Sub), "\xfd\x9b\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x9c\x01"_su8, O::F32X4Mul), "\xfd\x9c\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x9d\x01"_su8, O::F32X4Div), "\xfd\x9d\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x9e\x01"_su8, O::F32X4Min), "\xfd\x9e\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\x9f\x01"_su8, O::F32X4Max), "\xfd\x9f\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xa0\x01"_su8, O::F64X2Abs), "\xfd\xa0\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xa1\x01"_su8, O::F64X2Neg), "\xfd\xa1\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xa2\x01"_su8, O::F64X2Sqrt), "\xfd\xa2\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xa5\x01"_su8, O::F64X2Add), "\xfd\xa5\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xa6\x01"_su8, O::F64X2Sub), "\xfd\xa6\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xa7\x01"_su8, O::F64X2Mul), "\xfd\xa7\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xa8\x01"_su8, O::F64X2Div), "\xfd\xa8\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xa9\x01"_su8, O::F64X2Min), "\xfd\xa9\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xaa\x01"_su8, O::F64X2Max), "\xfd\xaa\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xab\x01"_su8, O::I32X4TruncSatF32X4S), "\xfd\xab\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xac\x01"_su8, O::I32X4TruncSatF32X4U), "\xfd\xac\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xaf\x01"_su8, O::F32X4ConvertI32X4S), "\xfd\xaf\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xb0\x01"_su8, O::F32X4ConvertI32X4U), "\xfd\xb0\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xc0\x01"_su8, O::V8X16Swizzle), "\xfd\xc0\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xc1\x01"_su8, O::V8X16Shuffle), "\xfd\xc1\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xc2\x01"_su8, O::V8X16LoadSplat), "\xfd\xc2\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xc3\x01"_su8, O::V16X8LoadSplat), "\xfd\xc3\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xc4\x01"_su8, O::V32X4LoadSplat), "\xfd\xc4\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xc5\x01"_su8, O::V64X2LoadSplat), "\xfd\xc5\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xc6\x01"_su8, O::I8X16NarrowI16X8S), "\xfd\xc6\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xc7\x01"_su8, O::I8X16NarrowI16X8U), "\xfd\xc7\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xc8\x01"_su8, O::I16X8NarrowI32X4S), "\xfd\xc8\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xc9\x01"_su8, O::I16X8NarrowI32X4U), "\xfd\xc9\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xca\x01"_su8, O::I16X8WidenLowI8X16S), "\xfd\xca\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xcb\x01"_su8, O::I16X8WidenHighI8X16S), "\xfd\xcb\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xcc\x01"_su8, O::I16X8WidenLowI8X16U), "\xfd\xcc\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xcd\x01"_su8, O::I16X8WidenHighI8X16U), "\xfd\xcd\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xce\x01"_su8, O::I32X4WidenLowI16X8S), "\xfd\xce\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xcf\x01"_su8, O::I32X4WidenHighI16X8S), "\xfd\xcf\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xd0\x01"_su8, O::I32X4WidenLowI16X8U), "\xfd\xd0\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xd1\x01"_su8, O::I32X4WidenHighI16X8U), "\xfd\xd1\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xd2\x01"_su8, O::I16X8Load8X8S), "\xfd\xd2\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xd3\x01"_su8, O::I16X8Load8X8U), "\xfd\xd3\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xd4\x01"_su8, O::I32X4Load16X4S), "\xfd\xd4\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xd5\x01"_su8, O::I32X4Load16X4U), "\xfd\xd5\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xd6\x01"_su8, O::I64X2Load32X2S), "\xfd\xd6\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xd7\x01"_su8, O::I64X2Load32X2U), "\xfd\xd7\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xd8\x01"_su8, O::V128Andnot), "\xfd\xd8\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xd9\x01"_su8, O::I8X16AvgrU), "\xfd\xd9\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xda\x01"_su8, O::I16X8AvgrU), "\xfd\xda\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xe1\x01"_su8, O::I8X16Abs), "\xfd\xe1\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xe2\x01"_su8, O::I16X8Abs), "\xfd\xe2\x01"_su8, features);
-  ExpectRead<O>(MakeAt("\xfd\xe3\x01"_su8, O::I32X4Abs), "\xfd\xe3\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x01"_su8, O::I16X8Load8X8S), "\xfd\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x02"_su8, O::I16X8Load8X8U), "\xfd\x02"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x03"_su8, O::I32X4Load16X4S), "\xfd\x03"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x04"_su8, O::I32X4Load16X4U), "\xfd\x04"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x05"_su8, O::I64X2Load32X2S), "\xfd\x05"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x06"_su8, O::I64X2Load32X2U), "\xfd\x06"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x07"_su8, O::V8X16LoadSplat), "\xfd\x07"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x08"_su8, O::V16X8LoadSplat), "\xfd\x08"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x09"_su8, O::V32X4LoadSplat), "\xfd\x09"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x0a"_su8, O::V64X2LoadSplat), "\xfd\x0a"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x0b"_su8, O::V128Store), "\xfd\x0b"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x0c"_su8, O::V128Const), "\xfd\x0c"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x0d"_su8, O::V8X16Shuffle), "\xfd\x0d"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x0e"_su8, O::V8X16Swizzle), "\xfd\x0e"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x0f"_su8, O::I8X16Splat), "\xfd\x0f"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x10"_su8, O::I16X8Splat), "\xfd\x10"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x11"_su8, O::I32X4Splat), "\xfd\x11"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x12"_su8, O::I64X2Splat), "\xfd\x12"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x13"_su8, O::F32X4Splat), "\xfd\x13"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x14"_su8, O::F64X2Splat), "\xfd\x14"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x15"_su8, O::I8X16ExtractLaneS), "\xfd\x15"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x16"_su8, O::I8X16ExtractLaneU), "\xfd\x16"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x17"_su8, O::I8X16ReplaceLane), "\xfd\x17"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x18"_su8, O::I16X8ExtractLaneS), "\xfd\x18"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x19"_su8, O::I16X8ExtractLaneU), "\xfd\x19"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x1a"_su8, O::I16X8ReplaceLane), "\xfd\x1a"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x1b"_su8, O::I32X4ExtractLane), "\xfd\x1b"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x1c"_su8, O::I32X4ReplaceLane), "\xfd\x1c"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x1d"_su8, O::I64X2ExtractLane), "\xfd\x1d"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x1e"_su8, O::I64X2ReplaceLane), "\xfd\x1e"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x1f"_su8, O::F32X4ExtractLane), "\xfd\x1f"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x20"_su8, O::F32X4ReplaceLane), "\xfd\x20"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x21"_su8, O::F64X2ExtractLane), "\xfd\x21"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x22"_su8, O::F64X2ReplaceLane), "\xfd\x22"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x23"_su8, O::I8X16Eq), "\xfd\x23"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x24"_su8, O::I8X16Ne), "\xfd\x24"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x25"_su8, O::I8X16LtS), "\xfd\x25"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x26"_su8, O::I8X16LtU), "\xfd\x26"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x27"_su8, O::I8X16GtS), "\xfd\x27"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x28"_su8, O::I8X16GtU), "\xfd\x28"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x29"_su8, O::I8X16LeS), "\xfd\x29"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x2a"_su8, O::I8X16LeU), "\xfd\x2a"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x2b"_su8, O::I8X16GeS), "\xfd\x2b"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x2c"_su8, O::I8X16GeU), "\xfd\x2c"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x2d"_su8, O::I16X8Eq), "\xfd\x2d"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x2e"_su8, O::I16X8Ne), "\xfd\x2e"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x2f"_su8, O::I16X8LtS), "\xfd\x2f"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x30"_su8, O::I16X8LtU), "\xfd\x30"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x31"_su8, O::I16X8GtS), "\xfd\x31"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x32"_su8, O::I16X8GtU), "\xfd\x32"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x33"_su8, O::I16X8LeS), "\xfd\x33"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x34"_su8, O::I16X8LeU), "\xfd\x34"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x35"_su8, O::I16X8GeS), "\xfd\x35"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x36"_su8, O::I16X8GeU), "\xfd\x36"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x37"_su8, O::I32X4Eq), "\xfd\x37"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x38"_su8, O::I32X4Ne), "\xfd\x38"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x39"_su8, O::I32X4LtS), "\xfd\x39"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x3a"_su8, O::I32X4LtU), "\xfd\x3a"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x3b"_su8, O::I32X4GtS), "\xfd\x3b"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x3c"_su8, O::I32X4GtU), "\xfd\x3c"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x3d"_su8, O::I32X4LeS), "\xfd\x3d"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x3e"_su8, O::I32X4LeU), "\xfd\x3e"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x3f"_su8, O::I32X4GeS), "\xfd\x3f"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x40"_su8, O::I32X4GeU), "\xfd\x40"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x41"_su8, O::F32X4Eq), "\xfd\x41"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x42"_su8, O::F32X4Ne), "\xfd\x42"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x43"_su8, O::F32X4Lt), "\xfd\x43"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x44"_su8, O::F32X4Gt), "\xfd\x44"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x45"_su8, O::F32X4Le), "\xfd\x45"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x46"_su8, O::F32X4Ge), "\xfd\x46"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x47"_su8, O::F64X2Eq), "\xfd\x47"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x48"_su8, O::F64X2Ne), "\xfd\x48"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x49"_su8, O::F64X2Lt), "\xfd\x49"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x4a"_su8, O::F64X2Gt), "\xfd\x4a"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x4b"_su8, O::F64X2Le), "\xfd\x4b"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x4c"_su8, O::F64X2Ge), "\xfd\x4c"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x4d"_su8, O::V128Not), "\xfd\x4d"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x4e"_su8, O::V128And), "\xfd\x4e"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x4f"_su8, O::V128Andnot), "\xfd\x4f"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x50"_su8, O::V128Or), "\xfd\x50"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x51"_su8, O::V128Xor), "\xfd\x51"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x52"_su8, O::V128BitSelect), "\xfd\x52"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x60"_su8, O::I8X16Abs), "\xfd\x60"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x61"_su8, O::I8X16Neg), "\xfd\x61"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x62"_su8, O::I8X16AnyTrue), "\xfd\x62"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x63"_su8, O::I8X16AllTrue), "\xfd\x63"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x65"_su8, O::I8X16NarrowI16X8S), "\xfd\x65"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x66"_su8, O::I8X16NarrowI16X8U), "\xfd\x66"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x6b"_su8, O::I8X16Shl), "\xfd\x6b"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x6c"_su8, O::I8X16ShrS), "\xfd\x6c"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x6d"_su8, O::I8X16ShrU), "\xfd\x6d"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x6e"_su8, O::I8X16Add), "\xfd\x6e"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x6f"_su8, O::I8X16AddSaturateS), "\xfd\x6f"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x70"_su8, O::I8X16AddSaturateU), "\xfd\x70"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x71"_su8, O::I8X16Sub), "\xfd\x71"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x72"_su8, O::I8X16SubSaturateS), "\xfd\x72"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x73"_su8, O::I8X16SubSaturateU), "\xfd\x73"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x76"_su8, O::I8X16MinS), "\xfd\x76"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x77"_su8, O::I8X16MinU), "\xfd\x77"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x78"_su8, O::I8X16MaxS), "\xfd\x78"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x79"_su8, O::I8X16MaxU), "\xfd\x79"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x7b"_su8, O::I8X16AvgrU), "\xfd\x7b"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x80\x01"_su8, O::I16X8Abs), "\xfd\x80\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x81\x01"_su8, O::I16X8Neg), "\xfd\x81\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x82\x01"_su8, O::I16X8AnyTrue), "\xfd\x82\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x83\x01"_su8, O::I16X8AllTrue), "\xfd\x83\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x85\x01"_su8, O::I16X8NarrowI32X4S), "\xfd\x85\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x86\x01"_su8, O::I16X8NarrowI32X4U), "\xfd\x86\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x87\x01"_su8, O::I16X8WidenLowI8X16S), "\xfd\x87\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x88\x01"_su8, O::I16X8WidenHighI8X16S), "\xfd\x88\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x89\x01"_su8, O::I16X8WidenLowI8X16U), "\xfd\x89\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x8a\x01"_su8, O::I16X8WidenHighI8X16U), "\xfd\x8a\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x8b\x01"_su8, O::I16X8Shl), "\xfd\x8b\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x8c\x01"_su8, O::I16X8ShrS), "\xfd\x8c\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x8d\x01"_su8, O::I16X8ShrU), "\xfd\x8d\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x8e\x01"_su8, O::I16X8Add), "\xfd\x8e\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x8f\x01"_su8, O::I16X8AddSaturateS), "\xfd\x8f\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x90\x01"_su8, O::I16X8AddSaturateU), "\xfd\x90\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x91\x01"_su8, O::I16X8Sub), "\xfd\x91\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x92\x01"_su8, O::I16X8SubSaturateS), "\xfd\x92\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x93\x01"_su8, O::I16X8SubSaturateU), "\xfd\x93\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x95\x01"_su8, O::I16X8Mul), "\xfd\x95\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x96\x01"_su8, O::I16X8MinS), "\xfd\x96\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x97\x01"_su8, O::I16X8MinU), "\xfd\x97\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x98\x01"_su8, O::I16X8MaxS), "\xfd\x98\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x99\x01"_su8, O::I16X8MaxU), "\xfd\x99\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\x9b\x01"_su8, O::I16X8AvgrU), "\xfd\x9b\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xa0\x01"_su8, O::I32X4Abs), "\xfd\xa0\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xa1\x01"_su8, O::I32X4Neg), "\xfd\xa1\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xa2\x01"_su8, O::I32X4AnyTrue), "\xfd\xa2\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xa3\x01"_su8, O::I32X4AllTrue), "\xfd\xa3\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xa7\x01"_su8, O::I32X4WidenLowI16X8S), "\xfd\xa7\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xa8\x01"_su8, O::I32X4WidenHighI16X8S), "\xfd\xa8\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xa9\x01"_su8, O::I32X4WidenLowI16X8U), "\xfd\xa9\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xaa\x01"_su8, O::I32X4WidenHighI16X8U), "\xfd\xaa\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xab\x01"_su8, O::I32X4Shl), "\xfd\xab\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xac\x01"_su8, O::I32X4ShrS), "\xfd\xac\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xad\x01"_su8, O::I32X4ShrU), "\xfd\xad\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xae\x01"_su8, O::I32X4Add), "\xfd\xae\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xb1\x01"_su8, O::I32X4Sub), "\xfd\xb1\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xb5\x01"_su8, O::I32X4Mul), "\xfd\xb5\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xb6\x01"_su8, O::I32X4MinS), "\xfd\xb6\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xb7\x01"_su8, O::I32X4MinU), "\xfd\xb7\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xb8\x01"_su8, O::I32X4MaxS), "\xfd\xb8\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xb9\x01"_su8, O::I32X4MaxU), "\xfd\xb9\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xc1\x01"_su8, O::I64X2Neg), "\xfd\xc1\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xcb\x01"_su8, O::I64X2Shl), "\xfd\xcb\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xcc\x01"_su8, O::I64X2ShrS), "\xfd\xcc\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xcd\x01"_su8, O::I64X2ShrU), "\xfd\xcd\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xce\x01"_su8, O::I64X2Add), "\xfd\xce\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xd1\x01"_su8, O::I64X2Sub), "\xfd\xd1\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xd5\x01"_su8, O::I64X2Mul), "\xfd\xd5\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xe0\x01"_su8, O::F32X4Abs), "\xfd\xe0\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xe1\x01"_su8, O::F32X4Neg), "\xfd\xe1\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xe3\x01"_su8, O::F32X4Sqrt), "\xfd\xe3\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xe4\x01"_su8, O::F32X4Add), "\xfd\xe4\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xe5\x01"_su8, O::F32X4Sub), "\xfd\xe5\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xe6\x01"_su8, O::F32X4Mul), "\xfd\xe6\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xe7\x01"_su8, O::F32X4Div), "\xfd\xe7\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xe8\x01"_su8, O::F32X4Min), "\xfd\xe8\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xe9\x01"_su8, O::F32X4Max), "\xfd\xe9\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xec\x01"_su8, O::F64X2Abs), "\xfd\xec\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xed\x01"_su8, O::F64X2Neg), "\xfd\xed\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xef\x01"_su8, O::F64X2Sqrt), "\xfd\xef\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xf0\x01"_su8, O::F64X2Add), "\xfd\xf0\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xf1\x01"_su8, O::F64X2Sub), "\xfd\xf1\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xf2\x01"_su8, O::F64X2Mul), "\xfd\xf2\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xf3\x01"_su8, O::F64X2Div), "\xfd\xf3\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xf4\x01"_su8, O::F64X2Min), "\xfd\xf4\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xf5\x01"_su8, O::F64X2Max), "\xfd\xf5\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xf8\x01"_su8, O::I32X4TruncSatF32X4S), "\xfd\xf8\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xf9\x01"_su8, O::I32X4TruncSatF32X4U), "\xfd\xf9\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xfa\x01"_su8, O::F32X4ConvertI32X4S), "\xfd\xfa\x01"_su8, features);
+  ExpectRead<O>(MakeAt("\xfd\xfb\x01"_su8, O::F32X4ConvertI32X4U), "\xfd\xfb\x01"_su8, features);
 }
 
 TEST(BinaryReadTest, Opcode_Unknown_simd_prefix) {
@@ -2812,10 +2699,12 @@ TEST(BinaryReadTest, Opcode_Unknown_simd_prefix) {
   features.enable_simd();
 
   const u8 kInvalidOpcodes[] = {
-      0x03, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x5d,
-      0x7a, 0x7b, 0x7d, 0x7e, 0x85, 0x86, 0x8b, 0x8c, 0x8e, 0x8f, 0x91, 0x92,
-      0x93, 0x94, 0x98, 0x99, 0xa3, 0xa4, 0xad, 0xae, 0xb1, 0xb2, 0xb3, 0xb4,
-      0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf, 0xdb,
+      0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e,
+      0x5f, 0x64, 0x67, 0x68, 0x69, 0x6a, 0x74, 0x75, 0x7a, 0x7c, 0x7d, 0x7e,
+      0x7f, 0x84, 0x94, 0x9a, 0x9c, 0x9d, 0x9e, 0x9f, 0xa4, 0xa5, 0xa6, 0xaf,
+      0xb0, 0xb2, 0xb3, 0xba, 0xbb, 0xc0, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
+      0xc8, 0xc9, 0xca, 0xcf, 0xd0, 0xd2, 0xd3, 0xd4, 0xd6, 0xd7, 0xd8, 0xd9,
+      0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf, 0xe2, 0xea, 0xeb, 0xee, 0xf6, 0xf7,
   };
   for (auto code : SpanU8{kInvalidOpcodes, sizeof(kInvalidOpcodes)}) {
     ExpectUnknownOpcode(0xfd, code, features);
