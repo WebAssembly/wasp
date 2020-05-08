@@ -28,6 +28,11 @@ using namespace ::wasp::test;
 
 class TextResolveTest : public ::testing::Test {
  protected:
+  using VT = ValueType;
+  using BVT = BoundValueType;
+  using I = Instruction;
+  using O = Opcode;
+
   template <typename T>
   void OK(const T& after, const T& before) {
     T copy = before;
@@ -63,9 +68,6 @@ class TextResolveTest : public ::testing::Test {
 };
 
 TEST_F(TextResolveTest, FunctionTypeUse) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
@@ -80,9 +82,6 @@ TEST_F(TextResolveTest, FunctionTypeUse) {
 }
 
 TEST_F(TextResolveTest, BlockImmediate) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
@@ -121,9 +120,6 @@ TEST_F(TextResolveTest, BrTableImmediate) {
 }
 
 TEST_F(TextResolveTest, CallIndirectImmediate) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   context.table_names.NewBound("$t");
   context.type_names.NewBound("$a");
   context.function_type_map.Define(
@@ -136,9 +132,6 @@ TEST_F(TextResolveTest, CallIndirectImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_NoOp) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Bare.
   OK(I{O::Nop}, I{O::Nop});
 
@@ -168,11 +161,6 @@ TEST_F(TextResolveTest, Instruction_NoOp) {
 }
 
 TEST_F(TextResolveTest, Instruction_BlockImmediate) {
-  using I = Instruction;
-  using O = Opcode;
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
@@ -192,9 +180,6 @@ TEST_F(TextResolveTest, Instruction_BlockImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_BrOnExnImmediate) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.label_names.NewBound("$l");
   context.event_names.NewBound("$e");
 
@@ -203,9 +188,6 @@ TEST_F(TextResolveTest, Instruction_BrOnExnImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_BrTableImmediate) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.label_names.NewBound("$l0");
   context.label_names.NewBound("$l1");
 
@@ -214,11 +196,6 @@ TEST_F(TextResolveTest, Instruction_BrTableImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_CallIndirectImmediate) {
-  using I = Instruction;
-  using O = Opcode;
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   context.table_names.NewBound("$t");
   context.type_names.NewBound("$a");
   context.function_type_map.Define(
@@ -243,9 +220,6 @@ TEST_F(TextResolveTest, Instruction_CallIndirectImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_CopyImmediate_Table) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.table_names.NewBound("$t0");
   context.table_names.NewBound("$t1");
 
@@ -254,9 +228,6 @@ TEST_F(TextResolveTest, Instruction_CopyImmediate_Table) {
 }
 
 TEST_F(TextResolveTest, Instruction_CopyImmediate_Memory) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.memory_names.NewBound("$m0");
   context.memory_names.NewBound("$m1");
 
@@ -265,9 +236,6 @@ TEST_F(TextResolveTest, Instruction_CopyImmediate_Memory) {
 }
 
 TEST_F(TextResolveTest, Instruction_InitImmediate_Table) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.element_segment_names.NewBound("$e");
   context.table_names.NewBound("$t");
 
@@ -276,9 +244,6 @@ TEST_F(TextResolveTest, Instruction_InitImmediate_Table) {
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Function) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.function_names.NewBound("$f");
 
   OK(I{O::Call, Var{u32{0}}}, I{O::Call, Var{"$f"_sv}});
@@ -287,9 +252,6 @@ TEST_F(TextResolveTest, Instruction_Var_Function) {
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Table) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.table_names.NewBound("$t");
 
   OK(I{O::TableFill, Var{u32{0}}}, I{O::TableFill, Var{"$t"_sv}});
@@ -300,9 +262,6 @@ TEST_F(TextResolveTest, Instruction_Var_Table) {
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Global) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.global_names.NewBound("$t");
 
   OK(I{O::GlobalGet, Var{u32{0}}}, I{O::GlobalGet, Var{"$t"_sv}});
@@ -310,27 +269,18 @@ TEST_F(TextResolveTest, Instruction_Var_Global) {
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Event) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.event_names.NewBound("$e");
 
   OK(I{O::Throw, Var{u32{0}}}, I{O::Throw, Var{"$e"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Element) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.element_segment_names.NewBound("$e");
 
   OK(I{O::ElemDrop, Var{u32{0}}}, I{O::ElemDrop, Var{"$e"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Data) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.data_segment_names.NewBound("$d");
 
   OK(I{O::MemoryInit, Var{u32{0}}}, I{O::MemoryInit, Var{"$d"_sv}});
@@ -338,9 +288,6 @@ TEST_F(TextResolveTest, Instruction_Var_Data) {
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Label) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.label_names.NewBound("$l");
 
   OK(I{O::BrIf, Var{u32{0}}}, I{O::BrIf, Var{"$l"_sv}});
@@ -348,9 +295,6 @@ TEST_F(TextResolveTest, Instruction_Var_Label) {
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Local) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.local_names.NewBound("$l");
 
   OK(I{O::LocalGet, Var{u32{0}}}, I{O::LocalGet, Var{"$l"_sv}});
@@ -359,9 +303,6 @@ TEST_F(TextResolveTest, Instruction_Var_Local) {
 }
 
 TEST_F(TextResolveTest, InstructionList) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.function_names.NewBound("$f");
   context.local_names.NewBound("$l");
 
@@ -379,9 +320,6 @@ TEST_F(TextResolveTest, InstructionList) {
 }
 
 TEST_F(TextResolveTest, InstructionList_LabelReuse) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.function_type_map.Define(BoundFunctionType{});
 
   OK(
@@ -410,9 +348,6 @@ TEST_F(TextResolveTest, InstructionList_LabelReuse) {
 }
 
 TEST_F(TextResolveTest, FunctionDesc) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
       BoundFunctionType{{BVT{"$p"_sv, VT::I32}}, {}});
@@ -430,9 +365,6 @@ TEST_F(TextResolveTest, FunctionDesc) {
 }
 
 TEST_F(TextResolveTest, EventType) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   context.type_names.NewBound("$a");
   context.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
@@ -449,9 +381,6 @@ TEST_F(TextResolveTest, EventType) {
 }
 
 TEST_F(TextResolveTest, EventDesc) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   context.type_names.NewBound("$a");
   context.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
@@ -465,9 +394,6 @@ TEST_F(TextResolveTest, EventDesc) {
 }
 
 TEST_F(TextResolveTest, Import_Function) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
       BoundFunctionType{{BVT{"$p"_sv, VT::I32}}, {}});
@@ -503,9 +429,6 @@ TEST_F(TextResolveTest, Import_Global) {
 }
 
 TEST_F(TextResolveTest, Import_Event) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
       BoundFunctionType{{BVT{"$p"_sv, VT::I32}}, {}});
@@ -522,11 +445,6 @@ TEST_F(TextResolveTest, Import_Event) {
 }
 
 TEST_F(TextResolveTest, Function) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-  using I = Instruction;
-  using O = Opcode;
-
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
       BoundFunctionType{{BVT{"$p"_sv, VT::I32}}, {}});
@@ -543,9 +461,6 @@ TEST_F(TextResolveTest, Function) {
 }
 
 TEST_F(TextResolveTest, ElementExpressionList) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.function_names.NewBound("$f"_sv);
 
   OK(
@@ -560,9 +475,6 @@ TEST_F(TextResolveTest, ElementExpressionList) {
 }
 
 TEST_F(TextResolveTest, ElementListWithExpressions) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.function_names.NewBound("$f"_sv);
 
   OK(
@@ -596,9 +508,6 @@ TEST_F(TextResolveTest, ElementListWithVars) {
 }
 
 TEST_F(TextResolveTest, ElementList) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.function_names.NewBound("$f"_sv);
   context.function_names.NewUnbound();
 
@@ -629,9 +538,6 @@ TEST_F(TextResolveTest, ElementList) {
 }
 
 TEST_F(TextResolveTest, Table) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.function_names.NewBound("$f"_sv);
 
   OK(Table{TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}},
@@ -651,9 +557,6 @@ TEST_F(TextResolveTest, Table) {
 }
 
 TEST_F(TextResolveTest, Global) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.global_names.NewBound("$g"_sv);
 
   OK(
@@ -709,9 +612,6 @@ TEST_F(TextResolveTest, Start) {
 }
 
 TEST_F(TextResolveTest, ElementSegment) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.function_names.NewBound("$f"_sv);
   context.table_names.NewBound("$t"_sv);
   context.global_names.NewBound("$g"_sv);
@@ -727,9 +627,6 @@ TEST_F(TextResolveTest, ElementSegment) {
 }
 
 TEST_F(TextResolveTest, DataSegment) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.memory_names.NewBound("$m"_sv);
   context.global_names.NewBound("$g"_sv);
 
@@ -744,9 +641,6 @@ TEST_F(TextResolveTest, DataSegment) {
 }
 
 TEST_F(TextResolveTest, Event) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   context.type_names.NewBound("$a");
   context.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
@@ -762,11 +656,6 @@ TEST_F(TextResolveTest, Event) {
 }
 
 TEST_F(TextResolveTest, ModuleItem) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-  using I = Instruction;
-  using O = Opcode;
-
   context.type_names.NewBound("$a");
   context.function_names.NewBound("$f");
   context.table_names.NewBound("$t");

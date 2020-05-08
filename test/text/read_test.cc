@@ -29,6 +29,11 @@ using namespace ::wasp::test;
 
 class TextReadTest : public ::testing::Test {
  protected:
+  using VT = ValueType;
+  using BVT = BoundValueType;
+  using I = Instruction;
+  using O = Opcode;
+
   // Read without checking the expected result.
   template <typename Func, typename... Args>
   void Read(Func&& func, SpanU8 span, Args&&... args) {
@@ -257,8 +262,6 @@ TEST_F(TextReadTest, ResultList) {
 }
 
 TEST_F(TextReadTest, LocalList) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
   auto span = "(local i32 f32) (local $foo i64) (local)"_su8;
   std::vector<At<BoundValueType>> expected{
       MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT::I32)}),
@@ -287,8 +290,6 @@ TEST_F(TextReadTest, TypeUseOpt) {
 }
 
 TEST_F(TextReadTest, FunctionTypeUse) {
-  using VT = ValueType;
-
   // Empty.
   OK(ReadFunctionTypeUse, FunctionTypeUse{}, ""_su8);
 
@@ -324,9 +325,6 @@ TEST_F(TextReadTest, FunctionTypeUse_ReuseType) {
 }
 
 TEST_F(TextReadTest, FunctionTypeUse_DeferType) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   FunctionTypeMap& ftm = context.function_type_map;
 
   ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
@@ -378,9 +376,6 @@ TEST_F(TextReadTest, InlineExportList) {
 
 
 TEST_F(TextReadTest, BoundFunctionType) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   SpanU8 span =
       "(param i32 i32) (param $t i64) (result f32 f32) (result f64)"_su8;
   NameMap name_map;
@@ -399,8 +394,6 @@ TEST_F(TextReadTest, BoundFunctionType) {
 }
 
 TEST_F(TextReadTest, FunctionType) {
-  using VT = ValueType;
-
   SpanU8 span = "(param i32 i32) (param i64) (result f32 f32) (result f64)"_su8;
   OK(ReadFunctionType,
      FunctionType{{MakeAt("i32"_su8, VT::I32), MakeAt("i32"_su8, VT::I32),
@@ -411,9 +404,6 @@ TEST_F(TextReadTest, FunctionType) {
 }
 
 TEST_F(TextReadTest, TypeEntry) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   OK(ReadTypeEntry, TypeEntry{nullopt, BoundFunctionType{{}, {}}},
      "(type (func))"_su8);
 
@@ -491,17 +481,11 @@ TEST_F(TextReadTest, BlockImmediate) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_Bare) {
-  using I = Instruction;
-  using O = Opcode;
-
   OK(ReadPlainInstruction, I{MakeAt("nop"_su8, O::Nop)}, "nop"_su8);
   OK(ReadPlainInstruction, I{MakeAt("i32.add"_su8, O::I32Add)}, "i32.add"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_Var) {
-  using I = Instruction;
-  using O = Opcode;
-
   OK(ReadPlainInstruction,
      I{MakeAt("br"_su8, O::Br), MakeAt("0"_su8, Var{Index{0}})}, "br 0"_su8);
   OK(ReadPlainInstruction,
@@ -510,9 +494,6 @@ TEST_F(TextReadTest, PlainInstruction_Var) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_BrOnExn) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.features.enable_exceptions();
   OK(ReadPlainInstruction,
      I{MakeAt("br_on_exn"_su8, O::BrOnExn),
@@ -522,9 +503,6 @@ TEST_F(TextReadTest, PlainInstruction_BrOnExn) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_BrTable) {
-  using I = Instruction;
-  using O = Opcode;
-
   // br_table w/ only default target.
   OK(ReadPlainInstruction,
      I{MakeAt("br_table"_su8, O::BrTable),
@@ -543,9 +521,6 @@ TEST_F(TextReadTest, PlainInstruction_BrTable) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_CallIndirect) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Bare call_indirect.
   OK(ReadPlainInstruction,
      I{MakeAt("call_indirect"_su8, O::CallIndirect),
@@ -563,9 +538,6 @@ TEST_F(TextReadTest, PlainInstruction_CallIndirect) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_CallIndirect_reference_types) {
-  using I = Instruction;
-  using O = Opcode;
-
   // In the reference types proposal, the call_indirect instruction also allows
   // a table var first.
   context.features.enable_reference_types();
@@ -588,9 +560,6 @@ TEST_F(TextReadTest, PlainInstruction_CallIndirect_reference_types) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_Const) {
-  using I = Instruction;
-  using O = Opcode;
-
   // i32.const
   OK(ReadPlainInstruction,
      I{MakeAt("i32.const"_su8, O::I32Const), MakeAt("12"_su8, u32{12})},
@@ -613,9 +582,6 @@ TEST_F(TextReadTest, PlainInstruction_Const) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_MemArg) {
-  using I = Instruction;
-  using O = Opcode;
-
   // No align, no offset.
   OK(ReadPlainInstruction,
      I{MakeAt("i32.load"_su8, O::I32Load),
@@ -646,19 +612,12 @@ TEST_F(TextReadTest, PlainInstruction_MemArg) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_Select) {
-  using I = Instruction;
-  using O = Opcode;
-
   OK(ReadPlainInstruction,
      I{MakeAt("select"_su8, O::Select), MakeAt(""_su8, ValueTypeList{})},
      "select"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_Select_reference_types) {
-  using I = Instruction;
-  using O = Opcode;
-  using VT = ValueType;
-
   context.features.enable_reference_types();
 
   // select w/o types
@@ -682,9 +641,6 @@ TEST_F(TextReadTest, PlainInstruction_Select_reference_types) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_SimdConst) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadPlainInstruction, {{0, "v128.const instruction not allowed"}},
        "v128.const i32x4 0 0 0 0"_su8);
 
@@ -730,9 +686,6 @@ TEST_F(TextReadTest, PlainInstruction_SimdConst) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_SimdLane) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadPlainInstruction,
        {{0, "i8x16.extract_lane_s instruction not allowed"}},
        "i8x16.extract_lane_s 0"_su8);
@@ -750,9 +703,6 @@ TEST_F(TextReadTest, PlainInstruction_SimdLane) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_Shuffle) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadPlainInstruction, {{0, "v8x16.shuffle instruction not allowed"}},
        "v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8);
 
@@ -765,9 +715,6 @@ TEST_F(TextReadTest, PlainInstruction_Shuffle) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_TableCopy) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadPlainInstruction, {{0, "table.copy instruction not allowed"}},
        "table.copy"_su8);
 
@@ -779,9 +726,6 @@ TEST_F(TextReadTest, PlainInstruction_TableCopy) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_TableCopy_reference_types) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.features.enable_reference_types();
 
   // table.copy w/o dst and src.
@@ -798,9 +742,6 @@ TEST_F(TextReadTest, PlainInstruction_TableCopy_reference_types) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_TableInit) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadPlainInstruction, {{0, "table.init instruction not allowed"}},
        "table.init 0"_su8);
 
@@ -821,9 +762,6 @@ TEST_F(TextReadTest, PlainInstruction_TableInit) {
 }
 
 TEST_F(TextReadTest, BlockInstruction_Block) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Empty block.
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
@@ -878,9 +816,6 @@ TEST_F(TextReadTest, BlockInstruction_Block_MismatchedLabels) {
 }
 
 TEST_F(TextReadTest, BlockInstruction_Loop) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Empty loop.
   OKVector(
       ReadBlockInstruction_ForTesting,
@@ -935,9 +870,6 @@ TEST_F(TextReadTest, BlockInstruction_Loop_MismatchedLabels) {
 }
 
 TEST_F(TextReadTest, BlockInstruction_If) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Empty if.
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
@@ -1037,9 +969,6 @@ TEST_F(TextReadTest, BlockInstruction_If_MismatchedLabels) {
 }
 
 TEST_F(TextReadTest, BlockInstruction_Try) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadBlockInstruction_ForTesting, {{0, "try instruction not allowed"}},
        "try catch end"_su8);
 
@@ -1134,9 +1063,6 @@ TEST_F(TextReadTest, BlockInstruction_Try_MismatchedLabels) {
 }
 
 TEST_F(TextReadTest, Label_ReuseNames) {
-  using I = Instruction;
-  using O = Opcode;
-
   OK(ReadInstructionList_ForTesting,
      InstructionList{
          MakeAt(
@@ -1156,9 +1082,6 @@ TEST_F(TextReadTest, Label_ReuseNames) {
 }
 
 TEST_F(TextReadTest, Label_DuplicateNames) {
-  using I = Instruction;
-  using O = Opcode;
-
   OK(ReadInstructionList_ForTesting,
      InstructionList{
          MakeAt("block $b"_su8,
@@ -1183,9 +1106,6 @@ auto ReadExpression_ForTesting(Tokenizer& tokenizer, Context& context)
 }
 
 TEST_F(TextReadTest, Expression_Plain) {
-  using I = Instruction;
-  using O = Opcode;
-
   // No immediates.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
@@ -1275,9 +1195,6 @@ TEST_F(TextReadTest, Expression_Plain) {
 }
 
 TEST_F(TextReadTest, Expression_Plain_exceptions) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadExpression_ForTesting, {{1, "br_on_exn instruction not allowed"}},
        "(br_on_exn 0 0)"_su8);
 
@@ -1297,9 +1214,6 @@ TEST_F(TextReadTest, Expression_Plain_exceptions) {
 }
 
 TEST_F(TextReadTest, Expression_Plain_simd) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadExpression_ForTesting, {{1, "v128.const instruction not allowed"}},
        "(v128.const i32x4 0 0 0 0)"_su8);
 
@@ -1325,9 +1239,6 @@ TEST_F(TextReadTest, Expression_Plain_simd) {
 }
 
 TEST_F(TextReadTest, Expression_Plain_bulk_memory) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadExpression_ForTesting, {{1, "table.init instruction not allowed"}},
        "(table.init 0)"_su8);
 
@@ -1356,9 +1267,6 @@ TEST_F(TextReadTest, Expression_Plain_bulk_memory) {
 
 
 TEST_F(TextReadTest, Expression_PlainFolded) {
-  using I = Instruction;
-  using O = Opcode;
-
   OKVector(ReadExpression_ForTesting,
            InstructionList{
                MakeAt("i32.const 0"_su8, I{MakeAt("i32.const"_su8, O::I32Const),
@@ -1379,9 +1287,6 @@ TEST_F(TextReadTest, Expression_PlainFolded) {
 }
 
 TEST_F(TextReadTest, Expression_Block) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Block.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
@@ -1402,9 +1307,6 @@ TEST_F(TextReadTest, Expression_Block) {
 }
 
 TEST_F(TextReadTest, Expression_If) {
-  using I = Instruction;
-  using O = Opcode;
-
   // If then.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
@@ -1457,9 +1359,6 @@ TEST_F(TextReadTest, Expression_If) {
 }
 
 TEST_F(TextReadTest, Expression_Try) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadExpression_ForTesting, {{1, "try instruction not allowed"}},
        "(try (catch))"_su8);
 
@@ -1489,9 +1388,6 @@ TEST_F(TextReadTest, Expression_Try) {
 }
 
 TEST_F(TextReadTest, ExpressionList) {
-  using I = Instruction;
-  using O = Opcode;
-
   OKVector(ReadExpressionList_ForTesting,
            InstructionList{
                MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
@@ -1540,9 +1436,6 @@ TEST_F(TextReadTest, EventType) {
 }
 
 TEST_F(TextReadTest, Function) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Empty func.
   OK(ReadFunction, Function{}, "(func)"_su8);
 
@@ -1650,9 +1543,6 @@ TEST_F(TextReadTest, FunctionInlineImport) {
 }
 
 TEST_F(TextReadTest, Function_DeferType) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   FunctionTypeMap& ftm = context.function_type_map;
 
   ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
@@ -1772,9 +1662,6 @@ TEST_F(TextReadTest, TableInlineImport) {
 }
 
 TEST_F(TextReadTest, Table_bulk_memory) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadTable,
        {
            {{21, "Expected Rpar, got Lpar"}},
@@ -1889,9 +1776,6 @@ TEST_F(TextReadTest, MemoryInlineImport) {
 }
 
 TEST_F(TextReadTest, Global) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Simplest global.
   OK(ReadGlobal,
      Global{GlobalDesc{
@@ -2084,9 +1968,6 @@ TEST_F(TextReadTest, Import_AfterNonImport) {
 }
 
 TEST_F(TextReadTest, Import_FunctionDeferType) {
-  using VT = ValueType;
-  using BVT = BoundValueType;
-
   FunctionTypeMap& ftm = context.function_type_map;
 
   ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
@@ -2169,9 +2050,6 @@ TEST_F(TextReadTest, Start_Multiple) {
 }
 
 TEST_F(TextReadTest, ElementExpression) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.features.enable_bulk_memory();
 
   // Item.
@@ -2190,9 +2068,6 @@ TEST_F(TextReadTest, ElementExpression) {
 }
 
 TEST_F(TextReadTest, OffsetExpression) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Expression.
   OK(ReadOffsetExpression,
      InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
@@ -2205,9 +2080,6 @@ TEST_F(TextReadTest, OffsetExpression) {
 }
 
 TEST_F(TextReadTest, ElementExpressionList) {
-  using I = Instruction;
-  using O = Opcode;
-
   context.features.enable_bulk_memory();
 
   // Item list.
@@ -2235,9 +2107,6 @@ TEST_F(TextReadTest, TableUseOpt) {
 }
 
 TEST_F(TextReadTest, ElementSegment_MVP) {
-  using I = Instruction;
-  using O = Opcode;
-
   // No table var, empty var list.
   OK(ReadElementSegment,
      ElementSegment{
@@ -2275,9 +2144,6 @@ TEST_F(TextReadTest, ElementSegment_MVP) {
 }
 
 TEST_F(TextReadTest, ElementSegment_bulk_memory) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadElementSegment,
        {
            {{6, "Expected offset expression, got ValueType"}},
@@ -2433,9 +2299,6 @@ TEST_F(TextReadTest, ElementSegment_DuplicateName) {
 }
 
 TEST_F(TextReadTest, DataSegment_MVP) {
-  using I = Instruction;
-  using O = Opcode;
-
   // No memory var, empty text list.
   OK(ReadDataSegment,
      DataSegment{
@@ -2473,9 +2336,6 @@ TEST_F(TextReadTest, DataSegment_MVP) {
 }
 
 TEST_F(TextReadTest, DataSegment_bulk_memory) {
-  using I = Instruction;
-  using O = Opcode;
-
   Fail(ReadDataSegment, {{5, "Expected offset expression, got Rpar"}},
        "(data)"_su8);
 

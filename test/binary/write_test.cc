@@ -29,6 +29,9 @@ using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::test;
 
+using I = Instruction;
+using O = Opcode;
+
 namespace {
 
 template <typename T>
@@ -384,8 +387,6 @@ TEST(BinaryWriteTest, InitImmediate) {
 }
 
 TEST(BinaryWriteTest, Instruction) {
-  using I = Instruction;
-  using O = Opcode;
   using MemArg = MemArgImmediate;
 
   ExpectWrite<I>("\x00"_su8, I{O::Unreachable});
@@ -566,9 +567,6 @@ TEST(BinaryWriteTest, Instruction) {
 }
 
 TEST(BinaryWriteTest, Instruction_exceptions) {
-  using I = Instruction;
-  using O = Opcode;
-
   ExpectWrite<I>("\x06\x40"_su8, I{O::Try, BlockType::Void});
   ExpectWrite<I>("\x07"_su8, I{O::Catch});
   ExpectWrite<I>("\x08\x00"_su8, I{O::Throw, Index{0}});
@@ -577,18 +575,12 @@ TEST(BinaryWriteTest, Instruction_exceptions) {
 }
 
 TEST(BinaryWriteTest, Instruction_tail_call) {
-  using I = Instruction;
-  using O = Opcode;
-
   ExpectWrite<I>("\x12\x00"_su8, I{O::ReturnCall, Index{0}});
   ExpectWrite<I>("\x13\x08\x00"_su8,
                  I{O::ReturnCallIndirect, CallIndirectImmediate{8, 0}});
 }
 
 TEST(BinaryWriteTest, Instruction_sign_extension) {
-  using I = Instruction;
-  using O = Opcode;
-
   ExpectWrite<I>("\xc0"_su8, I{O::I32Extend8S});
   ExpectWrite<I>("\xc1"_su8, I{O::I32Extend16S});
   ExpectWrite<I>("\xc2"_su8, I{O::I64Extend8S});
@@ -597,9 +589,6 @@ TEST(BinaryWriteTest, Instruction_sign_extension) {
 }
 
 TEST(BinaryWriteTest, Instruction_reference_types) {
-  using I = Instruction;
-  using O = Opcode;
-
   ExpectWrite<I>("\x1c\x02\x7f\x7e"_su8,
                  I{O::SelectT, ValueTypes{ValueType::I32, ValueType::I64}});
   ExpectWrite<I>("\x25\x00"_su8, I{O::TableGet, Index{0}});
@@ -612,16 +601,10 @@ TEST(BinaryWriteTest, Instruction_reference_types) {
 }
 
 TEST(BinaryWriteTest, Instruction_function_references) {
-  using I = Instruction;
-  using O = Opcode;
-
   ExpectWrite<I>("\xd2\x00"_su8, I{O::RefFunc, Index{0}});
 }
 
 TEST(BinaryWriteTest, Instruction_saturating_float_to_int) {
-  using I = Instruction;
-  using O = Opcode;
-
   ExpectWrite<I>("\xfc\x00"_su8, I{O::I32TruncSatF32S});
   ExpectWrite<I>("\xfc\x01"_su8, I{O::I32TruncSatF32U});
   ExpectWrite<I>("\xfc\x02"_su8, I{O::I32TruncSatF64S});
@@ -633,9 +616,6 @@ TEST(BinaryWriteTest, Instruction_saturating_float_to_int) {
 }
 
 TEST(BinaryWriteTest, Instruction_bulk_memory) {
-  using I = Instruction;
-  using O = Opcode;
-
   ExpectWrite<I>("\xfc\x08\x01\x00"_su8, I{O::MemoryInit, InitImmediate{1, 0}});
   ExpectWrite<I>("\xfc\x09\x02"_su8, I{O::DataDrop, Index{2}});
   ExpectWrite<I>("\xfc\x0a\x00\x00"_su8, I{O::MemoryCopy, CopyImmediate{0, 0}});
@@ -646,9 +626,6 @@ TEST(BinaryWriteTest, Instruction_bulk_memory) {
 }
 
 TEST(BinaryWriteTest, Instruction_simd) {
-  using I = Instruction;
-  using O = Opcode;
-
   ExpectWrite<I>("\xfd\x00\x01\x02"_su8, I{O::V128Load, MemArgImmediate{1, 2}});
   ExpectWrite<I>("\xfd\x01\x01\x02"_su8, I{O::I16X8Load8X8S, MemArgImmediate{1, 2}});
   ExpectWrite<I>("\xfd\x02\x01\x02"_su8, I{O::I16X8Load8X8U, MemArgImmediate{1, 2}});
@@ -832,9 +809,6 @@ TEST(BinaryWriteTest, Instruction_simd) {
 }
 
 TEST(BinaryWriteTest, Instruction_threads) {
-  using I = Instruction;
-  using O = Opcode;
-
   const MemArgImmediate m{0, 0};
 
   ExpectWrite<I>("\xfe\x00\x00\x00"_su8, I{O::MemoryAtomicNotify, m});

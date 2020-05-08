@@ -27,6 +27,9 @@ using namespace ::wasp;
 using namespace ::wasp::text;
 using namespace ::wasp::test;
 
+using I = Instruction;
+using O = Opcode;
+
 namespace {
 
 template <typename T, typename... Args>
@@ -170,9 +173,6 @@ TEST(TextWriteTest, Opcode) {
 }
 
 TEST(TextWriteTest, Instruction) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Bare
   ExpectWrite("nop"_sv, I{O::Nop});
 
@@ -241,9 +241,6 @@ TEST(TextWriteTest, Instruction) {
 }
 
 TEST(TextWriteTest, InstructionList) {
-  using I = Instruction;
-  using O = Opcode;
-
   ExpectWrite("block nop end nop"_sv, InstructionList{
                                           I{O::Block, BlockImmediate{}},
                                           I{O::Nop},
@@ -442,9 +439,6 @@ TEST(TextWriteTest, InlineExportList) {
 }
 
 TEST(TextWriteTest, Function) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Empty func.
   ExpectWrite("(func)"_sv, Function{});
 
@@ -505,9 +499,6 @@ TEST(TextWriteTest, FunctionInlineImport) {
 }
 
 TEST(TextWriteTest, ElementExpressionList) {
-  using I = Instruction;
-  using O = Opcode;
-
   ExpectWrite("(ref.null) (ref.func 0)"_sv, ElementExpressionList{
                                                 ElementExpression{
                                                     I{O::RefNull},
@@ -519,9 +510,6 @@ TEST(TextWriteTest, ElementExpressionList) {
 }
 
 TEST(TextWriteTest, ElementListWithExpressions) {
-  using I = Instruction;
-  using O = Opcode;
-
   ExpectWrite("funcref"_sv,
               ElementListWithExpressions{ReferenceType::Funcref, {}});
 
@@ -551,9 +539,6 @@ TEST(TextWriteTest, ElementList) {
 }
 
 TEST(TextWriteTest, Table) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Simplest table.
   ExpectWrite(
       "(table 0 funcref)"_sv,
@@ -663,9 +648,6 @@ TEST(TextWriteTest, MemoryInlineImport) {
 }
 
 TEST(TextWriteTest, Global) {
-  using I = Instruction;
-  using O = Opcode;
-
   // Simplest global.
   ExpectWrite(
       "(global i32 nop)"_sv,
@@ -739,9 +721,6 @@ TEST(TextWriteTest, Start) {
 }
 
 TEST(TextWriteTest, ElementSegment) {
-  using I = Instruction;
-  using O = Opcode;
-
   // No table var, empty var list.
   ExpectWrite("(elem (offset nop))"_sv,
               ElementSegment{nullopt, nullopt, InstructionList{I{O::Nop}},
@@ -851,9 +830,6 @@ TEST(TextWriteTest, ElementSegment) {
 }
 
 TEST(TextWriteTest, DataSegment) {
-  using I = Instruction;
-  using O = Opcode;
-
   // No memory var, empty text list.
   ExpectWrite("(data (offset nop))"_sv,
               DataSegment{nullopt, nullopt, InstructionList{I{O::Nop}}, {}});

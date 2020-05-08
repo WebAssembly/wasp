@@ -32,6 +32,9 @@ using namespace ::wasp::binary;
 using namespace ::wasp::test;
 using namespace ::wasp::binary::test;
 
+using I = Instruction;
+using O = Opcode;
+
 TEST(BinaryReadTest, BlockType_MVP) {
   ExpectRead<BlockType>(BlockType::I32, "\x7f"_su8);
   ExpectRead<BlockType>(BlockType::I64, "\x7e"_su8);
@@ -1248,8 +1251,6 @@ TEST(BinaryReadTest, InitImmediate_Memory_reference_types) {
 
 
 TEST(BinaryReadTest, Instruction) {
-  using I = Instruction;
-  using O = Opcode;
   using MemArg = MemArgImmediate;
   using BT = BlockType;
 
@@ -1489,9 +1490,6 @@ TEST(BinaryReadTest, Instruction_BadMemoryReserved) {
 }
 
 TEST(BinaryReadTest, Instruction_exceptions) {
-  using I = Instruction;
-  using O = Opcode;
-
   Features features;
   features.enable_exceptions();
 
@@ -1510,9 +1508,6 @@ TEST(BinaryReadTest, Instruction_exceptions) {
 }
 
 TEST(BinaryReadTest, Instruction_tail_call) {
-  using I = Instruction;
-  using O = Opcode;
-
   Features features;
   features.enable_tail_call();
 
@@ -1527,9 +1522,6 @@ TEST(BinaryReadTest, Instruction_tail_call) {
 }
 
 TEST(BinaryReadTest, Instruction_sign_extension) {
-  using I = Instruction;
-  using O = Opcode;
-
   Features features;
   features.enable_sign_extension();
 
@@ -1541,9 +1533,6 @@ TEST(BinaryReadTest, Instruction_sign_extension) {
 }
 
 TEST(BinaryReadTest, Instruction_reference_types) {
-  using I = Instruction;
-  using O = Opcode;
-
   Features features;
   features.enable_reference_types();
 
@@ -1584,9 +1573,6 @@ TEST(BinaryReadTest, Instruction_reference_types) {
 }
 
 TEST(BinaryReadTest, Instruction_saturating_float_to_int) {
-  using I = Instruction;
-  using O = Opcode;
-
   Features features;
   features.enable_saturating_float_to_int();
 
@@ -1609,9 +1595,6 @@ TEST(BinaryReadTest, Instruction_saturating_float_to_int) {
 }
 
 TEST(BinaryReadTest, Instruction_bulk_memory) {
-  using I = Instruction;
-  using O = Opcode;
-
   Features features;
   features.enable_bulk_memory();
 
@@ -1647,8 +1630,6 @@ TEST(BinaryReadTest, Instruction_bulk_memory) {
 }
 
 TEST(BinaryReadTest, Instruction_BadReserved_bulk_memory) {
-  using I = Instruction;
-
   Features features;
   features.enable_bulk_memory();
 
@@ -1663,9 +1644,6 @@ TEST(BinaryReadTest, Instruction_BadReserved_bulk_memory) {
 }
 
 TEST(BinaryReadTest, Instruction_simd) {
-  using I = Instruction;
-  using O = Opcode;
-
   Features f;
   f.enable_simd();
 
@@ -1851,9 +1829,6 @@ TEST(BinaryReadTest, Instruction_simd) {
 }
 
 TEST(BinaryReadTest, Instruction_threads) {
-  using I = Instruction;
-  using O = Opcode;
-
   Features f;
   f.enable_threads();
 
