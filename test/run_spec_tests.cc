@@ -36,6 +36,9 @@
 using namespace ::wasp;
 namespace fs = std::filesystem;
 
+static bool s_verbose = false;
+static bool s_print_text = false;
+
 class ErrorsBasic : public Errors {
  public:
   using Offset = size_t;
@@ -119,6 +122,8 @@ int main(int argc, char** argv) {
              print(parser.GetHelpString());
              exit(0);
            })
+      .Add('v', "--verbose", "verbose output", [&]() { s_verbose = true; })
+      .Add("--print-text", "print text output", [&]() { s_print_text = true; })
       .Add("<filename>", "filename",
            [&](string_view arg) { filenames.push_back(arg); });
   parser.Parse(args);
@@ -170,7 +175,10 @@ int main(int argc, char** argv) {
 }
 
 void DoFile(const fs::path& path, const Features& features) {
-  print("Reading {}...\n", path.string());
+  if (s_verbose) {
+    print("Reading {}...\n", path.string());
+  }
+
   auto data = ReadFile(path.string());
   if (!data) {
     print(stderr, "Error reading file {}", path.filename().string());
@@ -186,11 +194,10 @@ void DoFile(const fs::path& path, const Features& features) {
     errors.Print();
   }
 
-#if 0
-  text::WriteContext wcontext;
-  std::string output;
-  text::Write(wcontext, std::back_inserter(output), script);
-
-  print("{}\n", output);
-#endif
+  if (s_print_text) {
+    text::WriteContext wcontext;
+    std::string output;
+    text::Write(wcontext, std::back_inserter(output), script);
+    print("{}\n", output);
+  }
 }
