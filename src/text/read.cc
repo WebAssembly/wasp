@@ -63,7 +63,7 @@ auto ReadNat32(Tokenizer& tokenizer, Context& context) -> At<u32> {
     auto token = tokenizer.Peek();
     context.errors.OnError(
         token.loc, format("Expected a natural number, got {}", token.type));
-    return MakeAt(token_opt->loc, u32{0});
+    return MakeAt(token.loc, u32{0});
   }
   auto nat_opt = StrToNat<u32>(token_opt->literal_info(), token_opt->span_u8());
   if (!nat_opt) {
@@ -177,7 +177,7 @@ auto ReadText(Tokenizer& tokenizer, Context& context) -> At<Text> {
     auto token = tokenizer.Peek();
     context.errors.OnError(token.loc,
                            format("Expected quoted text, got {}", token.type));
-    return MakeAt(token_opt->loc, Text{});
+    return MakeAt(token.loc, Text{});
   }
   return MakeAt(token_opt->loc, token_opt->text());
 }
@@ -280,7 +280,7 @@ auto ReadValueType(Tokenizer& tokenizer, Context& context) -> At<ValueType> {
     auto token = tokenizer.Peek();
     context.errors.OnError(token.loc,
                            format("Expected value type, got {}", token.type));
-    return MakeAt(token_opt->loc, ValueType::I32);
+    return MakeAt(token.loc, ValueType::I32);
   }
   bool allowed = true;
   switch (token_opt->value_type()) {
