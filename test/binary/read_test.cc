@@ -83,7 +83,7 @@ TEST(BinaryReadTest, BlockType_reference_types) {
 
   Features features;
   features.enable_reference_types();
-  ExpectRead<BlockType>(BlockType::Anyref, "\x6f"_su8, features);
+  ExpectRead<BlockType>(BlockType::Externref, "\x6f"_su8, features);
 }
 
 TEST(BinaryReadTest, BlockType_Unknown) {
@@ -778,14 +778,11 @@ TEST(BinaryReadTest, ReferenceType) {
 TEST(BinaryReadTest, ReferenceType_ReferenceTypes) {
   ExpectReadFailure<ReferenceType>(
       {{0, "element type"}, {1, "Unknown element type: 111"}}, "\x6f"_su8);
-  ExpectReadFailure<ReferenceType>(
-      {{0, "element type"}, {1, "Unknown element type: 110"}}, "\x6e"_su8);
 
   Features features;
   features.enable_reference_types();
 
-  ExpectRead<ReferenceType>(ReferenceType::Anyref, "\x6f"_su8, features);
-  ExpectRead<ReferenceType>(ReferenceType::Nullref, "\x6e"_su8, features);
+  ExpectRead<ReferenceType>(ReferenceType::Externref, "\x6f"_su8, features);
 }
 
 TEST(BinaryReadTest, ReferenceType_Exceptions) {
@@ -3156,14 +3153,11 @@ TEST(BinaryReadTest, ValueType_reference_types) {
       {{0, "value type"}, {1, "Unknown value type: 112"}}, "\x70"_su8);
   ExpectReadFailure<ValueType>(
       {{0, "value type"}, {1, "Unknown value type: 111"}}, "\x6f"_su8);
-  ExpectReadFailure<ValueType>(
-      {{0, "value type"}, {1, "Unknown value type: 110"}}, "\x6e"_su8);
 
   Features features;
   features.enable_reference_types();
   ExpectRead<ValueType>(ValueType::Funcref, "\x70"_su8, features);
-  ExpectRead<ValueType>(ValueType::Anyref, "\x6f"_su8, features);
-  ExpectRead<ValueType>(ValueType::Nullref, "\x6e"_su8, features);
+  ExpectRead<ValueType>(ValueType::Externref, "\x6f"_su8, features);
 }
 
 TEST(BinaryReadTest, ValueType_exceptions) {

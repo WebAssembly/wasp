@@ -144,6 +144,7 @@ struct CopyImmediate {
 
 struct Instruction {
   explicit Instruction(At<Opcode>);
+  explicit Instruction(At<Opcode>, At<ReferenceType>);
   explicit Instruction(At<Opcode>, At<BlockType>);
   explicit Instruction(At<Opcode>, At<Index>);
   explicit Instruction(At<Opcode>, At<CallIndirectImmediate>);
@@ -163,6 +164,7 @@ struct Instruction {
 
   // Convenience constructors w/ no Location.
   explicit Instruction(Opcode);
+  explicit Instruction(Opcode, ReferenceType);
   explicit Instruction(Opcode, BlockType);
   explicit Instruction(Opcode, Index);
   explicit Instruction(Opcode, CallIndirectImmediate);
@@ -181,6 +183,7 @@ struct Instruction {
   explicit Instruction(Opcode, const ValueTypes&);
 
   bool has_no_immediate() const;
+  bool has_reference_type_immediate() const;
   bool has_block_type_immediate() const;
   bool has_index_immediate() const;
   bool has_call_indirect_immediate() const;
@@ -198,6 +201,8 @@ struct Instruction {
   bool has_shuffle_immediate() const;
   bool has_value_types_immediate() const;
 
+  auto reference_type_immediate() -> At<ReferenceType>&;
+  auto reference_type_immediate() const -> const At<ReferenceType>&;
   auto block_type_immediate() -> At<BlockType>&;
   auto block_type_immediate() const -> const At<BlockType>&;
   auto index_immediate() -> At<Index>&;
@@ -233,6 +238,7 @@ struct Instruction {
 
   At<Opcode> opcode;
   variant<monostate,
+          At<ReferenceType>,
           At<BlockType>,
           At<Index>,
           At<CallIndirectImmediate>,

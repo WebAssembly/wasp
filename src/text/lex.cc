@@ -461,6 +461,15 @@ auto LexKeyword(SpanU8* data, string_view sv, ValueType vt) -> Token {
   return LexReserved(guard.Reset());
 }
 
+auto LexKeyword(SpanU8* data, string_view sv, TokenType tt, ReferenceType rt)
+    -> Token {
+  MatchGuard guard{data};
+  if (MatchString(data, sv) && NoTrailingReservedChars(data)) {
+    return Token(guard.loc(), tt, rt);
+  }
+  return LexReserved(guard.Reset());
+}
+
 auto LexKeyword(SpanU8* data, string_view sv, TokenType tt, LiteralKind lk)
     -> Token {
   MatchGuard guard{data};

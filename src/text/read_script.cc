@@ -90,7 +90,7 @@ bool IsConst(Tokenizer& tokenizer) {
          token.type == TokenType::I64ConstInstr ||
          token.type == TokenType::SimdConstInstr ||
          token.type == TokenType::RefNullInstr ||
-         token.type == TokenType::RefHost;
+         token.type == TokenType::RefExtern;
 }
 
 auto ReadConst(Tokenizer& tokenizer, Context& context) -> At<Const> {
@@ -178,22 +178,24 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> At<Const> {
       return MakeAt(guard.loc(), Const{literal.value()});
     }
 
-    case TokenType::RefNullInstr:
+    case TokenType::RefNullInstr: {
       if (!context.features.reference_types_enabled()) {
         context.errors.OnError(token.loc, "ref.null not allowed");
       }
       tokenizer.Read();
+      auto type = ReadReferenceKind(tokenizer, context);
       Expect(tokenizer, context, TokenType::Rpar);
-      return MakeAt(guard.loc(), Const{RefNullConst{}});
+      return MakeAt(guard.loc(), Const{RefNullConst{type}});
+    }
 
-    case TokenType::RefHost: {
+    case TokenType::RefExtern: {
       if (!context.features.reference_types_enabled()) {
-        context.errors.OnError(token.loc, "ref.host not allowed");
+        context.errors.OnError(token.loc, "ref.extern not allowed");
       }
       tokenizer.Read();
       auto nat = ReadNat32(tokenizer, context);
       Expect(tokenizer, context, TokenType::Rpar);
-      return MakeAt(guard.loc(), Const{RefHostConst{nat}});
+      return MakeAt(guard.loc(), Const{RefExternConst{nat}});
     }
 
     default:
@@ -319,7 +321,7 @@ bool IsReturnResult(Tokenizer& tokenizer) {
          token.type == TokenType::I64ConstInstr ||
          token.type == TokenType::SimdConstInstr ||
          token.type == TokenType::RefNullInstr ||
-         token.type == TokenType::RefHost || token.type == TokenType::RefAny ||
+         token.type == TokenType::RefExtern ||
          token.type == TokenType::RefFuncInstr;
 }
 
@@ -408,31 +410,29 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
       return MakeAt(guard.loc(), ReturnResult{result.value()});
     }
 
-    case TokenType::RefNullInstr:
+    case TokenType::RefNullInstr: {
       if (!context.features.reference_types_enabled()) {
         context.errors.OnError(token.loc, "ref.null not allowed");
       }
       tokenizer.Read();
+      auto type = ReadReferenceKind(tokenizer, context);
       Expect(tokenizer, context, TokenType::Rpar);
-      return MakeAt(guard.loc(), ReturnResult{RefNullConst{}});
-
-    case TokenType::RefHost: {
-      if (!context.features.reference_types_enabled()) {
-        context.errors.OnError(token.loc, "ref.host not allowed");
-      }
-      tokenizer.Read();
-      auto nat = ReadNat32(tokenizer, context);
-      Expect(tokenizer, context, TokenType::Rpar);
-      return MakeAt(guard.loc(), ReturnResult{RefHostConst{nat}});
+      return MakeAt(guard.loc(), ReturnResult{RefNullConst{type}});
     }
 
-    case TokenType::RefAny:
+    case TokenType::RefExtern:
       if (!context.features.reference_types_enabled()) {
-        context.errors.OnError(token.loc, "ref.any not allowed");
+        context.errors.OnError(token.loc, "ref.extern not allowed");
       }
       tokenizer.Read();
-      Expect(tokenizer, context, TokenType::Rpar);
-      return MakeAt(guard.loc(), ReturnResult{RefAnyResult{}});
+      if (tokenizer.Peek().type == TokenType::Nat) {
+        auto nat = ReadNat32(tokenizer, context);
+        Expect(tokenizer, context, TokenType::Rpar);
+        return MakeAt(guard.loc(), ReturnResult{RefExternConst{nat}});
+      } else {
+        Expect(tokenizer, context, TokenType::Rpar);
+        return MakeAt(guard.loc(), ReturnResult{RefExternResult{}});
+      }
 
     case TokenType::RefFuncInstr:
       if (!context.features.reference_types_enabled()) {

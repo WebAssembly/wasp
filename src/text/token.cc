@@ -69,5 +69,28 @@ auto Text::ToString() const -> std::string {
   return result;
 }
 
+Token::Token() : loc{}, type{TokenType::Eof}, immediate{monostate{}} {}
+
+Token::Token(Location loc, TokenType type)
+    : loc{loc}, type{type}, immediate{monostate{}} {}
+
+Token::Token(Location loc, TokenType type, OpcodeInfo info)
+    : loc{loc}, type{type}, immediate{info} {}
+
+Token::Token(Location loc, TokenType type, ValueType valtype)
+    : loc{loc}, type{type}, immediate{valtype} {}
+
+Token::Token(Location loc, TokenType type, ReferenceType reftype)
+    : loc{loc}, type{type}, immediate{reftype} {}
+
+Token::Token(Location loc, TokenType type, LiteralInfo info)
+    : loc{loc}, type{type}, immediate{info} {}
+
+Token::Token(Location loc, TokenType type, Text text)
+    : loc{loc}, type{type}, immediate{text} {}
+
+Token::Token(Location loc, TokenType type, Immediate immediate)
+    : loc{loc}, type{type}, immediate{immediate} {}
+
 }  // namespace text
 }  // namespace wasp

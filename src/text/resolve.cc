@@ -159,7 +159,7 @@ void Resolve(Context& context, Instruction& instruction) {
       }
       break;
 
-    case 6: { // BlockImmediate
+    case 7: { // BlockImmediate
       auto& immediate = std::get<At<BlockImmediate>>(instruction.immediate);
       // TODO: share w/ code in read.cc
       if (immediate->label) {
@@ -171,22 +171,22 @@ void Resolve(Context& context, Instruction& instruction) {
       return Resolve(context, *immediate);
     }
 
-    case 7: // BrOnExnImmediate
+    case 8: // BrOnExnImmediate
       return Resolve(
           context,
           std::get<At<BrOnExnImmediate>>(instruction.immediate).value());
 
-    case 8: // BrTableImmediate
+    case 9: // BrTableImmediate
       return Resolve(
           context,
           std::get<At<BrTableImmediate>>(instruction.immediate).value());
 
-    case 9: // CallIndirectImmediate
+    case 10: // CallIndirectImmediate
       return Resolve(
           context,
           std::get<At<CallIndirectImmediate>>(instruction.immediate).value());
 
-    case 10: { // CopyImmediate
+    case 11: { // CopyImmediate
       auto& immediate = std::get<At<CopyImmediate>>(instruction.immediate);
       if (instruction.opcode == Opcode::TableCopy) {
         return Resolve(context, context.table_names, immediate.value());
@@ -196,12 +196,12 @@ void Resolve(Context& context, Instruction& instruction) {
       }
     }
 
-    case 11: // InitImmediate
+    case 12: // InitImmediate
       return Resolve(
           context, context.element_segment_names, context.table_names,
           std::get<At<InitImmediate>>(instruction.immediate).value());
 
-    case 15: { // Var
+    case 16: { // Var
       auto& immediate = std::get<At<Var>>(instruction.immediate);
       switch (instruction.opcode) {
         // Function.

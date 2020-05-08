@@ -96,6 +96,7 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<f32>);
   explicit Instruction(At<Opcode>, At<f64>);
   explicit Instruction(At<Opcode>, At<v128>);
+  explicit Instruction(At<Opcode>, At<ReferenceType>);
   explicit Instruction(At<Opcode>, At<BlockImmediate>);
   explicit Instruction(At<Opcode>, At<BrOnExnImmediate>);
   explicit Instruction(At<Opcode>, At<BrTableImmediate>);
@@ -114,6 +115,7 @@ struct Instruction {
           At<f32>,
           At<f64>,
           At<v128>,
+          At<ReferenceType>,
           At<BlockImmediate>,
           At<BrOnExnImmediate>,
           At<BrTableImmediate>,
@@ -464,13 +466,15 @@ struct ScriptModule {
   variant<Module, TextList> module;
 };
 
-struct RefNullConst {};
+struct RefNullConst {
+  At<ReferenceType> type;
+};
 
-struct RefHostConst {
+struct RefExternConst {
   At<u32> var;
 };
 
-using Const = variant<u32, u64, f32, f64, v128, RefNullConst, RefHostConst>;
+using Const = variant<u32, u64, f32, f64, v128, RefNullConst, RefExternConst>;
 using ConstList = std::vector<At<Const>>;
 
 struct InvokeAction {
@@ -516,7 +520,7 @@ using F64Result = FloatResult<f64>;
 using F32x4Result = std::array<F32Result, 4>;
 using F64x2Result = std::array<F64Result, 2>;
 
-struct RefAnyResult {};
+struct RefExternResult {};
 struct RefFuncResult {};
 
 using ReturnResult = variant<u32,
@@ -527,8 +531,8 @@ using ReturnResult = variant<u32,
                              F32x4Result,
                              F64x2Result,
                              RefNullConst,
-                             RefHostConst,
-                             RefAnyResult,
+                             RefExternConst,
+                             RefExternResult,
                              RefFuncResult>;
 using ReturnResultList = std::vector<At<ReturnResult>>;
 
@@ -604,12 +608,12 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::DataSegment, 5, name, type, memory, offset, data)         \
   WASP_V(text::ScriptModule, 3, name, kind, module)                      \
   WASP_V(text::RefNullConst, 0)                                          \
-  WASP_V(text::RefHostConst, 1, var)                                     \
+  WASP_V(text::RefExternConst, 1, var)                                   \
   WASP_V(text::InvokeAction, 3, module, name, consts)                    \
   WASP_V(text::GetAction, 2, module, name)                               \
   WASP_V(text::ModuleAssertion, 2, module, message)                      \
   WASP_V(text::ActionAssertion, 2, action, message)                      \
-  WASP_V(text::RefAnyResult, 0)                                          \
+  WASP_V(text::RefExternResult, 0)                                       \
   WASP_V(text::RefFuncResult, 0)                                         \
   WASP_V(text::ReturnAssertion, 2, action, results)                      \
   WASP_V(text::Assertion, 2, kind, desc)                                 \

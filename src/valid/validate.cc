@@ -71,7 +71,7 @@ bool Validate(const At<binary::ConstantExpression>& value,
     }
 
     case Opcode::RefNull:
-      actual_type = ValueType::Nullref;
+      actual_type = ToValueType(value->instruction->reference_type_immediate());
       break;
 
     case Opcode::RefFunc: {
@@ -489,40 +489,10 @@ bool Validate(const At<binary::TypeEntry>& value, Context& context) {
   return Validate(value->type, context);
 }
 
-namespace {
-
-bool IsReferenceType(ValueType type) {
-  return type == ValueType::Anyref || type == ValueType::Funcref ||
-         type == ValueType::Nullref;
-}
-
-// TODO: Almost the same as in TypesMatch (minus StackType::Any); how to
-// share?
-bool TypesMatch(ValueType expected, ValueType actual) {
-  // Types are the same.
-  if (expected == actual) {
-    return true;
-  }
-
-  // Anyref is a super type of all reference types.
-  if (expected == ValueType::Anyref && IsReferenceType(actual)) {
-    return true;
-  }
-
-  // Nullref is a subtype of all reference types.
-  if (IsReferenceType(expected) && actual == ValueType::Nullref) {
-    return true;
-  }
-
-  return false;
-}
-
-}  // namespace
-
 bool Validate(const At<ValueType>& actual,
               ValueType expected,
               Context& context) {
-  if (!TypesMatch(expected, actual)) {
+  if (expected != actual) {
     context.errors->OnError(
         actual.loc(),
         format("Expected value type {}, got {}", expected, actual));

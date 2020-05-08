@@ -502,7 +502,7 @@ auto ReadReferenceKind(Tokenizer& tokenizer, Context& context)
   auto token = tokenizer.Peek();
   if (!token.has_reference_type()) {
     context.errors.OnError(
-        token.loc, format("Expected element type, got {}", token.type));
+        token.loc, format("Expected reference type, got {}", token.type));
     return MakeAt(token.loc, ReferenceType::Funcref);
   }
 
@@ -1043,6 +1043,7 @@ bool IsPlainInstruction(Token token) {
     case TokenType::I64ConstInstr:
     case TokenType::MemoryInstr:
     case TokenType::RefFuncInstr:
+    case TokenType::RefIsNullInstr:
     case TokenType::RefNullInstr:
     case TokenType::SelectInstr:
     case TokenType::SimdConstInstr:
@@ -1093,10 +1094,17 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
   auto token = tokenizer.Peek();
   switch (token.type) {
     case TokenType::BareInstr:
-    case TokenType::RefNullInstr:
       CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       return MakeAt(token.loc, Instruction{token.opcode()});
+
+    case TokenType::RefNullInstr:
+    case TokenType::RefIsNullInstr: {
+      CheckOpcodeEnabled(token, context);
+      tokenizer.Read();
+      auto type = ReadReferenceKind(tokenizer, context);
+      return MakeAt(token.loc, Instruction{token.opcode(), type});
+    }
 
     case TokenType::BrOnExnInstr: {
       CheckOpcodeEnabled(token, context);

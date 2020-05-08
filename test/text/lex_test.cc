@@ -45,6 +45,10 @@ struct ExpectedToken {
         immediate{OpcodeInfo{opcode, Features{features}}} {}
   ExpectedToken(Location::index_type size, TokenType type, ValueType value_type)
       : size{size}, type{type}, immediate{value_type} {}
+  ExpectedToken(Location::index_type size,
+                TokenType type,
+                ReferenceType reftype)
+      : size{size}, type{type}, immediate{reftype} {}
   ExpectedToken(Location::index_type size, TokenType type, Text text)
       : size{size}, type{type}, immediate{text} {}
 
@@ -188,7 +192,6 @@ TEST(LexTest, Keyword) {
       {"export"_su8, TT::Export},
       {"f32x4"_su8, TT::F32X4},
       {"f64x2"_su8, TT::F64X2},
-      {"func"_su8, TT::Func},
       {"global"_su8, TT::Global},
       {"i16x8"_su8, TT::I16X8},
       {"i32x4"_su8, TT::I32X4},
@@ -221,7 +224,7 @@ TEST(LexTest, Keyword) {
       {"invoke"_su8, TT::Invoke},
       {"nan:arithmetic"_su8, TT::NanArithmetic},
       {"nan:canonical"_su8, TT::NanCanonical},
-      {"ref.host"_su8, TT::RefHost},
+      {"ref.extern"_su8, TT::RefExtern},
       {"register"_su8, TT::Register},
 
   };
@@ -681,7 +684,7 @@ TEST(LexTest, PlainInstr) {
       {"memory.size"_su8, TT::BareInstr, O::MemorySize, 0},
       {"nop"_su8, TT::BareInstr, O::Nop, 0},
       {"ref.func"_su8, TT::RefFuncInstr, O::RefFunc, F::ReferenceTypes},
-      {"ref.is_null"_su8, TT::BareInstr, O::RefIsNull, F::ReferenceTypes},
+      {"ref.is_null"_su8, TT::RefIsNullInstr, O::RefIsNull, F::ReferenceTypes},
       {"ref.null"_su8, TT::RefNullInstr, O::RefNull, F::ReferenceTypes},
       {"rethrow"_su8, TT::BareInstr, O::Rethrow, F::Exceptions},
       {"return_call_indirect"_su8, TT::CallIndirectInstr, O::ReturnCallIndirect, F::TailCall},
@@ -976,19 +979,33 @@ TEST(LexTest, ValueType) {
     ValueType value_type;
   } tests[] = {
       {"anyfunc"_su8, ValueType::Funcref},
-      {"anyref"_su8, ValueType::Anyref},
+      {"externref"_su8, ValueType::Externref},
       {"exnref"_su8, ValueType::Exnref},
       {"f32"_su8, ValueType::F32},
       {"f64"_su8, ValueType::F64},
       {"funcref"_su8, ValueType::Funcref},
       {"i32"_su8, ValueType::I32},
       {"i64"_su8, ValueType::I64},
-      {"nullref"_su8, ValueType::Nullref},
       {"v128"_su8, ValueType::V128},
   };
   for (auto test : tests) {
     ExpectLex({test.span.size(), TokenType::ValueType, test.value_type},
               test.span);
+  }
+}
+
+TEST(LexTest, ReferenceKind) {
+  struct {
+    SpanU8 span;
+    TokenType token_type;
+    ReferenceType reftype;
+  } tests[] = {
+      {"extern"_su8, TokenType::Extern, ReferenceType::Externref},
+      {"exn"_su8, TokenType::Exn, ReferenceType::Exnref},
+      {"func"_su8, TokenType::Func, ReferenceType::Funcref},
+  };
+  for (auto test : tests) {
+    ExpectLex({test.span.size(), test.token_type, test.reftype}, test.span);
   }
 }
 
@@ -1003,7 +1020,7 @@ R"((module
       {6, TokenType::Module},
       {3, TokenType::Whitespace},
       {1, TokenType::Lpar},
-      {4, TokenType::Func},
+      {4, TokenType::Func, ReferenceType::Funcref},
       {1, TokenType::Whitespace},
       {1, TokenType::Lpar},
       {6, TokenType::Export},
@@ -1058,10 +1075,14 @@ R"((  module (; a comment ;) (  func  ) ) ))"_su8;
     ExpectedToken token;
     size_t gap;
   } expected_tokens[] = {
-      {{1, TokenType::Lpar}, 2}, {{6, TokenType::Module}, 17},
-      {{1, TokenType::Lpar}, 2}, {{4, TokenType::Func}, 2},
-      {{1, TokenType::Rpar}, 1}, {{1, TokenType::Rpar}, 1},
-      {{1, TokenType::Rpar}, 0}, {{0, TokenType::Eof}, 0},
+      {{1, TokenType::Lpar}, 2},
+      {{6, TokenType::Module}, 17},
+      {{1, TokenType::Lpar}, 2},
+      {{4, TokenType::Func, ReferenceType::Funcref}, 2},
+      {{1, TokenType::Rpar}, 1},
+      {{1, TokenType::Rpar}, 1},
+      {{1, TokenType::Rpar}, 0},
+      {{0, TokenType::Eof}, 0},
   };
 
   for (auto&& pair : expected_tokens) {
@@ -1075,18 +1096,18 @@ TEST(LexTest, Tokenizer) {
   Tokenizer t{span};
 
   std::vector<Token> tokens = {
-    {span.subspan(0, 1), TokenType::Lpar},
-    {span.subspan(1, 6), TokenType::Module},
-    {span.subspan(8, 1), TokenType::Lpar},
-    {span.subspan(9, 4), TokenType::Func},
-    {span.subspan(14, 1), TokenType::Lpar},
-    {span.subspan(15, 5), TokenType::Param},
-    {span.subspan(21, 3), TokenType::ValueType, ValueType::I32},
-    {span.subspan(24, 1), TokenType::Rpar},
-    {span.subspan(25, 1), TokenType::Rpar},
-    {span.subspan(26, 1), TokenType::Rpar},
-    {span.subspan(27, 0), TokenType::Eof},
-    {span.subspan(27, 0), TokenType::Eof},
+      {span.subspan(0, 1), TokenType::Lpar},
+      {span.subspan(1, 6), TokenType::Module},
+      {span.subspan(8, 1), TokenType::Lpar},
+      {span.subspan(9, 4), TokenType::Func, ReferenceType::Funcref},
+      {span.subspan(14, 1), TokenType::Lpar},
+      {span.subspan(15, 5), TokenType::Param},
+      {span.subspan(21, 3), TokenType::ValueType, ValueType::I32},
+      {span.subspan(24, 1), TokenType::Rpar},
+      {span.subspan(25, 1), TokenType::Rpar},
+      {span.subspan(26, 1), TokenType::Rpar},
+      {span.subspan(27, 0), TokenType::Eof},
+      {span.subspan(27, 0), TokenType::Eof},
   };
 
   EXPECT_EQ(0, t.count());

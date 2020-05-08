@@ -42,7 +42,6 @@ using namespace ::wasp::binary;
   V(f32, StackType::F32)                                         \
   V(f64, StackType::F64)                                         \
   V(v128, StackType::V128)                                       \
-  V(anyref, StackType::Anyref)                                   \
   V(exnref, StackType::Exnref)                                   \
   V(i32_i32, StackType::I32, StackType::I32)                     \
   V(i32_i64, StackType::I32, StackType::I64)                     \
@@ -199,21 +198,11 @@ EventType MaybeDefault(optional<EventType> value) {
 }
 
 ReferenceType MaybeDefault(optional<ReferenceType> value) {
-  return value.value_or(ReferenceType::Anyref);
+  return value.value_or(ReferenceType::Externref);
 }
 
 Label MaybeDefault(const Label* value) {
   return value ? *value : Label{LabelType::Block, {}, {}, 0};
-}
-
-StackType ReferenceTypeToStackType(ReferenceType reftype) {
-  switch (reftype) {
-    case ReferenceType::Funcref: return StackType::Funcref;
-    case ReferenceType::Anyref: return StackType::Anyref;
-    case ReferenceType::Nullref: return StackType::Nullref;
-    case ReferenceType::Exnref: return StackType::Exnref;
-  }
-  WASP_UNREACHABLE();
 }
 
 optional<StackType> PeekType(Location loc, Context& context) {
@@ -243,11 +232,6 @@ void RemovePrefixIfGreater(StackTypeSpan* lhs, StackTypeSpan rhs) {
   }
 }
 
-bool IsReferenceType(StackType type) {
-  return type == StackType::Anyref || type == StackType::Funcref ||
-         type == StackType::Nullref;
-}
-
 bool TypesMatch(StackType expected, StackType actual) {
   // Types are the same.
   if (expected == actual) {
@@ -256,16 +240,6 @@ bool TypesMatch(StackType expected, StackType actual) {
 
   // One of the types is "any" (i.e. universal supertype or subtype)
   if (expected == StackType::Any || actual == StackType::Any) {
-    return true;
-  }
-
-  // Anyref is a super type of all reference types.
-  if (expected == StackType::Anyref && IsReferenceType(actual)) {
-    return true;
-  }
-
-  // Nullref is a subtype of all reference types.
-  if (IsReferenceType(expected) && actual == StackType::Nullref) {
     return true;
   }
 
@@ -492,25 +466,13 @@ bool BrTable(Location loc,
     if (label) {
       StackTypeSpan label_br_types{label->br_types()};
       if (br_types) {
-        if (context.features.reference_types_enabled()) {
-          // In the reference types proposal, only the arity is checked.
-          if (br_types->size() != label_br_types.size()) {
-            context.errors->OnError(
-                target.loc(),
-                format("br_table labels must have the same arity; expected "
-                       "{}, got {}",
-                       br_types->size(), label_br_types.size()));
-            valid = false;
-          }
-        } else {
-          if (*br_types != label_br_types) {
-            context.errors->OnError(
-                target.loc(),
-                format("br_table labels must have the same signature; expected "
-                       "{}, got {}",
-                       *br_types, label_br_types));
-            valid = false;
-          }
+        if (*br_types != label_br_types) {
+          context.errors->OnError(
+              target.loc(),
+              format("br_table labels must have the same signature; expected "
+                     "{}, got {}",
+                     *br_types, label_br_types));
+          valid = false;
         }
       } else {
         br_types = label_br_types;
@@ -622,14 +584,14 @@ bool GlobalSet(Location loc, At<Index> index, Context& context) {
 
 bool TableGet(Location loc, At<Index> index, Context& context) {
   auto table_type = GetTableType(index, context);
-  auto stack_type = ReferenceTypeToStackType(MaybeDefault(table_type).elemtype);
+  auto stack_type = ToStackType(MaybeDefault(table_type).elemtype);
   const StackType type[] = {stack_type};
   return AllTrue(table_type, PopAndPushTypes(loc, span_i32, type, context));
 }
 
 bool TableSet(Location loc, At<Index> index, Context& context) {
   auto table_type = GetTableType(index, context);
-  auto stack_type = ReferenceTypeToStackType(MaybeDefault(table_type).elemtype);
+  auto stack_type = ToStackType(MaybeDefault(table_type).elemtype);
   const StackType types[] = {StackType::I32, stack_type};
   return AllTrue(table_type, PopTypes(loc, types, context));
 }
@@ -757,8 +719,7 @@ bool MemoryFill(Location loc, Context& context) {
 bool CheckReferenceType(ReferenceType expected,
                         At<ReferenceType> actual,
                         Context& context) {
-  if (!TypesMatch(ReferenceTypeToStackType(expected),
-                  ReferenceTypeToStackType(actual))) {
+  if (!TypesMatch(ToStackType(expected), ToStackType(actual))) {
     context.errors->OnError(
         actual.loc(),
         format("Expected reference type {}, got {}", expected, actual));
@@ -797,7 +758,7 @@ bool TableCopy(Location loc,
 
 bool TableGrow(Location loc, At<Index> index, Context& context) {
   auto table_type = GetTableType(index, context);
-  auto stack_type = ReferenceTypeToStackType(MaybeDefault(table_type).elemtype);
+  auto stack_type = ToStackType(MaybeDefault(table_type).elemtype);
   const StackType types[] = {stack_type, StackType::I32};
   return AllTrue(table_type, PopAndPushTypes(loc, types, span_i32, context));
 }
@@ -810,7 +771,7 @@ bool TableSize(At<Index> index, Context& context) {
 
 bool TableFill(Location loc, At<Index> index, Context& context) {
   auto table_type = GetTableType(index, context);
-  auto stack_type = ReferenceTypeToStackType(MaybeDefault(table_type).elemtype);
+  auto stack_type = ToStackType(MaybeDefault(table_type).elemtype);
   const StackType types[] = {StackType::I32, stack_type, StackType::I32};
   return AllTrue(table_type, PopTypes(loc, types, context));
 }
@@ -1179,12 +1140,15 @@ bool Validate(const At<Instruction>& value, Context& context) {
       return TableSet(loc, value->index_immediate(), context);
 
     case Opcode::RefNull:
-      PushType(StackType::Nullref, context);
+      PushType(ToStackType(value->reference_type_immediate()), context);
       return true;
 
-    case Opcode::RefIsNull:
-      params = span_anyref, results = span_i32;
-      break;
+    case Opcode::RefIsNull: {
+      bool valid =
+          PopType(loc, ToStackType(value->reference_type_immediate()), context);
+      PushType(StackType::I32, context);
+      return valid;
+    }
 
     case Opcode::RefFunc:
       return RefFunc(loc, value->index_immediate(), context);

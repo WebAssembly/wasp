@@ -19,6 +19,7 @@
 
 #include <vector>
 
+#include "wasp/base/macros.h"
 #include "wasp/base/span.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/types.h"
@@ -37,10 +38,28 @@ enum class StackType : s32 {
 using StackTypes = std::vector<StackType>;
 using StackTypeSpan = span<const StackType>;
 
+inline ValueType ToValueType(ReferenceType type) {
+  switch (type) {
+    case ReferenceType::Funcref: return ValueType::Funcref;
+    case ReferenceType::Externref: return ValueType::Externref;
+    case ReferenceType::Exnref: return ValueType::Exnref;
+    default:
+      WASP_UNREACHABLE();
+  }
+}
+
+inline StackType ToStackType(ValueType type) {
+  return StackType(s32(type));
+}
+
+inline StackType ToStackType(ReferenceType type) {
+  return ToStackType(ToValueType(type));
+}
+
 inline StackTypes ToStackTypes(const ValueTypes& value_types) {
   StackTypes result;
   for (auto value_type : value_types) {
-    result.push_back(StackType(s32(*value_type)));
+    result.push_back(ToStackType(*value_type));
   }
   return result;
 }

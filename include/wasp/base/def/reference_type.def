@@ -15,6 +15,5 @@
 //
 
 WASP_V(0x70, Funcref, "funcref")
-WASP_FEATURE_V(0x6f, Anyref, "anyref", reference_types)
-WASP_FEATURE_V(0x6e, Nullref, "nullref", reference_types)
+WASP_FEATURE_V(0x6f, Externref, "externref", reference_types)
 WASP_FEATURE_V(0x68, Exnref, "exnref", exceptions)

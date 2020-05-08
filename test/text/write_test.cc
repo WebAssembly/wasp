@@ -74,10 +74,9 @@ TEST(TextWriteTest, ValueType) {
   ExpectWrite("f32"_sv, ValueType::F32);
   ExpectWrite("f64"_sv, ValueType::F64);
   ExpectWrite("v128"_sv, ValueType::V128);
-  ExpectWrite("anyref"_sv, ValueType::Anyref);
+  ExpectWrite("externref"_sv, ValueType::Externref);
   ExpectWrite("funcref"_sv, ValueType::Funcref);
   ExpectWrite("exnref"_sv, ValueType::Exnref);
-  ExpectWrite("nullref"_sv, ValueType::Nullref);
 }
 
 TEST(TextWriteTest, ValueTypeList) {
@@ -340,9 +339,8 @@ TEST(TextWriteTest, Limits) {
 }
 
 TEST(TextWriteTest, ReferenceType) {
-  ExpectWrite("anyref"_sv, ReferenceType::Anyref);
+  ExpectWrite("externref"_sv, ReferenceType::Externref);
   ExpectWrite("funcref"_sv, ReferenceType::Funcref);
-  ExpectWrite("nullref"_sv, ReferenceType::Nullref);
   ExpectWrite("exnref"_sv, ReferenceType::Exnref);
 }
 
@@ -1044,8 +1042,8 @@ TEST(TextWriteTest, Const) {
   // ref.null
   ExpectWrite("(ref.null)"_sv, Const{RefNullConst{}});
 
-  // ref.host 0
-  ExpectWrite("(ref.host 0)"_sv, Const{RefHostConst{u32{0}}});
+  // ref.extern 0
+  ExpectWrite("(ref.extern 0)"_sv, Const{RefExternConst{u32{0}}});
 }
 
 TEST(TextWriteTest, ConstList) {
@@ -1180,8 +1178,8 @@ TEST(TextWriteTest, ReturnResult) {
 
   // reference-types
   ExpectWrite("(ref.null)"_sv, ReturnResult{RefNullConst{}});
-  ExpectWrite("(ref.host 0)"_sv, ReturnResult{RefHostConst{u32{0}}});
-  ExpectWrite("(ref.any)"_sv, ReturnResult{RefAnyResult{}});
+  ExpectWrite("(ref.extern 0)"_sv, ReturnResult{RefExternConst{u32{0}}});
+  ExpectWrite("(ref.extern)"_sv, ReturnResult{RefExternResult{}});
   ExpectWrite("(ref.func)"_sv, ReturnResult{RefFuncResult{}});
 }
 

@@ -370,48 +370,52 @@ Iterator Write(WriteContext& context, Iterator out, const Instruction& value) {
       out = Write(context, out, std::get<At<v128>>(value.immediate));
       break;
 
-    case 6: // BlockImmediate
+    case 6: // ReferenceType
+      out = Write(context, out, std::get<At<ReferenceType>>(value.immediate));
+      break;
+
+    case 7: // BlockImmediate
       out = Write(context, out, std::get<At<BlockImmediate>>(value.immediate));
       break;
 
-    case 7: // BrOnExnImmediate
+    case 8: // BrOnExnImmediate
       out =
           Write(context, out, std::get<At<BrOnExnImmediate>>(value.immediate));
       break;
 
-    case 8: // BrTableImmediate
+    case 9: // BrTableImmediate
       out =
           Write(context, out, std::get<At<BrTableImmediate>>(value.immediate));
       break;
 
-    case 9: // CallIndirectImmediate
+    case 10: // CallIndirectImmediate
       out = Write(context, out,
                   std::get<At<CallIndirectImmediate>>(value.immediate));
       break;
 
-    case 10: // CopyImmediate
+    case 11: // CopyImmediate
       out = Write(context, out,
                   std::get<At<CopyImmediate>>(value.immediate));
       break;
 
-    case 11: // InitImmediate
+    case 12: // InitImmediate
       out = Write(context, out, std::get<At<InitImmediate>>(value.immediate));
       break;
 
-    case 12: // MemArgImmediate
+    case 13: // MemArgImmediate
       out = Write(context, out, std::get<At<MemArgImmediate>>(value.immediate));
       break;
 
-    case 13: // SelectImmediate
+    case 14: // SelectImmediate
       out = Write(context, out, std::get<At<SelectImmediate>>(value.immediate));
       break;
 
-    case 14: // ShuffleImmediate
+    case 15: // ShuffleImmediate
       out =
           Write(context, out, std::get<At<ShuffleImmediate>>(value.immediate));
       break;
 
-    case 15: // Var
+    case 16: // Var
       out = Write(context, out, std::get<At<Var>>(value.immediate));
       break;
   }
@@ -1037,9 +1041,9 @@ Iterator Write(WriteContext& context, Iterator out, const Const& value) {
       out = Write(context, out, Opcode::RefNull);
       break;
 
-    case 6: // RefHostConst
-      out = Write(context, out, "ref.host"_sv);
-      out = Write(context, out, std::get<RefHostConst>(value).var);
+    case 6: // RefExternConst
+      out = Write(context, out, "ref.extern"_sv);
+      out = Write(context, out, std::get<RefExternConst>(value).var);
       break;
   }
   out = WriteRpar(context, out);
@@ -1172,13 +1176,13 @@ Iterator Write(WriteContext& context, Iterator out, const ReturnResult& value) {
       out = Write(context, out, Opcode::RefNull);
       break;
 
-    case 8: // RefHostConst
-      out = Write(context, out, "ref.host"_sv);
-      out = WriteNat(context, out, *std::get<RefHostConst>(value).var);
+    case 8: // RefExternConst
+      out = Write(context, out, "ref.extern"_sv);
+      out = WriteNat(context, out, *std::get<RefExternConst>(value).var);
       break;
 
-    case 9: // RefAnyResult
-      out = Write(context, out, "ref.any"_sv);
+    case 9: // RefExternResult
+      out = Write(context, out, "ref.extern"_sv);
       break;
 
     case 10: // RefFuncResult

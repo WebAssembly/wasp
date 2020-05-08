@@ -49,7 +49,7 @@ TEST(BinaryWriteTest, BlockType) {
   ExpectWrite<BlockType>("\x7d"_su8, BlockType::F32);
   ExpectWrite<BlockType>("\x7c"_su8, BlockType::F64);
   ExpectWrite<BlockType>("\x7b"_su8, BlockType::V128);
-  ExpectWrite<BlockType>("\x6f"_su8, BlockType::Anyref);
+  ExpectWrite<BlockType>("\x6f"_su8, BlockType::Externref);
   ExpectWrite<BlockType>("\x40"_su8, BlockType::Void);
 }
 
@@ -1529,8 +1529,7 @@ TEST(BinaryWriteTest, ValueType) {
   ExpectWrite<ValueType>("\x7c"_su8, ValueType::F64);
   ExpectWrite<ValueType>("\x7b"_su8, ValueType::V128);
   ExpectWrite<ValueType>("\x70"_su8, ValueType::Funcref);
-  ExpectWrite<ValueType>("\x6f"_su8, ValueType::Anyref);
-  ExpectWrite<ValueType>("\x6e"_su8, ValueType::Nullref);
+  ExpectWrite<ValueType>("\x6f"_su8, ValueType::Externref);
   ExpectWrite<ValueType>("\x68"_su8, ValueType::Exnref);
 }
 

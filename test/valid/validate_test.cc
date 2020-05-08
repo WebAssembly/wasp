@@ -76,7 +76,7 @@ TEST(ValidateTest, ConstantExpression_InvalidOpcode) {
       Instruction{Opcode::Br, Index{0}},
       Instruction{Opcode::LocalGet, Index{0}},
       Instruction{Opcode::V128Const, v128{}},
-      Instruction{Opcode::RefNull},
+      Instruction{Opcode::RefNull, ReferenceType::Funcref},
   };
 
   for (const auto& instr : tests) {
@@ -894,7 +894,7 @@ TEST(ValidateTest, TypeEntry) {
 TEST(ValidateTest, ValueType) {
   const ValueType tests[] = {
       ValueType::I32, ValueType::I64,  ValueType::F32,
-      ValueType::F64, ValueType::V128, ValueType::Anyref,
+      ValueType::F64, ValueType::V128, ValueType::Externref,
   };
 
   for (auto value_type : tests) {
@@ -907,7 +907,7 @@ TEST(ValidateTest, ValueType) {
 TEST(ValidateTest, ValueType_Mismatch) {
   const ValueType tests[] = {
       ValueType::I32, ValueType::I64,  ValueType::F32,
-      ValueType::F64, ValueType::V128, ValueType::Anyref,
+      ValueType::F64, ValueType::V128, ValueType::Externref,
   };
 
   for (auto value_type1 : tests) {

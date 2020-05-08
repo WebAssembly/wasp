@@ -55,7 +55,7 @@ inline At<ReferenceType> ElementSegment::elemtype() const {
       case ExternalKind::Memory:
       case ExternalKind::Global:
       case ExternalKind::Event:
-        return ReferenceType::Anyref;
+        return ReferenceType::Externref;
     }
   } else {
     return expressions().elemtype;
@@ -133,6 +133,10 @@ inline bool Instruction::has_no_immediate() const {
   return holds_alternative<monostate>(immediate);
 }
 
+inline bool Instruction::has_reference_type_immediate() const {
+  return holds_alternative<At<ReferenceType>>(immediate);
+}
+
 inline bool Instruction::has_block_type_immediate() const {
   return holds_alternative<At<BlockType>>(immediate);
 }
@@ -195,6 +199,14 @@ inline bool Instruction::has_shuffle_immediate() const {
 
 inline bool Instruction::has_value_types_immediate() const {
   return holds_alternative<ValueTypes>(immediate);
+}
+
+inline At<ReferenceType>& Instruction::reference_type_immediate() {
+  return get<At<ReferenceType>>(immediate);
+}
+
+inline const At<ReferenceType>& Instruction::reference_type_immediate() const {
+  return get<At<ReferenceType>>(immediate);
 }
 
 inline At<BlockType>& Instruction::block_type_immediate() {

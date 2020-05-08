@@ -83,6 +83,7 @@ auto ReadFunction(Tokenizer&, Context&) -> At<Function>;
 // Section 4: Table
 
 auto ReadLimits(Tokenizer&, Context&) -> At<Limits>;
+auto ReadReferenceKind(Tokenizer&, Context&) -> At<ReferenceType>;
 auto ReadReferenceType(Tokenizer&, Context&) -> At<ReferenceType>;
 auto ReadReferenceTypeOpt(Tokenizer&, Context&) -> OptAt<ReferenceType>;
 

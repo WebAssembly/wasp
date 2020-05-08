@@ -89,12 +89,16 @@ inline bool Token::has_value_type() const {
   return immediate.index() == 2;
 }
 
-inline bool Token::has_literal_info() const {
+inline bool Token::has_reference_type() const {
   return immediate.index() == 3;
 }
 
-inline bool Token::has_text() const {
+inline bool Token::has_literal_info() const {
   return immediate.index() == 4;
+}
+
+inline bool Token::has_text() const {
+  return immediate.index() == 5;
 }
 
 inline At<Opcode> Token::opcode() const {
@@ -107,6 +111,10 @@ inline Features Token::opcode_features() const {
 
 inline At<ValueType> Token::value_type() const {
   return MakeAt(loc, get<ValueType>(immediate));
+}
+
+inline At<ReferenceType> Token::reference_type() const {
+  return MakeAt(loc, get<ReferenceType>(immediate));
 }
 
 inline LiteralInfo Token::literal_info() const {

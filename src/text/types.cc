@@ -24,26 +24,6 @@
 namespace wasp {
 namespace text {
 
-Token::Token() : loc{}, type{TokenType::Eof}, immediate{monostate{}} {}
-
-Token::Token(Location loc, TokenType type)
-    : loc{loc}, type{type}, immediate{monostate{}} {}
-
-Token::Token(Location loc, TokenType type, OpcodeInfo info)
-    : loc{loc}, type{type}, immediate{info} {}
-
-Token::Token(Location loc, TokenType type, ValueType valtype)
-    : loc{loc}, type{type}, immediate{valtype} {}
-
-Token::Token(Location loc, TokenType type, LiteralInfo info)
-    : loc{loc}, type{type}, immediate{info} {}
-
-Token::Token(Location loc, TokenType type, Text text)
-    : loc{loc}, type{type}, immediate{text} {}
-
-Token::Token(Location loc, TokenType type, Immediate immediate)
-    : loc{loc}, type{type}, immediate{immediate} {}
-
 Instruction::Instruction(At<Opcode> opcode) : opcode{opcode} {}
 
 Instruction::Instruction(At<Opcode> opcode, At<u32> immediate)
@@ -59,6 +39,9 @@ Instruction::Instruction(At<Opcode> opcode, At<f64> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
 Instruction::Instruction(At<Opcode> opcode, At<v128> immediate)
+    : opcode{opcode}, immediate{immediate} {}
+
+Instruction::Instruction(At<Opcode> opcode, At<ReferenceType> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
 Instruction::Instruction(At<Opcode> opcode, At<BlockImmediate> immediate)

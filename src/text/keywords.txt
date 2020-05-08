@@ -1,5 +1,4 @@
 align=, TokenType::AlignEqNat
-anyref, ValueType::Anyref
 assert_exhaustion, TokenType::AssertExhaustion
 assert_invalid, TokenType::AssertInvalid
 assert_malformed, TokenType::AssertMalformed
@@ -25,7 +24,10 @@ else, TokenType::Else, Opcode::Else
 end, TokenType::End, Opcode::End
 event, TokenType::Event
 exnref, ValueType::Exnref
+exn, TokenType::Exn, ReferenceType::Exnref
 export, TokenType::Export
+externref, ValueType::Externref
+extern, TokenType::Extern, ReferenceType::Externref
 f32.abs, Opcode::F32Abs
 f32.add, Opcode::F32Add
 f32.ceil, Opcode::F32Ceil
@@ -127,7 +129,7 @@ f64x2.sqrt, Opcode::F64X2Sqrt, Features::Simd
 f64x2.sub, Opcode::F64X2Sub, Features::Simd
 f64x2, TokenType::F64X2
 funcref, ValueType::Funcref
-func, TokenType::Func
+func, TokenType::Func, ReferenceType::Funcref
 get, TokenType::Get
 global.get, TokenType::VarInstr, Opcode::GlobalGet
 global.set, TokenType::VarInstr, Opcode::GlobalSet
@@ -454,15 +456,13 @@ nan:0x, TokenType::Float, LiteralKind::NanPayload
 nan:arithmetic, TokenType::NanArithmetic
 nan:canonical, TokenType::NanCanonical
 nop, Opcode::Nop
-nullref, ValueType::Nullref
 offset, TokenType::Offset
 offset=, TokenType::OffsetEqNat
 param, TokenType::Param
 quote, TokenType::Quote
-ref.any, TokenType::RefAny
+ref.extern, TokenType::RefExtern
 ref.func, TokenType::RefFuncInstr, Opcode::RefFunc, Features::ReferenceTypes
-ref.host, TokenType::RefHost
-ref.is_null, Opcode::RefIsNull, Features::ReferenceTypes
+ref.is_null, TokenType::RefIsNullInstr, Opcode::RefIsNull, Features::ReferenceTypes
 ref.null, TokenType::RefNullInstr, Opcode::RefNull, Features::ReferenceTypes
 register, TokenType::Register
 result, TokenType::Result

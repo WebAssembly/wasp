@@ -541,8 +541,8 @@ TEST(TextFormattersTest, RefNullConst) {
   EXPECT_EQ(R"({})", format("{}", RefNullConst{}));
 }
 
-TEST(TextFormattersTest, RefHostConst) {
-  EXPECT_EQ(R"({var 0})", format("{}", RefHostConst{u32{}}));
+TEST(TextFormattersTest, RefExternConst) {
+  EXPECT_EQ(R"({var 0})", format("{}", RefExternConst{u32{}}));
 }
 
 TEST(TextFormattersTest, Const) {
@@ -564,8 +564,9 @@ TEST(TextFormattersTest, Const) {
   // RefNullConst
   EXPECT_EQ(R"(ref.null {})", format("{}", Const{RefNullConst{}}));
 
-  // RefNullConst
-  EXPECT_EQ(R"(ref.host {var 0})", format("{}", Const{RefHostConst{u32{}}}));
+  // RefExternConst
+  EXPECT_EQ(R"(ref.extern {var 0})",
+            format("{}", Const{RefExternConst{u32{}}}));
 }
 
 TEST(TextFormattersTest, ConstList) {
@@ -654,8 +655,8 @@ TEST(TextFormattersTest, F64x2Result) {
             format("{}", F64x2Result{f64{}, NanKind::Arithmetic}));
 }
 
-TEST(TextFormattersTest, RefAnyResult) {
-  EXPECT_EQ(R"({})", format("{}", RefAnyResult{}));
+TEST(TextFormattersTest, RefExternResult) {
+  EXPECT_EQ(R"({})", format("{}", RefExternResult{}));
 }
 
 TEST(TextFormattersTest, RefFuncResult) {
@@ -686,8 +687,8 @@ TEST(TextFormattersTest, ReturnResult) {
   EXPECT_EQ(R"(f64x2 [f64 0.0 f64 0.0])",
             format("{}", ReturnResult{F64x2Result{}}));
 
-  // RefAnyResult
-  EXPECT_EQ(R"(ref.any {})", format("{}", ReturnResult{RefAnyResult{}}));
+  // RefExternResult
+  EXPECT_EQ(R"(ref.extern {})", format("{}", ReturnResult{RefExternResult{}}));
 
   // RefFuncResult
   EXPECT_EQ(R"(ref.func {})", format("{}", ReturnResult{RefFuncResult{}}));

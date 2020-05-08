@@ -332,9 +332,8 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
               NewValue(Instruction{MakeAt(Opcode::V128Const), MakeAt(v128{})}));
           break;
 
-        case ValueType::Anyref:
+        case ValueType::Externref:
         case ValueType::Funcref:
-        case ValueType::Nullref:
         case ValueType::Exnref:
           PushValue(NewValue(Instruction{MakeAt(Opcode::RefNull)}));
           break;

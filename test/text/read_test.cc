@@ -171,8 +171,8 @@ TEST_F(TextReadTest, ValueType) {
 
   Fail(ReadValueType, {{0, "value type v128 not allowed"}}, "v128"_su8);
   Fail(ReadValueType, {{0, "value type funcref not allowed"}}, "funcref"_su8);
-  Fail(ReadValueType, {{0, "value type anyref not allowed"}}, "anyref"_su8);
-  Fail(ReadValueType, {{0, "value type nullref not allowed"}}, "nullref"_su8);
+  Fail(ReadValueType, {{0, "value type externref not allowed"}},
+       "externref"_su8);
 }
 
 TEST_F(TextReadTest, ValueType_simd) {
@@ -183,8 +183,7 @@ TEST_F(TextReadTest, ValueType_simd) {
 TEST_F(TextReadTest, ValueType_reference_types) {
   context.features.enable_reference_types();
   OK(ReadValueType, ValueType::Funcref, "funcref"_su8);
-  OK(ReadValueType, ValueType::Anyref, "anyref"_su8);
-  OK(ReadValueType, ValueType::Nullref, "nullref"_su8);
+  OK(ReadValueType, ValueType::Externref, "externref"_su8);
 }
 
 TEST_F(TextReadTest, ValueType_exceptions) {
@@ -210,8 +209,7 @@ TEST_F(TextReadTest, ReferenceType) {
 TEST_F(TextReadTest, ReferenceType_reference_types) {
   context.features.enable_reference_types();
   OK(ReadReferenceType, ReferenceType::Funcref, "funcref"_su8);
-  OK(ReadReferenceType, ReferenceType::Anyref, "anyref"_su8);
-  OK(ReadReferenceType, ReferenceType::Nullref, "nullref"_su8);
+  OK(ReadReferenceType, ReferenceType::Externref, "externref"_su8);
 }
 
 TEST_F(TextReadTest, BoundParamList) {
@@ -2713,14 +2711,18 @@ TEST_F(TextReadTest, Const_simd) {
 }
 
 TEST_F(TextReadTest, Const_reference_types) {
-  Fail(ReadConst, {{1, "ref.null not allowed"}}, "(ref.null)"_su8);
-  Fail(ReadConst, {{1, "ref.host not allowed"}}, "(ref.host 0)"_su8);
+  Fail(ReadConst, {{1, "ref.null not allowed"}}, "(ref.null func)"_su8);
+  Fail(ReadConst, {{1, "ref.null not allowed"}}, "(ref.null extern)"_su8);
+  Fail(ReadConst, {{1, "ref.extern not allowed"}}, "(ref.extern 0)"_su8);
 
   context.features.enable_reference_types();
 
-  OK(ReadConst, Const{RefNullConst{}}, "(ref.null)"_su8);
-  OK(ReadConst, Const{RefHostConst{MakeAt("0"_su8, u32{0})}},
-     "(ref.host 0)"_su8);
+  OK(ReadConst, Const{RefNullConst{ReferenceType::Funcref}},
+     "(ref.null func)"_su8);
+  OK(ReadConst, Const{RefNullConst{ReferenceType::Externref}},
+     "(ref.null extern)"_su8);
+  OK(ReadConst, Const{RefExternConst{MakeAt("0"_su8, u32{0})}},
+     "(ref.extern 0)"_su8);
 }
 
 TEST_F(TextReadTest, ConstList) {
@@ -2900,17 +2902,21 @@ TEST_F(TextReadTest, ReturnResult_simd) {
 }
 
 TEST_F(TextReadTest, ReturnResult_reference_types) {
-  Fail(ReadReturnResult, {{1, "ref.null not allowed"}}, "(ref.null)"_su8);
-  Fail(ReadReturnResult, {{1, "ref.host not allowed"}}, "(ref.host 0)"_su8);
-  Fail(ReadReturnResult, {{1, "ref.any not allowed"}}, "(ref.any)"_su8);
+  Fail(ReadReturnResult, {{1, "ref.null not allowed"}}, "(ref.null func)"_su8);
+  Fail(ReadReturnResult, {{1, "ref.null not allowed"}}, "(ref.null extern)"_su8);
+  Fail(ReadReturnResult, {{1, "ref.extern not allowed"}}, "(ref.extern 0)"_su8);
+  Fail(ReadReturnResult, {{1, "ref.extern not allowed"}}, "(ref.extern)"_su8);
   Fail(ReadReturnResult, {{1, "ref.func not allowed"}}, "(ref.func)"_su8);
 
   context.features.enable_reference_types();
 
-  OK(ReadReturnResult, ReturnResult{RefNullConst{}}, "(ref.null)"_su8);
-  OK(ReadReturnResult, ReturnResult{RefHostConst{MakeAt("0"_su8, u32{0})}},
-     "(ref.host 0)"_su8);
-  OK(ReadReturnResult, ReturnResult{RefAnyResult{}}, "(ref.any)"_su8);
+  OK(ReadReturnResult, ReturnResult{RefNullConst{ReferenceType::Funcref}},
+     "(ref.null func)"_su8);
+  OK(ReadReturnResult, ReturnResult{RefNullConst{ReferenceType::Externref}},
+     "(ref.null extern)"_su8);
+  OK(ReadReturnResult, ReturnResult{RefExternConst{MakeAt("0"_su8, u32{0})}},
+     "(ref.extern 0)"_su8);
+  OK(ReadReturnResult, ReturnResult{RefExternResult{}}, "(ref.extern)"_su8);
   OK(ReadReturnResult, ReturnResult{RefFuncResult{}}, "(ref.func)"_su8);
 }
 

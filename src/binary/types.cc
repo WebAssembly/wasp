@@ -104,6 +104,9 @@ Import::Import(string_view module, string_view name, EventType desc)
 Instruction::Instruction(At<Opcode> opcode)
     : opcode(opcode), immediate() {}
 
+Instruction::Instruction(At<Opcode> opcode, At<ReferenceType> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
 Instruction::Instruction(At<Opcode> opcode, At<BlockType> immediate)
     : opcode(opcode), immediate(immediate) {}
 
@@ -154,6 +157,9 @@ Instruction::Instruction(At<Opcode> opcode, const ValueTypes& immediate)
 
 Instruction::Instruction(Opcode opcode)
     : opcode(opcode), immediate() {}
+
+Instruction::Instruction(Opcode opcode, ReferenceType immediate)
+    : opcode(opcode), immediate(immediate) {}
 
 Instruction::Instruction(Opcode opcode, BlockType immediate)
     : opcode(opcode), immediate(MakeAt(immediate)) {}

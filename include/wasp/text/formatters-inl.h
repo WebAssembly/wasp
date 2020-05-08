@@ -66,7 +66,7 @@ WASP_DEFINE_VARIANT_NAME(text::TextList, "text_list")
 
 // Const.
 WASP_DEFINE_VARIANT_NAME(text::RefNullConst, "ref.null")
-WASP_DEFINE_VARIANT_NAME(text::RefHostConst, "ref.host")
+WASP_DEFINE_VARIANT_NAME(text::RefExternConst, "ref.extern")
 
 // Action.
 WASP_DEFINE_VARIANT_NAME(text::InvokeAction, "invoke")
@@ -80,7 +80,7 @@ WASP_DEFINE_VARIANT_NAME(text::F32Result, "f32")
 WASP_DEFINE_VARIANT_NAME(text::F64Result, "f64")
 WASP_DEFINE_VARIANT_NAME(text::F32x4Result, "f32x4")
 WASP_DEFINE_VARIANT_NAME(text::F64x2Result, "f64x2")
-WASP_DEFINE_VARIANT_NAME(text::RefAnyResult, "ref.any")
+WASP_DEFINE_VARIANT_NAME(text::RefExternResult, "ref.extern")
 WASP_DEFINE_VARIANT_NAME(text::RefFuncResult, "ref.func")
 
 // Assertion.
