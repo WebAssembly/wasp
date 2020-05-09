@@ -156,7 +156,7 @@ optional<Index> FunctionTypeMap::Find(FunctionType type) {
   if (iter == list_.end()) {
     return nullopt;
   }
-  return list_.begin() - iter;
+  return iter - list_.begin();
 }
 
 optional<Index> FunctionTypeMap::Find(BoundFunctionType type) {

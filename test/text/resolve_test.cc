@@ -72,6 +72,10 @@ TEST_F(TextResolveTest, FunctionTypeUse) {
   context.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
 
+  context.type_names.NewBound("$b"_sv);
+  context.function_type_map.Define(
+      BoundFunctionType{{BVT{nullopt, VT::F32}}, {}});
+
   // Resolve the variable name to an index, and populate the function type.
   OK(FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}},
      FunctionTypeUse{Var{"$a"_sv}, {}});
@@ -79,6 +83,10 @@ TEST_F(TextResolveTest, FunctionTypeUse) {
   // Just populate the function type.
   OK(FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}},
      FunctionTypeUse{Var{u32{0}}, {}});
+
+  // Populate the variable when not specified.
+  OK(FunctionTypeUse{Var{u32{1}}, FunctionType{{VT::F32}, {}}},
+     FunctionTypeUse{nullopt, FunctionType{{VT::F32}, {}}});
 }
 
 TEST_F(TextResolveTest, BlockImmediate) {
@@ -89,6 +97,19 @@ TEST_F(TextResolveTest, BlockImmediate) {
   OK(BlockImmediate{nullopt,
                     FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}},
      BlockImmediate{nullopt, FunctionTypeUse{Var{"$a"_sv}, {}}});
+}
+
+TEST_F(TextResolveTest, BlockImmediate_InlineType) {
+  // An inline type can only be void, or a single result type.
+  OK(BlockImmediate{nullopt, {}}, BlockImmediate{nullopt, {}});
+
+  for (auto value_type : {VT::I32, VT::I64, VT::F32, VT::F64, VT::V128,
+                          VT::Funcref, VT::Externref, VT::Exnref}) {
+    OK(BlockImmediate{nullopt,
+                      FunctionTypeUse{nullopt, FunctionType{{}, {value_type}}}},
+       BlockImmediate{
+           nullopt, FunctionTypeUse{nullopt, FunctionType{{}, {value_type}}}});
+  }
 }
 
 TEST_F(TextResolveTest, BrOnExnImmediate) {
@@ -324,12 +345,12 @@ TEST_F(TextResolveTest, InstructionList_LabelReuse) {
 
   OK(
       InstructionList{
-          I{O::Block, BlockImmediate{"$l1"_sv, {Var{u32{0}}, {}}}},
-          I{O::Block, BlockImmediate{"$l0"_sv, {Var{u32{0}}, {}}}},
+          I{O::Block, BlockImmediate{"$l1"_sv, {}}},
+          I{O::Block, BlockImmediate{"$l0"_sv, {}}},
           I{O::Br, Var{u32{0}}},
           I{O::Br, Var{u32{1}}},
           I{O::End},
-          I{O::Block, BlockImmediate{"$l0"_sv, {Var{u32{0}}, {}}}},
+          I{O::Block, BlockImmediate{"$l0"_sv, {}}},
           I{O::Br, Var{u32{0}}},
           I{O::End},
           I{O::End},

@@ -24,6 +24,10 @@
 namespace wasp {
 namespace text {
 
+bool FunctionTypeUse::IsInlineType() const {
+  return !type_use && type->params.empty() && type->results.size() <= 1;
+}
+
 Instruction::Instruction(At<Opcode> opcode) : opcode{opcode} {}
 
 Instruction::Instruction(At<Opcode> opcode, At<u32> immediate)

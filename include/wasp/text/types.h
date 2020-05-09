@@ -48,6 +48,8 @@ struct FunctionType {
 };
 
 struct FunctionTypeUse {
+  bool IsInlineType() const;
+
   OptAt<Var> type_use;
   At<FunctionType> type;
 };

@@ -120,7 +120,9 @@ void Resolve(Context& context,
 }
 
 void Resolve(Context& context, BlockImmediate& immediate) {
-  Resolve(context, immediate.type);
+  if (!immediate.type.IsInlineType()) {
+    Resolve(context, immediate.type);
+  }
 }
 
 void Resolve(Context& context, BrOnExnImmediate& immediate) {

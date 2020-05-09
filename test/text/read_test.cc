@@ -480,6 +480,35 @@ TEST_F(TextReadTest, BlockImmediate) {
      "$l2 (type 0)"_su8);
 }
 
+TEST_F(TextReadTest, BlockImmediate_InlineType) {
+  // None of the inline block types should extend the context's function type
+  // map.
+  OK(ReadBlockImmediate, BlockImmediate{}, ""_su8);
+
+  struct {
+    At<ValueType> value_type;
+    SpanU8 span;
+  } tests[] = {
+      {MakeAt("i32"_su8, VT::I32), "(result i32)"_su8},
+      {MakeAt("i64"_su8, VT::I64), "(result i64)"_su8},
+      {MakeAt("f32"_su8, VT::F32), "(result f32)"_su8},
+      {MakeAt("f64"_su8, VT::F64), "(result f64)"_su8},
+  };
+
+  for (auto& test: tests) {
+    OK(ReadBlockImmediate,
+       BlockImmediate{
+           nullopt,
+           FunctionTypeUse{
+               nullopt,
+               MakeAt(test.span, FunctionType{{}, {test.value_type}})}},
+       test.span);
+  }
+
+  context.function_type_map.EndModule();
+  EXPECT_EQ(0u, context.function_type_map.Size());
+}
+
 TEST_F(TextReadTest, PlainInstruction_Bare) {
   OK(ReadPlainInstruction, I{MakeAt("nop"_su8, O::Nop)}, "nop"_su8);
   OK(ReadPlainInstruction, I{MakeAt("i32.add"_su8, O::I32Add)}, "i32.add"_su8);

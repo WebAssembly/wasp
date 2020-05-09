@@ -1341,8 +1341,16 @@ auto ReadBlockImmediate(Tokenizer& tokenizer, Context& context)
     -> At<BlockImmediate> {
   LocationGuard guard{tokenizer};
   auto label = ReadLabelOpt(tokenizer, context);
-  auto type = ReadFunctionTypeUse(tokenizer, context);
-  return MakeAt(guard.loc(), BlockImmediate{label, type});
+
+  // Don't use ReadFunctionTypeUse, since that always marks the type signature
+  // as being used, even if it is an inline signature.
+  auto type_use = ReadTypeUseOpt(tokenizer, context);
+  auto type = ReadFunctionType(tokenizer, context);
+  auto ftu = FunctionTypeUse{type_use, type};
+  if (!ftu.IsInlineType()) {
+    context.function_type_map.Use(ftu);
+  }
+  return MakeAt(guard.loc(), BlockImmediate{label, ftu});
 }
 
 bool ReadOpcodeOpt(Tokenizer& tokenizer,
@@ -1707,7 +1715,6 @@ auto ReadModule(Tokenizer& tokenizer, Context& context) -> Module {
   context.EndModule();
   return module;
 }
-
 
 }  // namespace text
 }  // namespace wasp
