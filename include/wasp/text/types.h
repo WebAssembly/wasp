@@ -253,8 +253,15 @@ struct Function {
 
 // Section 4: Table
 
-using ElementExpression = InstructionList;
-using ElementExpressionList = std::vector<ElementExpression>;
+struct ElementExpression {
+  explicit ElementExpression() = default;
+  explicit ElementExpression(const At<Instruction>&);
+  explicit ElementExpression(const InstructionList&);
+
+  InstructionList instructions;
+};
+
+using ElementExpressionList = std::vector<At<ElementExpression>>;
 
 struct ElementListWithExpressions {
   At<ReferenceType> elemtype;
@@ -320,10 +327,18 @@ struct Memory {
 
 // Section 6: Global
 
+struct ConstantExpression {
+  explicit ConstantExpression() = default;
+  explicit ConstantExpression(const At<Instruction>&);
+  explicit ConstantExpression(const InstructionList&);
+
+  InstructionList instructions;
+};
+
 struct Global {
   // Defined global.
   explicit Global(const GlobalDesc&,
-                  const InstructionList& init,
+                  const At<ConstantExpression>& init,
                   const InlineExportList&);
 
   // Imported global.
@@ -331,17 +346,11 @@ struct Global {
                   const At<InlineImport>&,
                   const InlineExportList&);
 
-  // Imported or defined.
-  explicit Global(const GlobalDesc&,
-                  const InstructionList& init,
-                  const OptAt<InlineImport>&,
-                  const InlineExportList&);
-
   auto ToImport() -> OptAt<Import>;
   auto ToExports(Index this_index) -> ExportList;
 
   GlobalDesc desc;
-  InstructionList init;
+  OptAt<ConstantExpression> init;
   OptAt<InlineImport> import;
   InlineExportList exports;
 };
@@ -366,7 +375,7 @@ struct ElementSegment {
   // Active.
   explicit ElementSegment(OptAt<BindVar> name,
                           OptAt<Var> table,
-                          const InstructionList& offset,
+                          const At<ConstantExpression>& offset,
                           const ElementList&);
 
   // Passive or declared.
@@ -377,7 +386,7 @@ struct ElementSegment {
   OptAt<BindVar> name;
   SegmentType type;
   OptAt<Var> table;
-  optional<InstructionList> offset;
+  OptAt<ConstantExpression> offset;
   ElementList elements;
 };
 
@@ -389,7 +398,7 @@ struct DataSegment {
   // Active.
   explicit DataSegment(OptAt<BindVar> name,
                        OptAt<Var> memory,
-                       const InstructionList& offset,
+                       const At<ConstantExpression>& offset,
                        const TextList&);
 
   // Passive.
@@ -398,7 +407,7 @@ struct DataSegment {
   OptAt<BindVar> name;
   SegmentType type;
   OptAt<Var> memory;
-  optional<InstructionList> offset;
+  OptAt<ConstantExpression> offset;
   TextList data;
 };
 
@@ -591,11 +600,13 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::Function, 5, desc, locals, instructions, import, exports) \
   WASP_V(text::Table, 4, desc, import, exports, elements)                \
   WASP_V(text::Memory, 4, desc, import, exports, data)                   \
+  WASP_V(text::ConstantExpression, 1, instructions)                      \
   WASP_V(text::Global, 4, desc, init, import, exports)                   \
   WASP_V(text::Event, 3, desc, import, exports)                          \
   WASP_V(text::Import, 3, module, name, desc)                            \
   WASP_V(text::Export, 3, kind, name, var)                               \
   WASP_V(text::Start, 1, var)                                            \
+  WASP_V(text::ElementExpression, 1, instructions)                       \
   WASP_V(text::ElementListWithExpressions, 2, elemtype, list)            \
   WASP_V(text::ElementListWithVars, 2, kind, list)                       \
   WASP_V(text::ElementSegment, 5, name, type, table, offset, elements)   \

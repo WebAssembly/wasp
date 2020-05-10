@@ -697,7 +697,7 @@ Iterator Write(WriteContext& context,
                const ElementExpressionList& elem_exprs) {
   // Use spaces instead of newlines for element expressions.
   for (auto& elem_expr : elem_exprs) {
-    for (auto& instr : elem_expr) {
+    for (auto& instr : elem_expr->instructions) {
       // Expressions need to be wrapped in parens.
       out = WriteLpar(context, out);
       out = Write(context, out, instr);
@@ -800,6 +800,13 @@ Iterator Write(WriteContext& context, Iterator out, const Memory& value) {
 }
 
 template <typename Iterator>
+Iterator Write(WriteContext& context,
+               Iterator out,
+               const ConstantExpression& value) {
+  return Write(context, out, value.instructions);
+}
+
+template <typename Iterator>
 Iterator Write(WriteContext& context, Iterator out, const Global& value) {
   out = WriteLpar(context, out, "global");
 
@@ -838,6 +845,13 @@ Iterator Write(WriteContext& context, Iterator out, const Start& value) {
   out = Write(context, out, value.var);
   out = WriteRpar(context, out);
   return out;
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context,
+               Iterator out,
+               const ElementExpression& value) {
+  return Write(context, out, value.instructions);
 }
 
 template <typename Iterator>

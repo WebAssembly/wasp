@@ -664,6 +664,14 @@ auto ReadMemory(Tokenizer& tokenizer, Context& context) -> At<Memory> {
 
 // Section 6: Global
 
+auto ReadConstantExpression(Tokenizer& tokenizer, Context& context)
+    -> At<ConstantExpression> {
+  LocationGuard guard{tokenizer};
+  InstructionList instructions;
+  ReadInstructionList(tokenizer, context, instructions);
+  return MakeAt(guard.loc(), ConstantExpression{instructions});
+}
+
 auto ReadGlobalType(Tokenizer& tokenizer, Context& context) -> At<GlobalType> {
   LocationGuard guard{tokenizer};
   At<ValueType> valtype;
@@ -684,21 +692,23 @@ auto ReadGlobal(Tokenizer& tokenizer, Context& context) -> At<Global> {
   LocationGuard guard{tokenizer};
   ExpectLpar(tokenizer, context, TokenType::Global);
 
-  InstructionList init;
-
   auto name = ReadBindVarOpt(tokenizer, context, context.global_names);
   auto exports = ReadInlineExportList(tokenizer, context);
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
 
   auto type = ReadGlobalType(tokenizer, context);
+
+  At<ConstantExpression> init;
   if (!import_opt) {
-    ReadInstructionList(tokenizer, context, init);
+    init = ReadConstantExpression(tokenizer, context);
+    Expect(tokenizer, context, TokenType::Rpar);
+    return MakeAt(guard.loc(), Global{GlobalDesc{name, type}, init, exports});
   }
 
   Expect(tokenizer, context, TokenType::Rpar);
   return MakeAt(guard.loc(),
-                Global{GlobalDesc{name, type}, init, import_opt, exports});
+                Global{GlobalDesc{name, type}, *import_opt, exports});
 }
 
 // Section 7: Export
@@ -792,7 +802,7 @@ auto ReadStart(Tokenizer& tokenizer, Context& context) -> At<Start> {
 // Section 9: Elem
 
 auto ReadOffsetExpression(Tokenizer& tokenizer, Context& context)
-    -> InstructionList {
+    -> At<ConstantExpression> {
   LocationGuard guard{tokenizer};
   InstructionList instructions;
   if (tokenizer.MatchLpar(TokenType::Offset)) {
@@ -805,13 +815,13 @@ auto ReadOffsetExpression(Tokenizer& tokenizer, Context& context)
     context.errors.OnError(
         token.loc, format("Expected offset expression, got {}", token.type));
   }
-  return instructions;
+  return MakeAt(guard.loc(), ConstantExpression{instructions});
 }
 
 auto ReadElementExpression(Tokenizer& tokenizer, Context& context)
-    -> ElementExpression {
+    -> At<ElementExpression> {
   LocationGuard guard{tokenizer};
-  ElementExpression expression;
+  InstructionList instructions;
 
   // Element expressions were first added in the bulk memory proposal, so it
   // shouldn't be read (and this function shouldn't be called) if that feature
@@ -824,16 +834,16 @@ auto ReadElementExpression(Tokenizer& tokenizer, Context& context)
   Context new_context{new_features, context.errors};
 
   if (tokenizer.MatchLpar(TokenType::Item)) {
-    ReadInstructionList(tokenizer, new_context, expression);
+    ReadInstructionList(tokenizer, new_context, instructions);
     Expect(tokenizer, context, TokenType::Rpar);
   } else if (IsExpression(tokenizer)) {
-    ReadExpression(tokenizer, new_context, expression);
+    ReadExpression(tokenizer, new_context, instructions);
   } else {
     auto token = tokenizer.Peek();
     context.errors.OnError(
         token.loc, format("Expected element expression, got {}", token.type));
   }
-  return expression;
+  return MakeAt(guard.loc(), ElementExpression{instructions});
 }
 
 auto ReadElementExpressionList(Tokenizer& tokenizer, Context& context)
@@ -865,7 +875,7 @@ auto ReadElementSegment(Tokenizer& tokenizer, Context& context)
     auto table_use_opt = ReadTableUseOpt(tokenizer, context);
 
     SegmentType segment_type;
-    optional<InstructionList> offset_opt;
+    OptAt<ConstantExpression> offset_opt;
     if (table_use_opt) {
       // LPAR ELEM bind_var_opt table_use * offset elem_list RPAR
       offset_opt = ReadOffsetExpression(tokenizer, context);
@@ -1545,7 +1555,7 @@ auto ReadDataSegment(Tokenizer& tokenizer, Context& context)
     auto memory_use_opt = ReadMemoryUseOpt(tokenizer, context);
 
     SegmentType segment_type;
-    optional<InstructionList> offset_opt;
+    OptAt<ConstantExpression> offset_opt;
     if (memory_use_opt || tokenizer.Peek().type == TokenType::Lpar) {
       // LPAR DATA bind_var_opt memory_use * offset string_list RPAR
       // LPAR DATA bind_var_opt * offset string_list RPAR  /* Sugar */

@@ -43,6 +43,8 @@ void Resolve(Context&, EventType&);
 void Resolve(Context&, EventDesc&);
 void Resolve(Context&, Import&);
 void Resolve(Context&, Function&);
+void Resolve(Context&, ConstantExpression&);
+void Resolve(Context&, ElementExpression&);
 void Resolve(Context&, ElementExpressionList&);
 void Resolve(Context&, ElementListWithExpressions&);
 void Resolve(Context&, ElementListWithVars&);

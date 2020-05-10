@@ -656,28 +656,28 @@ TEST(TextWriteTest, Global) {
   ExpectWrite(
       "(global i32 nop)"_sv,
       Global{GlobalDesc{{}, GlobalType{ValueType::I32, Mutability::Const}},
-             InstructionList{I{O::Nop}},
+             ConstantExpression{I{O::Nop}},
              {}});
 
   // Name.
   ExpectWrite(
       "(global $g i32 nop)"_sv,
       Global{GlobalDesc{"$g"_sv, GlobalType{ValueType::I32, Mutability::Const}},
-             InstructionList{I{O::Nop}},
+             ConstantExpression{I{O::Nop}},
              {}});
 
   // Inline export.
   ExpectWrite(
       "(global (export \"m\") i32 nop)"_sv,
       Global{GlobalDesc{{}, GlobalType{ValueType::I32, Mutability::Const}},
-             InstructionList{I{O::Nop}},
+             ConstantExpression{I{O::Nop}},
              InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 
   // Name and inline export.
   ExpectWrite("(global $g2 (export \"m\") i32 nop)"_sv,
               Global{GlobalDesc{"$g2"_sv,
                                 GlobalType{ValueType::I32, Mutability::Const}},
-                     InstructionList{I{O::Nop}},
+                     ConstantExpression{I{O::Nop}},
                      InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
 
@@ -727,36 +727,38 @@ TEST(TextWriteTest, Start) {
 TEST(TextWriteTest, ElementSegment) {
   // No table var, empty var list.
   ExpectWrite("(elem (offset nop))"_sv,
-              ElementSegment{nullopt, nullopt, InstructionList{I{O::Nop}},
+              ElementSegment{nullopt, nullopt, ConstantExpression{I{O::Nop}},
                              ElementListWithVars{ExternalKind::Function, {}}});
 
   // No table var, var list.
   ExpectWrite(
       "(elem (offset nop) 0 1 2)"_sv,
-      ElementSegment{nullopt, nullopt, InstructionList{I{O::Nop}},
+      ElementSegment{nullopt, nullopt, ConstantExpression{I{O::Nop}},
                      ElementListWithVars{ExternalKind::Function,
                                          VarList{Var{Index{0}}, Var{Index{1}},
                                                  Var{Index{2}}}}});
 
   // Table var.
-  ExpectWrite("(elem (table 0) (offset nop) func)"_sv,
-              ElementSegment{nullopt, Var{Index{0}}, InstructionList{I{O::Nop}},
-                             ElementListWithVars{ExternalKind::Function, {}}});
+  ExpectWrite(
+      "(elem (table 0) (offset nop) func)"_sv,
+      ElementSegment{nullopt, Var{Index{0}}, ConstantExpression{I{O::Nop}},
+                     ElementListWithVars{ExternalKind::Function, {}}});
 
   // Table var as Id.
-  ExpectWrite("(elem (table $t) (offset nop) func)"_sv,
-              ElementSegment{nullopt, Var{"$t"_sv}, InstructionList{I{O::Nop}},
-                             ElementListWithVars{ExternalKind::Function, {}}});
+  ExpectWrite(
+      "(elem (table $t) (offset nop) func)"_sv,
+      ElementSegment{nullopt, Var{"$t"_sv}, ConstantExpression{I{O::Nop}},
+                     ElementListWithVars{ExternalKind::Function, {}}});
 
   // Passive, w/ expression list.
-  ExpectWrite(
-      "(elem funcref (nop) (nop))"_sv,
-      ElementSegment{nullopt, SegmentType::Passive,
-                     ElementListWithExpressions{
-                         ReferenceType::Funcref, ElementExpressionList{
-                                                   ElementExpression{I{O::Nop}},
-                                                   ElementExpression{I{O::Nop}},
-                                               }}});
+  ExpectWrite("(elem funcref (nop) (nop))"_sv,
+              ElementSegment{
+                  nullopt, SegmentType::Passive,
+                  ElementListWithExpressions{ReferenceType::Funcref,
+                                             ElementExpressionList{
+                                                 ElementExpression{I{O::Nop}},
+                                                 ElementExpression{I{O::Nop}},
+                                             }}});
 
   // Passive, w/ var list.
   ExpectWrite("(elem func 0 $e)"_sv,
@@ -773,14 +775,14 @@ TEST(TextWriteTest, ElementSegment) {
                              ElementListWithVars{ExternalKind::Function, {}}});
 
   // Declared, w/ expression list.
-  ExpectWrite(
-      "(elem declare funcref (nop) (nop))"_sv,
-      ElementSegment{nullopt, SegmentType::Declared,
-                     ElementListWithExpressions{
-                         ReferenceType::Funcref, ElementExpressionList{
-                                                   ElementExpression{I{O::Nop}},
-                                                   ElementExpression{I{O::Nop}},
-                                               }}});
+  ExpectWrite("(elem declare funcref (nop) (nop))"_sv,
+              ElementSegment{
+                  nullopt, SegmentType::Declared,
+                  ElementListWithExpressions{ReferenceType::Funcref,
+                                             ElementExpressionList{
+                                                 ElementExpression{I{O::Nop}},
+                                                 ElementExpression{I{O::Nop}},
+                                             }}});
 
   // Declared, w/ var list.
   ExpectWrite("(elem declare func 0 $e)"_sv,
@@ -797,61 +799,62 @@ TEST(TextWriteTest, ElementSegment) {
                              ElementListWithVars{ExternalKind::Function, {}}});
 
   // Active legacy, empty
-  ExpectWrite("(elem (offset nop))"_sv,
-              ElementSegment{nullopt, nullopt, InstructionList{I{O::Nop}}, {}});
+  ExpectWrite(
+      "(elem (offset nop))"_sv,
+      ElementSegment{nullopt, nullopt, ConstantExpression{I{O::Nop}}, {}});
 
   // Active legacy (i.e. no element type or external kind).
   ExpectWrite("(elem (offset nop) 0 $e)"_sv,
               ElementSegment{
-                  nullopt, nullopt, InstructionList{I{O::Nop}},
+                  nullopt, nullopt, ConstantExpression{I{O::Nop}},
                   ElementListWithVars{ExternalKind::Function, VarList{
                                                                   Var{Index{0}},
                                                                   Var{"$e"_sv},
                                                               }}});
 
   // Active, w/ expression list.
-  ExpectWrite(
-      "(elem (offset nop) funcref (nop) (nop))"_sv,
-      ElementSegment{nullopt, nullopt, InstructionList{I{O::Nop}},
-                     ElementListWithExpressions{
-                         ReferenceType::Funcref, ElementExpressionList{
-                                                   ElementExpression{I{O::Nop}},
-                                                   ElementExpression{I{O::Nop}},
-                                               }}});
+  ExpectWrite("(elem (offset nop) funcref (nop) (nop))"_sv,
+              ElementSegment{
+                  nullopt, nullopt, ConstantExpression{I{O::Nop}},
+                  ElementListWithExpressions{ReferenceType::Funcref,
+                                             ElementExpressionList{
+                                                 ElementExpression{I{O::Nop}},
+                                                 ElementExpression{I{O::Nop}},
+                                             }}});
 
   // Active w/ table use.
   ExpectWrite("(elem (table 0) (offset nop) func 1)"_sv,
               ElementSegment{
-                  nullopt, Var{Index{0}}, InstructionList{I{O::Nop}},
+                  nullopt, Var{Index{0}}, ConstantExpression{I{O::Nop}},
                   ElementListWithVars{ExternalKind::Function, VarList{
                                                                   Var{Index{1}},
                                                               }}});
 
   // Active w/ name.
   ExpectWrite("(elem $e3 (offset nop) func)"_sv,
-              ElementSegment{"$e3"_sv, nullopt, InstructionList{I{O::Nop}},
+              ElementSegment{"$e3"_sv, nullopt, ConstantExpression{I{O::Nop}},
                              ElementListWithVars{ExternalKind::Function, {}}});
 }
 
 TEST(TextWriteTest, DataSegment) {
   // No memory var, empty text list.
   ExpectWrite("(data (offset nop))"_sv,
-              DataSegment{nullopt, nullopt, InstructionList{I{O::Nop}}, {}});
+              DataSegment{nullopt, nullopt, ConstantExpression{I{O::Nop}}, {}});
 
   // No memory var, text list.
   ExpectWrite("(data (offset nop) \"hi\")"_sv,
-              DataSegment{nullopt, nullopt, InstructionList{I{O::Nop}},
+              DataSegment{nullopt, nullopt, ConstantExpression{I{O::Nop}},
                           TextList{Text{"\"hi\""_sv, 2}}});
 
   // Memory var.
   ExpectWrite(
       "(data (memory 0) (offset nop))"_sv,
-      DataSegment{nullopt, Var{Index{0}}, InstructionList{I{O::Nop}}, {}});
+      DataSegment{nullopt, Var{Index{0}}, ConstantExpression{I{O::Nop}}, {}});
 
   // Memory var as Id.
   ExpectWrite(
       "(data (memory $m) (offset nop))"_sv,
-      DataSegment{nullopt, Var{"$m"_sv}, InstructionList{I{O::Nop}}, {}});
+      DataSegment{nullopt, Var{"$m"_sv}, ConstantExpression{I{O::Nop}}, {}});
 
   // Passive, w/ text list.
   ExpectWrite("(data \"hi\")"_sv,
@@ -864,21 +867,22 @@ TEST(TextWriteTest, DataSegment) {
 
   // Active, w/ text list.
   ExpectWrite("(data (offset nop) \"hi\")"_sv,
-              DataSegment{nullopt, nullopt, InstructionList{I{O::Nop}},
+              DataSegment{nullopt, nullopt, ConstantExpression{I{O::Nop}},
                           TextList{
                               Text{"\"hi\""_sv, 2},
                           }});
 
   // Active w/ memory use.
   ExpectWrite("(data (memory 0) (offset nop) \"hi\")"_sv,
-              DataSegment{nullopt, Var{Index{0}}, InstructionList{I{O::Nop}},
+              DataSegment{nullopt, Var{Index{0}}, ConstantExpression{I{O::Nop}},
                           TextList{
                               Text{"\"hi\""_sv, 2},
                           }});
 
   // Active w/ name.
-  ExpectWrite("(data $d2 (offset nop))"_sv,
-              DataSegment{"$d2"_sv, nullopt, InstructionList{I{O::Nop}}, {}});
+  ExpectWrite(
+      "(data $d2 (offset nop))"_sv,
+      DataSegment{"$d2"_sv, nullopt, ConstantExpression{I{O::Nop}}, {}});
 }
 
 TEST(TextWriteTest, Event) {
@@ -929,7 +933,7 @@ TEST(TextWriteTest, ModuleItem) {
       "(global i32 nop)"_sv,
       ModuleItem{Global{
           GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
-          InstructionList{Instruction{Opcode::Nop}},
+          ConstantExpression{Instruction{Opcode::Nop}},
           {}}});
 
   // Export.
@@ -946,13 +950,13 @@ TEST(TextWriteTest, ModuleItem) {
   ExpectWrite(
       "(elem (offset nop))"_sv,
       ModuleItem{ElementSegment{
-          nullopt, nullopt, InstructionList{Instruction{Opcode::Nop}}, {}}});
+          nullopt, nullopt, ConstantExpression{Instruction{Opcode::Nop}}, {}}});
 
   // Data.
   ExpectWrite(
       "(data (offset nop))"_sv,
       ModuleItem{DataSegment{
-          nullopt, nullopt, InstructionList{Instruction{Opcode::Nop}}, {}}});
+          nullopt, nullopt, ConstantExpression{Instruction{Opcode::Nop}}, {}}});
 
   // Event.
   ExpectWrite("(event)"_sv,

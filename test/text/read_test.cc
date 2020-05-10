@@ -1709,10 +1709,12 @@ TEST_F(TextReadTest, Table_bulk_memory) {
            ElementListWithExpressions{
                MakeAt("funcref"_su8, ReferenceType::Funcref),
                ElementExpressionList{
-                   ElementExpression{
-                       MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-                   ElementExpression{
-                       MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+                   MakeAt("(nop)"_su8,
+                          ElementExpression{
+                              MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+                   MakeAt("(nop)"_su8,
+                          ElementExpression{
+                              MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
                }}},
      "(table funcref (elem (nop) (nop)))"_su8);
 }
@@ -1811,7 +1813,8 @@ TEST_F(TextReadTest, Global) {
                 {},
                 MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
                                              Mutability::Const})},
-            InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+            MakeAt("nop"_su8, ConstantExpression{MakeAt(
+                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
             {}},
      "(global i32 nop)"_su8);
 
@@ -1821,7 +1824,8 @@ TEST_F(TextReadTest, Global) {
                 MakeAt("$g"_su8, "$g"_sv),
                 MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
                                              Mutability::Const})},
-            InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+            MakeAt("nop"_su8, ConstantExpression{MakeAt(
+                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
             {}},
      "(global $g i32 nop)"_su8);
 
@@ -1831,7 +1835,8 @@ TEST_F(TextReadTest, Global) {
                 {},
                 MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
                                              Mutability::Const})},
-            InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+            MakeAt("nop"_su8, ConstantExpression{MakeAt(
+                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
             InlineExportList{MakeAt(
                 "(export \"m\")"_su8,
                 InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
@@ -1843,7 +1848,8 @@ TEST_F(TextReadTest, Global) {
                 MakeAt("$g2"_su8, "$g2"_sv),
                 MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
                                              Mutability::Const})},
-            InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+            MakeAt("nop"_su8, ConstantExpression{MakeAt(
+                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
             InlineExportList{MakeAt(
                 "(export \"m\")"_su8,
                 InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
@@ -2099,12 +2105,12 @@ TEST_F(TextReadTest, ElementExpression) {
 TEST_F(TextReadTest, OffsetExpression) {
   // Expression.
   OK(ReadOffsetExpression,
-     InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+     ConstantExpression{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
      "(nop)"_su8);
 
   // Offset keyword.
   OK(ReadOffsetExpression,
-     InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+     ConstantExpression{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
      "(offset nop)"_su8);
 }
 
@@ -2112,21 +2118,25 @@ TEST_F(TextReadTest, ElementExpressionList) {
   context.features.enable_bulk_memory();
 
   // Item list.
-  OKVector(
-      ReadElementExpressionList,
-      ElementExpressionList{
-          ElementExpression{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-          ElementExpression{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-      },
-      "(item nop) (item nop)"_su8);
+  OKVector(ReadElementExpressionList,
+           ElementExpressionList{
+               MakeAt("(item nop)"_su8,
+                      ElementExpression{
+                          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+               MakeAt("(item nop)"_su8,
+                      ElementExpression{
+                          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+           },
+           "(item nop) (item nop)"_su8);
 
   // Expression list.
   OKVector(
       ReadElementExpressionList,
       ElementExpressionList{
-          ElementExpression{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-          ElementExpression{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-      },
+          MakeAt("(nop)"_su8, ElementExpression{MakeAt(
+                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+          MakeAt("(nop)"_su8, ElementExpression{MakeAt(
+                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})})},
       "(nop) (nop)"_su8);
 }
 
@@ -2140,7 +2150,8 @@ TEST_F(TextReadTest, ElementSegment_MVP) {
   OK(ReadElementSegment,
      ElementSegment{
          nullopt, nullopt,
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          ElementListWithVars{ExternalKind::Function, {}}},
      "(elem (nop))"_su8);
 
@@ -2148,7 +2159,8 @@ TEST_F(TextReadTest, ElementSegment_MVP) {
   OK(ReadElementSegment,
      ElementSegment{
          nullopt, nullopt,
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          ElementListWithVars{ExternalKind::Function,
                              VarList{MakeAt("0"_su8, Var{Index{0}}),
                                      MakeAt("1"_su8, Var{Index{1}}),
@@ -2159,7 +2171,8 @@ TEST_F(TextReadTest, ElementSegment_MVP) {
   OK(ReadElementSegment,
      ElementSegment{
          nullopt, MakeAt("0"_su8, Var{Index{0}}),
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          ElementListWithVars{ExternalKind::Function, {}}},
      "(elem 0 (nop))"_su8);
 
@@ -2167,7 +2180,8 @@ TEST_F(TextReadTest, ElementSegment_MVP) {
   OK(ReadElementSegment,
      ElementSegment{
          nullopt, MakeAt("$t"_su8, Var{"$t"_sv}),
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          ElementListWithVars{ExternalKind::Function, {}}},
      "(elem $t (nop))"_su8);
 }
@@ -2191,15 +2205,18 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
 
   // Passive, w/ expression list.
   OK(ReadElementSegment,
-     ElementSegment{nullopt, SegmentType::Passive,
-                    ElementListWithExpressions{
-                        MakeAt("funcref"_su8, ReferenceType::Funcref),
-                        ElementExpressionList{
-                            ElementExpression{MakeAt(
-                                "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-                            ElementExpression{MakeAt(
-                                "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-                        }}},
+     ElementSegment{
+         nullopt, SegmentType::Passive,
+         ElementListWithExpressions{
+             MakeAt("funcref"_su8, ReferenceType::Funcref),
+             ElementExpressionList{
+                 MakeAt("(nop)"_su8,
+                        ElementExpression{
+                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+                 MakeAt("(nop)"_su8,
+                        ElementExpression{
+                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+             }}},
      "(elem funcref (nop) (nop))"_su8);
 
   // Passive, w/ var list.
@@ -2222,15 +2239,18 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
 
   // Declared, w/ expression list.
   OK(ReadElementSegment,
-     ElementSegment{nullopt, SegmentType::Declared,
-                    ElementListWithExpressions{
-                        MakeAt("funcref"_su8, ReferenceType::Funcref),
-                        ElementExpressionList{
-                            ElementExpression{MakeAt(
-                                "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-                            ElementExpression{MakeAt(
-                                "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-                        }}},
+     ElementSegment{
+         nullopt, SegmentType::Declared,
+         ElementListWithExpressions{
+             MakeAt("funcref"_su8, ReferenceType::Funcref),
+             ElementExpressionList{
+                 MakeAt("(nop)"_su8,
+                        ElementExpression{
+                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+                 MakeAt("(nop)"_su8,
+                        ElementExpression{
+                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+             }}},
      "(elem declare funcref (nop) (nop))"_su8);
 
   // Declared, w/ var list.
@@ -2256,7 +2276,8 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
      ElementSegment{
          nullopt,
          nullopt,
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          {}},
      "(elem (nop))"_su8);
 
@@ -2264,7 +2285,8 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
   OK(ReadElementSegment,
      ElementSegment{
          nullopt, nullopt,
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          ElementListWithVars{ExternalKind::Function,
                              VarList{
                                  MakeAt("0"_su8, Var{Index{0}}),
@@ -2276,7 +2298,8 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
   OK(ReadElementSegment,
      ElementSegment{
          nullopt, nullopt,
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          ElementListWithVars{MakeAt("func"_su8, ExternalKind::Function),
                              VarList{
                                  MakeAt("0"_su8, Var{Index{0}}),
@@ -2288,14 +2311,17 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
   OK(ReadElementSegment,
      ElementSegment{
          nullopt, nullopt,
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          ElementListWithExpressions{
              MakeAt("funcref"_su8, ReferenceType::Funcref),
              ElementExpressionList{
-                 ElementExpression{
-                     MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-                 ElementExpression{
-                     MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+                 MakeAt("(nop)"_su8,
+                        ElementExpression{
+                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+                 MakeAt("(nop)"_su8,
+                        ElementExpression{
+                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
              }}},
      "(elem (nop) funcref (nop) (nop))"_su8);
 
@@ -2303,7 +2329,8 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
   OK(ReadElementSegment,
      ElementSegment{
          nullopt, MakeAt("(table 0)"_su8, Var{Index{0}}),
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          ElementListWithVars{MakeAt("func"_su8, ExternalKind::Function),
                              VarList{
                                  MakeAt("1"_su8, Var{Index{1}}),
@@ -2314,7 +2341,8 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
   OK(ReadElementSegment,
      ElementSegment{
          MakeAt("$e3"_su8, "$e3"_sv), nullopt,
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          ElementListWithVars{MakeAt("func"_su8, ExternalKind::Function), {}}},
      "(elem $e3 (nop) func)"_su8);
 }
@@ -2333,7 +2361,8 @@ TEST_F(TextReadTest, DataSegment_MVP) {
      DataSegment{
          nullopt,
          nullopt,
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          {}},
      "(data (nop))"_su8);
 
@@ -2341,7 +2370,8 @@ TEST_F(TextReadTest, DataSegment_MVP) {
   OK(ReadDataSegment,
      DataSegment{
          nullopt, nullopt,
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          TextList{MakeAt("\"hi\""_su8, Text{"\"hi\""_sv, 2})}},
      "(data (nop) \"hi\")"_su8);
 
@@ -2350,7 +2380,8 @@ TEST_F(TextReadTest, DataSegment_MVP) {
      DataSegment{
          nullopt,
          MakeAt("0"_su8, Var{Index{0}}),
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          {}},
      "(data 0 (nop))"_su8);
 
@@ -2359,7 +2390,8 @@ TEST_F(TextReadTest, DataSegment_MVP) {
      DataSegment{
          nullopt,
          MakeAt("$m"_su8, Var{"$m"_sv}),
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          {}},
      "(data $m (nop))"_su8);
 }
@@ -2386,7 +2418,8 @@ TEST_F(TextReadTest, DataSegment_bulk_memory) {
   OK(ReadDataSegment,
      DataSegment{
          nullopt, nullopt,
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          TextList{
              MakeAt("\"hi\""_su8, Text{"\"hi\""_sv, 2}),
          }},
@@ -2396,7 +2429,8 @@ TEST_F(TextReadTest, DataSegment_bulk_memory) {
   OK(ReadDataSegment,
      DataSegment{
          nullopt, MakeAt("(memory 0)"_su8, Var{Index{0}}),
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          TextList{
              MakeAt("\"hi\""_su8, Text{"\"hi\""_sv, 2}),
          }},
@@ -2407,7 +2441,8 @@ TEST_F(TextReadTest, DataSegment_bulk_memory) {
      DataSegment{
          MakeAt("$d2"_su8, "$d2"_sv),
          nullopt,
-         InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
+                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          {}},
      "(data $d2 (nop))"_su8);
 }
@@ -2463,8 +2498,9 @@ TEST_F(TextReadTest, ModuleItem) {
              nullopt,
              MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
                                           Mutability::Const})},
-         InstructionList{
-             MakeAt("nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})},
+         MakeAt("(nop)"_su8,
+                ConstantExpression{MakeAt(
+                    "nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})}),
          {}}},
      "(global i32 (nop))"_su8);
 
@@ -2486,8 +2522,9 @@ TEST_F(TextReadTest, ModuleItem) {
      ModuleItem{ElementSegment{
          nullopt,
          nullopt,
-         InstructionList{
-             MakeAt("nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})},
+         MakeAt("(nop)"_su8,
+                ConstantExpression{MakeAt(
+                    "nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})}),
          {}}},
      "(elem (nop))"_su8);
 
@@ -2496,8 +2533,9 @@ TEST_F(TextReadTest, ModuleItem) {
      ModuleItem{DataSegment{
          nullopt,
          nullopt,
-         InstructionList{
-             MakeAt("nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})},
+         MakeAt("(nop)"_su8,
+                ConstantExpression{MakeAt(
+                    "nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})}),
          {}}},
      "(data (nop))"_su8);
 }

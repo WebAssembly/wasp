@@ -121,7 +121,7 @@ TEST(TextTypesTest, TableToElementSegment) {
   Index this_index = 13;
 
   EXPECT_EQ((ElementSegment{nullopt, Var{this_index},
-                            InstructionList{Instruction{
+                            ConstantExpression{Instruction{
                                 MakeAt(Opcode::I32Const), MakeAt(s32{0})}},
                             elements}),
             (Table{desc, {}, elements}).ToElementSegment(this_index));
@@ -173,8 +173,8 @@ TEST(TextTypesTest, MemoryToDataSegment) {
   Index this_index = 13;
 
   EXPECT_EQ((DataSegment{nullopt, Var{this_index},
-                         InstructionList{Instruction{MakeAt(Opcode::I32Const),
-                                                     MakeAt(s32{0})}},
+                         ConstantExpression{Instruction{
+                             MakeAt(Opcode::I32Const), MakeAt(s32{0})}},
                          data}),
             (Memory{desc, {}, data}).ToDataSegment(this_index));
 }
@@ -208,7 +208,7 @@ TEST(TextTypesTest, GlobalToExports) {
                 MakeAt("(export \"e2\")"_su8,
                        Export{ExternalKind::Global, name2, Var{this_index}}),
             }),
-            (Global{desc, InstructionList{},
+            (Global{desc, ConstantExpression{},
                     InlineExportList{
                         MakeAt("(export \"e1\")"_su8, InlineExport{name1}),
                         MakeAt("(export \"e2\")"_su8, InlineExport{name2}),

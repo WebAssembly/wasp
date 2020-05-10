@@ -583,12 +583,12 @@ TEST_F(TextResolveTest, Global) {
   OK(
       Global{
           GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
-          InstructionList{I{O::GlobalGet, Var{Index{0}}}},
+          ConstantExpression{I{O::GlobalGet, Var{Index{0}}}},
           {},
       },
       Global{
           GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
-          InstructionList{I{O::GlobalGet, Var{"$g"_sv}}},
+          ConstantExpression{I{O::GlobalGet, Var{"$g"_sv}}},
           {},
       });
 }
@@ -638,11 +638,11 @@ TEST_F(TextResolveTest, ElementSegment) {
   context.global_names.NewBound("$g"_sv);
 
   OK(ElementSegment{nullopt, Var{Index{0}},
-                    InstructionList{I{O::GlobalGet, Var{Index{0}}}},
+                    ConstantExpression{I{O::GlobalGet, Var{Index{0}}}},
                     ElementList{ElementListWithVars{ExternalKind::Function,
                                                     VarList{Var{Index{0}}}}}},
      ElementSegment{nullopt, Var{"$t"_sv},
-                    InstructionList{I{O::GlobalGet, Var{"$g"_sv}}},
+                    ConstantExpression{I{O::GlobalGet, Var{"$g"_sv}}},
                     ElementList{ElementListWithVars{ExternalKind::Function,
                                                     VarList{Var{"$f"_sv}}}}});
 }
@@ -653,11 +653,11 @@ TEST_F(TextResolveTest, DataSegment) {
 
   OK(DataSegment{nullopt,
                  Var{Index{0}},
-                 InstructionList{I{O::GlobalGet, Var{Index{0}}}},
+                 ConstantExpression{I{O::GlobalGet, Var{Index{0}}}},
                  {}},
      DataSegment{nullopt,
                  Var{"$m"_sv},
-                 InstructionList{I{O::GlobalGet, Var{"$g"_sv}}},
+                 ConstantExpression{I{O::GlobalGet, Var{"$g"_sv}}},
                  {}});
 }
 
@@ -734,12 +734,12 @@ TEST_F(TextResolveTest, ModuleItem) {
   // Global.
   OK(ModuleItem{Global{
          GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
-         InstructionList{I{O::GlobalGet, Var{Index{0}}}},
+         ConstantExpression{I{O::GlobalGet, Var{Index{0}}}},
          {},
      }},
      ModuleItem{Global{
          GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
-         InstructionList{I{O::GlobalGet, Var{"$g"_sv}}},
+         ConstantExpression{I{O::GlobalGet, Var{"$g"_sv}}},
          {},
      }});
 
@@ -755,22 +755,23 @@ TEST_F(TextResolveTest, ModuleItem) {
   // ElementSegment.
   OK(ModuleItem{ElementSegment{
          nullopt, Var{Index{0}},
-         InstructionList{I{O::GlobalGet, Var{Index{0}}}},
+         ConstantExpression{I{O::GlobalGet, Var{Index{0}}}},
          ElementList{ElementListWithVars{ExternalKind::Function,
                                          VarList{Var{Index{0}}}}}}},
-     ModuleItem{ElementSegment{
-         nullopt, Var{"$t"_sv}, InstructionList{I{O::GlobalGet, Var{"$g"_sv}}},
-         ElementList{ElementListWithVars{ExternalKind::Function,
-                                         VarList{Var{"$f"_sv}}}}}});
+     ModuleItem{
+         ElementSegment{nullopt, Var{"$t"_sv},
+                        ConstantExpression{I{O::GlobalGet, Var{"$g"_sv}}},
+                        ElementList{ElementListWithVars{
+                            ExternalKind::Function, VarList{Var{"$f"_sv}}}}}});
 
   // DataSegment.
   OK(ModuleItem{DataSegment{nullopt,
                             Var{Index{0}},
-                            InstructionList{I{O::GlobalGet, Var{Index{0}}}},
+                            ConstantExpression{I{O::GlobalGet, Var{Index{0}}}},
                             {}}},
      ModuleItem{DataSegment{nullopt,
                             Var{"$m"_sv},
-                            InstructionList{I{O::GlobalGet, Var{"$g"_sv}}},
+                            ConstantExpression{I{O::GlobalGet, Var{"$g"_sv}}},
                             {}}});
 
   // Event.

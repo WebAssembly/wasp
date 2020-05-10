@@ -97,6 +97,7 @@ auto ReadMemory(Tokenizer&, Context&) -> At<Memory>;
 
 // Section 6: Global
 
+auto ReadConstantExpression(Tokenizer&, Context&) -> At<ConstantExpression>;
 auto ReadGlobalType(Tokenizer&, Context&) -> At<GlobalType>;
 auto ReadGlobal(Tokenizer&, Context&) -> At<Global>;
 
@@ -112,8 +113,8 @@ auto ReadStart(Tokenizer&, Context&) -> At<Start>;
 
 // Section 9: Elem
 
-auto ReadOffsetExpression(Tokenizer&, Context&) -> InstructionList;
-auto ReadElementExpression(Tokenizer&, Context&) -> ElementExpression;
+auto ReadOffsetExpression(Tokenizer&, Context&) -> At<ConstantExpression>;
+auto ReadElementExpression(Tokenizer&, Context&) -> At<ElementExpression>;
 auto ReadElementExpressionList(Tokenizer&, Context&) -> ElementExpressionList;
 auto ReadTableUseOpt(Tokenizer&, Context&) -> OptAt<Var>;
 auto ReadElementSegment(Tokenizer&, Context&) -> At<ElementSegment>;

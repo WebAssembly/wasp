@@ -175,10 +175,10 @@ auto Table::ToElementSegment(Index this_index) -> OptAt<ElementSegment> {
   if (!elements) {
     return nullopt;
   }
-  return ElementSegment{
-      nullopt, Var{this_index},
-      InstructionList{Instruction{MakeAt(Opcode::I32Const), MakeAt(s32{0})}},
-      *elements};
+  return ElementSegment{nullopt, Var{this_index},
+                        MakeAt(ConstantExpression{Instruction{
+                            MakeAt(Opcode::I32Const), MakeAt(s32{0})}}),
+                        *elements};
 }
 
 Memory::Memory(const MemoryDesc& desc, const InlineExportList& exports)
@@ -210,14 +210,20 @@ auto Memory::ToDataSegment(Index this_index) -> OptAt<DataSegment> {
   if (!data) {
     return nullopt;
   }
-  return DataSegment{
-      nullopt, Var{this_index},
-      InstructionList{Instruction{MakeAt(Opcode::I32Const), MakeAt(s32{0})}},
-      *data};
+  return DataSegment{nullopt, Var{this_index},
+                     MakeAt(ConstantExpression{Instruction{
+                         MakeAt(Opcode::I32Const), MakeAt(s32{0})}}),
+                     *data};
 }
 
+ConstantExpression::ConstantExpression(const At<Instruction>& instruction)
+    : instructions{{instruction}} {}
+
+ConstantExpression::ConstantExpression(const InstructionList& instructions)
+    : instructions{instructions} {}
+
 Global::Global(const GlobalDesc& desc,
-               const InstructionList& init,
+               const At<ConstantExpression>& init,
                const InlineExportList& exports)
     : desc{desc}, init{init}, exports{exports} {}
 
@@ -225,12 +231,6 @@ Global::Global(const GlobalDesc& desc,
                const At<InlineImport>& import,
                const InlineExportList& exports)
     : desc{desc}, import{import}, exports{exports} {}
-
-Global::Global(const GlobalDesc& desc,
-               const InstructionList& init,
-               const OptAt<InlineImport>& import,
-               const InlineExportList& exports)
-    : desc{desc}, init{init}, import{import}, exports{exports} {}
 
 auto Global::ToImport() -> OptAt<Import> {
   if (!import) {
@@ -269,9 +269,15 @@ auto Event::ToExports(Index this_index) -> ExportList {
   return MakeExportList(ExternalKind::Event, this_index, exports);
 }
 
+ElementExpression::ElementExpression(const At<Instruction>& instruction)
+    : instructions{{instruction}} {}
+
+ElementExpression::ElementExpression(const InstructionList& instructions)
+    : instructions{instructions} {}
+
 ElementSegment::ElementSegment(OptAt<BindVar> name,
                                OptAt<Var> table,
-                               const InstructionList& offset,
+                               const At<ConstantExpression>& offset,
                                const ElementList& elements)
     : name{name},
       type{SegmentType::Active},
@@ -286,7 +292,7 @@ ElementSegment::ElementSegment(OptAt<BindVar> name,
 
 DataSegment::DataSegment(OptAt<BindVar> name,
                          OptAt<Var> memory,
-                         const InstructionList& offset,
+                         const At<ConstantExpression>& offset,
                          const TextList& data)
     : name{name},
       type{SegmentType::Active},

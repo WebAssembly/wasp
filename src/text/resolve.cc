@@ -305,9 +305,17 @@ void Resolve(Context& context, Function& function) {
   Resolve(context, function.instructions);
 }
 
+void Resolve(Context& context, ConstantExpression& expression) {
+  Resolve(context, expression.instructions);
+}
+
+void Resolve(Context& context, ElementExpression& expression) {
+  Resolve(context, expression.instructions);
+}
+
 void Resolve(Context& context, ElementExpressionList& expression_list) {
   for (auto& expression : expression_list) {
-    Resolve(context, expression);
+    Resolve(context, *expression);
   }
 }
 
@@ -341,7 +349,9 @@ void Resolve(Context& context, Table& table) {
 }
 
 void Resolve(Context& context, Global& global) {
-  Resolve(context, global.init);
+  if (global.init) {
+    Resolve(context, global.init->value());
+  }
 }
 
 void Resolve(Context& context, Export& export_) {
@@ -373,7 +383,7 @@ void Resolve(Context& context, Start& start) {
 void Resolve(Context& context, ElementSegment& segment) {
   Resolve(context, context.table_names, segment.table);
   if (segment.offset) {
-    Resolve(context, *segment.offset);
+    Resolve(context, segment.offset->value());
   }
   Resolve(context, segment.elements);
 }
@@ -381,7 +391,7 @@ void Resolve(Context& context, ElementSegment& segment) {
 void Resolve(Context& context, DataSegment& segment) {
   Resolve(context, context.memory_names, segment.memory);
   if (segment.offset) {
-    Resolve(context, *segment.offset);
+    Resolve(context, segment.offset->value());
   }
 }
 
