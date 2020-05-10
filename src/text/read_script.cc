@@ -620,5 +620,12 @@ auto ReadScript(Tokenizer& tokenizer, Context& context) -> Script {
   return result;
 }
 
+
+// Explicit instantiations.
+template auto ReadFloatResult<f32>(Tokenizer&, Context&) -> At<FloatResult<f32>>;
+template auto ReadFloatResult<f64>(Tokenizer&, Context&) -> At<FloatResult<f64>>;
+template auto ReadSimdFloatResult<f32, 4>(Tokenizer&, Context&) -> At<ReturnResult>;
+template auto ReadSimdFloatResult<f64, 2>(Tokenizer&, Context&) -> At<ReturnResult>;
+
 }  // namespace text
 }  // namespace wasp

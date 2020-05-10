@@ -210,6 +210,7 @@ void Resolve(Context& context, Instruction& instruction) {
         default:
           break;
       }
+      break;
     }
 
     case 7: { // BlockImmediate

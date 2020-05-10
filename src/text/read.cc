@@ -1024,7 +1024,6 @@ auto ReadSimdValues(Tokenizer& tokenizer, Context& context) -> At<v128> {
   return MakeAt(guard.loc(), v128{result});
 }
 
-
 bool IsPlainInstruction(Token token) {
   switch (token.type) {
     case TokenType::BareInstr:
@@ -1709,6 +1708,28 @@ auto ReadModule(Tokenizer& tokenizer, Context& context) -> Module {
   context.EndModule();
   return module;
 }
+
+// Explicit instantiations.
+template auto ReadInt<s8>(Tokenizer&, Context&) -> At<s8>;
+template auto ReadInt<u8>(Tokenizer&, Context&) -> At<u8>;
+template auto ReadInt<s16>(Tokenizer&, Context&) -> At<s16>;
+template auto ReadInt<u16>(Tokenizer&, Context&) -> At<u16>;
+template auto ReadInt<s32>(Tokenizer&, Context&) -> At<s32>;
+template auto ReadInt<u32>(Tokenizer&, Context&) -> At<u32>;
+template auto ReadInt<s64>(Tokenizer&, Context&) -> At<s64>;
+template auto ReadInt<u64>(Tokenizer&, Context&) -> At<u64>;
+template auto ReadFloat<f32>(Tokenizer&, Context&) -> At<f32>;
+template auto ReadFloat<f64>(Tokenizer&, Context&) -> At<f64>;
+template auto ReadSimdValues<s8, 16>(Tokenizer&, Context&) -> At<v128>;
+template auto ReadSimdValues<u8, 16>(Tokenizer&, Context&) -> At<v128>;
+template auto ReadSimdValues<s16, 8>(Tokenizer&, Context&) -> At<v128>;
+template auto ReadSimdValues<u16, 8>(Tokenizer&, Context&) -> At<v128>;
+template auto ReadSimdValues<s32, 4>(Tokenizer&, Context&) -> At<v128>;
+template auto ReadSimdValues<u32, 4>(Tokenizer&, Context&) -> At<v128>;
+template auto ReadSimdValues<s64, 2>(Tokenizer&, Context&) -> At<v128>;
+template auto ReadSimdValues<u64, 2>(Tokenizer&, Context&) -> At<v128>;
+template auto ReadSimdValues<f32, 4>(Tokenizer&, Context&) -> At<v128>;
+template auto ReadSimdValues<f64, 2>(Tokenizer&, Context&) -> At<v128>;
 
 }  // namespace text
 }  // namespace wasp
