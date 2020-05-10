@@ -1020,10 +1020,13 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
       return MakeAt(guard.loc(), Instruction{opcode, immediate});
     }
 
-    // ValueTypeList immediate.
+    // Select immediate.
     case Opcode::SelectT: {
+      LocationGuard immediate_guard{data};
       WASP_TRY_READ(immediate, ReadVector<ValueType>(data, context, "types"));
-      return MakeAt(guard.loc(), Instruction{opcode, immediate});
+      return MakeAt(
+          guard.loc(),
+          Instruction{opcode, MakeAt(immediate_guard.loc(), immediate)});
     }
 
     // u8 immediate.

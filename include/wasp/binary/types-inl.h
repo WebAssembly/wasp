@@ -132,38 +132,6 @@ inline bool Instruction::has_no_immediate() const {
   return holds_alternative<monostate>(immediate);
 }
 
-inline bool Instruction::has_reference_type_immediate() const {
-  return holds_alternative<At<ReferenceType>>(immediate);
-}
-
-inline bool Instruction::has_block_type_immediate() const {
-  return holds_alternative<At<BlockType>>(immediate);
-}
-
-inline bool Instruction::has_index_immediate() const {
-  return holds_alternative<At<Index>>(immediate);
-}
-
-inline bool Instruction::has_call_indirect_immediate() const {
-  return holds_alternative<At<CallIndirectImmediate>>(immediate);
-}
-
-inline bool Instruction::has_br_table_immediate() const {
-  return holds_alternative<At<BrTableImmediate>>(immediate);
-}
-
-inline bool Instruction::has_br_on_exn_immediate() const {
-  return holds_alternative<At<BrOnExnImmediate>>(immediate);
-}
-
-inline bool Instruction::has_u8_immediate() const {
-  return holds_alternative<At<u8>>(immediate);
-}
-
-inline bool Instruction::has_mem_arg_immediate() const {
-  return holds_alternative<At<MemArgImmediate>>(immediate);
-}
-
 inline bool Instruction::has_s32_immediate() const {
   return holds_alternative<At<s32>>(immediate);
 }
@@ -184,86 +152,55 @@ inline bool Instruction::has_v128_immediate() const {
   return holds_alternative<At<v128>>(immediate);
 }
 
-inline bool Instruction::has_init_immediate() const {
-  return holds_alternative<At<InitImmediate>>(immediate);
+inline bool Instruction::has_index_immediate() const {
+  return holds_alternative<At<Index>>(immediate);
+}
+
+
+inline bool Instruction::has_block_type_immediate() const {
+  return holds_alternative<At<BlockType>>(immediate);
+}
+
+inline bool Instruction::has_br_on_exn_immediate() const {
+  return holds_alternative<At<BrOnExnImmediate>>(immediate);
+}
+
+inline bool Instruction::has_br_table_immediate() const {
+  return holds_alternative<At<BrTableImmediate>>(immediate);
+}
+
+inline bool Instruction::has_call_indirect_immediate() const {
+  return holds_alternative<At<CallIndirectImmediate>>(immediate);
 }
 
 inline bool Instruction::has_copy_immediate() const {
   return holds_alternative<At<CopyImmediate>>(immediate);
 }
 
+inline bool Instruction::has_init_immediate() const {
+  return holds_alternative<At<InitImmediate>>(immediate);
+}
+
+inline bool Instruction::has_mem_arg_immediate() const {
+  return holds_alternative<At<MemArgImmediate>>(immediate);
+}
+
+inline bool Instruction::has_reference_type_immediate() const {
+  return holds_alternative<At<ReferenceType>>(immediate);
+}
+
+inline bool Instruction::has_select_immediate() const {
+  return holds_alternative<At<SelectImmediate>>(immediate);
+}
+
 inline bool Instruction::has_shuffle_immediate() const {
   return holds_alternative<At<ShuffleImmediate>>(immediate);
 }
 
-inline bool Instruction::has_value_type_list_immediate() const {
-  return holds_alternative<ValueTypeList>(immediate);
+inline bool Instruction::has_simd_lane_immediate() const {
+  return holds_alternative<At<SimdLaneImmediate>>(immediate);
 }
 
-inline At<ReferenceType>& Instruction::reference_type_immediate() {
-  return get<At<ReferenceType>>(immediate);
-}
-
-inline const At<ReferenceType>& Instruction::reference_type_immediate() const {
-  return get<At<ReferenceType>>(immediate);
-}
-
-inline At<BlockType>& Instruction::block_type_immediate() {
-  return get<At<BlockType>>(immediate);
-}
-
-inline const At<BlockType>& Instruction::block_type_immediate() const {
-  return get<At<BlockType>>(immediate);
-}
-
-inline At<Index>& Instruction::index_immediate() {
-  return get<At<Index>>(immediate);
-}
-
-inline const At<Index>& Instruction::index_immediate() const {
-  return get<At<Index>>(immediate);
-}
-
-inline At<CallIndirectImmediate>& Instruction::call_indirect_immediate() {
-  return get<At<CallIndirectImmediate>>(immediate);
-}
-
-inline const At<CallIndirectImmediate>& Instruction::call_indirect_immediate()
-    const {
-  return get<At<CallIndirectImmediate>>(immediate);
-}
-
-inline At<BrTableImmediate>& Instruction::br_table_immediate() {
-  return get<At<BrTableImmediate>>(immediate);
-}
-
-inline const At<BrTableImmediate>& Instruction::br_table_immediate() const {
-  return get<At<BrTableImmediate>>(immediate);
-}
-
-inline At<BrOnExnImmediate>& Instruction::br_on_exn_immediate() {
-  return get<At<BrOnExnImmediate>>(immediate);
-}
-
-inline const At<BrOnExnImmediate>& Instruction::br_on_exn_immediate() const {
-  return get<At<BrOnExnImmediate>>(immediate);
-}
-
-inline At<u8>& Instruction::u8_immediate() {
-  return get<At<u8>>(immediate);
-}
-
-inline const At<u8>& Instruction::u8_immediate() const {
-  return get<At<u8>>(immediate);
-}
-
-inline At<MemArgImmediate>& Instruction::mem_arg_immediate() {
-  return get<At<MemArgImmediate>>(immediate);
-}
-
-inline const At<MemArgImmediate>& Instruction::mem_arg_immediate() const {
-  return get<At<MemArgImmediate>>(immediate);
-}
 
 inline At<s32>& Instruction::s32_immediate() {
   return get<At<s32>>(immediate);
@@ -305,12 +242,45 @@ inline const At<v128>& Instruction::v128_immediate() const {
   return get<At<v128>>(immediate);
 }
 
-inline At<InitImmediate>& Instruction::init_immediate() {
-  return get<At<InitImmediate>>(immediate);
+inline At<Index>& Instruction::index_immediate() {
+  return get<At<Index>>(immediate);
 }
 
-inline const At<InitImmediate>& Instruction::init_immediate() const {
-  return get<At<InitImmediate>>(immediate);
+inline const At<Index>& Instruction::index_immediate() const {
+  return get<At<Index>>(immediate);
+}
+
+inline At<BlockType>& Instruction::block_type_immediate() {
+  return get<At<BlockType>>(immediate);
+}
+
+inline const At<BlockType>& Instruction::block_type_immediate() const {
+  return get<At<BlockType>>(immediate);
+}
+
+inline At<BrOnExnImmediate>& Instruction::br_on_exn_immediate() {
+  return get<At<BrOnExnImmediate>>(immediate);
+}
+
+inline const At<BrOnExnImmediate>& Instruction::br_on_exn_immediate() const {
+  return get<At<BrOnExnImmediate>>(immediate);
+}
+
+inline At<BrTableImmediate>& Instruction::br_table_immediate() {
+  return get<At<BrTableImmediate>>(immediate);
+}
+
+inline const At<BrTableImmediate>& Instruction::br_table_immediate() const {
+  return get<At<BrTableImmediate>>(immediate);
+}
+
+inline At<CallIndirectImmediate>& Instruction::call_indirect_immediate() {
+  return get<At<CallIndirectImmediate>>(immediate);
+}
+
+inline const At<CallIndirectImmediate>& Instruction::call_indirect_immediate()
+    const {
+  return get<At<CallIndirectImmediate>>(immediate);
 }
 
 inline At<CopyImmediate>& Instruction::copy_immediate() {
@@ -321,6 +291,38 @@ inline const At<CopyImmediate>& Instruction::copy_immediate() const {
   return get<At<CopyImmediate>>(immediate);
 }
 
+inline At<InitImmediate>& Instruction::init_immediate() {
+  return get<At<InitImmediate>>(immediate);
+}
+
+inline const At<InitImmediate>& Instruction::init_immediate() const {
+  return get<At<InitImmediate>>(immediate);
+}
+
+inline At<MemArgImmediate>& Instruction::mem_arg_immediate() {
+  return get<At<MemArgImmediate>>(immediate);
+}
+
+inline const At<MemArgImmediate>& Instruction::mem_arg_immediate() const {
+  return get<At<MemArgImmediate>>(immediate);
+}
+
+inline At<ReferenceType>& Instruction::reference_type_immediate() {
+  return get<At<ReferenceType>>(immediate);
+}
+
+inline const At<ReferenceType>& Instruction::reference_type_immediate() const {
+  return get<At<ReferenceType>>(immediate);
+}
+
+inline At<SelectImmediate>& Instruction::select_immediate() {
+  return get<At<SelectImmediate>>(immediate);
+}
+
+inline const At<SelectImmediate>& Instruction::select_immediate() const {
+  return get<At<SelectImmediate>>(immediate);
+}
+
 inline At<ShuffleImmediate>& Instruction::shuffle_immediate() {
   return get<At<ShuffleImmediate>>(immediate);
 }
@@ -329,12 +331,12 @@ inline const At<ShuffleImmediate>& Instruction::shuffle_immediate() const {
   return get<At<ShuffleImmediate>>(immediate);
 }
 
-inline ValueTypeList& Instruction::value_type_list_immediate() {
-  return get<ValueTypeList>(immediate);
+inline At<SimdLaneImmediate>& Instruction::simd_lane_immediate() {
+  return get<At<SimdLaneImmediate>>(immediate);
 }
 
-inline const ValueTypeList& Instruction::value_type_list_immediate() const {
-  return get<ValueTypeList>(immediate);
+inline const At<SimdLaneImmediate>& Instruction::simd_lane_immediate() const {
+  return get<At<SimdLaneImmediate>>(immediate);
 }
 
 // Section

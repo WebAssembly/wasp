@@ -124,7 +124,7 @@ auto ReadNameEqNatOpt(Tokenizer&, Context&, TokenType, u32) -> OptAt<u32>;
 auto ReadAlignOpt(Tokenizer&, Context&) -> OptAt<u32>;
 auto ReadOffsetOpt(Tokenizer&, Context&) -> OptAt<u32>;
 
-auto ReadSimdLane(Tokenizer&, Context&) -> At<u32>;
+auto ReadSimdLane(Tokenizer&, Context&) -> At<u8>;
 auto ReadSimdShuffleImmediate(Tokenizer&, Context&) -> At<ShuffleImmediate>;
 template <typename T, size_t N>
 auto ReadSimdValues(Tokenizer&, Context&) -> At<v128>;

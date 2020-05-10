@@ -591,12 +591,12 @@ TEST_F(TextReadTest, PlainInstruction_CallIndirect_reference_types) {
 TEST_F(TextReadTest, PlainInstruction_Const) {
   // i32.const
   OK(ReadPlainInstruction,
-     I{MakeAt("i32.const"_su8, O::I32Const), MakeAt("12"_su8, u32{12})},
+     I{MakeAt("i32.const"_su8, O::I32Const), MakeAt("12"_su8, s32{12})},
      "i32.const 12"_su8);
 
   // i64.const
   OK(ReadPlainInstruction,
-     I{MakeAt("i64.const"_su8, O::I64Const), MakeAt("34"_su8, u64{34})},
+     I{MakeAt("i64.const"_su8, O::I64Const), MakeAt("34"_su8, s64{34})},
      "i64.const 34"_su8);
 
   // f32.const
@@ -642,7 +642,7 @@ TEST_F(TextReadTest, PlainInstruction_MemArg) {
 
 TEST_F(TextReadTest, PlainInstruction_Select) {
   OK(ReadPlainInstruction,
-     I{MakeAt("select"_su8, O::Select), MakeAt(""_su8, ValueTypeList{})},
+     I{MakeAt("select"_su8, O::Select), MakeAt(""_su8, SelectImmediate{})},
      "select"_su8);
 }
 
@@ -651,21 +651,21 @@ TEST_F(TextReadTest, PlainInstruction_Select_reference_types) {
 
   // select w/o types
   OK(ReadPlainInstruction,
-     I{MakeAt("select"_su8, O::Select), MakeAt(""_su8, ValueTypeList{})},
+     I{MakeAt("select"_su8, O::Select), MakeAt(""_su8, SelectImmediate{})},
      "select"_su8);
 
   // select w/ one type
   OK(ReadPlainInstruction,
      I{MakeAt("select"_su8, O::Select),
-       MakeAt("(result i32)"_su8, ValueTypeList{MakeAt("i32"_su8, VT::I32)})},
+       MakeAt("(result i32)"_su8, SelectImmediate{MakeAt("i32"_su8, VT::I32)})},
      "select (result i32)"_su8);
 
   // select w/ multiple types
   OK(ReadPlainInstruction,
      I{MakeAt("select"_su8, O::Select),
        MakeAt("(result i32) (result i64)"_su8,
-              ValueTypeList{MakeAt("i32"_su8, VT::I32),
-                            MakeAt("i64"_su8, VT::I64)})},
+              SelectImmediate{MakeAt("i32"_su8, VT::I32),
+                              MakeAt("i64"_su8, VT::I64)})},
      "select (result i32) (result i64)"_su8);
 }
 
@@ -723,11 +723,11 @@ TEST_F(TextReadTest, PlainInstruction_SimdLane) {
 
   OK(ReadPlainInstruction,
      I{MakeAt("i8x16.extract_lane_s"_su8, O::I8X16ExtractLaneS),
-       MakeAt("9"_su8, u32{9})},
+       MakeAt("9"_su8, SimdLaneImmediate{9})},
      "i8x16.extract_lane_s 9"_su8);
   OK(ReadPlainInstruction,
      I{MakeAt("f32x4.replace_lane"_su8, O::F32X4ReplaceLane),
-       MakeAt("3"_su8, u32{3})},
+       MakeAt("3"_su8, SimdLaneImmediate{3})},
      "f32x4.replace_lane 3"_su8);
 }
 
@@ -1191,7 +1191,7 @@ TEST_F(TextReadTest, Expression_Plain) {
   OKVector(ReadExpression_ForTesting,
            InstructionList{
                MakeAt("i32.const 3"_su8, I{MakeAt("i32.const"_su8, O::I32Const),
-                                           MakeAt("3"_su8, u32{3})}),
+                                           MakeAt("3"_su8, s32{3})}),
            },
            "(i32.const 3)"_su8);
 
@@ -1199,7 +1199,7 @@ TEST_F(TextReadTest, Expression_Plain) {
   OKVector(ReadExpression_ForTesting,
            InstructionList{
                MakeAt("i64.const 4"_su8, I{MakeAt("i64.const"_su8, O::I64Const),
-                                           MakeAt("4"_su8, u64{4})}),
+                                           MakeAt("4"_su8, s64{4})}),
            },
            "(i64.const 4)"_su8);
 
@@ -1262,7 +1262,7 @@ TEST_F(TextReadTest, Expression_Plain_simd) {
            InstructionList{
                MakeAt("f32x4.replace_lane 3"_su8,
                       I{MakeAt("f32x4.replace_lane"_su8, O::F32X4ReplaceLane),
-                        MakeAt("3"_su8, u32{3})}),
+                        MakeAt("3"_su8, SimdLaneImmediate{3})}),
            },
            "(f32x4.replace_lane 3)"_su8);
 }
@@ -1299,7 +1299,7 @@ TEST_F(TextReadTest, Expression_PlainFolded) {
   OKVector(ReadExpression_ForTesting,
            InstructionList{
                MakeAt("i32.const 0"_su8, I{MakeAt("i32.const"_su8, O::I32Const),
-                                           MakeAt("0"_su8, u32{0})}),
+                                           MakeAt("0"_su8, s32{0})}),
                MakeAt("i32.add"_su8, I{MakeAt("i32.add"_su8, O::I32Add)}),
            },
            "(i32.add (i32.const 0))"_su8);
@@ -1307,9 +1307,9 @@ TEST_F(TextReadTest, Expression_PlainFolded) {
   OKVector(ReadExpression_ForTesting,
            InstructionList{
                MakeAt("i32.const 0"_su8, I{MakeAt("i32.const"_su8, O::I32Const),
-                                           MakeAt("0"_su8, u32{0})}),
+                                           MakeAt("0"_su8, s32{0})}),
                MakeAt("i32.const 1"_su8, I{MakeAt("i32.const"_su8, O::I32Const),
-                                           MakeAt("1"_su8, u32{1})}),
+                                           MakeAt("1"_su8, s32{1})}),
                MakeAt("i32.add"_su8, I{MakeAt("i32.add"_su8, O::I32Add)}),
            },
            "(i32.add (i32.const 0) (i32.const 1))"_su8);

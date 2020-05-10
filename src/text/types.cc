@@ -30,10 +30,10 @@ bool FunctionTypeUse::IsInlineType() const {
 
 Instruction::Instruction(At<Opcode> opcode) : opcode{opcode} {}
 
-Instruction::Instruction(At<Opcode> opcode, At<u32> immediate)
+Instruction::Instruction(At<Opcode> opcode, At<s32> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
-Instruction::Instruction(At<Opcode> opcode, At<u64> immediate)
+Instruction::Instruction(At<Opcode> opcode, At<s64> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
 Instruction::Instruction(At<Opcode> opcode, At<f32> immediate)
@@ -45,7 +45,7 @@ Instruction::Instruction(At<Opcode> opcode, At<f64> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<v128> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
-Instruction::Instruction(At<Opcode> opcode, At<ReferenceType> immediate)
+Instruction::Instruction(At<Opcode> opcode, At<Var> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
 Instruction::Instruction(At<Opcode> opcode, At<BlockImmediate> immediate)
@@ -69,14 +69,18 @@ Instruction::Instruction(At<Opcode> opcode, At<InitImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<MemArgImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
+Instruction::Instruction(At<Opcode> opcode, At<ReferenceType> immediate)
+    : opcode{opcode}, immediate{immediate} {}
+
 Instruction::Instruction(At<Opcode> opcode, At<SelectImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
 Instruction::Instruction(At<Opcode> opcode, At<ShuffleImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
-Instruction::Instruction(At<Opcode> opcode, At<Var> immediate)
+Instruction::Instruction(At<Opcode> opcode, At<SimdLaneImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
+
 
 Function::Function(const FunctionDesc& desc,
                    const BoundValueTypeList& locals,
@@ -158,7 +162,7 @@ auto Table::ToElementSegment(Index this_index) -> OptAt<ElementSegment> {
   }
   return ElementSegment{
       nullopt, Var{this_index},
-      InstructionList{Instruction{MakeAt(Opcode::I32Const), MakeAt(u32{0})}},
+      InstructionList{Instruction{MakeAt(Opcode::I32Const), MakeAt(s32{0})}},
       *elements};
 }
 
@@ -193,7 +197,7 @@ auto Memory::ToDataSegment(Index this_index) -> OptAt<DataSegment> {
   }
   return DataSegment{
       nullopt, Var{this_index},
-      InstructionList{Instruction{MakeAt(Opcode::I32Const), MakeAt(u32{0})}},
+      InstructionList{Instruction{MakeAt(Opcode::I32Const), MakeAt(s32{0})}},
       *data};
 }
 

@@ -161,49 +161,7 @@ void Resolve(Context& context, Instruction& instruction) {
       }
       break;
 
-    case 7: { // BlockImmediate
-      auto& immediate = std::get<At<BlockImmediate>>(instruction.immediate);
-      // TODO: share w/ code in read.cc
-      if (immediate->label) {
-        context.label_names.ReplaceBound(*immediate->label);
-      } else {
-        context.label_names.NewUnbound();
-      }
-      context.label_name_stack.push_back(immediate->label);
-      return Resolve(context, *immediate);
-    }
-
-    case 8: // BrOnExnImmediate
-      return Resolve(
-          context,
-          std::get<At<BrOnExnImmediate>>(instruction.immediate).value());
-
-    case 9: // BrTableImmediate
-      return Resolve(
-          context,
-          std::get<At<BrTableImmediate>>(instruction.immediate).value());
-
-    case 10: // CallIndirectImmediate
-      return Resolve(
-          context,
-          std::get<At<CallIndirectImmediate>>(instruction.immediate).value());
-
-    case 11: { // CopyImmediate
-      auto& immediate = std::get<At<CopyImmediate>>(instruction.immediate);
-      if (instruction.opcode == Opcode::TableCopy) {
-        return Resolve(context, context.table_names, immediate.value());
-      } else {
-        assert(instruction.opcode == Opcode::MemoryCopy);
-        return Resolve(context, context.memory_names, immediate.value());
-      }
-    }
-
-    case 12: // InitImmediate
-      return Resolve(
-          context, context.element_segment_names, context.table_names,
-          std::get<At<InitImmediate>>(instruction.immediate).value());
-
-    case 16: { // Var
+    case 6: {  // Var
       auto& immediate = std::get<At<Var>>(instruction.immediate);
       switch (instruction.opcode) {
         // Function.
@@ -253,6 +211,48 @@ void Resolve(Context& context, Instruction& instruction) {
           break;
       }
     }
+
+    case 7: { // BlockImmediate
+      auto& immediate = std::get<At<BlockImmediate>>(instruction.immediate);
+      // TODO: share w/ code in read.cc
+      if (immediate->label) {
+        context.label_names.ReplaceBound(*immediate->label);
+      } else {
+        context.label_names.NewUnbound();
+      }
+      context.label_name_stack.push_back(immediate->label);
+      return Resolve(context, *immediate);
+    }
+
+    case 8: // BrOnExnImmediate
+      return Resolve(
+          context,
+          std::get<At<BrOnExnImmediate>>(instruction.immediate).value());
+
+    case 9: // BrTableImmediate
+      return Resolve(
+          context,
+          std::get<At<BrTableImmediate>>(instruction.immediate).value());
+
+    case 10: // CallIndirectImmediate
+      return Resolve(
+          context,
+          std::get<At<CallIndirectImmediate>>(instruction.immediate).value());
+
+    case 11: { // CopyImmediate
+      auto& immediate = std::get<At<CopyImmediate>>(instruction.immediate);
+      if (instruction.opcode == Opcode::TableCopy) {
+        return Resolve(context, context.table_names, immediate.value());
+      } else {
+        assert(instruction.opcode == Opcode::MemoryCopy);
+        return Resolve(context, context.memory_names, immediate.value());
+      }
+    }
+
+    case 12: // InitImmediate
+      return Resolve(
+          context, context.element_segment_names, context.table_names,
+          std::get<At<InitImmediate>>(instruction.immediate).value());
 
     default:
       break;

@@ -1117,7 +1117,7 @@ bool Validate(const At<Instruction>& value, Context& context) {
       return Select(loc, context);
 
     case Opcode::SelectT:
-      return SelectT(loc, value->value_type_list_immediate(), context);
+      return SelectT(loc, value->select_immediate(), context);
 
     case Opcode::LocalGet:
       return LocalGet(value->index_immediate(), context);

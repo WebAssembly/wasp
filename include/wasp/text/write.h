@@ -350,12 +350,12 @@ Iterator Write(WriteContext& context, Iterator out, const Instruction& value) {
     case 0: // monostate
       break;
 
-    case 1: // u32
-      out = Write(context, out, std::get<At<u32>>(value.immediate));
+    case 1: // s32
+      out = Write(context, out, std::get<At<s32>>(value.immediate));
       break;
 
-    case 2: // u64
-      out = Write(context, out, std::get<At<u64>>(value.immediate));
+    case 2: // s64
+      out = Write(context, out, std::get<At<s64>>(value.immediate));
       break;
 
     case 3: // f32
@@ -370,8 +370,8 @@ Iterator Write(WriteContext& context, Iterator out, const Instruction& value) {
       out = Write(context, out, std::get<At<v128>>(value.immediate));
       break;
 
-    case 6: // ReferenceType
-      out = Write(context, out, std::get<At<ReferenceType>>(value.immediate));
+    case 6: // Var
+      out = Write(context, out, std::get<At<Var>>(value.immediate));
       break;
 
     case 7: // BlockImmediate
@@ -406,17 +406,22 @@ Iterator Write(WriteContext& context, Iterator out, const Instruction& value) {
       out = Write(context, out, std::get<At<MemArgImmediate>>(value.immediate));
       break;
 
-    case 14: // SelectImmediate
+    case 14: // ReferenceType
+      out = Write(context, out, std::get<At<ReferenceType>>(value.immediate));
+      break;
+
+    case 15: // SelectImmediate
       out = Write(context, out, std::get<At<SelectImmediate>>(value.immediate));
       break;
 
-    case 15: // ShuffleImmediate
+    case 16: // ShuffleImmediate
       out =
           Write(context, out, std::get<At<ShuffleImmediate>>(value.immediate));
       break;
 
-    case 16: // Var
-      out = Write(context, out, std::get<At<Var>>(value.immediate));
+    case 17: // SimdLaneImmediate
+      out =
+          Write(context, out, std::get<At<SimdLaneImmediate>>(value.immediate));
       break;
   }
   return out;

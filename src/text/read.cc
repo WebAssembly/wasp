@@ -994,16 +994,10 @@ auto ReadOffsetOpt(Tokenizer& tokenizer, Context& context) -> OptAt<u32> {
   return ReadNameEqNatOpt(tokenizer, context, TokenType::OffsetEqNat, 7);
 }
 
-auto ReadSimdLane(Tokenizer& tokenizer, Context& context) -> At<u32> {
-  auto token = tokenizer.Peek();
-  // TODO: This should probably be ReadNat32, but the simd tests currently
+auto ReadSimdLane(Tokenizer& tokenizer, Context& context) -> At<u8> {
+  // TODO: This should probably be ReadNat<u8>, but the simd tests currently
   // allow signed values here.
-  auto lane = ReadInt<u32>(tokenizer, context);
-  if (lane > 255) {
-    context.errors.OnError(token.loc,
-                           format("Invalid lane number, got {}", token.type));
-  }
-  return lane;
+  return ReadInt<u8>(tokenizer, context);
 }
 
 auto ReadSimdShuffleImmediate(Tokenizer& tokenizer, Context& context)
@@ -1160,14 +1154,14 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     case TokenType::I32ConstInstr: {
       CheckOpcodeEnabled(token, context);
       tokenizer.Read();
-      auto immediate = ReadInt<u32>(tokenizer, context);
+      auto immediate = ReadInt<s32>(tokenizer, context);
       return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
     }
 
     case TokenType::I64ConstInstr: {
       CheckOpcodeEnabled(token, context);
       tokenizer.Read();
-      auto immediate = ReadInt<u64>(tokenizer, context);
+      auto immediate = ReadInt<s64>(tokenizer, context);
       return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
     }
 

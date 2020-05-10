@@ -176,11 +176,11 @@ TEST(TextWriteTest, Instruction) {
   // Bare
   ExpectWrite("nop"_sv, I{O::Nop});
 
-  // u32
-  ExpectWrite("i32.const 0"_sv, I{O::I32Const, MakeAt("0"_su8, u32{})});
+  // s32
+  ExpectWrite("i32.const 0"_sv, I{O::I32Const, MakeAt("0"_su8, s32{})});
 
-  // u64
-  ExpectWrite("i64.const 0"_sv, I{O::I64Const, MakeAt("0"_su8, u64{})});
+  // s64
+  ExpectWrite("i64.const 0"_sv, I{O::I64Const, MakeAt("0"_su8, s64{})});
 
   // f32
   ExpectWrite("f32.const 0"_sv, I{O::F32Const, MakeAt("0"_su8, f32{})});

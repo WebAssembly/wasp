@@ -582,8 +582,8 @@ void Tool::DoCodeSection(LazyCodeSection section) {
       } else if (instr->has_br_on_exn_immediate()) {
         // TODO: immediate
         sqlite3_bind_null(stmt, 6);
-      } else if (instr->has_u8_immediate()) {
-        sqlite3_bind_int(stmt, 6, instr->u8_immediate());
+      } else if (instr->has_simd_lane_immediate()) {
+        sqlite3_bind_int(stmt, 6, instr->simd_lane_immediate());
       } else if (instr->has_mem_arg_immediate()) {
         // TODO: immediate
         sqlite3_bind_null(stmt, 6);

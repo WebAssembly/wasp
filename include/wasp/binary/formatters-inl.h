@@ -300,23 +300,23 @@ typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
 
   switch (self.immediate.index()) {
     case 0: /* Nothing. */ break;
-    case 1: format_to(buf, " {}", self.reference_type_immediate()); break;
-    case 2: format_to(buf, " {}", self.block_type_immediate()); break;
-    case 3: format_to(buf, " {}", self.index_immediate()); break;
-    case 4: format_to(buf, " {}", self.call_indirect_immediate()); break;
-    case 5: format_to(buf, " {}", self.br_table_immediate()); break;
-    case 6: format_to(buf, " {}", self.br_on_exn_immediate()); break;
-    case 7: format_to(buf, " {}", self.u8_immediate()); break;
-    case 8: format_to(buf, " {}", self.mem_arg_immediate()); break;
-    case 9: format_to(buf, " {}", self.s32_immediate()); break;
-    case 10: format_to(buf, " {}", self.s64_immediate()); break;
-    case 11: format_to(buf, " {:f}", self.f32_immediate()); break;
-    case 12: format_to(buf, " {:f}", self.f64_immediate()); break;
-    case 13: format_to(buf, " {}", self.v128_immediate()); break;
-    case 14: format_to(buf, " {}", self.init_immediate()); break;
-    case 15: format_to(buf, " {}", self.copy_immediate()); break;
+    case 1: format_to(buf, " {}", self.s32_immediate()); break;
+    case 2: format_to(buf, " {}", self.s64_immediate()); break;
+    case 3: format_to(buf, " {:f}", self.f32_immediate()); break;
+    case 4: format_to(buf, " {:f}", self.f64_immediate()); break;
+    case 5: format_to(buf, " {}", self.v128_immediate()); break;
+    case 6: format_to(buf, " {}", self.index_immediate()); break;
+    case 7: format_to(buf, " {}", self.block_type_immediate()); break;
+    case 8: format_to(buf, " {}", self.br_on_exn_immediate()); break;
+    case 9: format_to(buf, " {}", self.br_table_immediate()); break;
+    case 10: format_to(buf, " {}", self.call_indirect_immediate()); break;
+    case 11: format_to(buf, " {}", self.copy_immediate()); break;
+    case 12: format_to(buf, " {}", self.init_immediate()); break;
+    case 13: format_to(buf, " {}", self.mem_arg_immediate()); break;
+    case 14: format_to(buf, " {}", self.reference_type_immediate()); break;
+    case 15: format_to(buf, " {}", self.select_immediate()); break;
     case 16: format_to(buf, " {}", self.shuffle_immediate()); break;
-    case 17: format_to(buf, " {}", self.value_type_list_immediate()); break;
+    case 17: format_to(buf, " {}", self.simd_lane_immediate()); break;
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }

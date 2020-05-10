@@ -87,15 +87,16 @@ struct MemArgImmediate {
 };
 
 using SelectImmediate = ValueTypeList;
+using SimdLaneImmediate = u8;
 
 struct Instruction {
   explicit Instruction(At<Opcode>);
-  explicit Instruction(At<Opcode>, At<u32>);
-  explicit Instruction(At<Opcode>, At<u64>);
+  explicit Instruction(At<Opcode>, At<s32>);
+  explicit Instruction(At<Opcode>, At<s64>);
   explicit Instruction(At<Opcode>, At<f32>);
   explicit Instruction(At<Opcode>, At<f64>);
   explicit Instruction(At<Opcode>, At<v128>);
-  explicit Instruction(At<Opcode>, At<ReferenceType>);
+  explicit Instruction(At<Opcode>, At<Var>);
   explicit Instruction(At<Opcode>, At<BlockImmediate>);
   explicit Instruction(At<Opcode>, At<BrOnExnImmediate>);
   explicit Instruction(At<Opcode>, At<BrTableImmediate>);
@@ -103,18 +104,19 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<CopyImmediate>);
   explicit Instruction(At<Opcode>, At<InitImmediate>);
   explicit Instruction(At<Opcode>, At<MemArgImmediate>);
+  explicit Instruction(At<Opcode>, At<ReferenceType>);
   explicit Instruction(At<Opcode>, At<SelectImmediate>);
   explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
-  explicit Instruction(At<Opcode>, At<Var>);
+  explicit Instruction(At<Opcode>, At<SimdLaneImmediate>);
 
   At<Opcode> opcode;
   variant<monostate,
-          At<u32>,
-          At<u64>,
+          At<s32>,
+          At<s64>,
           At<f32>,
           At<f64>,
           At<v128>,
-          At<ReferenceType>,
+          At<Var>,
           At<BlockImmediate>,
           At<BrOnExnImmediate>,
           At<BrTableImmediate>,
@@ -122,9 +124,10 @@ struct Instruction {
           At<CopyImmediate>,
           At<InitImmediate>,
           At<MemArgImmediate>,
+          At<ReferenceType>,
           At<SelectImmediate>,
           At<ShuffleImmediate>,
-          At<Var>>
+          At<SimdLaneImmediate>>
       immediate;
 };
 

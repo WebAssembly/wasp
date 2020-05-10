@@ -881,7 +881,7 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::MemorySize:
     case Opcode::MemoryGrow:
     case Opcode::MemoryFill:
-      return Write(instr.u8_immediate(), out);
+      return Write(u8{0}, out);
 
     // Const immediates.
     case Opcode::I32Const:
@@ -913,12 +913,12 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::V8X16Shuffle:
       return Write(instr.shuffle_immediate(), out);
 
-    // ValueTypeList immediate.
+    // select immediate.
     case Opcode::SelectT:
-      return WriteVector(instr.value_type_list_immediate().begin(),
-                         instr.value_type_list_immediate().end(), out);
+      return WriteVector(instr.select_immediate()->begin(),
+                         instr.select_immediate()->end(), out);
 
-    // u8 immediate.
+    // simd lane immediate.
     case Opcode::I8X16ExtractLaneS:
     case Opcode::I8X16ExtractLaneU:
     case Opcode::I16X8ExtractLaneS:
@@ -933,7 +933,7 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::I64X2ReplaceLane:
     case Opcode::F32X4ReplaceLane:
     case Opcode::F64X2ReplaceLane:
-      return Write(instr.u8_immediate(), out);
+      return Write(instr.simd_lane_immediate(), out);
   }
   WASP_UNREACHABLE();
 }

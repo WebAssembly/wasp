@@ -112,11 +112,6 @@ struct Section {
 
 // Instruction
 
-struct CallIndirectImmediate {
-  At<Index> index;
-  At<Index> table_index;
-};
-
 struct BrOnExnImmediate {
   At<Index> target;
   At<Index> event_index;
@@ -127,14 +122,9 @@ struct BrTableImmediate {
   At<Index> default_target;
 };
 
-struct MemArgImmediate {
-  At<u32> align_log2;
-  At<u32> offset;
-};
-
-struct InitImmediate {
-  At<Index> segment_index;
-  At<Index> dst_index;
+struct CallIndirectImmediate {
+  At<Index> index;
+  At<Index> table_index;
 };
 
 struct CopyImmediate {
@@ -142,81 +132,78 @@ struct CopyImmediate {
   At<Index> src_index;
 };
 
+struct InitImmediate {
+  At<Index> segment_index;
+  At<Index> dst_index;
+};
+
+struct MemArgImmediate {
+  At<u32> align_log2;
+  At<u32> offset;
+};
+
+using SelectImmediate = ValueTypeList;
+using SimdLaneImmediate = u8;
+
 struct Instruction {
   explicit Instruction(At<Opcode>);
-  explicit Instruction(At<Opcode>, At<ReferenceType>);
-  explicit Instruction(At<Opcode>, At<BlockType>);
-  explicit Instruction(At<Opcode>, At<Index>);
-  explicit Instruction(At<Opcode>, At<CallIndirectImmediate>);
-  explicit Instruction(At<Opcode>, At<BrOnExnImmediate>);
-  explicit Instruction(At<Opcode>, At<BrTableImmediate>);
-  explicit Instruction(At<Opcode>, At<u8>);
-  explicit Instruction(At<Opcode>, At<MemArgImmediate>);
   explicit Instruction(At<Opcode>, At<s32>);
   explicit Instruction(At<Opcode>, At<s64>);
   explicit Instruction(At<Opcode>, At<f32>);
   explicit Instruction(At<Opcode>, At<f64>);
   explicit Instruction(At<Opcode>, At<v128>);
-  explicit Instruction(At<Opcode>, At<InitImmediate>);
+  explicit Instruction(At<Opcode>, At<Index>);
+  explicit Instruction(At<Opcode>, At<BlockType>);
+  explicit Instruction(At<Opcode>, At<BrOnExnImmediate>);
+  explicit Instruction(At<Opcode>, At<BrTableImmediate>);
+  explicit Instruction(At<Opcode>, At<CallIndirectImmediate>);
   explicit Instruction(At<Opcode>, At<CopyImmediate>);
+  explicit Instruction(At<Opcode>, At<InitImmediate>);
+  explicit Instruction(At<Opcode>, At<MemArgImmediate>);
+  explicit Instruction(At<Opcode>, At<ReferenceType>);
+  explicit Instruction(At<Opcode>, At<SelectImmediate>);
   explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
-  explicit Instruction(At<Opcode>, const ValueTypeList&);
+  explicit Instruction(At<Opcode>, At<SimdLaneImmediate>);
 
   // Convenience constructors w/ no Location.
   explicit Instruction(Opcode);
-  explicit Instruction(Opcode, ReferenceType);
-  explicit Instruction(Opcode, BlockType);
-  explicit Instruction(Opcode, Index);
-  explicit Instruction(Opcode, CallIndirectImmediate);
-  explicit Instruction(Opcode, BrOnExnImmediate);
-  explicit Instruction(Opcode, BrTableImmediate);
-  explicit Instruction(Opcode, u8);
-  explicit Instruction(Opcode, MemArgImmediate);
   explicit Instruction(Opcode, s32);
   explicit Instruction(Opcode, s64);
   explicit Instruction(Opcode, f32);
   explicit Instruction(Opcode, f64);
   explicit Instruction(Opcode, v128);
-  explicit Instruction(Opcode, InitImmediate);
+  explicit Instruction(Opcode, Index);
+  explicit Instruction(Opcode, BlockType);
+  explicit Instruction(Opcode, BrOnExnImmediate);
+  explicit Instruction(Opcode, BrTableImmediate);
+  explicit Instruction(Opcode, CallIndirectImmediate);
   explicit Instruction(Opcode, CopyImmediate);
+  explicit Instruction(Opcode, InitImmediate);
+  explicit Instruction(Opcode, MemArgImmediate);
+  explicit Instruction(Opcode, ReferenceType);
+  explicit Instruction(Opcode, SelectImmediate);
   explicit Instruction(Opcode, ShuffleImmediate);
-  explicit Instruction(Opcode, const ValueTypeList&);
+  explicit Instruction(Opcode, SimdLaneImmediate);
 
   bool has_no_immediate() const;
-  bool has_reference_type_immediate() const;
-  bool has_block_type_immediate() const;
-  bool has_index_immediate() const;
-  bool has_call_indirect_immediate() const;
-  bool has_br_table_immediate() const;
-  bool has_br_on_exn_immediate() const;
-  bool has_u8_immediate() const;
-  bool has_mem_arg_immediate() const;
   bool has_s32_immediate() const;
   bool has_s64_immediate() const;
   bool has_f32_immediate() const;
   bool has_f64_immediate() const;
   bool has_v128_immediate() const;
-  bool has_init_immediate() const;
+  bool has_index_immediate() const;
+  bool has_block_type_immediate() const;
+  bool has_br_on_exn_immediate() const;
+  bool has_br_table_immediate() const;
+  bool has_call_indirect_immediate() const;
   bool has_copy_immediate() const;
+  bool has_init_immediate() const;
+  bool has_mem_arg_immediate() const;
+  bool has_reference_type_immediate() const;
+  bool has_select_immediate() const;
   bool has_shuffle_immediate() const;
-  bool has_value_type_list_immediate() const;
+  bool has_simd_lane_immediate() const;
 
-  auto reference_type_immediate() -> At<ReferenceType>&;
-  auto reference_type_immediate() const -> const At<ReferenceType>&;
-  auto block_type_immediate() -> At<BlockType>&;
-  auto block_type_immediate() const -> const At<BlockType>&;
-  auto index_immediate() -> At<Index>&;
-  auto index_immediate() const -> const At<Index>&;
-  auto call_indirect_immediate() -> At<CallIndirectImmediate>&;
-  auto call_indirect_immediate() const -> const At<CallIndirectImmediate>&;
-  auto br_table_immediate() -> At<BrTableImmediate>&;
-  auto br_table_immediate() const -> const At<BrTableImmediate>&;
-  auto br_on_exn_immediate() -> At<BrOnExnImmediate>&;
-  auto br_on_exn_immediate() const -> const At<BrOnExnImmediate>&;
-  auto u8_immediate() -> At<u8>&;
-  auto u8_immediate() const -> const At<u8>&;
-  auto mem_arg_immediate() -> At<MemArgImmediate>&;
-  auto mem_arg_immediate() const -> const At<MemArgImmediate>&;
   auto s32_immediate() -> At<s32>&;
   auto s32_immediate() const -> const At<s32>&;
   auto s64_immediate() -> At<s64>&;
@@ -227,34 +214,50 @@ struct Instruction {
   auto f64_immediate() const -> const At<f64>&;
   auto v128_immediate() -> At<v128>&;
   auto v128_immediate() const -> const At<v128>&;
-  auto init_immediate() -> At<InitImmediate>&;
-  auto init_immediate() const -> const At<InitImmediate>&;
+  auto index_immediate() -> At<Index>&;
+  auto index_immediate() const -> const At<Index>&;
+  auto block_type_immediate() -> At<BlockType>&;
+  auto block_type_immediate() const -> const At<BlockType>&;
+  auto br_on_exn_immediate() -> At<BrOnExnImmediate>&;
+  auto br_on_exn_immediate() const -> const At<BrOnExnImmediate>&;
+  auto br_table_immediate() -> At<BrTableImmediate>&;
+  auto br_table_immediate() const -> const At<BrTableImmediate>&;
+  auto call_indirect_immediate() -> At<CallIndirectImmediate>&;
+  auto call_indirect_immediate() const -> const At<CallIndirectImmediate>&;
   auto copy_immediate() -> At<CopyImmediate>&;
   auto copy_immediate() const -> const At<CopyImmediate>&;
+  auto init_immediate() -> At<InitImmediate>&;
+  auto init_immediate() const -> const At<InitImmediate>&;
+  auto mem_arg_immediate() -> At<MemArgImmediate>&;
+  auto mem_arg_immediate() const -> const At<MemArgImmediate>&;
+  auto reference_type_immediate() -> At<ReferenceType>&;
+  auto reference_type_immediate() const -> const At<ReferenceType>&;
+  auto select_immediate() -> At<SelectImmediate>&;
+  auto select_immediate() const -> const At<SelectImmediate>&;
   auto shuffle_immediate() -> At<ShuffleImmediate>&;
   auto shuffle_immediate() const -> const At<ShuffleImmediate>&;
-  auto value_type_list_immediate() -> ValueTypeList&;
-  auto value_type_list_immediate() const -> const ValueTypeList&;
+  auto simd_lane_immediate() -> At<SimdLaneImmediate>&;
+  auto simd_lane_immediate() const -> const At<SimdLaneImmediate>&;
 
   At<Opcode> opcode;
   variant<monostate,
-          At<ReferenceType>,
-          At<BlockType>,
-          At<Index>,
-          At<CallIndirectImmediate>,
-          At<BrTableImmediate>,
-          At<BrOnExnImmediate>,
-          At<u8>,
-          At<MemArgImmediate>,
           At<s32>,
           At<s64>,
           At<f32>,
           At<f64>,
           At<v128>,
-          At<InitImmediate>,
+          At<Index>,
+          At<BlockType>,
+          At<BrOnExnImmediate>,
+          At<BrTableImmediate>,
+          At<CallIndirectImmediate>,
           At<CopyImmediate>,
+          At<InitImmediate>,
+          At<MemArgImmediate>,
+          At<ReferenceType>,
+          At<SelectImmediate>,
           At<ShuffleImmediate>,
-          ValueTypeList>
+          At<SimdLaneImmediate>>
       immediate;
 };
 

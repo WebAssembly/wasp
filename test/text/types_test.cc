@@ -122,7 +122,7 @@ TEST(TextTypesTest, TableToElementSegment) {
 
   EXPECT_EQ((ElementSegment{nullopt, Var{this_index},
                             InstructionList{Instruction{
-                                MakeAt(Opcode::I32Const), MakeAt(u32{0})}},
+                                MakeAt(Opcode::I32Const), MakeAt(s32{0})}},
                             elements}),
             (Table{desc, {}, elements}).ToElementSegment(this_index));
 }
@@ -174,7 +174,7 @@ TEST(TextTypesTest, MemoryToDataSegment) {
 
   EXPECT_EQ((DataSegment{nullopt, Var{this_index},
                          InstructionList{Instruction{MakeAt(Opcode::I32Const),
-                                                     MakeAt(u32{0})}},
+                                                     MakeAt(s32{0})}},
                          data}),
             (Memory{desc, {}, data}).ToDataSegment(this_index));
 }

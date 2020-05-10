@@ -1129,12 +1129,12 @@ TEST_F(ValidateInstructionTest, Select_ReferenceTypes) {
 TEST_F(ValidateInstructionTest, SelectT) {
   for (const auto& vt :
        {VT::I32, VT::I64, VT::F32, VT::F64, VT::Externref, VT::Funcref}) {
-    TestSignature(I{O::SelectT, ValueTypeList{vt}}, {vt, vt, VT::I32}, {vt});
+    TestSignature(I{O::SelectT, SelectImmediate{vt}}, {vt, vt, VT::I32}, {vt});
   }
 }
 
 TEST_F(ValidateInstructionTest, SelectT_EmptyStack) {
-  Fail(I{O::SelectT, ValueTypeList{VT::I64}});
+  Fail(I{O::SelectT, SelectImmediate{VT::I64}});
   ExpectErrors({{"instruction", "Expected stack to contain [i32], got []"},
                 {"instruction", "Expected stack to contain [i64 i64], got []"}},
                errors);
@@ -1144,7 +1144,7 @@ TEST_F(ValidateInstructionTest, SelectT_ConditionTypeMismatch) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, f32{}});
-  Fail(I{O::SelectT, ValueTypeList{VT::I32}});
+  Fail(I{O::SelectT, SelectImmediate{VT::I32}});
   ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
               errors);
 }
