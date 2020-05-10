@@ -138,10 +138,6 @@ Instruction::Instruction(At<Opcode> opcode, At<SimdLaneImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<ShuffleImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
-
-Instruction::Instruction(Opcode opcode)
-    : opcode(opcode), immediate() {}
-
 Instruction::Instruction(Opcode opcode, s32 immediate)
     : opcode(opcode), immediate(MakeAt(immediate)) {}
 
@@ -154,45 +150,11 @@ Instruction::Instruction(Opcode opcode, f32 immediate)
 Instruction::Instruction(Opcode opcode, f64 immediate)
     : opcode(opcode), immediate(MakeAt(immediate)) {}
 
-Instruction::Instruction(Opcode opcode, v128 immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
-
 Instruction::Instruction(Opcode opcode, Index immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
-
-Instruction::Instruction(Opcode opcode, BlockType immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
-
-Instruction::Instruction(Opcode opcode, BrOnExnImmediate immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
-
-Instruction::Instruction(Opcode opcode, BrTableImmediate immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
-
-Instruction::Instruction(Opcode opcode, CallIndirectImmediate immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
-
-Instruction::Instruction(Opcode opcode, CopyImmediate immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
-
-Instruction::Instruction(Opcode opcode, InitImmediate immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
-
-Instruction::Instruction(Opcode opcode, MemArgImmediate immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
-
-Instruction::Instruction(Opcode opcode, ReferenceType immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
-
-Instruction::Instruction(Opcode opcode, SelectImmediate immediate)
     : opcode(opcode), immediate(MakeAt(immediate)) {}
 
 Instruction::Instruction(Opcode opcode, SimdLaneImmediate immediate)
     : opcode(opcode), immediate(MakeAt(immediate)) {}
-
-Instruction::Instruction(Opcode opcode, ShuffleImmediate immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
-
 
 Section::Section(At<KnownSection> contents) : contents{contents} {}
 

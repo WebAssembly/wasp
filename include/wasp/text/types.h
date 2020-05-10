@@ -109,6 +109,15 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
   explicit Instruction(At<Opcode>, At<SimdLaneImmediate>);
 
+  // Convenience constructors w/ no Location for numeric types (since the
+  // implicit conversions to At<T> doesn't work properly for these types).
+  // These are primarily used for tests.
+  explicit Instruction(Opcode, s32);
+  explicit Instruction(Opcode, s64);
+  explicit Instruction(Opcode, f32);
+  explicit Instruction(Opcode, f64);
+  explicit Instruction(Opcode, SimdLaneImmediate);
+
   At<Opcode> opcode;
   variant<monostate,
           At<s32>,

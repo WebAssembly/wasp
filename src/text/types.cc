@@ -81,6 +81,21 @@ Instruction::Instruction(At<Opcode> opcode, At<ShuffleImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<SimdLaneImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
+Instruction::Instruction(Opcode opcode, s32 immediate)
+    : opcode{opcode}, immediate{MakeAt(immediate)} {}
+
+Instruction::Instruction(Opcode opcode, s64 immediate)
+    : opcode{opcode}, immediate{MakeAt(immediate)} {}
+
+Instruction::Instruction(Opcode opcode, f32 immediate)
+    : opcode{opcode}, immediate{MakeAt(immediate)} {}
+
+Instruction::Instruction(Opcode opcode, f64 immediate)
+    : opcode{opcode}, immediate{MakeAt(immediate)} {}
+
+Instruction::Instruction(Opcode opcode, SimdLaneImmediate immediate)
+    : opcode{opcode}, immediate{MakeAt(immediate)} {}
+
 
 Function::Function(const FunctionDesc& desc,
                    const BoundValueTypeList& locals,

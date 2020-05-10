@@ -157,16 +157,16 @@ TEST_F(TextResolveTest, Instruction_NoOp) {
   OK(I{O::Nop}, I{O::Nop});
 
   // s32 Immediate.
-  OK(I{O::I32Const, MakeAt(""_su8, s32{})}, I{O::I32Const, MakeAt(""_su8, s32{})});
+  OK(I{O::I32Const, s32{}}, I{O::I32Const, s32{}});
 
   // s64 Immediate.
-  OK(I{O::I64Const, MakeAt(""_su8, s64{})}, I{O::I64Const, MakeAt(""_su8, s64{})});
+  OK(I{O::I64Const, s64{}}, I{O::I64Const, s64{}});
 
   // f32 Immediate.
-  OK(I{O::F32Const, MakeAt(""_su8, f32{})}, I{O::F32Const, MakeAt(""_su8, f32{})});
+  OK(I{O::F32Const, f32{}}, I{O::F32Const, f32{}});
 
   // f64 Immediate.
-  OK(I{O::F64Const, MakeAt(""_su8, f64{})}, I{O::F64Const, MakeAt(""_su8, f64{})});
+  OK(I{O::F64Const, f64{}}, I{O::F64Const, f64{}});
 
   // v128 Immediate.
   OK(I{O::V128Const, v128{}}, I{O::V128Const, v128{}});

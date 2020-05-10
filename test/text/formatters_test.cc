@@ -178,16 +178,16 @@ TEST(TextFormattersTest, Instruction) {
             format("{}", Instruction{Opcode::Nop}));
 
   EXPECT_EQ(R"({opcode i32.const, immediate s32 0})",
-            format("{}", Instruction{Opcode::I32Const, MakeAt(""_su8, s32{})}));
+            format("{}", Instruction{Opcode::I32Const, s32{}}));
 
   EXPECT_EQ(R"({opcode i64.const, immediate s64 0})",
-            format("{}", Instruction{Opcode::I64Const, MakeAt(""_su8, s64{})}));
+            format("{}", Instruction{Opcode::I64Const, s64{}}));
 
   EXPECT_EQ(R"({opcode f32.const, immediate f32 0.0})",
-            format("{}", Instruction{Opcode::F32Const, MakeAt(""_su8, f32{})}));
+            format("{}", Instruction{Opcode::F32Const, f32{}}));
 
   EXPECT_EQ(R"({opcode f64.const, immediate f64 0.0})",
-            format("{}", Instruction{Opcode::F64Const, MakeAt(""_su8, f64{})}));
+            format("{}", Instruction{Opcode::F64Const, f64{}}));
 
   EXPECT_EQ(R"({opcode v128.const, immediate v128 0x0 0x0 0x0 0x0})",
             format("{}", Instruction{Opcode::V128Const, v128{}}));

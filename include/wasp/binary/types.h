@@ -165,24 +165,14 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
   explicit Instruction(At<Opcode>, At<SimdLaneImmediate>);
 
-  // Convenience constructors w/ no Location.
-  explicit Instruction(Opcode);
+  // Convenience constructors w/ no Location for numeric types (since the
+  // implicit conversions to At<T> doesn't work properly for these types).
+  // These are primarily used for tests.
   explicit Instruction(Opcode, s32);
   explicit Instruction(Opcode, s64);
   explicit Instruction(Opcode, f32);
   explicit Instruction(Opcode, f64);
-  explicit Instruction(Opcode, v128);
   explicit Instruction(Opcode, Index);
-  explicit Instruction(Opcode, BlockType);
-  explicit Instruction(Opcode, BrOnExnImmediate);
-  explicit Instruction(Opcode, BrTableImmediate);
-  explicit Instruction(Opcode, CallIndirectImmediate);
-  explicit Instruction(Opcode, CopyImmediate);
-  explicit Instruction(Opcode, InitImmediate);
-  explicit Instruction(Opcode, MemArgImmediate);
-  explicit Instruction(Opcode, ReferenceType);
-  explicit Instruction(Opcode, SelectImmediate);
-  explicit Instruction(Opcode, ShuffleImmediate);
   explicit Instruction(Opcode, SimdLaneImmediate);
 
   bool has_no_immediate() const;

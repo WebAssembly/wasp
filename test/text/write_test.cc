@@ -177,16 +177,16 @@ TEST(TextWriteTest, Instruction) {
   ExpectWrite("nop"_sv, I{O::Nop});
 
   // s32
-  ExpectWrite("i32.const 0"_sv, I{O::I32Const, MakeAt("0"_su8, s32{})});
+  ExpectWrite("i32.const 0"_sv, I{O::I32Const, s32{}});
 
   // s64
-  ExpectWrite("i64.const 0"_sv, I{O::I64Const, MakeAt("0"_su8, s64{})});
+  ExpectWrite("i64.const 0"_sv, I{O::I64Const, s64{}});
 
   // f32
-  ExpectWrite("f32.const 0"_sv, I{O::F32Const, MakeAt("0"_su8, f32{})});
+  ExpectWrite("f32.const 0"_sv, I{O::F32Const, f32{}});
 
   // f64
-  ExpectWrite("f64.const 0"_sv, I{O::F64Const, MakeAt("0"_su8, f64{})});
+  ExpectWrite("f64.const 0"_sv, I{O::F64Const, f64{}});
 
   // v128
   ExpectWrite("v128.const i32x4 0 0 0 0"_sv, I{O::V128Const, v128{}});
