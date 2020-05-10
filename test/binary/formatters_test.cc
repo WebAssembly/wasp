@@ -145,27 +145,6 @@ TEST(BinaryFormattersTest, FunctionType) {
   EXPECT_EQ(R"(  [] -> [])", format("{:>10s}", FunctionType{{}, {}}));
 }
 
-TEST(BinaryFormattersTest, TableType) {
-  EXPECT_EQ(R"({min 1, max 2} funcref)",
-            format("{}", TableType{Limits{1, 2}, ReferenceType::Funcref}));
-  EXPECT_EQ(R"(  {min 0} funcref)",
-            format("{:>17s}", TableType{Limits{0}, ReferenceType::Funcref}));
-}
-
-TEST(BinaryFormattersTest, MemoryType) {
-  EXPECT_EQ(R"({min 1, max 2})", format("{}", MemoryType{Limits{1, 2}}));
-  EXPECT_EQ(R"(   {min 0})", format("{:>10s}", MemoryType{Limits{0}}));
-}
-
-TEST(BinaryFormattersTest, GlobalType) {
-  EXPECT_EQ(R"(const f32)",
-            format("{}", GlobalType{ValueType::F32, Mutability::Const}));
-  EXPECT_EQ(R"(var i32)",
-            format("{}", GlobalType{ValueType::I32, Mutability::Var}));
-  EXPECT_EQ(R"(   var f64)",
-            format("{:>10s}", GlobalType{ValueType::F64, Mutability::Var}));
-}
-
 TEST(BinaryFormattersTest, EventType) {
   EXPECT_EQ(R"(exception 0)",
             format("{}", EventType{EventAttribute::Exception, 0}));

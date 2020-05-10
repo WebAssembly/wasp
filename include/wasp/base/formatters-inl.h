@@ -334,6 +334,33 @@ typename Ctx::iterator formatter<::wasp::Limits>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::TableType>::format(
+    const ::wasp::TableType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.limits, self.elemtype);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::MemoryType>::format(
+    const ::wasp::MemoryType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{}", self.limits);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::GlobalType>::format(
+    const ::wasp::GlobalType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.mut, self.valtype);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::monostate>::format(
     const ::wasp::monostate& self,
     Ctx& ctx) {

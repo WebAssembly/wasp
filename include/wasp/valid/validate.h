@@ -57,7 +57,7 @@ bool Validate(const At<binary::FunctionType>&, Context&);
 
 bool Validate(const At<binary::Global>&, Context&);
 
-bool Validate(const At<binary::GlobalType>&, Context&);
+bool Validate(const At<GlobalType>&, Context&);
 
 bool Validate(const At<binary::Import>&, Context&);
 
@@ -74,13 +74,13 @@ bool Validate(const At<binary::Locals>&, Context&);
 
 bool Validate(const At<binary::Memory>&, Context&);
 
-bool Validate(const At<binary::MemoryType>&, Context&);
+bool Validate(const At<MemoryType>&, Context&);
 
 bool Validate(const At<binary::Start>& value, Context& context);
 
 bool Validate(const At<binary::Table>&, Context&);
 
-bool Validate(const At<binary::TableType>&, Context&);
+bool Validate(const At<TableType>&, Context&);
 
 bool Validate(const At<binary::TypeEntry>&, Context&);
 

@@ -77,9 +77,9 @@ struct Context {
 
   std::vector<binary::TypeEntry> types;
   std::vector<binary::Function> functions;
-  std::vector<binary::TableType> tables;
-  std::vector<binary::MemoryType> memories;
-  std::vector<binary::GlobalType> globals;
+  std::vector<TableType> tables;
+  std::vector<MemoryType> memories;
+  std::vector<GlobalType> globals;
   std::vector<binary::EventType> events;
   std::vector<ReferenceType> element_segments;
   Index imported_function_count = 0;

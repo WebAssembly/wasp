@@ -275,20 +275,6 @@ struct TypeEntry {
 
 // Section 2: Import
 
-struct TableType {
-  At<Limits> limits;
-  At<ReferenceType> elemtype;
-};
-
-struct MemoryType {
-  At<Limits> limits;
-};
-
-struct GlobalType {
-  At<ValueType> valtype;
-  At<Mutability> mut;
-};
-
 struct EventType {
   At<EventAttribute> attribute;
   At<Index> type_index;
@@ -501,7 +487,6 @@ struct Event {
   WASP_V(binary::Function, 1, type_index)                                \
   WASP_V(binary::FunctionType, 2, param_types, result_types)             \
   WASP_V(binary::Global, 2, global_type, init)                           \
-  WASP_V(binary::GlobalType, 2, valtype, mut)                            \
   WASP_V(binary::Import, 3, module, name, desc)                          \
   WASP_V(binary::InitImmediate, 2, segment_index, dst_index)             \
   WASP_V(binary::Instruction, 2, opcode, immediate)                      \
@@ -509,11 +494,9 @@ struct Event {
   WASP_V(binary::Locals, 2, count, type)                                 \
   WASP_V(binary::MemArgImmediate, 2, align_log2, offset)                 \
   WASP_V(binary::Memory, 1, memory_type)                                 \
-  WASP_V(binary::MemoryType, 1, limits)                                  \
   WASP_V(binary::Section, 1, contents)                                   \
   WASP_V(binary::Start, 1, func_index)                                   \
   WASP_V(binary::Table, 1, table_type)                                   \
-  WASP_V(binary::TableType, 2, limits, elemtype)                         \
   WASP_V(binary::TypeEntry, 1, type)
 
 #define WASP_BINARY_CONTAINERS(WASP_V) \

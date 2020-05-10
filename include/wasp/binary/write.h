@@ -370,16 +370,27 @@ Iterator Write(const FunctionType& value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(const Global& value, Iterator out) {
-  out = Write(value.global_type, out);
-  out = Write(value.init, out);
-  return out;
+Iterator Write(const TableType& value, Iterator out) {
+  out = Write(value.elemtype, out);
+  return Write(value.limits, out);
+}
+
+template <typename Iterator>
+Iterator Write(const MemoryType& value, Iterator out) {
+  return Write(value.limits, out);
 }
 
 template <typename Iterator>
 Iterator Write(const GlobalType& value, Iterator out) {
   out = Write(value.valtype, out);
   return Write(value.mut, out);
+}
+
+template <typename Iterator>
+Iterator Write(const Global& value, Iterator out) {
+  out = Write(value.global_type, out);
+  out = Write(value.init, out);
+  return out;
 }
 
 template <typename Iterator>
@@ -958,11 +969,6 @@ Iterator Write(const Memory& value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(const MemoryType& value, Iterator out) {
-  return Write(value.limits, out);
-}
-
-template <typename Iterator>
 Iterator Write(SectionId value, Iterator out) {
   return Write(encoding::SectionId::Encode(value), out);
 }
@@ -975,12 +981,6 @@ Iterator Write(const Start& value, Iterator out) {
 template <typename Iterator>
 Iterator Write(const Table& value, Iterator out) {
   return Write(value.table_type, out);
-}
-
-template <typename Iterator>
-Iterator Write(const TableType& value, Iterator out) {
-  out = Write(value.elemtype, out);
-  return Write(value.limits, out);
 }
 
 template <typename Iterator>

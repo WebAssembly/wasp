@@ -138,33 +138,6 @@ typename Ctx::iterator formatter<::wasp::binary::FunctionType>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::TableType>::format(
-    const ::wasp::binary::TableType& self,
-    Ctx& ctx) {
-  memory_buffer buf;
-  format_to(buf, "{} {}", self.limits, self.elemtype);
-  return formatter<string_view>::format(to_string_view(buf), ctx);
-}
-
-template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::MemoryType>::format(
-    const ::wasp::binary::MemoryType& self,
-    Ctx& ctx) {
-  memory_buffer buf;
-  format_to(buf, "{}", self.limits);
-  return formatter<string_view>::format(to_string_view(buf), ctx);
-}
-
-template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::binary::GlobalType>::format(
-    const ::wasp::binary::GlobalType& self,
-    Ctx& ctx) {
-  memory_buffer buf;
-  format_to(buf, "{} {}", self.mut, self.valtype);
-  return formatter<string_view>::format(to_string_view(buf), ctx);
-}
-
-template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::EventType>::format(
     const ::wasp::binary::EventType& self,
     Ctx& ctx) {

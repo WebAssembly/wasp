@@ -161,28 +161,14 @@ struct FunctionDesc {
   At<BoundFunctionType> type;
 };
 
-struct TableType {
-  At<Limits> limits;
-  At<ReferenceType> elemtype;
-};
-
 struct TableDesc {
   OptAt<BindVar> name;
   At<TableType> type;
 };
 
-struct MemoryType {
-  At<Limits> limits;
-};
-
 struct MemoryDesc {
   OptAt<BindVar> name;
   At<MemoryType> type;
-};
-
-struct GlobalType {
-  At<ValueType> valtype;
-  At<Mutability> mut;
 };
 
 struct GlobalDesc {
@@ -586,11 +572,8 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::CopyImmediate, 2, dst, src)                               \
   WASP_V(text::InitImmediate, 2, segment, dst)                           \
   WASP_V(text::MemArgImmediate, 2, align, offset)                        \
-  WASP_V(text::TableType, 2, limits, elemtype)                           \
   WASP_V(text::TableDesc, 2, name, type)                                 \
-  WASP_V(text::MemoryType, 1, limits)                                    \
   WASP_V(text::MemoryDesc, 2, name, type)                                \
-  WASP_V(text::GlobalType, 2, valtype, mut)                              \
   WASP_V(text::GlobalDesc, 2, name, type)                                \
   WASP_V(text::EventType, 2, attribute, type)                            \
   WASP_V(text::EventDesc, 2, name, type)                                 \

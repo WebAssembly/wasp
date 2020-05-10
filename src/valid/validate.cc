@@ -322,7 +322,7 @@ bool Validate(const At<binary::Global>& value, Context& context) {
   return valid;
 }
 
-bool Validate(const At<binary::GlobalType>& value, Context& context) {
+bool Validate(const At<GlobalType>& value, Context& context) {
   return true;
 }
 
@@ -418,7 +418,7 @@ bool Validate(const At<binary::Memory>& value, Context& context) {
   return valid;
 }
 
-bool Validate(const At<binary::MemoryType>& value, Context& context) {
+bool Validate(const At<MemoryType>& value, Context& context) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "memory type"};
   constexpr Index kMaxPages = 65536;
   bool valid = Validate(value->limits, kMaxPages, context);
@@ -472,7 +472,7 @@ bool Validate(const At<binary::Table>& value, Context& context) {
   return valid;
 }
 
-bool Validate(const At<binary::TableType>& value, Context& context) {
+bool Validate(const At<TableType>& value, Context& context) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "table type"};
   constexpr Index kMaxElements = std::numeric_limits<Index>::max();
   bool valid = Validate(value->limits, kMaxElements, context);

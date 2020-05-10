@@ -97,6 +97,20 @@ struct Limits {
   At<Shared> shared;
 };
 
+struct TableType {
+  At<Limits> limits;
+  At<ReferenceType> elemtype;
+};
+
+struct MemoryType {
+  At<Limits> limits;
+};
+
+struct GlobalType {
+  At<ValueType> valtype;
+  At<Mutability> mut;
+};
+
 using ShuffleImmediate = std::array<u8, 16>;
 
 #define WASP_BASE_WASM_ENUMS(WASP_V) \
@@ -110,7 +124,10 @@ using ShuffleImmediate = std::array<u8, 16>;
   WASP_V(Shared)
 
 #define WASP_BASE_WASM_STRUCTS(WASP_V) \
-  WASP_V(Limits, 3, min, max, shared)
+  WASP_V(Limits, 3, min, max, shared)  \
+  WASP_V(GlobalType, 2, valtype, mut)  \
+  WASP_V(MemoryType, 1, limits)        \
+  WASP_V(TableType, 2, limits, elemtype)
 
 #define WASP_BASE_WASM_CONTAINERS(WASP_V) \
   WASP_V(ShuffleImmediate)                \
