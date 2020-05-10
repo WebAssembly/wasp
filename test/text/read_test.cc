@@ -330,7 +330,7 @@ TEST_F(TextReadTest, FunctionTypeUse_DeferType) {
   ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
   Read(ReadFunctionTypeUse, "(param f32)"_su8);
   ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64}}, {}});
-  ftm.EndModule();
+  auto type_entries = ftm.EndModule();
 
   ASSERT_EQ(3u, ftm.Size());
   EXPECT_EQ((FunctionType{{VT::I32}, {}}), ftm.Get(0));
@@ -338,6 +338,15 @@ TEST_F(TextReadTest, FunctionTypeUse_DeferType) {
 
   // Implicitly defined after other explicitly defined types.
   EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT::F32)}, {}}), ftm.Get(2));
+
+  // Generated type entry.
+  ASSERT_EQ(1u, type_entries.size());
+  EXPECT_EQ(
+      (TypeEntry{nullopt,
+                 BoundFunctionType{BoundValueTypeList{BoundValueType{
+                                       nullopt, MakeAt("f32"_su8, VT::F32)}},
+                                   {}}}),
+      type_entries[0]);
 }
 
 TEST_F(TextReadTest, InlineImport) {
@@ -505,8 +514,9 @@ TEST_F(TextReadTest, BlockImmediate_InlineType) {
        test.span);
   }
 
-  context.function_type_map.EndModule();
+  auto type_entries = context.function_type_map.EndModule();
   EXPECT_EQ(0u, context.function_type_map.Size());
+  EXPECT_EQ(0u, type_entries.size());
 }
 
 TEST_F(TextReadTest, PlainInstruction_Bare) {
@@ -1577,7 +1587,7 @@ TEST_F(TextReadTest, Function_DeferType) {
   ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
   Read(ReadFunction, "(func (param f32))"_su8);
   ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64}}, {}});
-  ftm.EndModule();
+  auto type_entries = ftm.EndModule();
 
   ASSERT_EQ(3u, ftm.Size());
   EXPECT_EQ((FunctionType{{VT::I32}, {}}), ftm.Get(0));
@@ -1585,6 +1595,15 @@ TEST_F(TextReadTest, Function_DeferType) {
 
   // Implicitly defined after other explicitly defined types.
   EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT::F32)}, {}}), ftm.Get(2));
+
+  // Generated type entry.
+  ASSERT_EQ(1u, type_entries.size());
+  EXPECT_EQ(
+      (TypeEntry{nullopt,
+                 BoundFunctionType{BoundValueTypeList{BoundValueType{
+                                       nullopt, MakeAt("f32"_su8, VT::F32)}},
+                                   {}}}),
+      type_entries[0]);
 }
 
 TEST_F(TextReadTest, Table) {
@@ -2008,7 +2027,7 @@ TEST_F(TextReadTest, Import_FunctionDeferType) {
   ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
   Read(ReadImport, "(import \"m\" \"n\" (func (param f32)))"_su8);
   ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64}}, {}});
-  ftm.EndModule();
+  auto type_entries = ftm.EndModule();
 
   ASSERT_EQ(3u, ftm.Size());
   EXPECT_EQ((FunctionType{{VT::I32}, {}}), ftm.Get(0));
@@ -2016,6 +2035,15 @@ TEST_F(TextReadTest, Import_FunctionDeferType) {
 
   // Implicitly defined after other explicitly defined types.
   EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT::F32)}, {}}), ftm.Get(2));
+
+  // Generated type entry.
+  ASSERT_EQ(1u, type_entries.size());
+  EXPECT_EQ(
+      (TypeEntry{nullopt,
+                 BoundFunctionType{BoundValueTypeList{BoundValueType{
+                                       nullopt, MakeAt("f32"_su8, VT::F32)}},
+                                   {}}}),
+      type_entries[0]);
 }
 
 TEST_F(TextReadTest, Import_exceptions) {
@@ -2572,6 +2600,39 @@ TEST_F(TextReadTest, Module) {
          MakeAt("(start 0)"_su8,
                 ModuleItem{Start{MakeAt("0"_su8, Var{Index{0}})}})},
      "(type (func)) (func nop) (start 0)"_su8);
+}
+
+TEST_F(TextReadTest, ModuleWithDeferredTypes){
+  OK(ReadModule,
+     Module{
+         MakeAt("(func)"_su8, ModuleItem{Function{}}),
+         MakeAt(
+             "(func (param i32))"_su8,
+             ModuleItem{Function{
+                 FunctionDesc{
+                     nullopt,
+                     nullopt,
+                     MakeAt("(param i32)"_su8,
+                            BoundFunctionType{
+                                BoundValueTypeList{MakeAt(
+                                    "i32"_su8,
+                                    BoundValueType{
+                                        nullopt, MakeAt("i32"_su8, VT::I32)})},
+                                {}}),
+                 },
+                 {},
+                 {},
+                 {}}}),
+
+         // The deferred type entries.
+         ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}},
+         ModuleItem{TypeEntry{
+             nullopt,
+             BoundFunctionType{BoundValueTypeList{BoundValueType{
+                                   nullopt, MakeAt("i32"_su8, VT::I32)}},
+                               {}}}},
+     },
+     "(func) (func (param i32))"_su8);
 }
 
 TEST_F(TextReadTest, ModuleVarOpt) {

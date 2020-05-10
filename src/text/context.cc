@@ -60,8 +60,8 @@ void Context::EndBlock() {
   label_name_stack.pop_back();
 }
 
-void Context::EndModule() {
-  function_type_map.EndModule();
+auto Context::EndModule() -> TypeEntryList {
+  return function_type_map.EndModule();
 }
 
 NameMap::NameMap(NameMapKind kind) : kind_{kind} {}
@@ -145,10 +145,15 @@ void FunctionTypeMap::Use(OptAt<Var> type_use, BoundFunctionType type) {
   return Use(FunctionTypeUse{type_use, ToFunctionType(type)});
 }
 
-void FunctionTypeMap::EndModule() {
+auto FunctionTypeMap::EndModule() -> TypeEntryList {
+  TypeEntryList type_entries;
+  std::transform(deferred_list_.begin(), deferred_list_.end(),
+                 std::back_inserter(type_entries), ToTypeEntry);
+
   list_.insert(list_.end(), std::make_move_iterator(deferred_list_.begin()),
                std::make_move_iterator(deferred_list_.end()));
   deferred_list_.clear();
+  return type_entries;
 }
 
 optional<Index> FunctionTypeMap::Find(FunctionType type) {
@@ -174,15 +179,23 @@ optional<FunctionType> FunctionTypeMap::Get(Index index) const {
   return list_[index];
 }
 
+// static
 FunctionType FunctionTypeMap::ToFunctionType(BoundFunctionType bound_type) {
-  FunctionType unbound_type;
-  for (auto &param : bound_type.params) {
-    unbound_type.params.push_back(param->type);
+  ValueTypeList unbound_params;
+  for (auto param : bound_type.params) {
+    unbound_params.push_back(param->type);
   }
-  for (auto &result : bound_type.results) {
-    unbound_type.results.push_back(result);
+  return FunctionType{unbound_params, bound_type.results};
+}
+
+// static
+TypeEntry FunctionTypeMap::ToTypeEntry(FunctionType unbound_type) {
+  BoundValueTypeList bound_params;
+  for (auto param : unbound_type.params) {
+    bound_params.push_back(BoundValueType{nullopt, param});
   }
-  return unbound_type;
+  return TypeEntry{nullopt,
+                   BoundFunctionType{bound_params, unbound_type.results}};
 }
 
 }  // namespace text

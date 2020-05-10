@@ -1715,7 +1715,11 @@ auto ReadModule(Tokenizer& tokenizer, Context& context) -> Module {
   while (IsModuleItem(tokenizer)) {
     module.push_back(ReadModuleItem(tokenizer, context));
   }
-  context.EndModule();
+
+  auto deferred_types = context.EndModule();
+  for (auto& type_entry : deferred_types) {
+    module.push_back(ModuleItem{type_entry});
+  }
   return module;
 }
 

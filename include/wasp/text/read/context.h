@@ -58,6 +58,8 @@ struct NameMap {
 
 using LabelNameStack = std::vector<OptAt<BindVar>>;
 
+using TypeEntryList = std::vector<TypeEntry>;
+
 // In all places function types are used, they can be specified with:
 //   a type use:    `(type $var)`
 //   or explicitly: `(param i32) (result i32)`
@@ -78,7 +80,8 @@ struct FunctionTypeMap {
   void Define(BoundFunctionType);
   void Use(FunctionTypeUse);
   void Use(OptAt<Var> type_use, BoundFunctionType);
-  void EndModule();
+  // Returns the deferred type entries.
+  auto EndModule() -> TypeEntryList;
 
   optional<Index> Find(FunctionType);
   optional<Index> Find(BoundFunctionType);
@@ -87,7 +90,8 @@ struct FunctionTypeMap {
   optional<FunctionType> Get(Index) const;
 
  private:
-  FunctionType ToFunctionType(BoundFunctionType);
+  static FunctionType ToFunctionType(BoundFunctionType);
+  static TypeEntry ToTypeEntry(FunctionType);
 
   List list_;
   List deferred_list_;
@@ -100,7 +104,7 @@ struct Context {
   void BeginModule();    // Reset all module-specific context.
   void BeginFunction();  // Reset all function-specific context.
   void EndBlock();
-  void EndModule();
+  auto EndModule() -> TypeEntryList;
 
   Features features;
   Errors& errors;
