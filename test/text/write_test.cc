@@ -47,15 +47,15 @@ void ExpectWrite(string_view expected, const T& value, Args&&... args) {
 }  // namespace
 
 TEST(TextWriteTest, Var) {
-  ExpectWrite("0"_sv, Var{u32{}});
+  ExpectWrite("0"_sv, Var{Index{}});
   ExpectWrite("$a"_sv, Var{"$a"_sv});
 }
 
 TEST(TextWriteTest, VarList) {
   ExpectWrite("0 $a 1 $b"_sv, VarList{
-                                  Var{u32{}},
+                                  Var{Index{}},
                                   Var{"$a"_sv},
-                                  Var{u32{1}},
+                                  Var{Index{1}},
                                   Var{"$b"_sv},
                               });
 }
@@ -99,7 +99,7 @@ TEST(TextWriteTest, FunctionType) {
 
 TEST(TextWriteTest, FunctionTypeUse) {
   ExpectWrite(""_sv, FunctionTypeUse{});
-  ExpectWrite("(type 0)"_sv, FunctionTypeUse{Var{u32{0}}, {}});
+  ExpectWrite("(type 0)"_sv, FunctionTypeUse{Var{Index{0}}, {}});
   ExpectWrite("(result i32)"_sv,
               FunctionTypeUse{nullopt, FunctionType{
                                            ValueTypeList{},
@@ -116,7 +116,7 @@ TEST(TextWriteTest, BlockImmediate) {
   ExpectWrite(""_sv, BlockImmediate{});
   ExpectWrite("$l"_sv, BlockImmediate{"$l"_sv, {}});
   ExpectWrite("$l (type 0)"_sv,
-              BlockImmediate{"$l"_sv, FunctionTypeUse{Var{u32{0}}, {}}});
+              BlockImmediate{"$l"_sv, FunctionTypeUse{Var{Index{0}}, {}}});
 }
 
 TEST(TextWriteTest, BrOnExnImmediate) {
@@ -127,11 +127,11 @@ TEST(TextWriteTest, BrOnExnImmediate) {
 }
 
 TEST(TextWriteTest, BrTableImmediate) {
-  ExpectWrite("0"_sv, BrTableImmediate{{}, Var{u32{0}}});
+  ExpectWrite("0"_sv, BrTableImmediate{{}, Var{Index{0}}});
   ExpectWrite("0 1 2 $def"_sv, BrTableImmediate{VarList{
-                                                    Var{u32{0}},
-                                                    Var{u32{1}},
-                                                    Var{u32{2}},
+                                                    Var{Index{0}},
+                                                    Var{Index{1}},
+                                                    Var{Index{2}},
                                                 },
                                                 Var{"$def"_sv}});
 }
@@ -140,7 +140,7 @@ TEST(TextWriteTest, CallIndirectImmediate) {
   ExpectWrite("$t"_sv, CallIndirectImmediate{Var{"$t"_sv}, {}});
   ExpectWrite(
       "$t (type 0)"_sv,
-      CallIndirectImmediate{Var{"$t"_sv}, FunctionTypeUse{Var{u32{0}}, {}}});
+      CallIndirectImmediate{Var{"$t"_sv}, FunctionTypeUse{Var{Index{0}}, {}}});
 }
 
 TEST(TextWriteTest, CopyImmediate) {
@@ -195,26 +195,27 @@ TEST(TextWriteTest, Instruction) {
   ExpectWrite(
       "block $l (type 0) (param i32)"_sv,
       I{O::Block,
-        BlockImmediate{
-            "$l"_sv,
-            FunctionTypeUse{Var{u32{0}}, FunctionType{{ValueType::I32}, {}}}}});
+        BlockImmediate{"$l"_sv,
+                       FunctionTypeUse{Var{Index{0}},
+                                       FunctionType{{ValueType::I32}, {}}}}});
 
   // BrOnExnImmediate
   ExpectWrite("br_on_exn $l $e"_sv,
               I{O::BrOnExn, BrOnExnImmediate{Var{"$l"_sv}, Var{"$e"_sv}}});
 
   // BrTableImmediate
-  ExpectWrite("br_table 0 1 $d"_sv,
-              I{O::BrTable, BrTableImmediate{VarList{Var{u32{0}}, Var{u32{1}}},
-                                             Var{"$d"_sv}}});
+  ExpectWrite(
+      "br_table 0 1 $d"_sv,
+      I{O::BrTable,
+        BrTableImmediate{VarList{Var{Index{0}}, Var{Index{1}}}, Var{"$d"_sv}}});
 
   // CallIndirectImmediate
-  ExpectWrite(
-      "call_indirect $t (type 0) (param i32)"_sv,
-      I{O::CallIndirect,
-        CallIndirectImmediate{
-            Var{"$t"_sv},
-            FunctionTypeUse{Var{u32{0}}, FunctionType{{ValueType::I32}, {}}}}});
+  ExpectWrite("call_indirect $t (type 0) (param i32)"_sv,
+              I{O::CallIndirect,
+                CallIndirectImmediate{
+                    Var{"$t"_sv},
+                    FunctionTypeUse{Var{Index{0}},
+                                    FunctionType{{ValueType::I32}, {}}}}});
 
   // CopyImmediate
   ExpectWrite("table.copy $d $s"_sv,
@@ -314,7 +315,7 @@ TEST(TextWriteTest, FunctionDesc) {
 
   ExpectWrite("func $f"_sv, FunctionDesc{"$f"_sv, nullopt, {}});
 
-  ExpectWrite("func (type 0)"_sv, FunctionDesc{nullopt, Var{u32{0}}, {}});
+  ExpectWrite("func (type 0)"_sv, FunctionDesc{nullopt, Var{Index{0}}, {}});
 
   ExpectWrite("func (param i32)"_sv,
               FunctionDesc{nullopt, nullopt,
@@ -323,7 +324,7 @@ TEST(TextWriteTest, FunctionDesc) {
                                              {}}});
 
   ExpectWrite("func $f (type 0) (param i32)"_sv,
-              FunctionDesc{"$f"_sv, Var{u32{0}},
+              FunctionDesc{"$f"_sv, Var{Index{0}},
                            BoundFunctionType{BoundValueTypeList{BoundValueType{
                                                  nullopt, ValueType::I32}},
                                              {}}});
@@ -380,14 +381,15 @@ TEST(TextWriteTest, GlobalDesc) {
 TEST(TextWriteTest, EventType) {
   ExpectWrite(""_sv, EventType{});
   ExpectWrite("(type 0)"_sv, EventType{EventAttribute::Exception,
-                                       FunctionTypeUse{Var{u32{0}}, {}}});
+                                       FunctionTypeUse{Var{Index{0}}, {}}});
 }
 
 TEST(TextWriteTest, EventDesc) {
   ExpectWrite("event"_sv, EventDesc{nullopt, EventType{}});
-  ExpectWrite("event $e (type 0)"_sv,
-              EventDesc{"$e"_sv, EventType{EventAttribute::Exception,
-                                           FunctionTypeUse{Var{u32{0}}, {}}}});
+  ExpectWrite(
+      "event $e (type 0)"_sv,
+      EventDesc{"$e"_sv, EventType{EventAttribute::Exception,
+                                   FunctionTypeUse{Var{Index{0}}, {}}}});
 }
 
 TEST(TextWriteTest, Import) {
@@ -472,7 +474,7 @@ TEST(TextWriteTest, Function) {
 
   // Everything for defined Function.
   ExpectWrite("(func $f (export \"m\") (type 0)\n  (local i32)\n  nop)"_sv,
-              Function{FunctionDesc{"$f"_sv, Var{u32{0}}, {}},
+              Function{FunctionDesc{"$f"_sv, Var{Index{0}}, {}},
                        BoundValueTypeList{
                            BoundValueType{nullopt, ValueType::I32},
                        },
@@ -499,14 +501,15 @@ TEST(TextWriteTest, FunctionInlineImport) {
 }
 
 TEST(TextWriteTest, ElementExpressionList) {
-  ExpectWrite("(ref.null) (ref.func 0)"_sv, ElementExpressionList{
-                                                ElementExpression{
-                                                    I{O::RefNull},
-                                                },
-                                                ElementExpression{
-                                                    I{O::RefFunc, Var{u32{0}}},
-                                                },
-                                            });
+  ExpectWrite("(ref.null) (ref.func 0)"_sv,
+              ElementExpressionList{
+                  ElementExpression{
+                      I{O::RefNull},
+                  },
+                  ElementExpression{
+                      I{O::RefFunc, Var{Index{0}}},
+                  },
+              });
 }
 
 TEST(TextWriteTest, ElementListWithExpressions) {
@@ -525,8 +528,8 @@ TEST(TextWriteTest, ElementListWithVars) {
 
   ExpectWrite("func 0 1"_sv,
               ElementListWithVars{ExternalKind::Function, VarList{
-                                                              Var{u32{0}},
-                                                              Var{u32{1}},
+                                                              Var{Index{0}},
+                                                              Var{Index{1}},
                                                           }});
 }
 
@@ -534,8 +537,9 @@ TEST(TextWriteTest, ElementList) {
   ExpectWrite("funcref"_sv, ElementList{ElementListWithExpressions{
                                 ReferenceType::Funcref, {}}});
 
-  ExpectWrite("func 0"_sv, ElementList{ElementListWithVars{
-                               ExternalKind::Function, VarList{Var{u32{0}}}}});
+  ExpectWrite("func 0"_sv,
+              ElementList{ElementListWithVars{ExternalKind::Function,
+                                              VarList{Var{Index{0}}}}});
 }
 
 TEST(TextWriteTest, Table) {

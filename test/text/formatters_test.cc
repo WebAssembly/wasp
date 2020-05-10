@@ -75,13 +75,14 @@ TEST(TextFormattersTest, Token) {
 }
 
 TEST(TextFormattersTest, Var) {
-  EXPECT_EQ(R"(0)", format("{}", Var{u32{0}}));
+  EXPECT_EQ(R"(0)", format("{}", Var{Index{0}}));
   EXPECT_EQ(R"($a)", format("{}", Var{"$a"_sv}));
 }
 
 TEST(TextFormattersTest, VarList) {
-  EXPECT_EQ(R"([0 1 2 $a])", format("{}", VarList{Var{u32{0}}, Var{u32{1}},
-                                                  Var{u32{2}}, Var{"$a"_sv}}));
+  EXPECT_EQ(R"([0 1 2 $a])",
+            format("{}", VarList{Var{Index{0}}, Var{Index{1}}, Var{Index{2}},
+                                 Var{"$a"_sv}}));
 }
 
 TEST(TextFormattersTest, ValueTypeList) {
@@ -134,8 +135,8 @@ TEST(TextFormattersTest, BrTableImmediate) {
   EXPECT_EQ(R"({targets [], default_target $b})",
             format("{}", BrTableImmediate{{}, Var{"$b"_sv}}));
   EXPECT_EQ(R"({targets [0 1 2 $a], default_target $b})",
-            format("{}", BrTableImmediate{VarList{Var{u32{0}}, Var{u32{1}},
-                                                  Var{u32{2}}, Var{"$a"_sv}},
+            format("{}", BrTableImmediate{VarList{Var{Index{0}}, Var{Index{1}},
+                                                  Var{Index{2}}, Var{"$a"_sv}},
                                           Var{"$b"_sv}}));
 }
 
@@ -224,7 +225,7 @@ TEST(TextFormattersTest, Instruction) {
       format("{}", Instruction{Opcode::V8X16Shuffle, ShuffleImmediate{}}));
 
   EXPECT_EQ(R"({opcode local.get, immediate var 0})",
-            format("{}", Instruction{Opcode::LocalGet, Var{u32{0}}}));
+            format("{}", Instruction{Opcode::LocalGet, Var{Index{0}}}));
 }
 
 TEST(TextFormattersTest, InstructionList) {
@@ -399,11 +400,11 @@ TEST(TextFormattersTest, Global) {
 TEST(TextFormattersTest, Export) {
   EXPECT_EQ(R"({kind func, name {text $a, byte_size 1}, var 0})",
             format("{}", Export{ExternalKind::Function, Text{"$a"_sv, 1},
-                                Var{u32{0}}}));
+                                Var{Index{0}}}));
 }
 
 TEST(TextFormattersTest, Start) {
-  EXPECT_EQ(R"({var 0})", format("{}", Start{Var{u32{0}}}));
+  EXPECT_EQ(R"({var 0})", format("{}", Start{Var{Index{0}}}));
 }
 
 TEST(TextFormattersTest, ElementSegment) {
@@ -467,10 +468,10 @@ TEST(TextFormattersTest, ModuleItem) {
   // Export
   EXPECT_EQ(R"(export {kind func, name {text $a, byte_size 1}, var 0})",
             format("{}", ModuleItem{Export{ExternalKind::Function,
-                                           Text{"$a"_sv, 1}, Var{u32{0}}}}));
+                                           Text{"$a"_sv, 1}, Var{Index{0}}}}));
 
   // Start
-  EXPECT_EQ(R"(start {var 0})", format("{}", ModuleItem{Start{Var{u32{0}}}}));
+  EXPECT_EQ(R"(start {var 0})", format("{}", ModuleItem{Start{Var{Index{0}}}}));
 
   // ElementSegment
   EXPECT_EQ(
@@ -497,7 +498,7 @@ TEST(TextFormattersTest, Module) {
       R"([type {bind_var $a, type {params [], results []}} start {var 0}])",
       format("{}", Module{
                        ModuleItem{TypeEntry{"$a"_sv, BoundFunctionType{}}},
-                       ModuleItem{Start{Var{u32{0}}}},
+                       ModuleItem{Start{Var{Index{0}}}},
                    }));
 }
 

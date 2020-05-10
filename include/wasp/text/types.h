@@ -33,7 +33,7 @@
 namespace wasp {
 namespace text {
 
-using Var = variant<u32, string_view>;
+using Var = variant<Index, string_view>;
 using VarList = std::vector<At<Var>>;
 using BindVar = string_view;
 

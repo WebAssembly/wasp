@@ -77,15 +77,15 @@ TEST_F(TextResolveTest, FunctionTypeUse) {
       BoundFunctionType{{BVT{nullopt, VT::F32}}, {}});
 
   // Resolve the variable name to an index, and populate the function type.
-  OK(FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}},
+  OK(FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32}, {}}},
      FunctionTypeUse{Var{"$a"_sv}, {}});
 
   // Just populate the function type.
-  OK(FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}},
-     FunctionTypeUse{Var{u32{0}}, {}});
+  OK(FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32}, {}}},
+     FunctionTypeUse{Var{Index{0}}, {}});
 
   // Populate the variable when not specified.
-  OK(FunctionTypeUse{Var{u32{1}}, FunctionType{{VT::F32}, {}}},
+  OK(FunctionTypeUse{Var{Index{1}}, FunctionType{{VT::F32}, {}}},
      FunctionTypeUse{nullopt, FunctionType{{VT::F32}, {}}});
 }
 
@@ -94,8 +94,8 @@ TEST_F(TextResolveTest, BlockImmediate) {
   context.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
 
-  OK(BlockImmediate{nullopt,
-                    FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}},
+  OK(BlockImmediate{nullopt, FunctionTypeUse{Var{Index{0}},
+                                             FunctionType{{VT::I32}, {}}}},
      BlockImmediate{nullopt, FunctionTypeUse{Var{"$a"_sv}, {}}});
 }
 
@@ -116,7 +116,7 @@ TEST_F(TextResolveTest, BrOnExnImmediate) {
   context.label_names.NewBound("$l");
   context.event_names.NewBound("$e");
 
-  OK(BrOnExnImmediate{Var{u32{0}}, Var{u32{0}}},
+  OK(BrOnExnImmediate{Var{Index{0}}, Var{Index{0}}},
      BrOnExnImmediate{Var{"$l"_sv}, Var{"$e"_sv}});
 }
 
@@ -127,15 +127,15 @@ TEST_F(TextResolveTest, BrTableImmediate) {
   context.label_names.NewBound("$l3");
 
   OK(BrTableImmediate{{
-                          Var{u32{3}},
-                          Var{u32{2}},
-                          Var{u32{1}},
+                          Var{Index{3}},
+                          Var{Index{2}},
+                          Var{Index{1}},
                       },
-                      Var{u32{0}}},
+                      Var{Index{0}}},
      BrTableImmediate{{
                           Var{"$l0"_sv},
                           Var{"$l1"_sv},
-                          Var{u32{1}},
+                          Var{Index{1}},
                       },
                       Var{"$l3"_sv}});
 }
@@ -146,8 +146,8 @@ TEST_F(TextResolveTest, CallIndirectImmediate) {
   context.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
 
-  OK(CallIndirectImmediate{Var{u32{0}},
-                           FunctionTypeUse{Var{u32{0}},
+  OK(CallIndirectImmediate{Var{Index{0}},
+                           FunctionTypeUse{Var{Index{0}},
                                            FunctionType{{VT::I32}, {}}}},
      CallIndirectImmediate{Var{"$t"_sv}, FunctionTypeUse{Var{"$a"_sv}, {}}});
 }
@@ -187,14 +187,14 @@ TEST_F(TextResolveTest, Instruction_BlockImmediate) {
       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
 
   OK(I{O::Block,
-       BlockImmediate{
-           nullopt, FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}}},
+       BlockImmediate{nullopt, FunctionTypeUse{Var{Index{0}},
+                                               FunctionType{{VT::I32}, {}}}}},
      I{O::Block, BlockImmediate{nullopt, FunctionTypeUse{Var{"$a"_sv}, {}}}});
 
   // Populate the type use.
   OK(I{O::Block,
-       BlockImmediate{
-           nullopt, FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}}},
+       BlockImmediate{nullopt, FunctionTypeUse{Var{Index{0}},
+                                               FunctionType{{VT::I32}, {}}}}},
      I{O::Block,
        BlockImmediate{nullopt,
                       FunctionTypeUse{nullopt, FunctionType{{VT::I32}, {}}}}});
@@ -204,7 +204,7 @@ TEST_F(TextResolveTest, Instruction_BrOnExnImmediate) {
   context.label_names.NewBound("$l");
   context.event_names.NewBound("$e");
 
-  OK(I{O::BrOnExn, BrOnExnImmediate{Var{u32{0}}, Var{u32{0}}}},
+  OK(I{O::BrOnExn, BrOnExnImmediate{Var{Index{0}}, Var{Index{0}}}},
      I{O::BrOnExn, BrOnExnImmediate{Var{"$l"_sv}, Var{"$e"_sv}}});
 }
 
@@ -212,7 +212,7 @@ TEST_F(TextResolveTest, Instruction_BrTableImmediate) {
   context.label_names.NewBound("$l0");
   context.label_names.NewBound("$l1");
 
-  OK(I{O::BrTable, BrTableImmediate{{Var{u32{1}}}, Var{u32{0}}}},
+  OK(I{O::BrTable, BrTableImmediate{{Var{Index{1}}}, Var{Index{0}}}},
      I{O::BrTable, BrTableImmediate{{Var{"$l0"_sv}}, Var{"$l1"_sv}}});
 }
 
@@ -224,16 +224,16 @@ TEST_F(TextResolveTest, Instruction_CallIndirectImmediate) {
 
   OK(I{O::CallIndirect,
        CallIndirectImmediate{
-           Var{u32{0}},
-           FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}}},
+           Var{Index{0}},
+           FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32}, {}}}}},
      I{O::CallIndirect,
        CallIndirectImmediate{Var{"$t"_sv}, FunctionTypeUse{Var{"$a"_sv}, {}}}});
 
   // Populate the type use.
   OK(I{O::CallIndirect,
        CallIndirectImmediate{
-           Var{u32{0}},
-           FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}}},
+           Var{Index{0}},
+           FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32}, {}}}}},
      I{O::CallIndirect,
        CallIndirectImmediate{
            Var{"$t"_sv},
@@ -244,7 +244,7 @@ TEST_F(TextResolveTest, Instruction_CopyImmediate_Table) {
   context.table_names.NewBound("$t0");
   context.table_names.NewBound("$t1");
 
-  OK(I{O::TableCopy, CopyImmediate{Var{u32{0}}, Var{u32{1}}}},
+  OK(I{O::TableCopy, CopyImmediate{Var{Index{0}}, Var{Index{1}}}},
      I{O::TableCopy, CopyImmediate{Var{"$t0"_sv}, Var{"$t1"_sv}}});
 }
 
@@ -252,7 +252,7 @@ TEST_F(TextResolveTest, Instruction_CopyImmediate_Memory) {
   context.memory_names.NewBound("$m0");
   context.memory_names.NewBound("$m1");
 
-  OK(I{O::MemoryCopy, CopyImmediate{Var{u32{0}}, Var{u32{1}}}},
+  OK(I{O::MemoryCopy, CopyImmediate{Var{Index{0}}, Var{Index{1}}}},
      I{O::MemoryCopy, CopyImmediate{Var{"$m0"_sv}, Var{"$m1"_sv}}});
 }
 
@@ -260,67 +260,67 @@ TEST_F(TextResolveTest, Instruction_InitImmediate_Table) {
   context.element_segment_names.NewBound("$e");
   context.table_names.NewBound("$t");
 
-  OK(I{O::TableInit, InitImmediate{Var{u32{0}}, Var{u32{0}}}},
+  OK(I{O::TableInit, InitImmediate{Var{Index{0}}, Var{Index{0}}}},
      I{O::TableInit, InitImmediate{Var{"$e"_sv}, Var{"$t"_sv}}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Function) {
   context.function_names.NewBound("$f");
 
-  OK(I{O::Call, Var{u32{0}}}, I{O::Call, Var{"$f"_sv}});
-  OK(I{O::ReturnCall, Var{u32{0}}}, I{O::ReturnCall, Var{"$f"_sv}});
-  OK(I{O::RefFunc, Var{u32{0}}}, I{O::RefFunc, Var{"$f"_sv}});
+  OK(I{O::Call, Var{Index{0}}}, I{O::Call, Var{"$f"_sv}});
+  OK(I{O::ReturnCall, Var{Index{0}}}, I{O::ReturnCall, Var{"$f"_sv}});
+  OK(I{O::RefFunc, Var{Index{0}}}, I{O::RefFunc, Var{"$f"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Table) {
   context.table_names.NewBound("$t");
 
-  OK(I{O::TableFill, Var{u32{0}}}, I{O::TableFill, Var{"$t"_sv}});
-  OK(I{O::TableGet, Var{u32{0}}}, I{O::TableGet, Var{"$t"_sv}});
-  OK(I{O::TableGrow, Var{u32{0}}}, I{O::TableGrow, Var{"$t"_sv}});
-  OK(I{O::TableSet, Var{u32{0}}}, I{O::TableSet, Var{"$t"_sv}});
-  OK(I{O::TableSize, Var{u32{0}}}, I{O::TableSize, Var{"$t"_sv}});
+  OK(I{O::TableFill, Var{Index{0}}}, I{O::TableFill, Var{"$t"_sv}});
+  OK(I{O::TableGet, Var{Index{0}}}, I{O::TableGet, Var{"$t"_sv}});
+  OK(I{O::TableGrow, Var{Index{0}}}, I{O::TableGrow, Var{"$t"_sv}});
+  OK(I{O::TableSet, Var{Index{0}}}, I{O::TableSet, Var{"$t"_sv}});
+  OK(I{O::TableSize, Var{Index{0}}}, I{O::TableSize, Var{"$t"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Global) {
   context.global_names.NewBound("$t");
 
-  OK(I{O::GlobalGet, Var{u32{0}}}, I{O::GlobalGet, Var{"$t"_sv}});
-  OK(I{O::GlobalSet, Var{u32{0}}}, I{O::GlobalSet, Var{"$t"_sv}});
+  OK(I{O::GlobalGet, Var{Index{0}}}, I{O::GlobalGet, Var{"$t"_sv}});
+  OK(I{O::GlobalSet, Var{Index{0}}}, I{O::GlobalSet, Var{"$t"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Event) {
   context.event_names.NewBound("$e");
 
-  OK(I{O::Throw, Var{u32{0}}}, I{O::Throw, Var{"$e"_sv}});
+  OK(I{O::Throw, Var{Index{0}}}, I{O::Throw, Var{"$e"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Element) {
   context.element_segment_names.NewBound("$e");
 
-  OK(I{O::ElemDrop, Var{u32{0}}}, I{O::ElemDrop, Var{"$e"_sv}});
+  OK(I{O::ElemDrop, Var{Index{0}}}, I{O::ElemDrop, Var{"$e"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Data) {
   context.data_segment_names.NewBound("$d");
 
-  OK(I{O::MemoryInit, Var{u32{0}}}, I{O::MemoryInit, Var{"$d"_sv}});
-  OK(I{O::DataDrop, Var{u32{0}}}, I{O::DataDrop, Var{"$d"_sv}});
+  OK(I{O::MemoryInit, Var{Index{0}}}, I{O::MemoryInit, Var{"$d"_sv}});
+  OK(I{O::DataDrop, Var{Index{0}}}, I{O::DataDrop, Var{"$d"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Label) {
   context.label_names.NewBound("$l");
 
-  OK(I{O::BrIf, Var{u32{0}}}, I{O::BrIf, Var{"$l"_sv}});
-  OK(I{O::Br, Var{u32{0}}}, I{O::Br, Var{"$l"_sv}});
+  OK(I{O::BrIf, Var{Index{0}}}, I{O::BrIf, Var{"$l"_sv}});
+  OK(I{O::Br, Var{Index{0}}}, I{O::Br, Var{"$l"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Local) {
   context.local_names.NewBound("$l");
 
-  OK(I{O::LocalGet, Var{u32{0}}}, I{O::LocalGet, Var{"$l"_sv}});
-  OK(I{O::LocalSet, Var{u32{0}}}, I{O::LocalSet, Var{"$l"_sv}});
-  OK(I{O::LocalTee, Var{u32{0}}}, I{O::LocalTee, Var{"$l"_sv}});
+  OK(I{O::LocalGet, Var{Index{0}}}, I{O::LocalGet, Var{"$l"_sv}});
+  OK(I{O::LocalSet, Var{Index{0}}}, I{O::LocalSet, Var{"$l"_sv}});
+  OK(I{O::LocalTee, Var{Index{0}}}, I{O::LocalTee, Var{"$l"_sv}});
 }
 
 TEST_F(TextResolveTest, InstructionList) {
@@ -329,9 +329,9 @@ TEST_F(TextResolveTest, InstructionList) {
 
   OK(
       InstructionList{
-          I{O::LocalGet, Var{u32{0}}},
-          I{O::LocalSet, Var{u32{0}}},
-          I{O::Call, Var{u32{0}}},
+          I{O::LocalGet, Var{Index{0}}},
+          I{O::LocalSet, Var{Index{0}}},
+          I{O::Call, Var{Index{0}}},
       },
       InstructionList{
           I{O::LocalGet, Var{"$l"_sv}},
@@ -347,11 +347,11 @@ TEST_F(TextResolveTest, InstructionList_LabelReuse) {
       InstructionList{
           I{O::Block, BlockImmediate{"$l1"_sv, {}}},
           I{O::Block, BlockImmediate{"$l0"_sv, {}}},
-          I{O::Br, Var{u32{0}}},
-          I{O::Br, Var{u32{1}}},
+          I{O::Br, Var{Index{0}}},
+          I{O::Br, Var{Index{1}}},
           I{O::End},
           I{O::Block, BlockImmediate{"$l0"_sv, {}}},
-          I{O::Br, Var{u32{0}}},
+          I{O::Br, Var{Index{0}}},
           I{O::End},
           I{O::End},
       },
@@ -374,12 +374,12 @@ TEST_F(TextResolveTest, FunctionDesc) {
       BoundFunctionType{{BVT{"$p"_sv, VT::I32}}, {}});
 
   // $p param name is not copied.
-  OK(FunctionDesc{nullopt, Var{u32{0}},
+  OK(FunctionDesc{nullopt, Var{Index{0}},
                   BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}},
      FunctionDesc{nullopt, Var{"$a"_sv}, {}});
 
   // Populate the type use.
-  OK(FunctionDesc{nullopt, Var{u32{0}},
+  OK(FunctionDesc{nullopt, Var{Index{0}},
                   BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}},
      FunctionDesc{nullopt, nullopt,
                   BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}});
@@ -391,12 +391,12 @@ TEST_F(TextResolveTest, EventType) {
       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
 
   OK(EventType{EventAttribute::Exception,
-               FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}},
+               FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32}, {}}}},
      EventType{EventAttribute::Exception, FunctionTypeUse{Var{"$a"_sv}, {}}});
 
   // Populate the type use.
   OK(EventType{EventAttribute::Exception,
-               FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}},
+               FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32}, {}}}},
      EventType{EventAttribute::Exception,
                FunctionTypeUse{nullopt, FunctionType{{VT::I32}, {}}}});
 }
@@ -407,9 +407,9 @@ TEST_F(TextResolveTest, EventDesc) {
       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
 
   OK(EventDesc{nullopt,
-               EventType{
-                   EventAttribute::Exception,
-                   FunctionTypeUse{Var{u32{0}}, FunctionType{{VT::I32}, {}}}}},
+               EventType{EventAttribute::Exception,
+                         FunctionTypeUse{Var{Index{0}},
+                                         FunctionType{{VT::I32}, {}}}}},
      EventDesc{nullopt, EventType{EventAttribute::Exception,
                                   FunctionTypeUse{Var{"$a"_sv}, {}}}});
 }
@@ -421,7 +421,7 @@ TEST_F(TextResolveTest, Import_Function) {
 
   // $p param name is not copied.
   OK(Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-            FunctionDesc{nullopt, Var{u32{0}},
+            FunctionDesc{nullopt, Var{Index{0}},
                          BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}}},
      Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
             FunctionDesc{nullopt, Var{"$a"_sv}, {}}});
@@ -458,7 +458,7 @@ TEST_F(TextResolveTest, Import_Event) {
   OK(Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
             EventDesc{nullopt,
                       EventType{EventAttribute::Exception,
-                                FunctionTypeUse{Var{u32{0}},
+                                FunctionTypeUse{Var{Index{0}},
                                                 FunctionType{{VT::I32}, {}}}}}},
      Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
             EventDesc{nullopt, EventType{EventAttribute::Exception,
@@ -470,10 +470,10 @@ TEST_F(TextResolveTest, Function) {
   context.function_type_map.Define(
       BoundFunctionType{{BVT{"$p"_sv, VT::I32}}, {}});
 
-  OK(Function{FunctionDesc{nullopt, Var{u32{0}},
+  OK(Function{FunctionDesc{nullopt, Var{Index{0}},
                            BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}},
               {BVT{"$l"_sv, VT::I32}},
-              InstructionList{I{O::LocalGet, Var{u32{1}}}},
+              InstructionList{I{O::LocalGet, Var{Index{1}}}},
               {}},
      Function{FunctionDesc{nullopt, Var{"$a"_sv}, {}},
               {BVT{"$l"_sv, VT::I32}},
@@ -487,7 +487,7 @@ TEST_F(TextResolveTest, ElementExpressionList) {
   OK(
       ElementExpressionList{
           ElementExpression{I{O::RefNull}},
-          ElementExpression{I{O::RefFunc, Var{u32{0}}}},
+          ElementExpression{I{O::RefFunc, Var{Index{0}}}},
       },
       ElementExpressionList{
           ElementExpression{I{O::RefNull}},
@@ -503,7 +503,7 @@ TEST_F(TextResolveTest, ElementListWithExpressions) {
           ReferenceType::Funcref,
           ElementExpressionList{
               ElementExpression{I{O::RefNull}},
-              ElementExpression{I{O::RefFunc, Var{u32{0}}}},
+              ElementExpression{I{O::RefFunc, Var{Index{0}}}},
           }},
       ElementListWithExpressions{
           ReferenceType::Funcref,
@@ -519,12 +519,12 @@ TEST_F(TextResolveTest, ElementListWithVars) {
 
   OK(ElementListWithVars{ExternalKind::Function,
                          VarList{
-                             Var{u32{0}},
-                             Var{u32{1}},
+                             Var{Index{0}},
+                             Var{Index{1}},
                          }},
      ElementListWithVars{ExternalKind::Function, VarList{
                                                      Var{"$f"_sv},
-                                                     Var{u32{1}},
+                                                     Var{Index{1}},
                                                  }});
 }
 
@@ -537,7 +537,7 @@ TEST_F(TextResolveTest, ElementList) {
          ReferenceType::Funcref,
          ElementExpressionList{
              ElementExpression{I{O::RefNull}},
-             ElementExpression{I{O::RefFunc, Var{u32{0}}}},
+             ElementExpression{I{O::RefFunc, Var{Index{0}}}},
          }}},
      ElementList{ElementListWithExpressions{
          ReferenceType::Funcref,
@@ -549,12 +549,12 @@ TEST_F(TextResolveTest, ElementList) {
   // Vars.
   OK(ElementList{ElementListWithVars{ExternalKind::Function,
                                      VarList{
-                                         Var{u32{0}},
-                                         Var{u32{1}},
+                                         Var{Index{0}},
+                                         Var{Index{1}},
                                      }}},
      ElementList{ElementListWithVars{ExternalKind::Function, VarList{
                                                                  Var{"$f"_sv},
-                                                                 Var{u32{1}},
+                                                                 Var{Index{1}},
                                                              }}});
 }
 
@@ -566,7 +566,7 @@ TEST_F(TextResolveTest, Table) {
            ElementList{ElementListWithExpressions{
                ReferenceType::Funcref,
                ElementExpressionList{
-                   ElementExpression{I{O::RefFunc, Var{u32{0}}}},
+                   ElementExpression{I{O::RefFunc, Var{Index{0}}}},
                }}}},
      Table{TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}},
            {},
@@ -583,7 +583,7 @@ TEST_F(TextResolveTest, Global) {
   OK(
       Global{
           GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
-          InstructionList{I{O::GlobalGet, Var{u32{0}}}},
+          InstructionList{I{O::GlobalGet, Var{Index{0}}}},
           {},
       },
       Global{
@@ -610,26 +610,26 @@ TEST_F(TextResolveTest, Export) {
   context.event_names.NewUnbound();
   context.event_names.NewBound("$e"_sv);  // 4
 
-  OK(Export{ExternalKind::Function, Text{"\"f\"", 1}, Var{u32{0}}},
+  OK(Export{ExternalKind::Function, Text{"\"f\"", 1}, Var{Index{0}}},
      Export{ExternalKind::Function, Text{"\"f\"", 1}, Var{"$f"_sv}});
 
-  OK(Export{ExternalKind::Table, Text{"\"t\"", 1}, Var{u32{1}}},
+  OK(Export{ExternalKind::Table, Text{"\"t\"", 1}, Var{Index{1}}},
      Export{ExternalKind::Table, Text{"\"t\"", 1}, Var{"$t"_sv}});
 
-  OK(Export{ExternalKind::Memory, Text{"\"m\"", 1}, Var{u32{2}}},
+  OK(Export{ExternalKind::Memory, Text{"\"m\"", 1}, Var{Index{2}}},
      Export{ExternalKind::Memory, Text{"\"m\"", 1}, Var{"$m"_sv}});
 
-  OK(Export{ExternalKind::Global, Text{"\"g\"", 1}, Var{u32{3}}},
+  OK(Export{ExternalKind::Global, Text{"\"g\"", 1}, Var{Index{3}}},
      Export{ExternalKind::Global, Text{"\"g\"", 1}, Var{"$g"_sv}});
 
-  OK(Export{ExternalKind::Event, Text{"\"e\"", 1}, Var{u32{4}}},
+  OK(Export{ExternalKind::Event, Text{"\"e\"", 1}, Var{Index{4}}},
      Export{ExternalKind::Event, Text{"\"e\"", 1}, Var{"$e"_sv}});
 }
 
 TEST_F(TextResolveTest, Start) {
   context.function_names.NewBound("$f"_sv);
 
-  OK(Start{Var{u32{0}}}, Start{Var{"$f"_sv}});
+  OK(Start{Var{Index{0}}}, Start{Var{"$f"_sv}});
 }
 
 TEST_F(TextResolveTest, ElementSegment) {
@@ -637,10 +637,10 @@ TEST_F(TextResolveTest, ElementSegment) {
   context.table_names.NewBound("$t"_sv);
   context.global_names.NewBound("$g"_sv);
 
-  OK(ElementSegment{nullopt, Var{u32{0}},
-                    InstructionList{I{O::GlobalGet, Var{u32{0}}}},
+  OK(ElementSegment{nullopt, Var{Index{0}},
+                    InstructionList{I{O::GlobalGet, Var{Index{0}}}},
                     ElementList{ElementListWithVars{ExternalKind::Function,
-                                                    VarList{Var{u32{0}}}}}},
+                                                    VarList{Var{Index{0}}}}}},
      ElementSegment{nullopt, Var{"$t"_sv},
                     InstructionList{I{O::GlobalGet, Var{"$g"_sv}}},
                     ElementList{ElementListWithVars{ExternalKind::Function,
@@ -652,8 +652,8 @@ TEST_F(TextResolveTest, DataSegment) {
   context.global_names.NewBound("$g"_sv);
 
   OK(DataSegment{nullopt,
-                 Var{u32{0}},
-                 InstructionList{I{O::GlobalGet, Var{u32{0}}}},
+                 Var{Index{0}},
+                 InstructionList{I{O::GlobalGet, Var{Index{0}}}},
                  {}},
      DataSegment{nullopt,
                  Var{"$m"_sv},
@@ -668,7 +668,7 @@ TEST_F(TextResolveTest, Event) {
 
   OK(Event{EventDesc{nullopt,
                      EventType{EventAttribute::Exception,
-                               FunctionTypeUse{Var{u32{0}},
+                               FunctionTypeUse{Var{Index{0}},
                                                FunctionType{{VT::I32}, {}}}}},
            {}},
      Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
@@ -692,17 +692,17 @@ TEST_F(TextResolveTest, ModuleItem) {
   // Import.
   OK(ModuleItem{Import{
          Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-         FunctionDesc{nullopt, Var{u32{0}},
+         FunctionDesc{nullopt, Var{Index{0}},
                       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}}}},
      ModuleItem{Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
                        FunctionDesc{nullopt, Var{"$a"_sv}, {}}}});
 
   // Function.
   OK(ModuleItem{Function{
-         FunctionDesc{nullopt, Var{u32{0}},
+         FunctionDesc{nullopt, Var{Index{0}},
                       BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}},
          {BVT{"$l"_sv, VT::I32}},
-         InstructionList{I{O::LocalGet, Var{u32{1}}}},
+         InstructionList{I{O::LocalGet, Var{Index{1}}}},
          {}}},
      ModuleItem{Function{FunctionDesc{nullopt, Var{"$a"_sv}, {}},
                          {BVT{"$l"_sv, VT::I32}},
@@ -716,7 +716,7 @@ TEST_F(TextResolveTest, ModuleItem) {
          ElementList{ElementListWithExpressions{
              ReferenceType::Funcref,
              ElementExpressionList{
-                 ElementExpression{I{O::RefFunc, Var{u32{0}}}},
+                 ElementExpression{I{O::RefFunc, Var{Index{0}}}},
              }}}}},
      ModuleItem{
          Table{TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}},
@@ -734,7 +734,7 @@ TEST_F(TextResolveTest, ModuleItem) {
   // Global.
   OK(ModuleItem{Global{
          GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
-         InstructionList{I{O::GlobalGet, Var{u32{0}}}},
+         InstructionList{I{O::GlobalGet, Var{Index{0}}}},
          {},
      }},
      ModuleItem{Global{
@@ -744,18 +744,20 @@ TEST_F(TextResolveTest, ModuleItem) {
      }});
 
   // Export.
-  OK(ModuleItem{Export{ExternalKind::Function, Text{"\"f\"", 1}, Var{u32{0}}}},
+  OK(ModuleItem{Export{ExternalKind::Function, Text{"\"f\"", 1},
+                       Var{Index{0}}}},
      ModuleItem{
          Export{ExternalKind::Function, Text{"\"f\"", 1}, Var{"$f"_sv}}});
 
   // Start.
-  OK(ModuleItem{Start{Var{u32{0}}}}, ModuleItem{Start{Var{"$f"_sv}}});
+  OK(ModuleItem{Start{Var{Index{0}}}}, ModuleItem{Start{Var{"$f"_sv}}});
 
   // ElementSegment.
   OK(ModuleItem{ElementSegment{
-         nullopt, Var{u32{0}}, InstructionList{I{O::GlobalGet, Var{u32{0}}}},
+         nullopt, Var{Index{0}},
+         InstructionList{I{O::GlobalGet, Var{Index{0}}}},
          ElementList{ElementListWithVars{ExternalKind::Function,
-                                         VarList{Var{u32{0}}}}}}},
+                                         VarList{Var{Index{0}}}}}}},
      ModuleItem{ElementSegment{
          nullopt, Var{"$t"_sv}, InstructionList{I{O::GlobalGet, Var{"$g"_sv}}},
          ElementList{ElementListWithVars{ExternalKind::Function,
@@ -763,8 +765,8 @@ TEST_F(TextResolveTest, ModuleItem) {
 
   // DataSegment.
   OK(ModuleItem{DataSegment{nullopt,
-                            Var{u32{0}},
-                            InstructionList{I{O::GlobalGet, Var{u32{0}}}},
+                            Var{Index{0}},
+                            InstructionList{I{O::GlobalGet, Var{Index{0}}}},
                             {}}},
      ModuleItem{DataSegment{nullopt,
                             Var{"$m"_sv},
@@ -775,7 +777,7 @@ TEST_F(TextResolveTest, ModuleItem) {
   OK(ModuleItem{Event{
          EventDesc{nullopt,
                    EventType{EventAttribute::Exception,
-                             FunctionTypeUse{Var{u32{0}},
+                             FunctionTypeUse{Var{Index{0}},
                                              FunctionType{{VT::I32}, {}}}}},
          {}}},
      ModuleItem{
