@@ -35,31 +35,14 @@ DataSegment::DataSegment(SpanU8 init)
 
 ElementSegment::ElementSegment(At<Index> table_index,
                                At<ConstantExpression> offset,
-                               At<ExternalKind> kind,
-                               const Indexes& init)
+                               const ElementList& elements)
     : type{SegmentType::Active},
       table_index{table_index},
       offset{offset},
-      desc{IndexesInit{kind, init}} {}
+      elements{elements} {}
 
-ElementSegment::ElementSegment(At<Index> table_index,
-                               At<ConstantExpression> offset,
-                               At<ReferenceType> elemtype,
-                               const ElementExpressions& init)
-    : type{SegmentType::Active},
-      table_index{table_index},
-      offset{offset},
-      desc{ExpressionsInit{elemtype, init}} {}
-
-ElementSegment::ElementSegment(SegmentType type,
-                               At<ExternalKind> kind,
-                               const Indexes& init)
-    : type{type}, desc{IndexesInit{kind, init}} {}
-
-ElementSegment::ElementSegment(SegmentType type,
-                               At<ReferenceType> elemtype,
-                               const ElementExpressions& init)
-    : type{type}, desc{ExpressionsInit{elemtype, init}} {}
+ElementSegment::ElementSegment(SegmentType type, const ElementList& elements)
+    : type{type}, elements{elements} {}
 
 Export::Export(At<ExternalKind> kind, At<string_view> name, At<Index> index)
     : kind{kind}, name{name}, index{index} {}
@@ -152,7 +135,7 @@ Instruction::Instruction(At<Opcode> opcode, At<CopyImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<ShuffleImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
-Instruction::Instruction(At<Opcode> opcode, const ValueTypes& immediate)
+Instruction::Instruction(At<Opcode> opcode, const ValueTypeList& immediate)
     : opcode(opcode), immediate(immediate) {}
 
 Instruction::Instruction(Opcode opcode)
@@ -206,7 +189,7 @@ Instruction::Instruction(Opcode opcode, CopyImmediate immediate)
 Instruction::Instruction(Opcode opcode, ShuffleImmediate immediate)
     : opcode(opcode), immediate(MakeAt(immediate)) {}
 
-Instruction::Instruction(Opcode opcode, const ValueTypes& immediate)
+Instruction::Instruction(Opcode opcode, const ValueTypeList& immediate)
     : opcode(opcode), immediate(immediate) {}
 
 Section::Section(At<KnownSection> contents) : contents{contents} {}

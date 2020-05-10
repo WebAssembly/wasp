@@ -39,9 +39,6 @@ using BindVar = string_view;
 
 using TextList = std::vector<At<Text>>;
 
-// TODO: Rename?
-using ValueTypeList = wasp::ValueTypes;
-
 struct FunctionType {
   ValueTypeList params;
   ValueTypeList results;

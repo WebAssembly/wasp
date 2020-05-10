@@ -624,9 +624,10 @@ TEST(BinaryReadTest, ElementSegment_MVP) {
                      MakeAt("\x41\x01"_su8,
                             Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
                                         MakeAt("\x01"_su8, s32{1})})}),
-          ExternalKind::Function,
-          {MakeAt("\x01"_su8, Index{1}), MakeAt("\x02"_su8, Index{2}),
-           MakeAt("\x03"_su8, Index{3})}},
+          ElementListWithIndexes{
+              ExternalKind::Function,
+              {MakeAt("\x01"_su8, Index{1}), MakeAt("\x02"_su8, Index{2}),
+               MakeAt("\x03"_su8, Index{3})}}},
       "\x00\x41\x01\x0b\x03\x01\x02\x03"_su8);
 }
 
@@ -657,8 +658,9 @@ TEST(BinaryReadTest, ElementSegment_BulkMemory) {
   ExpectRead<ElementSegment>(
       ElementSegment{
           SegmentType::Passive,
-          MakeAt("\x00"_su8, ExternalKind::Function),
-          {MakeAt("\x01"_su8, Index{1}), MakeAt("\x02"_su8, Index{2})}},
+          ElementListWithIndexes{
+              MakeAt("\x00"_su8, ExternalKind::Function),
+              {MakeAt("\x01"_su8, Index{1}), MakeAt("\x02"_su8, Index{2})}}},
       "\x01\x00\x02\x01\x02"_su8, features);
 
   // Flags == 2: Active, table index, index list
@@ -670,8 +672,9 @@ TEST(BinaryReadTest, ElementSegment_BulkMemory) {
                      MakeAt("\x41\x02"_su8,
                             Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
                                         MakeAt("\x02"_su8, s32{2})})}),
-          MakeAt("\x00"_su8, ExternalKind::Function),
-          {MakeAt("\x03"_su8, Index{3}), MakeAt("\x04"_su8, Index{4})}},
+          ElementListWithIndexes{
+              MakeAt("\x00"_su8, ExternalKind::Function),
+              {MakeAt("\x03"_su8, Index{3}), MakeAt("\x04"_su8, Index{4})}}},
       "\x02\x01\x41\x02\x0b\x00\x02\x03\x04"_su8, features);
 
   // Flags == 4: Active (function only), table 0, expression list
@@ -683,28 +686,30 @@ TEST(BinaryReadTest, ElementSegment_BulkMemory) {
                      MakeAt("\x41\x05"_su8,
                             Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
                                         MakeAt("\x05"_su8, s32{5})})}),
-          ReferenceType::Funcref,
-          {MakeAt("\xd2\x06\x0b"_su8,
-                  ElementExpression{
-                      MakeAt("\xd2\x06"_su8,
-                             Instruction{MakeAt("\xd2"_su8, Opcode::RefFunc),
-                                         MakeAt("\x06"_su8, Index{6})})})}},
+          ElementListWithExpressions{
+              ReferenceType::Funcref,
+              {MakeAt("\xd2\x06\x0b"_su8,
+                      ElementExpression{MakeAt(
+                          "\xd2\x06"_su8,
+                          Instruction{MakeAt("\xd2"_su8, Opcode::RefFunc),
+                                      MakeAt("\x06"_su8, Index{6})})})}}},
       "\x04\x41\x05\x0b\x01\xd2\x06\x0b"_su8, features);
 
   // Flags == 5: Passive, expression list
   ExpectRead<ElementSegment>(
       ElementSegment{
           SegmentType::Passive,
-          MakeAt("\x70"_su8, ReferenceType::Funcref),
-          {MakeAt("\xd2\x07\x0b"_su8,
-                  ElementExpression{
-                      MakeAt("\xd2\x07"_su8,
-                             Instruction{MakeAt("\xd2"_su8, Opcode::RefFunc),
-                                         MakeAt("\x07"_su8, Index{7})})}),
-           MakeAt("\xd0\x0b"_su8,
-                  ElementExpression{MakeAt(
-                      "\xd0"_su8,
-                      Instruction{MakeAt("\xd0"_su8, Opcode::RefNull)})})}},
+          ElementListWithExpressions{
+              MakeAt("\x70"_su8, ReferenceType::Funcref),
+              {MakeAt("\xd2\x07\x0b"_su8,
+                      ElementExpression{MakeAt(
+                          "\xd2\x07"_su8,
+                          Instruction{MakeAt("\xd2"_su8, Opcode::RefFunc),
+                                      MakeAt("\x07"_su8, Index{7})})}),
+               MakeAt("\xd0\x0b"_su8,
+                      ElementExpression{MakeAt(
+                          "\xd0"_su8, Instruction{MakeAt(
+                                          "\xd0"_su8, Opcode::RefNull)})})}}},
       "\x05\x70\x02\xd2\x07\x0b\xd0\x0b"_su8, features);
 
   // Flags == 6: Active, table index, expression list
@@ -716,11 +721,12 @@ TEST(BinaryReadTest, ElementSegment_BulkMemory) {
                      MakeAt("\x41\x08"_su8,
                             Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
                                         MakeAt("\x08"_su8, s32{8})})}),
-          MakeAt("\x70"_su8, ReferenceType::Funcref),
-          {MakeAt("\xd0\x0b"_su8,
-                  ElementExpression{MakeAt(
-                      "\xd0"_su8,
-                      Instruction{MakeAt("\xd0"_su8, Opcode::RefNull)})})}},
+          ElementListWithExpressions{
+              MakeAt("\x70"_su8, ReferenceType::Funcref),
+              {MakeAt("\xd0\x0b"_su8,
+                      ElementExpression{MakeAt(
+                          "\xd0"_su8, Instruction{MakeAt(
+                                          "\xd0"_su8, Opcode::RefNull)})})}}},
       "\x06\x02\x41\x08\x0b\x70\x01\xd0\x0b"_su8, features);
 }
 
@@ -1538,8 +1544,8 @@ TEST(BinaryReadTest, Instruction_reference_types) {
 
   ExpectRead<I>(I{MakeAt("\x1c"_su8, O::SelectT),
                   MakeAt("\x02\x7f\x7e"_su8,
-                         ValueTypes{MakeAt("\x7f"_su8, ValueType::I32),
-                                    MakeAt("\x7e"_su8, ValueType::I64)})},
+                         ValueTypeList{MakeAt("\x7f"_su8, ValueType::I32),
+                                       MakeAt("\x7e"_su8, ValueType::I64)})},
                 "\x1c\x02\x7f\x7e"_su8, features);
   ExpectRead<I>(
       I{MakeAt("\x25"_su8, O::TableGet), MakeAt("\x00"_su8, Index{0})},

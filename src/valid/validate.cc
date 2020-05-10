@@ -162,9 +162,9 @@ bool Validate(const At<binary::ElementSegment>& value, Context& context) {
                       context);
   }
   if (value->has_indexes()) {
-    auto&& desc = value->indexes();
+    auto&& elements = value->indexes();
     Index max_index;
-    switch (desc.kind) {
+    switch (elements.kind) {
       case ExternalKind::Function:
         max_index = context.functions.size();
         break;
@@ -182,17 +182,17 @@ bool Validate(const At<binary::ElementSegment>& value, Context& context) {
         break;
     }
 
-    for (auto index : desc.init) {
+    for (auto index : elements.list) {
       valid &= ValidateIndex(index, max_index, "index", context);
-      if (desc.kind == ExternalKind::Function) {
+      if (elements.kind == ExternalKind::Function) {
         context.declared_functions.insert(index);
       }
     }
   } else if (value->has_expressions()) {
-    auto&& desc = value->expressions();
+    auto&& elements = value->expressions();
 
-    for (const auto& expr : desc.init) {
-      valid &= Validate(expr, desc.elemtype, context);
+    for (const auto& expr : elements.list) {
+      valid &= Validate(expr, elements.elemtype, context);
     }
   }
   return valid;

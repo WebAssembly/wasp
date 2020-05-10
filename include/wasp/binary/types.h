@@ -73,7 +73,7 @@ enum class SectionId : u32 {
 #undef WASP_FEATURE_V
 };
 
-using Indexes = std::vector<At<Index>>;
+using IndexList = std::vector<At<Index>>;
 
 // Section
 
@@ -123,7 +123,7 @@ struct BrOnExnImmediate {
 };
 
 struct BrTableImmediate {
-  Indexes targets;
+  IndexList targets;
   At<Index> default_target;
 };
 
@@ -160,7 +160,7 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<InitImmediate>);
   explicit Instruction(At<Opcode>, At<CopyImmediate>);
   explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
-  explicit Instruction(At<Opcode>, const ValueTypes&);
+  explicit Instruction(At<Opcode>, const ValueTypeList&);
 
   // Convenience constructors w/ no Location.
   explicit Instruction(Opcode);
@@ -180,7 +180,7 @@ struct Instruction {
   explicit Instruction(Opcode, InitImmediate);
   explicit Instruction(Opcode, CopyImmediate);
   explicit Instruction(Opcode, ShuffleImmediate);
-  explicit Instruction(Opcode, const ValueTypes&);
+  explicit Instruction(Opcode, const ValueTypeList&);
 
   bool has_no_immediate() const;
   bool has_reference_type_immediate() const;
@@ -199,7 +199,7 @@ struct Instruction {
   bool has_init_immediate() const;
   bool has_copy_immediate() const;
   bool has_shuffle_immediate() const;
-  bool has_value_types_immediate() const;
+  bool has_value_type_list_immediate() const;
 
   auto reference_type_immediate() -> At<ReferenceType>&;
   auto reference_type_immediate() const -> const At<ReferenceType>&;
@@ -233,8 +233,8 @@ struct Instruction {
   auto copy_immediate() const -> const At<CopyImmediate>&;
   auto shuffle_immediate() -> At<ShuffleImmediate>&;
   auto shuffle_immediate() const -> const At<ShuffleImmediate>&;
-  auto value_types_immediate() -> ValueTypes&;
-  auto value_types_immediate() const -> const ValueTypes&;
+  auto value_type_list_immediate() -> ValueTypeList&;
+  auto value_type_list_immediate() const -> const ValueTypeList&;
 
   At<Opcode> opcode;
   variant<monostate,
@@ -254,7 +254,7 @@ struct Instruction {
           At<InitImmediate>,
           At<CopyImmediate>,
           At<ShuffleImmediate>,
-          ValueTypes>
+          ValueTypeList>
       immediate;
 };
 
@@ -262,8 +262,8 @@ struct Instruction {
 // Section 1: Type
 
 struct FunctionType {
-  ValueTypes param_types;
-  ValueTypes result_types;
+  ValueTypeList param_types;
+  ValueTypeList result_types;
 };
 
 struct TypeEntry {
@@ -387,49 +387,43 @@ struct ElementExpression {
   At<Instruction> instruction;
 };
 
-using ElementExpressions = std::vector<At<ElementExpression>>;
+using ElementExpressionList = std::vector<At<ElementExpression>>;
+
+struct ElementListWithExpressions {
+  At<ReferenceType> elemtype;
+  ElementExpressionList list;
+};
+
+struct ElementListWithIndexes {
+  At<ExternalKind> kind;
+  IndexList list;
+};
+
+using ElementList = variant<ElementListWithIndexes, ElementListWithExpressions>;
 
 struct ElementSegment {
-  struct IndexesInit {
-    At<ExternalKind> kind;
-    Indexes init;
-  };
-
-  struct ExpressionsInit {
-    At<ReferenceType> elemtype;
-    ElementExpressions init;
-  };
-
   // Active.
   explicit ElementSegment(At<Index> table_index,
                           At<ConstantExpression> offset,
-                          At<ExternalKind>,
-                          const Indexes& init);
-  explicit ElementSegment(At<Index> table_index,
-                          At<ConstantExpression> offset,
-                          At<ReferenceType>,
-                          const ElementExpressions& init);
+                          const ElementList&);
 
   // Passive or declared.
-  explicit ElementSegment(SegmentType, At<ExternalKind>, const Indexes& init);
-  explicit ElementSegment(SegmentType,
-                          At<ReferenceType>,
-                          const ElementExpressions& init);
+  explicit ElementSegment(SegmentType, const ElementList&);
 
   bool has_indexes() const;
   bool has_expressions() const;
 
-  auto indexes() -> IndexesInit&;
-  auto indexes() const -> const IndexesInit&;
-  auto expressions() -> ExpressionsInit&;
-  auto expressions() const -> const ExpressionsInit&;
+  auto indexes() -> ElementListWithIndexes&;
+  auto indexes() const -> const ElementListWithIndexes&;
+  auto expressions() -> ElementListWithExpressions&;
+  auto expressions() const -> const ElementListWithExpressions&;
 
   auto elemtype() const -> At<ReferenceType>;
 
   SegmentType type;
   OptAt<Index> table_index;
   OptAt<ConstantExpression> offset;
-  variant<IndexesInit, ExpressionsInit> desc;
+  ElementList elements;
 };
 
 // Section 10: Code
@@ -483,46 +477,46 @@ struct Event {
   WASP_V(binary::BlockType)       \
   WASP_V(binary::SectionId)
 
-#define WASP_BINARY_STRUCTS(WASP_V)                                  \
-  WASP_V(binary::BrOnExnImmediate, 2, target, event_index)           \
-  WASP_V(binary::BrTableImmediate, 2, targets, default_target)       \
-  WASP_V(binary::CallIndirectImmediate, 2, index, table_index)       \
-  WASP_V(binary::Code, 2, locals, body)                              \
-  WASP_V(binary::ConstantExpression, 1, instruction)                 \
-  WASP_V(binary::CopyImmediate, 2, src_index, dst_index)             \
-  WASP_V(binary::CustomSection, 2, name, data)                       \
-  WASP_V(binary::DataCount, 1, count)                                \
-  WASP_V(binary::DataSegment, 4, type, memory_index, offset, init)   \
-  WASP_V(binary::ElementExpression, 1, instruction)                  \
-  WASP_V(binary::ElementSegment, 4, type, table_index, offset, desc) \
-  WASP_V(binary::ElementSegment::IndexesInit, 2, kind, init)         \
-  WASP_V(binary::ElementSegment::ExpressionsInit, 2, elemtype, init) \
-  WASP_V(binary::Event, 1, event_type)                               \
-  WASP_V(binary::EventType, 2, attribute, type_index)                \
-  WASP_V(binary::Export, 3, kind, name, index)                       \
-  WASP_V(binary::Expression, 1, data)                                \
-  WASP_V(binary::Function, 1, type_index)                            \
-  WASP_V(binary::FunctionType, 2, param_types, result_types)         \
-  WASP_V(binary::Global, 2, global_type, init)                       \
-  WASP_V(binary::GlobalType, 2, valtype, mut)                        \
-  WASP_V(binary::Import, 3, module, name, desc)                      \
-  WASP_V(binary::InitImmediate, 2, segment_index, dst_index)         \
-  WASP_V(binary::Instruction, 2, opcode, immediate)                  \
-  WASP_V(binary::KnownSection, 2, id, data)                          \
-  WASP_V(binary::Locals, 2, count, type)                             \
-  WASP_V(binary::MemArgImmediate, 2, align_log2, offset)             \
-  WASP_V(binary::Memory, 1, memory_type)                             \
-  WASP_V(binary::MemoryType, 1, limits)                              \
-  WASP_V(binary::Section, 1, contents)                               \
-  WASP_V(binary::Start, 1, func_index)                               \
-  WASP_V(binary::Table, 1, table_type)                               \
-  WASP_V(binary::TableType, 2, limits, elemtype)                     \
+#define WASP_BINARY_STRUCTS(WASP_V)                                      \
+  WASP_V(binary::BrOnExnImmediate, 2, target, event_index)               \
+  WASP_V(binary::BrTableImmediate, 2, targets, default_target)           \
+  WASP_V(binary::CallIndirectImmediate, 2, index, table_index)           \
+  WASP_V(binary::Code, 2, locals, body)                                  \
+  WASP_V(binary::ConstantExpression, 1, instruction)                     \
+  WASP_V(binary::CopyImmediate, 2, src_index, dst_index)                 \
+  WASP_V(binary::CustomSection, 2, name, data)                           \
+  WASP_V(binary::DataCount, 1, count)                                    \
+  WASP_V(binary::DataSegment, 4, type, memory_index, offset, init)       \
+  WASP_V(binary::ElementExpression, 1, instruction)                      \
+  WASP_V(binary::ElementSegment, 4, type, table_index, offset, elements) \
+  WASP_V(binary::ElementListWithIndexes, 2, kind, list)                  \
+  WASP_V(binary::ElementListWithExpressions, 2, elemtype, list)          \
+  WASP_V(binary::Event, 1, event_type)                                   \
+  WASP_V(binary::EventType, 2, attribute, type_index)                    \
+  WASP_V(binary::Export, 3, kind, name, index)                           \
+  WASP_V(binary::Expression, 1, data)                                    \
+  WASP_V(binary::Function, 1, type_index)                                \
+  WASP_V(binary::FunctionType, 2, param_types, result_types)             \
+  WASP_V(binary::Global, 2, global_type, init)                           \
+  WASP_V(binary::GlobalType, 2, valtype, mut)                            \
+  WASP_V(binary::Import, 3, module, name, desc)                          \
+  WASP_V(binary::InitImmediate, 2, segment_index, dst_index)             \
+  WASP_V(binary::Instruction, 2, opcode, immediate)                      \
+  WASP_V(binary::KnownSection, 2, id, data)                              \
+  WASP_V(binary::Locals, 2, count, type)                                 \
+  WASP_V(binary::MemArgImmediate, 2, align_log2, offset)                 \
+  WASP_V(binary::Memory, 1, memory_type)                                 \
+  WASP_V(binary::MemoryType, 1, limits)                                  \
+  WASP_V(binary::Section, 1, contents)                                   \
+  WASP_V(binary::Start, 1, func_index)                                   \
+  WASP_V(binary::Table, 1, table_type)                                   \
+  WASP_V(binary::TableType, 2, limits, elemtype)                         \
   WASP_V(binary::TypeEntry, 1, type)
 
 #define WASP_BINARY_CONTAINERS(WASP_V) \
-  WASP_V(binary::Indexes)              \
+  WASP_V(binary::IndexList)            \
   WASP_V(binary::LocalsList)           \
-  WASP_V(binary::ElementExpressions)
+  WASP_V(binary::ElementExpressionList)
 
 WASP_BINARY_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_BINARY_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)

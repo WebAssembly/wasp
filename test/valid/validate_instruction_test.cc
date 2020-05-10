@@ -102,19 +102,19 @@ class ValidateInstructionTest : public ::testing::Test {
   }
 
   void TestSignature(const Instruction& instruction,
-                     const ValueTypes& param_types,
-                     const ValueTypes& result_types) {
+                     const ValueTypeList& param_types,
+                     const ValueTypeList& result_types) {
     ErrorsNop errors_nop;
     Context valid_context{context};
     Context invalid_context{context, errors_nop};
-    const StackTypes stack_param_types = ToStackTypes(param_types);
-    const StackTypes stack_result_types = ToStackTypes(result_types);
+    const StackTypeList stack_param_types = ToStackTypeList(param_types);
+    const StackTypeList stack_result_types = ToStackTypeList(result_types);
 
     // Test that it is only valid when the full list of parameters is on the
     // stack.
     for (size_t n = 0; n <= param_types.size(); ++n) {
-      const StackTypes stack_param_types_slice(stack_param_types.begin() + n,
-                                               stack_param_types.end());
+      const StackTypeList stack_param_types_slice(stack_param_types.begin() + n,
+                                                  stack_param_types.end());
       valid_context.type_stack = stack_param_types_slice;
       if (n == 0) {
         EXPECT_TRUE(Validate(instruction, valid_context))
@@ -990,8 +990,8 @@ TEST_F(ValidateInstructionTest, Call_Void_Void) {
 }
 
 TEST_F(ValidateInstructionTest, Call_Params) {
-  ValueTypes param_types{VT::I32, VT::F32};
-  ValueTypes result_types{VT::F64};
+  ValueTypeList param_types{VT::I32, VT::F32};
+  ValueTypeList result_types{VT::F64};
   auto index = AddFunction(FunctionType{param_types, result_types});
   TestSignature(I{O::Call, Index{index}}, param_types, result_types);
 }
@@ -1012,8 +1012,8 @@ TEST_F(ValidateInstructionTest, Call_TypeIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, Call_MultiResult) {
-  ValueTypes param_types{VT::F32};
-  ValueTypes result_types{VT::I32, VT::I32};
+  ValueTypeList param_types{VT::F32};
+  ValueTypeList result_types{VT::I32, VT::I32};
   auto index = AddFunction(FunctionType{param_types, result_types});
   TestSignature(I{O::Call, Index{index}}, param_types, result_types);
 }
@@ -1129,12 +1129,12 @@ TEST_F(ValidateInstructionTest, Select_ReferenceTypes) {
 TEST_F(ValidateInstructionTest, SelectT) {
   for (const auto& vt :
        {VT::I32, VT::I64, VT::F32, VT::F64, VT::Externref, VT::Funcref}) {
-    TestSignature(I{O::SelectT, ValueTypes{vt}}, {vt, vt, VT::I32}, {vt});
+    TestSignature(I{O::SelectT, ValueTypeList{vt}}, {vt, vt, VT::I32}, {vt});
   }
 }
 
 TEST_F(ValidateInstructionTest, SelectT_EmptyStack) {
-  Fail(I{O::SelectT, ValueTypes{VT::I64}});
+  Fail(I{O::SelectT, ValueTypeList{VT::I64}});
   ExpectErrors({{"instruction", "Expected stack to contain [i32], got []"},
                 {"instruction", "Expected stack to contain [i64 i64], got []"}},
                errors);
@@ -1144,7 +1144,7 @@ TEST_F(ValidateInstructionTest, SelectT_ConditionTypeMismatch) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, f32{}});
-  Fail(I{O::SelectT, ValueTypes{VT::I32}});
+  Fail(I{O::SelectT, ValueTypeList{VT::I32}});
   ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
               errors);
 }
@@ -1878,7 +1878,7 @@ TEST_F(ValidateInstructionTest, TableGrow) {
 }
 
 TEST_F(ValidateInstructionTest, TableGrow_TableIndexOOB) {
-  context.type_stack = StackTypes{ST::Funcref, ST::I32};
+  context.type_stack = StackTypeList{ST::Funcref, ST::I32};
   Fail(I{O::TableGrow, Index{0}});
   ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
                errors);
@@ -1901,7 +1901,7 @@ TEST_F(ValidateInstructionTest, TableFill) {
 }
 
 TEST_F(ValidateInstructionTest, TableFill_TableIndexOOB) {
-  context.type_stack = StackTypes{ST::I32, ST::Funcref, ST::I32};
+  context.type_stack = StackTypeList{ST::I32, ST::Funcref, ST::I32};
   Fail(I{O::TableFill, Index{0}});
   ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
                errors);

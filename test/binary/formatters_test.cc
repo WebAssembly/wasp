@@ -323,9 +323,9 @@ TEST(BinaryFormattersTest, Instruction) {
                                ShuffleImmediate{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
                                                  11, 12, 13, 14, 15, 16}}}));
   // select (result i32)
-  EXPECT_EQ(
-      R"(select [i32])",
-      format("{}", Instruction{Opcode::SelectT, ValueTypes{ValueType::I32}}));
+  EXPECT_EQ(R"(select [i32])",
+            format("{}", Instruction{Opcode::SelectT,
+                                     ValueTypeList{ValueType::I32}}));
 
   EXPECT_EQ(R"(   i32.add)", format("{:>10s}", Instruction{Opcode::I32Add}));
 }
@@ -369,33 +369,34 @@ TEST(BinaryFormattersTest, Start) {
 TEST(BinaryFormattersTest, ElementSegment_Active) {
   EXPECT_EQ(
       R"({type func, init [2 3], mode active {table 1, offset nop end}})",
-      format("{}", ElementSegment{Index{1u},
-                                  ConstantExpression{Instruction{Opcode::Nop}},
-                                  ExternalKind::Function,
-                                  {2u, 3u}}));
+      format("{}",
+             ElementSegment{
+                 Index{1u}, ConstantExpression{Instruction{Opcode::Nop}},
+                 ElementListWithIndexes{ExternalKind::Function, {2u, 3u}}}));
 
   EXPECT_EQ(R"( {type func, init [], mode active {table 0, offset nop end}})",
             format("{:>60s}",
-                   ElementSegment{Index{0u},
-                                  ConstantExpression{Instruction{Opcode::Nop}},
-                                  ExternalKind::Function,
-                                  {}}));
+                   ElementSegment{
+                       Index{0u}, ConstantExpression{Instruction{Opcode::Nop}},
+                       ElementListWithIndexes{ExternalKind::Function, {}}}));
 }
 
 TEST(BinaryFormattersTest, ElementSegment_Passive) {
   EXPECT_EQ(
       R"({type funcref, init [ref.func 2 end ref.null end], mode passive})",
-      format("{}",
-             ElementSegment{
-                 SegmentType::Passive,
-                 ReferenceType::Funcref,
-                 {ElementExpression{Instruction{Opcode::RefFunc, Index{2u}}},
-                  ElementExpression{Instruction{Opcode::RefNull}}}}));
+      format(
+          "{}",
+          ElementSegment{
+              SegmentType::Passive,
+              ElementListWithExpressions{
+                  ReferenceType::Funcref,
+                  {ElementExpression{Instruction{Opcode::RefFunc, Index{2u}}},
+                   ElementExpression{Instruction{Opcode::RefNull}}}}}));
 
-  EXPECT_EQ(
-      R"( {type funcref, init [], mode passive})",
-      format("{:>38s}",
-             ElementSegment{SegmentType::Passive, ReferenceType::Funcref, {}}));
+  EXPECT_EQ(R"( {type funcref, init [], mode passive})",
+            format("{:>38s}", ElementSegment{SegmentType::Passive,
+                                             ElementListWithExpressions{
+                                                 ReferenceType::Funcref, {}}}));
 }
 
 TEST(BinaryFormattersTest, Code) {

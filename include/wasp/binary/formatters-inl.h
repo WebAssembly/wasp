@@ -316,7 +316,7 @@ typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
     case 14: format_to(buf, " {}", self.init_immediate()); break;
     case 15: format_to(buf, " {}", self.copy_immediate()); break;
     case 16: format_to(buf, " {}", self.shuffle_immediate()); break;
-    case 17: format_to(buf, " {}", self.value_types_immediate()); break;
+    case 17: format_to(buf, " {}", self.value_type_list_immediate()); break;
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
@@ -373,10 +373,10 @@ typename Ctx::iterator formatter<::wasp::binary::ElementSegment>::format(
   memory_buffer buf;
   if (self.has_indexes()) {
     format_to(buf, "{{type {}, init {}, ", self.indexes().kind,
-              self.indexes().init);
+              self.indexes().list);
   } else if (self.has_expressions()) {
     format_to(buf, "{{type {}, init {}, ", self.expressions().elemtype,
-              self.expressions().init);
+              self.expressions().list);
   }
 
   switch (self.type) {
@@ -398,21 +398,21 @@ typename Ctx::iterator formatter<::wasp::binary::ElementSegment>::format(
 
 template <typename Ctx>
 typename Ctx::iterator
-formatter<::wasp::binary::ElementSegment::IndexesInit>::format(
-    const ::wasp::binary::ElementSegment::IndexesInit& self,
+formatter<::wasp::binary::ElementListWithIndexes>::format(
+    const ::wasp::binary::ElementListWithIndexes& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{{type {}, init {}}}", self.kind, self.init);
+  format_to(buf, "{{type {}, list {}}}", self.kind, self.list);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 template <typename Ctx>
 typename Ctx::iterator
-formatter<::wasp::binary::ElementSegment::ExpressionsInit>::format(
-    const ::wasp::binary::ElementSegment::ExpressionsInit& self,
+formatter<::wasp::binary::ElementListWithExpressions>::format(
+    const ::wasp::binary::ElementListWithExpressions& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{{type {}, init {}}}", self.elemtype, self.init);
+  format_to(buf, "{{type {}, init {}}}", self.elemtype, self.list);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 

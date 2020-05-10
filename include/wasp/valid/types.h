@@ -35,7 +35,7 @@ enum class StackType : s32 {
 #undef WASP_FEATURE_V
 };
 
-using StackTypes = std::vector<StackType>;
+using StackTypeList = std::vector<StackType>;
 using StackTypeSpan = span<const StackType>;
 
 inline ValueType ToValueType(ReferenceType type) {
@@ -56,8 +56,8 @@ inline StackType ToStackType(ReferenceType type) {
   return ToStackType(ToValueType(type));
 }
 
-inline StackTypes ToStackTypes(const ValueTypes& value_types) {
-  StackTypes result;
+inline StackTypeList ToStackTypeList(const ValueTypeList& value_types) {
+  StackTypeList result;
   for (auto value_type : value_types) {
     result.push_back(ToStackType(*value_type));
   }

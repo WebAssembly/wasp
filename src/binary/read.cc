@@ -319,12 +319,12 @@ OptAt<ElementSegment> Read(SpanU8* data,
     }
     WASP_TRY_READ(
         init, ReadVector<ElementExpression>(data, context, "initializers"));
+
+    ElementListWithExpressions list{elemtype, init};
     if (decoded.segment_type == SegmentType::Active) {
-      return MakeAt(guard.loc(),
-                    ElementSegment{table_index, *offset, elemtype, init});
+      return MakeAt(guard.loc(), ElementSegment{table_index, *offset, list});
     } else {
-      return MakeAt(guard.loc(),
-                    ElementSegment{decoded.segment_type, elemtype, init});
+      return MakeAt(guard.loc(), ElementSegment{decoded.segment_type, list});
     }
   } else {
     At<ExternalKind> kind{ExternalKind::Function};
@@ -334,12 +334,11 @@ OptAt<ElementSegment> Read(SpanU8* data,
     }
     WASP_TRY_READ(init, ReadVector<Index>(data, context, "initializers"));
 
+    ElementListWithIndexes list{kind, init};
     if (decoded.segment_type == SegmentType::Active) {
-      return MakeAt(guard.loc(),
-                    ElementSegment{table_index, *offset, kind, init});
+      return MakeAt(guard.loc(), ElementSegment{table_index, *offset, list});
     } else {
-      return MakeAt(guard.loc(),
-                    ElementSegment{decoded.segment_type, kind, init});
+      return MakeAt(guard.loc(), ElementSegment{decoded.segment_type, list});
     }
   }
 }
@@ -1021,7 +1020,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
       return MakeAt(guard.loc(), Instruction{opcode, immediate});
     }
 
-    // ValueTypes immediate.
+    // ValueTypeList immediate.
     case Opcode::SelectT: {
       WASP_TRY_READ(immediate, ReadVector<ValueType>(data, context, "types"));
       return MakeAt(guard.loc(), Instruction{opcode, immediate});

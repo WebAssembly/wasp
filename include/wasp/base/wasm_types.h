@@ -46,7 +46,7 @@ enum class ValueType : s32 {
 #undef WASP_FEATURE_V
 };
 
-using ValueTypes = std::vector<At<ValueType>>;
+using ValueTypeList = std::vector<At<ValueType>>;
 
 enum class ReferenceType : s32 {
 #define WASP_V(val, Name, str) Name,
@@ -114,7 +114,7 @@ using ShuffleImmediate = std::array<u8, 16>;
 
 #define WASP_BASE_WASM_CONTAINERS(WASP_V) \
   WASP_V(ShuffleImmediate)                \
-  WASP_V(ValueTypes)
+  WASP_V(ValueTypeList)
 
 WASP_BASE_WASM_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_BASE_WASM_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)

@@ -511,12 +511,12 @@ void Tool::DoElementSection(LazyElementSection section) {
                                segment.index);
     }
     if (segment.value->has_indexes()) {
-      for (auto item : enumerate(segment.value->indexes().init)) {
+      for (auto item : enumerate(segment.value->indexes().list)) {
         Exec("insert into element_init values ({}, {}, null, {});",
              segment.index, item.index, item.value);
       }
     } else if (segment.value->has_expressions()) {
-      for (auto expr : enumerate(segment.value->expressions().init)) {
+      for (auto expr : enumerate(segment.value->expressions().list)) {
         auto instr = expr.value->instruction;
         auto opcode_val = static_cast<int>(*instr->opcode);
         switch (instr->opcode) {

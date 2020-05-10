@@ -258,8 +258,9 @@ TEST(BinaryLazySectionTest, Element) {
                          "\x41\x00"_su8,
                          Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
                                      MakeAt("\x00"_su8, s32{0})})}),
-              ExternalKind::Function,
-              {MakeAt("\x00"_su8, Index{0}), MakeAt("\x01"_su8, Index{1})}},
+              ElementListWithIndexes{ExternalKind::Function,
+                                     {MakeAt("\x00"_su8, Index{0}),
+                                      MakeAt("\x01"_su8, Index{1})}}},
           ElementSegment{
               MakeAt("\x00"_su8, Index{0}),
               MakeAt("\x41\x02\x0b"_su8,
@@ -267,10 +268,8 @@ TEST(BinaryLazySectionTest, Element) {
                          "\x41\x02"_su8,
                          Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
                                      MakeAt("\x02"_su8, s32{2})})}),
-              ExternalKind::Function,
-              {
-                  MakeAt("\x03"_su8, Index{3}),
-              }},
+              ElementListWithIndexes{ExternalKind::Function,
+                                     {MakeAt("\x03"_su8, Index{3})}}},
       },
       sec);
   ExpectNoErrors(errors);

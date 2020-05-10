@@ -255,13 +255,10 @@ TEST(ValidateTest, ElementSegment_Active) {
   const ElementSegment tests[] = {
       ElementSegment{0,
                      ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
-                     ExternalKind::Function,
-                     {0, 1}},
+                     ElementListWithIndexes{ExternalKind::Function, {0, 1}}},
       ElementSegment{
-          0,
-          ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-          ExternalKind::Function,
-          {}},
+          0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
+          ElementListWithIndexes{ExternalKind::Function, {}}},
   };
 
   for (const auto& element_segment : tests) {
@@ -275,12 +272,14 @@ TEST(ValidateTest, ElementSegment_Passive) {
   context.functions.push_back(Function{0});
 
   const ElementSegment tests[] = {
-      ElementSegment{SegmentType::Passive, ReferenceType::Funcref, {}},
+      ElementSegment{SegmentType::Passive,
+                     ElementListWithExpressions{ReferenceType::Funcref, {}}},
       ElementSegment{
           SegmentType::Passive,
-          ReferenceType::Funcref,
-          {ElementExpression{Instruction{Opcode::RefNull}},
-           ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}},
+          ElementListWithExpressions{
+              ReferenceType::Funcref,
+              {ElementExpression{Instruction{Opcode::RefNull}},
+               ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}}},
   };
 
   for (const auto& element_segment : tests) {
@@ -294,11 +293,13 @@ TEST(ValidateTest, ElementSegment_Declared) {
   context.functions.push_back(Function{0});
 
   const ElementSegment tests[] = {
-      ElementSegment{SegmentType::Declared, ExternalKind::Function, {0}},
+      ElementSegment{SegmentType::Declared,
+                     ElementListWithIndexes{ExternalKind::Function, {0}}},
       ElementSegment{
           SegmentType::Declared,
-          ReferenceType::Funcref,
-          {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}},
+          ElementListWithExpressions{
+              ReferenceType::Funcref,
+              {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}}},
   };
 
   EXPECT_EQ(0u, context.declared_functions.count(0));
@@ -318,13 +319,10 @@ TEST(ValidateTest, ElementSegment_Active_TypeMismatch) {
   const ElementSegment tests[] = {
       ElementSegment{0,
                      ConstantExpression{Instruction{Opcode::F32Const, f32{0}}},
-                     ExternalKind::Function,
-                     {}},
+                     ElementListWithIndexes{ExternalKind::Function, {}}},
       ElementSegment{
-          0,
-          ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-          ExternalKind::Function,
-          {}},
+          0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
+          ElementListWithIndexes{ExternalKind::Function, {}}},
   };
 
   for (const auto& element_segment : tests) {
@@ -337,10 +335,8 @@ TEST(ValidateTest, ElementSegment_Active_TableIndexOOB) {
   Context context{errors};
   context.functions.push_back(Function{0});
   const ElementSegment element_segment{
-      0,
-      ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
-      ExternalKind::Function,
-      {}};
+      0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
+      ElementListWithIndexes{ExternalKind::Function, {}}};
   EXPECT_FALSE(Validate(element_segment, context));
 }
 
@@ -349,10 +345,8 @@ TEST(ValidateTest, ElementSegment_Active_GlobalIndexOOB) {
   Context context{errors};
   context.tables.push_back(TableType{Limits{0}, ReferenceType::Funcref});
   const ElementSegment element_segment{
-      0,
-      ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-      ExternalKind::Function,
-      {}};
+      0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
+      ElementListWithIndexes{ExternalKind::Function, {}}};
   EXPECT_FALSE(Validate(element_segment, context));
 }
 
@@ -361,10 +355,8 @@ TEST(ValidateTest, ElementSegment_Active_FunctionIndexOOB) {
   Context context{errors};
   context.tables.push_back(TableType{Limits{0}, ReferenceType::Funcref});
   const ElementSegment element_segment{
-      0,
-      ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
-      ExternalKind::Function,
-      {0}};
+      0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
+      ElementListWithIndexes{ExternalKind::Function, {0}}};
   EXPECT_FALSE(Validate(element_segment, context));
 }
 
@@ -373,8 +365,9 @@ TEST(ValidateTest, ElementSegment_Passive_FunctionIndexOOB) {
   Context context{errors};
   const ElementSegment element_segment{
       SegmentType::Passive,
-      ReferenceType::Funcref,
-      {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}};
+      ElementListWithExpressions{
+          ReferenceType::Funcref,
+          {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}}};
   EXPECT_FALSE(Validate(element_segment, context));
 }
 

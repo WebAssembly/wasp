@@ -277,17 +277,17 @@ Iterator Write(const ElementSegment& value, Iterator out) {
     out = Write(*value.offset, out);
   }
   if (flags.has_expressions == encoding::HasExpressions::Yes) {
-    const auto& desc = value.expressions();
+    const auto& elements = value.expressions();
     if (!flags.is_legacy_active()) {
-      out = Write(desc.elemtype, out);
+      out = Write(elements.elemtype, out);
     }
-    out = WriteVector(desc.init.begin(), desc.init.end(), out);
+    out = WriteVector(elements.list.begin(), elements.list.end(), out);
   } else {
-    const auto& desc = value.indexes();
+    const auto& elements = value.indexes();
     if (!flags.is_legacy_active()) {
-      out = Write(desc.kind, out);
+      out = Write(elements.kind, out);
     }
-    out = WriteVector(desc.init.begin(), desc.init.end(), out);
+    out = WriteVector(elements.list.begin(), elements.list.end(), out);
   }
   return out;
 }
@@ -913,10 +913,10 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::V8X16Shuffle:
       return Write(instr.shuffle_immediate(), out);
 
-    // ValueTypes immediate.
+    // ValueTypeList immediate.
     case Opcode::SelectT:
-      return WriteVector(instr.value_types_immediate().begin(),
-                         instr.value_types_immediate().end(), out);
+      return WriteVector(instr.value_type_list_immediate().begin(),
+                         instr.value_type_list_immediate().end(), out);
 
     // u8 immediate.
     case Opcode::I8X16ExtractLaneS:

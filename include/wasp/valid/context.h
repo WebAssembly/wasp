@@ -49,13 +49,13 @@ struct Label {
         StackTypeSpan result_types,
         Index type_stack_limit);
 
-  const StackTypes& br_types() const {
+  const StackTypeList& br_types() const {
     return label_type == LabelType::Loop ? param_types : result_types;
   }
 
   LabelType label_type;
-  StackTypes param_types;
-  StackTypes result_types;
+  StackTypeList param_types;
+  StackTypeList result_types;
   Index type_stack_limit;
   bool unreachable;
 };
@@ -70,7 +70,7 @@ struct Context {
   Index GetLocalCount() const;
   optional<ValueType> GetLocalType(Index) const;
   bool AppendLocals(Index count, ValueType);
-  bool AppendLocals(const ValueTypes&);
+  bool AppendLocals(const ValueTypeList&);
 
   Features features;
   Errors* errors;
@@ -87,8 +87,8 @@ struct Context {
   optional<Index> declared_data_count;
   Index code_count = 0;
   std::vector<Index> locals_partial_sum;
-  ValueTypes locals;
-  StackTypes type_stack;
+  ValueTypeList locals;
+  StackTypeList type_stack;
   std::vector<Label> label_stack;
   std::set<string_view> export_names;
   std::vector<At<Index>> deferred_function_references;

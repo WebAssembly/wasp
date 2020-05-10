@@ -21,28 +21,27 @@ namespace binary {
 
 // ElementSegment
 inline bool ElementSegment::has_indexes() const {
-  return desc.index() == 0;
+  return elements.index() == 0;
 }
 
 inline bool ElementSegment::has_expressions() const {
-  return desc.index() == 1;
+  return elements.index() == 1;
 }
 
-inline ElementSegment::IndexesInit& ElementSegment::indexes() {
-  return get<IndexesInit>(desc);
+inline ElementListWithIndexes& ElementSegment::indexes() {
+  return get<ElementListWithIndexes>(elements);
 }
 
-inline const ElementSegment::IndexesInit& ElementSegment::indexes() const {
-  return get<IndexesInit>(desc);
+inline const ElementListWithIndexes& ElementSegment::indexes() const {
+  return get<ElementListWithIndexes>(elements);
 }
 
-inline ElementSegment::ExpressionsInit& ElementSegment::expressions() {
-  return get<ExpressionsInit>(desc);
+inline ElementListWithExpressions& ElementSegment::expressions() {
+  return get<ElementListWithExpressions>(elements);
 }
 
-inline const ElementSegment::ExpressionsInit& ElementSegment::expressions()
-    const {
-  return get<ExpressionsInit>(desc);
+inline const ElementListWithExpressions& ElementSegment::expressions() const {
+  return get<ElementListWithExpressions>(elements);
 }
 
 inline At<ReferenceType> ElementSegment::elemtype() const {
@@ -197,8 +196,8 @@ inline bool Instruction::has_shuffle_immediate() const {
   return holds_alternative<At<ShuffleImmediate>>(immediate);
 }
 
-inline bool Instruction::has_value_types_immediate() const {
-  return holds_alternative<ValueTypes>(immediate);
+inline bool Instruction::has_value_type_list_immediate() const {
+  return holds_alternative<ValueTypeList>(immediate);
 }
 
 inline At<ReferenceType>& Instruction::reference_type_immediate() {
@@ -330,12 +329,12 @@ inline const At<ShuffleImmediate>& Instruction::shuffle_immediate() const {
   return get<At<ShuffleImmediate>>(immediate);
 }
 
-inline ValueTypes& Instruction::value_types_immediate() {
-  return get<ValueTypes>(immediate);
+inline ValueTypeList& Instruction::value_type_list_immediate() {
+  return get<ValueTypeList>(immediate);
 }
 
-inline const ValueTypes& Instruction::value_types_immediate() const {
-  return get<ValueTypes>(immediate);
+inline const ValueTypeList& Instruction::value_type_list_immediate() const {
+  return get<ValueTypeList>(immediate);
 }
 
 // Section

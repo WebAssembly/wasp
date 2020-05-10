@@ -713,10 +713,10 @@ visit::Result Tool::Visitor::OnElement(const At<ElementSegment>& segment) {
 
   if (segment->has_indexes()) {
     print(" kind={} count={}", segment->indexes().kind,
-          segment->indexes().init.size());
+          segment->indexes().list.size());
   } else if (segment->has_expressions()) {
     print(" elemtype={} count={}", segment->expressions().elemtype,
-          segment->expressions().init.size());
+          segment->expressions().list.size());
   }
 
   Index offset = 0;
@@ -727,11 +727,11 @@ visit::Result Tool::Visitor::OnElement(const At<ElementSegment>& segment) {
   print("\n");
 
   if (segment->has_indexes()) {
-    for (auto item : enumerate(segment->indexes().init)) {
+    for (auto item : enumerate(segment->indexes().list)) {
       print("  - elem[{}] = {}\n", offset + item.index, item.value);
     }
   } else if (segment->has_expressions()) {
-    for (auto item : enumerate(segment->expressions().init)) {
+    for (auto item : enumerate(segment->expressions().list)) {
       print("  - elem[{}] = {}\n", offset + item.index, item.value);
     }
   }

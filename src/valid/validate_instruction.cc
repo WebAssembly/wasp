@@ -341,8 +341,8 @@ bool PopAndPushTypes(Location loc,
 bool PopAndPushTypes(Location loc,
                      const FunctionType& function_type,
                      Context& context) {
-  return PopAndPushTypes(loc, ToStackTypes(function_type.param_types),
-                         ToStackTypes(function_type.result_types), context);
+  return PopAndPushTypes(loc, ToStackTypeList(function_type.param_types),
+                         ToStackTypeList(function_type.result_types), context);
 }
 
 void SetUnreachable(Context& context) {
@@ -365,8 +365,8 @@ bool PushLabel(Location loc,
                LabelType label_type,
                const FunctionType& type,
                Context& context) {
-  auto stack_param_types = ToStackTypes(type.param_types);
-  auto stack_result_types = ToStackTypes(type.result_types);
+  auto stack_param_types = ToStackTypeList(type.param_types);
+  auto stack_result_types = ToStackTypeList(type.result_types);
   bool valid = PopTypes(loc, stack_param_types, context);
   context.label_stack.emplace_back(label_type, stack_param_types,
                                    stack_result_types,
@@ -527,7 +527,7 @@ bool Select(Location loc, Context& context) {
 }
 
 bool SelectT(Location loc,
-             const At<ValueTypes>& value_types,
+             const At<ValueTypeList>& value_types,
              Context& context) {
   bool valid = PopType(loc, StackType::I32, context);
   if (value_types->size() != 1) {
@@ -538,7 +538,7 @@ bool SelectT(Location loc,
             value_types->size()));
     return false;
   }
-  StackTypes stack_types = ToStackTypes(value_types);
+  StackTypeList stack_types = ToStackTypeList(value_types);
   StackType type = stack_types[0];
   const StackType pop_types[] = {type, type};
   const StackType push_type[] = {type};
@@ -967,10 +967,10 @@ bool ReturnCall(Location loc, At<Index> function_index, Context& context) {
       GetFunctionType(MaybeDefault(function).type_index, context);
   auto* label = GetLabel(context.label_stack.size() - 1, context);
   bool valid = CheckResultTypes(
-      loc, ToStackTypes(MaybeDefault(function_type).result_types),
+      loc, ToStackTypeList(MaybeDefault(function_type).result_types),
       MaybeDefault(label).br_types(), context);
-  valid &= PopTypes(loc, ToStackTypes(MaybeDefault(function_type).param_types),
-                    context);
+  valid &= PopTypes(
+      loc, ToStackTypeList(MaybeDefault(function_type).param_types), context);
   SetUnreachable(context);
   return AllTrue(function, function_type, valid);
 }
@@ -982,11 +982,11 @@ bool ReturnCallIndirect(Location loc,
   auto function_type = GetFunctionType(immediate->index, context);
   auto* label = GetLabel(context.label_stack.size() - 1, context);
   bool valid = CheckResultTypes(
-      loc, ToStackTypes(MaybeDefault(function_type).result_types),
+      loc, ToStackTypeList(MaybeDefault(function_type).result_types),
       MaybeDefault(label).br_types(), context);
   valid &= PopType(loc, StackType::I32, context);
-  valid &= PopTypes(loc, ToStackTypes(MaybeDefault(function_type).param_types),
-                    context);
+  valid &= PopTypes(
+      loc, ToStackTypeList(MaybeDefault(function_type).param_types), context);
   SetUnreachable(context);
   return AllTrue(table_type, function_type, valid);
 }
@@ -996,7 +996,7 @@ bool Throw(Location loc, At<Index> index, Context& context) {
   auto function_type =
       GetFunctionType(MaybeDefault(event_type).type_index, context);
   bool valid = PopTypes(
-      loc, ToStackTypes(MaybeDefault(function_type).param_types), context);
+      loc, ToStackTypeList(MaybeDefault(function_type).param_types), context);
   SetUnreachable(context);
   return AllTrue(event_type, function_type, valid);
 }
@@ -1014,8 +1014,9 @@ bool BrOnExn(Location loc,
   auto function_type =
       GetFunctionType(MaybeDefault(event_type).type_index, context);
   auto* label = GetLabel(immediate->target, context);
-  bool valid = TypesMatch(ToStackTypes(MaybeDefault(function_type).param_types),
-                          MaybeDefault(label).br_types());
+  bool valid =
+      TypesMatch(ToStackTypeList(MaybeDefault(function_type).param_types),
+                 MaybeDefault(label).br_types());
   valid &= PopAndPushTypes(loc, span_exnref, span_exnref, context);
   return AllTrue(event_type, function_type, label, valid);
 }
@@ -1116,7 +1117,7 @@ bool Validate(const At<Instruction>& value, Context& context) {
       return Select(loc, context);
 
     case Opcode::SelectT:
-      return SelectT(loc, value->value_types_immediate(), context);
+      return SelectT(loc, value->value_type_list_immediate(), context);
 
     case Opcode::LocalGet:
       return LocalGet(value->index_immediate(), context);
