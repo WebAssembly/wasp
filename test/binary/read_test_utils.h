@@ -40,9 +40,10 @@ void ExpectRead(const T& expected,
   auto result =
       wasp::binary::Read<T>(&data, context, std::forward<Args>(args)...);
   wasp::test::ExpectNoErrors(errors);
-  EXPECT_NE(nullptr, result->loc().data());
-  EXPECT_EQ(expected, **result);
   EXPECT_EQ(0u, data.size());
+  EXPECT_NE(nullptr, result->loc().data());
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(expected, **result);
 }
 
 template <typename T>

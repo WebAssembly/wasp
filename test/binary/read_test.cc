@@ -276,7 +276,7 @@ TEST(BinaryReadTest, ConstantExpression_ReferenceTypes) {
   // ref.null
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {0, "opcode"}, {1, "Unknown opcode: 208"}},
-      "\xd0\x0b"_su8);
+      "\xd0\x70\x0b"_su8);
 
   // ref.func
   ExpectReadFailure<ConstantExpression>(
@@ -289,8 +289,10 @@ TEST(BinaryReadTest, ConstantExpression_ReferenceTypes) {
   // ref.null
   ExpectRead<ConstantExpression>(
       ConstantExpression{
-          MakeAt("\xd0"_su8, Instruction{MakeAt("\xd0"_su8, Opcode::RefNull)})},
-      "\xd0\x0b"_su8, features);
+          MakeAt("\xd0\x70"_su8,
+                 Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
+                             MakeAt("\x70"_su8, ReferenceType::Funcref)})},
+      "\xd0\x70\x0b"_su8, features);
 
   // ref.func
   ExpectRead<ConstantExpression>(
@@ -562,8 +564,10 @@ TEST(BinaryReadTest, ElementExpression) {
   // ref.null
   ExpectRead<ElementExpression>(
       ElementExpression{
-          MakeAt("\xd0"_su8, Instruction{MakeAt("\xd0"_su8, Opcode::RefNull)})},
-      "\xd0\x0b"_su8, features);
+          MakeAt("\xd0\x70"_su8,
+                 Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
+                             MakeAt("\x70"_su8, ReferenceType::Funcref)})},
+      "\xd0\x70\x0b"_su8, features);
 
   // ref.func 2
   ExpectRead<ElementExpression>(
@@ -585,8 +589,8 @@ TEST(BinaryReadTest, ElementExpression_NoEnd) {
 
   // ref.null
   ExpectReadFailure<ElementExpression>(
-      {{0, "element expression"}, {1, "opcode"}, {1, "Unable to read u8"}},
-      "\xd0"_su8, features);
+      {{0, "element expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
+      "\xd0\x70"_su8, features);
 
   // ref.func
   ExpectReadFailure<ElementExpression>(
@@ -608,10 +612,12 @@ TEST(BinaryReadTest, ElementExpression_TooLong) {
 
   ExpectRead<ElementExpression>(
       ElementExpression{InstructionList{
-          MakeAt("\xd0"_su8, Instruction{MakeAt("\xd0"_su8, Opcode::RefNull)}),
+          MakeAt("\xd0\x70"_su8,
+                 Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
+                             MakeAt("\x70"_su8, ReferenceType::Funcref)}),
           MakeAt("\x01"_su8, Instruction{MakeAt("\x01"_su8, Opcode::Nop)}),
       }},
-      "\xd0\x01\x0b"_su8, features);
+      "\xd0\x70\x01\x0b"_su8, features);
 }
 
 TEST(BinaryReadTest, ElementExpression_InvalidInstruction) {
@@ -723,11 +729,13 @@ TEST(BinaryReadTest, ElementSegment_BulkMemory) {
                           "\xd2\x07"_su8,
                           Instruction{MakeAt("\xd2"_su8, Opcode::RefFunc),
                                       MakeAt("\x07"_su8, Index{7})})}),
-               MakeAt("\xd0\x0b"_su8,
+               MakeAt("\xd0\x70\x0b"_su8,
                       ElementExpression{MakeAt(
-                          "\xd0"_su8, Instruction{MakeAt(
-                                          "\xd0"_su8, Opcode::RefNull)})})}}},
-      "\x05\x70\x02\xd2\x07\x0b\xd0\x0b"_su8, features);
+                          "\xd0\x70"_su8,
+                          Instruction{
+                              MakeAt("\xd0"_su8, Opcode::RefNull),
+                              MakeAt("\x70"_su8, ReferenceType::Funcref)})})}}},
+      "\x05\x70\x02\xd2\x07\x0b\xd0\x70\x0b"_su8, features);
 
   // Flags == 6: Active, table index, expression list
   ExpectRead<ElementSegment>(  //*
@@ -740,11 +748,13 @@ TEST(BinaryReadTest, ElementSegment_BulkMemory) {
                                         MakeAt("\x08"_su8, s32{8})})}),
           ElementListWithExpressions{
               MakeAt("\x70"_su8, ReferenceType::Funcref),
-              {MakeAt("\xd0\x0b"_su8,
+              {MakeAt("\xd0\x70\x0b"_su8,
                       ElementExpression{MakeAt(
-                          "\xd0"_su8, Instruction{MakeAt(
-                                          "\xd0"_su8, Opcode::RefNull)})})}}},
-      "\x06\x02\x41\x08\x0b\x70\x01\xd0\x0b"_su8, features);
+                          "\xd0\x70"_su8,
+                          Instruction{
+                              MakeAt("\xd0"_su8, Opcode::RefNull),
+                              MakeAt("\x70"_su8, ReferenceType::Funcref)})})}}},
+      "\x06\x02\x41\x08\x0b\x70\x01\xd0\x70\x0b"_su8, features);
 }
 
 TEST(BinaryReadTest, ElementSegment_BulkMemory_BadFlags) {
@@ -1589,8 +1599,12 @@ TEST(BinaryReadTest, Instruction_reference_types) {
   ExpectRead<I>(
       I{MakeAt("\xfc\x11"_su8, O::TableFill), MakeAt("\x00"_su8, Index{0})},
       "\xfc\x11\x00"_su8, features);
-  ExpectRead<I>(I{MakeAt("\xd0"_su8, O::RefNull)}, "\xd0"_su8, features);
-  ExpectRead<I>(I{MakeAt("\xd1"_su8, O::RefIsNull)}, "\xd1"_su8, features);
+  ExpectRead<I>(I{MakeAt("\xd0"_su8, O::RefNull),
+                  MakeAt("\x70"_su8, ReferenceType::Funcref)},
+                "\xd0\x70"_su8, features);
+  ExpectRead<I>(I{MakeAt("\xd1"_su8, O::RefIsNull),
+                  MakeAt("\x70"_su8, ReferenceType::Funcref)},
+                "\xd1\x70"_su8, features);
   ExpectRead<I>(I{MakeAt("\xd2"_su8, O::RefFunc), MakeAt("\x00"_su8, Index{0})},
                 "\xd2\x00"_su8, features);
 }

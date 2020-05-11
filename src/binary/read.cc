@@ -609,8 +609,6 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I64Extend8S:
     case Opcode::I64Extend16S:
     case Opcode::I64Extend32S:
-    case Opcode::RefNull:
-    case Opcode::RefIsNull:
     case Opcode::I32TruncSatF32S:
     case Opcode::I32TruncSatF32U:
     case Opcode::I32TruncSatF64S:
@@ -768,7 +766,14 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I32X4Abs:
       return MakeAt(guard.loc(), Instruction{opcode});
 
-    // Type immediate.
+    // Reference type immediate.
+    case Opcode::RefNull:
+    case Opcode::RefIsNull: {
+      WASP_TRY_READ(type, Read<ReferenceType>(data, context));
+      return MakeAt(guard.loc(), Instruction{opcode, type});
+    }
+
+    // Block type immediate.
     case Opcode::Block:
     case Opcode::Loop:
     case Opcode::If:
