@@ -22,6 +22,12 @@
 namespace wasp {
 namespace binary {
 
+ConstantExpression::ConstantExpression(const At<Instruction>& instruction)
+    : instructions{{instruction}} {}
+
+ConstantExpression::ConstantExpression(const InstructionList& instructions)
+    : instructions{instructions} {}
+
 DataSegment::DataSegment(OptAt<Index> memory_index,
                          OptAt<ConstantExpression> offset,
                          SpanU8 init)
@@ -32,6 +38,12 @@ DataSegment::DataSegment(OptAt<Index> memory_index,
 
 DataSegment::DataSegment(SpanU8 init)
     : type{SegmentType::Passive}, init{init} {}
+
+ElementExpression::ElementExpression(const At<Instruction>& instruction)
+    : instructions{{instruction}} {}
+
+ElementExpression::ElementExpression(const InstructionList& instructions)
+    : instructions{instructions} {}
 
 ElementSegment::ElementSegment(At<Index> table_index,
                                At<ConstantExpression> offset,

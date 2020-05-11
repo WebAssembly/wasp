@@ -219,8 +219,16 @@ Iterator Write(const ComdatSymbol& value, Iterator out) {
 }
 
 template <typename Iterator>
+Iterator Write(const InstructionList& value, Iterator out) {
+  for (auto&& instr : value) {
+    out = Write(instr, out);
+  }
+  return out;
+}
+
+template <typename Iterator>
 Iterator Write(const ConstantExpression& value, Iterator out) {
-  out = Write(value.instruction, out);
+  out = Write(value.instructions, out);
   out = Write(Opcode::End, out);
   return out;
 }
@@ -254,7 +262,7 @@ Iterator Write(const DataSegment& value, Iterator out) {
 
 template <typename Iterator>
 Iterator Write(const ElementExpression& value, Iterator out) {
-  out = Write(value.instruction, out);
+  out = Write(value.instructions, out);
   out = Write(Opcode::End, out);
   return out;
 }
@@ -358,8 +366,7 @@ WriteFixedVarInt(T value, Iterator out, size_t length = VarInt<T>::kMaxBytes) {
 }
 
 template <typename Iterator>
-Iterator Write(const Function& value,
-                        Iterator out) {
+Iterator Write(const Function& value, Iterator out) {
   return Write(value.type_index, out);
 }
 

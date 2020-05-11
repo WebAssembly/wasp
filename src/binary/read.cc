@@ -155,36 +155,15 @@ OptAt<ConstantExpression> Read(SpanU8* data,
                                Tag<ConstantExpression>) {
   ErrorsContextGuard error_guard{context.errors, *data, "constant expression"};
   LocationGuard guard{data};
-  WASP_TRY_READ(instr, Read<Instruction>(data, context));
-  switch (instr->opcode) {
-    case Opcode::I32Const:
-    case Opcode::I64Const:
-    case Opcode::F32Const:
-    case Opcode::F64Const:
-    case Opcode::GlobalGet:
-      // OK.
+  InstructionList instrs;
+  while (true) {
+    WASP_TRY_READ(instr, Read<Instruction>(data, context));
+    if (instr->opcode == Opcode::End) {
       break;
-
-    case Opcode::RefNull:
-    case Opcode::RefFunc:
-      if (context.features.reference_types_enabled()) {
-        break;
-      }
-      // Fallthrough.
-
-    default:
-      context.errors.OnError(
-          *data,
-          format("Illegal instruction in constant expression: {}", instr));
-      return nullopt;
+    }
+    instrs.push_back(instr);
   }
-
-  WASP_TRY_READ(end, Read<Instruction>(data, context));
-  if (end->opcode != Opcode::End) {
-    context.errors.OnError(*data, "Expected end instruction");
-    return nullopt;
-  }
-  return MakeAt(guard.loc(), ConstantExpression{instr});
+  return MakeAt(guard.loc(), ConstantExpression{instrs});
 }
 
 OptAt<CopyImmediate> Read(SpanU8* data,
@@ -262,26 +241,16 @@ OptAt<ElementExpression> Read(SpanU8* data,
   Features new_features;
   new_features.enable_reference_types();
   Context new_context{new_features, context.errors};
-  WASP_TRY_READ(instr, Read<Instruction>(data, new_context));
-  switch (instr->opcode) {
-    case Opcode::RefNull:
-    case Opcode::RefFunc:
-      // OK.
+
+  InstructionList instrs;
+  while (true) {
+    WASP_TRY_READ(instr, Read<Instruction>(data, new_context));
+    if (instr->opcode == Opcode::End) {
       break;
-
-    default:
-      context.errors.OnError(
-          *data,
-          format("Illegal instruction in element expression: {}", instr));
-      return nullopt;
+    }
+    instrs.push_back(instr);
   }
-
-  WASP_TRY_READ(end, Read<Instruction>(data, context));
-  if (end->opcode != Opcode::End) {
-    context.errors.OnError(*data, "Expected end instruction");
-    return nullopt;
-  }
-  return MakeAt(guard.loc(), ElementExpression{instr});
+  return MakeAt(guard.loc(), ElementExpression{instrs});
 }
 
 OptAt<ElementSegment> Read(SpanU8* data,

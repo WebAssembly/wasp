@@ -264,6 +264,12 @@ TEST(BinaryReadTest, ConstantExpression) {
           "\x23\x00"_su8, Instruction{MakeAt("\x23"_su8, Opcode::GlobalGet),
                                       MakeAt("\x00"_su8, Index{0})})},
       "\x23\x00\x0b"_su8);
+
+  // Other instructions are invalid, but not malformed.
+  ExpectRead<ConstantExpression>(
+      ConstantExpression{
+          MakeAt("\x01"_su8, Instruction{MakeAt("\x01"_su8, Opcode::Nop)})},
+      "\x01\x0b"_su8);
 }
 
 TEST(BinaryReadTest, ConstantExpression_ReferenceTypes) {
@@ -321,9 +327,20 @@ TEST(BinaryReadTest, ConstantExpression_NoEnd) {
       "\x23\x00"_su8);
 }
 
+TEST(BinaryReadTest, ConstantExpression_TooShort) {
+  // An instruction sequence of length 0 is invalid, but not malformed.
+  ExpectRead<ConstantExpression>(ConstantExpression{}, "\x0b"_su8);
+}
+
 TEST(BinaryReadTest, ConstantExpression_TooLong) {
-  ExpectReadFailure<ConstantExpression>(
-      {{0, "constant expression"}, {3, "Expected end instruction"}},
+  // An instruction sequence of length > 1 is invalid, but not malformed.
+  ExpectRead<ConstantExpression>(
+      ConstantExpression{InstructionList{
+          MakeAt("\x41\x00"_su8,
+                 Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
+                             MakeAt("\x00"_su8, s32{0})}),
+          MakeAt("\x01"_su8, Instruction{MakeAt("\x01"_su8, Opcode::Nop)}),
+      }},
       "\x41\x00\x01\x0b"_su8);
 }
 
@@ -331,13 +348,6 @@ TEST(BinaryReadTest, ConstantExpression_InvalidInstruction) {
   ExpectReadFailure<ConstantExpression>(
       {{0, "constant expression"}, {0, "opcode"}, {1, "Unknown opcode: 6"}},
       "\x06"_su8);
-}
-
-TEST(BinaryReadTest, ConstantExpression_IllegalInstruction) {
-  ExpectReadFailure<ConstantExpression>(
-      {{0, "constant expression"},
-       {1, "Illegal instruction in constant expression: unreachable"}},
-      "\x00"_su8);
 }
 
 TEST(BinaryReadTest, ConstantExpression_PastEnd) {
@@ -561,6 +571,12 @@ TEST(BinaryReadTest, ElementExpression) {
                                Instruction{MakeAt("\xd2"_su8, Opcode::RefFunc),
                                            MakeAt("\x02"_su8, Index{2})})},
       "\xd2\x02\x0b"_su8, features);
+
+  // Other instructions are invalid, but not malformed.
+  ExpectRead<ElementExpression>(
+      ElementExpression{
+          MakeAt("\x01"_su8, Instruction{MakeAt("\x01"_su8, Opcode::Nop)})},
+      "\x01\x0b"_su8, features);
 }
 
 TEST(BinaryReadTest, ElementExpression_NoEnd) {
@@ -578,13 +594,24 @@ TEST(BinaryReadTest, ElementExpression_NoEnd) {
       "\xd2\x00"_su8, features);
 }
 
+TEST(BinaryReadTest, ElementExpression_TooShort) {
+  Features features;
+  features.enable_bulk_memory();
+
+  // An instruction sequence of length 0 is invalid, but not malformed.
+  ExpectRead<ElementExpression>(ElementExpression{}, "\x0b"_su8, features);
+}
+
 TEST(BinaryReadTest, ElementExpression_TooLong) {
   Features features;
   features.enable_bulk_memory();
 
-  ExpectReadFailure<ElementExpression>(
-      {{0, "element expression"}, {2, "Expected end instruction"}},
-      "\xd0\x00"_su8, features);
+  ExpectRead<ElementExpression>(
+      ElementExpression{InstructionList{
+          MakeAt("\xd0"_su8, Instruction{MakeAt("\xd0"_su8, Opcode::RefNull)}),
+          MakeAt("\x01"_su8, Instruction{MakeAt("\x01"_su8, Opcode::Nop)}),
+      }},
+      "\xd0\x01\x0b"_su8, features);
 }
 
 TEST(BinaryReadTest, ElementExpression_InvalidInstruction) {
@@ -594,16 +621,6 @@ TEST(BinaryReadTest, ElementExpression_InvalidInstruction) {
   ExpectReadFailure<ElementExpression>(
       {{0, "element expression"}, {0, "opcode"}, {1, "Unknown opcode: 6"}},
       "\x06"_su8, features);
-}
-
-TEST(BinaryReadTest, ElementExpression_IllegalInstruction) {
-  Features features;
-  features.enable_bulk_memory();
-
-  ExpectReadFailure<ElementExpression>(
-      {{0, "element expression"},
-       {1, "Illegal instruction in element expression: ref.is_null"}},
-      "\xd1"_su8, features);
 }
 
 TEST(BinaryReadTest, ElementExpression_PastEnd) {

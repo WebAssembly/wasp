@@ -26,6 +26,8 @@ namespace fmt {
 WASP_BINARY_ENUMS(WASP_DECLARE_FORMATTER)
 WASP_BINARY_STRUCTS(WASP_DECLARE_FORMATTER)
 
+WASP_DECLARE_FORMATTER(binary::InstructionList)
+
 }  // namespace fmt
 
 #include "wasp/binary/formatters-inl.h"

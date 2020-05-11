@@ -1134,13 +1134,13 @@ optional<string_view> Tool::GetSymbolName(Index index) const {
 }
 
 optional<Index> Tool::GetI32Value(const ConstantExpression& expr) {
-  switch (expr.instruction->opcode) {
-    case Opcode::I32Const:
-      return expr.instruction->s32_immediate();
-
-    default:
-      return nullopt;
+  if (expr.instructions.size() != 1) {
+    return nullopt;
   }
+  if (expr.instructions[0]->opcode != Opcode::I32Const) {
+    return nullopt;
+  }
+  return expr.instructions[0]->s32_immediate();
 }
 
 optional<Tool::RelocationEntries> Tool::GetRelocationEntries(

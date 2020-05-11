@@ -206,7 +206,7 @@ typename Ctx::iterator formatter<::wasp::binary::ConstantExpression>::format(
     const ::wasp::binary::ConstantExpression& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{} end", self.instruction);
+  format_to(buf, "{} end", self.instructions);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
@@ -215,7 +215,7 @@ typename Ctx::iterator formatter<::wasp::binary::ElementExpression>::format(
     const ::wasp::binary::ElementExpression& self,
     Ctx& ctx) {
   memory_buffer buf;
-  format_to(buf, "{} end", self.instruction);
+  format_to(buf, "{} end", self.instructions);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
@@ -290,6 +290,19 @@ typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
     case 15: format_to(buf, " {}", self.select_immediate()); break;
     case 16: format_to(buf, " {}", self.shuffle_immediate()); break;
     case 17: format_to(buf, " {}", self.simd_lane_immediate()); break;
+  }
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::InstructionList>::format(
+    const ::wasp::binary::InstructionList& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  string_view space = "";
+  for (const auto& x : self) {
+    format_to(buf, "{}{}", space, x);
+    space = " ";
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }

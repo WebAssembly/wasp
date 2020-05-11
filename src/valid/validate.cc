@@ -29,13 +29,21 @@ namespace wasp {
 namespace valid {
 
 bool Validate(const At<binary::ConstantExpression>& value,
+              ConstantExpressionKind kind,
               ValueType expected_type,
               Index max_global_index,
               Context& context) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "constant_expression"};
+  if (value->instructions.size() != 1) {
+    context.errors->OnError(
+        value.loc(), "A constant expression must be a single instruction");
+    return false;
+  }
+
   bool valid = true;
+  auto&& instruction = value->instructions[0];
   ValueType actual_type;
-  switch (value->instruction->opcode) {
+  switch (instruction->opcode) {
     case Opcode::I32Const:
       actual_type = ValueType::I32;
       break;
@@ -53,7 +61,7 @@ bool Validate(const At<binary::ConstantExpression>& value,
       break;
 
     case Opcode::GlobalGet: {
-      auto index = value->instruction->index_immediate();
+      auto index = instruction->index_immediate();
       if (!ValidateIndex(index, max_global_index, "global index", context)) {
         return false;
       }
@@ -63,7 +71,7 @@ bool Validate(const At<binary::ConstantExpression>& value,
 
       if (context.globals[index].mut == Mutability::Var) {
         context.errors->OnError(
-            value->instruction->index_immediate().loc(),
+            instruction->index_immediate().loc(),
             "A constant expression cannot contain a mutable global");
         valid = false;
       }
@@ -71,13 +79,19 @@ bool Validate(const At<binary::ConstantExpression>& value,
     }
 
     case Opcode::RefNull:
-      actual_type = ToValueType(value->instruction->reference_type_immediate());
+      actual_type = ToValueType(instruction->reference_type_immediate());
       break;
 
     case Opcode::RefFunc: {
-      auto index = value->instruction->index_immediate();
-      if (!ValidateIndex(index, context.functions.size(), "func index",
-                         context)) {
+      auto index = instruction->index_immediate();
+
+      if (kind == ConstantExpressionKind::GlobalInit) {
+        // ref.func indexes cannot be validated until after they are declared in
+        // the element segment.
+        context.deferred_function_references.push_back(index);
+        return valid;
+      } else if (!ValidateIndex(index, context.functions.size(), "func index",
+                                context)) {
         return false;
       }
       actual_type = ValueType::Funcref;
@@ -86,9 +100,9 @@ bool Validate(const At<binary::ConstantExpression>& value,
 
     default:
       context.errors->OnError(
-          value->instruction.loc(),
+          instruction.loc(),
           format("Invalid instruction in constant expression: {}",
-                 value->instruction));
+                 instruction));
       return false;
   }
 
@@ -109,8 +123,8 @@ bool Validate(const At<binary::DataSegment>& value, Context& context) {
                            "memory index", context);
   }
   if (value->offset) {
-    valid &= Validate(*value->offset, ValueType::I32, context.globals.size(),
-                      context);
+    valid &= Validate(*value->offset, ConstantExpressionKind::Other,
+                      ValueType::I32, context.globals.size(), context);
   }
   return valid;
 }
@@ -119,16 +133,23 @@ bool Validate(const At<binary::ElementExpression>& value,
               ReferenceType reftype,
               Context& context) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "element expression"};
+  if (value->instructions.size() != 1) {
+    context.errors->OnError(
+        value.loc(), "An element expression must be a single instruction");
+    return false;
+  }
+
   bool valid = true;
+  auto&& instruction = value->instructions[0];
   ReferenceType actual_type;
-  switch (value->instruction->opcode) {
+  switch (instruction->opcode) {
     case Opcode::RefNull:
       actual_type = ReferenceType::Funcref;
       break;
 
     case Opcode::RefFunc: {
       actual_type = ReferenceType::Funcref;
-      auto index = value->instruction->index_immediate();
+      auto index = instruction->index_immediate();
       if (!ValidateIndex(index, context.functions.size(), "function index",
                          context)) {
         valid = false;
@@ -139,9 +160,8 @@ bool Validate(const At<binary::ElementExpression>& value,
 
     default:
       context.errors->OnError(
-          value->instruction.loc(),
-          format("Invalid instruction in element expression: {}",
-                 value->instruction));
+          instruction.loc(),
+          format("Invalid instruction in element expression: {}", instruction));
       return false;
   }
 
@@ -158,8 +178,8 @@ bool Validate(const At<binary::ElementSegment>& value, Context& context) {
                            "table index", context);
   }
   if (value->offset) {
-    valid &= Validate(*value->offset, ValueType::I32, context.globals.size(),
-                      context);
+    valid &= Validate(*value->offset, ConstantExpressionKind::GlobalInit,
+                      ValueType::I32, context.globals.size(), context);
   }
   if (value->has_indexes()) {
     auto&& elements = value->indexes();
@@ -311,14 +331,9 @@ bool Validate(const At<binary::Global>& value, Context& context) {
   bool valid = true;
   valid &= Validate(value->global_type, context);
   // Only imported globals can be used in a global's constant expression.
-  valid &= Validate(value->init, value->global_type->valtype,
-                    context.imported_global_count, context);
-  // ref.func indexes cannot be validated until after they are declared in the
-  // element segment.
-  if (value->init->instruction->opcode == Opcode::RefFunc) {
-    context.deferred_function_references.push_back(
-        value->init->instruction->index_immediate());
-  }
+  valid &= Validate(value->init, ConstantExpressionKind::GlobalInit,
+                    value->global_type->valtype, context.imported_global_count,
+                    context);
   return valid;
 }
 

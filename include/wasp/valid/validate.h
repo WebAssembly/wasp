@@ -21,14 +21,19 @@
 #include "wasp/binary/types.h"
 
 namespace wasp {
-
 namespace valid {
+
+enum class ConstantExpressionKind {
+  GlobalInit,
+  Other,
+};
 
 struct Context;
 
 bool Validate(const At<binary::DataSegment>&, Context&);
 
 bool Validate(const At<binary::ConstantExpression>&,
+              ConstantExpressionKind kind,
               ValueType expected_type,
               Index max_global_index,
               Context&);

@@ -348,39 +348,41 @@ bool Tool::CreateTables() {
 
 bool Tool::InsertConstantExpression(const ConstantExpression& expr,
                                     string_view table, Index index) {
-  auto instr = expr.instruction;
-  auto opcode_val = static_cast<int>(*instr->opcode);
-  switch (instr->opcode) {
-    case Opcode::I32Const:
-      Exec("insert into {} values ({}, {}, {});", table, index, opcode_val,
-           instr->s32_immediate());
-      break;
+  bool ok = true;
+  for (auto instr : expr.instructions) {
+    auto opcode_val = static_cast<int>(*instr->opcode);
+    switch (instr->opcode) {
+      case Opcode::I32Const:
+        Exec("insert into {} values ({}, {}, {});", table, index, opcode_val,
+             instr->s32_immediate());
+        break;
 
-    case Opcode::I64Const:
-      Exec("insert into {} values ({}, {}, {});", table, index, opcode_val,
-           instr->s64_immediate());
-      break;
+      case Opcode::I64Const:
+        Exec("insert into {} values ({}, {}, {});", table, index, opcode_val,
+             instr->s64_immediate());
+        break;
 
-    case Opcode::F32Const:
-      Exec("insert into {} values ({}, {}, {});", table, index, opcode_val,
-           instr->f32_immediate());
-      break;
+      case Opcode::F32Const:
+        Exec("insert into {} values ({}, {}, {});", table, index, opcode_val,
+             instr->f32_immediate());
+        break;
 
-    case Opcode::F64Const:
-      Exec("insert into {} values ({}, {}, {});", table, index, opcode_val,
-           instr->f64_immediate());
-      break;
+      case Opcode::F64Const:
+        Exec("insert into {} values ({}, {}, {});", table, index, opcode_val,
+             instr->f64_immediate());
+        break;
 
-    case Opcode::GlobalGet:
-      Exec("insert into {} values ({}, {}, {});", table, index, opcode_val,
-           instr->index_immediate());
-      break;
+      case Opcode::GlobalGet:
+        Exec("insert into {} values ({}, {}, {});", table, index, opcode_val,
+             instr->index_immediate());
+        break;
 
-    default:
-      return false;
+      default:
+        ok = false;
+        break;
+    }
   }
-
-  return true;
+  return ok;
 }
 
 void Tool::DoTypeSection(LazyTypeSection section) {
@@ -517,22 +519,23 @@ void Tool::DoElementSection(LazyElementSection section) {
       }
     } else if (segment.value->has_expressions()) {
       for (auto expr : enumerate(segment.value->expressions().list)) {
-        auto instr = expr.value->instruction;
-        auto opcode_val = static_cast<int>(*instr->opcode);
-        switch (instr->opcode) {
-          case Opcode::RefNull:
-            Exec("insert into element_init values ({}, {}, {}, null);",
-                 segment.index, expr.index, opcode_val);
-            break;
+        for (auto instr : expr.value->instructions) {
+          auto opcode_val = static_cast<int>(*instr->opcode);
+          switch (instr->opcode) {
+            case Opcode::RefNull:
+              Exec("insert into element_init values ({}, {}, {}, null);",
+                   segment.index, expr.index, opcode_val);
+              break;
 
-          case Opcode::RefFunc:
-            Exec("insert into element_init values ({}, {}, {}, {});",
-                 segment.index, expr.index, opcode_val,
-                 instr->index_immediate());
-            break;
+            case Opcode::RefFunc:
+              Exec("insert into element_init values ({}, {}, {}, {});",
+                   segment.index, expr.index, opcode_val,
+                   instr->index_immediate());
+              break;
 
-          default:
-            break;
+            default:
+              break;
+          }
         }
       }
     }

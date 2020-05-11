@@ -251,6 +251,7 @@ struct Instruction {
       immediate;
 };
 
+using InstructionList = std::vector<At<Instruction>>;
 
 // Section 1: Type
 
@@ -333,7 +334,11 @@ struct Memory {
 // Section 6: Global
 
 struct ConstantExpression {
-  At<Instruction> instruction;
+  explicit ConstantExpression() = default;
+  explicit ConstantExpression(const At<Instruction>&);
+  explicit ConstantExpression(const InstructionList&);
+
+  InstructionList instructions;
 };
 
 struct Global {
@@ -363,7 +368,11 @@ struct Start {
 // Section 9: Elem
 
 struct ElementExpression {
-  At<Instruction> instruction;
+  explicit ElementExpression() = default;
+  explicit ElementExpression(const At<Instruction>&);
+  explicit ElementExpression(const InstructionList&);
+
+  InstructionList instructions;
 };
 
 using ElementExpressionList = std::vector<At<ElementExpression>>;
@@ -461,12 +470,12 @@ struct Event {
   WASP_V(binary::BrTableImmediate, 2, targets, default_target)           \
   WASP_V(binary::CallIndirectImmediate, 2, index, table_index)           \
   WASP_V(binary::Code, 2, locals, body)                                  \
-  WASP_V(binary::ConstantExpression, 1, instruction)                     \
+  WASP_V(binary::ConstantExpression, 1, instructions)                    \
   WASP_V(binary::CopyImmediate, 2, src_index, dst_index)                 \
   WASP_V(binary::CustomSection, 2, name, data)                           \
   WASP_V(binary::DataCount, 1, count)                                    \
   WASP_V(binary::DataSegment, 4, type, memory_index, offset, init)       \
-  WASP_V(binary::ElementExpression, 1, instruction)                      \
+  WASP_V(binary::ElementExpression, 1, instructions)                     \
   WASP_V(binary::ElementSegment, 4, type, table_index, offset, elements) \
   WASP_V(binary::ElementListWithIndexes, 2, kind, list)                  \
   WASP_V(binary::ElementListWithExpressions, 2, elemtype, list)          \
@@ -491,6 +500,7 @@ struct Event {
 
 #define WASP_BINARY_CONTAINERS(WASP_V) \
   WASP_V(binary::IndexList)            \
+  WASP_V(binary::InstructionList)      \
   WASP_V(binary::LocalsList)           \
   WASP_V(binary::ElementExpressionList)
 
