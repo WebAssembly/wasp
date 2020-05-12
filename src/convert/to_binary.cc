@@ -297,6 +297,124 @@ auto ToBinary(Context& context, const At<text::InitImmediate>& value)
                                       ToBinary(context, value->dst, 0)});
 }
 
+u32 GetNaturalAlignment(Opcode opcode) {
+  switch (opcode) {
+    case Opcode::I32AtomicLoad8U:
+    case Opcode::I32AtomicRmw8AddU:
+    case Opcode::I32AtomicRmw8AndU:
+    case Opcode::I32AtomicRmw8CmpxchgU:
+    case Opcode::I32AtomicRmw8OrU:
+    case Opcode::I32AtomicRmw8SubU:
+    case Opcode::I32AtomicRmw8XchgU:
+    case Opcode::I32AtomicRmw8XorU:
+    case Opcode::I32AtomicStore8:
+    case Opcode::I32Load8S:
+    case Opcode::I32Load8U:
+    case Opcode::I32Store8:
+    case Opcode::I64AtomicLoad8U:
+    case Opcode::I64AtomicRmw8AddU:
+    case Opcode::I64AtomicRmw8AndU:
+    case Opcode::I64AtomicRmw8CmpxchgU:
+    case Opcode::I64AtomicRmw8OrU:
+    case Opcode::I64AtomicRmw8SubU:
+    case Opcode::I64AtomicRmw8XchgU:
+    case Opcode::I64AtomicRmw8XorU:
+    case Opcode::I64AtomicStore8:
+    case Opcode::I64Load8S:
+    case Opcode::I64Load8U:
+    case Opcode::I64Store8:
+    case Opcode::V8X16LoadSplat:
+      return 1;
+
+    case Opcode::I32AtomicLoad16U:
+    case Opcode::I32AtomicRmw16AddU:
+    case Opcode::I32AtomicRmw16AndU:
+    case Opcode::I32AtomicRmw16CmpxchgU:
+    case Opcode::I32AtomicRmw16OrU:
+    case Opcode::I32AtomicRmw16SubU:
+    case Opcode::I32AtomicRmw16XchgU:
+    case Opcode::I32AtomicRmw16XorU:
+    case Opcode::I32AtomicStore16:
+    case Opcode::I32Load16S:
+    case Opcode::I32Load16U:
+    case Opcode::I32Store16:
+    case Opcode::I64AtomicLoad16U:
+    case Opcode::I64AtomicRmw16AddU:
+    case Opcode::I64AtomicRmw16AndU:
+    case Opcode::I64AtomicRmw16CmpxchgU:
+    case Opcode::I64AtomicRmw16OrU:
+    case Opcode::I64AtomicRmw16SubU:
+    case Opcode::I64AtomicRmw16XchgU:
+    case Opcode::I64AtomicRmw16XorU:
+    case Opcode::I64AtomicStore16:
+    case Opcode::I64Load16S:
+    case Opcode::I64Load16U:
+    case Opcode::I64Store16:
+    case Opcode::V16X8LoadSplat:
+      return 2;
+
+    case Opcode::F32Load:
+    case Opcode::F32Store:
+    case Opcode::I32AtomicLoad:
+    case Opcode::I32AtomicRmwAdd:
+    case Opcode::I32AtomicRmwAnd:
+    case Opcode::I32AtomicRmwCmpxchg:
+    case Opcode::I32AtomicRmwOr:
+    case Opcode::I32AtomicRmwSub:
+    case Opcode::I32AtomicRmwXchg:
+    case Opcode::I32AtomicRmwXor:
+    case Opcode::I32AtomicStore:
+    case Opcode::I32Load:
+    case Opcode::I32Store:
+    case Opcode::I64AtomicLoad32U:
+    case Opcode::I64AtomicRmw32AddU:
+    case Opcode::I64AtomicRmw32AndU:
+    case Opcode::I64AtomicRmw32CmpxchgU:
+    case Opcode::I64AtomicRmw32OrU:
+    case Opcode::I64AtomicRmw32SubU:
+    case Opcode::I64AtomicRmw32XchgU:
+    case Opcode::I64AtomicRmw32XorU:
+    case Opcode::I64AtomicStore32:
+    case Opcode::I64Load32S:
+    case Opcode::I64Load32U:
+    case Opcode::I64Store32:
+    case Opcode::MemoryAtomicNotify:
+    case Opcode::MemoryAtomicWait32:
+    case Opcode::V32X4LoadSplat:
+      return 4;
+
+    case Opcode::F64Load:
+    case Opcode::F64Store:
+    case Opcode::I16X8Load8X8S:
+    case Opcode::I16X8Load8X8U:
+    case Opcode::I32X4Load16X4S:
+    case Opcode::I32X4Load16X4U:
+    case Opcode::I64AtomicLoad:
+    case Opcode::I64AtomicRmwAdd:
+    case Opcode::I64AtomicRmwAnd:
+    case Opcode::I64AtomicRmwCmpxchg:
+    case Opcode::I64AtomicRmwOr:
+    case Opcode::I64AtomicRmwSub:
+    case Opcode::I64AtomicRmwXchg:
+    case Opcode::I64AtomicRmwXor:
+    case Opcode::I64AtomicStore:
+    case Opcode::I64Load:
+    case Opcode::I64Store:
+    case Opcode::I64X2Load32X2S:
+    case Opcode::I64X2Load32X2U:
+    case Opcode::MemoryAtomicWait64:
+    case Opcode::V64X2LoadSplat:
+      return 8;
+
+    case Opcode::V128Load:
+    case Opcode::V128Store:
+      return 16;
+
+    default:
+      return 0;
+  }
+}
+
 u32 GetAlignLog2(u32 align) {
   // Must be power-of-two.
   assert(align != 0 && (align & (align - 1)) == 0);
@@ -308,10 +426,9 @@ u32 GetAlignLog2(u32 align) {
   return align_log2 - 1;
 }
 
-auto ToBinary(Context& context, const At<text::MemArgImmediate>& value)
-    -> At<binary::MemArgImmediate> {
-  // TODO: Get natural alignment...
-  u32 natural_align = 0;
+auto ToBinary(Context& context,
+              const At<text::MemArgImmediate>& value,
+              u32 natural_align) -> At<binary::MemArgImmediate> {
   return MakeAt(value.loc(),
                 binary::MemArgImmediate{
                     MakeAt(value->align->loc(),
@@ -402,9 +519,11 @@ auto ToBinary(Context& context, const At<text::Instruction>& value)
     case 13: // MemArgImmediate
       return MakeAt(
           value.loc(),
-          binary::Instruction{value->opcode,
-                              ToBinary(context, get<At<text::MemArgImmediate>>(
-                                                    value->immediate))});
+          binary::Instruction{
+              value->opcode,
+              ToBinary(context,
+                       get<At<text::MemArgImmediate>>(value->immediate),
+                       GetNaturalAlignment(*value->opcode))});
 
     case 14: // ReferenceType
       return MakeAt(value.loc(), binary::Instruction{

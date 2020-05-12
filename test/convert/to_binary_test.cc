@@ -25,16 +25,16 @@ using namespace ::wasp::convert;
 
 namespace {
 
-template <typename B, typename T>
-void OK(const B& expected, const T& input) {
+template <typename B, typename T, typename... Args>
+void OK(const B& expected, const T& input, Args&&... args) {
   Context context;
-  EXPECT_EQ(expected, ToBinary(context, input));
+  EXPECT_EQ(expected, ToBinary(context, input, std::forward<Args>(args)...));
 }
 
-template <typename F, typename B, typename T>
-void OK(const F& func, const B& expected, const T& input) {
+template <typename F, typename B, typename T, typename... Args>
+void OKFunc(const F& func, const B& expected, const T& input, Args&&... args) {
   Context context;
-  EXPECT_EQ(expected, func(context, input));
+  EXPECT_EQ(expected, func(context, input, std::forward<Args>(args)...));
 }
 
 const SpanU8 loc1 = "A"_su8;
@@ -431,22 +431,27 @@ TEST(ConvertToBinaryTest, InitImmediate) {
 }
 
 TEST(ConvertToBinaryTest, MemArgImmediate) {
-  u32 align = 16;
-  u32 align_log2 = 4;
+  u32 natural_align = 16;
+  u32 natural_align_log2 = 4;
+  u32 align = 8;
+  u32 align_log2 = 3;
   u32 offset = 5;
 
   // align and offset defined.
   OK(MakeAt(loc1, binary::MemArgImmediate{MakeAt(loc2, align_log2),
                                           MakeAt(loc3, offset)}),
      MakeAt(loc1,
-            text::MemArgImmediate{MakeAt(loc2, align), MakeAt(loc3, offset)}));
+            text::MemArgImmediate{MakeAt(loc2, align), MakeAt(loc3, offset)}),
+     natural_align);
 
   // offset nullopt.
   OK(MakeAt(loc1, binary::MemArgImmediate{MakeAt(loc2, align_log2), u32{0}}),
-     MakeAt(loc1, text::MemArgImmediate{MakeAt(loc2, align), nullopt}));
+     MakeAt(loc1, text::MemArgImmediate{MakeAt(loc2, align), nullopt}),
+     natural_align);
 
-  // TODO: align nullopt; should be natural alignment, which depends on
-  // instruction.
+  // align and offset are nullopt.
+  OK(MakeAt(loc1, binary::MemArgImmediate{natural_align_log2, u32{0}}),
+     MakeAt(loc1, text::MemArgImmediate{nullopt, nullopt}), natural_align);
 }
 
 TEST(ConvertToBinaryTest, Instruction) {
@@ -607,6 +612,126 @@ TEST(ConvertToBinaryTest, Instruction) {
                               MakeAt(loc3, text::SimdLaneImmediate{13})}));
 }
 
+TEST(ConvertToBinaryTest, OpcodeAlignment) {
+  struct {
+    Opcode opcode;
+    u32 expected_align_log2;
+  } tests[] = {
+      {Opcode::I32AtomicLoad8U, 0},
+      {Opcode::I32AtomicRmw8AddU, 0},
+      {Opcode::I32AtomicRmw8AndU, 0},
+      {Opcode::I32AtomicRmw8CmpxchgU, 0},
+      {Opcode::I32AtomicRmw8OrU, 0},
+      {Opcode::I32AtomicRmw8SubU, 0},
+      {Opcode::I32AtomicRmw8XchgU, 0},
+      {Opcode::I32AtomicRmw8XorU, 0},
+      {Opcode::I32AtomicStore8, 0},
+      {Opcode::I32Load8S, 0},
+      {Opcode::I32Load8U, 0},
+      {Opcode::I32Store8, 0},
+      {Opcode::I64AtomicLoad8U, 0},
+      {Opcode::I64AtomicRmw8AddU, 0},
+      {Opcode::I64AtomicRmw8AndU, 0},
+      {Opcode::I64AtomicRmw8CmpxchgU, 0},
+      {Opcode::I64AtomicRmw8OrU, 0},
+      {Opcode::I64AtomicRmw8SubU, 0},
+      {Opcode::I64AtomicRmw8XchgU, 0},
+      {Opcode::I64AtomicRmw8XorU, 0},
+      {Opcode::I64AtomicStore8, 0},
+      {Opcode::I64Load8S, 0},
+      {Opcode::I64Load8U, 0},
+      {Opcode::I64Store8, 0},
+      {Opcode::V8X16LoadSplat, 0},
+
+      {Opcode::I32AtomicLoad16U, 1},
+      {Opcode::I32AtomicRmw16AddU, 1},
+      {Opcode::I32AtomicRmw16AndU, 1},
+      {Opcode::I32AtomicRmw16CmpxchgU, 1},
+      {Opcode::I32AtomicRmw16OrU, 1},
+      {Opcode::I32AtomicRmw16SubU, 1},
+      {Opcode::I32AtomicRmw16XchgU, 1},
+      {Opcode::I32AtomicRmw16XorU, 1},
+      {Opcode::I32AtomicStore16, 1},
+      {Opcode::I32Load16S, 1},
+      {Opcode::I32Load16U, 1},
+      {Opcode::I32Store16, 1},
+      {Opcode::I64AtomicLoad16U, 1},
+      {Opcode::I64AtomicRmw16AddU, 1},
+      {Opcode::I64AtomicRmw16AndU, 1},
+      {Opcode::I64AtomicRmw16CmpxchgU, 1},
+      {Opcode::I64AtomicRmw16OrU, 1},
+      {Opcode::I64AtomicRmw16SubU, 1},
+      {Opcode::I64AtomicRmw16XchgU, 1},
+      {Opcode::I64AtomicRmw16XorU, 1},
+      {Opcode::I64AtomicStore16, 1},
+      {Opcode::I64Load16S, 1},
+      {Opcode::I64Load16U, 1},
+      {Opcode::I64Store16, 1},
+      {Opcode::V16X8LoadSplat, 1},
+
+      {Opcode::F32Load, 2},
+      {Opcode::F32Store, 2},
+      {Opcode::I32AtomicLoad, 2},
+      {Opcode::I32AtomicRmwAdd, 2},
+      {Opcode::I32AtomicRmwAnd, 2},
+      {Opcode::I32AtomicRmwCmpxchg, 2},
+      {Opcode::I32AtomicRmwOr, 2},
+      {Opcode::I32AtomicRmwSub, 2},
+      {Opcode::I32AtomicRmwXchg, 2},
+      {Opcode::I32AtomicRmwXor, 2},
+      {Opcode::I32AtomicStore, 2},
+      {Opcode::I32Load, 2},
+      {Opcode::I32Store, 2},
+      {Opcode::I64AtomicLoad32U, 2},
+      {Opcode::I64AtomicRmw32AddU, 2},
+      {Opcode::I64AtomicRmw32AndU, 2},
+      {Opcode::I64AtomicRmw32CmpxchgU, 2},
+      {Opcode::I64AtomicRmw32OrU, 2},
+      {Opcode::I64AtomicRmw32SubU, 2},
+      {Opcode::I64AtomicRmw32XchgU, 2},
+      {Opcode::I64AtomicRmw32XorU, 2},
+      {Opcode::I64AtomicStore32, 2},
+      {Opcode::I64Load32S, 2},
+      {Opcode::I64Load32U, 2},
+      {Opcode::I64Store32, 2},
+      {Opcode::MemoryAtomicNotify, 2},
+      {Opcode::MemoryAtomicWait32, 2},
+      {Opcode::V32X4LoadSplat, 2},
+
+      {Opcode::F64Load, 3},
+      {Opcode::F64Store, 3},
+      {Opcode::I16X8Load8X8S, 3},
+      {Opcode::I16X8Load8X8U, 3},
+      {Opcode::I32X4Load16X4S, 3},
+      {Opcode::I32X4Load16X4U, 3},
+      {Opcode::I64AtomicLoad, 3},
+      {Opcode::I64AtomicRmwAdd, 3},
+      {Opcode::I64AtomicRmwAnd, 3},
+      {Opcode::I64AtomicRmwCmpxchg, 3},
+      {Opcode::I64AtomicRmwOr, 3},
+      {Opcode::I64AtomicRmwSub, 3},
+      {Opcode::I64AtomicRmwXchg, 3},
+      {Opcode::I64AtomicRmwXor, 3},
+      {Opcode::I64AtomicStore, 3},
+      {Opcode::I64Load, 3},
+      {Opcode::I64Store, 3},
+      {Opcode::I64X2Load32X2S, 3},
+      {Opcode::I64X2Load32X2U, 3},
+      {Opcode::MemoryAtomicWait64, 3},
+      {Opcode::V64X2LoadSplat, 3},
+
+      {Opcode::V128Load, 4},
+      {Opcode::V128Store, 4},
+  };
+  for (auto& test : tests) {
+    Context context;
+    auto result = ToBinary(
+        context, text::Instruction{test.opcode, text::MemArgImmediate{}});
+    EXPECT_EQ(test.expected_align_log2,
+              result->mem_arg_immediate()->align_log2);
+  }
+}
+
 TEST(ConvertToBinaryTest, InstructionList) {
   OK(
       binary::InstructionList{
@@ -618,47 +743,48 @@ TEST(ConvertToBinaryTest, InstructionList) {
 }
 
 TEST(ConvertToBinaryTest, Expression) {
-  OK(ToBinaryExpression,
-     MakeAt(loc1,
-            binary::Expression{
-                "\x01"      // nop
-                "\x41\x00"  // i32.const 0
-                "\x1a"_su8  // drop
-            }),
-     MakeAt(loc1, text::InstructionList{
-                      text::Instruction{Opcode::Nop},
-                      text::Instruction{Opcode::I32Const, s32{0}},
-                      text::Instruction{Opcode::Drop},
-                  }));
+  OKFunc(ToBinaryExpression,
+         MakeAt(loc1,
+                binary::Expression{
+                    "\x01"      // nop
+                    "\x41\x00"  // i32.const 0
+                    "\x1a"_su8  // drop
+                }),
+         MakeAt(loc1, text::InstructionList{
+                          text::Instruction{Opcode::Nop},
+                          text::Instruction{Opcode::I32Const, s32{0}},
+                          text::Instruction{Opcode::Drop},
+                      }));
 }
 
 TEST(ConvertToBinaryTest, LocalsList) {
-  OK(ToBinaryLocalsList,
-     MakeAt(
-         loc1,
-         binary::LocalsList{binary::Locals{2, MakeAt(loc2, ValueType::I32)},
-                            binary::Locals{1, MakeAt(loc4, ValueType::F32)}}),
-     MakeAt(loc1,
-            text::BoundValueTypeList{
-                text::BoundValueType{nullopt, MakeAt(loc2, ValueType::I32)},
-                text::BoundValueType{nullopt, MakeAt(loc3, ValueType::I32)},
-                text::BoundValueType{nullopt, MakeAt(loc4, ValueType::F32)},
-            }));
+  OKFunc(ToBinaryLocalsList,
+         MakeAt(loc1,
+                binary::LocalsList{
+                    binary::Locals{2, MakeAt(loc2, ValueType::I32)},
+                    binary::Locals{1, MakeAt(loc4, ValueType::F32)}}),
+         MakeAt(loc1,
+                text::BoundValueTypeList{
+                    text::BoundValueType{nullopt, MakeAt(loc2, ValueType::I32)},
+                    text::BoundValueType{nullopt, MakeAt(loc3, ValueType::I32)},
+                    text::BoundValueType{nullopt, MakeAt(loc4, ValueType::F32)},
+                }));
 }
 
 TEST(ConvertToBinaryTest, Code) {
-  OK(ToBinaryCode,
-     MakeAt(loc1,
-            binary::Code{MakeAt(loc2, binary::LocalsList{binary::Locals{
-                                          1, MakeAt(loc3, ValueType::I32)}}),
-                         binary::Expression{"\x01"_su8}}),
-     MakeAt(loc1,
-            text::Function{
-                {},
-                MakeAt(loc2, text::BoundValueTypeList{text::BoundValueType{
-                                 nullopt, MakeAt(loc3, ValueType::I32)}}),
-                {text::Instruction{Opcode::Nop}},
-                {}}));
+  OKFunc(
+      ToBinaryCode,
+      MakeAt(loc1,
+             binary::Code{MakeAt(loc2, binary::LocalsList{binary::Locals{
+                                           1, MakeAt(loc3, ValueType::I32)}}),
+                          binary::Expression{"\x01"_su8}}),
+      MakeAt(loc1,
+             text::Function{
+                 {},
+                 MakeAt(loc2, text::BoundValueTypeList{text::BoundValueType{
+                                  nullopt, MakeAt(loc3, ValueType::I32)}}),
+                 {text::Instruction{Opcode::Nop}},
+                 {}}));
 }
 
 TEST(ConvertToBinaryTest, DataSegment) {
