@@ -82,6 +82,7 @@ add_library(wasplib
   src/binary/read.cc
   src/binary/sections.cc
   src/binary/types.cc
+  src/convert/to_binary.cc
   src/valid/context.cc
   src/valid/formatters.cc
   src/valid/validate.cc
@@ -143,6 +144,7 @@ add_executable(wasp_unittests
   test/binary/read_linking_test.cc
   test/binary/visitor_test.cc
   test/binary/write_test.cc
+  test/convert/to_binary_test.cc
   test/text/formatters_test.cc
   test/text/lex_test.cc
   test/text/numeric_test.cc

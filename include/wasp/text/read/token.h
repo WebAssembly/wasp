@@ -18,6 +18,7 @@
 #define WASP_TEXT_READ_TOKEN_H_
 
 #include <string>
+#include <vector>
 
 #include "wasp/base/at.h"
 #include "wasp/base/features.h"
@@ -68,6 +69,7 @@ struct OpcodeInfo {
 };
 
 struct Text {
+  void ToBuffer(std::vector<u8>& buffer) const;
   auto ToString() const -> std::string;
 
   string_view text;

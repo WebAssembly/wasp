@@ -28,6 +28,14 @@ bool FunctionTypeUse::IsInlineType() const {
   return !type_use && type->params.empty() && type->results.size() <= 1;
 }
 
+OptAt<ValueType> FunctionTypeUse::GetInlineType() const {
+  assert(IsInlineType());
+  if (type->results.empty()) {
+    return nullopt;
+  }
+  return type->results[0];
+}
+
 Instruction::Instruction(At<Opcode> opcode) : opcode{opcode} {}
 
 Instruction::Instruction(At<Opcode> opcode, At<s32> immediate)

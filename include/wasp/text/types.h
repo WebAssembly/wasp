@@ -46,6 +46,7 @@ struct FunctionType {
 
 struct FunctionTypeUse {
   bool IsInlineType() const;
+  OptAt<ValueType> GetInlineType() const;
 
   OptAt<Var> type_use;
   At<FunctionType> type;

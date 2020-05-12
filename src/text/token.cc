@@ -19,7 +19,7 @@
 namespace wasp {
 namespace text {
 
-auto Text::ToString() const -> std::string {
+void Text::ToBuffer(std::vector<u8>& buffer) const {
   static const char kHexDigit[256] = {
       /*00*/ 0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
       /*10*/ 0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -31,42 +31,44 @@ auto Text::ToString() const -> std::string {
       // The rest are zero.
   };
 
-  std::string result;
-  result.reserve(byte_size);
+  buffer.reserve(buffer.size() + byte_size);
 
   // Remove surrounding quotes.
   assert(text.size() >= 2 && text[0] == '"' && text[text.size() - 1] == '"');
   string_view input = text.substr(1, text.size() - 2);
-  const char* p = input.begin();
-  const char* end = input.end();
 
   // Unescape characters.
-  for (; p < end; ++p) {
+  for (const char *p = input.begin(), *end = input.end(); p < end; ++p) {
     char c = *p;
     if (c == '\\') {
       c = *++p;
       switch (c) {
-        case 't': result += '\t'; break;
-        case 'n': result += '\n'; break;
-        case 'r': result += '\r'; break;
+        case 't': buffer.push_back('\t'); break;
+        case 'n': buffer.push_back('\n'); break;
+        case 'r': buffer.push_back('\r'); break;
 
         case '"':
         case '\'':
         case '\\':
-          result += c;
+          buffer.push_back(c);
           break;
 
         default:
           // Must be a "\xx" hexadecimal sequence.
-          result += char((kHexDigit[int(c)] << 4) | kHexDigit[int(*++p)]);
+          buffer.push_back((kHexDigit[int(c)] << 4) | kHexDigit[int(*++p)]);
           break;
       }
     } else {
-      result += c;
+      buffer.push_back(c);
     }
   }
+}
 
-  return result;
+auto Text::ToString() const -> std::string {
+  std::vector<u8> buffer;
+  ToBuffer(buffer);
+  return std::string(reinterpret_cast<const char*>(buffer.data()),
+                     buffer.size());
 }
 
 Token::Token() : loc{}, type{TokenType::Eof}, immediate{monostate{}} {}
