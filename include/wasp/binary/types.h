@@ -46,12 +46,12 @@ namespace binary {
 // numbers encoded as signed LEB128. For example, 0x40 is the encoding for -64.
 // Signed LEB128 values have their sign bit as the 6th bit (instead of the 7th
 // bit), so to convert them to a s32 value, we must shift by 25.
-constexpr s32 ConvertValueTypeToBlockType(u8 value) {
+constexpr s32 EncodeValueTypeAsBlockType(u8 value) {
   return (value << 25) >> 25;
 }
 
 enum class BlockType : s32 {
-#define WASP_V(val, Name, str) Name = ConvertValueTypeToBlockType(val),
+#define WASP_V(val, Name, str) Name = EncodeValueTypeAsBlockType(val),
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
 #include "wasp/binary/def/block_type.def"
 #undef WASP_V

@@ -17,7 +17,7 @@
 #include "gtest/gtest.h"
 #include "test/binary/read_test_utils.h"
 #include "test/binary/test_utils.h"
-#include "wasp/binary/encoding/symbol_info_flags_encoding.h"
+#include "wasp/binary/linking_section/encoding.h"
 #include "wasp/binary/linking_section/read.h"
 
 using namespace ::wasp;

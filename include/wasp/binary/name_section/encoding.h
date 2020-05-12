@@ -14,23 +14,27 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_NAME_SECTION_WRITE_H_
-#define WASP_BINARY_NAME_SECTION_WRITE_H_
+#ifndef WASP_BINARY_NAME_SECTION_ENCODING_H
+#define WASP_BINARY_NAME_SECTION_ENCODING_H
 
-#include "wasp/binary/name_section/encoding.h"
+#include "wasp/base/optional.h"
+#include "wasp/base/types.h"
 #include "wasp/binary/name_section/types.h"
-#include "wasp/binary/write.h"
 
 namespace wasp {
+
+class Features;
+
 namespace binary {
+namespace encoding {
 
-template <typename Iterator>
-Iterator Write(NameSubsectionId value, Iterator out) {
-  return Write(encoding::NameSubsectionId::Encode(value), out);
-}
+struct NameSubsectionId {
+  static u8 Encode(::wasp::binary::NameSubsectionId);
+  static optional<::wasp::binary::NameSubsectionId> Decode(u8);
+};
 
-
+}  // namespace encoding
 }  // namespace binary
 }  // namespace wasp
 
-#endif  // WASP_BINARY_NAME_SECTION_WRITE_H_
+#endif  // WASP_BINARY_NAME_SECTION_ENCODING_H

@@ -38,8 +38,8 @@ enum class Opcode : u32 {
 #undef WASP_PREFIX_V
 };
 
-enum class ValueType : s32 {
-#define WASP_V(val, Name, str) Name,
+enum class ValueType : u8 {
+#define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
 #include "wasp/base/def/value_type.def"
 #undef WASP_V
@@ -48,8 +48,8 @@ enum class ValueType : s32 {
 
 using ValueTypeList = std::vector<At<ValueType>>;
 
-enum class ReferenceType : s32 {
-#define WASP_V(val, Name, str) Name,
+enum class ReferenceType : u8 {
+#define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
 #include "wasp/base/def/reference_type.def"
 #undef WASP_V
@@ -57,7 +57,7 @@ enum class ReferenceType : s32 {
 };
 
 enum class ExternalKind : u8 {
-#define WASP_V(val, Name, str) Name,
+#define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
 #include "wasp/base/def/external_kind.def"
 #undef WASP_V
@@ -65,13 +65,13 @@ enum class ExternalKind : u8 {
 };
 
 enum class EventAttribute : u8 {
-#define WASP_V(val, Name, str) Name,
+#define WASP_V(val, Name, str) Name = val,
 #include "wasp/base/def/event_attribute.def"
 #undef WASP_V
 };
 
 enum class Mutability : u8 {
-#define WASP_V(val, Name, str) Name,
+#define WASP_V(val, Name, str) Name = val,
 #include "wasp/base/def/mutability.def"
 #undef WASP_V
 };

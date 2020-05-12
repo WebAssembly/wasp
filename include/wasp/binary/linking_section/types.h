@@ -34,19 +34,19 @@ namespace wasp {
 namespace binary {
 
 enum class ComdatSymbolKind : u8 {
-#define WASP_V(val, Name, str) Name,
+#define WASP_V(val, Name, str) Name = val,
 #include "wasp/binary/def/comdat_symbol_kind.def"
 #undef WASP_V
 };
 
 enum class LinkingSubsectionId : u8 {
-#define WASP_V(val, Name, str) Name,
+#define WASP_V(val, Name, str) Name = val,
 #include "wasp/binary/def/linking_subsection_id.def"
 #undef WASP_V
 };
 
 enum class RelocationType : u8 {
-#define WASP_V(val, Name, str) Name,
+#define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
 #include "wasp/binary/def/relocation_type.def"
 #undef WASP_V
@@ -54,7 +54,7 @@ enum class RelocationType : u8 {
 };
 
 enum class SymbolInfoKind : u8 {
-#define WASP_V(val, Name, str) Name,
+#define WASP_V(val, Name, str) Name = val,
 #include "wasp/binary/def/symbol_info_kind.def"
 #undef WASP_V
 };

@@ -14,47 +14,30 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BINARY_EVENT_ATTRIBUTE_ENCODING_H
-#define WASP_BINARY_EVENT_ATTRIBUTE_ENCODING_H
+#include "wasp/binary/name_section/encoding.h"
 
+#include "wasp/base/features.h"
 #include "wasp/base/macros.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/types.h"
+#include "wasp/binary/name_section/types.h"
 
 namespace wasp {
 namespace binary {
 namespace encoding {
 
-struct EventAttribute {
-#define WASP_V(val, Name, str) static constexpr u8 Name = val;
-#include "wasp/base/def/event_attribute.def"
-#undef WASP_V
-
-  static u8 Encode(::wasp::EventAttribute);
-  static optional<::wasp::EventAttribute> Decode(u8);
-};
-
 // static
-inline u8 EventAttribute::Encode(::wasp::EventAttribute decoded) {
-  switch (decoded) {
-#define WASP_V(val, Name, str)       \
-  case ::wasp::EventAttribute::Name: \
-    return val;
-#include "wasp/base/def/event_attribute.def"
-#undef WASP_V
-    default:
-      WASP_UNREACHABLE();
-  }
+u8 NameSubsectionId::Encode(::wasp::binary::NameSubsectionId decoded) {
+  return u8(decoded);
 }
 
 // static
-inline optional<::wasp::EventAttribute> EventAttribute::Decode(u8 val) {
+optional<::wasp::binary::NameSubsectionId> NameSubsectionId::Decode(u8 val) {
   switch (val) {
 #define WASP_V(val, Name, str) \
-  case Name:                   \
-    return ::wasp::EventAttribute::Name;
-#include "wasp/base/def/event_attribute.def"
+  case val:                    \
+    return ::wasp::binary::NameSubsectionId::Name;
+#include "wasp/binary/def/name_subsection_id.def"
 #undef WASP_V
     default:
       return nullopt;
@@ -64,5 +47,3 @@ inline optional<::wasp::EventAttribute> EventAttribute::Decode(u8 val) {
 }  // namespace encoding
 }  // namespace binary
 }  // namespace wasp
-
-#endif  // WASP_BINARY_EVENT_ATTRIBUTE_ENCODING_H

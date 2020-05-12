@@ -28,7 +28,7 @@ namespace wasp {
 namespace valid {
 
 enum class StackType : s32 {
-#define WASP_V(val, Name, str) Name,
+#define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
 #include "wasp/valid/stack_type.def"
 #undef WASP_V
@@ -39,13 +39,7 @@ using StackTypeList = std::vector<StackType>;
 using StackTypeSpan = span<const StackType>;
 
 inline ValueType ToValueType(ReferenceType type) {
-  switch (type) {
-    case ReferenceType::Funcref: return ValueType::Funcref;
-    case ReferenceType::Externref: return ValueType::Externref;
-    case ReferenceType::Exnref: return ValueType::Exnref;
-    default:
-      WASP_UNREACHABLE();
-  }
+  return ValueType(u8(type));
 }
 
 inline StackType ToStackType(ValueType type) {

@@ -17,10 +17,7 @@
 #ifndef WASP_BINARY_LINKING_SECTION_WRITE_H_
 #define WASP_BINARY_LINKING_SECTION_WRITE_H_
 
-#include "wasp/binary/encoding/comdat_symbol_kind_encoding.h"
-#include "wasp/binary/encoding/linking_subsection_id_encoding.h"
-#include "wasp/binary/encoding/relocation_type_encoding.h"
-#include "wasp/binary/encoding/symbol_info_kind_encoding.h"
+#include "wasp/binary/encoding/encoding.h"
 #include "wasp/binary/types_linking.h"
 #include "wasp/binary/write.h"
 

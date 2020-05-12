@@ -23,17 +23,7 @@
 
 #include "wasp/base/types.h"
 #include "wasp/base/wasm_types.h"
-#include "wasp/binary/encoding.h"  // XXX
-#include "wasp/binary/encoding/block_type_encoding.h"
-#include "wasp/binary/encoding/reference_type_encoding.h"
-#include "wasp/binary/encoding/event_attribute_encoding.h"
-#include "wasp/binary/encoding/external_kind_encoding.h"
-#include "wasp/binary/encoding/limits_flags_encoding.h"
-#include "wasp/binary/encoding/mutability_encoding.h"
-#include "wasp/binary/encoding/opcode_encoding.h"
-#include "wasp/binary/encoding/section_id_encoding.h"
-#include "wasp/binary/encoding/segment_flags_encoding.h"
-#include "wasp/binary/encoding/value_type_encoding.h"
+#include "wasp/binary/encoding.h"
 #include "wasp/binary/types.h"
 #include "wasp/binary/var_int.h"
 
@@ -200,21 +190,6 @@ template <typename Iterator>
 Iterator Write(const CallIndirectImmediate& immediate, Iterator out) {
   out = WriteIndex(immediate.index, out);
   out = Write(immediate.table_index, out);
-  return out;
-}
-
-template <typename Iterator>
-Iterator Write(const Comdat& value, Iterator out) {
-  out = Write(value.name, out);
-  out = Write(value.flags, out);
-  out = WriteVector(value.symbols.begin(), value.symbols.end(), out);
-  return out;
-}
-
-template <typename Iterator>
-Iterator Write(const ComdatSymbol& value, Iterator out) {
-  out = Write(value.kind, out);
-  out = WriteIndex(value.index, out);
   return out;
 }
 

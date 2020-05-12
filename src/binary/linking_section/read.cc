@@ -17,11 +17,7 @@
 #include "wasp/binary/linking_section/read.h"
 
 #include "wasp/base/errors_context_guard.h"
-#include "wasp/binary/encoding/comdat_symbol_kind_encoding.h"
-#include "wasp/binary/encoding/linking_subsection_id_encoding.h"
-#include "wasp/binary/encoding/relocation_type_encoding.h"
-#include "wasp/binary/encoding/symbol_info_flags_encoding.h"
-#include "wasp/binary/encoding/symbol_info_kind_encoding.h"
+#include "wasp/binary/linking_section/encoding.h"
 #include "wasp/binary/read.h"
 #include "wasp/binary/read/context.h"
 #include "wasp/binary/read/location_guard.h"
