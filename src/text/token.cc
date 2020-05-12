@@ -19,7 +19,7 @@
 namespace wasp {
 namespace text {
 
-void Text::ToBuffer(std::vector<u8>& buffer) const {
+void Text::ToBuffer(Buffer& buffer) const {
   static const char kHexDigit[256] = {
       /*00*/ 0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
       /*10*/ 0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -65,7 +65,7 @@ void Text::ToBuffer(std::vector<u8>& buffer) const {
 }
 
 auto Text::ToString() const -> std::string {
-  std::vector<u8> buffer;
+  Buffer buffer;
   ToBuffer(buffer);
   return std::string(reinterpret_cast<const char*>(buffer.data()),
                      buffer.size());

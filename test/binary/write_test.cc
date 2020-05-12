@@ -22,6 +22,7 @@
 
 #include "test/binary/test_utils.h"
 #include "test/write_test_utils.h"
+#include "wasp/base/buffer.h"
 #include "wasp/binary/name_section/write.h"
 #include "wasp/binary/write.h"
 
@@ -36,7 +37,7 @@ namespace {
 
 template <typename T>
 void ExpectWrite(wasp::SpanU8 expected, const T& value) {
-  std::vector<wasp::u8> result(expected.size());
+  wasp::Buffer result(expected.size());
   auto iter = wasp::binary::Write(
       value, MakeClampedIterator(result.begin(), result.end()));
   EXPECT_FALSE(iter.overflow());
@@ -67,8 +68,8 @@ TEST(BinaryWriteTest, BrTableImmediate) {
 }
 
 TEST(BinaryWriteTest, Bytes) {
-  const std::vector<u8> input{{0x12, 0x34, 0x56}};
-  std::vector<u8> output;
+  const wasp::Buffer input{{0x12, 0x34, 0x56}};
+  wasp::Buffer output;
   WriteBytes(input, std::back_inserter(output));
   EXPECT_EQ(input, output);
 }
@@ -248,7 +249,7 @@ namespace {
 
 template <typename T>
 void ExpectWriteFixedVarInt(SpanU8 expected, T value, size_t length) {
-  std::vector<wasp::u8> result(expected.size());
+  wasp::Buffer result(expected.size());
   auto iter = wasp::binary::WriteFixedVarInt(
       value, MakeClampedIterator(result.begin(), result.end()), length);
   EXPECT_FALSE(iter.overflow());

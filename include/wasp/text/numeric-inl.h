@@ -22,6 +22,7 @@
 
 #include "third_party/gdtoa/gdtoa.h"
 #include "wasp/base/bitcast.h"
+#include "wasp/base/buffer.h"
 #include "wasp/base/macros.h"
 
 namespace wasp {
@@ -120,7 +121,7 @@ auto StrToInt(LiteralInfo info, SpanU8 span) -> optional<T> {
   return value;
 }
 
-inline void RemoveUnderscores(SpanU8 span, std::vector<u8>& out) {
+inline void RemoveUnderscores(SpanU8 span, Buffer& out) {
   std::copy_if(span.begin(), span.end(), std::back_inserter(out),
                [](u8 c) { return c != '_'; });
 }
@@ -213,7 +214,7 @@ template <typename T>
 auto StrToFloat(LiteralInfo info, SpanU8 span) -> optional<T> {
   switch (info.kind) {
     case LiteralKind::Normal: {
-      std::vector<u8> vec;
+      Buffer vec;
       RemoveUnderscores(span, vec);  // Always need to copy, to null-terminate.
       vec.push_back(0);
       return ParseFloat<T>(vec);

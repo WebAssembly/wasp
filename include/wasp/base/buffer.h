@@ -1,5 +1,5 @@
 //
-// Copyright 2018 WebAssembly Community Group participants
+// Copyright 2020 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,29 +14,17 @@
 // limitations under the License.
 //
 
-#include "wasp/base/file.h"
+#ifndef WASP_BASE_BUFFER_H_
+#define WASP_BASE_BUFFER_H_
 
-#include <fstream>
-#include <string>
+#include <vector>
+
+#include "wasp/base/types.h"
 
 namespace wasp {
 
-optional<Buffer> ReadFile(string_view filename) {
-  std::ifstream stream{std::string{filename}, std::ios::in | std::ios::binary};
-  if (!stream) {
-    return nullopt;
-  }
-
-  Buffer buffer;
-  stream.seekg(0, std::ios::end);
-  buffer.resize(stream.tellg());
-  stream.seekg(0, std::ios::beg);
-  stream.read(reinterpret_cast<char*>(&buffer[0]), buffer.size());
-  if (stream.fail()) {
-    return nullopt;
-  }
-
-  return buffer;
-}
+using Buffer = std::vector<u8>;
 
 }  // namespace wasp
+
+#endif // WASP_BASE_BUFFER_H_

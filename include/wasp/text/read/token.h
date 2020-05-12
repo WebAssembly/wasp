@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "wasp/base/at.h"
+#include "wasp/base/buffer.h"
 #include "wasp/base/features.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
@@ -69,7 +70,7 @@ struct OpcodeInfo {
 };
 
 struct Text {
-  void ToBuffer(std::vector<u8>& buffer) const;
+  void ToBuffer(Buffer& buffer) const;
   auto ToString() const -> std::string;
 
   string_view text;

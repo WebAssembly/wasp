@@ -19,13 +19,14 @@
 
 #include <vector>
 
+#include "wasp/base/buffer.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 
 namespace wasp {
 
-optional<std::vector<u8>> ReadFile(string_view filename);
+optional<Buffer> ReadFile(string_view filename);
 
 }  // namespace wasp
 

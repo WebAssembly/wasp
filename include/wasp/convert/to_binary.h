@@ -22,15 +22,13 @@
 #include <vector>
 
 #include "wasp/base/at.h"
+#include "wasp/base/buffer.h"
 #include "wasp/base/optional.h"
 #include "wasp/binary/types.h"
 #include "wasp/text/types.h"
 
 namespace wasp {
 namespace convert {
-
-// TODO: move into wasp base.
-using Buffer = std::vector<u8>;
 
 struct Context {
   string_view Add(std::string);
