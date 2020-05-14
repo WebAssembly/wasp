@@ -429,11 +429,11 @@ u32 GetAlignLog2(u32 align) {
 auto ToBinary(Context& context,
               const At<text::MemArgImmediate>& value,
               u32 natural_align) -> At<binary::MemArgImmediate> {
-  return MakeAt(value.loc(),
-                binary::MemArgImmediate{
-                    MakeAt(value->align->loc(),
-                           GetAlignLog2(value->align.value_or(natural_align))),
-                    MakeAt(value->offset->loc(), value->offset.value_or(0))});
+  auto align = value->align
+                   ? MakeAt(value->align->loc(), GetAlignLog2(*value->align))
+                   : MakeAt(GetAlignLog2(natural_align));
+  auto offset = value->offset ? *value->offset : MakeAt(u32{0});
+  return MakeAt(value.loc(), binary::MemArgImmediate{align, offset});
 }
 
 auto ToBinary(Context& context, const At<text::Instruction>& value)
