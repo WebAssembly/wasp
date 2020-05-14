@@ -175,6 +175,11 @@ target_link_libraries(run_spec_tests
   wasplib
 )
 
+# TODO: Link stdc++fs conditionally, only when needed.
+target_link_libraries(run_spec_tests
+  stdc++fs
+)
+
 add_executable(wasp_sqlite
   src/tools/argparser.cc
   src/tools/wasp_sqlite.cc
