@@ -107,6 +107,9 @@ auto ToBinary(Context&, const At<text::DataSegment>&) -> At<binary::DataSegment>
 auto ToBinary(Context&, const At<text::EventType>&) -> At<binary::EventType>;
 auto ToBinary(Context&, const At<text::Event>&) -> OptAt<binary::Event>;
 
+// Module
+auto ToBinary(Context&, const At<text::Module>&) -> At<binary::Module>;
+
 }  // namespace convert
 }  // namespace wasp
 

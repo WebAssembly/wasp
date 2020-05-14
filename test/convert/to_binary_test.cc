@@ -839,3 +839,161 @@ TEST(ConvertToBinaryTest, Event) {
                                    })},
                         {}}));
 }
+
+TEST(ConvertToBinaryTest, Module) {
+  // Additional locations only needed for Module. :-)
+  const SpanU8 loc8 = "H"_su8;
+  const SpanU8 loc9 = "I"_su8;
+  const SpanU8 loc10 = "J"_su8;
+  const SpanU8 loc11 = "K"_su8;
+  const SpanU8 loc12 = "L"_su8;
+  const SpanU8 loc13 = "M"_su8;
+  const SpanU8 loc14 = "N"_su8;
+  const SpanU8 loc15 = "O"_su8;
+  const SpanU8 loc16 = "P"_su8;
+  const SpanU8 loc17 = "Q"_su8;
+  const SpanU8 loc18 = "R"_su8;
+  const SpanU8 loc19 = "S"_su8;
+  const SpanU8 loc20 = "T"_su8;
+  const SpanU8 loc21 = "U"_su8;
+  const SpanU8 loc22 = "V"_su8;
+  const SpanU8 loc23 = "W"_su8;
+  const SpanU8 loc24 = "X"_su8;
+
+  auto table_type = MakeAt(
+      "T0"_su8, TableType{MakeAt("T1"_su8, Limits{MakeAt("T2"_su8, u32{0})}),
+                          MakeAt("T3"_su8, ReferenceType::Funcref)});
+
+  auto memory_type = MakeAt(
+      "M0"_su8, MemoryType{MakeAt("M1"_su8, Limits{MakeAt("M2"_su8, u32{0})})});
+
+  auto global_type =
+      MakeAt("G0"_su8, GlobalType{MakeAt("G1"_su8, ValueType::I32),
+                                  MakeAt("G2"_su8, Mutability::Const)});
+
+  auto external_kind = MakeAt("EK"_su8, ExternalKind::Function);
+
+  // These will be shared between global, data, and element segments. This
+  // would never actually happen, but it simplifies the test below.
+  auto binary_constant_expression = MakeAt(
+      "CE0"_su8,
+      binary::ConstantExpression{MakeAt(
+          "CE1"_su8, binary::Instruction{MakeAt("CE2"_su8, Opcode::I32Const),
+                                         MakeAt("CE3"_su8, s32{0})})});
+
+  auto text_constant_expression = MakeAt(
+      "CE0"_su8,
+      text::ConstantExpression{MakeAt(
+          "CE1"_su8, text::Instruction{MakeAt("CE2"_su8, Opcode::I32Const),
+                                       MakeAt("CE3"_su8, s32{0})})});
+
+  OK(MakeAt(
+         loc1,
+         binary::Module{
+             // types
+             {MakeAt(loc2, binary::TypeEntry{})},
+             // imports
+             {MakeAt(loc3,
+                     binary::Import{MakeAt(loc4, "m"_sv), MakeAt(loc5, "n"_sv),
+                                    MakeAt(loc6, Index{0})})},
+             // functions
+             {MakeAt(loc7, binary::Function{MakeAt(loc8, Index{0})})},
+             // tables
+             {MakeAt(loc9, binary::Table{table_type})},
+             // memories
+             {MakeAt(loc10, binary::Memory{memory_type})},
+             // globals
+             {MakeAt(loc11,
+                     binary::Global{global_type, binary_constant_expression})},
+             // events
+             {MakeAt(loc12,
+                     binary::Event{MakeAt(
+                         loc13, binary::EventType{EventAttribute::Exception,
+                                                  MakeAt(loc14, Index{0})})})},
+             // exports
+             {MakeAt(loc15, binary::Export{external_kind, MakeAt(loc16, "e"_sv),
+                                           MakeAt(loc17, Index{0})})},
+             // starts
+             {MakeAt(loc18, binary::Start{MakeAt(loc19, Index{0})})},
+             // element_segments
+             {MakeAt(loc20,
+                     binary::ElementSegment{
+                         MakeAt(loc21, Index{0}), binary_constant_expression,
+                         binary::ElementList{binary::ElementListWithIndexes{
+                             external_kind, {MakeAt(loc22, Index{0})}}}})},
+             // data_counts
+             {},
+             // codes
+             {MakeAt(loc7, binary::Code{binary::LocalsList{},
+                                        binary::Expression{"\x01"_su8}})},
+             // data_segments
+             {MakeAt(loc23, binary::DataSegment{MakeAt(loc24, Index{0}),
+                                                binary_constant_expression,
+                                                "hello"_su8})},
+         }),
+     MakeAt(
+         loc1,
+         text::Module{
+             // (type (func))
+             MakeAt(loc2, text::ModuleItem{text::TypeEntry{nullopt, {}}}),
+             // (import "m" "n" (func (type 0)))
+             MakeAt(loc3, text::ModuleItem{text::Import{
+                              MakeAt(loc4, text::Text{"\"m\"", 1}),
+                              MakeAt(loc5, text::Text{"\"n\"", 1}),
+                              text::FunctionDesc{
+                                  nullopt,
+                                  MakeAt(loc6, text::Var{Index{0}}),
+                                  {}}}}),
+             // (event)
+             MakeAt(loc12,
+                    text::ModuleItem{text::Event{
+                        text::EventDesc{
+                            nullopt,
+                            MakeAt(loc13,
+                                   text::EventType{
+                                       EventAttribute::Exception,
+                                       text::FunctionTypeUse{
+                                           MakeAt(loc14, text::Var{Index{0}}),
+                                           {}}})},
+                        {}}}),
+             // (global i32 i32.const 0)
+             MakeAt(loc11, text::ModuleItem{text::Global{
+                               text::GlobalDesc{nullopt, global_type},
+                               text_constant_expression,
+                               {}}}),
+             // (memory 0)
+             MakeAt(loc10, text::ModuleItem{text::Memory{
+                               text::MemoryDesc{nullopt, memory_type}, {}}}),
+             // (table 0 funcref)
+             MakeAt(loc9, text::ModuleItem{text::Table{
+                              text::TableDesc{nullopt, table_type}, {}}}),
+             // (start 0)
+             MakeAt(loc18, text::ModuleItem{text::Start{
+                               MakeAt(loc19, text::Var{Index{0}})}}),
+             // (func (type 0) nop)
+             MakeAt(loc7,
+                    text::ModuleItem{text::Function{
+                        text::FunctionDesc{
+                            nullopt, MakeAt(loc8, text::Var{Index{0}}), {}},
+                        {},
+                        {text::Instruction{Opcode::Nop}},
+                        {}}}),
+             // (elem (i32.const 0) func 0)
+             MakeAt(loc20, text::ModuleItem{text::ElementSegment{
+                               nullopt, MakeAt(loc21, text::Var{Index{0}}),
+                               text_constant_expression,
+                               text::ElementList{text::ElementListWithVars{
+                                   external_kind,
+                                   {MakeAt(loc22, text::Var{Index{0}})}}}}}),
+             // (export "e" (func 0))
+             MakeAt(loc15,
+                    text::ModuleItem{text::Export{
+                        external_kind, MakeAt(loc16, text::Text{"\"e\""_sv, 1}),
+                        MakeAt(loc17, text::Var{Index{0}})}}),
+             // (data (i32.const 0) "hello")
+             MakeAt(loc23, text::ModuleItem{text::DataSegment{
+                               nullopt, MakeAt(loc24, text::Var{Index{0}}),
+                               text_constant_expression,
+                               text::TextList{text::Text{"\"hello\""_sv, 5}}}}),
+         }));
+}

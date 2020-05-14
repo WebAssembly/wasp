@@ -61,7 +61,7 @@
   }                                                                    \
   bool operator!=(const Name& lhs, const Name& rhs) { return !(lhs == rhs); }
 
-#define WASP_OPERATOR_EQ_NE_CONTAINER(Name)                                  \
+#define WASP_OPERATOR_EQ_NE_CONTAINER(Name)                            \
   bool operator==(const Name& lhs, const Name& rhs) {                  \
     return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end()); \
   }                                                                    \

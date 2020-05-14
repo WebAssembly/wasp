@@ -461,6 +461,26 @@ struct Event {
   At<EventType> event_type;
 };
 
+// Module
+// (primarily used as a container when converting from text. For binary
+// decoding, it's more efficient to lazily decode sections.)
+
+struct Module {
+  std::vector<At<TypeEntry>> types;
+  std::vector<At<Import>> imports;
+  std::vector<At<Function>> functions;
+  std::vector<At<Table>> tables;
+  std::vector<At<Memory>> memories;
+  std::vector<At<Global>> globals;
+  std::vector<At<Event>> events;
+  std::vector<At<Export>> exports;
+  std::vector<At<Start>> starts;
+  std::vector<At<ElementSegment>> element_segments;
+  std::vector<At<DataCount>> data_counts;
+  std::vector<At<Code>> codes;
+  std::vector<At<DataSegment>> data_segments;
+};
+
 #define WASP_BINARY_ENUMS(WASP_V) \
   WASP_V(binary::BlockType)       \
   WASP_V(binary::SectionId)
@@ -506,6 +526,8 @@ struct Event {
 
 WASP_BINARY_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_BINARY_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
+
+WASP_DECLARE_OPERATOR_EQ_NE(binary::Module)
 
 // Used for gtest.
 

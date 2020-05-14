@@ -179,6 +179,19 @@ Section::Section(CustomSection contents) : contents{contents} {}
 WASP_BINARY_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_BINARY_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
 
+bool operator==(const Module& lhs, const Module& rhs) {
+  return lhs.types == rhs.types && lhs.imports == rhs.imports &&
+         lhs.functions == rhs.functions && lhs.tables == rhs.tables &&
+         lhs.memories == rhs.memories && lhs.globals == rhs.globals &&
+         lhs.events == rhs.events && lhs.exports == rhs.exports &&
+         lhs.starts == rhs.starts &&
+         lhs.element_segments == rhs.element_segments &&
+         lhs.data_counts == rhs.data_counts && lhs.codes == rhs.codes &&
+         lhs.data_segments == rhs.data_segments;
+}
+
+bool operator!=(const Module& lhs, const Module& rhs) { return !(lhs == rhs); }
+
 }  // namespace binary
 }  // namespace wasp
 
