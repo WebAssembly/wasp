@@ -443,19 +443,19 @@ struct Event {
 
 // Module
 
-using ModuleItem = variant<TypeEntry,
-                           Import,
-                           Function,
-                           Table,
-                           Memory,
-                           Global,
-                           Export,
-                           Start,
-                           ElementSegment,
-                           DataSegment,
-                           Event>;
+using ModuleItem = variant<At<TypeEntry>,
+                           At<Import>,
+                           At<Function>,
+                           At<Table>,
+                           At<Memory>,
+                           At<Global>,
+                           At<Export>,
+                           At<Start>,
+                           At<ElementSegment>,
+                           At<DataSegment>,
+                           At<Event>>;
 
-using Module = std::vector<At<ModuleItem>>;
+using Module = std::vector<ModuleItem>;
 
 // Script
 

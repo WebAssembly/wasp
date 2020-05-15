@@ -28,7 +28,8 @@ namespace {
 template <typename B, typename T, typename... Args>
 void OK(const B& expected, const T& input, Args&&... args) {
   Context context;
-  EXPECT_EQ(expected, ToBinary(context, input, std::forward<Args>(args)...));
+  auto actual = ToBinary(context, input, std::forward<Args>(args)...);
+  EXPECT_EQ(expected, actual);
 }
 
 template <typename F, typename B, typename T, typename... Args>
@@ -935,18 +936,19 @@ TEST(ConvertToBinaryTest, Module) {
          loc1,
          text::Module{
              // (type (func))
-             MakeAt(loc2, text::ModuleItem{text::TypeEntry{nullopt, {}}}),
+             MakeAt(loc2, text::TypeEntry{nullopt, {}}),
              // (import "m" "n" (func (type 0)))
-             MakeAt(loc3, text::ModuleItem{text::Import{
-                              MakeAt(loc4, text::Text{"\"m\"", 1}),
-                              MakeAt(loc5, text::Text{"\"n\"", 1}),
-                              text::FunctionDesc{
-                                  nullopt,
-                                  MakeAt(loc6, text::Var{Index{0}}),
-                                  {}}}}),
+             MakeAt(loc3,
+                    text::Import{
+                        MakeAt(loc4, text::Text{"\"m\"", 1}),
+                        MakeAt(loc5, text::Text{"\"n\"", 1}),
+                        text::FunctionDesc{
+                            nullopt,
+                            MakeAt(loc6, text::Var{Index{0}}),
+                            {}}}),
              // (event)
              MakeAt(loc12,
-                    text::ModuleItem{text::Event{
+                    text::Event{
                         text::EventDesc{
                             nullopt,
                             MakeAt(loc13,
@@ -955,45 +957,45 @@ TEST(ConvertToBinaryTest, Module) {
                                        text::FunctionTypeUse{
                                            MakeAt(loc14, text::Var{Index{0}}),
                                            {}}})},
-                        {}}}),
+                        {}}),
              // (global i32 i32.const 0)
-             MakeAt(loc11, text::ModuleItem{text::Global{
-                               text::GlobalDesc{nullopt, global_type},
-                               text_constant_expression,
-                               {}}}),
+             MakeAt(loc11, text::Global{text::GlobalDesc{nullopt, global_type},
+                                        text_constant_expression,
+                                        {}}),
              // (memory 0)
-             MakeAt(loc10, text::ModuleItem{text::Memory{
-                               text::MemoryDesc{nullopt, memory_type}, {}}}),
+             MakeAt(loc10,
+                    text::Memory{text::MemoryDesc{nullopt, memory_type}, {}}),
              // (table 0 funcref)
-             MakeAt(loc9, text::ModuleItem{text::Table{
-                              text::TableDesc{nullopt, table_type}, {}}}),
+             MakeAt(loc9,
+                    text::Table{text::TableDesc{nullopt, table_type}, {}}),
              // (start 0)
-             MakeAt(loc18, text::ModuleItem{text::Start{
-                               MakeAt(loc19, text::Var{Index{0}})}}),
+             MakeAt(loc18, text::Start{MakeAt(loc19, text::Var{Index{0}})}),
              // (func (type 0) nop)
              MakeAt(loc7,
-                    text::ModuleItem{text::Function{
+                    text::Function{
                         text::FunctionDesc{
                             nullopt, MakeAt(loc8, text::Var{Index{0}}), {}},
                         {},
                         {text::Instruction{Opcode::Nop}},
-                        {}}}),
+                        {}}),
              // (elem (i32.const 0) func 0)
-             MakeAt(loc20, text::ModuleItem{text::ElementSegment{
-                               nullopt, MakeAt(loc21, text::Var{Index{0}}),
-                               text_constant_expression,
-                               text::ElementList{text::ElementListWithVars{
-                                   external_kind,
-                                   {MakeAt(loc22, text::Var{Index{0}})}}}}}),
+             MakeAt(loc20,
+                    text::ElementSegment{
+                        nullopt, MakeAt(loc21, text::Var{Index{0}}),
+                        text_constant_expression,
+                        text::ElementList{text::ElementListWithVars{
+                            external_kind,
+                            {MakeAt(loc22, text::Var{Index{0}})}}}}),
              // (export "e" (func 0))
              MakeAt(loc15,
-                    text::ModuleItem{text::Export{
-                        external_kind, MakeAt(loc16, text::Text{"\"e\""_sv, 1}),
-                        MakeAt(loc17, text::Var{Index{0}})}}),
+                    text::Export{external_kind,
+                                 MakeAt(loc16, text::Text{"\"e\""_sv, 1}),
+                                 MakeAt(loc17, text::Var{Index{0}})}),
              // (data (i32.const 0) "hello")
-             MakeAt(loc23, text::ModuleItem{text::DataSegment{
-                               nullopt, MakeAt(loc24, text::Var{Index{0}}),
-                               text_constant_expression,
-                               text::TextList{text::Text{"\"hello\""_sv, 5}}}}),
+             MakeAt(loc23,
+                    text::DataSegment{
+                        nullopt, MakeAt(loc24, text::Var{Index{0}}),
+                        text_constant_expression,
+                        text::TextList{text::Text{"\"hello\""_sv, 5}}}),
          }));
 }

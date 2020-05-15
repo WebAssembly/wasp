@@ -40,7 +40,7 @@ auto ToBinary(Context& context, const At<text::Text>& value)
 }
 
 auto ToBinary(Context& context, const At<text::Var>& value) -> At<Index> {
-  assert(std::holds_alternative<Index>(*value));
+  assert(holds_alternative<Index>(*value));
   return MakeAt(value.loc(), std::get<Index>(*value));
 }
 
@@ -655,67 +655,62 @@ auto ToBinary(Context& context, const At<text::Module>& value)
     }
   };
 
-  for (auto& item : *value) {
-    switch (item->index()) {
+  for (auto&& item : *value) {
+    switch (item.index()) {
       case 0:  // TypeEntry.
         result.types.push_back(
-            ToBinary(context, MakeAt(item.loc(), get<text::TypeEntry>(*item))));
+            ToBinary(context, get<At<text::TypeEntry>>(item)));
         break;
 
       case 1:  // Import.
         result.imports.push_back(
-            ToBinary(context, MakeAt(item.loc(), get<text::Import>(*item))));
+            ToBinary(context, get<At<text::Import>>(item)));
         break;
 
       case 2: { // Function
-        auto function = MakeAt(item.loc(), get<text::Function>(*item));
+        auto&& function = get<At<text::Function>>(item);
         push_back_opt(result.functions, ToBinary(context, function));
         push_back_opt(result.codes, ToBinaryCode(context, function));
         break;
       }
 
-      case 3:   // Table
-        push_back_opt(
-            result.tables,
-            ToBinary(context, MakeAt(item.loc(), get<text::Table>(*item))));
+      case 3:  // Table
+        push_back_opt(result.tables,
+                      ToBinary(context, get<At<text::Table>>(item)));
         break;
 
       case 4:  // Memory
-        push_back_opt(
-            result.memories,
-            ToBinary(context, MakeAt(item.loc(), get<text::Memory>(*item))));
+        push_back_opt(result.memories,
+                      ToBinary(context, get<At<text::Memory>>(item)));
         break;
 
       case 5:  // Global
-        push_back_opt(
-            result.globals,
-            ToBinary(context, MakeAt(item.loc(), get<text::Global>(*item))));
+        push_back_opt(result.globals,
+                      ToBinary(context, get<At<text::Global>>(item)));
         break;
 
       case 6:  // Export
         result.exports.push_back(
-            ToBinary(context, MakeAt(item.loc(), get<text::Export>(*item))));
+            ToBinary(context, get<At<text::Export>>(item)));
         break;
 
       case 7:  // Start
-        result.starts.push_back(
-            ToBinary(context, MakeAt(item.loc(), get<text::Start>(*item))));
+        result.starts.push_back(ToBinary(context, get<At<text::Start>>(item)));
         break;
 
       case 8:  // ElementSegment
-        result.element_segments.push_back(ToBinary(
-            context, MakeAt(item.loc(), get<text::ElementSegment>(*item))));
+        result.element_segments.push_back(
+            ToBinary(context, get<At<text::ElementSegment>>(item)));
         break;
 
       case 9:  // DataSegment
-        result.data_segments.push_back(ToBinary(
-            context, MakeAt(item.loc(), get<text::DataSegment>(*item))));
+        result.data_segments.push_back(
+            ToBinary(context, get<At<text::DataSegment>>(item)));
         break;
 
       case 10:   // Event
-        push_back_opt(
-            result.events,
-            ToBinary(context, MakeAt(item.loc(), get<text::Event>(*item))));
+        push_back_opt(result.events,
+                      ToBinary(context, get<At<text::Event>>(item)));
         break;
     }
   }

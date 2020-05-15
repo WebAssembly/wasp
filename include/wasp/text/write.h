@@ -171,10 +171,10 @@ Iterator Write(WriteContext& context, Iterator out, T value) {
 
 template <typename Iterator>
 Iterator Write(WriteContext& context, Iterator out, Var value) {
-  if (std::holds_alternative<u32>(value)) {
-    return WriteNat(context, out, std::get<u32>(value));
+  if (holds_alternative<u32>(value)) {
+    return WriteNat(context, out, get<u32>(value));
   } else {
-    return Write(context, out, std::get<string_view>(value));
+    return Write(context, out, get<string_view>(value));
   }
 }
 
@@ -352,77 +352,72 @@ Iterator Write(WriteContext& context, Iterator out, const Instruction& value) {
       break;
 
     case 1: // s32
-      out = Write(context, out, std::get<At<s32>>(value.immediate));
+      out = Write(context, out, get<At<s32>>(value.immediate));
       break;
 
     case 2: // s64
-      out = Write(context, out, std::get<At<s64>>(value.immediate));
+      out = Write(context, out, get<At<s64>>(value.immediate));
       break;
 
     case 3: // f32
-      out = Write(context, out, std::get<At<f32>>(value.immediate));
+      out = Write(context, out, get<At<f32>>(value.immediate));
       break;
 
     case 4: // f64
-      out = Write(context, out, std::get<At<f64>>(value.immediate));
+      out = Write(context, out, get<At<f64>>(value.immediate));
       break;
 
     case 5: // v128
-      out = Write(context, out, std::get<At<v128>>(value.immediate));
+      out = Write(context, out, get<At<v128>>(value.immediate));
       break;
 
     case 6: // Var
-      out = Write(context, out, std::get<At<Var>>(value.immediate));
+      out = Write(context, out, get<At<Var>>(value.immediate));
       break;
 
     case 7: // BlockImmediate
-      out = Write(context, out, std::get<At<BlockImmediate>>(value.immediate));
+      out = Write(context, out, get<At<BlockImmediate>>(value.immediate));
       break;
 
     case 8: // BrOnExnImmediate
-      out =
-          Write(context, out, std::get<At<BrOnExnImmediate>>(value.immediate));
+      out = Write(context, out, get<At<BrOnExnImmediate>>(value.immediate));
       break;
 
     case 9: // BrTableImmediate
-      out =
-          Write(context, out, std::get<At<BrTableImmediate>>(value.immediate));
+      out = Write(context, out, get<At<BrTableImmediate>>(value.immediate));
       break;
 
     case 10: // CallIndirectImmediate
-      out = Write(context, out,
-                  std::get<At<CallIndirectImmediate>>(value.immediate));
+      out =
+          Write(context, out, get<At<CallIndirectImmediate>>(value.immediate));
       break;
 
     case 11: // CopyImmediate
-      out = Write(context, out,
-                  std::get<At<CopyImmediate>>(value.immediate));
+      out = Write(context, out, get<At<CopyImmediate>>(value.immediate));
       break;
 
     case 12: // InitImmediate
-      out = Write(context, out, std::get<At<InitImmediate>>(value.immediate));
+      out = Write(context, out, get<At<InitImmediate>>(value.immediate));
       break;
 
     case 13: // MemArgImmediate
-      out = Write(context, out, std::get<At<MemArgImmediate>>(value.immediate));
+      out = Write(context, out, get<At<MemArgImmediate>>(value.immediate));
       break;
 
     case 14: // ReferenceType
-      out = Write(context, out, std::get<At<ReferenceType>>(value.immediate));
+      out = Write(context, out, get<At<ReferenceType>>(value.immediate));
       break;
 
     case 15: // SelectImmediate
-      out = Write(context, out, std::get<At<SelectImmediate>>(value.immediate));
+      out = Write(context, out, get<At<SelectImmediate>>(value.immediate));
       break;
 
     case 16: // ShuffleImmediate
-      out =
-          Write(context, out, std::get<At<ShuffleImmediate>>(value.immediate));
+      out = Write(context, out, get<At<ShuffleImmediate>>(value.immediate));
       break;
 
     case 17: // SimdLaneImmediate
-      out =
-          Write(context, out, std::get<At<SimdLaneImmediate>>(value.immediate));
+      out = Write(context, out, get<At<SimdLaneImmediate>>(value.immediate));
       break;
   }
   return out;
@@ -449,7 +444,7 @@ Iterator WriteWithNewlines(WriteContext& context,
 
     out = Write(context, out, value);
 
-    if (std::holds_alternative<At<BlockImmediate>>(value->immediate) ||
+    if (holds_alternative<At<BlockImmediate>>(value->immediate) ||
         opcode == Opcode::Else || opcode == Opcode::Catch) {
       context.Indent();
     }
@@ -614,23 +609,23 @@ Iterator Write(WriteContext& context, Iterator out, const Import& value) {
   out = WriteLpar(context, out);
   switch (value.desc.index()) {
     case 0:  // FunctionDesc
-      out = Write(context, out, std::get<FunctionDesc>(value.desc));
+      out = Write(context, out, get<FunctionDesc>(value.desc));
       break;
 
     case 1:  // TableDesc
-      out = Write(context, out, std::get<TableDesc>(value.desc));
+      out = Write(context, out, get<TableDesc>(value.desc));
       break;
 
     case 2:  // MemoryDesc
-      out = Write(context, out, std::get<MemoryDesc>(value.desc));
+      out = Write(context, out, get<MemoryDesc>(value.desc));
       break;
 
     case 3:  // GlobalDesc
-      out = Write(context, out, std::get<GlobalDesc>(value.desc));
+      out = Write(context, out, get<GlobalDesc>(value.desc));
       break;
 
     case 4:  // EventDesc
-      out = Write(context, out, std::get<EventDesc>(value.desc));
+      out = Write(context, out, get<EventDesc>(value.desc));
       break;
   }
   out = WriteRpar(context, out);
@@ -734,10 +729,10 @@ Iterator Write(WriteContext& context,
 
 template <typename Iterator>
 Iterator Write(WriteContext& context, Iterator out, const ElementList& value) {
-  if (std::holds_alternative<ElementListWithVars>(value)) {
-    return Write(context, out, std::get<ElementListWithVars>(value));
+  if (holds_alternative<ElementListWithVars>(value)) {
+    return Write(context, out, get<ElementListWithVars>(value));
   } else {
-    return Write(context, out, std::get<ElementListWithExpressions>(value));
+    return Write(context, out, get<ElementListWithExpressions>(value));
   }
 }
 
@@ -760,12 +755,11 @@ Iterator Write(WriteContext& context, Iterator out, const Table& value) {
     out = WriteLpar(context, out, "elem");
     // Only write the list of elements, without the ExternalKind or
     // ReferenceType.
-    if (std::holds_alternative<ElementListWithVars>(*value.elements)) {
-      out = Write(context, out,
-                  std::get<ElementListWithVars>(*value.elements).list);
+    if (holds_alternative<ElementListWithVars>(*value.elements)) {
+      out = Write(context, out, get<ElementListWithVars>(*value.elements).list);
     } else {
       out = Write(context, out,
-                  std::get<ElementListWithExpressions>(*value.elements).list);
+                  get<ElementListWithExpressions>(*value.elements).list);
     }
     out = WriteRpar(context, out);
   } else {
@@ -876,8 +870,8 @@ Iterator Write(WriteContext& context,
 
       // When writing a function var list, we can omit the "func" keyword to
       // remain compatible with the MVP text format.
-      if (std::holds_alternative<ElementListWithVars>(value.elements)) {
-        auto& element_vars = std::get<ElementListWithVars>(value.elements);
+      if (holds_alternative<ElementListWithVars>(value.elements)) {
+        auto& element_vars = get<ElementListWithVars>(value.elements);
         //  The legacy format which omits the external kind cannot be used with
         //  the "table use" or bind_var syntax.
         if (element_vars.kind != ExternalKind::Function || value.table ||
@@ -887,7 +881,7 @@ Iterator Write(WriteContext& context,
         out = Write(context, out, element_vars.list);
       } else {
         out = Write(context, out,
-                    std::get<ElementListWithExpressions>(value.elements));
+                    get<ElementListWithExpressions>(value.elements));
       }
       break;
 
@@ -950,47 +944,47 @@ template <typename Iterator>
 Iterator Write(WriteContext& context, Iterator out, const ModuleItem& value) {
   switch (value.index()) {
     case 0: // TypeEntry
-      out = Write(context, out, std::get<TypeEntry>(value));
+      out = Write(context, out, get<At<TypeEntry>>(value));
       break;
 
     case 1: // Import
-      out = Write(context, out, std::get<Import>(value));
+      out = Write(context, out, get<At<Import>>(value));
       break;
 
     case 2:  // Function
-      out = Write(context, out, std::get<Function>(value));
+      out = Write(context, out, get<At<Function>>(value));
       break;
 
     case 3:  // Table
-      out = Write(context, out, std::get<Table>(value));
+      out = Write(context, out, get<At<Table>>(value));
       break;
 
     case 4:  // Memory
-      out = Write(context, out, std::get<Memory>(value));
+      out = Write(context, out, get<At<Memory>>(value));
       break;
 
     case 5:  // Global
-      out = Write(context, out, std::get<Global>(value));
+      out = Write(context, out, get<At<Global>>(value));
       break;
 
     case 6:  // Export
-      out = Write(context, out, std::get<Export>(value));
+      out = Write(context, out, get<At<Export>>(value));
       break;
 
     case 7:  // Start
-      out = Write(context, out, std::get<Start>(value));
+      out = Write(context, out, get<At<Start>>(value));
       break;
 
     case 8:  // ElementSegment
-      out = Write(context, out, std::get<ElementSegment>(value));
+      out = Write(context, out, get<At<ElementSegment>>(value));
       break;
 
     case 9:  // DataSegment
-      out = Write(context, out, std::get<DataSegment>(value));
+      out = Write(context, out, get<At<DataSegment>>(value));
       break;
 
     case 10:  // Event
-      out = Write(context, out, std::get<Event>(value));
+      out = Write(context, out, get<At<Event>>(value));
       break;
   }
   context.Newline();
@@ -1010,18 +1004,18 @@ Iterator Write(WriteContext& context, Iterator out, const ScriptModule& value) {
     case ScriptModuleKind::Text:
       context.Indent();
       context.Newline();
-      out = Write(context, out, std::get<Module>(value.module));
+      out = Write(context, out, get<Module>(value.module));
       context.Dedent();
       break;
 
     case ScriptModuleKind::Binary:
       out = Write(context, out, "binary"_sv);
-      out = Write(context, out, std::get<TextList>(value.module));
+      out = Write(context, out, get<TextList>(value.module));
       break;
 
     case ScriptModuleKind::Quote:
       out = Write(context, out, "quote"_sv);
-      out = Write(context, out, std::get<TextList>(value.module));
+      out = Write(context, out, get<TextList>(value.module));
       break;
   }
   out = WriteRpar(context, out);
@@ -1034,27 +1028,27 @@ Iterator Write(WriteContext& context, Iterator out, const Const& value) {
   switch (value.index()) {
     case 0: // u32
       out = Write(context, out, Opcode::I32Const);
-      out = Write(context, out, std::get<u32>(value));
+      out = Write(context, out, get<u32>(value));
       break;
 
     case 1: // u64
       out = Write(context, out, Opcode::I64Const);
-      out = Write(context, out, std::get<u64>(value));
+      out = Write(context, out, get<u64>(value));
       break;
 
     case 2: // f32
       out = Write(context, out, Opcode::F32Const);
-      out = Write(context, out, std::get<f32>(value));
+      out = Write(context, out, get<f32>(value));
       break;
 
     case 3: // f64
       out = Write(context, out, Opcode::F64Const);
-      out = Write(context, out, std::get<f64>(value));
+      out = Write(context, out, get<f64>(value));
       break;
 
     case 4: // v128
       out = Write(context, out, Opcode::V128Const);
-      out = Write(context, out, std::get<v128>(value));
+      out = Write(context, out, get<v128>(value));
       break;
 
     case 5: // RefNullConst
@@ -1063,7 +1057,7 @@ Iterator Write(WriteContext& context, Iterator out, const Const& value) {
 
     case 6: // RefExternConst
       out = Write(context, out, "ref.extern"_sv);
-      out = Write(context, out, std::get<RefExternConst>(value).var);
+      out = Write(context, out, get<RefExternConst>(value).var);
       break;
   }
   out = WriteRpar(context, out);
@@ -1096,10 +1090,10 @@ Iterator Write(WriteContext& context, Iterator out, const GetAction& value) {
 
 template <typename Iterator>
 Iterator Write(WriteContext& context, Iterator out, const Action& value) {
-  if (std::holds_alternative<InvokeAction>(value)) {
-    out = Write(context, out, std::get<InvokeAction>(value));
-  } else if (std::holds_alternative<GetAction>(value)) {
-    out = Write(context, out, std::get<GetAction>(value));
+  if (holds_alternative<InvokeAction>(value)) {
+    out = Write(context, out, get<InvokeAction>(value));
+  } else if (holds_alternative<GetAction>(value)) {
+    out = Write(context, out, get<GetAction>(value));
   }
   return out;
 }
@@ -1137,10 +1131,10 @@ template <typename Iterator, typename T>
 Iterator Write(WriteContext& context,
                Iterator out,
                const FloatResult<T>& value) {
-  if (std::holds_alternative<T>(value)) {
-    return Write(context, out, std::get<T>(value));
+  if (holds_alternative<T>(value)) {
+    return Write(context, out, get<T>(value));
   } else {
-    return Write(context, out, std::get<NanKind>(value));
+    return Write(context, out, get<NanKind>(value));
   }
 }
 
@@ -1157,39 +1151,39 @@ Iterator Write(WriteContext& context, Iterator out, const ReturnResult& value) {
   switch (value.index()) {
     case 0: // u32
       out = Write(context, out, Opcode::I32Const);
-      out = Write(context, out, std::get<u32>(value));
+      out = Write(context, out, get<u32>(value));
       break;
 
     case 1: // u64
       out = Write(context, out, Opcode::I64Const);
-      out = Write(context, out, std::get<u64>(value));
+      out = Write(context, out, get<u64>(value));
       break;
 
     case 2: // v128
       out = Write(context, out, Opcode::V128Const);
-      out = Write(context, out, std::get<v128>(value));
+      out = Write(context, out, get<v128>(value));
       break;
 
     case 3: // F32Result
       out = Write(context, out, Opcode::F32Const);
-      out = Write(context, out, std::get<F32Result>(value));
+      out = Write(context, out, get<F32Result>(value));
       break;
 
     case 4: // F64Result
       out = Write(context, out, Opcode::F64Const);
-      out = Write(context, out, std::get<F64Result>(value));
+      out = Write(context, out, get<F64Result>(value));
       break;
 
     case 5: // F32x4Result
       out = Write(context, out, Opcode::V128Const);
       out = Write(context, out, "f32x4"_sv);
-      out = Write(context, out, std::get<F32x4Result>(value));
+      out = Write(context, out, get<F32x4Result>(value));
       break;
 
     case 6: // F64x2Result
       out = Write(context, out, Opcode::V128Const);
       out = Write(context, out, "f64x2"_sv);
-      out = Write(context, out, std::get<F64x2Result>(value));
+      out = Write(context, out, get<F64x2Result>(value));
       break;
 
     case 7: // RefNullConst
@@ -1198,7 +1192,7 @@ Iterator Write(WriteContext& context, Iterator out, const ReturnResult& value) {
 
     case 8: // RefExternConst
       out = Write(context, out, "ref.extern"_sv);
-      out = WriteNat(context, out, *std::get<RefExternConst>(value).var);
+      out = WriteNat(context, out, *get<RefExternConst>(value).var);
       break;
 
     case 9: // RefExternResult
@@ -1236,7 +1230,7 @@ Iterator Write(WriteContext& context, Iterator out, const Assertion& value) {
       out = WriteLpar(context, out, "assert_malformed");
       context.Indent();
       context.Newline();
-      out = Write(context, out, std::get<ModuleAssertion>(value.desc));
+      out = Write(context, out, get<ModuleAssertion>(value.desc));
       context.Dedent();
       break;
 
@@ -1244,7 +1238,7 @@ Iterator Write(WriteContext& context, Iterator out, const Assertion& value) {
       out = WriteLpar(context, out, "assert_invalid");
       context.Indent();
       context.Newline();
-      out = Write(context, out, std::get<ModuleAssertion>(value.desc));
+      out = Write(context, out, get<ModuleAssertion>(value.desc));
       context.Dedent();
       break;
 
@@ -1252,31 +1246,31 @@ Iterator Write(WriteContext& context, Iterator out, const Assertion& value) {
       out = WriteLpar(context, out, "assert_unlinkable");
       context.Indent();
       context.Newline();
-      out = Write(context, out, std::get<ModuleAssertion>(value.desc));
+      out = Write(context, out, get<ModuleAssertion>(value.desc));
       context.Dedent();
       break;
 
     case AssertionKind::ActionTrap:
       out = WriteLpar(context, out, "assert_trap");
-      out = Write(context, out, std::get<ActionAssertion>(value.desc));
+      out = Write(context, out, get<ActionAssertion>(value.desc));
       break;
 
     case AssertionKind::Return:
       out = WriteLpar(context, out, "assert_return");
-      out = Write(context, out, std::get<ReturnAssertion>(value.desc));
+      out = Write(context, out, get<ReturnAssertion>(value.desc));
       break;
 
     case AssertionKind::ModuleTrap:
       out = WriteLpar(context, out, "assert_trap");
       context.Indent();
       context.Newline();
-      out = Write(context, out, std::get<ModuleAssertion>(value.desc));
+      out = Write(context, out, get<ModuleAssertion>(value.desc));
       context.Dedent();
       break;
 
     case AssertionKind::Exhaustion:
       out = WriteLpar(context, out, "assert_exhaustion");
-      out = Write(context, out, std::get<ActionAssertion>(value.desc));
+      out = Write(context, out, get<ActionAssertion>(value.desc));
       break;
   }
   out = WriteRpar(context, out);
@@ -1296,19 +1290,19 @@ template <typename Iterator>
 Iterator Write(WriteContext& context, Iterator out, const Command& value) {
   switch (value.index()) {
     case 0:  // ScriptModule
-      out = Write(context, out, std::get<ScriptModule>(value));
+      out = Write(context, out, get<ScriptModule>(value));
       break;
 
     case 1:  // Register
-      out = Write(context, out, std::get<Register>(value));
+      out = Write(context, out, get<Register>(value));
       break;
 
     case 2:  // Action
-      out = Write(context, out, std::get<Action>(value));
+      out = Write(context, out, get<Action>(value));
       break;
 
     case 3:  // Assertion
-      out = Write(context, out, std::get<Assertion>(value));
+      out = Write(context, out, get<Assertion>(value));
       break;
   }
   context.Newline();

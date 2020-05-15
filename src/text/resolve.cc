@@ -27,11 +27,11 @@ namespace wasp {
 namespace text {
 
 void Resolve(Context& context, NameMap& name_map, At<Var>& var) {
-  if (std::holds_alternative<Index>(var.value())) {
+  if (holds_alternative<Index>(var.value())) {
     return;
   }
 
-  auto name = std::get<string_view>(var.value());
+  auto name = get<string_view>(var.value());
   if (!name_map.Has(name)) {
     context.errors.OnError(var.loc(), format("Undefined variable {}", name));
     return;
@@ -56,7 +56,7 @@ void Resolve(Context& context, NameMap& name_map, VarList& var_list) {
 void Resolve(Context& context, FunctionTypeUse& function_type_use) {
   Resolve(context, context.type_names, function_type_use.type_use);
   if (function_type_use.type_use) {
-    auto type_index = std::get<u32>(function_type_use.type_use->value());
+    auto type_index = get<u32>(function_type_use.type_use->value());
     auto type_opt = context.function_type_map.Get(type_index);
     // It's possible that this type use is invalid, but that's a validation
     // error not a parse/resolve error. We'll only check that the type use and
@@ -90,7 +90,7 @@ void Resolve(Context& context,
   // (used in function definitions and imports).
   Resolve(context, context.type_names, type_use);
   if (type_use) {
-    auto type_index = std::get<u32>(type_use->value());
+    auto type_index = get<u32>(type_use->value());
     auto type_opt = context.function_type_map.Get(type_index);
     // It's possible that this type use is invalid, but that's a validation
     // error not a parse/resolve error. We'll only check that the type use and
@@ -164,7 +164,7 @@ void Resolve(Context& context, Instruction& instruction) {
       break;
 
     case 6: {  // Var
-      auto& immediate = std::get<At<Var>>(instruction.immediate);
+      auto& immediate = get<At<Var>>(instruction.immediate);
       switch (instruction.opcode) {
         // Function.
         case Opcode::Call:
@@ -216,7 +216,7 @@ void Resolve(Context& context, Instruction& instruction) {
     }
 
     case 7: { // BlockImmediate
-      auto& immediate = std::get<At<BlockImmediate>>(instruction.immediate);
+      auto& immediate = get<At<BlockImmediate>>(instruction.immediate);
       // TODO: share w/ code in read.cc
       if (immediate->label) {
         context.label_names.ReplaceBound(*immediate->label);
@@ -228,22 +228,20 @@ void Resolve(Context& context, Instruction& instruction) {
     }
 
     case 8: // BrOnExnImmediate
-      return Resolve(
-          context,
-          std::get<At<BrOnExnImmediate>>(instruction.immediate).value());
+      return Resolve(context,
+                     get<At<BrOnExnImmediate>>(instruction.immediate).value());
 
     case 9: // BrTableImmediate
-      return Resolve(
-          context,
-          std::get<At<BrTableImmediate>>(instruction.immediate).value());
+      return Resolve(context,
+                     get<At<BrTableImmediate>>(instruction.immediate).value());
 
     case 10: // CallIndirectImmediate
       return Resolve(
           context,
-          std::get<At<CallIndirectImmediate>>(instruction.immediate).value());
+          get<At<CallIndirectImmediate>>(instruction.immediate).value());
 
     case 11: { // CopyImmediate
-      auto& immediate = std::get<At<CopyImmediate>>(instruction.immediate);
+      auto& immediate = get<At<CopyImmediate>>(instruction.immediate);
       if (instruction.opcode == Opcode::TableCopy) {
         return Resolve(context, context.table_names, immediate.value());
       } else {
@@ -253,9 +251,9 @@ void Resolve(Context& context, Instruction& instruction) {
     }
 
     case 12: // InitImmediate
-      return Resolve(
-          context, context.element_segment_names, context.table_names,
-          std::get<At<InitImmediate>>(instruction.immediate).value());
+      return Resolve(context, context.element_segment_names,
+                     context.table_names,
+                     get<At<InitImmediate>>(instruction.immediate).value());
 
     default:
       break;
@@ -283,10 +281,10 @@ void Resolve(Context& context, EventDesc& desc) {
 void Resolve(Context& context, Import& import) {
   switch (import.desc.index()) {
     case 0: // FunctionDesc.
-      return Resolve(context, std::get<FunctionDesc>(import.desc));
+      return Resolve(context, get<FunctionDesc>(import.desc));
 
     case 4: // EventDesc..
-      return Resolve(context, std::get<EventDesc>(import.desc));
+      return Resolve(context, get<EventDesc>(import.desc));
 
     default:
       break;
@@ -337,10 +335,10 @@ void Resolve(Context& context, ElementListWithVars& element_list) {
 }
 
 void Resolve(Context& context, ElementList& element_list) {
-  if (std::holds_alternative<ElementListWithVars>(element_list)) {
-    Resolve(context, std::get<ElementListWithVars>(element_list));
+  if (holds_alternative<ElementListWithVars>(element_list)) {
+    Resolve(context, get<ElementListWithVars>(element_list));
   } else {
-    Resolve(context, std::get<ElementListWithExpressions>(element_list));
+    Resolve(context, get<ElementListWithExpressions>(element_list));
   }
 }
 
@@ -404,31 +402,31 @@ void Resolve(Context& context, Event& event) {
 void Resolve(Context& context, ModuleItem& item) {
   switch (item.index()) {
     case 1:
-      return Resolve(context, std::get<Import>(item));
+      return Resolve(context, *get<At<Import>>(item));
 
     case 2:
-      return Resolve(context, std::get<Function>(item));
+      return Resolve(context, *get<At<Function>>(item));
 
     case 3:
-      return Resolve(context, std::get<Table>(item));
+      return Resolve(context, *get<At<Table>>(item));
 
     case 5:
-      return Resolve(context, std::get<Global>(item));
+      return Resolve(context, *get<At<Global>>(item));
 
     case 6:
-      return Resolve(context, std::get<Export>(item));
+      return Resolve(context, *get<At<Export>>(item));
 
     case 7:
-      return Resolve(context, std::get<Start>(item));
+      return Resolve(context, *get<At<Start>>(item));
 
     case 8:
-      return Resolve(context, std::get<ElementSegment>(item));
+      return Resolve(context, *get<At<ElementSegment>>(item));
 
     case 9:
-      return Resolve(context, std::get<DataSegment>(item));
+      return Resolve(context, *get<At<DataSegment>>(item));
 
     case 10:
-      return Resolve(context, std::get<Event>(item));
+      return Resolve(context, *get<At<Event>>(item));
 
     default:
       break;
@@ -437,13 +435,13 @@ void Resolve(Context& context, ModuleItem& item) {
 
 void Resolve(Context& context, Module& module) {
   for (auto& item : module) {
-    Resolve(context, item.value());
+    Resolve(context, item);
   }
 }
 
 void Resolve(Context& context, ScriptModule& script_module) {
-  if (std::holds_alternative<Module>(script_module.module)) {
-    Resolve(context, std::get<Module>(script_module.module));
+  if (holds_alternative<Module>(script_module.module)) {
+    Resolve(context, get<Module>(script_module.module));
   }
 }
 
