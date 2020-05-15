@@ -16,6 +16,10 @@
 
 #include "wasp/binary/linking_section/types.h"
 
+#include <cassert>
+
+#include "wasp/base/hash.h"
+#include "wasp/base/macros.h"
 #include "wasp/base/operator_eq_ne_macros.h"
 #include "wasp/base/std_hash_macros.h"
 
@@ -34,6 +38,65 @@ SymbolInfo::SymbolInfo(At<Flags> flags, const Data& data)
 
 SymbolInfo::SymbolInfo(At<Flags> flags, const Section& section)
     : flags{flags}, desc{section} {}
+
+SymbolInfoKind SymbolInfo::kind() const {
+  switch (desc.index()) {
+    case 0:
+      return *base().kind;
+    case 1:
+      return SymbolInfoKind::Data;
+    case 2:
+      return SymbolInfoKind::Section;
+    default:
+      WASP_UNREACHABLE();
+  }
+}
+
+bool SymbolInfo::is_base() const {
+  return desc.index() == 0;
+}
+
+bool SymbolInfo::is_data() const {
+  return desc.index() == 1;
+}
+
+bool SymbolInfo::is_section() const {
+  return desc.index() == 2;
+}
+
+SymbolInfo::Base& SymbolInfo::base() {
+  return get<Base>(desc);
+}
+
+const SymbolInfo::Base& SymbolInfo::base() const {
+  return get<Base>(desc);
+}
+
+SymbolInfo::Data& SymbolInfo::data() {
+  return get<Data>(desc);
+}
+
+const SymbolInfo::Data& SymbolInfo::data() const {
+  return get<Data>(desc);
+}
+
+SymbolInfo::Section& SymbolInfo::section() {
+  return get<Section>(desc);
+}
+
+const SymbolInfo::Section& SymbolInfo::section() const {
+  return get<Section>(desc);
+}
+
+optional<string_view> SymbolInfo::name() const {
+  if (is_base()) {
+    return base().name.value();
+  } else if (is_data()) {
+    return data().name.value();
+  } else {
+    return nullopt;
+  }
+}
 
 WASP_BINARY_LINKING_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_BINARY_LINKING_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)

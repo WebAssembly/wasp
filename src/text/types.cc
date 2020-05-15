@@ -17,7 +17,9 @@
 #include "wasp/text/types.h"
 
 #include <algorithm>
+#include <cassert>
 
+#include "wasp/base/hash.h"
 #include "wasp/base/operator_eq_ne_macros.h"
 #include "wasp/base/std_hash_macros.h"
 

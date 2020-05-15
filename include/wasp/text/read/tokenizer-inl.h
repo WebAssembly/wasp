@@ -16,6 +16,8 @@
 
 #include "wasp/text/read/lex.h"
 
+#include <cassert>
+
 namespace wasp {
 namespace text {
 

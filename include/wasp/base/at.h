@@ -19,7 +19,6 @@
 
 #include <utility>
 
-#include "wasp/base/hash.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 
@@ -68,6 +67,8 @@ At<T> MakeAt(Location loc, T val) {
 }  // namespace wasp
 
 namespace std {
+
+template <typename T> struct hash;
 
 template <typename T>
 struct hash<::wasp::At<T>> {

@@ -16,6 +16,7 @@
 
 #include "wasp/binary/name_section/types.h"
 
+#include "wasp/base/hash.h"
 #include "wasp/base/operator_eq_ne_macros.h"
 #include "wasp/base/std_hash_macros.h"
 

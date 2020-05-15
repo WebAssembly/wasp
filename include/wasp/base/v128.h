@@ -18,7 +18,6 @@
 #define WASP_BASE_V128_H_
 
 #include <array>
-#include <functional>
 #include <type_traits>
 
 #include "wasp/base/types.h"
@@ -87,6 +86,8 @@ struct v128 {
 }  // namespace wasp
 
 namespace std {
+
+template <typename T> struct hash;
 
 template <>
 struct hash<::wasp::v128> {

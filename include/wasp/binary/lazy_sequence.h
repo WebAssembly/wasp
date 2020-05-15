@@ -20,7 +20,6 @@
 #include <iterator>
 
 #include "wasp/base/at.h"
-#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"

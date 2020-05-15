@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+#include <cassert>
 #include <limits>
 
 #include "wasp/base/errors.h"

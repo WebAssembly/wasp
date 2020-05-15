@@ -17,8 +17,6 @@
 #ifndef WASP_BASE_SPAN_H_
 #define WASP_BASE_SPAN_H_
 
-#include <functional>
-
 #include "nonstd/span.hpp"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
@@ -60,6 +58,8 @@ inline string_view ToStringView(SpanU8 span) {
 }  // namespace wasp
 
 namespace std {
+
+template <typename T> struct hash;
 
 template <>
 struct hash<::wasp::SpanU8> {

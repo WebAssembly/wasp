@@ -17,10 +17,12 @@
 #ifndef WASP_BINARY_WRITE_H_
 #define WASP_BINARY_WRITE_H_
 
+#include <cassert>
 #include <cstring>
 #include <limits>
 #include <type_traits>
 
+#include "wasp/base/macros.h"
 #include "wasp/base/types.h"
 #include "wasp/base/wasm_types.h"
 #include "wasp/binary/encoding.h"

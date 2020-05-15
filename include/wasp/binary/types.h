@@ -18,7 +18,6 @@
 #define WASP_BINARY_TYPES_H_
 
 #include <array>
-#include <functional>
 #include <iosfwd>
 #include <vector>
 
@@ -539,7 +538,5 @@ WASP_BINARY_STRUCTS(WASP_DECLARE_PRINT_TO)
 
 WASP_BINARY_STRUCTS(WASP_DECLARE_STD_HASH)
 WASP_BINARY_CONTAINERS(WASP_DECLARE_STD_HASH)
-
-#include "wasp/binary/types-inl.h"
 
 #endif // WASP_BINARY_TYPES_H_

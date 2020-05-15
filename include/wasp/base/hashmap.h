@@ -1,5 +1,5 @@
 //
-// Copyright 2019 WebAssembly Community Group participants
+// Copyright 2020 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,16 +14,18 @@
 // limitations under the License.
 //
 
-#include <cstring>
+#ifndef WASP_BASE_HASHMAP_H_
+#define WASP_BASE_HASHMAP_H_
+
+#include "parallel_hashmap/phmap.h"
 
 namespace wasp {
 
-template <typename T>
-GetV128Type<T> v128::as() const {
-  // TODO(binji): This is not correct in big-endian environments.
-  T result;
-  memcpy(result.data(), data_.data(), sizeof(result));
-  return result;
-}
+using phmap::flat_hash_map;
+using phmap::flat_hash_set;
+using phmap::node_hash_map;
+using phmap::node_hash_set;
 
 }  // namespace wasp
+
+#endif  // WASP_BASE_HASHMAP_H_

@@ -16,6 +16,8 @@
 
 #include "wasp/text/resolve.h"
 
+#include <cassert>
+
 #include "wasp/base/errors.h"
 #include "wasp/base/format.h"
 #include "wasp/text/formatters.h"

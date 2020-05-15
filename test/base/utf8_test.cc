@@ -16,6 +16,8 @@
 
 #include "wasp/base/utf8.h"
 
+#include <cassert>
+
 #include "gtest/gtest.h"
 
 using namespace ::wasp;

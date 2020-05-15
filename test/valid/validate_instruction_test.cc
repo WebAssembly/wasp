@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+#include <cassert>
+
 #include "gtest/gtest.h"
 #include "test/valid/test_utils.h"
 #include "wasp/base/errors_nop.h"

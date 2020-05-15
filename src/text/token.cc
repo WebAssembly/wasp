@@ -16,6 +16,8 @@
 
 #include "wasp/text/read/token.h"
 
+#include <cassert>
+
 namespace wasp {
 namespace text {
 

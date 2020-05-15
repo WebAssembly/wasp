@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_LINKING_SECTION_TYPES_H_
 #define WASP_BINARY_LINKING_SECTION_TYPES_H_
 
-#include <functional>
 #include <vector>
 
 #include "wasp/base/at.h"
@@ -209,7 +208,5 @@ WASP_BINARY_LINKING_STRUCTS(WASP_DECLARE_PRINT_TO)
 
 WASP_BINARY_LINKING_STRUCTS(WASP_DECLARE_STD_HASH)
 WASP_BINARY_LINKING_CONTAINERS(WASP_DECLARE_STD_HASH)
-
-#include "wasp/binary/linking_section/types-inl.h"
 
 #endif // WASP_BINARY_LINKING_SECTION_TYPES_H_

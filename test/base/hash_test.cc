@@ -15,6 +15,7 @@
 //
 
 #include "wasp/base/hash.h"
+#include "wasp/base/hashmap.h"
 
 #include "gtest/gtest.h"
 

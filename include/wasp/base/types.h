@@ -18,7 +18,6 @@
 #define WASP_BASE_TYPES_H_
 
 #include <cstdint>
-#include <vector>
 
 namespace wasp {
 

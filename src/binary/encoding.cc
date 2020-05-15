@@ -16,6 +16,8 @@
 
 #include "wasp/binary/encoding.h"
 
+#include <cassert>
+
 #include "wasp/base/features.h"
 #include "wasp/base/macros.h"
 #include "wasp/base/optional.h"

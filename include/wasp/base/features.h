@@ -81,6 +81,8 @@ class Features {
 }  // namespace wasp
 
 namespace std {
+template <typename T> struct hash;
+
 template <>
 struct hash<::wasp::Features> {
   size_t operator()(const ::wasp::Features&) const;

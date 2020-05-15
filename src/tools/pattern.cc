@@ -31,6 +31,7 @@
 #include "wasp/base/format.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/hash.h"
+#include "wasp/base/hashmap.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/str_to_u32.h"
 #include "wasp/base/string_view.h"

@@ -16,6 +16,8 @@
 
 #include "wasp/binary/read.h"
 
+#include <cassert>
+
 #include "wasp/base/errors.h"
 #include "wasp/base/errors_context_guard.h"
 #include "wasp/base/features.h"

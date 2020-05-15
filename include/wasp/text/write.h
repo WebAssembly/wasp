@@ -18,6 +18,7 @@
 #define WASP_TEXT_WRITE_H_
 
 #include <algorithm>
+#include <cassert>
 #include <string>
 #include <type_traits>
 

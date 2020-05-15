@@ -18,7 +18,7 @@
 #define WASP_TEXT_READ_CONTEXT_H_
 
 #include "wasp/base/features.h"
-#include "wasp/base/hash.h"
+#include "wasp/base/hashmap.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"

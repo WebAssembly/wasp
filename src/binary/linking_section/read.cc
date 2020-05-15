@@ -16,6 +16,7 @@
 
 #include "wasp/binary/linking_section/read.h"
 
+#include "wasp/base/macros.h"
 #include "wasp/base/errors_context_guard.h"
 #include "wasp/binary/linking_section/encoding.h"
 #include "wasp/binary/read.h"

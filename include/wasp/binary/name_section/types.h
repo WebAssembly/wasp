@@ -17,7 +17,6 @@
 #ifndef WASP_BINARY_NAME_SECTION_TYPES_H_
 #define WASP_BINARY_NAME_SECTION_TYPES_H_
 
-#include <functional>
 #include <vector>
 
 #include "wasp/base/at.h"

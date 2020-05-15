@@ -19,15 +19,9 @@
 
 #include <iterator>
 
-#include "parallel_hashmap/phmap.h"
 #include "parallel_hashmap/phmap_utils.h"
 
 namespace wasp {
-
-using phmap::flat_hash_set;
-using phmap::flat_hash_map;
-using phmap::node_hash_set;
-using phmap::node_hash_map;
 
 using phmap::HashState;
 
