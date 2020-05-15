@@ -22,22 +22,6 @@
 namespace wasp {
 namespace text {
 
-using ModuleItemList = std::vector<At<ModuleItem>>;
-
-struct DesugarContext {
-  Index function_count = 0;
-  Index table_count = 0;
-  Index memory_count = 0;
-  Index global_count = 0;
-  Index event_count = 0;
-  ModuleItemList new_items;
-};
-
-void Desugar(DesugarContext&, const At<Function>&) -> At<ModuleItem>;
-void Desugar(DesugarContext&, const At<Table>&) -> At<ModuleItem>;
-void Desugar(DesugarContext&, const At<Memory>&) -> At<ModuleItem>;
-void Desugar(DesugarContext&, const At<Global>&) -> At<ModuleItem>;
-void Desugar(DesugarContext&, const At<Event>&) -> At<ModuleItem>;
 void Desugar(Module&);
 
 }  // namespace text
