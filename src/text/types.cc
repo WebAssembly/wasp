@@ -132,7 +132,7 @@ Function::Function(const FunctionDesc& desc,
       import{import},
       exports{exports} {}
 
-auto Function::ToImport() -> OptAt<Import> {
+auto Function::ToImport() const -> OptAt<Import> {
   if (!import) {
     return nullopt;
   }
@@ -152,7 +152,7 @@ auto MakeExportList(ExternalKind kind,
   return result;
 }
 
-auto Function::ToExports(Index this_index) -> ExportList {
+auto Function::ToExports(Index this_index) const -> ExportList {
   return MakeExportList(ExternalKind::Function, this_index, exports);
 }
 
@@ -169,7 +169,7 @@ Table::Table(const TableDesc& desc,
              const InlineExportList& exports)
     : desc{desc}, import{import}, exports{exports} {}
 
-auto Table::ToImport() -> OptAt<Import> {
+auto Table::ToImport() const -> OptAt<Import> {
   if (!import) {
     return nullopt;
   }
@@ -177,11 +177,11 @@ auto Table::ToImport() -> OptAt<Import> {
                 Import{import->value().module, import->value().name, desc});
 }
 
-auto Table::ToExports(Index this_index) -> ExportList {
+auto Table::ToExports(Index this_index) const -> ExportList {
   return MakeExportList(ExternalKind::Table, this_index, exports);
 }
 
-auto Table::ToElementSegment(Index this_index) -> OptAt<ElementSegment> {
+auto Table::ToElementSegment(Index this_index) const -> OptAt<ElementSegment> {
   if (!elements) {
     return nullopt;
   }
@@ -204,7 +204,7 @@ Memory::Memory(const MemoryDesc& desc,
                const InlineExportList& exports)
     : desc{desc}, import{import}, exports{exports} {}
 
-auto Memory::ToImport() -> OptAt<Import> {
+auto Memory::ToImport() const -> OptAt<Import> {
   if (!import) {
     return nullopt;
   }
@@ -212,11 +212,11 @@ auto Memory::ToImport() -> OptAt<Import> {
                 Import{import->value().module, import->value().name, desc});
 }
 
-auto Memory::ToExports(Index this_index) -> ExportList {
+auto Memory::ToExports(Index this_index) const -> ExportList {
   return MakeExportList(ExternalKind::Memory, this_index, exports);
 }
 
-auto Memory::ToDataSegment(Index this_index) -> OptAt<DataSegment> {
+auto Memory::ToDataSegment(Index this_index) const -> OptAt<DataSegment> {
   if (!data) {
     return nullopt;
   }
@@ -242,7 +242,7 @@ Global::Global(const GlobalDesc& desc,
                const InlineExportList& exports)
     : desc{desc}, import{import}, exports{exports} {}
 
-auto Global::ToImport() -> OptAt<Import> {
+auto Global::ToImport() const -> OptAt<Import> {
   if (!import) {
     return nullopt;
   }
@@ -250,7 +250,7 @@ auto Global::ToImport() -> OptAt<Import> {
                 Import{import->value().module, import->value().name, desc});
 }
 
-auto Global::ToExports(Index this_index) -> ExportList {
+auto Global::ToExports(Index this_index) const -> ExportList {
   return MakeExportList(ExternalKind::Global, this_index, exports);
 }
 
@@ -267,7 +267,7 @@ Event::Event(const EventDesc& desc,
              const InlineExportList& exports)
     : desc{desc}, import{import}, exports{exports} {}
 
-auto Event::ToImport() -> OptAt<Import> {
+auto Event::ToImport() const -> OptAt<Import> {
   if (!import) {
     return nullopt;
   }
@@ -275,7 +275,7 @@ auto Event::ToImport() -> OptAt<Import> {
                 Import{import->value().module, import->value().name, desc});
 }
 
-auto Event::ToExports(Index this_index) -> ExportList {
+auto Event::ToExports(Index this_index) const -> ExportList {
   return MakeExportList(ExternalKind::Event, this_index, exports);
 }
 

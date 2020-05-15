@@ -242,8 +242,8 @@ struct Function {
                     const OptAt<InlineImport>&,
                     const InlineExportList&);
 
-  auto ToImport() -> OptAt<Import>;
-  auto ToExports(Index this_index) -> ExportList;
+  auto ToImport() const -> OptAt<Import>;
+  auto ToExports(Index this_index) const -> ExportList;
 
   FunctionDesc desc;
   BoundValueTypeList locals;
@@ -290,9 +290,9 @@ struct Table {
                  const At<InlineImport>&,
                  const InlineExportList&);
 
-  auto ToImport() -> OptAt<Import>;
-  auto ToExports(Index this_index) -> ExportList;
-  auto ToElementSegment(Index this_index) -> OptAt<ElementSegment>;
+  auto ToImport() const -> OptAt<Import>;
+  auto ToExports(Index this_index) const -> ExportList;
+  auto ToElementSegment(Index this_index) const -> OptAt<ElementSegment>;
 
   TableDesc desc;
   OptAt<InlineImport> import;
@@ -316,9 +316,9 @@ struct Memory {
                   const At<InlineImport>&,
                   const InlineExportList&);
 
-  auto ToImport() -> OptAt<Import>;
-  auto ToExports(Index this_index) -> ExportList;
-  auto ToDataSegment(Index this_index) -> OptAt<DataSegment>;
+  auto ToImport() const -> OptAt<Import>;
+  auto ToExports(Index this_index) const -> ExportList;
+  auto ToDataSegment(Index this_index) const -> OptAt<DataSegment>;
 
   MemoryDesc desc;
   OptAt<InlineImport> import;
@@ -347,8 +347,8 @@ struct Global {
                   const At<InlineImport>&,
                   const InlineExportList&);
 
-  auto ToImport() -> OptAt<Import>;
-  auto ToExports(Index this_index) -> ExportList;
+  auto ToImport() const -> OptAt<Import>;
+  auto ToExports(Index this_index) const -> ExportList;
 
   GlobalDesc desc;
   OptAt<ConstantExpression> init;
@@ -433,8 +433,8 @@ struct Event {
                  const OptAt<InlineImport>&,
                  const InlineExportList&);
 
-  auto ToImport() -> OptAt<Import>;
-  auto ToExports(Index this_index) -> ExportList;
+  auto ToImport() const -> OptAt<Import>;
+  auto ToExports(Index this_index) const -> ExportList;
 
   EventDesc desc;
   OptAt<InlineImport> import;

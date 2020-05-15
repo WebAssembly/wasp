@@ -88,6 +88,7 @@ add_library(wasplib
   src/valid/validate.cc
   src/valid/validate_instruction.cc
   src/text/context.cc
+  src/text/desugar.cc
   src/text/lex.cc
   src/text/numeric.cc
   src/text/print_to.cc
