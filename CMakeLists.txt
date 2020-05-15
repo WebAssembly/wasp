@@ -114,9 +114,11 @@ add_executable(wasp
   src/tools/cfg.cc
   src/tools/dfg.cc
   src/tools/dump.cc
-  src/tools/validate.cc
   src/tools/pattern.cc
+  src/tools/text-errors.cc
+  src/tools/validate.cc
   src/tools/wasp.cc
+  src/tools/wat2wasm.cc
 )
 
 target_link_libraries(wasp
@@ -170,6 +172,7 @@ target_link_libraries(wasp_unittests
 
 add_executable(run_spec_tests
   src/tools/argparser.cc
+  src/tools/text-errors.cc
   test/run_spec_tests.cc
 )
 

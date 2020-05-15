@@ -24,6 +24,7 @@
 #include "src/tools/dump.h"
 #include "src/tools/pattern.h"
 #include "src/tools/validate.h"
+#include "src/tools/wat2wasm.h"
 
 #include "wasp/base/enumerate.h"
 #include "wasp/base/format.h"
@@ -48,6 +49,7 @@ int main(int argc, char** argv) {
       {"dfg", wasp::tools::dfg::Main},
       {"validate", wasp::tools::validate::Main},
       {"pattern", wasp::tools::pattern::Main},
+      {"wat2wasm", wasp::tools::wat2wasm::Main},
   };
 
   wasp::tools::ArgParser parser{"wasp"};
@@ -75,5 +77,6 @@ void PrintHelp(int errcode) {
   print(stderr, "  dfg         Generate DOT file of a function's data flow graph.\n");
   print(stderr, "  validate    Validate a WebAssembly file.\n");
   print(stderr, "  pattern     Find common instruction sequences.\n");
+  print(stderr, "  wat2wasm    Convert a WebAssembly text file to binary.\n");
   exit(errcode);
 }
