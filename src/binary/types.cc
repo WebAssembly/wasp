@@ -538,9 +538,9 @@ bool operator==(const Module& lhs, const Module& rhs) {
          lhs.functions == rhs.functions && lhs.tables == rhs.tables &&
          lhs.memories == rhs.memories && lhs.globals == rhs.globals &&
          lhs.events == rhs.events && lhs.exports == rhs.exports &&
-         lhs.starts == rhs.starts &&
+         lhs.start == rhs.start &&
          lhs.element_segments == rhs.element_segments &&
-         lhs.data_counts == rhs.data_counts && lhs.codes == rhs.codes &&
+         lhs.data_count == rhs.data_count && lhs.codes == rhs.codes &&
          lhs.data_segments == rhs.data_segments;
 }
 

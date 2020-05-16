@@ -19,10 +19,13 @@
 
 #include <cassert>
 #include <cstring>
+#include <iterator>
 #include <limits>
 #include <type_traits>
 
+#include "wasp/base/buffer.h"
 #include "wasp/base/macros.h"
+#include "wasp/base/optional.h"
 #include "wasp/base/types.h"
 #include "wasp/base/wasm_types.h"
 #include "wasp/binary/encoding.h"
@@ -142,6 +145,14 @@ Iterator WriteBytes(SpanU8 value, Iterator out) {
 }
 
 template <typename Iterator>
+Iterator WriteLengthAndBytes(SpanU8 value, Iterator out) {
+  assert(value.size() < std::numeric_limits<u32>::max());
+  out = Write(u32(value.size()), out);
+  out = WriteBytes(value, out);
+  return out;
+}
+
+template <typename Iterator>
 Iterator Write(s64 value, Iterator out) {
   return WriteVarInt(value, out);
 }
@@ -182,16 +193,28 @@ Iterator Write(const BrTableImmediate& immediate, Iterator out) {
 template <typename Iterator>
 Iterator Write(string_view value, Iterator out) {
   assert(value.size() < std::numeric_limits<u32>::max());
-  u32 value_size = value.size();
-  out = Write(value_size, out);
-  return WriteBytes(
-      SpanU8{reinterpret_cast<const u8*>(value.data()), value_size}, out);
+  return WriteLengthAndBytes(SpanU8{reinterpret_cast<const u8*>(value.data()),
+                                    static_cast<span_index_t>(value.size())},
+                             out);
 }
 
 template <typename Iterator>
 Iterator Write(const CallIndirectImmediate& immediate, Iterator out) {
   out = WriteIndex(immediate.index, out);
   out = Write(immediate.table_index, out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(Code value, Iterator out) {
+  // Write Code to a separate buffer, so we know its length.
+  Buffer buffer;
+  auto code_out = std::back_inserter(buffer);
+  code_out = WriteVector(value.locals.begin(), value.locals.end(), code_out);
+  code_out = WriteBytes(value.body->data, code_out);
+
+  // Then write that buffer to the real output.
+  out = WriteLengthAndBytes(buffer, out);
   return out;
 }
 
@@ -218,6 +241,11 @@ Iterator Write(const CopyImmediate& immediate, Iterator out) {
 }
 
 template <typename Iterator>
+Iterator Write(const DataCount& value, Iterator out) {
+  return Write(value.count, out);
+}
+
+template <typename Iterator>
 Iterator Write(const DataSegment& value, Iterator out) {
   encoding::DecodedDataSegmentFlags flags = {
       value.type, value.memory_index && *value.memory_index != 0
@@ -231,9 +259,7 @@ Iterator Write(const DataSegment& value, Iterator out) {
   if (flags.segment_type == SegmentType::Active) {
     out = Write(*value.offset, out);
   }
-  assert(value.init.size() < std::numeric_limits<u32>::max());
-  out = Write(static_cast<u32>(value.init.size()), out);
-  out = WriteBytes(value.init, out);
+  out = WriteLengthAndBytes(value.init, out);
   return out;
 }
 
@@ -971,6 +997,69 @@ template <typename Iterator>
 Iterator Write(const TypeEntry& value, Iterator out) {
   out = Write(encoding::Type::Function, out);
   return Write(value.type, out);
+}
+
+template <typename InputIterator, typename OutputIterator>
+OutputIterator WriteKnownSection(SectionId section_id,
+                                 InputIterator in_begin,
+                                 InputIterator in_end,
+                                 OutputIterator out) {
+  // Write to a separate buffer, so we know its length.
+  Buffer buffer;
+  WriteVector(in_begin, in_end, std::back_inserter(buffer));
+
+  // Then write the section id, followed by the buffer to the real output.
+  out = Write(section_id, out);
+  out = WriteLengthAndBytes(buffer, out);
+  return out;
+}
+
+template <typename Container, typename Iterator>
+Iterator WriteNonEmptyKnownSection(SectionId section_id,
+                                   Container container,
+                                   Iterator out) {
+  if (!container.empty()) {
+    out = WriteKnownSection(section_id, std::begin(container),
+                            std::end(container), out);
+  }
+  return out;
+}
+
+template <typename T, typename Iterator>
+Iterator WriteNonEmptyKnownSection(SectionId section_id,
+                                   const optional<T>& value_opt,
+                                   Iterator out) {
+  // Only write the section if the value is contained.
+  if (value_opt) {
+    // Write to a separate buffer, so we know its length.
+    Buffer buffer;
+    Write(*value_opt, std::back_inserter(buffer));
+
+    // Then write the section id, followed by the buffer to the real output.
+    out = Write(section_id, out);
+    out = WriteLengthAndBytes(buffer, out);
+  }
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(const Module& value, Iterator out) {
+  out = WriteBytes(encoding::Magic, out);
+  out = WriteBytes(encoding::Version, out);
+  out = WriteNonEmptyKnownSection(SectionId::Type, value.types, out);
+  out = WriteNonEmptyKnownSection(SectionId::Import, value.imports, out);
+  out = WriteNonEmptyKnownSection(SectionId::Function, value.functions, out);
+  out = WriteNonEmptyKnownSection(SectionId::Table, value.tables, out);
+  out = WriteNonEmptyKnownSection(SectionId::Memory, value.memories, out);
+  out = WriteNonEmptyKnownSection(SectionId::Global, value.globals, out);
+  out = WriteNonEmptyKnownSection(SectionId::Event, value.events, out);
+  out = WriteNonEmptyKnownSection(SectionId::Export, value.exports, out);
+  out = WriteNonEmptyKnownSection(SectionId::Start, value.start, out);
+  out = WriteNonEmptyKnownSection(SectionId::Element, value.element_segments, out);
+  out = WriteNonEmptyKnownSection(SectionId::DataCount, value.data_count, out);
+  out = WriteNonEmptyKnownSection(SectionId::Code, value.codes, out);
+  out = WriteNonEmptyKnownSection(SectionId::Data, value.data_segments, out);
+  return out;
 }
 
 }  // namespace binary

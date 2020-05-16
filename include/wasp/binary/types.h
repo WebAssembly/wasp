@@ -473,9 +473,9 @@ struct Module {
   std::vector<At<Global>> globals;
   std::vector<At<Event>> events;
   std::vector<At<Export>> exports;
-  std::vector<At<Start>> starts;
+  optional<At<Start>> start;
   std::vector<At<ElementSegment>> element_segments;
-  std::vector<At<DataCount>> data_counts;
+  optional<At<DataCount>> data_count;
   std::vector<At<Code>> codes;
   std::vector<At<DataSegment>> data_segments;
 };

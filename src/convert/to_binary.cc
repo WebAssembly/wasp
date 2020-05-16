@@ -695,7 +695,10 @@ auto ToBinary(Context& context, const At<text::Module>& value)
         break;
 
       case 7:  // Start
-        result.starts.push_back(ToBinary(context, get<At<text::Start>>(item)));
+        // This will overwrite an existing Start section, if any. That
+        // shouldn't happen, since reading multiple start sections means the
+        // text is malformed.
+        result.start = ToBinary(context, get<At<text::Start>>(item));
         break;
 
       case 8:  // ElementSegment
