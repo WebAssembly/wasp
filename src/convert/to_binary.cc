@@ -570,6 +570,8 @@ auto ToBinaryExpression(Context& context,
   for (auto&& instr : *value) {
     out = binary::Write(ToBinary(context, instr), out);
   }
+  // Write implicit 'end' instruction.
+  out = binary::Write(binary::Instruction{Opcode::End}, out);
   return MakeAt(value.loc(),
                 binary::Expression{context.Add(std::move(buffer))});
 }

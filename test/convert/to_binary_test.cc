@@ -749,7 +749,8 @@ TEST(ConvertToBinaryTest, Expression) {
                 binary::Expression{
                     "\x01"      // nop
                     "\x41\x00"  // i32.const 0
-                    "\x1a"_su8  // drop
+                    "\x1a"      // drop
+                    "\x0b"_su8  // implicit end
                 }),
          MakeAt(loc1, text::InstructionList{
                           text::Instruction{Opcode::Nop},
@@ -778,7 +779,7 @@ TEST(ConvertToBinaryTest, Code) {
       MakeAt(loc1,
              binary::Code{MakeAt(loc2, binary::LocalsList{binary::Locals{
                                            1, MakeAt(loc3, ValueType::I32)}}),
-                          binary::Expression{"\x01"_su8}}),
+                          binary::Expression{"\x01\x0b"_su8}}),
       MakeAt(loc1,
              text::Function{
                  {},
@@ -926,7 +927,7 @@ TEST(ConvertToBinaryTest, Module) {
              {},
              // codes
              {MakeAt(loc7, binary::Code{binary::LocalsList{},
-                                        binary::Expression{"\x01"_su8}})},
+                                        binary::Expression{"\x01\x0b"_su8}})},
              // data_segments
              {MakeAt(loc23, binary::DataSegment{MakeAt(loc24, Index{0}),
                                                 binary_constant_expression,
