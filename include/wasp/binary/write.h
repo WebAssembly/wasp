@@ -594,8 +594,6 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::I64Extend8S:
     case Opcode::I64Extend16S:
     case Opcode::I64Extend32S:
-    case Opcode::RefNull:
-    case Opcode::RefIsNull:
     case Opcode::I32TruncSatF32S:
     case Opcode::I32TruncSatF32U:
     case Opcode::I32TruncSatF64S:
@@ -752,6 +750,11 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::I16X8Abs:
     case Opcode::I32X4Abs:
       return out;
+
+    // Reference type immediate.
+    case Opcode::RefNull:
+    case Opcode::RefIsNull:
+      return Write(instr.reference_type_immediate(), out);
 
     // Type immediate.
     case Opcode::Block:

@@ -143,7 +143,9 @@ TEST(BinaryWriteTest, DataSegment_BulkMemory) {
 
 TEST(BinaryWriteTest, ElementExpression) {
   // ref.null
-  ExpectWrite("\xd0\x0b"_su8, ElementExpression{Instruction{Opcode::RefNull}});
+  ExpectWrite(
+      "\xd0\x70\x0b"_su8,
+      ElementExpression{Instruction{Opcode::RefNull, ReferenceType::Funcref}});
 
   // ref.func 2
   ExpectWrite("\xd2\x02\x0b"_su8,
@@ -181,21 +183,23 @@ TEST(BinaryWriteTest, ElementSegment_BulkMemory) {
 
   // Flags == 5: Passive, expression list
   ExpectWrite(
-      "\x05\x70\x02\xd2\x07\x0b\xd0\x0b"_su8,
+      "\x05\x70\x02\xd2\x07\x0b\xd0\x70\x0b"_su8,
       ElementSegment{
           SegmentType::Passive,
           ElementListWithExpressions{
               ReferenceType::Funcref,
               {ElementExpression{Instruction{Opcode::RefFunc, Index{7u}}},
-               ElementExpression{Instruction{Opcode::RefNull}}}}});
+               ElementExpression{
+                   Instruction{Opcode::RefNull, ReferenceType::Funcref}}}}});
 
   // Flags == 6: Active, table index, expression list
-  ExpectWrite("\x06\x02\x41\x08\x0b\x70\x01\xd0\x0b"_su8,
+  ExpectWrite("\x06\x02\x41\x08\x0b\x70\x01\xd0\x70\x0b"_su8,
               ElementSegment{
                   2u, ConstantExpression{Instruction{Opcode::I32Const, s32{8}}},
                   ElementListWithExpressions{
                       ReferenceType::Funcref,
-                      {ElementExpression{Instruction{Opcode::RefNull}}}}});
+                      {ElementExpression{Instruction{
+                          Opcode::RefNull, ReferenceType::Funcref}}}}});
 }
 
 TEST(BinaryWriteTest, ReferenceType) {
@@ -594,8 +598,8 @@ TEST(BinaryWriteTest, Instruction_reference_types) {
   ExpectWrite("\xfc\x0f\x00"_su8, I{O::TableGrow, Index{0}});
   ExpectWrite("\xfc\x10\x00"_su8, I{O::TableSize, Index{0}});
   ExpectWrite("\xfc\x11\x00"_su8, I{O::TableFill, Index{0}});
-  ExpectWrite("\xd0"_su8, I{O::RefNull});
-  ExpectWrite("\xd1"_su8, I{O::RefIsNull});
+  ExpectWrite("\xd0\x70"_su8, I{O::RefNull, ReferenceType::Funcref});
+  ExpectWrite("\xd1\x70"_su8, I{O::RefIsNull, ReferenceType::Funcref});
 }
 
 TEST(BinaryWriteTest, Instruction_function_references) {
