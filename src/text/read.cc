@@ -1484,10 +1484,9 @@ void ReadExpression(Tokenizer& tokenizer,
         instructions.push_back(block_instr);
 
         // Read then block.
-        if (tokenizer.MatchLpar(TokenType::Then)) {
-          ReadInstructionList(tokenizer, context, instructions);
-          Expect(tokenizer, context, TokenType::Rpar);
-        }
+        ExpectLpar(tokenizer, context, TokenType::Then);
+        ReadInstructionList(tokenizer, context, instructions);
+        Expect(tokenizer, context, TokenType::Rpar);
 
         // Read else block, if any.
         if (tokenizer.Match(TokenType::Lpar)) {

@@ -1397,6 +1397,13 @@ TEST_F(TextReadTest, Expression_If) {
            "(if (nop) (then (nop)) (else (nop)))"_su8);
 }
 
+TEST_F(TextReadTest, Expression_IfNoThen) {
+  Fail(ReadExpression_ForTesting,
+       {{{15, "Expected '(' Then, got Rpar Eof"}},
+        {{16, "Expected Rpar, got Eof"}}},
+       "(if (nop) (nop))"_su8);
+}
+
 TEST_F(TextReadTest, Expression_Try) {
   Fail(ReadExpression_ForTesting, {{1, "try instruction not allowed"}},
        "(try (catch))"_su8);
