@@ -1378,7 +1378,6 @@ void ExpectOpcode(Tokenizer& tokenizer,
   if (!ReadOpcodeOpt(tokenizer, context, instructions, token_type)) {
     context.errors.OnError(
         token.loc, format("Expected {}, got {}", token_type, token.type));
-    instructions.push_back(MakeAt(token.loc, Instruction{token.opcode()}));
   }
 }
 
