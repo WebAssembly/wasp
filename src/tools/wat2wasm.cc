@@ -14,6 +14,9 @@
 // limitations under the License.
 //
 
+#include <filesystem>
+#include <fstream>
+
 #include "src/tools/argparser.h"
 #include "src/tools/text-errors.h"
 #include "wasp/base/buffer.h"
@@ -36,13 +39,15 @@
 #include "wasp/text/resolve.h"
 #include "wasp/text/types.h"
 
+namespace fs = std::filesystem;
+
 namespace wasp {
 namespace tools {
 namespace wat2wasm {
 
 struct Options {
   Features features;
-  string_view output_filename;
+  std::string output_filename;
 };
 
 struct Tool {
@@ -51,12 +56,6 @@ struct Tool {
   enum class PrintChars { No, Yes };
 
   int Run();
-  void PrintMemory(SpanU8 data,
-                   Index offset,
-                   PrintChars print_chars = PrintChars::Yes,
-                   string_view prefix = "",
-                   int octets_per_line = 16,
-                   int octets_per_group = 2);
 
   std::string filename;
   Options options;
@@ -94,6 +93,12 @@ int Main(span<string_view> args) {
     return 1;
   }
 
+  if (options.output_filename.empty()) {
+    // Create an output filename from the input filename.
+    options.output_filename =
+        fs::path(filename).replace_extension(".wasm").string();
+  }
+
   SpanU8 data{*optbuf};
   Tool tool{filename, data, options};
   return tool.Run();
@@ -120,42 +125,17 @@ int Tool::Run() {
 
   Buffer buffer;
   Write(binary_module, std::back_inserter(buffer));
-  PrintMemory(buffer, 0);
-  return 0;
-}
 
-void Tool::PrintMemory(SpanU8 start,
-                       Index offset,
-                       PrintChars print_chars,
-                       string_view prefix,
-                       int octets_per_line,
-                       int octets_per_group) {
-  SpanU8 data = start;
-  while (!data.empty()) {
-    auto line_size = std::min<size_t>(data.size(), octets_per_line);
-    const SpanU8 line = data.subspan(0, line_size);
-    print("{}", prefix);
-    print("{:08x}: ", (line.begin() - start.begin()) + offset);
-    for (int i = 0; i < octets_per_line;) {
-      for (int j = 0; j < octets_per_group; ++j, ++i) {
-        if (i < line.size()) {
-          print("{:02x}", line[i]);
-        } else {
-          print("  ");
-        }
-      }
-      print(" ");
-    }
-
-    if (print_chars == PrintChars::Yes) {
-      print(" ");
-      for (int c : line) {
-        print("{:c}", isprint(c) ? static_cast<char>(c) : '.');
-      }
-    }
-    print("\n");
-    remove_prefix(&data, line_size);
+  std::ofstream fstream(options.output_filename,
+                        std::ios_base::out | std::ios_base::binary);
+  if (!fstream) {
+    print(stderr, "Unable to open file {}.\n", options.output_filename);
+    return 1;
   }
+
+  auto span = ToStringView(buffer);
+  fstream.write(span.data(), span.size());
+  return 0;
 }
 
 }  // namespace wat2wasm
