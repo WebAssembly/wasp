@@ -30,6 +30,7 @@
 #include "wasp/binary/encoding.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/types.h"
+#include "wasp/binary/visitor.h"
 #include "wasp/binary/write.h"
 #include "wasp/convert/to_binary.h"
 #include "wasp/text/desugar.h"
@@ -38,6 +39,8 @@
 #include "wasp/text/read/tokenizer.h"
 #include "wasp/text/resolve.h"
 #include "wasp/text/types.h"
+#include "wasp/valid/context.h"
+#include "wasp/valid/validate.h"
 
 namespace fs = std::filesystem;
 
@@ -47,6 +50,7 @@ namespace wat2wasm {
 
 struct Options {
   Features features;
+  bool validate = true;
   std::string output_filename;
 };
 
@@ -72,6 +76,8 @@ int Main(span<string_view> args) {
            [&]() { parser.PrintHelpAndExit(0); })
       .Add('o', "--output", "<filename>", "write DOT file output to <filename>",
            [&](string_view arg) { options.output_filename = arg; })
+      .Add("--no-validate", "Don't validate before writing",
+           [&]() { options.validate = false; })
       .AddFeatureFlags(options.features)
       .Add("<filename>", "input wasm file", [&](string_view arg) {
         if (filename.empty()) {
@@ -122,6 +128,16 @@ int Tool::Run() {
 
   convert::Context convert_context;
   auto binary_module = convert::ToBinary(convert_context, text_module);
+
+  if (options.validate) {
+    valid::Context validate_context{options.features, errors};
+    Validate(binary_module, validate_context);
+
+    if (errors.has_error()) {
+      errors.Print();
+      return 1;
+    }
+  }
 
   Buffer buffer;
   Write(binary_module, std::back_inserter(buffer));
