@@ -54,70 +54,73 @@ void Resolve(Context& context, NameMap& name_map, VarList& var_list) {
 }
 
 void Resolve(Context& context, FunctionTypeUse& function_type_use) {
-  Resolve(context, context.type_names, function_type_use.type_use);
-  if (function_type_use.type_use) {
-    auto type_index = get<u32>(function_type_use.type_use->value());
-    auto type_opt = context.function_type_map.Get(type_index);
-    // It's possible that this type use is invalid, but that's a validation
-    // error not a parse/resolve error. We'll only check that the type use and
-    // explicit function type match when the type use is valid.
-    if (type_opt) {
-      if (function_type_use.type->params.size() ||
-          function_type_use.type->results.size()) {
-        // Explicit params/results, so check that they match.
-        if (function_type_use.type != *type_opt) {
-          context.errors.OnError(
-              function_type_use.type.loc(),
-              format("Type use {} does not match explicit type {}",
-                     function_type_use.type_use, function_type_use.type));
-        }
-      } else {
-        // No params/results given, so populate them.
-        function_type_use.type = *type_opt;
-      }
-    }
-  } else {
-    auto index_opt = context.function_type_map.Find(function_type_use.type);
-    assert(index_opt.has_value());
-    function_type_use.type_use = *index_opt;
-  }
-}
+  auto& type_use = function_type_use.type_use;
+  auto& type = function_type_use.type;
 
-void Resolve(Context& context,
-             OptAt<Var>& type_use,
-             At<BoundFunctionType>& type) {
-  // Same behavior as FunctionTypeUse above, but handles BoundFunctionTypes
-  // (used in function definitions and imports).
   Resolve(context, context.type_names, type_use);
   if (type_use) {
-    auto type_index = get<u32>(type_use->value());
-    auto type_opt = context.function_type_map.Get(type_index);
-    // It's possible that this type use is invalid, but that's a validation
-    // error not a parse/resolve error. We'll only check that the type use and
-    // explicit function type match when the type use is valid.
-    if (type_opt) {
-      if (type->params.size() || type->results.size()) {
-        // Explicit params/results, so check that they match.
-        if (type->params != type_opt->params ||
-            type->results != type_opt->results) {
-          context.errors.OnError(
-              type.loc(), format("Type use {} does not match explicit type {}",
-                                 type_use, type));
+    if (holds_alternative<u32>(type_use->value())) {
+      auto type_index = get<u32>(type_use->value());
+      auto type_opt = context.function_type_map.Get(type_index);
+      // It's possible that this type use is invalid, but that's a validation
+      // error not a parse/resolve error. We'll only check that the type use and
+      // explicit function type match when the type use is valid.
+      if (type_opt) {
+        if (type->params.size() || type->results.size()) {
+          // Explicit params/results, so check that they match.
+          if (type != *type_opt) {
+            context.errors.OnError(
+                type.loc(),
+                format("Type use {} does not match explicit type {}", type_use,
+                       type));
+          }
+        } else {
+          // No params/results given, so populate them.
+          type = *type_opt;
         }
-      } else {
-        // No params/results given, so populate them.
-        std::transform(
-            type_opt->params.begin(), type_opt->params.end(),
-            std::back_inserter(type->params), [](const At<ValueType>& vt) {
-              return MakeAt(vt.loc(), BoundValueType{nullopt, vt.value()});
-            });
-        type->results = type_opt->results;
       }
     }
   } else {
     auto index_opt = context.function_type_map.Find(type);
-    assert(index_opt.has_value());
-    type_use = *index_opt;
+    if (index_opt) {
+      type_use = *index_opt;
+    }
+  }
+}
+
+// TODO: How to combine this with the function above?
+void Resolve(Context& context,
+             OptAt<Var>& type_use,
+             At<BoundFunctionType>& type) {
+  Resolve(context, context.type_names, type_use);
+  if (type_use) {
+    if (holds_alternative<u32>(type_use->value())) {
+      auto type_index = get<u32>(type_use->value());
+      auto type_opt = context.function_type_map.Get(type_index);
+      // It's possible that this type use is invalid, but that's a validation
+      // error not a parse/resolve error. We'll only check that the type use and
+      // explicit function type match when the type use is valid.
+      if (type_opt) {
+        if (type->params.size() || type->results.size()) {
+          // Explicit params/results, so check that they match.
+          if (type->params != type_opt->params ||
+              type->results != type_opt->results) {
+            context.errors.OnError(
+                type.loc(),
+                format("Type use {} does not match explicit type {}", type_use,
+                       type));
+          }
+        } else {
+          // No params/results given, so populate them.
+          type = ToBoundFunctionType(*type_opt);
+        }
+      }
+    }
+  } else {
+    auto index_opt = context.function_type_map.Find(type);
+    if (index_opt) {
+      type_use = *index_opt;
+    }
   }
 }
 

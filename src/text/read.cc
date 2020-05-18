@@ -147,6 +147,16 @@ auto ReadVarList(Tokenizer& tokenizer, Context& context) -> VarList {
   return result;
 }
 
+auto ReadNonEmptyVarList(Tokenizer& tokenizer, Context& context) -> VarList {
+  VarList result;
+  result.push_back(ReadVar(tokenizer, context));
+
+  auto var_list = ReadVarList(tokenizer, context);
+  result.insert(result.end(), std::make_move_iterator(var_list.begin()),
+                std::make_move_iterator(var_list.end()));
+  return result;
+}
+
 auto ReadVarUseOpt(Tokenizer& tokenizer, Context& context, TokenType token_type)
     -> OptAt<Var> {
   LocationGuard guard{tokenizer};
@@ -1125,7 +1135,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
-      auto var_list = ReadVarList(tokenizer, context);
+      auto var_list = ReadNonEmptyVarList(tokenizer, context);
       auto default_target = var_list.back();
       var_list.pop_back();
       auto immediate = MakeAt(immediate_guard.loc(),

@@ -41,7 +41,9 @@ class TextResolveTest : public ::testing::Test {
     ExpectNoErrors(errors);
   }
 
-  // TODO: Add fail tests after refactoring to remove ExpectedError.
+  // TODO: Add fail tests after refactoring to remove ExpectedError. These
+  // can't be used as-is, since there is no good way to get the original span
+  // (as needed by ExpectError).
 #if 0
   void Fail(
             const ExpectedError& error,
@@ -67,6 +69,17 @@ class TextResolveTest : public ::testing::Test {
   Context context{errors};
 };
 
+TEST_F(TextResolveTest, Var_Undefined) {
+  NameMap name_map;  // Empty name map.
+  At<Var> var = MakeAt(Var{"$a"_sv});
+  Resolve(context, name_map, var);
+  EXPECT_EQ(MakeAt(Var{"$a"_sv}), var);
+  // TODO: Use Fail(...) above.
+  ASSERT_EQ(1u, errors.errors.size());
+  ASSERT_EQ(1u, errors.errors[0].size());
+  EXPECT_EQ("Undefined variable $a", errors.errors[0][0].desc);
+}
+
 TEST_F(TextResolveTest, FunctionTypeUse) {
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
@@ -87,6 +100,20 @@ TEST_F(TextResolveTest, FunctionTypeUse) {
   // Populate the variable when not specified.
   OK(FunctionTypeUse{Var{Index{1}}, FunctionType{{VT::F32}, {}}},
      FunctionTypeUse{nullopt, FunctionType{{VT::F32}, {}}});
+}
+
+TEST_F(TextResolveTest, FunctionTypeUse_NoFunctionTypeInContext) {
+  FunctionTypeUse type_use;
+  Resolve(context, type_use);
+  EXPECT_EQ((FunctionTypeUse{}), type_use);
+}
+
+TEST_F(TextResolveTest, BoundFunctionTypeUse_NoFunctionTypeInContext) {
+  OptAt<Var> type_use;
+  At<BoundFunctionType> type;
+  Resolve(context, type_use, type);
+  EXPECT_EQ(nullopt, type_use);
+  EXPECT_EQ(MakeAt(BoundFunctionType{}), type);
 }
 
 TEST_F(TextResolveTest, BlockImmediate) {

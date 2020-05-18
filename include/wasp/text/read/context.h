@@ -90,7 +90,6 @@ struct FunctionTypeMap {
   optional<FunctionType> Get(Index) const;
 
  private:
-  static FunctionType ToFunctionType(BoundFunctionType);
   static TypeEntry ToTypeEntry(FunctionType);
 
   List list_;

@@ -228,7 +228,7 @@ auto StrToFloat(LiteralInfo info, SpanU8 span) -> optional<T> {
       using Int = typename Traits::Int;
       RemoveSign(span, info.sign);
       auto payload = ParseInteger<Int, 16>(span.subspan(6));  // Skip "nan:0x".
-      if (!payload || *payload > Traits::significand_mask) {
+      if (!payload || *payload == 0 || *payload > Traits::significand_mask) {
         return nullopt;
       }
       return MakeNanPayload<T>(info.sign, *payload);

@@ -157,6 +157,9 @@ struct BoundFunctionType {
   ValueTypeList results;
 };
 
+FunctionType ToFunctionType(BoundFunctionType);
+BoundFunctionType ToBoundFunctionType(FunctionType);
+
 struct TypeEntry {
   OptAt<BindVar> bind_var;
   At<BoundFunctionType> type;

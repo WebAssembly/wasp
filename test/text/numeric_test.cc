@@ -329,6 +329,28 @@ TEST(TextNumericTest, StrToFloat_f32) {
   }
 }
 
+TEST(TextNumericTest, StrToFloat_f32_BadNanPayload) {
+  struct {
+    SpanU8 span;
+    LiteralInfo info;
+  } tests[] = {
+      {"nan:0x0"_su8, LI::NanPayload(Sign::None, HU::No)},
+      {"+nan:0x0"_su8, LI::NanPayload(Sign::Plus, HU::No)},
+      {"-nan:0x0"_su8, LI::NanPayload(Sign::Minus, HU::No)},
+
+      {"nan:0x800000"_su8, LI::NanPayload(Sign::None, HU::No)},
+      {"+nan:0x800000"_su8, LI::NanPayload(Sign::Plus, HU::No)},
+      {"-nan:0x800000"_su8, LI::NanPayload(Sign::Minus, HU::No)},
+
+      {"nan:0x1_0000_0000"_su8, LI::NanPayload(Sign::None, HU::Yes)},
+      {"+nan:0x1_0000_0000"_su8, LI::NanPayload(Sign::Plus, HU::Yes)},
+      {"-nan:0x1_0000_0000"_su8, LI::NanPayload(Sign::Minus, HU::Yes)},
+  };
+  for (auto test : tests) {
+    EXPECT_EQ(nullopt, StrToFloat<f32>(test.info, test.span));
+  }
+}
+
 TEST(TextNumericTest, StrToFloat_f64) {
   const auto none = LI::Number(Sign::None, HU::No);
   const auto plus = LI::Number(Sign::Plus, HU::No);
@@ -427,6 +449,28 @@ TEST(TextNumericTest, StrToFloat_f64) {
   };
   for (auto test : tests) {
     ExpectFloat<f64, u64>(test.span, test.info, test.value_bits);
+  }
+}
+
+TEST(TextNumericTest, StrToFloat_f64_BadNanPayload) {
+  struct {
+    SpanU8 span;
+    LiteralInfo info;
+  } tests[] = {
+      {"nan:0x0"_su8, LI::NanPayload(Sign::None, HU::No)},
+      {"+nan:0x0"_su8, LI::NanPayload(Sign::Plus, HU::No)},
+      {"-nan:0x0"_su8, LI::NanPayload(Sign::Minus, HU::No)},
+
+      {"nan:0x10000000000000"_su8, LI::NanPayload(Sign::None, HU::No)},
+      {"+nan:0x10000000000000"_su8, LI::NanPayload(Sign::Plus, HU::No)},
+      {"-nan:0x10000000000000"_su8, LI::NanPayload(Sign::Minus, HU::No)},
+
+      {"nan:0x1_0000_0000_0000_0000"_su8, LI::NanPayload(Sign::None, HU::Yes)},
+      {"+nan:0x1_0000_0000_0000_0000"_su8, LI::NanPayload(Sign::Plus, HU::Yes)},
+      {"-nan:0x1_0000_0000_0000_0000"_su8, LI::NanPayload(Sign::Minus, HU::Yes)},
+  };
+  for (auto test : tests) {
+    EXPECT_EQ(nullopt, StrToFloat<f64>(test.info, test.span));
   }
 }
 

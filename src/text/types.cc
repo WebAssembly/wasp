@@ -38,6 +38,22 @@ OptAt<ValueType> FunctionTypeUse::GetInlineType() const {
   return type->results[0];
 }
 
+FunctionType ToFunctionType(BoundFunctionType bound_type) {
+  ValueTypeList unbound_params;
+  for (auto param : bound_type.params) {
+    unbound_params.push_back(param->type);
+  }
+  return FunctionType{unbound_params, bound_type.results};
+}
+
+BoundFunctionType ToBoundFunctionType(FunctionType unbound_type) {
+  BoundValueTypeList bound_params;
+  for (auto param : unbound_type.params) {
+    bound_params.push_back(BoundValueType{nullopt, param});
+  }
+  return BoundFunctionType{bound_params, unbound_type.results};
+}
+
 Instruction::Instruction(At<Opcode> opcode) : opcode{opcode} {}
 
 Instruction::Instruction(At<Opcode> opcode, At<s32> immediate)

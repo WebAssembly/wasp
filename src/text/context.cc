@@ -180,15 +180,6 @@ optional<FunctionType> FunctionTypeMap::Get(Index index) const {
 }
 
 // static
-FunctionType FunctionTypeMap::ToFunctionType(BoundFunctionType bound_type) {
-  ValueTypeList unbound_params;
-  for (auto param : bound_type.params) {
-    unbound_params.push_back(param->type);
-  }
-  return FunctionType{unbound_params, bound_type.results};
-}
-
-// static
 TypeEntry FunctionTypeMap::ToTypeEntry(FunctionType unbound_type) {
   BoundValueTypeList bound_params;
   for (auto param : unbound_type.params) {

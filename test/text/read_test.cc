@@ -559,6 +559,12 @@ TEST_F(TextReadTest, PlainInstruction_BrTable) {
      "br_table 0 1 $a $b"_su8);
 }
 
+TEST_F(TextReadTest, PlainInstruction_BrTable_NoVars) {
+  // br_table w/ no vars
+  Fail(ReadPlainInstruction, {{8, "Expected a variable, got Eof"}},
+       "br_table"_su8);
+}
+
 TEST_F(TextReadTest, PlainInstruction_CallIndirect) {
   // Bare call_indirect.
   OK(ReadPlainInstruction,

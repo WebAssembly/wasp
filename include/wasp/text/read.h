@@ -41,6 +41,7 @@ auto ReadFloat(Tokenizer&, Context&) -> At<T>;
 auto ReadVar(Tokenizer&, Context&) -> At<Var>;
 auto ReadVarOpt(Tokenizer&, Context&) -> OptAt<Var>;
 auto ReadVarList(Tokenizer&, Context&) -> VarList;
+auto ReadNonEmptyVarList(Tokenizer&, Context&) -> VarList;
 
 auto ReadVarUseOpt(Tokenizer&, Context&, TokenType) -> OptAt<Var>;
 auto ReadTypeUseOpt(Tokenizer&, Context&) -> OptAt<Var>;
