@@ -17,6 +17,7 @@
 #ifndef WASP_BINARY_VISITOR_H_
 #define WASP_BINARY_VISITOR_H_
 
+#include "wasp/binary/lazy_expression.h"
 #include "wasp/binary/lazy_module.h"
 #include "wasp/binary/sections.h"
 
@@ -27,7 +28,8 @@ namespace visit {
 enum class Result { Ok, Fail, Skip };
 
 struct Visitor {
-  Result EndModule() { return Result::Ok; }
+  Result BeginModule(const LazyModule&) { return Result::Ok; }
+  Result EndModule(const LazyModule&) { return Result::Ok; }
 
   // All sections, known and custom.
   Result OnSection(At<Section>) { return Result::Ok; }
@@ -90,6 +92,7 @@ struct Visitor {
   // Section 10.
   Result BeginCodeSection(LazyCodeSection) { return Result::Ok; }
   Result OnCode(const At<Code>&) { return Result::Ok; }
+  Result OnInstruction(const At<Instruction>&) { return Result::Ok; }
   Result EndCodeSection(LazyCodeSection) { return Result::Ok; }
 
   // Section 11.
@@ -99,7 +102,8 @@ struct Visitor {
 };
 
 struct SkipVisitor : Visitor {
-  Result EndModule() { return Result::Skip; }
+  Result BeginModule(LazyModule&) { return Result::Ok; }
+  Result EndModule(LazyModule&) { return Result::Skip; }
   Result OnSection(At<Section>) { return Result::Skip; }
   Result BeginTypeSection(LazyTypeSection) { return Result::Skip; }
   Result BeginImportSection(LazyImportSection) { return Result::Skip; }
@@ -157,6 +161,11 @@ Result Visit(LazyModule&, Visitor&);
 template <typename Visitor>
 inline Result Visit(LazyModule& module, Visitor& visitor) {
   module.context.Reset();
+  auto begin_res = visitor.BeginModule(module);
+  if (begin_res != Result::Ok) {
+    return begin_res;
+  }
+
   for (auto section : module.sections) {
     auto res = visitor.OnSection(section);
     if (res == Result::Skip) {
@@ -179,13 +188,32 @@ inline Result Visit(LazyModule& module, Visitor& visitor) {
         WASP_OPT_SECTION(Start)
         WASP_SECTION(Element)
         WASP_OPT_SECTION(DataCount)
-        WASP_SECTION(Code)
+
+        // Special case for Code section, to provide Instruction callback.
+        case SectionId::Code: {
+          auto sec = ReadCodeSection(known, module.context);
+          auto res = visitor.BeginCodeSection(sec);
+          if (res == Result::Ok) {
+            for (const auto& item : sec.sequence) {
+              WASP_CHECK(visitor.OnCode(item));
+              for (const auto& instruction :
+                   ReadExpression(item->body, module.context)) {
+                WASP_CHECK(visitor.OnInstruction(instruction));
+              }
+            }
+            WASP_CHECK(visitor.EndCodeSection(sec));
+          } else if (res == Result::Fail) {
+            return Result::Fail;
+          }
+          break;
+        }
+
         WASP_SECTION(Data)
         default: break;
       }
     }
   }
-  return visitor.EndModule();
+  return visitor.EndModule(module);
 }
 
 #undef WASP_CHECK

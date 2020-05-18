@@ -61,9 +61,11 @@ const u8 kTestModule[] = {
 const int kSectionCount = 11;
 const int kTypeCount = 3;
 const int kFunctionCount = 2;
+const int kInstructionCount = 3;
 
 struct VisitorMock {
-  MOCK_METHOD0(EndModule, visit::Result());
+  MOCK_METHOD1(BeginModule, visit::Result(LazyModule&));
+  MOCK_METHOD1(EndModule, visit::Result(LazyModule&));
   MOCK_METHOD1(OnSection, visit::Result(At<Section>));
   MOCK_METHOD1(BeginTypeSection, visit::Result(LazyTypeSection));
   MOCK_METHOD1(OnType, visit::Result(const At<TypeEntry>&));
@@ -100,6 +102,7 @@ struct VisitorMock {
   MOCK_METHOD1(EndDataCountSection, visit::Result(DataCountSection));
   MOCK_METHOD1(BeginCodeSection, visit::Result(LazyCodeSection));
   MOCK_METHOD1(OnCode, visit::Result(const At<Code>&));
+  MOCK_METHOD1(OnInstruction, visit::Result(const At<Instruction>&));
   MOCK_METHOD1(EndCodeSection, visit::Result(LazyCodeSection));
   MOCK_METHOD1(BeginDataSection, visit::Result(LazyDataSection));
   MOCK_METHOD1(OnData, visit::Result(const At<DataSegment>&));
@@ -129,7 +132,8 @@ TEST_F(BinaryVisitorTest, AllOk) {
   using ::testing::Return;
   using ::wasp::binary::visit::Result;
 
-  EXPECT_CALL(v, EndModule()).Times(1);
+  EXPECT_CALL(v, BeginModule(_)).Times(1);
+  EXPECT_CALL(v, EndModule(_)).Times(1);
 
   EXPECT_CALL(v, OnSection(_)).Times(kSectionCount);
 
@@ -177,6 +181,9 @@ TEST_F(BinaryVisitorTest, AllOk) {
   EXPECT_CALL(v, OnCode(_))
       .Times(kFunctionCount)
       .WillRepeatedly(Return(Result::Ok));
+  EXPECT_CALL(v, OnInstruction(_))
+      .Times(kInstructionCount)
+      .WillRepeatedly(Return(Result::Ok));
   EXPECT_CALL(v, EndCodeSection(_)).WillOnce(Return(Result::Ok));
 
   EXPECT_CALL(v, BeginDataSection(_)).WillOnce(Return(Result::Ok));
@@ -191,7 +198,8 @@ TEST_F(BinaryVisitorTest, AllSkipped) {
   using ::testing::Return;
   using ::wasp::binary::visit::Result;
 
-  EXPECT_CALL(v, EndModule()).Times(1);
+  EXPECT_CALL(v, BeginModule(_)).Times(1);
+  EXPECT_CALL(v, EndModule(_)).Times(1);
   EXPECT_CALL(v, OnSection(_)).Times(kSectionCount);
   EXPECT_CALL(v, BeginTypeSection(_)).WillOnce(Return(Result::Skip));
   EXPECT_CALL(v, BeginImportSection(_)).WillOnce(Return(Result::Skip));
