@@ -19,33 +19,42 @@
 namespace wasp {
 namespace binary {
 
-LazyFunctionNamesSubsection ReadFunctionNamesSubsection(SpanU8 data,
-                                                        Context& context) {
+auto ReadNameSection(SpanU8 data, Context& context) -> LazyNameSection {
+  return LazyNameSection{data, context};
+}
+
+auto ReadNameSection(CustomSection sec, Context& context) -> LazyNameSection {
+  return LazyNameSection{sec.data, context};
+}
+
+auto ReadFunctionNamesSubsection(SpanU8 data, Context& context)
+    -> LazyFunctionNamesSubsection {
   return LazyFunctionNamesSubsection{data, "function names subsection",
                                      context};
 }
 
-LazyFunctionNamesSubsection ReadFunctionNamesSubsection(NameSubsection sec,
-                                                        Context& context) {
+auto ReadFunctionNamesSubsection(NameSubsection sec, Context& context)
+    -> LazyFunctionNamesSubsection {
   return ReadFunctionNamesSubsection(sec.data, context);
 }
 
-LazyLocalNamesSubsection ReadLocalNamesSubsection(SpanU8 data,
-                                                  Context& context) {
+auto ReadLocalNamesSubsection(SpanU8 data, Context& context)
+    -> LazyLocalNamesSubsection {
   return LazyLocalNamesSubsection{data, "local names subsection", context};
 }
 
-LazyLocalNamesSubsection ReadLocalNamesSubsection(NameSubsection sec,
-                                                  Context& context) {
+auto ReadLocalNamesSubsection(NameSubsection sec, Context& context)
+    -> LazyLocalNamesSubsection {
   return ReadLocalNamesSubsection(sec.data, context);
 }
 
-ModuleNameSubsection ReadModuleNameSubsection(SpanU8 data, Context& context) {
+auto ReadModuleNameSubsection(SpanU8 data, Context& context)
+    -> ModuleNameSubsection {
   return ReadString(&data, context, "module name");
 }
 
-ModuleNameSubsection ReadModuleNameSubsection(NameSubsection sec,
-                                              Context& context) {
+auto ReadModuleNameSubsection(NameSubsection sec, Context& context)
+    -> ModuleNameSubsection {
   return ReadModuleNameSubsection(sec.data, context);
 }
 

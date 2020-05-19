@@ -16,46 +16,85 @@
 
 #include "wasp/binary/linking_section/sections.h"
 
+#include "wasp/base/errors.h"
+#include "wasp/binary/formatters.h"
+
 namespace wasp {
 namespace binary {
 
-LazyComdatSubsection ReadComdatSubsection(SpanU8 data, Context& context) {
+LinkingSection::LinkingSection(SpanU8 data, Context& context)
+    : data{data},
+      version{Read<u32>(&data, context)},
+      subsections{data, context} {
+  constexpr u32 kVersion = 2;
+  if (version && version != kVersion) {
+    context.errors.OnError(
+        data, format("Expected linking section version: {}, got {}", kVersion,
+                     *version));
+  }
+}
+
+auto ReadLinkingSection(SpanU8 data, Context& context) -> LinkingSection {
+  return LinkingSection{data, context};
+}
+
+auto ReadLinkingSection(CustomSection sec, Context& context) -> LinkingSection {
+  return LinkingSection{sec.data, context};
+}
+
+RelocationSection::RelocationSection(SpanU8 data, Context& context)
+    : data{data},
+      section_index{Read<u32>(&data, context)},
+      count{ReadCount(&data, context)},
+      entries{data, count, "relocation section", context} {}
+
+auto ReadRelocationSection(SpanU8 data, Context& context) -> RelocationSection {
+  return RelocationSection{data, context};
+}
+
+auto ReadRelocationSection(CustomSection sec, Context& context)
+    -> RelocationSection {
+  return RelocationSection{sec.data, context};
+}
+
+auto ReadComdatSubsection(SpanU8 data, Context& context)
+    -> LazyComdatSubsection {
   return LazyComdatSubsection{data, "comdat subsection", context};
 }
 
-LazyComdatSubsection ReadComdatSubsection(LinkingSubsection sec,
-                                          Context& context) {
+auto ReadComdatSubsection(LinkingSubsection sec, Context& context)
+    -> LazyComdatSubsection {
   return ReadComdatSubsection(sec.data, context);
 }
 
-LazyInitFunctionsSubsection ReadInitFunctionsSubsection(SpanU8 data,
-                                                        Context& context) {
+auto ReadInitFunctionsSubsection(SpanU8 data, Context& context)
+    -> LazyInitFunctionsSubsection {
   return LazyInitFunctionsSubsection{data, "init functions subsection",
                                      context};
 }
 
-LazyInitFunctionsSubsection ReadInitFunctionsSubsection(LinkingSubsection sec,
-                                                        Context& context) {
+auto ReadInitFunctionsSubsection(LinkingSubsection sec, Context& context)
+    -> LazyInitFunctionsSubsection {
   return ReadInitFunctionsSubsection(sec.data, context);
 }
 
-LazySegmentInfoSubsection ReadSegmentInfoSubsection(SpanU8 data,
-                                                    Context& context) {
+auto ReadSegmentInfoSubsection(SpanU8 data, Context& context)
+    -> LazySegmentInfoSubsection {
   return LazySegmentInfoSubsection{data, "segment info subsection", context};
 }
 
-LazySegmentInfoSubsection ReadSegmentInfoSubsection(LinkingSubsection sec,
-                                                    Context& context) {
+auto ReadSegmentInfoSubsection(LinkingSubsection sec, Context& context)
+    -> LazySegmentInfoSubsection {
   return ReadSegmentInfoSubsection(sec.data, context);
 }
 
-LazySymbolTableSubsection ReadSymbolTableSubsection(SpanU8 data,
-                                                    Context& context) {
+auto ReadSymbolTableSubsection(SpanU8 data, Context& context)
+    -> LazySymbolTableSubsection {
   return LazySymbolTableSubsection{data, "symbol table subsection", context};
 }
 
-LazySymbolTableSubsection ReadSymbolTableSubsection(LinkingSubsection sec,
-                                                    Context& context) {
+auto ReadSymbolTableSubsection(LinkingSubsection sec, Context& context)
+    -> LazySymbolTableSubsection {
   return ReadSymbolTableSubsection(sec.data, context);
 }
 

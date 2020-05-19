@@ -49,26 +49,27 @@ using LazyInitFunctionsSubsection = LazySection<InitFunction>;
 using LazyComdatSubsection = LazySection<Comdat>;
 using LazySymbolTableSubsection = LazySection<SymbolInfo>;
 
-RelocationSection ReadRelocationSection(SpanU8 data, Context&);
-RelocationSection ReadRelocationSection(CustomSection sec, Context&);
+auto ReadRelocationSection(SpanU8 data, Context&) -> RelocationSection;
+auto ReadRelocationSection(CustomSection sec, Context&) -> RelocationSection;
 
-LinkingSection ReadLinkingSection(SpanU8, Context&);
-LinkingSection ReadLinkingSection(CustomSection, Context&);
+auto ReadLinkingSection(SpanU8, Context&) -> LinkingSection;
+auto ReadLinkingSection(CustomSection, Context&) -> LinkingSection;
 
-LazySegmentInfoSubsection ReadSegmentInfoSubsection(SpanU8, Context&);
-LazySegmentInfoSubsection ReadSegmentInfoSubsection(LinkingSubsection,
-                                                    Context&);
+auto ReadSegmentInfoSubsection(SpanU8, Context&) -> LazySegmentInfoSubsection;
+auto ReadSegmentInfoSubsection(LinkingSubsection, Context&)
+    -> LazySegmentInfoSubsection;
 
-LazyInitFunctionsSubsection ReadInitFunctionsSubsection(SpanU8, Context&);
-LazyInitFunctionsSubsection ReadInitFunctionsSubsection(LinkingSubsection,
-                                                        Context&);
+auto ReadInitFunctionsSubsection(SpanU8, Context&)
+    -> LazyInitFunctionsSubsection;
+auto ReadInitFunctionsSubsection(LinkingSubsection, Context&)
+    -> LazyInitFunctionsSubsection;
 
-LazyComdatSubsection ReadComdatSubsection(SpanU8, Context&);
-LazyComdatSubsection ReadComdatSubsection(LinkingSubsection, Context&);
+auto ReadComdatSubsection(SpanU8, Context&) -> LazyComdatSubsection;
+auto ReadComdatSubsection(LinkingSubsection, Context&) -> LazyComdatSubsection;
 
-LazySymbolTableSubsection ReadSymbolTableSubsection(SpanU8, Context&);
-LazySymbolTableSubsection ReadSymbolTableSubsection(LinkingSubsection,
-                                                    Context&);
+auto ReadSymbolTableSubsection(SpanU8, Context&) -> LazySymbolTableSubsection;
+auto ReadSymbolTableSubsection(LinkingSubsection, Context&)
+    -> LazySymbolTableSubsection;
 
 }  // namespace binary
 }  // namespace wasp
