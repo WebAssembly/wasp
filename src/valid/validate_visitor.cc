@@ -77,21 +77,7 @@ auto ValidateVisitor::OnDataCount(const At<binary::DataCount>& data_count)
 }
 
 auto ValidateVisitor::OnCode(const At<binary::Code>& code) -> Result {
-  if (!BeginCode(code.loc(), context)) {
-    return Result::Fail;
-  }
-
-  for (const auto& locals : code->locals) {
-    if (!Validate(locals, context)) {
-      return Result::Fail;
-    }
-  }
-  return Result::Ok;
-}
-
-auto ValidateVisitor::OnInstruction(const At<binary::Instruction>& instruction)
-    -> Result {
-  return FailUnless(Validate(instruction, context));
+  return FailUnless(Validate(code, context));
 }
 
 auto ValidateVisitor::OnData(const At<binary::DataSegment>& segment) -> Result {

@@ -23,10 +23,32 @@
 #include "wasp/base/macros.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/formatters.h"
+#include "wasp/binary/lazy_expression.h"
+#include "wasp/valid/begin_code.h"
 #include "wasp/valid/context.h"
 
 namespace wasp {
 namespace valid {
+
+bool Validate(const At<binary::Code>& value,
+              Context& context,
+              Errors& read_errors) {
+  bool valid = true;
+  valid &= BeginCode(value.loc(), context);
+  for (auto& locals : value->locals) {
+    valid &= Validate(locals, context);
+  }
+  binary::Context read_context{context.features, read_errors};
+  for (auto& instruction : binary::ReadExpression(value->body, read_context)) {
+    valid &= Validate(instruction, context);
+  }
+  return valid;
+}
+
+bool Validate(const At<binary::Code>& value, Context& context) {
+  // By default, use the same error reporting as the validator.
+  return Validate(value, context, *context.errors);
+}
 
 bool Validate(const At<binary::ConstantExpression>& value,
               ConstantExpressionKind kind,
@@ -530,6 +552,43 @@ bool EndModule(Context& context) {
       valid = false;
     }
   }
+  return valid;
+}
+
+template <typename T>
+bool ValidateKnownSection(const std::vector<T>& values, Context& context) {
+  bool valid = true;
+  for (auto& value : values) {
+    valid &= Validate(value, context);
+  }
+  return valid;
+}
+
+template <typename T>
+bool ValidateKnownSection(const optional<T>& value, Context& context) {
+  bool valid = true;
+  if (value) {
+    valid &= Validate(*value, context);
+  }
+  return valid;
+}
+
+bool Validate(const binary::Module& value, Context& context) {
+  bool valid = true;
+  valid &= ValidateKnownSection(value.types, context);
+  valid &= ValidateKnownSection(value.imports, context);
+  valid &= ValidateKnownSection(value.functions, context);
+  valid &= ValidateKnownSection(value.tables, context);
+  valid &= ValidateKnownSection(value.memories, context);
+  valid &= ValidateKnownSection(value.globals, context);
+  valid &= ValidateKnownSection(value.events, context);
+  valid &= ValidateKnownSection(value.exports, context);
+  valid &= ValidateKnownSection(value.start, context);
+  valid &= ValidateKnownSection(value.element_segments, context);
+  valid &= ValidateKnownSection(value.data_count, context);
+  valid &= ValidateKnownSection(value.codes, context);
+  valid &= ValidateKnownSection(value.data_segments, context);
+  valid &= EndModule(context);
   return valid;
 }
 

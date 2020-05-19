@@ -21,6 +21,9 @@
 #include "wasp/binary/types.h"
 
 namespace wasp {
+
+class Errors;
+
 namespace valid {
 
 enum class ConstantExpressionKind {
@@ -29,6 +32,9 @@ enum class ConstantExpressionKind {
 };
 
 struct Context;
+
+bool Validate(const At<binary::Code>&, Context&, Errors& read_errors);
+bool Validate(const At<binary::Code>&, Context&);
 
 bool Validate(const At<binary::DataSegment>&, Context&);
 
@@ -92,6 +98,8 @@ bool Validate(const At<binary::TypeEntry>&, Context&);
 bool Validate(const At<ValueType>& actual, ValueType expected, Context&);
 
 bool EndModule(Context&);
+
+bool Validate(const binary::Module&, Context&);
 
 }  // namespace valid
 }  // namespace wasp

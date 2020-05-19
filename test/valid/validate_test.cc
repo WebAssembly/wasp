@@ -27,6 +27,19 @@ using namespace ::wasp::binary;
 using namespace ::wasp::valid;
 using namespace ::wasp::valid::test;
 
+TEST(ValidateTest, Code) {
+  Code code{LocalsList{Locals{2, ValueType::I32}},
+            Expression{"\x20\x00"     // local.get 0
+                       "\x20\x01"     // local.get 1
+                       "\x6a"         // i32.add
+                       "\x0b"_su8}};  // end
+  TestErrors errors;
+  Context context{errors};
+  context.types.push_back(TypeEntry{FunctionType{{}, {ValueType::I32}}});
+  context.functions.push_back(Function{0});
+  EXPECT_TRUE(Validate(code, context));
+}
+
 TEST(ValidateTest, ConstantExpression_Const) {
   const struct {
     Instruction instr;
@@ -959,4 +972,32 @@ TEST(ValidateTest, EndModule_UndeclaredFunctionReference) {
   Context context{errors};
   context.deferred_function_references.push_back(0);
   EXPECT_FALSE(EndModule(context));
+}
+
+TEST(ValidateTest, Module) {
+  TestErrors errors;
+  Context context{errors};
+
+  Module module;
+  module.types.push_back(TypeEntry{});
+  module.imports.push_back(Import{"a"_sv, "b"_sv, Index{0}});
+  module.functions.push_back(Function{Index{0}});
+  module.tables.push_back(Table{TableType{Limits{0}, ReferenceType::Funcref}});
+  module.memories.push_back(Memory{MemoryType{Limits{0}}});
+  module.globals.push_back(
+      Global{GlobalType{ValueType::I32, Mutability::Const},
+             ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}});
+  module.events.push_back(
+      Event{EventType{EventAttribute::Exception, Index{0}}});
+  module.exports.push_back(Export{ExternalKind::Function, "c"_sv, 0});
+  module.start = Start{Index{0}};
+  module.element_segments.push_back(ElementSegment{
+      Index{0}, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
+      ElementList{ElementListWithIndexes{ExternalKind::Function, {0, 0}}}});
+  module.codes.push_back(Code{LocalsList{}, Expression{"\x0b"_su8}});
+  module.data_segments.push_back(DataSegment{
+      Index{0}, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
+      "hi"_su8});
+
+  EXPECT_TRUE(Validate(module, context));
 }
