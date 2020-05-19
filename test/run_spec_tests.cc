@@ -127,7 +127,7 @@ void DoFile(const fs::path& path, const Features& features) {
   if (s_print_text) {
     text::WriteContext wcontext;
     std::string output;
-    text::Write(wcontext, std::back_inserter(output), script);
+    text::Write(wcontext, script, std::back_inserter(output));
     print("{}\n", output);
   }
 }

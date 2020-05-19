@@ -48,26 +48,26 @@ struct WriteContext {
 
 // WriteRaw
 template <typename Iterator>
-Iterator WriteRaw(WriteContext& context, Iterator out, char value) {
+Iterator WriteRaw(WriteContext& context, char value, Iterator out) {
   *out++ = value;
   return out;
 }
 
 template <typename Iterator>
-Iterator WriteRaw(WriteContext& context, Iterator out, string_view value) {
+Iterator WriteRaw(WriteContext& context, string_view value, Iterator out) {
   return std::copy(value.begin(), value.end(), out);
 }
 
 template <typename Iterator>
 Iterator WriteRaw(WriteContext& context,
-                  Iterator out,
-                  const std::string& value) {
+                  const std::string& value,
+                  Iterator out) {
   return std::copy(value.begin(), value.end(), out);
 }
 
 template <typename Iterator>
 Iterator WriteSeparator(WriteContext& context, Iterator out) {
-  out = WriteRaw(context, out, context.separator);
+  out = WriteRaw(context, context.separator, out);
   context.ClearSeparator();
   return out;
 }
@@ -75,11 +75,11 @@ Iterator WriteSeparator(WriteContext& context, Iterator out) {
 // WriteFormat
 template <typename Iterator, typename T>
 Iterator WriteFormat(WriteContext& context,
-                     Iterator out,
                      const T& value,
+                     Iterator out,
                      string_view format_string = "{}") {
   out = WriteSeparator(context, out);
-  out = WriteRaw(context, out, format(format_string, value));
+  out = WriteRaw(context, format(format_string, value), out);
   context.Space();
   return out;
 }
@@ -87,14 +87,14 @@ Iterator WriteFormat(WriteContext& context,
 template <typename Iterator>
 Iterator WriteLpar(WriteContext& context, Iterator out) {
   out = WriteSeparator(context, out);
-  out = WriteRaw(context, out, '(');
+  out = WriteRaw(context, '(', out);
   return out;
 }
 
 template <typename Iterator>
-Iterator WriteLpar(WriteContext& context, Iterator out, string_view name) {
+Iterator WriteLpar(WriteContext& context, string_view name, Iterator out) {
   out = WriteLpar(context, out);
-  out = WriteRaw(context, out, name);
+  out = WriteRaw(context, name, out);
   context.Space();
   return out;
 }
@@ -102,136 +102,134 @@ Iterator WriteLpar(WriteContext& context, Iterator out, string_view name) {
 template <typename Iterator>
 Iterator WriteRpar(WriteContext& context, Iterator out) {
   context.ClearSeparator();
-  out = WriteRaw(context, out, ')');
+  out = WriteRaw(context, ')', out);
   context.Space();
   return out;
 }
 
 template <typename Iterator, typename SourceIter>
 Iterator WriteRange(WriteContext& context,
-                     Iterator out,
-                     SourceIter begin,
-                     SourceIter end) {
+                    SourceIter begin,
+                    SourceIter end,
+                    Iterator out) {
   for (auto iter = begin; iter != end; ++iter) {
-    out = Write(context, out, *iter);
+    out = Write(context, *iter, out);
   }
   return out;
 }
 
 template <typename Iterator, typename T>
 Iterator WriteVector(WriteContext& context,
-                     Iterator out,
-                     const std::vector<T>& values) {
-  return WriteRange(context, out, values.begin(), values.end());
+                     const std::vector<T>& values,
+                     Iterator out) {
+  return WriteRange(context, values.begin(), values.end(), out);
 }
 
 template <typename Iterator, typename T>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const optional<T>& value_opt) {
+               const optional<T>& value_opt,
+               Iterator out) {
   if (value_opt) {
-    out = Write(context, out, *value_opt);
+    out = Write(context, *value_opt, out);
   }
   return out;
 }
 
 template <typename Iterator, typename T>
-Iterator Write(WriteContext& context,
-               Iterator out,
-               const At<T>& value) {
-  return Write(context, out, *value);
+Iterator Write(WriteContext& context, const At<T>& value, Iterator out) {
+  return Write(context, *value, out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, string_view value) {
+Iterator Write(WriteContext& context, string_view value, Iterator out) {
   out = WriteSeparator(context, out);
-  out = WriteRaw(context, out, value);
+  out = WriteRaw(context, value, out);
   context.Space();
   return out;
 }
 
 template <typename Iterator, typename T>
-Iterator WriteNat(WriteContext& context, Iterator out, T value) {
-  return Write(context, out, string_view{NatToStr<T>(value, context.base)});
+Iterator WriteNat(WriteContext& context, T value, Iterator out) {
+  return Write(context, string_view{NatToStr<T>(value, context.base)}, out);
 }
 
 template <typename Iterator,
           typename T,
           typename std::enable_if_t<std::is_integral_v<T>, int> = 0>
-Iterator Write(WriteContext& context, Iterator out, T value) {
-  return Write(context, out, string_view{IntToStr<T>(value, context.base)});
+Iterator Write(WriteContext& context, T value, Iterator out) {
+  return Write(context, string_view{IntToStr<T>(value, context.base)}, out);
 }
 
 template <typename Iterator,
           typename T,
           typename std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
-Iterator Write(WriteContext& context, Iterator out, T value) {
-  return Write(context, out, string_view{FloatToStr<T>(value, context.base)});
+Iterator Write(WriteContext& context, T value, Iterator out) {
+  return Write(context, string_view{FloatToStr<T>(value, context.base)}, out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, Var value) {
+Iterator Write(WriteContext& context, Var value, Iterator out) {
   if (holds_alternative<u32>(value)) {
-    return WriteNat(context, out, get<u32>(value));
+    return WriteNat(context, get<u32>(value), out);
   } else {
-    return Write(context, out, get<string_view>(value));
+    return Write(context, get<string_view>(value), out);
   }
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const VarList& values) {
-  return WriteVector(context, out, values);
+Iterator Write(WriteContext& context, const VarList& values, Iterator out) {
+  return WriteVector(context, values, out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Text& value) {
-  return Write(context, out, value.text);
+Iterator Write(WriteContext& context, const Text& value, Iterator out) {
+  return Write(context, value.text, out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const TextList& values) {
-  return WriteVector(context, out, values);
+Iterator Write(WriteContext& context, const TextList& values, Iterator out) {
+  return WriteVector(context, values, out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const ValueType& value) {
-  return WriteFormat(context, out, value);
-}
-
-template <typename Iterator>
-Iterator Write(WriteContext& context,
-               Iterator out,
-               const ValueTypeList& values) {
-  return WriteVector(context, out, values);
+Iterator Write(WriteContext& context, const ValueType& value, Iterator out) {
+  return WriteFormat(context, value, out);
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
                const ValueTypeList& values,
-               string_view name) {
+               Iterator out) {
+  return WriteVector(context, values, out);
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context,
+               const ValueTypeList& values,
+               string_view name,
+               Iterator out) {
   if (!values.empty()) {
-    out = WriteLpar(context, out, name);
-    out = Write(context, out, values);
+    out = WriteLpar(context, name, out);
+    out = Write(context, values, out);
     out = WriteRpar(context, out);
   }
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const FunctionType& value) {
-  out = Write(context, out, value.params, "param");
-  out = Write(context, out, value.results, "result");
+Iterator Write(WriteContext& context, const FunctionType& value, Iterator out) {
+  out = Write(context, value.params, "param", out);
+  out = Write(context, value.results, "result", out);
   return out;
 }
 
 template <typename Iterator>
 Iterator WriteTypeUse(WriteContext& context,
-                      Iterator out,
-                      const OptAt<Var>& value) {
+                      const OptAt<Var>& value,
+                      Iterator out) {
   if (value) {
-    out = WriteLpar(context, out, "type");
-    out = Write(context, out, value->value());
+    out = WriteLpar(context, "type", out);
+    out = Write(context, value->value(), out);
     out = WriteRpar(context, out);
   }
   return out;
@@ -239,185 +237,185 @@ Iterator WriteTypeUse(WriteContext& context,
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const FunctionTypeUse& value) {
-  out = WriteTypeUse(context, out, value.type_use);
-  out = Write(context, out, *value.type);
+               const FunctionTypeUse& value,
+               Iterator out) {
+  out = WriteTypeUse(context, value.type_use, out);
+  out = Write(context, *value.type, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const v128& value) {
+Iterator Write(WriteContext& context, const v128& value, Iterator out) {
   u32x4 immediate = value.as<u32x4>();
-  out = Write(context, out, "i32x4"_sv);
+  out = Write(context, "i32x4"_sv, out);
   for (auto& lane : immediate) {
-    out = Write(context, out, lane);
+    out = Write(context, lane, out);
   }
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const BlockImmediate& value) {
-  out = Write(context, out, value.label);
-  out = Write(context, out, value.type);
+               const BlockImmediate& value,
+               Iterator out) {
+  out = Write(context, value.label, out);
+  out = Write(context, value.type, out);
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const BrOnExnImmediate& value) {
-  out = Write(context, out, *value.target);
-  out = Write(context, out, *value.event);
+               const BrOnExnImmediate& value,
+               Iterator out) {
+  out = Write(context, *value.target, out);
+  out = Write(context, *value.event, out);
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const BrTableImmediate& value) {
-  out = Write(context, out, value.targets);
-  out = Write(context, out, *value.default_target);
+               const BrTableImmediate& value,
+               Iterator out) {
+  out = Write(context, value.targets, out);
+  out = Write(context, *value.default_target, out);
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const CallIndirectImmediate& value) {
-  out = Write(context, out, value.table);
-  out = Write(context, out, value.type);
+               const CallIndirectImmediate& value,
+               Iterator out) {
+  out = Write(context, value.table, out);
+  out = Write(context, value.type, out);
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const CopyImmediate& value) {
-  out = Write(context, out, value.dst);
-  out = Write(context, out, value.src);
+               const CopyImmediate& value,
+               Iterator out) {
+  out = Write(context, value.dst, out);
+  out = Write(context, value.src, out);
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const InitImmediate& value) {
+               const InitImmediate& value,
+               Iterator out) {
   // Write dcontext, out, st first, if it exists.
   if (value.dst) {
-    out = Write(context, out, value.dst->value());
+    out = Write(context, value.dst->value(), out);
   }
-  out = Write(context, out, *value.segment);
+  out = Write(context, *value.segment, out);
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const MemArgImmediate& value) {
+               const MemArgImmediate& value,
+               Iterator out) {
   if (value.offset) {
-    out = Write(context, out, "offset="_sv);
+    out = Write(context, "offset="_sv, out);
     context.ClearSeparator();
-    out = Write(context, out, value.offset->value());
+    out = Write(context, value.offset->value(), out);
   }
 
   if (value.align) {
-    out = Write(context, out, "align="_sv);
+    out = Write(context, "align="_sv, out);
     context.ClearSeparator();
-    out = Write(context, out, value.align->value());
+    out = Write(context, value.align->value(), out);
   }
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const ShuffleImmediate& value) {
-  return WriteRange(context, out, value.begin(), value.end());
+               const ShuffleImmediate& value,
+               Iterator out) {
+  return WriteRange(context, value.begin(), value.end(), out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Opcode& value) {
-  return WriteFormat(context, out, value);
+Iterator Write(WriteContext& context, const Opcode& value, Iterator out) {
+  return WriteFormat(context, value, out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Instruction& value) {
-  out = Write(context, out, *value.opcode);
+Iterator Write(WriteContext& context, const Instruction& value, Iterator out) {
+  out = Write(context, *value.opcode, out);
 
   switch (value.immediate.index()) {
     case 0: // monostate
       break;
 
     case 1: // s32
-      out = Write(context, out, get<At<s32>>(value.immediate));
+      out = Write(context, get<At<s32>>(value.immediate), out);
       break;
 
     case 2: // s64
-      out = Write(context, out, get<At<s64>>(value.immediate));
+      out = Write(context, get<At<s64>>(value.immediate), out);
       break;
 
     case 3: // f32
-      out = Write(context, out, get<At<f32>>(value.immediate));
+      out = Write(context, get<At<f32>>(value.immediate), out);
       break;
 
     case 4: // f64
-      out = Write(context, out, get<At<f64>>(value.immediate));
+      out = Write(context, get<At<f64>>(value.immediate), out);
       break;
 
     case 5: // v128
-      out = Write(context, out, get<At<v128>>(value.immediate));
+      out = Write(context, get<At<v128>>(value.immediate), out);
       break;
 
     case 6: // Var
-      out = Write(context, out, get<At<Var>>(value.immediate));
+      out = Write(context, get<At<Var>>(value.immediate), out);
       break;
 
     case 7: // BlockImmediate
-      out = Write(context, out, get<At<BlockImmediate>>(value.immediate));
+      out = Write(context, get<At<BlockImmediate>>(value.immediate), out);
       break;
 
     case 8: // BrOnExnImmediate
-      out = Write(context, out, get<At<BrOnExnImmediate>>(value.immediate));
+      out = Write(context, get<At<BrOnExnImmediate>>(value.immediate), out);
       break;
 
     case 9: // BrTableImmediate
-      out = Write(context, out, get<At<BrTableImmediate>>(value.immediate));
+      out = Write(context, get<At<BrTableImmediate>>(value.immediate), out);
       break;
 
     case 10: // CallIndirectImmediate
       out =
-          Write(context, out, get<At<CallIndirectImmediate>>(value.immediate));
+          Write(context, get<At<CallIndirectImmediate>>(value.immediate), out);
       break;
 
     case 11: // CopyImmediate
-      out = Write(context, out, get<At<CopyImmediate>>(value.immediate));
+      out = Write(context, get<At<CopyImmediate>>(value.immediate), out);
       break;
 
     case 12: // InitImmediate
-      out = Write(context, out, get<At<InitImmediate>>(value.immediate));
+      out = Write(context, get<At<InitImmediate>>(value.immediate), out);
       break;
 
     case 13: // MemArgImmediate
-      out = Write(context, out, get<At<MemArgImmediate>>(value.immediate));
+      out = Write(context, get<At<MemArgImmediate>>(value.immediate), out);
       break;
 
     case 14: // ReferenceType
-      out = Write(context, out, get<At<ReferenceType>>(value.immediate));
+      out = Write(context, get<At<ReferenceType>>(value.immediate), out);
       break;
 
     case 15: // SelectImmediate
-      out = Write(context, out, get<At<SelectImmediate>>(value.immediate));
+      out = Write(context, get<At<SelectImmediate>>(value.immediate), out);
       break;
 
     case 16: // ShuffleImmediate
-      out = Write(context, out, get<At<ShuffleImmediate>>(value.immediate));
+      out = Write(context, get<At<ShuffleImmediate>>(value.immediate), out);
       break;
 
     case 17: // SimdLaneImmediate
-      out = Write(context, out, get<At<SimdLaneImmediate>>(value.immediate));
+      out = Write(context, get<At<SimdLaneImmediate>>(value.immediate), out);
       break;
   }
   return out;
@@ -425,15 +423,15 @@ Iterator Write(WriteContext& context, Iterator out, const Instruction& value) {
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const InstructionList& values) {
-  return WriteVector(context, out, values);
+               const InstructionList& values,
+               Iterator out) {
+  return WriteVector(context, values, out);
 }
 
 template <typename Iterator>
 Iterator WriteWithNewlines(WriteContext& context,
-                           Iterator out,
-                           const InstructionList& values) {
+                           const InstructionList& values,
+                           Iterator out) {
   for (auto& value : values) {
     auto opcode = value->opcode;
     if (opcode == Opcode::End || opcode == Opcode::Else ||
@@ -442,7 +440,7 @@ Iterator WriteWithNewlines(WriteContext& context,
       context.Newline();
     }
 
-    out = Write(context, out, value);
+    out = Write(context, value, out);
 
     if (holds_alternative<At<BlockImmediate>>(value->immediate) ||
         opcode == Opcode::Else || opcode == Opcode::Catch) {
@@ -455,18 +453,18 @@ Iterator WriteWithNewlines(WriteContext& context,
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const BoundValueType& value) {
-  out = Write(context, out, value.name);
-  out = Write(context, out, value.type);
+               const BoundValueType& value,
+               Iterator out) {
+  out = Write(context, value.name, out);
+  out = Write(context, value.type, out);
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
                const BoundValueTypeList& values,
-               string_view prefix) {
+               string_view prefix,
+               Iterator out) {
   bool first = true;
   bool prev_has_name = false;
   for (auto& value : values) {
@@ -475,12 +473,12 @@ Iterator Write(WriteContext& context,
       out = WriteRpar(context, out);
     }
     if (has_name || prev_has_name || first) {
-      out = WriteLpar(context, out, prefix);
+      out = WriteLpar(context, prefix, out);
     }
     if (has_name) {
-      out = Write(context, out, value->name);
+      out = Write(context, value->name, out);
     }
-    out = Write(context, out, value->type);
+    out = Write(context, value->type, out);
     prev_has_name = has_name;
     first = false;
   }
@@ -492,87 +490,85 @@ Iterator Write(WriteContext& context,
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const BoundFunctionType& value) {
-  out = Write(context, out, value.params, "param");
-  out = Write(context, out, value.results, "result");
+               const BoundFunctionType& value,
+               Iterator out) {
+  out = Write(context, value.params, "param", out);
+  out = Write(context, value.results, "result", out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const TypeEntry& value) {
-  out = WriteLpar(context, out, "type");
-  out = WriteLpar(context, out, "func");
-  out = Write(context, out, value.bind_var);
-  out = Write(context, out, value.type);
+Iterator Write(WriteContext& context, const TypeEntry& value, Iterator out) {
+  out = WriteLpar(context, "type", out);
+  out = WriteLpar(context, "func", out);
+  out = Write(context, value.bind_var, out);
+  out = Write(context, value.type, out);
   out = WriteRpar(context, out);
   out = WriteRpar(context, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const FunctionDesc& value) {
-  out = Write(context, out, "func"_sv);
-  out = Write(context, out, value.name);
-  out = WriteTypeUse(context, out, value.type_use);
-  out = Write(context, out, value.type);
+Iterator Write(WriteContext& context, const FunctionDesc& value, Iterator out) {
+  out = Write(context, "func"_sv, out);
+  out = Write(context, value.name, out);
+  out = WriteTypeUse(context, value.type_use, out);
+  out = Write(context, value.type, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context,
-               Iterator out,
-               const Limits& value) {
-  out = Write(context, out, value.min);
+Iterator Write(WriteContext& context, const Limits& value, Iterator out) {
+  out = Write(context, value.min, out);
   if (value.max) {
-    out = Write(context, out, *value.max);
+    out = Write(context, *value.max, out);
   }
   if (value.shared == Shared::Yes) {
-    out = Write(context, out, "shared"_sv);
+    out = Write(context, "shared"_sv, out);
   }
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, ReferenceType value) {
-  return WriteFormat(context, out, value);
+Iterator Write(WriteContext& context, ReferenceType value, Iterator out) {
+  return WriteFormat(context, value, out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const TableType& value) {
-  out = Write(context, out, value.limits);
-  out = WriteFormat(context, out, value.elemtype);
+Iterator Write(WriteContext& context, const TableType& value, Iterator out) {
+  out = Write(context, value.limits, out);
+  out = WriteFormat(context, value.elemtype, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const TableDesc& value) {
-  out = Write(context, out, "table"_sv);
-  out = Write(context, out, value.name);
-  out = Write(context, out, value.type);
+Iterator Write(WriteContext& context, const TableDesc& value, Iterator out) {
+  out = Write(context, "table"_sv, out);
+  out = Write(context, value.name, out);
+  out = Write(context, value.type, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const MemoryType& value) {
-  out = Write(context, out, value.limits);
+Iterator Write(WriteContext& context, const MemoryType& value, Iterator out) {
+  out = Write(context, value.limits, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const MemoryDesc& value) {
-  out = Write(context, out, "memory"_sv);
-  out = Write(context, out, value.name);
-  out = Write(context, out, value.type);
+Iterator Write(WriteContext& context, const MemoryDesc& value, Iterator out) {
+  out = Write(context, "memory"_sv, out);
+  out = Write(context, value.name, out);
+  out = Write(context, value.type, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const GlobalType& value) {
+Iterator Write(WriteContext& context, const GlobalType& value, Iterator out) {
   if (value.mut == Mutability::Var) {
-    out = WriteLpar(context, out, "mut");
+    out = WriteLpar(context, "mut", out);
   }
-  out = Write(context, out, value.valtype);
+  out = Write(context, value.valtype, out);
   if (value.mut == Mutability::Var) {
     out = WriteRpar(context, out);
   }
@@ -580,52 +576,52 @@ Iterator Write(WriteContext& context, Iterator out, const GlobalType& value) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const GlobalDesc& value) {
-  out = Write(context, out, "global"_sv);
-  out = Write(context, out, value.name);
-  out = Write(context, out, value.type);
+Iterator Write(WriteContext& context, const GlobalDesc& value, Iterator out) {
+  out = Write(context, "global"_sv, out);
+  out = Write(context, value.name, out);
+  out = Write(context, value.type, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const EventType& value) {
-  out = Write(context, out, value.type);
+Iterator Write(WriteContext& context, const EventType& value, Iterator out) {
+  out = Write(context, value.type, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const EventDesc& value) {
-  out = Write(context, out, "event"_sv);
-  out = Write(context, out, value.name);
-  out = Write(context, out, value.type);
+Iterator Write(WriteContext& context, const EventDesc& value, Iterator out) {
+  out = Write(context, "event"_sv, out);
+  out = Write(context, value.name, out);
+  out = Write(context, value.type, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Import& value) {
-  out = WriteLpar(context, out, "import"_sv);
-  out = Write(context, out, value.module);
-  out = Write(context, out, value.name);
+Iterator Write(WriteContext& context, const Import& value, Iterator out) {
+  out = WriteLpar(context, "import"_sv, out);
+  out = Write(context, value.module, out);
+  out = Write(context, value.name, out);
   out = WriteLpar(context, out);
   switch (value.desc.index()) {
     case 0:  // FunctionDesc
-      out = Write(context, out, get<FunctionDesc>(value.desc));
+      out = Write(context, get<FunctionDesc>(value.desc), out);
       break;
 
     case 1:  // TableDesc
-      out = Write(context, out, get<TableDesc>(value.desc));
+      out = Write(context, get<TableDesc>(value.desc), out);
       break;
 
     case 2:  // MemoryDesc
-      out = Write(context, out, get<MemoryDesc>(value.desc));
+      out = Write(context, get<MemoryDesc>(value.desc), out);
       break;
 
     case 3:  // GlobalDesc
-      out = Write(context, out, get<GlobalDesc>(value.desc));
+      out = Write(context, get<GlobalDesc>(value.desc), out);
       break;
 
     case 4:  // EventDesc
-      out = Write(context, out, get<EventDesc>(value.desc));
+      out = Write(context, get<EventDesc>(value.desc), out);
       break;
   }
   out = WriteRpar(context, out);
@@ -634,51 +630,51 @@ Iterator Write(WriteContext& context, Iterator out, const Import& value) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const InlineImport& value) {
-  out = WriteLpar(context, out, "import"_sv);
-  out = Write(context, out, value.module);
-  out = Write(context, out, value.name);
+Iterator Write(WriteContext& context, const InlineImport& value, Iterator out) {
+  out = WriteLpar(context, "import"_sv, out);
+  out = Write(context, value.module, out);
+  out = Write(context, value.name, out);
   out = WriteRpar(context, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const InlineExport& value) {
-  out = WriteLpar(context, out, "export"_sv);
-  out = Write(context, out, value.name);
+Iterator Write(WriteContext& context, const InlineExport& value, Iterator out) {
+  out = WriteLpar(context, "export"_sv, out);
+  out = Write(context, value.name, out);
   out = WriteRpar(context, out);
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const InlineExportList& values) {
-  return WriteVector(context, out, values);
+               const InlineExportList& values,
+               Iterator out) {
+  return WriteVector(context, values, out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Function& value) {
-  out = WriteLpar(context, out, "func");
+Iterator Write(WriteContext& context, const Function& value, Iterator out) {
+  out = WriteLpar(context, "func", out);
 
   // Can't write FunctionDesc directly, since inline imports/exports occur
   // between the bindvar and the type use.
-  out = Write(context, out, value.desc.name);
-  out = Write(context, out, value.exports);
+  out = Write(context, value.desc.name, out);
+  out = Write(context, value.exports, out);
 
   if (value.import) {
-    out = Write(context, out, *value.import);
+    out = Write(context, *value.import, out);
   }
 
-  out = WriteTypeUse(context, out, value.desc.type_use);
-  out = Write(context, out, value.desc.type);
+  out = WriteTypeUse(context, value.desc.type_use, out);
+  out = Write(context, value.desc.type, out);
 
   if (!value.import) {
     context.Indent();
     context.Newline();
-    out = Write(context, out, value.locals, "local");
+    out = Write(context, value.locals, "local", out);
     context.Newline();
-    out = WriteWithNewlines(context, out, value.instructions);
+    out = WriteWithNewlines(context, value.instructions, out);
     context.Dedent();
   }
 
@@ -689,14 +685,14 @@ Iterator Write(WriteContext& context, Iterator out, const Function& value) {
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const ElementExpressionList& elem_exprs) {
+               const ElementExpressionList& elem_exprs,
+               Iterator out) {
   // Use spaces instead of newlines for element expressions.
   for (auto& elem_expr : elem_exprs) {
     for (auto& instr : elem_expr->instructions) {
       // Expressions need to be wrapped in parens.
       out = WriteLpar(context, out);
-      out = Write(context, out, instr);
+      out = Write(context, instr, out);
       out = WriteRpar(context, out);
       context.Space();
     }
@@ -706,64 +702,64 @@ Iterator Write(WriteContext& context,
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const ElementListWithExpressions& value) {
-  out = Write(context, out, value.elemtype);
-  out = Write(context, out, value.list);
+               const ElementListWithExpressions& value,
+               Iterator out) {
+  out = Write(context, value.elemtype, out);
+  out = Write(context, value.list, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, ExternalKind value) {
-  return WriteFormat(context, out, value);
+Iterator Write(WriteContext& context, ExternalKind value, Iterator out) {
+  return WriteFormat(context, value, out);
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const ElementListWithVars& value) {
-  out = Write(context, out, value.kind);
-  out = Write(context, out, value.list);
+               const ElementListWithVars& value,
+               Iterator out) {
+  out = Write(context, value.kind, out);
+  out = Write(context, value.list, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const ElementList& value) {
+Iterator Write(WriteContext& context, const ElementList& value, Iterator out) {
   if (holds_alternative<ElementListWithVars>(value)) {
-    return Write(context, out, get<ElementListWithVars>(value));
+    return Write(context, get<ElementListWithVars>(value), out);
   } else {
-    return Write(context, out, get<ElementListWithExpressions>(value));
+    return Write(context, get<ElementListWithExpressions>(value), out);
   }
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Table& value) {
-  out = WriteLpar(context, out, "table");
+Iterator Write(WriteContext& context, const Table& value, Iterator out) {
+  out = WriteLpar(context, "table", out);
 
   // Can't write TableDesc directly, since inline imports/exports occur after
   // the bind var.
-  out = Write(context, out, value.desc.name);
-  out = Write(context, out, value.exports);
+  out = Write(context, value.desc.name, out);
+  out = Write(context, value.exports, out);
 
   if (value.import) {
-    out = Write(context, out, *value.import);
-    out = Write(context, out, value.desc.type);
+    out = Write(context, *value.import, out);
+    out = Write(context, value.desc.type, out);
   } else if (value.elements) {
     // Don't write the limits, because they are implicitly defined by the
     // element segment length.
-    out = Write(context, out, value.desc.type->elemtype);
-    out = WriteLpar(context, out, "elem");
+    out = Write(context, value.desc.type->elemtype, out);
+    out = WriteLpar(context, "elem", out);
     // Only write the list of elements, without the ExternalKind or
     // ReferenceType.
     if (holds_alternative<ElementListWithVars>(*value.elements)) {
-      out = Write(context, out, get<ElementListWithVars>(*value.elements).list);
+      out = Write(context, get<ElementListWithVars>(*value.elements).list, out);
     } else {
-      out = Write(context, out,
-                  get<ElementListWithExpressions>(*value.elements).list);
+      out = Write(context,
+                  get<ElementListWithExpressions>(*value.elements).list, out);
     }
     out = WriteRpar(context, out);
   } else {
-    out = Write(context, out, value.desc.type);
+    out = Write(context, value.desc.type, out);
   }
 
   out = WriteRpar(context, out);
@@ -771,23 +767,23 @@ Iterator Write(WriteContext& context, Iterator out, const Table& value) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Memory& value) {
-  out = WriteLpar(context, out, "memory");
+Iterator Write(WriteContext& context, const Memory& value, Iterator out) {
+  out = WriteLpar(context, "memory", out);
 
   // Can't write MemoryDesc directly, since inline imports/exports occur after
   // the bind var.
-  out = Write(context, out, value.desc.name);
-  out = Write(context, out, value.exports);
+  out = Write(context, value.desc.name, out);
+  out = Write(context, value.exports, out);
 
   if (value.import) {
-    out = Write(context, out, *value.import);
-    out = Write(context, out, value.desc.type);
+    out = Write(context, *value.import, out);
+    out = Write(context, value.desc.type, out);
   } else if (value.data) {
-    out = WriteLpar(context, out, "data");
-    out = Write(context, out, value.data);
+    out = WriteLpar(context, "data", out);
+    out = Write(context, value.data, out);
     out = WriteRpar(context, out);
   } else {
-    out = Write(context, out, value.desc.type);
+    out = Write(context, value.desc.type, out);
   }
 
   out = WriteRpar(context, out);
@@ -796,26 +792,26 @@ Iterator Write(WriteContext& context, Iterator out, const Memory& value) {
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const ConstantExpression& value) {
-  return Write(context, out, value.instructions);
+               const ConstantExpression& value,
+               Iterator out) {
+  return Write(context, value.instructions, out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Global& value) {
-  out = WriteLpar(context, out, "global");
+Iterator Write(WriteContext& context, const Global& value, Iterator out) {
+  out = WriteLpar(context, "global", out);
 
   // Can't write GlobalDesc directly, since inline imports/exports occur after
   // the bind var.
-  out = Write(context, out, value.desc.name);
-  out = Write(context, out, value.exports);
+  out = Write(context, value.desc.name, out);
+  out = Write(context, value.exports, out);
 
   if (value.import) {
-    out = Write(context, out, *value.import);
-    out = Write(context, out, value.desc.type);
+    out = Write(context, *value.import, out);
+    out = Write(context, value.desc.type, out);
   } else {
-    out = Write(context, out, value.desc.type);
-    out = Write(context, out, value.init);
+    out = Write(context, value.desc.type, out);
+    out = Write(context, value.init, out);
   }
 
   out = WriteRpar(context, out);
@@ -823,48 +819,48 @@ Iterator Write(WriteContext& context, Iterator out, const Global& value) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Export& value) {
-  out = WriteLpar(context, out, "export");
-  out = Write(context, out, value.name);
+Iterator Write(WriteContext& context, const Export& value, Iterator out) {
+  out = WriteLpar(context, "export", out);
+  out = Write(context, value.name, out);
   out = WriteLpar(context, out);
-  out = Write(context, out, value.kind);
-  out = Write(context, out, value.var);
+  out = Write(context, value.kind, out);
+  out = Write(context, value.var, out);
   out = WriteRpar(context, out);
   out = WriteRpar(context, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Start& value) {
-  out = WriteLpar(context, out, "start");
-  out = Write(context, out, value.var);
+Iterator Write(WriteContext& context, const Start& value, Iterator out) {
+  out = WriteLpar(context, "start", out);
+  out = Write(context, value.var, out);
   out = WriteRpar(context, out);
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const ElementExpression& value) {
-  return Write(context, out, value.instructions);
+               const ElementExpression& value,
+               Iterator out) {
+  return Write(context, value.instructions, out);
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const ElementSegment& value) {
-  out = WriteLpar(context, out, "elem");
-  out = Write(context, out, value.name);
+               const ElementSegment& value,
+               Iterator out) {
+  out = WriteLpar(context, "elem", out);
+  out = Write(context, value.name, out);
   switch (value.type) {
     case SegmentType::Active:
       if (value.table) {
-        out = WriteLpar(context, out, "table");
-        out = Write(context, out, *value.table);
+        out = WriteLpar(context, "table", out);
+        out = Write(context, *value.table, out);
         out = WriteRpar(context, out);
       }
       if (value.offset) {
-        out = WriteLpar(context, out, "offset");
-        out = Write(context, out, *value.offset);
+        out = WriteLpar(context, "offset", out);
+        out = Write(context, *value.offset, out);
         out = WriteRpar(context, out);
       }
 
@@ -876,22 +872,22 @@ Iterator Write(WriteContext& context,
         //  the "table use" or bind_var syntax.
         if (element_vars.kind != ExternalKind::Function || value.table ||
             value.name) {
-          out = Write(context, out, element_vars.kind);
+          out = Write(context, element_vars.kind, out);
         }
-        out = Write(context, out, element_vars.list);
+        out = Write(context, element_vars.list, out);
       } else {
-        out = Write(context, out,
-                    get<ElementListWithExpressions>(value.elements));
+        out = Write(context,
+                    get<ElementListWithExpressions>(value.elements), out);
       }
       break;
 
     case SegmentType::Passive:
-      out = Write(context, out, value.elements);
+      out = Write(context, value.elements, out);
       break;
 
     case SegmentType::Declared:
-      out = Write(context, out, "declare"_sv);
-      out = Write(context, out, value.elements);
+      out = Write(context, "declare"_sv, out);
+      out = Write(context, value.elements, out);
       break;
   }
   out = WriteRpar(context, out);
@@ -899,41 +895,41 @@ Iterator Write(WriteContext& context,
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const DataSegment& value) {
-  out = WriteLpar(context, out, "data");
-  out = Write(context, out, value.name);
+Iterator Write(WriteContext& context, const DataSegment& value, Iterator out) {
+  out = WriteLpar(context, "data", out);
+  out = Write(context, value.name, out);
   if (value.type == SegmentType::Active) {
     if (value.memory) {
-      out = WriteLpar(context, out, "memory");
-      out = Write(context, out, *value.memory);
+      out = WriteLpar(context, "memory", out);
+      out = Write(context, *value.memory, out);
       out = WriteRpar(context, out);
     }
     if (value.offset) {
-      out = WriteLpar(context, out, "offset");
-      out = Write(context, out, *value.offset);
+      out = WriteLpar(context, "offset", out);
+      out = Write(context, *value.offset, out);
       out = WriteRpar(context, out);
     }
   }
 
-  out = Write(context, out, value.data);
+  out = Write(context, value.data, out);
   out = WriteRpar(context, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Event& value) {
-  out = WriteLpar(context, out, "event");
+Iterator Write(WriteContext& context, const Event& value, Iterator out) {
+  out = WriteLpar(context, "event", out);
 
   // Can't write EventDesc directly, since inline imports/exports occur after
   // the bind var.
-  out = Write(context, out, value.desc.name);
-  out = Write(context, out, value.exports);
+  out = Write(context, value.desc.name, out);
+  out = Write(context, value.exports, out);
 
   if (value.import) {
-    out = Write(context, out, *value.import);
-    out = Write(context, out, value.desc.type);
+    out = Write(context, *value.import, out);
+    out = Write(context, value.desc.type, out);
   } else {
-    out = Write(context, out, value.desc.type);
+    out = Write(context, value.desc.type, out);
   }
 
   out = WriteRpar(context, out);
@@ -941,50 +937,50 @@ Iterator Write(WriteContext& context, Iterator out, const Event& value) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const ModuleItem& value) {
+Iterator Write(WriteContext& context, const ModuleItem& value, Iterator out) {
   switch (value.index()) {
     case 0: // TypeEntry
-      out = Write(context, out, get<At<TypeEntry>>(value));
+      out = Write(context, get<At<TypeEntry>>(value), out);
       break;
 
     case 1: // Import
-      out = Write(context, out, get<At<Import>>(value));
+      out = Write(context, get<At<Import>>(value), out);
       break;
 
     case 2:  // Function
-      out = Write(context, out, get<At<Function>>(value));
+      out = Write(context, get<At<Function>>(value), out);
       break;
 
     case 3:  // Table
-      out = Write(context, out, get<At<Table>>(value));
+      out = Write(context, get<At<Table>>(value), out);
       break;
 
     case 4:  // Memory
-      out = Write(context, out, get<At<Memory>>(value));
+      out = Write(context, get<At<Memory>>(value), out);
       break;
 
     case 5:  // Global
-      out = Write(context, out, get<At<Global>>(value));
+      out = Write(context, get<At<Global>>(value), out);
       break;
 
     case 6:  // Export
-      out = Write(context, out, get<At<Export>>(value));
+      out = Write(context, get<At<Export>>(value), out);
       break;
 
     case 7:  // Start
-      out = Write(context, out, get<At<Start>>(value));
+      out = Write(context, get<At<Start>>(value), out);
       break;
 
     case 8:  // ElementSegment
-      out = Write(context, out, get<At<ElementSegment>>(value));
+      out = Write(context, get<At<ElementSegment>>(value), out);
       break;
 
     case 9:  // DataSegment
-      out = Write(context, out, get<At<DataSegment>>(value));
+      out = Write(context, get<At<DataSegment>>(value), out);
       break;
 
     case 10:  // Event
-      out = Write(context, out, get<At<Event>>(value));
+      out = Write(context, get<At<Event>>(value), out);
       break;
   }
   context.Newline();
@@ -992,30 +988,30 @@ Iterator Write(WriteContext& context, Iterator out, const ModuleItem& value) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Module& value) {
-  return WriteVector(context, out, value);
+Iterator Write(WriteContext& context, const Module& value, Iterator out) {
+  return WriteVector(context, value, out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const ScriptModule& value) {
-  out = WriteLpar(context, out, "module");
-  out = Write(context, out, value.name);
+Iterator Write(WriteContext& context, const ScriptModule& value, Iterator out) {
+  out = WriteLpar(context, "module", out);
+  out = Write(context, value.name, out);
   switch (value.kind) {
     case ScriptModuleKind::Text:
       context.Indent();
       context.Newline();
-      out = Write(context, out, get<Module>(value.module));
+      out = Write(context, get<Module>(value.module), out);
       context.Dedent();
       break;
 
     case ScriptModuleKind::Binary:
-      out = Write(context, out, "binary"_sv);
-      out = Write(context, out, get<TextList>(value.module));
+      out = Write(context, "binary"_sv, out);
+      out = Write(context, get<TextList>(value.module), out);
       break;
 
     case ScriptModuleKind::Quote:
-      out = Write(context, out, "quote"_sv);
-      out = Write(context, out, get<TextList>(value.module));
+      out = Write(context, "quote"_sv, out);
+      out = Write(context, get<TextList>(value.module), out);
       break;
   }
   out = WriteRpar(context, out);
@@ -1023,41 +1019,41 @@ Iterator Write(WriteContext& context, Iterator out, const ScriptModule& value) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Const& value) {
+Iterator Write(WriteContext& context, const Const& value, Iterator out) {
   out = WriteLpar(context, out);
   switch (value.index()) {
     case 0: // u32
-      out = Write(context, out, Opcode::I32Const);
-      out = Write(context, out, get<u32>(value));
+      out = Write(context, Opcode::I32Const, out);
+      out = Write(context, get<u32>(value), out);
       break;
 
     case 1: // u64
-      out = Write(context, out, Opcode::I64Const);
-      out = Write(context, out, get<u64>(value));
+      out = Write(context, Opcode::I64Const, out);
+      out = Write(context, get<u64>(value), out);
       break;
 
     case 2: // f32
-      out = Write(context, out, Opcode::F32Const);
-      out = Write(context, out, get<f32>(value));
+      out = Write(context, Opcode::F32Const, out);
+      out = Write(context, get<f32>(value), out);
       break;
 
     case 3: // f64
-      out = Write(context, out, Opcode::F64Const);
-      out = Write(context, out, get<f64>(value));
+      out = Write(context, Opcode::F64Const, out);
+      out = Write(context, get<f64>(value), out);
       break;
 
     case 4: // v128
-      out = Write(context, out, Opcode::V128Const);
-      out = Write(context, out, get<v128>(value));
+      out = Write(context, Opcode::V128Const, out);
+      out = Write(context, get<v128>(value), out);
       break;
 
     case 5: // RefNullConst
-      out = Write(context, out, Opcode::RefNull);
+      out = Write(context, Opcode::RefNull, out);
       break;
 
     case 6: // RefExternConst
-      out = Write(context, out, "ref.extern"_sv);
-      out = Write(context, out, get<RefExternConst>(value).var);
+      out = Write(context, "ref.extern"_sv, out);
+      out = Write(context, get<RefExternConst>(value).var, out);
       break;
   }
   out = WriteRpar(context, out);
@@ -1065,142 +1061,142 @@ Iterator Write(WriteContext& context, Iterator out, const Const& value) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const ConstList& values) {
-  return WriteVector(context, out, values);
+Iterator Write(WriteContext& context, const ConstList& values, Iterator out) {
+  return WriteVector(context, values, out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const InvokeAction& value) {
-  out = WriteLpar(context, out, "invoke");
-  out = Write(context, out, value.module);
-  out = Write(context, out, value.name);
-  out = Write(context, out, value.consts);
+Iterator Write(WriteContext& context, const InvokeAction& value, Iterator out) {
+  out = WriteLpar(context, "invoke", out);
+  out = Write(context, value.module, out);
+  out = Write(context, value.name, out);
+  out = Write(context, value.consts, out);
   out = WriteRpar(context, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const GetAction& value) {
-  out = WriteLpar(context, out, "get");
-  out = Write(context, out, value.module);
-  out = Write(context, out, value.name);
+Iterator Write(WriteContext& context, const GetAction& value, Iterator out) {
+  out = WriteLpar(context, "get", out);
+  out = Write(context, value.module, out);
+  out = Write(context, value.name, out);
   out = WriteRpar(context, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Action& value) {
+Iterator Write(WriteContext& context, const Action& value, Iterator out) {
   if (holds_alternative<InvokeAction>(value)) {
-    out = Write(context, out, get<InvokeAction>(value));
+    out = Write(context, get<InvokeAction>(value), out);
   } else if (holds_alternative<GetAction>(value)) {
-    out = Write(context, out, get<GetAction>(value));
+    out = Write(context, get<GetAction>(value), out);
   }
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const ModuleAssertion& value) {
-  out = Write(context, out, value.module);
+               const ModuleAssertion& value,
+               Iterator out) {
+  out = Write(context, value.module, out);
   context.Newline();
-  out = Write(context, out, value.message);
+  out = Write(context, value.message, out);
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const ActionAssertion& value) {
-  out = Write(context, out, value.action);
-  out = Write(context, out, value.message);
+               const ActionAssertion& value,
+               Iterator out) {
+  out = Write(context, value.action, out);
+  out = Write(context, value.message, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const NanKind& value) {
+Iterator Write(WriteContext& context, const NanKind& value, Iterator out) {
   if (value == NanKind::Arithmetic) {
-    return Write(context, out, "nan:arithmetic"_sv);
+    return Write(context, "nan:arithmetic"_sv, out);
   } else {
     assert(value == NanKind::Canonical);
-    return Write(context, out, "nan:canonical"_sv);
+    return Write(context, "nan:canonical"_sv, out);
   }
 }
 
 template <typename Iterator, typename T>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const FloatResult<T>& value) {
+               const FloatResult<T>& value,
+               Iterator out) {
   if (holds_alternative<T>(value)) {
-    return Write(context, out, get<T>(value));
+    return Write(context, get<T>(value), out);
   } else {
-    return Write(context, out, get<NanKind>(value));
+    return Write(context, get<NanKind>(value), out);
   }
 }
 
 template <typename Iterator, typename T, size_t N>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const std::array<FloatResult<T>, N>& value) {
-  return WriteRange(context, out, value.begin(), value.end());
+               const std::array<FloatResult<T>, N>& value,
+               Iterator out) {
+  return WriteRange(context, value.begin(), value.end(), out);
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const ReturnResult& value) {
+Iterator Write(WriteContext& context, const ReturnResult& value, Iterator out) {
   out = WriteLpar(context, out);
   switch (value.index()) {
     case 0: // u32
-      out = Write(context, out, Opcode::I32Const);
-      out = Write(context, out, get<u32>(value));
+      out = Write(context, Opcode::I32Const, out);
+      out = Write(context, get<u32>(value), out);
       break;
 
     case 1: // u64
-      out = Write(context, out, Opcode::I64Const);
-      out = Write(context, out, get<u64>(value));
+      out = Write(context, Opcode::I64Const, out);
+      out = Write(context, get<u64>(value), out);
       break;
 
     case 2: // v128
-      out = Write(context, out, Opcode::V128Const);
-      out = Write(context, out, get<v128>(value));
+      out = Write(context, Opcode::V128Const, out);
+      out = Write(context, get<v128>(value), out);
       break;
 
     case 3: // F32Result
-      out = Write(context, out, Opcode::F32Const);
-      out = Write(context, out, get<F32Result>(value));
+      out = Write(context, Opcode::F32Const, out);
+      out = Write(context, get<F32Result>(value), out);
       break;
 
     case 4: // F64Result
-      out = Write(context, out, Opcode::F64Const);
-      out = Write(context, out, get<F64Result>(value));
+      out = Write(context, Opcode::F64Const, out);
+      out = Write(context, get<F64Result>(value), out);
       break;
 
     case 5: // F32x4Result
-      out = Write(context, out, Opcode::V128Const);
-      out = Write(context, out, "f32x4"_sv);
-      out = Write(context, out, get<F32x4Result>(value));
+      out = Write(context, Opcode::V128Const, out);
+      out = Write(context, "f32x4"_sv, out);
+      out = Write(context, get<F32x4Result>(value), out);
       break;
 
     case 6: // F64x2Result
-      out = Write(context, out, Opcode::V128Const);
-      out = Write(context, out, "f64x2"_sv);
-      out = Write(context, out, get<F64x2Result>(value));
+      out = Write(context, Opcode::V128Const, out);
+      out = Write(context, "f64x2"_sv, out);
+      out = Write(context, get<F64x2Result>(value), out);
       break;
 
     case 7: // RefNullConst
-      out = Write(context, out, Opcode::RefNull);
+      out = Write(context, Opcode::RefNull, out);
       break;
 
     case 8: // RefExternConst
-      out = Write(context, out, "ref.extern"_sv);
-      out = WriteNat(context, out, *get<RefExternConst>(value).var);
+      out = Write(context, "ref.extern"_sv, out);
+      out = WriteNat(context, *get<RefExternConst>(value).var, out);
       break;
 
     case 9: // RefExternResult
-      out = Write(context, out, "ref.extern"_sv);
+      out = Write(context, "ref.extern"_sv, out);
       break;
 
     case 10: // RefFuncResult
-      out = Write(context, out, "ref.func"_sv);
+      out = Write(context, "ref.func"_sv, out);
       break;
   }
   out = WriteRpar(context, out);
@@ -1209,68 +1205,68 @@ Iterator Write(WriteContext& context, Iterator out, const ReturnResult& value) {
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const ReturnResultList& values) {
-  return WriteVector(context, out, values);
+               const ReturnResultList& values,
+               Iterator out) {
+  return WriteVector(context, values, out);
 }
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
-               Iterator out,
-               const ReturnAssertion& value) {
-  out = Write(context, out, value.action);
-  out = Write(context, out, value.results);
+               const ReturnAssertion& value,
+               Iterator out) {
+  out = Write(context, value.action, out);
+  out = Write(context, value.results, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Assertion& value) {
+Iterator Write(WriteContext& context, const Assertion& value, Iterator out) {
   switch (value.kind) {
     case AssertionKind::Malformed:
-      out = WriteLpar(context, out, "assert_malformed");
+      out = WriteLpar(context, "assert_malformed", out);
       context.Indent();
       context.Newline();
-      out = Write(context, out, get<ModuleAssertion>(value.desc));
+      out = Write(context, get<ModuleAssertion>(value.desc), out);
       context.Dedent();
       break;
 
     case AssertionKind::Invalid:
-      out = WriteLpar(context, out, "assert_invalid");
+      out = WriteLpar(context, "assert_invalid", out);
       context.Indent();
       context.Newline();
-      out = Write(context, out, get<ModuleAssertion>(value.desc));
+      out = Write(context, get<ModuleAssertion>(value.desc), out);
       context.Dedent();
       break;
 
     case AssertionKind::Unlinkable:
-      out = WriteLpar(context, out, "assert_unlinkable");
+      out = WriteLpar(context, "assert_unlinkable", out);
       context.Indent();
       context.Newline();
-      out = Write(context, out, get<ModuleAssertion>(value.desc));
+      out = Write(context, get<ModuleAssertion>(value.desc), out);
       context.Dedent();
       break;
 
     case AssertionKind::ActionTrap:
-      out = WriteLpar(context, out, "assert_trap");
-      out = Write(context, out, get<ActionAssertion>(value.desc));
+      out = WriteLpar(context, "assert_trap", out);
+      out = Write(context, get<ActionAssertion>(value.desc), out);
       break;
 
     case AssertionKind::Return:
-      out = WriteLpar(context, out, "assert_return");
-      out = Write(context, out, get<ReturnAssertion>(value.desc));
+      out = WriteLpar(context, "assert_return", out);
+      out = Write(context, get<ReturnAssertion>(value.desc), out);
       break;
 
     case AssertionKind::ModuleTrap:
-      out = WriteLpar(context, out, "assert_trap");
+      out = WriteLpar(context, "assert_trap", out);
       context.Indent();
       context.Newline();
-      out = Write(context, out, get<ModuleAssertion>(value.desc));
+      out = Write(context, get<ModuleAssertion>(value.desc), out);
       context.Dedent();
       break;
 
     case AssertionKind::Exhaustion:
-      out = WriteLpar(context, out, "assert_exhaustion");
-      out = Write(context, out, get<ActionAssertion>(value.desc));
+      out = WriteLpar(context, "assert_exhaustion", out);
+      out = Write(context, get<ActionAssertion>(value.desc), out);
       break;
   }
   out = WriteRpar(context, out);
@@ -1278,31 +1274,31 @@ Iterator Write(WriteContext& context, Iterator out, const Assertion& value) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Register& value) {
-  out = WriteLpar(context, out, "register");
-  out = Write(context, out, value.name);
-  out = Write(context, out, value.module);
+Iterator Write(WriteContext& context, const Register& value, Iterator out) {
+  out = WriteLpar(context, "register", out);
+  out = Write(context, value.name, out);
+  out = Write(context, value.module, out);
   out = WriteRpar(context, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Command& value) {
+Iterator Write(WriteContext& context, const Command& value, Iterator out) {
   switch (value.index()) {
     case 0:  // ScriptModule
-      out = Write(context, out, get<ScriptModule>(value));
+      out = Write(context, get<ScriptModule>(value), out);
       break;
 
     case 1:  // Register
-      out = Write(context, out, get<Register>(value));
+      out = Write(context, get<Register>(value), out);
       break;
 
     case 2:  // Action
-      out = Write(context, out, get<Action>(value));
+      out = Write(context, get<Action>(value), out);
       break;
 
     case 3:  // Assertion
-      out = Write(context, out, get<Assertion>(value));
+      out = Write(context, get<Assertion>(value), out);
       break;
   }
   context.Newline();
@@ -1310,8 +1306,8 @@ Iterator Write(WriteContext& context, Iterator out, const Command& value) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, Iterator out, const Script& values) {
-  return WriteVector(context, out, values);
+Iterator Write(WriteContext& context, const Script& values, Iterator out) {
+  return WriteVector(context, values, out);
 }
 
 }  // namespace text

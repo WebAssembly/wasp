@@ -36,9 +36,9 @@ template <typename T, typename... Args>
 void ExpectWrite(string_view expected, const T& value, Args&&... args) {
   WriteContext context;
   std::string result(expected.size(), 'X');
-  auto iter = wasp::text::Write(
-      context, MakeClampedIterator(result.begin(), result.end()), value,
-      std::forward<Args>(args)...);
+  auto iter =
+      wasp::text::Write(context, value, std::forward<Args>(args)...,
+                        MakeClampedIterator(result.begin(), result.end()));
   EXPECT_FALSE(iter.overflow());
   EXPECT_EQ(iter.base(), result.end());
   EXPECT_EQ(expected, result);
