@@ -31,7 +31,7 @@ TEST(ValidateCodeTest, BeginCode) {
   Context context{errors};
   context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{0});
-  EXPECT_TRUE(BeginCode(Location{}, context));
+  EXPECT_TRUE(BeginCode(context, Location{}));
 }
 
 TEST(ValidateCodeTest, BeginCode_CodeIndexOOB) {
@@ -40,7 +40,7 @@ TEST(ValidateCodeTest, BeginCode_CodeIndexOOB) {
   context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{0});
   context.code_count = 1;
-  EXPECT_FALSE(BeginCode(Location{}, context));
+  EXPECT_FALSE(BeginCode(context, Location{}));
 }
 
 TEST(ValidateCodeTest, BeginCode_TypeIndexOOB) {
@@ -48,11 +48,11 @@ TEST(ValidateCodeTest, BeginCode_TypeIndexOOB) {
   Context context{errors};
   context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{1});
-  EXPECT_FALSE(BeginCode(Location{}, context));
+  EXPECT_FALSE(BeginCode(context, Location{}));
 }
 
 TEST(ValidateCodeTest, Locals) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_TRUE(Validate(Locals{10, ValueType::I32}, context));
+  EXPECT_TRUE(Validate(context, Locals{10, ValueType::I32}));
 }

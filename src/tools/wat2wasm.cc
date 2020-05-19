@@ -131,7 +131,7 @@ int Tool::Run() {
 
   if (options.validate) {
     valid::Context validate_context{options.features, errors};
-    Validate(binary_module, validate_context);
+    Validate(validate_context, binary_module);
 
     if (errors.has_error()) {
       errors.Print();

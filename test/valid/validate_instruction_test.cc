@@ -50,7 +50,7 @@ class ValidateInstructionTest : public ::testing::Test {
   void BeginFunction(const FunctionType& function_type) {
     context.Reset();
     AddFunction(function_type);
-    EXPECT_TRUE(BeginCode(Location{}, context));
+    EXPECT_TRUE(BeginCode(context, Location{}));
   }
 
   template <typename T>
@@ -96,11 +96,11 @@ class ValidateInstructionTest : public ::testing::Test {
   }
 
   void Ok(const Instruction& instruction) {
-    EXPECT_TRUE(Validate(instruction, context)) << format("{}", instruction);
+    EXPECT_TRUE(Validate(context, instruction)) << format("{}", instruction);
   }
 
   void Fail(const Instruction& instruction) {
-    EXPECT_FALSE(Validate(instruction, context)) << format("{}", instruction);
+    EXPECT_FALSE(Validate(context, instruction)) << format("{}", instruction);
   }
 
   void TestSignature(const Instruction& instruction,
@@ -119,12 +119,12 @@ class ValidateInstructionTest : public ::testing::Test {
                                                   stack_param_types.end());
       valid_context.type_stack = stack_param_types_slice;
       if (n == 0) {
-        EXPECT_TRUE(Validate(instruction, valid_context))
+        EXPECT_TRUE(Validate(valid_context, instruction))
             << format("{} with stack {}", instruction, stack_param_types_slice);
         EXPECT_EQ(stack_result_types, valid_context.type_stack)
             << format("{}", instruction);
       } else {
-        EXPECT_FALSE(Validate(instruction, invalid_context))
+        EXPECT_FALSE(Validate(invalid_context, instruction))
             << format("{} with stack {}", instruction, stack_param_types_slice);
       }
     }
@@ -136,14 +136,14 @@ class ValidateInstructionTest : public ::testing::Test {
         stack_type = stack_type == ST::I32 ? ST::F64 : ST::I32;
       }
       invalid_context.type_stack = mismatch_types;
-      EXPECT_FALSE(Validate(instruction, invalid_context))
+      EXPECT_FALSE(Validate(invalid_context, instruction))
           << format("{} with stack", instruction, mismatch_types);
     }
 
     // Test that it is valid with an unreachable stack.
     valid_context.label_stack.back().unreachable = true;
     valid_context.type_stack.clear();
-    EXPECT_TRUE(Validate(instruction, valid_context))
+    EXPECT_TRUE(Validate(valid_context, instruction))
         << format("{}", instruction);
   }
 

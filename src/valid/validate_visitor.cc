@@ -34,54 +34,54 @@ auto ValidateVisitor::EndModule(binary::LazyModule& module) -> Result {
 
 auto ValidateVisitor::OnType(const At<binary::TypeEntry>& type_entry)
     -> Result {
-  return FailUnless(Validate(type_entry, context));
+  return FailUnless(Validate(context, type_entry));
 }
 
 auto ValidateVisitor::OnImport(const At<binary::Import>& import) -> Result {
-  return FailUnless(Validate(import, context));
+  return FailUnless(Validate(context, import));
 }
 
 auto ValidateVisitor::OnFunction(const At<binary::Function>& function)
     -> Result {
-  return FailUnless(Validate(function, context));
+  return FailUnless(Validate(context, function));
 }
 
 auto ValidateVisitor::OnTable(const At<binary::Table>& table) -> Result {
-  return FailUnless(Validate(table, context));
+  return FailUnless(Validate(context, table));
 }
 
 auto ValidateVisitor::OnMemory(const At<binary::Memory>& memory) -> Result {
-  return FailUnless(Validate(memory, context));
+  return FailUnless(Validate(context, memory));
 }
 
 auto ValidateVisitor::OnGlobal(const At<binary::Global>& global) -> Result {
-  return FailUnless(Validate(global, context));
+  return FailUnless(Validate(context, global));
 }
 
 auto ValidateVisitor::OnExport(const At<binary::Export>& export_) -> Result {
-  return FailUnless(Validate(export_, context));
+  return FailUnless(Validate(context, export_));
 }
 
 auto ValidateVisitor::OnStart(const At<binary::Start>& start) -> Result {
-  return FailUnless(Validate(start, context));
+  return FailUnless(Validate(context, start));
 }
 
 auto ValidateVisitor::OnElement(const At<binary::ElementSegment>& segment)
     -> Result {
-  return FailUnless(Validate(segment, context));
+  return FailUnless(Validate(context, segment));
 }
 
 auto ValidateVisitor::OnDataCount(const At<binary::DataCount>& data_count)
     -> Result {
-  return FailUnless(Validate(data_count, context));
+  return FailUnless(Validate(context, data_count));
 }
 
 auto ValidateVisitor::OnCode(const At<binary::Code>& code) -> Result {
-  return FailUnless(Validate(code, context));
+  return FailUnless(Validate(context, code));
 }
 
 auto ValidateVisitor::OnData(const At<binary::DataSegment>& segment) -> Result {
-  return FailUnless(Validate(segment, context));
+  return FailUnless(Validate(context, segment));
 }
 
 auto ValidateVisitor::FailUnless(bool b) -> Result {

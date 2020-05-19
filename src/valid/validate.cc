@@ -30,31 +30,31 @@
 namespace wasp {
 namespace valid {
 
-bool Validate(const At<binary::Code>& value,
-              Context& context,
+bool Validate(Context& context,
+              const At<binary::Code>& value,
               Errors& read_errors) {
   bool valid = true;
-  valid &= BeginCode(value.loc(), context);
+  valid &= BeginCode(context, value.loc());
   for (auto& locals : value->locals) {
-    valid &= Validate(locals, context);
+    valid &= Validate(context, locals);
   }
   binary::Context read_context{context.features, read_errors};
   for (auto& instruction : binary::ReadExpression(value->body, read_context)) {
-    valid &= Validate(instruction, context);
+    valid &= Validate(context, instruction);
   }
   return valid;
 }
 
-bool Validate(const At<binary::Code>& value, Context& context) {
+bool Validate(Context& context, const At<binary::Code>& value) {
   // By default, use the same error reporting as the validator.
-  return Validate(value, context, *context.errors);
+  return Validate(context, value, *context.errors);
 }
 
-bool Validate(const At<binary::ConstantExpression>& value,
+bool Validate(Context& context,
+              const At<binary::ConstantExpression>& value,
               ConstantExpressionKind kind,
               ValueType expected_type,
-              Index max_global_index,
-              Context& context) {
+              Index max_global_index) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "constant_expression"};
   if (value->instructions.size() != 1) {
     context.errors->OnError(
@@ -84,7 +84,7 @@ bool Validate(const At<binary::ConstantExpression>& value,
 
     case Opcode::GlobalGet: {
       auto index = instruction->index_immediate();
-      if (!ValidateIndex(index, max_global_index, "global index", context)) {
+      if (!ValidateIndex(context, index, max_global_index, "global index")) {
         return false;
       }
 
@@ -112,8 +112,8 @@ bool Validate(const At<binary::ConstantExpression>& value,
         // the element segment.
         context.deferred_function_references.push_back(index);
         return valid;
-      } else if (!ValidateIndex(index, context.functions.size(), "func index",
-                                context)) {
+      } else if (!ValidateIndex(context, index, context.functions.size(),
+                                "func index")) {
         return false;
       }
       actual_type = ValueType::Funcref;
@@ -128,32 +128,32 @@ bool Validate(const At<binary::ConstantExpression>& value,
       return false;
   }
 
-  valid &= Validate(actual_type, expected_type, context);
+  valid &= Validate(context, actual_type, expected_type);
   return valid;
 }
 
-bool Validate(const At<binary::DataCount>& value, Context& context) {
+bool Validate(Context& context, const At<binary::DataCount>& value) {
   context.declared_data_count = value->count;
   return true;
 }
 
-bool Validate(const At<binary::DataSegment>& value, Context& context) {
+bool Validate(Context& context, const At<binary::DataSegment>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "data segment"};
   bool valid = true;
   if (value->memory_index) {
-    valid &= ValidateIndex(*value->memory_index, context.memories.size(),
-                           "memory index", context);
+    valid &= ValidateIndex(context, *value->memory_index,
+                           context.memories.size(), "memory index");
   }
   if (value->offset) {
-    valid &= Validate(*value->offset, ConstantExpressionKind::Other,
-                      ValueType::I32, context.globals.size(), context);
+    valid &= Validate(context, *value->offset, ConstantExpressionKind::Other,
+                      ValueType::I32, context.globals.size());
   }
   return valid;
 }
 
-bool Validate(const At<binary::ElementExpression>& value,
-              ReferenceType reftype,
-              Context& context) {
+bool Validate(Context& context,
+              const At<binary::ElementExpression>& value,
+              ReferenceType reftype) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "element expression"};
   if (value->instructions.size() != 1) {
     context.errors->OnError(
@@ -172,8 +172,8 @@ bool Validate(const At<binary::ElementExpression>& value,
     case Opcode::RefFunc: {
       actual_type = ReferenceType::Funcref;
       auto index = instruction->index_immediate();
-      if (!ValidateIndex(index, context.functions.size(), "function index",
-                         context)) {
+      if (!ValidateIndex(context, index, context.functions.size(),
+                         "function index")) {
         valid = false;
       }
       context.declared_functions.insert(index);
@@ -187,21 +187,22 @@ bool Validate(const At<binary::ElementExpression>& value,
       return false;
   }
 
-  valid &= Validate(MakeAt(value.loc(), actual_type), reftype, context);
+  valid &= Validate(context, MakeAt(value.loc(), actual_type), reftype);
   return valid;
 }
 
-bool Validate(const At<binary::ElementSegment>& value, Context& context) {
+bool Validate(Context& context, const At<binary::ElementSegment>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "element segment"};
   context.element_segments.push_back(value->elemtype());
   bool valid = true;
   if (value->table_index) {
-    valid &= ValidateIndex(*value->table_index, context.tables.size(),
-                           "table index", context);
+    valid &= ValidateIndex(context, *value->table_index, context.tables.size(),
+                           "table index");
   }
   if (value->offset) {
-    valid &= Validate(*value->offset, ConstantExpressionKind::GlobalInit,
-                      ValueType::I32, context.globals.size(), context);
+    valid &=
+        Validate(context, *value->offset, ConstantExpressionKind::GlobalInit,
+                 ValueType::I32, context.globals.size());
   }
   if (value->has_indexes()) {
     auto&& elements = value->indexes();
@@ -225,7 +226,7 @@ bool Validate(const At<binary::ElementSegment>& value, Context& context) {
     }
 
     for (auto index : elements.list) {
-      valid &= ValidateIndex(index, max_index, "index", context);
+      valid &= ValidateIndex(context, index, max_index, "index");
       if (elements.kind == ExternalKind::Function) {
         context.declared_functions.insert(index);
       }
@@ -234,15 +235,15 @@ bool Validate(const At<binary::ElementSegment>& value, Context& context) {
     auto&& elements = value->expressions();
 
     for (const auto& expr : elements.list) {
-      valid &= Validate(expr, elements.elemtype, context);
+      valid &= Validate(context, expr, elements.elemtype);
     }
   }
   return valid;
 }
 
-bool Validate(const At<ReferenceType>& actual,
-              ReferenceType expected,
-              Context& context) {
+bool Validate(Context& context,
+              const At<ReferenceType>& actual,
+              ReferenceType expected) {
   if (actual != expected) {
     context.errors->OnError(
         actual.loc(),
@@ -252,7 +253,7 @@ bool Validate(const At<ReferenceType>& actual,
   return true;
 }
 
-bool Validate(const At<binary::Export>& value, Context& context) {
+bool Validate(Context& context, const At<binary::Export>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "export"};
   bool valid = true;
 
@@ -265,23 +266,23 @@ bool Validate(const At<binary::Export>& value, Context& context) {
 
   switch (value->kind) {
     case ExternalKind::Function:
-      valid &= ValidateIndex(value->index, context.functions.size(),
-                             "function index", context);
+      valid &= ValidateIndex(context, value->index, context.functions.size(),
+                             "function index");
       break;
 
     case ExternalKind::Table:
-      valid &= ValidateIndex(value->index, context.tables.size(), "table index",
-                             context);
+      valid &= ValidateIndex(context, value->index, context.tables.size(),
+                             "table index");
       break;
 
     case ExternalKind::Memory:
-      valid &= ValidateIndex(value->index, context.memories.size(),
-                             "memory index", context);
+      valid &= ValidateIndex(context, value->index, context.memories.size(),
+                             "memory index");
       break;
 
     case ExternalKind::Global:
-      if (ValidateIndex(value->index, context.globals.size(), "global index",
-                        context)) {
+      if (ValidateIndex(context, value->index, context.globals.size(),
+                        "global index")) {
         const auto& global = context.globals[value->index];
         if (global.mut == Mutability::Var &&
             !context.features.mutable_globals_enabled()) {
@@ -295,8 +296,8 @@ bool Validate(const At<binary::Export>& value, Context& context) {
       break;
 
     case ExternalKind::Event:
-      valid &= ValidateIndex(value->index, context.events.size(), "event index",
-                             context);
+      valid &= ValidateIndex(context, value->index, context.events.size(),
+                             "event index");
       break;
 
     default:
@@ -305,16 +306,16 @@ bool Validate(const At<binary::Export>& value, Context& context) {
   return valid;
 }
 
-bool Validate(const At<binary::Event>& value, Context& context) {
+bool Validate(Context& context, const At<binary::Event>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "event"};
-  return Validate(value->event_type, context);
+  return Validate(context, value->event_type);
 }
 
-bool Validate(const At<binary::EventType>& value, Context& context) {
+bool Validate(Context& context, const At<binary::EventType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "event type"};
   context.events.push_back(value);
-  if (!ValidateIndex(value->type_index, context.types.size(),
-                     "event type index", context)) {
+  if (!ValidateIndex(context, value->type_index, context.types.size(),
+                     "event type index")) {
     return false;
   }
 
@@ -328,14 +329,14 @@ bool Validate(const At<binary::EventType>& value, Context& context) {
   return true;
 }
 
-bool Validate(const At<binary::Function>& value, Context& context) {
+bool Validate(Context& context, const At<binary::Function>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "function"};
   context.functions.push_back(value);
-  return ValidateIndex(value->type_index, context.types.size(),
-                       "function type index", context);
+  return ValidateIndex(context, value->type_index, context.types.size(),
+                       "function type index");
 }
 
-bool Validate(const At<binary::FunctionType>& value, Context& context) {
+bool Validate(Context& context, const At<binary::FunctionType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "function type"};
   if (value->result_types.size() > 1 &&
       !context.features.multi_value_enabled()) {
@@ -347,44 +348,43 @@ bool Validate(const At<binary::FunctionType>& value, Context& context) {
   return true;
 }
 
-bool Validate(const At<binary::Global>& value, Context& context) {
+bool Validate(Context& context, const At<binary::Global>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "global"};
   context.globals.push_back(value->global_type);
   bool valid = true;
-  valid &= Validate(value->global_type, context);
+  valid &= Validate(context, value->global_type);
   // Only imported globals can be used in a global's constant expression.
-  valid &= Validate(value->init, ConstantExpressionKind::GlobalInit,
-                    value->global_type->valtype, context.imported_global_count,
-                    context);
+  valid &= Validate(context, value->init, ConstantExpressionKind::GlobalInit,
+                    value->global_type->valtype, context.imported_global_count);
   return valid;
 }
 
-bool Validate(const At<GlobalType>& value, Context& context) {
+bool Validate(Context& context, const At<GlobalType>& value) {
   return true;
 }
 
-bool Validate(const At<binary::Import>& value, Context& context) {
+bool Validate(Context& context, const At<binary::Import>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "import"};
   bool valid = true;
 
   switch (value->kind()) {
     case ExternalKind::Function:
-      valid &= Validate(binary::Function{value->index()}, context);
+      valid &= Validate(context, binary::Function{value->index()});
       context.imported_function_count++;
       break;
 
     case ExternalKind::Table:
-      valid &= Validate(binary::Table{value->table_type()}, context);
+      valid &= Validate(context, binary::Table{value->table_type()});
       break;
 
     case ExternalKind::Memory:
-      valid &= Validate(binary::Memory{value->memory_type()}, context);
+      valid &= Validate(context, binary::Memory{value->memory_type()});
       break;
 
     case ExternalKind::Global:
       context.globals.push_back(value->global_type());
       context.imported_global_count++;
-      valid &= Validate(value->global_type(), context);
+      valid &= Validate(context, value->global_type());
       if (value->global_type()->mut == Mutability::Var &&
           !context.features.mutable_globals_enabled()) {
         context.errors->OnError(value->global_type().loc(),
@@ -394,7 +394,7 @@ bool Validate(const At<binary::Import>& value, Context& context) {
       break;
 
     case ExternalKind::Event:
-      valid &= Validate(binary::Event{value->event_type()}, context);
+      valid &= Validate(context, binary::Event{value->event_type()});
       break;
 
     default:
@@ -404,10 +404,10 @@ bool Validate(const At<binary::Import>& value, Context& context) {
   return valid;
 }
 
-bool ValidateIndex(const At<Index>& index,
+bool ValidateIndex(Context& context,
+                   const At<Index>& index,
                    Index max,
-                   string_view desc,
-                   Context& context) {
+                   string_view desc) {
   if (index >= max) {
     context.errors->OnError(
         index.loc(),
@@ -417,7 +417,7 @@ bool ValidateIndex(const At<Index>& index,
   return true;
 }
 
-bool Validate(const At<Limits>& value, Index max, Context& context) {
+bool Validate(Context& context, const At<Limits>& value, Index max) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "limits"};
   bool valid = true;
   if (value->min > max) {
@@ -443,10 +443,10 @@ bool Validate(const At<Limits>& value, Index max, Context& context) {
   return valid;
 }
 
-bool Validate(const At<binary::Memory>& value, Context& context) {
+bool Validate(Context& context, const At<binary::Memory>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "memory"};
   context.memories.push_back(value->memory_type);
-  bool valid = Validate(value->memory_type, context);
+  bool valid = Validate(context, value->memory_type);
   if (context.memories.size() > 1) {
     context.errors->OnError(value.loc(),
                             "Too many memories, must be 1 or fewer");
@@ -455,10 +455,10 @@ bool Validate(const At<binary::Memory>& value, Context& context) {
   return valid;
 }
 
-bool Validate(const At<MemoryType>& value, Context& context) {
+bool Validate(Context& context, const At<MemoryType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "memory type"};
   constexpr Index kMaxPages = 65536;
-  bool valid = Validate(value->limits, kMaxPages, context);
+  bool valid = Validate(context, value->limits, kMaxPages);
   if (value->limits->shared == Shared::Yes &&
       !context.features.threads_enabled()) {
     context.errors->OnError(value.loc(), "Memories cannot be shared");
@@ -467,10 +467,10 @@ bool Validate(const At<MemoryType>& value, Context& context) {
   return valid;
 }
 
-bool Validate(const At<binary::Start>& value, Context& context) {
+bool Validate(Context& context, const At<binary::Start>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "start"};
-  if (!ValidateIndex(value->func_index, context.functions.size(),
-                     "function index", context)) {
+  if (!ValidateIndex(context, value->func_index, context.functions.size(),
+                     "function index")) {
     return false;
   }
 
@@ -497,10 +497,10 @@ bool Validate(const At<binary::Start>& value, Context& context) {
   return valid;
 }
 
-bool Validate(const At<binary::Table>& value, Context& context) {
+bool Validate(Context& context, const At<binary::Table>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "table"};
   context.tables.push_back(value->table_type);
-  bool valid = Validate(value->table_type, context);
+  bool valid = Validate(context, value->table_type);
   if (context.tables.size() > 1 &&
       !context.features.reference_types_enabled()) {
     context.errors->OnError(value.loc(), "Too many tables, must be 1 or fewer");
@@ -509,10 +509,10 @@ bool Validate(const At<binary::Table>& value, Context& context) {
   return valid;
 }
 
-bool Validate(const At<TableType>& value, Context& context) {
+bool Validate(Context& context, const At<TableType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "table type"};
   constexpr Index kMaxElements = std::numeric_limits<Index>::max();
-  bool valid = Validate(value->limits, kMaxElements, context);
+  bool valid = Validate(context, value->limits, kMaxElements);
   if (value->limits->shared == Shared::Yes) {
     context.errors->OnError(value.loc(), "Tables cannot be shared");
     valid = false;
@@ -520,15 +520,15 @@ bool Validate(const At<TableType>& value, Context& context) {
   return valid;
 }
 
-bool Validate(const At<binary::TypeEntry>& value, Context& context) {
+bool Validate(Context& context, const At<binary::TypeEntry>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "type entry"};
   context.types.push_back(value);
-  return Validate(value->type, context);
+  return Validate(context, value->type);
 }
 
-bool Validate(const At<ValueType>& actual,
-              ValueType expected,
-              Context& context) {
+bool Validate(Context& context,
+              const At<ValueType>& actual,
+              ValueType expected) {
   if (expected != actual) {
     context.errors->OnError(
         actual.loc(),
@@ -556,38 +556,38 @@ bool EndModule(Context& context) {
 }
 
 template <typename T>
-bool ValidateKnownSection(const std::vector<T>& values, Context& context) {
+bool ValidateKnownSection(Context& context, const std::vector<T>& values) {
   bool valid = true;
   for (auto& value : values) {
-    valid &= Validate(value, context);
+    valid &= Validate(context, value);
   }
   return valid;
 }
 
 template <typename T>
-bool ValidateKnownSection(const optional<T>& value, Context& context) {
+bool ValidateKnownSection(Context& context, const optional<T>& value) {
   bool valid = true;
   if (value) {
-    valid &= Validate(*value, context);
+    valid &= Validate(context, *value);
   }
   return valid;
 }
 
-bool Validate(const binary::Module& value, Context& context) {
+bool Validate(Context& context, const binary::Module& value) {
   bool valid = true;
-  valid &= ValidateKnownSection(value.types, context);
-  valid &= ValidateKnownSection(value.imports, context);
-  valid &= ValidateKnownSection(value.functions, context);
-  valid &= ValidateKnownSection(value.tables, context);
-  valid &= ValidateKnownSection(value.memories, context);
-  valid &= ValidateKnownSection(value.globals, context);
-  valid &= ValidateKnownSection(value.events, context);
-  valid &= ValidateKnownSection(value.exports, context);
-  valid &= ValidateKnownSection(value.start, context);
-  valid &= ValidateKnownSection(value.element_segments, context);
-  valid &= ValidateKnownSection(value.data_count, context);
-  valid &= ValidateKnownSection(value.codes, context);
-  valid &= ValidateKnownSection(value.data_segments, context);
+  valid &= ValidateKnownSection(context, value.types);
+  valid &= ValidateKnownSection(context, value.imports);
+  valid &= ValidateKnownSection(context, value.functions);
+  valid &= ValidateKnownSection(context, value.tables);
+  valid &= ValidateKnownSection(context, value.memories);
+  valid &= ValidateKnownSection(context, value.globals);
+  valid &= ValidateKnownSection(context, value.events);
+  valid &= ValidateKnownSection(context, value.exports);
+  valid &= ValidateKnownSection(context, value.start);
+  valid &= ValidateKnownSection(context, value.element_segments);
+  valid &= ValidateKnownSection(context, value.data_count);
+  valid &= ValidateKnownSection(context, value.codes);
+  valid &= ValidateKnownSection(context, value.data_segments);
   valid &= EndModule(context);
   return valid;
 }

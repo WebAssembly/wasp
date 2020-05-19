@@ -27,7 +27,7 @@
 namespace wasp {
 namespace valid {
 
-inline bool BeginCode(Location loc, Context& context) {
+inline bool BeginCode(Context& context, Location loc) {
   Index func_index = context.imported_function_count + context.code_count;
   if (func_index >= context.functions.size()) {
     context.errors->OnError(

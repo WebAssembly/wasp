@@ -37,7 +37,7 @@ TEST(ValidateTest, Code) {
   Context context{errors};
   context.types.push_back(TypeEntry{FunctionType{{}, {ValueType::I32}}});
   context.functions.push_back(Function{0});
-  EXPECT_TRUE(Validate(code, context));
+  EXPECT_TRUE(Validate(context, code));
 }
 
 TEST(ValidateTest, ConstantExpression_Const) {
@@ -54,9 +54,8 @@ TEST(ValidateTest, ConstantExpression_Const) {
   for (const auto& test : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_TRUE(Validate(ConstantExpression{test.instr},
-                         ConstantExpressionKind::Other, test.valtype, 0,
-                         context));
+    EXPECT_TRUE(Validate(context, ConstantExpression{test.instr},
+                         ConstantExpressionKind::Other, test.valtype, 0));
   }
 }
 
@@ -70,17 +69,17 @@ TEST(ValidateTest, ConstantExpression_Global) {
   auto max = context.globals.size();
 
   EXPECT_TRUE(Validate(
-      ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-      ConstantExpressionKind::GlobalInit, ValueType::I32, max, context));
+      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
+      ConstantExpressionKind::GlobalInit, ValueType::I32, max));
   EXPECT_TRUE(Validate(
-      ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
-      ConstantExpressionKind::GlobalInit, ValueType::I64, max, context));
+      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
+      ConstantExpressionKind::GlobalInit, ValueType::I64, max));
   EXPECT_TRUE(Validate(
-      ConstantExpression{Instruction{Opcode::GlobalGet, Index{2}}},
-      ConstantExpressionKind::GlobalInit, ValueType::F32, max, context));
+      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{2}}},
+      ConstantExpressionKind::GlobalInit, ValueType::F32, max));
   EXPECT_TRUE(Validate(
-      ConstantExpression{Instruction{Opcode::GlobalGet, Index{3}}},
-      ConstantExpressionKind::GlobalInit, ValueType::F64, max, context));
+      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{3}}},
+      ConstantExpressionKind::GlobalInit, ValueType::F64, max));
 }
 
 TEST(ValidateTest, ConstantExpression_InvalidOpcode) {
@@ -96,9 +95,8 @@ TEST(ValidateTest, ConstantExpression_InvalidOpcode) {
   for (const auto& instr : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_FALSE(Validate(ConstantExpression{instr},
-                          ConstantExpressionKind::Other, ValueType::I32, 0,
-                          context));
+    EXPECT_FALSE(Validate(context, ConstantExpression{instr},
+                          ConstantExpressionKind::Other, ValueType::I32, 0));
   }
 }
 
@@ -116,9 +114,8 @@ TEST(ValidateTest, ConstantExpression_ConstMismatch) {
   for (const auto& test : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_FALSE(Validate(ConstantExpression{test.instr},
-                          ConstantExpressionKind::Other, test.valtype, 0,
-                          context));
+    EXPECT_FALSE(Validate(context, ConstantExpression{test.instr},
+                          ConstantExpressionKind::Other, test.valtype, 0));
   }
 }
 
@@ -128,9 +125,9 @@ TEST(ValidateTest, ConstantExpression_GlobalIndexOOB) {
   context.globals.push_back(GlobalType{ValueType::I32, Mutability::Const});
   auto max = context.globals.size();
 
-  EXPECT_FALSE(
-      Validate(ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
-               ConstantExpressionKind::Other, ValueType::I32, max, context));
+  EXPECT_FALSE(Validate(
+      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
+      ConstantExpressionKind::Other, ValueType::I32, max));
 }
 
 TEST(ValidateTest, ConstantExpression_GlobalTypeMismatch) {
@@ -142,18 +139,18 @@ TEST(ValidateTest, ConstantExpression_GlobalTypeMismatch) {
   context.globals.push_back(GlobalType{ValueType::F64, Mutability::Const});
   auto max = context.globals.size();
 
-  EXPECT_FALSE(
-      Validate(ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-               ConstantExpressionKind::Other, ValueType::I64, max, context));
-  EXPECT_FALSE(
-      Validate(ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
-               ConstantExpressionKind::Other, ValueType::F32, max, context));
-  EXPECT_FALSE(
-      Validate(ConstantExpression{Instruction{Opcode::GlobalGet, Index{2}}},
-               ConstantExpressionKind::Other, ValueType::F64, max, context));
-  EXPECT_FALSE(
-      Validate(ConstantExpression{Instruction{Opcode::GlobalGet, Index{3}}},
-               ConstantExpressionKind::Other, ValueType::I32, max, context));
+  EXPECT_FALSE(Validate(
+      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
+      ConstantExpressionKind::Other, ValueType::I64, max));
+  EXPECT_FALSE(Validate(
+      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
+      ConstantExpressionKind::Other, ValueType::F32, max));
+  EXPECT_FALSE(Validate(
+      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{2}}},
+      ConstantExpressionKind::Other, ValueType::F64, max));
+  EXPECT_FALSE(Validate(
+      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{3}}},
+      ConstantExpressionKind::Other, ValueType::I32, max));
 }
 
 TEST(ValidateTest, ConstantExpression_GlobalMutVar) {
@@ -162,9 +159,9 @@ TEST(ValidateTest, ConstantExpression_GlobalMutVar) {
   context.globals.push_back(GlobalType{ValueType::I32, Mutability::Var});
   auto max = context.globals.size();
 
-  EXPECT_FALSE(
-      Validate(ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-               ConstantExpressionKind::Other, ValueType::I32, max, context));
+  EXPECT_FALSE(Validate(
+      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
+      ConstantExpressionKind::Other, ValueType::I32, max));
 }
 
 TEST(ValidateTest, ConstantExpression_WrongInstructionCount) {
@@ -172,14 +169,14 @@ TEST(ValidateTest, ConstantExpression_WrongInstructionCount) {
   Context context{errors};
 
   // Too few instructions.
-  EXPECT_FALSE(Validate(ConstantExpression{}, ConstantExpressionKind::Other,
-                        ValueType::I32, 0, context));
+  EXPECT_FALSE(Validate(context, ConstantExpression{},
+                        ConstantExpressionKind::Other, ValueType::I32, 0));
   // Too many instructions.
-  EXPECT_FALSE(Validate(ConstantExpression{InstructionList{
+  EXPECT_FALSE(Validate(context,
+                        ConstantExpression{InstructionList{
                             Instruction{Opcode::GlobalGet, Index{0}},
                             Instruction{Opcode::I32Const, s32{0}}}},
-                        ConstantExpressionKind::Other, ValueType::I32, 0,
-                        context));
+                        ConstantExpressionKind::Other, ValueType::I32, 0));
 }
 
 TEST(ValidateTest, ConstantExpression_FuncrefDeferred) {
@@ -189,8 +186,8 @@ TEST(ValidateTest, ConstantExpression_FuncrefDeferred) {
   // This index is invalid currently, but cannot be validated until the element
   // segment section is parsed, so the check is deferred.
   EXPECT_TRUE(Validate(
-      ConstantExpression{Instruction{Opcode::RefFunc, Index{0}}},
-      ConstantExpressionKind::GlobalInit, ValueType::Funcref, 0, context));
+      context, ConstantExpression{Instruction{Opcode::RefFunc, Index{0}}},
+      ConstantExpressionKind::GlobalInit, ValueType::Funcref, 0));
 
   EXPECT_EQ(1u, context.deferred_function_references.size());
 }
@@ -198,7 +195,7 @@ TEST(ValidateTest, ConstantExpression_FuncrefDeferred) {
 TEST(ValidateTest, DataCount) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_TRUE(Validate(DataCount{1}, context));
+  EXPECT_TRUE(Validate(context, DataCount{1}));
   ASSERT_TRUE(context.declared_data_count);
   EXPECT_EQ(1u, context.declared_data_count);
 }
@@ -219,7 +216,7 @@ TEST(ValidateTest, DataSegment_Active) {
   };
 
   for (const auto& data_segment : tests) {
-    EXPECT_TRUE(Validate(data_segment, context));
+    EXPECT_TRUE(Validate(context, data_segment));
   }
 }
 
@@ -229,7 +226,7 @@ TEST(ValidateTest, DataSegment_Active_MemoryIndexOOB) {
   const SpanU8 span{reinterpret_cast<const u8*>("123"), 3};
   const DataSegment data_segment{
       0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}, span};
-  EXPECT_FALSE(Validate(data_segment, context));
+  EXPECT_FALSE(Validate(context, data_segment));
 }
 
 TEST(ValidateTest, DataSegment_Active_GlobalIndexOOB) {
@@ -239,7 +236,7 @@ TEST(ValidateTest, DataSegment_Active_GlobalIndexOOB) {
   const SpanU8 span{reinterpret_cast<const u8*>("123"), 3};
   const DataSegment data_segment{
       0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}, span};
-  EXPECT_FALSE(Validate(data_segment, context));
+  EXPECT_FALSE(Validate(context, data_segment));
 }
 
 TEST(ValidateTest, ElementExpression) {
@@ -253,8 +250,8 @@ TEST(ValidateTest, ElementExpression) {
   };
 
   for (const auto& instr : tests) {
-    EXPECT_TRUE(Validate(ElementExpression{instr}, ReferenceType::Funcref,
-                         context));
+    EXPECT_TRUE(
+        Validate(context, ElementExpression{instr}, ReferenceType::Funcref));
   }
 }
 
@@ -274,8 +271,8 @@ TEST(ValidateTest, ElementExpression_InvalidOpcode) {
   for (const auto& instr : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_FALSE(Validate(ElementExpression{instr}, ReferenceType::Funcref,
-                          context));
+    EXPECT_FALSE(
+        Validate(context, ElementExpression{instr}, ReferenceType::Funcref));
   }
 }
 
@@ -283,9 +280,9 @@ TEST(ValidateTest, ElementExpression_FunctionIndexOOB) {
   TestErrors errors;
   Context context{errors};
   context.functions.push_back(Function{0});
-  EXPECT_FALSE(
-      Validate(ElementExpression{Instruction{Opcode::RefFunc, Index{1}}},
-               ReferenceType::Funcref, context));
+  EXPECT_FALSE(Validate(
+      context, ElementExpression{Instruction{Opcode::RefFunc, Index{1}}},
+      ReferenceType::Funcref));
 }
 
 TEST(ValidateTest, ElementSegment_Active) {
@@ -306,7 +303,7 @@ TEST(ValidateTest, ElementSegment_Active) {
   };
 
   for (const auto& element_segment : tests) {
-    EXPECT_TRUE(Validate(element_segment, context));
+    EXPECT_TRUE(Validate(context, element_segment));
   }
 }
 
@@ -327,7 +324,7 @@ TEST(ValidateTest, ElementSegment_Passive) {
   };
 
   for (const auto& element_segment : tests) {
-    EXPECT_TRUE(Validate(element_segment, context));
+    EXPECT_TRUE(Validate(context, element_segment));
   }
 }
 
@@ -348,7 +345,7 @@ TEST(ValidateTest, ElementSegment_Declared) {
 
   EXPECT_EQ(0u, context.declared_functions.count(0));
   for (const auto& element_segment : tests) {
-    EXPECT_TRUE(Validate(element_segment, context));
+    EXPECT_TRUE(Validate(context, element_segment));
   }
   EXPECT_EQ(1u, context.declared_functions.count(0));
 }
@@ -370,7 +367,7 @@ TEST(ValidateTest, ElementSegment_Active_TypeMismatch) {
   };
 
   for (const auto& element_segment : tests) {
-    EXPECT_FALSE(Validate(element_segment, context));
+    EXPECT_FALSE(Validate(context, element_segment));
   }
 }
 
@@ -381,7 +378,7 @@ TEST(ValidateTest, ElementSegment_Active_TableIndexOOB) {
   const ElementSegment element_segment{
       0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
       ElementListWithIndexes{ExternalKind::Function, {}}};
-  EXPECT_FALSE(Validate(element_segment, context));
+  EXPECT_FALSE(Validate(context, element_segment));
 }
 
 TEST(ValidateTest, ElementSegment_Active_GlobalIndexOOB) {
@@ -391,7 +388,7 @@ TEST(ValidateTest, ElementSegment_Active_GlobalIndexOOB) {
   const ElementSegment element_segment{
       0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
       ElementListWithIndexes{ExternalKind::Function, {}}};
-  EXPECT_FALSE(Validate(element_segment, context));
+  EXPECT_FALSE(Validate(context, element_segment));
 }
 
 TEST(ValidateTest, ElementSegment_Active_FunctionIndexOOB) {
@@ -401,7 +398,7 @@ TEST(ValidateTest, ElementSegment_Active_FunctionIndexOOB) {
   const ElementSegment element_segment{
       0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
       ElementListWithIndexes{ExternalKind::Function, {0}}};
-  EXPECT_FALSE(Validate(element_segment, context));
+  EXPECT_FALSE(Validate(context, element_segment));
 }
 
 TEST(ValidateTest, ElementSegment_Passive_FunctionIndexOOB) {
@@ -412,13 +409,14 @@ TEST(ValidateTest, ElementSegment_Passive_FunctionIndexOOB) {
       ElementListWithExpressions{
           ReferenceType::Funcref,
           {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}}};
-  EXPECT_FALSE(Validate(element_segment, context));
+  EXPECT_FALSE(Validate(context, element_segment));
 }
 
 TEST(ValidateTest, ReferenceType) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_TRUE(Validate(ReferenceType::Funcref, ReferenceType::Funcref, context));
+  EXPECT_TRUE(
+      Validate(context, ReferenceType::Funcref, ReferenceType::Funcref));
 }
 
 TEST(ValidateTest, Export) {
@@ -440,7 +438,7 @@ TEST(ValidateTest, Export) {
   };
 
   for (const auto& export_ : tests) {
-    EXPECT_TRUE(Validate(export_, context));
+    EXPECT_TRUE(Validate(context, export_));
   }
 }
 
@@ -456,7 +454,7 @@ TEST(ValidateTest, Export_IndexOOB) {
   for (const auto& export_ : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_FALSE(Validate(export_, context));
+    EXPECT_FALSE(Validate(context, export_));
   }
 }
 
@@ -466,8 +464,7 @@ TEST(ValidateTest, Export_GlobalMutVar_MVP) {
   TestErrors errors;
   Context context{features, errors};
   context.globals.push_back(GlobalType{ValueType::I32, Mutability::Var});
-  EXPECT_FALSE(
-      Validate(Export{ExternalKind::Global, "", 0}, context));
+  EXPECT_FALSE(Validate(context, Export{ExternalKind::Global, "", 0}));
 }
 
 TEST(ValidateTest, Export_GlobalMutVar_MutableGlobals) {
@@ -475,8 +472,7 @@ TEST(ValidateTest, Export_GlobalMutVar_MutableGlobals) {
   TestErrors errors;
   Context context{features, errors};
   context.globals.push_back(GlobalType{ValueType::I32, Mutability::Var});
-  EXPECT_TRUE(
-      Validate(Export{ExternalKind::Global, "", 0}, context));
+  EXPECT_TRUE(Validate(context, Export{ExternalKind::Global, "", 0}));
 }
 
 TEST(ValidateTest, Export_Duplicate) {
@@ -484,8 +480,8 @@ TEST(ValidateTest, Export_Duplicate) {
   TestErrors errors;
   Context context{features, errors};
   context.functions.push_back(Function{0});
-  EXPECT_TRUE(Validate(Export{ExternalKind::Function, "hi", 0}, context));
-  EXPECT_FALSE(Validate(Export{ExternalKind::Function, "hi", 0}, context));
+  EXPECT_TRUE(Validate(context, Export{ExternalKind::Function, "hi", 0}));
+  EXPECT_FALSE(Validate(context, Export{ExternalKind::Function, "hi", 0}));
 }
 
 TEST(ValidateTest, Event) {
@@ -493,8 +489,8 @@ TEST(ValidateTest, Event) {
   TestErrors errors;
   Context context{features, errors};
   context.types.push_back(TypeEntry{FunctionType{}});
-  EXPECT_TRUE(Validate(Event{EventType{EventAttribute::Exception, Index{0}}},
-                       context));
+  EXPECT_TRUE(
+      Validate(context, Event{EventType{EventAttribute::Exception, Index{0}}}));
 }
 
 TEST(ValidateTest, EventType) {
@@ -503,7 +499,7 @@ TEST(ValidateTest, EventType) {
   Context context{features, errors};
   context.types.push_back(TypeEntry{FunctionType{{ValueType::I32}, {}}});
   EXPECT_TRUE(
-      Validate(EventType{EventAttribute::Exception, Index{0}}, context));
+      Validate(context, EventType{EventAttribute::Exception, Index{0}}));
 }
 
 TEST(ValidateTest, EventType_IndexOOB) {
@@ -511,7 +507,7 @@ TEST(ValidateTest, EventType_IndexOOB) {
   TestErrors errors;
   Context context{features, errors};
   EXPECT_FALSE(
-      Validate(EventType{EventAttribute::Exception, Index{0}}, context));
+      Validate(context, EventType{EventAttribute::Exception, Index{0}}));
 }
 
 TEST(ValidateTest, EventType_NonEmptyResult) {
@@ -520,20 +516,20 @@ TEST(ValidateTest, EventType_NonEmptyResult) {
   Context context{features, errors};
   context.types.push_back(TypeEntry{FunctionType{{}, {ValueType::I32}}});
   EXPECT_FALSE(
-      Validate(EventType{EventAttribute::Exception, Index{0}}, context));
+      Validate(context, EventType{EventAttribute::Exception, Index{0}}));
 }
 
 TEST(ValidateTest, Function) {
   TestErrors errors;
   Context context{errors};
   context.types.push_back(TypeEntry{FunctionType{}});
-  EXPECT_TRUE(Validate(Function{0}, context));
+  EXPECT_TRUE(Validate(context, Function{0}));
 }
 
 TEST(ValidateTest, Function_IndexOOB) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_FALSE(Validate(Function{0}, context));
+  EXPECT_FALSE(Validate(context, Function{0}));
 }
 
 TEST(ValidateTest, FunctionType) {
@@ -552,7 +548,7 @@ TEST(ValidateTest, FunctionType) {
   for (const auto& function_type : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_TRUE(Validate(function_type, context));
+    EXPECT_TRUE(Validate(context, function_type));
   }
 }
 
@@ -565,7 +561,7 @@ TEST(ValidateTest, FunctionType_MultiReturn_MVP) {
   for (const auto& function_type : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_FALSE(Validate(function_type, context));
+    EXPECT_FALSE(Validate(context, function_type));
   }
 }
 
@@ -581,7 +577,7 @@ TEST(ValidateTest, FunctionType_MultiReturn) {
   for (const auto& function_type : tests) {
     TestErrors errors;
     Context context{features, errors};
-    EXPECT_TRUE(Validate(function_type, context));
+    EXPECT_TRUE(Validate(context, function_type));
   }
 }
 
@@ -616,7 +612,7 @@ TEST(ValidateTest, Global) {
   };
 
   for (const auto& global : tests) {
-    EXPECT_TRUE(Validate(global, context));
+    EXPECT_TRUE(Validate(context, global));
   }
 }
 
@@ -651,7 +647,7 @@ TEST(ValidateTest, Global_TypeMismatch) {
   };
 
   for (const auto& global : tests) {
-    EXPECT_FALSE(Validate(global, context));
+    EXPECT_FALSE(Validate(context, global));
   }
 }
 
@@ -661,7 +657,7 @@ TEST(ValidateTest, Global_GlobalGetIndexOOB) {
   const Global global{
       GlobalType{ValueType::I32, Mutability::Const},
       ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}};
-  EXPECT_FALSE(Validate(global, context));
+  EXPECT_FALSE(Validate(context, global));
 }
 
 TEST(ValidateTest, GlobalType) {
@@ -679,7 +675,7 @@ TEST(ValidateTest, GlobalType) {
   for (const auto& global_type : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_TRUE(Validate(global_type, context));
+    EXPECT_TRUE(Validate(context, global_type));
   }
 }
 
@@ -697,14 +693,14 @@ TEST(ValidateTest, Import) {
   };
 
   for (const auto& import : tests) {
-    EXPECT_TRUE(Validate(import, context));
+    EXPECT_TRUE(Validate(context, import));
   }
 }
 
 TEST(ValidateTest, Import_FunctionIndexOOB) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_FALSE(Validate(Import{"", "", Index{0}}, context));
+  EXPECT_FALSE(Validate(context, Import{"", "", Index{0}}));
 }
 
 TEST(ValidateTest, Import_TooManyTables) {
@@ -713,8 +709,7 @@ TEST(ValidateTest, Import_TooManyTables) {
   const TableType table_type{Limits{0}, ReferenceType::Funcref};
   context.tables.push_back(table_type);
 
-  EXPECT_FALSE(
-      Validate(Import{"", "", table_type}, context));
+  EXPECT_FALSE(Validate(context, Import{"", "", table_type}));
 }
 
 TEST(ValidateTest, Import_TooManyMemories) {
@@ -723,8 +718,7 @@ TEST(ValidateTest, Import_TooManyMemories) {
   const MemoryType memory_type{Limits{0}};
   context.memories.push_back(memory_type);
 
-  EXPECT_FALSE(
-      Validate(Import{"", "", memory_type}, context));
+  EXPECT_FALSE(Validate(context, Import{"", "", memory_type}));
 }
 
 TEST(ValidateTest, Import_GlobalMutVar_MVP) {
@@ -733,14 +727,14 @@ TEST(ValidateTest, Import_GlobalMutVar_MVP) {
   TestErrors errors;
   Context context{features, errors};
   EXPECT_FALSE(Validate(
-      Import{"", "", GlobalType{ValueType::I32, Mutability::Var}}, context));
+      context, Import{"", "", GlobalType{ValueType::I32, Mutability::Var}}));
 }
 
 TEST(ValidateTest, Import_GlobalMutVar_MutableGlobals) {
   TestErrors errors;
   Context context{errors};
   EXPECT_TRUE(Validate(
-      Import{"", "", GlobalType{ValueType::I32, Mutability::Var}}, context));
+      context, Import{"", "", GlobalType{ValueType::I32, Mutability::Var}}));
 }
 
 TEST(ValidateTest, Import_Event_IndexOOB) {
@@ -748,7 +742,7 @@ TEST(ValidateTest, Import_Event_IndexOOB) {
   TestErrors errors;
   Context context{features, errors};
   EXPECT_FALSE(Validate(
-      Import{"", "", EventType{EventAttribute::Exception, Index{0}}}, context));
+      context, Import{"", "", EventType{EventAttribute::Exception, Index{0}}}));
 }
 
 TEST(ValidateTest, Import_Event_NonEmptyResult) {
@@ -757,30 +751,30 @@ TEST(ValidateTest, Import_Event_NonEmptyResult) {
   Context context{features, errors};
   context.types.push_back(TypeEntry{FunctionType{{}, {ValueType::F32}}});
   EXPECT_FALSE(Validate(
-      Import{"", "", EventType{EventAttribute::Exception, Index{0}}}, context));
+      context, Import{"", "", EventType{EventAttribute::Exception, Index{0}}}));
 }
 
 TEST(ValidateTest, Index) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_TRUE(ValidateIndex(1, 3, "index", context));
-  EXPECT_FALSE(ValidateIndex(3, 3, "index", context));
-  EXPECT_FALSE(ValidateIndex(0, 0, "index", context));
+  EXPECT_TRUE(ValidateIndex(context, 1, 3, "index"));
+  EXPECT_FALSE(ValidateIndex(context, 3, 3, "index"));
+  EXPECT_FALSE(ValidateIndex(context, 0, 0, "index"));
 }
 
 TEST(ValidateTest, Limits) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_TRUE(Validate(Limits{0}, 10, context));
-  EXPECT_TRUE(Validate(Limits{9, 10}, 10, context));
+  EXPECT_TRUE(Validate(context, Limits{0}, 10));
+  EXPECT_TRUE(Validate(context, Limits{9, 10}, 10));
 }
 
 TEST(ValidateTest, Limits_Invalid) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_FALSE(Validate(Limits{11}, 10, context));
-  EXPECT_FALSE(Validate(Limits{9, 11}, 10, context));
-  EXPECT_FALSE(Validate(Limits{5, 3}, 10, context));
+  EXPECT_FALSE(Validate(context, Limits{11}, 10));
+  EXPECT_FALSE(Validate(context, Limits{9, 11}, 10));
+  EXPECT_FALSE(Validate(context, Limits{5, 3}, 10));
 }
 
 TEST(ValidateTest, Memory) {
@@ -792,7 +786,7 @@ TEST(ValidateTest, Memory) {
   for (const auto& memory : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_TRUE(Validate(memory, context));
+    EXPECT_TRUE(Validate(context, memory));
   }
 }
 
@@ -800,7 +794,7 @@ TEST(ValidateTest, Memory_TooManyMemories) {
   TestErrors errors;
   Context context{errors};
   context.memories.push_back(MemoryType{Limits{0}});
-  EXPECT_FALSE(Validate(Memory{MemoryType{Limits{0}}}, context));
+  EXPECT_FALSE(Validate(context, Memory{MemoryType{Limits{0}}}));
 }
 
 TEST(ValidateTest, MemoryType) {
@@ -815,7 +809,7 @@ TEST(ValidateTest, MemoryType) {
   for (const auto& memory_type : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_TRUE(Validate(memory_type, context));
+    EXPECT_TRUE(Validate(context, memory_type));
   }
 }
 
@@ -829,14 +823,14 @@ TEST(ValidateTest, MemoryType_TooLarge) {
   for (const auto& memory_type : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_FALSE(Validate(memory_type, context));
+    EXPECT_FALSE(Validate(context, memory_type));
   }
 }
 
 TEST(ValidateTest, MemoryType_Shared_MVP) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_FALSE(Validate(MemoryType{Limits{0, 100, Shared::Yes}}, context));
+  EXPECT_FALSE(Validate(context, MemoryType{Limits{0, 100, Shared::Yes}}));
 }
 
 TEST(ValidateTest, MemoryType_Shared_Threads) {
@@ -844,7 +838,7 @@ TEST(ValidateTest, MemoryType_Shared_Threads) {
   features.enable_threads();
   TestErrors errors;
   Context context{features, errors};
-  EXPECT_TRUE(Validate(MemoryType{Limits{0, 100, Shared::Yes}}, context));
+  EXPECT_TRUE(Validate(context, MemoryType{Limits{0, 100, Shared::Yes}}));
 }
 
 TEST(ValidateTest, Start) {
@@ -852,13 +846,13 @@ TEST(ValidateTest, Start) {
   Context context{errors};
   context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{0});
-  EXPECT_TRUE(Validate(Start{0}, context));
+  EXPECT_TRUE(Validate(context, Start{0}));
 }
 
 TEST(ValidateTest, Start_FunctionIndexOOB) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_FALSE(Validate(Start{0}, context));
+  EXPECT_FALSE(Validate(context, Start{0}));
 }
 
 TEST(ValidateTest, Start_InvalidParamCount) {
@@ -867,7 +861,7 @@ TEST(ValidateTest, Start_InvalidParamCount) {
   Context context{errors};
   context.types.push_back(TypeEntry{function_type});
   context.functions.push_back(Function{0});
-  EXPECT_FALSE(Validate(Start{0}, context));
+  EXPECT_FALSE(Validate(context, Start{0}));
 }
 
 TEST(ValidateTest, Start_InvalidResultCount) {
@@ -876,7 +870,7 @@ TEST(ValidateTest, Start_InvalidResultCount) {
   const FunctionType function_type{{}, {ValueType::I32}};
   context.types.push_back(TypeEntry{function_type});
   context.functions.push_back(Function{0});
-  EXPECT_FALSE(Validate(Start{0}, context));
+  EXPECT_FALSE(Validate(context, Start{0}));
 }
 
 TEST(ValidateTest, Table) {
@@ -888,7 +882,7 @@ TEST(ValidateTest, Table) {
   for (const auto& table : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_TRUE(Validate(table, context));
+    EXPECT_TRUE(Validate(context, table));
   }
 }
 
@@ -897,7 +891,7 @@ TEST(ValidateTest, Table_TooManyTables) {
   Context context{errors};
   const TableType table_type{Limits{0}, ReferenceType::Funcref};
   context.tables.push_back(table_type);
-  EXPECT_FALSE(Validate(Table{table_type}, context));
+  EXPECT_FALSE(Validate(context, Table{table_type}));
 }
 
 TEST(ValidateTest, TableType) {
@@ -911,7 +905,7 @@ TEST(ValidateTest, TableType) {
   for (const auto& table_type : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_TRUE(Validate(table_type, context));
+    EXPECT_TRUE(Validate(context, table_type));
   }
 }
 
@@ -919,13 +913,13 @@ TEST(ValidateTest, TableType_Shared) {
   TestErrors errors;
   Context context{errors};
   EXPECT_FALSE(Validate(
-      TableType{Limits{0, 100, Shared::Yes}, ReferenceType::Funcref}, context));
+      context, TableType{Limits{0, 100, Shared::Yes}, ReferenceType::Funcref}));
 }
 
 TEST(ValidateTest, TypeEntry) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_TRUE(Validate(TypeEntry{FunctionType{}}, context));
+  EXPECT_TRUE(Validate(context, TypeEntry{FunctionType{}}));
 }
 
 TEST(ValidateTest, ValueType) {
@@ -937,7 +931,7 @@ TEST(ValidateTest, ValueType) {
   for (auto value_type : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_TRUE(Validate(value_type, value_type, context));
+    EXPECT_TRUE(Validate(context, value_type, value_type));
   }
 }
 
@@ -954,7 +948,7 @@ TEST(ValidateTest, ValueType_Mismatch) {
       }
       TestErrors errors;
       Context context{errors};
-      EXPECT_FALSE(Validate(value_type1, value_type2, context));
+      EXPECT_FALSE(Validate(context, value_type1, value_type2));
     }
   }
 }
@@ -999,5 +993,5 @@ TEST(ValidateTest, Module) {
       Index{0}, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
       "hi"_su8});
 
-  EXPECT_TRUE(Validate(module, context));
+  EXPECT_TRUE(Validate(context, module));
 }

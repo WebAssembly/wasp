@@ -33,73 +33,45 @@ enum class ConstantExpressionKind {
 
 struct Context;
 
-bool Validate(const At<binary::Code>&, Context&, Errors& read_errors);
-bool Validate(const At<binary::Code>&, Context&);
-
-bool Validate(const At<binary::DataSegment>&, Context&);
-
-bool Validate(const At<binary::ConstantExpression>&,
+bool Validate(Context&, const At<binary::Code>&, Errors& read_errors);
+bool Validate(Context&, const At<binary::Code>&);
+bool Validate(Context&, const At<binary::DataSegment>&);
+bool Validate(Context&,
+              const At<binary::ConstantExpression>&,
               ConstantExpressionKind kind,
               ValueType expected_type,
-              Index max_global_index,
-              Context&);
-
-bool Validate(const At<binary::DataCount>&, Context&);
-
-bool Validate(const At<binary::DataSegment>&, Context&);
-
-bool Validate(const At<binary::ElementExpression>&, ReferenceType, Context&);
-
-bool Validate(const At<binary::ElementSegment>&, Context&);
-
-bool Validate(const At<ReferenceType>& actual,
-              ReferenceType expected,
-              Context&);
-
-bool Validate(const At<binary::Export>&, Context&);
-
-bool Validate(const At<binary::Event>&, Context&);
-
-bool Validate(const At<binary::EventType>&, Context&);
-
-bool Validate(const At<binary::Function>&, Context&);
-
-bool Validate(const At<binary::FunctionType>&, Context&);
-
-bool Validate(const At<binary::Global>&, Context&);
-
-bool Validate(const At<GlobalType>&, Context&);
-
-bool Validate(const At<binary::Import>&, Context&);
-
-bool ValidateIndex(const At<Index>& index,
+              Index max_global_index);
+bool Validate(Context&, const At<binary::DataCount>&);
+bool Validate(Context&, const At<binary::DataSegment>&);
+bool Validate(Context&, const At<binary::ElementExpression>&, ReferenceType);
+bool Validate(Context&, const At<binary::ElementSegment>&);
+bool Validate(Context&,
+              const At<ReferenceType>& actual,
+              ReferenceType expected);
+bool Validate(Context&, const At<binary::Export>&);
+bool Validate(Context&, const At<binary::Event>&);
+bool Validate(Context&, const At<binary::EventType>&);
+bool Validate(Context&, const At<binary::Function>&);
+bool Validate(Context&, const At<binary::FunctionType>&);
+bool Validate(Context&, const At<binary::Global>&);
+bool Validate(Context&, const At<GlobalType>&);
+bool Validate(Context&, const At<binary::Import>&);
+bool ValidateIndex(Context&,
+                   const At<Index>& index,
                    Index max,
-                   string_view desc,
-                   Context&);
-
-bool Validate(const At<binary::Instruction>&, Context&);
-
-bool Validate(const At<Limits>&, Index max, Context&);
-
-bool Validate(const At<binary::Locals>&, Context&);
-
-bool Validate(const At<binary::Memory>&, Context&);
-
-bool Validate(const At<MemoryType>&, Context&);
-
-bool Validate(const At<binary::Start>& value, Context& context);
-
-bool Validate(const At<binary::Table>&, Context&);
-
-bool Validate(const At<TableType>&, Context&);
-
-bool Validate(const At<binary::TypeEntry>&, Context&);
-
-bool Validate(const At<ValueType>& actual, ValueType expected, Context&);
-
+                   string_view desc);
+bool Validate(Context&, const At<binary::Instruction>&);
+bool Validate(Context&, const At<Limits>&, Index max);
+bool Validate(Context&, const At<binary::Locals>&);
+bool Validate(Context&, const At<binary::Memory>&);
+bool Validate(Context&, const At<MemoryType>&);
+bool Validate(Context&, const At<binary::Start>& value);
+bool Validate(Context&, const At<binary::Table>&);
+bool Validate(Context&, const At<TableType>&);
+bool Validate(Context&, const At<binary::TypeEntry>&);
+bool Validate(Context&, const At<ValueType>& actual, ValueType expected);
 bool EndModule(Context&);
-
-bool Validate(const binary::Module&, Context&);
+bool Validate(Context&, const binary::Module&);
 
 }  // namespace valid
 }  // namespace wasp
