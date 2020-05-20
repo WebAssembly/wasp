@@ -92,7 +92,6 @@ struct Visitor {
   // Section 10.
   Result BeginCodeSection(LazyCodeSection) { return Result::Ok; }
   Result OnCode(const At<Code>&) { return Result::Ok; }
-  Result OnInstruction(const At<Instruction>&) { return Result::Ok; }
   Result EndCodeSection(LazyCodeSection) { return Result::Ok; }
 
   // Section 11.
@@ -188,26 +187,7 @@ inline Result Visit(LazyModule& module, Visitor& visitor) {
         WASP_OPT_SECTION(Start)
         WASP_SECTION(Element)
         WASP_OPT_SECTION(DataCount)
-
-        // Special case for Code section, to provide Instruction callback.
-        case SectionId::Code: {
-          auto sec = ReadCodeSection(known, module.context);
-          auto res = visitor.BeginCodeSection(sec);
-          if (res == Result::Ok) {
-            for (const auto& item : sec.sequence) {
-              WASP_CHECK(visitor.OnCode(item));
-              for (const auto& instruction :
-                   ReadExpression(item->body, module.context)) {
-                WASP_CHECK(visitor.OnInstruction(instruction));
-              }
-            }
-            WASP_CHECK(visitor.EndCodeSection(sec));
-          } else if (res == Result::Fail) {
-            return Result::Fail;
-          }
-          break;
-        }
-
+        WASP_SECTION(Code)
         WASP_SECTION(Data)
         default: break;
       }

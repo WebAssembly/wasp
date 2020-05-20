@@ -61,7 +61,6 @@ const u8 kTestModule[] = {
 const int kSectionCount = 11;
 const int kTypeCount = 3;
 const int kFunctionCount = 2;
-const int kInstructionCount = 3;
 
 struct VisitorMock {
   MOCK_METHOD1(BeginModule, visit::Result(LazyModule&));
@@ -102,7 +101,6 @@ struct VisitorMock {
   MOCK_METHOD1(EndDataCountSection, visit::Result(DataCountSection));
   MOCK_METHOD1(BeginCodeSection, visit::Result(LazyCodeSection));
   MOCK_METHOD1(OnCode, visit::Result(const At<Code>&));
-  MOCK_METHOD1(OnInstruction, visit::Result(const At<Instruction>&));
   MOCK_METHOD1(EndCodeSection, visit::Result(LazyCodeSection));
   MOCK_METHOD1(BeginDataSection, visit::Result(LazyDataSection));
   MOCK_METHOD1(OnData, visit::Result(const At<DataSegment>&));
@@ -180,9 +178,6 @@ TEST_F(BinaryVisitorTest, AllOk) {
   EXPECT_CALL(v, BeginCodeSection(_)).WillOnce(Return(Result::Ok));
   EXPECT_CALL(v, OnCode(_))
       .Times(kFunctionCount)
-      .WillRepeatedly(Return(Result::Ok));
-  EXPECT_CALL(v, OnInstruction(_))
-      .Times(kInstructionCount)
       .WillRepeatedly(Return(Result::Ok));
   EXPECT_CALL(v, EndCodeSection(_)).WillOnce(Return(Result::Ok));
 
