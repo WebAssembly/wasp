@@ -45,7 +45,7 @@ struct NameMap {
   void NewBound(BindVar);
   void ReplaceBound(BindVar);
   void New(OptAt<BindVar>);
-  void Delete(BindVar);
+  void PopBack(OptAt<BindVar>);
 
   bool Has(BindVar) const;
   Index Get(BindVar) const;

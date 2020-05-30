@@ -395,6 +395,30 @@ TEST_F(TextResolveTest, InstructionList_LabelReuse) {
       });
 }
 
+TEST_F(TextResolveTest, InstructionList_EndBlock) {
+  context.function_type_map.Define(BoundFunctionType{});
+
+  OK(
+      InstructionList{
+          I{O::Block, BlockImmediate{"$outer"_sv, {}}},
+          I{O::Block, BlockImmediate{"$inner"_sv, {}}},
+          I{O::Br, Var{Index{0}}},
+          I{O::Br, Var{Index{1}}},
+          I{O::End},
+          I{O::Br, Var{Index{0}}},
+          I{O::End},
+      },
+      InstructionList{
+          I{O::Block, BlockImmediate{"$outer"_sv, {}}},
+          I{O::Block, BlockImmediate{"$inner"_sv, {}}},
+          I{O::Br, Var{"$inner"_sv}},
+          I{O::Br, Var{"$outer"_sv}},
+          I{O::End},
+          I{O::Br, Var{"$outer"_sv}},
+          I{O::End},
+      });
+}
+
 TEST_F(TextResolveTest, FunctionDesc) {
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(

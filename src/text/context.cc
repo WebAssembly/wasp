@@ -53,10 +53,7 @@ void Context::BeginFunction() {
 
 void Context::EndBlock() {
   assert(!label_name_stack.empty());
-  auto name_opt = label_name_stack.back();
-  if (name_opt) {
-    label_names.Delete(*name_opt);
-  }
+  label_names.PopBack(label_name_stack.back());
   label_name_stack.pop_back();
 }
 
@@ -92,8 +89,11 @@ void NameMap::New(OptAt<BindVar> var) {
   }
 }
 
-void NameMap::Delete(BindVar var) {
-  map_.erase(var);
+void NameMap::PopBack(OptAt<BindVar> var) {
+  if (var) {
+    map_.erase(*var);
+  }
+  next_index_--;
 }
 
 bool NameMap::Has(BindVar var) const {
