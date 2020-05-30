@@ -291,6 +291,14 @@ TEST_F(TextResolveTest, Instruction_InitImmediate_Table) {
      I{O::TableInit, InitImmediate{Var{"$e"_sv}, Var{"$t"_sv}}});
 }
 
+TEST_F(TextResolveTest, Instruction_InitImmediate_Memory) {
+  context.data_segment_names.NewBound("$d");
+  context.memory_names.NewBound("$m");
+
+  OK(I{O::MemoryInit, InitImmediate{Var{Index{0}}, Var{Index{0}}}},
+     I{O::MemoryInit, InitImmediate{Var{"$d"_sv}, Var{"$m"_sv}}});
+}
+
 TEST_F(TextResolveTest, Instruction_Var_Function) {
   context.function_names.NewBound("$f");
 
@@ -331,7 +339,6 @@ TEST_F(TextResolveTest, Instruction_Var_Element) {
 TEST_F(TextResolveTest, Instruction_Var_Data) {
   context.data_segment_names.NewBound("$d");
 
-  OK(I{O::MemoryInit, Var{Index{0}}}, I{O::MemoryInit, Var{"$d"_sv}});
   OK(I{O::DataDrop, Var{Index{0}}}, I{O::DataDrop, Var{"$d"_sv}});
 }
 

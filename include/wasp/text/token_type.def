@@ -85,6 +85,8 @@ WASP_V(F64ConstInstr)      // "f64.const"
 WASP_V(I32ConstInstr)      // "i32.const"
 WASP_V(I64ConstInstr)      // "i64.const"
 WASP_V(MemoryInstr)        // "i32.load", "i64.atomic.rmw8.add_u", etc.
+WASP_V(MemoryCopyInstr)    // "memory.copy"
+WASP_V(MemoryInitInstr)    // "memory.init"
 WASP_V(RefFuncInstr)       // "ref.func"
 WASP_V(RefIsNullInstr)     // "ref.is_null"
 WASP_V(RefNullInstr)       // "ref.null"

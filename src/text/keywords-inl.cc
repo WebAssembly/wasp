@@ -1484,9 +1484,9 @@ switch (PeekChar(data, 2)) {
               default: break;
             }
             break;
-          case 't': return LexKeyword(data, "memory.init", TokenType::VarInstr, Opcode::MemoryInit, Features::BulkMemory);
+          case 't': return LexKeyword(data, "memory.init", TokenType::MemoryInitInstr, Opcode::MemoryInit, Features::BulkMemory);
           case 'w': return LexKeyword(data, "memory.grow", Opcode::MemoryGrow);
-          case 'y': return LexKeyword(data, "memory.copy", Opcode::MemoryCopy, Features::BulkMemory);
+          case 'y': return LexKeyword(data, "memory.copy", TokenType::MemoryCopyInstr, Opcode::MemoryCopy, Features::BulkMemory);
           default: break;
         }
         break;

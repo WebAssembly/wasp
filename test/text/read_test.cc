@@ -759,6 +759,30 @@ TEST_F(TextReadTest, PlainInstruction_Shuffle) {
      "v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8);
 }
 
+TEST_F(TextReadTest, PlainInstruction_MemoryCopy) {
+  Fail(ReadPlainInstruction, {{0, "memory.copy instruction not allowed"}},
+       "memory.copy"_su8);
+
+  // memory.copy w/o dst and src.
+  context.features.enable_bulk_memory();
+  OK(ReadPlainInstruction,
+     I{MakeAt("memory.copy"_su8, O::MemoryCopy), MakeAt(CopyImmediate{})},
+     "memory.copy"_su8);
+}
+
+TEST_F(TextReadTest, PlainInstruction_MemoryInit) {
+  Fail(ReadPlainInstruction, {{0, "memory.init instruction not allowed"}},
+       "memory.init 0"_su8);
+
+  context.features.enable_bulk_memory();
+
+  // memory.init w/ just segment index.
+  OK(ReadPlainInstruction,
+     I{MakeAt("memory.init"_su8, O::MemoryInit),
+       MakeAt("2"_su8, InitImmediate{MakeAt("2"_su8, Var{Index{2}}), nullopt})},
+     "memory.init 2"_su8);
+}
+
 TEST_F(TextReadTest, PlainInstruction_TableCopy) {
   Fail(ReadPlainInstruction, {{0, "table.copy instruction not allowed"}},
        "table.copy"_su8);

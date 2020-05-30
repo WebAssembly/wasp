@@ -253,10 +253,16 @@ void Resolve(Context& context, Instruction& instruction) {
       }
     }
 
-    case 12: // InitImmediate
-      return Resolve(context, context.element_segment_names,
-                     context.table_names,
-                     get<At<InitImmediate>>(instruction.immediate).value());
+    case 12: { // InitImmediate
+      auto& immediate = get<At<InitImmediate>>(instruction.immediate);
+      if (instruction.opcode == Opcode::MemoryInit) {
+        return Resolve(context, context.data_segment_names,
+                       context.memory_names, immediate.value());
+      } else {
+        return Resolve(context, context.element_segment_names,
+                       context.table_names, immediate.value());
+      }
+    }
 
     default:
       break;

@@ -1056,6 +1056,8 @@ bool IsPlainInstruction(Token token) {
     case TokenType::I32ConstInstr:
     case TokenType::I64ConstInstr:
     case TokenType::MemoryInstr:
+    case TokenType::MemoryCopyInstr:
+    case TokenType::MemoryInitInstr:
     case TokenType::RefFuncInstr:
     case TokenType::RefIsNullInstr:
     case TokenType::RefNullInstr:
@@ -1193,6 +1195,21 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       auto align_opt = ReadAlignOpt(tokenizer, context);
       auto immediate =
           MakeAt(immediate_guard.loc(), MemArgImmediate{align_opt, offset_opt});
+      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+    }
+
+    case TokenType::MemoryCopyInstr:
+      CheckOpcodeEnabled(token, context);
+      tokenizer.Read();
+      return MakeAt(guard.loc(), Instruction{token.opcode(), CopyImmediate{}});
+
+    case TokenType::MemoryInitInstr: {
+      CheckOpcodeEnabled(token, context);
+      tokenizer.Read();
+      LocationGuard immediate_guard{tokenizer};
+      auto segment_var = ReadVar(tokenizer, context);
+      auto immediate =
+          MakeAt(immediate_guard.loc(), InitImmediate{segment_var, nullopt});
       return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
     }
 
