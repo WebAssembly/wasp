@@ -23,9 +23,9 @@
 namespace wasp {
 namespace tools {
 
-void BinaryErrors::PrintTo(std::ostream& file) {
+void BinaryErrors::PrintTo(std::ostream& os) {
   for (const auto& error : errors) {
-    file << ErrorToString(error);
+    os << ErrorToString(error);
   }
 }
 
@@ -37,7 +37,7 @@ void BinaryErrors::HandleOnError(Location loc, string_view message) {
   errors.push_back(Error{loc, std::string(message)});
 }
 
-std::string BinaryErrors::ErrorToString(const Error& error) const {
+auto BinaryErrors::ErrorToString(const Error& error) const -> std::string {
   auto& loc = error.loc;
   const ptrdiff_t before = 4, after = 8, max_size = 32;
   size_t start = std::max(before, loc.begin() - data.begin()) - before;

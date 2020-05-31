@@ -29,13 +29,11 @@ namespace tools {
 TextErrors::TextErrors(string_view filename, SpanU8 data)
     : filename{filename}, data{data} {}
 
-void TextErrors::Print() {
+void TextErrors::PrintTo(std::ostream& os) const {
   if (has_error()) {
     CalculateLineNumbers();
     for (const auto& error : errors) {
-      auto offset = error.loc.data() - data.data();
-      auto [line, column] = GetLineColumn(offset);
-      print(std::cerr, "{}:{}:{}: {}\n", filename, line, column, error.message);
+      os << ErrorToString(error);
     }
   }
 }
@@ -52,7 +50,7 @@ void TextErrors::HandleOnError(Location loc, string_view message) {
   errors.push_back(Error{loc, std::string{message}});
 }
 
-void TextErrors::CalculateLineNumbers() {
+void TextErrors::CalculateLineNumbers() const {
   if (!line_offsets.empty()) {
     return;
   }
@@ -65,9 +63,16 @@ void TextErrors::CalculateLineNumbers() {
   }
 }
 
-auto TextErrors::GetLineColumn(Offset offset) -> std::pair<Line, Column> {
+auto TextErrors::GetLineRange(Line line) const -> std::pair<Offset, Offset> {
+  Offset data_size = data.end() - data.begin();
+  Offset start = line > 0 ? line_offsets[line - 1] : 0;
+  Offset end = line < line_offsets.size() ? line_offsets[line] - 1 : data_size;
+  return std::pair(start, end);
+}
+
+auto TextErrors::GetLineColumn(Offset offset) const -> std::pair<Line, Column> {
   auto iter =
-      std::lower_bound(line_offsets.begin(), line_offsets.end(), offset);
+      std::upper_bound(line_offsets.begin(), line_offsets.end(), offset);
   Line line;
   Column column;
   if (iter == line_offsets.begin()) {
@@ -80,6 +85,46 @@ auto TextErrors::GetLineColumn(Offset offset) -> std::pair<Line, Column> {
   }
 
   return std::pair(line, column);
+}
+
+auto TextErrors::ErrorToString(const Error& error) const -> std::string {
+  auto& loc = error.loc;
+  Offset loc_start = loc.begin() - data.data();
+  Offset loc_end = loc.end() - data.data();
+  auto [line, column] = GetLineColumn(loc_start);
+
+  const ptrdiff_t before = 4, max_size = 80;
+  auto [line_start, line_end] = GetLineRange(line);
+
+  if (line_end - line_start > max_size) {
+    if (line_end - loc_start <= max_size) {  // Near the end of the line.
+      line_start = line_end - max_size;
+    } else if (loc_end - line_start <= max_size) {  // Near the beginning.
+      line_end = line_start + max_size;
+    } else {  // Somewhere in the middle.
+      line_start = loc_start - before;
+      line_end = line_start + max_size;
+    }
+  }
+
+  // TODO: Move this somewhere so it can be reused.
+  auto clamp = [](const auto& min, const auto& val, const auto& max) {
+    if (val < min) return min;
+    if (val > max) return max;
+    return val;
+  };
+
+  loc_start = clamp(line_start, loc_start, line_end);
+  loc_end = clamp(line_start, loc_end, line_end);
+
+  Location context = {data.begin() + line_start, data.begin() + line_end};
+  string_view line1 = ToStringView(context);
+  std::string line2 = std::string(loc_start - line_start, ' ') +
+                      std::string(loc_end - loc_start, '^') +
+                      std::string(line_end - loc_end, ' ');
+
+  return format("{}:{}:{}: {}\n{}\n{}\n", filename, line, column, error.message,
+                line1, line2);
 }
 
 }  // namespace tools

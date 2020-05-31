@@ -122,7 +122,7 @@ void DoFile(const fs::path& path, const Features& features) {
   auto script = ReadScript(tokenizer, context);
 
   if (errors.has_error()) {
-    errors.Print();
+    errors.PrintTo(std::cerr);
   }
 
   if (s_print_text) {

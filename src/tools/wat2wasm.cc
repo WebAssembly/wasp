@@ -123,7 +123,7 @@ int Tool::Run() {
   Desugar(text_module);
 
   if (errors.has_error()) {
-    errors.Print();
+    errors.PrintTo(std::cerr);
     return 1;
   }
 
@@ -135,7 +135,7 @@ int Tool::Run() {
     Validate(validate_context, binary_module);
 
     if (errors.has_error()) {
-      errors.Print();
+      errors.PrintTo(std::cerr);
       return 1;
     }
   }

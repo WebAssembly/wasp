@@ -33,16 +33,15 @@ class BinaryErrors : public Errors {
  public:
   explicit BinaryErrors(SpanU8 data) : data{data} {}
 
-  void PrintTo(std::ostream&);
-
   bool has_error() const { return !errors.empty(); }
+  void PrintTo(std::ostream&);
 
  protected:
   void HandlePushContext(Location loc, string_view desc) override;
   void HandlePopContext() override;
   void HandleOnError(Location loc, string_view message) override;
 
-  std::string ErrorToString(const Error&) const;
+  auto ErrorToString(const Error&) const -> std::string;
 
   SpanU8 data;
   std::vector<Error> errors;

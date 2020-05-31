@@ -36,7 +36,7 @@ class TextErrors : public Errors {
 
   explicit TextErrors(string_view filename, SpanU8 data);
 
-  void Print();
+  void PrintTo(std::ostream&) const;
   bool has_error() const;
 
  protected:
@@ -44,13 +44,15 @@ class TextErrors : public Errors {
   void HandlePopContext() override;
   void HandleOnError(Location, string_view message) override;
 
-  void CalculateLineNumbers();
-  auto GetLineColumn(Offset) -> std::pair<Line, Column>;
+  void CalculateLineNumbers() const;
+  auto GetLineRange(Line) const -> std::pair<Offset, Offset>;
+  auto GetLineColumn(Offset) const -> std::pair<Line, Column>;
+  auto ErrorToString(const Error&) const -> std::string;
 
-  string_view filename;
+  std::string filename;
   SpanU8 data;
   std::vector<Error> errors;
-  std::vector<Offset> line_offsets;
+  mutable std::vector<Offset> line_offsets;
 };
 
 }  // namespace tools
