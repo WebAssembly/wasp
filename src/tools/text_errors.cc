@@ -18,6 +18,7 @@
 #include "src/tools/text_errors.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "wasp/base/enumerate.h"
 #include "wasp/base/format.h"
@@ -34,7 +35,7 @@ void TextErrors::Print() {
     for (const auto& error : errors) {
       auto offset = error.loc.data() - data.data();
       auto [line, column] = GetLineColumn(offset);
-      print(stderr, "{}:{}:{}: {}\n", filename, line, column, error.message);
+      print(std::cerr, "{}:{}:{}: {}\n", filename, line, column, error.message);
     }
   }
 }

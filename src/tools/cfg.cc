@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "src/tools/argparser.h"
+#include "src/tools/binary_errors.h"
 #include "wasp/base/enumerate.h"
-#include "wasp/base/errors_nop.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/format.h"
@@ -95,7 +95,7 @@ struct Tool {
   void AddSuccessor(BBID, BBID, const std::string& name = std::string{});
   void Br(Index, const std::string& name = std::string{});
 
-  ErrorsNop errors;
+  BinaryErrors errors;
   Options options;
   LazyModule module;
   std::map<string_view, Index> name_to_function;
@@ -123,45 +123,49 @@ int Main(span<string_view> args) {
         if (filename.empty()) {
           filename = arg;
         } else {
-          print(stderr, "Filename already given\n");
+          print(std::cerr, "Filename already given\n");
         }
       });
   parser.Parse(args);
 
   if (filename.empty()) {
-    print(stderr, "No filename given.\n");
+    print(std::cerr, "No filename given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   if (options.function.empty()) {
-    print(stderr, "No function given.\n");
+    print(std::cerr, "No function given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   auto optbuf = ReadFile(filename);
   if (!optbuf) {
-    print(stderr, "Error reading file {}.\n", filename);
+    print(std::cerr, "Error reading file {}.\n", filename);
     return 1;
   }
 
   SpanU8 data{*optbuf};
   Tool tool{data, options};
-  return tool.Run();
+  int result = tool.Run();
+  tool.errors.PrintTo(std::cerr);
+  return result;
 }
 
 Tool::Tool(SpanU8 data, Options options)
-    : options{options}, module{ReadModule(data, options.features, errors)} {}
+    : errors{data},
+      options{options},
+      module{ReadModule(data, options.features, errors)} {}
 
 int Tool::Run() {
   DoPrepass();
   auto index_opt = GetFunctionIndex();
   if (!index_opt) {
-    print(stderr, "Unknown function {}\n", options.function);
+    print(std::cerr, "Unknown function {}\n", options.function);
     return 1;
   }
   auto code_opt = GetCode(*index_opt);
   if (!code_opt) {
-    print(stderr, "Invalid function index {}\n", *index_opt);
+    print(std::cerr, "Invalid function index {}\n", *index_opt);
     return 1;
   }
   CalculateCFG(*code_opt);
@@ -500,7 +504,7 @@ void Tool::Br(Index index, const std::string& name) {
   if (index < labels.size()) {
     AddSuccessor(labels[labels.size() - index - 1].br, name);
   } else {
-    print(stderr, "Invalid branch depth: {}\n", index);
+    print(std::cerr, "Invalid branch depth: {}\n", index);
   }
 }
 

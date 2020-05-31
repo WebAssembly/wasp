@@ -16,13 +16,14 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
 
 #include "src/tools/argparser.h"
+#include "src/tools/binary_errors.h"
 #include "wasp/base/enumerate.h"
-#include "wasp/base/errors.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/formatters.h"
@@ -51,20 +52,6 @@ enum class Pass {
   Details,
   Disassemble,
   RawData,
-};
-
-class ErrorsBasic : public Errors {
- public:
-  explicit ErrorsBasic(SpanU8 data) : data{data} {}
-
- protected:
-  void HandlePushContext(SpanU8 pos, string_view desc) override {}
-  void HandlePopContext() override {}
-  void HandleOnError(SpanU8 pos, string_view message) override {
-    print(stderr, "{:08x}: {}\n", pos.data() - data.data(), message);
-  }
-
-  SpanU8 data;
 };
 
 struct Options {
@@ -187,7 +174,7 @@ struct Tool {
   std::string filename;
   Options options;
   SpanU8 data;
-  ErrorsBasic errors;
+  BinaryErrors errors;
   LazyModule module;
   std::vector<TypeEntry> type_entries;
   std::vector<Function> functions;
@@ -235,30 +222,31 @@ int Main(span<string_view> args) {
   parser.Parse(args);
 
   if (filenames.empty()) {
-    print(stderr, "No filenames given.\n");
+    print(std::cerr, "No filenames given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   if (!(options.print_headers || options.print_disassembly ||
         options.print_details || options.print_raw_data)) {
-    print(stderr, "At least one of the following switches must be given:\n");
-    print(stderr, " -d/--disassemble\n");
-    print(stderr, " -h/--headers\n");
-    print(stderr, " -x/--details\n");
-    print(stderr, " -s/--full-contents\n");
+    print(std::cerr, "At least one of the following switches must be given:\n");
+    print(std::cerr, " -d/--disassemble\n");
+    print(std::cerr, " -h/--headers\n");
+    print(std::cerr, " -x/--details\n");
+    print(std::cerr, " -s/--full-contents\n");
     parser.PrintHelpAndExit(1);
   }
 
   for (auto filename : filenames) {
     auto optbuf = ReadFile(filename);
     if (!optbuf) {
-      print(stderr, "Error reading file {}.\n", filename);
+      print(std::cerr, "Error reading file {}.\n", filename);
       continue;
     }
 
     SpanU8 data{*optbuf};
     Tool tool{filename, data, options};
     tool.Run();
+    tool.errors.PrintTo(std::cerr);
   }
 
   return 0;
@@ -283,7 +271,7 @@ void Tool::Run() {
   if (options.function && !options.func_index) {
     options.func_index = StrToU32(*options.function);
     if (!options.func_index) {
-      print(stderr, "unknown function {}\n", *options.function);
+      print(std::cerr, "unknown function {}\n", *options.function);
       return;
     }
   }

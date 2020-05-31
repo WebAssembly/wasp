@@ -15,6 +15,7 @@
 //
 
 #include <algorithm>
+#include <iostream>
 #include <map>
 
 #include "src/tools/argparser.h"
@@ -25,7 +26,6 @@
 #include "src/tools/pattern.h"
 #include "src/tools/validate.h"
 #include "src/tools/wat2wasm.h"
-
 #include "wasp/base/enumerate.h"
 #include "wasp/base/format.h"
 #include "wasp/base/formatters.h"
@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
       .Add("<command>", "command", [&](string_view arg) {
         auto iter = commands.find(arg);
         if (iter == commands.end()) {
-          print(stderr, "Unknown command `{}`\n", arg);
+          print(std::cerr, "Unknown command `{}`\n", arg);
           PrintHelp(1);
         } else {
           exit(iter->second(parser.RestOfArgs()));
@@ -68,15 +68,15 @@ int main(int argc, char** argv) {
 }
 
 void PrintHelp(int errcode) {
-  print(stderr, "usage: wasp <command> [<options>]\n");
-  print(stderr, "\n");
-  print(stderr, "commands:\n");
-  print(stderr, "  dump        Dump the contents of a WebAssembly file.\n");
-  print(stderr, "  callgraph   Generate DOT file for the function call graph.\n");
-  print(stderr, "  cfg         Generate DOT file of a function's control flow graph.\n");
-  print(stderr, "  dfg         Generate DOT file of a function's data flow graph.\n");
-  print(stderr, "  validate    Validate a WebAssembly file.\n");
-  print(stderr, "  pattern     Find common instruction sequences.\n");
-  print(stderr, "  wat2wasm    Convert a WebAssembly text file to binary.\n");
+  print(std::cerr, "usage: wasp <command> [<options>]\n");
+  print(std::cerr, "\n");
+  print(std::cerr, "commands:\n");
+  print(std::cerr, "  dump        Dump the contents of a WebAssembly file.\n");
+  print(std::cerr, "  callgraph   Generate DOT file for the function call graph.\n");
+  print(std::cerr, "  cfg         Generate DOT file of a function's control flow graph.\n");
+  print(std::cerr, "  dfg         Generate DOT file of a function's data flow graph.\n");
+  print(std::cerr, "  validate    Validate a WebAssembly file.\n");
+  print(std::cerr, "  pattern     Find common instruction sequences.\n");
+  print(std::cerr, "  wat2wasm    Convert a WebAssembly text file to binary.\n");
   exit(errcode);
 }

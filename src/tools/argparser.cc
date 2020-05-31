@@ -14,10 +14,10 @@
 // limitations under the License.
 //
 
-#include <algorithm>
-#include <cstdio>
-
 #include "src/tools/argparser.h"
+
+#include <algorithm>
+#include <iostream>
 
 #include "wasp/base/format.h"
 
@@ -92,7 +92,7 @@ void ArgParser::Parse(span<string_view> args) {
         if (index_ + 1 < args.size()) {
           get<ParamCallback>(option.callback)(args[++index_]);
         } else {
-          print(stderr, "Argument `{}` requires parameter\n.", arg);
+          print(std::cerr, "Argument `{}` requires parameter\n.", arg);
         }
         return true;
       } else {
@@ -105,13 +105,13 @@ void ArgParser::Parse(span<string_view> args) {
       if (auto option = FindLongOption(arg)) {
         call(*option);
       } else {
-        print(stderr, "Unknown long argument `{}`.\n", arg);
+        print(std::cerr, "Unknown long argument `{}`.\n", arg);
       }
     } else if (arg[0] == '-') {
       optional<char> prev_arg_with_param;
       for (auto c : arg.substr(1)) {
         if (prev_arg_with_param) {
-          print(stderr,
+          print(std::cerr,
                 "Argument `-{}` ignored since it follows `-{}` which has a "
                 "parameter.\n",
                 c, *prev_arg_with_param);
@@ -125,7 +125,7 @@ void ArgParser::Parse(span<string_view> args) {
             prev_arg_with_param = c;
           }
         } else {
-          print(stderr, "Unknown short argument `-{}`.\n", c);
+          print(std::cerr, "Unknown short argument `-{}`.\n", c);
         }
       }
     } else {
@@ -133,7 +133,7 @@ void ArgParser::Parse(span<string_view> args) {
         --index_;  // Back up so call reads arg as the parameter.
         call(*option);
       } else {
-        print(stderr, "Unexpected bare argument `{}`.\n", arg);
+        print(std::cerr, "Unexpected bare argument `{}`.\n", arg);
       }
     }
   }
@@ -190,7 +190,7 @@ std::string ArgParser::GetHelpString() const {
 }
 
 void ArgParser::PrintHelpAndExit(int errcode) {
-  print(stderr, GetHelpString());
+  print(std::cerr, GetHelpString());
   exit(errcode);
 }
 

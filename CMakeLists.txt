@@ -189,6 +189,7 @@ target_link_libraries(run_spec_tests
 
 add_executable(wasp_sqlite
   src/tools/argparser.cc
+  src/tools/binary_errors.cc
   src/tools/wasp_sqlite.cc
   third_party/sqlite/sqlite3.c
 )

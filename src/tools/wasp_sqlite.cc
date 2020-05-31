@@ -18,10 +18,10 @@
 #include <iostream>
 
 #include "src/tools/argparser.h"
+#include "src/tools/binary_errors.h"
 #include "third_party/sqlite/sqlite3.h"
 #include "wasp/base/enumerate.h"
 #include "wasp/base/errors.h"
-#include "wasp/base/errors_nop.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/format.h"
@@ -73,7 +73,6 @@ struct Tool {
 
   span<string_view> filenames;
   Options options;
-  ErrorsNop errors;  // XXX
   LazyModule* module; // HACK: current module
   sqlite3* db = nullptr;
   Index imported_function_count = 0;
@@ -147,10 +146,12 @@ void Tool::Run() {
     }
 
     SpanU8 data{*optbuf};
+    tools::BinaryErrors errors{data};
     LazyModule cur_module{ReadModule(data, options.features, errors)};
     if (!(cur_module.magic && cur_module.version)) continue;
     module = &cur_module;
 
+    // TODO: Use visitor.
     for (auto section : enumerate(module->sections)) {
       if (section.value->is_known()) {
         auto known = section.value->known();
@@ -210,6 +211,8 @@ void Tool::Run() {
         }
       }
     }
+
+    errors.PrintTo(std::cerr);
   }
 
   print("memory used: {}\n", sqlite3_memory_highwater(0));

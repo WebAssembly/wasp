@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <iostream>
 #include <utility>
 
 #include "src/tools/argparser.h"
@@ -58,7 +59,7 @@ int main(int argc, char** argv) {
   parser.Parse(args);
 
   if (filenames.empty()) {
-    print(stderr, "No filename given.\n");
+    print(std::cerr, "No filename given.\n");
     return 1;
   }
 
@@ -110,7 +111,7 @@ void DoFile(const fs::path& path, const Features& features) {
 
   auto data = ReadFile(path.string());
   if (!data) {
-    print(stderr, "Error reading file {}", path.filename().string());
+    print(std::cerr, "Error reading file {}", path.filename().string());
     return;
   }
 

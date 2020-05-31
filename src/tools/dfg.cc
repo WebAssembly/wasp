@@ -22,6 +22,7 @@
 #include <string>
 
 #include "src/tools/argparser.h"
+#include "src/tools/binary_errors.h"
 #include "wasp/base/enumerate.h"
 #include "wasp/base/errors_nop.h"
 #include "wasp/base/features.h"
@@ -134,7 +135,7 @@ struct Tool {
   ValueID AddPhiOperands(VarID, ValueID);
   void SealBlock(BBID);
 
-  ErrorsNop errors;
+  BinaryErrors errors;
   Options options;
   LazyModule module;
   std::vector<TypeEntry> type_entries;
@@ -168,46 +169,50 @@ int Main(span<string_view> args) {
         if (filename.empty()) {
           filename = arg;
         } else {
-          print(stderr, "Filename already given\n");
+          print(std::cerr, "Filename already given\n");
         }
       });
   parser.Parse(args);
 
   if (filename.empty()) {
-    print(stderr, "No filename given.\n");
+    print(std::cerr, "No filename given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   if (options.function.empty()) {
-    print(stderr, "No function given.\n");
+    print(std::cerr, "No function given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   auto optbuf = ReadFile(filename);
   if (!optbuf) {
-    print(stderr, "Error reading file {}.\n", filename);
+    print(std::cerr, "Error reading file {}.\n", filename);
     return 1;
   }
 
   SpanU8 data{*optbuf};
   Tool tool{data, options};
-  return tool.Run();
+  int result = tool.Run();
+  tool.errors.PrintTo(std::cerr);
+  return result;
 }
 
 Tool::Tool(SpanU8 data, Options options)
-    : options{options}, module{ReadModule(data, options.features, errors)} {}
+    : errors{data},
+      options{options},
+      module{ReadModule(data, options.features, errors)} {}
 
 int Tool::Run() {
   DoPrepass();
   auto index_opt = GetFunctionIndex();
   if (!index_opt) {
-    print(stderr, "Unknown function {}\n", options.function);
+    print(std::cerr, "Unknown function {}\n", options.function);
     return 1;
   }
   auto ft_opt = GetFunctionType(*index_opt);
   auto code_opt = GetCode(*index_opt);
   if (!ft_opt || !code_opt) {
-    print(stderr, "Invalid function index {}\n", *index_opt);
+    print(std::cerr, "Invalid function index {}\n", *index_opt);
     return 1;
   }
   CalculateDFG(*ft_opt, *code_opt);
@@ -451,7 +456,7 @@ void Tool::DoInstruction(const Instruction& instr) {
         BasicInstruction(instr, func_type_opt->param_types.size(),
                          func_type_opt->result_types.size());
       } else {
-        print(stderr, "*** Error: `{}` with unknown function\n", instr);
+        print(std::cerr, "*** Error: `{}` with unknown function\n", instr);
       }
       if (instr.opcode == Opcode::ReturnCall) {
         Return();
@@ -468,7 +473,7 @@ void Tool::DoInstruction(const Instruction& instr) {
         BasicInstruction(instr, func_type->param_types.size() + 1,
                          func_type->result_types.size());
       } else {
-        print(stderr, "*** Error: `{}` with unknown type\n", instr);
+        print(std::cerr, "*** Error: `{}` with unknown type\n", instr);
       }
       if (instr.opcode == Opcode::ReturnCallIndirect) {
         Return();
@@ -1021,7 +1026,7 @@ void Tool::Br(Index index) {
     AddPred(target);
     ForwardValues(label, target);
   } else {
-    print(stderr, "*** Error: Invalid br depth {}\n", index);
+    print(std::cerr, "*** Error: Invalid br depth {}\n", index);
   }
 }
 
@@ -1070,8 +1075,8 @@ void Tool::CopyValues(size_t count, ValueIDs& out) {
       out[i] = ReadVariable(value_stack_size - count + i, current_bbid);
     }
   } else {
-    print(stderr, "*** Error: CopyValues({}) past bottom of stack {}\n", count,
-          GetStackSize());
+    print(std::cerr, "*** Error: CopyValues({}) past bottom of stack {}\n",
+          count, GetStackSize());
   }
 }
 
@@ -1109,8 +1114,8 @@ void Tool::PopValues(size_t count) {
   if (count <= stack_size) {
     value_stack_size -= count;
   } else {
-    print(stderr, "*** Error: PopValues({}) past bottom of stack {}\n", count,
-          GetStackSize());
+    print(std::cerr, "*** Error: PopValues({}) past bottom of stack {}\n",
+          count, GetStackSize());
     value_stack_size -= stack_size;
   }
 }

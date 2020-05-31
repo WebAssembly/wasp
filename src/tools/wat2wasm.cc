@@ -16,6 +16,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 
 #include "src/tools/argparser.h"
 #include "src/tools/text_errors.h"
@@ -83,19 +84,19 @@ int Main(span<string_view> args) {
         if (filename.empty()) {
           filename = arg;
         } else {
-          print(stderr, "Filename already given\n");
+          print(std::cerr, "Filename already given\n");
         }
       });
   parser.Parse(args);
 
   if (filename.empty()) {
-    print(stderr, "No filenames given.\n");
+    print(std::cerr, "No filenames given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   auto optbuf = ReadFile(filename);
   if (!optbuf) {
-    print(stderr, "Error reading file {}.\n", filename);
+    print(std::cerr, "Error reading file {}.\n", filename);
     return 1;
   }
 
@@ -145,7 +146,7 @@ int Tool::Run() {
   std::ofstream fstream(options.output_filename,
                         std::ios_base::out | std::ios_base::binary);
   if (!fstream) {
-    print(stderr, "Unable to open file {}.\n", options.output_filename);
+    print(std::cerr, "Unable to open file {}.\n", options.output_filename);
     return 1;
   }
 

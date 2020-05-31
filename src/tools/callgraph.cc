@@ -24,8 +24,8 @@
 #include <vector>
 
 #include "src/tools/argparser.h"
+#include "src/tools/binary_errors.h"
 #include "wasp/base/enumerate.h"
-#include "wasp/base/errors_nop.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/format.h"
@@ -70,7 +70,7 @@ struct Tool {
 
   optional<string_view> GetFunctionName(Index) const;
 
-  ErrorsNop errors;
+  BinaryErrors errors;
   Options options;
   LazyModule module;
   std::map<Index, string_view> function_names;
@@ -104,35 +104,39 @@ int Main(span<string_view> args) {
         if (filename.empty()) {
           filename = arg;
         } else {
-          print(stderr, "Filename already given\n");
+          print(std::cerr, "Filename already given\n");
         }
       });
   parser.Parse(args);
 
   if (filename.empty()) {
-    print(stderr, "No filenames given.\n");
+    print(std::cerr, "No filenames given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   auto optbuf = ReadFile(filename);
   if (!optbuf) {
-    print(stderr, "Error reading file {}.\n", filename);
+    print(std::cerr, "Error reading file {}.\n", filename);
     return 1;
   }
 
   SpanU8 data{*optbuf};
   Tool tool{data, options};
-  return tool.Run();
+  int result = tool.Run();
+  tool.errors.PrintTo(std::cerr);
+  return result;
 }
 
 Tool::Tool(SpanU8 data, Options options)
-    : options{options}, module{ReadModule(data, options.features, errors)} {}
+    : errors{data},
+      options{options},
+      module{ReadModule(data, options.features, errors)} {}
 
 int Tool::Run() {
   DoPrepass();
   GetFunctionIndex();
   if (options.mode != Mode::All && !options.function_index) {
-    print(stderr, "Unknown function {}.\n", *options.function);
+    print(std::cerr, "Unknown function {}.\n", *options.function);
     return 1;
   }
   CalculateCallGraph();

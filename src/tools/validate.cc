@@ -27,8 +27,6 @@
 #include "src/tools/argparser.h"
 #include "src/tools/binary_errors.h"
 #include "wasp/base/enumerate.h"
-#include "wasp/base/error.h"
-#include "wasp/base/errors.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/format.h"
@@ -87,7 +85,7 @@ int Main(span<string_view> args) {
   for (auto filename : filenames) {
     auto optbuf = ReadFile(filename);
     if (!optbuf) {
-      print(stderr, "Error reading file {}.\n", filename);
+      print(std::cerr, "Error reading file {}.\n", filename);
       ok = false;
       continue;
     }
