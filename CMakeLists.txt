@@ -109,6 +109,9 @@ set_source_files_properties(
   COMPILE_FLAGS "-Wno-parentheses -Wno-implicit-fallthrough -Wno-unused-label -Wno-sign-compare"
 )
 
+# TODO: Link stdc++fs conditionally, only when needed.
+set(filesystem_lib "stdc++fs")
+
 add_executable(wasp
   src/tools/argparser.cc
   src/tools/binary_errors.cc
@@ -125,6 +128,7 @@ add_executable(wasp
 
 target_link_libraries(wasp
   wasplib
+  ${filesystem_lib}
 )
 
 add_executable(wasp_unittests
@@ -180,11 +184,7 @@ add_executable(run_spec_tests
 
 target_link_libraries(run_spec_tests
   wasplib
-)
-
-# TODO: Link stdc++fs conditionally, only when needed.
-target_link_libraries(run_spec_tests
-  stdc++fs
+  ${filesystem_lib}
 )
 
 add_executable(wasp_sqlite
