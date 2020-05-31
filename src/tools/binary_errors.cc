@@ -25,22 +25,20 @@ namespace tools {
 
 void BinaryErrors::PrintTo(std::ostream& file) {
   for (const auto& error : errors) {
-    file << error;
+    file << ErrorToString(error);
   }
 }
 
-void BinaryErrors::HandlePushContext(Location loc, string_view desc) {
-  context_stack.push_back(Error{loc, std::string{desc}});
-}
+void BinaryErrors::HandlePushContext(Location loc, string_view desc) {}
 
-void BinaryErrors::HandlePopContext() {
-  context_stack.pop_back();
-}
+void BinaryErrors::HandlePopContext() {}
 
 void BinaryErrors::HandleOnError(Location loc, string_view message) {
-  std::string error =
-      format("{:08x}: {}\n", loc.begin() - data.begin(), message);
+  errors.push_back(Error{loc, std::string(message)});
+}
 
+std::string BinaryErrors::ErrorToString(const Error& error) const {
+  auto& loc = error.loc;
   const ptrdiff_t before = 4, after = 8, max_size = 32;
   size_t start = std::max(before, loc.begin() - data.begin()) - before;
   size_t end = data.size() - std::max(after, data.end() - loc.end()) + after;
@@ -48,32 +46,27 @@ void BinaryErrors::HandleOnError(Location loc, string_view message) {
 
   Location context = {data.begin() + start, data.begin() + end};
 
+  std::string line1 = "    ";
+  std::string line2 = "    ";
+
   bool space = false;
-  error += "    ";
-  for (u8 x : context) {
-    error += format("{:02x}", x);
-    if (space) {
-      error += ' ';
-    }
-    space = !space;
-  }
-  error += "\n    ";
-
-  space = false;
   for (auto iter = context.begin(); iter < context.end(); ++iter) {
+    u8 x = *iter;
+    line1 += format("{:02x}", x);
     if (iter >= loc.begin() && iter < loc.end()) {
-      error += "^^";
+      line2 += "^^";
     } else {
-      error += "  ";
+      line2 += "  ";
     }
     if (space) {
-      error += ' ';
+      line1 += ' ';
+      line2 += ' ';
     }
     space = !space;
   }
-  error += "\n";
 
-  errors.push_back(error);
+  return format("{:08x}: {}\n{}\n{}\n", loc.begin() - data.begin(),
+                error.message, line1, line2);
 }
 
 }  // namespace tools

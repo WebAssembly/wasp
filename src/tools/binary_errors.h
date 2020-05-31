@@ -42,9 +42,10 @@ class BinaryErrors : public Errors {
   void HandlePopContext() override;
   void HandleOnError(Location loc, string_view message) override;
 
+  std::string ErrorToString(const Error&) const;
+
   SpanU8 data;
-  std::vector<Error> context_stack;
-  std::vector<std::string> errors;
+  std::vector<Error> errors;
 };
 
 }  // namespace tools
