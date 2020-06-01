@@ -118,7 +118,8 @@ int Tool::Run() {
   text::Tokenizer tokenizer{data};
   tools::TextErrors errors{filename, data};
   text::Context read_context{options.features, errors};
-  auto text_module = ReadModule(tokenizer, read_context);
+  auto text_module =
+      ReadModule(tokenizer, read_context).value_or(text::Module{});
   Resolve(read_context, text_module);
   Desugar(text_module);
 

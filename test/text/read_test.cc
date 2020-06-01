@@ -21,6 +21,7 @@
 #include "wasp/base/errors.h"
 #include "wasp/text/formatters.h"
 #include "wasp/text/read/context.h"
+#include "wasp/text/read/macros.h"
 #include "wasp/text/read/tokenizer.h"
 
 using namespace ::wasp;
@@ -55,9 +56,10 @@ class TextReadTest : public ::testing::Test {
   void OKVector(Func&& func, const T& expected, SpanU8 span, Args&&... args) {
     Tokenizer tokenizer{span};
     auto actual = func(tokenizer, context, std::forward<Args>(args)...);
-    ASSERT_EQ(expected.size(), actual.size());
+    ASSERT_TRUE(actual.has_value());
+    ASSERT_EQ(expected.size(), actual->size());
     for (size_t i = 0; i < expected.size(); ++i) {
-      EXPECT_EQ(expected[i], actual[i]);
+      EXPECT_EQ(expected[i], (*actual)[i]);
     }
     ExpectNoErrors(errors);
   }
@@ -91,23 +93,23 @@ class TextReadTest : public ::testing::Test {
 // Helpers for handling InstructionList functions.
 
 auto ReadBlockInstruction_ForTesting(Tokenizer& tokenizer, Context& context)
-    -> InstructionList {
+    -> optional<InstructionList> {
   InstructionList result;
-  ReadBlockInstruction(tokenizer, context, result);
+  WASP_TRY(ReadBlockInstruction(tokenizer, context, result));
   return result;
 }
 
 auto ReadInstructionList_ForTesting(Tokenizer& tokenizer, Context& context)
-    -> InstructionList {
+    -> optional<InstructionList> {
   InstructionList result;
-  ReadInstructionList(tokenizer, context, result);
+  WASP_TRY(ReadInstructionList(tokenizer, context, result));
   return result;
 }
 
 auto ReadExpressionList_ForTesting(Tokenizer& tokenizer, Context& context)
-    -> InstructionList {
+    -> optional<InstructionList> {
   InstructionList result;
-  ReadExpressionList(tokenizer, context, result);
+  WASP_TRY(ReadExpressionList(tokenizer, context, result));
   return result;
 }
 
@@ -365,10 +367,8 @@ TEST_F(TextReadTest, InlineImport_AfterNonImport) {
 }
 
 TEST_F(TextReadTest, InlineExport) {
-  OK(ReadInlineExportOpt,
-     InlineExport{MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})},
+  OK(ReadInlineExport, InlineExport{MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})},
      R"((export "n"))"_su8);
-  OK(ReadInlineExportOpt, nullopt, ""_su8);
 }
 
 TEST_F(TextReadTest, InlineExportList) {
@@ -380,7 +380,6 @@ TEST_F(TextReadTest, InlineExportList) {
                       InlineExport{MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
            },
            R"((export "m") (export "n"))"_su8);
-  OK(ReadInlineExportOpt, nullopt, ""_su8);
 }
 
 
@@ -1027,11 +1026,7 @@ TEST_F(TextReadTest, BlockInstruction_If_MismatchedLabels) {
        "if else $l2 end"_su8);
   Fail(ReadBlockInstruction_ForTesting, {{10, "Expected label $l, got $l2"}},
        "if $l end $l2"_su8);
-  Fail(ReadBlockInstruction_ForTesting,
-       {
-           {{11, "Expected label $l, got $l2"}},
-           {{19, "Expected label $l, got $l2"}},
-       },
+  Fail(ReadBlockInstruction_ForTesting, {{11, "Expected label $l, got $l2"}},
        "if $l else $l2 end $l2"_su8);
   Fail(ReadBlockInstruction_ForTesting, {{11, "Expected label $l, got $l2"}},
        "if $l else $l2 end $l"_su8);
@@ -1121,11 +1116,7 @@ TEST_F(TextReadTest, BlockInstruction_Try_MismatchedLabels) {
        "try catch $l2 end"_su8);
   Fail(ReadBlockInstruction_ForTesting, {{17, "Expected label $l, got $l2"}},
        "try $l catch end $l2"_su8);
-  Fail(ReadBlockInstruction_ForTesting,
-       {
-           {{13, "Expected label $l, got $l2"}},
-           {{21, "Expected label $l, got $l2"}},
-       },
+  Fail(ReadBlockInstruction_ForTesting, {{13, "Expected label $l, got $l2"}},
        "try $l catch $l2 end $l2"_su8);
   Fail(ReadBlockInstruction_ForTesting, {{13, "Expected label $l, got $l2"}},
        "try $l catch $l2 end $l"_su8);
@@ -1168,9 +1159,9 @@ TEST_F(TextReadTest, Label_DuplicateNames) {
 }
 
 auto ReadExpression_ForTesting(Tokenizer& tokenizer, Context& context)
-    -> InstructionList {
+    -> optional<InstructionList> {
   InstructionList result;
-  ReadExpression(tokenizer, context, result);
+  WASP_TRY(ReadExpression(tokenizer, context, result));
   return result;
 }
 
@@ -1428,19 +1419,12 @@ TEST_F(TextReadTest, Expression_If) {
 }
 
 TEST_F(TextReadTest, Expression_IfNoThen) {
-  Fail(ReadExpression_ForTesting,
-       {{{15, "Expected '(' Then, got Rpar Eof"}},
-        {{16, "Expected Rpar, got Eof"}}},
+  Fail(ReadExpression_ForTesting, {{15, "Expected '(' Then, got Rpar Eof"}},
        "(if (nop) (nop))"_su8);
 }
 
 TEST_F(TextReadTest, Expression_IfBadElse) {
-  Fail(ReadExpression_ForTesting,
-       {
-           {{18, "Expected Else, got Func"}},
-           {{18, "Expected Rpar, got Func"}},
-           {{18, "Expected Rpar, got Func"}},
-       },
+  Fail(ReadExpression_ForTesting, {{18, "Expected Else, got Func"}},
        "(if (nop) (then) (func))"_su8);
 }
 
@@ -1757,11 +1741,7 @@ TEST_F(TextReadTest, TableInlineImport) {
 }
 
 TEST_F(TextReadTest, Table_bulk_memory) {
-  Fail(ReadTable,
-       {
-           {{21, "Expected Rpar, got Lpar"}},
-           {{21, "Expected Rpar, got Lpar"}},
-       },
+  Fail(ReadTable, {{21, "Expected Rpar, got Lpar"}},
        "(table funcref (elem (nop)))"_su8);
 
   context.features.enable_bulk_memory();
@@ -2262,18 +2242,10 @@ TEST_F(TextReadTest, ElementSegment_MVP) {
 }
 
 TEST_F(TextReadTest, ElementSegment_bulk_memory) {
-  Fail(ReadElementSegment,
-       {
-           {{6, "Expected offset expression, got ValueType"}},
-           {{6, "Expected Rpar, got ValueType"}},
-       },
+  Fail(ReadElementSegment, {{6, "Expected offset expression, got ValueType"}},
        "(elem funcref)"_su8);
 
-  Fail(ReadElementSegment,
-       {
-           {{6, "Expected offset expression, got Func"}},
-           {{6, "Expected Rpar, got Func"}},
-       },
+  Fail(ReadElementSegment, {{6, "Expected offset expression, got Func"}},
        "(elem func)"_su8);
 
   context.features.enable_bulk_memory();
