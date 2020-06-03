@@ -1243,7 +1243,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
-      auto segment_var = ReadVar(tokenizer, context);
+      WASP_TRY_READ(segment_var, ReadVar(tokenizer, context));
       auto immediate =
           MakeAt(immediate_guard.loc(), InitImmediate{segment_var, nullopt});
       return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
