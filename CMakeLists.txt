@@ -159,6 +159,7 @@ add_executable(wasp_unittests
   test/text/lex_test.cc
   test/text/numeric_test.cc
   test/text/read_test.cc
+  test/text/read_script_test.cc
   test/text/resolve_test.cc
   test/text/token_test.cc
   test/text/types_test.cc
