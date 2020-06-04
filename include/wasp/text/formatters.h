@@ -26,8 +26,9 @@ namespace fmt {
 WASP_TEXT_ENUMS(WASP_DECLARE_FORMATTER)
 WASP_TEXT_STRUCTS(WASP_DECLARE_FORMATTER)
 
-// Special case for Var.
+// Special cases.
 WASP_DECLARE_FORMATTER(text::Var)
+WASP_DECLARE_FORMATTER(text::ModuleItem)
 
 }  // namespace fmt
 

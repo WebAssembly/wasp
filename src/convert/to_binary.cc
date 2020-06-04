@@ -640,64 +640,56 @@ auto ToBinary(Context& context, const At<text::Module>& value)
   };
 
   for (auto&& item : *value) {
-    switch (item.index()) {
-      case 0:  // TypeEntry.
-        result.types.push_back(
-            ToBinary(context, get<At<text::TypeEntry>>(item)));
+    switch (item.kind()) {
+      case text::ModuleItemKind::TypeEntry:
+        result.types.push_back(ToBinary(context, item.type_entry()));
         break;
 
-      case 1:  // Import.
-        result.imports.push_back(
-            ToBinary(context, get<At<text::Import>>(item)));
+      case text::ModuleItemKind::Import:
+        result.imports.push_back(ToBinary(context, item.import()));
         break;
 
-      case 2: { // Function
-        auto&& function = get<At<text::Function>>(item);
+      case text::ModuleItemKind::Function: {
+        auto&& function = item.function();
         push_back_opt(result.functions, ToBinary(context, function));
         push_back_opt(result.codes, ToBinaryCode(context, function));
         break;
       }
 
-      case 3:  // Table
-        push_back_opt(result.tables,
-                      ToBinary(context, get<At<text::Table>>(item)));
+      case text::ModuleItemKind::Table:
+        push_back_opt(result.tables, ToBinary(context, item.table()));
         break;
 
-      case 4:  // Memory
-        push_back_opt(result.memories,
-                      ToBinary(context, get<At<text::Memory>>(item)));
+      case text::ModuleItemKind::Memory:
+        push_back_opt(result.memories, ToBinary(context, item.memory()));
         break;
 
-      case 5:  // Global
-        push_back_opt(result.globals,
-                      ToBinary(context, get<At<text::Global>>(item)));
+      case text::ModuleItemKind::Global:
+        push_back_opt(result.globals, ToBinary(context, item.global()));
         break;
 
-      case 6:  // Export
-        result.exports.push_back(
-            ToBinary(context, get<At<text::Export>>(item)));
+      case text::ModuleItemKind::Export:
+        result.exports.push_back(ToBinary(context, item.export_()));
         break;
 
-      case 7:  // Start
+      case text::ModuleItemKind::Start:
         // This will overwrite an existing Start section, if any. That
         // shouldn't happen, since reading multiple start sections means the
         // text is malformed.
-        result.start = ToBinary(context, get<At<text::Start>>(item));
+        result.start = ToBinary(context, item.start());
         break;
 
-      case 8:  // ElementSegment
+      case text::ModuleItemKind::ElementSegment:
         result.element_segments.push_back(
-            ToBinary(context, get<At<text::ElementSegment>>(item)));
+            ToBinary(context, item.element_segment()));
         break;
 
-      case 9:  // DataSegment
-        result.data_segments.push_back(
-            ToBinary(context, get<At<text::DataSegment>>(item)));
+      case text::ModuleItemKind::DataSegment:
+        result.data_segments.push_back(ToBinary(context, item.data_segment()));
         break;
 
-      case 10:   // Event
-        push_back_opt(result.events,
-                      ToBinary(context, get<At<text::Event>>(item)));
+      case text::ModuleItemKind::Event:
+        push_back_opt(result.events, ToBinary(context, item.event()));
         break;
     }
   }

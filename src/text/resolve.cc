@@ -405,33 +405,33 @@ void Resolve(Context& context, Event& event) {
 }
 
 void Resolve(Context& context, ModuleItem& item) {
-  switch (item.index()) {
-    case 1:
-      return Resolve(context, *get<At<Import>>(item));
+  switch (item.kind()) {
+    case ModuleItemKind::Import:
+      return Resolve(context, *item.import());
 
-    case 2:
-      return Resolve(context, *get<At<Function>>(item));
+    case ModuleItemKind::Function:
+      return Resolve(context, *item.function());
 
-    case 3:
-      return Resolve(context, *get<At<Table>>(item));
+    case ModuleItemKind::Table:
+      return Resolve(context, *item.table());
 
-    case 5:
-      return Resolve(context, *get<At<Global>>(item));
+    case ModuleItemKind::Global:
+      return Resolve(context, *item.global());
 
-    case 6:
-      return Resolve(context, *get<At<Export>>(item));
+    case ModuleItemKind::Export:
+      return Resolve(context, *item.export_());
 
-    case 7:
-      return Resolve(context, *get<At<Start>>(item));
+    case ModuleItemKind::Start:
+      return Resolve(context, *item.start());
 
-    case 8:
-      return Resolve(context, *get<At<ElementSegment>>(item));
+    case ModuleItemKind::ElementSegment:
+      return Resolve(context, *item.element_segment());
 
-    case 9:
-      return Resolve(context, *get<At<DataSegment>>(item));
+    case ModuleItemKind::DataSegment:
+      return Resolve(context, *item.data_segment());
 
-    case 10:
-      return Resolve(context, *get<At<Event>>(item));
+    case ModuleItemKind::Event:
+      return Resolve(context, *item.event());
 
     default:
       break;

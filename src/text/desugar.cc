@@ -35,15 +35,15 @@ struct DesugarContext {
 
 void ReplaceImportOpt(ModuleItem& item, const OptAt<Import>& import_opt){
   if (import_opt) {
-    item = *import_opt;
+    item = ModuleItem{*import_opt};
   }
 }
 
 template <typename T>
 void AppendExports(ModuleItemList& items, At<T>& value, Index this_index) {
-  auto exports = value->ToExports(this_index);
-  items.insert(items.end(), std::make_move_iterator(exports.begin()),
-               std::make_move_iterator(exports.end()));
+  for (auto & export_: value->ToExports(this_index)) {
+    items.push_back(ModuleItem{std::move(export_)});
+  }
   value->exports.clear();
 }
 
@@ -51,9 +51,9 @@ void Desugar(Module& module) {
   DesugarContext context;
 
   for (auto&& item : module) {
-    switch (item.index()) {
-      case 1: { // Import
-        auto import = get<At<Import>>(item);
+    switch (item.kind()) {
+      case ModuleItemKind::Import: {
+        auto import = item.import();
         switch (import->desc.index()) {
           case 0: context.function_count++; break;
           case 1: context.table_count++; break;
@@ -64,19 +64,19 @@ void Desugar(Module& module) {
         break;
       }
 
-      case 2: { // Function
-        auto& function = get<At<Function>>(item);
+      case ModuleItemKind::Function: {
+        auto& function = item.function();
         AppendExports(context.new_items, function, context.function_count);
         ReplaceImportOpt(item, function->ToImport());
         context.function_count++;
         break;
       }
 
-      case 3: { // Table
-        auto& table = get<At<Table>>(item);
+      case ModuleItemKind::Table: {
+        auto& table = item.table();
         auto segment_opt = table->ToElementSegment(context.table_count);
         if (segment_opt) {
-          context.new_items.push_back(*segment_opt);
+          context.new_items.push_back(ModuleItem{*segment_opt});
           table->elements = nullopt;
         }
         AppendExports(context.new_items, table, context.table_count);
@@ -85,11 +85,11 @@ void Desugar(Module& module) {
         break;
       }
 
-      case 4: { // Memory
-        auto& memory = get<At<Memory>>(item);
+      case ModuleItemKind::Memory: {
+        auto& memory = item.memory();
         auto segment_opt = memory->ToDataSegment(context.memory_count);
         if (segment_opt) {
-          context.new_items.push_back(*segment_opt);
+          context.new_items.push_back(ModuleItem{*segment_opt});
           memory->data = nullopt;
         }
         AppendExports(context.new_items, memory, context.memory_count);
@@ -98,21 +98,24 @@ void Desugar(Module& module) {
         break;
       }
 
-      case 5: { // Global
-        auto& global = get<At<Global>>(item);
+      case ModuleItemKind::Global: {
+        auto& global = item.global();
         AppendExports(context.new_items, global, context.global_count);
         ReplaceImportOpt(item, global->ToImport());
         context.global_count++;
         break;
       }
 
-      case 10: { // Event
-        auto& event = get<At<Event>>(item);
+      case ModuleItemKind::Event: {
+        auto& event = item.event();
         AppendExports(context.new_items, event, context.event_count);
         ReplaceImportOpt(item, event->ToImport());
         context.event_count++;
         break;
       }
+
+      default:
+        break;
     }
   }
 

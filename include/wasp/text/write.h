@@ -937,49 +937,49 @@ Iterator Write(WriteContext& context, const Event& value, Iterator out) {
 
 template <typename Iterator>
 Iterator Write(WriteContext& context, const ModuleItem& value, Iterator out) {
-  switch (value.index()) {
-    case 0: // TypeEntry
-      out = Write(context, get<At<TypeEntry>>(value), out);
+  switch (value.kind()) {
+    case ModuleItemKind::TypeEntry:
+      out = Write(context, value.type_entry(), out);
       break;
 
-    case 1: // Import
-      out = Write(context, get<At<Import>>(value), out);
+    case ModuleItemKind::Import:
+      out = Write(context, value.import(), out);
       break;
 
-    case 2:  // Function
-      out = Write(context, get<At<Function>>(value), out);
+    case ModuleItemKind::Function:
+      out = Write(context, value.function(), out);
       break;
 
-    case 3:  // Table
-      out = Write(context, get<At<Table>>(value), out);
+    case ModuleItemKind::Table:
+      out = Write(context, value.table(), out);
       break;
 
-    case 4:  // Memory
-      out = Write(context, get<At<Memory>>(value), out);
+    case ModuleItemKind::Memory:
+      out = Write(context, value.memory(), out);
       break;
 
-    case 5:  // Global
-      out = Write(context, get<At<Global>>(value), out);
+    case ModuleItemKind::Global:
+      out = Write(context, value.global(), out);
       break;
 
-    case 6:  // Export
-      out = Write(context, get<At<Export>>(value), out);
+    case ModuleItemKind::Export:
+      out = Write(context, value.export_(), out);
       break;
 
-    case 7:  // Start
-      out = Write(context, get<At<Start>>(value), out);
+    case ModuleItemKind::Start:
+      out = Write(context, value.start(), out);
       break;
 
-    case 8:  // ElementSegment
-      out = Write(context, get<At<ElementSegment>>(value), out);
+    case ModuleItemKind::ElementSegment:
+      out = Write(context, value.element_segment(), out);
       break;
 
-    case 9:  // DataSegment
-      out = Write(context, get<At<DataSegment>>(value), out);
+    case ModuleItemKind::DataSegment:
+      out = Write(context, value.data_segment(), out);
       break;
 
-    case 10:  // Event
-      out = Write(context, get<At<Event>>(value), out);
+    case ModuleItemKind::Event:
+      out = Write(context, value.event(), out);
       break;
   }
   context.Newline();

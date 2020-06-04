@@ -529,17 +529,70 @@ struct Event {
 
 // Module
 
-using ModuleItem = variant<At<TypeEntry>,
-                           At<Import>,
-                           At<Function>,
-                           At<Table>,
-                           At<Memory>,
-                           At<Global>,
-                           At<Export>,
-                           At<Start>,
-                           At<ElementSegment>,
-                           At<DataSegment>,
-                           At<Event>>;
+// NOTE this must be kept in sync with the ModuleItem variant below.
+enum class ModuleItemKind {
+  TypeEntry,
+  Import,
+  Function,
+  Table,
+  Memory,
+  Global,
+  Export,
+  Start,
+  ElementSegment,
+  DataSegment,
+  Event
+};
+
+struct ModuleItem {
+  auto kind() const -> ModuleItemKind;
+  bool is_type_entry() const;
+  bool is_import() const;
+  bool is_function() const;
+  bool is_table() const;
+  bool is_memory() const;
+  bool is_global() const;
+  bool is_export() const;
+  bool is_start() const;
+  bool is_element_segment() const;
+  bool is_data_segment() const;
+  bool is_event() const;
+
+  auto type_entry() -> At<TypeEntry>&;
+  auto type_entry() const -> const At<TypeEntry>&;
+  auto import() -> At<Import>&;
+  auto import() const -> const At<Import>&;
+  auto function() -> At<Function>&;
+  auto function() const -> const At<Function>&;
+  auto table() -> At<Table>&;
+  auto table() const -> const At<Table>&;
+  auto memory() -> At<Memory>&;
+  auto memory() const -> const At<Memory>&;
+  auto global() -> At<Global>&;
+  auto global() const -> const At<Global>&;
+  auto export_() -> At<Export>&;
+  auto export_() const -> const At<Export>&;
+  auto start() -> At<Start>&;
+  auto start() const -> const At<Start>&;
+  auto element_segment() -> At<ElementSegment>&;
+  auto element_segment() const -> const At<ElementSegment>&;
+  auto data_segment() -> At<DataSegment>&;
+  auto data_segment() const -> const At<DataSegment>&;
+  auto event() -> At<Event>&;
+  auto event() const -> const At<Event>&;
+
+  variant<At<TypeEntry>,
+          At<Import>,
+          At<Function>,
+          At<Table>,
+          At<Memory>,
+          At<Global>,
+          At<Export>,
+          At<Start>,
+          At<ElementSegment>,
+          At<DataSegment>,
+          At<Event>> desc;
+};
 
 using Module = std::vector<ModuleItem>;
 
@@ -728,6 +781,7 @@ using Script = std::vector<At<Command>>;
 WASP_TEXT_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_DECLARE_OPERATOR_EQ_NE(text::Var)
+WASP_DECLARE_OPERATOR_EQ_NE(text::ModuleItem)
 
 bool operator==(const BoundValueTypeList& lhs, const ValueTypeList& rhs);
 bool operator==(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
@@ -740,6 +794,7 @@ WASP_TEXT_ENUMS(WASP_DECLARE_PRINT_TO)
 WASP_TEXT_STRUCTS(WASP_DECLARE_PRINT_TO)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_PRINT_TO)
 WASP_DECLARE_PRINT_TO(text::Var)
+WASP_DECLARE_PRINT_TO(text::ModuleItem)
 
 }  // namespace text
 }  // namespace wasp
@@ -747,5 +802,6 @@ WASP_DECLARE_PRINT_TO(text::Var)
 WASP_TEXT_STRUCTS(WASP_DECLARE_STD_HASH)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_STD_HASH)
 WASP_DECLARE_STD_HASH(text::Var)
+WASP_DECLARE_STD_HASH(text::ModuleItem)
 
 #endif  // WASP_TEXT_TYPES_H_

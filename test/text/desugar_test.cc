@@ -71,240 +71,272 @@ class TextDesugarTest : public ::testing::Test {
 TEST_F(TextDesugarTest, Function_Defined) {
   OK(
       Module{
-          MakeAt(loc1, Function{}),
+          ModuleItem{MakeAt(loc1, Function{})},
       },
       Module{
-          MakeAt(loc1, Function{}),
+          ModuleItem{MakeAt(loc1, Function{})},
       });
 }
 
 TEST_F(TextDesugarTest, Function_DefinedExport) {
   OK(
       Module{
-          MakeAt(loc1, Function{}),
-          MakeAt(export1_loc, Export{ExternalKind::Function, name3, Var{0}}),
-          MakeAt(export2_loc, Export{ExternalKind::Function, name4, Var{0}}),
+          ModuleItem{MakeAt(loc1, Function{})},
+          ModuleItem{MakeAt(export1_loc,
+                            Export{ExternalKind::Function, name3, Var{0}})},
+          ModuleItem{MakeAt(export2_loc,
+                            Export{ExternalKind::Function, name4, Var{0}})},
       },
       Module{
-          MakeAt(loc1, Function{FunctionDesc{}, {}, {}, {export1, export2}}),
+          ModuleItem{MakeAt(
+              loc1, Function{FunctionDesc{}, {}, {}, {export1, export2}})},
       });
 }
 
 TEST_F(TextDesugarTest, Function_Import) {
   OK(
       Module{
-          MakeAt(import_loc, Import{name1, name2, func_desc}),
+          ModuleItem{MakeAt(import_loc, Import{name1, name2, func_desc})},
       },
-      Module{MakeAt(loc1, Function{func_desc, import, {}})});
+      Module{ModuleItem{MakeAt(loc1, Function{func_desc, import, {}})}});
 }
 
 TEST_F(TextDesugarTest, Function_ImportExport) {
   OK(
       Module{
-          MakeAt(import_loc, Import{name1, name2, func_desc}),
-          MakeAt(export1_loc, Export{ExternalKind::Function, name3, Var{0}}),
-          MakeAt(export2_loc, Export{ExternalKind::Function, name4, Var{0}}),
+          ModuleItem{MakeAt(import_loc, Import{name1, name2, func_desc})},
+          ModuleItem{MakeAt(export1_loc,
+                            Export{ExternalKind::Function, name3, Var{0}})},
+          ModuleItem{MakeAt(export2_loc,
+                            Export{ExternalKind::Function, name4, Var{0}})},
       },
       Module{
-          MakeAt(loc1, Function{func_desc, import, {export1, export2}}),
+          ModuleItem{
+              MakeAt(loc1, Function{func_desc, import, {export1, export2}})},
       });
 }
 
 TEST_F(TextDesugarTest, Table_Defined) {
   OK(
       Module{
-          MakeAt(loc1, Table{table_desc, {}}),
+          ModuleItem{MakeAt(loc1, Table{table_desc, {}})},
       },
       Module{
-          MakeAt(loc1, Table{table_desc, {}}),
+          ModuleItem{MakeAt(loc1, Table{table_desc, {}})},
       });
 }
 
 TEST_F(TextDesugarTest, Table_DefinedExport) {
   OK(
       Module{
-          MakeAt(loc1, Table{table_desc, {}}),
-          MakeAt(export1_loc, Export{ExternalKind::Table, name3, Var{0}}),
-          MakeAt(export2_loc, Export{ExternalKind::Table, name4, Var{0}}),
+          ModuleItem{MakeAt(loc1, Table{table_desc, {}})},
+          ModuleItem{
+              MakeAt(export1_loc, Export{ExternalKind::Table, name3, Var{0}})},
+          ModuleItem{
+              MakeAt(export2_loc, Export{ExternalKind::Table, name4, Var{0}})},
       },
       Module{
-          MakeAt(loc1, Table{table_desc, {export1, export2}}),
+          ModuleItem{MakeAt(loc1, Table{table_desc, {export1, export2}})},
       });
 }
 
 TEST_F(TextDesugarTest, Table_DefinedSegment) {
   OK(
       Module{
-          MakeAt(loc1, Table{table_desc, {}}),
-          ElementSegment{nullopt, Var{0}, constant_expression, element_list},
+          ModuleItem{MakeAt(loc1, Table{table_desc, {}})},
+          ModuleItem{ElementSegment{nullopt, Var{0}, constant_expression,
+                                    element_list}},
       },
       Module{
-          MakeAt(loc1, Table{table_desc, {}, element_list}),
+          ModuleItem{MakeAt(loc1, Table{table_desc, {}, element_list})},
       });
 }
 
 TEST_F(TextDesugarTest, Table_Import) {
   OK(
       Module{
-          MakeAt(import_loc, Import{name1, name2, table_desc}),
+          ModuleItem{MakeAt(import_loc, Import{name1, name2, table_desc})},
       },
       Module{
-          MakeAt(loc1, Table{table_desc, import, {}}),
+          ModuleItem{MakeAt(loc1, Table{table_desc, import, {}})},
       });
 }
 
 TEST_F(TextDesugarTest, Table_ImportExport) {
   OK(
       Module{
-          MakeAt(import_loc, Import{name1, name2, table_desc}),
-          MakeAt(export1_loc, Export{ExternalKind::Table, name3, Var{0}}),
-          MakeAt(export2_loc, Export{ExternalKind::Table, name4, Var{0}}),
+          ModuleItem{MakeAt(import_loc, Import{name1, name2, table_desc})},
+          ModuleItem{
+              MakeAt(export1_loc, Export{ExternalKind::Table, name3, Var{0}})},
+          ModuleItem{
+              MakeAt(export2_loc, Export{ExternalKind::Table, name4, Var{0}})},
       },
       Module{
-          MakeAt(loc1, Table{table_desc, import, {export1, export2}}),
+          ModuleItem{
+              MakeAt(loc1, Table{table_desc, import, {export1, export2}})},
       });
 }
 
 TEST_F(TextDesugarTest, Memory_Defined) {
   OK(
       Module{
-          MakeAt(loc1, Memory{memory_desc, {}}),
+          ModuleItem{MakeAt(loc1, Memory{memory_desc, {}})},
       },
       Module{
-          MakeAt(loc1, Memory{memory_desc, {}}),
+          ModuleItem{MakeAt(loc1, Memory{memory_desc, {}})},
       });
 }
 
 TEST_F(TextDesugarTest, Memory_DefinedExport) {
   OK(
       Module{
-          MakeAt(loc1, Memory{memory_desc, {}}),
-          MakeAt(export1_loc, Export{ExternalKind::Memory, name3, Var{0}}),
-          MakeAt(export2_loc, Export{ExternalKind::Memory, name4, Var{0}}),
+          ModuleItem{MakeAt(loc1, Memory{memory_desc, {}})},
+          ModuleItem{
+              MakeAt(export1_loc, Export{ExternalKind::Memory, name3, Var{0}})},
+          ModuleItem{
+              MakeAt(export2_loc, Export{ExternalKind::Memory, name4, Var{0}})},
       },
       Module{
-          MakeAt(loc1, Memory{memory_desc, {export1, export2}}),
+          ModuleItem{MakeAt(loc1, Memory{memory_desc, {export1, export2}})},
       });
 }
 
 TEST_F(TextDesugarTest, Memory_DefinedSegment) {
   OK(
       Module{
-          MakeAt(loc1, Memory{memory_desc, {}}),
-          DataSegment{nullopt, Var{0}, constant_expression, text_list},
+          ModuleItem{MakeAt(loc1, Memory{memory_desc, {}})},
+          ModuleItem{
+              DataSegment{nullopt, Var{0}, constant_expression, text_list}},
       },
       Module{
-          MakeAt(loc1, Memory{memory_desc, {}, text_list}),
+          ModuleItem{MakeAt(loc1, Memory{memory_desc, {}, text_list})},
       });
 }
 
 TEST_F(TextDesugarTest, Memory_Import) {
   OK(
       Module{
-          MakeAt(import_loc, Import{name1, name2, memory_desc}),
+          ModuleItem{MakeAt(import_loc, Import{name1, name2, memory_desc})},
       },
       Module{
-          MakeAt(loc1, Memory{memory_desc, import, {}}),
+          ModuleItem{MakeAt(loc1, Memory{memory_desc, import, {}})},
       });
 }
 
 TEST_F(TextDesugarTest, Memory_ImportExport) {
   OK(
       Module{
-          MakeAt(import_loc, Import{name1, name2, memory_desc}),
-          MakeAt(export1_loc, Export{ExternalKind::Memory, name3, Var{0}}),
-          MakeAt(export2_loc, Export{ExternalKind::Memory, name4, Var{0}}),
+          ModuleItem{MakeAt(import_loc, Import{name1, name2, memory_desc})},
+          ModuleItem{
+              MakeAt(export1_loc, Export{ExternalKind::Memory, name3, Var{0}})},
+          ModuleItem{
+              MakeAt(export2_loc, Export{ExternalKind::Memory, name4, Var{0}})},
       },
       Module{
-          MakeAt(loc1, Memory{memory_desc, import, {export1, export2}}),
+          ModuleItem{
+              MakeAt(loc1, Memory{memory_desc, import, {export1, export2}})},
       });
 }
 
 TEST_F(TextDesugarTest, Global_Defined) {
   OK(
       Module{
-          MakeAt(loc1, Global{global_desc, constant_expression, {}}),
+          ModuleItem{
+              MakeAt(loc1, Global{global_desc, constant_expression, {}})},
       },
       Module{
-          MakeAt(loc1, Global{global_desc, constant_expression, {}}),
+          ModuleItem{
+              MakeAt(loc1, Global{global_desc, constant_expression, {}})},
       });
 }
 
 TEST_F(TextDesugarTest, Global_DefinedExport) {
   OK(
       Module{
-          MakeAt(loc1, Global{global_desc, constant_expression, {}}),
-          MakeAt(export1_loc, Export{ExternalKind::Global, name3, Var{0}}),
-          MakeAt(export2_loc, Export{ExternalKind::Global, name4, Var{0}}),
+          ModuleItem{
+              MakeAt(loc1, Global{global_desc, constant_expression, {}})},
+          ModuleItem{
+              MakeAt(export1_loc, Export{ExternalKind::Global, name3, Var{0}})},
+          ModuleItem{
+              MakeAt(export2_loc, Export{ExternalKind::Global, name4, Var{0}})},
       },
       Module{
-          MakeAt(loc1,
-                 Global{global_desc, constant_expression, {export1, export2}}),
+          ModuleItem{MakeAt(
+              loc1,
+              Global{global_desc, constant_expression, {export1, export2}})},
       });
 }
 
 TEST_F(TextDesugarTest, Global_Import) {
   OK(
       Module{
-          MakeAt(import_loc, Import{name1, name2, global_desc}),
+          ModuleItem{MakeAt(import_loc, Import{name1, name2, global_desc})},
       },
       Module{
-          MakeAt(loc1, Global{global_desc, import, {}}),
+          ModuleItem{MakeAt(loc1, Global{global_desc, import, {}})},
       });
 }
 
 TEST_F(TextDesugarTest, Global_ImportExport) {
   OK(
       Module{
-          MakeAt(import_loc, Import{name1, name2, global_desc}),
-          MakeAt(export1_loc, Export{ExternalKind::Global, name3, Var{0}}),
-          MakeAt(export2_loc, Export{ExternalKind::Global, name4, Var{0}}),
+          ModuleItem{MakeAt(import_loc, Import{name1, name2, global_desc})},
+          ModuleItem{
+              MakeAt(export1_loc, Export{ExternalKind::Global, name3, Var{0}})},
+          ModuleItem{
+              MakeAt(export2_loc, Export{ExternalKind::Global, name4, Var{0}})},
       },
       Module{
-          MakeAt(loc1, Global{global_desc, import, {export1, export2}}),
+          ModuleItem{
+              MakeAt(loc1, Global{global_desc, import, {export1, export2}})},
       });
 }
 
 TEST_F(TextDesugarTest, Event_Defined) {
   OK(
       Module{
-          MakeAt(loc1, Event{event_desc, {}}),
+          ModuleItem{MakeAt(loc1, Event{event_desc, {}})},
       },
       Module{
-          MakeAt(loc1, Event{event_desc, {}}),
+          ModuleItem{MakeAt(loc1, Event{event_desc, {}})},
       });
 }
 
 TEST_F(TextDesugarTest, Event_DefinedExport) {
   OK(
       Module{
-          MakeAt(loc1, Event{event_desc, {}}),
-          MakeAt(export1_loc, Export{ExternalKind::Event, name3, Var{0}}),
-          MakeAt(export2_loc, Export{ExternalKind::Event, name4, Var{0}}),
+          ModuleItem{MakeAt(loc1, Event{event_desc, {}})},
+          ModuleItem{
+              MakeAt(export1_loc, Export{ExternalKind::Event, name3, Var{0}})},
+          ModuleItem{
+              MakeAt(export2_loc, Export{ExternalKind::Event, name4, Var{0}})},
       },
       Module{
-          MakeAt(loc1, Event{event_desc, {export1, export2}}),
+          ModuleItem{MakeAt(loc1, Event{event_desc, {export1, export2}})},
       });
 }
 
 TEST_F(TextDesugarTest, Event_Import) {
   OK(
       Module{
-          MakeAt(import_loc, Import{name1, name2, event_desc}),
+          ModuleItem{MakeAt(import_loc, Import{name1, name2, event_desc})},
       },
       Module{
-          MakeAt(loc1, Event{event_desc, import, {}}),
+          ModuleItem{MakeAt(loc1, Event{event_desc, import, {}})},
       });
 }
 
 TEST_F(TextDesugarTest, Event_ImportExport) {
   OK(
       Module{
-          MakeAt(import_loc, Import{name1, name2, event_desc}),
-          MakeAt(export1_loc, Export{ExternalKind::Event, name3, Var{0}}),
-          MakeAt(export2_loc, Export{ExternalKind::Event, name4, Var{0}}),
+          ModuleItem{MakeAt(import_loc, Import{name1, name2, event_desc})},
+          ModuleItem{
+              MakeAt(export1_loc, Export{ExternalKind::Event, name3, Var{0}})},
+          ModuleItem{
+              MakeAt(export2_loc, Export{ExternalKind::Event, name4, Var{0}})},
       },
       Module{
-          MakeAt(loc1, Event{event_desc, import, {export1, export2}}),
+          ModuleItem{
+              MakeAt(loc1, Event{event_desc, import, {export1, export2}})},
       });
 }

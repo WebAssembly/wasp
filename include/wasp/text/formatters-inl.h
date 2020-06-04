@@ -191,6 +191,15 @@ typename Ctx::iterator formatter<::wasp::text::Var>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::text::ModuleItem>::format(
+    const ::wasp::text::ModuleItem& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{}", self.desc);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::text::ScriptModuleKind>::format(
     const ::wasp::text::ScriptModuleKind& self,
     Ctx& ctx) {

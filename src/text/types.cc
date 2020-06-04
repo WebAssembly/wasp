@@ -626,9 +626,147 @@ DataSegment::DataSegment(OptAt<BindVar> name,
 DataSegment::DataSegment(OptAt<BindVar> name, const TextList& data)
     : name{name}, type{SegmentType::Passive}, data{data} {}
 
+auto ModuleItem::kind() const -> ModuleItemKind {
+  return static_cast<ModuleItemKind>(desc.index());
+}
+
+bool ModuleItem::is_type_entry() const {
+  return holds_alternative<At<TypeEntry>>(desc);
+}
+
+bool ModuleItem::is_import() const {
+  return holds_alternative<At<Import>>(desc);
+}
+
+bool ModuleItem::is_function() const {
+  return holds_alternative<At<Function>>(desc);
+}
+
+bool ModuleItem::is_table() const {
+  return holds_alternative<At<Table>>(desc);
+}
+
+bool ModuleItem::is_memory() const {
+  return holds_alternative<At<Memory>>(desc);
+}
+
+bool ModuleItem::is_global() const {
+  return holds_alternative<At<Global>>(desc);
+}
+
+bool ModuleItem::is_export() const {
+  return holds_alternative<At<Export>>(desc);
+}
+
+bool ModuleItem::is_start() const {
+  return holds_alternative<At<Start>>(desc);
+}
+
+bool ModuleItem::is_element_segment() const {
+  return holds_alternative<At<ElementSegment>>(desc);
+}
+
+bool ModuleItem::is_data_segment() const {
+  return holds_alternative<At<DataSegment>>(desc);
+}
+
+bool ModuleItem::is_event() const {
+  return holds_alternative<At<Event>>(desc);
+}
+
+auto ModuleItem::type_entry() -> At<TypeEntry>& {
+  return get<At<TypeEntry>>(desc);
+}
+
+auto ModuleItem::type_entry() const -> const At<TypeEntry>& {
+  return get<At<TypeEntry>>(desc);
+}
+
+auto ModuleItem::import() -> At<Import>& {
+  return get<At<Import>>(desc);
+}
+
+auto ModuleItem::import() const -> const At<Import>& {
+  return get<At<Import>>(desc);
+}
+
+auto ModuleItem::function() -> At<Function>& {
+  return get<At<Function>>(desc);
+}
+
+auto ModuleItem::function() const -> const At<Function>& {
+  return get<At<Function>>(desc);
+}
+
+auto ModuleItem::table() -> At<Table>& {
+  return get<At<Table>>(desc);
+}
+
+auto ModuleItem::table() const -> const At<Table>& {
+  return get<At<Table>>(desc);
+}
+
+auto ModuleItem::memory() -> At<Memory>& {
+  return get<At<Memory>>(desc);
+}
+
+auto ModuleItem::memory() const -> const At<Memory>& {
+  return get<At<Memory>>(desc);
+}
+
+auto ModuleItem::global() -> At<Global>& {
+  return get<At<Global>>(desc);
+}
+
+auto ModuleItem::global() const -> const At<Global>& {
+  return get<At<Global>>(desc);
+}
+
+auto ModuleItem::export_() -> At<Export>& {
+  return get<At<Export>>(desc);
+}
+
+auto ModuleItem::export_() const -> const At<Export>& {
+  return get<At<Export>>(desc);
+}
+
+auto ModuleItem::start() -> At<Start>& {
+  return get<At<Start>>(desc);
+}
+
+auto ModuleItem::start() const -> const At<Start>& {
+  return get<At<Start>>(desc);
+}
+
+auto ModuleItem::element_segment() -> At<ElementSegment>& {
+  return get<At<ElementSegment>>(desc);
+}
+
+auto ModuleItem::element_segment() const -> const At<ElementSegment>& {
+  return get<At<ElementSegment>>(desc);
+}
+
+auto ModuleItem::data_segment() -> At<DataSegment>& {
+  return get<At<DataSegment>>(desc);
+}
+
+auto ModuleItem::data_segment() const -> const At<DataSegment>& {
+  return get<At<DataSegment>>(desc);
+}
+
+auto ModuleItem::event() -> At<Event>& {
+  return get<At<Event>>(desc);
+}
+
+auto ModuleItem::event() const -> const At<Event>& {
+  return get<At<Event>>(desc);
+}
+
+
 WASP_TEXT_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_TEXT_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
 WASP_OPERATOR_EQ_NE_1(text::Var, desc)
+WASP_OPERATOR_EQ_NE_1(text::ModuleItem, desc)
 
 bool operator==(const BoundValueTypeList& lhs, const ValueTypeList& rhs) {
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
@@ -645,3 +783,4 @@ bool operator!=(const BoundValueTypeList& lhs, const ValueTypeList& rhs) {
 WASP_TEXT_STRUCTS(WASP_STD_HASH_VARGS)
 WASP_TEXT_CONTAINERS(WASP_STD_HASH_CONTAINER)
 WASP_STD_HASH_1(text::Var, desc)
+WASP_STD_HASH_1(text::ModuleItem, desc)
