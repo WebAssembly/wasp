@@ -26,6 +26,31 @@
 namespace wasp {
 namespace text {
 
+bool Var::is_index() const {
+  return holds_alternative<Index>(desc);
+}
+
+bool Var::is_name() const {
+  return holds_alternative<string_view>(desc);
+}
+
+auto Var::index() -> Index& {
+  return get<Index>(desc);
+}
+
+auto Var::index() const -> const Index& {
+  return get<Index>(desc);
+}
+
+auto Var::name() -> string_view& {
+  return get<string_view>(desc);
+}
+
+auto Var::name() const -> const string_view& {
+  return get<string_view>(desc);
+}
+
+
 bool FunctionTypeUse::IsInlineType() const {
   return !type_use && type->params.empty() && type->results.size() <= 1;
 }
@@ -603,6 +628,7 @@ DataSegment::DataSegment(OptAt<BindVar> name, const TextList& data)
 
 WASP_TEXT_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_TEXT_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
+WASP_OPERATOR_EQ_NE_1(text::Var, desc)
 
 bool operator==(const BoundValueTypeList& lhs, const ValueTypeList& rhs) {
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
@@ -618,3 +644,4 @@ bool operator!=(const BoundValueTypeList& lhs, const ValueTypeList& rhs) {
 
 WASP_TEXT_STRUCTS(WASP_STD_HASH_VARGS)
 WASP_TEXT_CONTAINERS(WASP_STD_HASH_CONTAINER)
+WASP_STD_HASH_1(text::Var, desc)

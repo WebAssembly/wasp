@@ -40,8 +40,8 @@ auto ToBinary(Context& context, const At<text::Text>& value)
 }
 
 auto ToBinary(Context& context, const At<text::Var>& value) -> At<Index> {
-  assert(holds_alternative<Index>(*value));
-  return MakeAt(value.loc(), std::get<Index>(*value));
+  assert(value->is_index());
+  return MakeAt(value.loc(), value->index());
 }
 
 auto ToBinary(Context& context, const OptAt<text::Var>& var) -> At<Index> {

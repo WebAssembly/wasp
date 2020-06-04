@@ -169,10 +169,10 @@ Iterator Write(WriteContext& context, T value, Iterator out) {
 
 template <typename Iterator>
 Iterator Write(WriteContext& context, Var value, Iterator out) {
-  if (holds_alternative<u32>(value)) {
-    return WriteNat(context, get<u32>(value), out);
+  if (value.is_index()) {
+    return WriteNat(context, value.index(), out);
   } else {
-    return Write(context, get<string_view>(value), out);
+    return Write(context, value.name(), out);
   }
 }
 

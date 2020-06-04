@@ -27,18 +27,18 @@ namespace wasp {
 namespace text {
 
 void Resolve(Context& context, NameMap& name_map, At<Var>& var) {
-  if (holds_alternative<Index>(var.value())) {
+  if (var->is_index()) {
     return;
   }
 
-  auto name = get<string_view>(var.value());
+  auto name = var->name();
   if (!name_map.Has(name)) {
     context.errors.OnError(var.loc(), format("Undefined variable {}", name));
     return;
   }
 
   // TODO: Check for existence and get value at the same time?
-  var = MakeAt(var.loc(), name_map.Get(name));
+  var->desc = name_map.Get(name);
 }
 
 void Resolve(Context& context, NameMap& name_map, OptAt<Var>& var) {
@@ -59,8 +59,8 @@ void Resolve(Context& context, FunctionTypeUse& function_type_use) {
 
   Resolve(context, context.type_names, type_use);
   if (type_use) {
-    if (holds_alternative<u32>(type_use->value())) {
-      auto type_index = get<u32>(type_use->value());
+    if (type_use->value().is_index()) {
+      auto type_index = type_use->value().index();
       auto type_opt = context.function_type_map.Get(type_index);
       // It's possible that this type use is invalid, but that's a validation
       // error not a parse/resolve error. We'll only check that the type use and
@@ -83,7 +83,7 @@ void Resolve(Context& context, FunctionTypeUse& function_type_use) {
   } else {
     auto index_opt = context.function_type_map.Find(type);
     if (index_opt) {
-      type_use = *index_opt;
+      type_use = Var{*index_opt};
     }
   }
 }
@@ -94,8 +94,8 @@ void Resolve(Context& context,
              At<BoundFunctionType>& type) {
   Resolve(context, context.type_names, type_use);
   if (type_use) {
-    if (holds_alternative<u32>(type_use->value())) {
-      auto type_index = get<u32>(type_use->value());
+    if (type_use->value().is_index()) {
+      auto type_index = type_use->value().index();
       auto type_opt = context.function_type_map.Get(type_index);
       // It's possible that this type use is invalid, but that's a validation
       // error not a parse/resolve error. We'll only check that the type use and
@@ -119,7 +119,7 @@ void Resolve(Context& context,
   } else {
     auto index_opt = context.function_type_map.Find(type);
     if (index_opt) {
-      type_use = *index_opt;
+      type_use = Var{*index_opt};
     }
   }
 }

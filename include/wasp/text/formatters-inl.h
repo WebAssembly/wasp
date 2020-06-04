@@ -182,10 +182,10 @@ typename Ctx::iterator formatter<::wasp::text::Var>::format(
     const ::wasp::text::Var& self,
     Ctx& ctx) {
   memory_buffer buf;
-  if (std::holds_alternative<::wasp::u32>(self)) {
-    format_to(buf, "{}", std::get<::wasp::u32>(self));
+  if (self.is_index()) {
+    format_to(buf, "{}", self.index());
   } else {
-    format_to(buf, "{}", std::get<::wasp::string_view>(self));
+    format_to(buf, "{}", self.name());
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }

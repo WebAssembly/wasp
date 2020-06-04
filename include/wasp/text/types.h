@@ -33,7 +33,18 @@
 namespace wasp {
 namespace text {
 
-using Var = variant<Index, string_view>;
+struct Var {
+  bool is_index() const;
+  bool is_name() const;
+
+  auto index() -> Index&;
+  auto index() const -> const Index&;
+  auto name() -> string_view&;
+  auto name() const -> const string_view&;
+
+  variant<Index, string_view> desc;
+};
+
 using VarList = std::vector<At<Var>>;
 using BindVar = string_view;
 
@@ -716,6 +727,7 @@ using Script = std::vector<At<Command>>;
 
 WASP_TEXT_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
+WASP_DECLARE_OPERATOR_EQ_NE(text::Var)
 
 bool operator==(const BoundValueTypeList& lhs, const ValueTypeList& rhs);
 bool operator==(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
@@ -727,11 +739,13 @@ bool operator!=(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
 WASP_TEXT_ENUMS(WASP_DECLARE_PRINT_TO)
 WASP_TEXT_STRUCTS(WASP_DECLARE_PRINT_TO)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_PRINT_TO)
+WASP_DECLARE_PRINT_TO(text::Var)
 
 }  // namespace text
 }  // namespace wasp
 
 WASP_TEXT_STRUCTS(WASP_DECLARE_STD_HASH)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_STD_HASH)
+WASP_DECLARE_STD_HASH(text::Var)
 
 #endif  // WASP_TEXT_TYPES_H_
