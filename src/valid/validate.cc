@@ -433,7 +433,7 @@ bool Validate(Context& context, const At<Limits>& value, Index max) {
           format("Expected maximum {} to be <= {}", *value->max, max));
       valid = false;
     }
-    if (value->min > *value->max) {
+    if (value->min.value() > value->max->value()) {
       context.errors->OnError(value->min.loc(),
                               format("Expected minimum {} to be <= maximum {}",
                                      value->min, *value->max));

@@ -767,6 +767,9 @@ TEST(ValidateTest, Limits) {
   Context context{errors};
   EXPECT_TRUE(Validate(context, Limits{0}, 10));
   EXPECT_TRUE(Validate(context, Limits{9, 10}, 10));
+  // Test that the value is compared, not the string.
+  EXPECT_TRUE(Validate(
+      context, Limits{MakeAt("9"_su8, u32{9}), MakeAt("10"_su8, u32{10})}, 10));
 }
 
 TEST(ValidateTest, Limits_Invalid) {
