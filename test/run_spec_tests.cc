@@ -15,6 +15,7 @@
 //
 
 #include <algorithm>
+#include <cassert>
 #include <filesystem>
 #include <iostream>
 #include <utility>
@@ -26,16 +27,19 @@
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/format.h"
+#include "wasp/convert/to_binary.h"
+#include "wasp/text/desugar.h"
 #include "wasp/text/read.h"
 #include "wasp/text/read/context.h"
 #include "wasp/text/read/tokenizer.h"
-#include "wasp/text/write.h"
+#include "wasp/text/resolve.h"
+#include "wasp/valid/context.h"
+#include "wasp/valid/validate.h"
 
 using namespace ::wasp;
 namespace fs = std::filesystem;
 
 static bool s_verbose = false;
-static bool s_print_text = false;
 
 void DoFile(const fs::path&, const Features&);
 
@@ -53,7 +57,6 @@ int main(int argc, char** argv) {
              exit(0);
            })
       .Add('v', "--verbose", "verbose output", [&]() { s_verbose = true; })
-      .Add("--print-text", "print text output", [&]() { s_print_text = true; })
       .Add("<filename>", "filename",
            [&](string_view arg) { filenames.push_back(arg); });
   parser.Parse(args);
@@ -89,17 +92,19 @@ int main(int argc, char** argv) {
   std::sort(sources.begin(), sources.end());
   for (auto& source : sources) {
     Features features;
-    // TODO: Merge these defaults into features.def, since they're now merged
-    // to the upstream spec.
-    features.enable_multi_value();
-    features.enable_saturating_float_to_int();
-    features.enable_sign_extension();
-
     for (auto&& [directory, feature_bits] : directory_feature_map) {
       if (source.string().find(directory) != std::string::npos) {
         features = Features{feature_bits};
       }
     }
+
+    // TODO: Merge these defaults into features.def, since they're now merged
+    // to the upstream spec.
+    features.enable_mutable_globals();
+    features.enable_multi_value();
+    features.enable_saturating_float_to_int();
+    features.enable_sign_extension();
+
     DoFile(source, features);
   }
 }
@@ -116,19 +121,31 @@ void DoFile(const fs::path& path, const Features& features) {
   }
 
   text::Tokenizer tokenizer{*data};
-  std::string filename = path.filename().string();
+  std::string filename = path.string();
   tools::TextErrors errors{filename, *data};
   text::Context context{features, errors};
   auto script = ReadScript(tokenizer, context);
 
-  if (errors.has_error()) {
+  if (!script || errors.has_error()) {
     errors.PrintTo(std::cerr);
+    return;
   }
 
-  if (s_print_text) {
-    text::WriteContext wcontext;
-    std::string output;
-    text::Write(wcontext, script, std::back_inserter(output));
-    print("{}\n", output);
+  for (auto&& command : *script) {
+    if (command->is_script_module()) {
+      auto&& script_module = command->script_module();
+      if (script_module.has_module()) {
+        auto&& text_module = script_module.module();
+        text::Desugar(text_module);
+        convert::Context convert_context;
+        auto binary_module = convert::ToBinary(convert_context, text_module);
+        valid::Context valid_context{features, errors};
+        Validate(valid_context, binary_module);
+      }
+    }
+  }
+
+  if (errors.has_error()) {
+    errors.PrintTo(std::cerr);
   }
 }
