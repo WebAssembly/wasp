@@ -1283,21 +1283,21 @@ Iterator Write(WriteContext& context, const Register& value, Iterator out) {
 
 template <typename Iterator>
 Iterator Write(WriteContext& context, const Command& value, Iterator out) {
-  switch (value.index()) {
-    case 0:  // ScriptModule
-      out = Write(context, get<ScriptModule>(value), out);
+  switch (value.kind()) {
+    case CommandKind::ScriptModule:
+      out = Write(context, value.script_module(), out);
       break;
 
-    case 1:  // Register
-      out = Write(context, get<Register>(value), out);
+    case CommandKind::Register:
+      out = Write(context, value.register_(), out);
       break;
 
-    case 2:  // Action
-      out = Write(context, get<Action>(value), out);
+    case CommandKind::Action:
+      out = Write(context, value.action(), out);
       break;
 
-    case 3:  // Assertion
-      out = Write(context, get<Assertion>(value), out);
+    case CommandKind::Assertion:
+      out = Write(context, value.assertion(), out);
       break;
   }
   context.Newline();

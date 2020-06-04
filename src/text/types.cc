@@ -881,11 +881,65 @@ auto Const::ref_extern() const -> const RefExternConst& {
 }
 
 
+auto Command::kind() const -> CommandKind {
+  return static_cast<CommandKind>(contents.index());
+}
+
+bool Command::is_script_module() const {
+  return holds_alternative<ScriptModule>(contents);
+}
+
+bool Command::is_register() const {
+  return holds_alternative<Register>(contents);
+}
+
+bool Command::is_action() const {
+  return holds_alternative<Action>(contents);
+}
+
+bool Command::is_assertion() const {
+  return holds_alternative<Assertion>(contents);
+}
+
+auto Command::script_module() -> ScriptModule& {
+  return get<ScriptModule>(contents);
+}
+
+auto Command::script_module() const -> const ScriptModule& {
+  return get<ScriptModule>(contents);
+}
+
+auto Command::register_() -> Register& {
+  return get<Register>(contents);
+}
+
+auto Command::register_() const -> const Register& {
+  return get<Register>(contents);
+}
+
+auto Command::action() -> Action& {
+  return get<Action>(contents);
+}
+
+auto Command::action() const -> const Action& {
+  return get<Action>(contents);
+}
+
+auto Command::assertion() -> Assertion& {
+  return get<Assertion>(contents);
+}
+
+auto Command::assertion() const -> const Assertion& {
+  return get<Assertion>(contents);
+}
+
+
 WASP_TEXT_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_TEXT_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
 WASP_OPERATOR_EQ_NE_1(text::Var, desc)
 WASP_OPERATOR_EQ_NE_1(text::ModuleItem, desc)
 WASP_OPERATOR_EQ_NE_1(text::Const, value)
+WASP_OPERATOR_EQ_NE_1(text::Command, contents)
 
 bool operator==(const BoundValueTypeList& lhs, const ValueTypeList& rhs) {
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
@@ -904,3 +958,4 @@ WASP_TEXT_CONTAINERS(WASP_STD_HASH_CONTAINER)
 WASP_STD_HASH_1(text::Var, desc)
 WASP_STD_HASH_1(text::ModuleItem, desc)
 WASP_STD_HASH_1(text::Const, value)
+WASP_STD_HASH_1(text::Command, contents)

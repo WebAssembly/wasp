@@ -256,4 +256,13 @@ typename Ctx::iterator formatter<::wasp::text::NanKind>::format(
   return formatter<string_view>::format(result, ctx);
 }
 
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::text::Command>::format(
+    const ::wasp::text::Command& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{}", self.contents);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
 }  // namespace fmt

@@ -746,7 +746,32 @@ struct Register {
   OptAt<ModuleVar> module;
 };
 
-using Command = variant<ScriptModule, Register, Action, Assertion>;
+// NOTE: variant order must be kept in sync with Command variant below.
+enum class CommandKind {
+  ScriptModule,
+  Register,
+  Action,
+  Assertion,
+};
+
+struct Command {
+  auto kind() const -> CommandKind;
+  bool is_script_module() const;
+  bool is_register() const;
+  bool is_action() const;
+  bool is_assertion() const;
+
+  auto script_module() -> ScriptModule&;
+  auto script_module() const -> const ScriptModule&;
+  auto register_() -> Register&;
+  auto register_() const -> const Register&;
+  auto action() -> Action&;
+  auto action() const -> const Action&;
+  auto assertion() -> Assertion&;
+  auto assertion() const -> const Assertion&;
+
+  variant<ScriptModule, Register, Action, Assertion> contents;
+};
 
 using Script = std::vector<At<Command>>;
 
@@ -832,6 +857,7 @@ WASP_TEXT_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_DECLARE_OPERATOR_EQ_NE(text::Var)
 WASP_DECLARE_OPERATOR_EQ_NE(text::ModuleItem)
 WASP_DECLARE_OPERATOR_EQ_NE(text::Const)
+WASP_DECLARE_OPERATOR_EQ_NE(text::Command)
 
 bool operator==(const BoundValueTypeList& lhs, const ValueTypeList& rhs);
 bool operator==(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
@@ -846,6 +872,7 @@ WASP_TEXT_CONTAINERS(WASP_DECLARE_PRINT_TO)
 WASP_DECLARE_PRINT_TO(text::Var)
 WASP_DECLARE_PRINT_TO(text::ModuleItem)
 WASP_DECLARE_PRINT_TO(text::Const)
+WASP_DECLARE_PRINT_TO(text::Command)
 
 }  // namespace text
 }  // namespace wasp
@@ -855,5 +882,6 @@ WASP_TEXT_CONTAINERS(WASP_DECLARE_STD_HASH)
 WASP_DECLARE_STD_HASH(text::Var)
 WASP_DECLARE_STD_HASH(text::ModuleItem)
 WASP_DECLARE_STD_HASH(text::Const)
+WASP_DECLARE_STD_HASH(text::Command)
 
 #endif  // WASP_TEXT_TYPES_H_
