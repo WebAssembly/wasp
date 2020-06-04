@@ -671,13 +671,13 @@ TEST_F(TextReadTest, PlainInstruction_Select_reference_types) {
 
   // select w/ one type
   OK(ReadPlainInstruction,
-     I{MakeAt("select"_su8, O::Select),
+     I{MakeAt("select"_su8, O::SelectT),
        MakeAt("(result i32)"_su8, SelectImmediate{MakeAt("i32"_su8, VT::I32)})},
      "select (result i32)"_su8);
 
   // select w/ multiple types
   OK(ReadPlainInstruction,
-     I{MakeAt("select"_su8, O::Select),
+     I{MakeAt("select"_su8, O::SelectT),
        MakeAt("(result i32) (result i64)"_su8,
               SelectImmediate{MakeAt("i32"_su8, VT::I32),
                               MakeAt("i64"_su8, VT::I64)})},

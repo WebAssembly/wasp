@@ -1252,13 +1252,18 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     case TokenType::SelectInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
+      At<Opcode> opcode = token.opcode();
       At<ValueTypeList> immediate;
       if (context.features.reference_types_enabled()) {
         LocationGuard immediate_guard{tokenizer};
         WASP_TRY_READ(value_type_list, ReadResultList(tokenizer, context));
         immediate = MakeAt(immediate_guard.loc(), value_type_list);
+        if (!value_type_list.empty()) {
+          // Typed select has a different opcode.
+          opcode = MakeAt(opcode.loc(), Opcode::SelectT);
+        }
       }
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+      return MakeAt(guard.loc(), Instruction{opcode, immediate});
     }
 
     case TokenType::SimdConstInstr: {
