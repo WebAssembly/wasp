@@ -686,6 +686,8 @@ auto ToBinary(Context& context, const At<text::Module>& value)
 
       case text::ModuleItemKind::DataSegment:
         result.data_segments.push_back(ToBinary(context, item.data_segment()));
+        result.data_count =
+            binary::DataCount{Index(result.data_segments.size())};
         break;
 
       case text::ModuleItemKind::Event:

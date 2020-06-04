@@ -924,7 +924,7 @@ TEST(ConvertToBinaryTest, Module) {
                          binary::ElementList{binary::ElementListWithIndexes{
                              external_kind, {MakeAt(loc22, Index{0})}}}})},
              // data_counts
-             {},
+             {binary::DataCount{Index{1}}},
              // codes
              {MakeAt(loc7, binary::Code{binary::LocalsList{},
                                         binary::Expression{"\x01\x0b"_su8}})},
