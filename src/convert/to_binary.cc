@@ -101,7 +101,7 @@ auto ToBinary(Context& context, const At<text::Import>& value)
 
   switch (value->desc.index()) {
     case 0: { // Function
-      auto& desc = std::get<text::FunctionDesc>(value->desc);
+      auto& desc = value->function_desc();
       return MakeAt(value.loc(),
                     binary::Import{module, name,
                                    MakeAt(desc.type_use->loc(),
@@ -109,28 +109,28 @@ auto ToBinary(Context& context, const At<text::Import>& value)
     }
 
     case 1: { // Table
-      auto& desc = std::get<text::TableDesc>(value->desc);
+      auto& desc = value->table_desc();
       return MakeAt(
           value.loc(),
           binary::Import{module, name, MakeAt(desc.type.loc(), desc.type)});
     }
 
     case 2: { // Memory
-      auto& desc = std::get<text::MemoryDesc>(value->desc);
+      auto& desc = value->memory_desc();
       return MakeAt(
           value.loc(),
           binary::Import{module, name, MakeAt(desc.type.loc(), desc.type)});
     }
 
     case 3: { // Global
-      auto& desc = std::get<text::GlobalDesc>(value->desc);
+      auto& desc = value->global_desc();
       return MakeAt(
           value.loc(),
           binary::Import{module, name, MakeAt(desc.type.loc(), desc.type)});
     }
 
     case 4: { // Event
-      auto& desc = std::get<text::EventDesc>(value->desc);
+      auto& desc = value->event_desc();
       return MakeAt(value.loc(),
                     binary::Import{
                         module, name,

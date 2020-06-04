@@ -286,10 +286,10 @@ void Resolve(Context& context, EventDesc& desc) {
 void Resolve(Context& context, Import& import) {
   switch (import.desc.index()) {
     case 0: // FunctionDesc.
-      return Resolve(context, get<FunctionDesc>(import.desc));
+      return Resolve(context, import.function_desc());
 
     case 4: // EventDesc..
-      return Resolve(context, get<EventDesc>(import.desc));
+      return Resolve(context, import.event_desc());
 
     default:
       break;

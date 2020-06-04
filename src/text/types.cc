@@ -333,6 +333,68 @@ const At<SimdLaneImmediate>& Instruction::simd_lane_immediate() const {
 }
 
 
+bool Import::is_function() const {
+  return holds_alternative<FunctionDesc>(desc);
+}
+
+bool Import::is_table() const {
+  return holds_alternative<TableDesc>(desc);
+}
+
+bool Import::is_memory() const {
+  return holds_alternative<MemoryDesc>(desc);
+}
+
+bool Import::is_global() const {
+  return holds_alternative<GlobalDesc>(desc);
+}
+
+bool Import::is_event() const {
+  return holds_alternative<EventDesc>(desc);
+}
+
+
+auto Import::function_desc() -> FunctionDesc& {
+  return get<FunctionDesc>(desc);
+}
+
+auto Import::function_desc() const -> const FunctionDesc& {
+  return get<FunctionDesc>(desc);
+}
+
+auto Import::table_desc() -> TableDesc& {
+  return get<TableDesc>(desc);
+}
+
+auto Import::table_desc() const -> const TableDesc& {
+  return get<TableDesc>(desc);
+}
+
+auto Import::memory_desc() -> MemoryDesc& {
+  return get<MemoryDesc>(desc);
+}
+
+auto Import::memory_desc() const -> const MemoryDesc& {
+  return get<MemoryDesc>(desc);
+}
+
+auto Import::global_desc() -> GlobalDesc& {
+  return get<GlobalDesc>(desc);
+}
+
+auto Import::global_desc() const -> const GlobalDesc& {
+  return get<GlobalDesc>(desc);
+}
+
+auto Import::event_desc() -> EventDesc& {
+  return get<EventDesc>(desc);
+}
+
+auto Import::event_desc() const -> const EventDesc& {
+  return get<EventDesc>(desc);
+}
+
+
 Function::Function(const FunctionDesc& desc,
                    const BoundValueTypeList& locals,
                    const InstructionList& instructions,

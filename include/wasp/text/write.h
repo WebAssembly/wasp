@@ -604,23 +604,23 @@ Iterator Write(WriteContext& context, const Import& value, Iterator out) {
   out = WriteLpar(context, out);
   switch (value.desc.index()) {
     case 0:  // FunctionDesc
-      out = Write(context, get<FunctionDesc>(value.desc), out);
+      out = Write(context, value.function_desc(), out);
       break;
 
     case 1:  // TableDesc
-      out = Write(context, get<TableDesc>(value.desc), out);
+      out = Write(context, value.table_desc(), out);
       break;
 
     case 2:  // MemoryDesc
-      out = Write(context, get<MemoryDesc>(value.desc), out);
+      out = Write(context, value.memory_desc(), out);
       break;
 
     case 3:  // GlobalDesc
-      out = Write(context, get<GlobalDesc>(value.desc), out);
+      out = Write(context, value.global_desc(), out);
       break;
 
     case 4:  // EventDesc
-      out = Write(context, get<EventDesc>(value.desc), out);
+      out = Write(context, value.event_desc(), out);
       break;
   }
   out = WriteRpar(context, out);

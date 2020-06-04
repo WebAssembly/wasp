@@ -256,6 +256,24 @@ struct EventDesc {
 struct Import {
   At<Text> module;
   At<Text> name;
+
+  bool is_function() const;
+  bool is_table() const;
+  bool is_memory() const;
+  bool is_global() const;
+  bool is_event() const;
+
+  auto function_desc() -> FunctionDesc&;
+  auto function_desc() const -> const FunctionDesc&;
+  auto table_desc() -> TableDesc&;
+  auto table_desc() const -> const TableDesc&;
+  auto memory_desc() -> MemoryDesc&;
+  auto memory_desc() const -> const MemoryDesc&;
+  auto global_desc() -> GlobalDesc&;
+  auto global_desc() const -> const GlobalDesc&;
+  auto event_desc() -> EventDesc&;
+  auto event_desc() const -> const EventDesc&;
+
   // TODO: Use At on variant members?
   variant<FunctionDesc, TableDesc, MemoryDesc, GlobalDesc, EventDesc> desc;
 };
