@@ -49,6 +49,7 @@ TEST(ValidateTest, ConstantExpression_Const) {
       {Instruction{Opcode::I64Const, s64{0}}, ValueType::I64},
       {Instruction{Opcode::F32Const, f32{0}}, ValueType::F32},
       {Instruction{Opcode::F64Const, f64{0}}, ValueType::F64},
+      {Instruction{Opcode::V128Const, v128{}}, ValueType::V128},
   };
 
   for (const auto& test : tests) {

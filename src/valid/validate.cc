@@ -82,6 +82,10 @@ bool Validate(Context& context,
       actual_type = ValueType::F64;
       break;
 
+    case Opcode::V128Const:
+      actual_type = ValueType::V128;
+      break;
+
     case Opcode::GlobalGet: {
       auto index = instruction->index_immediate();
       if (!ValidateIndex(context, index, max_global_index, "global index")) {
