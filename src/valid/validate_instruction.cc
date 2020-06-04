@@ -788,24 +788,12 @@ bool CheckAtomicAlignment(Context& context,
   return true;
 }
 
-bool CheckSharedMemory(Context& context,
-                       const At<Instruction>& instruction,
-                       const optional<MemoryType>& memory_type) {
-  if (memory_type && memory_type->limits->shared == Shared::No) {
-    context.errors->OnError(
-        instruction.loc(), format("Memory must be shared for {}", instruction));
-    return false;
-  }
-  return true;
-}
-
 bool MemoryAtomicNotify(Context& context,
                         Location loc,
                         const At<Instruction>& instruction) {
   const u32 align = 2;
   auto memory_type = GetMemoryType(context, 0);
   bool valid = CheckAtomicAlignment(context, instruction, align);
-  valid &= CheckSharedMemory(context, instruction, memory_type);
   return AllTrue(memory_type, valid,
                  PopAndPushTypes(context, loc, span_i32_i32, span_i32));
 }
@@ -824,7 +812,6 @@ bool MemoryAtomicWait(Context& context,
   }
 
   bool valid = CheckAtomicAlignment(context, instruction, align);
-  valid &= CheckSharedMemory(context, instruction, memory_type);
   return AllTrue(memory_type, valid,
                  PopAndPushTypes(context, loc, span, span_i32));
 }
@@ -848,7 +835,6 @@ bool AtomicLoad(Context& context,
   }
 
   bool valid = CheckAtomicAlignment(context, instruction, align);
-  valid &= CheckSharedMemory(context, instruction, memory_type);
   return AllTrue(memory_type, valid,
                  PopAndPushTypes(context, loc, span_i32, span));
 }
@@ -872,7 +858,6 @@ bool AtomicStore(Context& context,
   }
 
   bool valid = CheckAtomicAlignment(context, instruction, align);
-  valid &= CheckSharedMemory(context, instruction, memory_type);
   return AllTrue(memory_type, valid, PopTypes(context, loc, span));
 }
 
@@ -957,7 +942,6 @@ bool AtomicRmw(Context& context,
   }
 
   bool valid = CheckAtomicAlignment(context, instruction, align);
-  valid &= CheckSharedMemory(context, instruction, memory_type);
   return AllTrue(memory_type, valid,
                  PopAndPushTypes(context, loc, params, results));
 }

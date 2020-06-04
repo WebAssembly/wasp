@@ -2238,8 +2238,7 @@ TEST_F(ValidateInstructionTest, AtomicLoad_MemoryNonShared) {
   AddMemory(MemoryType{Limits{0}});
   for (const auto& info: infos) {
     Ok(I{O::I32Const, s32{}});
-    Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
-    ExpectErrorSubstr({"instruction", "Memory must be shared"}, errors);
+    Ok(I{info.opcode, MemArgImmediate{info.align, 0}});
   }
 }
 
@@ -2301,8 +2300,7 @@ TEST_F(ValidateInstructionTest, AtomicStore_MemoryNonShared) {
   AddMemory(MemoryType{Limits{0}});
   Ok(I{O::Unreachable});
   for (const auto& info: infos) {
-    Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
-    ExpectErrorSubstr({"instruction", "Memory must be shared"}, errors);
+    Ok(I{info.opcode, MemArgImmediate{info.align, 0}});
   }
 }
 
@@ -2422,8 +2420,7 @@ TEST_F(ValidateInstructionTest, AtomicRmw_MemoryNonShared) {
   Ok(I{O::Unreachable});
   AddMemory(MemoryType{Limits{0}});
   for (const auto& info: infos) {
-    Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
-    ExpectErrorSubstr({"instruction", "Memory must be shared"}, errors);
+    Ok(I{info.opcode, MemArgImmediate{info.align, 0}});
     Ok(I{O::Drop});
   }
 }
@@ -2497,8 +2494,7 @@ TEST_F(ValidateInstructionTest, AtomicCmpxchg_MemoryNonShared) {
   Ok(I{O::Unreachable});
   AddMemory(MemoryType{Limits{0}});
   for (const auto& info: infos) {
-    Fail(I{info.opcode, MemArgImmediate{info.align, 0}});
-    ExpectErrorSubstr({"instruction", "Memory must be shared"}, errors);
+    Ok(I{info.opcode, MemArgImmediate{info.align, 0}});
     Ok(I{O::Drop});
   }
 }
