@@ -180,17 +180,17 @@ TEST(ValidateTest, ConstantExpression_WrongInstructionCount) {
                         ConstantExpressionKind::Other, ValueType::I32, 0));
 }
 
-TEST(ValidateTest, ConstantExpression_FuncrefDeferred) {
+TEST(ValidateTest, ConstantExpression_Funcref) {
   TestErrors errors;
   Context context{errors};
+  context.functions.push_back(Function{0});
 
-  // This index is invalid currently, but cannot be validated until the element
-  // segment section is parsed, so the check is deferred.
+  // Using ref.func in the global section implicitly declares that function.
   EXPECT_TRUE(Validate(
       context, ConstantExpression{Instruction{Opcode::RefFunc, Index{0}}},
       ConstantExpressionKind::GlobalInit, ValueType::Funcref, 0));
 
-  EXPECT_EQ(1u, context.deferred_function_references.size());
+  EXPECT_EQ(1u, context.declared_functions.size());
 }
 
 TEST(ValidateTest, DataCount) {
@@ -955,21 +955,6 @@ TEST(ValidateTest, ValueType_Mismatch) {
       EXPECT_FALSE(Validate(context, value_type1, value_type2));
     }
   }
-}
-
-TEST(ValidateTest, EndModule) {
-  TestErrors errors;
-  Context context{errors};
-  context.deferred_function_references.push_back(0);
-  context.declared_functions.insert(0);
-  EXPECT_TRUE(EndModule(context));
-}
-
-TEST(ValidateTest, EndModule_UndeclaredFunctionReference) {
-  TestErrors errors;
-  Context context{errors};
-  context.deferred_function_references.push_back(0);
-  EXPECT_FALSE(EndModule(context));
 }
 
 TEST(ValidateTest, Module) {

@@ -70,7 +70,6 @@ bool Validate(Context&, const At<binary::Table>&);
 bool Validate(Context&, const At<TableType>&);
 bool Validate(Context&, const At<binary::TypeEntry>&);
 bool Validate(Context&, const At<ValueType>& actual, ValueType expected);
-bool EndModule(Context&);
 bool Validate(Context&, const binary::Module&);
 
 }  // namespace valid

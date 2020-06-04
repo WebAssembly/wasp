@@ -91,7 +91,6 @@ struct Context {
   StackTypeList type_stack;
   std::vector<Label> label_stack;
   std::set<string_view> export_names;
-  std::vector<At<Index>> deferred_function_references;
   std::set<Index> declared_functions;
 };
 

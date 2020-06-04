@@ -110,14 +110,11 @@ bool Validate(Context& context,
 
     case Opcode::RefFunc: {
       auto index = instruction->index_immediate();
-
-      if (kind == ConstantExpressionKind::GlobalInit) {
-        // ref.func indexes cannot be validated until after they are declared in
-        // the element segment.
-        context.deferred_function_references.push_back(index);
-        return valid;
-      } else if (!ValidateIndex(context, index, context.functions.size(),
-                                "func index")) {
+      // ref.func indexes are implicitly declared by referencing them in a
+      // constant expression.
+      context.declared_functions.insert(index);
+      if (!ValidateIndex(context, index, context.functions.size(),
+                         "func index")) {
         return false;
       }
       actual_type = ValueType::Funcref;
@@ -542,23 +539,6 @@ bool Validate(Context& context,
   return true;
 }
 
-bool EndModule(Context& context) {
-  // Check that all functions referenced by a ref.func initializer in a global
-  // are declared in an element segment. This can't be done in the global
-  // section since the element section occurs later. It can't be done after the
-  // element section either, since there might not be an element section.
-  bool valid = true;
-  for (auto index : context.deferred_function_references) {
-    if (context.declared_functions.find(index) ==
-        context.declared_functions.end()) {
-      context.errors->OnError(
-          index.loc(), format("Undeclared function reference {}", index));
-      valid = false;
-    }
-  }
-  return valid;
-}
-
 template <typename T>
 bool ValidateKnownSection(Context& context, const std::vector<T>& values) {
   bool valid = true;
@@ -592,7 +572,6 @@ bool Validate(Context& context, const binary::Module& value) {
   valid &= ValidateKnownSection(context, value.data_count);
   valid &= ValidateKnownSection(context, value.codes);
   valid &= ValidateKnownSection(context, value.data_segments);
-  valid &= EndModule(context);
   return valid;
 }
 

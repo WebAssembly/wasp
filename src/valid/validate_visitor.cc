@@ -28,8 +28,7 @@ ValidateVisitor::ValidateVisitor(Features features, Errors& errors)
     : context{features, errors}, features{features}, errors{errors} {}
 
 auto ValidateVisitor::EndModule(binary::LazyModule& module) -> Result {
-  return FailUnless(binary::EndModule(&module.data, module.context) &&
-                    valid::EndModule(context));
+  return FailUnless(binary::EndModule(&module.data, module.context));
 }
 
 auto ValidateVisitor::OnType(const At<binary::TypeEntry>& type_entry)
