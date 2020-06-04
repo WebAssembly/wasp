@@ -999,18 +999,18 @@ Iterator Write(WriteContext& context, const ScriptModule& value, Iterator out) {
     case ScriptModuleKind::Text:
       context.Indent();
       context.Newline();
-      out = Write(context, get<Module>(value.module), out);
+      out = Write(context, value.module(), out);
       context.Dedent();
       break;
 
     case ScriptModuleKind::Binary:
       out = Write(context, "binary"_sv, out);
-      out = Write(context, get<TextList>(value.module), out);
+      out = Write(context, value.text_list(), out);
       break;
 
     case ScriptModuleKind::Quote:
       out = Write(context, "quote"_sv, out);
-      out = Write(context, get<TextList>(value.module), out);
+      out = Write(context, value.text_list(), out);
       break;
   }
   out = WriteRpar(context, out);

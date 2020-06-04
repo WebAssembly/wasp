@@ -765,6 +765,31 @@ auto ModuleItem::event() const -> const At<Event>& {
   return get<At<Event>>(desc);
 }
 
+bool ScriptModule::has_module() const {
+  return holds_alternative<Module>(contents);
+}
+
+auto ScriptModule::module() -> Module& {
+  return get<Module>(contents);
+}
+
+auto ScriptModule::module() const -> const Module& {
+  return get<Module>(contents);
+}
+
+
+bool ScriptModule::has_text_list() const {
+  return holds_alternative<TextList>(contents);
+}
+
+auto ScriptModule::text_list() -> TextList& {
+  return get<TextList>(contents);
+}
+
+auto ScriptModule::text_list() const -> const TextList& {
+  return get<TextList>(contents);
+}
+
 
 WASP_TEXT_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_TEXT_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)

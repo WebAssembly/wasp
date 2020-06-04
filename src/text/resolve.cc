@@ -445,8 +445,8 @@ void Resolve(Context& context, Module& module) {
 }
 
 void Resolve(Context& context, ScriptModule& script_module) {
-  if (holds_alternative<Module>(script_module.module)) {
-    Resolve(context, get<Module>(script_module.module));
+  if (script_module.has_module()) {
+    Resolve(context, script_module.module());
   }
 }
 

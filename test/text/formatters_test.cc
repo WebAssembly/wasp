@@ -511,17 +511,17 @@ TEST(TextFormattersTest, ScriptModuleKind) {
 TEST(TextFormattersTest, ScriptModule) {
   // Text Module.
   EXPECT_EQ(
-      R"({name none, kind text, module module []})",
+      R"({name none, kind text, contents module []})",
       format("{}", ScriptModule{nullopt, ScriptModuleKind::Text, Module{}}));
 
   // Binary Module.
-  EXPECT_EQ(R"({name none, kind binary, module text_list []})",
+  EXPECT_EQ(R"({name none, kind binary, contents text_list []})",
             format("{}", ScriptModule{nullopt, ScriptModuleKind::Binary,
                                       TextList{}}));
 
   // Quote Module.
   EXPECT_EQ(
-      R"({name none, kind quote, module text_list []})",
+      R"({name none, kind quote, contents text_list []})",
       format("{}", ScriptModule{nullopt, ScriptModuleKind::Quote, TextList{}}));
 }
 
@@ -599,7 +599,7 @@ TEST(TextFormattersTest, AssertionKind) {
 
 TEST(TextFormattersTest, ModuleAssertion) {
   EXPECT_EQ(
-      R"({module {name none, kind text, module module []}, message {text "error", byte_size 5}})",
+      R"({module {name none, kind text, contents module []}, message {text "error", byte_size 5}})",
       format("{}", ModuleAssertion{
                        ScriptModule{nullopt, ScriptModuleKind::Text, Module{}},
                        Text{"\"error\""_sv, 5}}));
@@ -700,7 +700,7 @@ TEST(TextFormattersTest, ReturnAssertion) {
 TEST(TextFormattersTest, Assertion) {
   // ModuleAssertion.
   EXPECT_EQ(
-      R"({kind invalid, desc module {module {name none, kind text, module module []}, message {text "error", byte_size 5}}})",
+      R"({kind invalid, desc module {module {name none, kind text, contents module []}, message {text "error", byte_size 5}}})",
       format("{}", Assertion{AssertionKind::Invalid,
                              ModuleAssertion{
                                  ScriptModule{nullopt, ScriptModuleKind::Text,
@@ -733,7 +733,7 @@ TEST(TextFormattersTest, Register) {
 
 TEST(TextFormattersTest, Command) {
   // ScriptModule.
-  EXPECT_EQ(R"(module {name none, kind text, module module []})",
+  EXPECT_EQ(R"(module {name none, kind text, contents module []})",
             format("{}", Command{ScriptModule{nullopt, ScriptModuleKind::Text,
                                               Module{}}}));
 

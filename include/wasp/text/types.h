@@ -608,9 +608,19 @@ enum class ScriptModuleKind {
 };
 
 struct ScriptModule {
+  // For ScriptModuleKind::Text.
+  bool has_module() const;
+  auto module() -> Module&;
+  auto module() const -> const Module&;
+
+  // For ScriptModuleKind::Binary and ScriptModuleKind::Quote.
+  bool has_text_list() const;
+  auto text_list() -> TextList&;
+  auto text_list() const -> const TextList&;
+
   OptAt<BindVar> name;
   ScriptModuleKind kind;
-  variant<Module, TextList> module;
+  variant<Module, TextList> contents;
 };
 
 struct RefNullConst {
@@ -752,7 +762,7 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::ElementListWithVars, 2, kind, list)                       \
   WASP_V(text::ElementSegment, 5, name, type, table, offset, elements)   \
   WASP_V(text::DataSegment, 5, name, type, memory, offset, data)         \
-  WASP_V(text::ScriptModule, 3, name, kind, module)                      \
+  WASP_V(text::ScriptModule, 3, name, kind, contents)                    \
   WASP_V(text::RefNullConst, 0)                                          \
   WASP_V(text::RefExternConst, 1, var)                                   \
   WASP_V(text::InvokeAction, 3, module, name, consts)                    \
