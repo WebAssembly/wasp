@@ -284,11 +284,11 @@ void Resolve(Context& context, EventDesc& desc) {
 }
 
 void Resolve(Context& context, Import& import) {
-  switch (import.desc.index()) {
-    case 0: // FunctionDesc.
+  switch (import.kind()) {
+    case ExternalKind::Function:
       return Resolve(context, import.function_desc());
 
-    case 4: // EventDesc..
+    case ExternalKind::Event:
       return Resolve(context, import.event_desc());
 
     default:

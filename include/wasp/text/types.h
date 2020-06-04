@@ -268,6 +268,7 @@ struct Import {
   At<Text> module;
   At<Text> name;
 
+  ExternalKind kind() const;
   bool is_function() const;
   bool is_table() const;
   bool is_memory() const;
@@ -285,7 +286,7 @@ struct Import {
   auto event_desc() -> EventDesc&;
   auto event_desc() const -> const EventDesc&;
 
-  // TODO: Use At on variant members?
+  // NOTE: variant order must be kept in sync with ExternalKind enum.
   variant<FunctionDesc, TableDesc, MemoryDesc, GlobalDesc, EventDesc> desc;
 };
 

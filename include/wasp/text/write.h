@@ -602,24 +602,24 @@ Iterator Write(WriteContext& context, const Import& value, Iterator out) {
   out = Write(context, value.module, out);
   out = Write(context, value.name, out);
   out = WriteLpar(context, out);
-  switch (value.desc.index()) {
-    case 0:  // FunctionDesc
+  switch (value.kind()) {
+    case ExternalKind::Function:
       out = Write(context, value.function_desc(), out);
       break;
 
-    case 1:  // TableDesc
+    case ExternalKind::Table:
       out = Write(context, value.table_desc(), out);
       break;
 
-    case 2:  // MemoryDesc
+    case ExternalKind::Memory:
       out = Write(context, value.memory_desc(), out);
       break;
 
-    case 3:  // GlobalDesc
+    case ExternalKind::Global:
       out = Write(context, value.global_desc(), out);
       break;
 
-    case 4:  // EventDesc
+    case ExternalKind::Event:
       out = Write(context, value.event_desc(), out);
       break;
   }

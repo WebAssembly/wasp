@@ -54,12 +54,12 @@ void Desugar(Module& module) {
     switch (item.kind()) {
       case ModuleItemKind::Import: {
         auto import = item.import();
-        switch (import->desc.index()) {
-          case 0: context.function_count++; break;
-          case 1: context.table_count++; break;
-          case 2: context.memory_count++; break;
-          case 3: context.global_count++; break;
-          case 4: context.event_count++; break;
+        switch (import->kind()) {
+          case ExternalKind::Function: context.function_count++; break;
+          case ExternalKind::Table: context.table_count++; break;
+          case ExternalKind::Memory: context.memory_count++; break;
+          case ExternalKind::Global: context.global_count++; break;
+          case ExternalKind::Event: context.event_count++; break;
         }
         break;
       }

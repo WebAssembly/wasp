@@ -99,8 +99,8 @@ auto ToBinary(Context& context, const At<text::Import>& value)
   auto module = MakeAt(value->module.loc(), ToBinary(context, value->module));
   auto name = MakeAt(value->name.loc(), ToBinary(context, value->name));
 
-  switch (value->desc.index()) {
-    case 0: { // Function
+  switch (value->kind()) {
+    case ExternalKind::Function: {
       auto& desc = value->function_desc();
       return MakeAt(value.loc(),
                     binary::Import{module, name,
@@ -108,28 +108,28 @@ auto ToBinary(Context& context, const At<text::Import>& value)
                                           ToBinary(context, desc.type_use))});
     }
 
-    case 1: { // Table
+    case ExternalKind::Table: {
       auto& desc = value->table_desc();
       return MakeAt(
           value.loc(),
           binary::Import{module, name, MakeAt(desc.type.loc(), desc.type)});
     }
 
-    case 2: { // Memory
+    case ExternalKind::Memory: {
       auto& desc = value->memory_desc();
       return MakeAt(
           value.loc(),
           binary::Import{module, name, MakeAt(desc.type.loc(), desc.type)});
     }
 
-    case 3: { // Global
+    case ExternalKind::Global: {
       auto& desc = value->global_desc();
       return MakeAt(
           value.loc(),
           binary::Import{module, name, MakeAt(desc.type.loc(), desc.type)});
     }
 
-    case 4: { // Event
+    case ExternalKind::Event: {
       auto& desc = value->event_desc();
       return MakeAt(value.loc(),
                     binary::Import{

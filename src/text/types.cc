@@ -357,6 +357,9 @@ const At<SimdLaneImmediate>& Instruction::simd_lane_immediate() const {
   return get<At<SimdLaneImmediate>>(immediate);
 }
 
+ExternalKind Import::kind() const {
+  return static_cast<ExternalKind>(desc.index());
+}
 
 bool Import::is_function() const {
   return holds_alternative<FunctionDesc>(desc);
