@@ -122,6 +122,216 @@ Instruction::Instruction(Opcode opcode, f64 immediate)
 Instruction::Instruction(Opcode opcode, SimdLaneImmediate immediate)
     : opcode{opcode}, immediate{MakeAt(immediate)} {}
 
+bool Instruction::has_no_immediate() const {
+  return holds_alternative<monostate>(immediate);
+}
+
+bool Instruction::has_s32_immediate() const {
+  return holds_alternative<At<s32>>(immediate);
+}
+
+bool Instruction::has_s64_immediate() const {
+  return holds_alternative<At<s64>>(immediate);
+}
+
+bool Instruction::has_f32_immediate() const {
+  return holds_alternative<At<f32>>(immediate);
+}
+
+bool Instruction::has_f64_immediate() const {
+  return holds_alternative<At<f64>>(immediate);
+}
+
+bool Instruction::has_v128_immediate() const {
+  return holds_alternative<At<v128>>(immediate);
+}
+
+bool Instruction::has_var_immediate() const {
+  return holds_alternative<At<Var>>(immediate);
+}
+
+
+bool Instruction::has_block_immediate() const {
+  return holds_alternative<At<BlockImmediate>>(immediate);
+}
+
+bool Instruction::has_br_on_exn_immediate() const {
+  return holds_alternative<At<BrOnExnImmediate>>(immediate);
+}
+
+bool Instruction::has_br_table_immediate() const {
+  return holds_alternative<At<BrTableImmediate>>(immediate);
+}
+
+bool Instruction::has_call_indirect_immediate() const {
+  return holds_alternative<At<CallIndirectImmediate>>(immediate);
+}
+
+bool Instruction::has_copy_immediate() const {
+  return holds_alternative<At<CopyImmediate>>(immediate);
+}
+
+bool Instruction::has_init_immediate() const {
+  return holds_alternative<At<InitImmediate>>(immediate);
+}
+
+bool Instruction::has_mem_arg_immediate() const {
+  return holds_alternative<At<MemArgImmediate>>(immediate);
+}
+
+bool Instruction::has_reference_type_immediate() const {
+  return holds_alternative<At<ReferenceType>>(immediate);
+}
+
+bool Instruction::has_select_immediate() const {
+  return holds_alternative<At<SelectImmediate>>(immediate);
+}
+
+bool Instruction::has_shuffle_immediate() const {
+  return holds_alternative<At<ShuffleImmediate>>(immediate);
+}
+
+bool Instruction::has_simd_lane_immediate() const {
+  return holds_alternative<At<SimdLaneImmediate>>(immediate);
+}
+
+
+At<s32>& Instruction::s32_immediate() {
+  return get<At<s32>>(immediate);
+}
+
+const At<s32>& Instruction::s32_immediate() const {
+  return get<At<s32>>(immediate);
+}
+
+At<s64>& Instruction::s64_immediate() {
+  return get<At<s64>>(immediate);
+}
+
+const At<s64>& Instruction::s64_immediate() const {
+  return get<At<s64>>(immediate);
+}
+
+At<f32>& Instruction::f32_immediate() {
+  return get<At<f32>>(immediate);
+}
+
+const At<f32>& Instruction::f32_immediate() const {
+  return get<At<f32>>(immediate);
+}
+
+At<f64>& Instruction::f64_immediate() {
+  return get<At<f64>>(immediate);
+}
+
+const At<f64>& Instruction::f64_immediate() const {
+  return get<At<f64>>(immediate);
+}
+
+At<v128>& Instruction::v128_immediate() {
+  return get<At<v128>>(immediate);
+}
+
+const At<v128>& Instruction::v128_immediate() const {
+  return get<At<v128>>(immediate);
+}
+
+At<Var>& Instruction::var_immediate() {
+  return get<At<Var>>(immediate);
+}
+
+const At<Var>& Instruction::var_immediate() const {
+  return get<At<Var>>(immediate);
+}
+
+At<BlockImmediate>& Instruction::block_immediate() {
+  return get<At<BlockImmediate>>(immediate);
+}
+
+const At<BlockImmediate>& Instruction::block_immediate() const {
+  return get<At<BlockImmediate>>(immediate);
+}
+
+At<BrOnExnImmediate>& Instruction::br_on_exn_immediate() {
+  return get<At<BrOnExnImmediate>>(immediate);
+}
+
+const At<BrOnExnImmediate>& Instruction::br_on_exn_immediate() const {
+  return get<At<BrOnExnImmediate>>(immediate);
+}
+
+At<BrTableImmediate>& Instruction::br_table_immediate() {
+  return get<At<BrTableImmediate>>(immediate);
+}
+
+const At<BrTableImmediate>& Instruction::br_table_immediate() const {
+  return get<At<BrTableImmediate>>(immediate);
+}
+
+At<CallIndirectImmediate>& Instruction::call_indirect_immediate() {
+  return get<At<CallIndirectImmediate>>(immediate);
+}
+
+const At<CallIndirectImmediate>& Instruction::call_indirect_immediate() const {
+  return get<At<CallIndirectImmediate>>(immediate);
+}
+
+At<CopyImmediate>& Instruction::copy_immediate() {
+  return get<At<CopyImmediate>>(immediate);
+}
+
+const At<CopyImmediate>& Instruction::copy_immediate() const {
+  return get<At<CopyImmediate>>(immediate);
+}
+
+At<InitImmediate>& Instruction::init_immediate() {
+  return get<At<InitImmediate>>(immediate);
+}
+
+const At<InitImmediate>& Instruction::init_immediate() const {
+  return get<At<InitImmediate>>(immediate);
+}
+
+At<MemArgImmediate>& Instruction::mem_arg_immediate() {
+  return get<At<MemArgImmediate>>(immediate);
+}
+
+const At<MemArgImmediate>& Instruction::mem_arg_immediate() const {
+  return get<At<MemArgImmediate>>(immediate);
+}
+
+At<ReferenceType>& Instruction::reference_type_immediate() {
+  return get<At<ReferenceType>>(immediate);
+}
+
+const At<ReferenceType>& Instruction::reference_type_immediate() const {
+  return get<At<ReferenceType>>(immediate);
+}
+
+At<SelectImmediate>& Instruction::select_immediate() {
+  return get<At<SelectImmediate>>(immediate);
+}
+
+const At<SelectImmediate>& Instruction::select_immediate() const {
+  return get<At<SelectImmediate>>(immediate);
+}
+
+At<ShuffleImmediate>& Instruction::shuffle_immediate() {
+  return get<At<ShuffleImmediate>>(immediate);
+}
+
+const At<ShuffleImmediate>& Instruction::shuffle_immediate() const {
+  return get<At<ShuffleImmediate>>(immediate);
+}
+
+At<SimdLaneImmediate>& Instruction::simd_lane_immediate() {
+  return get<At<SimdLaneImmediate>>(immediate);
+}
+
+const At<SimdLaneImmediate>& Instruction::simd_lane_immediate() const {
+  return get<At<SimdLaneImmediate>>(immediate);
+}
+
 
 Function::Function(const FunctionDesc& desc,
                    const BoundValueTypeList& locals,

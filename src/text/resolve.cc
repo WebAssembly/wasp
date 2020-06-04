@@ -167,7 +167,7 @@ void Resolve(Context& context, Instruction& instruction) {
       break;
 
     case 6: {  // Var
-      auto& immediate = get<At<Var>>(instruction.immediate);
+      auto& immediate = instruction.var_immediate();
       switch (instruction.opcode) {
         // Function.
         case Opcode::Call:
@@ -219,7 +219,7 @@ void Resolve(Context& context, Instruction& instruction) {
     }
 
     case 7: { // BlockImmediate
-      auto& immediate = get<At<BlockImmediate>>(instruction.immediate);
+      auto& immediate = instruction.block_immediate();
       // TODO: share w/ code in read.cc
       if (immediate->label) {
         context.label_names.ReplaceBound(*immediate->label);
@@ -231,20 +231,16 @@ void Resolve(Context& context, Instruction& instruction) {
     }
 
     case 8: // BrOnExnImmediate
-      return Resolve(context,
-                     get<At<BrOnExnImmediate>>(instruction.immediate).value());
+      return Resolve(context, instruction.br_on_exn_immediate().value());
 
     case 9: // BrTableImmediate
-      return Resolve(context,
-                     get<At<BrTableImmediate>>(instruction.immediate).value());
+      return Resolve(context, instruction.br_table_immediate().value());
 
     case 10: // CallIndirectImmediate
-      return Resolve(
-          context,
-          get<At<CallIndirectImmediate>>(instruction.immediate).value());
+      return Resolve(context, instruction.call_indirect_immediate().value());
 
     case 11: { // CopyImmediate
-      auto& immediate = get<At<CopyImmediate>>(instruction.immediate);
+      auto& immediate = instruction.copy_immediate();
       if (instruction.opcode == Opcode::TableCopy) {
         return Resolve(context, context.table_names, immediate.value());
       } else {
@@ -254,7 +250,7 @@ void Resolve(Context& context, Instruction& instruction) {
     }
 
     case 12: { // InitImmediate
-      auto& immediate = get<At<InitImmediate>>(instruction.immediate);
+      auto& immediate = instruction.init_immediate();
       if (instruction.opcode == Opcode::MemoryInit) {
         return Resolve(context, context.data_segment_names,
                        context.memory_names, immediate.value());

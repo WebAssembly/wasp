@@ -350,72 +350,71 @@ Iterator Write(WriteContext& context, const Instruction& value, Iterator out) {
       break;
 
     case 1: // s32
-      out = Write(context, get<At<s32>>(value.immediate), out);
+      out = Write(context, value.s32_immediate(), out);
       break;
 
     case 2: // s64
-      out = Write(context, get<At<s64>>(value.immediate), out);
+      out = Write(context, value.s64_immediate(), out);
       break;
 
     case 3: // f32
-      out = Write(context, get<At<f32>>(value.immediate), out);
+      out = Write(context, value.f32_immediate(), out);
       break;
 
     case 4: // f64
-      out = Write(context, get<At<f64>>(value.immediate), out);
+      out = Write(context, value.f64_immediate(), out);
       break;
 
     case 5: // v128
-      out = Write(context, get<At<v128>>(value.immediate), out);
+      out = Write(context, value.v128_immediate(), out);
       break;
 
     case 6: // Var
-      out = Write(context, get<At<Var>>(value.immediate), out);
+      out = Write(context, value.var_immediate(), out);
       break;
 
     case 7: // BlockImmediate
-      out = Write(context, get<At<BlockImmediate>>(value.immediate), out);
+      out = Write(context, value.block_immediate(), out);
       break;
 
     case 8: // BrOnExnImmediate
-      out = Write(context, get<At<BrOnExnImmediate>>(value.immediate), out);
+      out = Write(context, value.br_on_exn_immediate(), out);
       break;
 
     case 9: // BrTableImmediate
-      out = Write(context, get<At<BrTableImmediate>>(value.immediate), out);
+      out = Write(context, value.br_table_immediate(), out);
       break;
 
     case 10: // CallIndirectImmediate
-      out =
-          Write(context, get<At<CallIndirectImmediate>>(value.immediate), out);
+      out = Write(context, value.call_indirect_immediate(), out);
       break;
 
     case 11: // CopyImmediate
-      out = Write(context, get<At<CopyImmediate>>(value.immediate), out);
+      out = Write(context, value.copy_immediate(), out);
       break;
 
     case 12: // InitImmediate
-      out = Write(context, get<At<InitImmediate>>(value.immediate), out);
+      out = Write(context, value.init_immediate(), out);
       break;
 
     case 13: // MemArgImmediate
-      out = Write(context, get<At<MemArgImmediate>>(value.immediate), out);
+      out = Write(context, value.mem_arg_immediate(), out);
       break;
 
     case 14: // ReferenceType
-      out = Write(context, get<At<ReferenceType>>(value.immediate), out);
+      out = Write(context, value.reference_type_immediate(), out);
       break;
 
     case 15: // SelectImmediate
-      out = Write(context, get<At<SelectImmediate>>(value.immediate), out);
+      out = Write(context, value.select_immediate(), out);
       break;
 
     case 16: // ShuffleImmediate
-      out = Write(context, get<At<ShuffleImmediate>>(value.immediate), out);
+      out = Write(context, value.shuffle_immediate(), out);
       break;
 
     case 17: // SimdLaneImmediate
-      out = Write(context, get<At<SimdLaneImmediate>>(value.immediate), out);
+      out = Write(context, value.simd_lane_immediate(), out);
       break;
   }
   return out;
@@ -442,8 +441,8 @@ Iterator WriteWithNewlines(WriteContext& context,
 
     out = Write(context, value, out);
 
-    if (holds_alternative<At<BlockImmediate>>(value->immediate) ||
-        opcode == Opcode::Else || opcode == Opcode::Catch) {
+    if (value->has_block_immediate() || opcode == Opcode::Else ||
+        opcode == Opcode::Catch) {
       context.Indent();
     }
     context.Newline();

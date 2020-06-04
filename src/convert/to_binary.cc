@@ -439,114 +439,96 @@ auto ToBinary(Context& context,
 auto ToBinary(Context& context, const At<text::Instruction>& value)
     -> At<binary::Instruction> {
   switch (value->immediate.index()) {
-    case 0: // monostate
+    case 0:  // monostate
       return MakeAt(value.loc(), binary::Instruction{value->opcode});
 
-    case 1: // s32
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{value->opcode, get<At<s32>>(value->immediate)});
+    case 1:  // s32
+      return MakeAt(value.loc(),
+                    binary::Instruction{value->opcode, value->s32_immediate()});
 
-    case 2: // s64
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{value->opcode, get<At<s64>>(value->immediate)});
+    case 2:  // s64
+      return MakeAt(value.loc(),
+                    binary::Instruction{value->opcode, value->s64_immediate()});
 
-    case 3: // f32
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{value->opcode, get<At<f32>>(value->immediate)});
+    case 3:  // f32
+      return MakeAt(value.loc(),
+                    binary::Instruction{value->opcode, value->f32_immediate()});
 
-    case 4: // f64
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{value->opcode, get<At<f64>>(value->immediate)});
+    case 4:  // f64
+      return MakeAt(value.loc(),
+                    binary::Instruction{value->opcode, value->f64_immediate()});
 
-    case 5: // v128
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{value->opcode, get<At<v128>>(value->immediate)});
+    case 5:  // v128
+      return MakeAt(value.loc(), binary::Instruction{value->opcode,
+                                                     value->v128_immediate()});
 
-    case 6: // Var
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{
-              value->opcode,
-              ToBinary(context, get<At<text::Var>>(value->immediate))});
-
-    case 7: // BlockImmediate
+    case 6:  // Var
       return MakeAt(
           value.loc(),
           binary::Instruction{value->opcode,
-                              ToBinary(context, get<At<text::BlockImmediate>>(
-                                                    value->immediate))});
+                              ToBinary(context, value->var_immediate())});
 
-    case 8: // BrOnExnImmediate
+    case 7:  // BlockImmediate
       return MakeAt(
           value.loc(),
           binary::Instruction{value->opcode,
-                              ToBinary(context, get<At<text::BrOnExnImmediate>>(
-                                                    value->immediate))});
+                              ToBinary(context, value->block_immediate())});
 
-    case 9: // BrTableImmediate
+    case 8:  // BrOnExnImmediate
       return MakeAt(
           value.loc(),
           binary::Instruction{value->opcode,
-                              ToBinary(context, get<At<text::BrTableImmediate>>(
-                                                    value->immediate))});
+                              ToBinary(context, value->br_on_exn_immediate())});
 
-    case 10: // CallIndirectImmediate
+    case 9:  // BrTableImmediate
+      return MakeAt(
+          value.loc(),
+          binary::Instruction{value->opcode,
+                              ToBinary(context, value->br_table_immediate())});
+
+    case 10:  // CallIndirectImmediate
       return MakeAt(value.loc(),
                     binary::Instruction{
                         value->opcode,
-                        ToBinary(context, get<At<text::CallIndirectImmediate>>(
-                                              value->immediate))});
+                        ToBinary(context, value->call_indirect_immediate())});
 
-    case 11: // CopyImmediate
+    case 11:  // CopyImmediate
       return MakeAt(
           value.loc(),
           binary::Instruction{value->opcode,
-                              ToBinary(context, get<At<text::CopyImmediate>>(
-                                                    value->immediate))});
+                              ToBinary(context, value->copy_immediate())});
 
-    case 12: // InitImmediate
+    case 12:  // InitImmediate
       return MakeAt(
           value.loc(),
           binary::Instruction{value->opcode,
-                              ToBinary(context, get<At<text::InitImmediate>>(
-                                                    value->immediate))});
+                              ToBinary(context, value->init_immediate())});
 
-    case 13: // MemArgImmediate
+    case 13:  // MemArgImmediate
       return MakeAt(
           value.loc(),
-          binary::Instruction{
-              value->opcode,
-              ToBinary(context,
-                       get<At<text::MemArgImmediate>>(value->immediate),
-                       GetNaturalAlignment(*value->opcode))});
+          binary::Instruction{value->opcode,
+                              ToBinary(context, value->mem_arg_immediate(),
+                                       GetNaturalAlignment(*value->opcode))});
 
-    case 14: // ReferenceType
+    case 14:  // ReferenceType
+      return MakeAt(value.loc(),
+                    binary::Instruction{value->opcode,
+                                        value->reference_type_immediate()});
+
+    case 15:  // SelectImmediate
       return MakeAt(value.loc(), binary::Instruction{
-                                     value->opcode,
-                                     get<At<ReferenceType>>(value->immediate)});
+                                     value->opcode, value->select_immediate()});
 
-    case 15: // SelectImmediate
+    case 16:  // ShuffleImmediate
       return MakeAt(
           value.loc(),
-          binary::Instruction{
-              value->opcode, get<At<text::SelectImmediate>>(value->immediate)});
+          binary::Instruction{value->opcode, value->shuffle_immediate()});
 
-    case 16: // ShuffleImmediate
+    case 17:  // SimdLaneImmediate
       return MakeAt(
           value.loc(),
-          binary::Instruction{value->opcode,
-                              get<At<ShuffleImmediate>>(value->immediate)});
-
-    case 17: // SimdLaneImmediate
-      return MakeAt(value.loc(),
-                    binary::Instruction{
-                        value->opcode,
-                        get<At<text::SimdLaneImmediate>>(value->immediate)});
+          binary::Instruction{value->opcode, value->simd_lane_immediate()});
 
     default:
       WASP_UNREACHABLE();

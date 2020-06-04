@@ -119,6 +119,60 @@ struct Instruction {
   explicit Instruction(Opcode, f64);
   explicit Instruction(Opcode, SimdLaneImmediate);
 
+  bool has_no_immediate() const;
+  bool has_s32_immediate() const;
+  bool has_s64_immediate() const;
+  bool has_f32_immediate() const;
+  bool has_f64_immediate() const;
+  bool has_v128_immediate() const;
+  bool has_var_immediate() const;
+  bool has_block_immediate() const;
+  bool has_br_on_exn_immediate() const;
+  bool has_br_table_immediate() const;
+  bool has_call_indirect_immediate() const;
+  bool has_copy_immediate() const;
+  bool has_init_immediate() const;
+  bool has_mem_arg_immediate() const;
+  bool has_reference_type_immediate() const;
+  bool has_select_immediate() const;
+  bool has_shuffle_immediate() const;
+  bool has_simd_lane_immediate() const;
+
+  auto s32_immediate() -> At<s32>&;
+  auto s32_immediate() const -> const At<s32>&;
+  auto s64_immediate() -> At<s64>&;
+  auto s64_immediate() const -> const At<s64>&;
+  auto f32_immediate() -> At<f32>&;
+  auto f32_immediate() const -> const At<f32>&;
+  auto f64_immediate() -> At<f64>&;
+  auto f64_immediate() const -> const At<f64>&;
+  auto v128_immediate() -> At<v128>&;
+  auto v128_immediate() const -> const At<v128>&;
+  auto var_immediate() -> At<Var>&;
+  auto var_immediate() const -> const At<Var>&;
+  auto block_immediate() -> At<BlockImmediate>&;
+  auto block_immediate() const -> const At<BlockImmediate>&;
+  auto br_on_exn_immediate() -> At<BrOnExnImmediate>&;
+  auto br_on_exn_immediate() const -> const At<BrOnExnImmediate>&;
+  auto br_table_immediate() -> At<BrTableImmediate>&;
+  auto br_table_immediate() const -> const At<BrTableImmediate>&;
+  auto call_indirect_immediate() -> At<CallIndirectImmediate>&;
+  auto call_indirect_immediate() const -> const At<CallIndirectImmediate>&;
+  auto copy_immediate() -> At<CopyImmediate>&;
+  auto copy_immediate() const -> const At<CopyImmediate>&;
+  auto init_immediate() -> At<InitImmediate>&;
+  auto init_immediate() const -> const At<InitImmediate>&;
+  auto mem_arg_immediate() -> At<MemArgImmediate>&;
+  auto mem_arg_immediate() const -> const At<MemArgImmediate>&;
+  auto reference_type_immediate() -> At<ReferenceType>&;
+  auto reference_type_immediate() const -> const At<ReferenceType>&;
+  auto select_immediate() -> At<SelectImmediate>&;
+  auto select_immediate() const -> const At<SelectImmediate>&;
+  auto shuffle_immediate() -> At<ShuffleImmediate>&;
+  auto shuffle_immediate() const -> const At<ShuffleImmediate>&;
+  auto simd_lane_immediate() -> At<SimdLaneImmediate>&;
+  auto simd_lane_immediate() const -> const At<SimdLaneImmediate>&;
+
   At<Opcode> opcode;
   variant<monostate,
           At<s32>,
