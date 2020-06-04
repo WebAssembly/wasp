@@ -1020,39 +1020,39 @@ Iterator Write(WriteContext& context, const ScriptModule& value, Iterator out) {
 template <typename Iterator>
 Iterator Write(WriteContext& context, const Const& value, Iterator out) {
   out = WriteLpar(context, out);
-  switch (value.index()) {
-    case 0: // u32
+  switch (value.kind()) {
+    case ConstKind::U32:
       out = Write(context, Opcode::I32Const, out);
-      out = Write(context, get<u32>(value), out);
+      out = Write(context, value.u32_(), out);
       break;
 
-    case 1: // u64
+    case ConstKind::U64:
       out = Write(context, Opcode::I64Const, out);
-      out = Write(context, get<u64>(value), out);
+      out = Write(context, value.u64_(), out);
       break;
 
-    case 2: // f32
+    case ConstKind::F32:
       out = Write(context, Opcode::F32Const, out);
-      out = Write(context, get<f32>(value), out);
+      out = Write(context, value.f32_(), out);
       break;
 
-    case 3: // f64
+    case ConstKind::F64:
       out = Write(context, Opcode::F64Const, out);
-      out = Write(context, get<f64>(value), out);
+      out = Write(context, value.f64_(), out);
       break;
 
-    case 4: // v128
+    case ConstKind::V128:
       out = Write(context, Opcode::V128Const, out);
-      out = Write(context, get<v128>(value), out);
+      out = Write(context, value.v128_(), out);
       break;
 
-    case 5: // RefNullConst
+    case ConstKind::RefNull:
       out = Write(context, Opcode::RefNull, out);
       break;
 
-    case 6: // RefExternConst
+    case ConstKind::RefExtern:
       out = Write(context, "ref.extern"_sv, out);
-      out = Write(context, get<RefExternConst>(value).var, out);
+      out = Write(context, value.ref_extern().var, out);
       break;
   }
   out = WriteRpar(context, out);

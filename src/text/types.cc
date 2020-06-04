@@ -791,10 +791,101 @@ auto ScriptModule::text_list() const -> const TextList& {
 }
 
 
+auto Const::kind() const -> ConstKind {
+  return static_cast<ConstKind>(value.index());
+}
+
+bool Const::is_u32() const {
+  return holds_alternative<u32>(value);
+}
+
+bool Const::is_u64() const {
+  return holds_alternative<u64>(value);
+}
+
+bool Const::is_f32() const {
+  return holds_alternative<f32>(value);
+}
+
+bool Const::is_f64() const {
+  return holds_alternative<f64>(value);
+}
+
+bool Const::is_v128() const {
+  return holds_alternative<v128>(value);
+}
+
+bool Const::is_ref_null() const {
+  return holds_alternative<RefNullConst>(value);
+}
+
+bool Const::is_ref_extern() const {
+  return holds_alternative<RefExternConst>(value);
+}
+
+
+auto Const::u32_() -> u32& {
+  return get<u32>(value);
+}
+
+auto Const::u32_() const -> const u32& {
+  return get<u32>(value);
+}
+
+auto Const::u64_() -> u64& {
+  return get<u64>(value);
+}
+
+auto Const::u64_() const -> const u64& {
+  return get<u64>(value);
+}
+
+auto Const::f32_() -> f32& {
+  return get<f32>(value);
+}
+
+auto Const::f32_() const -> const f32& {
+  return get<f32>(value);
+}
+
+auto Const::f64_() -> f64& {
+  return get<f64>(value);
+}
+
+auto Const::f64_() const -> const f64& {
+  return get<f64>(value);
+}
+
+auto Const::v128_() -> v128& {
+  return get<v128>(value);
+}
+
+auto Const::v128_() const -> const v128& {
+  return get<v128>(value);
+}
+
+auto Const::ref_null() -> RefNullConst& {
+  return get<RefNullConst>(value);
+}
+
+auto Const::ref_null() const -> const RefNullConst& {
+  return get<RefNullConst>(value);
+}
+
+auto Const::ref_extern() -> RefExternConst& {
+  return get<RefExternConst>(value);
+}
+
+auto Const::ref_extern() const -> const RefExternConst& {
+  return get<RefExternConst>(value);
+}
+
+
 WASP_TEXT_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_TEXT_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
 WASP_OPERATOR_EQ_NE_1(text::Var, desc)
 WASP_OPERATOR_EQ_NE_1(text::ModuleItem, desc)
+WASP_OPERATOR_EQ_NE_1(text::Const, value)
 
 bool operator==(const BoundValueTypeList& lhs, const ValueTypeList& rhs) {
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
@@ -812,3 +903,4 @@ WASP_TEXT_STRUCTS(WASP_STD_HASH_VARGS)
 WASP_TEXT_CONTAINERS(WASP_STD_HASH_CONTAINER)
 WASP_STD_HASH_1(text::Var, desc)
 WASP_STD_HASH_1(text::ModuleItem, desc)
+WASP_STD_HASH_1(text::Const, value)

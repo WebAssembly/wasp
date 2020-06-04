@@ -268,7 +268,7 @@ struct Import {
   At<Text> module;
   At<Text> name;
 
-  ExternalKind kind() const;
+  auto kind() const -> ExternalKind;
   bool is_function() const;
   bool is_table() const;
   bool is_memory() const;
@@ -631,7 +631,45 @@ struct RefExternConst {
   At<u32> var;
 };
 
-using Const = variant<u32, u64, f32, f64, v128, RefNullConst, RefExternConst>;
+// NOTE this must be kept in sync with the Const variant below.
+enum class ConstKind {
+  U32,
+  U64,
+  F32,
+  F64,
+  V128,
+  RefNull,
+  RefExtern,
+};
+
+struct Const {
+  auto kind() const -> ConstKind;
+  bool is_u32() const;
+  bool is_u64() const;
+  bool is_f32() const;
+  bool is_f64() const;
+  bool is_v128() const;
+  bool is_ref_null() const;
+  bool is_ref_extern() const;
+
+  auto u32_() -> u32&;
+  auto u32_() const -> const u32&;
+  auto u64_() -> u64&;
+  auto u64_() const -> const u64&;
+  auto f32_() -> f32&;
+  auto f32_() const -> const f32&;
+  auto f64_() -> f64&;
+  auto f64_() const -> const f64&;
+  auto v128_() -> v128&;
+  auto v128_() const -> const v128&;
+  auto ref_null() -> RefNullConst&;
+  auto ref_null() const -> const RefNullConst&;
+  auto ref_extern() -> RefExternConst&;
+  auto ref_extern() const -> const RefExternConst&;
+
+  variant<u32, u64, f32, f64, v128, RefNullConst, RefExternConst> value;
+};
+
 using ConstList = std::vector<At<Const>>;
 
 struct InvokeAction {
@@ -793,6 +831,7 @@ WASP_TEXT_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_DECLARE_OPERATOR_EQ_NE(text::Var)
 WASP_DECLARE_OPERATOR_EQ_NE(text::ModuleItem)
+WASP_DECLARE_OPERATOR_EQ_NE(text::Const)
 
 bool operator==(const BoundValueTypeList& lhs, const ValueTypeList& rhs);
 bool operator==(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
@@ -806,6 +845,7 @@ WASP_TEXT_STRUCTS(WASP_DECLARE_PRINT_TO)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_PRINT_TO)
 WASP_DECLARE_PRINT_TO(text::Var)
 WASP_DECLARE_PRINT_TO(text::ModuleItem)
+WASP_DECLARE_PRINT_TO(text::Const)
 
 }  // namespace text
 }  // namespace wasp
@@ -814,5 +854,6 @@ WASP_TEXT_STRUCTS(WASP_DECLARE_STD_HASH)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_STD_HASH)
 WASP_DECLARE_STD_HASH(text::Var)
 WASP_DECLARE_STD_HASH(text::ModuleItem)
+WASP_DECLARE_STD_HASH(text::Const)
 
 #endif  // WASP_TEXT_TYPES_H_

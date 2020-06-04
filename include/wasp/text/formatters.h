@@ -29,6 +29,7 @@ WASP_TEXT_STRUCTS(WASP_DECLARE_FORMATTER)
 // Special cases.
 WASP_DECLARE_FORMATTER(text::Var)
 WASP_DECLARE_FORMATTER(text::ModuleItem)
+WASP_DECLARE_FORMATTER(text::Const)
 
 }  // namespace fmt
 

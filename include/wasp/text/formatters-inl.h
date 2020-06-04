@@ -200,6 +200,15 @@ typename Ctx::iterator formatter<::wasp::text::ModuleItem>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::text::Const>::format(
+    const ::wasp::text::Const& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{}", self.value);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::text::ScriptModuleKind>::format(
     const ::wasp::text::ScriptModuleKind& self,
     Ctx& ctx) {
