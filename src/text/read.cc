@@ -197,7 +197,8 @@ auto ReadText(Tokenizer& tokenizer, Context& context) -> OptAt<Text> {
 
 auto ReadUtf8Text(Tokenizer& tokenizer, Context& context) -> OptAt<Text> {
   WASP_TRY_READ(text, ReadText(tokenizer, context));
-  if (!IsValidUtf8(text->text)) {
+  // TODO: The lexer could validate utf-8 while reading characters.
+  if (!IsValidUtf8(text->ToString())) {
     context.errors.OnError(text.loc(), "Invalid UTF-8 encoding");
     return nullopt;
   }

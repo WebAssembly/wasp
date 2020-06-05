@@ -160,6 +160,11 @@ TEST_F(TextReadTest, Text) {
   OK(ReadText, Text{"\"hello\""_sv, 5}, "\"hello\""_su8);
 }
 
+TEST_F(TextReadTest, Utf8Text) {
+  OK(ReadUtf8Text, Text{"\"\\ee\\b8\\96\""_sv, 3}, "\"\\ee\\b8\\96\""_su8);
+  Fail(ReadUtf8Text, {{0, "Invalid UTF-8 encoding"}}, "\"\\80\""_su8);
+}
+
 TEST_F(TextReadTest, TextList) {
   auto span = "\"hello, \" \"world\" \"123\""_su8;
   std::vector<At<Text>> expected{
