@@ -89,7 +89,7 @@ auto ReadInt(Tokenizer& tokenizer, Context& context) -> OptAt<T> {
   auto int_opt = StrToInt<T>(token.literal_info(), token.span_u8());
   if (!int_opt) {
     context.errors.OnError(token.loc,
-                           format("Invalid integer, got {}", token));
+                           format("Invalid integer, got {}", token.type));
     return nullopt;
   }
   return MakeAt(token.loc, *int_opt);
@@ -1049,6 +1049,13 @@ auto ReadOffsetOpt(Tokenizer& tokenizer, Context& context) -> OptAt<u32> {
 auto ReadSimdLane(Tokenizer& tokenizer, Context& context) -> OptAt<u8> {
   // TODO: This should probably be ReadNat<u8>, but the simd tests currently
   // allow signed values here.
+  auto token = tokenizer.Peek();
+  if (token.type == TokenType::Int &&
+      token.literal_info().sign == Sign::Minus) {
+    context.errors.OnError(
+        token.loc, format("Expected a positive integer, got {}", token.type));
+    return nullopt;
+  }
   return ReadInt<u8>(tokenizer, context);
 }
 

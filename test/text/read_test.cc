@@ -746,6 +746,12 @@ TEST_F(TextReadTest, PlainInstruction_SimdLane) {
      "f32x4.replace_lane 3"_su8);
 }
 
+TEST_F(TextReadTest, InvalidSimdLane) {
+  Fail(ReadSimdLane, {{0, "Expected a positive integer, got Int"}},
+       "-1"_su8);
+  Fail(ReadSimdLane, {{0, "Invalid integer, got Nat"}}, "256"_su8);
+}
+
 TEST_F(TextReadTest, PlainInstruction_Shuffle) {
   Fail(ReadPlainInstruction, {{0, "v8x16.shuffle instruction not allowed"}},
        "v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8);
