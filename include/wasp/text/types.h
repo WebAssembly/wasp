@@ -50,6 +50,8 @@ using BindVar = string_view;
 
 using TextList = std::vector<At<Text>>;
 
+void ToBuffer(const TextList&, Buffer& buffer);
+
 struct FunctionType {
   ValueTypeList params;
   ValueTypeList results;

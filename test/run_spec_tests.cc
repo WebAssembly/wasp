@@ -132,16 +132,52 @@ void DoFile(const fs::path& path, const Features& features) {
   }
 
   for (auto&& command : *script) {
-    if (command->is_script_module()) {
-      auto&& script_module = command->script_module();
-      if (script_module.has_module()) {
-        auto&& text_module = script_module.module();
-        text::Desugar(text_module);
-        convert::Context convert_context;
-        auto binary_module = convert::ToBinary(convert_context, text_module);
-        valid::Context valid_context{features, errors};
-        Validate(valid_context, binary_module);
+    switch (command->kind()) {
+      case text::CommandKind::ScriptModule: {
+        if (command->script_module().has_module()) {
+          auto&& text_module = command->script_module().module();
+          text::Desugar(text_module);
+          convert::Context convert_context;
+          auto binary_module = convert::ToBinary(convert_context, text_module);
+          valid::Context valid_context{features, errors};
+          Validate(valid_context, binary_module);
+        }
+        break;
       }
+
+      case text::CommandKind::Assertion: {
+        auto kind = command->assertion().kind;
+        if (kind != text::AssertionKind::Malformed &&
+            kind != text::AssertionKind::Invalid) {
+          break;
+        }
+
+        auto&& module_assertion =
+            get<text::ModuleAssertion>(command->assertion().desc);
+        auto&& script_module = module_assertion.module;
+        if (script_module->has_text_list()) {
+          Buffer buffer;
+          ToBuffer(script_module->text_list(), buffer);
+
+          if (kind == text::AssertionKind::Malformed) {
+            if (script_module->kind == text::ScriptModuleKind::Quote) {
+              text::Tokenizer tokenizer{buffer};
+              tools::TextErrors nested_errors{"malformed module", buffer};
+              text::Context context{features, nested_errors};
+              auto script = ReadScript(tokenizer, context);
+              if (!nested_errors.has_error()) {
+                errors.OnError(script_module.loc(),
+                               "Expected malformed text module.");
+              }
+            } else {
+            }
+          }
+        }
+        break;
+      }
+
+      default:
+        break;
     }
   }
 

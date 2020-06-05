@@ -26,6 +26,13 @@
 namespace wasp {
 namespace text {
 
+void ToBuffer(const TextList& text_list, Buffer& buffer) {
+  for (auto&& text: text_list) {
+    text->ToBuffer(buffer);
+  }
+}
+
+
 bool Var::is_index() const {
   return holds_alternative<Index>(desc);
 }
