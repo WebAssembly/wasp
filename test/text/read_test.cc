@@ -2627,7 +2627,7 @@ TEST_F(TextReadTest, Module) {
      "(type (func)) (func nop) (start 0)"_su8);
 }
 
-TEST_F(TextReadTest, ModuleWithDeferredTypes){
+TEST_F(TextReadTest, ModuleWithDeferredTypes) {
   OK(ReadModule,
      Module{
          MakeAt("(func)"_su8, ModuleItem{Function{}}),
@@ -2658,4 +2658,9 @@ TEST_F(TextReadTest, ModuleWithDeferredTypes){
                                {}}}},
      },
      "(func) (func (param i32))"_su8);
+}
+
+TEST_F(TextReadTest, Module_MultipleStart) {
+  Fail(ReadModule, {{11, "Multiple start functions"}},
+       "(start 0) (start 0)"_su8);
 }

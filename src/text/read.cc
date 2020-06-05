@@ -830,6 +830,7 @@ auto ReadStart(Tokenizer& tokenizer, Context& context) -> OptAt<Start> {
     context.errors.OnError(start_token.loc, "Multiple start functions");
     return nullopt;
   }
+  context.seen_start = true;
 
   WASP_TRY_READ(var, ReadVar(tokenizer, context));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
