@@ -1021,6 +1021,14 @@ bool Validate(Context& context, const At<Locals>& value) {
   return true;
 }
 
+bool Validate(Context& context, const At<LocalsList>& value) {
+  bool valid = true;
+  for (auto&& locals : *value) {
+    valid &= Validate(context, locals);
+  }
+  return valid;
+}
+
 bool Validate(Context& context, const At<Instruction>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "instruction"};
   if (context.label_stack.empty()) {

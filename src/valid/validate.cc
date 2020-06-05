@@ -63,9 +63,10 @@ bool Validate(Context& context,
               Errors& read_errors) {
   bool valid = true;
   valid &= BeginCode(context, value.loc());
-  for (auto& locals : value->locals) {
-    valid &= Validate(context, locals);
-  }
+  valid &= Validate(context, value->locals);
+  // TODO: This isn't correct; we can't create a new binary::Context here
+  // because it will lose information (from the binary::Context that read this
+  // binary::Code struct).
   binary::Context read_context{context.features, read_errors};
   for (auto& instruction : binary::ReadExpression(value->body, read_context)) {
     valid &= Validate(context, instruction);
