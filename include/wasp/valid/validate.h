@@ -33,6 +33,8 @@ enum class ConstantExpressionKind {
 
 struct Context;
 
+bool BeginCode(Context&, Location loc);
+
 bool Validate(Context&, const At<binary::Code>&, Errors& read_errors);
 bool Validate(Context&, const At<binary::Code>&);
 bool Validate(Context&, const At<binary::DataSegment>&);

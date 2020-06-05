@@ -19,7 +19,6 @@
 #include <cassert>
 
 #include "wasp/binary/read/end_module.h"
-#include "wasp/valid/begin_code.h"
 
 namespace wasp {
 namespace valid {
