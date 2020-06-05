@@ -441,6 +441,9 @@ TEST(ValidateTest, Export) {
   for (const auto& export_ : tests) {
     EXPECT_TRUE(Validate(context, export_));
   }
+
+  // Exporting a function marks it as declared.
+  EXPECT_EQ(1u, context.declared_functions.size());
 }
 
 TEST(ValidateTest, Export_IndexOOB) {

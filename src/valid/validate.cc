@@ -269,6 +269,7 @@ bool Validate(Context& context, const At<binary::Export>& value) {
     case ExternalKind::Function:
       valid &= ValidateIndex(context, value->index, context.functions.size(),
                              "function index");
+      context.declared_functions.insert(value->index);
       break;
 
     case ExternalKind::Table:
