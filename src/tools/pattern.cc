@@ -79,7 +79,7 @@ struct Tool {
 
     visit::Result OnSection(At<Section>);
     visit::Result BeginCodeSection(LazyCodeSection);
-    visit::Result OnCode(const At<Code>&);
+    visit::Result BeginCode(const At<Code>&);
 
     Tool& tool;
   };
@@ -170,7 +170,7 @@ visit::Result Tool::Visitor::BeginCodeSection(LazyCodeSection) {
   return visit::Result::Ok;
 }
 
-visit::Result Tool::Visitor::OnCode(const At<Code>& code) {
+visit::Result Tool::Visitor::BeginCode(const At<Code>& code) {
   Instructions instructions;
 
   auto instrs = ReadExpression(code->body, tool.module.context);
@@ -200,7 +200,8 @@ visit::Result Tool::Visitor::OnCode(const At<Code>& code) {
     }
     ++tool.total_instructions;
   }
-  return visit::Result::Ok;
+  // Skip iterating over instructions.
+  return visit::Result::Skip;
 }
 
 }  // namespace pattern

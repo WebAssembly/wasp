@@ -43,7 +43,7 @@ struct ValidateVisitor : binary::visit::Visitor {
   auto OnStart(const At<binary::Start>&) -> Result;
   auto OnElement(const At<binary::ElementSegment>&) -> Result;
   auto OnDataCount(const At<binary::DataCount>&) -> Result;
-  auto OnCode(const At<binary::Code>&) -> Result;
+  auto BeginCode(const At<binary::Code>&) -> Result;
   auto OnData(const At<binary::DataSegment>&) -> Result;
 
   auto FailUnless(bool) -> Result;

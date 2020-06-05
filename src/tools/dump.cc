@@ -102,7 +102,7 @@ struct Tool {
     visit::Result OnElement(const At<ElementSegment>&);
     visit::Result BeginDataCountSection(DataCountSection);
     visit::Result BeginCodeSection(LazyCodeSection);
-    visit::Result OnCode(const At<Code>&);
+    visit::Result BeginCode(const At<Code>&);
     visit::Result BeginDataSection(LazyDataSection);
     visit::Result OnData(const At<DataSegment>&);
 
@@ -746,7 +746,7 @@ visit::Result Tool::Visitor::BeginCodeSection(LazyCodeSection section) {
   return SkipUnless(tool.ShouldPrintDetails(pass) || pass == Pass::Disassemble);
 }
 
-visit::Result Tool::Visitor::OnCode(const At<Code>& code) {
+visit::Result Tool::Visitor::BeginCode(const At<Code>& code) {
   if (!tool.options.func_index || index == tool.options.func_index) {
     if (pass == Pass::Details) {
       print(" - func[{}] size={}\n", index, code->body->data.size());
@@ -755,7 +755,8 @@ visit::Result Tool::Visitor::OnCode(const At<Code>& code) {
     }
   }
   ++index;
-  return visit::Result::Ok;
+  // Skip iterating over instructions.
+  return visit::Result::Skip;
 }
 
 visit::Result Tool::Visitor::BeginDataSection(LazyDataSection section) {
