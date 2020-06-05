@@ -1266,5 +1266,21 @@ OptAt<ValueType> Read(SpanU8* data, Context& context, Tag<ValueType>) {
   return decoded;
 }
 
+bool EndModule(SpanU8* data, Context& context) {
+  if (context.defined_function_count != context.code_count) {
+    context.errors.OnError(
+        *data, format("Expected code count of {}, but got {}",
+                      context.defined_function_count, context.code_count));
+    return false;
+  }
+  if (context.declared_data_count &&
+      *context.declared_data_count != context.data_count) {
+    context.errors.OnError(
+        *data, format("Expected data count of {}, but got {}",
+                      *context.declared_data_count, context.data_count));
+  }
+  return true;
+}
+
 }  // namespace binary
 }  // namespace wasp

@@ -32,7 +32,6 @@ struct ValidateVisitor : binary::visit::Visitor {
 
   explicit ValidateVisitor(Features features, Errors& errors);
 
-  auto EndModule(binary::LazyModule&) -> Result;
   auto OnType(const At<binary::TypeEntry>&) -> Result;
   auto OnImport(const At<binary::Import>&) -> Result;
   auto OnFunction(const At<binary::Function>&) -> Result;

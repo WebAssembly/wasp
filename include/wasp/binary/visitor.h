@@ -19,7 +19,6 @@
 
 #include "wasp/binary/lazy_expression.h"
 #include "wasp/binary/lazy_module.h"
-#include "wasp/binary/read/end_module.h"
 #include "wasp/binary/sections.h"
 
 namespace wasp {
