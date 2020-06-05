@@ -23,6 +23,11 @@
 namespace wasp {
 namespace tools {
 
+BinaryErrors::BinaryErrors(SpanU8 data) : BinaryErrors{"<unknown>", data} {}
+
+BinaryErrors::BinaryErrors(string_view filename, SpanU8 data)
+    : filename{filename}, data{data} {}
+
 void BinaryErrors::PrintTo(std::ostream& os) {
   for (const auto& error : errors) {
     os << ErrorToString(error);
@@ -65,7 +70,7 @@ auto BinaryErrors::ErrorToString(const Error& error) const -> std::string {
     space = !space;
   }
 
-  return format("{:08x}: {}\n{}\n{}\n", loc.begin() - data.begin(),
+  return format("{}:{:08x}: {}\n{}\n{}\n", filename, loc.begin() - data.begin(),
                 error.message, line1, line2);
 }
 

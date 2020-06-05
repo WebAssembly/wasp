@@ -31,7 +31,9 @@ namespace tools {
 
 class BinaryErrors : public Errors {
  public:
-  explicit BinaryErrors(SpanU8 data) : data{data} {}
+  // TODO: remove this constructor and always require a filename.
+  explicit BinaryErrors(SpanU8 data);
+  explicit BinaryErrors(string_view filename, SpanU8 data);
 
   bool has_error() const { return !errors.empty(); }
   void PrintTo(std::ostream&);
@@ -43,6 +45,7 @@ class BinaryErrors : public Errors {
 
   auto ErrorToString(const Error&) const -> std::string;
 
+  std::string filename;
   SpanU8 data;
   std::vector<Error> errors;
 };

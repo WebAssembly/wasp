@@ -179,6 +179,7 @@ target_link_libraries(wasp_unittests
 
 add_executable(run_spec_tests
   src/tools/argparser.cc
+  src/tools/binary_errors.cc
   src/tools/text_errors.cc
   test/run_spec_tests.cc
 )

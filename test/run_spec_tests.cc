@@ -21,12 +21,16 @@
 #include <utility>
 
 #include "src/tools/argparser.h"
+#include "src/tools/binary_errors.h"
 #include "src/tools/text_errors.h"
 #include "wasp/base/enumerate.h"
 #include "wasp/base/error.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
 #include "wasp/base/format.h"
+#include "wasp/binary/lazy_expression.h"
+#include "wasp/binary/lazy_module.h"
+#include "wasp/binary/visitor.h"
 #include "wasp/convert/to_binary.h"
 #include "wasp/text/desugar.h"
 #include "wasp/text/read.h"
@@ -39,7 +43,31 @@
 using namespace ::wasp;
 namespace fs = std::filesystem;
 
-static bool s_verbose = false;
+static int s_verbose = 0;
+
+struct Tool {
+  explicit Tool(string_view filename, SpanU8 data, const Features& features)
+      : filename{filename},
+        data{data},
+        features{features},
+        errors{filename, data} {}
+
+  void Run();
+
+ private:
+  void OnCommand(At<text::Command>&);
+  void OnScriptModuleCommand(const text::ScriptModule&);
+  void OnAssertionCommand(text::Assertion&);
+  void OnAssertMalformedText(Location, string_view filename, const Buffer&);
+  void OnAssertMalformedBinary(Location, string_view filename, const Buffer&);
+  void OnAssertInvalid(Location, const text::Module&);
+
+  std::string filename;
+  SpanU8 data;
+  Features features;
+  tools::TextErrors errors;
+  int assertion_count = 0;
+};
 
 void DoFile(const fs::path&, const Features&);
 
@@ -56,7 +84,7 @@ int main(int argc, char** argv) {
              print(parser.GetHelpString());
              exit(0);
            })
-      .Add('v', "--verbose", "verbose output", [&]() { s_verbose = true; })
+      .Add('v', "--verbose", "verbose output", [&]() { s_verbose++; })
       .Add("<filename>", "filename",
            [&](string_view arg) { filenames.push_back(arg); });
   parser.Parse(args);
@@ -114,15 +142,19 @@ void DoFile(const fs::path& path, const Features& features) {
     print("Reading {}...\n", path.string());
   }
 
-  auto data = ReadFile(path.string());
+  std::string filename = path.string();
+  auto data = ReadFile(filename);
   if (!data) {
     print(std::cerr, "Error reading file {}", path.filename().string());
     return;
   }
 
-  text::Tokenizer tokenizer{*data};
-  std::string filename = path.string();
-  tools::TextErrors errors{filename, *data};
+  Tool tool{filename, *data, features};
+  tool.Run();
+}
+
+void Tool::Run() {
+  text::Tokenizer tokenizer{data};
   text::Context context{features, errors};
   auto script = ReadScript(tokenizer, context);
 
@@ -132,56 +164,117 @@ void DoFile(const fs::path& path, const Features& features) {
   }
 
   for (auto&& command : *script) {
-    switch (command->kind()) {
-      case text::CommandKind::ScriptModule: {
-        if (command->script_module().has_module()) {
-          auto&& text_module = command->script_module().module();
-          text::Desugar(text_module);
-          convert::Context convert_context;
-          auto binary_module = convert::ToBinary(convert_context, text_module);
-          valid::Context valid_context{features, errors};
-          Validate(valid_context, binary_module);
-        }
-        break;
-      }
-
-      case text::CommandKind::Assertion: {
-        auto kind = command->assertion().kind;
-        if (kind != text::AssertionKind::Malformed &&
-            kind != text::AssertionKind::Invalid) {
-          break;
-        }
-
-        auto&& module_assertion =
-            get<text::ModuleAssertion>(command->assertion().desc);
-        auto&& script_module = module_assertion.module;
-        if (script_module->has_text_list()) {
-          Buffer buffer;
-          ToBuffer(script_module->text_list(), buffer);
-
-          if (kind == text::AssertionKind::Malformed) {
-            if (script_module->kind == text::ScriptModuleKind::Quote) {
-              text::Tokenizer tokenizer{buffer};
-              tools::TextErrors nested_errors{"malformed module", buffer};
-              text::Context context{features, nested_errors};
-              auto script = ReadScript(tokenizer, context);
-              if (!nested_errors.has_error()) {
-                errors.OnError(script_module.loc(),
-                               "Expected malformed text module.");
-              }
-            } else {
-            }
-          }
-        }
-        break;
-      }
-
-      default:
-        break;
-    }
+    OnCommand(command);
   }
 
   if (errors.has_error()) {
     errors.PrintTo(std::cerr);
+  }
+}
+
+void Tool::OnCommand(At<text::Command>& command) {
+  switch (command->kind()) {
+    case text::CommandKind::ScriptModule:
+      OnScriptModuleCommand(command->script_module());
+      break;
+
+    case text::CommandKind::Assertion:
+      OnAssertionCommand(command->assertion());
+      break;
+
+    default:
+      break;
+  }
+}
+
+void Tool::OnScriptModuleCommand(const text::ScriptModule& script_module) {
+  if (script_module.has_module()) {
+    auto text_module = script_module.module();
+    text::Desugar(text_module);
+    convert::Context convert_context;
+    auto binary_module = convert::ToBinary(convert_context, text_module);
+    valid::Context valid_context{features, errors};
+    Validate(valid_context, binary_module);
+  }
+}
+
+void Tool::OnAssertionCommand(text::Assertion& assertion) {
+  if (assertion.kind != text::AssertionKind::Malformed &&
+      assertion.kind != text::AssertionKind::Invalid) {
+    return;
+  }
+
+  auto&& module_assertion =
+      get<text::ModuleAssertion>(assertion.desc);
+  auto&& script_module = module_assertion.module;
+
+  if (script_module->has_text_list()) {
+    Buffer buffer;
+    ToBuffer(script_module->text_list(), buffer);
+
+    if (assertion.kind == text::AssertionKind::Malformed) {
+      if (script_module->kind == text::ScriptModuleKind::Quote) {
+        OnAssertMalformedText(script_module.loc(),
+                              format("malformed_{}.wat", assertion_count++),
+                              buffer);
+      } else {
+        OnAssertMalformedBinary(script_module.loc(),
+                                format("malformed_{}.wasm", assertion_count++),
+                                buffer);
+      }
+    } else if (assertion.kind == text::AssertionKind::Invalid) {
+      errors.OnError(script_module.loc(), "assert_invalid with quote/bin?");
+    }
+  } else if (script_module->has_module()) {
+    OnAssertInvalid(script_module.loc(), script_module->module());
+  }
+}
+
+void Tool::OnAssertMalformedText(Location loc,
+                                 string_view filename,
+                                 const Buffer& buffer) {
+  text::Tokenizer tokenizer{buffer};
+  tools::TextErrors nested_errors{filename, buffer};
+  text::Context context{features, nested_errors};
+  auto script = ReadScript(tokenizer, context);
+  if (!nested_errors.has_error()) {
+    errors.OnError(loc, "Expected malformed text module.");
+  }
+  if (s_verbose > 1) {
+    nested_errors.PrintTo(std::cout);
+  }
+}
+
+void Tool::OnAssertMalformedBinary(Location loc,
+                                 string_view filename,
+                                 const Buffer& buffer) {
+  tools::BinaryErrors nested_errors{filename, buffer};
+  binary::LazyModule module =
+      binary::ReadModule(buffer, features, nested_errors);
+  binary::visit::Visitor visitor;
+  binary::visit::Visit(module, visitor);
+  if (!nested_errors.has_error()) {
+    errors.OnError(loc, "Expected malformed binary module.");
+  }
+  if (s_verbose > 1) {
+    nested_errors.PrintTo(std::cout);
+  }
+}
+
+void Tool::OnAssertInvalid(Location loc, const text::Module& orig_text_module) {
+  tools::TextErrors nested_errors{filename, data};
+  // TODO: Have to copy since Desugar modifies the module in-place. Should we
+  // have a version that returns a new Module too?
+  text::Module text_module = orig_text_module;
+  text::Desugar(text_module);
+  convert::Context convert_context;
+  auto binary_module = convert::ToBinary(convert_context, text_module);
+  valid::Context valid_context{features, nested_errors};
+  bool result = Validate(valid_context, binary_module);
+  if (result || !nested_errors.has_error()) {
+    errors.OnError(loc, "Expected invalid module.");
+  }
+  if (s_verbose > 1) {
+    nested_errors.PrintTo(std::cout);
   }
 }
