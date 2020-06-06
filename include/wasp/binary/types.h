@@ -431,6 +431,15 @@ struct Code {
   At<Expression> body;
 };
 
+struct UnpackedExpression {
+  InstructionList instructions;
+};
+
+struct UnpackedCode {
+  LocalsList locals;
+  UnpackedExpression body;
+};
+
 // Section 11: Data
 
 struct DataSegment {
@@ -476,7 +485,7 @@ struct Module {
   optional<At<Start>> start;
   std::vector<At<ElementSegment>> element_segments;
   optional<At<DataCount>> data_count;
-  std::vector<At<Code>> codes;
+  std::vector<At<UnpackedCode>> codes;
   std::vector<At<DataSegment>> data_segments;
 };
 
@@ -515,7 +524,9 @@ struct Module {
   WASP_V(binary::Section, 1, contents)                                   \
   WASP_V(binary::Start, 1, func_index)                                   \
   WASP_V(binary::Table, 1, table_type)                                   \
-  WASP_V(binary::TypeEntry, 1, type)
+  WASP_V(binary::TypeEntry, 1, type)                                     \
+  WASP_V(binary::UnpackedCode, 2, locals, body)                          \
+  WASP_V(binary::UnpackedExpression, 1, instructions)
 
 #define WASP_BINARY_CONTAINERS(WASP_V) \
   WASP_V(binary::IndexList)            \

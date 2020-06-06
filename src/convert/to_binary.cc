@@ -544,18 +544,13 @@ auto ToBinary(Context& context, const text::InstructionList& value)
   return result;
 }
 
-auto ToBinaryExpression(Context& context,
-                        const At<text::InstructionList>& value)
-    -> At<binary::Expression> {
-  Buffer buffer;
-  auto out = std::back_inserter(buffer);
-  for (auto&& instr : *value) {
-    out = binary::Write(ToBinary(context, instr), out);
-  }
-  // Write implicit 'end' instruction.
-  out = binary::Write(binary::Instruction{Opcode::End}, out);
-  return MakeAt(value.loc(),
-                binary::Expression{context.Add(std::move(buffer))});
+auto ToBinaryUnpackedExpression(Context& context,
+                                const At<text::InstructionList>& value)
+    -> At<binary::UnpackedExpression> {
+  binary::UnpackedExpression result;
+  result.instructions = ToBinary(context, value);
+  result.instructions.push_back(binary::Instruction{Opcode::End});
+  return MakeAt(value.loc(), result);
 }
 
 auto ToBinaryLocalsList(Context& context,
@@ -577,14 +572,15 @@ auto ToBinaryLocalsList(Context& context,
 }
 
 auto ToBinaryCode(Context& context, const At<text::Function>& value)
-    -> OptAt<binary::Code> {
+    -> OptAt<binary::UnpackedCode> {
   if (value->import) {
     return nullopt;
   }
 
   return MakeAt(value.loc(),
-                binary::Code{ToBinaryLocalsList(context, value->locals),
-                             ToBinaryExpression(context, value->instructions)});
+                binary::UnpackedCode{
+                    ToBinaryLocalsList(context, value->locals),
+                    ToBinaryUnpackedExpression(context, value->instructions)});
 }
 
 // Section 11: Data

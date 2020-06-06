@@ -451,4 +451,22 @@ typename Ctx::iterator formatter<::wasp::binary::Event>::format(
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::UnpackedCode>::format(
+    const ::wasp::binary::UnpackedCode& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{locals {}, body {}}}", self.locals, self.body);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::UnpackedExpression>::format(
+    const ::wasp::binary::UnpackedExpression& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{}", self.instructions);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
 }  // namespace fmt

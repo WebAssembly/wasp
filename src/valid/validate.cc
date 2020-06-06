@@ -58,25 +58,20 @@ bool BeginCode(Context& context, Location loc) {
   }
 }
 
-bool Validate(Context& context,
-              const At<binary::Code>& value,
-              Errors& read_errors) {
+bool Validate(Context& context, const At<binary::UnpackedExpression>& value) {
   bool valid = true;
-  valid &= BeginCode(context, value.loc());
-  valid &= Validate(context, value->locals);
-  // TODO: This isn't correct; we can't create a new binary::Context here
-  // because it will lose information (from the binary::Context that read this
-  // binary::Code struct).
-  binary::Context read_context{context.features, read_errors};
-  for (auto& instruction : binary::ReadExpression(value->body, read_context)) {
-    valid &= Validate(context, instruction);
+  for (auto&& instr : value->instructions) {
+    valid &= Validate(context, instr);
   }
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::Code>& value) {
-  // By default, use the same error reporting as the validator.
-  return Validate(context, value, *context.errors);
+bool Validate(Context& context, const At<binary::UnpackedCode>& value) {
+  bool valid = true;
+  valid &= BeginCode(context, value.loc());
+  valid &= Validate(context, value->locals);
+  valid &= Validate(context, value->body);
+  return valid;
 }
 
 bool Validate(Context& context,

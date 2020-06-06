@@ -93,9 +93,10 @@ auto ToBinary(Context&, const At<text::MemArgImmediate>&, u32 natural_align) -> 
 auto ToBinary(Context&, const At<text::Instruction>&) -> At<binary::Instruction>;
 auto ToBinary(Context&, const text::InstructionList&) -> binary::InstructionList;
 
-auto ToBinaryExpression(Context&, const At<text::InstructionList>&) -> At<binary::Expression>;
+// TODO: Create text::Expression instead of using text::InstructionList here.
+auto ToBinaryUnpackedExpression(Context&, const At<text::InstructionList>&) -> At<binary::UnpackedExpression>;
 auto ToBinaryLocalsList(Context&, const At<text::BoundValueTypeList>&) -> At<binary::LocalsList>;
-auto ToBinaryCode(Context&, const At<text::Function>&) -> OptAt<binary::Code>;
+auto ToBinaryCode(Context&, const At<text::Function>&) -> OptAt<binary::UnpackedCode>;
 
 // Section 11: Data
 auto ToBinary(Context&, const At<text::TextList>&) -> SpanU8;

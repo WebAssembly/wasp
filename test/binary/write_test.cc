@@ -1130,10 +1130,17 @@ TEST(BinaryWriteTest, Module_DataCount) {
 
 TEST(BinaryWriteTest, Module_Code) {
   Module module;
+  module.codes.push_back(UnpackedCode{
+      LocalsList{Locals{2, ValueType::I32}, Locals{1, ValueType::I64}},
+      UnpackedExpression{InstructionList{
+          Instruction{Opcode::Unreachable},
+          Instruction{Opcode::End},
+      }}});
   module.codes.push_back(
-      Code{LocalsList{Locals{2, ValueType::I32}, Locals{1, ValueType::I64}},
-           Expression{"\x00\x0b"_su8}});
-  module.codes.push_back(Code{LocalsList{}, Expression{"\x41\x01\x0b"_su8}});
+      UnpackedCode{LocalsList{}, UnpackedExpression{InstructionList{
+                                     Instruction{Opcode::I32Const, s32{1}},
+                                     Instruction{Opcode::End},
+                                 }}});
 
   ExpectWrite(
       "\x00\x61\x73\x6d\x01\x00\x00\x00"  // magic/version

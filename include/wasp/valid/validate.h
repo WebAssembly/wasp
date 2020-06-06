@@ -22,8 +22,6 @@
 
 namespace wasp {
 
-class Errors;
-
 namespace valid {
 
 enum class ConstantExpressionKind {
@@ -35,8 +33,6 @@ struct Context;
 
 bool BeginCode(Context&, Location loc);
 
-bool Validate(Context&, const At<binary::Code>&, Errors& read_errors);
-bool Validate(Context&, const At<binary::Code>&);
 bool Validate(Context&, const At<binary::DataSegment>&);
 bool Validate(Context&,
               const At<binary::ConstantExpression>&,
@@ -73,6 +69,9 @@ bool Validate(Context&, const At<binary::Table>&);
 bool Validate(Context&, const At<TableType>&);
 bool Validate(Context&, const At<binary::TypeEntry>&);
 bool Validate(Context&, const At<ValueType>& actual, ValueType expected);
+bool Validate(Context&, const At<binary::UnpackedCode>&);
+bool Validate(Context&, const At<binary::UnpackedExpression>&);
+
 bool Validate(Context&, const binary::Module&);
 
 }  // namespace valid

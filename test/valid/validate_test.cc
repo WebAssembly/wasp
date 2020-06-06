@@ -27,12 +27,13 @@ using namespace ::wasp::binary;
 using namespace ::wasp::valid;
 using namespace ::wasp::valid::test;
 
-TEST(ValidateTest, Code) {
-  Code code{LocalsList{Locals{2, ValueType::I32}},
-            Expression{"\x20\x00"     // local.get 0
-                       "\x20\x01"     // local.get 1
-                       "\x6a"         // i32.add
-                       "\x0b"_su8}};  // end
+TEST(ValidateTest, UnpackedCode) {
+  UnpackedCode code{
+      LocalsList{Locals{2, ValueType::I32}},
+      UnpackedExpression{InstructionList{
+          Instruction{Opcode::LocalGet, Index{0}},
+          Instruction{Opcode::LocalGet, Index{1}}, Instruction{Opcode::I32Add},
+          Instruction{Opcode::End}}}};
   TestErrors errors;
   Context context{errors};
   context.types.push_back(TypeEntry{FunctionType{{}, {ValueType::I32}}});
@@ -980,7 +981,9 @@ TEST(ValidateTest, Module) {
   module.element_segments.push_back(ElementSegment{
       Index{0}, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
       ElementList{ElementListWithIndexes{ExternalKind::Function, {0, 0}}}});
-  module.codes.push_back(Code{LocalsList{}, Expression{"\x0b"_su8}});
+  module.codes.push_back(UnpackedCode{
+      LocalsList{},
+      UnpackedExpression{InstructionList{Instruction{Opcode::End}}}});
   module.data_segments.push_back(DataSegment{
       Index{0}, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
       "hi"_su8});

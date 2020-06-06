@@ -227,6 +227,24 @@ Iterator Write(const InstructionList& value, Iterator out) {
 }
 
 template <typename Iterator>
+Iterator Write(const UnpackedExpression& value, Iterator out) {
+  return Write(value.instructions, out);
+}
+
+template <typename Iterator>
+Iterator Write(const UnpackedCode& value, Iterator out) {
+  // Write Code to a separate buffer, so we know its length.
+  Buffer buffer;
+  auto code_out = std::back_inserter(buffer);
+  code_out = WriteVector(value.locals.begin(), value.locals.end(), code_out);
+  code_out = Write(value.body, code_out);
+
+  // Then write that buffer to the real output.
+  out = WriteLengthAndBytes(buffer, out);
+  return out;
+}
+
+template <typename Iterator>
 Iterator Write(const ConstantExpression& value, Iterator out) {
   out = Write(value.instructions, out);
   out = Write(Opcode::End, out);

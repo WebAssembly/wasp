@@ -69,11 +69,13 @@ auto ValidateVisitor::OnDataCount(const At<binary::DataCount>& data_count)
 }
 
 auto ValidateVisitor::BeginCode(const At<binary::Code>& code) -> Result {
-  if (!Validate(context, code)) {
-    return Result::Fail;
-  }
-  // TODO: Use the OnInstruction path to validate instructions.
-  return Result::Skip;
+  return FailUnless(valid::BeginCode(context, code.loc()) &&
+                    Validate(context, code->locals));
+}
+
+auto ValidateVisitor::OnInstruction(const At<binary::Instruction>& instruction)
+    -> Result {
+  return FailUnless(Validate(context, instruction));
 }
 
 auto ValidateVisitor::OnData(const At<binary::DataSegment>& segment) -> Result {

@@ -744,19 +744,25 @@ TEST(ConvertToBinaryTest, InstructionList) {
 }
 
 TEST(ConvertToBinaryTest, Expression) {
-  OKFunc(ToBinaryExpression,
-         MakeAt(loc1,
-                binary::Expression{
-                    "\x01"      // nop
-                    "\x41\x00"  // i32.const 0
-                    "\x1a"      // drop
-                    "\x0b"_su8  // implicit end
-                }),
-         MakeAt(loc1, text::InstructionList{
-                          text::Instruction{Opcode::Nop},
-                          text::Instruction{Opcode::I32Const, s32{0}},
-                          text::Instruction{Opcode::Drop},
-                      }));
+  OKFunc(
+      ToBinaryUnpackedExpression,
+      MakeAt(
+          loc1,
+          binary::UnpackedExpression{MakeAt(
+              loc1,
+              binary::InstructionList{
+                  MakeAt(loc2,
+                         binary::Instruction{MakeAt(loc3, Opcode::I32Const),
+                                             MakeAt(loc4, s32{0})}),
+                  MakeAt(loc5, binary::Instruction{MakeAt(loc6, Opcode::Drop)}),
+                  binary::Instruction{Opcode::End},
+              })}),
+      MakeAt(loc1,
+             text::InstructionList{
+                 MakeAt(loc2, text::Instruction{MakeAt(loc3, Opcode::I32Const),
+                                                MakeAt(loc4, s32{0})}),
+                 MakeAt(loc5, text::Instruction{MakeAt(loc6, Opcode::Drop)}),
+             }));
 }
 
 TEST(ConvertToBinaryTest, LocalsList) {
@@ -777,16 +783,27 @@ TEST(ConvertToBinaryTest, Code) {
   OKFunc(
       ToBinaryCode,
       MakeAt(loc1,
-             binary::Code{MakeAt(loc2, binary::LocalsList{binary::Locals{
-                                           1, MakeAt(loc3, ValueType::I32)}}),
-                          binary::Expression{"\x01\x0b"_su8}}),
-      MakeAt(loc1,
-             text::Function{
-                 {},
-                 MakeAt(loc2, text::BoundValueTypeList{text::BoundValueType{
-                                  nullopt, MakeAt(loc3, ValueType::I32)}}),
-                 {text::Instruction{Opcode::Nop}},
-                 {}}));
+             binary::UnpackedCode{
+                 MakeAt(loc2, binary::LocalsList{binary::Locals{
+                                  1, MakeAt(loc3, ValueType::I32)}}),
+                 MakeAt(loc4,
+                        binary::UnpackedExpression{
+                            MakeAt(loc4,
+                                   binary::InstructionList{
+                                       MakeAt(loc5, binary::Instruction{MakeAt(
+                                                        loc6, Opcode::Nop)}),
+                                       binary::Instruction{Opcode::End},
+                                   })})}),
+      MakeAt(
+          loc1,
+          text::Function{
+              {},
+              MakeAt(loc2, text::BoundValueTypeList{text::BoundValueType{
+                               nullopt, MakeAt(loc3, ValueType::I32)}}),
+              MakeAt(loc4,
+                     text::InstructionList{MakeAt(
+                         loc5, text::Instruction{MakeAt(loc6, Opcode::Nop)})}),
+              {}}));
 }
 
 TEST(ConvertToBinaryTest, DataSegment) {
@@ -861,6 +878,8 @@ TEST(ConvertToBinaryTest, Module) {
   const SpanU8 loc22 = "V"_su8;
   const SpanU8 loc23 = "W"_su8;
   const SpanU8 loc24 = "X"_su8;
+  const SpanU8 loc25 = "Y"_su8;
+  const SpanU8 loc26 = "Z"_su8;
 
   auto table_type = MakeAt(
       "T0"_su8, TableType{MakeAt("T1"_su8, Limits{MakeAt("T2"_su8, u32{0})}),
@@ -926,8 +945,14 @@ TEST(ConvertToBinaryTest, Module) {
              // data_counts
              {binary::DataCount{Index{1}}},
              // codes
-             {MakeAt(loc7, binary::Code{binary::LocalsList{},
-                                        binary::Expression{"\x01\x0b"_su8}})},
+             {MakeAt(loc7,
+                     binary::UnpackedCode{
+                         binary::LocalsList{},
+                         binary::UnpackedExpression{binary::InstructionList{
+                             MakeAt(loc25, binary::Instruction{MakeAt(
+                                               loc26, Opcode::Nop)}),
+                             binary::Instruction{Opcode::End},
+                         }}})},
              // data_segments
              {MakeAt(loc23, binary::DataSegment{MakeAt(loc24, Index{0}),
                                                 binary_constant_expression,
@@ -981,7 +1006,8 @@ TEST(ConvertToBinaryTest, Module) {
                         text::FunctionDesc{
                             nullopt, MakeAt(loc8, text::Var{Index{0}}), {}},
                         {},
-                        {text::Instruction{Opcode::Nop}},
+                        {MakeAt(loc25,
+                                text::Instruction{MakeAt(loc26, Opcode::Nop)})},
                         {}})},
                 // (elem (i32.const 0) func 0)
                 text::ModuleItem{MakeAt(
