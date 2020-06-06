@@ -225,6 +225,19 @@ TEST(BinaryReadTest, Code_PastEnd) {
       "\x01\x01"_su8);
 }
 
+TEST(BinaryReadTest, Code_TooManyLocals) {
+  ExpectReadFailure<Code>(
+      {{0, "code"},
+       {1, "locals vector"},
+       {8, "locals"},
+       {8, "Too many locals: 4294967296"}},
+      "\x09"                      // length
+      "\x02"                      // local decls count
+      "\xfe\xff\xff\xff\x0f\x7f"  // (local i32 ** (2**32) - 2)
+      "\x02\x7e"_su8              // (local i64 i64)
+  );
+}
+
 TEST(BinaryReadTest, ConstantExpression) {
   // i32.const
   ExpectRead<ConstantExpression>(

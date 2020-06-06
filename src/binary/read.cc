@@ -17,6 +17,7 @@
 #include "wasp/binary/read.h"
 
 #include <cassert>
+#include <limits>
 
 #include "wasp/base/errors.h"
 #include "wasp/base/errors_context_guard.h"
@@ -136,6 +137,7 @@ OptAt<Code> Read(SpanU8* data, Context& context, Tag<Code>) {
   ErrorsContextGuard error_guard{context.errors, *data, "code"};
   LocationGuard guard{data};
   context.code_count++;
+  context.local_count = 0;
   WASP_TRY_READ(body_size, ReadLength(data, context));
   WASP_TRY_READ(body, ReadBytes(data, body_size, context));
   WASP_TRY_READ(locals, ReadVector<Locals>(&*body, context, "locals vector"));
@@ -1050,6 +1052,14 @@ OptAt<Locals> Read(SpanU8* data, Context& context, Tag<Locals>) {
   ErrorsContextGuard error_guard{context.errors, *data, "locals"};
   LocationGuard guard{data};
   WASP_TRY_READ(count, ReadIndex(data, context, "count"));
+
+  context.local_count += count;
+  if (context.local_count > std::numeric_limits<u32>::max()) {
+    context.errors.OnError(count.loc(),
+                           format("Too many locals: {}", context.local_count));
+    return nullopt;
+  }
+
   WASP_TRY_READ_CONTEXT(type, Read<ValueType>(data, context), "type");
   return MakeAt(guard.range(data), Locals{count, type});
 }

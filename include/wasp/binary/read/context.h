@@ -41,6 +41,7 @@ struct Context {
   optional<Index> declared_data_count;
   Index code_count = 0;
   Index data_count = 0;
+  u64 local_count = 0;
 };
 
 }  // namespace binary
