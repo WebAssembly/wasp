@@ -21,6 +21,7 @@ namespace wasp {
 namespace binary {
 
 LazyExpression ReadExpression(SpanU8 data, Context& context) {
+  context.seen_final_end = false;
   return LazyExpression{data, context};
 }
 

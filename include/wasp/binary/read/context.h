@@ -41,7 +41,11 @@ struct Context {
   optional<Index> declared_data_count;
   Index code_count = 0;
   Index data_count = 0;
+
+  // Function context.
   u64 local_count = 0;
+  std::vector<Opcode> open_blocks;
+  bool seen_final_end = false;
 };
 
 }  // namespace binary

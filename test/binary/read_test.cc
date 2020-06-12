@@ -1391,23 +1391,14 @@ TEST_F(BinaryReadTest, InitImmediate_Memory_reference_types) {
        "\x80\x01\x80\x01"_su8);
 }
 
-TEST_F(BinaryReadTest, Instruction) {
+TEST_F(BinaryReadTest, PlainInstruction) {
   using MemArg = MemArgImmediate;
-  using BT = BlockType;
 
   auto memarg = MakeAt("\x01\x02"_su8, MemArg{MakeAt("\x01"_su8, u32{1}),
                                               MakeAt("\x02"_su8, u32{2})});
 
   OK(Read<I>, I{MakeAt("\x00"_su8, O::Unreachable)}, "\x00"_su8);
   OK(Read<I>, I{MakeAt("\x01"_su8, O::Nop)}, "\x01"_su8);
-  OK(Read<I>, I{MakeAt("\x02"_su8, O::Block), MakeAt("\x7f"_su8, BT::I32)},
-     "\x02\x7f"_su8);
-  OK(Read<I>, I{MakeAt("\x03"_su8, O::Loop), MakeAt("\x40"_su8, BT::Void)},
-     "\x03\x40"_su8);
-  OK(Read<I>, I{MakeAt("\x04"_su8, O::If), MakeAt("\x7c"_su8, BT::F64)},
-     "\x04\x7c"_su8);
-  OK(Read<I>, I{MakeAt("\x05"_su8, O::Else)}, "\x05"_su8);
-  OK(Read<I>, I{MakeAt("\x0b"_su8, O::End)}, "\x0b"_su8);
   OK(Read<I>, I{MakeAt("\x0c"_su8, O::Br), MakeAt("\x01"_su8, Index{1})},
      "\x0c\x01"_su8);
   OK(Read<I>, I{MakeAt("\x0d"_su8, O::BrIf), MakeAt("\x02"_su8, Index{2})},
@@ -1613,6 +1604,62 @@ TEST_F(BinaryReadTest, Instruction_BadMemoryReserved) {
        "\x40\x01"_su8);
 }
 
+TEST_F(BinaryReadTest, InstructionList_BlockEnd) {
+  OK(Read<InstructionList>,
+     InstructionList{
+         MakeAt("\x02\x40"_su8, I{MakeAt("\x02"_su8, O::Block),
+                                  MakeAt("\x40"_su8, BlockType::Void)}),
+         MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
+     },
+     "\x02\x40\x0b\x0b"_su8);
+}
+
+TEST_F(BinaryReadTest, InstructionList_BlockNoEnd) {
+  Fail(Read<InstructionList>, {{3, "opcode"}, {3, "Unable to read u8"}},
+       "\x02\x40\x0b"_su8);
+}
+
+TEST_F(BinaryReadTest, InstructionList_LoopEnd) {
+  OK(Read<InstructionList>,
+     InstructionList{
+         MakeAt("\x03\x40"_su8, I{MakeAt("\x03"_su8, O::Loop),
+                                  MakeAt("\x40"_su8, BlockType::Void)}),
+         MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
+     },
+     "\x03\x40\x0b\x0b"_su8);
+}
+
+TEST_F(BinaryReadTest, InstructionList_LoopNoEnd) {
+  Fail(Read<InstructionList>, {{3, "opcode"}, {3, "Unable to read u8"}},
+       "\x03\x40\x0b"_su8);
+}
+
+TEST_F(BinaryReadTest, InstructionList_IfEnd) {
+  OK(Read<InstructionList>,
+     InstructionList{
+         MakeAt("\x04\x40"_su8, I{MakeAt("\x04"_su8, O::If),
+                                  MakeAt("\x40"_su8, BlockType::Void)}),
+         MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
+     },
+     "\x04\x40\x0b\x0b"_su8);
+}
+
+TEST_F(BinaryReadTest, InstructionList_IfElseEnd) {
+  OK(Read<InstructionList>,
+     InstructionList{
+         MakeAt("\x04\x40"_su8, I{MakeAt("\x04"_su8, O::If),
+                                  MakeAt("\x40"_su8, BlockType::Void)}),
+         MakeAt("\x05"_su8, I{MakeAt("\x05"_su8, O::Else)}),
+         MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
+     },
+     "\x04\x40\x05\x0b\x0b"_su8);
+}
+
+TEST_F(BinaryReadTest, InstructionList_IfNoEnd) {
+  Fail(Read<InstructionList>, {{3, "opcode"}, {3, "Unable to read u8"}},
+       "\x04\x40\x0b"_su8);
+}
+
 TEST_F(BinaryReadTest, Instruction_exceptions) {
   context.features.enable_exceptions();
 
@@ -1628,6 +1675,33 @@ TEST_F(BinaryReadTest, Instruction_exceptions) {
        MakeAt("\x01\x02"_su8, BrOnExnImmediate{MakeAt("\x01"_su8, Index{1}),
                                                MakeAt("\x02"_su8, Index{2})})},
      "\x0a\x01\x02"_su8);
+}
+
+TEST_F(BinaryReadTest, InstructionList_TryCatchEnd) {
+  context.features.enable_exceptions();
+
+  OK(Read<InstructionList>,
+     InstructionList{
+         MakeAt("\x06\x40"_su8, I{MakeAt("\x06"_su8, O::Try),
+                                  MakeAt("\x40"_su8, BlockType::Void)}),
+         MakeAt("\x07"_su8, I{MakeAt("\x07"_su8, O::Catch)}),
+         MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
+     },
+     "\x06\x40\x07\x0b\x0b"_su8);
+}
+
+TEST_F(BinaryReadTest, InstructionList_TryNoCatch) {
+  context.features.enable_exceptions();
+
+  Fail(Read<InstructionList>, {{2, "Expected catch instruction in try block"}},
+       "\x06\x40\x0b\x0b"_su8);
+}
+
+TEST_F(BinaryReadTest, InstructionList_TryNoEnd) {
+  context.features.enable_exceptions();
+
+  Fail(Read<InstructionList>, {{4, "opcode"}, {4, "Unable to read u8"}},
+       "\x06\x40\07\x0b"_su8);
 }
 
 TEST_F(BinaryReadTest, Instruction_tail_call) {
@@ -1713,6 +1787,7 @@ TEST_F(BinaryReadTest, Instruction_saturating_float_to_int) {
 
 TEST_F(BinaryReadTest, Instruction_bulk_memory) {
   context.features.enable_bulk_memory();
+  context.declared_data_count = 1;
 
   OK(Read<I>,
      I{MakeAt("\xfc\x08"_su8, O::MemoryInit),
@@ -1758,6 +1833,15 @@ TEST_F(BinaryReadTest, Instruction_BadReserved_bulk_memory) {
         {3, "reserved"},
         {3, "Expected reserved byte 0, got 1"}},
        "\xfc\x0e\x00\x01"_su8);
+}
+
+TEST_F(BinaryReadTest, Instruction_NoDataCount_bulk_memory) {
+  context.features.enable_bulk_memory();
+
+  Fail(Read<I>, {{0, "memory.init instruction requires a data count section"}},
+       "\xfc\x08\x01\x00"_su8);
+  Fail(Read<I>, {{0, "data.drop instruction requires a data count section"}},
+       "\xfc\x09\x02"_su8);
 }
 
 TEST_F(BinaryReadTest, Instruction_simd) {

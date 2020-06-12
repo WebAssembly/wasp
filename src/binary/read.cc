@@ -150,16 +150,8 @@ OptAt<ConstantExpression> Read(SpanU8* data,
                                Context& context,
                                Tag<ConstantExpression>) {
   ErrorsContextGuard error_guard{context.errors, *data, "constant expression"};
-  LocationGuard guard{data};
-  InstructionList instrs;
-  while (true) {
-    WASP_TRY_READ(instr, Read<Instruction>(data, context));
-    if (instr->opcode == Opcode::End) {
-      break;
-    }
-    instrs.push_back(instr);
-  }
-  return MakeAt(guard.range(data), ConstantExpression{instrs});
+  WASP_TRY_READ(instrs, Read<InstructionList>(data, context));
+  return MakeAt(instrs.loc(), ConstantExpression{*instrs});
 }
 
 OptAt<CopyImmediate> Read(SpanU8* data,
@@ -227,7 +219,6 @@ OptAt<ElementExpression> Read(SpanU8* data,
                               Context& context,
                               Tag<ElementExpression>) {
   ErrorsContextGuard error_guard{context.errors, *data, "element expression"};
-  LocationGuard guard{data};
   // Element expressions were first added in the bulk memory proposal, so it
   // shouldn't be read (and this function shouldn't be called) if that feature
   // is not enabled.
@@ -238,15 +229,8 @@ OptAt<ElementExpression> Read(SpanU8* data,
   new_features.enable_reference_types();
   Context new_context{new_features, context.errors};
 
-  InstructionList instrs;
-  while (true) {
-    WASP_TRY_READ(instr, Read<Instruction>(data, new_context));
-    if (instr->opcode == Opcode::End) {
-      break;
-    }
-    instrs.push_back(instr);
-  }
-  return MakeAt(guard.range(data), ElementExpression{instrs});
+  WASP_TRY_READ(instrs, Read<InstructionList>(data, new_context));
+  return MakeAt(instrs.loc(), ElementExpression{*instrs});
 }
 
 OptAt<ElementSegment> Read(SpanU8* data,
@@ -467,17 +451,31 @@ OptAt<InitImmediate> Read(SpanU8* data,
   }
 }
 
+bool RequireDataCountSection(Context& context, const At<Opcode>& opcode) {
+  if (!context.declared_data_count) {
+    context.errors.OnError(
+        opcode.loc(),
+        format("{} instruction requires a data count section", *opcode));
+    return false;
+  }
+  return true;
+}
+
 OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
   LocationGuard guard{data};
   WASP_TRY_READ(opcode, Read<Opcode>(data, context));
+
+  if (context.seen_final_end) {
+    context.errors.OnError(
+        opcode.loc(), format("Unexpected {} instruction after 'end'", *opcode));
+    return nullopt;
+  }
+
   switch (opcode) {
     // No immediates:
     case Opcode::Unreachable:
     case Opcode::Nop:
-    case Opcode::Else:
-    case Opcode::Catch:
     case Opcode::Rethrow:
-    case Opcode::End:
     case Opcode::Return:
     case Opcode::Drop:
     case Opcode::Select:
@@ -766,6 +764,42 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I32X4Abs:
       return MakeAt(guard.range(data), Instruction{opcode});
 
+    // No immediates, but only allowed if there's a matching block/loop/if/try
+    // instruction.
+    case Opcode::End:
+      if (context.open_blocks.empty()) {
+        context.seen_final_end = true;
+      } else if (context.open_blocks.back() == Opcode::Try) {
+        context.errors.OnError(opcode.loc(),
+                               "Expected catch instruction in try block");
+        return nullopt;
+      } else {
+        context.open_blocks.pop_back();
+      }
+      return MakeAt(guard.range(data), Instruction{opcode});
+
+    // No immediates, but only allowed if there's a matching if instruction.
+    case Opcode::Else:
+      if (context.open_blocks.empty() ||
+          context.open_blocks.back() != Opcode::If) {
+        context.errors.OnError(opcode.loc(), "Unexpected else instruction");
+        return nullopt;
+      } else {
+        context.open_blocks.back() = Opcode::Else;
+      }
+      return MakeAt(guard.range(data), Instruction{opcode});
+
+    // No immediates, but only allowed if there's a matching try instruction.
+    case Opcode::Catch:
+      if (context.open_blocks.empty() ||
+          context.open_blocks.back() != Opcode::Try) {
+        context.errors.OnError(opcode.loc(), "Unexpected catch instruction");
+        return nullopt;
+      } else {
+        context.open_blocks.back() = Opcode::Catch;
+      }
+      return MakeAt(guard.range(data), Instruction{opcode});
+
     // Reference type immediate.
     case Opcode::RefNull:
     case Opcode::RefIsNull: {
@@ -779,8 +813,16 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::If:
     case Opcode::Try: {
       WASP_TRY_READ(type, Read<BlockType>(data, context));
+      context.open_blocks.push_back(opcode);
       return MakeAt(guard.range(data), Instruction{opcode, type});
     }
+
+    // Index immediate, w/ additional data count requirement.
+    case Opcode::DataDrop:
+      if (!RequireDataCountSection(context, opcode)) {
+        return nullopt;
+      }
+      // Fallthrough.
 
     // Index immediate.
     case Opcode::Throw:
@@ -796,7 +838,6 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::TableGet:
     case Opcode::TableSet:
     case Opcode::RefFunc:
-    case Opcode::DataDrop:
     case Opcode::ElemDrop:
     case Opcode::TableGrow:
     case Opcode::TableSize:
@@ -969,6 +1010,9 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::MemoryInit: {
       WASP_TRY_READ(immediate, Read<InitImmediate>(data, context,
                                                    BulkImmediateKind::Memory));
+      if (!RequireDataCountSection(context, opcode)) {
+        return nullopt;
+      }
       return MakeAt(guard.range(data), Instruction{opcode, immediate});
     }
     case Opcode::TableInit: {
@@ -1024,6 +1068,22 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     }
   }
   WASP_UNREACHABLE();
+}
+
+OptAt<InstructionList> Read(SpanU8* data,
+                            Context& context,
+                            Tag<InstructionList>) {
+  LocationGuard guard{data};
+  InstructionList instrs;
+  context.seen_final_end = false;
+  while (true) {
+    WASP_TRY_READ(instr, Read<Instruction>(data, context));
+    if (context.seen_final_end) {
+      break;
+    }
+    instrs.push_back(instr);
+  }
+  return MakeAt(guard.range(data), instrs);
 }
 
 OptAt<Index> ReadLength(SpanU8* data, Context& context) {
