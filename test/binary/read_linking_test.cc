@@ -15,10 +15,11 @@
 //
 
 #include "gtest/gtest.h"
-#include "test/binary/read_test_utils.h"
 #include "test/binary/test_utils.h"
+#include "test/test_utils.h"
 #include "wasp/binary/linking_section/encoding.h"
 #include "wasp/binary/linking_section/read.h"
+#include "wasp/binary/read/context.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;

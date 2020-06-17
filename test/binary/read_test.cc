@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "test/binary/read_test_utils.h"
 #include "test/binary/test_utils.h"
 #include "test/test_utils.h"
 #include "wasp/binary/name_section/read.h"
