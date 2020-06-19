@@ -2974,13 +2974,13 @@ TEST_F(BinaryReadTest, S32) {
 TEST_F(BinaryReadTest, S32_TooLong) {
   Fail(Read<s32>,
        {{0, "s32"},
-        {5,
+        {4,
          "Last byte of s32 must be sign extension: expected "
          "0x5 or 0x7d, got 0x15"}},
        "\xf0\xf0\xf0\xf0\x15"_su8);
   Fail(Read<s32>,
        {{0, "s32"},
-        {5,
+        {4,
          "Last byte of s32 must be sign extension: expected "
          "0x3 or 0x7b, got 0x73"}},
        "\xff\xff\xff\xff\x73"_su8);
@@ -3020,13 +3020,13 @@ TEST_F(BinaryReadTest, S64) {
 TEST_F(BinaryReadTest, S64_TooLong) {
   Fail(Read<s64>,
        {{0, "s64"},
-        {10,
+        {9,
          "Last byte of s64 must be sign extension: expected 0x0 or 0x7f, got "
          "0xf0"}},
        "\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0\xf0"_su8);
   Fail(Read<s64>,
        {{0, "s64"},
-        {10,
+        {9,
          "Last byte of s64 must be sign extension: expected 0x0 or 0x7f, got "
          "0xff"}},
        "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"_su8);
@@ -3225,7 +3225,7 @@ TEST_F(BinaryReadTest, U32) {
 TEST_F(BinaryReadTest, U32_TooLong) {
   Fail(Read<u32>,
        {{0, "u32"},
-        {5, "Last byte of u32 must be zero extension: expected 0x2, got 0x12"}},
+        {4, "Last byte of u32 must be zero extension: expected 0x2, got 0x12"}},
        "\xf0\xf0\xf0\xf0\x12"_su8);
 }
 

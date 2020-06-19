@@ -72,11 +72,12 @@ OptAt<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
       const u8 one_ext = (byte | kLastByteOnes) & kByteMask;
       if (is_signed) {
         context.errors.OnError(
-            *data, format("Last byte of {} must be sign "
-                          "extension: expected {:#2x} or {:#2x}, got {:#2x}",
-                          desc, zero_ext, one_ext, byte));
+            byte.loc(),
+            format("Last byte of {} must be sign "
+                   "extension: expected {:#2x} or {:#2x}, got {:#2x}",
+                   desc, zero_ext, one_ext, byte));
       } else {
-        context.errors.OnError(*data,
+        context.errors.OnError(byte.loc(),
                                format("Last byte of {} must be zero "
                                       "extension: expected {:#2x}, got {:#2x}",
                                       desc, zero_ext, byte));
