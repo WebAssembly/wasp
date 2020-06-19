@@ -130,32 +130,47 @@ Result Visit(LazyModule&, Visitor&);
     return Result::Fail;   \
   }
 
-#define WASP_MAYBE_SKIP(x, body) \
-  switch (x) {                   \
-    case Result::Fail:           \
-      return Result::Fail;       \
-    case Result::Skip:           \
-      break;                     \
-    case Result::Ok:             \
-      body break;                \
+#define WASP_IF_OK(x, body) \
+  switch (x) {              \
+    case Result::Fail:      \
+      return Result::Fail;  \
+    case Result::Skip:      \
+      break;                \
+    case Result::Ok:        \
+      body break;           \
   }
 
-#define WASP_SECTION(Name)                                 \
+#define WASP_IF_OK_ELSE_SKIP(x, body, skip) \
+  switch (x) {                              \
+    case Result::Fail:                      \
+      return Result::Fail;                  \
+    case Result::Skip:                      \
+      skip break;                           \
+    case Result::Ok:                        \
+      body break;                           \
+  }
+
+#define WASP_SECTION_ELSE_SKIP(Name, skip_section)         \
   case SectionId::Name: {                                  \
     auto sec = Read##Name##Section(known, module.context); \
-    WASP_MAYBE_SKIP(visitor.Begin##Name##Section(sec), {   \
-      for (const auto& item : sec.sequence) {              \
-        WASP_CHECK(visitor.On##Name(item));                \
-      }                                                    \
-      WASP_CHECK(visitor.End##Name##Section(sec));         \
-    })                                                     \
+    WASP_IF_OK_ELSE_SKIP(                                  \
+        visitor.Begin##Name##Section(sec),                 \
+        {                                                  \
+          for (const auto& item : sec.sequence) {          \
+            WASP_CHECK(visitor.On##Name(item));            \
+          }                                                \
+          WASP_CHECK(visitor.End##Name##Section(sec));     \
+        },                                                 \
+        skip_section)                                      \
     break;                                                 \
   }
+
+#define WASP_SECTION(Name) WASP_SECTION_ELSE_SKIP(Name, {})
 
 #define WASP_OPT_SECTION(Name)                             \
   case SectionId::Name: {                                  \
     auto opt = Read##Name##Section(known, module.context); \
-    WASP_MAYBE_SKIP(visitor.Begin##Name##Section(opt), {   \
+    WASP_IF_OK(visitor.Begin##Name##Section(opt), {        \
       if (opt) {                                           \
         WASP_CHECK(visitor.On##Name(*opt));                \
       }                                                    \
@@ -185,7 +200,9 @@ inline Result Visit(LazyModule& module, Visitor& visitor) {
       switch (known->id) {
         WASP_SECTION(Type)
         WASP_SECTION(Import)
-        WASP_SECTION(Function)
+        WASP_SECTION_ELSE_SKIP(Function, {
+          module.context.defined_function_count += sec.count->value();
+        })
         WASP_SECTION(Table)
         WASP_SECTION(Memory)
         WASP_SECTION(Global)
@@ -197,23 +214,34 @@ inline Result Visit(LazyModule& module, Visitor& visitor) {
 
         case SectionId::Code: {
           auto sec = ReadCodeSection(known, module.context);
-          WASP_MAYBE_SKIP(visitor.BeginCodeSection(sec), {
-            for (const auto& code : sec.sequence) {
-              WASP_MAYBE_SKIP(visitor.BeginCode(*code), {
-                for (auto&& instr :
-                     ReadExpression(*code->body, module.context)) {
-                  WASP_CHECK(visitor.OnInstruction(instr));
+          WASP_IF_OK_ELSE_SKIP(
+              visitor.BeginCodeSection(sec),
+              {
+                for (const auto& code : sec.sequence) {
+                  WASP_IF_OK(
+                      visitor.BeginCode(*code), {
+                        for (auto&& instr :
+                             ReadExpression(*code->body, module.context)) {
+                          WASP_CHECK(visitor.OnInstruction(instr));
+                        }
+                        EndCode(code->body->data.last(0), module.context);
+                        WASP_CHECK(visitor.EndCode(*code));
+                      })
                 }
-                EndCode(code->body->data.last(0), module.context);
-                WASP_CHECK(visitor.EndCode(*code));
-              })
-            }
-            WASP_CHECK(visitor.EndCodeSection(sec));
-          })
+                WASP_CHECK(visitor.EndCodeSection(sec));
+              },
+              // If skipping this section, increment by the number of code
+              // items specified in this section.
+              { module.context.code_count += sec.count->value(); })
           break;
         }
 
-        WASP_SECTION(Data)
+        WASP_SECTION_ELSE_SKIP(
+            Data,
+            // If skipping this section, increment by the number of data items
+            // specified in this section.
+            { module.context.data_count += sec.count->value(); })
+
         default: break;
       }
     }
