@@ -204,6 +204,7 @@ inline Result Visit(LazyModule& module, Visitor& visitor) {
                      ReadExpression(*code->body, module.context)) {
                   WASP_CHECK(visitor.OnInstruction(instr));
                 }
+                EndCode(code->body->data.last(0), module.context);
                 WASP_CHECK(visitor.EndCode(*code));
               })
             }
@@ -217,7 +218,7 @@ inline Result Visit(LazyModule& module, Visitor& visitor) {
       }
     }
   }
-  EndModule(&module.data, module.context);
+  EndModule(module.data, module.context);
   return visitor.EndModule(module);
 }
 

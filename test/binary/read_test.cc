@@ -3343,3 +3343,49 @@ TEST_F(BinaryReadTest, ReadVector_PastEnd) {
   EXPECT_EQ(nullopt, result);
   EXPECT_EQ(0u, copy.size());
 }
+
+TEST_F(BinaryReadTest, EndCode_UnclosedBlock) {
+  const SpanU8 data = "\x02\x40"_su8;  // block void
+  context.open_blocks.push_back(MakeAt(data.first(1), Opcode::Block));
+  EXPECT_FALSE(EndCode(data.last(0), context));
+  ExpectError({{0, "Unclosed block instruction"}}, errors, data);
+}
+
+TEST_F(BinaryReadTest, EndCode_MissingEnd) {
+  const SpanU8 data = "\x01"_su8;  // nop
+  context.seen_final_end = false;
+  EXPECT_FALSE(EndCode(data.last(0), context));
+  ExpectError({{1, "Expected final end instruction"}}, errors, data);
+}
+
+TEST_F(BinaryReadTest, EndModule_FunctionCodeMismatch) {
+  const SpanU8 data =
+      "\0asm\x01\x00\x00\x00"  // magic + version
+      "\x01\x04\x60\x00"       // (type (func))
+      "\x03\x02\x01\x00"_su8;  // (func (type 0)), no code section
+  context.defined_function_count = 1;
+  context.code_count = 0;
+  EXPECT_FALSE(EndModule(data.last(0), context));
+  ExpectError({{16, "Expected code count of 1, but got 0"}}, errors, data);
+}
+
+TEST_F(BinaryReadTest, EndModule_DataCount_DataMissing) {
+  const SpanU8 data =
+      "\0asm\x01\x00\x00\x00"  // magic + version
+      "\x0c\x01\x01"_su8;      // data count = 1
+  context.declared_data_count = 1;
+  context.data_count = 0;
+  EXPECT_FALSE(EndModule(data.last(0), context));
+  ExpectError({{11, "Expected data count of 1, but got 0"}}, errors, data);
+}
+
+TEST_F(BinaryReadTest, EndModule_DataCountMismatch) {
+  const SpanU8 data =
+      "\0asm\x01\x00\x00\x00"      // magic + version
+      "\x0c\x01\x00"               // data count = 0
+      "\x0b\x03\x01\x01\x00"_su8;  // empty passive data segment
+  context.declared_data_count = 0;
+  context.data_count = 1;
+  EXPECT_FALSE(EndModule(data.last(0), context));
+  ExpectError({{16, "Expected data count of 0, but got 1"}}, errors, data);
+}

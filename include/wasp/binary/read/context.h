@@ -44,7 +44,7 @@ struct Context {
 
   // Function context.
   u64 local_count = 0;
-  std::vector<Opcode> open_blocks;
+  std::vector<At<Opcode>> open_blocks;
   bool seen_final_end = false;
 };
 

@@ -127,7 +127,8 @@ auto Read(SpanU8*, Context&, Tag<u8>) -> OptAt<u8>;
 auto Read(SpanU8*, Context&, Tag<v128>) -> OptAt<v128>;
 auto Read(SpanU8*, Context&, Tag<ValueType>) -> OptAt<ValueType>;
 
-bool EndModule(SpanU8*, Context&);
+bool EndCode(SpanU8, Context&);
+bool EndModule(SpanU8, Context&);
 
 }  // namespace binary
 }  // namespace wasp

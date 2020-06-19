@@ -785,18 +785,18 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
         context.errors.OnError(opcode.loc(), "Unexpected else instruction");
         return nullopt;
       } else {
-        context.open_blocks.back() = Opcode::Else;
+        context.open_blocks.back() = opcode;
       }
       return MakeAt(guard.range(data), Instruction{opcode});
 
     // No immediates, but only allowed if there's a matching try instruction.
     case Opcode::Catch:
       if (context.open_blocks.empty() ||
-          context.open_blocks.back() != Opcode::Try) {
+          context.open_blocks.back().second != Opcode::Try) {
         context.errors.OnError(opcode.loc(), "Unexpected catch instruction");
         return nullopt;
       } else {
-        context.open_blocks.back() = Opcode::Catch;
+        context.open_blocks.back() = opcode;
       }
       return MakeAt(guard.range(data), Instruction{opcode});
 
@@ -1336,18 +1336,33 @@ OptAt<ValueType> Read(SpanU8* data, Context& context, Tag<ValueType>) {
   return decoded;
 }
 
-bool EndModule(SpanU8* data, Context& context) {
+bool EndCode(SpanU8 data, Context& context) {
+  if (!context.open_blocks.empty()) {
+    for (auto& [loc, op]: context.open_blocks) {
+      context.errors.OnError(loc, format("Unclosed {} instruction", op));
+    }
+    return false;
+  }
+  if (!context.seen_final_end) {
+    context.errors.OnError(data, "Expected final end instruction");
+    return false;
+  }
+  return true;
+}
+
+bool EndModule(SpanU8 data, Context& context) {
   if (context.defined_function_count != context.code_count) {
     context.errors.OnError(
-        *data, format("Expected code count of {}, but got {}",
-                      context.defined_function_count, context.code_count));
+        data, format("Expected code count of {}, but got {}",
+                     context.defined_function_count, context.code_count));
     return false;
   }
   if (context.declared_data_count &&
       *context.declared_data_count != context.data_count) {
     context.errors.OnError(
-        *data, format("Expected data count of {}, but got {}",
-                      *context.declared_data_count, context.data_count));
+        data, format("Expected data count of {}, but got {}",
+                     *context.declared_data_count, context.data_count));
+    return false;
   }
   return true;
 }
