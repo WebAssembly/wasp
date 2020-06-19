@@ -951,10 +951,10 @@ bool ReturnCall(Context& context, Location loc, At<Index> function_index) {
   auto function_type =
       GetFunctionType(context, MaybeDefault(function).type_index);
   auto* label = GetLabel(context, context.label_stack.size() - 1);
-  bool valid = CheckResultTypes(context, 
+  bool valid = CheckResultTypes(context,
       loc, ToStackTypeList(MaybeDefault(function_type).result_types),
       MaybeDefault(label).br_types());
-  valid &= PopTypes(context, 
+  valid &= PopTypes(context,
       loc, ToStackTypeList(MaybeDefault(function_type).param_types));
   SetUnreachable(context);
   return AllTrue(function, function_type, valid);
@@ -966,11 +966,11 @@ bool ReturnCallIndirect(Context& context,
   auto table_type = GetTableType(context, 0);
   auto function_type = GetFunctionType(context, immediate->index);
   auto* label = GetLabel(context, context.label_stack.size() - 1);
-  bool valid = CheckResultTypes(context, 
+  bool valid = CheckResultTypes(context,
       loc, ToStackTypeList(MaybeDefault(function_type).result_types),
       MaybeDefault(label).br_types());
   valid &= PopType(context, loc, StackType::I32);
-  valid &= PopTypes(context, 
+  valid &= PopTypes(context,
       loc, ToStackTypeList(MaybeDefault(function_type).param_types));
   SetUnreachable(context);
   return AllTrue(table_type, function_type, valid);
@@ -980,7 +980,7 @@ bool Throw(Context& context, Location loc, At<Index> index) {
   auto event_type = GetEventType(context, index);
   auto function_type =
       GetFunctionType(context, MaybeDefault(event_type).type_index);
-  bool valid = PopTypes(context, 
+  bool valid = PopTypes(context,
       loc, ToStackTypeList(MaybeDefault(function_type).param_types));
   SetUnreachable(context);
   return AllTrue(event_type, function_type, valid);
@@ -1004,6 +1004,92 @@ bool BrOnExn(Context& context,
                  MaybeDefault(label).br_types());
   valid &= PopAndPushTypes(context, loc, span_exnref, span_exnref);
   return AllTrue(event_type, function_type, label, valid);
+}
+
+bool SimdLane(Context& context,
+              Location loc,
+              const At<Instruction>& instruction) {
+  StackTypeSpan params, results;
+  u8 num_lanes;
+  switch (instruction->opcode) {
+    case Opcode::I8X16ExtractLaneS:
+    case Opcode::I8X16ExtractLaneU: num_lanes = 16; goto extract_i32;
+    case Opcode::I16X8ExtractLaneS:
+    case Opcode::I16X8ExtractLaneU: num_lanes = 8; goto extract_i32;
+    case Opcode::I32X4ExtractLane:  num_lanes = 4; goto extract_i32;
+
+    extract_i32:
+      params = span_v128, results = span_i32;
+      break;
+
+    case Opcode::I64X2ExtractLane:
+      params = span_v128, results = span_i64;
+      num_lanes = 2;
+      break;
+
+    case Opcode::F32X4ExtractLane:
+      params = span_v128, results = span_f32;
+      num_lanes = 4;
+      break;
+
+    case Opcode::F64X2ExtractLane:
+      params = span_v128, results = span_f64;
+      num_lanes = 2;
+      break;
+
+    case Opcode::I8X16ReplaceLane: num_lanes = 16; goto replace_i32;
+    case Opcode::I16X8ReplaceLane: num_lanes = 8; goto replace_i32;
+    case Opcode::I32X4ReplaceLane: num_lanes = 4; goto replace_i32;
+
+    replace_i32:
+      params = span_v128_i32, results = span_v128;
+      break;
+
+    case Opcode::I64X2ReplaceLane:
+      params = span_v128_i64, results = span_v128;
+      num_lanes = 2;
+      break;
+
+    case Opcode::F32X4ReplaceLane:
+      params = span_v128_f32, results = span_v128;
+      num_lanes = 4;
+      break;
+
+    case Opcode::F64X2ReplaceLane:
+      params = span_v128_f64, results = span_v128;
+      num_lanes = 2;
+      break;
+
+    default:
+      WASP_UNREACHABLE();
+  }
+
+  bool valid = true;
+  if (instruction->simd_lane_immediate() >= num_lanes) {
+    context.errors->OnError(instruction.loc(),
+                            format("Invalid lane immediate {}",
+                                   instruction->simd_lane_immediate()));
+    valid = false;
+  }
+  return AllTrue(valid, PopAndPushTypes(context, loc, params, results));
+}
+
+bool SimdShuffle(Context& context,
+                 Location loc,
+                 const At<ShuffleImmediate>& immediate) {
+  const SimdLaneImmediate max_lane = 32;  // Two i8x16 values.
+  bool valid = true;
+  for (auto lane : *immediate) {
+    if (lane >= max_lane) {
+      context.errors->OnError(immediate.loc(),
+                              format("Invalid shuffle immediate {}", lane));
+      valid = false;
+    }
+  }
+
+  StackTypeSpan params = span_v128_v128;
+  StackTypeSpan results = span_v128;
+  return AllTrue(valid, PopAndPushTypes(context, loc, params, results));
 }
 
 }  // namespace
@@ -1574,7 +1660,6 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::F64X2Div:
     case Opcode::F64X2Min:
     case Opcode::F64X2Max:
-    case Opcode::V8X16Shuffle:
     case Opcode::V8X16Swizzle:
     case Opcode::I8X16NarrowI16X8S:
     case Opcode::I8X16NarrowI16X8U:
@@ -1585,6 +1670,9 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::I16X8AvgrU:
       params = span_v128_v128, results = span_v128;
       break;
+
+    case Opcode::V8X16Shuffle:
+      return SimdShuffle(context, loc, value->shuffle_immediate());
 
     case Opcode::I8X16Splat:
     case Opcode::I16X8Splat:
@@ -1609,6 +1697,17 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::I16X8ExtractLaneS:
     case Opcode::I16X8ExtractLaneU:
     case Opcode::I32X4ExtractLane:
+    case Opcode::I64X2ExtractLane:
+    case Opcode::F32X4ExtractLane:
+    case Opcode::F64X2ExtractLane:
+    case Opcode::I8X16ReplaceLane:
+    case Opcode::I16X8ReplaceLane:
+    case Opcode::I32X4ReplaceLane:
+    case Opcode::I64X2ReplaceLane:
+    case Opcode::F32X4ReplaceLane:
+    case Opcode::F64X2ReplaceLane:
+      return SimdLane(context, loc, value);
+
     case Opcode::I8X16AnyTrue:
     case Opcode::I8X16AllTrue:
     case Opcode::I16X8AnyTrue:
@@ -1618,21 +1717,6 @@ bool Validate(Context& context, const At<Instruction>& value) {
       params = span_v128, results = span_i32;
       break;
 
-    case Opcode::I64X2ExtractLane:
-      params = span_v128, results = span_i64;
-      break;
-
-    case Opcode::F32X4ExtractLane:
-      params = span_v128, results = span_f32;
-      break;
-
-    case Opcode::F64X2ExtractLane:
-      params = span_v128, results = span_f64;
-      break;
-
-    case Opcode::I8X16ReplaceLane:
-    case Opcode::I16X8ReplaceLane:
-    case Opcode::I32X4ReplaceLane:
     case Opcode::I8X16Shl:
     case Opcode::I8X16ShrS:
     case Opcode::I8X16ShrU:
@@ -1646,18 +1730,6 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::I64X2ShrS:
     case Opcode::I64X2ShrU:
       params = span_v128_i32, results = span_v128;
-      break;
-
-    case Opcode::I64X2ReplaceLane:
-      params = span_v128_i64, results = span_v128;
-      break;
-
-    case Opcode::F32X4ReplaceLane:
-      params = span_v128_f32, results = span_v128;
-      break;
-
-    case Opcode::F64X2ReplaceLane:
-      params = span_v128_f64, results = span_v128;
       break;
 
     case Opcode::MemoryAtomicNotify:

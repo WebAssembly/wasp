@@ -2073,16 +2073,37 @@ TEST_F(ValidateInstructionTest, SimdBinary) {
       O::F64X2Add,          O::F64X2Sub,
       O::F64X2Mul,          O::F64X2Div,
       O::F64X2Min,          O::F64X2Max,
-      O::V8X16Shuffle,      O::V8X16Swizzle,
-      O::I8X16NarrowI16X8S, O::I8X16NarrowI16X8U,
-      O::I16X8NarrowI32X4S, O::I16X8NarrowI32X4U,
-      O::V128Andnot,        O::I8X16AvgrU,
-      O::I16X8AvgrU,
+      O::V8X16Swizzle,      O::I8X16NarrowI16X8S,
+      O::I8X16NarrowI16X8U, O::I16X8NarrowI32X4S,
+      O::I16X8NarrowI32X4U, O::V128Andnot,
+      O::I8X16AvgrU,        O::I16X8AvgrU,
   };
 
   for (const auto& opcode: opcodes) {
     TestSignature(I{opcode}, {VT::V128, VT::V128}, {VT::V128});
   }
+}
+
+TEST_F(ValidateInstructionTest, SimdShuffle) {
+  TestSignature(I{O::V8X16Shuffle, ShuffleImmediate{}}, {VT::V128, VT::V128},
+                {VT::V128});
+}
+
+TEST_F(ValidateInstructionTest, SimdShuffle_ValidLane) {
+  // Test valid indexes.
+  context.type_stack = StackTypeList{ST::V128, ST::V128};
+  Ok(I{O::V8X16Shuffle, ShuffleImmediate{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                                          12, 13, 14, 15}}});
+
+  // 16 through 31 is also allowed.
+  context.type_stack = StackTypeList{ST::V128, ST::V128};
+  Ok(I{O::V8X16Shuffle, ShuffleImmediate{{16, 17, 18, 19, 20, 21, 22, 23, 24,
+                                          25, 26, 27, 28, 29, 30, 31}}});
+
+  // >= 32 is not allowed.
+  context.type_stack = StackTypeList{ST::V128, ST::V128};
+  Fail(I{O::V8X16Shuffle,
+         ShuffleImmediate{{32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}});
 }
 
 TEST_F(ValidateInstructionTest, SimdAnyTrueAllTrue) {
@@ -2117,7 +2138,30 @@ TEST_F(ValidateInstructionTest, SimdExtractLanes) {
                {O::F32X4ExtractLane, VT::F32},  {O::F64X2ExtractLane, VT::F64}};
 
   for (const auto& info: infos) {
-    TestSignature(I{info.opcode}, {VT::V128}, {info.value_type});
+    TestSignature(I{info.opcode, SimdLaneImmediate{0}}, {VT::V128},
+                  {info.value_type});
+  }
+}
+
+TEST_F(ValidateInstructionTest, SimdExtractLanes_ValidLane) {
+  const struct {
+    Opcode opcode;
+    SimdLaneImmediate max_valid_lane;
+  } infos[] = {{O::I8X16ExtractLaneS, 15}, {O::I8X16ExtractLaneU, 15},
+               {O::I16X8ExtractLaneS, 7}, {O::I16X8ExtractLaneU, 7},
+               {O::I32X4ExtractLane, 3},  {O::I64X2ExtractLane, 1},
+               {O::F32X4ExtractLane, 3},  {O::F64X2ExtractLane, 1}};
+
+  for (const auto& info: infos) {
+    // Test valid indexes.
+    for (SimdLaneImmediate imm = 0; imm < info.max_valid_lane; ++imm) {
+      context.type_stack = StackTypeList{ST::V128};
+      Ok(I{info.opcode, imm});
+    }
+
+    // Test invalid indexes.
+    context.type_stack = StackTypeList{ST::V128};
+    Fail(I{info.opcode, SimdLaneImmediate(info.max_valid_lane + 1)});
   }
 }
 
@@ -2130,7 +2174,31 @@ TEST_F(ValidateInstructionTest, SimdReplaceLanes) {
                {O::F32X4ReplaceLane, VT::F32}, {O::F64X2ReplaceLane, VT::F64}};
 
   for (const auto& info : infos) {
-    TestSignature(I{info.opcode}, {VT::V128, info.value_type}, {VT::V128});
+    TestSignature(I{info.opcode, SimdLaneImmediate{0}},
+                  {VT::V128, info.value_type}, {VT::V128});
+  }
+}
+
+TEST_F(ValidateInstructionTest, SimdReplaceLanes_ValidLane) {
+  const struct {
+    Opcode opcode;
+    StackType stack_type;
+    SimdLaneImmediate max_valid_lane;
+  } infos[] = {
+      {O::I8X16ReplaceLane, ST::I32, 15}, {O::I16X8ReplaceLane, ST::I32, 7},
+      {O::I32X4ReplaceLane, ST::I32, 3},  {O::I64X2ReplaceLane, ST::I64, 1},
+      {O::F32X4ReplaceLane, ST::F32, 3},  {O::F64X2ReplaceLane, ST::F64, 1}};
+
+  for (const auto& info: infos) {
+    // Test valid indexes.
+    for (SimdLaneImmediate imm = 0; imm < info.max_valid_lane; ++imm) {
+      context.type_stack = StackTypeList{ST::V128, info.stack_type};
+      Ok(I{info.opcode, imm});
+    }
+
+    // Test invalid indexes.
+    context.type_stack = StackTypeList{ST::V128, info.stack_type};
+    Fail(I{info.opcode, SimdLaneImmediate(info.max_valid_lane + 1)});
   }
 }
 
