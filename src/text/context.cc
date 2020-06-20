@@ -129,12 +129,11 @@ void FunctionTypeMap::Use(FunctionTypeUse type) {
     return;
   }
 
-  if (std::find(list_.begin(), list_.end(), type.type) != list_.end()) {
+  if (FindIter(list_, type.type) != list_.end()) {
     return;
   }
 
-  if (std::find(deferred_list_.begin(), deferred_list_.end(), type.type) !=
-      deferred_list_.end()) {
+  if (FindIter(deferred_list_, type.type) != deferred_list_.end()) {
     return;
   }
 
@@ -147,17 +146,23 @@ void FunctionTypeMap::Use(OptAt<Var> type_use, BoundFunctionType type) {
 
 auto FunctionTypeMap::EndModule() -> TypeEntryList {
   TypeEntryList type_entries;
-  std::transform(deferred_list_.begin(), deferred_list_.end(),
-                 std::back_inserter(type_entries), ToTypeEntry);
-
-  list_.insert(list_.end(), std::make_move_iterator(deferred_list_.begin()),
-               std::make_move_iterator(deferred_list_.end()));
+  for (auto&& deferred : deferred_list_) {
+    // Only add deferred types if they aren't already in the list. This could
+    // happen if the type was defined after the use, e.g.:
+    //
+    // (func (type $foo))
+    // (type $foo (func))
+    if (!Find(deferred)) {
+      list_.push_back(deferred);
+      type_entries.push_back(ToTypeEntry(deferred));
+    }
+  }
   deferred_list_.clear();
   return type_entries;
 }
 
 optional<Index> FunctionTypeMap::Find(FunctionType type) {
-  auto iter = std::find(list_.begin(), list_.end(), type);
+  auto iter = FindIter(list_, type);
   if (iter == list_.end()) {
     return nullopt;
   }
@@ -180,13 +185,37 @@ optional<FunctionType> FunctionTypeMap::Get(Index index) const {
 }
 
 // static
-TypeEntry FunctionTypeMap::ToTypeEntry(FunctionType unbound_type) {
+TypeEntry FunctionTypeMap::ToTypeEntry(const FunctionType& unbound_type) {
   BoundValueTypeList bound_params;
   for (auto param : unbound_type.params) {
     bound_params.push_back(BoundValueType{nullopt, param});
   }
   return TypeEntry{nullopt,
                    BoundFunctionType{bound_params, unbound_type.results}};
+}
+
+// static
+FunctionTypeMap::List::const_iterator FunctionTypeMap::FindIter(
+    const List& list,
+    const FunctionType& type) {
+  return std::find_if(list.begin(), list.end(),
+                      [&](const FunctionType& ft) { return IsSame(type, ft); });
+}
+
+// static
+bool FunctionTypeMap::IsSame(const FunctionType& lhs, const FunctionType& rhs) {
+  // Note: FunctionTypes already have an operator==, but that also checks
+  // whether the locations are the same too.
+  return IsSame(lhs.params, rhs.params) && IsSame(lhs.results, rhs.results);
+}
+
+// static
+bool FunctionTypeMap::IsSame(const ValueTypeList& lhs,
+                             const ValueTypeList& rhs) {
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
+                    [](const At<ValueType>& lhs, const At<ValueType>& rhs) {
+                      return lhs.value() == rhs.value();
+                    });
 }
 
 }  // namespace text

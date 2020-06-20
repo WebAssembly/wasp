@@ -1648,6 +1648,18 @@ TEST_F(TextReadTest, Function_DeferType) {
       type_entries[0]);
 }
 
+TEST_F(TextReadTest, Function_DeferType_Reused) {
+  FunctionTypeMap& ftm = context.function_type_map;
+
+  Read(ReadFunction, "(func (param i64))"_su8);
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64}}, {}});
+  auto type_entries = ftm.EndModule();
+
+  ASSERT_EQ(1u, ftm.Size());
+  EXPECT_EQ((FunctionType{{VT::I64}, {}}), ftm.Get(0));
+  EXPECT_TRUE(type_entries.empty());
+}
+
 TEST_F(TextReadTest, Table) {
   // Simplest table.
   OK(ReadTable,

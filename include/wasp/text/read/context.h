@@ -72,7 +72,7 @@ using TypeEntryList = std::vector<TypeEntry>;
 // If the type is given explicitly without a type use, then it will be added
 // after all defined function types. It's as if they were added to the end of
 // the module, in the order they were used. That's the purpose of the
-// `deferred_set_` set below.
+// `deferred_list_` set below.
 struct FunctionTypeMap {
   using List = std::vector<FunctionType>;
 
@@ -90,7 +90,10 @@ struct FunctionTypeMap {
   optional<FunctionType> Get(Index) const;
 
  private:
-  static TypeEntry ToTypeEntry(FunctionType);
+  static TypeEntry ToTypeEntry(const FunctionType&);
+  static List::const_iterator FindIter(const List&, const FunctionType&);
+  static bool IsSame(const FunctionType&, const FunctionType&);
+  static bool IsSame(const ValueTypeList&, const ValueTypeList&);
 
   List list_;
   List deferred_list_;
