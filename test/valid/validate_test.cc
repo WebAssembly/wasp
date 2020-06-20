@@ -849,6 +849,14 @@ TEST(ValidateTest, MemoryType_Shared_Threads) {
   EXPECT_TRUE(Validate(context, MemoryType{Limits{0, 100, Shared::Yes}}));
 }
 
+TEST(ValidateTest, MemoryType_Shared_NoMax) {
+  Features features;
+  features.enable_threads();
+  TestErrors errors;
+  Context context{features, errors};
+  EXPECT_FALSE(Validate(context, MemoryType{Limits{0, nullopt, Shared::Yes}}));
+}
+
 TEST(ValidateTest, Start) {
   TestErrors errors;
   Context context{errors};

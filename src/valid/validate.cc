@@ -485,10 +485,17 @@ bool Validate(Context& context, const At<MemoryType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "memory type"};
   constexpr Index kMaxPages = 65536;
   bool valid = Validate(context, value->limits, kMaxPages);
-  if (value->limits->shared == Shared::Yes &&
-      !context.features.threads_enabled()) {
-    context.errors->OnError(value.loc(), "Memories cannot be shared");
-    valid = false;
+  if (value->limits->shared == Shared::Yes) {
+    if (!context.features.threads_enabled()) {
+      context.errors->OnError(value.loc(), "Memories cannot be shared");
+      valid = false;
+    }
+
+    if (!value->limits->max) {
+      context.errors->OnError(value.loc(),
+                              "Shared memories must have a maximum");
+      valid = false;
+    }
   }
   return valid;
 }
