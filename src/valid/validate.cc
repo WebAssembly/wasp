@@ -248,6 +248,8 @@ bool Validate(Context& context, const At<binary::ElementSegment>& value) {
       case ExternalKind::Event:
         max_index = context.events.size();
         break;
+      default:
+        WASP_UNREACHABLE();
     }
 
     for (auto index : elements.list) {

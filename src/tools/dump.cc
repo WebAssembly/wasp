@@ -1179,7 +1179,7 @@ void Tool::PrintMemory(SpanU8 start,
     print("{:07x}: ", (line.begin() - start.begin()) + offset);
     for (int i = 0; i < octets_per_line;) {
       for (int j = 0; j < octets_per_group; ++j, ++i) {
-        if (i < line.size()) {
+        if (i < static_cast<int>(line_size)) {
           print("{:02x}", line[i]);
         } else {
           print("  ");
