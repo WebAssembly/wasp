@@ -17,6 +17,8 @@
 #ifndef WASP_BASE_SPAN_H_
 #define WASP_BASE_SPAN_H_
 
+#define span_FEATURE_COMPARISON 1
+
 #include "nonstd/span.hpp"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
@@ -32,12 +34,12 @@ using nonstd::operator<=;
 using nonstd::operator>;
 using nonstd::operator>=;
 
-using span_index_t = nonstd::span_lite::index_t;
+using span_extent_t = nonstd::span_lite::extent_t;
 
-constexpr span_index_t dynamic_extent = -1;
+constexpr span_extent_t dynamic_extent = -1;
 
-template <class T, span_index_t Extent>
-void remove_prefix(span<T, Extent>* s, span_index_t offset) {
+template <class T, span_extent_t Extent>
+void remove_prefix(span<T, Extent>* s, span_extent_t offset) {
   *s = s->subspan(offset);
 }
 
@@ -47,7 +49,7 @@ using Location = SpanU8;
 // Make SpanU8 from literal string.
 inline SpanU8 operator"" _su8(const char* str, size_t N) {
   return SpanU8{reinterpret_cast<const u8*>(str),
-                static_cast<SpanU8::index_type>(N)};
+                static_cast<span_extent_t>(N)};
 }
 
 inline string_view ToStringView(SpanU8 span) {

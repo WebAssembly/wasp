@@ -40,7 +40,7 @@ auto Read(SpanU8* data, Context& context, Args&&... args) -> OptAt<T> {
 }
 
 // Read functions that return SpanU8.
-auto ReadBytes(SpanU8* data, SpanU8::index_type N, Context&) -> OptAt<SpanU8>;
+auto ReadBytes(SpanU8* data, span_extent_t N, Context&) -> OptAt<SpanU8>;
 auto ReadBytesExpected(SpanU8* data,
                        SpanU8 expected,
                        Context&,

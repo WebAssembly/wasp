@@ -330,16 +330,16 @@ TEST_F(TextReadScriptTest, ReturnResult_simd) {
 
   OK(ReadReturnResult,
      ReturnResult{F32x4Result{
-         F32Result{0},
+         F32Result{f32{0}},
          F32Result{NanKind::Arithmetic},
-         F32Result{0},
+         F32Result{f32{0}},
          F32Result{NanKind::Canonical},
      }},
      "(v128.const f32x4 0 nan:arithmetic 0 nan:canonical)"_su8);
 
   OK(ReadReturnResult,
      ReturnResult{F64x2Result{
-         F64Result{0},
+         F64Result{f64{0}},
          F64Result{NanKind::Arithmetic},
      }},
      "(v128.const f64x2 0 nan:arithmetic)"_su8);

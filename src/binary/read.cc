@@ -73,7 +73,7 @@ OptAt<BrTableImmediate> Read(SpanU8* data,
                 BrTableImmediate{std::move(targets), default_target});
 }
 
-OptAt<SpanU8> ReadBytes(SpanU8* data, SpanU8::index_type N, Context& context) {
+OptAt<SpanU8> ReadBytes(SpanU8* data, span_extent_t N, Context& context) {
   if (data->size() < N) {
     context.errors.OnError(*data, format("Unable to read {} bytes", N));
     return nullopt;

@@ -32,27 +32,24 @@ using LI = LiteralInfo;
 using HU = HasUnderscores;
 
 struct ExpectedToken {
-  ExpectedToken(Location::index_type size, TokenType type)
-      : size{size}, type{type} {}
-  ExpectedToken(Location::index_type size, TokenType type, LiteralInfo info)
+  ExpectedToken(span_extent_t size, TokenType type) : size{size}, type{type} {}
+  ExpectedToken(span_extent_t size, TokenType type, LiteralInfo info)
       : size{size}, type{type}, immediate{info} {}
-  ExpectedToken(Location::index_type size,
+  ExpectedToken(span_extent_t size,
                 TokenType type,
                 Opcode opcode,
                 Features::Bits features = 0)
       : size{size},
         type{type},
         immediate{OpcodeInfo{opcode, Features{features}}} {}
-  ExpectedToken(Location::index_type size, TokenType type, ValueType value_type)
+  ExpectedToken(span_extent_t size, TokenType type, ValueType value_type)
       : size{size}, type{type}, immediate{value_type} {}
-  ExpectedToken(Location::index_type size,
-                TokenType type,
-                ReferenceType reftype)
+  ExpectedToken(span_extent_t size, TokenType type, ReferenceType reftype)
       : size{size}, type{type}, immediate{reftype} {}
-  ExpectedToken(Location::index_type size, TokenType type, Text text)
+  ExpectedToken(span_extent_t size, TokenType type, Text text)
       : size{size}, type{type}, immediate{text} {}
 
-  Location::index_type size;
+  span_extent_t size;
   TokenType type;
   Token::Immediate immediate;
 };

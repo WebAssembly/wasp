@@ -67,7 +67,7 @@ class BinaryReadTest : public ::testing::Test {
   void FailUnknownOpcode(u8 prefix, u32 orig_code) {
     u8 data[] = {prefix, 0, 0, 0, 0, 0};
     u32 code = orig_code;
-    int length = 1;
+    size_t length = 1;
     do {
       data[length++] = (code & 0x7f) | (code >= 0x80 ? 0x80 : 0);
       code >>= 7;

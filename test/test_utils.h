@@ -33,7 +33,7 @@ struct ErrorContext {
 };
 
 struct ErrorContextLoc {
-  Location::index_type pos;
+  span_extent_t pos;
   std::string desc;
 };
 

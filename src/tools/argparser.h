@@ -94,7 +94,7 @@ class ArgParser {
   };
 
   span<string_view> args_;
-  int index_ = 0;
+  span_extent_t index_ = 0;
 };
 
 }  // namespace tools

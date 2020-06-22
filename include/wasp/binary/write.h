@@ -194,7 +194,7 @@ template <typename Iterator>
 Iterator Write(string_view value, Iterator out) {
   assert(value.size() < std::numeric_limits<u32>::max());
   return WriteLengthAndBytes(SpanU8{reinterpret_cast<const u8*>(value.data()),
-                                    static_cast<span_index_t>(value.size())},
+                                    static_cast<span_extent_t>(value.size())},
                              out);
 }
 

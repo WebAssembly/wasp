@@ -82,10 +82,10 @@ TEST_F(TextDesugarTest, Function_DefinedExport) {
   OK(
       Module{
           ModuleItem{MakeAt(loc1, Function{})},
-          ModuleItem{MakeAt(export1_loc,
-                            Export{ExternalKind::Function, name3, Var{0}})},
-          ModuleItem{MakeAt(export2_loc,
-                            Export{ExternalKind::Function, name4, Var{0}})},
+          ModuleItem{MakeAt(export1_loc, Export{ExternalKind::Function, name3,
+                                                Var{Index{0}}})},
+          ModuleItem{MakeAt(export2_loc, Export{ExternalKind::Function, name4,
+                                                Var{Index{0}}})},
       },
       Module{
           ModuleItem{MakeAt(
@@ -105,10 +105,10 @@ TEST_F(TextDesugarTest, Function_ImportExport) {
   OK(
       Module{
           ModuleItem{MakeAt(import_loc, Import{name1, name2, func_desc})},
-          ModuleItem{MakeAt(export1_loc,
-                            Export{ExternalKind::Function, name3, Var{0}})},
-          ModuleItem{MakeAt(export2_loc,
-                            Export{ExternalKind::Function, name4, Var{0}})},
+          ModuleItem{MakeAt(export1_loc, Export{ExternalKind::Function, name3,
+                                                Var{Index{0}}})},
+          ModuleItem{MakeAt(export2_loc, Export{ExternalKind::Function, name4,
+                                                Var{Index{0}}})},
       },
       Module{
           ModuleItem{
@@ -130,10 +130,10 @@ TEST_F(TextDesugarTest, Table_DefinedExport) {
   OK(
       Module{
           ModuleItem{MakeAt(loc1, Table{table_desc, {}})},
-          ModuleItem{
-              MakeAt(export1_loc, Export{ExternalKind::Table, name3, Var{0}})},
-          ModuleItem{
-              MakeAt(export2_loc, Export{ExternalKind::Table, name4, Var{0}})},
+          ModuleItem{MakeAt(export1_loc,
+                            Export{ExternalKind::Table, name3, Var{Index{0}}})},
+          ModuleItem{MakeAt(export2_loc,
+                            Export{ExternalKind::Table, name4, Var{Index{0}}})},
       },
       Module{
           ModuleItem{MakeAt(loc1, Table{table_desc, {export1, export2}})},
@@ -144,7 +144,7 @@ TEST_F(TextDesugarTest, Table_DefinedSegment) {
   OK(
       Module{
           ModuleItem{MakeAt(loc1, Table{table_desc, {}})},
-          ModuleItem{ElementSegment{nullopt, Var{0}, constant_expression,
+          ModuleItem{ElementSegment{nullopt, Var{Index{0}}, constant_expression,
                                     element_list}},
       },
       Module{
@@ -166,10 +166,10 @@ TEST_F(TextDesugarTest, Table_ImportExport) {
   OK(
       Module{
           ModuleItem{MakeAt(import_loc, Import{name1, name2, table_desc})},
-          ModuleItem{
-              MakeAt(export1_loc, Export{ExternalKind::Table, name3, Var{0}})},
-          ModuleItem{
-              MakeAt(export2_loc, Export{ExternalKind::Table, name4, Var{0}})},
+          ModuleItem{MakeAt(export1_loc,
+                            Export{ExternalKind::Table, name3, Var{Index{0}}})},
+          ModuleItem{MakeAt(export2_loc,
+                            Export{ExternalKind::Table, name4, Var{Index{0}}})},
       },
       Module{
           ModuleItem{
@@ -191,10 +191,10 @@ TEST_F(TextDesugarTest, Memory_DefinedExport) {
   OK(
       Module{
           ModuleItem{MakeAt(loc1, Memory{memory_desc, {}})},
-          ModuleItem{
-              MakeAt(export1_loc, Export{ExternalKind::Memory, name3, Var{0}})},
-          ModuleItem{
-              MakeAt(export2_loc, Export{ExternalKind::Memory, name4, Var{0}})},
+          ModuleItem{MakeAt(
+              export1_loc, Export{ExternalKind::Memory, name3, Var{Index{0}}})},
+          ModuleItem{MakeAt(
+              export2_loc, Export{ExternalKind::Memory, name4, Var{Index{0}}})},
       },
       Module{
           ModuleItem{MakeAt(loc1, Memory{memory_desc, {export1, export2}})},
@@ -205,8 +205,8 @@ TEST_F(TextDesugarTest, Memory_DefinedSegment) {
   OK(
       Module{
           ModuleItem{MakeAt(loc1, Memory{memory_desc, {}})},
-          ModuleItem{
-              DataSegment{nullopt, Var{0}, constant_expression, text_list}},
+          ModuleItem{DataSegment{nullopt, Var{Index{0}}, constant_expression,
+                                 text_list}},
       },
       Module{
           ModuleItem{MakeAt(loc1, Memory{memory_desc, {}, text_list})},
@@ -227,10 +227,10 @@ TEST_F(TextDesugarTest, Memory_ImportExport) {
   OK(
       Module{
           ModuleItem{MakeAt(import_loc, Import{name1, name2, memory_desc})},
-          ModuleItem{
-              MakeAt(export1_loc, Export{ExternalKind::Memory, name3, Var{0}})},
-          ModuleItem{
-              MakeAt(export2_loc, Export{ExternalKind::Memory, name4, Var{0}})},
+          ModuleItem{MakeAt(
+              export1_loc, Export{ExternalKind::Memory, name3, Var{Index{0}}})},
+          ModuleItem{MakeAt(
+              export2_loc, Export{ExternalKind::Memory, name4, Var{Index{0}}})},
       },
       Module{
           ModuleItem{
@@ -255,10 +255,10 @@ TEST_F(TextDesugarTest, Global_DefinedExport) {
       Module{
           ModuleItem{
               MakeAt(loc1, Global{global_desc, constant_expression, {}})},
-          ModuleItem{
-              MakeAt(export1_loc, Export{ExternalKind::Global, name3, Var{0}})},
-          ModuleItem{
-              MakeAt(export2_loc, Export{ExternalKind::Global, name4, Var{0}})},
+          ModuleItem{MakeAt(
+              export1_loc, Export{ExternalKind::Global, name3, Var{Index{0}}})},
+          ModuleItem{MakeAt(
+              export2_loc, Export{ExternalKind::Global, name4, Var{Index{0}}})},
       },
       Module{
           ModuleItem{MakeAt(
@@ -281,10 +281,10 @@ TEST_F(TextDesugarTest, Global_ImportExport) {
   OK(
       Module{
           ModuleItem{MakeAt(import_loc, Import{name1, name2, global_desc})},
-          ModuleItem{
-              MakeAt(export1_loc, Export{ExternalKind::Global, name3, Var{0}})},
-          ModuleItem{
-              MakeAt(export2_loc, Export{ExternalKind::Global, name4, Var{0}})},
+          ModuleItem{MakeAt(
+              export1_loc, Export{ExternalKind::Global, name3, Var{Index{0}}})},
+          ModuleItem{MakeAt(
+              export2_loc, Export{ExternalKind::Global, name4, Var{Index{0}}})},
       },
       Module{
           ModuleItem{
@@ -306,10 +306,10 @@ TEST_F(TextDesugarTest, Event_DefinedExport) {
   OK(
       Module{
           ModuleItem{MakeAt(loc1, Event{event_desc, {}})},
-          ModuleItem{
-              MakeAt(export1_loc, Export{ExternalKind::Event, name3, Var{0}})},
-          ModuleItem{
-              MakeAt(export2_loc, Export{ExternalKind::Event, name4, Var{0}})},
+          ModuleItem{MakeAt(export1_loc,
+                            Export{ExternalKind::Event, name3, Var{Index{0}}})},
+          ModuleItem{MakeAt(export2_loc,
+                            Export{ExternalKind::Event, name4, Var{Index{0}}})},
       },
       Module{
           ModuleItem{MakeAt(loc1, Event{event_desc, {export1, export2}})},
@@ -330,10 +330,10 @@ TEST_F(TextDesugarTest, Event_ImportExport) {
   OK(
       Module{
           ModuleItem{MakeAt(import_loc, Import{name1, name2, event_desc})},
-          ModuleItem{
-              MakeAt(export1_loc, Export{ExternalKind::Event, name3, Var{0}})},
-          ModuleItem{
-              MakeAt(export2_loc, Export{ExternalKind::Event, name4, Var{0}})},
+          ModuleItem{MakeAt(export1_loc,
+                            Export{ExternalKind::Event, name3, Var{Index{0}}})},
+          ModuleItem{MakeAt(export2_loc,
+                            Export{ExternalKind::Event, name4, Var{Index{0}}})},
       },
       Module{
           ModuleItem{

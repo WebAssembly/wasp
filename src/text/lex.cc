@@ -71,7 +71,7 @@ bool IsDigit(int c) { return IsCharClass(c, CharClass::Digit); }
 bool IsHexDigit(int c) { return IsCharClass(c, CharClass::HexDigit); }
 bool IsReserved(int c) { return IsCharClass(c, CharClass::Reserved); }
 
-auto PeekChar(SpanU8* data, int offset = 0) -> int {
+auto PeekChar(SpanU8* data, span_extent_t offset = 0) -> int {
   if (offset >= data->size()) {
     return -1;
   }

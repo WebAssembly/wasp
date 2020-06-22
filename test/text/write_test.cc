@@ -1148,15 +1148,15 @@ TEST(TextWriteTest, ReturnResult) {
 
   ExpectWrite("(v128.const f32x4 0 nan:arithmetic 0 nan:canonical)"_sv,
               ReturnResult{F32x4Result{
-                  F32Result{0},
+                  F32Result{f32{0}},
                   F32Result{NanKind::Arithmetic},
-                  F32Result{0},
+                  F32Result{f32{0}},
                   F32Result{NanKind::Canonical},
               }});
 
   ExpectWrite("(v128.const f64x2 0 nan:arithmetic)"_sv,
               ReturnResult{F64x2Result{
-                  F64Result{0},
+                  F64Result{f64{0}},
                   F64Result{NanKind::Arithmetic},
               }});
 
