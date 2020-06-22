@@ -54,6 +54,8 @@ bool is_in_range(int x, int low, int high) {
 
 #define FOR_RANGE(var, low, high) for (int var = low; var < high; var++)
 #define FOR_EACH_BYTE(var) FOR_RANGE(var, 0, 0x100)
+#define FOR_EACH_BYTE_SKIP(var, skip) \
+  for (int var = 0; var < 0x100; var += skip)
 
 TEST(Utf8Test, valid_empty) {
   assert_is_valid_utf8(true, 0);
@@ -121,9 +123,9 @@ TEST(Utf8Test, valid_3_bytes_ed) {
 
 TEST(Utf8Test, valid_4_bytes_f0) {
   int cu0 = 0xf0;
-  FOR_EACH_BYTE(cu1) {
-    FOR_EACH_BYTE(cu2) {
-      FOR_EACH_BYTE(cu3) {
+  FOR_EACH_BYTE_SKIP(cu1, 4) {
+    FOR_EACH_BYTE_SKIP(cu2, 4) {
+      FOR_EACH_BYTE_SKIP(cu3, 4) {
         bool is_valid = is_in_range(cu1, 0x90, 0xc0) &&
                         is_in_range(cu2, 0x80, 0xc0) &&
                         is_in_range(cu3, 0x80, 0xc0);
@@ -135,9 +137,9 @@ TEST(Utf8Test, valid_4_bytes_f0) {
 
 TEST(Utf8Test, valid_4_bytes) {
   FOR_RANGE(cu0, 0xf1, 0xf4) {
-    FOR_EACH_BYTE(cu1) {
-      FOR_EACH_BYTE(cu2) {
-        FOR_EACH_BYTE(cu3) {
+    FOR_EACH_BYTE_SKIP(cu1, 4) {
+      FOR_EACH_BYTE_SKIP(cu2, 4) {
+        FOR_EACH_BYTE_SKIP(cu3, 4) {
           bool is_valid = is_in_range(cu1, 0x80, 0xc0) &&
                           is_in_range(cu2, 0x80, 0xc0) &&
                           is_in_range(cu3, 0x80, 0xc0);
@@ -150,9 +152,9 @@ TEST(Utf8Test, valid_4_bytes) {
 
 TEST(Utf8Test, valid_4_bytes_f4) {
   int cu0 = 0xf4;
-  FOR_EACH_BYTE(cu1) {
-    FOR_EACH_BYTE(cu2) {
-      FOR_EACH_BYTE(cu3) {
+  FOR_EACH_BYTE_SKIP(cu1, 4) {
+    FOR_EACH_BYTE_SKIP(cu2, 4) {
+      FOR_EACH_BYTE_SKIP(cu3, 4) {
         bool is_valid = is_in_range(cu1, 0x80, 0x90) &&
                         is_in_range(cu2, 0x80, 0xc0) &&
                         is_in_range(cu3, 0x80, 0xc0);
