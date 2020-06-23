@@ -1448,7 +1448,7 @@ switch (PeekChar(data, 2)) {
           case 'c': return LexKeyword(data, "ref.func", TokenType::RefFuncInstr, Opcode::RefFunc, Features::ReferenceTypes);
           case 'e': return LexKeyword(data, "ref.extern", TokenType::RefExtern);
           case 'l': return LexKeyword(data, "ref.null", TokenType::RefNullInstr, Opcode::RefNull, Features::ReferenceTypes);
-          case 'n': return LexKeyword(data, "ref.is_null", TokenType::RefIsNullInstr, Opcode::RefIsNull, Features::ReferenceTypes);
+          case 'n': return LexKeyword(data, "ref.is_null", Opcode::RefIsNull, Features::ReferenceTypes);
           default: break;
         }
         break;

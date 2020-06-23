@@ -681,7 +681,7 @@ TEST(LexTest, PlainInstr) {
       {"memory.size"_su8, TT::BareInstr, O::MemorySize, 0},
       {"nop"_su8, TT::BareInstr, O::Nop, 0},
       {"ref.func"_su8, TT::RefFuncInstr, O::RefFunc, F::ReferenceTypes},
-      {"ref.is_null"_su8, TT::RefIsNullInstr, O::RefIsNull, F::ReferenceTypes},
+      {"ref.is_null"_su8, TT::BareInstr, O::RefIsNull, F::ReferenceTypes},
       {"ref.null"_su8, TT::RefNullInstr, O::RefNull, F::ReferenceTypes},
       {"rethrow"_su8, TT::BareInstr, O::Rethrow, F::Exceptions},
       {"return_call_indirect"_su8, TT::CallIndirectInstr, O::ReturnCallIndirect, F::TailCall},

@@ -840,6 +840,18 @@ TEST_F(TextReadTest, PlainInstruction_TableInit) {
      "table.init 2"_su8);
 }
 
+TEST_F(TextReadTest, PlainInstruction_RefNull) {
+  Fail(ReadPlainInstruction, {{0, "ref.null instruction not allowed"}},
+       "ref.null extern"_su8);
+
+  context.features.enable_reference_types();
+
+  OK(ReadPlainInstruction,
+     I{MakeAt("ref.null"_su8, O::RefNull),
+       MakeAt("extern"_su8, ReferenceType::Externref)},
+     "ref.null extern"_su8);
+}
+
 TEST_F(TextReadTest, BlockInstruction_Block) {
   // Empty block.
   OKVector(ReadBlockInstruction_ForTesting,
