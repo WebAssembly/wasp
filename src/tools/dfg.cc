@@ -15,6 +15,7 @@
 //
 
 #include <cassert>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -140,6 +141,7 @@ struct Tool {
   LazyModule module;
   std::vector<TypeEntry> type_entries;
   std::vector<Function> functions;
+  std::vector<Code> codes;
   std::map<string_view, Index> name_to_function;
   Index imported_function_count = 0;
   std::vector<Label> labels;
@@ -193,7 +195,7 @@ int Main(span<string_view> args) {
   SpanU8 data{*optbuf};
   Tool tool{data, options};
   int result = tool.Run();
-  tool.errors.PrintTo(std::cerr);
+  // tool.errors.PrintTo(std::cerr);
   return result;
 }
 
@@ -202,22 +204,98 @@ Tool::Tool(SpanU8 data, Options options)
       options{options},
       module{ReadModule(data, options.features, errors)} {}
 
+bool IsOpcode(optional<Instruction> instr, Opcode opcode) {
+  return instr && instr->opcode == opcode;
+}
+
 int Tool::Run() {
   DoPrepass();
-  auto index_opt = GetFunctionIndex();
-  if (!index_opt) {
-    print(std::cerr, "Unknown function {}\n", options.function);
-    return 1;
+
+  int add_count = 0;
+  int add_mul_count = 0;
+
+  for (Index i = imported_function_count; i < functions.size(); ++i) {
+    labels.clear();
+    bbs.clear();
+    values.clear();
+    current_def.clear();
+    value_stack_size = 0;
+    start_bbid = InvalidBBID;
+    current_bbid = InvalidBBID;
+    undef = InvalidValueID;
+
+#if 0
+    auto index_opt = GetFunctionIndex();
+    if (!index_opt) {
+      print(std::cerr, "Unknown function {}\n", options.function);
+      return 1;
+    }
+#endif
+    optional<Index> index_opt = i;
+
+    auto ft_opt = GetFunctionType(*index_opt);
+    auto code_opt = GetCode(*index_opt);
+    auto now2 = std::chrono::high_resolution_clock::now();
+    if (!ft_opt || !code_opt) {
+      print(std::cerr, "Invalid function index {}\n", *index_opt);
+      continue;
+    }
+    CalculateDFG(*ft_opt, *code_opt);
+    auto now3 = std::chrono::high_resolution_clock::now();
+    RemoveTrivialPhis();
+    auto now4 = std::chrono::high_resolution_clock::now();
+
+#if 0
+    WriteDotFile();
+#else
+    for (auto&& value : values) {
+      if (value.instr) {
+        if (value.instr->opcode == Opcode::I32Add && value.operands.size() == 2) {
+          auto&& lhs = GetValue(value.operands[0]);
+          auto&& rhs = GetValue(value.operands[1]);
+
+          optional<Value> other;
+
+          if (IsOpcode(lhs.instr, Opcode::I32Const)) {
+            other = rhs;
+          } else if (IsOpcode(rhs.instr, Opcode::I32Const)) {
+            other = lhs;
+          }
+
+          if (other) {
+            if ((IsOpcode(other->instr, Opcode::I32Mul) ||
+                 IsOpcode(other->instr, Opcode::I32Shl)) &&
+                other->operands.size() == 2) {
+              auto&& lhs2 = GetValue(other->operands[0]);
+              auto&& rhs2 = GetValue(other->operands[1]);
+
+              if (IsOpcode(lhs2.instr, Opcode::I32Const) ||
+                  IsOpcode(rhs2.instr, Opcode::I32Const)) {
+#if 0
+                print("func {}: {} {} {} {} {}\n", i, *lhs2.instr, *rhs2.instr,
+                      *lhs.instr, *rhs.instr, *value.instr);
+#endif
+                ++add_mul_count;
+              }
+            } else {
+#if 0
+              print("Found add: {} {} {}\n", *lhs.instr, *rhs.instr,
+                    *value.instr);
+#endif
+              ++add_count;
+            }
+          }
+        }
+      }
+    }
+#endif
+    using ns = std::chrono::nanoseconds;
+    print("func {}: {} values, {} {}\n", i, values.size(),
+          ns(now3 - now2).count(), ns(now4 - now3).count());
   }
-  auto ft_opt = GetFunctionType(*index_opt);
-  auto code_opt = GetCode(*index_opt);
-  if (!ft_opt || !code_opt) {
-    print(std::cerr, "Invalid function index {}\n", *index_opt);
-    return 1;
-  }
-  CalculateDFG(*ft_opt, *code_opt);
-  RemoveTrivialPhis();
-  WriteDotFile();
+
+  print("add count: {}\nadd+mul/shl count: {}\n", add_count, add_mul_count);
+
   return 0;
 }
 
@@ -252,6 +330,12 @@ void Tool::DoPrepass() {
           break;
         }
 
+        case SectionId::Code: {
+          auto seq = ReadCodeSection(known, module.context).sequence;
+          std::copy(seq.begin(), seq.end(), std::back_inserter(codes));
+          break;
+        }
+
         default:
           break;
       }
@@ -283,20 +367,15 @@ optional<FunctionType> Tool::GetFunctionType(Index func_index) {
 }
 
 optional<Code> Tool::GetCode(Index find_index) {
-  for (auto section : module.sections) {
-    if (section->is_known()) {
-      auto known = section->known();
-      if (known->id == SectionId::Code) {
-        auto section = ReadCodeSection(known, module.context);
-        for (auto code : enumerate(section.sequence, imported_function_count)) {
-          if (code.index == find_index) {
-            return code.value;
-          }
-        }
-      }
-    }
+  if (find_index >= functions.size()) {
+    return nullopt;
   }
-  return nullopt;
+  if (find_index < imported_function_count) {
+    return nullopt;
+  }
+  find_index -= imported_function_count;
+  assert(find_index < codes.size());
+  return codes[find_index];
 }
 
 void Tool::CalculateDFG(const FunctionType& type, Code code) {
