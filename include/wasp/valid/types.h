@@ -58,6 +58,21 @@ inline StackTypeList ToStackTypeList(const ValueTypeList& value_types) {
   return result;
 }
 
+inline bool IsReferenceType(StackType type) {
+  switch (type) {
+#define WASP_V(val, Name, str) case StackType::Name: return true;
+#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
+#include "wasp/base/def/reference_type.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+    case StackType::Any:
+      return true;
+
+    default:
+      return false;
+  }
+}
+
 }  // namespace valid
 }  // namespace wasp
 

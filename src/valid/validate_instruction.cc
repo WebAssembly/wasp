@@ -1224,8 +1224,14 @@ bool Validate(Context& context, const At<Instruction>& value) {
       return true;
 
     case Opcode::RefIsNull: {
-      bool valid =
-          PopType(context, loc, ToStackType(value->reference_type_immediate()));
+      auto type = MaybeDefault(PeekType(context, loc));
+      bool valid = true;
+      if (!IsReferenceType(type)) {
+        context.errors->OnError(loc, format("Expected reference type, got {}",
+                                            GetTypeStack(context)));
+        valid = false;
+      }
+      valid &= DropTypes(context, loc, 1);
       PushType(context, StackType::I32);
       return valid;
     }

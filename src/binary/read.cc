@@ -615,6 +615,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I64TruncSatF32U:
     case Opcode::I64TruncSatF64S:
     case Opcode::I64TruncSatF64U:
+    case Opcode::RefIsNull:
     case Opcode::I8X16Add:
     case Opcode::I16X8Add:
     case Opcode::I32X4Add:
@@ -801,8 +802,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
       return MakeAt(guard.range(data), Instruction{opcode});
 
     // Reference type immediate.
-    case Opcode::RefNull:
-    case Opcode::RefIsNull: {
+    case Opcode::RefNull: {
       WASP_TRY_READ(type, Read<ReferenceType>(data, context));
       return MakeAt(guard.range(data), Instruction{opcode, type});
     }

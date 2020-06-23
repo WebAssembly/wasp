@@ -1764,10 +1764,7 @@ TEST_F(BinaryReadTest, Instruction_reference_types) {
      I{MakeAt("\xd0"_su8, O::RefNull),
        MakeAt("\x70"_su8, ReferenceType::Funcref)},
      "\xd0\x70"_su8);
-  OK(Read<I>,
-     I{MakeAt("\xd1"_su8, O::RefIsNull),
-       MakeAt("\x70"_su8, ReferenceType::Funcref)},
-     "\xd1\x70"_su8);
+  OK(Read<I>, I{MakeAt("\xd1"_su8, O::RefIsNull)}, "\xd1"_su8);
   OK(Read<I>, I{MakeAt("\xd2"_su8, O::RefFunc), MakeAt("\x00"_su8, Index{0})},
      "\xd2\x00"_su8);
 }

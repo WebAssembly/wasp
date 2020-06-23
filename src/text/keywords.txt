@@ -462,7 +462,7 @@ param, TokenType::Param
 quote, TokenType::Quote
 ref.extern, TokenType::RefExtern
 ref.func, TokenType::RefFuncInstr, Opcode::RefFunc, Features::ReferenceTypes
-ref.is_null, TokenType::RefIsNullInstr, Opcode::RefIsNull, Features::ReferenceTypes
+ref.is_null, Opcode::RefIsNull, Features::ReferenceTypes
 ref.null, TokenType::RefNullInstr, Opcode::RefNull, Features::ReferenceTypes
 register, TokenType::Register
 result, TokenType::Result

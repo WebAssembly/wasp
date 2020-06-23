@@ -1102,7 +1102,6 @@ bool IsPlainInstruction(Token token) {
     case TokenType::MemoryCopyInstr:
     case TokenType::MemoryInitInstr:
     case TokenType::RefFuncInstr:
-    case TokenType::RefIsNullInstr:
     case TokenType::RefNullInstr:
     case TokenType::SelectInstr:
     case TokenType::SimdConstInstr:
@@ -1159,12 +1158,11 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       tokenizer.Read();
       return MakeAt(token.loc, Instruction{token.opcode()});
 
-    case TokenType::RefNullInstr:
-    case TokenType::RefIsNullInstr: {
+    case TokenType::RefNullInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
       WASP_TRY_READ(type, ReadReferenceKind(tokenizer, context));
-      return MakeAt(token.loc, Instruction{token.opcode(), type});
+      return MakeAt(guard.loc(), Instruction{token.opcode(), type});
     }
 
     case TokenType::BrOnExnInstr: {

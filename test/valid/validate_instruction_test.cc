@@ -1691,8 +1691,8 @@ TEST_F(ValidateInstructionTest, SignExtension) {
 TEST_F(ValidateInstructionTest, ReferenceTypes) {
   TestSignature(I{O::RefNull, RT::Externref}, {}, {VT::Externref});
   TestSignature(I{O::RefNull, RT::Funcref}, {}, {VT::Funcref});
-  TestSignature(I{O::RefIsNull, RT::Externref}, {VT::Externref}, {VT::I32});
-  TestSignature(I{O::RefIsNull, RT::Funcref}, {VT::Funcref}, {VT::I32});
+  TestSignature(I{O::RefIsNull}, {VT::Externref}, {VT::I32});
+  TestSignature(I{O::RefIsNull}, {VT::Funcref}, {VT::I32});
 }
 
 TEST_F(ValidateInstructionTest, RefFunc) {
