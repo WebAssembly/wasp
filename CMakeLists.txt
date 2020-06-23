@@ -120,6 +120,7 @@ add_executable(wasp
   src/tools/dfg.cc
   src/tools/dump.cc
   src/tools/pattern.cc
+  src/tools/stats.cc
   src/tools/text_errors.cc
   src/tools/validate.cc
   src/tools/wasp.cc
