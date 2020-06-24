@@ -941,6 +941,13 @@ TEST(BinaryWriteTest, Locals) {
   ExpectWrite("\xc0\x02\x7c"_su8, Locals{320, ValueType::F64});
 }
 
+TEST(BinaryWriteTest, LetImmediate) {
+  ExpectWrite("\x40\x00"_su8, LetImmediate{BlockType::Void, LocalsList{}});
+  ExpectWrite(
+      "\x00\x01\x02\x7f"_su8,
+      LetImmediate{BlockType{Index{0}}, LocalsList{Locals{2, ValueType::I32}}});
+}
+
 TEST(BinaryWriteTest, MemArgImmediate) {
   ExpectWrite("\x00\x00"_su8, MemArgImmediate{0, 0});
   ExpectWrite("\x01\x80\x02"_su8, MemArgImmediate{1, 256});

@@ -105,6 +105,7 @@ auto Read(SpanU8*, Context&, Tag<InitImmediate>, BulkImmediateKind)
     -> OptAt<InitImmediate>;
 auto Read(SpanU8*, Context&, Tag<Instruction>) -> OptAt<Instruction>;
 auto Read(SpanU8*, Context&, Tag<InstructionList>) -> OptAt<InstructionList>;
+auto Read(SpanU8*, Context&, Tag<LetImmediate>) -> OptAt<LetImmediate>;
 auto Read(SpanU8*, Context&, Tag<Limits>) -> OptAt<Limits>;
 auto Read(SpanU8*, Context&, Tag<Locals>) -> OptAt<Locals>;
 auto Read(SpanU8*, Context&, Tag<MemArgImmediate>) -> OptAt<MemArgImmediate>;

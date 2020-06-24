@@ -154,6 +154,24 @@ TEST(TextWriteTest, InitImmediate) {
   ExpectWrite("$dst $seg"_sv, InitImmediate{Var{"$seg"_sv}, Var{"$dst"_sv}});
 }
 
+TEST(TextWriteTest, LetImmediate) {
+  ExpectWrite(""_sv, LetImmediate{});
+  ExpectWrite("$l"_sv, LetImmediate{BlockImmediate{BindVar{"$l"_sv}, {}}, {}});
+  ExpectWrite("(type 0) (local i32)"_sv,
+              LetImmediate{
+                  BlockImmediate{nullopt, FunctionTypeUse{Var{Index{0}}, {}}},
+                  BoundValueTypeList{BoundValueType{nullopt, ValueType::I32}}});
+  ExpectWrite(
+      "(param i32) (local f32 f64)"_sv,
+      LetImmediate{
+          BlockImmediate{
+              nullopt,
+              FunctionTypeUse{nullopt,
+                              FunctionType{ValueTypeList{ValueType::I32}, {}}}},
+          BoundValueTypeList{BoundValueType{nullopt, ValueType::F32},
+                             BoundValueType{nullopt, ValueType::F64}}});
+}
+
 TEST(TextWriteTest, MemArgImmediate) {
   ExpectWrite(""_sv, MemArgImmediate{});
   ExpectWrite("align=4"_sv, MemArgImmediate{u32{4}, nullopt});

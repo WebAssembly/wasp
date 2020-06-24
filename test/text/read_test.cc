@@ -523,6 +523,46 @@ TEST_F(TextReadTest, BlockImmediate_InlineType) {
   EXPECT_EQ(0u, type_entries.size());
 }
 
+TEST_F(TextReadTest, LetImmediate) {
+  // empty let immediate.
+  OK(ReadLetImmediate, LetImmediate{}, ""_su8);
+
+  // label, no locals
+  OK(ReadLetImmediate,
+     LetImmediate{BlockImmediate{MakeAt("$l"_su8, BindVar{"$l"_sv}), {}}, {}},
+     "$l"_su8);
+
+  // type use, locals
+  OK(ReadLetImmediate,
+     LetImmediate{
+         BlockImmediate{
+             nullopt,
+             FunctionTypeUse{MakeAt("(type 0)"_su8, Var{Index{0}}), {}}},
+         BoundValueTypeList{MakeAt(
+             "i32"_su8,
+             BoundValueType{nullopt, MakeAt("i32"_su8, ValueType::I32)})}},
+     "(type 0) (local i32)"_su8);
+
+  // inline type, multiple locals
+  OK(ReadLetImmediate,
+     LetImmediate{
+         BlockImmediate{nullopt,
+                        FunctionTypeUse{
+                            nullopt, MakeAt("(param i32)"_su8,
+                                            FunctionType{
+                                                ValueTypeList{MakeAt(
+                                                    "i32"_su8, ValueType::I32)},
+                                                {},
+                                            })}},
+         BoundValueTypeList{
+             MakeAt("f32"_su8,
+                    BoundValueType{nullopt, MakeAt("f32"_su8, ValueType::F32)}),
+             MakeAt(
+                 "f64"_su8,
+                 BoundValueType{nullopt, MakeAt("f64"_su8, ValueType::F64)})}},
+     "(param i32) (local f32 f64)"_su8);
+}
+
 TEST_F(TextReadTest, PlainInstruction_Bare) {
   OK(ReadPlainInstruction, I{MakeAt("nop"_su8, O::Nop)}, "nop"_su8);
   OK(ReadPlainInstruction, I{MakeAt("i32.add"_su8, O::I32Add)}, "i32.add"_su8);

@@ -998,6 +998,13 @@ Iterator Write(const Locals& value, Iterator out) {
 }
 
 template <typename Iterator>
+Iterator Write(const LetImmediate& immediate, Iterator out) {
+  out = Write(immediate.block_type, out);
+  out = WriteVector(immediate.locals.begin(), immediate.locals.end(), out);
+  return out;
+}
+
+template <typename Iterator>
 Iterator Write(const MemArgImmediate& immediate, Iterator out) {
   out = Write(immediate.align_log2, out);
   out = Write(immediate.offset, out);

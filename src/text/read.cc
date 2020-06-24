@@ -1439,6 +1439,15 @@ auto ReadBlockImmediate(Tokenizer& tokenizer, Context& context)
   return MakeAt(guard.loc(), BlockImmediate{label, ftu});
 }
 
+auto ReadLetImmediate(Tokenizer& tokenizer, Context& context)
+    -> OptAt<LetImmediate> {
+  LocationGuard guard{tokenizer};
+  WASP_TRY_READ(block, ReadBlockImmediate(tokenizer, context));
+  // TODO: Need to be more careful with locals for let.
+  WASP_TRY_READ(locals, ReadLocalList(tokenizer, context, context.local_names));
+  return MakeAt(guard.loc(), LetImmediate{block, locals});
+}
+
 bool ReadOpcodeOpt(Tokenizer& tokenizer,
                    Context& context,
                    InstructionList& instructions,

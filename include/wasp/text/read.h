@@ -145,6 +145,7 @@ auto ReadPlainInstruction(Tokenizer&, Context&) -> OptAt<Instruction>;
 auto ReadLabelOpt(Tokenizer&, Context&) -> OptAt<BindVar>;
 bool ReadEndLabelOpt(Tokenizer&, Context&, OptAt<BindVar>);
 auto ReadBlockImmediate(Tokenizer&, Context&) -> OptAt<BlockImmediate>;
+auto ReadLetImmediate(Tokenizer&, Context&) -> OptAt<LetImmediate>;
 void EndBlock(Context&);
 
 bool ReadOpcodeOpt(Tokenizer&, Context&, InstructionList&, TokenType);

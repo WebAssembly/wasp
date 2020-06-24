@@ -2231,6 +2231,24 @@ TEST_F(BinaryReadTest, Locals_PastEnd) {
       "\xc0\x02"_su8);
 }
 
+TEST_F(BinaryReadTest, LetImmediate) {
+  OK(Read<LetImmediate>,
+     LetImmediate{MakeAt("\x40"_su8, BlockType::Void),
+                  MakeAt("\x00"_su8, LocalsList{})},
+     "\x40\x00"_su8);
+
+  context.features.enable_multi_value();
+
+  OK(Read<LetImmediate>,
+     LetImmediate{MakeAt("\x00"_su8, BlockType{0}),
+                  MakeAt("\x01\x02\x7f"_su8,
+                         LocalsList{MakeAt(
+                             "\x02\x7f"_su8,
+                             Locals{MakeAt("\x02"_su8, Index{2}),
+                                    MakeAt("\x7f"_su8, ValueType::I32)})})},
+     "\x00\x01\x02\x7f"_su8);
+}
+
 TEST_F(BinaryReadTest, MemArgImmediate) {
   OK(Read<MemArgImmediate>,
      MemArgImmediate{MakeAt("\x00"_su8, u32{0}), MakeAt("\x00"_su8, u32{0})},

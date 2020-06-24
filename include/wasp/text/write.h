@@ -313,6 +313,15 @@ Iterator Write(WriteContext& context,
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
+               const LetImmediate& value,
+               Iterator out) {
+  out = Write(context, value.block, out);
+  out = Write(context, value.locals, "local", out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context,
                const MemArgImmediate& value,
                Iterator out) {
   if (value.offset) {

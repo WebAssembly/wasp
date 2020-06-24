@@ -1134,6 +1134,14 @@ OptAt<Locals> Read(SpanU8* data, Context& context, Tag<Locals>) {
   return MakeAt(guard.range(data), Locals{count, type});
 }
 
+OptAt<LetImmediate> Read(SpanU8* data, Context& context, Tag<LetImmediate>) {
+  LocationGuard guard{data};
+  WASP_TRY_READ_CONTEXT(block_type, Read<BlockType>(data, context),
+                        "block_type");
+  WASP_TRY_READ(locals, ReadVector<Locals>(data, context, "locals vector"));
+  return MakeAt(guard.range(data), LetImmediate{block_type, locals});
+}
+
 OptAt<MemArgImmediate> Read(SpanU8* data,
                             Context& context,
                             Tag<MemArgImmediate>) {
