@@ -397,23 +397,28 @@ Iterator Write(WriteContext& context, const Instruction& value, Iterator out) {
       out = Write(context, value.init_immediate(), out);
       break;
 
-    case 13: // MemArgImmediate
+    case 13: // LetImmediate
+      // TODO
+      assert(false);
+      break;
+
+    case 14: // MemArgImmediate
       out = Write(context, value.mem_arg_immediate(), out);
       break;
 
-    case 14: // ReferenceType
+    case 15: // ReferenceType
       out = Write(context, value.reference_type_immediate(), out);
       break;
 
-    case 15: // SelectImmediate
+    case 16: // SelectImmediate
       out = Write(context, value.select_immediate(), out);
       break;
 
-    case 16: // ShuffleImmediate
+    case 17: // ShuffleImmediate
       out = Write(context, value.shuffle_immediate(), out);
       break;
 
-    case 17: // SimdLaneImmediate
+    case 18: // SimdLaneImmediate
       out = Write(context, value.simd_lane_immediate(), out);
       break;
   }

@@ -95,6 +95,18 @@ struct InitImmediate {
   OptAt<Var> dst;
 };
 
+struct BoundValueType {
+  OptAt<BindVar> name;
+  At<ValueType> type;
+};
+
+using BoundValueTypeList = std::vector<At<BoundValueType>>;
+
+struct LetImmediate {
+  BlockImmediate block;
+  BoundValueTypeList locals;
+};
+
 struct MemArgImmediate {
   OptAt<u32> align;
   OptAt<u32> offset;
@@ -117,6 +129,7 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<CallIndirectImmediate>);
   explicit Instruction(At<Opcode>, At<CopyImmediate>);
   explicit Instruction(At<Opcode>, At<InitImmediate>);
+  explicit Instruction(At<Opcode>, At<LetImmediate>);
   explicit Instruction(At<Opcode>, At<MemArgImmediate>);
   explicit Instruction(At<Opcode>, At<ReferenceType>);
   explicit Instruction(At<Opcode>, At<SelectImmediate>);
@@ -145,6 +158,7 @@ struct Instruction {
   bool has_call_indirect_immediate() const;
   bool has_copy_immediate() const;
   bool has_init_immediate() const;
+  bool has_let_immediate() const;
   bool has_mem_arg_immediate() const;
   bool has_reference_type_immediate() const;
   bool has_select_immediate() const;
@@ -175,6 +189,8 @@ struct Instruction {
   auto copy_immediate() const -> const At<CopyImmediate>&;
   auto init_immediate() -> At<InitImmediate>&;
   auto init_immediate() const -> const At<InitImmediate>&;
+  auto let_immediate() -> At<LetImmediate>&;
+  auto let_immediate() const -> const At<LetImmediate>&;
   auto mem_arg_immediate() -> At<MemArgImmediate>&;
   auto mem_arg_immediate() const -> const At<MemArgImmediate>&;
   auto reference_type_immediate() -> At<ReferenceType>&;
@@ -200,6 +216,7 @@ struct Instruction {
           At<CallIndirectImmediate>,
           At<CopyImmediate>,
           At<InitImmediate>,
+          At<LetImmediate>,
           At<MemArgImmediate>,
           At<ReferenceType>,
           At<SelectImmediate>,
@@ -211,13 +228,6 @@ struct Instruction {
 using InstructionList = std::vector<At<Instruction>>;
 
 // Section 1: Type
-
-struct BoundValueType {
-  OptAt<BindVar> name;
-  At<ValueType> type;
-};
-
-using BoundValueTypeList = std::vector<At<BoundValueType>>;
 
 struct BoundFunctionType {
   BoundValueTypeList params;
@@ -805,6 +815,7 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::CallIndirectImmediate, 2, table, type)                    \
   WASP_V(text::CopyImmediate, 2, dst, src)                               \
   WASP_V(text::InitImmediate, 2, segment, dst)                           \
+  WASP_V(text::LetImmediate, 2, block, locals)                           \
   WASP_V(text::MemArgImmediate, 2, align, offset)                        \
   WASP_V(text::TableDesc, 2, name, type)                                 \
   WASP_V(text::MemoryDesc, 2, name, type)                                \

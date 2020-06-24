@@ -136,6 +136,18 @@ struct InitImmediate {
   At<Index> dst_index;
 };
 
+struct Locals {
+  At<Index> count;
+  At<ValueType> type;
+};
+
+using LocalsList = std::vector<At<Locals>>;
+
+struct LetImmediate {
+  At<BlockType> block_type;
+  LocalsList locals;
+};
+
 struct MemArgImmediate {
   At<u32> align_log2;
   At<u32> offset;
@@ -158,6 +170,7 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<CallIndirectImmediate>);
   explicit Instruction(At<Opcode>, At<CopyImmediate>);
   explicit Instruction(At<Opcode>, At<InitImmediate>);
+  explicit Instruction(At<Opcode>, At<LetImmediate>);
   explicit Instruction(At<Opcode>, At<MemArgImmediate>);
   explicit Instruction(At<Opcode>, At<ReferenceType>);
   explicit Instruction(At<Opcode>, At<SelectImmediate>);
@@ -187,6 +200,7 @@ struct Instruction {
   bool has_call_indirect_immediate() const;
   bool has_copy_immediate() const;
   bool has_init_immediate() const;
+  bool has_let_immediate() const;
   bool has_mem_arg_immediate() const;
   bool has_reference_type_immediate() const;
   bool has_select_immediate() const;
@@ -217,6 +231,8 @@ struct Instruction {
   auto copy_immediate() const -> const At<CopyImmediate>&;
   auto init_immediate() -> At<InitImmediate>&;
   auto init_immediate() const -> const At<InitImmediate>&;
+  auto let_immediate() -> At<LetImmediate>&;
+  auto let_immediate() const -> const At<LetImmediate>&;
   auto mem_arg_immediate() -> At<MemArgImmediate>&;
   auto mem_arg_immediate() const -> const At<MemArgImmediate>&;
   auto reference_type_immediate() -> At<ReferenceType>&;
@@ -242,6 +258,7 @@ struct Instruction {
           At<CallIndirectImmediate>,
           At<CopyImmediate>,
           At<InitImmediate>,
+          At<LetImmediate>,
           At<MemArgImmediate>,
           At<ReferenceType>,
           At<SelectImmediate>,
@@ -415,13 +432,6 @@ struct ElementSegment {
 
 // Section 10: Code
 
-struct Locals {
-  At<Index> count;
-  At<ValueType> type;
-};
-
-using LocalsList = std::vector<At<Locals>>;
-
 struct Expression {
   SpanU8 data;
 };
@@ -518,6 +528,7 @@ struct Module {
   WASP_V(binary::InitImmediate, 2, segment_index, dst_index)             \
   WASP_V(binary::Instruction, 2, opcode, immediate)                      \
   WASP_V(binary::KnownSection, 2, id, data)                              \
+  WASP_V(binary::LetImmediate, 2, block_type, locals)                    \
   WASP_V(binary::Locals, 2, count, type)                                 \
   WASP_V(binary::MemArgImmediate, 2, align_log2, offset)                 \
   WASP_V(binary::Memory, 1, memory_type)                                 \

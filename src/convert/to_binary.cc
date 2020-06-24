@@ -504,28 +504,33 @@ auto ToBinary(Context& context, const At<text::Instruction>& value)
           binary::Instruction{value->opcode,
                               ToBinary(context, value->init_immediate())});
 
-    case 13:  // MemArgImmediate
+    case 13:  // LetImmediate
+      assert(false);
+      WASP_UNREACHABLE();
+      break;
+
+    case 14:  // MemArgImmediate
       return MakeAt(
           value.loc(),
           binary::Instruction{value->opcode,
                               ToBinary(context, value->mem_arg_immediate(),
                                        GetNaturalAlignment(*value->opcode))});
 
-    case 14:  // ReferenceType
+    case 15:  // ReferenceType
       return MakeAt(value.loc(),
                     binary::Instruction{value->opcode,
                                         value->reference_type_immediate()});
 
-    case 15:  // SelectImmediate
+    case 16:  // SelectImmediate
       return MakeAt(value.loc(), binary::Instruction{
                                      value->opcode, value->select_immediate()});
 
-    case 16:  // ShuffleImmediate
+    case 17:  // ShuffleImmediate
       return MakeAt(
           value.loc(),
           binary::Instruction{value->opcode, value->shuffle_immediate()});
 
-    case 17:  // SimdLaneImmediate
+    case 18:  // SimdLaneImmediate
       return MakeAt(
           value.loc(),
           binary::Instruction{value->opcode, value->simd_lane_immediate()});

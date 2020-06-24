@@ -76,6 +76,14 @@ TEST(BinaryFormattersTest, NameSubsectionKind) {
   EXPECT_EQ(R"(  module)", format("{:>8s}", NameSubsectionId::ModuleName));
 }
 
+TEST(BinaryFormattersTest, LetImmediate) {
+  EXPECT_EQ(R"({type [], locals []})",
+            format("{}", LetImmediate{BlockType::Void, LocalsList{}}));
+  EXPECT_EQ(R"({type type[0], locals [i32 ** 2]})",
+            format("{}", LetImmediate{BlockType{Index{0}},
+                                      LocalsList{Locals{2, ValueType::I32}}}));
+}
+
 TEST(BinaryFormattersTest, MemArgImmediate) {
   EXPECT_EQ(R"({align 1, offset 2})", format("{}", MemArgImmediate{1, 2}));
   EXPECT_EQ(R"({align 0, offset 0} )", format("{:20s}", MemArgImmediate{0, 0}));
@@ -269,6 +277,9 @@ TEST(BinaryFormattersTest, Instruction) {
   // memory.size (w/ a reserved value of 0)
   EXPECT_EQ(R"(memory.size 0)",
             format("{}", Instruction{Opcode::MemorySize, u8{0}}));
+  // let
+  EXPECT_EQ(R"(let {type type[0], locals []})",
+            format("{}", Instruction{Opcode::Let, LetImmediate{}}));
   // i32.load offset=10 align=4 (alignment is stored as power-of-two)
   EXPECT_EQ(R"(i32.load {align 2, offset 10})",
             format("{}", Instruction{Opcode::I32Load, MemArgImmediate{2, 10}}));

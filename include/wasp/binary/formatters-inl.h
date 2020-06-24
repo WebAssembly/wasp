@@ -69,6 +69,15 @@ typename Ctx::iterator formatter<::wasp::binary::SectionId>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::LetImmediate>::format(
+    const ::wasp::binary::LetImmediate& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{{type {}, locals {}}}", self.block_type, self.locals);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::MemArgImmediate>::format(
     const ::wasp::binary::MemArgImmediate& self,
     Ctx& ctx) {
@@ -285,11 +294,12 @@ typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
     case 10: format_to(buf, " {}", self.call_indirect_immediate()); break;
     case 11: format_to(buf, " {}", self.copy_immediate()); break;
     case 12: format_to(buf, " {}", self.init_immediate()); break;
-    case 13: format_to(buf, " {}", self.mem_arg_immediate()); break;
-    case 14: format_to(buf, " {}", self.reference_type_immediate()); break;
-    case 15: format_to(buf, " {}", self.select_immediate()); break;
-    case 16: format_to(buf, " {}", self.shuffle_immediate()); break;
-    case 17: format_to(buf, " {}", self.simd_lane_immediate()); break;
+    case 13: format_to(buf, " {}", self.let_immediate()); break;
+    case 14: format_to(buf, " {}", self.mem_arg_immediate()); break;
+    case 15: format_to(buf, " {}", self.reference_type_immediate()); break;
+    case 16: format_to(buf, " {}", self.select_immediate()); break;
+    case 17: format_to(buf, " {}", self.shuffle_immediate()); break;
+    case 18: format_to(buf, " {}", self.simd_lane_immediate()); break;
   }
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }

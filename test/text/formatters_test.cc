@@ -168,6 +168,12 @@ TEST(TextFormattersTest, InitImmediate) {
             format("{}", InitImmediate{Var{"$a"_sv}, Var{"$b"_sv}}));
 }
 
+TEST(TextFormattersTest, LetImmediate) {
+  EXPECT_EQ(
+      R"({block {label none, type {type_use none, type {params [], results []}}}, locals []})",
+      format("{}", LetImmediate{}));
+}
+
 TEST(TextFormattersTest, MemArgImmediate) {
   EXPECT_EQ(R"({align none, offset none})", format("{}", MemArgImmediate{}));
   EXPECT_EQ(R"({align 4, offset 0})",
@@ -213,6 +219,10 @@ TEST(TextFormattersTest, Instruction) {
   EXPECT_EQ(R"({opcode table.init, immediate init {segment $a, dst none}})",
             format("{}", Instruction{Opcode::TableInit,
                                      InitImmediate{Var{"$a"_sv}, nullopt}}));
+
+  EXPECT_EQ(
+      R"({opcode let, immediate let {block {label none, type {type_use none, type {params [], results []}}}, locals []}})",
+      format("{}", Instruction{Opcode::Let, LetImmediate{}}));
 
   EXPECT_EQ(R"({opcode i32.load, immediate mem_arg {align none, offset none}})",
             format("{}", Instruction{Opcode::I32Load, MemArgImmediate{}}));

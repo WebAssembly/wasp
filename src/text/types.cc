@@ -124,6 +124,9 @@ Instruction::Instruction(At<Opcode> opcode, At<CopyImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<InitImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
+Instruction::Instruction(At<Opcode> opcode, At<LetImmediate> immediate)
+    : opcode{opcode}, immediate{immediate} {}
+
 Instruction::Instruction(At<Opcode> opcode, At<MemArgImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
@@ -205,6 +208,10 @@ bool Instruction::has_copy_immediate() const {
 
 bool Instruction::has_init_immediate() const {
   return holds_alternative<At<InitImmediate>>(immediate);
+}
+
+bool Instruction::has_let_immediate() const {
+  return holds_alternative<At<LetImmediate>>(immediate);
 }
 
 bool Instruction::has_mem_arg_immediate() const {
@@ -322,6 +329,14 @@ At<InitImmediate>& Instruction::init_immediate() {
 
 const At<InitImmediate>& Instruction::init_immediate() const {
   return get<At<InitImmediate>>(immediate);
+}
+
+At<LetImmediate>& Instruction::let_immediate() {
+  return get<At<LetImmediate>>(immediate);
+}
+
+const At<LetImmediate>& Instruction::let_immediate() const {
+  return get<At<LetImmediate>>(immediate);
 }
 
 At<MemArgImmediate>& Instruction::mem_arg_immediate() {
