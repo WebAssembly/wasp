@@ -15,6 +15,7 @@
 //
 
 #include <cassert>
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -211,8 +212,7 @@ bool IsOpcode(optional<Instruction> instr, Opcode opcode) {
 int Tool::Run() {
   DoPrepass();
 
-  int add_count = 0;
-  int add_mul_count = 0;
+  std::map<std::pair<Opcode, Opcode>, u64> add_operands;
 
   for (Index i = imported_function_count; i < functions.size(); ++i) {
     labels.clear();
@@ -254,47 +254,39 @@ int Tool::Run() {
           auto&& lhs = GetValue(value.operands[0]);
           auto&& rhs = GetValue(value.operands[1]);
 
-          optional<Value> other;
-
-          if (IsOpcode(lhs.instr, Opcode::I32Const)) {
-            other = rhs;
-          } else if (IsOpcode(rhs.instr, Opcode::I32Const)) {
-            other = lhs;
-          }
-
-          if (other) {
-            if ((IsOpcode(other->instr, Opcode::I32Mul) ||
-                 IsOpcode(other->instr, Opcode::I32Shl)) &&
-                other->operands.size() == 2) {
-              auto&& lhs2 = GetValue(other->operands[0]);
-              auto&& rhs2 = GetValue(other->operands[1]);
-
-              if (IsOpcode(lhs2.instr, Opcode::I32Const) ||
-                  IsOpcode(rhs2.instr, Opcode::I32Const)) {
-#if 0
-                print("func {}: {} {} {} {} {}\n", i, *lhs2.instr, *rhs2.instr,
-                      *lhs.instr, *rhs.instr, *value.instr);
-#endif
-                ++add_mul_count;
-              }
-            } else {
-#if 0
-              print("Found add: {} {} {}\n", *lhs.instr, *rhs.instr,
-                    *value.instr);
-#endif
-              ++add_count;
+          if (lhs.instr && rhs.instr) {
+            Opcode lhs_op = lhs.instr->opcode;
+            Opcode rhs_op = rhs.instr->opcode;
+            if (lhs_op < rhs_op) {
+              std::swap(lhs_op, rhs_op);
             }
+            add_operands[std::pair(lhs_op, rhs_op)]++;
           }
         }
       }
     }
 #endif
     using ns = std::chrono::nanoseconds;
+#if 0
     print("func {}: {} values, {} {}\n", i, values.size(),
           ns(now3 - now2).count(), ns(now4 - now3).count());
+#endif
   }
 
-  print("add count: {}\nadd+mul/shl count: {}\n", add_count, add_mul_count);
+  std::vector<std::pair<std::pair<Opcode, Opcode>, u64>> add_op2;
+  std::copy(add_operands.begin(), add_operands.end(),
+            std::back_inserter(add_op2));
+
+  std::sort(add_op2.begin(), add_op2.end(),
+            [](auto& lhs, auto& rhs) { return lhs.second > rhs.second; });
+
+  int printed = 0;
+  for (auto&& [pair, count] : add_op2) {
+    print("{}, {}: {}\n", pair.first, pair.second, count);
+    if (++printed > 10) {
+      break;
+    }
+  }
 
   return 0;
 }
