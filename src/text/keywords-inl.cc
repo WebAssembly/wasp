@@ -1374,7 +1374,12 @@ switch (PeekChar(data, 2)) {
   case '_':
     switch (PeekChar(data, 5)) {
       default: return LexKeyword(data, "br_if", TokenType::VarInstr, Opcode::BrIf);
-      case '_': return LexKeyword(data, "br_on_exn", TokenType::BrOnExnInstr, Opcode::BrOnExn, Features::Exceptions);
+      case '_':
+        switch (PeekChar(data, 9)) {
+          default: return LexKeyword(data, "br_on_exn", TokenType::BrOnExnInstr, Opcode::BrOnExn, Features::Exceptions);
+          case 'l': return LexKeyword(data, "br_on_null", TokenType::VarInstr, Opcode::BrOnNull, Features::FunctionReferences);
+        }
+        break;
       case 'b': return LexKeyword(data, "br_table", TokenType::BrTableInstr, Opcode::BrTable);
     }
     break;
@@ -1442,13 +1447,20 @@ switch (PeekChar(data, 2)) {
     break;
   case 'f':
     switch (PeekChar(data, 3)) {
-      default: return LexKeyword(data, "inf", TokenType::Float, LiteralKind::Infinity);
+      default:
+        switch (PeekChar(data, 1)) {
+          case 'e': return LexKeyword(data, "ref", TokenType::Ref);
+          case 'n': return LexKeyword(data, "inf", TokenType::Float, LiteralKind::Infinity);
+          default: break;
+        }
+        break;
       case '.':
-        switch (PeekChar(data, 7)) {
-          case 'c': return LexKeyword(data, "ref.func", TokenType::RefFuncInstr, Opcode::RefFunc, Features::ReferenceTypes);
+        switch (PeekChar(data, 4)) {
+          case 'a': return LexKeyword(data, "ref.as_non_null", Opcode::RefAsNonNull, Features::FunctionReferences);
           case 'e': return LexKeyword(data, "ref.extern", TokenType::RefExtern);
-          case 'l': return LexKeyword(data, "ref.null", TokenType::RefNullInstr, Opcode::RefNull, Features::ReferenceTypes);
-          case 'n': return LexKeyword(data, "ref.is_null", Opcode::RefIsNull, Features::ReferenceTypes);
+          case 'f': return LexKeyword(data, "ref.func", TokenType::RefFuncInstr, Opcode::RefFunc, Features::ReferenceTypes);
+          case 'i': return LexKeyword(data, "ref.is_null", Opcode::RefIsNull, Features::ReferenceTypes);
+          case 'n': return LexKeyword(data, "ref.null", TokenType::RefNullInstr, Opcode::RefNull, Features::ReferenceTypes);
           default: break;
         }
         break;
@@ -1464,8 +1476,19 @@ switch (PeekChar(data, 2)) {
   case 'i': return LexNameEqNum(data, "align=", TokenType::AlignEqNat);
   case 'l':
     switch (PeekChar(data, 4)) {
-      default: return LexKeyword(data, "call", TokenType::VarInstr, Opcode::Call);
-      case '_': return LexKeyword(data, "call_indirect", TokenType::CallIndirectInstr, Opcode::CallIndirect);
+      default:
+        switch (PeekChar(data, 1)) {
+          case 'a': return LexKeyword(data, "call", TokenType::VarInstr, Opcode::Call);
+          case 'u': return LexKeyword(data, "null", TokenType::Null);
+          default: break;
+        }
+        break;
+      case '_':
+        switch (PeekChar(data, 8)) {
+          default: return LexKeyword(data, "call_ref", Opcode::CallRef, Features::FunctionReferences);
+          case 'i': return LexKeyword(data, "call_indirect", TokenType::CallIndirectInstr, Opcode::CallIndirect);
+        }
+        break;
       case 'c': return LexKeyword(data, "select", TokenType::SelectInstr, Opcode::Select);
     }
     break;
@@ -1512,6 +1535,7 @@ switch (PeekChar(data, 2)) {
       case 'c':
         switch (PeekChar(data, 4)) {
           default: return LexKeyword(data, "func", TokenType::Func, ReferenceType::Funcref);
+          case '.': return LexKeyword(data, "func.bind", TokenType::VarInstr, Opcode::FuncBind, Features::FunctionReferences);
           case 'r': return LexKeyword(data, "funcref", ValueType::Funcref);
         }
         break;
@@ -1579,57 +1603,57 @@ switch (PeekChar(data, 2)) {
     }
     break;
   case 't':
-    switch (PeekChar(data, 3)) {
-      default:
-        switch (PeekChar(data, 1)) {
-          case 'e': return LexKeyword(data, "get", TokenType::Get);
-          case 'u': return LexKeyword(data, "mut", TokenType::Mut);
-          default: break;
-        }
-        break;
-      case '_':
-        switch (PeekChar(data, 9)) {
-          default:
-            switch (PeekChar(data, 0)) {
-              case 'g': return LexKeyword(data, "get_local", TokenType::VarInstr, Opcode::LocalGet);
-              case 's': return LexKeyword(data, "set_local", TokenType::VarInstr, Opcode::LocalSet);
-              default: break;
-            }
-            break;
-          case 'l':
-            switch (PeekChar(data, 0)) {
-              case 'g': return LexKeyword(data, "get_global", TokenType::VarInstr, Opcode::GlobalGet);
-              case 's': return LexKeyword(data, "set_global", TokenType::VarInstr, Opcode::GlobalSet);
-              default: break;
-            }
-            break;
-        }
-        break;
-      case 'a':
+    switch (PeekChar(data, 0)) {
+      case 'c': return LexKeyword(data, "catch", TokenType::Catch, Opcode::Catch);
+      case 'd':
         switch (PeekChar(data, 4)) {
           default: return LexKeyword(data, "data", TokenType::Data);
           case '.': return LexKeyword(data, "data.drop", TokenType::VarInstr, Opcode::DataDrop, Features::BulkMemory);
         }
         break;
-      case 'c': return LexKeyword(data, "catch", TokenType::Catch, Opcode::Catch);
       case 'e':
         switch (PeekChar(data, 6)) {
           default: return LexKeyword(data, "extern", TokenType::Extern, ReferenceType::Externref);
           case 'r': return LexKeyword(data, "externref", ValueType::Externref);
         }
         break;
-      case 'h': return LexKeyword(data, "rethrow", Opcode::Rethrow, Features::Exceptions);
-      case 'u':
+      case 'g':
+        switch (PeekChar(data, 3)) {
+          default: return LexKeyword(data, "get", TokenType::Get);
+          case '_':
+            switch (PeekChar(data, 9)) {
+              default: return LexKeyword(data, "get_local", TokenType::VarInstr, Opcode::LocalGet);
+              case 'l': return LexKeyword(data, "get_global", TokenType::VarInstr, Opcode::GlobalGet);
+            }
+            break;
+        }
+        break;
+      case 'l': return LexKeyword(data, "let", TokenType::LetInstr, Opcode::Let, Features::FunctionReferences);
+      case 'm': return LexKeyword(data, "mut", TokenType::Mut);
+      case 'r':
         switch (PeekChar(data, 6)) {
           default: return LexKeyword(data, "return", Opcode::Return);
           case '_':
             switch (PeekChar(data, 11)) {
               default: return LexKeyword(data, "return_call", TokenType::VarInstr, Opcode::ReturnCall, Features::TailCall);
-              case '_': return LexKeyword(data, "return_call_indirect", TokenType::CallIndirectInstr, Opcode::ReturnCallIndirect, Features::TailCall);
+              case '_':
+                switch (PeekChar(data, 15)) {
+                  default: return LexKeyword(data, "return_call_ref", Opcode::ReturnCallRef, Features::FunctionReferences);
+                  case 'i': return LexKeyword(data, "return_call_indirect", TokenType::CallIndirectInstr, Opcode::ReturnCallIndirect, Features::TailCall);
+                }
+                break;
             }
             break;
+          case 'w': return LexKeyword(data, "rethrow", Opcode::Rethrow, Features::Exceptions);
         }
         break;
+      case 's':
+        switch (PeekChar(data, 9)) {
+          default: return LexKeyword(data, "set_local", TokenType::VarInstr, Opcode::LocalSet);
+          case 'l': return LexKeyword(data, "set_global", TokenType::VarInstr, Opcode::GlobalSet);
+        }
+        break;
+      default: break;
     }
     break;
   case 'v': return LexKeyword(data, "invoke", TokenType::Invoke);

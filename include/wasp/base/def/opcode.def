@@ -198,6 +198,14 @@ WASP_FEATURE_V(0x00, 0x0a, BrOnExn, "br_on_exn", exceptions)
 WASP_FEATURE_V(0x00, 0x12, ReturnCall, "return_call", tail_call)
 WASP_FEATURE_V(0x00, 0x13, ReturnCallIndirect, "return_call_indirect", tail_call)
 
+// Function references opcodes
+WASP_FEATURE_V(0x00, 0x14, CallRef, "call_ref", function_references)
+WASP_FEATURE_V(0x00, 0x15, ReturnCallRef, "return_call_ref", function_references)
+WASP_FEATURE_V(0x00, 0x16, FuncBind, "func.bind", function_references)
+WASP_FEATURE_V(0x00, 0x17, Let, "let", function_references)
+WASP_FEATURE_V(0x00, 0xd3, RefAsNonNull, "ref.as_non_null", function_references)
+WASP_FEATURE_V(0x00, 0xd4, BrOnNull, "br_on_null", function_references)
+
 // Reference type opcodes
 WASP_FEATURE_V(0x00, 0x1c, SelectT, "select", reference_types)
 WASP_FEATURE_V(0x00, 0x25, TableGet, "table.get", reference_types)

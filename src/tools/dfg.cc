@@ -959,6 +959,16 @@ void Tool::DoInstruction(const Instruction& instr) {
       // TODO
       assert(false);
       break;
+
+    case Opcode::CallRef:
+    case Opcode::ReturnCallRef:
+    case Opcode::FuncBind:
+    case Opcode::Let:
+    case Opcode::RefAsNonNull:
+    case Opcode::BrOnNull:
+      // TODO
+      assert(false);
+      break;
   }
 }
 

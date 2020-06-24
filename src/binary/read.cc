@@ -1066,6 +1066,16 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
       WASP_TRY_READ(lane, Read<u8>(data, context));
       return MakeAt(guard.range(data), Instruction{opcode, lane});
     }
+
+    case Opcode::CallRef:
+    case Opcode::ReturnCallRef:
+    case Opcode::FuncBind:
+    case Opcode::Let:
+    case Opcode::RefAsNonNull:
+    case Opcode::BrOnNull:
+      // TODO
+      assert(false);
+      return nullopt;
   }
   WASP_UNREACHABLE();
 }

@@ -976,6 +976,16 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::F32X4ReplaceLane:
     case Opcode::F64X2ReplaceLane:
       return Write(instr.simd_lane_immediate(), out);
+
+    case Opcode::CallRef:
+    case Opcode::ReturnCallRef:
+    case Opcode::FuncBind:
+    case Opcode::Let:
+    case Opcode::RefAsNonNull:
+    case Opcode::BrOnNull:
+      // TODO
+      assert(false);
+      break;
   }
   WASP_UNREACHABLE();
 }

@@ -9,10 +9,12 @@ binary, TokenType::Binary
 block, TokenType::BlockInstr, Opcode::Block
 br_if, TokenType::VarInstr, Opcode::BrIf
 br_on_exn, TokenType::BrOnExnInstr, Opcode::BrOnExn, Features::Exceptions
+br_on_null, TokenType::VarInstr, Opcode::BrOnNull, Features::FunctionReferences
 br_table, TokenType::BrTableInstr, Opcode::BrTable
 br, TokenType::VarInstr, Opcode::Br
 call_indirect, TokenType::CallIndirectInstr, Opcode::CallIndirect
 call, TokenType::VarInstr, Opcode::Call
+call_ref, Opcode::CallRef, Features::FunctionReferences
 catch, TokenType::Catch, Opcode::Catch
 data.drop, TokenType::VarInstr, Opcode::DataDrop, Features::BulkMemory
 data, TokenType::Data
@@ -130,6 +132,7 @@ f64x2.sub, Opcode::F64X2Sub, Features::Simd
 f64x2, TokenType::F64X2
 funcref, ValueType::Funcref
 func, TokenType::Func, ReferenceType::Funcref
+func.bind, TokenType::VarInstr, Opcode::FuncBind, Features::FunctionReferences
 get, TokenType::Get
 global.get, TokenType::VarInstr, Opcode::GlobalGet
 global.set, TokenType::VarInstr, Opcode::GlobalSet
@@ -435,6 +438,7 @@ import, TokenType::Import
 inf, TokenType::Float, LiteralKind::Infinity
 invoke, TokenType::Invoke
 item, TokenType::Item
+let, TokenType::LetInstr, Opcode::Let, Features::FunctionReferences
 local.get, TokenType::VarInstr, Opcode::LocalGet
 local.set, TokenType::VarInstr, Opcode::LocalSet
 local.tee, TokenType::VarInstr, Opcode::LocalTee
@@ -456,10 +460,13 @@ nan:0x, TokenType::Float, LiteralKind::NanPayload
 nan:arithmetic, TokenType::NanArithmetic
 nan:canonical, TokenType::NanCanonical
 nop, Opcode::Nop
+null, TokenType::Null
 offset, TokenType::Offset
 offset=, TokenType::OffsetEqNat
 param, TokenType::Param
 quote, TokenType::Quote
+ref, TokenType::Ref
+ref.as_non_null, Opcode::RefAsNonNull, Features::FunctionReferences
 ref.extern, TokenType::RefExtern
 ref.func, TokenType::RefFuncInstr, Opcode::RefFunc, Features::ReferenceTypes
 ref.is_null, Opcode::RefIsNull, Features::ReferenceTypes
@@ -469,6 +476,7 @@ result, TokenType::Result
 rethrow, Opcode::Rethrow, Features::Exceptions
 return_call_indirect, TokenType::CallIndirectInstr, Opcode::ReturnCallIndirect, Features::TailCall
 return_call, TokenType::VarInstr, Opcode::ReturnCall, Features::TailCall
+return_call_ref, Opcode::ReturnCallRef, Features::FunctionReferences
 return, Opcode::Return
 select, TokenType::SelectInstr, Opcode::Select
 shared, TokenType::Shared
