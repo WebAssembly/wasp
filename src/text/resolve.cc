@@ -32,13 +32,13 @@ void Resolve(Context& context, NameMap& name_map, At<Var>& var) {
   }
 
   auto name = var->name();
-  if (!name_map.Has(name)) {
+  auto opt_index = name_map.Get(name);
+  if (!opt_index) {
     context.errors.OnError(var.loc(), format("Undefined variable {}", name));
     return;
   }
 
-  // TODO: Check for existence and get value at the same time?
-  var->desc = name_map.Get(name);
+  var->desc = *opt_index;
 }
 
 void Resolve(Context& context, NameMap& name_map, OptAt<Var>& var) {
@@ -221,12 +221,8 @@ void Resolve(Context& context, Instruction& instruction) {
     case 7: { // BlockImmediate
       auto& immediate = instruction.block_immediate();
       // TODO: share w/ code in read.cc
-      if (immediate->label) {
-        context.label_names.ReplaceBound(*immediate->label);
-      } else {
-        context.label_names.NewUnbound();
-      }
-      context.label_name_stack.push_back(immediate->label);
+      context.label_names.Push();
+      context.label_names.New(immediate->label);
       return Resolve(context, *immediate);
     }
 

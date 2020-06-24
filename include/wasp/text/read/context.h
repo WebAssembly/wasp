@@ -18,10 +18,10 @@
 #define WASP_TEXT_READ_CONTEXT_H_
 
 #include "wasp/base/features.h"
-#include "wasp/base/hashmap.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
+#include "wasp/text/read/name_map.h"
 #include "wasp/text/types.h"
 
 namespace wasp {
@@ -29,34 +29,6 @@ namespace wasp {
 class Errors;
 
 namespace text {
-
-enum class NameMapKind {
-  Forward,  // The oldest object has the lowest index (e.g. Functions).
-  Reverse,  // The most recent object has the lowest index (e.g. Labels).
-};
-
-struct NameMap {
-  using Map = flat_hash_map<BindVar, Index>;
-
-  explicit NameMap(NameMapKind = NameMapKind::Forward);
-
-  void Reset();
-  void NewUnbound();
-  void NewBound(BindVar);
-  void ReplaceBound(BindVar);
-  void New(OptAt<BindVar>);
-  void PopBack(OptAt<BindVar>);
-
-  bool Has(BindVar) const;
-  Index Get(BindVar) const;
-
- private:
-  Map map_;
-  Index next_index_ = 0;
-  NameMapKind kind_;
-};
-
-using LabelNameStack = std::vector<OptAt<BindVar>>;
 
 using TypeEntryList = std::vector<TypeEntry>;
 
@@ -130,8 +102,7 @@ struct Context {
 
   // Function context.
   NameMap local_names;  // Includes params.
-  NameMap label_names{NameMapKind::Reverse};
-  LabelNameStack label_name_stack;
+  NameMap label_names;
 };
 
 }  // namespace text

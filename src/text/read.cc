@@ -1393,13 +1393,11 @@ auto ReadLabelOpt(Tokenizer& tokenizer, Context& context) -> OptAt<BindVar> {
   auto token_opt = tokenizer.Match(TokenType::Id);
   if (!token_opt) {
     context.label_names.NewUnbound();
-    context.label_name_stack.push_back(nullopt);
     return nullopt;
   }
 
   BindVar bind_var{token_opt->as_string_view()};
-  context.label_names.ReplaceBound(bind_var);
-  context.label_name_stack.push_back(bind_var);
+  context.label_names.NewBound(bind_var);
   return MakeAt(token_opt->loc, bind_var);
 }
 
@@ -1426,6 +1424,7 @@ bool ReadEndLabelOpt(Tokenizer& tokenizer,
 auto ReadBlockImmediate(Tokenizer& tokenizer, Context& context)
     -> OptAt<BlockImmediate> {
   LocationGuard guard{tokenizer};
+  context.label_names.Push();
   auto label = ReadLabelOpt(tokenizer, context);
 
   // Don't use ReadFunctionTypeUse, since that always marks the type signature

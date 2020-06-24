@@ -48,71 +48,14 @@ void Context::BeginModule() {
 void Context::BeginFunction() {
   local_names.Reset();
   label_names.Reset();
-  label_name_stack.clear();
 }
 
 void Context::EndBlock() {
-  assert(!label_name_stack.empty());
-  label_names.PopBack(label_name_stack.back());
-  label_name_stack.pop_back();
+  label_names.Pop();
 }
 
 auto Context::EndModule() -> TypeEntryList {
   return function_type_map.EndModule();
-}
-
-NameMap::NameMap(NameMapKind kind) : kind_{kind} {}
-
-void NameMap::Reset() {
-  map_.clear();
-  next_index_ = 0;
-}
-
-void NameMap::NewUnbound() {
-  next_index_++;
-}
-
-void NameMap::NewBound(BindVar var) {
-  assert(!Has(var));
-  map_.emplace(var, next_index_++);
-}
-
-void NameMap::ReplaceBound(BindVar var) {
-  map_.emplace(var, next_index_++);
-}
-
-void NameMap::New(OptAt<BindVar> var) {
-  if (var) {
-    NewBound(*var);
-  } else {
-    NewUnbound();
-  }
-}
-
-void NameMap::PopBack(OptAt<BindVar> var) {
-  if (var) {
-    map_.erase(*var);
-  }
-  next_index_--;
-}
-
-bool NameMap::Has(BindVar var) const {
-  return map_.find(var) != map_.end();
-}
-
-Index NameMap::Get(BindVar var) const {
-  auto iter = map_.find(var);
-  assert(iter != map_.end());
-  switch (kind_) {
-    case NameMapKind::Forward:
-      return iter->second;
-
-    case NameMapKind::Reverse:
-      return next_index_ - iter->second - 1;
-
-    default:
-      WASP_UNREACHABLE();
-  }
 }
 
 void FunctionTypeMap::BeginModule() {

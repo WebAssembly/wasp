@@ -140,6 +140,7 @@ TEST_F(TextResolveTest, BlockImmediate_InlineType) {
 }
 
 TEST_F(TextResolveTest, BrOnExnImmediate) {
+  context.label_names.Push();
   context.label_names.NewBound("$l");
   context.event_names.NewBound("$e");
 
@@ -148,9 +149,13 @@ TEST_F(TextResolveTest, BrOnExnImmediate) {
 }
 
 TEST_F(TextResolveTest, BrTableImmediate) {
+  context.label_names.Push();
   context.label_names.NewBound("$l0");
+  context.label_names.Push();
   context.label_names.NewBound("$l1");
+  context.label_names.Push();
   context.label_names.NewUnbound();
+  context.label_names.Push();
   context.label_names.NewBound("$l3");
 
   OK(BrTableImmediate{{
@@ -228,6 +233,7 @@ TEST_F(TextResolveTest, Instruction_BlockImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_BrOnExnImmediate) {
+  context.label_names.Push();
   context.label_names.NewBound("$l");
   context.event_names.NewBound("$e");
 
@@ -236,7 +242,9 @@ TEST_F(TextResolveTest, Instruction_BrOnExnImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_BrTableImmediate) {
+  context.label_names.Push();
   context.label_names.NewBound("$l0");
+  context.label_names.Push();
   context.label_names.NewBound("$l1");
 
   OK(I{O::BrTable, BrTableImmediate{{Var{Index{1}}}, Var{Index{0}}}},
@@ -343,6 +351,7 @@ TEST_F(TextResolveTest, Instruction_Var_Data) {
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Label) {
+  context.label_names.Push();
   context.label_names.NewBound("$l");
 
   OK(I{O::BrIf, Var{Index{0}}}, I{O::BrIf, Var{"$l"_sv}});
@@ -398,6 +407,28 @@ TEST_F(TextResolveTest, InstructionList_LabelReuse) {
           I{O::Block, BlockImmediate{"$l0"_sv, {}}},
           I{O::Br, Var{"$l0"_sv}},
           I{O::End},
+          I{O::End},
+      });
+}
+
+TEST_F(TextResolveTest, InstructionList_LabelDuplicate) {
+  context.function_type_map.Define(BoundFunctionType{});
+
+  OK(
+      InstructionList{
+          I{O::Block, BlockImmediate{"$l"_sv, {}}},
+          I{O::Block, BlockImmediate{"$l"_sv, {}}},
+          I{O::Br, Var{Index{0}}},
+          I{O::End},
+          I{O::Br, Var{Index{0}}},
+          I{O::End},
+      },
+      InstructionList{
+          I{O::Block, BlockImmediate{"$l"_sv, {}}},
+          I{O::Block, BlockImmediate{"$l"_sv, {}}},
+          I{O::Br, Var{"$l"_sv}},
+          I{O::End},
+          I{O::Br, Var{"$l"_sv}},
           I{O::End},
       });
 }

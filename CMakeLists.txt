@@ -91,6 +91,7 @@ add_library(wasplib
   src/text/context.cc
   src/text/desugar.cc
   src/text/lex.cc
+  src/text/name_map.cc
   src/text/numeric.cc
   src/text/print_to.cc
   src/text/read.cc
@@ -157,6 +158,7 @@ add_executable(wasp_unittests
   test/text/desugar_test.cc
   test/text/formatters_test.cc
   test/text/lex_test.cc
+  test/text/name_map_test.cc
   test/text/numeric_test.cc
   test/text/read_test.cc
   test/text/read_script_test.cc
