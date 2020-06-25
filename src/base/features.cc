@@ -39,6 +39,9 @@ void Features::EnableAll() {
 }
 
 void Features::UpdateDependencies(){
+  if (bits_ & (FunctionReferences | Exceptions)) {
+    bits_ |= ReferenceTypes;
+  }
   if (bits_ & ReferenceTypes) {
     bits_ |= BulkMemory;
   }

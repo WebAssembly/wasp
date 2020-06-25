@@ -110,6 +110,8 @@ int main(int argc, char** argv) {
 
   std::vector<std::pair<std::string, Features::Bits>> directory_feature_map = {
       {"bulk-memory-operations", Features::BulkMemory},
+      {"exception-handling", Features::Exceptions},
+      {"function-references", Features::FunctionReferences},
       {"mutable-global", Features::MutableGlobals},
       {"reference-types", Features::ReferenceTypes},
       {"simd", Features::Simd},
