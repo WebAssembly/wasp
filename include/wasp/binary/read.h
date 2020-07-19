@@ -100,6 +100,7 @@ auto Read(SpanU8*, Context&, Tag<Function>) -> OptAt<Function>;
 auto Read(SpanU8*, Context&, Tag<FunctionType>) -> OptAt<FunctionType>;
 auto Read(SpanU8*, Context&, Tag<Global>) -> OptAt<Global>;
 auto Read(SpanU8*, Context&, Tag<GlobalType>) -> OptAt<GlobalType>;
+auto Read(SpanU8*, Context&, Tag<HeapType>) -> OptAt<HeapType>;
 auto Read(SpanU8*, Context&, Tag<Import>) -> OptAt<Import>;
 auto Read(SpanU8*, Context&, Tag<InitImmediate>, BulkImmediateKind)
     -> OptAt<InitImmediate>;

@@ -198,7 +198,7 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> OptAt<Const> {
         return nullopt;
       }
       tokenizer.Read();
-      WASP_TRY_READ(type, ReadReferenceKind(tokenizer, context));
+      WASP_TRY_READ(type, ReadHeapType(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
       return MakeAt(guard.loc(), Const{RefNullConst{type}});
     }
@@ -449,7 +449,7 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
         return nullopt;
       }
       tokenizer.Read();
-      WASP_TRY_READ(type, ReadReferenceKind(tokenizer, context));
+      WASP_TRY_READ(type, ReadHeapType(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
       return MakeAt(guard.loc(), ReturnResult{RefNullConst{type}});
     }

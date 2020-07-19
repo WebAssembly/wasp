@@ -41,8 +41,6 @@ enum class LabelType {
   Catch,
 };
 
-using ValueTypeSpan = span<const ValueType>;
-
 struct Label {
   Label(LabelType,
         StackTypeSpan param_types,
@@ -68,26 +66,26 @@ struct Context {
   void Reset();
 
   Index GetLocalCount() const;
-  optional<ValueType> GetLocalType(Index) const;
-  bool AppendLocals(Index count, ValueType);
-  bool AppendLocals(const ValueTypeList&);
+  optional<binary::ValueType> GetLocalType(Index) const;
+  bool AppendLocals(Index count, binary::ValueType);
+  bool AppendLocals(const binary::ValueTypeList&);
 
   Features features;
   Errors* errors;
 
   std::vector<binary::TypeEntry> types;
   std::vector<binary::Function> functions;
-  std::vector<TableType> tables;
+  std::vector<binary::TableType> tables;
   std::vector<MemoryType> memories;
-  std::vector<GlobalType> globals;
+  std::vector<binary::GlobalType> globals;
   std::vector<binary::EventType> events;
-  std::vector<ReferenceType> element_segments;
+  std::vector<binary::ReferenceType> element_segments;
   Index imported_function_count = 0;
   Index imported_global_count = 0;
   optional<Index> declared_data_count;
   Index code_count = 0;
   std::vector<Index> locals_partial_sum;
-  ValueTypeList locals;
+  binary::ValueTypeList locals;
   StackTypeList type_stack;
   std::vector<Label> label_stack;
   std::set<string_view> export_names;

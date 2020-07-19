@@ -161,9 +161,8 @@ TEST_F(TextReadScriptTest, Const_reference_types) {
 
   context.features.enable_reference_types();
 
-  OK(ReadConst, Const{RefNullConst{ReferenceType::Funcref}},
-     "(ref.null func)"_su8);
-  OK(ReadConst, Const{RefNullConst{ReferenceType::Externref}},
+  OK(ReadConst, Const{RefNullConst{HeapType::Func()}}, "(ref.null func)"_su8);
+  OK(ReadConst, Const{RefNullConst{HeapType::Extern()}},
      "(ref.null extern)"_su8);
   OK(ReadConst, Const{RefExternConst{MakeAt("0"_su8, u32{0})}},
      "(ref.extern 0)"_su8);
@@ -354,9 +353,9 @@ TEST_F(TextReadScriptTest, ReturnResult_reference_types) {
 
   context.features.enable_reference_types();
 
-  OK(ReadReturnResult, ReturnResult{RefNullConst{ReferenceType::Funcref}},
+  OK(ReadReturnResult, ReturnResult{RefNullConst{HeapType::Func()}},
      "(ref.null func)"_su8);
-  OK(ReadReturnResult, ReturnResult{RefNullConst{ReferenceType::Externref}},
+  OK(ReadReturnResult, ReturnResult{RefNullConst{HeapType::Extern()}},
      "(ref.null extern)"_su8);
   OK(ReadReturnResult, ReturnResult{RefExternConst{MakeAt("0"_su8, u32{0})}},
      "(ref.extern 0)"_su8);

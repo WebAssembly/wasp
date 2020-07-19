@@ -24,7 +24,7 @@
 
 namespace fmt {
 
-WASP_DECLARE_FORMATTER(valid::StackType);
+WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_FORMATTER)
 
 }  // namespace fmt
 

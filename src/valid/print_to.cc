@@ -1,5 +1,5 @@
 //
-// Copyright 2019 WebAssembly Community Group participants
+// Copyright 2020 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,11 +14,16 @@
 // limitations under the License.
 //
 
-WASP_V(0x7f, I32, "i32")
-WASP_V(0x7e, I64, "i64")
-WASP_V(0x7d, F32, "f32")
-WASP_V(0x7c, F64, "f64")
-WASP_FEATURE_V(0x7b, V128, "v128", simd)
-WASP_FEATURE_V(0x70, Funcref, "funcref", reference_types)
-WASP_FEATURE_V(0x6f, Externref, "externref", reference_types)
-WASP_FEATURE_V(0x68, Exnref, "exnref", exceptions)
+#include <iostream>
+
+#include "wasp/base/print_to_macros.h"
+#include "wasp/valid/formatters.h"
+#include "wasp/valid/types.h"
+
+namespace wasp {
+namespace valid {
+
+WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_DEFINE_PRINT_TO)
+
+}  // namespace valid
+}  // namespace wasp

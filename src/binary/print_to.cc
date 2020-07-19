@@ -24,7 +24,7 @@ namespace wasp {
 namespace binary {
 
 WASP_BINARY_ENUMS(WASP_DEFINE_PRINT_TO)
-WASP_BINARY_STRUCTS(WASP_DEFINE_PRINT_TO)
+WASP_BINARY_STRUCTS_CUSTOM_FORMAT(WASP_DEFINE_PRINT_TO)
 
 }  // namespace binary
 }  // namespace wasp

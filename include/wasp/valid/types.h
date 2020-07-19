@@ -27,53 +27,60 @@
 namespace wasp {
 namespace valid {
 
-enum class StackType : s32 {
-#define WASP_V(val, Name, str) Name = val,
-#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/valid/stack_type.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
+struct Any {};
+
+struct StackType {
+  explicit StackType();
+  explicit StackType(binary::ValueType);
+  explicit StackType(Any);
+  static StackType I32();
+  static StackType I64();
+  static StackType F32();
+  static StackType F64();
+  static StackType V128();
+  static StackType Funcref();
+  static StackType Externref();
+  static StackType Exnref();
+
+  bool is_value_type() const;
+  bool is_any() const;
+
+  auto value_type() -> binary::ValueType&;
+  auto value_type() const -> const binary::ValueType&;
+
+  variant<binary::ValueType, Any> type;
 };
 
 using StackTypeList = std::vector<StackType>;
 using StackTypeSpan = span<const StackType>;
 
-inline ValueType ToValueType(ReferenceType type) {
-  return ValueType(u8(type));
-}
+binary::ValueType ToValueType(binary::ReferenceType);
+binary::ValueType ToValueType(binary::HeapType);
+StackType ToStackType(binary::ValueType);
+StackType ToStackType(binary::ReferenceType);
+StackType ToStackType(binary::HeapType);
+StackTypeList ToStackTypeList(const binary::ValueTypeList&);
+bool IsReferenceTypeOrAny(StackType);
+binary::ReferenceType Canonicalize(binary::ReferenceType);
 
-inline StackType ToStackType(ValueType type) {
-  return StackType(s32(type));
-}
+#define WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_V) \
+  WASP_V(valid::Any, 0)            \
+  WASP_V(valid::StackType, 1, type)
 
-inline StackType ToStackType(ReferenceType type) {
-  return ToStackType(ToValueType(type));
-}
+#define WASP_VALID_CONTAINERS(WASP_V) \
+  WASP_V(valid::StackTypeList)        \
+  WASP_V(valid::StackTypeSpan)
 
-inline StackTypeList ToStackTypeList(const ValueTypeList& value_types) {
-  StackTypeList result;
-  for (auto value_type : value_types) {
-    result.push_back(ToStackType(*value_type));
-  }
-  return result;
-}
+WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_OPERATOR_EQ_NE)
+WASP_VALID_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 
-inline bool IsReferenceType(StackType type) {
-  switch (type) {
-#define WASP_V(val, Name, str) case StackType::Name: return true;
-#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/base/def/reference_type.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-    case StackType::Any:
-      return true;
+WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_PRINT_TO)
 
-    default:
-      return false;
-  }
-}
 
 }  // namespace valid
 }  // namespace wasp
+
+WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_STD_HASH)
+WASP_VALID_CONTAINERS(WASP_DECLARE_STD_HASH)
 
 #endif // WASP_VALID_TYPES_H_

@@ -85,6 +85,8 @@ add_library(wasplib
   src/convert/to_binary.cc
   src/valid/context.cc
   src/valid/formatters.cc
+  src/valid/print_to.cc
+  src/valid/types.cc
   src/valid/validate.cc
   src/valid/validate_instruction.cc
   src/valid/validate_visitor.cc
@@ -191,26 +193,29 @@ target_link_libraries(run_spec_tests
   ${filesystem_lib}
 )
 
-add_executable(wasp_sqlite
-  src/tools/argparser.cc
-  src/tools/binary_errors.cc
-  src/tools/wasp_sqlite.cc
-  third_party/sqlite/sqlite3.c
-)
-
-set(sqlite_flags "-Wno-implicit-fallthrough")
-if (CMAKE_C_COMPILER_ID MATCHES "GNU")
-  set(sqlite_flags "${sqlite_flags} -Wno-cast-function-type")
-endif ()
-
-set_source_files_properties(
-  third_party/sqlite/sqlite3.c
-  PROPERTIES
-  COMPILE_FLAGS "${sqlite_flags}"
-)
-
-target_link_libraries(wasp_sqlite
-  wasplib
-  dl
-  pthread
-)
+# TODO: Remove wasp_sqlite; it's an interesting experiment, but probably
+# shouldn't be contained in the core wasp repo.
+#
+# add_executable(wasp_sqlite
+#   src/tools/argparser.cc
+#   src/tools/binary_errors.cc
+#   src/tools/wasp_sqlite.cc
+#   third_party/sqlite/sqlite3.c
+# )
+# 
+# set(sqlite_flags "-Wno-implicit-fallthrough")
+# if (CMAKE_C_COMPILER_ID MATCHES "GNU")
+#   set(sqlite_flags "${sqlite_flags} -Wno-cast-function-type")
+# endif ()
+# 
+# set_source_files_properties(
+#   third_party/sqlite/sqlite3.c
+#   PROPERTIES
+#   COMPILE_FLAGS "${sqlite_flags}"
+# )
+# 
+# target_link_libraries(wasp_sqlite
+#   wasplib
+#   dl
+#   pthread
+# )

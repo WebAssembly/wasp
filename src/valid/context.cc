@@ -50,7 +50,7 @@ Index Context::GetLocalCount() const {
   return locals_partial_sum.empty() ? 0 : locals_partial_sum.back();
 }
 
-optional<ValueType> Context::GetLocalType(Index index) const {
+optional<binary::ValueType> Context::GetLocalType(Index index) const {
   const auto iter = std::upper_bound(locals_partial_sum.begin(),
                                      locals_partial_sum.end(), index);
   if (iter == locals_partial_sum.end()) {
@@ -59,7 +59,7 @@ optional<ValueType> Context::GetLocalType(Index index) const {
   return locals[iter - locals_partial_sum.begin()];
 }
 
-bool Context::AppendLocals(Index count, ValueType value_type) {
+bool Context::AppendLocals(Index count, binary::ValueType value_type) {
   if (count > 0) {
     const Index max = std::numeric_limits<Index>::max();
     const auto old_count = GetLocalCount();
@@ -73,13 +73,13 @@ bool Context::AppendLocals(Index count, ValueType value_type) {
   return true;
 }
 
-bool Context::AppendLocals(const ValueTypeList& value_types) {
+bool Context::AppendLocals(const binary::ValueTypeList& value_types) {
   if (value_types.empty()) {
     return true;
   }
 
   size_t last_index = 0;
-  ValueType last_type = value_types[0];
+  binary::ValueType last_type = value_types[0];
   for (size_t i = 1; i < value_types.size(); ++i) {
     if (value_types[i] != last_type) {
       if (!AppendLocals(i - last_index, last_type)) {

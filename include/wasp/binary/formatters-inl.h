@@ -16,33 +16,97 @@
 
 #include "wasp/binary/formatters.h"
 
+#include <cassert>
+
 #include "wasp/base/formatters.h"
 #include "wasp/base/macros.h"
 
+namespace wasp {
+
+WASP_DEFINE_VARIANT_NAME(binary::ValueType, "value_type")
+
+}  // namespace wasp
+
 namespace fmt {
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::HeapType>::format(
+    const ::wasp::binary::HeapType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  if (self.is_heap_kind()) {
+    format_to(buf, "{}", self.heap_kind());
+  } else {
+    assert(self.is_index());
+    format_to(buf, "{}", self.index());
+  }
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::RefType>::format(
+    const ::wasp::binary::RefType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "ref ");
+  if (self.null == ::wasp::Null::Yes) {
+    format_to(buf, "null ");
+  }
+  format_to(buf, "{}", self.heap_type);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::ReferenceType>::format(
+    const ::wasp::binary::ReferenceType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  if (self.is_reference_kind()) {
+    format_to(buf, "{}", self.reference_kind());
+  } else {
+    assert(self.is_ref());
+    format_to(buf, "{}", self.ref());
+  }
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::ValueType>::format(
+    const ::wasp::binary::ValueType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  if (self.is_numeric_type()) {
+    format_to(buf, "{}", self.numeric_type());
+  } else {
+    assert(self.is_reference_type());
+    format_to(buf, "{}", self.reference_type());
+  }
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::VoidType>::format(
+    const ::wasp::binary::VoidType& self,
+    Ctx& ctx) {
+  return formatter<string_view>::format("void", ctx);
+}
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::BlockType>::format(
     const ::wasp::binary::BlockType& self,
     Ctx& ctx) {
-  string_view result;
-  switch (self) {
-#define WASP_V(val, Name, str, ...)     \
-  case ::wasp::binary::BlockType::Name: \
-    result = "[" str "]";               \
-    break;
-#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/def/block_type.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-    default:
-      // Block types that are indexes in the type section.
-      memory_buffer buf;
-      format_to(buf, "type[{}]", static_cast<::wasp::s32>(self));
-      return formatter<string_view>::format(to_string_view(buf), ctx);
+  memory_buffer buf;
+  if (self.is_value_type()) {
+    format_to(buf, "[{}]", self.value_type());
+  } else if (self.is_void()) {
+    format_to(buf, "[]");
+  } else {
+    assert(self.is_index());
+    format_to(buf, "type[{}]", self.index());
   }
-  return formatter<string_view>::format(result, ctx);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
+
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::binary::SectionId>::format(
@@ -143,6 +207,24 @@ typename Ctx::iterator formatter<::wasp::binary::FunctionType>::format(
     Ctx& ctx) {
   memory_buffer buf;
   format_to(buf, "{} -> {}", self.param_types, self.result_types);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::TableType>::format(
+    const ::wasp::binary::TableType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.limits, self.elemtype);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::binary::GlobalType>::format(
+    const ::wasp::binary::GlobalType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.mut, self.valtype);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
@@ -296,7 +378,7 @@ typename Ctx::iterator formatter<::wasp::binary::Instruction>::format(
     case 12: format_to(buf, " {}", self.init_immediate()); break;
     case 13: format_to(buf, " {}", self.let_immediate()); break;
     case 14: format_to(buf, " {}", self.mem_arg_immediate()); break;
-    case 15: format_to(buf, " {}", self.reference_type_immediate()); break;
+    case 15: format_to(buf, " {}", self.heap_type_immediate()); break;
     case 16: format_to(buf, " {}", self.select_immediate()); break;
     case 17: format_to(buf, " {}", self.shuffle_immediate()); break;
     case 18: format_to(buf, " {}", self.simd_lane_immediate()); break;

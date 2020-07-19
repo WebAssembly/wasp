@@ -18,10 +18,9 @@
 #define WASP_VALID_VALIDATE_H_
 
 #include "wasp/base/types.h"
-#include "wasp/binary/types.h"
+#include "wasp/valid/types.h"
 
 namespace wasp {
-
 namespace valid {
 
 enum class ConstantExpressionKind {
@@ -33,26 +32,32 @@ struct Context;
 
 bool BeginCode(Context&, Location loc);
 
+bool TypesMatch(binary::ValueType expected, binary::ValueType actual);
+bool TypesMatch(StackType expected, StackType actual);
+bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual);
+
 bool Validate(Context&, const At<binary::DataSegment>&);
 bool Validate(Context&,
               const At<binary::ConstantExpression>&,
               ConstantExpressionKind kind,
-              ValueType expected_type,
+              binary::ValueType expected_type,
               Index max_global_index);
 bool Validate(Context&, const At<binary::DataCount>&);
 bool Validate(Context&, const At<binary::DataSegment>&);
-bool Validate(Context&, const At<binary::ElementExpression>&, ReferenceType);
+bool Validate(Context&,
+              const At<binary::ElementExpression>&,
+              binary::ReferenceType);
 bool Validate(Context&, const At<binary::ElementSegment>&);
 bool Validate(Context&,
-              const At<ReferenceType>& actual,
-              ReferenceType expected);
+              const At<binary::ReferenceType>& actual,
+              binary::ReferenceType expected);
 bool Validate(Context&, const At<binary::Export>&);
 bool Validate(Context&, const At<binary::Event>&);
 bool Validate(Context&, const At<binary::EventType>&);
 bool Validate(Context&, const At<binary::Function>&);
 bool Validate(Context&, const At<binary::FunctionType>&);
 bool Validate(Context&, const At<binary::Global>&);
-bool Validate(Context&, const At<GlobalType>&);
+bool Validate(Context&, const At<binary::GlobalType>&);
 bool Validate(Context&, const At<binary::Import>&);
 bool ValidateIndex(Context&,
                    const At<Index>& index,
@@ -66,9 +71,11 @@ bool Validate(Context&, const At<binary::Memory>&);
 bool Validate(Context&, const At<MemoryType>&);
 bool Validate(Context&, const At<binary::Start>& value);
 bool Validate(Context&, const At<binary::Table>&);
-bool Validate(Context&, const At<TableType>&);
+bool Validate(Context&, const At<binary::TableType>&);
 bool Validate(Context&, const At<binary::TypeEntry>&);
-bool Validate(Context&, const At<ValueType>& actual, ValueType expected);
+bool Validate(Context&,
+              const At<binary::ValueType>& actual,
+              binary::ValueType expected);
 bool Validate(Context&, const At<binary::UnpackedCode>&);
 bool Validate(Context&, const At<binary::UnpackedExpression>&);
 

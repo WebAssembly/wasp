@@ -31,8 +31,8 @@ TEST(TextTypesTest, FunctionToImport) {
              BoundFunctionType{
                  {MakeAt("$a i32"_su8,
                          BoundValueType{"$a"_sv,
-                                        MakeAt("i32"_su8, ValueType::I32)})},
-                 {MakeAt("f32"_su8, ValueType::F32)}}),
+                                        MakeAt("i32"_su8, ValueType::I32())})},
+                 {MakeAt("f32"_su8, ValueType::F32())}}),
   };
 
   EXPECT_EQ(
@@ -72,7 +72,7 @@ TEST(TextTypesTest, TableToImport) {
       nullopt,
       MakeAt("1 funcref"_su8,
              TableType{MakeAt("1"_su8, Limits{MakeAt("1"_su8, u32{1})}),
-                       MakeAt("funcref"_su8, ReferenceType::Funcref)})};
+                       MakeAt("funcref"_su8, ReferenceType::Funcref())})};
 
   EXPECT_EQ(
       MakeAt("(import \"m\" \"n\")"_su8, Import{module, name, desc}),
@@ -89,7 +89,7 @@ TEST(TextTypesTest, TableToExports) {
       nullopt,
       MakeAt("1 funcref"_su8,
              TableType{MakeAt("1"_su8, Limits{MakeAt("1"_su8, u32{1})}),
-                       MakeAt("funcref"_su8, ReferenceType::Funcref)})};
+                       MakeAt("funcref"_su8, ReferenceType::Funcref())})};
   Index this_index = 13;
 
   EXPECT_EQ((ExportList{
@@ -117,7 +117,7 @@ TEST(TextTypesTest, TableToElementSegment) {
       nullopt,
       MakeAt("funcref"_su8,
              TableType{Limits{u32{2}},
-                       MakeAt("funcref"_su8, ReferenceType::Funcref)})};
+                       MakeAt("funcref"_su8, ReferenceType::Funcref())})};
   Index this_index = 13;
 
   EXPECT_EQ((ElementSegment{nullopt, Var{this_index},
@@ -183,7 +183,7 @@ TEST(TextTypesTest, GlobalToImport) {
   auto module = MakeAt("\"m\""_su8, Text{"\"m\"", 1});
   auto name = MakeAt("\"n\""_su8, Text{"\"n\"", 1});
   auto desc = GlobalDesc{
-      nullopt, MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
+      nullopt, MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32()),
                                             Mutability::Const})};
 
   EXPECT_EQ(
@@ -198,7 +198,7 @@ TEST(TextTypesTest, GlobalToExports) {
   auto name1 = MakeAt("\"e1\""_su8, Text{"\"e1\"", 1});
   auto name2 = MakeAt("\"e2\""_su8, Text{"\"e2\"", 1});
   auto desc = GlobalDesc{
-      nullopt, MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
+      nullopt, MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32()),
                                             Mutability::Const})};
   Index this_index = 13;
 

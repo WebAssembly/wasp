@@ -32,7 +32,6 @@ void ToBuffer(const TextList& text_list, Buffer& buffer) {
   }
 }
 
-
 bool Var::is_index() const {
   return holds_alternative<Index>(desc);
 }
@@ -57,6 +56,183 @@ auto Var::name() const -> const string_view& {
   return get<string_view>(desc);
 }
 
+HeapType::HeapType(HeapKind type) : type{type} {}
+
+HeapType::HeapType(Var type) : type{type} {}
+
+// static
+HeapType HeapType::Func() {
+  return HeapType{HeapKind::Func};
+}
+
+// static
+HeapType HeapType::Extern() {
+  return HeapType{HeapKind::Extern};
+}
+
+// static
+HeapType HeapType::Exn() {
+  return HeapType{HeapKind::Exn};
+}
+
+bool HeapType::is_heap_kind() const {
+  return holds_alternative<HeapKind>(type);
+}
+
+bool HeapType::is_func() const {
+  return is_heap_kind() && heap_kind() == HeapKind::Func;
+}
+
+bool HeapType::is_extern() const {
+  return is_heap_kind() && heap_kind() == HeapKind::Extern;
+}
+
+bool HeapType::is_exn() const {
+  return is_heap_kind() && heap_kind() == HeapKind::Exn;
+}
+
+bool HeapType::is_var() const {
+  return holds_alternative<Var>(type);
+}
+
+auto HeapType::heap_kind() -> HeapKind& {
+  return get<HeapKind>(type);
+}
+
+auto HeapType::heap_kind() const -> const HeapKind& {
+  return get<HeapKind>(type);
+}
+
+auto HeapType::var() -> Var& {
+  return get<Var>(type);
+}
+
+auto HeapType::var() const -> const Var& {
+  return get<Var>(type);
+}
+
+ReferenceType::ReferenceType(ReferenceKind type) : type{type} {}
+
+ReferenceType::ReferenceType(RefType type) : type{type} {}
+
+// static
+ReferenceType ReferenceType::Funcref() {
+  return ReferenceType{ReferenceKind::Funcref};
+}
+
+// static
+ReferenceType ReferenceType::Externref() {
+  return ReferenceType{ReferenceKind::Externref};
+}
+
+// static
+ReferenceType ReferenceType::Exnref() {
+  return ReferenceType{ReferenceKind::Exnref};
+}
+
+bool ReferenceType::is_reference_kind() const {
+  return holds_alternative<ReferenceKind>(type);
+}
+
+bool ReferenceType::is_funcref() const {
+  return is_reference_kind() && reference_kind() == ReferenceKind::Funcref;
+}
+
+bool ReferenceType::is_externref() const {
+  return is_reference_kind() && reference_kind() == ReferenceKind::Externref;
+}
+
+bool ReferenceType::is_exnref() const {
+  return is_reference_kind() && reference_kind() == ReferenceKind::Exnref;
+}
+
+bool ReferenceType::is_ref() const {
+  return holds_alternative<RefType>(type);
+}
+
+auto ReferenceType::reference_kind() -> ReferenceKind& {
+  return get<ReferenceKind>(type);
+}
+
+auto ReferenceType::reference_kind() const -> const ReferenceKind& {
+  return get<ReferenceKind>(type);
+}
+
+auto ReferenceType::ref() -> RefType& {
+  return get<RefType>(type);
+}
+
+auto ReferenceType::ref() const -> const RefType& {
+  return get<RefType>(type);
+}
+
+ValueType::ValueType(NumericType type) : type{type} {}
+
+ValueType::ValueType(ReferenceType type) : type{type} {}
+
+// static
+ValueType ValueType::I32() {
+  return ValueType{NumericType::I32};
+}
+
+// static
+ValueType ValueType::I64() {
+  return ValueType{NumericType::I64};
+}
+
+// static
+ValueType ValueType::F32() {
+  return ValueType{NumericType::F32};
+}
+
+// static
+ValueType ValueType::F64() {
+  return ValueType{NumericType::F64};
+}
+
+// static
+ValueType ValueType::V128() {
+  return ValueType{NumericType::V128};
+}
+
+// static
+ValueType ValueType::Funcref() {
+  return ValueType{ReferenceType::Funcref()};
+}
+
+// static
+ValueType ValueType::Externref() {
+  return ValueType{ReferenceType::Externref()};
+}
+
+// static
+ValueType ValueType::Exnref() {
+  return ValueType{ReferenceType::Exnref()};
+}
+
+bool ValueType::is_numeric_type() const {
+  return holds_alternative<NumericType>(type);
+}
+
+bool ValueType::is_reference_type() const {
+  return holds_alternative<ReferenceType>(type);
+}
+
+auto ValueType::numeric_type() -> NumericType& {
+  return get<NumericType>(type);
+}
+
+auto ValueType::numeric_type() const -> const NumericType& {
+  return get<NumericType>(type);
+}
+
+auto ValueType::reference_type() -> ReferenceType& {
+  return get<ReferenceType>(type);
+}
+
+auto ValueType::reference_type() const -> const ReferenceType& {
+  return get<ReferenceType>(type);
+}
 
 bool FunctionTypeUse::IsInlineType() const {
   return !type_use && type->params.empty() && type->results.size() <= 1;
@@ -130,7 +306,7 @@ Instruction::Instruction(At<Opcode> opcode, At<LetImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<MemArgImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
-Instruction::Instruction(At<Opcode> opcode, At<ReferenceType> immediate)
+Instruction::Instruction(At<Opcode> opcode, At<HeapType> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
 Instruction::Instruction(At<Opcode> opcode, At<SelectImmediate> immediate)
@@ -218,8 +394,8 @@ bool Instruction::has_mem_arg_immediate() const {
   return holds_alternative<At<MemArgImmediate>>(immediate);
 }
 
-bool Instruction::has_reference_type_immediate() const {
-  return holds_alternative<At<ReferenceType>>(immediate);
+bool Instruction::has_heap_type_immediate() const {
+  return holds_alternative<At<HeapType>>(immediate);
 }
 
 bool Instruction::has_select_immediate() const {
@@ -347,12 +523,12 @@ const At<MemArgImmediate>& Instruction::mem_arg_immediate() const {
   return get<At<MemArgImmediate>>(immediate);
 }
 
-At<ReferenceType>& Instruction::reference_type_immediate() {
-  return get<At<ReferenceType>>(immediate);
+At<HeapType>& Instruction::heap_type_immediate() {
+  return get<At<HeapType>>(immediate);
 }
 
-const At<ReferenceType>& Instruction::reference_type_immediate() const {
-  return get<At<ReferenceType>>(immediate);
+const At<HeapType>& Instruction::heap_type_immediate() const {
+  return get<At<HeapType>>(immediate);
 }
 
 At<SelectImmediate>& Instruction::select_immediate() {
@@ -957,11 +1133,8 @@ auto Command::assertion() const -> const Assertion& {
 
 
 WASP_TEXT_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
+WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_TEXT_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
-WASP_OPERATOR_EQ_NE_1(text::Var, desc)
-WASP_OPERATOR_EQ_NE_1(text::ModuleItem, desc)
-WASP_OPERATOR_EQ_NE_1(text::Const, value)
-WASP_OPERATOR_EQ_NE_1(text::Command, contents)
 
 bool operator==(const BoundValueTypeList& lhs, const ValueTypeList& rhs) {
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
@@ -976,8 +1149,5 @@ bool operator!=(const BoundValueTypeList& lhs, const ValueTypeList& rhs) {
 }  // namespace wasp
 
 WASP_TEXT_STRUCTS(WASP_STD_HASH_VARGS)
+WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_STD_HASH_VARGS)
 WASP_TEXT_CONTAINERS(WASP_STD_HASH_CONTAINER)
-WASP_STD_HASH_1(text::Var, desc)
-WASP_STD_HASH_1(text::ModuleItem, desc)
-WASP_STD_HASH_1(text::Const, value)
-WASP_STD_HASH_1(text::Command, contents)

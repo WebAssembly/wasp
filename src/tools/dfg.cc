@@ -312,37 +312,35 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
   // Add locals, initialized to 0.
   for (const auto& locals : code.locals) {
     for (Index i = 0; i < locals->count; ++i) {
-      switch (locals->type) {
-        case ValueType::I32:
-          PushValue(
-              NewValue(Instruction{MakeAt(Opcode::I32Const), MakeAt(s32{0})}));
-          break;
+      if (locals->type->is_numeric_type()) {
+        switch (locals->type->numeric_type()) {
+          case NumericType::I32:
+            PushValue(NewValue(
+                Instruction{MakeAt(Opcode::I32Const), MakeAt(s32{0})}));
+            break;
 
-        case ValueType::F32:
-          PushValue(
-              NewValue(Instruction{MakeAt(Opcode::F32Const), MakeAt(f32{0})}));
-          break;
+          case NumericType::F32:
+            PushValue(NewValue(
+                Instruction{MakeAt(Opcode::F32Const), MakeAt(f32{0})}));
+            break;
 
-        case ValueType::I64:
-          PushValue(
-              NewValue(Instruction{MakeAt(Opcode::I64Const), MakeAt(s64{0})}));
-          break;
+          case NumericType::I64:
+            PushValue(NewValue(
+                Instruction{MakeAt(Opcode::I64Const), MakeAt(s64{0})}));
+            break;
 
-        case ValueType::F64:
-          PushValue(
-              NewValue(Instruction{MakeAt(Opcode::F64Const), MakeAt(f64{0})}));
-          break;
+          case NumericType::F64:
+            PushValue(NewValue(
+                Instruction{MakeAt(Opcode::F64Const), MakeAt(f64{0})}));
+            break;
 
-        case ValueType::V128:
-          PushValue(
-              NewValue(Instruction{MakeAt(Opcode::V128Const), MakeAt(v128{})}));
-          break;
-
-        case ValueType::Externref:
-        case ValueType::Funcref:
-        case ValueType::Exnref:
-          PushValue(NewValue(Instruction{MakeAt(Opcode::RefNull)}));
-          break;
+          case NumericType::V128:
+            PushValue(NewValue(
+                Instruction{MakeAt(Opcode::V128Const), MakeAt(v128{})}));
+            break;
+        }
+      } else {
+        PushValue(NewValue(Instruction{MakeAt(Opcode::RefNull)}));
       }
     }
   }
@@ -974,7 +972,7 @@ void Tool::DoInstruction(const Instruction& instr) {
 
 // static
 size_t Tool::BlockTypeToValueCount(BlockType type) {
-  return type == BlockType::Void ? 0 : 1;
+  return type == BlockType::Void() ? 0 : 1;
 }
 
 void Tool::PushLabel(Opcode opcode, BBID br, BBID next) {

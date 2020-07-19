@@ -56,9 +56,9 @@ TEST(BinaryLazySectionTest, Type) {
           TypeEntry{MakeAt("\x00\x00"_su8, FunctionType{{}, {}})},
           TypeEntry{
               MakeAt("\x02\x7f\x7f\x01\x7f"_su8,
-                     FunctionType{{MakeAt("\x07f"_su8, ValueType::I32),
-                                   MakeAt("\x07f"_su8, ValueType::I32)},
-                                  {MakeAt("\x07f"_su8, ValueType::I32)}})},
+                     FunctionType{{MakeAt("\x07f"_su8, ValueType::I32()),
+                                   MakeAt("\x07f"_su8, ValueType::I32())},
+                                  {MakeAt("\x07f"_su8, ValueType::I32())}})},
       },
       sec);
   ExpectNoErrors(errors);
@@ -124,19 +124,20 @@ TEST(BinaryLazySectionTest, Table) {
               TableType{MakeAt("\x00\x01"_su8,
                                Limits{MakeAt("\x01"_su8, Index{1}), nullopt,
                                       MakeAt("\x00"_su8, Shared::No)}),
-                        MakeAt("\x70"_su8, ReferenceType::Funcref)})},
-          Table{MakeAt("\x70\x01\x00\x80\x01"_su8,
-                       TableType{MakeAt("\x01\x00\x80\x01"_su8,
-                                        Limits{MakeAt("\x00"_su8, u32{0}),
-                                               MakeAt("\x80\x01"_su8, u32{128}),
-                                               MakeAt("\x01"_su8, Shared::No)}),
-                                 MakeAt("\x70"_su8, ReferenceType::Funcref)})},
+                        MakeAt("\x70"_su8, ReferenceType::Funcref())})},
+          Table{
+              MakeAt("\x70\x01\x00\x80\x01"_su8,
+                     TableType{MakeAt("\x01\x00\x80\x01"_su8,
+                                      Limits{MakeAt("\x00"_su8, u32{0}),
+                                             MakeAt("\x80\x01"_su8, u32{128}),
+                                             MakeAt("\x01"_su8, Shared::No)}),
+                               MakeAt("\x70"_su8, ReferenceType::Funcref())})},
           Table{MakeAt(
               "\x70\x00\x00"_su8,
               TableType{MakeAt("\x00\x00"_su8,
                                Limits{MakeAt("\x00"_su8, u32{0}), nullopt,
                                       MakeAt("\x00"_su8, Shared::No)}),
-                        MakeAt("\x70"_su8, ReferenceType::Funcref)})},
+                        MakeAt("\x70"_su8, ReferenceType::Funcref())})},
       },
       sec);
   ExpectNoErrors(errors);
@@ -187,7 +188,7 @@ TEST(BinaryLazySectionTest, Global) {
   ExpectSection(
       {
           Global{MakeAt("\x7f\x01"_su8,
-                        GlobalType{MakeAt("\x7f"_su8, ValueType::I32),
+                        GlobalType{MakeAt("\x7f"_su8, ValueType::I32()),
                                    MakeAt("\x01"_su8, Mutability::Var)}),
                  MakeAt("\x41\x00\x0b"_su8,
                         ConstantExpression{MakeAt(
@@ -195,7 +196,7 @@ TEST(BinaryLazySectionTest, Global) {
                             Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
                                         MakeAt("\x00"_su8, s32{0})})})},
           Global{MakeAt("\x7e\x00"_su8,
-                        GlobalType{MakeAt("\x7e"_su8, ValueType::I64),
+                        GlobalType{MakeAt("\x7e"_su8, ValueType::I64()),
                                    MakeAt("\x00"_su8, Mutability::Const)}),
                  MakeAt("\x42\x01\x0b"_su8,
                         ConstantExpression{MakeAt(
@@ -289,7 +290,7 @@ TEST(BinaryLazySectionTest, Code) {
           Code{{}, MakeAt("\x0b"_su8, "\x0b"_expr)},
           Code{{MakeAt("\x01\x7f"_su8,
                        Locals{MakeAt("\x01"_su8, Index{1}),
-                              MakeAt("\x7f"_su8, ValueType::I32)})},
+                              MakeAt("\x7f"_su8, ValueType::I32())})},
                MakeAt("\x6a\x0b"_su8, "\x6a\x0b"_expr)},
       },
       sec);

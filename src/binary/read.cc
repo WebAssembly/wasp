@@ -261,7 +261,7 @@ OptAt<ElementSegment> Read(SpanU8* data,
   }
 
   if (decoded.has_expressions == encoding::HasExpressions::Yes) {
-    At<ReferenceType> elemtype{ReferenceType::Funcref};
+    At<ReferenceType> elemtype{ReferenceType::Funcref()};
     if (!decoded.is_legacy_active()) {
       WASP_TRY_READ(elemtype_, Read<ReferenceType>(data, context));
       elemtype = elemtype_;
@@ -297,11 +297,25 @@ OptAt<ElementSegment> Read(SpanU8* data,
 }
 
 OptAt<ReferenceType> Read(SpanU8* data, Context& context, Tag<ReferenceType>) {
-  ErrorsContextGuard error_guard{context.errors, *data, "element type"};
+  ErrorsContextGuard error_guard{context.errors, *data, "reference type"};
+  LocationGuard guard{data};
   WASP_TRY_READ(val, Read<u8>(data, context));
-  WASP_TRY_DECODE_FEATURES(decoded, val, ReferenceType, "element type",
-                           context.features);
-  return decoded;
+
+  if (encoding::ReferenceType::IsPrefixByte(*val, context.features)) {
+    WASP_TRY_READ(code, Read<s32>(data, context));
+    auto decoded = encoding::ReferenceType::Decode(val, code, context.features);
+    if (!decoded) {
+      context.errors.OnError(
+          guard.range(data),
+          format("Unknown reference type: {} {}", val, code));
+      return nullopt;
+    }
+    return MakeAt(guard.range(data), *decoded);
+  } else {
+    WASP_TRY_DECODE_FEATURES(decoded, val, ReferenceType, "reference type",
+                             context.features);
+    return decoded;
+  }
 }
 
 OptAt<Event> Read(SpanU8* data, Context& context, Tag<Event>) {
@@ -397,6 +411,14 @@ OptAt<GlobalType> Read(SpanU8* data, Context& context, Tag<GlobalType>) {
   WASP_TRY_READ(type, Read<ValueType>(data, context));
   WASP_TRY_READ(mut, Read<Mutability>(data, context));
   return MakeAt(guard.range(data), GlobalType{type, mut});
+}
+
+OptAt<HeapType> Read(SpanU8* data, Context& context, Tag<HeapType>) {
+  ErrorsContextGuard error_guard{context.errors, *data, "heap type"};
+  WASP_TRY_READ(val, Read<s32>(data, context));
+  WASP_TRY_DECODE_FEATURES(decoded, val, HeapType, "heap type",
+                           context.features);
+  return decoded;
 }
 
 OptAt<Import> Read(SpanU8* data, Context& context, Tag<Import>) {
@@ -801,9 +823,9 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
       }
       return MakeAt(guard.range(data), Instruction{opcode});
 
-    // Reference type immediate.
+    // HeapType type immediate.
     case Opcode::RefNull: {
-      WASP_TRY_READ(type, Read<ReferenceType>(data, context));
+      WASP_TRY_READ(type, Read<HeapType>(data, context));
       return MakeAt(guard.range(data), Instruction{opcode, type});
     }
 
@@ -1347,11 +1369,23 @@ OptAt<v128> Read(SpanU8* data, Context& context, Tag<v128>) {
 }
 
 OptAt<ValueType> Read(SpanU8* data, Context& context, Tag<ValueType>) {
-  ErrorsContextGuard guard{context.errors, *data, "value type"};
+  ErrorsContextGuard error_guard{context.errors, *data, "value type"};
+  LocationGuard guard{data};
   WASP_TRY_READ(val, Read<u8>(data, context));
-  WASP_TRY_DECODE_FEATURES(decoded, val, ValueType, "value type",
-                           context.features);
-  return decoded;
+  if (encoding::ValueType::IsPrefixByte(*val, context.features)) {
+    WASP_TRY_READ(code, Read<s32>(data, context));
+    auto decoded = encoding::ValueType::Decode(val, code, context.features);
+    if (!decoded) {
+      context.errors.OnError(guard.range(data),
+                             format("Unknown value type: {} {}", val, code));
+      return nullopt;
+    }
+    return MakeAt(guard.range(data), *decoded);
+  } else {
+    WASP_TRY_DECODE_FEATURES(decoded, val, ValueType, "value type",
+                             context.features);
+    return decoded;
+  }
 }
 
 bool EndCode(SpanU8 data, Context& context) {

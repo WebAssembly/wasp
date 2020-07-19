@@ -16,26 +16,32 @@
 
 #include "wasp/valid/formatters.h"
 
+#include "wasp/base/formatter_macros.h"
+#include "wasp/base/formatters.h"
+#include "wasp/base/macros.h"
+#include "wasp/binary/formatters.h"
+
 namespace fmt {
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::valid::Any>::format(
+    const ::wasp::valid::Any& self,
+    Ctx& ctx) {
+  return formatter<string_view>::format("any", ctx);
+}
 
 template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::valid::StackType>::format(
     const ::wasp::valid::StackType& self,
     Ctx& ctx) {
-  string_view result;
-  switch (self) {
-#define WASP_V(val, Name, str, ...)    \
-  case ::wasp::valid::StackType::Name: \
-    result = str;                      \
-    break;
-#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/valid/stack_type.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-    default:
-      WASP_UNREACHABLE();
+  memory_buffer buf;
+  if (self.is_value_type()) {
+    format_to(buf, "{}", self.value_type());
+  } else {
+    assert(self.is_any());
+    format_to(buf, "any");
   }
-  return formatter<string_view>::format(result, ctx);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 
 }  // namespace fmt

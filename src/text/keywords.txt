@@ -25,11 +25,11 @@ elem, TokenType::Elem
 else, TokenType::Else, Opcode::Else
 end, TokenType::End, Opcode::End
 event, TokenType::Event
-exnref, ValueType::Exnref
-exn, TokenType::Exn, ReferenceType::Exnref
+exnref, ReferenceKind::Exnref
+exn, TokenType::Exn, HeapKind::Exn
 export, TokenType::Export
-externref, ValueType::Externref
-extern, TokenType::Extern, ReferenceType::Externref
+externref, ReferenceKind::Externref
+extern, TokenType::Extern, HeapKind::Extern
 f32.abs, Opcode::F32Abs
 f32.add, Opcode::F32Add
 f32.ceil, Opcode::F32Ceil
@@ -59,7 +59,7 @@ f32.sqrt, Opcode::F32Sqrt
 f32.store, TokenType::MemoryInstr, Opcode::F32Store
 f32.sub, Opcode::F32Sub
 f32.trunc, Opcode::F32Trunc
-f32, ValueType::F32
+f32, NumericType::F32
 f32x4.abs, Opcode::F32X4Abs, Features::Simd
 f32x4.add, Opcode::F32X4Add, Features::Simd
 f32x4.convert_i32x4_s, Opcode::F32X4ConvertI32X4S, Features::Simd
@@ -110,7 +110,7 @@ f64.sqrt, Opcode::F64Sqrt
 f64.store, TokenType::MemoryInstr, Opcode::F64Store
 f64.sub, Opcode::F64Sub
 f64.trunc, Opcode::F64Trunc
-f64, ValueType::F64
+f64, NumericType::F64
 f64x2.abs, Opcode::F64X2Abs, Features::Simd
 f64x2.add, Opcode::F64X2Add, Features::Simd
 f64x2.div, Opcode::F64X2Div, Features::Simd
@@ -130,8 +130,8 @@ f64x2.splat, Opcode::F64X2Splat, Features::Simd
 f64x2.sqrt, Opcode::F64X2Sqrt, Features::Simd
 f64x2.sub, Opcode::F64X2Sub, Features::Simd
 f64x2, TokenType::F64X2
-funcref, ValueType::Funcref
-func, TokenType::Func, ReferenceType::Funcref
+funcref, ReferenceKind::Funcref
+func, TokenType::Func, HeapKind::Func
 func.bind, TokenType::VarInstr, Opcode::FuncBind, Features::FunctionReferences
 get, TokenType::Get
 global.get, TokenType::VarInstr, Opcode::GlobalGet
@@ -254,7 +254,7 @@ i32.trunc_sat_f32_s, Opcode::I32TruncSatF32S, Features::SaturatingFloatToInt
 i32.trunc_sat_f32_u, Opcode::I32TruncSatF32U, Features::SaturatingFloatToInt
 i32.trunc_sat_f64_s, Opcode::I32TruncSatF64S, Features::SaturatingFloatToInt
 i32.trunc_sat_f64_u, Opcode::I32TruncSatF64U, Features::SaturatingFloatToInt
-i32, ValueType::I32
+i32, NumericType::I32
 i32.wrap_i64, Opcode::I32WrapI64
 i32x4.abs, Opcode::I32X4Abs, Features::Simd
 i32x4.add, Opcode::I32X4Add, Features::Simd
@@ -383,7 +383,7 @@ i64.trunc_sat_f32_s, Opcode::I64TruncSatF32S, Features::SaturatingFloatToInt
 i64.trunc_sat_f32_u, Opcode::I64TruncSatF32U, Features::SaturatingFloatToInt
 i64.trunc_sat_f64_s, Opcode::I64TruncSatF64S, Features::SaturatingFloatToInt
 i64.trunc_sat_f64_u, Opcode::I64TruncSatF64U, Features::SaturatingFloatToInt
-i64, ValueType::I64
+i64, NumericType::I64
 i64x2.add, Opcode::I64X2Add, Features::Simd
 i64x2.extract_lane, TokenType::SimdLaneInstr, Opcode::I64X2ExtractLane, Features::Simd
 i64x2.load32x2_s, TokenType::MemoryInstr, Opcode::I64X2Load32X2S, Features::Simd
@@ -502,7 +502,7 @@ v128.load, TokenType::MemoryInstr, Opcode::V128Load, Features::Simd
 v128.not, Opcode::V128Not, Features::Simd
 v128.or, Opcode::V128Or, Features::Simd
 v128.store, TokenType::MemoryInstr, Opcode::V128Store, Features::Simd
-v128, ValueType::V128
+v128, NumericType::V128
 v128.xor, Opcode::V128Xor, Features::Simd
 v16x8.load_splat, TokenType::MemoryInstr, Opcode::V16X8LoadSplat, Features::Simd
 v32x4.load_splat, TokenType::MemoryInstr, Opcode::V32X4LoadSplat, Features::Simd
@@ -511,7 +511,7 @@ v8x16.load_splat, TokenType::MemoryInstr, Opcode::V8X16LoadSplat, Features::Simd
 v8x16.shuffle, TokenType::SimdShuffleInstr, Opcode::V8X16Shuffle, Features::Simd
 v8x16.swizzle, Opcode::V8X16Swizzle, Features::Simd
 # Deprecated names.
-anyfunc, ValueType::Funcref
+anyfunc, ReferenceKind::Funcref
 current_memory, Opcode::MemorySize
 f32.convert_s/i32, Opcode::F32ConvertI32S
 f32.convert_s/i64, Opcode::F32ConvertI64S

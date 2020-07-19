@@ -42,10 +42,14 @@ struct ExpectedToken {
       : size{size},
         type{type},
         immediate{OpcodeInfo{opcode, Features{features}}} {}
-  ExpectedToken(span_extent_t size, TokenType type, ValueType value_type)
-      : size{size}, type{type}, immediate{value_type} {}
-  ExpectedToken(span_extent_t size, TokenType type, ReferenceType reftype)
-      : size{size}, type{type}, immediate{reftype} {}
+  ExpectedToken(span_extent_t size, TokenType type, NumericType numeric_type)
+      : size{size}, type{type}, immediate{numeric_type} {}
+  ExpectedToken(span_extent_t size,
+                TokenType type,
+                ReferenceKind reference_kind)
+      : size{size}, type{type}, immediate{reference_kind} {}
+  ExpectedToken(span_extent_t size, TokenType type, HeapKind heap_kind)
+      : size{size}, type{type}, immediate{heap_kind} {}
   ExpectedToken(span_extent_t size, TokenType type, Text text)
       : size{size}, type{type}, immediate{text} {}
 
@@ -978,39 +982,53 @@ TEST(LexTest, Text) {
   }
 }
 
-TEST(LexTest, ValueType) {
+TEST(LexTest, NumericType) {
   struct {
     SpanU8 span;
-    ValueType value_type;
+    NumericType numeric_type;
   } tests[] = {
-      {"anyfunc"_su8, ValueType::Funcref},
-      {"externref"_su8, ValueType::Externref},
-      {"exnref"_su8, ValueType::Exnref},
-      {"f32"_su8, ValueType::F32},
-      {"f64"_su8, ValueType::F64},
-      {"funcref"_su8, ValueType::Funcref},
-      {"i32"_su8, ValueType::I32},
-      {"i64"_su8, ValueType::I64},
-      {"v128"_su8, ValueType::V128},
+      {"f32"_su8, NumericType::F32},
+      {"f64"_su8, NumericType::F64},
+      {"i32"_su8, NumericType::I32},
+      {"i64"_su8, NumericType::I64},
+      {"v128"_su8, NumericType::V128},
   };
   for (auto test : tests) {
-    ExpectLex({test.span.size(), TokenType::ValueType, test.value_type},
+    ExpectLex({test.span.size(), TokenType::NumericType, test.numeric_type},
               test.span);
   }
 }
 
-TEST(LexTest, ReferenceKind) {
+TEST(LexTest, ReferenceType) {
+  struct {
+    SpanU8 span;
+    ReferenceKind reference_kind;
+  } tests[] = {
+      {"anyfunc"_su8, ReferenceKind::Funcref},
+      {"externref"_su8, ReferenceKind::Externref},
+      {"exnref"_su8, ReferenceKind::Exnref},
+      {"funcref"_su8, ReferenceKind::Funcref},
+  };
+  for (auto test : tests) {
+    ExpectLex(
+        {test.span.size(), TokenType::ReferenceKind, test.reference_kind},
+        test.span);
+  }
+}
+
+
+TEST(LexTest, HeapType) {
   struct {
     SpanU8 span;
     TokenType token_type;
-    ReferenceType reftype;
+    HeapKind heap_kind;
   } tests[] = {
-      {"extern"_su8, TokenType::Extern, ReferenceType::Externref},
-      {"exn"_su8, TokenType::Exn, ReferenceType::Exnref},
-      {"func"_su8, TokenType::Func, ReferenceType::Funcref},
+      {"extern"_su8, TokenType::Extern, HeapKind::Extern},
+      {"exn"_su8, TokenType::Exn, HeapKind::Exn},
+      {"func"_su8, TokenType::Func, HeapKind::Func},
   };
   for (auto test : tests) {
-    ExpectLex({test.span.size(), test.token_type, test.reftype}, test.span);
+    ExpectLex({test.span.size(), test.token_type, test.heap_kind}, test.span);
   }
 }
 
@@ -1025,7 +1043,7 @@ R"((module
       {6, TokenType::Module},
       {3, TokenType::Whitespace},
       {1, TokenType::Lpar},
-      {4, TokenType::Func, ReferenceType::Funcref},
+      {4, TokenType::Func, HeapKind::Func},
       {1, TokenType::Whitespace},
       {1, TokenType::Lpar},
       {6, TokenType::Export},
@@ -1036,15 +1054,15 @@ R"((module
       {1, TokenType::Lpar},
       {5, TokenType::Param},
       {1, TokenType::Whitespace},
-      {3, TokenType::ValueType, ValueType::I32},
+      {3, TokenType::NumericType, NumericType::I32},
       {1, TokenType::Whitespace},
-      {3, TokenType::ValueType, ValueType::I32},
+      {3, TokenType::NumericType, NumericType::I32},
       {1, TokenType::Rpar},
       {1, TokenType::Whitespace},
       {1, TokenType::Lpar},
       {6, TokenType::Result},
       {1, TokenType::Whitespace},
-      {3, TokenType::ValueType, ValueType::I32},
+      {3, TokenType::NumericType, NumericType::I32},
       {1, TokenType::Rpar},
       {5, TokenType::Whitespace},
       {1, TokenType::Lpar},
@@ -1083,7 +1101,7 @@ R"((  module (; a comment ;) (  func  ) ) ))"_su8;
       {{1, TokenType::Lpar}, 2},
       {{6, TokenType::Module}, 17},
       {{1, TokenType::Lpar}, 2},
-      {{4, TokenType::Func, ReferenceType::Funcref}, 2},
+      {{4, TokenType::Func, HeapKind::Func}, 2},
       {{1, TokenType::Rpar}, 1},
       {{1, TokenType::Rpar}, 1},
       {{1, TokenType::Rpar}, 0},
@@ -1104,10 +1122,10 @@ TEST(LexTest, Tokenizer) {
       {span.subspan(0, 1), TokenType::Lpar},
       {span.subspan(1, 6), TokenType::Module},
       {span.subspan(8, 1), TokenType::Lpar},
-      {span.subspan(9, 4), TokenType::Func, ReferenceType::Funcref},
+      {span.subspan(9, 4), TokenType::Func, HeapKind::Func},
       {span.subspan(14, 1), TokenType::Lpar},
       {span.subspan(15, 5), TokenType::Param},
-      {span.subspan(21, 3), TokenType::ValueType, ValueType::I32},
+      {span.subspan(21, 3), TokenType::NumericType, NumericType::I32},
       {span.subspan(24, 1), TokenType::Rpar},
       {span.subspan(25, 1), TokenType::Rpar},
       {span.subspan(26, 1), TokenType::Rpar},

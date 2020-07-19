@@ -18,6 +18,14 @@
 
 #include <type_traits>
 
+namespace wasp {
+
+WASP_DEFINE_VARIANT_NAME(wasp::NumericType, "numeric_type")
+WASP_DEFINE_VARIANT_NAME(wasp::ReferenceKind, "reference_kind")
+WASP_DEFINE_VARIANT_NAME(wasp::HeapKind, "heap_kind")
+
+}  // namespace wasp
+
 namespace fmt {
 
 template <typename T, std::size_t SIZE, typename Allocator>
@@ -160,17 +168,17 @@ typename Ctx::iterator formatter<::wasp::Opcode>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::ValueType>::format(
-    const ::wasp::ValueType& self,
+typename Ctx::iterator formatter<::wasp::NumericType>::format(
+    const ::wasp::NumericType& self,
     Ctx& ctx) {
   string_view result;
   switch (self) {
 #define WASP_V(val, Name, str, ...) \
-  case ::wasp::ValueType::Name:     \
+  case ::wasp::NumericType::Name:     \
     result = str;                   \
     break;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/base/def/value_type.def"
+#include "wasp/base/def/numeric_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -180,17 +188,37 @@ typename Ctx::iterator formatter<::wasp::ValueType>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::ReferenceType>::format(
-    const ::wasp::ReferenceType& self,
+typename Ctx::iterator formatter<::wasp::ReferenceKind>::format(
+    const ::wasp::ReferenceKind& self,
     Ctx& ctx) {
   string_view result;
   switch (self) {
 #define WASP_V(val, Name, str, ...) \
-  case ::wasp::ReferenceType::Name: \
+  case ::wasp::ReferenceKind::Name: \
     result = str;                   \
     break;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/base/def/reference_type.def"
+#include "wasp/base/def/reference_kind.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::HeapKind>::format(
+    const ::wasp::HeapKind& self,
+    Ctx& ctx) {
+  string_view result;
+  switch (self) {
+#define WASP_V(val, Name, str, ...) \
+  case ::wasp::HeapKind::Name:      \
+    result = str;                   \
+    break;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
+#include "wasp/base/def/heap_kind.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -298,6 +326,23 @@ typename Ctx::iterator formatter<::wasp::Features>::format(
 }
 
 template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::Null>::format(const ::wasp::Null& self,
+                                                       Ctx& ctx) {
+  string_view result;
+  switch (self) {
+    case ::wasp::Null::No:
+      result = "no";
+      break;
+    case ::wasp::Null::Yes:
+      result = "yes";
+      break;
+    default:
+      WASP_UNREACHABLE();
+  }
+  return formatter<string_view>::format(result, ctx);
+}
+
+template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::Shared>::format(
     const ::wasp::Shared& self,
     Ctx& ctx) {
@@ -334,29 +379,11 @@ typename Ctx::iterator formatter<::wasp::Limits>::format(
 }
 
 template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::TableType>::format(
-    const ::wasp::TableType& self,
-    Ctx& ctx) {
-  memory_buffer buf;
-  format_to(buf, "{} {}", self.limits, self.elemtype);
-  return formatter<string_view>::format(to_string_view(buf), ctx);
-}
-
-template <typename Ctx>
 typename Ctx::iterator formatter<::wasp::MemoryType>::format(
     const ::wasp::MemoryType& self,
     Ctx& ctx) {
   memory_buffer buf;
   format_to(buf, "{}", self.limits);
-  return formatter<string_view>::format(to_string_view(buf), ctx);
-}
-
-template <typename Ctx>
-typename Ctx::iterator formatter<::wasp::GlobalType>::format(
-    const ::wasp::GlobalType& self,
-    Ctx& ctx) {
-  memory_buffer buf;
-  format_to(buf, "{} {}", self.mut, self.valtype);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 

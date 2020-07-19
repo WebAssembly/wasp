@@ -108,25 +108,9 @@ TEST(FormattersTest, Variant) {
   EXPECT_EQ(R"(Point {x:1, y:2})", format("{}", MyVariant{Point{1, 2}}));
 }
 
-TEST(FormattersTest, TableType) {
-  EXPECT_EQ(R"({min 1, max 2} funcref)",
-            format("{}", TableType{Limits{1, 2}, ReferenceType::Funcref}));
-  EXPECT_EQ(R"(  {min 0} funcref)",
-            format("{:>17s}", TableType{Limits{0}, ReferenceType::Funcref}));
-}
-
 TEST(FormattersTest, MemoryType) {
   EXPECT_EQ(R"({min 1, max 2})", format("{}", MemoryType{Limits{1, 2}}));
   EXPECT_EQ(R"(   {min 0})", format("{:>10s}", MemoryType{Limits{0}}));
-}
-
-TEST(FormattersTest, GlobalType) {
-  EXPECT_EQ(R"(const f32)",
-            format("{}", GlobalType{ValueType::F32, Mutability::Const}));
-  EXPECT_EQ(R"(var i32)",
-            format("{}", GlobalType{ValueType::I32, Mutability::Var}));
-  EXPECT_EQ(R"(   var f64)",
-            format("{:>10s}", GlobalType{ValueType::F64, Mutability::Var}));
 }
 
 TEST(FormattersTest, ShuffleImmediate) {

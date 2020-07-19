@@ -45,6 +45,78 @@ struct Var {
   variant<Index, string_view> desc;
 };
 
+struct HeapType {
+  explicit HeapType(HeapKind);
+  explicit HeapType(Var);
+  static HeapType Func();
+  static HeapType Extern();
+  static HeapType Exn();
+
+  bool is_heap_kind() const;
+  bool is_func() const;
+  bool is_extern() const;
+  bool is_exn() const;
+  bool is_var() const;
+
+  auto heap_kind() -> HeapKind&;
+  auto heap_kind() const -> const HeapKind&;
+  auto var() -> Var&;
+  auto var() const -> const Var&;
+
+  variant<HeapKind, Var> type;
+};
+
+struct RefType {
+  HeapType heap_type;
+  Null null;
+};
+
+struct ReferenceType {
+  explicit ReferenceType(ReferenceKind);
+  explicit ReferenceType(RefType);
+  static ReferenceType Funcref();
+  static ReferenceType Externref();
+  static ReferenceType Exnref();
+
+  bool is_reference_kind() const;
+  bool is_funcref() const;
+  bool is_externref() const;
+  bool is_exnref() const;
+  bool is_ref() const;
+
+  auto reference_kind() -> ReferenceKind&;
+  auto reference_kind() const -> const ReferenceKind&;
+  auto ref() -> RefType&;
+  auto ref() const -> const RefType&;
+
+  variant<ReferenceKind, RefType> type;
+};
+
+struct ValueType {
+  explicit ValueType(NumericType);
+  explicit ValueType(ReferenceType);
+  static ValueType I32();
+  static ValueType I64();
+  static ValueType F32();
+  static ValueType F64();
+  static ValueType V128();
+  static ValueType Funcref();
+  static ValueType Externref();
+  static ValueType Exnref();
+
+  bool is_numeric_type() const;
+  bool is_reference_type() const;
+
+  auto numeric_type() -> NumericType&;
+  auto numeric_type() const -> const NumericType&;
+  auto reference_type() -> ReferenceType&;
+  auto reference_type() const -> const ReferenceType&;
+
+  variant<NumericType, ReferenceType> type;
+};
+
+using ValueTypeList = std::vector<At<ValueType>>;
+
 using VarList = std::vector<At<Var>>;
 using BindVar = string_view;
 
@@ -131,7 +203,7 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<InitImmediate>);
   explicit Instruction(At<Opcode>, At<LetImmediate>);
   explicit Instruction(At<Opcode>, At<MemArgImmediate>);
-  explicit Instruction(At<Opcode>, At<ReferenceType>);
+  explicit Instruction(At<Opcode>, At<HeapType>);
   explicit Instruction(At<Opcode>, At<SelectImmediate>);
   explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
   explicit Instruction(At<Opcode>, At<SimdLaneImmediate>);
@@ -160,7 +232,7 @@ struct Instruction {
   bool has_init_immediate() const;
   bool has_let_immediate() const;
   bool has_mem_arg_immediate() const;
-  bool has_reference_type_immediate() const;
+  bool has_heap_type_immediate() const;
   bool has_select_immediate() const;
   bool has_shuffle_immediate() const;
   bool has_simd_lane_immediate() const;
@@ -193,8 +265,8 @@ struct Instruction {
   auto let_immediate() const -> const At<LetImmediate>&;
   auto mem_arg_immediate() -> At<MemArgImmediate>&;
   auto mem_arg_immediate() const -> const At<MemArgImmediate>&;
-  auto reference_type_immediate() -> At<ReferenceType>&;
-  auto reference_type_immediate() const -> const At<ReferenceType>&;
+  auto heap_type_immediate() -> At<HeapType>&;
+  auto heap_type_immediate() const -> const At<HeapType>&;
   auto select_immediate() -> At<SelectImmediate>&;
   auto select_immediate() const -> const At<SelectImmediate>&;
   auto shuffle_immediate() -> At<ShuffleImmediate>&;
@@ -218,7 +290,7 @@ struct Instruction {
           At<InitImmediate>,
           At<LetImmediate>,
           At<MemArgImmediate>,
-          At<ReferenceType>,
+          At<HeapType>,
           At<SelectImmediate>,
           At<ShuffleImmediate>,
           At<SimdLaneImmediate>>
@@ -251,6 +323,11 @@ struct FunctionDesc {
   At<BoundFunctionType> type;
 };
 
+struct TableType {
+  At<Limits> limits;
+  At<ReferenceType> elemtype;
+};
+
 struct TableDesc {
   OptAt<BindVar> name;
   At<TableType> type;
@@ -259,6 +336,11 @@ struct TableDesc {
 struct MemoryDesc {
   OptAt<BindVar> name;
   At<MemoryType> type;
+};
+
+struct GlobalType {
+  At<ValueType> valtype;
+  At<Mutability> mut;
 };
 
 struct GlobalDesc {
@@ -636,7 +718,7 @@ struct ScriptModule {
 };
 
 struct RefNullConst {
-  At<ReferenceType> type;
+  At<HeapType> type;
 };
 
 struct RefExternConst {
@@ -851,8 +933,21 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::Assertion, 2, kind, desc)                                 \
   WASP_V(text::Register, 2, name, module)
 
+#define WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_V) \
+  WASP_V(text::Var, 1, desc)                    \
+  WASP_V(text::ModuleItem, 1, desc)             \
+  WASP_V(text::Const, 1, value)                 \
+  WASP_V(text::Command, 1, contents)            \
+  WASP_V(text::HeapType, 1, type)               \
+  WASP_V(text::RefType, 2, heap_type, null)     \
+  WASP_V(text::ReferenceType, 1, type)          \
+  WASP_V(text::ValueType, 1, type)              \
+  WASP_V(text::TableType, 2, limits, elemtype)  \
+  WASP_V(text::GlobalType, 2, valtype, mut)
+
 #define WASP_TEXT_CONTAINERS(WASP_V)  \
   WASP_V(text::VarList)               \
+  WASP_V(text::ValueTypeList)         \
   WASP_V(text::TextList)              \
   WASP_V(text::InstructionList)       \
   WASP_V(text::BoundValueTypeList)    \
@@ -866,11 +961,8 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::Script)
 
 WASP_TEXT_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
+WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
-WASP_DECLARE_OPERATOR_EQ_NE(text::Var)
-WASP_DECLARE_OPERATOR_EQ_NE(text::ModuleItem)
-WASP_DECLARE_OPERATOR_EQ_NE(text::Const)
-WASP_DECLARE_OPERATOR_EQ_NE(text::Command)
 
 bool operator==(const BoundValueTypeList& lhs, const ValueTypeList& rhs);
 bool operator==(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
@@ -881,20 +973,14 @@ bool operator!=(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
 
 WASP_TEXT_ENUMS(WASP_DECLARE_PRINT_TO)
 WASP_TEXT_STRUCTS(WASP_DECLARE_PRINT_TO)
+WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_PRINT_TO)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_PRINT_TO)
-WASP_DECLARE_PRINT_TO(text::Var)
-WASP_DECLARE_PRINT_TO(text::ModuleItem)
-WASP_DECLARE_PRINT_TO(text::Const)
-WASP_DECLARE_PRINT_TO(text::Command)
 
 }  // namespace text
 }  // namespace wasp
 
 WASP_TEXT_STRUCTS(WASP_DECLARE_STD_HASH)
+WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_STD_HASH)
 WASP_TEXT_CONTAINERS(WASP_DECLARE_STD_HASH)
-WASP_DECLARE_STD_HASH(text::Var)
-WASP_DECLARE_STD_HASH(text::ModuleItem)
-WASP_DECLARE_STD_HASH(text::Const)
-WASP_DECLARE_STD_HASH(text::Command)
 
 #endif  // WASP_TEXT_TYPES_H_

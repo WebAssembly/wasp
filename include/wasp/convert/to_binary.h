@@ -43,6 +43,11 @@ struct Context {
 };
 
 // Helpers.
+auto ToBinary(Context&, const At<text::HeapType>&) -> At<binary::HeapType>;
+auto ToBinary(Context&, const At<text::RefType>&) -> At<binary::RefType>;
+auto ToBinary(Context&, const At<text::ReferenceType>&) -> At<binary::ReferenceType>;
+auto ToBinary(Context&, const At<text::ValueType>&) -> At<binary::ValueType>;
+auto ToBinary(Context&, const text::ValueTypeList&) -> binary::ValueTypeList;
 auto ToBinary(Context&, const At<text::Text>&) -> At<string_view>;
 auto ToBinary(Context&, const At<text::Var>&) -> At<Index>;
 auto ToBinary(Context&, const OptAt<text::Var>&) -> At<Index>;
@@ -51,7 +56,7 @@ auto ToBinary(Context&, const text::VarList&) -> binary::IndexList;
 auto ToBinary(Context&, const At<text::FunctionType>&) -> At<binary::FunctionType>;
 
 // Section 1: Type
-auto ToBinary(Context&, const text::BoundValueTypeList&) -> ValueTypeList;
+auto ToBinary(Context&, const text::BoundValueTypeList&) -> binary::ValueTypeList;
 auto ToBinary(Context&, const At<text::TypeEntry>&) -> At<binary::TypeEntry>;
 
 // Section 2: Import
@@ -61,6 +66,7 @@ auto ToBinary(Context&, const At<text::Import>&) -> At<binary::Import>;
 auto ToBinary(Context&, const At<text::Function>&) -> OptAt<binary::Function>;
 
 // Section 4: Table
+auto ToBinary(Context&, const At<text::TableType>&) -> At<binary::TableType>;
 auto ToBinary(Context&, const At<text::Table>&) -> OptAt<binary::Table>;
 
 // Section 5: Memory
@@ -68,6 +74,7 @@ auto ToBinary(Context&, const At<text::Memory>&) -> OptAt<binary::Memory>;
 
 // Section 6: Global
 auto ToBinary(Context&, const At<text::ConstantExpression>&) -> At<binary::ConstantExpression>;
+auto ToBinary(Context&, const At<text::GlobalType>&) -> At<binary::GlobalType>;
 auto ToBinary(Context&, const At<text::Global>&) -> OptAt<binary::Global>;
 
 // Section 7: Export

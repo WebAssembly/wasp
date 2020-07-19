@@ -16,6 +16,8 @@
 
 #include "wasp/valid/validate.h"
 
+#include <cassert>
+
 #include "wasp/base/errors.h"
 #include "wasp/base/errors_context_guard.h"
 #include "wasp/base/features.h"
@@ -77,7 +79,7 @@ bool Validate(Context& context, const At<binary::UnpackedCode>& value) {
 bool Validate(Context& context,
               const At<binary::ConstantExpression>& value,
               ConstantExpressionKind kind,
-              ValueType expected_type,
+              binary::ValueType expected_type,
               Index max_global_index) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "constant_expression"};
   if (value->instructions.size() != 1) {
@@ -88,26 +90,26 @@ bool Validate(Context& context,
 
   bool valid = true;
   auto&& instruction = value->instructions[0];
-  ValueType actual_type;
+  optional<binary::ValueType> actual_type;
   switch (instruction->opcode) {
     case Opcode::I32Const:
-      actual_type = ValueType::I32;
+      actual_type = binary::ValueType::I32();
       break;
 
     case Opcode::I64Const:
-      actual_type = ValueType::I64;
+      actual_type = binary::ValueType::I64();
       break;
 
     case Opcode::F32Const:
-      actual_type = ValueType::F32;
+      actual_type = binary::ValueType::F32();
       break;
 
     case Opcode::F64Const:
-      actual_type = ValueType::F64;
+      actual_type = binary::ValueType::F64();
       break;
 
     case Opcode::V128Const:
-      actual_type = ValueType::V128;
+      actual_type = binary::ValueType::V128();
       break;
 
     case Opcode::GlobalGet: {
@@ -129,7 +131,7 @@ bool Validate(Context& context,
     }
 
     case Opcode::RefNull:
-      actual_type = ToValueType(instruction->reference_type_immediate());
+      actual_type = ToValueType(instruction->heap_type_immediate());
       break;
 
     case Opcode::RefFunc: {
@@ -141,7 +143,7 @@ bool Validate(Context& context,
                          "func index")) {
         return false;
       }
-      actual_type = ValueType::Funcref;
+      actual_type = binary::ValueType::Funcref();
       break;
     }
 
@@ -153,7 +155,8 @@ bool Validate(Context& context,
       return false;
   }
 
-  valid &= Validate(context, actual_type, expected_type);
+  assert(actual_type.has_value());
+  valid &= Validate(context, *actual_type, expected_type);
   return valid;
 }
 
@@ -171,14 +174,14 @@ bool Validate(Context& context, const At<binary::DataSegment>& value) {
   }
   if (value->offset) {
     valid &= Validate(context, *value->offset, ConstantExpressionKind::Other,
-                      ValueType::I32, context.globals.size());
+                      binary::ValueType::I32(), context.globals.size());
   }
   return valid;
 }
 
 bool Validate(Context& context,
               const At<binary::ElementExpression>& value,
-              ReferenceType reftype) {
+              binary::ReferenceType reftype) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "element expression"};
   if (value->instructions.size() != 1) {
     context.errors->OnError(
@@ -188,14 +191,14 @@ bool Validate(Context& context,
 
   bool valid = true;
   auto&& instruction = value->instructions[0];
-  ReferenceType actual_type;
+  optional<binary::ReferenceType> actual_type;
   switch (instruction->opcode) {
     case Opcode::RefNull:
-      actual_type = ReferenceType::Funcref;
+      actual_type = binary::ReferenceType::Funcref();
       break;
 
     case Opcode::RefFunc: {
-      actual_type = ReferenceType::Funcref;
+      actual_type = binary::ReferenceType::Funcref();
       auto index = instruction->index_immediate();
       if (!ValidateIndex(context, index, context.functions.size(),
                          "function index")) {
@@ -212,7 +215,8 @@ bool Validate(Context& context,
       return false;
   }
 
-  valid &= Validate(context, MakeAt(value.loc(), actual_type), reftype);
+  assert(actual_type.has_value());
+  valid &= Validate(context, MakeAt(value.loc(), *actual_type), reftype);
   return valid;
 }
 
@@ -227,7 +231,7 @@ bool Validate(Context& context, const At<binary::ElementSegment>& value) {
   if (value->offset) {
     valid &=
         Validate(context, *value->offset, ConstantExpressionKind::GlobalInit,
-                 ValueType::I32, context.globals.size());
+                 binary::ValueType::I32(), context.globals.size());
   }
   if (value->has_indexes()) {
     auto&& elements = value->indexes();
@@ -269,8 +273,8 @@ bool Validate(Context& context, const At<binary::ElementSegment>& value) {
 }
 
 bool Validate(Context& context,
-              const At<ReferenceType>& actual,
-              ReferenceType expected) {
+              const At<binary::ReferenceType>& actual,
+              binary::ReferenceType expected) {
   if (actual != expected) {
     context.errors->OnError(
         actual.loc(),
@@ -387,7 +391,7 @@ bool Validate(Context& context, const At<binary::Global>& value) {
   return valid;
 }
 
-bool Validate(Context& context, const At<GlobalType>& value) {
+bool Validate(Context& context, const At<binary::GlobalType>& value) {
   return true;
 }
 
@@ -544,7 +548,7 @@ bool Validate(Context& context, const At<binary::Table>& value) {
   return valid;
 }
 
-bool Validate(Context& context, const At<TableType>& value) {
+bool Validate(Context& context, const At<binary::TableType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "table type"};
   constexpr Index kMaxElements = std::numeric_limits<Index>::max();
   bool valid = Validate(context, value->limits, kMaxElements);
@@ -561,10 +565,26 @@ bool Validate(Context& context, const At<binary::TypeEntry>& value) {
   return Validate(context, value->type);
 }
 
+bool TypesMatch(binary::ValueType expected, binary::ValueType actual) {
+  // Types are the same.
+  if (expected == actual) {
+    return true;
+  }
+
+  // One of the types is "ref null X" and the other is "Xref"
+  if (expected.is_reference_type() && actual.is_reference_type() &&
+      Canonicalize(expected.reference_type()) ==
+          Canonicalize(actual.reference_type())) {
+    return true;
+  }
+
+  return false;
+}
+
 bool Validate(Context& context,
-              const At<ValueType>& actual,
-              ValueType expected) {
-  if (expected != actual) {
+              const At<binary::ValueType>& actual,
+              binary::ValueType expected) {
+  if (!TypesMatch(expected, actual)) {
     context.errors->OnError(
         actual.loc(),
         format("Expected value type {}, got {}", expected, actual));

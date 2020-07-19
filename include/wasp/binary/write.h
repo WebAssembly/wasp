@@ -100,6 +100,15 @@ Iterator Write(Opcode value, Iterator out) {
 }
 
 template <typename Iterator>
+Iterator Write(encoding::EncodedValueType value, Iterator out) {
+  out = Write(value.code, out);
+  if (value.immediate) {
+    out = Write(*value.immediate, out);
+  }
+  return out;
+}
+
+template <typename Iterator>
 Iterator Write(ValueType value, Iterator out) {
   return Write(encoding::ValueType::Encode(value), out);
 }
@@ -107,6 +116,11 @@ Iterator Write(ValueType value, Iterator out) {
 template <typename Iterator>
 Iterator Write(BlockType value, Iterator out) {
   return Write(encoding::BlockType::Encode(value), out);
+}
+
+template <typename Iterator>
+Iterator Write(HeapType value, Iterator out) {
+  return Write(encoding::HeapType::Encode(value), out);
 }
 
 template <typename Iterator>
@@ -607,6 +621,7 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case Opcode::I64ReinterpretF64:
     case Opcode::F32ReinterpretI32:
     case Opcode::F64ReinterpretI64:
+    case Opcode::RefIsNull:
     case Opcode::I32Extend8S:
     case Opcode::I32Extend16S:
     case Opcode::I64Extend8S:
@@ -771,8 +786,7 @@ Iterator Write(const Instruction& instr, Iterator out) {
 
     // Reference type immediate.
     case Opcode::RefNull:
-    case Opcode::RefIsNull:
-      return Write(instr.reference_type_immediate(), out);
+      return Write(instr.heap_type_immediate(), out);
 
     // Type immediate.
     case Opcode::Block:

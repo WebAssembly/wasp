@@ -38,20 +38,26 @@ enum class Opcode : u32 {
 #undef WASP_PREFIX_V
 };
 
-enum class ValueType : u8 {
+enum class NumericType : u8 {
 #define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/base/def/value_type.def"
+#include "wasp/base/def/numeric_type.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
 
-using ValueTypeList = std::vector<At<ValueType>>;
-
-enum class ReferenceType : u8 {
+enum class ReferenceKind : u8 {
 #define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/base/def/reference_type.def"
+#include "wasp/base/def/reference_kind.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+};
+
+enum class HeapKind : u8 {
+#define WASP_V(val, Name, str) Name = val,
+#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
+#include "wasp/base/def/heap_kind.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
@@ -87,6 +93,11 @@ enum class Shared {
   Yes,
 };
 
+enum class Null {
+  No,
+  Yes,
+};
+
 struct Limits {
   explicit Limits(At<u32> min);
   explicit Limits(At<u32> min, OptAt<u32> max);
@@ -97,41 +108,30 @@ struct Limits {
   At<Shared> shared;
 };
 
-struct TableType {
-  At<Limits> limits;
-  At<ReferenceType> elemtype;
-};
-
 struct MemoryType {
   At<Limits> limits;
-};
-
-struct GlobalType {
-  At<ValueType> valtype;
-  At<Mutability> mut;
 };
 
 using ShuffleImmediate = std::array<u8, 16>;
 
 #define WASP_BASE_WASM_ENUMS(WASP_V) \
   WASP_V(Opcode)                     \
-  WASP_V(ValueType)                  \
-  WASP_V(ReferenceType)              \
+  WASP_V(NumericType)                \
+  WASP_V(ReferenceKind)              \
+  WASP_V(HeapKind)                   \
   WASP_V(ExternalKind)               \
   WASP_V(EventAttribute)             \
   WASP_V(Mutability)                 \
   WASP_V(SegmentType)                \
-  WASP_V(Shared)
+  WASP_V(Shared)                     \
+  WASP_V(Null)
 
 #define WASP_BASE_WASM_STRUCTS(WASP_V) \
   WASP_V(Limits, 3, min, max, shared)  \
-  WASP_V(GlobalType, 2, valtype, mut)  \
-  WASP_V(MemoryType, 1, limits)        \
-  WASP_V(TableType, 2, limits, elemtype)
+  WASP_V(MemoryType, 1, limits)
 
 #define WASP_BASE_WASM_CONTAINERS(WASP_V) \
-  WASP_V(ShuffleImmediate)                \
-  WASP_V(ValueTypeList)
+  WASP_V(ShuffleImmediate)
 
 WASP_BASE_WASM_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_BASE_WASM_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)

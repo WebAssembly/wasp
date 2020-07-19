@@ -1247,8 +1247,8 @@ void Tool::PrintInstruction(const Instruction& instr,
         PrintGlobalName(instr.index_immediate());
       } else if (instr.has_block_type_immediate()) {
         auto block_type = instr.block_type_immediate();
-        if (s32(*block_type) >= 0) {
-          auto type_entry_opt = GetTypeEntry(Index(*block_type));
+        if (block_type->is_index()) {
+          auto type_entry_opt = GetTypeEntry(block_type->index());
           if (type_entry_opt) {
             print(" <{}>", type_entry_opt->type);
           }

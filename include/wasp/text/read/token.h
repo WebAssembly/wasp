@@ -80,16 +80,18 @@ struct Text {
 struct Token {
   using Immediate = variant<monostate,
                             OpcodeInfo,
-                            ValueType,
-                            ReferenceType,
+                            NumericType,
+                            ReferenceKind,
+                            HeapKind,
                             LiteralInfo,
                             Text>;
 
   Token();
   Token(Location, TokenType);
   Token(Location, TokenType, OpcodeInfo);
-  Token(Location, TokenType, ValueType);
-  Token(Location, TokenType, ReferenceType);
+  Token(Location, TokenType, NumericType);
+  Token(Location, TokenType, ReferenceKind);
+  Token(Location, TokenType, HeapKind);
   Token(Location, TokenType, LiteralInfo);
   Token(Location, TokenType, Text);
   Token(Location, TokenType, Immediate);
@@ -98,15 +100,17 @@ struct Token {
   string_view as_string_view() const;
 
   bool has_opcode() const;
-  bool has_value_type() const;
-  bool has_reference_type() const;
+  bool has_numeric_type() const;
+  bool has_reference_kind() const;
+  bool has_heap_kind() const;
   bool has_literal_info() const;
   bool has_text() const;
 
   At<Opcode> opcode() const;
   Features opcode_features() const;
-  At<ValueType> value_type() const;
-  At<ReferenceType> reference_type() const;
+  At<NumericType> numeric_type() const;
+  At<ReferenceKind> reference_kind() const;
+  At<HeapKind> heap_kind() const;
   LiteralInfo literal_info() const;
   Text text() const;
 

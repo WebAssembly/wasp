@@ -45,10 +45,10 @@ class TextDesugarTest : public ::testing::Test {
 
   const FunctionDesc func_desc{};
   const TableDesc table_desc{nullopt,
-                             TableType{Limits{0}, ReferenceType::Funcref}};
+                             TableType{Limits{0}, ReferenceType::Funcref()}};
   const MemoryDesc memory_desc{nullopt, MemoryType{Limits{0}}};
   const GlobalDesc global_desc{nullopt,
-                               GlobalType{ValueType::I32, Mutability::Const}};
+                               GlobalType{ValueType::I32(), Mutability::Const}};
   const EventDesc event_desc{nullopt, EventType{EventAttribute::Exception, {}}};
 
 

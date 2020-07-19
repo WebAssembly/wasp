@@ -335,7 +335,13 @@ bool Tool::CreateTables() {
 #define WASP_V(val, Name, str) \
   CHECK(Exec("insert into value_type_name values ({}, \"{}\");", count++, str));
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/base/def/value_type.def"
+#include "wasp/base/def/numeric_type.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+#define WASP_V(val, Name, str) \
+  CHECK(Exec("insert into value_type_name values ({}, \"{}\");", count++, str));
+#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
+#include "wasp/base/def/reference_type_kind.def"
 #undef WASP_V
 #undef WASP_FEATURE_V
 

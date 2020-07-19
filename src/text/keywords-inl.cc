@@ -10,8 +10,8 @@ switch (PeekChar(data, 2)) {
     switch (PeekChar(data, 3)) {
       default:
         switch (PeekChar(data, 0)) {
-          case 'f': return LexKeyword(data, "f32", ValueType::F32);
-          case 'i': return LexKeyword(data, "i32", ValueType::I32);
+          case 'f': return LexKeyword(data, "f32", NumericType::F32);
+          case 'i': return LexKeyword(data, "i32", NumericType::I32);
           default: break;
         }
         break;
@@ -446,7 +446,7 @@ switch (PeekChar(data, 2)) {
         break;
       case '8':
         switch (PeekChar(data, 4)) {
-          default: return LexKeyword(data, "v128", ValueType::V128);
+          default: return LexKeyword(data, "v128", NumericType::V128);
           case '.':
             switch (PeekChar(data, 5)) {
               case 'a':
@@ -663,8 +663,8 @@ switch (PeekChar(data, 2)) {
     switch (PeekChar(data, 3)) {
       default:
         switch (PeekChar(data, 0)) {
-          case 'f': return LexKeyword(data, "f64", ValueType::F64);
-          case 'i': return LexKeyword(data, "i64", ValueType::I64);
+          case 'f': return LexKeyword(data, "f64", NumericType::F64);
+          case 'i': return LexKeyword(data, "i64", NumericType::I64);
           default: break;
         }
         break;
@@ -1520,7 +1520,7 @@ switch (PeekChar(data, 2)) {
       default:
         switch (PeekChar(data, 1)) {
           case 'a': return LexKeyword(data, "nan", TokenType::Float, LiteralKind::Nan);
-          case 'x': return LexKeyword(data, "exn", TokenType::Exn, ReferenceType::Exnref);
+          case 'x': return LexKeyword(data, "exn", TokenType::Exn, HeapKind::Exn);
           default: break;
         }
         break;
@@ -1534,12 +1534,12 @@ switch (PeekChar(data, 2)) {
       case 'a': return LexKeyword(data, "binary", TokenType::Binary);
       case 'c':
         switch (PeekChar(data, 4)) {
-          default: return LexKeyword(data, "func", TokenType::Func, ReferenceType::Funcref);
+          default: return LexKeyword(data, "func", TokenType::Func, HeapKind::Func);
           case '.': return LexKeyword(data, "func.bind", TokenType::VarInstr, Opcode::FuncBind, Features::FunctionReferences);
-          case 'r': return LexKeyword(data, "funcref", ValueType::Funcref);
+          case 'r': return LexKeyword(data, "funcref", ReferenceKind::Funcref);
         }
         break;
-      case 'r': return LexKeyword(data, "exnref", ValueType::Exnref);
+      case 'r': return LexKeyword(data, "exnref", ReferenceKind::Exnref);
     }
     break;
   case 'o':
@@ -1613,8 +1613,8 @@ switch (PeekChar(data, 2)) {
         break;
       case 'e':
         switch (PeekChar(data, 6)) {
-          default: return LexKeyword(data, "extern", TokenType::Extern, ReferenceType::Externref);
-          case 'r': return LexKeyword(data, "externref", ValueType::Externref);
+          default: return LexKeyword(data, "extern", TokenType::Extern, HeapKind::Extern);
+          case 'r': return LexKeyword(data, "externref", ReferenceKind::Externref);
         }
         break;
       case 'g':
@@ -1797,7 +1797,7 @@ switch (PeekChar(data, 2)) {
   case 'y':
     switch (PeekChar(data, 3)) {
       default: return LexKeyword(data, "try", TokenType::BlockInstr, Opcode::Try, Features::Exceptions);
-      case 'f': return LexKeyword(data, "anyfunc", ValueType::Funcref);
+      case 'f': return LexKeyword(data, "anyfunc", ReferenceKind::Funcref);
     }
     break;
 }

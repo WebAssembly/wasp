@@ -415,8 +415,8 @@ Iterator Write(WriteContext& context, const Instruction& value, Iterator out) {
       out = Write(context, value.mem_arg_immediate(), out);
       break;
 
-    case 15: // ReferenceType
-      out = Write(context, value.reference_type_immediate(), out);
+    case 15: // HeapType
+      out = Write(context, value.heap_type_immediate(), out);
       break;
 
     case 16: // SelectImmediate
@@ -540,6 +540,11 @@ Iterator Write(WriteContext& context, const Limits& value, Iterator out) {
     out = Write(context, "shared"_sv, out);
   }
   return out;
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context, HeapType value, Iterator out) {
+  return WriteFormat(context, value, out);
 }
 
 template <typename Iterator>

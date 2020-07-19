@@ -48,13 +48,13 @@ void ExpectWrite(SpanU8 expected, const T& value) {
 }  // namespace
 
 TEST(BinaryWriteTest, BlockType) {
-  ExpectWrite("\x7f"_su8, BlockType::I32);
-  ExpectWrite("\x7e"_su8, BlockType::I64);
-  ExpectWrite("\x7d"_su8, BlockType::F32);
-  ExpectWrite("\x7c"_su8, BlockType::F64);
-  ExpectWrite("\x7b"_su8, BlockType::V128);
-  ExpectWrite("\x6f"_su8, BlockType::Externref);
-  ExpectWrite("\x40"_su8, BlockType::Void);
+  ExpectWrite("\x7f"_su8, BlockType::I32());
+  ExpectWrite("\x7e"_su8, BlockType::I64());
+  ExpectWrite("\x7d"_su8, BlockType::F32());
+  ExpectWrite("\x7c"_su8, BlockType::F64());
+  ExpectWrite("\x7b"_su8, BlockType::V128());
+  ExpectWrite("\x6f"_su8, BlockType::Externref());
+  ExpectWrite("\x40"_su8, BlockType::Void());
 }
 
 TEST(BinaryWriteTest, BrOnExnImmediate) {
@@ -86,8 +86,8 @@ TEST(BinaryWriteTest, Code) {
       "\x80\x01\x7e"       // locals[1]: i64 * 128
       "\x01\x02\x03"_su8,  // code
       Code{LocalsList{
-               Locals{2, ValueType::I32},
-               Locals{128, ValueType::I64},
+               Locals{2, ValueType::I32()},
+               Locals{128, ValueType::I64()},
            },
            Expression{"\x01\x02\x03"_su8}});
 }
@@ -143,9 +143,8 @@ TEST(BinaryWriteTest, DataSegment_BulkMemory) {
 
 TEST(BinaryWriteTest, ElementExpression) {
   // ref.null
-  ExpectWrite(
-      "\xd0\x70\x0b"_su8,
-      ElementExpression{Instruction{Opcode::RefNull, ReferenceType::Funcref}});
+  ExpectWrite("\xd0\x70\x0b"_su8, ElementExpression{Instruction{
+                                      Opcode::RefNull, HeapType::Func()}});
 
   // ref.func 2
   ExpectWrite("\xd2\x02\x0b"_su8,
@@ -178,7 +177,7 @@ TEST(BinaryWriteTest, ElementSegment_BulkMemory) {
       ElementSegment{
           0u, ConstantExpression{Instruction{Opcode::I32Const, s32{5}}},
           ElementListWithExpressions{
-              ReferenceType::Funcref,
+              ReferenceType::Funcref(),
               {ElementExpression{Instruction{Opcode::RefFunc, Index{6u}}}}}});
 
   // Flags == 5: Passive, expression list
@@ -187,23 +186,23 @@ TEST(BinaryWriteTest, ElementSegment_BulkMemory) {
       ElementSegment{
           SegmentType::Passive,
           ElementListWithExpressions{
-              ReferenceType::Funcref,
+              ReferenceType::Funcref(),
               {ElementExpression{Instruction{Opcode::RefFunc, Index{7u}}},
                ElementExpression{
-                   Instruction{Opcode::RefNull, ReferenceType::Funcref}}}}});
+                   Instruction{Opcode::RefNull, HeapType::Func()}}}}});
 
   // Flags == 6: Active, table index, expression list
   ExpectWrite("\x06\x02\x41\x08\x0b\x70\x01\xd0\x70\x0b"_su8,
               ElementSegment{
                   2u, ConstantExpression{Instruction{Opcode::I32Const, s32{8}}},
                   ElementListWithExpressions{
-                      ReferenceType::Funcref,
-                      {ElementExpression{Instruction{
-                          Opcode::RefNull, ReferenceType::Funcref}}}}});
+                      ReferenceType::Funcref(),
+                      {ElementExpression{
+                          Instruction{Opcode::RefNull, HeapType::Func()}}}}});
 }
 
 TEST(BinaryWriteTest, ReferenceType) {
-  ExpectWrite("\x70"_su8, ReferenceType::Funcref);
+  ExpectWrite("\x70"_su8, ReferenceType::Funcref());
 }
 
 TEST(BinaryWriteTest, Event) {
@@ -349,20 +348,21 @@ TEST(BinaryWriteTest, Function) {
 
 TEST(BinaryWriteTest, FunctionType) {
   ExpectWrite("\x00\x00"_su8, FunctionType{{}, {}});
-  ExpectWrite("\x02\x7f\x7e\x01\x7c"_su8,
-              FunctionType{{ValueType::I32, ValueType::I64}, {ValueType::F64}});
+  ExpectWrite(
+      "\x02\x7f\x7e\x01\x7c"_su8,
+      FunctionType{{ValueType::I32(), ValueType::I64()}, {ValueType::F64()}});
 }
 
 TEST(BinaryWriteTest, Global) {
   ExpectWrite(
       "\x7f\x01\x41\x00\x0b"_su8,
-      Global{GlobalType{ValueType::I32, Mutability::Var},
+      Global{GlobalType{ValueType::I32(), Mutability::Var},
              ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}});
 }
 
 TEST(BinaryWriteTest, GlobalType) {
-  ExpectWrite("\x7f\x00"_su8, GlobalType{ValueType::I32, Mutability::Const});
-  ExpectWrite("\x7d\x01"_su8, GlobalType{ValueType::F32, Mutability::Var});
+  ExpectWrite("\x7f\x00"_su8, GlobalType{ValueType::I32(), Mutability::Const});
+  ExpectWrite("\x7d\x01"_su8, GlobalType{ValueType::F32(), Mutability::Var});
 }
 
 TEST(BinaryWriteTest, Import) {
@@ -370,14 +370,14 @@ TEST(BinaryWriteTest, Import) {
 
   ExpectWrite(
       "\x01\x62\x05table\x01\x70\x00\x01"_su8,
-      Import{"b", "table", TableType{Limits{1}, ReferenceType::Funcref}});
+      Import{"b", "table", TableType{Limits{1}, ReferenceType::Funcref()}});
 
   ExpectWrite("\x01\x63\x06memory\x02\x01\x00\x02"_su8,
               Import{"c", "memory", MemoryType{Limits{0, 2}}});
 
   ExpectWrite(
       "\x01\x64\x06global\x03\x7f\x00"_su8,
-      Import{"d", "global", GlobalType{ValueType::I32, Mutability::Const}});
+      Import{"d", "global", GlobalType{ValueType::I32(), Mutability::Const}});
 
   ExpectWrite("\x01v\x06!event\x04\x00\x02"_su8,
               Import{"v", "!event", EventType{EventAttribute::Exception, 2}});
@@ -393,9 +393,9 @@ TEST(BinaryWriteTest, Instruction) {
 
   ExpectWrite("\x00"_su8, I{O::Unreachable});
   ExpectWrite("\x01"_su8, I{O::Nop});
-  ExpectWrite("\x02\x7f"_su8, I{O::Block, BlockType::I32});
-  ExpectWrite("\x03\x40"_su8, I{O::Loop, BlockType::Void});
-  ExpectWrite("\x04\x7c"_su8, I{O::If, BlockType::F64});
+  ExpectWrite("\x02\x7f"_su8, I{O::Block, BlockType::I32()});
+  ExpectWrite("\x03\x40"_su8, I{O::Loop, BlockType::Void()});
+  ExpectWrite("\x04\x7c"_su8, I{O::If, BlockType::F64()});
   ExpectWrite("\x05"_su8, I{O::Else});
   ExpectWrite("\x0b"_su8, I{O::End});
   ExpectWrite("\x0c\x01"_su8, I{O::Br, Index{1}});
@@ -569,7 +569,7 @@ TEST(BinaryWriteTest, Instruction) {
 }
 
 TEST(BinaryWriteTest, Instruction_exceptions) {
-  ExpectWrite("\x06\x40"_su8, I{O::Try, BlockType::Void});
+  ExpectWrite("\x06\x40"_su8, I{O::Try, BlockType::Void()});
   ExpectWrite("\x07"_su8, I{O::Catch});
   ExpectWrite("\x08\x00"_su8, I{O::Throw, Index{0}});
   ExpectWrite("\x09"_su8, I{O::Rethrow});
@@ -592,14 +592,14 @@ TEST(BinaryWriteTest, Instruction_sign_extension) {
 
 TEST(BinaryWriteTest, Instruction_reference_types) {
   ExpectWrite("\x1c\x02\x7f\x7e"_su8,
-              I{O::SelectT, ValueTypeList{ValueType::I32, ValueType::I64}});
+              I{O::SelectT, ValueTypeList{ValueType::I32(), ValueType::I64()}});
   ExpectWrite("\x25\x00"_su8, I{O::TableGet, Index{0}});
   ExpectWrite("\x26\x00"_su8, I{O::TableSet, Index{0}});
   ExpectWrite("\xfc\x0f\x00"_su8, I{O::TableGrow, Index{0}});
   ExpectWrite("\xfc\x10\x00"_su8, I{O::TableSize, Index{0}});
   ExpectWrite("\xfc\x11\x00"_su8, I{O::TableFill, Index{0}});
-  ExpectWrite("\xd0\x70"_su8, I{O::RefNull, ReferenceType::Funcref});
-  ExpectWrite("\xd1\x70"_su8, I{O::RefIsNull, ReferenceType::Funcref});
+  ExpectWrite("\xd0\x70"_su8, I{O::RefNull, HeapType::Func()});
+  ExpectWrite("\xd1"_su8, I{O::RefIsNull});
 }
 
 TEST(BinaryWriteTest, Instruction_function_references) {
@@ -883,8 +883,8 @@ TEST(BinaryWriteTest, Instruction_threads) {
 
 TEST(BinaryWriteTest, KnownSection_Vector) {
   std::vector<TypeEntry> types{
-      TypeEntry{FunctionType{{ValueType::I32, ValueType::I64}, {}}},
-      TypeEntry{FunctionType{{}, {ValueType::I32, ValueType::I64}}},
+      TypeEntry{FunctionType{{ValueType::I32(), ValueType::I64()}, {}}},
+      TypeEntry{FunctionType{{}, {ValueType::I32(), ValueType::I64()}}},
   };
   SpanU8 expected =
       "\x01"                       // section "type"
@@ -937,15 +937,15 @@ TEST(BinaryWriteTest, Limits) {
 }
 
 TEST(BinaryWriteTest, Locals) {
-  ExpectWrite("\x02\x7f"_su8, Locals{2, ValueType::I32});
-  ExpectWrite("\xc0\x02\x7c"_su8, Locals{320, ValueType::F64});
+  ExpectWrite("\x02\x7f"_su8, Locals{2, ValueType::I32()});
+  ExpectWrite("\xc0\x02\x7c"_su8, Locals{320, ValueType::F64()});
 }
 
 TEST(BinaryWriteTest, LetImmediate) {
-  ExpectWrite("\x40\x00"_su8, LetImmediate{BlockType::Void, LocalsList{}});
-  ExpectWrite(
-      "\x00\x01\x02\x7f"_su8,
-      LetImmediate{BlockType{Index{0}}, LocalsList{Locals{2, ValueType::I32}}});
+  ExpectWrite("\x40\x00"_su8, LetImmediate{BlockType::Void(), LocalsList{}});
+  ExpectWrite("\x00\x01\x02\x7f"_su8,
+              LetImmediate{BlockType{Index{0}},
+                           LocalsList{Locals{2, ValueType::I32()}}});
 }
 
 TEST(BinaryWriteTest, MemArgImmediate) {
@@ -970,7 +970,7 @@ TEST(BinaryWriteTest, Module_TypeEntry) {
   Module module;
   module.types.push_back(TypeEntry{FunctionType{}});
   module.types.push_back(
-      TypeEntry{FunctionType{{ValueType::I32}, {ValueType::I64}}});
+      TypeEntry{FunctionType{{ValueType::I32()}, {ValueType::I64()}}});
 
   ExpectWrite(
       "\x00\x61\x73\x6d\x01\x00\x00\x00"  // magic/version
@@ -1013,8 +1013,10 @@ TEST(BinaryWriteTest, Module_Function) {
 
 TEST(BinaryWriteTest, Module_Table) {
   Module module;
-  module.tables.push_back(Table{TableType{Limits{1}, ReferenceType::Funcref}});
-  module.tables.push_back(Table{TableType{Limits{2}, ReferenceType::Externref}});
+  module.tables.push_back(
+      Table{TableType{Limits{1}, ReferenceType::Funcref()}});
+  module.tables.push_back(
+      Table{TableType{Limits{2}, ReferenceType::Externref()}});
 
   ExpectWrite(
       "\x00\x61\x73\x6d\x01\x00\x00\x00"  // magic/version
@@ -1044,10 +1046,10 @@ TEST(BinaryWriteTest, Module_Memory) {
 TEST(BinaryWriteTest, Module_Global) {
   Module module;
   module.globals.push_back(
-      Global{GlobalType{ValueType::I32, Mutability::Const},
+      Global{GlobalType{ValueType::I32(), Mutability::Const},
              ConstantExpression{Instruction{Opcode::I32Const, s32{1}}}});
   module.globals.push_back(
-      Global{GlobalType{ValueType::I64, Mutability::Var},
+      Global{GlobalType{ValueType::I64(), Mutability::Var},
              ConstantExpression{Instruction{Opcode::I64Const, s64{2}}}});
 
   ExpectWrite(
@@ -1138,7 +1140,7 @@ TEST(BinaryWriteTest, Module_DataCount) {
 TEST(BinaryWriteTest, Module_Code) {
   Module module;
   module.codes.push_back(UnpackedCode{
-      LocalsList{Locals{2, ValueType::I32}, Locals{1, ValueType::I64}},
+      LocalsList{Locals{2, ValueType::I32()}, Locals{1, ValueType::I64()}},
       UnpackedExpression{InstructionList{
           Instruction{Opcode::Unreachable},
           Instruction{Opcode::End},
@@ -1745,19 +1747,19 @@ TEST(BinaryWriteTest, String) {
 
 TEST(BinaryWriteTest, Table) {
   ExpectWrite("\x70\x00\x01"_su8,
-                     Table{TableType{Limits{1}, ReferenceType::Funcref}});
+                     Table{TableType{Limits{1}, ReferenceType::Funcref()}});
 }
 
 TEST(BinaryWriteTest, TableType) {
   ExpectWrite("\x70\x00\x01"_su8,
-                         TableType{Limits{1}, ReferenceType::Funcref});
+                         TableType{Limits{1}, ReferenceType::Funcref()});
   ExpectWrite("\x70\x01\x01\x02"_su8,
-                         TableType{Limits{1, 2}, ReferenceType::Funcref});
+                         TableType{Limits{1, 2}, ReferenceType::Funcref()});
 }
 
 TEST(BinaryWriteTest, TypeEntry) {
   ExpectWrite("\x60\x00\x01\x7f"_su8,
-                         TypeEntry{FunctionType{{}, {ValueType::I32}}});
+                         TypeEntry{FunctionType{{}, {ValueType::I32()}}});
 }
 
 TEST(BinaryWriteTest, U8) {
@@ -1773,14 +1775,14 @@ TEST(BinaryWriteTest, U32) {
 }
 
 TEST(BinaryWriteTest, ValueType) {
-  ExpectWrite("\x7f"_su8, ValueType::I32);
-  ExpectWrite("\x7e"_su8, ValueType::I64);
-  ExpectWrite("\x7d"_su8, ValueType::F32);
-  ExpectWrite("\x7c"_su8, ValueType::F64);
-  ExpectWrite("\x7b"_su8, ValueType::V128);
-  ExpectWrite("\x70"_su8, ValueType::Funcref);
-  ExpectWrite("\x6f"_su8, ValueType::Externref);
-  ExpectWrite("\x68"_su8, ValueType::Exnref);
+  ExpectWrite("\x7f"_su8, ValueType::I32());
+  ExpectWrite("\x7e"_su8, ValueType::I64());
+  ExpectWrite("\x7d"_su8, ValueType::F32());
+  ExpectWrite("\x7c"_su8, ValueType::F64());
+  ExpectWrite("\x7b"_su8, ValueType::V128());
+  ExpectWrite("\x70"_su8, ValueType::Funcref());
+  ExpectWrite("\x6f"_su8, ValueType::Externref());
+  ExpectWrite("\x68"_su8, ValueType::Exnref());
 }
 
 TEST(BinaryWriteTest, WriteVector_u8) {

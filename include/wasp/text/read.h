@@ -86,10 +86,16 @@ auto ReadFunction(Tokenizer&, Context&) -> OptAt<Function>;
 
 // Section 4: Table
 
+enum class AllowFuncref { No, Yes };
+
 auto ReadLimits(Tokenizer&, Context&) -> OptAt<Limits>;
-auto ReadReferenceKind(Tokenizer&, Context&) -> OptAt<ReferenceType>;
-auto ReadReferenceType(Tokenizer&, Context&) -> OptAt<ReferenceType>;
-auto ReadReferenceTypeOpt(Tokenizer&, Context&) -> OptAt<ReferenceType>;
+auto ReadHeapType(Tokenizer&, Context&) -> OptAt<HeapType>;
+auto ReadReferenceType(Tokenizer&, Context&, AllowFuncref = AllowFuncref::Yes)
+    -> OptAt<ReferenceType>;
+auto ReadReferenceTypeOpt(Tokenizer&,
+                          Context&,
+                          AllowFuncref = AllowFuncref::Yes)
+    -> OptAt<ReferenceType>;
 
 auto ReadTableType(Tokenizer&, Context&) -> OptAt<TableType>;
 auto ReadTable(Tokenizer&, Context&) -> OptAt<Table>;

@@ -1,5 +1,5 @@
 //
-// Copyright 2020 WebAssembly Community Group participants
+// Copyright 2019 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,19 +14,6 @@
 // limitations under the License.
 //
 
-#include <iostream>
-
-#include "wasp/base/print_to_macros.h"
-#include "wasp/text/formatters.h"
-#include "wasp/text/types.h"
-
-namespace wasp {
-namespace text {
-
-WASP_TEXT_ENUMS(WASP_DEFINE_PRINT_TO)
-WASP_TEXT_STRUCTS(WASP_DEFINE_PRINT_TO)
-WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_DEFINE_PRINT_TO)
-WASP_TEXT_CONTAINERS(WASP_DEFINE_PRINT_TO)
-
-}  // namespace text
-}  // namespace wasp
+WASP_V(0x70, Func, "func")
+WASP_FEATURE_V(0x6f, Extern, "extern", reference_types)
+WASP_FEATURE_V(0x68, Exn, "exn", exceptions)

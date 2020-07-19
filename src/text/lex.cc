@@ -453,19 +453,27 @@ auto LexKeyword(SpanU8* data,
   return LexReserved(guard.Reset());
 }
 
-auto LexKeyword(SpanU8* data, string_view sv, ValueType vt) -> Token {
+auto LexKeyword(SpanU8* data, string_view sv, NumericType nt) -> Token {
   MatchGuard guard{data};
   if (MatchString(data, sv) && NoTrailingReservedChars(data)) {
-    return Token(guard.loc(), TokenType::ValueType, vt);
+    return Token(guard.loc(), TokenType::NumericType, nt);
   }
   return LexReserved(guard.Reset());
 }
 
-auto LexKeyword(SpanU8* data, string_view sv, TokenType tt, ReferenceType rt)
+auto LexKeyword(SpanU8* data, string_view sv, ReferenceKind rk) -> Token {
+  MatchGuard guard{data};
+  if (MatchString(data, sv) && NoTrailingReservedChars(data)) {
+    return Token(guard.loc(), TokenType::ReferenceKind, rk);
+  }
+  return LexReserved(guard.Reset());
+}
+
+auto LexKeyword(SpanU8* data, string_view sv, TokenType tt, HeapKind hk)
     -> Token {
   MatchGuard guard{data};
   if (MatchString(data, sv) && NoTrailingReservedChars(data)) {
-    return Token(guard.loc(), tt, rt);
+    return Token(guard.loc(), tt, hk);
   }
   return LexReserved(guard.Reset());
 }

@@ -176,63 +176,65 @@ TEST_F(TextReadTest, TextList) {
 }
 
 TEST_F(TextReadTest, ValueType) {
-  OK(ReadValueType, ValueType::I32, "i32"_su8);
-  OK(ReadValueType, ValueType::I64, "i64"_su8);
-  OK(ReadValueType, ValueType::F32, "f32"_su8);
-  OK(ReadValueType, ValueType::F64, "f64"_su8);
+  OK(ReadValueType, VT::I32(), "i32"_su8);
+  OK(ReadValueType, VT::I64(), "i64"_su8);
+  OK(ReadValueType, VT::F32(), "f32"_su8);
+  OK(ReadValueType, VT::F64(), "f64"_su8);
 
   Fail(ReadValueType, {{0, "value type v128 not allowed"}}, "v128"_su8);
-  Fail(ReadValueType, {{0, "value type funcref not allowed"}}, "funcref"_su8);
-  Fail(ReadValueType, {{0, "value type externref not allowed"}},
+  Fail(ReadValueType, {{0, "reference type funcref not allowed"}},
+       "funcref"_su8);
+  Fail(ReadValueType, {{0, "reference type externref not allowed"}},
        "externref"_su8);
 }
 
 TEST_F(TextReadTest, ValueType_simd) {
   context.features.enable_simd();
-  OK(ReadValueType, ValueType::V128, "v128"_su8);
+  OK(ReadValueType, VT::V128(), "v128"_su8);
 }
 
 TEST_F(TextReadTest, ValueType_reference_types) {
   context.features.enable_reference_types();
-  OK(ReadValueType, ValueType::Funcref, "funcref"_su8);
-  OK(ReadValueType, ValueType::Externref, "externref"_su8);
+  OK(ReadValueType, VT::Funcref(), "funcref"_su8);
+  OK(ReadValueType, VT::Externref(), "externref"_su8);
 }
 
 TEST_F(TextReadTest, ValueType_exceptions) {
   context.features.enable_exceptions();
-  OK(ReadValueType, ValueType::Exnref, "exnref"_su8);
+  OK(ReadValueType, VT::Exnref(), "exnref"_su8);
 }
 
 TEST_F(TextReadTest, ValueTypeList) {
   auto span = "i32 f32 f64 i64"_su8;
   std::vector<At<ValueType>> expected{
-      MakeAt("i32"_su8, ValueType::I32),
-      MakeAt("f32"_su8, ValueType::F32),
-      MakeAt("f64"_su8, ValueType::F64),
-      MakeAt("i64"_su8, ValueType::I64),
+      MakeAt("i32"_su8, VT::I32()),
+      MakeAt("f32"_su8, VT::F32()),
+      MakeAt("f64"_su8, VT::F64()),
+      MakeAt("i64"_su8, VT::I64()),
   };
   OKVector(ReadValueTypeList, expected, span);
 }
 
 TEST_F(TextReadTest, ReferenceType) {
-  OK(ReadReferenceType, ReferenceType::Funcref, "funcref"_su8);
+  OK(ReadReferenceType, ReferenceType::Funcref(), "funcref"_su8,
+     AllowFuncref::Yes);
 }
 
 TEST_F(TextReadTest, ReferenceType_reference_types) {
   context.features.enable_reference_types();
-  OK(ReadReferenceType, ReferenceType::Funcref, "funcref"_su8);
-  OK(ReadReferenceType, ReferenceType::Externref, "externref"_su8);
+  OK(ReadReferenceType, ReferenceType::Funcref(), "funcref"_su8,
+     AllowFuncref::Yes);
+  OK(ReadReferenceType, ReferenceType::Externref(), "externref"_su8,
+     AllowFuncref::Yes);
 }
 
 TEST_F(TextReadTest, BoundParamList) {
   auto span = "(param i32 f32) (param $foo i64) (param)"_su8;
   std::vector<At<BoundValueType>> expected{
-      MakeAt("i32"_su8,
-             BoundValueType{nullopt, MakeAt("i32"_su8, ValueType::I32)}),
-      MakeAt("f32"_su8,
-             BoundValueType{nullopt, MakeAt("f32"_su8, ValueType::F32)}),
-      MakeAt("$foo i64"_su8, BoundValueType{MakeAt("$foo"_su8, "$foo"_sv),
-                                            MakeAt("i64"_su8, ValueType::I64)}),
+      MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT::I32())}),
+      MakeAt("f32"_su8, BVT{nullopt, MakeAt("f32"_su8, VT::F32())}),
+      MakeAt("$foo i64"_su8,
+             BVT{MakeAt("$foo"_su8, "$foo"_sv), MakeAt("i64"_su8, VT::I64())}),
   };
 
   NameMap name_map;
@@ -251,9 +253,9 @@ TEST_F(TextReadTest, BoundParamList_DuplicateName) {
 TEST_F(TextReadTest, ParamList) {
   auto span = "(param i32 f32) (param i64) (param)"_su8;
   std::vector<At<ValueType>> expected{
-      MakeAt("i32"_su8, ValueType::I32),
-      MakeAt("f32"_su8, ValueType::F32),
-      MakeAt("i64"_su8, ValueType::I64),
+      MakeAt("i32"_su8, VT::I32()),
+      MakeAt("f32"_su8, VT::F32()),
+      MakeAt("i64"_su8, VT::I64()),
   };
   OKVector(ReadParamList, expected, span);
 }
@@ -261,9 +263,9 @@ TEST_F(TextReadTest, ParamList) {
 TEST_F(TextReadTest, ResultList) {
   auto span = "(result i32 f32) (result i64) (result)"_su8;
   std::vector<At<ValueType>> expected{
-      MakeAt("i32"_su8, ValueType::I32),
-      MakeAt("f32"_su8, ValueType::F32),
-      MakeAt("i64"_su8, ValueType::I64),
+      MakeAt("i32"_su8, VT::I32()),
+      MakeAt("f32"_su8, VT::F32()),
+      MakeAt("i64"_su8, VT::I64()),
   };
   OKVector(ReadResultList, expected, span);
 }
@@ -271,10 +273,10 @@ TEST_F(TextReadTest, ResultList) {
 TEST_F(TextReadTest, LocalList) {
   auto span = "(local i32 f32) (local $foo i64) (local)"_su8;
   std::vector<At<BoundValueType>> expected{
-      MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT::I32)}),
-      MakeAt("f32"_su8, BVT{nullopt, MakeAt("f32"_su8, VT::F32)}),
+      MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT::I32())}),
+      MakeAt("f32"_su8, BVT{nullopt, MakeAt("f32"_su8, VT::F32())}),
       MakeAt("$foo i64"_su8,
-             BVT{MakeAt("$foo"_su8, "$foo"_sv), MakeAt("i64"_su8, VT::I64)}),
+             BVT{MakeAt("$foo"_su8, "$foo"_sv), MakeAt("i64"_su8, VT::I64())}),
   };
 
   NameMap name_map;
@@ -309,22 +311,22 @@ TEST_F(TextReadTest, FunctionTypeUse) {
   OK(ReadFunctionTypeUse,
      FunctionTypeUse{nullopt,
                      MakeAt("(param i32 f32) (result f64)"_su8,
-                            FunctionType{{MakeAt("i32"_su8, VT::I32),
-                                          MakeAt("f32"_su8, VT::F32)},
-                                         {MakeAt("f64"_su8, VT::F64)}})},
+                            FunctionType{{MakeAt("i32"_su8, VT::I32()),
+                                          MakeAt("f32"_su8, VT::F32())},
+                                         {MakeAt("f64"_su8, VT::F64())}})},
      "(param i32 f32) (result f64)"_su8);
 
   // Type use and function type.
   OK(ReadFunctionTypeUse,
      FunctionTypeUse{MakeAt("(type $t)"_su8, Var{"$t"_sv}),
                      MakeAt("(result i32)"_su8,
-                            FunctionType{{}, {MakeAt("i32"_su8, VT::I32)}})},
+                            FunctionType{{}, {MakeAt("i32"_su8, VT::I32())}})},
      "(type $t) (result i32)"_su8);
 }
 
 TEST_F(TextReadTest, FunctionTypeUse_ReuseType) {
   context.function_type_map.Define(
-      BoundFunctionType{{BoundValueType{nullopt, ValueType::I32}}, {}});
+      BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}});
 
   Read(ReadFunctionTypeUse, "(param i32)"_su8);
 
@@ -334,24 +336,24 @@ TEST_F(TextReadTest, FunctionTypeUse_ReuseType) {
 TEST_F(TextReadTest, FunctionTypeUse_DeferType) {
   FunctionTypeMap& ftm = context.function_type_map;
 
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}});
   Read(ReadFunctionTypeUse, "(param f32)"_su8);
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64}}, {}});
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64()}}, {}});
   auto type_entries = ftm.EndModule();
 
   ASSERT_EQ(3u, ftm.Size());
-  EXPECT_EQ((FunctionType{{VT::I32}, {}}), ftm.Get(0));
-  EXPECT_EQ((FunctionType{{VT::I64}, {}}), ftm.Get(1));
+  EXPECT_EQ((FunctionType{{VT::I32()}, {}}), ftm.Get(0));
+  EXPECT_EQ((FunctionType{{VT::I64()}, {}}), ftm.Get(1));
 
   // Implicitly defined after other explicitly defined types.
-  EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT::F32)}, {}}), ftm.Get(2));
+  EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT::F32())}, {}}), ftm.Get(2));
 
   // Generated type entry.
   ASSERT_EQ(1u, type_entries.size());
   EXPECT_EQ(
       (TypeEntry{nullopt,
-                 BoundFunctionType{BoundValueTypeList{BoundValueType{
-                                       nullopt, MakeAt("f32"_su8, VT::F32)}},
+                 BoundFunctionType{BoundValueTypeList{BVT{
+                                       nullopt, MakeAt("f32"_su8, VT::F32())}},
                                    {}}}),
       type_entries[0]);
 }
@@ -394,12 +396,12 @@ TEST_F(TextReadTest, BoundFunctionType) {
   NameMap name_map;
   OK(ReadBoundFunctionType,
      BoundFunctionType{
-         {MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT::I32)}),
-          MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT::I32)}),
+         {MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT::I32())}),
+          MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT::I32())}),
           MakeAt("$t i64"_su8,
-                 BVT{MakeAt("$t"_su8, "$t"_sv), MakeAt("i64"_su8, VT::I64)})},
-         {MakeAt("f32"_su8, VT::F32), MakeAt("f32"_su8, VT::F32),
-          MakeAt("f64"_su8, VT::F64)}},
+                 BVT{MakeAt("$t"_su8, "$t"_sv), MakeAt("i64"_su8, VT::I64())})},
+         {MakeAt("f32"_su8, VT::F32()), MakeAt("f32"_su8, VT::F32()),
+          MakeAt("f64"_su8, VT::F64())}},
      span, name_map);
 
   ASSERT_TRUE(name_map.Has("$t"));
@@ -409,10 +411,10 @@ TEST_F(TextReadTest, BoundFunctionType) {
 TEST_F(TextReadTest, FunctionType) {
   SpanU8 span = "(param i32 i32) (param i64) (result f32 f32) (result f64)"_su8;
   OK(ReadFunctionType,
-     FunctionType{{MakeAt("i32"_su8, VT::I32), MakeAt("i32"_su8, VT::I32),
-                   MakeAt("i64"_su8, VT::I64)},
-                  {MakeAt("f32"_su8, VT::F32), MakeAt("f32"_su8, VT::F32),
-                   MakeAt("f64"_su8, VT::F64)}},
+     FunctionType{{MakeAt("i32"_su8, VT::I32()), MakeAt("i32"_su8, VT::I32()),
+                   MakeAt("i64"_su8, VT::I64())},
+                  {MakeAt("f32"_su8, VT::F32()), MakeAt("f32"_su8, VT::F32()),
+                   MakeAt("f64"_su8, VT::F64())}},
      span);
 }
 
@@ -426,8 +428,8 @@ TEST_F(TextReadTest, TypeEntry) {
          MakeAt("(param $bar i32) (result i64)"_su8,
                 BoundFunctionType{
                     {MakeAt("$bar i32"_su8, BVT{MakeAt("$bar"_su8, "$bar"_sv),
-                                                MakeAt("i32"_su8, VT::I32)})},
-                    {MakeAt("i64"_su8, VT::I64)}})},
+                                                MakeAt("i32"_su8, VT::I32())})},
+                    {MakeAt("i64"_su8, VT::I64())}})},
      "(type $foo (func (param $bar i32) (result i64)))"_su8);
 }
 
@@ -502,10 +504,10 @@ TEST_F(TextReadTest, BlockImmediate_InlineType) {
     At<ValueType> value_type;
     SpanU8 span;
   } tests[] = {
-      {MakeAt("i32"_su8, VT::I32), "(result i32)"_su8},
-      {MakeAt("i64"_su8, VT::I64), "(result i64)"_su8},
-      {MakeAt("f32"_su8, VT::F32), "(result f32)"_su8},
-      {MakeAt("f64"_su8, VT::F64), "(result f64)"_su8},
+      {MakeAt("i32"_su8, VT::I32()), "(result i32)"_su8},
+      {MakeAt("i64"_su8, VT::I64()), "(result i64)"_su8},
+      {MakeAt("f32"_su8, VT::F32()), "(result f32)"_su8},
+      {MakeAt("f64"_su8, VT::F64()), "(result f64)"_su8},
   };
 
   for (auto& test: tests) {
@@ -534,32 +536,27 @@ TEST_F(TextReadTest, LetImmediate) {
 
   // type use, locals
   OK(ReadLetImmediate,
-     LetImmediate{
-         BlockImmediate{
-             nullopt,
-             FunctionTypeUse{MakeAt("(type 0)"_su8, Var{Index{0}}), {}}},
-         BoundValueTypeList{MakeAt(
-             "i32"_su8,
-             BoundValueType{nullopt, MakeAt("i32"_su8, ValueType::I32)})}},
+     LetImmediate{BlockImmediate{nullopt, FunctionTypeUse{MakeAt("(type 0)"_su8,
+                                                                 Var{Index{0}}),
+                                                          {}}},
+                  BoundValueTypeList{MakeAt(
+                      "i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT::I32())})}},
      "(type 0) (local i32)"_su8);
 
   // inline type, multiple locals
   OK(ReadLetImmediate,
      LetImmediate{
-         BlockImmediate{nullopt,
-                        FunctionTypeUse{
-                            nullopt, MakeAt("(param i32)"_su8,
-                                            FunctionType{
-                                                ValueTypeList{MakeAt(
-                                                    "i32"_su8, ValueType::I32)},
-                                                {},
-                                            })}},
+         BlockImmediate{
+             nullopt,
+             FunctionTypeUse{nullopt, MakeAt("(param i32)"_su8,
+                                             FunctionType{
+                                                 ValueTypeList{MakeAt(
+                                                     "i32"_su8, VT::I32())},
+                                                 {},
+                                             })}},
          BoundValueTypeList{
-             MakeAt("f32"_su8,
-                    BoundValueType{nullopt, MakeAt("f32"_su8, ValueType::F32)}),
-             MakeAt(
-                 "f64"_su8,
-                 BoundValueType{nullopt, MakeAt("f64"_su8, ValueType::F64)})}},
+             MakeAt("f32"_su8, BVT{nullopt, MakeAt("f32"_su8, VT::F32())}),
+             MakeAt("f64"_su8, BVT{nullopt, MakeAt("f64"_su8, VT::F64())})}},
      "(param i32) (local f32 f64)"_su8);
 }
 
@@ -717,15 +714,16 @@ TEST_F(TextReadTest, PlainInstruction_Select_reference_types) {
   // select w/ one type
   OK(ReadPlainInstruction,
      I{MakeAt("select"_su8, O::SelectT),
-       MakeAt("(result i32)"_su8, SelectImmediate{MakeAt("i32"_su8, VT::I32)})},
+       MakeAt("(result i32)"_su8,
+              SelectImmediate{MakeAt("i32"_su8, VT::I32())})},
      "select (result i32)"_su8);
 
   // select w/ multiple types
   OK(ReadPlainInstruction,
      I{MakeAt("select"_su8, O::SelectT),
        MakeAt("(result i32) (result i64)"_su8,
-              SelectImmediate{MakeAt("i32"_su8, VT::I32),
-                              MakeAt("i64"_su8, VT::I64)})},
+              SelectImmediate{MakeAt("i32"_su8, VT::I32()),
+                              MakeAt("i64"_su8, VT::I64())})},
      "select (result i32) (result i64)"_su8);
 }
 
@@ -888,7 +886,7 @@ TEST_F(TextReadTest, PlainInstruction_RefNull) {
 
   OK(ReadPlainInstruction,
      I{MakeAt("ref.null"_su8, O::RefNull),
-       MakeAt("extern"_su8, ReferenceType::Externref)},
+       MakeAt("extern"_su8, HeapType::Extern())},
      "ref.null extern"_su8);
 }
 
@@ -1534,7 +1532,7 @@ TEST_F(TextReadTest, TableType) {
   OK(ReadTableType,
      TableType{MakeAt("1 2"_su8,
                       Limits{MakeAt("1"_su8, u32{1}), MakeAt("2"_su8, u32{2})}),
-               MakeAt("funcref"_su8, ReferenceType::Funcref)},
+               MakeAt("funcref"_su8, ReferenceType::Funcref())},
      "1 2 funcref"_su8);
 }
 
@@ -1547,12 +1545,12 @@ TEST_F(TextReadTest, MemoryType) {
 
 TEST_F(TextReadTest, GlobalType) {
   OK(ReadGlobalType,
-     GlobalType{MakeAt("i32"_su8, MakeAt("i32"_su8, ValueType::I32)),
+     GlobalType{MakeAt("i32"_su8, MakeAt("i32"_su8, VT::I32())),
                 Mutability::Const},
      "i32"_su8);
 
   OK(ReadGlobalType,
-     GlobalType{MakeAt("(mut i32)"_su8, MakeAt("i32"_su8, ValueType::I32)),
+     GlobalType{MakeAt("(mut i32)"_su8, MakeAt("i32"_su8, VT::I32())),
                 MakeAt("mut"_su8, Mutability::Var)},
      "(mut i32)"_su8);
 }
@@ -1589,16 +1587,13 @@ TEST_F(TextReadTest, Function) {
 
   // Locals.
   OK(ReadFunction,
-     Function{
-         {},
-         BoundValueTypeList{
-             MakeAt("i32"_su8,
-                    BoundValueType{nullopt, MakeAt("i32"_su8, ValueType::I32)}),
-             MakeAt("i64"_su8,
-                    BoundValueType{nullopt, MakeAt("i64"_su8, ValueType::I64)}),
-         },
-         {},
-         {}},
+     Function{{},
+              BoundValueTypeList{
+                  MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT::I32())}),
+                  MakeAt("i64"_su8, BVT{nullopt, MakeAt("i64"_su8, VT::I64())}),
+              },
+              {},
+              {}},
      "(func (local i32 i64))"_su8);
 
   // Instructions.
@@ -1617,8 +1612,7 @@ TEST_F(TextReadTest, Function) {
   OK(ReadFunction,
      Function{FunctionDesc{MakeAt("$f2"_su8, "$f2"_sv), nullopt, {}},
               BoundValueTypeList{MakeAt(
-                  "i32"_su8,
-                  BoundValueType{nullopt, MakeAt("i32"_su8, ValueType::I32)})},
+                  "i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT::I32())})},
               InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
               InlineExportList{MakeAt(
                   "(export \"m\")"_su8,
@@ -1659,13 +1653,11 @@ TEST_F(TextReadTest, FunctionInlineImport) {
      Function{
          FunctionDesc{
              MakeAt("$f"_su8, "$f"_sv), nullopt,
-             MakeAt(
-                 "(param i32)"_su8,
-                 BoundFunctionType{
-                     {MakeAt("i32"_su8,
-                             BoundValueType{
-                                 nullopt, MakeAt("i32"_su8, ValueType::I32)})},
-                     {}})},
+             MakeAt("(param i32)"_su8,
+                    BoundFunctionType{
+                        {MakeAt("i32"_su8,
+                                BVT{nullopt, MakeAt("i32"_su8, VT::I32())})},
+                        {}})},
          MakeAt("(import \"a\" \"b\")"_su8,
                 InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
                              MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
@@ -1678,24 +1670,24 @@ TEST_F(TextReadTest, FunctionInlineImport) {
 TEST_F(TextReadTest, Function_DeferType) {
   FunctionTypeMap& ftm = context.function_type_map;
 
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}});
   Read(ReadFunction, "(func (param f32))"_su8);
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64}}, {}});
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64()}}, {}});
   auto type_entries = ftm.EndModule();
 
   ASSERT_EQ(3u, ftm.Size());
-  EXPECT_EQ((FunctionType{{VT::I32}, {}}), ftm.Get(0));
-  EXPECT_EQ((FunctionType{{VT::I64}, {}}), ftm.Get(1));
+  EXPECT_EQ((FunctionType{{VT::I32()}, {}}), ftm.Get(0));
+  EXPECT_EQ((FunctionType{{VT::I64()}, {}}), ftm.Get(1));
 
   // Implicitly defined after other explicitly defined types.
-  EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT::F32)}, {}}), ftm.Get(2));
+  EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT::F32())}, {}}), ftm.Get(2));
 
   // Generated type entry.
   ASSERT_EQ(1u, type_entries.size());
   EXPECT_EQ(
       (TypeEntry{nullopt,
-                 BoundFunctionType{BoundValueTypeList{BoundValueType{
-                                       nullopt, MakeAt("f32"_su8, VT::F32)}},
+                 BoundFunctionType{BoundValueTypeList{BVT{
+                                       nullopt, MakeAt("f32"_su8, VT::F32())}},
                                    {}}}),
       type_entries[0]);
 }
@@ -1704,75 +1696,76 @@ TEST_F(TextReadTest, Function_DeferType_Reused) {
   FunctionTypeMap& ftm = context.function_type_map;
 
   Read(ReadFunction, "(func (param i64))"_su8);
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64}}, {}});
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64()}}, {}});
   auto type_entries = ftm.EndModule();
 
   ASSERT_EQ(1u, ftm.Size());
-  EXPECT_EQ((FunctionType{{VT::I64}, {}}), ftm.Get(0));
+  EXPECT_EQ((FunctionType{{VT::I64()}, {}}), ftm.Get(0));
   EXPECT_TRUE(type_entries.empty());
 }
 
 TEST_F(TextReadTest, Table) {
   // Simplest table.
   OK(ReadTable,
-     Table{
-         TableDesc{
-             {},
-             MakeAt("0 funcref"_su8,
-                    TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
-         {}},
+     Table{TableDesc{
+               {},
+               MakeAt(
+                   "0 funcref"_su8,
+                   TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
+                             MakeAt("funcref"_su8, ReferenceType::Funcref())})},
+           {}},
      "(table 0 funcref)"_su8);
 
   // Name.
   OK(ReadTable,
-     Table{
-         TableDesc{
-             MakeAt("$t"_su8, "$t"_sv),
-             MakeAt("0 funcref"_su8,
-                    TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
-         {}},
+     Table{TableDesc{
+               MakeAt("$t"_su8, "$t"_sv),
+               MakeAt(
+                   "0 funcref"_su8,
+                   TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
+                             MakeAt("funcref"_su8, ReferenceType::Funcref())})},
+           {}},
      "(table $t 0 funcref)"_su8);
 
   // Inline export.
   OK(ReadTable,
-     Table{
-         TableDesc{
-             {},
-             MakeAt("0 funcref"_su8,
-                    TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
-         InlineExportList{
-             MakeAt("(export \"m\")"_su8,
-                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+     Table{TableDesc{
+               {},
+               MakeAt(
+                   "0 funcref"_su8,
+                   TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
+                             MakeAt("funcref"_su8, ReferenceType::Funcref())})},
+           InlineExportList{
+               MakeAt("(export \"m\")"_su8,
+                      InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(table (export \"m\") 0 funcref)"_su8);
 
   // Name and inline export.
   OK(ReadTable,
-     Table{
-         TableDesc{
-             MakeAt("$t2"_su8, "$t2"_sv),
-             MakeAt("0 funcref"_su8,
-                    TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
-         InlineExportList{
-             MakeAt("(export \"m\")"_su8,
-                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+     Table{TableDesc{
+               MakeAt("$t2"_su8, "$t2"_sv),
+               MakeAt(
+                   "0 funcref"_su8,
+                   TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
+                             MakeAt("funcref"_su8, ReferenceType::Funcref())})},
+           InlineExportList{
+               MakeAt("(export \"m\")"_su8,
+                      InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(table $t2 (export \"m\") 0 funcref)"_su8);
 
   // Inline element var list.
   OK(ReadTable,
-     Table{TableDesc{{},
-                     TableType{Limits{u32{3}, u32{3}},
-                               MakeAt("funcref"_su8, ReferenceType::Funcref)}},
-           {},
-           ElementListWithVars{ExternalKind::Function,
-                               VarList{
-                                   MakeAt("0"_su8, Var{Index{0}}),
-                                   MakeAt("1"_su8, Var{Index{1}}),
-                                   MakeAt("2"_su8, Var{Index{2}}),
-                               }}},
+     Table{
+         TableDesc{{},
+                   TableType{Limits{u32{3}, u32{3}},
+                             MakeAt("funcref"_su8, ReferenceType::Funcref())}},
+         {},
+         ElementListWithVars{ExternalKind::Function,
+                             VarList{
+                                 MakeAt("0"_su8, Var{Index{0}}),
+                                 MakeAt("1"_su8, Var{Index{1}}),
+                                 MakeAt("2"_su8, Var{Index{2}}),
+                             }}},
      "(table funcref (elem 0 1 2))"_su8);
 }
 
@@ -1786,32 +1779,32 @@ TEST_F(TextReadTest, Table_DuplicateName) {
 TEST_F(TextReadTest, TableInlineImport) {
   // Inline import.
   OK(ReadTable,
-     Table{
-         TableDesc{
-             {},
-             MakeAt("0 funcref"_su8,
-                    TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
-         MakeAt("(import \"m\" \"n\")"_su8,
-                InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-                             MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
-         {}},
+     Table{TableDesc{
+               {},
+               MakeAt(
+                   "0 funcref"_su8,
+                   TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
+                             MakeAt("funcref"_su8, ReferenceType::Funcref())})},
+           MakeAt("(import \"m\" \"n\")"_su8,
+                  InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
+                               MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
+           {}},
      "(table (import \"m\" \"n\") 0 funcref)"_su8);
 
   // Everything for Table import.
   OK(ReadTable,
-     Table{
-         TableDesc{
-             MakeAt("$t"_su8, "$t"_sv),
-             MakeAt("0 funcref"_su8,
-                    TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
-         MakeAt("(import \"a\" \"b\")"_su8,
-                InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
-                             MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
-         InlineExportList{
-             MakeAt("(export \"m\")"_su8,
-                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+     Table{TableDesc{
+               MakeAt("$t"_su8, "$t"_sv),
+               MakeAt(
+                   "0 funcref"_su8,
+                   TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
+                             MakeAt("funcref"_su8, ReferenceType::Funcref())})},
+           MakeAt("(import \"a\" \"b\")"_su8,
+                  InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
+                               MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
+           InlineExportList{
+               MakeAt("(export \"m\")"_su8,
+                      InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(table $t (export \"m\") (import \"a\" \"b\") 0 funcref)"_su8);
 }
 
@@ -1823,20 +1816,21 @@ TEST_F(TextReadTest, Table_bulk_memory) {
 
   // Inline element var list.
   OK(ReadTable,
-     Table{TableDesc{{},
-                     TableType{Limits{u32{2}, u32{2}},
-                               MakeAt("funcref"_su8, ReferenceType::Funcref)}},
-           {},
-           ElementListWithExpressions{
-               MakeAt("funcref"_su8, ReferenceType::Funcref),
-               ElementExpressionList{
-                   MakeAt("(nop)"_su8,
-                          ElementExpression{
-                              MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-                   MakeAt("(nop)"_su8,
-                          ElementExpression{
-                              MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-               }}},
+     Table{
+         TableDesc{{},
+                   TableType{Limits{u32{2}, u32{2}},
+                             MakeAt("funcref"_su8, ReferenceType::Funcref())}},
+         {},
+         ElementListWithExpressions{
+             MakeAt("funcref"_su8, ReferenceType::Funcref()),
+             ElementExpressionList{
+                 MakeAt("(nop)"_su8,
+                        ElementExpression{
+                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+                 MakeAt("(nop)"_su8,
+                        ElementExpression{
+                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+             }}},
      "(table funcref (elem (nop) (nop)))"_su8);
 }
 
@@ -1930,50 +1924,50 @@ TEST_F(TextReadTest, MemoryInlineImport) {
 TEST_F(TextReadTest, Global) {
   // Simplest global.
   OK(ReadGlobal,
-     Global{GlobalDesc{
-                {},
-                MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
-                                             Mutability::Const})},
-            MakeAt("nop"_su8, ConstantExpression{MakeAt(
-                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-            {}},
+     Global{
+         GlobalDesc{{},
+                    MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT::I32()),
+                                                 Mutability::Const})},
+         MakeAt("nop"_su8, ConstantExpression{MakeAt(
+                               "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+         {}},
      "(global i32 nop)"_su8);
 
   // Name.
   OK(ReadGlobal,
-     Global{GlobalDesc{
-                MakeAt("$g"_su8, "$g"_sv),
-                MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
-                                             Mutability::Const})},
-            MakeAt("nop"_su8, ConstantExpression{MakeAt(
-                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-            {}},
+     Global{
+         GlobalDesc{MakeAt("$g"_su8, "$g"_sv),
+                    MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT::I32()),
+                                                 Mutability::Const})},
+         MakeAt("nop"_su8, ConstantExpression{MakeAt(
+                               "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+         {}},
      "(global $g i32 nop)"_su8);
 
   // Inline export.
   OK(ReadGlobal,
-     Global{GlobalDesc{
-                {},
-                MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
-                                             Mutability::Const})},
-            MakeAt("nop"_su8, ConstantExpression{MakeAt(
-                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-            InlineExportList{MakeAt(
-                "(export \"m\")"_su8,
-                InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+     Global{
+         GlobalDesc{{},
+                    MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT::I32()),
+                                                 Mutability::Const})},
+         MakeAt("nop"_su8, ConstantExpression{MakeAt(
+                               "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+         InlineExportList{
+             MakeAt("(export \"m\")"_su8,
+                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(global (export \"m\") i32 nop)"_su8);
 
   // Name and inline export.
   OK(ReadGlobal,
-     Global{GlobalDesc{
-                MakeAt("$g2"_su8, "$g2"_sv),
-                MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
-                                             Mutability::Const})},
-            MakeAt("nop"_su8, ConstantExpression{MakeAt(
-                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-            InlineExportList{MakeAt(
-                "(export \"m\")"_su8,
-                InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+     Global{
+         GlobalDesc{MakeAt("$g2"_su8, "$g2"_sv),
+                    MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT::I32()),
+                                                 Mutability::Const})},
+         MakeAt("nop"_su8, ConstantExpression{MakeAt(
+                               "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+         InlineExportList{
+             MakeAt("(export \"m\")"_su8,
+                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(global $g2 (export \"m\") i32 nop)"_su8);
 }
 
@@ -1987,28 +1981,28 @@ TEST_F(TextReadTest, Global_DuplicateName) {
 TEST_F(TextReadTest, GlobalInlineImport) {
   // Inline import.
   OK(ReadGlobal,
-     Global{GlobalDesc{
-                {},
-                MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
-                                             Mutability::Const})},
-            MakeAt("(import \"m\" \"n\")"_su8,
-                   InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-                                MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
-            {}},
+     Global{
+         GlobalDesc{{},
+                    MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT::I32()),
+                                                 Mutability::Const})},
+         MakeAt("(import \"m\" \"n\")"_su8,
+                InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
+                             MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
+         {}},
      "(global (import \"m\" \"n\") i32)"_su8);
 
   // Everything for Global import.
   OK(ReadGlobal,
-     Global{GlobalDesc{
-                MakeAt("$g"_su8, "$g"_sv),
-                MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
-                                             Mutability::Const})},
-            MakeAt("(import \"a\" \"b\")"_su8,
-                   InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
-                                MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
-            InlineExportList{MakeAt(
-                "(export \"m\")"_su8,
-                InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+     Global{
+         GlobalDesc{MakeAt("$g"_su8, "$g"_sv),
+                    MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT::I32()),
+                                                 Mutability::Const})},
+         MakeAt("(import \"a\" \"b\")"_su8,
+                InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
+                             MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
+         InlineExportList{
+             MakeAt("(export \"m\")"_su8,
+                    InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(global $g (export \"m\") (import \"a\" \"b\") i32)"_su8);
 }
 
@@ -2085,14 +2079,14 @@ TEST_F(TextReadTest, Import) {
 
   // Table.
   OK(ReadImport,
-     Import{
-         MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-         MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1}),
-         TableDesc{
-             nullopt,
-             MakeAt("1 funcref"_su8,
-                    TableType{MakeAt("1"_su8, Limits{MakeAt("1"_su8, u32{1})}),
-                              MakeAt("funcref"_su8, ReferenceType::Funcref)})}},
+     Import{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
+            MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1}),
+            TableDesc{
+                nullopt,
+                MakeAt("1 funcref"_su8,
+                       TableType{
+                           MakeAt("1"_su8, Limits{MakeAt("1"_su8, u32{1})}),
+                           MakeAt("funcref"_su8, ReferenceType::Funcref())})}},
      "(import \"m\" \"n\" (table 1 funcref))"_su8);
 
   // Memory.
@@ -2109,10 +2103,9 @@ TEST_F(TextReadTest, Import) {
   OK(ReadImport,
      Import{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
             MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1}),
-            GlobalDesc{
-                nullopt,
-                MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
-                                             Mutability::Const})}},
+            GlobalDesc{nullopt, MakeAt("i32"_su8,
+                                       GlobalType{MakeAt("i32"_su8, VT::I32()),
+                                                  Mutability::Const})}},
      "(import \"m\" \"n\" (global i32))"_su8);
 }
 
@@ -2126,24 +2119,24 @@ TEST_F(TextReadTest, Import_AfterNonImport) {
 TEST_F(TextReadTest, Import_FunctionDeferType) {
   FunctionTypeMap& ftm = context.function_type_map;
 
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}});
   Read(ReadImport, "(import \"m\" \"n\" (func (param f32)))"_su8);
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64}}, {}});
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT::I64()}}, {}});
   auto type_entries = ftm.EndModule();
 
   ASSERT_EQ(3u, ftm.Size());
-  EXPECT_EQ((FunctionType{{VT::I32}, {}}), ftm.Get(0));
-  EXPECT_EQ((FunctionType{{VT::I64}, {}}), ftm.Get(1));
+  EXPECT_EQ((FunctionType{{VT::I32()}, {}}), ftm.Get(0));
+  EXPECT_EQ((FunctionType{{VT::I64()}, {}}), ftm.Get(1));
 
   // Implicitly defined after other explicitly defined types.
-  EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT::F32)}, {}}), ftm.Get(2));
+  EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT::F32())}, {}}), ftm.Get(2));
 
   // Generated type entry.
   ASSERT_EQ(1u, type_entries.size());
   EXPECT_EQ(
       (TypeEntry{nullopt,
-                 BoundFunctionType{BoundValueTypeList{BoundValueType{
-                                       nullopt, MakeAt("f32"_su8, VT::F32)}},
+                 BoundFunctionType{BoundValueTypeList{BVT{
+                                       nullopt, MakeAt("f32"_su8, VT::F32())}},
                                    {}}}),
       type_entries[0]);
 }
@@ -2317,7 +2310,8 @@ TEST_F(TextReadTest, ElementSegment_MVP) {
 }
 
 TEST_F(TextReadTest, ElementSegment_bulk_memory) {
-  Fail(ReadElementSegment, {{6, "Expected offset expression, got ValueType"}},
+  Fail(ReadElementSegment,
+       {{6, "Expected offset expression, got ReferenceKind"}},
        "(elem funcref)"_su8);
 
   Fail(ReadElementSegment, {{6, "Expected offset expression, got Func"}},
@@ -2330,7 +2324,7 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
      ElementSegment{
          nullopt, SegmentType::Passive,
          ElementListWithExpressions{
-             MakeAt("funcref"_su8, ReferenceType::Funcref),
+             MakeAt("funcref"_su8, ReferenceType::Funcref()),
              ElementExpressionList{
                  MakeAt("(nop)"_su8,
                         ElementExpression{
@@ -2364,7 +2358,7 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
      ElementSegment{
          nullopt, SegmentType::Declared,
          ElementListWithExpressions{
-             MakeAt("funcref"_su8, ReferenceType::Funcref),
+             MakeAt("funcref"_su8, ReferenceType::Funcref()),
              ElementExpressionList{
                  MakeAt("(nop)"_su8,
                         ElementExpression{
@@ -2436,7 +2430,7 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
          MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          ElementListWithExpressions{
-             MakeAt("funcref"_su8, ReferenceType::Funcref),
+             MakeAt("funcref"_su8, ReferenceType::Funcref()),
              ElementExpressionList{
                  MakeAt("(nop)"_su8,
                         ElementExpression{
@@ -2597,9 +2591,10 @@ TEST_F(TextReadTest, ModuleItem) {
      ModuleItem{Table{
          TableDesc{
              nullopt,
-             MakeAt("0 funcref"_su8,
-                    TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, ReferenceType::Funcref)})},
+             MakeAt(
+                 "0 funcref"_su8,
+                 TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
+                           MakeAt("funcref"_su8, ReferenceType::Funcref())})},
          {}}},
      "(table 0 funcref)"_su8);
 
@@ -2616,10 +2611,9 @@ TEST_F(TextReadTest, ModuleItem) {
   // Global.
   OK(ReadModuleItem,
      ModuleItem{Global{
-         GlobalDesc{
-             nullopt,
-             MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, ValueType::I32),
-                                          Mutability::Const})},
+         GlobalDesc{nullopt,
+                    MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT::I32()),
+                                                 Mutability::Const})},
          MakeAt("(nop)"_su8,
                 ConstantExpression{MakeAt(
                     "nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})}),
@@ -2700,31 +2694,30 @@ TEST_F(TextReadTest, ModuleWithDeferredTypes) {
   OK(ReadModule,
      Module{
          MakeAt("(func)"_su8, ModuleItem{Function{}}),
-         MakeAt(
-             "(func (param i32))"_su8,
-             ModuleItem{Function{
-                 FunctionDesc{
-                     nullopt,
-                     nullopt,
-                     MakeAt("(param i32)"_su8,
-                            BoundFunctionType{
-                                BoundValueTypeList{MakeAt(
-                                    "i32"_su8,
-                                    BoundValueType{
-                                        nullopt, MakeAt("i32"_su8, VT::I32)})},
-                                {}}),
-                 },
-                 {},
-                 {},
-                 {}}}),
+         MakeAt("(func (param i32))"_su8,
+                ModuleItem{Function{
+                    FunctionDesc{
+                        nullopt,
+                        nullopt,
+                        MakeAt("(param i32)"_su8,
+                               BoundFunctionType{
+                                   BoundValueTypeList{MakeAt(
+                                       "i32"_su8,
+                                       BVT{nullopt,
+                                           MakeAt("i32"_su8, VT::I32())})},
+                                   {}}),
+                    },
+                    {},
+                    {},
+                    {}}}),
 
          // The deferred type entries.
          ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}},
          ModuleItem{TypeEntry{
              nullopt,
-             BoundFunctionType{BoundValueTypeList{BoundValueType{
-                                   nullopt, MakeAt("i32"_su8, VT::I32)}},
-                               {}}}},
+             BoundFunctionType{
+                 BoundValueTypeList{BVT{nullopt, MakeAt("i32"_su8, VT::I32())}},
+                 {}}}},
      },
      "(func) (func (param i32))"_su8);
 }

@@ -16,11 +16,19 @@
 
 #include "wasp/text/formatters.h"
 
+#include <cassert>
+
 #include "wasp/base/formatter_macros.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/macros.h"
 
 namespace wasp {
+
+// ReferenceType
+WASP_DEFINE_VARIANT_NAME(text::RefType, "ref_type")
+
+// ValueType.
+WASP_DEFINE_VARIANT_NAME(text::ReferenceType, "reference_type")
 
 // Instruction.
 WASP_DEFINE_VARIANT_NAME(text::OpcodeInfo, "opcode_info")
@@ -34,6 +42,7 @@ WASP_DEFINE_VARIANT_NAME(text::CopyImmediate, "copy")
 WASP_DEFINE_VARIANT_NAME(text::InitImmediate, "init")
 WASP_DEFINE_VARIANT_NAME(text::LetImmediate, "let")
 WASP_DEFINE_VARIANT_NAME(text::MemArgImmediate, "mem_arg")
+WASP_DEFINE_VARIANT_NAME(text::HeapType, "heap_type")
 WASP_DEFINE_VARIANT_NAME(text::SelectImmediate, "select")
 WASP_DEFINE_VARIANT_NAME(text::Var, "var")
 
@@ -263,6 +272,79 @@ typename Ctx::iterator formatter<::wasp::text::Command>::format(
     Ctx& ctx) {
   memory_buffer buf;
   format_to(buf, "{}", self.contents);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::text::HeapType>::format(
+    const ::wasp::text::HeapType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  if (self.is_heap_kind()) {
+    format_to(buf, "{}", self.heap_kind());
+  } else {
+    assert(self.is_var());
+    format_to(buf, "{}", self.var());
+  }
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::text::RefType>::format(
+    const ::wasp::text::RefType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "ref ");
+  if (self.null == ::wasp::Null::Yes) {
+    format_to(buf, "null ");
+  }
+  format_to(buf, "{}", self.heap_type);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::text::ReferenceType>::format(
+    const ::wasp::text::ReferenceType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  if (self.is_reference_kind()) {
+    format_to(buf, "{}", self.reference_kind());
+  } else {
+    assert(self.is_ref());
+    format_to(buf, "{}", self.ref());
+  }
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::text::ValueType>::format(
+    const ::wasp::text::ValueType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  if (self.is_numeric_type()) {
+    format_to(buf, "{}", self.numeric_type());
+  } else {
+    assert(self.is_reference_type());
+    format_to(buf, "{}", self.reference_type());
+  }
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::text::TableType>::format(
+    const ::wasp::text::TableType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.limits, self.elemtype);
+  return formatter<string_view>::format(to_string_view(buf), ctx);
+}
+
+template <typename Ctx>
+typename Ctx::iterator formatter<::wasp::text::GlobalType>::format(
+    const ::wasp::text::GlobalType& self,
+    Ctx& ctx) {
+  memory_buffer buf;
+  format_to(buf, "{} {}", self.mut, self.valtype);
   return formatter<string_view>::format(to_string_view(buf), ctx);
 }
 

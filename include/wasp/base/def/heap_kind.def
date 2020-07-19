@@ -1,5 +1,5 @@
 //
-// Copyright 2019 WebAssembly Community Group participants
+// Copyright 2020 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,5 +14,6 @@
 // limitations under the License.
 //
 
-#include "wasp/base/def/value_type.def"
-WASP_V(0x40, Void, "")
+WASP_V(0x70, Func, "func")
+WASP_FEATURE_V(0x6f, Extern, "extern", reference_types)
+WASP_FEATURE_V(0x68, Exn, "exn", exceptions)

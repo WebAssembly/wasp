@@ -36,32 +36,104 @@
 namespace wasp {
 namespace binary {
 
-// BlockType values are 0x40, and 0x7c through 0x7f in the MVP. In the
-// multi-value proposal, a block type is extended to a s32 value, where
-// negative values represent the standard value types, and non-negative values
-// are indexes into the type section.
-//
-// The values 0x40, 0x7c..0x7f are all representations of small negative
-// numbers encoded as signed LEB128. For example, 0x40 is the encoding for -64.
-// Signed LEB128 values have their sign bit as the 6th bit (instead of the 7th
-// bit), so to convert them to a s32 value, we must shift by 25.
-constexpr s32 EncodeValueTypeAsBlockType(u8 value) {
-  return (value << 25) >> 25;
-}
+struct HeapType {
+  explicit HeapType(HeapKind);
+  explicit HeapType(Index);
+  static HeapType Func();
+  static HeapType Extern();
+  static HeapType Exn();
 
-enum class BlockType : s32 {
-#define WASP_V(val, Name, str) Name = EncodeValueTypeAsBlockType(val),
-#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/def/block_type.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
+  bool is_heap_kind() const;
+  bool is_func() const;
+  bool is_extern() const;
+  bool is_exn() const;
+  bool is_index() const;
+
+  auto heap_kind() -> HeapKind&;
+  auto heap_kind() const -> const HeapKind&;
+  auto index() -> Index&;
+  auto index() const -> const Index&;
+
+  variant<HeapKind, Index> type;
 };
 
-static_assert(s32(BlockType::I32) == -1, "Invalid value for BlockType::I32");
-static_assert(s32(BlockType::I64) == -2, "Invalid value for BlockType::I64");
-static_assert(s32(BlockType::F32) == -3, "Invalid value for BlockType::F32");
-static_assert(s32(BlockType::F64) == -4, "Invalid value for BlockType::F64");
-static_assert(s32(BlockType::Void) == -64, "Invalid value for BlockType::Void");
+struct RefType {
+  HeapType heap_type;
+  Null null;
+};
+
+struct ReferenceType {
+  explicit ReferenceType(ReferenceKind);
+  explicit ReferenceType(RefType);
+  static ReferenceType Funcref();
+  static ReferenceType Externref();
+  static ReferenceType Exnref();
+
+  bool is_reference_kind() const;
+  bool is_funcref() const;
+  bool is_externref() const;
+  bool is_exnref() const;
+  bool is_ref() const;
+
+  auto reference_kind() -> ReferenceKind&;
+  auto reference_kind() const -> const ReferenceKind&;
+  auto ref() -> RefType&;
+  auto ref() const -> const RefType&;
+
+  variant<ReferenceKind, RefType> type;
+};
+
+struct ValueType {
+  explicit ValueType(NumericType);
+  explicit ValueType(ReferenceType);
+  static ValueType I32();
+  static ValueType I64();
+  static ValueType F32();
+  static ValueType F64();
+  static ValueType V128();
+  static ValueType Funcref();
+  static ValueType Externref();
+  static ValueType Exnref();
+
+  bool is_numeric_type() const;
+  bool is_reference_type() const;
+
+  auto numeric_type() -> NumericType&;
+  auto numeric_type() const -> const NumericType&;
+  auto reference_type() -> ReferenceType&;
+  auto reference_type() const -> const ReferenceType&;
+
+  variant<NumericType, ReferenceType> type;
+};
+
+using ValueTypeList = std::vector<At<ValueType>>;
+
+struct VoidType {};
+struct BlockType {
+  explicit BlockType(ValueType);
+  explicit BlockType(VoidType);
+  explicit BlockType(Index);
+  static BlockType I32();
+  static BlockType I64();
+  static BlockType F32();
+  static BlockType F64();
+  static BlockType V128();
+  static BlockType Void();
+  static BlockType Funcref();
+  static BlockType Externref();
+  static BlockType Exnref();
+
+  bool is_value_type() const;
+  bool is_void() const;
+  bool is_index() const;
+
+  auto value_type() -> ValueType&;
+  auto value_type() const -> const ValueType&;
+  auto index() -> Index&;
+  auto index() const -> const Index&;
+
+  variant<ValueType, VoidType, Index> type;
+};
 
 // The section ids are ordered by their expected order in the binary format.
 enum class SectionId : u32 {
@@ -172,7 +244,7 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<InitImmediate>);
   explicit Instruction(At<Opcode>, At<LetImmediate>);
   explicit Instruction(At<Opcode>, At<MemArgImmediate>);
-  explicit Instruction(At<Opcode>, At<ReferenceType>);
+  explicit Instruction(At<Opcode>, At<HeapType>);
   explicit Instruction(At<Opcode>, At<SelectImmediate>);
   explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
   explicit Instruction(At<Opcode>, At<SimdLaneImmediate>);
@@ -202,7 +274,7 @@ struct Instruction {
   bool has_init_immediate() const;
   bool has_let_immediate() const;
   bool has_mem_arg_immediate() const;
-  bool has_reference_type_immediate() const;
+  bool has_heap_type_immediate() const;
   bool has_select_immediate() const;
   bool has_shuffle_immediate() const;
   bool has_simd_lane_immediate() const;
@@ -235,8 +307,8 @@ struct Instruction {
   auto let_immediate() const -> const At<LetImmediate>&;
   auto mem_arg_immediate() -> At<MemArgImmediate>&;
   auto mem_arg_immediate() const -> const At<MemArgImmediate>&;
-  auto reference_type_immediate() -> At<ReferenceType>&;
-  auto reference_type_immediate() const -> const At<ReferenceType>&;
+  auto heap_type_immediate() -> At<HeapType>&;
+  auto heap_type_immediate() const -> const At<HeapType>&;
   auto select_immediate() -> At<SelectImmediate>&;
   auto select_immediate() const -> const At<SelectImmediate>&;
   auto shuffle_immediate() -> At<ShuffleImmediate>&;
@@ -260,7 +332,7 @@ struct Instruction {
           At<InitImmediate>,
           At<LetImmediate>,
           At<MemArgImmediate>,
-          At<ReferenceType>,
+          At<HeapType>,
           At<SelectImmediate>,
           At<ShuffleImmediate>,
           At<SimdLaneImmediate>>
@@ -281,6 +353,16 @@ struct TypeEntry {
 };
 
 // Section 2: Import
+
+struct TableType {
+  At<Limits> limits;
+  At<ReferenceType> elemtype;
+};
+
+struct GlobalType {
+  At<ValueType> valtype;
+  At<Mutability> mut;
+};
 
 struct EventType {
   At<EventAttribute> attribute;
@@ -500,10 +582,10 @@ struct Module {
 };
 
 #define WASP_BINARY_ENUMS(WASP_V) \
-  WASP_V(binary::BlockType)       \
   WASP_V(binary::SectionId)
 
-#define WASP_BINARY_STRUCTS(WASP_V)                                      \
+#define WASP_BINARY_STRUCTS_CUSTOM_FORMAT(WASP_V)                        \
+  WASP_V(binary::BlockType, 1, type)                                     \
   WASP_V(binary::BrOnExnImmediate, 2, target, event_index)               \
   WASP_V(binary::BrTableImmediate, 2, targets, default_target)           \
   WASP_V(binary::CallIndirectImmediate, 2, index, table_index)           \
@@ -524,6 +606,8 @@ struct Module {
   WASP_V(binary::Function, 1, type_index)                                \
   WASP_V(binary::FunctionType, 2, param_types, result_types)             \
   WASP_V(binary::Global, 2, global_type, init)                           \
+  WASP_V(binary::GlobalType, 2, valtype, mut)                            \
+  WASP_V(binary::HeapType, 1, type)                                      \
   WASP_V(binary::Import, 3, module, name, desc)                          \
   WASP_V(binary::InitImmediate, 2, segment_index, dst_index)             \
   WASP_V(binary::Instruction, 2, opcode, immediate)                      \
@@ -532,20 +616,26 @@ struct Module {
   WASP_V(binary::Locals, 2, count, type)                                 \
   WASP_V(binary::MemArgImmediate, 2, align_log2, offset)                 \
   WASP_V(binary::Memory, 1, memory_type)                                 \
+  WASP_V(binary::RefType, 2, heap_type, null)                            \
+  WASP_V(binary::ReferenceType, 1, type)                                 \
   WASP_V(binary::Section, 1, contents)                                   \
   WASP_V(binary::Start, 1, func_index)                                   \
   WASP_V(binary::Table, 1, table_type)                                   \
+  WASP_V(binary::TableType, 2, limits, elemtype)                         \
   WASP_V(binary::TypeEntry, 1, type)                                     \
   WASP_V(binary::UnpackedCode, 2, locals, body)                          \
-  WASP_V(binary::UnpackedExpression, 1, instructions)
+  WASP_V(binary::UnpackedExpression, 1, instructions)                    \
+  WASP_V(binary::ValueType, 1, type)                                     \
+  WASP_V(binary::VoidType, 0)
 
-#define WASP_BINARY_CONTAINERS(WASP_V) \
-  WASP_V(binary::IndexList)            \
-  WASP_V(binary::InstructionList)      \
-  WASP_V(binary::LocalsList)           \
-  WASP_V(binary::ElementExpressionList)
+#define WASP_BINARY_CONTAINERS(WASP_V)  \
+  WASP_V(binary::IndexList)             \
+  WASP_V(binary::InstructionList)       \
+  WASP_V(binary::LocalsList)            \
+  WASP_V(binary::ElementExpressionList) \
+  WASP_V(binary::ValueTypeList)
 
-WASP_BINARY_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
+WASP_BINARY_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_BINARY_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 
 WASP_DECLARE_OPERATOR_EQ_NE(binary::Module)
@@ -553,12 +643,12 @@ WASP_DECLARE_OPERATOR_EQ_NE(binary::Module)
 // Used for gtest.
 
 WASP_BINARY_ENUMS(WASP_DECLARE_PRINT_TO)
-WASP_BINARY_STRUCTS(WASP_DECLARE_PRINT_TO)
+WASP_BINARY_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_PRINT_TO)
 
 }  // namespace binary
 }  // namespace wasp
 
-WASP_BINARY_STRUCTS(WASP_DECLARE_STD_HASH)
+WASP_BINARY_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_STD_HASH)
 WASP_BINARY_CONTAINERS(WASP_DECLARE_STD_HASH)
 
 #endif // WASP_BINARY_TYPES_H_

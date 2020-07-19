@@ -35,8 +35,15 @@ struct Type {
   static constexpr u8 Function = 0x60;
 };
 
+struct EncodedValueType {
+  s32 code;
+  optional<s32> immediate;
+};
+
 struct BlockType {
-  static s32 Encode(::wasp::binary::BlockType);
+  static constexpr s32 Void = 0x40;
+
+  static EncodedValueType Encode(::wasp::binary::BlockType);
   static optional<::wasp::binary::BlockType> Decode(u8, const Features&);
   static optional<::wasp::binary::BlockType> Decode(s32, const Features&);
 };
@@ -56,6 +63,15 @@ enum class HasMax { No, Yes };
 struct DecodedLimitsFlags {
   HasMax has_max;
   Shared shared;
+};
+
+struct HeapType {
+  static constexpr s32 Func = -0x10;
+  static constexpr s32 Extern = -0x11;
+  static constexpr s32 Exn = -0x18;
+
+  static s32 Encode(const ::wasp::binary::HeapType&);
+  static optional<::wasp::binary::HeapType> Decode(s32, const Features&);
 };
 
 struct LimitsFlags {
@@ -89,9 +105,22 @@ struct Opcode {
   static optional<::wasp::Opcode> Decode(u8 prefix, u32 code, const Features&);
 };
 
+enum class AllowFuncref { No, Yes };
+
 struct ReferenceType {
-  static u8 Encode(::wasp::ReferenceType);
-  static optional<::wasp::ReferenceType> Decode(u8, const Features&);
+  static constexpr u8 Funcref = 0x70;
+  static constexpr u8 Externref = 0x6f;
+  static constexpr u8 RefNull = 0x6c;  // Prefix.
+  static constexpr u8 Ref = 0x6b;      // Prefix.
+  static constexpr u8 Exnref = 0x68;
+
+  static bool IsPrefixByte(u8, const Features&);
+  static EncodedValueType Encode(::wasp::binary::ReferenceType);
+  static optional<::wasp::binary::ReferenceType>
+  Decode(u8, const Features&, AllowFuncref = AllowFuncref::Yes);
+  static optional<::wasp::binary::ReferenceType> Decode(u8 prefix,
+                                                        s32 code,
+                                                        const Features&);
 };
 
 struct SectionId {
@@ -140,9 +169,18 @@ struct ElemSegmentFlags {
   static optional<DecodedElemSegmentFlags> Decode(Index, const Features&);
 };
 
+struct NumericType {
+  static u8 Encode(::wasp::NumericType);
+  static optional<::wasp::NumericType> Decode(u8, const Features&);
+};
+
 struct ValueType {
-  static u8 Encode(::wasp::ValueType);
-  static optional<::wasp::ValueType> Decode(u8, const Features&);
+  static bool IsPrefixByte(u8, const Features&);
+  static EncodedValueType Encode(::wasp::binary::ValueType);
+  static optional<::wasp::binary::ValueType> Decode(u8, const Features&);
+  static optional<::wasp::binary::ValueType> Decode(u8 prefix,
+                                                    s32 code,
+                                                    const Features&);
 };
 
 }  // namespace encoding

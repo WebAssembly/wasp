@@ -81,11 +81,14 @@ Token::Token(Location loc, TokenType type)
 Token::Token(Location loc, TokenType type, OpcodeInfo info)
     : loc{loc}, type{type}, immediate{info} {}
 
-Token::Token(Location loc, TokenType type, ValueType valtype)
-    : loc{loc}, type{type}, immediate{valtype} {}
+Token::Token(Location loc, TokenType type, NumericType numeric_type)
+    : loc{loc}, type{type}, immediate{numeric_type} {}
 
-Token::Token(Location loc, TokenType type, ReferenceType reftype)
-    : loc{loc}, type{type}, immediate{reftype} {}
+Token::Token(Location loc, TokenType type, ReferenceKind reference_kind)
+    : loc{loc}, type{type}, immediate{reference_kind} {}
+
+Token::Token(Location loc, TokenType type, HeapKind heap_kind)
+    : loc{loc}, type{type}, immediate{heap_kind} {}
 
 Token::Token(Location loc, TokenType type, LiteralInfo info)
     : loc{loc}, type{type}, immediate{info} {}

@@ -37,30 +37,30 @@ namespace {
 
 using namespace ::wasp::binary;
 
-#define STACK_TYPE_SPANS(V)                                      \
-  V(i32, StackType::I32)                                         \
-  V(i64, StackType::I64)                                         \
-  V(f32, StackType::F32)                                         \
-  V(f64, StackType::F64)                                         \
-  V(v128, StackType::V128)                                       \
-  V(exnref, StackType::Exnref)                                   \
-  V(i32_i32, StackType::I32, StackType::I32)                     \
-  V(i32_i64, StackType::I32, StackType::I64)                     \
-  V(i32_f32, StackType::I32, StackType::F32)                     \
-  V(i32_f64, StackType::I32, StackType::F64)                     \
-  V(i32_v128, StackType::I32, StackType::V128)                   \
-  V(i64_i64, StackType::I64, StackType::I64)                     \
-  V(f32_f32, StackType::F32, StackType::F32)                     \
-  V(f64_f64, StackType::F64, StackType::F64)                     \
-  V(v128_i32, StackType::V128, StackType::I32)                   \
-  V(v128_i64, StackType::V128, StackType::I64)                   \
-  V(v128_f32, StackType::V128, StackType::F32)                   \
-  V(v128_f64, StackType::V128, StackType::F64)                   \
-  V(v128_v128, StackType::V128, StackType::V128)                 \
-  V(i32_i32_i32, StackType::I32, StackType::I32, StackType::I32) \
-  V(i32_i32_i64, StackType::I32, StackType::I32, StackType::I64) \
-  V(i32_i64_i64, StackType::I32, StackType::I64, StackType::I64) \
-  V(v128_v128_v128, StackType::V128, StackType::V128, StackType::V128)
+#define STACK_TYPE_SPANS(V)                                            \
+  V(i32, StackType::I32())                                             \
+  V(i64, StackType::I64())                                             \
+  V(f32, StackType::F32())                                             \
+  V(f64, StackType::F64())                                             \
+  V(v128, StackType::V128())                                           \
+  V(exnref, StackType::Exnref())                                       \
+  V(i32_i32, StackType::I32(), StackType::I32())                       \
+  V(i32_i64, StackType::I32(), StackType::I64())                       \
+  V(i32_f32, StackType::I32(), StackType::F32())                       \
+  V(i32_f64, StackType::I32(), StackType::F64())                       \
+  V(i32_v128, StackType::I32(), StackType::V128())                     \
+  V(i64_i64, StackType::I64(), StackType::I64())                       \
+  V(f32_f32, StackType::F32(), StackType::F32())                       \
+  V(f64_f64, StackType::F64(), StackType::F64())                       \
+  V(v128_i32, StackType::V128(), StackType::I32())                     \
+  V(v128_i64, StackType::V128(), StackType::I64())                     \
+  V(v128_f32, StackType::V128(), StackType::F32())                     \
+  V(v128_f64, StackType::V128(), StackType::F64())                     \
+  V(v128_v128, StackType::V128(), StackType::V128())                   \
+  V(i32_i32_i32, StackType::I32(), StackType::I32(), StackType::I32()) \
+  V(i32_i32_i64, StackType::I32(), StackType::I32(), StackType::I64()) \
+  V(i32_i64_i64, StackType::I32(), StackType::I64(), StackType::I64()) \
+  V(v128_v128_v128, StackType::V128(), StackType::V128(), StackType::V128())
 
 #define WASP_V(name, ...)                         \
   const StackType array_##name[] = {__VA_ARGS__}; \
@@ -86,20 +86,13 @@ optional<FunctionType> GetFunctionType(Context& context, At<Index> index) {
 
 optional<FunctionType> GetBlockTypeSignature(Context& context,
                                              BlockType block_type) {
-  switch (block_type) {
-    case BlockType::Void:
-      return FunctionType{};
-
-#define WASP_V(val, Name, str) \
-  case BlockType::Name:        \
-    return FunctionType{{}, {ValueType::Name}};
-#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/base/def/value_type.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
-
-    default:
-      return GetFunctionType(context, Index(block_type));
+  if (block_type.is_void()) {
+    return FunctionType{};
+  } else if (block_type.is_value_type()) {
+    return FunctionType{{}, {block_type.value_type()}};
+  } else {
+    assert(block_type.is_index());
+    return GetFunctionType(context, block_type.index());
   }
 }
 
@@ -175,7 +168,7 @@ bool CheckDataSegment(Context& context, At<Index> index) {
 }
 
 StackType MaybeDefault(optional<StackType> value) {
-  return value.value_or(StackType::I32);
+  return value.value_or(StackType::I32());
 }
 
 Function MaybeDefault(optional<Function> value) {
@@ -187,11 +180,11 @@ FunctionType MaybeDefault(optional<FunctionType> value) {
 }
 
 TableType MaybeDefault(optional<TableType> value) {
-  return value.value_or(TableType{Limits{0}, ReferenceType::Funcref});
+  return value.value_or(TableType{Limits{0}, ReferenceType::Funcref()});
 }
 
 GlobalType MaybeDefault(optional<GlobalType> value) {
-  return value.value_or(GlobalType{ValueType::I32, Mutability::Const});
+  return value.value_or(GlobalType{ValueType::I32(), Mutability::Const});
 }
 
 EventType MaybeDefault(optional<EventType> value) {
@@ -199,7 +192,7 @@ EventType MaybeDefault(optional<EventType> value) {
 }
 
 ReferenceType MaybeDefault(optional<ReferenceType> value) {
-  return value.value_or(ReferenceType::Externref);
+  return value.value_or(ReferenceType::Externref());
 }
 
 Label MaybeDefault(const Label* value) {
@@ -213,7 +206,7 @@ optional<StackType> PeekType(Context& context, Location loc) {
       context.errors->OnError(loc, "Expected stack to have 1 value, got 0");
       return nullopt;
     }
-    return StackType::Any;
+    return StackType{Any{}};
   }
   return type_stack[type_stack.size() - 1];
 }
@@ -231,37 +224,6 @@ void RemovePrefixIfGreater(StackTypeSpan* lhs, StackTypeSpan rhs) {
   if (lhs->size() > rhs.size()) {
     remove_prefix(lhs, lhs->size() - rhs.size());
   }
-}
-
-bool TypesMatch(StackType expected, StackType actual) {
-  // Types are the same.
-  if (expected == actual) {
-    return true;
-  }
-
-  // One of the types is "any" (i.e. universal supertype or subtype)
-  if (expected == StackType::Any || actual == StackType::Any) {
-    return true;
-  }
-
-  return false;
-}
-
-bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual) {
-  if (expected.size() != actual.size()) {
-    return false;
-  }
-
-  for (auto eiter = expected.begin(), lend = expected.end(),
-            aiter = actual.begin();
-       eiter != lend; ++eiter, ++aiter) {
-    StackType etype = *eiter;
-    StackType atype = *aiter;
-    if (!TypesMatch(etype, atype)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 bool CheckTypes(Context& context, Location loc, StackTypeSpan expected) {
@@ -450,7 +412,7 @@ bool Br(Context& context, Location loc, At<Index> depth) {
 }
 
 bool BrIf(Context& context, Location loc, At<Index> depth) {
-  bool valid = PopType(context, loc, StackType::I32);
+  bool valid = PopType(context, loc, StackType::I32());
   const auto* label = GetLabel(context, depth);
   auto label_ = MaybeDefault(label);
   return AllTrue(
@@ -461,7 +423,7 @@ bool BrIf(Context& context, Location loc, At<Index> depth) {
 bool BrTable(Context& context,
              Location loc,
              const At<BrTableImmediate>& immediate) {
-  bool valid = PopType(context, loc, StackType::I32);
+  bool valid = PopType(context, loc, StackType::I32());
   optional<StackTypeSpan> br_types;
   auto handle_target = [&](At<Index> target) {
     const auto* label = GetLabel(context, target);
@@ -506,17 +468,17 @@ bool CallIndirect(Context& context,
                   const At<CallIndirectImmediate>& immediate) {
   auto table_type = GetTableType(context, immediate->table_index);
   auto function_type = GetFunctionType(context, immediate->index);
-  bool valid = PopType(context, loc, StackType::I32);
+  bool valid = PopType(context, loc, StackType::I32());
   return AllTrue(table_type, function_type, valid,
                  PopAndPushTypes(context, loc, MaybeDefault(function_type)));
 }
 
 bool Select(Context& context, Location loc) {
-  bool valid = PopType(context, loc, StackType::I32);
+  bool valid = PopType(context, loc, StackType::I32());
   auto type = MaybeDefault(PeekType(context, loc));
-  if (!(type == StackType::I32 || type == StackType::I64 ||
-        type == StackType::F32 || type == StackType::F64 ||
-        type == StackType::Any)) {
+  if (!(type == StackType::I32() || type == StackType::I64() ||
+        type == StackType::F32() || type == StackType::F64() ||
+        type.is_any())) {
     context.errors->OnError(
         loc, format("select instruction without expected type can only be used "
                     "with i32, i64, f32, f64; got {}",
@@ -531,7 +493,7 @@ bool Select(Context& context, Location loc) {
 bool SelectT(Context& context,
              Location loc,
              const At<ValueTypeList>& value_types) {
-  bool valid = PopType(context, loc, StackType::I32);
+  bool valid = PopType(context, loc, StackType::I32());
   if (value_types->size() != 1) {
     context.errors->OnError(
         value_types.loc(),
@@ -593,7 +555,7 @@ bool TableGet(Context& context, Location loc, At<Index> index) {
 bool TableSet(Context& context, Location loc, At<Index> index) {
   auto table_type = GetTableType(context, index);
   auto stack_type = ToStackType(MaybeDefault(table_type).elemtype);
-  const StackType types[] = {StackType::I32, stack_type};
+  const StackType types[] = {StackType::I32(), stack_type};
   return AllTrue(table_type, PopTypes(context, loc, types));
 }
 
@@ -604,7 +566,7 @@ bool RefFunc(Context& context, Location loc, At<Index> index) {
                             format("Undeclared function reference {}", index));
     return false;
   }
-  PushType(context, StackType::Funcref);
+  PushType(context, StackType::Funcref());
   return true;
 }
 
@@ -683,7 +645,7 @@ bool Store(Context& context, Location loc, const At<Instruction>& instruction) {
 
 bool MemorySize(Context& context) {
   auto memory_type = GetMemoryType(context, 0);
-  PushType(context, StackType::I32);
+  PushType(context, StackType::I32());
   return AllTrue(memory_type);
 }
 
@@ -760,7 +722,7 @@ bool TableCopy(Context& context,
 bool TableGrow(Context& context, Location loc, At<Index> index) {
   auto table_type = GetTableType(context, index);
   auto stack_type = ToStackType(MaybeDefault(table_type).elemtype);
-  const StackType types[] = {stack_type, StackType::I32};
+  const StackType types[] = {stack_type, StackType::I32()};
   return AllTrue(table_type, PopAndPushTypes(context, loc, types, span_i32));
 }
 
@@ -773,7 +735,7 @@ bool TableSize(Context& context, At<Index> index) {
 bool TableFill(Context& context, Location loc, At<Index> index) {
   auto table_type = GetTableType(context, index);
   auto stack_type = ToStackType(MaybeDefault(table_type).elemtype);
-  const StackType types[] = {StackType::I32, stack_type, StackType::I32};
+  const StackType types[] = {StackType::I32(), stack_type, StackType::I32()};
   return AllTrue(table_type, PopTypes(context, loc, types));
 }
 
@@ -969,7 +931,7 @@ bool ReturnCallIndirect(Context& context,
   bool valid = CheckResultTypes(context,
       loc, ToStackTypeList(MaybeDefault(function_type).result_types),
       MaybeDefault(label).br_types());
-  valid &= PopType(context, loc, StackType::I32);
+  valid &= PopType(context, loc, StackType::I32());
   valid &= PopTypes(context,
       loc, ToStackTypeList(MaybeDefault(function_type).param_types));
   SetUnreachable(context);
@@ -1094,6 +1056,30 @@ bool SimdShuffle(Context& context,
 
 }  // namespace
 
+bool TypesMatch(StackType expected, StackType actual) {
+  // One of the types is "any" (i.e. universal supertype or subtype), or the
+  // value types match.
+  return expected.is_any() || actual.is_any() ||
+         TypesMatch(expected.value_type(), actual.value_type());
+}
+
+bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual) {
+  if (expected.size() != actual.size()) {
+    return false;
+  }
+
+  for (auto eiter = expected.begin(), lend = expected.end(),
+            aiter = actual.begin();
+       eiter != lend; ++eiter, ++aiter) {
+    StackType etype = *eiter;
+    StackType atype = *aiter;
+    if (!TypesMatch(etype, atype)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool Validate(Context& context, const At<Locals>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "locals"};
   if (!context.AppendLocals(value->count, value->type)) {
@@ -1143,7 +1129,7 @@ bool Validate(Context& context, const At<Instruction>& value) {
                        value->block_type_immediate());
 
     case Opcode::If: {
-      bool valid = PopType(context, loc, StackType::I32);
+      bool valid = PopType(context, loc, StackType::I32());
       valid &=
           PushLabel(context, loc, LabelType::If, value->block_type_immediate());
       return valid;
@@ -1220,19 +1206,19 @@ bool Validate(Context& context, const At<Instruction>& value) {
       return TableSet(context, loc, value->index_immediate());
 
     case Opcode::RefNull:
-      PushType(context, ToStackType(value->reference_type_immediate()));
+      PushType(context, ToStackType(value->heap_type_immediate()));
       return true;
 
     case Opcode::RefIsNull: {
       auto type = MaybeDefault(PeekType(context, loc));
       bool valid = true;
-      if (!IsReferenceType(type)) {
+      if (!IsReferenceTypeOrAny(type)) {
         context.errors->OnError(loc, format("Expected reference type, got {}",
                                             GetTypeStack(context)));
         valid = false;
       }
       valid &= DropTypes(context, loc, 1);
-      PushType(context, StackType::I32);
+      PushType(context, StackType::I32());
       return valid;
     }
 
@@ -1285,19 +1271,19 @@ bool Validate(Context& context, const At<Instruction>& value) {
       return MemoryGrow(context, loc);
 
     case Opcode::I32Const:
-      PushType(context, StackType::I32);
+      PushType(context, StackType::I32());
       return true;
 
     case Opcode::I64Const:
-      PushType(context, StackType::I64);
+      PushType(context, StackType::I64());
       return true;
 
     case Opcode::F32Const:
-      PushType(context, StackType::F32);
+      PushType(context, StackType::F32());
       return true;
 
     case Opcode::F64Const:
-      PushType(context, StackType::F64);
+      PushType(context, StackType::F64());
       return true;
 
     case Opcode::I32Eqz:
@@ -1542,7 +1528,7 @@ bool Validate(Context& context, const At<Instruction>& value) {
       return TableFill(context, loc, value->index_immediate());
 
     case Opcode::V128Const:
-      PushType(context, StackType::V128);
+      PushType(context, StackType::V128());
       return true;
 
     case Opcode::V128Not:

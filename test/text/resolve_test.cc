@@ -83,23 +83,23 @@ TEST_F(TextResolveTest, Var_Undefined) {
 TEST_F(TextResolveTest, FunctionTypeUse) {
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+      BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}});
 
   context.type_names.NewBound("$b"_sv);
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT::F32}}, {}});
+      BoundFunctionType{{BVT{nullopt, VT::F32()}}, {}});
 
   // Resolve the variable name to an index, and populate the function type.
-  OK(FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32}, {}}},
+  OK(FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32()}, {}}},
      FunctionTypeUse{Var{"$a"_sv}, {}});
 
   // Just populate the function type.
-  OK(FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32}, {}}},
+  OK(FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32()}, {}}},
      FunctionTypeUse{Var{Index{0}}, {}});
 
   // Populate the variable when not specified.
-  OK(FunctionTypeUse{Var{Index{1}}, FunctionType{{VT::F32}, {}}},
-     FunctionTypeUse{nullopt, FunctionType{{VT::F32}, {}}});
+  OK(FunctionTypeUse{Var{Index{1}}, FunctionType{{VT::F32()}, {}}},
+     FunctionTypeUse{nullopt, FunctionType{{VT::F32()}, {}}});
 }
 
 TEST_F(TextResolveTest, FunctionTypeUse_NoFunctionTypeInContext) {
@@ -119,10 +119,10 @@ TEST_F(TextResolveTest, BoundFunctionTypeUse_NoFunctionTypeInContext) {
 TEST_F(TextResolveTest, BlockImmediate) {
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+      BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}});
 
   OK(BlockImmediate{nullopt, FunctionTypeUse{Var{Index{0}},
-                                             FunctionType{{VT::I32}, {}}}},
+                                             FunctionType{{VT::I32()}, {}}}},
      BlockImmediate{nullopt, FunctionTypeUse{Var{"$a"_sv}, {}}});
 }
 
@@ -130,8 +130,9 @@ TEST_F(TextResolveTest, BlockImmediate_InlineType) {
   // An inline type can only be void, or a single result type.
   OK(BlockImmediate{nullopt, {}}, BlockImmediate{nullopt, {}});
 
-  for (auto value_type : {VT::I32, VT::I64, VT::F32, VT::F64, VT::V128,
-                          VT::Funcref, VT::Externref, VT::Exnref}) {
+  for (auto value_type :
+       {VT::I32(), VT::I64(), VT::F32(), VT::F64(), VT::V128(), VT::Funcref(),
+        VT::Externref(), VT::Exnref()}) {
     OK(BlockImmediate{nullopt,
                       FunctionTypeUse{nullopt, FunctionType{{}, {value_type}}}},
        BlockImmediate{
@@ -176,11 +177,11 @@ TEST_F(TextResolveTest, CallIndirectImmediate) {
   context.table_names.NewBound("$t");
   context.type_names.NewBound("$a");
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+      BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}});
 
   OK(CallIndirectImmediate{Var{Index{0}},
                            FunctionTypeUse{Var{Index{0}},
-                                           FunctionType{{VT::I32}, {}}}},
+                                           FunctionType{{VT::I32()}, {}}}},
      CallIndirectImmediate{Var{"$t"_sv}, FunctionTypeUse{Var{"$a"_sv}, {}}});
 }
 
@@ -216,20 +217,20 @@ TEST_F(TextResolveTest, Instruction_NoOp) {
 TEST_F(TextResolveTest, Instruction_BlockImmediate) {
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+      BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}});
 
   OK(I{O::Block,
        BlockImmediate{nullopt, FunctionTypeUse{Var{Index{0}},
-                                               FunctionType{{VT::I32}, {}}}}},
+                                               FunctionType{{VT::I32()}, {}}}}},
      I{O::Block, BlockImmediate{nullopt, FunctionTypeUse{Var{"$a"_sv}, {}}}});
 
   // Populate the type use.
   OK(I{O::Block,
        BlockImmediate{nullopt, FunctionTypeUse{Var{Index{0}},
-                                               FunctionType{{VT::I32}, {}}}}},
+                                               FunctionType{{VT::I32()}, {}}}}},
      I{O::Block,
        BlockImmediate{nullopt,
-                      FunctionTypeUse{nullopt, FunctionType{{VT::I32}, {}}}}});
+                      FunctionTypeUse{nullopt, FunctionType{{VT::I32()}, {}}}}});
 }
 
 TEST_F(TextResolveTest, Instruction_BrOnExnImmediate) {
@@ -255,12 +256,12 @@ TEST_F(TextResolveTest, Instruction_CallIndirectImmediate) {
   context.table_names.NewBound("$t");
   context.type_names.NewBound("$a");
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+      BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}});
 
   OK(I{O::CallIndirect,
        CallIndirectImmediate{
            Var{Index{0}},
-           FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32}, {}}}}},
+           FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32()}, {}}}}},
      I{O::CallIndirect,
        CallIndirectImmediate{Var{"$t"_sv}, FunctionTypeUse{Var{"$a"_sv}, {}}}});
 
@@ -268,11 +269,11 @@ TEST_F(TextResolveTest, Instruction_CallIndirectImmediate) {
   OK(I{O::CallIndirect,
        CallIndirectImmediate{
            Var{Index{0}},
-           FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32}, {}}}}},
+           FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32()}, {}}}}},
      I{O::CallIndirect,
        CallIndirectImmediate{
            Var{"$t"_sv},
-           FunctionTypeUse{nullopt, FunctionType{{VT::I32}, {}}}}});
+           FunctionTypeUse{nullopt, FunctionType{{VT::I32()}, {}}}}});
 }
 
 TEST_F(TextResolveTest, Instruction_CopyImmediate_Table) {
@@ -460,45 +461,45 @@ TEST_F(TextResolveTest, InstructionList_EndBlock) {
 TEST_F(TextResolveTest, FunctionDesc) {
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{"$p"_sv, VT::I32}}, {}});
+      BoundFunctionType{{BVT{"$p"_sv, VT::I32()}}, {}});
 
   // $p param name is not copied.
   OK(FunctionDesc{nullopt, Var{Index{0}},
-                  BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}},
+                  BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}}},
      FunctionDesc{nullopt, Var{"$a"_sv}, {}});
 
   // Populate the type use.
   OK(FunctionDesc{nullopt, Var{Index{0}},
-                  BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}},
+                  BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}}},
      FunctionDesc{nullopt, nullopt,
-                  BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}});
+                  BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}}});
 }
 
 TEST_F(TextResolveTest, EventType) {
   context.type_names.NewBound("$a");
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+      BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}});
 
   OK(EventType{EventAttribute::Exception,
-               FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32}, {}}}},
+               FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32()}, {}}}},
      EventType{EventAttribute::Exception, FunctionTypeUse{Var{"$a"_sv}, {}}});
 
   // Populate the type use.
   OK(EventType{EventAttribute::Exception,
-               FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32}, {}}}},
+               FunctionTypeUse{Var{Index{0}}, FunctionType{{VT::I32()}, {}}}},
      EventType{EventAttribute::Exception,
-               FunctionTypeUse{nullopt, FunctionType{{VT::I32}, {}}}});
+               FunctionTypeUse{nullopt, FunctionType{{VT::I32()}, {}}}});
 }
 
 TEST_F(TextResolveTest, EventDesc) {
   context.type_names.NewBound("$a");
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+      BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}});
 
   OK(EventDesc{nullopt,
                EventType{EventAttribute::Exception,
                          FunctionTypeUse{Var{Index{0}},
-                                         FunctionType{{VT::I32}, {}}}}},
+                                         FunctionType{{VT::I32()}, {}}}}},
      EventDesc{nullopt, EventType{EventAttribute::Exception,
                                   FunctionTypeUse{Var{"$a"_sv}, {}}}});
 }
@@ -506,21 +507,22 @@ TEST_F(TextResolveTest, EventDesc) {
 TEST_F(TextResolveTest, Import_Function) {
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{"$p"_sv, VT::I32}}, {}});
+      BoundFunctionType{{BVT{"$p"_sv, VT::I32()}}, {}});
 
   // $p param name is not copied.
   OK(Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
             FunctionDesc{nullopt, Var{Index{0}},
-                         BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}}},
+                         BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}}}},
      Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
             FunctionDesc{nullopt, Var{"$a"_sv}, {}}});
 }
 
 TEST_F(TextResolveTest, Import_Table) {
   OK(Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-            TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}}},
-     Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-            TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}}});
+            TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref()}}},
+     Import{
+         Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
+         TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref()}}});
 }
 
 TEST_F(TextResolveTest, Import_Memory) {
@@ -532,23 +534,22 @@ TEST_F(TextResolveTest, Import_Memory) {
 
 TEST_F(TextResolveTest, Import_Global) {
   OK(Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-            GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}}},
-     Import{
-         Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-         GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}}});
+            GlobalDesc{nullopt, GlobalType{VT::I32(), Mutability::Const}}},
+     Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
+            GlobalDesc{nullopt, GlobalType{VT::I32(), Mutability::Const}}});
 }
 
 TEST_F(TextResolveTest, Import_Event) {
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{"$p"_sv, VT::I32}}, {}});
+      BoundFunctionType{{BVT{"$p"_sv, VT::I32()}}, {}});
 
   // $p param name is not copied.
   OK(Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-            EventDesc{nullopt,
-                      EventType{EventAttribute::Exception,
-                                FunctionTypeUse{Var{Index{0}},
-                                                FunctionType{{VT::I32}, {}}}}}},
+            EventDesc{nullopt, EventType{EventAttribute::Exception,
+                                         FunctionTypeUse{
+                                             Var{Index{0}},
+                                             FunctionType{{VT::I32()}, {}}}}}},
      Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
             EventDesc{nullopt, EventType{EventAttribute::Exception,
                                          FunctionTypeUse{Var{"$a"_sv}, {}}}}});
@@ -557,15 +558,15 @@ TEST_F(TextResolveTest, Import_Event) {
 TEST_F(TextResolveTest, Function) {
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{"$p"_sv, VT::I32}}, {}});
+      BoundFunctionType{{BVT{"$p"_sv, VT::I32()}}, {}});
 
   OK(Function{FunctionDesc{nullopt, Var{Index{0}},
-                           BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}},
-              {BVT{"$l"_sv, VT::I32}},
+                           BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}}},
+              {BVT{"$l"_sv, VT::I32()}},
               InstructionList{I{O::LocalGet, Var{Index{1}}}},
               {}},
      Function{FunctionDesc{nullopt, Var{"$a"_sv}, {}},
-              {BVT{"$l"_sv, VT::I32}},
+              {BVT{"$l"_sv, VT::I32()}},
               InstructionList{I{O::LocalGet, Var{"$l"_sv}}},
               {}});
 }
@@ -589,13 +590,13 @@ TEST_F(TextResolveTest, ElementListWithExpressions) {
 
   OK(
       ElementListWithExpressions{
-          ReferenceType::Funcref,
+          ReferenceType::Funcref(),
           ElementExpressionList{
               ElementExpression{I{O::RefNull}},
               ElementExpression{I{O::RefFunc, Var{Index{0}}}},
           }},
       ElementListWithExpressions{
-          ReferenceType::Funcref,
+          ReferenceType::Funcref(),
           ElementExpressionList{
               ElementExpression{I{O::RefNull}},
               ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
@@ -623,13 +624,13 @@ TEST_F(TextResolveTest, ElementList) {
 
   // Expressions.
   OK(ElementList{ElementListWithExpressions{
-         ReferenceType::Funcref,
+         ReferenceType::Funcref(),
          ElementExpressionList{
              ElementExpression{I{O::RefNull}},
              ElementExpression{I{O::RefFunc, Var{Index{0}}}},
          }}},
      ElementList{ElementListWithExpressions{
-         ReferenceType::Funcref,
+         ReferenceType::Funcref(),
          ElementExpressionList{
              ElementExpression{I{O::RefNull}},
              ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
@@ -650,17 +651,17 @@ TEST_F(TextResolveTest, ElementList) {
 TEST_F(TextResolveTest, Table) {
   context.function_names.NewBound("$f"_sv);
 
-  OK(Table{TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}},
+  OK(Table{TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref()}},
            {},
            ElementList{ElementListWithExpressions{
-               ReferenceType::Funcref,
+               ReferenceType::Funcref(),
                ElementExpressionList{
                    ElementExpression{I{O::RefFunc, Var{Index{0}}}},
                }}}},
-     Table{TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}},
+     Table{TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref()}},
            {},
            ElementList{ElementListWithExpressions{
-               ReferenceType::Funcref,
+               ReferenceType::Funcref(),
                ElementExpressionList{
                    ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
                }}}});
@@ -671,12 +672,12 @@ TEST_F(TextResolveTest, Global) {
 
   OK(
       Global{
-          GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
+          GlobalDesc{nullopt, GlobalType{VT::I32(), Mutability::Const}},
           ConstantExpression{I{O::GlobalGet, Var{Index{0}}}},
           {},
       },
       Global{
-          GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
+          GlobalDesc{nullopt, GlobalType{VT::I32(), Mutability::Const}},
           ConstantExpression{I{O::GlobalGet, Var{"$g"_sv}}},
           {},
       });
@@ -753,12 +754,12 @@ TEST_F(TextResolveTest, DataSegment) {
 TEST_F(TextResolveTest, Event) {
   context.type_names.NewBound("$a");
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT::I32}}, {}});
+      BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}});
 
   OK(Event{EventDesc{nullopt,
                      EventType{EventAttribute::Exception,
                                FunctionTypeUse{Var{Index{0}},
-                                               FunctionType{{VT::I32}, {}}}}},
+                                               FunctionType{{VT::I32()}, {}}}}},
            {}},
      Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
                                         FunctionTypeUse{Var{"$a"_sv}, {}}}},
@@ -773,7 +774,7 @@ TEST_F(TextResolveTest, ModuleItem) {
   context.global_names.NewBound("$g");
 
   context.function_type_map.Define(
-      BoundFunctionType{{BVT{"$p"_sv, VT::I32}}, {}});
+      BoundFunctionType{{BVT{"$p"_sv, VT::I32()}}, {}});
 
   // TypeEntry.
   OK(ModuleItem{TypeEntry{}}, ModuleItem{TypeEntry{}});
@@ -782,39 +783,39 @@ TEST_F(TextResolveTest, ModuleItem) {
   OK(ModuleItem{Import{
          Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
          FunctionDesc{nullopt, Var{Index{0}},
-                      BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}}}},
+                      BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}}}}},
      ModuleItem{Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
                        FunctionDesc{nullopt, Var{"$a"_sv}, {}}}});
 
   // Function.
   OK(ModuleItem{Function{
          FunctionDesc{nullopt, Var{Index{0}},
-                      BoundFunctionType{{BVT{nullopt, VT::I32}}, {}}},
-         {BVT{"$l"_sv, VT::I32}},
+                      BoundFunctionType{{BVT{nullopt, VT::I32()}}, {}}},
+         {BVT{"$l"_sv, VT::I32()}},
          InstructionList{I{O::LocalGet, Var{Index{1}}}},
          {}}},
      ModuleItem{Function{FunctionDesc{nullopt, Var{"$a"_sv}, {}},
-                         {BVT{"$l"_sv, VT::I32}},
+                         {BVT{"$l"_sv, VT::I32()}},
                          InstructionList{I{O::LocalGet, Var{"$l"_sv}}},
                          {}}});
 
   // Table.
   OK(ModuleItem{Table{
-         TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}},
+         TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref()}},
          {},
          ElementList{ElementListWithExpressions{
-             ReferenceType::Funcref,
+             ReferenceType::Funcref(),
              ElementExpressionList{
                  ElementExpression{I{O::RefFunc, Var{Index{0}}}},
              }}}}},
-     ModuleItem{
-         Table{TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref}},
-               {},
-               ElementList{ElementListWithExpressions{
-                   ReferenceType::Funcref,
-                   ElementExpressionList{
-                       ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
-                   }}}}});
+     ModuleItem{Table{
+         TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref()}},
+         {},
+         ElementList{ElementListWithExpressions{
+             ReferenceType::Funcref(),
+             ElementExpressionList{
+                 ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
+             }}}}});
 
   // Memory.
   OK(ModuleItem{Memory{MemoryDesc{nullopt, MemoryType{Limits{0}}}, {}}},
@@ -822,12 +823,12 @@ TEST_F(TextResolveTest, ModuleItem) {
 
   // Global.
   OK(ModuleItem{Global{
-         GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
+         GlobalDesc{nullopt, GlobalType{VT::I32(), Mutability::Const}},
          ConstantExpression{I{O::GlobalGet, Var{Index{0}}}},
          {},
      }},
      ModuleItem{Global{
-         GlobalDesc{nullopt, GlobalType{ValueType::I32, Mutability::Const}},
+         GlobalDesc{nullopt, GlobalType{VT::I32(), Mutability::Const}},
          ConstantExpression{I{O::GlobalGet, Var{"$g"_sv}}},
          {},
      }});
@@ -868,7 +869,7 @@ TEST_F(TextResolveTest, ModuleItem) {
          EventDesc{nullopt,
                    EventType{EventAttribute::Exception,
                              FunctionTypeUse{Var{Index{0}},
-                                             FunctionType{{VT::I32}, {}}}}},
+                                             FunctionType{{VT::I32()}, {}}}}},
          {}}},
      ModuleItem{
          Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
