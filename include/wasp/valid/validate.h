@@ -32,6 +32,9 @@ struct Context;
 
 bool BeginCode(Context&, Location loc);
 
+bool TypesMatch(binary::HeapType expected, binary::HeapType actual);
+bool TypesMatch(binary::RefType expected, binary::RefType actual);
+bool TypesMatch(binary::ReferenceType expected, binary::ReferenceType actual);
 bool TypesMatch(binary::ValueType expected, binary::ValueType actual);
 bool TypesMatch(StackType expected, StackType actual);
 bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual);

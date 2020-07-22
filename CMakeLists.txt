@@ -143,6 +143,7 @@ add_executable(wasp_unittests
   test/base/str_to_u32_test.cc
   test/base/utf8_test.cc
   test/base/v128_test.cc
+  test/binary/constants.cc
   test/binary/formatters_test.cc
   test/binary/lazy_expression_test.cc
   test/binary/lazy_linking_section_test.cc
@@ -157,6 +158,7 @@ add_executable(wasp_unittests
   test/binary/visitor_test.cc
   test/binary/write_test.cc
   test/convert/to_binary_test.cc
+  test/text/constants.cc
   test/text/desugar_test.cc
   test/text/formatters_test.cc
   test/text/lex_test.cc

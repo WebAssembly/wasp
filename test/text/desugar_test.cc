@@ -18,9 +18,11 @@
 
 #include "gtest/gtest.h"
 #include "test/test_utils.h"
+#include "test/text/constants.h"
 
 using namespace ::wasp;
 using namespace ::wasp::text;
+using namespace ::wasp::text::test;
 using namespace ::wasp::test;
 
 class TextDesugarTest : public ::testing::Test {
@@ -44,11 +46,9 @@ class TextDesugarTest : public ::testing::Test {
 
 
   const FunctionDesc func_desc{};
-  const TableDesc table_desc{nullopt,
-                             TableType{Limits{0}, ReferenceType::Funcref()}};
+  const TableDesc table_desc{nullopt, TableType{Limits{0}, RT_Funcref}};
   const MemoryDesc memory_desc{nullopt, MemoryType{Limits{0}}};
-  const GlobalDesc global_desc{nullopt,
-                               GlobalType{ValueType::I32(), Mutability::Const}};
+  const GlobalDesc global_desc{nullopt, GlobalType{VT_I32, Mutability::Const}};
   const EventDesc event_desc{nullopt, EventType{EventAttribute::Exception, {}}};
 
 

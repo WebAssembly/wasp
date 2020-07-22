@@ -44,8 +44,8 @@ struct BlockType {
   static constexpr s32 Void = 0x40;
 
   static EncodedValueType Encode(::wasp::binary::BlockType);
-  static optional<::wasp::binary::BlockType> Decode(u8, const Features&);
-  static optional<::wasp::binary::BlockType> Decode(s32, const Features&);
+  static optional<::wasp::binary::BlockType> Decode(At<u8>, const Features&);
+  static optional<::wasp::binary::BlockType> Decode(At<s32>, const Features&);
 };
 
 struct EventAttribute {
@@ -71,7 +71,7 @@ struct HeapType {
   static constexpr s32 Exn = -0x18;
 
   static s32 Encode(const ::wasp::binary::HeapType&);
-  static optional<::wasp::binary::HeapType> Decode(s32, const Features&);
+  static optional<::wasp::binary::HeapType> Decode(At<s32>, const Features&);
 };
 
 struct LimitsFlags {
@@ -117,9 +117,9 @@ struct ReferenceType {
   static bool IsPrefixByte(u8, const Features&);
   static EncodedValueType Encode(::wasp::binary::ReferenceType);
   static optional<::wasp::binary::ReferenceType>
-  Decode(u8, const Features&, AllowFuncref = AllowFuncref::Yes);
-  static optional<::wasp::binary::ReferenceType> Decode(u8 prefix,
-                                                        s32 code,
+  Decode(At<u8>, const Features&, AllowFuncref = AllowFuncref::Yes);
+  static optional<::wasp::binary::ReferenceType> Decode(At<u8> prefix,
+                                                        At<s32> code,
                                                         const Features&);
 };
 
@@ -177,9 +177,9 @@ struct NumericType {
 struct ValueType {
   static bool IsPrefixByte(u8, const Features&);
   static EncodedValueType Encode(::wasp::binary::ValueType);
-  static optional<::wasp::binary::ValueType> Decode(u8, const Features&);
-  static optional<::wasp::binary::ValueType> Decode(u8 prefix,
-                                                    s32 code,
+  static optional<::wasp::binary::ValueType> Decode(At<u8>, const Features&);
+  static optional<::wasp::binary::ValueType> Decode(At<u8> prefix,
+                                                    At<s32> code,
                                                     const Features&);
 };
 

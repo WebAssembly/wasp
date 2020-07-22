@@ -18,6 +18,7 @@
 
 #include "gtest/gtest.h"
 
+#include "test/text/constants.h"
 #include "test/write_test_utils.h"
 #include "wasp/base/errors.h"
 #include "wasp/text/formatters.h"
@@ -25,6 +26,7 @@
 
 using namespace ::wasp;
 using namespace ::wasp::text;
+using namespace ::wasp::text::test;
 using namespace ::wasp::test;
 
 using I = Instruction;
@@ -72,28 +74,25 @@ TEST(TextWriteTest, TextList) {
 }
 
 TEST(TextWriteTest, ValueType) {
-  ExpectWrite("i32"_sv, ValueType::I32());
-  ExpectWrite("i64"_sv, ValueType::I64());
-  ExpectWrite("f32"_sv, ValueType::F32());
-  ExpectWrite("f64"_sv, ValueType::F64());
-  ExpectWrite("v128"_sv, ValueType::V128());
-  ExpectWrite("externref"_sv, ValueType::Externref());
-  ExpectWrite("funcref"_sv, ValueType::Funcref());
-  ExpectWrite("exnref"_sv, ValueType::Exnref());
+  ExpectWrite("i32"_sv, VT_I32);
+  ExpectWrite("i64"_sv, VT_I64);
+  ExpectWrite("f32"_sv, VT_F32);
+  ExpectWrite("f64"_sv, VT_F64);
+  ExpectWrite("v128"_sv, VT_V128);
+  ExpectWrite("externref"_sv, VT_Externref);
+  ExpectWrite("funcref"_sv, VT_Funcref);
+  ExpectWrite("exnref"_sv, VT_Exnref);
 }
 
 TEST(TextWriteTest, ValueTypeList) {
-  ExpectWrite("i32 i64"_sv, ValueTypeList{
-                                ValueType::I32(),
-                                ValueType::I64(),
-                            });
+  ExpectWrite("i32 i64"_sv, ValueTypeList{VT_I32, VT_I64});
 }
 
 TEST(TextWriteTest, FunctionType) {
   ExpectWrite("(param i32 i64) (result f32)"_sv,
               FunctionType{
-                  ValueTypeList{ValueType::I32(), ValueType::I64()},
-                  ValueTypeList{ValueType::F32()},
+                  ValueTypeList{VT_I32, VT_I64},
+                  ValueTypeList{VT_F32},
               });
 }
 
@@ -103,12 +102,12 @@ TEST(TextWriteTest, FunctionTypeUse) {
   ExpectWrite("(result i32)"_sv,
               FunctionTypeUse{nullopt, FunctionType{
                                            ValueTypeList{},
-                                           ValueTypeList{ValueType::I32()},
+                                           ValueTypeList{VT_I32},
                                        }});
   ExpectWrite("(type $a) (param i32) (result i32)"_sv,
               FunctionTypeUse{Var{"$a"_sv}, FunctionType{
-                                                ValueTypeList{ValueType::I32()},
-                                                ValueTypeList{ValueType::I32()},
+                                                ValueTypeList{VT_I32},
+                                                ValueTypeList{VT_I32},
                                             }});
 }
 
@@ -159,18 +158,16 @@ TEST(TextWriteTest, LetImmediate) {
   ExpectWrite("$l"_sv, LetImmediate{BlockImmediate{BindVar{"$l"_sv}, {}}, {}});
   ExpectWrite(
       "(type 0) (local i32)"_sv,
-      LetImmediate{
-          BlockImmediate{nullopt, FunctionTypeUse{Var{Index{0}}, {}}},
-          BoundValueTypeList{BoundValueType{nullopt, ValueType::I32()}}});
+      LetImmediate{BlockImmediate{nullopt, FunctionTypeUse{Var{Index{0}}, {}}},
+                   BoundValueTypeList{BoundValueType{nullopt, VT_I32}}});
   ExpectWrite(
       "(param i32) (local f32 f64)"_sv,
       LetImmediate{
-          BlockImmediate{
-              nullopt,
-              FunctionTypeUse{
-                  nullopt, FunctionType{ValueTypeList{ValueType::I32()}, {}}}},
-          BoundValueTypeList{BoundValueType{nullopt, ValueType::F32()},
-                             BoundValueType{nullopt, ValueType::F64()}}});
+          BlockImmediate{nullopt,
+                         FunctionTypeUse{
+                             nullopt, FunctionType{ValueTypeList{VT_I32}, {}}}},
+          BoundValueTypeList{BoundValueType{nullopt, VT_F32},
+                             BoundValueType{nullopt, VT_F64}}});
 }
 
 TEST(TextWriteTest, MemArgImmediate) {
@@ -214,9 +211,8 @@ TEST(TextWriteTest, Instruction) {
   ExpectWrite(
       "block $l (type 0) (param i32)"_sv,
       I{O::Block,
-        BlockImmediate{"$l"_sv,
-                       FunctionTypeUse{Var{Index{0}},
-                                       FunctionType{{ValueType::I32()}, {}}}}});
+        BlockImmediate{"$l"_sv, FunctionTypeUse{Var{Index{0}},
+                                                FunctionType{{VT_I32}, {}}}}});
 
   // BrOnExnImmediate
   ExpectWrite("br_on_exn $l $e"_sv,
@@ -229,12 +225,12 @@ TEST(TextWriteTest, Instruction) {
         BrTableImmediate{VarList{Var{Index{0}}, Var{Index{1}}}, Var{"$d"_sv}}});
 
   // CallIndirectImmediate
-  ExpectWrite("call_indirect $t (type 0) (param i32)"_sv,
-              I{O::CallIndirect,
-                CallIndirectImmediate{
-                    Var{"$t"_sv},
-                    FunctionTypeUse{Var{Index{0}},
-                                    FunctionType{{ValueType::I32()}, {}}}}});
+  ExpectWrite(
+      "call_indirect $t (type 0) (param i32)"_sv,
+      I{O::CallIndirect,
+        CallIndirectImmediate{
+            Var{"$t"_sv},
+            FunctionTypeUse{Var{Index{0}}, FunctionType{{VT_I32}, {}}}}});
 
   // CopyImmediate
   ExpectWrite("table.copy $d $s"_sv,
@@ -249,8 +245,7 @@ TEST(TextWriteTest, Instruction) {
               I{O::I32Load, MemArgImmediate{u32{4}, u32{10}}});
 
   // SelectImmediate
-  ExpectWrite("select i32"_sv,
-              I{O::Select, SelectImmediate{ValueType::I32()}});
+  ExpectWrite("select i32"_sv, I{O::Select, SelectImmediate{VT_I32}});
 
   // ShuffleImmediate
   ExpectWrite("v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_sv,
@@ -270,8 +265,8 @@ TEST(TextWriteTest, InstructionList) {
 }
 
 TEST(TextWriteTest, BoundValueType) {
-  ExpectWrite("i32"_sv, BoundValueType{nullopt, ValueType::I32()});
-  ExpectWrite("$a i32"_sv, BoundValueType{"$a"_sv, ValueType::I32()});
+  ExpectWrite("i32"_sv, BoundValueType{nullopt, VT_I32});
+  ExpectWrite("$a i32"_sv, BoundValueType{"$a"_sv, VT_I32});
 }
 
 TEST(TextWriteTest, BoundValueTypeList_Param) {
@@ -279,23 +274,23 @@ TEST(TextWriteTest, BoundValueTypeList_Param) {
 
   ExpectWrite("(param $a i32)"_sv,
               BoundValueTypeList{
-                  BoundValueType{"$a"_sv, ValueType::I32()},
+                  BoundValueType{"$a"_sv, VT_I32},
               },
               "param");
 
   ExpectWrite("(param i32 i32)"_sv,
               BoundValueTypeList{
-                  BoundValueType{nullopt, ValueType::I32()},
-                  BoundValueType{nullopt, ValueType::I32()},
+                  BoundValueType{nullopt, VT_I32},
+                  BoundValueType{nullopt, VT_I32},
               },
               "param");
 
   ExpectWrite("(param i32 f32) (param $a i32) (param i32)"_sv,
               BoundValueTypeList{
-                  BoundValueType{nullopt, ValueType::I32()},
-                  BoundValueType{nullopt, ValueType::F32()},
-                  BoundValueType{"$a"_sv, ValueType::I32()},
-                  BoundValueType{nullopt, ValueType::I32()},
+                  BoundValueType{nullopt, VT_I32},
+                  BoundValueType{nullopt, VT_F32},
+                  BoundValueType{"$a"_sv, VT_I32},
+                  BoundValueType{nullopt, VT_I32},
               },
               "param");
 }
@@ -303,29 +298,27 @@ TEST(TextWriteTest, BoundValueTypeList_Param) {
 TEST(TextWriteTest, BoundFunctionType) {
   ExpectWrite(""_sv, BoundFunctionType{});
 
-  ExpectWrite(
-      "(param i32)"_sv,
-      BoundFunctionType{
-          BoundValueTypeList{BoundValueType{nullopt, ValueType::I32()}}, {}});
-
-  ExpectWrite("(result i32)"_sv,
-              BoundFunctionType{{}, ValueTypeList{ValueType::I32()}});
-
-  ExpectWrite("(param $a i32) (result i32)"_sv,
+  ExpectWrite("(param i32)"_sv,
               BoundFunctionType{
-                  BoundValueTypeList{BoundValueType{"$a"_sv, ValueType::I32()}},
-                  ValueTypeList{ValueType::I32()}});
+                  BoundValueTypeList{BoundValueType{nullopt, VT_I32}}, {}});
+
+  ExpectWrite("(result i32)"_sv, BoundFunctionType{{}, ValueTypeList{VT_I32}});
+
+  ExpectWrite(
+      "(param $a i32) (result i32)"_sv,
+      BoundFunctionType{BoundValueTypeList{BoundValueType{"$a"_sv, VT_I32}},
+                        ValueTypeList{VT_I32}});
 }
 
 TEST(TextWriteTest, TypeEntry) {
   ExpectWrite("(type (func))"_sv, TypeEntry{});
 
   ExpectWrite("(type (func $t (param $a i32) (result i32)))"_sv,
-              TypeEntry{"$t"_sv, BoundFunctionType{
-                                     BoundValueTypeList{BoundValueType{
-                                         "$a"_sv, ValueType::I32()}},
-                                     ValueTypeList{ValueType::I32()},
-                                 }});
+              TypeEntry{"$t"_sv,
+                        BoundFunctionType{
+                            BoundValueTypeList{BoundValueType{"$a"_sv, VT_I32}},
+                            ValueTypeList{VT_I32},
+                        }});
 }
 
 TEST(TextWriteTest, FunctionDesc) {
@@ -335,17 +328,19 @@ TEST(TextWriteTest, FunctionDesc) {
 
   ExpectWrite("func (type 0)"_sv, FunctionDesc{nullopt, Var{Index{0}}, {}});
 
-  ExpectWrite("func (param i32)"_sv,
-              FunctionDesc{nullopt, nullopt,
-                           BoundFunctionType{BoundValueTypeList{BoundValueType{
-                                                 nullopt, ValueType::I32()}},
-                                             {}}});
+  ExpectWrite(
+      "func (param i32)"_sv,
+      FunctionDesc{
+          nullopt, nullopt,
+          BoundFunctionType{BoundValueTypeList{BoundValueType{nullopt, VT_I32}},
+                            {}}});
 
-  ExpectWrite("func $f (type 0) (param i32)"_sv,
-              FunctionDesc{"$f"_sv, Var{Index{0}},
-                           BoundFunctionType{BoundValueTypeList{BoundValueType{
-                                                 nullopt, ValueType::I32()}},
-                                             {}}});
+  ExpectWrite(
+      "func $f (type 0) (param i32)"_sv,
+      FunctionDesc{
+          "$f"_sv, Var{Index{0}},
+          BoundFunctionType{BoundValueTypeList{BoundValueType{nullopt, VT_I32}},
+                            {}}});
 }
 
 TEST(TextWriteTest, Limits) {
@@ -355,23 +350,21 @@ TEST(TextWriteTest, Limits) {
 }
 
 TEST(TextWriteTest, ReferenceType) {
-  ExpectWrite("externref"_sv, ReferenceType::Externref());
-  ExpectWrite("funcref"_sv, ReferenceType::Funcref());
-  ExpectWrite("exnref"_sv, ReferenceType::Exnref());
+  ExpectWrite("externref"_sv, RT_Externref);
+  ExpectWrite("funcref"_sv, RT_Funcref);
+  ExpectWrite("exnref"_sv, RT_Exnref);
 }
 
 TEST(TextWriteTest, TableType) {
-  ExpectWrite("0 funcref"_sv, TableType{Limits{0}, ReferenceType::Funcref()});
+  ExpectWrite("0 funcref"_sv, TableType{Limits{0}, RT_Funcref});
 }
 
 TEST(TextWriteTest, TableDesc) {
-  ExpectWrite(
-      "table 0 funcref"_sv,
-      TableDesc{nullopt, TableType{Limits{0}, ReferenceType::Funcref()}});
+  ExpectWrite("table 0 funcref"_sv,
+              TableDesc{nullopt, TableType{Limits{0}, RT_Funcref}});
 
-  ExpectWrite(
-      "table $t 1 funcref"_sv,
-      TableDesc{"$t"_sv, TableType{Limits{1}, ReferenceType::Funcref()}});
+  ExpectWrite("table $t 1 funcref"_sv,
+              TableDesc{"$t"_sv, TableType{Limits{1}, RT_Funcref}});
 }
 
 TEST(TextWriteTest, MemoryType) {
@@ -385,18 +378,16 @@ TEST(TextWriteTest, MemoryDesc) {
 }
 
 TEST(TextWriteTest, GlobalType) {
-  ExpectWrite("i32"_sv, GlobalType{ValueType::I32(), Mutability::Const});
-  ExpectWrite("(mut f32)"_sv, GlobalType{ValueType::F32(), Mutability::Var});
+  ExpectWrite("i32"_sv, GlobalType{VT_I32, Mutability::Const});
+  ExpectWrite("(mut f32)"_sv, GlobalType{VT_F32, Mutability::Var});
 }
 
 TEST(TextWriteTest, GlobalDesc) {
-  ExpectWrite(
-      "global i32"_sv,
-      GlobalDesc{nullopt, GlobalType{ValueType::I32(), Mutability::Const}});
+  ExpectWrite("global i32"_sv,
+              GlobalDesc{nullopt, GlobalType{VT_I32, Mutability::Const}});
 
-  ExpectWrite(
-      "global $g (mut f32)"_sv,
-      GlobalDesc{"$g"_sv, GlobalType{ValueType::F32(), Mutability::Var}});
+  ExpectWrite("global $g (mut f32)"_sv,
+              GlobalDesc{"$g"_sv, GlobalType{VT_F32, Mutability::Var}});
 }
 
 TEST(TextWriteTest, EventType) {
@@ -421,8 +412,7 @@ TEST(TextWriteTest, Import) {
   // Table
   ExpectWrite("(import \"a\" \"b\" (table 0 funcref))"_sv,
               Import{Text{"\"a\"", 1}, Text{"\"b\"", 1},
-                     TableDesc{nullopt, TableType{Limits{0},
-                                                  ReferenceType::Funcref()}}});
+                     TableDesc{nullopt, TableType{Limits{0}, RT_Funcref}}});
 
   // Memory
   ExpectWrite("(import \"a\" \"b\" (memory 0))"_sv,
@@ -430,10 +420,10 @@ TEST(TextWriteTest, Import) {
                      MemoryDesc{nullopt, MemoryType{Limits{0}}}});
 
   // Global
-  ExpectWrite("(import \"a\" \"b\" (global i32))"_sv,
-              Import{Text{"\"a\"", 1}, Text{"\"b\"", 1},
-                     GlobalDesc{nullopt, GlobalType{ValueType::I32(),
-                                                    Mutability::Const}}});
+  ExpectWrite(
+      "(import \"a\" \"b\" (global i32))"_sv,
+      Import{Text{"\"a\"", 1}, Text{"\"b\"", 1},
+             GlobalDesc{nullopt, GlobalType{VT_I32, Mutability::Const}}});
 
   // Event
   ExpectWrite("(import \"a\" \"b\" (event))"_sv,
@@ -482,8 +472,8 @@ TEST(TextWriteTest, Function) {
   ExpectWrite("(func\n  (local i32 i64))"_sv,
               Function{{},
                        BoundValueTypeList{
-                           BoundValueType{nullopt, ValueType::I32()},
-                           BoundValueType{nullopt, ValueType::I64()},
+                           BoundValueType{nullopt, VT_I32},
+                           BoundValueType{nullopt, VT_I64},
                        },
                        {},
                        {}});
@@ -497,7 +487,7 @@ TEST(TextWriteTest, Function) {
   ExpectWrite("(func $f (export \"m\") (type 0)\n  (local i32)\n  nop)"_sv,
               Function{FunctionDesc{"$f"_sv, Var{Index{0}}, {}},
                        BoundValueTypeList{
-                           BoundValueType{nullopt, ValueType::I32()},
+                           BoundValueType{nullopt, VT_I32},
                        },
                        InstructionList{I{O::Nop}},
                        InlineExportList{
@@ -512,14 +502,12 @@ TEST(TextWriteTest, FunctionInlineImport) {
       Function{{}, InlineImport{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1}}, {}});
 
   // Everything for imported Function.
-  ExpectWrite(
-      "(func $f (export \"m\") (import \"a\" \"b\") (param i32))"_sv,
-      Function{
-          FunctionDesc{"$f"_sv, nullopt,
-                       BoundFunctionType{
-                           {BoundValueType{nullopt, ValueType::I32()}}, {}}},
-          InlineImport{Text{"\"a\""_sv, 1}, Text{"\"b\""_sv, 1}},
-          InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
+  ExpectWrite("(func $f (export \"m\") (import \"a\" \"b\") (param i32))"_sv,
+              Function{FunctionDesc{"$f"_sv, nullopt,
+                                    BoundFunctionType{
+                                        {BoundValueType{nullopt, VT_I32}}, {}}},
+                       InlineImport{Text{"\"a\""_sv, 1}, Text{"\"b\""_sv, 1}},
+                       InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
 
 TEST(TextWriteTest, ElementExpressionList) {
@@ -535,11 +523,10 @@ TEST(TextWriteTest, ElementExpressionList) {
 }
 
 TEST(TextWriteTest, ElementListWithExpressions) {
-  ExpectWrite("funcref"_sv,
-              ElementListWithExpressions{ReferenceType::Funcref(), {}});
+  ExpectWrite("funcref"_sv, ElementListWithExpressions{RT_Funcref, {}});
 
   ExpectWrite("funcref (ref.null)"_sv,
-              ElementListWithExpressions{ReferenceType::Funcref(),
+              ElementListWithExpressions{RT_Funcref,
                                          ElementExpressionList{
                                              ElementExpression{I{O::RefNull}},
                                          }});
@@ -556,8 +543,8 @@ TEST(TextWriteTest, ElementListWithVars) {
 }
 
 TEST(TextWriteTest, ElementList) {
-  ExpectWrite("funcref"_sv, ElementList{ElementListWithExpressions{
-                                ReferenceType::Funcref(), {}}});
+  ExpectWrite("funcref"_sv,
+              ElementList{ElementListWithExpressions{RT_Funcref, {}}});
 
   ExpectWrite("func 0"_sv,
               ElementList{ElementListWithVars{ExternalKind::Function,
@@ -566,67 +553,57 @@ TEST(TextWriteTest, ElementList) {
 
 TEST(TextWriteTest, Table) {
   // Simplest table.
-  ExpectWrite(
-      "(table 0 funcref)"_sv,
-      Table{TableDesc{{}, TableType{Limits{u32{0}}, ReferenceType::Funcref()}},
-            {}});
+  ExpectWrite("(table 0 funcref)"_sv,
+              Table{TableDesc{{}, TableType{Limits{u32{0}}, RT_Funcref}}, {}});
 
   // Name.
-  ExpectWrite("(table $t 0 funcref)"_sv,
-              Table{TableDesc{"$t"_sv, TableType{Limits{u32{0}},
-                                                 ReferenceType::Funcref()}},
-                    {}});
+  ExpectWrite(
+      "(table $t 0 funcref)"_sv,
+      Table{TableDesc{"$t"_sv, TableType{Limits{u32{0}}, RT_Funcref}}, {}});
 
   // Inline export.
-  ExpectWrite(
-      "(table (export \"m\") 0 funcref)"_sv,
-      Table{TableDesc{{}, TableType{Limits{u32{0}}, ReferenceType::Funcref()}},
-            InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
+  ExpectWrite("(table (export \"m\") 0 funcref)"_sv,
+              Table{TableDesc{{}, TableType{Limits{u32{0}}, RT_Funcref}},
+                    InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 
   // Name and inline export.
   ExpectWrite("(table $t2 (export \"m\") 0 funcref)"_sv,
-              Table{TableDesc{"$t2"_sv, TableType{Limits{u32{0}},
-                                                  ReferenceType::Funcref()}},
+              Table{TableDesc{"$t2"_sv, TableType{Limits{u32{0}}, RT_Funcref}},
                     InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 
   // Inline element var list.
   ExpectWrite(
       "(table funcref (elem 0 1 2))"_sv,
-      Table{
-          TableDesc{
-              {}, TableType{Limits{u32{3}, u32{3}}, ReferenceType::Funcref()}},
-          {},
-          ElementListWithVars{ExternalKind::Function, VarList{
-                                                          Var{Index{0}},
-                                                          Var{Index{1}},
-                                                          Var{Index{2}},
-                                                      }}});
+      Table{TableDesc{{}, TableType{Limits{u32{3}, u32{3}}, RT_Funcref}},
+            {},
+            ElementListWithVars{ExternalKind::Function, VarList{
+                                                            Var{Index{0}},
+                                                            Var{Index{1}},
+                                                            Var{Index{2}},
+                                                        }}});
 
   // Inline element var list.
-  ExpectWrite("(table funcref (elem (nop) (nop)))"_sv,
-              Table{TableDesc{{},
-                              TableType{Limits{u32{2}, u32{2}},
-                                        ReferenceType::Funcref()}},
-                    {},
-                    ElementListWithExpressions{ReferenceType::Funcref(),
-                                               ElementExpressionList{
-                                                   ElementExpression{I{O::Nop}},
-                                                   ElementExpression{I{O::Nop}},
-                                               }}});
+  ExpectWrite(
+      "(table funcref (elem (nop) (nop)))"_sv,
+      Table{TableDesc{{}, TableType{Limits{u32{2}, u32{2}}, RT_Funcref}},
+            {},
+            ElementListWithExpressions{RT_Funcref,
+                                       ElementExpressionList{
+                                           ElementExpression{I{O::Nop}},
+                                           ElementExpression{I{O::Nop}},
+                                       }}});
 }
 
 TEST(TextWriteTest, TableInlineImport) {
   // Inline import.
-  ExpectWrite(
-      "(table (import \"m\" \"n\") 0 funcref)"_sv,
-      Table{TableDesc{{}, TableType{Limits{u32{0}}, ReferenceType::Funcref()}},
-            InlineImport{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1}},
-            {}});
+  ExpectWrite("(table (import \"m\" \"n\") 0 funcref)"_sv,
+              Table{TableDesc{{}, TableType{Limits{u32{0}}, RT_Funcref}},
+                    InlineImport{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1}},
+                    {}});
 
   // Everything for Table import.
   ExpectWrite("(table $t (export \"m\") (import \"a\" \"b\") 0 funcref)"_sv,
-              Table{TableDesc{"$t"_sv, TableType{Limits{u32{0}},
-                                                 ReferenceType::Funcref()}},
+              Table{TableDesc{"$t"_sv, TableType{Limits{u32{0}}, RT_Funcref}},
                     InlineImport{Text{"\"a\""_sv, 1}, Text{"\"b\""_sv, 1}},
                     InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
@@ -676,48 +653,43 @@ TEST(TextWriteTest, MemoryInlineImport) {
 
 TEST(TextWriteTest, Global) {
   // Simplest global.
-  ExpectWrite(
-      "(global i32 nop)"_sv,
-      Global{GlobalDesc{{}, GlobalType{ValueType::I32(), Mutability::Const}},
-             ConstantExpression{I{O::Nop}},
-             {}});
+  ExpectWrite("(global i32 nop)"_sv,
+              Global{GlobalDesc{{}, GlobalType{VT_I32, Mutability::Const}},
+                     ConstantExpression{I{O::Nop}},
+                     {}});
 
   // Name.
   ExpectWrite("(global $g i32 nop)"_sv,
-              Global{GlobalDesc{"$g"_sv, GlobalType{ValueType::I32(),
-                                                    Mutability::Const}},
+              Global{GlobalDesc{"$g"_sv, GlobalType{VT_I32, Mutability::Const}},
                      ConstantExpression{I{O::Nop}},
                      {}});
 
   // Inline export.
-  ExpectWrite(
-      "(global (export \"m\") i32 nop)"_sv,
-      Global{GlobalDesc{{}, GlobalType{ValueType::I32(), Mutability::Const}},
-             ConstantExpression{I{O::Nop}},
-             InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
-
-  // Name and inline export.
-  ExpectWrite("(global $g2 (export \"m\") i32 nop)"_sv,
-              Global{GlobalDesc{"$g2"_sv,
-                                GlobalType{ValueType::I32(), Mutability::Const}},
+  ExpectWrite("(global (export \"m\") i32 nop)"_sv,
+              Global{GlobalDesc{{}, GlobalType{VT_I32, Mutability::Const}},
                      ConstantExpression{I{O::Nop}},
                      InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
+
+  // Name and inline export.
+  ExpectWrite(
+      "(global $g2 (export \"m\") i32 nop)"_sv,
+      Global{GlobalDesc{"$g2"_sv, GlobalType{VT_I32, Mutability::Const}},
+             ConstantExpression{I{O::Nop}},
+             InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
 
 TEST(TextWriteTest, GlobalInlineImport) {
   // Inline import.
-  ExpectWrite(
-      "(global (import \"m\" \"n\") i32)"_sv,
-      Global{GlobalDesc{{}, GlobalType{ValueType::I32(), Mutability::Const}},
-             InlineImport{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1}},
-             {}});
+  ExpectWrite("(global (import \"m\" \"n\") i32)"_sv,
+              Global{GlobalDesc{{}, GlobalType{VT_I32, Mutability::Const}},
+                     InlineImport{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1}},
+                     {}});
 
   // Everything for Global import.
-  ExpectWrite(
-      "(global $g (export \"m\") (import \"a\" \"b\") i32)"_sv,
-      Global{GlobalDesc{"$g"_sv, GlobalType{ValueType::I32(), Mutability::Const}},
-             InlineImport{Text{"\"a\""_sv, 1}, Text{"\"b\""_sv, 1}},
-             InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
+  ExpectWrite("(global $g (export \"m\") (import \"a\" \"b\") i32)"_sv,
+              Global{GlobalDesc{"$g"_sv, GlobalType{VT_I32, Mutability::Const}},
+                     InlineImport{Text{"\"a\""_sv, 1}, Text{"\"b\""_sv, 1}},
+                     InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
 
 TEST(TextWriteTest, Export) {
@@ -775,10 +747,9 @@ TEST(TextWriteTest, ElementSegment) {
 
   // Passive, w/ expression list.
   ExpectWrite("(elem funcref (nop) (nop))"_sv,
-              ElementSegment{
-                  nullopt, SegmentType::Passive,
-                  ElementListWithExpressions{ReferenceType::Funcref(),
-                                             ElementExpressionList{
+              ElementSegment{nullopt, SegmentType::Passive,
+                             ElementListWithExpressions{
+                                 RT_Funcref, ElementExpressionList{
                                                  ElementExpression{I{O::Nop}},
                                                  ElementExpression{I{O::Nop}},
                                              }}});
@@ -799,10 +770,9 @@ TEST(TextWriteTest, ElementSegment) {
 
   // Declared, w/ expression list.
   ExpectWrite("(elem declare funcref (nop) (nop))"_sv,
-              ElementSegment{
-                  nullopt, SegmentType::Declared,
-                  ElementListWithExpressions{ReferenceType::Funcref(),
-                                             ElementExpressionList{
+              ElementSegment{nullopt, SegmentType::Declared,
+                             ElementListWithExpressions{
+                                 RT_Funcref, ElementExpressionList{
                                                  ElementExpression{I{O::Nop}},
                                                  ElementExpression{I{O::Nop}},
                                              }}});
@@ -837,10 +807,9 @@ TEST(TextWriteTest, ElementSegment) {
 
   // Active, w/ expression list.
   ExpectWrite("(elem (offset nop) funcref (nop) (nop))"_sv,
-              ElementSegment{
-                  nullopt, nullopt, ConstantExpression{I{O::Nop}},
-                  ElementListWithExpressions{ReferenceType::Funcref(),
-                                             ElementExpressionList{
+              ElementSegment{nullopt, nullopt, ConstantExpression{I{O::Nop}},
+                             ElementListWithExpressions{
+                                 RT_Funcref, ElementExpressionList{
                                                  ElementExpression{I{O::Nop}},
                                                  ElementExpression{I{O::Nop}},
                                              }}});
@@ -942,9 +911,8 @@ TEST(TextWriteTest, ModuleItem) {
   // Table.
   ExpectWrite(
       "(table 0 funcref)"_sv,
-      ModuleItem{Table{TableDesc{nullopt, TableType{Limits{u32{0}},
-                                                    ReferenceType::Funcref()}},
-                       {}}});
+      ModuleItem{Table{
+          TableDesc{nullopt, TableType{Limits{u32{0}}, RT_Funcref}}, {}}});
 
   // Memory.
   ExpectWrite(
@@ -952,12 +920,11 @@ TEST(TextWriteTest, ModuleItem) {
       ModuleItem{Memory{MemoryDesc{nullopt, MemoryType{Limits{u32{0}}}}, {}}});
 
   // Global.
-  ExpectWrite(
-      "(global i32 nop)"_sv,
-      ModuleItem{Global{
-          GlobalDesc{nullopt, GlobalType{ValueType::I32(), Mutability::Const}},
-          ConstantExpression{Instruction{Opcode::Nop}},
-          {}}});
+  ExpectWrite("(global i32 nop)"_sv,
+              ModuleItem{Global{
+                  GlobalDesc{nullopt, GlobalType{VT_I32, Mutability::Const}},
+                  ConstantExpression{Instruction{Opcode::Nop}},
+                  {}}});
 
   // Export.
   ExpectWrite("(export \"m\" (func 0))"_sv, ModuleItem{Export{
@@ -1047,7 +1014,7 @@ TEST(TextWriteTest, Const) {
   ExpectWrite("(v128.const i32x4 0 0 0 0)"_sv, Const{v128{}});
 
   // ref.null
-  ExpectWrite("(ref.null)"_sv, Const{RefNullConst{HeapType::Func()}});
+  ExpectWrite("(ref.null)"_sv, Const{RefNullConst{HT_Func}});
 
   // ref.extern 0
   ExpectWrite("(ref.extern 0)"_sv, Const{RefExternConst{u32{0}}});
@@ -1184,7 +1151,7 @@ TEST(TextWriteTest, ReturnResult) {
               }});
 
   // reference-types
-  ExpectWrite("(ref.null)"_sv, ReturnResult{RefNullConst{HeapType::Func()}});
+  ExpectWrite("(ref.null)"_sv, ReturnResult{RefNullConst{HT_Func}});
   ExpectWrite("(ref.extern 0)"_sv, ReturnResult{RefExternConst{u32{0}}});
   ExpectWrite("(ref.extern)"_sv, ReturnResult{RefExternResult{}});
   ExpectWrite("(ref.func)"_sv, ReturnResult{RefFuncResult{}});

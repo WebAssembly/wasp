@@ -972,7 +972,7 @@ void Tool::DoInstruction(const Instruction& instr) {
 
 // static
 size_t Tool::BlockTypeToValueCount(BlockType type) {
-  return type == BlockType::Void() ? 0 : 1;
+  return type.is_void() ? 0 : 1;
 }
 
 void Tool::PushLabel(Opcode opcode, BBID br, BBID next) {

@@ -46,73 +46,64 @@ struct Var {
 };
 
 struct HeapType {
-  explicit HeapType(HeapKind);
-  explicit HeapType(Var);
-  static HeapType Func();
-  static HeapType Extern();
-  static HeapType Exn();
+  explicit HeapType(At<HeapKind>);
+  explicit HeapType(At<Var>);
 
   bool is_heap_kind() const;
-  bool is_func() const;
-  bool is_extern() const;
-  bool is_exn() const;
   bool is_var() const;
 
-  auto heap_kind() -> HeapKind&;
-  auto heap_kind() const -> const HeapKind&;
-  auto var() -> Var&;
-  auto var() const -> const Var&;
+  auto heap_kind() -> At<HeapKind>&;
+  auto heap_kind() const -> const At<HeapKind>&;
+  auto var() -> At<Var>&;
+  auto var() const -> const At<Var>&;
 
-  variant<HeapKind, Var> type;
+  variant<At<HeapKind>, At<Var>> type;
 };
 
 struct RefType {
-  HeapType heap_type;
+  At<HeapType> heap_type;
   Null null;
 };
 
 struct ReferenceType {
-  explicit ReferenceType(ReferenceKind);
-  explicit ReferenceType(RefType);
-  static ReferenceType Funcref();
-  static ReferenceType Externref();
-  static ReferenceType Exnref();
+  explicit ReferenceType(At<ReferenceKind>);
+  explicit ReferenceType(At<RefType>);
+  static ReferenceType Funcref_NoLocation();
+  static ReferenceType Externref_NoLocation();
+  static ReferenceType Exnref_NoLocation();
 
   bool is_reference_kind() const;
-  bool is_funcref() const;
-  bool is_externref() const;
-  bool is_exnref() const;
   bool is_ref() const;
 
-  auto reference_kind() -> ReferenceKind&;
-  auto reference_kind() const -> const ReferenceKind&;
-  auto ref() -> RefType&;
-  auto ref() const -> const RefType&;
+  auto reference_kind() -> At<ReferenceKind>&;
+  auto reference_kind() const -> const At<ReferenceKind>&;
+  auto ref() -> At<RefType>&;
+  auto ref() const -> const At<RefType>&;
 
-  variant<ReferenceKind, RefType> type;
+  variant<At<ReferenceKind>, At<RefType>> type;
 };
 
 struct ValueType {
-  explicit ValueType(NumericType);
-  explicit ValueType(ReferenceType);
-  static ValueType I32();
-  static ValueType I64();
-  static ValueType F32();
-  static ValueType F64();
-  static ValueType V128();
-  static ValueType Funcref();
-  static ValueType Externref();
-  static ValueType Exnref();
+  explicit ValueType(At<NumericType>);
+  explicit ValueType(At<ReferenceType>);
+  static ValueType I32_NoLocation();
+  static ValueType I64_NoLocation();
+  static ValueType F32_NoLocation();
+  static ValueType F64_NoLocation();
+  static ValueType V128_NoLocation();
+  static ValueType Funcref_NoLocation();
+  static ValueType Externref_NoLocation();
+  static ValueType Exnref_NoLocation();
 
   bool is_numeric_type() const;
   bool is_reference_type() const;
 
-  auto numeric_type() -> NumericType&;
-  auto numeric_type() const -> const NumericType&;
-  auto reference_type() -> ReferenceType&;
-  auto reference_type() const -> const ReferenceType&;
+  auto numeric_type() -> At<NumericType>&;
+  auto numeric_type() const -> const At<NumericType>&;
+  auto reference_type() -> At<ReferenceType>&;
+  auto reference_type() const -> const At<ReferenceType>&;
 
-  variant<NumericType, ReferenceType> type;
+  variant<At<NumericType>, At<ReferenceType>> type;
 };
 
 using ValueTypeList = std::vector<At<ValueType>>;

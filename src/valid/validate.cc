@@ -60,6 +60,67 @@ bool BeginCode(Context& context, Location loc) {
   }
 }
 
+bool TypesMatch(binary::HeapType expected, binary::HeapType actual) {
+  if (expected.is_heap_kind() && actual.is_heap_kind()) {
+    return expected.heap_kind().value() == actual.heap_kind().value();
+  } else if (expected.is_index() && actual.is_index()) {
+    return expected.index().value() == actual.index().value();
+  }
+  return false;
+}
+
+bool TypesMatch(binary::RefType expected, binary::RefType actual) {
+  return TypesMatch(expected.heap_type, actual.heap_type) &&
+         expected.null == actual.null;
+}
+
+bool TypesMatch(binary::ReferenceType expected, binary::ReferenceType actual) {
+  // Canoicalize in case one of the types is "ref null X" and the other is
+  // "Xref".
+  expected = Canonicalize(expected);
+  actual = Canonicalize(actual);
+
+  if (expected.is_reference_kind() && actual.is_reference_kind()) {
+    return expected.reference_kind().value() == actual.reference_kind().value();
+  } else if (expected.is_ref() && actual.is_ref()) {
+    return TypesMatch(expected.ref(), actual.ref());
+  }
+  return false;
+}
+
+bool TypesMatch(binary::ValueType expected, binary::ValueType actual) {
+  if (expected.is_numeric_type() && actual.is_numeric_type()) {
+    return expected.numeric_type().value() == actual.numeric_type().value();
+  } else if (expected.is_reference_type() && actual.is_reference_type()) {
+    return TypesMatch(expected.reference_type(), actual.reference_type());
+  }
+  return false;
+}
+
+bool TypesMatch(StackType expected, StackType actual) {
+  // One of the types is "any" (i.e. universal supertype or subtype), or the
+  // value types match.
+  return expected.is_any() || actual.is_any() ||
+         TypesMatch(expected.value_type(), actual.value_type());
+}
+
+bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual) {
+  if (expected.size() != actual.size()) {
+    return false;
+  }
+
+  for (auto eiter = expected.begin(), lend = expected.end(),
+            aiter = actual.begin();
+       eiter != lend; ++eiter, ++aiter) {
+    StackType etype = *eiter;
+    StackType atype = *aiter;
+    if (!TypesMatch(etype, atype)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool Validate(Context& context, const At<binary::UnpackedExpression>& value) {
   bool valid = true;
   for (auto&& instr : value->instructions) {
@@ -93,23 +154,23 @@ bool Validate(Context& context,
   optional<binary::ValueType> actual_type;
   switch (instruction->opcode) {
     case Opcode::I32Const:
-      actual_type = binary::ValueType::I32();
+      actual_type = binary::ValueType::I32_NoLocation();
       break;
 
     case Opcode::I64Const:
-      actual_type = binary::ValueType::I64();
+      actual_type = binary::ValueType::I64_NoLocation();
       break;
 
     case Opcode::F32Const:
-      actual_type = binary::ValueType::F32();
+      actual_type = binary::ValueType::F32_NoLocation();
       break;
 
     case Opcode::F64Const:
-      actual_type = binary::ValueType::F64();
+      actual_type = binary::ValueType::F64_NoLocation();
       break;
 
     case Opcode::V128Const:
-      actual_type = binary::ValueType::V128();
+      actual_type = binary::ValueType::V128_NoLocation();
       break;
 
     case Opcode::GlobalGet: {
@@ -143,7 +204,7 @@ bool Validate(Context& context,
                          "func index")) {
         return false;
       }
-      actual_type = binary::ValueType::Funcref();
+      actual_type = binary::ValueType::Funcref_NoLocation();
       break;
     }
 
@@ -173,8 +234,9 @@ bool Validate(Context& context, const At<binary::DataSegment>& value) {
                            context.memories.size(), "memory index");
   }
   if (value->offset) {
-    valid &= Validate(context, *value->offset, ConstantExpressionKind::Other,
-                      binary::ValueType::I32(), context.globals.size());
+    valid &=
+        Validate(context, *value->offset, ConstantExpressionKind::Other,
+                 binary::ValueType::I32_NoLocation(), context.globals.size());
   }
   return valid;
 }
@@ -194,11 +256,11 @@ bool Validate(Context& context,
   optional<binary::ReferenceType> actual_type;
   switch (instruction->opcode) {
     case Opcode::RefNull:
-      actual_type = binary::ReferenceType::Funcref();
+      actual_type = binary::ReferenceType::Funcref_NoLocation();
       break;
 
     case Opcode::RefFunc: {
-      actual_type = binary::ReferenceType::Funcref();
+      actual_type = binary::ReferenceType::Funcref_NoLocation();
       auto index = instruction->index_immediate();
       if (!ValidateIndex(context, index, context.functions.size(),
                          "function index")) {
@@ -231,7 +293,7 @@ bool Validate(Context& context, const At<binary::ElementSegment>& value) {
   if (value->offset) {
     valid &=
         Validate(context, *value->offset, ConstantExpressionKind::GlobalInit,
-                 binary::ValueType::I32(), context.globals.size());
+                 binary::ValueType::I32_NoLocation(), context.globals.size());
   }
   if (value->has_indexes()) {
     auto&& elements = value->indexes();
@@ -275,10 +337,10 @@ bool Validate(Context& context, const At<binary::ElementSegment>& value) {
 bool Validate(Context& context,
               const At<binary::ReferenceType>& actual,
               binary::ReferenceType expected) {
-  if (actual != expected) {
+  if (!TypesMatch(actual, expected)) {
     context.errors->OnError(
         actual.loc(),
-        format("Expected element type {}, got {}", expected, actual));
+        format("Expected reference type {}, got {}", expected, actual));
     return false;
   }
   return true;
@@ -563,22 +625,6 @@ bool Validate(Context& context, const At<binary::TypeEntry>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "type entry"};
   context.types.push_back(value);
   return Validate(context, value->type);
-}
-
-bool TypesMatch(binary::ValueType expected, binary::ValueType actual) {
-  // Types are the same.
-  if (expected == actual) {
-    return true;
-  }
-
-  // One of the types is "ref null X" and the other is "Xref"
-  if (expected.is_reference_type() && actual.is_reference_type() &&
-      Canonicalize(expected.reference_type()) ==
-          Canonicalize(actual.reference_type())) {
-    return true;
-  }
-
-  return false;
 }
 
 bool Validate(Context& context,

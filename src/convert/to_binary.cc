@@ -41,7 +41,7 @@ auto ToBinary(Context& context, const At<text::HeapType>& value)
   } else {
     assert(value->is_var());
     return MakeAt(value.loc(),
-                  binary::HeapType{ToBinary(context, MakeAt(value->var()))});
+                  binary::HeapType{ToBinary(context, value->var())});
   }
 }
 
@@ -318,12 +318,12 @@ auto ToBinary(Context& context, const At<text::BlockImmediate>& value)
     // TODO: This is really nasty; find a nicer way.
     auto inline_type = value->type.GetInlineType();
     if (!inline_type) {
-      return MakeAt(value.loc(), binary::BlockType::Void());
+      return MakeAt(value.loc(), binary::BlockType{binary::VoidType{}});
     }
     return MakeAt(value.loc(),
-                  binary::BlockType{ToBinary(context, inline_type->value())});
+                  binary::BlockType{ToBinary(context, *inline_type)});
   } else {
-    Index block_type_index = ToBinary(context, value->type.type_use);
+    auto block_type_index = ToBinary(context, value->type.type_use);
     assert(block_type_index < 0x8000'0000);
     return MakeAt(value.loc(), binary::BlockType{block_type_index});
   }

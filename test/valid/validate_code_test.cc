@@ -15,6 +15,7 @@
 //
 
 #include "gtest/gtest.h"
+#include "test/binary/constants.h"
 #include "test/valid/test_utils.h"
 #include "wasp/base/features.h"
 #include "wasp/valid/context.h"
@@ -22,6 +23,7 @@
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
+using namespace ::wasp::binary::test;
 using namespace ::wasp::valid;
 using namespace ::wasp::valid::test;
 
@@ -53,5 +55,5 @@ TEST(ValidateCodeTest, BeginCode_TypeIndexOOB) {
 TEST(ValidateCodeTest, Locals) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_TRUE(Validate(context, Locals{10, ValueType::I32()}));
+  EXPECT_TRUE(Validate(context, Locals{10, VT_I32}));
 }

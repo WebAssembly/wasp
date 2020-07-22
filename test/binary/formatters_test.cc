@@ -17,6 +17,7 @@
 #include "wasp/binary/formatters.h"
 
 #include "gtest/gtest.h"
+#include "test/binary/constants.h"
 #include "test/binary/test_utils.h"
 #include "wasp/binary/linking_section/formatters.h"
 #include "wasp/binary/name_section/formatters.h"
@@ -26,20 +27,20 @@ using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
 
 TEST(BinaryFormattersTest, ValueType) {
-  EXPECT_EQ(R"(i32)", format("{}", ValueType::I32()));
-  EXPECT_EQ(R"(  f32)", format("{:>5s}", ValueType::F32()));
+  EXPECT_EQ(R"(i32)", format("{}", VT_I32));
+  EXPECT_EQ(R"(  f32)", format("{:>5s}", VT_F32));
 }
 
 TEST(BinaryFormattersTest, BlockType) {
-  EXPECT_EQ(R"([i32])", format("{}", BlockType::I32()));
-  EXPECT_EQ(R"([])", format("{}", BlockType::Void()));
+  EXPECT_EQ(R"([i32])", format("{}", BT_I32));
+  EXPECT_EQ(R"([])", format("{}", BT_Void));
   EXPECT_EQ(R"(type[100])", format("{}", BlockType(Index{100})));
-  EXPECT_EQ(R"(   [f64])", format("{:>8s}", BlockType::F64()));
+  EXPECT_EQ(R"(   [f64])", format("{:>8s}", BT_F64));
 }
 
 TEST(BinaryFormattersTest, ReferenceType) {
-  EXPECT_EQ(R"(funcref)", format("{}", ReferenceType::Funcref()));
-  EXPECT_EQ(R"(   funcref)", format("{:>10s}", ReferenceType::Funcref()));
+  EXPECT_EQ(R"(funcref)", format("{}", RT_Funcref));
+  EXPECT_EQ(R"(   funcref)", format("{:>10s}", RT_Funcref));
 }
 
 TEST(BinaryFormattersTest, ExternalKind) {
@@ -78,11 +79,10 @@ TEST(BinaryFormattersTest, NameSubsectionKind) {
 
 TEST(BinaryFormattersTest, LetImmediate) {
   EXPECT_EQ(R"({type [], locals []})",
-            format("{}", LetImmediate{BlockType::Void(), LocalsList{}}));
-  EXPECT_EQ(
-      R"({type type[0], locals [i32 ** 2]})",
-      format("{}", LetImmediate{BlockType{Index{0}},
-                                LocalsList{Locals{2, ValueType::I32()}}}));
+            format("{}", LetImmediate{BT_Void, LocalsList{}}));
+  EXPECT_EQ(R"({type type[0], locals [i32 ** 2]})",
+            format("{}", LetImmediate{BlockType{Index{0}},
+                                      LocalsList{Locals{2, VT_I32}}}));
 }
 
 TEST(BinaryFormattersTest, MemArgImmediate) {
@@ -99,8 +99,8 @@ TEST(BinaryFormattersTest, Limits) {
 }
 
 TEST(BinaryFormattersTest, Locals) {
-  EXPECT_EQ(R"(i32 ** 3)", format("{}", Locals{3, ValueType::I32()}));
-  EXPECT_EQ(R"(  i32 ** 3)", format("{:>10s}", Locals{3, ValueType::I32()}));
+  EXPECT_EQ(R"(i32 ** 3)", format("{}", Locals{3, VT_I32}));
+  EXPECT_EQ(R"(  i32 ** 3)", format("{:>10s}", Locals{3, VT_I32}));
 }
 
 TEST(BinaryFormattersTest, KnownSection) {
@@ -140,35 +140,32 @@ TEST(BinaryFormattersTest, Section) {
 TEST(BinaryFormattersTest, TypeEntry) {
   EXPECT_EQ(R"([] -> [])", format("{}", TypeEntry{FunctionType{{}, {}}}));
   EXPECT_EQ(R"([i32] -> [])",
-            format("{}", TypeEntry{FunctionType{{ValueType::I32()}, {}}}));
+            format("{}", TypeEntry{FunctionType{{VT_I32}, {}}}));
   EXPECT_EQ(R"(  [] -> [])",
             format("{:>10s}", TypeEntry{FunctionType{{}, {}}}));
 }
 
 TEST(BinaryFormattersTest, FunctionType) {
   EXPECT_EQ(R"([] -> [])", format("{}", FunctionType{{}, {}}));
-  EXPECT_EQ(R"([i32] -> [])",
-            format("{}", FunctionType{{ValueType::I32()}, {}}));
+  EXPECT_EQ(R"([i32] -> [])", format("{}", FunctionType{{VT_I32}, {}}));
   EXPECT_EQ(R"([i32 f32] -> [i64 f64])",
-            format("{}", FunctionType{{ValueType::I32(), ValueType::F32()},
-                                      {ValueType::I64(), ValueType::F64()}}));
+            format("{}", FunctionType{{VT_I32, VT_F32}, {VT_I64, VT_F64}}));
   EXPECT_EQ(R"(  [] -> [])", format("{:>10s}", FunctionType{{}, {}}));
 }
 
 TEST(BinaryFormattersTest, TableType) {
   EXPECT_EQ(R"({min 1, max 2} funcref)",
-            format("{}", TableType{Limits{1, 2}, ReferenceType::Funcref()}));
+            format("{}", TableType{Limits{1, 2}, RT_Funcref}));
   EXPECT_EQ(R"(  {min 0} funcref)",
-            format("{:>17s}", TableType{Limits{0}, ReferenceType::Funcref()}));
+            format("{:>17s}", TableType{Limits{0}, RT_Funcref}));
 }
 
 TEST(BinaryFormattersTest, GlobalType) {
   EXPECT_EQ(R"(const f32)",
-            format("{}", GlobalType{ValueType::F32(), Mutability::Const}));
-  EXPECT_EQ(R"(var i32)",
-            format("{}", GlobalType{ValueType::I32(), Mutability::Var}));
+            format("{}", GlobalType{VT_F32, Mutability::Const}));
+  EXPECT_EQ(R"(var i32)", format("{}", GlobalType{VT_I32, Mutability::Var}));
   EXPECT_EQ(R"(   var f64)",
-            format("{:>10s}", GlobalType{ValueType::F64(), Mutability::Var}));
+            format("{:>10s}", GlobalType{VT_F64, Mutability::Var}));
 }
 
 TEST(BinaryFormattersTest, EventType) {
@@ -186,18 +183,16 @@ TEST(BinaryFormattersTest, Import) {
   // Table
   EXPECT_EQ(
       R"({module "c", name "d", desc table {min 1} funcref})",
-      format("{}", Import{"c"_sv, "d"_sv,
-                          TableType{Limits{1}, ReferenceType::Funcref()}}));
+      format("{}", Import{"c"_sv, "d"_sv, TableType{Limits{1}, RT_Funcref}}));
 
   // Memory
   EXPECT_EQ(R"({module "e", name "f", desc memory {min 0, max 4}})",
             format("{}", Import{"e"_sv, "f"_sv, MemoryType{Limits{0, 4}}}));
 
   // Global
-  EXPECT_EQ(
-      R"({module "g", name "h", desc global var i32})",
-      format("{}", Import{"g"_sv, "h"_sv,
-                          GlobalType{ValueType::I32(), Mutability::Var}}));
+  EXPECT_EQ(R"({module "g", name "h", desc global var i32})",
+            format("{}", Import{"g"_sv, "h"_sv,
+                                GlobalType{VT_I32, Mutability::Var}}));
 
   // Event
   EXPECT_EQ(R"({module "i", name "j", desc event exception 0})",
@@ -278,8 +273,7 @@ TEST(BinaryFormattersTest, Instruction) {
   // nop
   EXPECT_EQ(R"(nop)", format("{}", Instruction{Opcode::Nop}));
   // block (result i32)
-  EXPECT_EQ(R"(block [i32])",
-            format("{}", Instruction{Opcode::Block, BlockType::I32()}));
+  EXPECT_EQ(R"(block [i32])", format("{}", Instruction{Opcode::Block, BT_I32}));
   // br 3
   EXPECT_EQ(R"(br 3)", format("{}", Instruction{Opcode::Br, Index{3u}}));
   // br_table 0 1 4
@@ -335,8 +329,7 @@ TEST(BinaryFormattersTest, Instruction) {
                                                  11, 12, 13, 14, 15, 16}}}));
   // select (result i32)
   EXPECT_EQ(R"(select [i32])",
-            format("{}", Instruction{Opcode::SelectT,
-                                     ValueTypeList{ValueType::I32()}}));
+            format("{}", Instruction{Opcode::SelectT, ValueTypeList{VT_I32}}));
 
   EXPECT_EQ(R"(   i32.add)", format("{:>10s}", Instruction{Opcode::I32Add}));
 }
@@ -347,12 +340,10 @@ TEST(BinaryFormattersTest, Function) {
 }
 
 TEST(BinaryFormattersTest, Table) {
-  EXPECT_EQ(
-      R"({type {min 1} funcref})",
-      format("{}", Table{TableType{Limits{1}, ReferenceType::Funcref()}}));
-  EXPECT_EQ(
-      R"(   {type {min 1} funcref})",
-      format("{:>25s}", Table{TableType{Limits{1}, ReferenceType::Funcref()}}));
+  EXPECT_EQ(R"({type {min 1} funcref})",
+            format("{}", Table{TableType{Limits{1}, RT_Funcref}}));
+  EXPECT_EQ(R"(   {type {min 1} funcref})",
+            format("{:>25s}", Table{TableType{Limits{1}, RT_Funcref}}));
 }
 
 TEST(BinaryFormattersTest, Memory) {
@@ -364,12 +355,12 @@ TEST(BinaryFormattersTest, Memory) {
 
 TEST(BinaryFormattersTest, Global) {
   EXPECT_EQ(R"({type const i32, init i32.const 0 end})",
-            format("{}", Global{GlobalType{ValueType::I32(), Mutability::Const},
+            format("{}", Global{GlobalType{VT_I32, Mutability::Const},
                                 ConstantExpression{
                                     Instruction{Opcode::I32Const, s32{0}}}}));
   EXPECT_EQ(
       R"(  {type var f32, init nop end})",
-      format("{:>30s}", Global{GlobalType{ValueType::F32(), Mutability::Var},
+      format("{:>30s}", Global{GlobalType{VT_F32, Mutability::Var},
                                ConstantExpression{Instruction{Opcode::Nop}}}));
 }
 
@@ -401,21 +392,19 @@ TEST(BinaryFormattersTest, ElementSegment_Passive) {
           ElementSegment{
               SegmentType::Passive,
               ElementListWithExpressions{
-                  ReferenceType::Funcref(),
+                  RT_Funcref,
                   {ElementExpression{Instruction{Opcode::RefFunc, Index{2u}}},
                    ElementExpression{Instruction{Opcode::RefNull}}}}}));
 
-  EXPECT_EQ(
-      R"( {type funcref, init [], mode passive})",
-      format("{:>38s}", ElementSegment{SegmentType::Passive,
-                                       ElementListWithExpressions{
-                                           ReferenceType::Funcref(), {}}}));
+  EXPECT_EQ(R"( {type funcref, init [], mode passive})",
+            format("{:>38s}",
+                   ElementSegment{SegmentType::Passive,
+                                  ElementListWithExpressions{RT_Funcref, {}}}));
 }
 
 TEST(BinaryFormattersTest, Code) {
   EXPECT_EQ(R"({locals [i32 ** 1], body "\0b"})",
-            format("{}", Code{{Locals{1, ValueType::I32()}},
-                              Expression{"\x0b"_su8}}));
+            format("{}", Code{{Locals{1, VT_I32}}, Expression{"\x0b"_su8}}));
 
   EXPECT_EQ(
       R"(     {locals [], body ""})",

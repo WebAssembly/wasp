@@ -34,42 +34,42 @@ StackType::StackType(Any type) : type{type} {}
 
 // static
 StackType StackType::I32() {
-  return StackType{binary::ValueType::I32()};
+  return StackType{binary::ValueType::I32_NoLocation()};
 }
 
 // static
 StackType StackType::I64() {
-  return StackType{binary::ValueType::I64()};
+  return StackType{binary::ValueType::I64_NoLocation()};
 }
 
 // static
 StackType StackType::F32() {
-  return StackType{binary::ValueType::F32()};
+  return StackType{binary::ValueType::F32_NoLocation()};
 }
 
 // static
 StackType StackType::F64() {
-  return StackType{binary::ValueType::F64()};
+  return StackType{binary::ValueType::F64_NoLocation()};
 }
 
 // static
 StackType StackType::V128() {
-  return StackType{binary::ValueType::V128()};
+  return StackType{binary::ValueType::V128_NoLocation()};
 }
 
 // static
 StackType StackType::Funcref() {
-  return StackType{binary::ValueType::Funcref()};
+  return StackType{binary::ValueType::Funcref_NoLocation()};
 }
 
 // static
 StackType StackType::Externref() {
-  return StackType{binary::ValueType::Externref()};
+  return StackType{binary::ValueType::Externref_NoLocation()};
 }
 
 // static
 StackType StackType::Exnref() {
-  return StackType{binary::ValueType::Exnref()};
+  return StackType{binary::ValueType::Exnref_NoLocation()};
 }
 
 bool StackType::is_value_type() const {

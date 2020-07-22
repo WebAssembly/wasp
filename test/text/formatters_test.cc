@@ -18,8 +18,11 @@
 
 #include "gtest/gtest.h"
 
+#include "test/text/constants.h"
+
 using namespace ::wasp;
 using namespace ::wasp::text;
+using namespace ::wasp::text::test;
 
 TEST(TextFormattersTest, TokenType) {
   EXPECT_EQ(R"(Binary)", format("{}", TokenType::Binary));
@@ -91,29 +94,26 @@ TEST(TextFormattersTest, VarList) {
 }
 
 TEST(TextFormattersTest, ValueTypeList) {
-  EXPECT_EQ(R"([i32 f32])", format("{}", ValueTypeList{
-                                             ValueType::I32(),
-                                             ValueType::F32(),
-                                         }));
+  EXPECT_EQ(R"([i32 f32])", format("{}", ValueTypeList{VT_I32, VT_F32}));
 }
 
 TEST(TextFormattersTest, FunctionType) {
   EXPECT_EQ(R"({params [i32], results [f32]})",
             format("{}", FunctionType{
-                             ValueTypeList{ValueType::I32()},
-                             ValueTypeList{ValueType::F32()},
+                             ValueTypeList{VT_I32},
+                             ValueTypeList{VT_F32},
                          }));
 }
 
 TEST(TextFormattersTest, FunctionTypeUse) {
   EXPECT_EQ(R"({type_use none, type {params [], results []}})",
             format("{}", FunctionTypeUse{}));
-  EXPECT_EQ(R"({type_use $a, type {params [i32], results [f32]}})",
-            format("{}", FunctionTypeUse{Var{"$a"_sv},
-                                         FunctionType{
-                                             ValueTypeList{ValueType::I32()},
-                                             ValueTypeList{ValueType::F32()},
-                                         }}));
+  EXPECT_EQ(
+      R"({type_use $a, type {params [i32], results [f32]}})",
+      format("{}", FunctionTypeUse{Var{"$a"_sv}, FunctionType{
+                                                     ValueTypeList{VT_I32},
+                                                     ValueTypeList{VT_F32},
+                                                 }}));
 }
 
 TEST(TextFormattersTest, BlockImmediate) {
@@ -122,13 +122,12 @@ TEST(TextFormattersTest, BlockImmediate) {
       format("{}", BlockImmediate{}));
   EXPECT_EQ(
       R"({label $l, type {type_use $a, type {params [i32], results [f32]}}})",
-      format("{}",
-             BlockImmediate{BindVar{"$l"_sv},
-                            FunctionTypeUse{Var{"$a"_sv},
-                                            FunctionType{
-                                                ValueTypeList{ValueType::I32()},
-                                                ValueTypeList{ValueType::F32()},
-                                            }}}));
+      format("{}", BlockImmediate{
+                       BindVar{"$l"_sv},
+                       FunctionTypeUse{Var{"$a"_sv}, FunctionType{
+                                                         ValueTypeList{VT_I32},
+                                                         ValueTypeList{VT_F32},
+                                                     }}}));
 }
 
 TEST(TextFormattersTest, BrOnExnImmediate) {
@@ -153,11 +152,10 @@ TEST(TextFormattersTest, CallIndirectImmediate) {
       R"({table $t, type {type_use $a, type {params [i32], results [f32]}}})",
       format("{}", CallIndirectImmediate{
                        Var{"$t"_sv},
-                       FunctionTypeUse{Var{"$a"_sv},
-                                       FunctionType{
-                                           ValueTypeList{ValueType::I32()},
-                                           ValueTypeList{ValueType::F32()},
-                                       }}}));
+                       FunctionTypeUse{Var{"$a"_sv}, FunctionType{
+                                                         ValueTypeList{VT_I32},
+                                                         ValueTypeList{VT_F32},
+                                                     }}}));
 }
 
 TEST(TextFormattersTest, CopyImmediate) {
@@ -251,22 +249,22 @@ TEST(TextFormattersTest, InstructionList) {
 
 TEST(TextFormattersTest, BoundValueType) {
   EXPECT_EQ(R"({name none, type i32})",
-            format("{}", BoundValueType{nullopt, ValueType::I32()}));
+            format("{}", BoundValueType{nullopt, VT_I32}));
 }
 
 TEST(TextFormattersTest, BoundValueTypeList) {
   EXPECT_EQ(R"([{name none, type i32} {name $a, type f32}])",
             format("{}", BoundValueTypeList{
-                             BoundValueType{nullopt, ValueType::I32()},
-                             BoundValueType{"$a"_sv, ValueType::F32()},
+                             BoundValueType{nullopt, VT_I32},
+                             BoundValueType{"$a"_sv, VT_F32},
                          }));
 }
 
 TEST(TextFormattersTest, BoundFunctionType) {
   EXPECT_EQ(R"({params [{name none, type i32}], results [f32]})",
-            format("{}", BoundFunctionType{BoundValueTypeList{BoundValueType{
-                                               nullopt, ValueType::I32()}},
-                                           ValueTypeList{ValueType::F32()}}));
+            format("{}", BoundFunctionType{BoundValueTypeList{
+                                               BoundValueType{nullopt, VT_I32}},
+                                           ValueTypeList{VT_F32}}));
 }
 
 TEST(TextFormattersTest, TypeEntry) {
@@ -280,10 +278,8 @@ TEST(TextFormattersTest, FunctionDesc) {
 }
 
 TEST(TextFormattersTest, TableDesc) {
-  EXPECT_EQ(
-      R"({name none, type {min 1} funcref})",
-      format("{}",
-             TableDesc{nullopt, TableType{Limits{1}, ReferenceType::Funcref()}}));
+  EXPECT_EQ(R"({name none, type {min 1} funcref})",
+            format("{}", TableDesc{nullopt, TableType{Limits{1}, RT_Funcref}}));
 }
 
 TEST(TextFormattersTest, MemoryDesc) {
@@ -293,7 +289,7 @@ TEST(TextFormattersTest, MemoryDesc) {
 
 TEST(TextFormattersTest, GlobalDesc) {
   EXPECT_EQ(R"({name none, type const i32})",
-            format("{}", GlobalDesc{nullopt, GlobalType{ValueType::I32(),
+            format("{}", GlobalDesc{nullopt, GlobalType{VT_I32,
                                                         Mutability::Const}}));
 }
 
@@ -321,8 +317,7 @@ TEST(TextFormattersTest, Import) {
       R"({module {text $a, byte_size 1}, name {text $b, byte_size 1}, desc table {name none, type {min 1} funcref}})",
       format("{}",
              Import{Text{"$a"_sv, 1}, Text{"$b"_sv, 1},
-                    TableDesc{nullopt,
-                              TableType{Limits{1}, ReferenceType::Funcref()}}}));
+                    TableDesc{nullopt, TableType{Limits{1}, RT_Funcref}}}));
 
   // Memory
   EXPECT_EQ(
@@ -334,8 +329,8 @@ TEST(TextFormattersTest, Import) {
   EXPECT_EQ(
       R"({module {text $a, byte_size 1}, name {text $b, byte_size 1}, desc global {name none, type const i32}})",
       format("{}", Import{Text{"$a"_sv, 1}, Text{"$b"_sv, 1},
-                          GlobalDesc{nullopt, GlobalType{ValueType::I32(),
-                                                         Mutability::Const}}}));
+                          GlobalDesc{nullopt,
+                                     GlobalType{VT_I32, Mutability::Const}}}));
   // Event
   EXPECT_EQ(
       R"({module {text $a, byte_size 1}, name {text $b, byte_size 1}, desc event {name none, type {attribute exception, type {type_use none, type {params [], results []}}}}})",
@@ -371,7 +366,7 @@ TEST(TextFormattersTest, Function) {
 
 TEST(TextFormattersTest, ElementListWithExpressions) {
   EXPECT_EQ(R"({elemtype funcref, list []})",
-            format("{}", ElementListWithExpressions{ReferenceType::Funcref(), {}}));
+            format("{}", ElementListWithExpressions{RT_Funcref, {}}));
 }
 
 TEST(TextFormattersTest, ElementListWithVars) {
@@ -380,9 +375,9 @@ TEST(TextFormattersTest, ElementListWithVars) {
 }
 
 TEST(TextFormattersTest, ElementList) {
-  EXPECT_EQ(R"(expression {elemtype funcref, list []})",
-            format("{}", ElementList{ElementListWithExpressions{
-                             ReferenceType::Funcref(), {}}}));
+  EXPECT_EQ(
+      R"(expression {elemtype funcref, list []})",
+      format("{}", ElementList{ElementListWithExpressions{RT_Funcref, {}}}));
 
   EXPECT_EQ(R"(var {kind func, list []})",
             format("{}", ElementList{
@@ -392,9 +387,8 @@ TEST(TextFormattersTest, ElementList) {
 TEST(TextFormattersTest, Table) {
   EXPECT_EQ(
       R"({desc {name none, type {min 1} funcref}, import none, exports [], elements none})",
-      format("{}", Table{TableDesc{nullopt, TableType{Limits{1},
-                                                      ReferenceType::Funcref()}},
-                         {}}));
+      format("{}",
+             Table{TableDesc{nullopt, TableType{Limits{1}, RT_Funcref}}, {}}));
 }
 
 TEST(TextFormattersTest, Memory) {
@@ -406,10 +400,10 @@ TEST(TextFormattersTest, Memory) {
 TEST(TextFormattersTest, Global) {
   EXPECT_EQ(
       R"({desc {name none, type const i32}, init {instructions []}, import none, exports []})",
-      format("{}", Global{GlobalDesc{nullopt, GlobalType{ValueType::I32(),
-                                                         Mutability::Const}},
-                          ConstantExpression{},
-                          {}}));
+      format("{}",
+             Global{GlobalDesc{nullopt, GlobalType{VT_I32, Mutability::Const}},
+                    ConstantExpression{},
+                    {}}));
 }
 
 TEST(TextFormattersTest, Export) {
@@ -460,10 +454,9 @@ TEST(TextFormattersTest, ModuleItem) {
   // Table
   EXPECT_EQ(
       R"(table {desc {name none, type {min 1} funcref}, import none, exports [], elements none})",
-      format("{}", ModuleItem{Table{
-                       TableDesc{nullopt,
-                                 TableType{Limits{1}, ReferenceType::Funcref()}},
-                       {}}}));
+      format("{}",
+             ModuleItem{Table{
+                 TableDesc{nullopt, TableType{Limits{1}, RT_Funcref}}, {}}}));
 
   // Memory
   EXPECT_EQ(
@@ -474,11 +467,11 @@ TEST(TextFormattersTest, ModuleItem) {
   // Global
   EXPECT_EQ(
       R"(global {desc {name none, type const i32}, init {instructions []}, import none, exports []})",
-      format("{}", ModuleItem{Global{
-                       GlobalDesc{nullopt, GlobalType{ValueType::I32(),
-                                                      Mutability::Const}},
-                       ConstantExpression{},
-                       {}}}));
+      format("{}",
+             ModuleItem{Global{
+                 GlobalDesc{nullopt, GlobalType{VT_I32, Mutability::Const}},
+                 ConstantExpression{},
+                 {}}}));
 
   // Export
   EXPECT_EQ(R"(export {kind func, name {text $a, byte_size 1}, var 0})",
@@ -541,7 +534,7 @@ TEST(TextFormattersTest, ScriptModule) {
 }
 
 TEST(TextFormattersTest, RefNullConst) {
-  EXPECT_EQ(R"({})", format("{}", RefNullConst{HeapType::Func()}));
+  EXPECT_EQ(R"({})", format("{}", RefNullConst{HT_Func}));
 }
 
 TEST(TextFormattersTest, RefExternConst) {
@@ -565,8 +558,7 @@ TEST(TextFormattersTest, Const) {
   EXPECT_EQ(R"(v128 0x0 0x0 0x0 0x0)", format("{}", Const{v128{}}));
 
   // RefNullConst
-  EXPECT_EQ(R"(ref.null {})",
-            format("{}", Const{RefNullConst{HeapType::Func()}}));
+  EXPECT_EQ(R"(ref.null {})", format("{}", Const{RefNullConst{HT_Func}}));
 
   // RefExternConst
   EXPECT_EQ(R"(ref.extern {var 0})",

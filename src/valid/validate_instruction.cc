@@ -180,11 +180,13 @@ FunctionType MaybeDefault(optional<FunctionType> value) {
 }
 
 TableType MaybeDefault(optional<TableType> value) {
-  return value.value_or(TableType{Limits{0}, ReferenceType::Funcref()});
+  return value.value_or(
+      TableType{Limits{0}, ReferenceType::Funcref_NoLocation()});
 }
 
 GlobalType MaybeDefault(optional<GlobalType> value) {
-  return value.value_or(GlobalType{ValueType::I32(), Mutability::Const});
+  return value.value_or(
+      GlobalType{ValueType::I32_NoLocation(), Mutability::Const});
 }
 
 EventType MaybeDefault(optional<EventType> value) {
@@ -192,7 +194,7 @@ EventType MaybeDefault(optional<EventType> value) {
 }
 
 ReferenceType MaybeDefault(optional<ReferenceType> value) {
-  return value.value_or(ReferenceType::Externref());
+  return value.value_or(ReferenceType::Externref_NoLocation());
 }
 
 Label MaybeDefault(const Label* value) {
@@ -476,8 +478,7 @@ bool CallIndirect(Context& context,
 bool Select(Context& context, Location loc) {
   bool valid = PopType(context, loc, StackType::I32());
   auto type = MaybeDefault(PeekType(context, loc));
-  if (!(type == StackType::I32() || type == StackType::I64() ||
-        type == StackType::F32() || type == StackType::F64() ||
+  if (!((type.is_value_type() && type.value_type().is_numeric_type()) ||
         type.is_any())) {
     context.errors->OnError(
         loc, format("select instruction without expected type can only be used "
@@ -1055,30 +1056,6 @@ bool SimdShuffle(Context& context,
 }
 
 }  // namespace
-
-bool TypesMatch(StackType expected, StackType actual) {
-  // One of the types is "any" (i.e. universal supertype or subtype), or the
-  // value types match.
-  return expected.is_any() || actual.is_any() ||
-         TypesMatch(expected.value_type(), actual.value_type());
-}
-
-bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual) {
-  if (expected.size() != actual.size()) {
-    return false;
-  }
-
-  for (auto eiter = expected.begin(), lend = expected.end(),
-            aiter = actual.begin();
-       eiter != lend; ++eiter, ++aiter) {
-    StackType etype = *eiter;
-    StackType atype = *aiter;
-    if (!TypesMatch(etype, atype)) {
-      return false;
-    }
-  }
-  return true;
-}
 
 bool Validate(Context& context, const At<Locals>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "locals"};

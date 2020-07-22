@@ -24,83 +24,38 @@
 namespace wasp {
 namespace binary {
 
-BlockType::BlockType(ValueType type) : type{type} {}
+BlockType::BlockType(At<ValueType> type) : type{type} {}
 
-BlockType::BlockType(VoidType type) : type{type} {}
+BlockType::BlockType(At<VoidType> type) : type{type} {}
 
-BlockType::BlockType(Index type) : type{type} {}
-
-// static
-BlockType BlockType::I32() {
-  return BlockType{ValueType::I32()};
-}
-
-// static
-BlockType BlockType::I64() {
-  return BlockType{ValueType::I64()};
-}
-
-// static
-BlockType BlockType::F32() {
-  return BlockType{ValueType::F32()};
-}
-
-// static
-BlockType BlockType::F64() {
-  return BlockType{ValueType::F64()};
-}
-
-// static
-BlockType BlockType::V128() {
-  return BlockType{ValueType::V128()};
-}
-
-// static
-BlockType BlockType::Void() {
-  return BlockType{VoidType{}};
-}
-
-// static
-BlockType BlockType::Funcref() {
-  return BlockType{ValueType::Funcref()};
-}
-
-// static
-BlockType BlockType::Externref() {
-  return BlockType{ValueType::Externref()};
-}
-
-// static
-BlockType BlockType::Exnref() {
-  return BlockType{ValueType::Exnref()};
-}
+BlockType::BlockType(At<Index> type) : type{type} {}
 
 bool BlockType::is_value_type() const {
-  return holds_alternative<ValueType>(type);
+  return holds_alternative<At<ValueType>>(type);
 }
 
 bool BlockType::is_void() const {
-  return holds_alternative<VoidType>(type);
+  return holds_alternative<At<VoidType>>(type);
 }
 
 bool BlockType::is_index() const {
-  return holds_alternative<Index>(type);
+  return holds_alternative<At<Index>>(type);
 }
 
-auto BlockType::value_type() -> ValueType& {
-  return get<ValueType>(type);
+auto BlockType::value_type() -> At<ValueType>& {
+  return get<At<ValueType>>(type);
 }
 
-auto BlockType::value_type() const -> const ValueType& {
-  return get<ValueType>(type);
+auto BlockType::value_type() const -> const At<ValueType>& {
+  return get<At<ValueType>>(type);
 }
 
-auto BlockType::index() -> Index& {
-  return get<Index>(type);
+auto BlockType::index() -> At<Index>& {
+  return get<At<Index>>(type);
 }
 
-auto BlockType::index() const -> const Index& {
-  return get<Index>(type);
+auto BlockType::index() const -> const At<Index>& {
+  return get<At<Index>>(type);
 }
 
 ConstantExpression::ConstantExpression(const At<Instruction>& instruction)
@@ -165,15 +120,15 @@ At<ReferenceType> ElementSegment::elemtype() const {
   if (has_indexes()) {
     switch (indexes().kind) {
       case ExternalKind::Function:
-        return ReferenceType::Funcref();
+        return ReferenceType{ReferenceKind::Funcref};
 
       case ExternalKind::Table:
       case ExternalKind::Memory:
       case ExternalKind::Global:
-        return ReferenceType::Externref();
+        return ReferenceType{ReferenceKind::Externref};
 
       case ExternalKind::Event:
-        return ReferenceType::Exnref();
+        return ReferenceType{ReferenceKind::Exnref};
     }
   } else {
     return expressions().elemtype;
@@ -188,59 +143,32 @@ Export::Export(At<ExternalKind> kind, At<string_view> name, At<Index> index)
 Export::Export(ExternalKind kind, string_view name, Index index)
     : kind{kind}, name{name}, index{index} {}
 
-HeapType::HeapType(HeapKind type) : type{type} {}
+HeapType::HeapType(At<HeapKind> type) : type{type} {}
 
-HeapType::HeapType(Index type) : type{type} {}
-
-// static
-HeapType HeapType::Func() {
-  return HeapType{HeapKind::Func};
-}
-
-// static
-HeapType HeapType::Extern() {
-  return HeapType{HeapKind::Extern};
-}
-
-// static
-HeapType HeapType::Exn() {
-  return HeapType{HeapKind::Exn};
-}
+HeapType::HeapType(At<Index> type) : type{type} {}
 
 bool HeapType::is_heap_kind() const {
-  return holds_alternative<HeapKind>(type);
-}
-
-bool HeapType::is_func() const {
-  return is_heap_kind() && heap_kind() == HeapKind::Func;
-}
-
-bool HeapType::is_extern() const {
-  return is_heap_kind() && heap_kind() == HeapKind::Extern;
-}
-
-bool HeapType::is_exn() const {
-  return is_heap_kind() && heap_kind() == HeapKind::Exn;
+  return holds_alternative<At<HeapKind>>(type);
 }
 
 bool HeapType::is_index() const {
-  return holds_alternative<Index>(type);
+  return holds_alternative<At<Index>>(type);
 }
 
-auto HeapType::heap_kind() -> HeapKind& {
-  return get<HeapKind>(type);
+auto HeapType::heap_kind() -> At<HeapKind>& {
+  return get<At<HeapKind>>(type);
 }
 
-auto HeapType::heap_kind() const -> const HeapKind& {
-  return get<HeapKind>(type);
+auto HeapType::heap_kind() const -> const At<HeapKind>& {
+  return get<At<HeapKind>>(type);
 }
 
-auto HeapType::index() -> Index& {
-  return get<Index>(type);
+auto HeapType::index() -> At<Index>& {
+  return get<At<Index>>(type);
 }
 
-auto HeapType::index() const -> const Index& {
-  return get<Index>(type);
+auto HeapType::index() const -> const At<Index>& {
+  return get<At<Index>>(type);
 }
 
 Import::Import(At<string_view> module, At<string_view> name, At<Index> desc)
@@ -639,127 +567,116 @@ const At<SimdLaneImmediate>& Instruction::simd_lane_immediate() const {
   return get<At<SimdLaneImmediate>>(immediate);
 }
 
-ValueType::ValueType(NumericType type) : type{type} {}
+ValueType::ValueType(At<NumericType> type) : type{type} {}
 
-ValueType::ValueType(ReferenceType type) : type{type} {}
+ValueType::ValueType(At<ReferenceType> type) : type{type} {}
 
 // static
-ValueType ValueType::I32() {
+ValueType ValueType::I32_NoLocation() {
   return ValueType{NumericType::I32};
 }
 
 // static
-ValueType ValueType::I64() {
+ValueType ValueType::I64_NoLocation() {
   return ValueType{NumericType::I64};
 }
 
 // static
-ValueType ValueType::F32() {
+ValueType ValueType::F32_NoLocation() {
   return ValueType{NumericType::F32};
 }
 
 // static
-ValueType ValueType::F64() {
+ValueType ValueType::F64_NoLocation() {
   return ValueType{NumericType::F64};
 }
 
 // static
-ValueType ValueType::V128() {
+ValueType ValueType::V128_NoLocation() {
   return ValueType{NumericType::V128};
 }
 
 // static
-ValueType ValueType::Funcref() {
-  return ValueType{ReferenceType::Funcref()};
+ValueType ValueType::Funcref_NoLocation() {
+  return ValueType{ReferenceType::Funcref_NoLocation()};
 }
 
 // static
-ValueType ValueType::Externref() {
-  return ValueType{ReferenceType::Externref()};
+ValueType ValueType::Externref_NoLocation() {
+  return ValueType{ReferenceType::Externref_NoLocation()};
 }
 
 // static
-ValueType ValueType::Exnref() {
-  return ValueType{ReferenceType::Exnref()};
+ValueType ValueType::Exnref_NoLocation() {
+  return ValueType{ReferenceType::Exnref_NoLocation()};
 }
 
+// static
 bool ValueType::is_numeric_type() const {
-  return holds_alternative<NumericType>(type);
+  return holds_alternative<At<NumericType>>(type);
 }
 
 bool ValueType::is_reference_type() const {
-  return holds_alternative<ReferenceType>(type);
+  return holds_alternative<At<ReferenceType>>(type);
 }
 
-auto ValueType::numeric_type() -> NumericType& {
-  return get<NumericType>(type);
+auto ValueType::numeric_type() -> At<NumericType>& {
+  return get<At<NumericType>>(type);
 }
 
-auto ValueType::numeric_type() const -> const NumericType& {
-  return get<NumericType>(type);
+auto ValueType::numeric_type() const -> const At<NumericType>& {
+  return get<At<NumericType>>(type);
 }
 
-auto ValueType::reference_type() -> ReferenceType& {
-  return get<ReferenceType>(type);
+auto ValueType::reference_type() -> At<ReferenceType>& {
+  return get<At<ReferenceType>>(type);
 }
 
-auto ValueType::reference_type() const -> const ReferenceType& {
-  return get<ReferenceType>(type);
+auto ValueType::reference_type() const -> const At<ReferenceType>& {
+  return get<At<ReferenceType>>(type);
 }
 
-ReferenceType::ReferenceType(ReferenceKind type) : type{type} {}
+ReferenceType::ReferenceType(At<ReferenceKind> type) : type{type} {}
 
-ReferenceType::ReferenceType(RefType type) : type{type} {}
+ReferenceType::ReferenceType(At<RefType> type) : type{type} {}
 
 // static
-ReferenceType ReferenceType::Funcref() {
+ReferenceType ReferenceType::Funcref_NoLocation() {
   return ReferenceType{ReferenceKind::Funcref};
 }
 
 // static
-ReferenceType ReferenceType::Externref() {
+ReferenceType ReferenceType::Externref_NoLocation() {
   return ReferenceType{ReferenceKind::Externref};
 }
 
 // static
-ReferenceType ReferenceType::Exnref() {
+ReferenceType ReferenceType::Exnref_NoLocation() {
   return ReferenceType{ReferenceKind::Exnref};
 }
 
 bool ReferenceType::is_reference_kind() const {
-  return holds_alternative<ReferenceKind>(type);
-}
-
-bool ReferenceType::is_funcref() const {
-  return is_reference_kind() && reference_kind() == ReferenceKind::Funcref;
-}
-
-bool ReferenceType::is_externref() const {
-  return is_reference_kind() && reference_kind() == ReferenceKind::Externref;
-}
-
-bool ReferenceType::is_exnref() const {
-  return is_reference_kind() && reference_kind() == ReferenceKind::Exnref;
+  return holds_alternative<At<ReferenceKind>>(type);
 }
 
 bool ReferenceType::is_ref() const {
-  return holds_alternative<RefType>(type);
+  return holds_alternative<At<RefType>>(type);
 }
 
-auto ReferenceType::reference_kind() -> ReferenceKind& {
-  return get<ReferenceKind>(type);
+auto ReferenceType::reference_kind() -> At<ReferenceKind>& {
+  return get<At<ReferenceKind>>(type);
 }
 
-auto ReferenceType::reference_kind() const -> const ReferenceKind& {
-  return get<ReferenceKind>(type);
+auto ReferenceType::reference_kind() const -> const At<ReferenceKind>& {
+  return get<At<ReferenceKind>>(type);
 }
 
-auto ReferenceType::ref() -> RefType& {
-  return get<RefType>(type);
+auto ReferenceType::ref() -> At<RefType>& {
+  return get<At<RefType>>(type);
 }
 
-auto ReferenceType::ref() const -> const RefType& {
-  return get<RefType>(type);
+auto ReferenceType::ref() const -> const At<RefType>& {
+  return get<At<RefType>>(type);
 }
 
 Section::Section(At<KnownSection> contents) : contents{contents} {}

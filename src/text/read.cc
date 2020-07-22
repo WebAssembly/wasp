@@ -572,7 +572,7 @@ auto ReadHeapType(Tokenizer& tokenizer, Context& context) -> OptAt<HeapType> {
                            format("heap type {} not allowed", heap_kind));
     return nullopt;
   }
-  return MakeAt(token.loc, HeapType(*heap_kind));
+  return MakeAt(token.loc, HeapType(MakeAt(token.loc, *heap_kind)));
 }
 
 auto ReadReferenceType(Tokenizer& tokenizer,

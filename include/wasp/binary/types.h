@@ -37,102 +37,88 @@ namespace wasp {
 namespace binary {
 
 struct HeapType {
-  explicit HeapType(HeapKind);
-  explicit HeapType(Index);
-  static HeapType Func();
-  static HeapType Extern();
-  static HeapType Exn();
+  explicit HeapType(At<HeapKind>);
+  explicit HeapType(At<Index>);
 
   bool is_heap_kind() const;
-  bool is_func() const;
-  bool is_extern() const;
-  bool is_exn() const;
   bool is_index() const;
 
-  auto heap_kind() -> HeapKind&;
-  auto heap_kind() const -> const HeapKind&;
-  auto index() -> Index&;
-  auto index() const -> const Index&;
+  auto heap_kind() -> At<HeapKind>&;
+  auto heap_kind() const -> const At<HeapKind>&;
+  auto index() -> At<Index>&;
+  auto index() const -> const At<Index>&;
 
-  variant<HeapKind, Index> type;
+  variant<At<HeapKind>, At<Index>> type;
 };
 
 struct RefType {
-  HeapType heap_type;
+  At<HeapType> heap_type;
   Null null;
 };
 
 struct ReferenceType {
-  explicit ReferenceType(ReferenceKind);
-  explicit ReferenceType(RefType);
-  static ReferenceType Funcref();
-  static ReferenceType Externref();
-  static ReferenceType Exnref();
+  explicit ReferenceType(At<ReferenceKind>);
+  explicit ReferenceType(At<RefType>);
+
+  // Convenience functions, but without any location.
+  static ReferenceType Funcref_NoLocation();
+  static ReferenceType Externref_NoLocation();
+  static ReferenceType Exnref_NoLocation();
 
   bool is_reference_kind() const;
-  bool is_funcref() const;
-  bool is_externref() const;
-  bool is_exnref() const;
   bool is_ref() const;
 
-  auto reference_kind() -> ReferenceKind&;
-  auto reference_kind() const -> const ReferenceKind&;
-  auto ref() -> RefType&;
-  auto ref() const -> const RefType&;
+  auto reference_kind() -> At<ReferenceKind>&;
+  auto reference_kind() const -> const At<ReferenceKind>&;
+  auto ref() -> At<RefType>&;
+  auto ref() const -> const At<RefType>&;
 
-  variant<ReferenceKind, RefType> type;
+  variant<At<ReferenceKind>, At<RefType>> type;
 };
 
 struct ValueType {
-  explicit ValueType(NumericType);
-  explicit ValueType(ReferenceType);
-  static ValueType I32();
-  static ValueType I64();
-  static ValueType F32();
-  static ValueType F64();
-  static ValueType V128();
-  static ValueType Funcref();
-  static ValueType Externref();
-  static ValueType Exnref();
+  explicit ValueType(At<NumericType>);
+  explicit ValueType(At<ReferenceType>);
+
+  // Convenience functions, but without any location.
+  static ValueType I32_NoLocation();
+  static ValueType I64_NoLocation();
+  static ValueType F32_NoLocation();
+  static ValueType F64_NoLocation();
+  static ValueType V128_NoLocation();
+  static ValueType Funcref_NoLocation();
+  static ValueType Externref_NoLocation();
+  static ValueType Exnref_NoLocation();
 
   bool is_numeric_type() const;
   bool is_reference_type() const;
 
-  auto numeric_type() -> NumericType&;
-  auto numeric_type() const -> const NumericType&;
-  auto reference_type() -> ReferenceType&;
-  auto reference_type() const -> const ReferenceType&;
+  auto numeric_type() -> At<NumericType>&;
+  auto numeric_type() const -> const At<NumericType>&;
+  auto reference_type() -> At<ReferenceType>&;
+  auto reference_type() const -> const At<ReferenceType>&;
 
-  variant<NumericType, ReferenceType> type;
+  variant<At<NumericType>, At<ReferenceType>> type;
 };
 
 using ValueTypeList = std::vector<At<ValueType>>;
 
 struct VoidType {};
 struct BlockType {
-  explicit BlockType(ValueType);
-  explicit BlockType(VoidType);
-  explicit BlockType(Index);
-  static BlockType I32();
-  static BlockType I64();
-  static BlockType F32();
-  static BlockType F64();
-  static BlockType V128();
-  static BlockType Void();
-  static BlockType Funcref();
-  static BlockType Externref();
-  static BlockType Exnref();
+  explicit BlockType(At<ValueType>);
+  explicit BlockType(At<VoidType>);
+  explicit BlockType(At<Index>);
 
   bool is_value_type() const;
   bool is_void() const;
   bool is_index() const;
 
-  auto value_type() -> ValueType&;
-  auto value_type() const -> const ValueType&;
-  auto index() -> Index&;
-  auto index() const -> const Index&;
+  auto value_type() -> At<ValueType>&;
+  auto value_type() const -> const At<ValueType>&;
+  auto index() -> At<Index>&;
+  auto index() const -> const At<Index>&;
 
-  variant<ValueType, VoidType, Index> type;
+  variant<At<ValueType>, At<VoidType>, At<Index>> type;
 };
 
 // The section ids are ordered by their expected order in the binary format.

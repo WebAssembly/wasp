@@ -18,6 +18,7 @@
 
 #include "gtest/gtest.h"
 #include "test/test_utils.h"
+#include "test/text/constants.h"
 #include "wasp/base/errors.h"
 #include "wasp/text/formatters.h"
 #include "wasp/text/read/context.h"
@@ -26,16 +27,12 @@
 
 using namespace ::wasp;
 using namespace ::wasp::text;
+using namespace ::wasp::text::test;
 using namespace ::wasp::test;
 
 // TODO: copied from read-test.cc, share?
 class TextReadScriptTest : public ::testing::Test {
  protected:
-  using VT = ValueType;
-  using BVT = BoundValueType;
-  using I = Instruction;
-  using O = Opcode;
-
   // Read without checking the expected result.
   template <typename Func, typename... Args>
   void Read(Func&& func, SpanU8 span, Args&&... args) {
@@ -161,9 +158,8 @@ TEST_F(TextReadScriptTest, Const_reference_types) {
 
   context.features.enable_reference_types();
 
-  OK(ReadConst, Const{RefNullConst{HeapType::Func()}}, "(ref.null func)"_su8);
-  OK(ReadConst, Const{RefNullConst{HeapType::Extern()}},
-     "(ref.null extern)"_su8);
+  OK(ReadConst, Const{RefNullConst{HT_Func}}, "(ref.null func)"_su8);
+  OK(ReadConst, Const{RefNullConst{HT_Extern}}, "(ref.null extern)"_su8);
   OK(ReadConst, Const{RefExternConst{MakeAt("0"_su8, u32{0})}},
      "(ref.extern 0)"_su8);
 }
@@ -353,9 +349,9 @@ TEST_F(TextReadScriptTest, ReturnResult_reference_types) {
 
   context.features.enable_reference_types();
 
-  OK(ReadReturnResult, ReturnResult{RefNullConst{HeapType::Func()}},
+  OK(ReadReturnResult, ReturnResult{RefNullConst{HT_Func}},
      "(ref.null func)"_su8);
-  OK(ReadReturnResult, ReturnResult{RefNullConst{HeapType::Extern()}},
+  OK(ReadReturnResult, ReturnResult{RefNullConst{HT_Extern}},
      "(ref.null extern)"_su8);
   OK(ReadReturnResult, ReturnResult{RefExternConst{MakeAt("0"_su8, u32{0})}},
      "(ref.extern 0)"_su8);

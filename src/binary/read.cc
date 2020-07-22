@@ -261,7 +261,7 @@ OptAt<ElementSegment> Read(SpanU8* data,
   }
 
   if (decoded.has_expressions == encoding::HasExpressions::Yes) {
-    At<ReferenceType> elemtype{ReferenceType::Funcref()};
+    At<ReferenceType> elemtype{ReferenceType{ReferenceKind::Funcref}};
     if (!decoded.is_legacy_active()) {
       WASP_TRY_READ(elemtype_, Read<ReferenceType>(data, context));
       elemtype = elemtype_;

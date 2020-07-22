@@ -16,6 +16,7 @@
 
 #include "gtest/gtest.h"
 
+#include "test/binary/constants.h"
 #include "test/valid/test_utils.h"
 #include "wasp/base/features.h"
 #include "wasp/binary/formatters.h"
@@ -24,19 +25,20 @@
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
+using namespace ::wasp::binary::test;
 using namespace ::wasp::valid;
 using namespace ::wasp::valid::test;
 
 TEST(ValidateTest, UnpackedCode) {
   UnpackedCode code{
-      LocalsList{Locals{2, ValueType::I32()}},
+      LocalsList{Locals{2, VT_I32}},
       UnpackedExpression{InstructionList{
           Instruction{Opcode::LocalGet, Index{0}},
           Instruction{Opcode::LocalGet, Index{1}}, Instruction{Opcode::I32Add},
           Instruction{Opcode::End}}}};
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{{}, {ValueType::I32()}}});
+  context.types.push_back(TypeEntry{FunctionType{{}, {VT_I32}}});
   context.functions.push_back(Function{0});
   EXPECT_TRUE(Validate(context, code));
 }
@@ -46,11 +48,11 @@ TEST(ValidateTest, ConstantExpression_Const) {
     Instruction instr;
     ValueType valtype;
   } tests[] = {
-      {Instruction{Opcode::I32Const, s32{0}}, ValueType::I32()},
-      {Instruction{Opcode::I64Const, s64{0}}, ValueType::I64()},
-      {Instruction{Opcode::F32Const, f32{0}}, ValueType::F32()},
-      {Instruction{Opcode::F64Const, f64{0}}, ValueType::F64()},
-      {Instruction{Opcode::V128Const, v128{}}, ValueType::V128()},
+      {Instruction{Opcode::I32Const, s32{0}}, VT_I32},
+      {Instruction{Opcode::I64Const, s64{0}}, VT_I64},
+      {Instruction{Opcode::F32Const, f32{0}}, VT_F32},
+      {Instruction{Opcode::F64Const, f64{0}}, VT_F64},
+      {Instruction{Opcode::V128Const, v128{}}, VT_V128},
   };
 
   for (const auto& test : tests) {
@@ -64,24 +66,24 @@ TEST(ValidateTest, ConstantExpression_Const) {
 TEST(ValidateTest, ConstantExpression_Global) {
   TestErrors errors;
   Context context{errors};
-  context.globals.push_back(GlobalType{ValueType::I32(), Mutability::Const});
-  context.globals.push_back(GlobalType{ValueType::I64(), Mutability::Const});
-  context.globals.push_back(GlobalType{ValueType::F32(), Mutability::Const});
-  context.globals.push_back(GlobalType{ValueType::F64(), Mutability::Const});
+  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
+  context.globals.push_back(GlobalType{VT_I64, Mutability::Const});
+  context.globals.push_back(GlobalType{VT_F32, Mutability::Const});
+  context.globals.push_back(GlobalType{VT_F64, Mutability::Const});
   auto max = context.globals.size();
 
   EXPECT_TRUE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-      ConstantExpressionKind::GlobalInit, ValueType::I32(), max));
+      ConstantExpressionKind::GlobalInit, VT_I32, max));
   EXPECT_TRUE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
-      ConstantExpressionKind::GlobalInit, ValueType::I64(), max));
+      ConstantExpressionKind::GlobalInit, VT_I64, max));
   EXPECT_TRUE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{2}}},
-      ConstantExpressionKind::GlobalInit, ValueType::F32(), max));
+      ConstantExpressionKind::GlobalInit, VT_F32, max));
   EXPECT_TRUE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{3}}},
-      ConstantExpressionKind::GlobalInit, ValueType::F64(), max));
+      ConstantExpressionKind::GlobalInit, VT_F64, max));
 }
 
 TEST(ValidateTest, ConstantExpression_InvalidOpcode) {
@@ -91,14 +93,14 @@ TEST(ValidateTest, ConstantExpression_InvalidOpcode) {
       Instruction{Opcode::Br, Index{0}},
       Instruction{Opcode::LocalGet, Index{0}},
       Instruction{Opcode::V128Const, v128{}},
-      Instruction{Opcode::RefNull, HeapType::Func()},
+      Instruction{Opcode::RefNull, HT_Func},
   };
 
   for (const auto& instr : tests) {
     TestErrors errors;
     Context context{errors};
     EXPECT_FALSE(Validate(context, ConstantExpression{instr},
-                          ConstantExpressionKind::Other, ValueType::I32(), 0));
+                          ConstantExpressionKind::Other, VT_I32, 0));
   }
 }
 
@@ -107,10 +109,10 @@ TEST(ValidateTest, ConstantExpression_ConstMismatch) {
     Instruction instr;
     ValueType valtype;
   } tests[] = {
-      {Instruction{Opcode::I32Const, s32{0}}, ValueType::I64()},
-      {Instruction{Opcode::I64Const, s64{0}}, ValueType::F32()},
-      {Instruction{Opcode::F32Const, f32{0}}, ValueType::F64()},
-      {Instruction{Opcode::F64Const, f64{0}}, ValueType::I32()},
+      {Instruction{Opcode::I32Const, s32{0}}, VT_I64},
+      {Instruction{Opcode::I64Const, s64{0}}, VT_F32},
+      {Instruction{Opcode::F32Const, f32{0}}, VT_F64},
+      {Instruction{Opcode::F64Const, f64{0}}, VT_I32},
   };
 
   for (const auto& test : tests) {
@@ -124,46 +126,46 @@ TEST(ValidateTest, ConstantExpression_ConstMismatch) {
 TEST(ValidateTest, ConstantExpression_GlobalIndexOOB) {
   TestErrors errors;
   Context context{errors};
-  context.globals.push_back(GlobalType{ValueType::I32(), Mutability::Const});
+  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
   auto max = context.globals.size();
 
   EXPECT_FALSE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
-      ConstantExpressionKind::Other, ValueType::I32(), max));
+      ConstantExpressionKind::Other, VT_I32, max));
 }
 
 TEST(ValidateTest, ConstantExpression_GlobalTypeMismatch) {
   TestErrors errors;
   Context context{errors};
-  context.globals.push_back(GlobalType{ValueType::I32(), Mutability::Const});
-  context.globals.push_back(GlobalType{ValueType::I64(), Mutability::Const});
-  context.globals.push_back(GlobalType{ValueType::F32(), Mutability::Const});
-  context.globals.push_back(GlobalType{ValueType::F64(), Mutability::Const});
+  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
+  context.globals.push_back(GlobalType{VT_I64, Mutability::Const});
+  context.globals.push_back(GlobalType{VT_F32, Mutability::Const});
+  context.globals.push_back(GlobalType{VT_F64, Mutability::Const});
   auto max = context.globals.size();
 
   EXPECT_FALSE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-      ConstantExpressionKind::Other, ValueType::I64(), max));
+      ConstantExpressionKind::Other, VT_I64, max));
   EXPECT_FALSE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
-      ConstantExpressionKind::Other, ValueType::F32(), max));
+      ConstantExpressionKind::Other, VT_F32, max));
   EXPECT_FALSE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{2}}},
-      ConstantExpressionKind::Other, ValueType::F64(), max));
+      ConstantExpressionKind::Other, VT_F64, max));
   EXPECT_FALSE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{3}}},
-      ConstantExpressionKind::Other, ValueType::I32(), max));
+      ConstantExpressionKind::Other, VT_I32, max));
 }
 
 TEST(ValidateTest, ConstantExpression_GlobalMutVar) {
   TestErrors errors;
   Context context{errors};
-  context.globals.push_back(GlobalType{ValueType::I32(), Mutability::Var});
+  context.globals.push_back(GlobalType{VT_I32, Mutability::Var});
   auto max = context.globals.size();
 
   EXPECT_FALSE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-      ConstantExpressionKind::Other, ValueType::I32(), max));
+      ConstantExpressionKind::Other, VT_I32, max));
 }
 
 TEST(ValidateTest, ConstantExpression_WrongInstructionCount) {
@@ -172,13 +174,13 @@ TEST(ValidateTest, ConstantExpression_WrongInstructionCount) {
 
   // Too few instructions.
   EXPECT_FALSE(Validate(context, ConstantExpression{},
-                        ConstantExpressionKind::Other, ValueType::I32(), 0));
+                        ConstantExpressionKind::Other, VT_I32, 0));
   // Too many instructions.
   EXPECT_FALSE(Validate(context,
                         ConstantExpression{InstructionList{
                             Instruction{Opcode::GlobalGet, Index{0}},
                             Instruction{Opcode::I32Const, s32{0}}}},
-                        ConstantExpressionKind::Other, ValueType::I32(), 0));
+                        ConstantExpressionKind::Other, VT_I32, 0));
 }
 
 TEST(ValidateTest, ConstantExpression_Funcref) {
@@ -189,7 +191,7 @@ TEST(ValidateTest, ConstantExpression_Funcref) {
   // Using ref.func in the global section implicitly declares that function.
   EXPECT_TRUE(Validate(
       context, ConstantExpression{Instruction{Opcode::RefFunc, Index{0}}},
-      ConstantExpressionKind::GlobalInit, ValueType::Funcref(), 0));
+      ConstantExpressionKind::GlobalInit, VT_Funcref, 0));
 
   EXPECT_EQ(1u, context.declared_functions.size());
 }
@@ -206,7 +208,7 @@ TEST(ValidateTest, DataSegment_Active) {
   TestErrors errors;
   Context context{errors};
   context.memories.push_back(MemoryType{Limits{0}});
-  context.globals.push_back(GlobalType{ValueType::I32(), Mutability::Const});
+  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
 
   const SpanU8 span{reinterpret_cast<const u8*>("123"), 3};
   const DataSegment tests[] = {
@@ -252,8 +254,7 @@ TEST(ValidateTest, ElementExpression) {
   };
 
   for (const auto& instr : tests) {
-    EXPECT_TRUE(
-        Validate(context, ElementExpression{instr}, ReferenceType::Funcref()));
+    EXPECT_TRUE(Validate(context, ElementExpression{instr}, RT_Funcref));
   }
 }
 
@@ -273,8 +274,7 @@ TEST(ValidateTest, ElementExpression_InvalidOpcode) {
   for (const auto& instr : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_FALSE(
-        Validate(context, ElementExpression{instr}, ReferenceType::Funcref()));
+    EXPECT_FALSE(Validate(context, ElementExpression{instr}, RT_Funcref));
   }
 }
 
@@ -284,7 +284,7 @@ TEST(ValidateTest, ElementExpression_FunctionIndexOOB) {
   context.functions.push_back(Function{0});
   EXPECT_FALSE(Validate(
       context, ElementExpression{Instruction{Opcode::RefFunc, Index{1}}},
-      ReferenceType::Funcref()));
+      RT_Funcref));
 }
 
 TEST(ValidateTest, ElementSegment_Active) {
@@ -292,8 +292,8 @@ TEST(ValidateTest, ElementSegment_Active) {
   Context context{errors};
   context.functions.push_back(Function{0});
   context.functions.push_back(Function{0});
-  context.tables.push_back(TableType{Limits{0}, ReferenceType::Funcref()});
-  context.globals.push_back(GlobalType{ValueType::I32(), Mutability::Const});
+  context.tables.push_back(TableType{Limits{0}, RT_Funcref});
+  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
 
   const ElementSegment tests[] = {
       ElementSegment{0,
@@ -316,11 +316,11 @@ TEST(ValidateTest, ElementSegment_Passive) {
 
   const ElementSegment tests[] = {
       ElementSegment{SegmentType::Passive,
-                     ElementListWithExpressions{ReferenceType::Funcref(), {}}},
+                     ElementListWithExpressions{RT_Funcref, {}}},
       ElementSegment{
           SegmentType::Passive,
           ElementListWithExpressions{
-              ReferenceType::Funcref(),
+              RT_Funcref,
               {ElementExpression{Instruction{Opcode::RefNull}},
                ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}}},
   };
@@ -341,7 +341,7 @@ TEST(ValidateTest, ElementSegment_Declared) {
       ElementSegment{
           SegmentType::Declared,
           ElementListWithExpressions{
-              ReferenceType::Funcref(),
+              RT_Funcref,
               {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}}},
   };
 
@@ -356,8 +356,8 @@ TEST(ValidateTest, ElementSegment_Active_TypeMismatch) {
   TestErrors errors;
   Context context{errors};
   context.functions.push_back(Function{0});
-  context.tables.push_back(TableType{Limits{0}, ReferenceType::Funcref()});
-  context.globals.push_back(GlobalType{ValueType::F32(), Mutability::Const});
+  context.tables.push_back(TableType{Limits{0}, RT_Funcref});
+  context.globals.push_back(GlobalType{VT_F32, Mutability::Const});
 
   const ElementSegment tests[] = {
       ElementSegment{0,
@@ -386,7 +386,7 @@ TEST(ValidateTest, ElementSegment_Active_TableIndexOOB) {
 TEST(ValidateTest, ElementSegment_Active_GlobalIndexOOB) {
   TestErrors errors;
   Context context{errors};
-  context.tables.push_back(TableType{Limits{0}, ReferenceType::Funcref()});
+  context.tables.push_back(TableType{Limits{0}, RT_Funcref});
   const ElementSegment element_segment{
       0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
       ElementListWithIndexes{ExternalKind::Function, {}}};
@@ -396,7 +396,7 @@ TEST(ValidateTest, ElementSegment_Active_GlobalIndexOOB) {
 TEST(ValidateTest, ElementSegment_Active_FunctionIndexOOB) {
   TestErrors errors;
   Context context{errors};
-  context.tables.push_back(TableType{Limits{0}, ReferenceType::Funcref()});
+  context.tables.push_back(TableType{Limits{0}, RT_Funcref});
   const ElementSegment element_segment{
       0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
       ElementListWithIndexes{ExternalKind::Function, {0}}};
@@ -409,7 +409,7 @@ TEST(ValidateTest, ElementSegment_Passive_FunctionIndexOOB) {
   const ElementSegment element_segment{
       SegmentType::Passive,
       ElementListWithExpressions{
-          ReferenceType::Funcref(),
+          RT_Funcref,
           {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}}};
   EXPECT_FALSE(Validate(context, element_segment));
 }
@@ -417,8 +417,7 @@ TEST(ValidateTest, ElementSegment_Passive_FunctionIndexOOB) {
 TEST(ValidateTest, ReferenceType) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_TRUE(
-      Validate(context, ReferenceType::Funcref(), ReferenceType::Funcref()));
+  EXPECT_TRUE(Validate(context, RT_Funcref, RT_Funcref));
 }
 
 TEST(ValidateTest, Export) {
@@ -426,9 +425,9 @@ TEST(ValidateTest, Export) {
   Context context{errors};
   context.types.push_back(TypeEntry{FunctionType{}});
   context.functions.push_back(Function{0});
-  context.tables.push_back(TableType{Limits{1}, ReferenceType::Funcref()});
+  context.tables.push_back(TableType{Limits{1}, RT_Funcref});
   context.memories.push_back(MemoryType{Limits{1}});
-  context.globals.push_back(GlobalType{ValueType::I32(), Mutability::Const});
+  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
   context.events.push_back(EventType{EventAttribute::Exception, Index{0}});
 
   const Export tests[] = {
@@ -468,7 +467,7 @@ TEST(ValidateTest, Export_GlobalMutVar_MVP) {
   features.disable_mutable_globals();
   TestErrors errors;
   Context context{features, errors};
-  context.globals.push_back(GlobalType{ValueType::I32(), Mutability::Var});
+  context.globals.push_back(GlobalType{VT_I32, Mutability::Var});
   EXPECT_FALSE(Validate(context, Export{ExternalKind::Global, "", 0}));
 }
 
@@ -476,7 +475,7 @@ TEST(ValidateTest, Export_GlobalMutVar_MutableGlobals) {
   Features features;
   TestErrors errors;
   Context context{features, errors};
-  context.globals.push_back(GlobalType{ValueType::I32(), Mutability::Var});
+  context.globals.push_back(GlobalType{VT_I32, Mutability::Var});
   EXPECT_TRUE(Validate(context, Export{ExternalKind::Global, "", 0}));
 }
 
@@ -502,7 +501,7 @@ TEST(ValidateTest, EventType) {
   Features features;
   TestErrors errors;
   Context context{features, errors};
-  context.types.push_back(TypeEntry{FunctionType{{ValueType::I32()}, {}}});
+  context.types.push_back(TypeEntry{FunctionType{{VT_I32}, {}}});
   EXPECT_TRUE(
       Validate(context, EventType{EventAttribute::Exception, Index{0}}));
 }
@@ -519,7 +518,7 @@ TEST(ValidateTest, EventType_NonEmptyResult) {
   Features features;
   TestErrors errors;
   Context context{features, errors};
-  context.types.push_back(TypeEntry{FunctionType{{}, {ValueType::I32()}}});
+  context.types.push_back(TypeEntry{FunctionType{{}, {VT_I32}}});
   EXPECT_FALSE(
       Validate(context, EventType{EventAttribute::Exception, Index{0}}));
 }
@@ -540,14 +539,13 @@ TEST(ValidateTest, Function_IndexOOB) {
 TEST(ValidateTest, FunctionType) {
   const FunctionType tests[] = {
       FunctionType{},
-      FunctionType{{ValueType::I32()}, {}},
-      FunctionType{{ValueType::F32()}, {}},
-      FunctionType{{ValueType::F64()}, {}},
-      FunctionType{{ValueType::I64()}, {ValueType::I32()}},
-      FunctionType{{ValueType::I64(), ValueType::F32()}, {ValueType::F32()}},
-      FunctionType{{}, {ValueType::F64()}},
-      FunctionType{{ValueType::I64(), ValueType::I64(), ValueType::I64()},
-                   {ValueType::I64()}},
+      FunctionType{{VT_I32}, {}},
+      FunctionType{{VT_F32}, {}},
+      FunctionType{{VT_F64}, {}},
+      FunctionType{{VT_I64}, {VT_I32}},
+      FunctionType{{VT_I64, VT_F32}, {VT_F32}},
+      FunctionType{{}, {VT_F64}},
+      FunctionType{{VT_I64, VT_I64, VT_I64}, {VT_I64}},
   };
 
   for (const auto& function_type : tests) {
@@ -559,8 +557,8 @@ TEST(ValidateTest, FunctionType) {
 
 TEST(ValidateTest, FunctionType_MultiReturn_MVP) {
   const FunctionType tests[] = {
-      FunctionType{{}, {ValueType::I32(), ValueType::I32()}},
-      FunctionType{{}, {ValueType::I32(), ValueType::I64(), ValueType::F32()}},
+      FunctionType{{}, {VT_I32, VT_I32}},
+      FunctionType{{}, {VT_I32, VT_I64, VT_F32}},
   };
 
   for (const auto& function_type : tests) {
@@ -575,8 +573,8 @@ TEST(ValidateTest, FunctionType_MultiReturn) {
   features.enable_multi_value();
 
   const FunctionType tests[] = {
-      FunctionType{{}, {ValueType::I32(), ValueType::I32()}},
-      FunctionType{{}, {ValueType::I32(), ValueType::I64(), ValueType::F32()}},
+      FunctionType{{}, {VT_I32, VT_I32}},
+      FunctionType{{}, {VT_I32, VT_I64, VT_F32}},
   };
 
   for (const auto& function_type : tests) {
@@ -589,30 +587,30 @@ TEST(ValidateTest, FunctionType_MultiReturn) {
 TEST(ValidateTest, Global) {
   TestErrors errors;
   Context context{errors};
-  context.globals.push_back(GlobalType{ValueType::I32(), Mutability::Const});
+  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
   context.imported_global_count = 1;
 
   const Global tests[] = {
-      Global{GlobalType{ValueType::I32(), Mutability::Const},
+      Global{GlobalType{VT_I32, Mutability::Const},
              ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}},
-      Global{GlobalType{ValueType::I64(), Mutability::Const},
+      Global{GlobalType{VT_I64, Mutability::Const},
              ConstantExpression{Instruction{Opcode::I64Const, s64{0}}}},
-      Global{GlobalType{ValueType::F32(), Mutability::Const},
+      Global{GlobalType{VT_F32, Mutability::Const},
              ConstantExpression{Instruction{Opcode::F32Const, f32{0}}}},
-      Global{GlobalType{ValueType::F64(), Mutability::Const},
+      Global{GlobalType{VT_F64, Mutability::Const},
              ConstantExpression{Instruction{Opcode::F64Const, f64{0}}}},
-      Global{GlobalType{ValueType::I32(), Mutability::Const},
+      Global{GlobalType{VT_I32, Mutability::Const},
              ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}},
 
-      Global{GlobalType{ValueType::I32(), Mutability::Var},
+      Global{GlobalType{VT_I32, Mutability::Var},
              ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}},
-      Global{GlobalType{ValueType::I64(), Mutability::Var},
+      Global{GlobalType{VT_I64, Mutability::Var},
              ConstantExpression{Instruction{Opcode::I64Const, s64{0}}}},
-      Global{GlobalType{ValueType::F32(), Mutability::Var},
+      Global{GlobalType{VT_F32, Mutability::Var},
              ConstantExpression{Instruction{Opcode::F32Const, f32{0}}}},
-      Global{GlobalType{ValueType::F64(), Mutability::Var},
+      Global{GlobalType{VT_F64, Mutability::Var},
              ConstantExpression{Instruction{Opcode::F64Const, f64{0}}}},
-      Global{GlobalType{ValueType::I32(), Mutability::Var},
+      Global{GlobalType{VT_I32, Mutability::Var},
              ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}},
   };
 
@@ -624,30 +622,30 @@ TEST(ValidateTest, Global) {
 TEST(ValidateTest, Global_TypeMismatch) {
   TestErrors errors;
   Context context{errors};
-  context.globals.push_back(GlobalType{ValueType::F32(), Mutability::Const});
+  context.globals.push_back(GlobalType{VT_F32, Mutability::Const});
   context.imported_global_count = 1;
 
   const Global tests[] = {
-      Global{GlobalType{ValueType::F32(), Mutability::Const},
+      Global{GlobalType{VT_F32, Mutability::Const},
              ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}},
-      Global{GlobalType{ValueType::F64(), Mutability::Const},
+      Global{GlobalType{VT_F64, Mutability::Const},
              ConstantExpression{Instruction{Opcode::I64Const, s64{0}}}},
-      Global{GlobalType{ValueType::I32(), Mutability::Const},
+      Global{GlobalType{VT_I32, Mutability::Const},
              ConstantExpression{Instruction{Opcode::F32Const, f32{0}}}},
-      Global{GlobalType{ValueType::I64(), Mutability::Const},
+      Global{GlobalType{VT_I64, Mutability::Const},
              ConstantExpression{Instruction{Opcode::F64Const, f64{0}}}},
-      Global{GlobalType{ValueType::I32(), Mutability::Const},
+      Global{GlobalType{VT_I32, Mutability::Const},
              ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}},
 
-      Global{GlobalType{ValueType::F32(), Mutability::Var},
+      Global{GlobalType{VT_F32, Mutability::Var},
              ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}},
-      Global{GlobalType{ValueType::F64(), Mutability::Var},
+      Global{GlobalType{VT_F64, Mutability::Var},
              ConstantExpression{Instruction{Opcode::I64Const, s64{0}}}},
-      Global{GlobalType{ValueType::I32(), Mutability::Var},
+      Global{GlobalType{VT_I32, Mutability::Var},
              ConstantExpression{Instruction{Opcode::F32Const, f32{0}}}},
-      Global{GlobalType{ValueType::I64(), Mutability::Var},
+      Global{GlobalType{VT_I64, Mutability::Var},
              ConstantExpression{Instruction{Opcode::F64Const, f64{0}}}},
-      Global{GlobalType{ValueType::I32(), Mutability::Var},
+      Global{GlobalType{VT_I32, Mutability::Var},
              ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}},
   };
 
@@ -660,21 +658,21 @@ TEST(ValidateTest, Global_GlobalGetIndexOOB) {
   TestErrors errors;
   Context context{errors};
   const Global global{
-      GlobalType{ValueType::I32(), Mutability::Const},
+      GlobalType{VT_I32, Mutability::Const},
       ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}};
   EXPECT_FALSE(Validate(context, global));
 }
 
 TEST(ValidateTest, GlobalType) {
   const GlobalType tests[] = {
-      GlobalType{ValueType::I32(), Mutability::Const},
-      GlobalType{ValueType::I64(), Mutability::Const},
-      GlobalType{ValueType::F32(), Mutability::Const},
-      GlobalType{ValueType::F64(), Mutability::Const},
-      GlobalType{ValueType::I32(), Mutability::Var},
-      GlobalType{ValueType::I64(), Mutability::Var},
-      GlobalType{ValueType::F32(), Mutability::Var},
-      GlobalType{ValueType::F64(), Mutability::Var},
+      GlobalType{VT_I32, Mutability::Const},
+      GlobalType{VT_I64, Mutability::Const},
+      GlobalType{VT_F32, Mutability::Const},
+      GlobalType{VT_F64, Mutability::Const},
+      GlobalType{VT_I32, Mutability::Var},
+      GlobalType{VT_I64, Mutability::Var},
+      GlobalType{VT_F32, Mutability::Var},
+      GlobalType{VT_F64, Mutability::Var},
   };
 
   for (const auto& global_type : tests) {
@@ -691,9 +689,9 @@ TEST(ValidateTest, Import) {
 
   const Import tests[] = {
       Import{"", "", Index{0}},
-      Import{"", "", TableType{Limits{0}, ReferenceType::Funcref()}},
+      Import{"", "", TableType{Limits{0}, RT_Funcref}},
       Import{"", "", MemoryType{Limits{0}}},
-      Import{"", "", GlobalType{ValueType::I32(), Mutability::Const}},
+      Import{"", "", GlobalType{VT_I32, Mutability::Const}},
       Import{"", "", EventType{EventAttribute::Exception, Index{0}}},
   };
 
@@ -711,7 +709,7 @@ TEST(ValidateTest, Import_FunctionIndexOOB) {
 TEST(ValidateTest, Import_TooManyTables) {
   TestErrors errors;
   Context context{errors};
-  const TableType table_type{Limits{0}, ReferenceType::Funcref()};
+  const TableType table_type{Limits{0}, RT_Funcref};
   context.tables.push_back(table_type);
 
   EXPECT_FALSE(Validate(context, Import{"", "", table_type}));
@@ -732,14 +730,14 @@ TEST(ValidateTest, Import_GlobalMutVar_MVP) {
   TestErrors errors;
   Context context{features, errors};
   EXPECT_FALSE(Validate(
-      context, Import{"", "", GlobalType{ValueType::I32(), Mutability::Var}}));
+      context, Import{"", "", GlobalType{VT_I32, Mutability::Var}}));
 }
 
 TEST(ValidateTest, Import_GlobalMutVar_MutableGlobals) {
   TestErrors errors;
   Context context{errors};
   EXPECT_TRUE(Validate(
-      context, Import{"", "", GlobalType{ValueType::I32(), Mutability::Var}}));
+      context, Import{"", "", GlobalType{VT_I32, Mutability::Var}}));
 }
 
 TEST(ValidateTest, Import_Event_IndexOOB) {
@@ -754,7 +752,7 @@ TEST(ValidateTest, Import_Event_NonEmptyResult) {
   Features features;
   TestErrors errors;
   Context context{features, errors};
-  context.types.push_back(TypeEntry{FunctionType{{}, {ValueType::F32()}}});
+  context.types.push_back(TypeEntry{FunctionType{{}, {VT_F32}}});
   EXPECT_FALSE(Validate(
       context, Import{"", "", EventType{EventAttribute::Exception, Index{0}}}));
 }
@@ -872,7 +870,7 @@ TEST(ValidateTest, Start_FunctionIndexOOB) {
 }
 
 TEST(ValidateTest, Start_InvalidParamCount) {
-  FunctionType function_type{{ValueType::I32()}, {}};
+  FunctionType function_type{{VT_I32}, {}};
   TestErrors errors;
   Context context{errors};
   context.types.push_back(TypeEntry{function_type});
@@ -883,7 +881,7 @@ TEST(ValidateTest, Start_InvalidParamCount) {
 TEST(ValidateTest, Start_InvalidResultCount) {
   TestErrors errors;
   Context context{errors};
-  const FunctionType function_type{{}, {ValueType::I32()}};
+  const FunctionType function_type{{}, {VT_I32}};
   context.types.push_back(TypeEntry{function_type});
   context.functions.push_back(Function{0});
   EXPECT_FALSE(Validate(context, Start{0}));
@@ -891,8 +889,8 @@ TEST(ValidateTest, Start_InvalidResultCount) {
 
 TEST(ValidateTest, Table) {
   const Table tests[] = {
-      Table{TableType{Limits{0}, ReferenceType::Funcref()}},
-      Table{TableType{Limits{1, 10}, ReferenceType::Funcref()}},
+      Table{TableType{Limits{0}, RT_Funcref}},
+      Table{TableType{Limits{1, 10}, RT_Funcref}},
   };
 
   for (const auto& table : tests) {
@@ -905,17 +903,17 @@ TEST(ValidateTest, Table) {
 TEST(ValidateTest, Table_TooManyTables) {
   TestErrors errors;
   Context context{errors};
-  const TableType table_type{Limits{0}, ReferenceType::Funcref()};
+  const TableType table_type{Limits{0}, RT_Funcref};
   context.tables.push_back(table_type);
   EXPECT_FALSE(Validate(context, Table{table_type}));
 }
 
 TEST(ValidateTest, TableType) {
   const TableType tests[] = {
-      TableType{Limits{0}, ReferenceType::Funcref()},
-      TableType{Limits{1000}, ReferenceType::Funcref()},
-      TableType{Limits{100, 12345}, ReferenceType::Funcref()},
-      TableType{Limits{0, 0xffffffff}, ReferenceType::Funcref()},
+      TableType{Limits{0}, RT_Funcref},
+      TableType{Limits{1000}, RT_Funcref},
+      TableType{Limits{100, 12345}, RT_Funcref},
+      TableType{Limits{0, 0xffffffff}, RT_Funcref},
   };
 
   for (const auto& table_type : tests) {
@@ -928,8 +926,8 @@ TEST(ValidateTest, TableType) {
 TEST(ValidateTest, TableType_Shared) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_FALSE(Validate(
-      context, TableType{Limits{0, 100, Shared::Yes}, ReferenceType::Funcref()}));
+  EXPECT_FALSE(
+      Validate(context, TableType{Limits{0, 100, Shared::Yes}, RT_Funcref}));
 }
 
 TEST(ValidateTest, TypeEntry) {
@@ -940,8 +938,7 @@ TEST(ValidateTest, TypeEntry) {
 
 TEST(ValidateTest, ValueType) {
   const ValueType tests[] = {
-      ValueType::I32(), ValueType::I64(),  ValueType::F32(),
-      ValueType::F64(), ValueType::V128(), ValueType::Externref(),
+      VT_I32, VT_I64, VT_F32, VT_F64, VT_V128, VT_Externref,
   };
 
   for (auto value_type : tests) {
@@ -953,8 +950,7 @@ TEST(ValidateTest, ValueType) {
 
 TEST(ValidateTest, ValueType_Mismatch) {
   const ValueType tests[] = {
-      ValueType::I32(), ValueType::I64(),  ValueType::F32(),
-      ValueType::F64(), ValueType::V128(), ValueType::Externref(),
+      VT_I32, VT_I64, VT_F32, VT_F64, VT_V128, VT_Externref,
   };
 
   for (auto value_type1 : tests) {
@@ -977,10 +973,10 @@ TEST(ValidateTest, Module) {
   module.types.push_back(TypeEntry{});
   module.imports.push_back(Import{"a"_sv, "b"_sv, Index{0}});
   module.functions.push_back(Function{Index{0}});
-  module.tables.push_back(Table{TableType{Limits{0}, ReferenceType::Funcref()}});
+  module.tables.push_back(Table{TableType{Limits{0}, RT_Funcref}});
   module.memories.push_back(Memory{MemoryType{Limits{0}}});
   module.globals.push_back(
-      Global{GlobalType{ValueType::I32(), Mutability::Const},
+      Global{GlobalType{VT_I32, Mutability::Const},
              ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}});
   module.events.push_back(
       Event{EventType{EventAttribute::Exception, Index{0}}});

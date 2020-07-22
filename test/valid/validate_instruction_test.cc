@@ -17,6 +17,7 @@
 #include <cassert>
 
 #include "gtest/gtest.h"
+#include "test/binary/constants.h"
 #include "test/valid/test_utils.h"
 #include "wasp/base/errors_nop.h"
 #include "wasp/base/features.h"
@@ -27,6 +28,7 @@
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
+using namespace ::wasp::binary::test;
 using namespace ::wasp::valid;
 using namespace ::wasp::valid::test;
 
@@ -120,7 +122,7 @@ class ValidateInstructionTest : public ::testing::Test {
       if (n == 0) {
         EXPECT_TRUE(Validate(valid_context, instruction))
             << format("{} with stack {}", instruction, stack_param_types_slice);
-        EXPECT_EQ(stack_result_types, valid_context.type_stack)
+        EXPECT_TRUE(TypesMatch(stack_result_types, valid_context.type_stack))
             << format("{}", instruction);
       } else {
         EXPECT_FALSE(Validate(invalid_context, instruction))
@@ -132,7 +134,7 @@ class ValidateInstructionTest : public ::testing::Test {
       // Create a type stack of the right size, but with all mismatched types.
       auto mismatch_types = stack_param_types;
       for (auto& stack_type : mismatch_types) {
-        stack_type = stack_type == ST::I32() ? ST::F64() : ST::I32();
+        stack_type = TypesMatch(stack_type, ST::I32()) ? ST::F64() : ST::I32();
       }
       invalid_context.type_stack = mismatch_types;
       EXPECT_FALSE(Validate(invalid_context, instruction))
@@ -156,13 +158,13 @@ struct ValueTypeInfo {
   Instruction instruction;
 };
 const ValueTypeInfo all_value_types[] = {
-    {ValueType::I32(), BlockType::I32(), Instruction{Opcode::I32Const, s32{}}},
-    {ValueType::I64(), BlockType::I64(), Instruction{Opcode::I64Const, s64{}}},
-    {ValueType::F32(), BlockType::F32(), Instruction{Opcode::F32Const, f32{}}},
-    {ValueType::F64(), BlockType::F64(), Instruction{Opcode::F64Const, f64{}}},
+    {VT_I32, BT_I32, Instruction{Opcode::I32Const, s32{}}},
+    {VT_I64, BT_I64, Instruction{Opcode::I64Const, s64{}}},
+    {VT_F32, BT_F32, Instruction{Opcode::F32Const, f32{}}},
+    {VT_F64, BT_F64, Instruction{Opcode::F64Const, f64{}}},
 #if 0
-    {ValueType::V128(), BlockType::V128(), Instruction{Opcode::V128Const, v128{}}},
-    {ValueType::Externref(), BlockType::Externref(), Instruction{Opcode::RefNull}},
+    {VT_V128, BT_V128, Instruction{Opcode::V128Const, v128{}}},
+    {VT_Externref), BT_Externref, Instruction{Opcode::RefNull}},
 #endif
 };
 
@@ -177,7 +179,7 @@ TEST_F(ValidateInstructionTest, Nop) {
 }
 
 TEST_F(ValidateInstructionTest, Block_Void) {
-  Ok(I{O::Block, BlockType::Void()});
+  Ok(I{O::Block, BT_Void});
   Ok(I{O::End});
   ExpectNoErrors(errors);
 }
@@ -192,7 +194,7 @@ TEST_F(ValidateInstructionTest, Block_SingleResult) {
 }
 
 TEST_F(ValidateInstructionTest, Block_MultiResult) {
-  auto index = AddFunctionType(FunctionType{{}, {VT::I32(), VT::F32()}});
+  auto index = AddFunctionType(FunctionType{{}, {VT_I32, VT_F32}});
   Ok(I{O::Block, BlockType(index)});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, s32{}});
@@ -201,7 +203,7 @@ TEST_F(ValidateInstructionTest, Block_MultiResult) {
 }
 
 TEST_F(ValidateInstructionTest, Block_Param) {
-  auto index = AddFunctionType(FunctionType{{VT::I64()}, {}});
+  auto index = AddFunctionType(FunctionType{{VT_I64}, {}});
   Ok(I{O::I64Const, s64{}});
   Ok(I{O::Block, BlockType(index)});
   Ok(I{O::Drop});
@@ -212,7 +214,7 @@ TEST_F(ValidateInstructionTest, Block_Param) {
 }
 
 TEST_F(ValidateInstructionTest, Loop_Void) {
-  Ok(I{O::Loop, BlockType::Void()});
+  Ok(I{O::Loop, BT_Void});
   Ok(I{O::End});
   ExpectNoErrors(errors);
 }
@@ -227,7 +229,7 @@ TEST_F(ValidateInstructionTest, Loop_SingleResult) {
 }
 
 TEST_F(ValidateInstructionTest, Loop_MultiResult) {
-  auto index = AddFunctionType(FunctionType{{}, {VT::I32(), VT::F32()}});
+  auto index = AddFunctionType(FunctionType{{}, {VT_I32, VT_F32}});
   Ok(I{O::Loop, BlockType(index)});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, s32{}});
@@ -236,7 +238,7 @@ TEST_F(ValidateInstructionTest, Loop_MultiResult) {
 }
 
 TEST_F(ValidateInstructionTest, Loop_Param) {
-  auto index = AddFunctionType(FunctionType{{VT::I64()}, {}});
+  auto index = AddFunctionType(FunctionType{{VT_I64}, {}});
   Ok(I{O::I64Const, s64{}});
   Ok(I{O::Loop, BlockType(index)});
   Ok(I{O::Drop});
@@ -248,14 +250,14 @@ TEST_F(ValidateInstructionTest, Loop_Param) {
 
 TEST_F(ValidateInstructionTest, If_End_Void) {
   Ok(I{O::I32Const, s32{}});
-  Ok(I{O::If, BlockType::Void()});
+  Ok(I{O::If, BT_Void});
   Ok(I{O::End});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, If_Else_Void) {
   Ok(I{O::I32Const, s32{}});
-  Ok(I{O::If, BlockType::Void()});
+  Ok(I{O::If, BT_Void});
   Ok(I{O::Else});
   Ok(I{O::End});
   ExpectNoErrors(errors);
@@ -274,7 +276,7 @@ TEST_F(ValidateInstructionTest, If_Else_SingleResult) {
 }
 
 TEST_F(ValidateInstructionTest, If_Else_MultiResult) {
-  auto index = AddFunctionType(FunctionType{{}, {VT::I32(), VT::F32()}});
+  auto index = AddFunctionType(FunctionType{{}, {VT_I32, VT_F32}});
 
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::If, BlockType(index)});
@@ -291,7 +293,7 @@ TEST_F(ValidateInstructionTest, If_Else_MultiResult) {
 }
 
 TEST_F(ValidateInstructionTest, If_Else_Param) {
-  auto index = AddFunctionType(FunctionType{{VT::I32()}, {}});
+  auto index = AddFunctionType(FunctionType{{VT_I32}, {}});
 
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -306,7 +308,7 @@ TEST_F(ValidateInstructionTest, If_Else_Param) {
 }
 
 TEST_F(ValidateInstructionTest, If_Multi_PassThrough) {
-  auto index = AddFunctionType(FunctionType{{VT::I32()}, {VT::I32()}});
+  auto index = AddFunctionType(FunctionType{{VT_I32}, {VT_I32}});
 
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -320,7 +322,7 @@ TEST_F(ValidateInstructionTest, If_Multi_PassThrough) {
 
 TEST_F(ValidateInstructionTest, If_End_Void_Unreachable) {
   Ok(I{O::I32Const, s32{}});
-  Ok(I{O::If, BlockType::Void()});
+  Ok(I{O::If, BT_Void});
   Ok(I{O::Unreachable});
   Ok(I{O::End});
   ExpectNoErrors(errors);
@@ -328,13 +330,13 @@ TEST_F(ValidateInstructionTest, If_End_Void_Unreachable) {
 
 TEST_F(ValidateInstructionTest, If_Else_Void_Unreachable) {
   Ok(I{O::I32Const, s32{}});
-  Ok(I{O::If, BlockType::Void()});
+  Ok(I{O::If, BT_Void});
   Ok(I{O::Unreachable});
   Ok(I{O::Else});
   Ok(I{O::End});
 
   Ok(I{O::I32Const, s32{}});
-  Ok(I{O::If, BlockType::Void()});
+  Ok(I{O::If, BT_Void});
   Ok(I{O::Else});
   Ok(I{O::Unreachable});
   Ok(I{O::End});
@@ -363,7 +365,7 @@ TEST_F(ValidateInstructionTest, If_Else_SingleResult_Unreachable) {
 }
 
 TEST_F(ValidateInstructionTest, If_Else_MultiResult_Unreachable) {
-  auto index = AddFunctionType(FunctionType{{}, {VT::I32(), VT::F32()}});
+  auto index = AddFunctionType(FunctionType{{}, {VT_I32, VT_F32}});
 
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::If, BlockType(index)});
@@ -376,21 +378,21 @@ TEST_F(ValidateInstructionTest, If_Else_MultiResult_Unreachable) {
 }
 
 TEST_F(ValidateInstructionTest, If_EmptyStack) {
-  Fail(I{O::If, BlockType::Void()});
+  Fail(I{O::If, BT_Void});
   ExpectError({"instruction", "Expected stack to contain [i32], got []"},
               errors);
 }
 
 TEST_F(ValidateInstructionTest, If_CondTypeMismatch) {
   Ok(I{O::F32Const, f32{}});
-  Fail(I{O::If, BlockType::Void()});
+  Fail(I{O::If, BT_Void});
   ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
               errors);
 }
 
 TEST_F(ValidateInstructionTest, If_End_I32) {
   Ok(I{O::I32Const, s32{}});
-  Ok(I{O::If, BlockType::I32()});
+  Ok(I{O::If, BT_I32});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::End});
   ExpectError({"instruction", "Expected stack to contain [i32], got []"},
@@ -399,7 +401,7 @@ TEST_F(ValidateInstructionTest, If_End_I32) {
 
 TEST_F(ValidateInstructionTest, If_End_I32_Unreachable) {
   Ok(I{O::I32Const, s32{}});
-  Ok(I{O::If, BlockType::I32()});
+  Ok(I{O::If, BT_I32});
   Ok(I{O::Unreachable});
   Fail(I{O::End});
   ExpectError({"instruction", "Expected stack to contain [i32], got []"},
@@ -408,7 +410,7 @@ TEST_F(ValidateInstructionTest, If_End_I32_Unreachable) {
 
 TEST_F(ValidateInstructionTest, If_Else_TypeMismatch) {
   Ok(I{O::I32Const, s32{}});
-  Ok(I{O::If, BlockType::I32()});
+  Ok(I{O::If, BT_I32});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::Else});
   Ok(I{O::F32Const, f32{}});
@@ -417,7 +419,7 @@ TEST_F(ValidateInstructionTest, If_Else_TypeMismatch) {
               errors);
 
   Ok(I{O::I32Const, s32{}});
-  Ok(I{O::If, BlockType::I32()});
+  Ok(I{O::If, BT_I32});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::Else});
   Ok(I{O::I32Const, s32{}});
@@ -427,7 +429,7 @@ TEST_F(ValidateInstructionTest, If_Else_TypeMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, If_Else_ArityMismatch) {
-  auto index = AddFunctionType(FunctionType{{}, {VT::I32(), VT::F32()}});
+  auto index = AddFunctionType(FunctionType{{}, {VT_I32, VT_F32}});
 
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::If, BlockType(index)});
@@ -444,27 +446,27 @@ TEST_F(ValidateInstructionTest, Else_NoIf) {
   Fail(I{O::Else});
   ExpectError({"instruction", "Got else instruction without if"}, errors);
 
-  Ok(I{O::Block, BlockType::Void()});
+  Ok(I{O::Block, BT_Void});
   Fail(I{O::Else});
   ExpectError({"instruction", "Got else instruction without if"}, errors);
 }
 
 TEST_F(ValidateInstructionTest, End) {
-  Ok(I{O::Block, BlockType::Void()});
+  Ok(I{O::Block, BT_Void});
   Ok(I{O::End});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, End_Unreachable) {
-  Ok(I{O::Block, BlockType::Void()});
+  Ok(I{O::Block, BT_Void});
   Ok(I{O::Unreachable});
   Ok(I{O::End});
 
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::Unreachable});
   Ok(I{O::End});
 
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::Unreachable});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::End});
@@ -472,7 +474,7 @@ TEST_F(ValidateInstructionTest, End_Unreachable) {
 }
 
 TEST_F(ValidateInstructionTest, End_Unreachable_TypeMismatch) {
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::Unreachable});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::End});
@@ -488,14 +490,14 @@ TEST_F(ValidateInstructionTest, End_EmptyLabelStack) {
 }
 
 TEST_F(ValidateInstructionTest, End_EmptyTypeStack) {
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Fail(I{O::End});
   ExpectError({"instruction", "Expected stack to contain [i32], got []"},
               errors);
 }
 
 TEST_F(ValidateInstructionTest, End_TypeMismatch) {
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::End});
   ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
@@ -503,7 +505,7 @@ TEST_F(ValidateInstructionTest, End_TypeMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, End_TooManyValues) {
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::End});
@@ -511,7 +513,7 @@ TEST_F(ValidateInstructionTest, End_TooManyValues) {
 }
 
 TEST_F(ValidateInstructionTest, End_Unreachable_TooManyValues) {
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::Unreachable});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -520,7 +522,7 @@ TEST_F(ValidateInstructionTest, End_Unreachable_TooManyValues) {
 }
 
 TEST_F(ValidateInstructionTest, Try_Void) {
-  Ok(I{O::Try, BlockType::Void()});
+  Ok(I{O::Try, BT_Void});
   Ok(I{O::End});
   ExpectNoErrors(errors);
 }
@@ -535,7 +537,7 @@ TEST_F(ValidateInstructionTest, Try_SingleResult) {
 }
 
 TEST_F(ValidateInstructionTest, Try_MultiResult) {
-  auto index = AddFunctionType(FunctionType{{}, {VT::I32(), VT::F32()}});
+  auto index = AddFunctionType(FunctionType{{}, {VT_I32, VT_F32}});
   Ok(I{O::Try, BlockType(index)});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, s32{}});
@@ -544,7 +546,7 @@ TEST_F(ValidateInstructionTest, Try_MultiResult) {
 }
 
 TEST_F(ValidateInstructionTest, Try_Param) {
-  auto index = AddFunctionType(FunctionType{{VT::I64()}, {}});
+  auto index = AddFunctionType(FunctionType{{VT_I64}, {}});
   Ok(I{O::I64Const, s64{}});
   Ok(I{O::Try, BlockType(index)});
   Ok(I{O::Drop});
@@ -555,7 +557,7 @@ TEST_F(ValidateInstructionTest, Try_Param) {
 }
 
 TEST_F(ValidateInstructionTest, Try_Catch_Void) {
-  Ok(I{O::Try, BlockType::Void()});
+  Ok(I{O::Try, BT_Void});
   Ok(I{O::Catch});
   Ok(I{O::Drop});  // Drop the exception.
   Ok(I{O::End});
@@ -575,7 +577,7 @@ TEST_F(ValidateInstructionTest, Try_Catch_SingleResult) {
 }
 
 TEST_F(ValidateInstructionTest, Try_Catch_MultiResult) {
-  auto index = AddFunctionType(FunctionType{{}, {VT::I32(), VT::F32()}});
+  auto index = AddFunctionType(FunctionType{{}, {VT_I32, VT_F32}});
   Ok(I{O::Try, BlockType(index)});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, f32{}});
@@ -588,7 +590,7 @@ TEST_F(ValidateInstructionTest, Try_Catch_MultiResult) {
 }
 
 TEST_F(ValidateInstructionTest, Try_Catch_Param) {
-  auto index = AddFunctionType(FunctionType{{VT::I32()}, {}});
+  auto index = AddFunctionType(FunctionType{{VT_I32}, {}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::Try, BlockType(index)});
   Ok(I{O::Drop});
@@ -602,15 +604,15 @@ TEST_F(ValidateInstructionTest, Try_Catch_Param) {
 }
 
 TEST_F(ValidateInstructionTest, Catch_IsException) {
-  auto global = AddGlobal(GlobalType{VT::Exnref(), Mutability::Var});
-  Ok(I{O::Try, BlockType::Void()});
+  auto global = AddGlobal(GlobalType{VT_Exnref, Mutability::Var});
+  Ok(I{O::Try, BT_Void});
   Ok(I{O::Catch});
   Ok(I{O::GlobalSet, global});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Throw) {
-  auto type_index = AddFunctionType(FunctionType{{VT::I32(), VT::F32()}, {}});
+  auto type_index = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {}});
   auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, f32{}});
@@ -619,9 +621,9 @@ TEST_F(ValidateInstructionTest, Throw) {
 }
 
 TEST_F(ValidateInstructionTest, Throw_Unreachable) {
-  auto type_index = AddFunctionType(FunctionType{{VT::I32()}, {}});
+  auto type_index = AddFunctionType(FunctionType{{VT_I32}, {}});
   auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
-  Ok(I{O::Block, BlockType::F32()});
+  Ok(I{O::Block, BT_F32});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::Throw, Index{event_index}});
   Ok(I{O::End});
@@ -635,7 +637,7 @@ TEST_F(ValidateInstructionTest, Throw_IndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, Throw_TypeMismatch) {
-  auto type_index = AddFunctionType(FunctionType{{VT::I32(), VT::F32()}, {}});
+  auto type_index = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {}});
   auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
   Ok(I{O::I64Const, s32{}});
   Fail(I{O::Throw, Index{event_index}});
@@ -650,7 +652,7 @@ TEST_F(ValidateInstructionTest, Rethrow) {
 }
 
 TEST_F(ValidateInstructionTest, Rethrow_Unreachable) {
-  Ok(I{O::Try, BlockType::I32()});
+  Ok(I{O::Try, BT_I32});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::Catch});
   Ok(I{O::Rethrow});
@@ -667,39 +669,39 @@ TEST_F(ValidateInstructionTest, Rethrow_Mismatch) {
 TEST_F(ValidateInstructionTest, BrOnExn_Void) {
   auto type_index = AddFunctionType(FunctionType{});
   auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
-  Ok(I{O::Try, BlockType::Void()});
+  Ok(I{O::Try, BT_Void});
   Ok(I{O::Catch});
   Ok(I{O::BrOnExn, BrOnExnImmediate{0, event_index}});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrOnExn_SingleResult) {
-  auto type_index = AddFunctionType(FunctionType{{VT::I32()}, {}});
+  auto type_index = AddFunctionType(FunctionType{{VT_I32}, {}});
   auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
-  Ok(I{O::Block, BlockType::I32()});
-  Ok(I{O::Try, BlockType::Void()});
+  Ok(I{O::Block, BT_I32});
+  Ok(I{O::Try, BT_Void});
   Ok(I{O::Catch});
   Ok(I{O::BrOnExn, BrOnExnImmediate{1, event_index}});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrOnExn_MultiResult) {
-  auto if_v = AddFunctionType(FunctionType{{VT::I32(), VT::F32()}, {}});
-  auto v_if = AddFunctionType(FunctionType{{}, {VT::I32(), VT::F32()}});
+  auto if_v = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {}});
+  auto v_if = AddFunctionType(FunctionType{{}, {VT_I32, VT_F32}});
   auto event_index = AddEvent(EventType{EventAttribute::Exception, if_v});
   Ok(I{O::Block, BlockType(v_if)});
-  Ok(I{O::Try, BlockType::Void()});
+  Ok(I{O::Try, BT_Void});
   Ok(I{O::Catch});
   Ok(I{O::BrOnExn, BrOnExnImmediate{1, event_index}});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrOnExn_ForwardExn) {
-  auto type_index = AddFunctionType(FunctionType{{VT::I32()}, {}});
+  auto type_index = AddFunctionType(FunctionType{{VT_I32}, {}});
   auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
-  Ok(I{O::Block, BlockType::I32()});
-  Ok(I{O::Block, BlockType::I32()});
-  Ok(I{O::Try, BlockType::Void()});
+  Ok(I{O::Block, BT_I32});
+  Ok(I{O::Block, BT_I32});
+  Ok(I{O::Try, BT_Void});
   Ok(I{O::Catch});
   Ok(I{O::BrOnExn, BrOnExnImmediate{1, event_index}});
   Ok(I{O::BrOnExn, BrOnExnImmediate{2, event_index}});
@@ -709,7 +711,7 @@ TEST_F(ValidateInstructionTest, BrOnExn_ForwardExn) {
 TEST_F(ValidateInstructionTest, BrOnExn_TypeMismatch) {
   auto type_index = AddFunctionType(FunctionType{});
   auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
-  Ok(I{O::Block, BlockType::Void()});
+  Ok(I{O::Block, BT_Void});
   Fail(I{O::BrOnExn, BrOnExnImmediate{0, event_index}});
   ExpectError({"instruction", "Expected stack to contain [exnref], got []"},
               errors);
@@ -731,21 +733,21 @@ TEST_F(ValidateInstructionTest, Br_Block_SingleResult) {
 }
 
 TEST_F(ValidateInstructionTest, Br_EmptyStack) {
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Fail(I{O::Br, Index{0}});
   ExpectError({"instruction", "Expected stack to contain [i32], got []"},
               errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_FullerStack) {
-  Ok(I{O::Block, BlockType::Void()});
+  Ok(I{O::Block, BT_Void});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::Br, Index{0}});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_TypeMismatch) {
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::Br, Index{0}});
   ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
@@ -753,16 +755,16 @@ TEST_F(ValidateInstructionTest, Br_TypeMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, Br_Depth1) {
-  Ok(I{O::Block, BlockType::I32()});
-  Ok(I{O::Block, BlockType::Void()});
+  Ok(I{O::Block, BT_I32});
+  Ok(I{O::Block, BT_Void});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::Br, Index{1}});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_ForwardUnreachable) {
-  Ok(I{O::Block, BlockType::I32()});
-  Ok(I{O::Block, BlockType::F32()});
+  Ok(I{O::Block, BT_I32});
+  Ok(I{O::Block, BT_F32});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::Br, Index{1}});
   Ok(I{O::Br, Index{0}});
@@ -770,11 +772,11 @@ TEST_F(ValidateInstructionTest, Br_ForwardUnreachable) {
 }
 
 TEST_F(ValidateInstructionTest, Br_Loop_Void) {
-  Ok(I{O::Loop, BlockType::Void()});
+  Ok(I{O::Loop, BT_Void});
   Ok(I{O::Br, Index{0}});
   Ok(I{O::End});
 
-  Ok(I{O::Loop, BlockType::I32()});
+  Ok(I{O::Loop, BT_I32});
   Ok(I{O::Br, Index{0}});
   Ok(I{O::End});
   ExpectNoErrors(errors);
@@ -820,7 +822,7 @@ TEST_F(ValidateInstructionTest, BrIf_ConditionMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, BrIf_EmptyStack) {
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrIf, Index{0}});
   ExpectError({"instruction", "Expected stack to contain [i32], got []"},
@@ -828,7 +830,7 @@ TEST_F(ValidateInstructionTest, BrIf_EmptyStack) {
 }
 
 TEST_F(ValidateInstructionTest, BrIf_TypeMismatch) {
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrIf, Index{0}});
@@ -837,8 +839,8 @@ TEST_F(ValidateInstructionTest, BrIf_TypeMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, BrIf_PropagateValue) {
-  Ok(I{O::Block, BlockType::F32()});
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_F32});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrIf, Index{1}});
@@ -848,7 +850,7 @@ TEST_F(ValidateInstructionTest, BrIf_PropagateValue) {
 }
 
 TEST_F(ValidateInstructionTest, BrIf_Loop_Void) {
-  Ok(I{O::Loop, BlockType::Void()});
+  Ok(I{O::Loop, BT_Void});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrIf, Index{0}});
   Ok(I{O::End});
@@ -874,20 +876,20 @@ TEST_F(ValidateInstructionTest, BrTable_Void) {
 }
 
 TEST_F(ValidateInstructionTest, BrTable_MultiDepth_Void) {
-  Ok(I{O::Block, BlockType::Void()});  // 3
-  Ok(I{O::Block, BlockType::Void()});  // 2
-  Ok(I{O::Block, BlockType::Void()});  // 1
-  Ok(I{O::Block, BlockType::Void()});  // 0
+  Ok(I{O::Block, BT_Void});  // 3
+  Ok(I{O::Block, BT_Void});  // 2
+  Ok(I{O::Block, BT_Void});  // 1
+  Ok(I{O::Block, BT_Void});  // 0
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrTable, BrTableImmediate{{0, 1, 2, 3}, 4}});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, BrTable_MultiDepth_SingleResult) {
-  Ok(I{O::Block, BlockType::I32()});   // 3
-  Ok(I{O::Block, BlockType::Void()});  // 2
-  Ok(I{O::Block, BlockType::I32()});   // 1
-  Ok(I{O::Block, BlockType::Void()});  // 0
+  Ok(I{O::Block, BT_I32});   // 3
+  Ok(I{O::Block, BT_Void});  // 2
+  Ok(I{O::Block, BT_I32});   // 1
+  Ok(I{O::Block, BT_Void});  // 0
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrTable, BrTableImmediate{{1, 1, 1, 3}, 3}});
@@ -895,7 +897,7 @@ TEST_F(ValidateInstructionTest, BrTable_MultiDepth_SingleResult) {
 }
 
 TEST_F(ValidateInstructionTest, BrTable_Unreachable) {
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrTable, BrTableImmediate{{}, 1}});
   Ok(I{O::End});
@@ -909,7 +911,7 @@ TEST_F(ValidateInstructionTest, BrTable_NoKey) {
 }
 
 TEST_F(ValidateInstructionTest, BrTable_EmptyStack) {
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrTable, BrTableImmediate{{}, 0}});
   ExpectError({"instruction", "Expected stack to contain [i32], got []"},
@@ -917,7 +919,7 @@ TEST_F(ValidateInstructionTest, BrTable_EmptyStack) {
 }
 
 TEST_F(ValidateInstructionTest, BrTable_ValueTypeMismatch) {
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrTable, BrTableImmediate{{0}, 0}});
@@ -926,8 +928,8 @@ TEST_F(ValidateInstructionTest, BrTable_ValueTypeMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
-  Ok(I{O::Block, BlockType::Void()});
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_Void});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrTable, BrTableImmediate{{1}, 0}});
@@ -940,10 +942,10 @@ TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
 TEST_F(ValidateInstructionTest, BrTable_References) {
   context.features.enable_reference_types();
 
-  Ok(I{O::Block, BlockType::Externref()});
-  Ok(I{O::Block, BlockType::Externref()});
-  Ok(I{O::Block, BlockType::Externref()});
-  Ok(I{O::RefNull, HT::Extern()});
+  Ok(I{O::Block, BT_Externref});
+  Ok(I{O::Block, BT_Externref});
+  Ok(I{O::Block, BT_Externref});
+  Ok(I{O::RefNull, HT_Extern});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrTable, BrTableImmediate{{0, 1}, 2}});
   ExpectNoErrors(errors);
@@ -955,29 +957,29 @@ TEST_F(ValidateInstructionTest, Return) {
 }
 
 TEST_F(ValidateInstructionTest, Return_InsideBlocks) {
-  Ok(I{O::Block, BlockType::Void()});
-  Ok(I{O::Block, BlockType::Void()});
-  Ok(I{O::Block, BlockType::Void()});
+  Ok(I{O::Block, BT_Void});
+  Ok(I{O::Block, BT_Void});
+  Ok(I{O::Block, BT_Void});
   Ok(I{O::Return});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Return_Unreachable) {
-  Ok(I{O::Block, BlockType::F64()});
+  Ok(I{O::Block, BT_F64});
   Ok(I{O::Return});
   Ok(I{O::End});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Return_SingleResult) {
-  BeginFunction(FunctionType{{}, {VT::I32()}});
+  BeginFunction(FunctionType{{}, {VT_I32}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::Return});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Return_TypeMismatch) {
-  BeginFunction(FunctionType{{}, {VT::I32()}});
+  BeginFunction(FunctionType{{}, {VT_I32}});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::Return});
   ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
@@ -991,8 +993,8 @@ TEST_F(ValidateInstructionTest, Call_Void_Void) {
 }
 
 TEST_F(ValidateInstructionTest, Call_Params) {
-  ValueTypeList param_types{VT::I32(), VT::F32()};
-  ValueTypeList result_types{VT::F64()};
+  ValueTypeList param_types{VT_I32, VT_F32};
+  ValueTypeList result_types{VT_F64};
   auto index = AddFunction(FunctionType{param_types, result_types});
   TestSignature(I{O::Call, Index{index}}, param_types, result_types);
 }
@@ -1013,14 +1015,14 @@ TEST_F(ValidateInstructionTest, Call_TypeIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, Call_MultiResult) {
-  ValueTypeList param_types{VT::F32()};
-  ValueTypeList result_types{VT::I32(), VT::I32()};
+  ValueTypeList param_types{VT_F32};
+  ValueTypeList result_types{VT_I32, VT_I32};
   auto index = AddFunction(FunctionType{param_types, result_types});
   TestSignature(I{O::Call, Index{index}}, param_types, result_types);
 }
 
 TEST_F(ValidateInstructionTest, CallIndirect) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
+  AddTable(TableType{Limits{0}, RT_Funcref});
   auto index = AddFunctionType(FunctionType{});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::CallIndirect, CallIndirectImmediate{index, 0}});
@@ -1028,17 +1030,17 @@ TEST_F(ValidateInstructionTest, CallIndirect) {
 }
 
 TEST_F(ValidateInstructionTest, CallIndirect_Params) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  auto index = AddFunctionType(FunctionType{{VT::F32(), VT::I64()}, {}});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  auto index = AddFunctionType(FunctionType{{VT_F32, VT_I64}, {}});
   TestSignature(I{O::CallIndirect, CallIndirectImmediate{index, 0}},
-                {VT::F32(), VT::I64(), VT::I32()}, {});
+                {VT_F32, VT_I64, VT_I32}, {});
 }
 
 TEST_F(ValidateInstructionTest, CallIndirect_MultiResult) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  auto index = AddFunctionType(FunctionType{{}, {VT::I64(), VT::F32()}});
-  TestSignature(I{O::CallIndirect, CallIndirectImmediate{index, 0}},
-                {VT::I32()}, {VT::I64(), VT::F32()});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  auto index = AddFunctionType(FunctionType{{}, {VT_I64, VT_F32}});
+  TestSignature(I{O::CallIndirect, CallIndirectImmediate{index, 0}}, {VT_I32},
+                {VT_I64, VT_F32});
 }
 
 TEST_F(ValidateInstructionTest, CallIndirect_TableIndexOOB) {
@@ -1050,7 +1052,7 @@ TEST_F(ValidateInstructionTest, CallIndirect_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, CallIndirect_TypeIndexOOB) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
+  AddTable(TableType{Limits{0}, RT_Funcref});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::CallIndirect, CallIndirectImmediate{100, 0}});
   ExpectError({"instruction", "Invalid type index 100, must be less than 1"},
@@ -1059,8 +1061,8 @@ TEST_F(ValidateInstructionTest, CallIndirect_TypeIndexOOB) {
 
 TEST_F(ValidateInstructionTest, CallIndirect_NonZeroTableIndex_ReferenceTypes) {
   auto index = AddFunctionType(FunctionType{});
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  AddTable(TableType{Limits{0}, RT_Funcref});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::CallIndirect, CallIndirectImmediate{index, 1}});
 }
@@ -1081,7 +1083,7 @@ TEST_F(ValidateInstructionTest, Drop_EmptyStack) {
 
 TEST_F(ValidateInstructionTest, Select) {
   for (const auto& info : all_value_types) {
-    TestSignature(I{O::Select}, {info.value_type, info.value_type, VT::I32()},
+    TestSignature(I{O::Select}, {info.value_type, info.value_type, VT_I32},
                   {info.value_type});
   }
 }
@@ -1128,15 +1130,15 @@ TEST_F(ValidateInstructionTest, Select_ReferenceTypes) {
 }
 
 TEST_F(ValidateInstructionTest, SelectT) {
-  for (const auto& vt : {VT::I32(), VT::I64(), VT::F32(), VT::F64(),
-                         VT::Externref(), VT::Funcref()}) {
-    TestSignature(I{O::SelectT, SelectImmediate{vt}}, {vt, vt, VT::I32()},
+  for (const auto& vt :
+       {VT_I32, VT_I64, VT_F32, VT_F64, VT_Externref, VT_Funcref}) {
+    TestSignature(I{O::SelectT, SelectImmediate{vt}}, {vt, vt, VT_I32},
                   {vt});
   }
 }
 
 TEST_F(ValidateInstructionTest, SelectT_EmptyStack) {
-  Fail(I{O::SelectT, SelectImmediate{VT::I64()}});
+  Fail(I{O::SelectT, SelectImmediate{VT_I64}});
   ExpectErrors({{"instruction", "Expected stack to contain [i32], got []"},
                 {"instruction", "Expected stack to contain [i64 i64], got []"}},
                errors);
@@ -1146,7 +1148,7 @@ TEST_F(ValidateInstructionTest, SelectT_ConditionTypeMismatch) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, f32{}});
-  Fail(I{O::SelectT, SelectImmediate{VT::I32()}});
+  Fail(I{O::SelectT, SelectImmediate{VT_I32}});
   ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
               errors);
 }
@@ -1159,8 +1161,8 @@ TEST_F(ValidateInstructionTest, LocalGet) {
 }
 
 TEST_F(ValidateInstructionTest, LocalGet_Param) {
-  BeginFunction(FunctionType{{VT::I32(), VT::F32()}, {}});
-  auto index = AddLocal(VT::I64());
+  BeginFunction(FunctionType{{VT_I32, VT_F32}, {}});
+  auto index = AddLocal(VT_I64);
   EXPECT_EQ(2, index);
   Ok(I{O::LocalGet, Index{0}}); // 1st param.
   Ok(I{O::LocalGet, Index{1}}); // 2nd param.
@@ -1185,8 +1187,8 @@ TEST_F(ValidateInstructionTest, LocalSet) {
 }
 
 TEST_F(ValidateInstructionTest, LocalSet_Param) {
-  BeginFunction(FunctionType{{VT::I32(), VT::F32()}, {}});
-  auto index = AddLocal(VT::F64());
+  BeginFunction(FunctionType{{VT_I32, VT_F32}, {}});
+  auto index = AddLocal(VT_F64);
   EXPECT_EQ(2, index);
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::LocalSet, Index{0}}); // 1st param.
@@ -1255,7 +1257,7 @@ TEST_F(ValidateInstructionTest, GlobalSet_IndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, GlobalSet_Immutable) {
-  auto index = AddGlobal(GlobalType{VT::I32(), Mutability::Const});
+  auto index = AddGlobal(GlobalType{VT_I32, Mutability::Const});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::GlobalSet, Index{index}});
   ExpectError({"instruction", "global.set is invalid on immutable global 0"},
@@ -1263,13 +1265,13 @@ TEST_F(ValidateInstructionTest, GlobalSet_Immutable) {
 }
 
 TEST_F(ValidateInstructionTest, TableGet_Funcref) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  TestSignature(I{O::TableGet, Index{0}}, {VT::I32()}, {VT::Funcref()});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  TestSignature(I{O::TableGet, Index{0}}, {VT_I32}, {VT_Funcref});
 }
 
 TEST_F(ValidateInstructionTest, TableGet_Externref) {
-  AddTable(TableType{Limits{0}, ReferenceType::Externref()});
-  TestSignature(I{O::TableGet, Index{0}}, {VT::I32()}, {VT::Externref()});
+  AddTable(TableType{Limits{0}, RT_Externref});
+  TestSignature(I{O::TableGet, Index{0}}, {VT_I32}, {VT_Externref});
 }
 
 TEST_F(ValidateInstructionTest, TableGet_IndexOOB) {
@@ -1280,13 +1282,13 @@ TEST_F(ValidateInstructionTest, TableGet_IndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableSet_Funcref) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  TestSignature(I{O::TableSet, Index{0}}, {VT::I32(), VT::Funcref()}, {});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  TestSignature(I{O::TableSet, Index{0}}, {VT_I32, VT_Funcref}, {});
 }
 
 TEST_F(ValidateInstructionTest, TableSet_Externref) {
-  AddTable(TableType{Limits{0}, ReferenceType::Externref()});
-  TestSignature(I{O::TableSet, Index{0}}, {VT::I32(), VT::Externref()}, {});
+  AddTable(TableType{Limits{0}, RT_Externref});
+  TestSignature(I{O::TableSet, Index{0}}, {VT_I32, VT_Externref}, {});
 }
 
 TEST_F(ValidateInstructionTest, TableSet_IndexOOB) {
@@ -1297,7 +1299,7 @@ TEST_F(ValidateInstructionTest, TableSet_IndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableSet_InvalidType) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
+  AddTable(TableType{Limits{0}, RT_Funcref});
   context.type_stack = {ST::I32(), ST::Externref()};
   Fail(I{O::TableSet, Index{0}});
   ExpectError({"instruction",
@@ -1309,17 +1311,16 @@ TEST_F(ValidateInstructionTest, Load) {
   const struct {
     Opcode opcode;
     ValueType result;
-  } infos[] = {{O::I32Load, VT::I32()},    {O::I32Load8S, VT::I32()},
-               {O::I32Load8U, VT::I32()},  {O::I32Load16S, VT::I32()},
-               {O::I32Load16U, VT::I32()}, {O::I64Load, VT::I64()},
-               {O::I64Load8S, VT::I64()},  {O::I64Load8U, VT::I64()},
-               {O::I64Load16S, VT::I64()}, {O::I64Load16U, VT::I64()},
-               {O::I64Load32S, VT::I64()}, {O::I64Load32U, VT::I64()},
-               {O::F32Load, VT::F32()},    {O::F64Load, VT::F64()}};
+  } infos[] = {
+      {O::I32Load, VT_I32},    {O::I32Load8S, VT_I32},  {O::I32Load8U, VT_I32},
+      {O::I32Load16S, VT_I32}, {O::I32Load16U, VT_I32}, {O::I64Load, VT_I64},
+      {O::I64Load8S, VT_I64},  {O::I64Load8U, VT_I64},  {O::I64Load16S, VT_I64},
+      {O::I64Load16U, VT_I64}, {O::I64Load32S, VT_I64}, {O::I64Load32U, VT_I64},
+      {O::F32Load, VT_F32},    {O::F64Load, VT_F64}};
 
   AddMemory(MemoryType{Limits{0}});
   for (const auto& info: infos) {
-    TestSignature(I{info.opcode, MemArgImmediate{0, 0}}, {VT::I32()},
+    TestSignature(I{info.opcode, MemArgImmediate{0, 0}}, {VT_I32},
                   {info.result});
   }
 }
@@ -1363,16 +1364,15 @@ TEST_F(ValidateInstructionTest, Store) {
   const struct {
     Opcode opcode;
     ValueType value_type;
-  } infos[] = {{O::I32Store, VT::I32()},   {O::I32Store8, VT::I32()},
-               {O::I32Store16, VT::I32()}, {O::I64Store, VT::I64()},
-               {O::I64Store8, VT::I64()},  {O::I64Store16, VT::I64()},
-               {O::I64Store32, VT::I64()}, {O::F32Store, VT::F32()},
-               {O::F64Store, VT::F64()}};
+  } infos[] = {
+      {O::I32Store, VT_I32},   {O::I32Store8, VT_I32}, {O::I32Store16, VT_I32},
+      {O::I64Store, VT_I64},   {O::I64Store8, VT_I64}, {O::I64Store16, VT_I64},
+      {O::I64Store32, VT_I64}, {O::F32Store, VT_F32},  {O::F64Store, VT_F64}};
 
   AddMemory(MemoryType{Limits{0}});
   for (const auto& info: infos) {
     TestSignature(I{info.opcode, MemArgImmediate{0, 0}},
-                  {VT::I32(), info.value_type}, {});
+                  {VT_I32, info.value_type}, {});
   }
 }
 
@@ -1408,7 +1408,7 @@ TEST_F(ValidateInstructionTest, Store_Alignment) {
 
 TEST_F(ValidateInstructionTest, MemorySize) {
   AddMemory(MemoryType{Limits{0}});
-  TestSignature(I{O::MemorySize, u8{}}, {}, {VT::I32()});
+  TestSignature(I{O::MemorySize, u8{}}, {}, {VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, MemorySize_MemoryIndexOOB) {
@@ -1419,7 +1419,7 @@ TEST_F(ValidateInstructionTest, MemorySize_MemoryIndexOOB) {
 
 TEST_F(ValidateInstructionTest, MemoryGrow) {
   AddMemory(MemoryType{Limits{0}});
-  TestSignature(I{O::MemoryGrow, u8{}}, {VT::I32()}, {VT::I32()});
+  TestSignature(I{O::MemoryGrow, u8{}}, {VT_I32}, {VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, MemoryGrow_MemoryIndexOOB) {
@@ -1434,52 +1434,42 @@ TEST_F(ValidateInstructionTest, Unary) {
     Opcode opcode;
     ValueType value_type;
   } infos[] = {
-      {O::I32Eqz, VT::I32()},     {O::I32Clz, VT::I32()},
-      {O::I32Ctz, VT::I32()},     {O::I32Popcnt, VT::I32()},
-      {O::I64Clz, VT::I64()},     {O::I64Ctz, VT::I64()},
-      {O::I64Popcnt, VT::I64()},  {O::F32Abs, VT::F32()},
-      {O::F32Neg, VT::F32()},     {O::F32Ceil, VT::F32()},
-      {O::F32Floor, VT::F32()},   {O::F32Trunc, VT::F32()},
-      {O::F32Nearest, VT::F32()}, {O::F32Sqrt, VT::F32()},
-      {O::F64Abs, VT::F64()},     {O::F64Neg, VT::F64()},
-      {O::F64Ceil, VT::F64()},    {O::F64Floor, VT::F64()},
-      {O::F64Trunc, VT::F64()},   {O::F64Nearest, VT::F64()},
-      {O::F64Sqrt, VT::F64()},
+      {O::I32Eqz, VT_I32},     {O::I32Clz, VT_I32},     {O::I32Ctz, VT_I32},
+      {O::I32Popcnt, VT_I32},  {O::I64Clz, VT_I64},     {O::I64Ctz, VT_I64},
+      {O::I64Popcnt, VT_I64},  {O::F32Abs, VT_F32},     {O::F32Neg, VT_F32},
+      {O::F32Ceil, VT_F32},    {O::F32Floor, VT_F32},   {O::F32Trunc, VT_F32},
+      {O::F32Nearest, VT_F32}, {O::F32Sqrt, VT_F32},    {O::F64Abs, VT_F64},
+      {O::F64Neg, VT_F64},     {O::F64Ceil, VT_F64},    {O::F64Floor, VT_F64},
+      {O::F64Trunc, VT_F64},   {O::F64Nearest, VT_F64}, {O::F64Sqrt, VT_F64},
   };
 
   for (const auto& info: infos) {
     TestSignature(I{info.opcode}, {info.value_type}, {info.value_type});
   }
 
-  TestSignature(I{O::I64Eqz}, {VT::I64()}, {VT::I32()});
+  TestSignature(I{O::I64Eqz}, {VT_I64}, {VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, Binary) {
   const struct {
     Opcode opcode;
     ValueType value_type;
-  } infos[] = {{O::I32Add, VT::I32()},      {O::I32Sub, VT::I32()},
-               {O::I32Mul, VT::I32()},      {O::I32DivS, VT::I32()},
-               {O::I32DivU, VT::I32()},     {O::I32RemS, VT::I32()},
-               {O::I32RemU, VT::I32()},     {O::I32And, VT::I32()},
-               {O::I32Or, VT::I32()},       {O::I32Xor, VT::I32()},
-               {O::I32Shl, VT::I32()},      {O::I32ShrS, VT::I32()},
-               {O::I32ShrU, VT::I32()},     {O::I32Rotl, VT::I32()},
-               {O::I32Rotr, VT::I32()},     {O::I64Add, VT::I64()},
-               {O::I64Sub, VT::I64()},      {O::I64Mul, VT::I64()},
-               {O::I64DivS, VT::I64()},     {O::I64DivU, VT::I64()},
-               {O::I64RemS, VT::I64()},     {O::I64RemU, VT::I64()},
-               {O::I64And, VT::I64()},      {O::I64Or, VT::I64()},
-               {O::I64Xor, VT::I64()},      {O::I64Shl, VT::I64()},
-               {O::I64ShrS, VT::I64()},     {O::I64ShrU, VT::I64()},
-               {O::I64Rotl, VT::I64()},     {O::I64Rotr, VT::I64()},
-               {O::F32Add, VT::F32()},      {O::F32Sub, VT::F32()},
-               {O::F32Mul, VT::F32()},      {O::F32Div, VT::F32()},
-               {O::F32Min, VT::F32()},      {O::F32Max, VT::F32()},
-               {O::F32Copysign, VT::F32()}, {O::F64Add, VT::F64()},
-               {O::F64Sub, VT::F64()},      {O::F64Mul, VT::F64()},
-               {O::F64Div, VT::F64()},      {O::F64Min, VT::F64()},
-               {O::F64Max, VT::F64()},      {O::F64Copysign, VT::F64()}};
+  } infos[] = {
+      {O::I32Add, VT_I32},      {O::I32Sub, VT_I32},     {O::I32Mul, VT_I32},
+      {O::I32DivS, VT_I32},     {O::I32DivU, VT_I32},    {O::I32RemS, VT_I32},
+      {O::I32RemU, VT_I32},     {O::I32And, VT_I32},     {O::I32Or, VT_I32},
+      {O::I32Xor, VT_I32},      {O::I32Shl, VT_I32},     {O::I32ShrS, VT_I32},
+      {O::I32ShrU, VT_I32},     {O::I32Rotl, VT_I32},    {O::I32Rotr, VT_I32},
+      {O::I64Add, VT_I64},      {O::I64Sub, VT_I64},     {O::I64Mul, VT_I64},
+      {O::I64DivS, VT_I64},     {O::I64DivU, VT_I64},    {O::I64RemS, VT_I64},
+      {O::I64RemU, VT_I64},     {O::I64And, VT_I64},     {O::I64Or, VT_I64},
+      {O::I64Xor, VT_I64},      {O::I64Shl, VT_I64},     {O::I64ShrS, VT_I64},
+      {O::I64ShrU, VT_I64},     {O::I64Rotl, VT_I64},    {O::I64Rotr, VT_I64},
+      {O::F32Add, VT_F32},      {O::F32Sub, VT_F32},     {O::F32Mul, VT_F32},
+      {O::F32Div, VT_F32},      {O::F32Min, VT_F32},     {O::F32Max, VT_F32},
+      {O::F32Copysign, VT_F32}, {O::F64Add, VT_F64},     {O::F64Sub, VT_F64},
+      {O::F64Mul, VT_F64},      {O::F64Div, VT_F64},     {O::F64Min, VT_F64},
+      {O::F64Max, VT_F64},      {O::F64Copysign, VT_F64}};
 
   for (const auto& info: infos) {
     TestSignature(I{info.opcode}, {info.value_type, info.value_type},
@@ -1491,21 +1481,21 @@ TEST_F(ValidateInstructionTest, Compare) {
   const struct {
     Opcode opcode;
     ValueType value_type;
-  } infos[] = {{O::I32Eq, VT::I32()},  {O::I32Ne, VT::I32()},  {O::I32LtS, VT::I32()},
-               {O::I32LtU, VT::I32()}, {O::I32GtS, VT::I32()}, {O::I32GtU, VT::I32()},
-               {O::I32LeS, VT::I32()}, {O::I32LeU, VT::I32()}, {O::I32GeS, VT::I32()},
-               {O::I32GeU, VT::I32()}, {O::I64Eq, VT::I64()},  {O::I64Ne, VT::I64()},
-               {O::I64LtS, VT::I64()}, {O::I64LtU, VT::I64()}, {O::I64GtS, VT::I64()},
-               {O::I64GtU, VT::I64()}, {O::I64LeS, VT::I64()}, {O::I64LeU, VT::I64()},
-               {O::I64GeS, VT::I64()}, {O::I64GeU, VT::I64()}, {O::F32Eq, VT::F32()},
-               {O::F32Ne, VT::F32()},  {O::F32Lt, VT::F32()},  {O::F32Gt, VT::F32()},
-               {O::F32Le, VT::F32()},  {O::F32Ge, VT::F32()},  {O::F64Eq, VT::F64()},
-               {O::F64Ne, VT::F64()},  {O::F64Lt, VT::F64()},  {O::F64Gt, VT::F64()},
-               {O::F64Le, VT::F64()},  {O::F64Ge, VT::F64()}};
+  } infos[] = {{O::I32Eq, VT_I32},  {O::I32Ne, VT_I32},  {O::I32LtS, VT_I32},
+               {O::I32LtU, VT_I32}, {O::I32GtS, VT_I32}, {O::I32GtU, VT_I32},
+               {O::I32LeS, VT_I32}, {O::I32LeU, VT_I32}, {O::I32GeS, VT_I32},
+               {O::I32GeU, VT_I32}, {O::I64Eq, VT_I64},  {O::I64Ne, VT_I64},
+               {O::I64LtS, VT_I64}, {O::I64LtU, VT_I64}, {O::I64GtS, VT_I64},
+               {O::I64GtU, VT_I64}, {O::I64LeS, VT_I64}, {O::I64LeU, VT_I64},
+               {O::I64GeS, VT_I64}, {O::I64GeU, VT_I64}, {O::F32Eq, VT_F32},
+               {O::F32Ne, VT_F32},  {O::F32Lt, VT_F32},  {O::F32Gt, VT_F32},
+               {O::F32Le, VT_F32},  {O::F32Ge, VT_F32},  {O::F64Eq, VT_F64},
+               {O::F64Ne, VT_F64},  {O::F64Lt, VT_F64},  {O::F64Gt, VT_F64},
+               {O::F64Le, VT_F64},  {O::F64Ge, VT_F64}};
 
   for (const auto& info: infos) {
     TestSignature(I{info.opcode}, {info.value_type, info.value_type},
-                  {VT::I32()});
+                  {VT_I32});
   }
 }
 
@@ -1514,31 +1504,31 @@ TEST_F(ValidateInstructionTest, Conversion) {
     Opcode opcode;
     ValueType to;
     ValueType from;
-  } infos[] = {{O::I32WrapI64, VT::I32(), VT::I64()},
-               {O::I32TruncF32S, VT::I32(), VT::F32()},
-               {O::I32TruncF32U, VT::I32(), VT::F32()},
-               {O::I32ReinterpretF32, VT::I32(), VT::F32()},
-               {O::I32TruncF64S, VT::I32(), VT::F64()},
-               {O::I32TruncF64U, VT::I32(), VT::F64()},
-               {O::I64ExtendI32S, VT::I64(), VT::I32()},
-               {O::I64ExtendI32U, VT::I64(), VT::I32()},
-               {O::I64TruncF32S, VT::I64(), VT::F32()},
-               {O::I64TruncF32U, VT::I64(), VT::F32()},
-               {O::I64TruncF64S, VT::I64(), VT::F64()},
-               {O::I64TruncF64U, VT::I64(), VT::F64()},
-               {O::I64ReinterpretF64, VT::I64(), VT::F64()},
-               {O::F32ConvertI32S, VT::F32(), VT::I32()},
-               {O::F32ConvertI32U, VT::F32(), VT::I32()},
-               {O::F32ReinterpretI32, VT::F32(), VT::I32()},
-               {O::F32ConvertI64S, VT::F32(), VT::I64()},
-               {O::F32ConvertI64U, VT::F32(), VT::I64()},
-               {O::F32DemoteF64, VT::F32(), VT::F64()},
-               {O::F64ConvertI32S, VT::F64(), VT::I32()},
-               {O::F64ConvertI32U, VT::F64(), VT::I32()},
-               {O::F64ConvertI64S, VT::F64(), VT::I64()},
-               {O::F64ConvertI64U, VT::F64(), VT::I64()},
-               {O::F64ReinterpretI64, VT::F64(), VT::I64()},
-               {O::F64PromoteF32, VT::F64(), VT::F32()}};
+  } infos[] = {{O::I32WrapI64, VT_I32, VT_I64},
+               {O::I32TruncF32S, VT_I32, VT_F32},
+               {O::I32TruncF32U, VT_I32, VT_F32},
+               {O::I32ReinterpretF32, VT_I32, VT_F32},
+               {O::I32TruncF64S, VT_I32, VT_F64},
+               {O::I32TruncF64U, VT_I32, VT_F64},
+               {O::I64ExtendI32S, VT_I64, VT_I32},
+               {O::I64ExtendI32U, VT_I64, VT_I32},
+               {O::I64TruncF32S, VT_I64, VT_F32},
+               {O::I64TruncF32U, VT_I64, VT_F32},
+               {O::I64TruncF64S, VT_I64, VT_F64},
+               {O::I64TruncF64U, VT_I64, VT_F64},
+               {O::I64ReinterpretF64, VT_I64, VT_F64},
+               {O::F32ConvertI32S, VT_F32, VT_I32},
+               {O::F32ConvertI32U, VT_F32, VT_I32},
+               {O::F32ReinterpretI32, VT_F32, VT_I32},
+               {O::F32ConvertI64S, VT_F32, VT_I64},
+               {O::F32ConvertI64U, VT_F32, VT_I64},
+               {O::F32DemoteF64, VT_F32, VT_F64},
+               {O::F64ConvertI32S, VT_F64, VT_I32},
+               {O::F64ConvertI32U, VT_F64, VT_I32},
+               {O::F64ConvertI64S, VT_F64, VT_I64},
+               {O::F64ConvertI64U, VT_F64, VT_I64},
+               {O::F64ReinterpretI64, VT_F64, VT_I64},
+               {O::F64PromoteF32, VT_F64, VT_F32}};
 
   for (const auto& info: infos) {
     TestSignature(I{info.opcode}, {info.from}, {info.to});
@@ -1546,8 +1536,8 @@ TEST_F(ValidateInstructionTest, Conversion) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCall) {
-  BeginFunction(FunctionType{{}, {VT::F32()}});
-  auto index = AddFunction(FunctionType{{VT::I32()}, {VT::F32()}});
+  BeginFunction(FunctionType{{}, {VT_F32}});
+  auto index = AddFunction(FunctionType{{VT_I32}, {VT_F32}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::ReturnCall, Index{index}});
   ExpectNoErrors(errors);
@@ -1555,9 +1545,9 @@ TEST_F(ValidateInstructionTest, ReturnCall) {
 
 TEST_F(ValidateInstructionTest, ReturnCall_Unreachable) {
   BeginFunction(FunctionType{{}, {}});
-  auto index = AddFunction(FunctionType{{VT::I32()}, {}});
+  auto index = AddFunction(FunctionType{{VT_I32}, {}});
 
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::F64Const, f64{}});  // Extra value on stack is ok.
 
   Ok(I{O::I32Const, s32{}});
@@ -1584,7 +1574,7 @@ TEST_F(ValidateInstructionTest, ReturnCall_TypeIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCall_ParamTypeMismatch) {
-  auto index = AddFunction(FunctionType{{VT::I32()}, {}});
+  auto index = AddFunction(FunctionType{{VT_I32}, {}});
   Ok(I{O::F32Const, f32{}});
   Fail(I{O::ReturnCall, Index{index}});
   ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
@@ -1592,8 +1582,8 @@ TEST_F(ValidateInstructionTest, ReturnCall_ParamTypeMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCall_ResultTypeMismatch) {
-  BeginFunction(FunctionType{{}, {VT::F32()}});
-  auto index = AddFunction(FunctionType{{}, {VT::I32()}});
+  BeginFunction(FunctionType{{}, {VT_F32}});
+  auto index = AddFunction(FunctionType{{}, {VT_I32}});
   Fail(I{O::ReturnCall, Index{index}});
   ExpectError(
       {"instruction",
@@ -1602,9 +1592,9 @@ TEST_F(ValidateInstructionTest, ReturnCall_ResultTypeMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect) {
-  BeginFunction(FunctionType{{}, {VT::F32()}});
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  auto index = AddFunctionType(FunctionType{{VT::I64()}, {VT::F32()}});
+  BeginFunction(FunctionType{{}, {VT_F32}});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  auto index = AddFunctionType(FunctionType{{VT_I64}, {VT_F32}});
   Ok(I{O::I64Const, s64{}});  // Param.
   Ok(I{O::I32Const, s32{}});  // call_indirect key.
   Ok(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
@@ -1613,10 +1603,10 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect) {
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_Unreachable) {
   BeginFunction(FunctionType{{}, {}});
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  auto index = AddFunctionType(FunctionType{{VT::I64()}, {}});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  auto index = AddFunctionType(FunctionType{{VT_I64}, {}});
 
-  Ok(I{O::Block, BlockType::I32()});
+  Ok(I{O::Block, BT_I32});
   Ok(I{O::F64Const, f64{}});  // Extra value on stack is ok.
 
   Ok(I{O::I64Const, s64{}});
@@ -1628,7 +1618,7 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect_Unreachable) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_TableIndexOOB) {
-  auto index = AddFunction(FunctionType{{VT::I32()}, {}});
+  auto index = AddFunction(FunctionType{{VT_I32}, {}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
   ExpectErrors({{"instruction", "Invalid table index 0, must be less than 0"},
@@ -1637,7 +1627,7 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_TypeIndexOOB) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
+  AddTable(TableType{Limits{0}, RT_Funcref});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{100, 0}});
   ExpectError({"instruction", "Invalid type index 100, must be less than 1"},
@@ -1645,7 +1635,7 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect_TypeIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_NoKey) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
+  AddTable(TableType{Limits{0}, RT_Funcref});
   auto index = AddFunction(FunctionType{{}, {}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
   ExpectError({"instruction", "Expected stack to contain [i32], got []"},
@@ -1653,8 +1643,8 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect_NoKey) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_ParamTypeMismatch) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  auto index = AddFunction(FunctionType{{VT::I32()}, {}});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  auto index = AddFunction(FunctionType{{VT_I32}, {}});
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
@@ -1663,9 +1653,9 @@ TEST_F(ValidateInstructionTest, ReturnCallIndirect_ParamTypeMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallIndirect_ResultTypeMismatch) {
-  BeginFunction(FunctionType{{}, {VT::F32()}});
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  auto index = AddFunction(FunctionType{{}, {VT::I32()}});
+  BeginFunction(FunctionType{{}, {VT_F32}});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  auto index = AddFunction(FunctionType{{}, {VT_I32}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::ReturnCallIndirect, CallIndirectImmediate{index, 0}});
   ExpectError(
@@ -1678,11 +1668,11 @@ TEST_F(ValidateInstructionTest, SignExtension) {
   const struct {
     Opcode opcode;
     ValueType value_type;
-  } infos[] = {{O::I32Extend8S, VT::I32()},
-               {O::I32Extend16S, VT::I32()},
-               {O::I64Extend8S, VT::I64()},
-               {O::I64Extend16S, VT::I64()},
-               {O::I64Extend32S, VT::I64()}};
+  } infos[] = {{O::I32Extend8S, VT_I32},
+               {O::I32Extend16S, VT_I32},
+               {O::I64Extend8S, VT_I64},
+               {O::I64Extend16S, VT_I64},
+               {O::I64Extend32S, VT_I64}};
 
   for (const auto& info: infos) {
     TestSignature(I{info.opcode}, {info.value_type}, {info.value_type});
@@ -1694,15 +1684,15 @@ TEST_F(ValidateInstructionTest, ReferenceTypes) {
       VT{ReferenceType{RefType{HeapType{HeapKind::Extern}, Null::Yes}}};
   auto RefNullFunc =
       VT{ReferenceType{RefType{HeapType{HeapKind::Func}, Null::Yes}}};
-  TestSignature(I{O::RefNull, HT::Extern()}, {}, {RefNullExtern});
-  TestSignature(I{O::RefNull, HT::Func()}, {}, {RefNullFunc});
-  TestSignature(I{O::RefIsNull}, {VT::Externref()}, {VT::I32()});
-  TestSignature(I{O::RefIsNull}, {VT::Funcref()}, {VT::I32()});
+  TestSignature(I{O::RefNull, HT_Extern}, {}, {RefNullExtern});
+  TestSignature(I{O::RefNull, HT_Func}, {}, {RefNullFunc});
+  TestSignature(I{O::RefIsNull}, {VT_Externref}, {VT_I32});
+  TestSignature(I{O::RefIsNull}, {VT_Funcref}, {VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, RefFunc) {
   context.declared_functions.insert(0);
-  TestSignature(I{O::RefFunc, Index{0}}, {}, {VT::Funcref()});
+  TestSignature(I{O::RefFunc, Index{0}}, {}, {VT_Funcref});
 }
 
 TEST_F(ValidateInstructionTest, RefFunc_UndeclaredFunctionReference) {
@@ -1715,14 +1705,14 @@ TEST_F(ValidateInstructionTest, SaturatingFloatToInt) {
     Opcode opcode;
     ValueType to;
     ValueType from;
-  } infos[] = {{O::I32TruncSatF32S, VT::I32(), VT::F32()},
-               {O::I32TruncSatF32U, VT::I32(), VT::F32()},
-               {O::I32TruncSatF64S, VT::I32(), VT::F64()},
-               {O::I32TruncSatF64U, VT::I32(), VT::F64()},
-               {O::I64TruncSatF32S, VT::I64(), VT::F32()},
-               {O::I64TruncSatF32U, VT::I64(), VT::F32()},
-               {O::I64TruncSatF64S, VT::I64(), VT::F64()},
-               {O::I64TruncSatF64U, VT::I64(), VT::F64()}};
+  } infos[] = {{O::I32TruncSatF32S, VT_I32, VT_F32},
+               {O::I32TruncSatF32U, VT_I32, VT_F32},
+               {O::I32TruncSatF64S, VT_I32, VT_F64},
+               {O::I32TruncSatF64U, VT_I32, VT_F64},
+               {O::I64TruncSatF32S, VT_I64, VT_F32},
+               {O::I64TruncSatF32U, VT_I64, VT_F32},
+               {O::I64TruncSatF64S, VT_I64, VT_F64},
+               {O::I64TruncSatF64U, VT_I64, VT_F64}};
 
   for (const auto& info: infos) {
     TestSignature(I{info.opcode}, {info.from}, {info.to});
@@ -1733,7 +1723,7 @@ TEST_F(ValidateInstructionTest, MemoryInit) {
   context.declared_data_count = 2;
   AddMemory(MemoryType{Limits{0}});
   TestSignature(I{O::MemoryInit, InitImmediate{1, 0}},
-                {VT::I32(), VT::I32(), VT::I32()}, {});
+                {VT_I32, VT_I32, VT_I32}, {});
 }
 
 TEST_F(ValidateInstructionTest, MemoryInit_MemoryIndexOOB) {
@@ -1773,8 +1763,8 @@ TEST_F(ValidateInstructionTest, DataDrop_SegmentIndexOOB) {
 
 TEST_F(ValidateInstructionTest, MemoryCopy) {
   AddMemory(MemoryType{Limits{0}});
-  TestSignature(I{O::MemoryCopy, CopyImmediate{0, 0}},
-                {VT::I32(), VT::I32(), VT::I32()}, {});
+  TestSignature(I{O::MemoryCopy, CopyImmediate{0, 0}}, {VT_I32, VT_I32, VT_I32},
+                {});
 }
 
 TEST_F(ValidateInstructionTest, MemoryCopy_MemoryIndexOOB) {
@@ -1788,7 +1778,7 @@ TEST_F(ValidateInstructionTest, MemoryCopy_MemoryIndexOOB) {
 
 TEST_F(ValidateInstructionTest, MemoryFill) {
   AddMemory(MemoryType{Limits{0}});
-  TestSignature(I{O::MemoryFill, u8{0}}, {VT::I32(), VT::I32(), VT::I32()}, {});
+  TestSignature(I{O::MemoryFill, u8{0}}, {VT_I32, VT_I32, VT_I32}, {});
 }
 
 TEST_F(ValidateInstructionTest, MemoryFill_MemoryIndexOOB) {
@@ -1801,15 +1791,15 @@ TEST_F(ValidateInstructionTest, MemoryFill_MemoryIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableInit) {
-  auto index = AddElementSegment(ReferenceType::Funcref());
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
+  auto index = AddElementSegment(RT_Funcref);
+  AddTable(TableType{Limits{0}, RT_Funcref});
   TestSignature(I{O::TableInit, InitImmediate{index, 0}},
-                {VT::I32(), VT::I32(), VT::I32()}, {});
+                {VT_I32, VT_I32, VT_I32}, {});
 }
 
 TEST_F(ValidateInstructionTest, TableInit_TypeMismatch) {
-  auto index = AddElementSegment(ReferenceType::Externref());
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
+  auto index = AddElementSegment(RT_Externref);
+  AddTable(TableType{Limits{0}, RT_Funcref});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1819,7 +1809,7 @@ TEST_F(ValidateInstructionTest, TableInit_TypeMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, TableInit_TableIndexOOB) {
-  auto index = AddElementSegment(ReferenceType::Funcref());
+  auto index = AddElementSegment(RT_Funcref);
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1829,7 +1819,7 @@ TEST_F(ValidateInstructionTest, TableInit_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableInit_SegmentIndexOOB) {
-  AddTable(TableType{Limits{0}, ReferenceType::Externref()});
+  AddTable(TableType{Limits{0}, RT_Externref});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1840,7 +1830,7 @@ TEST_F(ValidateInstructionTest, TableInit_SegmentIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, ElemDrop) {
-  auto index = AddElementSegment(ReferenceType::Funcref());
+  auto index = AddElementSegment(RT_Funcref);
   TestSignature(I{O::ElemDrop, Index{index}}, {}, {});
 }
 
@@ -1852,14 +1842,14 @@ TEST_F(ValidateInstructionTest, ElemDrop_SegmentIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableCopy) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  TestSignature(I{O::TableCopy, CopyImmediate{0, 0}},
-                {VT::I32(), VT::I32(), VT::I32()}, {});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  TestSignature(I{O::TableCopy, CopyImmediate{0, 0}}, {VT_I32, VT_I32, VT_I32},
+                {});
 }
 
 TEST_F(ValidateInstructionTest, TableCopy_TypeMismatch) {
-  auto dst_index = AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  auto src_index = AddTable(TableType{Limits{0}, ReferenceType::Externref()});
+  auto dst_index = AddTable(TableType{Limits{0}, RT_Funcref});
+  auto src_index = AddTable(TableType{Limits{0}, RT_Externref});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1869,7 +1859,7 @@ TEST_F(ValidateInstructionTest, TableCopy_TypeMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, TableCopy_TableIndexOOB) {
-  auto index = AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
+  auto index = AddTable(TableType{Limits{0}, RT_Funcref});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1879,9 +1869,8 @@ TEST_F(ValidateInstructionTest, TableCopy_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableGrow) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  TestSignature(I{O::TableGrow, Index{0}}, {VT::Funcref(), VT::I32()},
-                {VT::I32()});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  TestSignature(I{O::TableGrow, Index{0}}, {VT_Funcref, VT_I32}, {VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, TableGrow_TableIndexOOB) {
@@ -1892,8 +1881,8 @@ TEST_F(ValidateInstructionTest, TableGrow_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableSize) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  TestSignature(I{O::TableSize, Index{0}}, {}, {VT::I32()});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  TestSignature(I{O::TableSize, Index{0}}, {}, {VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, TableSize_TableIndexOOB) {
@@ -1903,9 +1892,8 @@ TEST_F(ValidateInstructionTest, TableSize_TableIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, TableFill) {
-  AddTable(TableType{Limits{0}, ReferenceType::Funcref()});
-  TestSignature(I{O::TableFill, Index{0}},
-                {VT::I32(), VT::Funcref(), VT::I32()}, {});
+  AddTable(TableType{Limits{0}, RT_Funcref});
+  TestSignature(I{O::TableFill, Index{0}}, {VT_I32, VT_Funcref, VT_I32}, {});
 }
 
 TEST_F(ValidateInstructionTest, TableFill_TableIndexOOB) {
@@ -1925,7 +1913,7 @@ TEST_F(ValidateInstructionTest, SimdLoad) {
 
   AddMemory(MemoryType{Limits{0}});
   for (const auto& opcode : opcodes) {
-    TestSignature(I{opcode, MemArgImmediate{0, 0}}, {VT::I32()}, {VT::V128()});
+    TestSignature(I{opcode, MemArgImmediate{0, 0}}, {VT_I32}, {VT_V128});
   }
 }
 
@@ -1968,8 +1956,7 @@ TEST_F(ValidateInstructionTest, SimdLoad_MemoryOOB) {
 
 TEST_F(ValidateInstructionTest, SimdStore) {
   AddMemory(MemoryType{Limits{0}});
-  TestSignature(I{O::V128Store, MemArgImmediate{0, 0}}, {VT::I32(), VT::V128()},
-                {});
+  TestSignature(I{O::V128Store, MemArgImmediate{0, 0}}, {VT_I32, VT_V128}, {});
 }
 
 TEST_F(ValidateInstructionTest, SimdStore_Alignment) {
@@ -1991,12 +1978,11 @@ TEST_F(ValidateInstructionTest, SimdStore_MemoryOOB) {
 }
 
 TEST_F(ValidateInstructionTest, SimdConst) {
-  TestSignature(I{O::V128Const}, {}, {VT::V128()});
+  TestSignature(I{O::V128Const}, {}, {VT_V128});
 }
 
 TEST_F(ValidateInstructionTest, SimdBitSelect) {
-  TestSignature(I{O::V128BitSelect}, {VT::V128(), VT::V128(), VT::V128()},
-                {VT::V128()});
+  TestSignature(I{O::V128BitSelect}, {VT_V128, VT_V128, VT_V128}, {VT_V128});
 }
 
 TEST_F(ValidateInstructionTest, SimdUnary) {
@@ -2030,7 +2016,7 @@ TEST_F(ValidateInstructionTest, SimdUnary) {
   };
 
   for (const auto& opcode: opcodes) {
-    TestSignature(I{opcode}, {VT::V128()}, {VT::V128()});
+    TestSignature(I{opcode}, {VT_V128}, {VT_V128});
   }
 }
 
@@ -2087,13 +2073,13 @@ TEST_F(ValidateInstructionTest, SimdBinary) {
   };
 
   for (const auto& opcode: opcodes) {
-    TestSignature(I{opcode}, {VT::V128(), VT::V128()}, {VT::V128()});
+    TestSignature(I{opcode}, {VT_V128, VT_V128}, {VT_V128});
   }
 }
 
 TEST_F(ValidateInstructionTest, SimdShuffle) {
-  TestSignature(I{O::V8X16Shuffle, ShuffleImmediate{}},
-                {VT::V128(), VT::V128()}, {VT::V128()});
+  TestSignature(I{O::V8X16Shuffle, ShuffleImmediate{}}, {VT_V128, VT_V128},
+                {VT_V128});
 }
 
 TEST_F(ValidateInstructionTest, SimdShuffle_ValidLane) {
@@ -2118,7 +2104,7 @@ TEST_F(ValidateInstructionTest, SimdAnyTrueAllTrue) {
                             O::I16X8AllTrue, O::I32X4AnyTrue, O::I32X4AllTrue};
 
   for (const auto& opcode : opcodes) {
-    TestSignature(I{opcode}, {VT::V128()}, {VT::I32()});
+    TestSignature(I{opcode}, {VT_V128}, {VT_I32});
   }
 }
 
@@ -2126,12 +2112,12 @@ TEST_F(ValidateInstructionTest, SimdSplats) {
   const struct {
     Opcode opcode;
     ValueType value_type;
-  } infos[] = {{O::I8X16Splat, VT::I32()}, {O::I16X8Splat, VT::I32()},
-               {O::I32X4Splat, VT::I32()}, {O::I64X2Splat, VT::I64()},
-               {O::F32X4Splat, VT::F32()}, {O::F64X2Splat, VT::F64()}};
+  } infos[] = {{O::I8X16Splat, VT_I32}, {O::I16X8Splat, VT_I32},
+               {O::I32X4Splat, VT_I32}, {O::I64X2Splat, VT_I64},
+               {O::F32X4Splat, VT_F32}, {O::F64X2Splat, VT_F64}};
 
   for (const auto& info: infos) {
-    TestSignature(I{info.opcode}, {info.value_type}, {VT::V128()});
+    TestSignature(I{info.opcode}, {info.value_type}, {VT_V128});
   }
 }
 
@@ -2139,14 +2125,13 @@ TEST_F(ValidateInstructionTest, SimdExtractLanes) {
   const struct {
     Opcode opcode;
     ValueType value_type;
-  } infos[] = {
-      {O::I8X16ExtractLaneS, VT::I32()}, {O::I8X16ExtractLaneU, VT::I32()},
-      {O::I16X8ExtractLaneS, VT::I32()}, {O::I16X8ExtractLaneU, VT::I32()},
-      {O::I32X4ExtractLane, VT::I32()},  {O::I64X2ExtractLane, VT::I64()},
-      {O::F32X4ExtractLane, VT::F32()},  {O::F64X2ExtractLane, VT::F64()}};
+  } infos[] = {{O::I8X16ExtractLaneS, VT_I32}, {O::I8X16ExtractLaneU, VT_I32},
+               {O::I16X8ExtractLaneS, VT_I32}, {O::I16X8ExtractLaneU, VT_I32},
+               {O::I32X4ExtractLane, VT_I32},  {O::I64X2ExtractLane, VT_I64},
+               {O::F32X4ExtractLane, VT_F32},  {O::F64X2ExtractLane, VT_F64}};
 
   for (const auto& info: infos) {
-    TestSignature(I{info.opcode, SimdLaneImmediate{0}}, {VT::V128()},
+    TestSignature(I{info.opcode, SimdLaneImmediate{0}}, {VT_V128},
                   {info.value_type});
   }
 }
@@ -2177,14 +2162,13 @@ TEST_F(ValidateInstructionTest, SimdReplaceLanes) {
   const struct {
     Opcode opcode;
     ValueType value_type;
-  } infos[] = {
-      {O::I8X16ReplaceLane, VT::I32()}, {O::I16X8ReplaceLane, VT::I32()},
-      {O::I32X4ReplaceLane, VT::I32()}, {O::I64X2ReplaceLane, VT::I64()},
-      {O::F32X4ReplaceLane, VT::F32()}, {O::F64X2ReplaceLane, VT::F64()}};
+  } infos[] = {{O::I8X16ReplaceLane, VT_I32}, {O::I16X8ReplaceLane, VT_I32},
+               {O::I32X4ReplaceLane, VT_I32}, {O::I64X2ReplaceLane, VT_I64},
+               {O::F32X4ReplaceLane, VT_F32}, {O::F64X2ReplaceLane, VT_F64}};
 
   for (const auto& info : infos) {
     TestSignature(I{info.opcode, SimdLaneImmediate{0}},
-                  {VT::V128(), info.value_type}, {VT::V128()});
+                  {VT_V128, info.value_type}, {VT_V128});
   }
 }
 
@@ -2220,18 +2204,18 @@ TEST_F(ValidateInstructionTest, SimdShifts) {
                             O::I64X2Shl, O::I64X2ShrS, O::I64X2ShrU};
 
   for (const auto& opcode : opcodes) {
-    TestSignature(I{opcode}, {VT::V128(), VT::I32()}, {VT::V128()});
+    TestSignature(I{opcode}, {VT_V128, VT_I32}, {VT_V128});
   }
 }
 
 TEST_F(ValidateInstructionTest, AtomicNotifyAndWait) {
   AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
   TestSignature(I{O::MemoryAtomicNotify, MemArgImmediate{2, 0}},
-                {VT::I32(), VT::I32()}, {VT::I32()});
+                {VT_I32, VT_I32}, {VT_I32});
   TestSignature(I{O::MemoryAtomicWait32, MemArgImmediate{2, 0}},
-                {VT::I32(), VT::I32(), VT::I64()}, {VT::I32()});
+                {VT_I32, VT_I32, VT_I64}, {VT_I32});
   TestSignature(I{O::MemoryAtomicWait64, MemArgImmediate{3, 0}},
-                {VT::I32(), VT::I64(), VT::I64()}, {VT::I32()});
+                {VT_I32, VT_I64, VT_I64}, {VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, AtomicNotifyAndWait_Alignment) {
@@ -2264,14 +2248,14 @@ TEST_F(ValidateInstructionTest, AtomicLoad) {
     ValueType result;
     u32 align;
   } infos[] = {
-      {O::I32AtomicLoad, VT::I32(), 2},    {O::I32AtomicLoad8U, VT::I32(), 0},
-      {O::I32AtomicLoad16U, VT::I32(), 1}, {O::I64AtomicLoad, VT::I64(), 3},
-      {O::I64AtomicLoad8U, VT::I64(), 0},  {O::I64AtomicLoad16U, VT::I64(), 1},
-      {O::I64AtomicLoad32U, VT::I64(), 2}};
+      {O::I32AtomicLoad, VT_I32, 2},    {O::I32AtomicLoad8U, VT_I32, 0},
+      {O::I32AtomicLoad16U, VT_I32, 1}, {O::I64AtomicLoad, VT_I64, 3},
+      {O::I64AtomicLoad8U, VT_I64, 0},  {O::I64AtomicLoad16U, VT_I64, 1},
+      {O::I64AtomicLoad32U, VT_I64, 2}};
 
   AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
   for (const auto& info: infos) {
-    TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}}, {VT::I32()},
+    TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}}, {VT_I32},
                   {info.result});
   }
 
@@ -2326,15 +2310,15 @@ TEST_F(ValidateInstructionTest, AtomicStore) {
     ValueType value_type;
     u32 align;
   } infos[] = {
-      {O::I32AtomicStore, VT::I32(), 2},   {O::I32AtomicStore8, VT::I32(), 0},
-      {O::I32AtomicStore16, VT::I32(), 1}, {O::I64AtomicStore, VT::I64(), 3},
-      {O::I64AtomicStore8, VT::I64(), 0},  {O::I64AtomicStore16, VT::I64(), 1},
-      {O::I64AtomicStore32, VT::I64(), 2}};
+      {O::I32AtomicStore, VT_I32, 2},   {O::I32AtomicStore8, VT_I32, 0},
+      {O::I32AtomicStore16, VT_I32, 1}, {O::I64AtomicStore, VT_I64, 3},
+      {O::I64AtomicStore8, VT_I64, 0},  {O::I64AtomicStore16, VT_I64, 1},
+      {O::I64AtomicStore32, VT_I64, 2}};
 
   AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
   for (const auto& info: infos) {
     TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}},
-                  {VT::I32(), info.value_type}, {});
+                  {VT_I32, info.value_type}, {});
   }
 
   Ok(I{O::Unreachable});
@@ -2388,54 +2372,33 @@ TEST_F(ValidateInstructionTest, AtomicRmw) {
     ValueType value_type;
     u32 align;
   } infos[] = {
-      {O::I32AtomicRmwAdd, VT::I32(), 2},
-      {O::I32AtomicRmwSub, VT::I32(), 2},
-      {O::I32AtomicRmwAnd, VT::I32(), 2},
-      {O::I32AtomicRmwOr, VT::I32(), 2},
-      {O::I32AtomicRmwXor, VT::I32(), 2},
-      {O::I32AtomicRmwXchg, VT::I32(), 2},
-      {O::I32AtomicRmw16AddU, VT::I32(), 1},
-      {O::I32AtomicRmw16SubU, VT::I32(), 1},
-      {O::I32AtomicRmw16AndU, VT::I32(), 1},
-      {O::I32AtomicRmw16OrU, VT::I32(), 1},
-      {O::I32AtomicRmw16XorU, VT::I32(), 1},
-      {O::I32AtomicRmw16XchgU, VT::I32(), 1},
-      {O::I32AtomicRmw8AddU, VT::I32(), 0},
-      {O::I32AtomicRmw8SubU, VT::I32(), 0},
-      {O::I32AtomicRmw8AndU, VT::I32(), 0},
-      {O::I32AtomicRmw8OrU, VT::I32(), 0},
-      {O::I32AtomicRmw8XorU, VT::I32(), 0},
-      {O::I32AtomicRmw8XchgU, VT::I32(), 0},
-      {O::I64AtomicRmwAdd, VT::I64(), 3},
-      {O::I64AtomicRmwSub, VT::I64(), 3},
-      {O::I64AtomicRmwAnd, VT::I64(), 3},
-      {O::I64AtomicRmwOr, VT::I64(), 3},
-      {O::I64AtomicRmwXor, VT::I64(), 3},
-      {O::I64AtomicRmwXchg, VT::I64(), 3},
-      {O::I64AtomicRmw32AddU, VT::I64(), 2},
-      {O::I64AtomicRmw32SubU, VT::I64(), 2},
-      {O::I64AtomicRmw32AndU, VT::I64(), 2},
-      {O::I64AtomicRmw32OrU, VT::I64(), 2},
-      {O::I64AtomicRmw32XorU, VT::I64(), 2},
-      {O::I64AtomicRmw32XchgU, VT::I64(), 2},
-      {O::I64AtomicRmw16AddU, VT::I64(), 1},
-      {O::I64AtomicRmw16SubU, VT::I64(), 1},
-      {O::I64AtomicRmw16AndU, VT::I64(), 1},
-      {O::I64AtomicRmw16OrU, VT::I64(), 1},
-      {O::I64AtomicRmw16XorU, VT::I64(), 1},
-      {O::I64AtomicRmw16XchgU, VT::I64(), 1},
-      {O::I64AtomicRmw8AddU, VT::I64(), 0},
-      {O::I64AtomicRmw8SubU, VT::I64(), 0},
-      {O::I64AtomicRmw8AndU, VT::I64(), 0},
-      {O::I64AtomicRmw8OrU, VT::I64(), 0},
-      {O::I64AtomicRmw8XorU, VT::I64(), 0},
-      {O::I64AtomicRmw8XchgU, VT::I64(), 0},
+      {O::I32AtomicRmwAdd, VT_I32, 2},    {O::I32AtomicRmwSub, VT_I32, 2},
+      {O::I32AtomicRmwAnd, VT_I32, 2},    {O::I32AtomicRmwOr, VT_I32, 2},
+      {O::I32AtomicRmwXor, VT_I32, 2},    {O::I32AtomicRmwXchg, VT_I32, 2},
+      {O::I32AtomicRmw16AddU, VT_I32, 1}, {O::I32AtomicRmw16SubU, VT_I32, 1},
+      {O::I32AtomicRmw16AndU, VT_I32, 1}, {O::I32AtomicRmw16OrU, VT_I32, 1},
+      {O::I32AtomicRmw16XorU, VT_I32, 1}, {O::I32AtomicRmw16XchgU, VT_I32, 1},
+      {O::I32AtomicRmw8AddU, VT_I32, 0},  {O::I32AtomicRmw8SubU, VT_I32, 0},
+      {O::I32AtomicRmw8AndU, VT_I32, 0},  {O::I32AtomicRmw8OrU, VT_I32, 0},
+      {O::I32AtomicRmw8XorU, VT_I32, 0},  {O::I32AtomicRmw8XchgU, VT_I32, 0},
+      {O::I64AtomicRmwAdd, VT_I64, 3},    {O::I64AtomicRmwSub, VT_I64, 3},
+      {O::I64AtomicRmwAnd, VT_I64, 3},    {O::I64AtomicRmwOr, VT_I64, 3},
+      {O::I64AtomicRmwXor, VT_I64, 3},    {O::I64AtomicRmwXchg, VT_I64, 3},
+      {O::I64AtomicRmw32AddU, VT_I64, 2}, {O::I64AtomicRmw32SubU, VT_I64, 2},
+      {O::I64AtomicRmw32AndU, VT_I64, 2}, {O::I64AtomicRmw32OrU, VT_I64, 2},
+      {O::I64AtomicRmw32XorU, VT_I64, 2}, {O::I64AtomicRmw32XchgU, VT_I64, 2},
+      {O::I64AtomicRmw16AddU, VT_I64, 1}, {O::I64AtomicRmw16SubU, VT_I64, 1},
+      {O::I64AtomicRmw16AndU, VT_I64, 1}, {O::I64AtomicRmw16OrU, VT_I64, 1},
+      {O::I64AtomicRmw16XorU, VT_I64, 1}, {O::I64AtomicRmw16XchgU, VT_I64, 1},
+      {O::I64AtomicRmw8AddU, VT_I64, 0},  {O::I64AtomicRmw8SubU, VT_I64, 0},
+      {O::I64AtomicRmw8AndU, VT_I64, 0},  {O::I64AtomicRmw8OrU, VT_I64, 0},
+      {O::I64AtomicRmw8XorU, VT_I64, 0},  {O::I64AtomicRmw8XchgU, VT_I64, 0},
   };
 
   AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
   for (const auto& info: infos) {
     TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}},
-                  {VT::I32(), info.value_type}, {info.value_type});
+                  {VT_I32, info.value_type}, {info.value_type});
   }
 
   Ok(I{O::Unreachable});
@@ -2530,19 +2493,19 @@ TEST_F(ValidateInstructionTest, AtomicCmpxchg) {
     ValueType value_type;
     u32 align;
   } infos[] = {
-      {O::I32AtomicRmwCmpxchg, VT::I32(), 2},
-      {O::I32AtomicRmw16CmpxchgU, VT::I32(), 1},
-      {O::I32AtomicRmw8CmpxchgU, VT::I32(), 0},
-      {O::I64AtomicRmwCmpxchg, VT::I64(), 3},
-      {O::I64AtomicRmw32CmpxchgU, VT::I64(), 2},
-      {O::I64AtomicRmw16CmpxchgU, VT::I64(), 1},
-      {O::I64AtomicRmw8CmpxchgU, VT::I64(), 0},
+      {O::I32AtomicRmwCmpxchg, VT_I32, 2},
+      {O::I32AtomicRmw16CmpxchgU, VT_I32, 1},
+      {O::I32AtomicRmw8CmpxchgU, VT_I32, 0},
+      {O::I64AtomicRmwCmpxchg, VT_I64, 3},
+      {O::I64AtomicRmw32CmpxchgU, VT_I64, 2},
+      {O::I64AtomicRmw16CmpxchgU, VT_I64, 1},
+      {O::I64AtomicRmw8CmpxchgU, VT_I64, 0},
   };
 
   AddMemory(MemoryType{Limits{0, 0, Shared::Yes}});
   for (const auto& info: infos) {
     TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}},
-                  {VT::I32(), info.value_type, info.value_type},
+                  {VT_I32, info.value_type, info.value_type},
                   {info.value_type});
   }
 

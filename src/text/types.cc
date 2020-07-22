@@ -56,182 +56,143 @@ auto Var::name() const -> const string_view& {
   return get<string_view>(desc);
 }
 
-HeapType::HeapType(HeapKind type) : type{type} {}
+HeapType::HeapType(At<HeapKind> type) : type{type} {}
 
-HeapType::HeapType(Var type) : type{type} {}
-
-// static
-HeapType HeapType::Func() {
-  return HeapType{HeapKind::Func};
-}
-
-// static
-HeapType HeapType::Extern() {
-  return HeapType{HeapKind::Extern};
-}
-
-// static
-HeapType HeapType::Exn() {
-  return HeapType{HeapKind::Exn};
-}
+HeapType::HeapType(At<Var> type) : type{type} {}
 
 bool HeapType::is_heap_kind() const {
-  return holds_alternative<HeapKind>(type);
-}
-
-bool HeapType::is_func() const {
-  return is_heap_kind() && heap_kind() == HeapKind::Func;
-}
-
-bool HeapType::is_extern() const {
-  return is_heap_kind() && heap_kind() == HeapKind::Extern;
-}
-
-bool HeapType::is_exn() const {
-  return is_heap_kind() && heap_kind() == HeapKind::Exn;
+  return holds_alternative<At<HeapKind>>(type);
 }
 
 bool HeapType::is_var() const {
-  return holds_alternative<Var>(type);
+  return holds_alternative<At<Var>>(type);
 }
 
-auto HeapType::heap_kind() -> HeapKind& {
-  return get<HeapKind>(type);
+auto HeapType::heap_kind() -> At<HeapKind>& {
+  return get<At<HeapKind>>(type);
 }
 
-auto HeapType::heap_kind() const -> const HeapKind& {
-  return get<HeapKind>(type);
+auto HeapType::heap_kind() const -> const At<HeapKind>& {
+  return get<At<HeapKind>>(type);
 }
 
-auto HeapType::var() -> Var& {
-  return get<Var>(type);
+auto HeapType::var() -> At<Var>& {
+  return get<At<Var>>(type);
 }
 
-auto HeapType::var() const -> const Var& {
-  return get<Var>(type);
+auto HeapType::var() const -> const At<Var>& {
+  return get<At<Var>>(type);
 }
 
-ReferenceType::ReferenceType(ReferenceKind type) : type{type} {}
+ReferenceType::ReferenceType(At<ReferenceKind> type) : type{type} {}
 
-ReferenceType::ReferenceType(RefType type) : type{type} {}
+ReferenceType::ReferenceType(At<RefType> type) : type{type} {}
 
 // static
-ReferenceType ReferenceType::Funcref() {
+ReferenceType ReferenceType::Funcref_NoLocation() {
   return ReferenceType{ReferenceKind::Funcref};
 }
 
 // static
-ReferenceType ReferenceType::Externref() {
+ReferenceType ReferenceType::Externref_NoLocation() {
   return ReferenceType{ReferenceKind::Externref};
 }
 
 // static
-ReferenceType ReferenceType::Exnref() {
+ReferenceType ReferenceType::Exnref_NoLocation() {
   return ReferenceType{ReferenceKind::Exnref};
 }
 
 bool ReferenceType::is_reference_kind() const {
-  return holds_alternative<ReferenceKind>(type);
-}
-
-bool ReferenceType::is_funcref() const {
-  return is_reference_kind() && reference_kind() == ReferenceKind::Funcref;
-}
-
-bool ReferenceType::is_externref() const {
-  return is_reference_kind() && reference_kind() == ReferenceKind::Externref;
-}
-
-bool ReferenceType::is_exnref() const {
-  return is_reference_kind() && reference_kind() == ReferenceKind::Exnref;
+  return holds_alternative<At<ReferenceKind>>(type);
 }
 
 bool ReferenceType::is_ref() const {
-  return holds_alternative<RefType>(type);
+  return holds_alternative<At<RefType>>(type);
 }
 
-auto ReferenceType::reference_kind() -> ReferenceKind& {
-  return get<ReferenceKind>(type);
+auto ReferenceType::reference_kind() -> At<ReferenceKind>& {
+  return get<At<ReferenceKind>>(type);
 }
 
-auto ReferenceType::reference_kind() const -> const ReferenceKind& {
-  return get<ReferenceKind>(type);
+auto ReferenceType::reference_kind() const -> const At<ReferenceKind>& {
+  return get<At<ReferenceKind>>(type);
 }
 
-auto ReferenceType::ref() -> RefType& {
-  return get<RefType>(type);
+auto ReferenceType::ref() -> At<RefType>& {
+  return get<At<RefType>>(type);
 }
 
-auto ReferenceType::ref() const -> const RefType& {
-  return get<RefType>(type);
+auto ReferenceType::ref() const -> const At<RefType>& {
+  return get<At<RefType>>(type);
 }
 
-ValueType::ValueType(NumericType type) : type{type} {}
+ValueType::ValueType(At<NumericType> type) : type{type} {}
 
-ValueType::ValueType(ReferenceType type) : type{type} {}
+ValueType::ValueType(At<ReferenceType> type) : type{type} {}
 
 // static
-ValueType ValueType::I32() {
+ValueType ValueType::I32_NoLocation() {
   return ValueType{NumericType::I32};
 }
 
 // static
-ValueType ValueType::I64() {
+ValueType ValueType::I64_NoLocation() {
   return ValueType{NumericType::I64};
 }
 
 // static
-ValueType ValueType::F32() {
+ValueType ValueType::F32_NoLocation() {
   return ValueType{NumericType::F32};
 }
 
 // static
-ValueType ValueType::F64() {
+ValueType ValueType::F64_NoLocation() {
   return ValueType{NumericType::F64};
 }
 
 // static
-ValueType ValueType::V128() {
+ValueType ValueType::V128_NoLocation() {
   return ValueType{NumericType::V128};
 }
 
 // static
-ValueType ValueType::Funcref() {
-  return ValueType{ReferenceType::Funcref()};
+ValueType ValueType::Funcref_NoLocation() {
+  return ValueType{ReferenceType::Funcref_NoLocation()};
 }
 
 // static
-ValueType ValueType::Externref() {
-  return ValueType{ReferenceType::Externref()};
+ValueType ValueType::Externref_NoLocation() {
+  return ValueType{ReferenceType::Externref_NoLocation()};
 }
 
 // static
-ValueType ValueType::Exnref() {
-  return ValueType{ReferenceType::Exnref()};
+ValueType ValueType::Exnref_NoLocation() {
+  return ValueType{ReferenceType::Exnref_NoLocation()};
 }
 
 bool ValueType::is_numeric_type() const {
-  return holds_alternative<NumericType>(type);
+  return holds_alternative<At<NumericType>>(type);
 }
 
 bool ValueType::is_reference_type() const {
-  return holds_alternative<ReferenceType>(type);
+  return holds_alternative<At<ReferenceType>>(type);
 }
 
-auto ValueType::numeric_type() -> NumericType& {
-  return get<NumericType>(type);
+auto ValueType::numeric_type() -> At<NumericType>& {
+  return get<At<NumericType>>(type);
 }
 
-auto ValueType::numeric_type() const -> const NumericType& {
-  return get<NumericType>(type);
+auto ValueType::numeric_type() const -> const At<NumericType>& {
+  return get<At<NumericType>>(type);
 }
 
-auto ValueType::reference_type() -> ReferenceType& {
-  return get<ReferenceType>(type);
+auto ValueType::reference_type() -> At<ReferenceType>& {
+  return get<At<ReferenceType>>(type);
 }
 
-auto ValueType::reference_type() const -> const ReferenceType& {
-  return get<ReferenceType>(type);
+auto ValueType::reference_type() const -> const At<ReferenceType>& {
+  return get<At<ReferenceType>>(type);
 }
 
 bool FunctionTypeUse::IsInlineType() const {

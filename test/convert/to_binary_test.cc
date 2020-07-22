@@ -17,11 +17,14 @@
 #include "wasp/convert/to_binary.h"
 
 #include "gtest/gtest.h"
+#include "test/binary/constants.h"
+#include "test/text/constants.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/text/formatters.h"
 
 using namespace ::wasp;
 using namespace ::wasp::convert;
+namespace tt = ::wasp::text::test;
 
 namespace {
 
@@ -46,6 +49,14 @@ const SpanU8 loc5 = "E"_su8;
 const SpanU8 loc6 = "F"_su8;
 const SpanU8 loc7 = "G"_su8;
 
+// Similar to the definitions in test/binary/constants, but using text
+// locations (e.g. "i32").
+const binary::HeapType BHT_Func{MakeAt("func"_su8, HeapKind::Func)};
+const binary::ReferenceType BRT_Funcref{MakeAt("funcref"_su8, ReferenceKind::Funcref)};
+const binary::ValueType BVT_I32{MakeAt("i32"_su8, NumericType::I32)};
+const binary::ValueType BVT_F32{MakeAt("f32"_su8, NumericType::F32)};
+const binary::ValueType BVT_Funcref{MakeAt("funcref"_su8, BRT_Funcref)};
+
 }  // namespace
 
 TEST(ConvertToBinaryTest, VarList) {
@@ -63,33 +74,30 @@ TEST(ConvertToBinaryTest, VarList) {
 TEST(ConvertToBinaryTest, FunctionType) {
   OK(MakeAt(loc1,
             binary::FunctionType{
-                binary::ValueTypeList{MakeAt(loc2, binary::ValueType::I32())},
-                binary::ValueTypeList{MakeAt(loc3, binary::ValueType::F32())},
+                binary::ValueTypeList{MakeAt(loc2, BVT_I32)},
+                binary::ValueTypeList{MakeAt(loc3, BVT_F32)},
             }),
      MakeAt(loc1, text::FunctionType{
-                      text::ValueTypeList{MakeAt(loc2, text::ValueType::I32())},
-                      text::ValueTypeList{MakeAt(loc3, text::ValueType::F32())},
+                      text::ValueTypeList{MakeAt(loc2, tt::VT_I32)},
+                      text::ValueTypeList{MakeAt(loc3, tt::VT_F32)},
                   }));
 }
 
 TEST(ConvertToBinaryTest, TypeEntry) {
-  OK(MakeAt(
-         loc1,
-         binary::TypeEntry{MakeAt(
-             loc2,
-             binary::FunctionType{
-                 binary::ValueTypeList{MakeAt(loc3, binary::ValueType::I32())},
-                 binary::ValueTypeList{MakeAt(loc4, binary::ValueType::F32())},
-             })}),
+  OK(MakeAt(loc1, binary::TypeEntry{MakeAt(
+                      loc2,
+                      binary::FunctionType{
+                          binary::ValueTypeList{MakeAt(loc3, BVT_I32)},
+                          binary::ValueTypeList{MakeAt(loc4, BVT_F32)},
+                      })}),
      MakeAt(loc1,
             text::TypeEntry{
                 {},
                 MakeAt(loc2,
                        text::BoundFunctionType{
                            text::BoundValueTypeList{text::BoundValueType{
-                               nullopt, MakeAt(loc3, text::ValueType::I32())}},
-                           text::ValueTypeList{
-                               MakeAt(loc4, text::ValueType::F32())}})}));
+                               nullopt, MakeAt(loc3, tt::VT_I32)}},
+                           text::ValueTypeList{MakeAt(loc4, tt::VT_F32)}})}));
 }
 
 TEST(ConvertToBinaryTest, Import) {
@@ -103,25 +111,24 @@ TEST(ConvertToBinaryTest, Import) {
                              nullopt, MakeAt(loc4, text::Var{Index{0}}), {}}}));
 
   // Table
-  OK(MakeAt(loc1,
-            binary::Import{
-                MakeAt(loc2, "m"_sv), MakeAt(loc3, "n"_sv),
-                MakeAt(loc4,
-                       binary::TableType{
-                           MakeAt(loc5, Limits{MakeAt(loc6, u32{1})}),
-                           MakeAt(loc7, binary::ReferenceType::Funcref()),
-                       })}),
-     MakeAt(
+  OK(MakeAt(
          loc1,
-         text::Import{
-             MakeAt(loc2, text::Text{"\"m\"", 1}),
-             MakeAt(loc3, text::Text{"\"n\"", 1}),
-             text::TableDesc{
-                 nullopt,
-                 MakeAt(loc4, text::TableType{
-                                  MakeAt(loc5, Limits{MakeAt(loc6, u32{1})}),
-                                  MakeAt(loc7, text::ReferenceType::Funcref()),
-                              })}}));
+         binary::Import{MakeAt(loc2, "m"_sv), MakeAt(loc3, "n"_sv),
+                        MakeAt(loc4,
+                               binary::TableType{
+                                   MakeAt(loc5, Limits{MakeAt(loc6, u32{1})}),
+                                   MakeAt(loc7, BRT_Funcref),
+                               })}),
+     MakeAt(loc1,
+            text::Import{
+                MakeAt(loc2, text::Text{"\"m\"", 1}),
+                MakeAt(loc3, text::Text{"\"n\"", 1}),
+                text::TableDesc{
+                    nullopt,
+                    MakeAt(loc4, text::TableType{
+                                     MakeAt(loc5, Limits{MakeAt(loc6, u32{1})}),
+                                     MakeAt(loc7, tt::RT_Funcref),
+                                 })}}));
 
   // Memory
   OK(MakeAt(
@@ -142,22 +149,20 @@ TEST(ConvertToBinaryTest, Import) {
                                  })}}));
 
   // Global
-  OK(MakeAt(loc1,
-            binary::Import{MakeAt(loc2, "m"_sv), MakeAt(loc3, "n"_sv),
-                           MakeAt(loc4,
-                                  binary::GlobalType{
-                                      MakeAt(loc5, binary::ValueType::I32()),
-                                      Mutability::Const,
-                                  })}),
-     MakeAt(loc1, text::Import{
-                      MakeAt(loc2, text::Text{"\"m\"", 1}),
-                      MakeAt(loc3, text::Text{"\"n\"", 1}),
-                      text::GlobalDesc{
-                          nullopt,
-                          MakeAt(loc4, text::GlobalType{
-                                           MakeAt(loc5, text::ValueType::I32()),
-                                           Mutability::Const,
-                                       })}}));
+  OK(MakeAt(loc1, binary::Import{MakeAt(loc2, "m"_sv), MakeAt(loc3, "n"_sv),
+                                 MakeAt(loc4,
+                                        binary::GlobalType{
+                                            MakeAt(loc5, BVT_I32),
+                                            Mutability::Const,
+                                        })}),
+     MakeAt(loc1,
+            text::Import{MakeAt(loc2, text::Text{"\"m\"", 1}),
+                         MakeAt(loc3, text::Text{"\"n\"", 1}),
+                         text::GlobalDesc{
+                             nullopt, MakeAt(loc4, text::GlobalType{
+                                                       MakeAt(loc5, tt::VT_I32),
+                                                       Mutability::Const,
+                                                   })}}));
 
   // Event
   OK(MakeAt(loc1, binary::Import{MakeAt(loc2, "m"_sv), MakeAt(loc3, "n"_sv),
@@ -190,12 +195,12 @@ TEST(ConvertToBinaryTest, Function) {
 }
 
 TEST(ConvertToBinaryTest, Table) {
-  auto binary_table_type = MakeAt(
-      loc1, binary::TableType{Limits{MakeAt(loc2, Index{0})},
-                              MakeAt(loc3, binary::ReferenceType::Funcref())});
-  auto text_table_type = MakeAt(
-      loc1, text::TableType{Limits{MakeAt(loc2, Index{0})},
-                            MakeAt(loc3, text::ReferenceType::Funcref())});
+  auto binary_table_type =
+      MakeAt(loc1, binary::TableType{Limits{MakeAt(loc2, Index{0})},
+                                     MakeAt(loc3, BRT_Funcref)});
+  auto text_table_type =
+      MakeAt(loc1, text::TableType{Limits{MakeAt(loc2, Index{0})},
+                                   MakeAt(loc3, tt::RT_Funcref)});
 
   OK(MakeAt(loc4, binary::Table{binary_table_type}),
      MakeAt(loc4, text::Table{text::TableDesc{nullopt, text_table_type}, {}}));
@@ -210,14 +215,13 @@ TEST(ConvertToBinaryTest, Memory) {
 }
 
 TEST(ConvertToBinaryTest, Global) {
-  auto binary_global_type =
-      MakeAt(loc1, binary::GlobalType{
-                       MakeAt(loc2, binary::ValueType::I32()),
-                       MakeAt(Mutability::Const),
-                   });
+  auto binary_global_type = MakeAt(loc1, binary::GlobalType{
+                                             MakeAt(loc2, BVT_I32),
+                                             MakeAt(Mutability::Const),
+                                         });
 
   auto text_global_type = MakeAt(loc1, text::GlobalType{
-                                           MakeAt(loc2, text::ValueType::I32()),
+                                           MakeAt(loc2, tt::VT_I32),
                                            MakeAt(Mutability::Const),
                                        });
 
@@ -317,14 +321,14 @@ TEST(ConvertToBinaryTest, ElementList) {
 
   // ElementExpression.
   OK(binary::ElementList{binary::ElementListWithExpressions{
-         MakeAt(loc1, binary::ReferenceType::Funcref()),
+         MakeAt(loc1, BRT_Funcref),
          MakeAt(loc2, binary::ElementExpressionList{MakeAt(
                           loc3, binary::ElementExpression{MakeAt(
                                     loc4, binary::Instruction{MakeAt(
                                               loc5, Opcode::Nop)})})}),
      }},
      text::ElementList{text::ElementListWithExpressions{
-         MakeAt(loc1, text::ReferenceType::Funcref()),
+         MakeAt(loc1, tt::RT_Funcref),
          MakeAt(loc2, text::ElementExpressionList{MakeAt(
                           loc3, text::ElementExpression{MakeAt(
                                     loc4, text::Instruction{MakeAt(
@@ -371,24 +375,22 @@ TEST(ConvertToBinaryTest, ElementSegment) {
 
 TEST(ConvertToBinaryTest, BlockImmediate) {
   // Void inline type.
-  OK(MakeAt(loc1, binary::BlockType::Void()),
+  OK(MakeAt(loc1, binary::BlockType{binary::VoidType{}}),
      MakeAt(loc1, text::BlockImmediate{nullopt, text::FunctionTypeUse{}}));
 
   // Single inline type.
-  OK(MakeAt(loc1, binary::BlockType::I32()),
+  OK(MakeAt(loc1, binary::BlockType{BVT_I32}),
      MakeAt(loc1,
             text::BlockImmediate{
                 nullopt, text::FunctionTypeUse{
-                             nullopt, text::FunctionType{
-                                          {}, {text::ValueType::I32()}}}}));
+                             nullopt, text::FunctionType{{}, {tt::VT_I32}}}}));
 
   // Generic type (via multi-value proposal).
   OK(MakeAt(loc1, binary::BlockType(13)),
      MakeAt(loc1, text::BlockImmediate{
-                      nullopt,
-                      text::FunctionTypeUse{
-                          text::Var{Index{13}},
-                          text::FunctionType{{text::ValueType::I32()}, {}}}}));
+                      nullopt, text::FunctionTypeUse{
+                                   text::Var{Index{13}},
+                                   text::FunctionType{{tt::VT_I32}, {}}}}));
 }
 
 TEST(ConvertToBinaryTest, BrOnExnImmediate) {
@@ -515,13 +517,12 @@ TEST(ConvertToBinaryTest, Instruction) {
   // BlockImmediate.
   OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::Block),
                                       binary::BlockType{13}}),
-     MakeAt(loc1, text::Instruction{
-                      MakeAt(loc2, Opcode::Block),
-                      text::BlockImmediate{
-                          nullopt, text::FunctionTypeUse{
-                                       text::Var{Index{13}},
-                                       text::FunctionType{
-                                           {text::ValueType::I32()}, {}}}}}));
+     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::Block),
+                                    text::BlockImmediate{
+                                        nullopt, text::FunctionTypeUse{
+                                                     text::Var{Index{13}},
+                                                     text::FunctionType{
+                                                         {tt::VT_I32}, {}}}}}));
 
   // BrOnExnImmediate.
   OK(MakeAt(
@@ -601,20 +602,18 @@ TEST(ConvertToBinaryTest, Instruction) {
 
   // HeapType.
   OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::RefNull),
-                                      MakeAt(loc3, binary::HeapType::Func())}),
+                                      MakeAt(loc3, BHT_Func)}),
      MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::RefNull),
-                                    MakeAt(loc3, text::HeapType::Func())}));
+                                    MakeAt(loc3, tt::HT_Func)}));
 
   // SelectImmediate.
   OK(MakeAt(loc1,
             binary::Instruction{
                 MakeAt(loc2, Opcode::SelectT),
-                MakeAt(loc3, binary::SelectImmediate{MakeAt(
-                                 loc4, binary::ValueType::I32())})}),
-     MakeAt(loc1, text::Instruction{
-                      MakeAt(loc2, Opcode::SelectT),
-                      MakeAt(loc3, text::SelectImmediate{MakeAt(
-                                       loc4, text::ValueType::I32())})}));
+                MakeAt(loc3, binary::SelectImmediate{MakeAt(loc4, BVT_I32)})}),
+     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::SelectT),
+                                    MakeAt(loc3, text::SelectImmediate{MakeAt(
+                                                     loc4, tt::VT_I32)})}));
 
   // ShuffleImmediate.
   OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::V8X16Shuffle),
@@ -784,19 +783,16 @@ TEST(ConvertToBinaryTest, Expression) {
 }
 
 TEST(ConvertToBinaryTest, LocalsList) {
-  OKFunc(ToBinaryLocalsList,
-         MakeAt(loc1,
-                binary::LocalsList{
-                    binary::Locals{2, MakeAt(loc2, binary::ValueType::I32())},
-                    binary::Locals{1, MakeAt(loc4, binary::ValueType::F32())}}),
-         MakeAt(loc1, text::BoundValueTypeList{
-                          text::BoundValueType{
-                              nullopt, MakeAt(loc2, text::ValueType::I32())},
-                          text::BoundValueType{
-                              nullopt, MakeAt(loc3, text::ValueType::I32())},
-                          text::BoundValueType{
-                              nullopt, MakeAt(loc4, text::ValueType::F32())},
-                      }));
+  OKFunc(
+      ToBinaryLocalsList,
+      MakeAt(loc1,
+             binary::LocalsList{binary::Locals{2, MakeAt(loc2, BVT_I32)},
+                                binary::Locals{1, MakeAt(loc4, BVT_F32)}}),
+      MakeAt(loc1, text::BoundValueTypeList{
+                       text::BoundValueType{nullopt, MakeAt(loc2, tt::VT_I32)},
+                       text::BoundValueType{nullopt, MakeAt(loc3, tt::VT_I32)},
+                       text::BoundValueType{nullopt, MakeAt(loc4, tt::VT_F32)},
+                   }));
 }
 
 TEST(ConvertToBinaryTest, Code) {
@@ -805,7 +801,7 @@ TEST(ConvertToBinaryTest, Code) {
       MakeAt(loc1,
              binary::UnpackedCode{
                  MakeAt(loc2, binary::LocalsList{binary::Locals{
-                                  1, MakeAt(loc3, binary::ValueType::I32())}}),
+                                  1, MakeAt(loc3, BVT_I32)}}),
                  MakeAt(loc4,
                         binary::UnpackedExpression{
                             MakeAt(loc4,
@@ -819,7 +815,7 @@ TEST(ConvertToBinaryTest, Code) {
           text::Function{
               {},
               MakeAt(loc2, text::BoundValueTypeList{text::BoundValueType{
-                               nullopt, MakeAt(loc3, text::ValueType::I32())}}),
+                               nullopt, MakeAt(loc3, tt::VT_I32)}}),
               MakeAt(loc4,
                      text::InstructionList{MakeAt(
                          loc5, text::Instruction{MakeAt(loc6, Opcode::Nop)})}),
@@ -904,23 +900,23 @@ TEST(ConvertToBinaryTest, Module) {
   auto binary_table_type = MakeAt(
       "T0"_su8,
       binary::TableType{MakeAt("T1"_su8, Limits{MakeAt("T2"_su8, u32{0})}),
-                        MakeAt("T3"_su8, binary::ReferenceType::Funcref())});
+                        MakeAt("T3"_su8, BRT_Funcref)});
 
   auto text_table_type =
       MakeAt("T0"_su8,
              text::TableType{MakeAt("T1"_su8, Limits{MakeAt("T2"_su8, u32{0})}),
-                             MakeAt("T3"_su8, text::ReferenceType::Funcref())});
+                             MakeAt("T3"_su8, tt::RT_Funcref)});
 
   auto memory_type = MakeAt(
       "M0"_su8, MemoryType{MakeAt("M1"_su8, Limits{MakeAt("M2"_su8, u32{0})})});
 
-  auto binary_global_type = MakeAt(
-      "G0"_su8, binary::GlobalType{MakeAt("G1"_su8, binary::ValueType::I32()),
-                                   MakeAt("G2"_su8, Mutability::Const)});
+  auto binary_global_type =
+      MakeAt("G0"_su8, binary::GlobalType{MakeAt("G1"_su8, BVT_I32),
+                                          MakeAt("G2"_su8, Mutability::Const)});
 
-  auto text_global_type = MakeAt(
-      "G0"_su8, text::GlobalType{MakeAt("G1"_su8, text::ValueType::I32()),
-                                 MakeAt("G2"_su8, Mutability::Const)});
+  auto text_global_type =
+      MakeAt("G0"_su8, text::GlobalType{MakeAt("G1"_su8, tt::VT_I32),
+                                        MakeAt("G2"_su8, Mutability::Const)});
 
   auto external_kind = MakeAt("EK"_su8, ExternalKind::Function);
 

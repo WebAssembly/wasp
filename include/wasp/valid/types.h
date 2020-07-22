@@ -33,6 +33,7 @@ struct StackType {
   explicit StackType();
   explicit StackType(binary::ValueType);
   explicit StackType(Any);
+
   static StackType I32();
   static StackType I64();
   static StackType F32();

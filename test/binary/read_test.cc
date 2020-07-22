@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "test/binary/constants.h"
 #include "test/binary/test_utils.h"
 #include "test/test_utils.h"
 #include "wasp/binary/name_section/read.h"
@@ -84,21 +85,21 @@ class BinaryReadTest : public ::testing::Test {
 };
 
 TEST_F(BinaryReadTest, BlockType_MVP) {
-  OK(Read<BlockType>, BlockType::I32(), "\x7f"_su8);
-  OK(Read<BlockType>, BlockType::I64(), "\x7e"_su8);
-  OK(Read<BlockType>, BlockType::F32(), "\x7d"_su8);
-  OK(Read<BlockType>, BlockType::F64(), "\x7c"_su8);
-  OK(Read<BlockType>, BlockType::Void(), "\x40"_su8);
+  OK(Read<BlockType>, BT_I32, "\x7f"_su8);
+  OK(Read<BlockType>, BT_I64, "\x7e"_su8);
+  OK(Read<BlockType>, BT_F32, "\x7d"_su8);
+  OK(Read<BlockType>, BT_F64, "\x7c"_su8);
+  OK(Read<BlockType>, BT_Void, "\x40"_su8);
 }
 
 TEST_F(BinaryReadTest, BlockType_Basic_multi_value) {
   context.features.enable_multi_value();
 
-  OK(Read<BlockType>, BlockType::I32(), "\x7f"_su8);
-  OK(Read<BlockType>, BlockType::I64(), "\x7e"_su8);
-  OK(Read<BlockType>, BlockType::F32(), "\x7d"_su8);
-  OK(Read<BlockType>, BlockType::F64(), "\x7c"_su8);
-  OK(Read<BlockType>, BlockType::Void(), "\x40"_su8);
+  OK(Read<BlockType>, BT_I32, "\x7f"_su8);
+  OK(Read<BlockType>, BT_I64, "\x7e"_su8);
+  OK(Read<BlockType>, BT_F32, "\x7d"_su8);
+  OK(Read<BlockType>, BT_F64, "\x7c"_su8);
+  OK(Read<BlockType>, BT_Void, "\x40"_su8);
 }
 
 TEST_F(BinaryReadTest, BlockType_simd) {
@@ -106,7 +107,7 @@ TEST_F(BinaryReadTest, BlockType_simd) {
        "\x7b"_su8);
 
   context.features.enable_simd();
-  OK(Read<BlockType>, BlockType::V128(), "\x7b"_su8);
+  OK(Read<BlockType>, BT_V128, "\x7b"_su8);
 }
 
 TEST_F(BinaryReadTest, BlockType_MultiValueNegative) {
@@ -120,8 +121,9 @@ TEST_F(BinaryReadTest, BlockType_multi_value) {
        "\x01"_su8);
 
   context.features.enable_multi_value();
-  OK(Read<BlockType>, BlockType(1), "\x01"_su8);
-  OK(Read<BlockType>, BlockType(448), "\xc0\x03"_su8);
+  OK(Read<BlockType>, BlockType{MakeAt("\x01"_su8, Index{1})}, "\x01"_su8);
+  OK(Read<BlockType>, BlockType{MakeAt("\xc0\x03"_su8, Index{448})},
+     "\xc0\x03"_su8);
 }
 
 TEST_F(BinaryReadTest, BlockType_reference_types) {
@@ -129,7 +131,7 @@ TEST_F(BinaryReadTest, BlockType_reference_types) {
        "\x6f"_su8);
 
   context.features.enable_reference_types();
-  OK(Read<BlockType>, BlockType::Externref(), "\x6f"_su8);
+  OK(Read<BlockType>, BT_Externref, "\x6f"_su8);
 }
 
 TEST_F(BinaryReadTest, BlockType_Unknown) {
@@ -245,12 +247,11 @@ TEST_F(BinaryReadTest, Code) {
   //   (local i32 i32 i64 i64 i64)
   //   (nop))
   OK(Read<Code>,
-     Code{
-         {MakeAt("\x02\x7f"_su8, Locals{MakeAt("\x02"_su8, Index{2}),
-                                        MakeAt("\x7f"_su8, ValueType::I32())}),
-          MakeAt("\x03\x7e"_su8, Locals{MakeAt("\x03"_su8, Index{3}),
-                                        MakeAt("\x7e"_su8, ValueType::I64())})},
-         MakeAt("\x01\x0b"_su8, "\x01\x0b"_expr)},
+     Code{{MakeAt("\x02\x7f"_su8, Locals{MakeAt("\x02"_su8, Index{2}),
+                                         MakeAt("\x7f"_su8, VT_I32)}),
+           MakeAt("\x03\x7e"_su8, Locals{MakeAt("\x03"_su8, Index{3}),
+                                         MakeAt("\x7e"_su8, VT_I64)})},
+          MakeAt("\x01\x0b"_su8, "\x01\x0b"_expr)},
      "\x07\x02\x02\x7f\x03\x7e\x01\x0b"_su8);
 }
 
@@ -342,9 +343,9 @@ TEST_F(BinaryReadTest, ConstantExpression_ReferenceTypes) {
 
   // ref.null
   OK(Read<ConstantExpression>,
-     ConstantExpression{MakeAt(
-         "\xd0\x70"_su8, Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
-                                     MakeAt("\x70"_su8, HeapType::Func())})},
+     ConstantExpression{
+         MakeAt("\xd0\x70"_su8, Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
+                                            MakeAt("\x70"_su8, HT_Func)})},
      "\xd0\x70\x0b"_su8);
 
   // ref.func
@@ -639,9 +640,9 @@ TEST_F(BinaryReadTest, ElementExpression) {
 
   // ref.null
   OK(Read<ElementExpression>,
-     ElementExpression{MakeAt(
-         "\xd0\x70"_su8, Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
-                                     MakeAt("\x70"_su8, HeapType::Func())})},
+     ElementExpression{
+         MakeAt("\xd0\x70"_su8, Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
+                                            MakeAt("\x70"_su8, HT_Func)})},
      "\xd0\x70\x0b"_su8);
 
   // ref.func 2
@@ -684,9 +685,8 @@ TEST_F(BinaryReadTest, ElementExpression_TooLong) {
 
   OK(Read<ElementExpression>,
      ElementExpression{InstructionList{
-         MakeAt("\xd0\x70"_su8,
-                Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
-                            MakeAt("\x70"_su8, HeapType::Func())}),
+         MakeAt("\xd0\x70"_su8, Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
+                                            MakeAt("\x70"_su8, HT_Func)}),
          MakeAt("\x01"_su8, Instruction{MakeAt("\x01"_su8, Opcode::Nop)}),
      }},
      "\xd0\x70\x01\x0b"_su8);
@@ -780,7 +780,7 @@ TEST_F(BinaryReadTest, ElementSegment_BulkMemory) {
                            Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
                                        MakeAt("\x05"_su8, s32{5})})}),
          ElementListWithExpressions{
-             ReferenceType::Funcref(),
+             ReferenceType::Funcref_NoLocation(),
              {MakeAt("\xd2\x06\x0b"_su8,
                      ElementExpression{
                          MakeAt("\xd2\x06"_su8,
@@ -793,18 +793,17 @@ TEST_F(BinaryReadTest, ElementSegment_BulkMemory) {
      ElementSegment{
          SegmentType::Passive,
          ElementListWithExpressions{
-             MakeAt("\x70"_su8, ReferenceType::Funcref()),
+             MakeAt("\x70"_su8, RT_Funcref),
              {MakeAt("\xd2\x07\x0b"_su8,
                      ElementExpression{
                          MakeAt("\xd2\x07"_su8,
                                 Instruction{MakeAt("\xd2"_su8, Opcode::RefFunc),
                                             MakeAt("\x07"_su8, Index{7})})}),
-              MakeAt(
-                  "\xd0\x70\x0b"_su8,
-                  ElementExpression{MakeAt(
-                      "\xd0\x70"_su8,
-                      Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
-                                  MakeAt("\x70"_su8, HeapType::Func())})})}}},
+              MakeAt("\xd0\x70\x0b"_su8,
+                     ElementExpression{
+                         MakeAt("\xd0\x70"_su8,
+                                Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
+                                            MakeAt("\x70"_su8, HT_Func)})})}}},
      "\x05\x70\x02\xd2\x07\x0b\xd0\x70\x0b"_su8);
 
   // Flags == 6: Active, table index, expression list
@@ -817,13 +816,12 @@ TEST_F(BinaryReadTest, ElementSegment_BulkMemory) {
                            Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
                                        MakeAt("\x08"_su8, s32{8})})}),
          ElementListWithExpressions{
-             MakeAt("\x70"_su8, ReferenceType::Funcref()),
-             {MakeAt(
-                 "\xd0\x70\x0b"_su8,
-                 ElementExpression{MakeAt(
-                     "\xd0\x70"_su8,
-                     Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
-                                 MakeAt("\x70"_su8, HeapType::Func())})})}}},
+             MakeAt("\x70"_su8, RT_Funcref),
+             {MakeAt("\xd0\x70\x0b"_su8,
+                     ElementExpression{
+                         MakeAt("\xd0\x70"_su8,
+                                Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
+                                            MakeAt("\x70"_su8, HT_Func)})})}}},
      "\x06\x02\x41\x08\x0b\x70\x01\xd0\x70\x0b"_su8);
 }
 
@@ -877,7 +875,7 @@ TEST_F(BinaryReadTest, ElementSegment_BulkMemory_PastEnd) {
 }
 
 TEST_F(BinaryReadTest, ReferenceType) {
-  OK(Read<ReferenceType>, ReferenceType::Funcref(), "\x70"_su8);
+  OK(Read<ReferenceType>, RT_Funcref, "\x70"_su8);
 }
 
 TEST_F(BinaryReadTest, ReferenceType_ReferenceTypes) {
@@ -886,7 +884,7 @@ TEST_F(BinaryReadTest, ReferenceType_ReferenceTypes) {
 
   context.features.enable_reference_types();
 
-  OK(Read<ReferenceType>, ReferenceType::Externref(), "\x6f"_su8);
+  OK(Read<ReferenceType>, RT_Externref, "\x6f"_su8);
 }
 
 TEST_F(BinaryReadTest, ReferenceType_Exceptions) {
@@ -895,7 +893,7 @@ TEST_F(BinaryReadTest, ReferenceType_Exceptions) {
 
   context.features.enable_exceptions();
 
-  OK(Read<ReferenceType>, ReferenceType::Exnref(), "\x68"_su8);
+  OK(Read<ReferenceType>, RT_Exnref, "\x68"_su8);
 }
 
 
@@ -1069,9 +1067,8 @@ TEST_F(BinaryReadTest, Function_PastEnd) {
 TEST_F(BinaryReadTest, FunctionType) {
   OK(Read<FunctionType>, FunctionType{{}, {}}, "\x00\x00"_su8);
   OK(Read<FunctionType>,
-     FunctionType{{MakeAt("\x7f"_su8, ValueType::I32()),
-                   MakeAt("\x7e"_su8, ValueType::I64())},
-                  {MakeAt("\x7c"_su8, ValueType::F64())}},
+     FunctionType{{MakeAt("\x7f"_su8, VT_I32), MakeAt("\x7e"_su8, VT_I64)},
+                  {MakeAt("\x7c"_su8, VT_F64)}},
      "\x02\x7f\x7e\x01\x7c"_su8);
 }
 
@@ -1108,7 +1105,7 @@ TEST_F(BinaryReadTest, Global) {
   // but still can be successfully parsed.
   OK(Read<Global>,
      Global{MakeAt("\x7f\x01"_su8,
-                   GlobalType{MakeAt("\x7f"_su8, ValueType::I32()),
+                   GlobalType{MakeAt("\x7f"_su8, VT_I32),
                               MakeAt("\x01"_su8, Mutability::Var)}),
             MakeAt("\x42\x00\x0b"_su8,
                    ConstantExpression{
@@ -1136,11 +1133,11 @@ TEST_F(BinaryReadTest, Global_PastEnd) {
 
 TEST_F(BinaryReadTest, GlobalType) {
   OK(Read<GlobalType>,
-     GlobalType{MakeAt("\x7f"_su8, ValueType::I32()),
+     GlobalType{MakeAt("\x7f"_su8, VT_I32),
                 MakeAt("\x00"_su8, Mutability::Const)},
      "\x7f\x00"_su8);
   OK(Read<GlobalType>,
-     GlobalType{MakeAt("\x7d"_su8, ValueType::F32()),
+     GlobalType{MakeAt("\x7d"_su8, VT_F32),
                 MakeAt("\x01"_su8, Mutability::Var)},
      "\x7d\x01"_su8);
 }
@@ -1177,7 +1174,7 @@ TEST_F(BinaryReadTest, Import) {
                    TableType{MakeAt("\x00\x01"_su8,
                                     Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
                                            MakeAt("\x00"_su8, Shared::No)}),
-                             MakeAt("\x70"_su8, ReferenceType::Funcref())})},
+                             MakeAt("\x70"_su8, RT_Funcref)})},
      "\x01"
      "b\x05table\x01\x70\x00\x01"_su8);
 
@@ -1202,7 +1199,7 @@ TEST_F(BinaryReadTest, Import) {
                    "d"_sv),
             MakeAt("\x06global"_su8, "global"_sv),
             MakeAt("\x7f\x00"_su8,
-                   GlobalType{MakeAt("\x7f"_su8, ValueType::I32()),
+                   GlobalType{MakeAt("\x7f"_su8, VT_I32),
                               MakeAt("\x00"_su8, Mutability::Const)})},
      "\x01\x64\x06global\x03\x7f\x00"_su8);
 }
@@ -1607,8 +1604,8 @@ TEST_F(BinaryReadTest, Instruction_BadMemoryReserved) {
 TEST_F(BinaryReadTest, InstructionList_BlockEnd) {
   OK(Read<InstructionList>,
      InstructionList{
-         MakeAt("\x02\x40"_su8, I{MakeAt("\x02"_su8, O::Block),
-                                  MakeAt("\x40"_su8, BlockType::Void())}),
+         MakeAt("\x02\x40"_su8,
+                I{MakeAt("\x02"_su8, O::Block), MakeAt("\x40"_su8, BT_Void)}),
          MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
      },
      "\x02\x40\x0b\x0b"_su8);
@@ -1622,8 +1619,8 @@ TEST_F(BinaryReadTest, InstructionList_BlockNoEnd) {
 TEST_F(BinaryReadTest, InstructionList_LoopEnd) {
   OK(Read<InstructionList>,
      InstructionList{
-         MakeAt("\x03\x40"_su8, I{MakeAt("\x03"_su8, O::Loop),
-                                  MakeAt("\x40"_su8, BlockType::Void())}),
+         MakeAt("\x03\x40"_su8,
+                I{MakeAt("\x03"_su8, O::Loop), MakeAt("\x40"_su8, BT_Void)}),
          MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
      },
      "\x03\x40\x0b\x0b"_su8);
@@ -1637,8 +1634,8 @@ TEST_F(BinaryReadTest, InstructionList_LoopNoEnd) {
 TEST_F(BinaryReadTest, InstructionList_IfEnd) {
   OK(Read<InstructionList>,
      InstructionList{
-         MakeAt("\x04\x40"_su8, I{MakeAt("\x04"_su8, O::If),
-                                  MakeAt("\x40"_su8, BlockType::Void())}),
+         MakeAt("\x04\x40"_su8,
+                I{MakeAt("\x04"_su8, O::If), MakeAt("\x40"_su8, BT_Void)}),
          MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
      },
      "\x04\x40\x0b\x0b"_su8);
@@ -1647,8 +1644,8 @@ TEST_F(BinaryReadTest, InstructionList_IfEnd) {
 TEST_F(BinaryReadTest, InstructionList_IfElseEnd) {
   OK(Read<InstructionList>,
      InstructionList{
-         MakeAt("\x04\x40"_su8, I{MakeAt("\x04"_su8, O::If),
-                                  MakeAt("\x40"_su8, BlockType::Void())}),
+         MakeAt("\x04\x40"_su8,
+                I{MakeAt("\x04"_su8, O::If), MakeAt("\x40"_su8, BT_Void)}),
          MakeAt("\x05"_su8, I{MakeAt("\x05"_su8, O::Else)}),
          MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
      },
@@ -1663,8 +1660,7 @@ TEST_F(BinaryReadTest, InstructionList_IfNoEnd) {
 TEST_F(BinaryReadTest, Instruction_exceptions) {
   context.features.enable_exceptions();
 
-  OK(Read<I>,
-     I{MakeAt("\x06"_su8, O::Try), MakeAt("\x40"_su8, BlockType::Void())},
+  OK(Read<I>, I{MakeAt("\x06"_su8, O::Try), MakeAt("\x40"_su8, BT_Void)},
      "\x06\x40"_su8);
   OK(Read<I>, I{MakeAt("\x07"_su8, O::Catch)}, "\x07"_su8);
   OK(Read<I>, I{MakeAt("\x08"_su8, O::Throw), MakeAt("\x00"_su8, Index{0})},
@@ -1682,8 +1678,8 @@ TEST_F(BinaryReadTest, InstructionList_TryCatchEnd) {
 
   OK(Read<InstructionList>,
      InstructionList{
-         MakeAt("\x06\x40"_su8, I{MakeAt("\x06"_su8, O::Try),
-                                  MakeAt("\x40"_su8, BlockType::Void())}),
+         MakeAt("\x06\x40"_su8,
+                I{MakeAt("\x06"_su8, O::Try), MakeAt("\x40"_su8, BT_Void)}),
          MakeAt("\x07"_su8, I{MakeAt("\x07"_su8, O::Catch)}),
          MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
      },
@@ -1733,9 +1729,8 @@ TEST_F(BinaryReadTest, Instruction_reference_types) {
 
   OK(Read<I>,
      I{MakeAt("\x1c"_su8, O::SelectT),
-       MakeAt("\x02\x7f\x7e"_su8,
-              ValueTypeList{MakeAt("\x7f"_su8, ValueType::I32()),
-                            MakeAt("\x7e"_su8, ValueType::I64())})},
+       MakeAt("\x02\x7f\x7e"_su8, ValueTypeList{MakeAt("\x7f"_su8, VT_I32),
+                                                MakeAt("\x7e"_su8, VT_I64)})},
      "\x1c\x02\x7f\x7e"_su8);
   OK(Read<I>, I{MakeAt("\x25"_su8, O::TableGet), MakeAt("\x00"_su8, Index{0})},
      "\x25\x00"_su8);
@@ -1760,8 +1755,7 @@ TEST_F(BinaryReadTest, Instruction_reference_types) {
   OK(Read<I>,
      I{MakeAt("\xfc\x11"_su8, O::TableFill), MakeAt("\x00"_su8, Index{0})},
      "\xfc\x11\x00"_su8);
-  OK(Read<I>,
-     I{MakeAt("\xd0"_su8, O::RefNull), MakeAt("\x70"_su8, HeapType::Func())},
+  OK(Read<I>, I{MakeAt("\xd0"_su8, O::RefNull), MakeAt("\x70"_su8, HT_Func)},
      "\xd0\x70"_su8);
   OK(Read<I>, I{MakeAt("\xd1"_su8, O::RefIsNull)}, "\xd1"_su8);
   OK(Read<I>, I{MakeAt("\xd2"_su8, O::RefFunc), MakeAt("\x00"_su8, Index{0})},
@@ -2213,11 +2207,10 @@ TEST_F(BinaryReadTest, Limits_PastEnd) {
 
 TEST_F(BinaryReadTest, Locals) {
   OK(Read<Locals>,
-     Locals{MakeAt("\x02"_su8, u32{2}), MakeAt("\x7f"_su8, ValueType::I32())},
+     Locals{MakeAt("\x02"_su8, u32{2}), MakeAt("\x7f"_su8, VT_I32)},
      "\x02\x7f"_su8);
   OK(Read<Locals>,
-     Locals{MakeAt("\xc0\x02"_su8, u32{320}),
-            MakeAt("\x7c"_su8, ValueType::F64())},
+     Locals{MakeAt("\xc0\x02"_su8, u32{320}), MakeAt("\x7c"_su8, VT_F64)},
      "\xc0\x02\x7c"_su8);
 }
 
@@ -2232,19 +2225,19 @@ TEST_F(BinaryReadTest, Locals_PastEnd) {
 
 TEST_F(BinaryReadTest, LetImmediate) {
   OK(Read<LetImmediate>,
-     LetImmediate{MakeAt("\x40"_su8, BlockType::Void()),
+     LetImmediate{MakeAt("\x40"_su8, BT_Void),
                   MakeAt("\x00"_su8, LocalsList{})},
      "\x40\x00"_su8);
 
   context.features.enable_multi_value();
 
   OK(Read<LetImmediate>,
-     LetImmediate{MakeAt("\x00"_su8, BlockType{0}),
-                  MakeAt("\x01\x02\x7f"_su8,
-                         LocalsList{MakeAt(
-                             "\x02\x7f"_su8,
-                             Locals{MakeAt("\x02"_su8, Index{2}),
-                                    MakeAt("\x7f"_su8, ValueType::I32())})})},
+     LetImmediate{
+         MakeAt("\x00"_su8, BlockType{MakeAt("\x00"_su8, Index{0})}),
+         MakeAt("\x01\x02\x7f"_su8,
+                LocalsList{MakeAt("\x02\x7f"_su8,
+                                  Locals{MakeAt("\x02"_su8, Index{2}),
+                                         MakeAt("\x7f"_su8, VT_I32)})})},
      "\x00\x01\x02\x7f"_su8);
 }
 
@@ -3168,7 +3161,7 @@ TEST_F(BinaryReadTest, Table) {
                   TableType{MakeAt("\x00\x01"_su8,
                                    Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
                                           MakeAt("\x00"_su8, Shared::No)}),
-                            MakeAt("\x70"_su8, ReferenceType::Funcref())})},
+                            MakeAt("\x70"_su8, RT_Funcref)})},
      "\x70\x00\x01"_su8);
 }
 
@@ -3186,15 +3179,15 @@ TEST_F(BinaryReadTest, TableType) {
      TableType{
          MakeAt("\x00\x01"_su8, Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
                                        MakeAt("\x00"_su8, Shared::No)}),
-         MakeAt("\x70"_su8, ReferenceType::Funcref())},
+         MakeAt("\x70"_su8, RT_Funcref)},
      "\x70\x00\x01"_su8);
   OK(Read<TableType>,
-       TableType{
-          MakeAt("\x01\x01\x02"_su8,
-                 Limits{MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, u32{2}),
-                        MakeAt("\x01"_su8, Shared::No)}),
-          MakeAt("\x70"_su8, ReferenceType::Funcref())},
-      "\x70\x01\x01\x02"_su8);
+     TableType{
+         MakeAt("\x01\x01\x02"_su8,
+                Limits{MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, u32{2}),
+                       MakeAt("\x01"_su8, Shared::No)}),
+         MakeAt("\x70"_su8, RT_Funcref)},
+     "\x70\x01\x01\x02"_su8);
 }
 
 TEST_F(BinaryReadTest, TableType_BadReferenceType) {
@@ -3220,9 +3213,8 @@ TEST_F(BinaryReadTest, TableType_PastEnd) {
 
 TEST_F(BinaryReadTest, TypeEntry) {
   OK(Read<TypeEntry>,
-     TypeEntry{
-         MakeAt("\x00\x01\x7f"_su8,
-                FunctionType{{}, {MakeAt("\x7f"_su8, ValueType::I32())}})},
+     TypeEntry{MakeAt("\x00\x01\x7f"_su8,
+                      FunctionType{{}, {MakeAt("\x7f"_su8, VT_I32)}})},
      "\x60\x00\x01\x7f"_su8);
 }
 
@@ -3260,10 +3252,10 @@ TEST_F(BinaryReadTest, U8) {
 }
 
 TEST_F(BinaryReadTest, ValueType_MVP) {
-  OK(Read<ValueType>, ValueType::I32(), "\x7f"_su8);
-  OK(Read<ValueType>, ValueType::I64(), "\x7e"_su8);
-  OK(Read<ValueType>, ValueType::F32(), "\x7d"_su8);
-  OK(Read<ValueType>, ValueType::F64(), "\x7c"_su8);
+  OK(Read<ValueType>, VT_I32, "\x7f"_su8);
+  OK(Read<ValueType>, VT_I64, "\x7e"_su8);
+  OK(Read<ValueType>, VT_F32, "\x7d"_su8);
+  OK(Read<ValueType>, VT_F64, "\x7c"_su8);
 }
 
 TEST_F(BinaryReadTest, ValueType_simd) {
@@ -3271,7 +3263,7 @@ TEST_F(BinaryReadTest, ValueType_simd) {
        "\x7b"_su8);
 
   context.features.enable_simd();
-  OK(Read<ValueType>, ValueType::V128(), "\x7b"_su8);
+  OK(Read<ValueType>, VT_V128, "\x7b"_su8);
 }
 
 TEST_F(BinaryReadTest, ValueType_reference_types) {
@@ -3281,8 +3273,8 @@ TEST_F(BinaryReadTest, ValueType_reference_types) {
        "\x6f"_su8);
 
   context.features.enable_reference_types();
-  OK(Read<ValueType>, ValueType::Funcref(), "\x70"_su8);
-  OK(Read<ValueType>, ValueType::Externref(), "\x6f"_su8);
+  OK(Read<ValueType>, VT_Funcref, "\x70"_su8);
+  OK(Read<ValueType>, VT_Externref, "\x6f"_su8);
 }
 
 TEST_F(BinaryReadTest, ValueType_exceptions) {
@@ -3290,7 +3282,7 @@ TEST_F(BinaryReadTest, ValueType_exceptions) {
        {{0, "value type"}, {1, "Unknown value type: 104"}}, "\x68"_su8);
 
   context.features.enable_exceptions();
-  OK(Read<ValueType>, ValueType::Exnref(), "\x68"_su8);
+  OK(Read<ValueType>, VT_Exnref, "\x68"_su8);
 }
 
 TEST_F(BinaryReadTest, ValueType_Unknown) {
