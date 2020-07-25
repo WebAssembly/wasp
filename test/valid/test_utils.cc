@@ -29,10 +29,10 @@ void ExpectErrors(const std::vector<ExpectedError>& expected_errors,
   ASSERT_EQ(expected_errors.size(), errors.errors.size());
   for (size_t j = 0; j < expected_errors.size(); ++j) {
     const ExpectedError& expected = expected_errors[j];
-    const Error& actual = errors.errors[j];
+    const ErrorList& actual = errors.errors[j];
     ASSERT_EQ(expected.size(), actual.size());
     for (size_t i = 0; i < actual.size(); ++i) {
-      EXPECT_EQ(expected[i], actual[i].desc);
+      EXPECT_EQ(expected[i], actual[i].message);
     }
   }
 
@@ -54,7 +54,7 @@ void ExpectErrorSubstr(const ExpectedError& expected, TestErrors& errors) {
   ASSERT_EQ(1, errors.errors.size());
   ASSERT_EQ(expected.size(), errors.errors[0].size());
   for (size_t i = 0; i < expected.size(); ++i) {
-    EXPECT_PRED2(substr, errors.errors[0][i].desc, expected[i]);
+    EXPECT_PRED2(substr, errors.errors[0][i].message, expected[i]);
   }
   ClearErrors(errors);
 }

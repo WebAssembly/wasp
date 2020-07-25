@@ -28,7 +28,7 @@ namespace wasp {
 namespace valid {
 namespace test {
 
-using Error = wasp::test::Error;
+using ErrorList = wasp::test::ErrorList;
 using TestErrors = wasp::test::TestErrors;
 
 // TODO: Support location data in tests?

@@ -26,7 +26,6 @@ namespace wasp {
 namespace text {
 
 struct Context;
-struct NameMap;
 class Tokenizer;
 
 auto Expect(Tokenizer&, Context&, TokenType expected) -> optional<Token>;
@@ -53,12 +52,11 @@ auto ReadTextList(Tokenizer&, Context&) -> optional<TextList>;
 
 // Section 1: Type
 
-auto ReadBindVarOpt(Tokenizer&, Context&, NameMap&) -> OptAt<BindVar>;
+auto ReadBindVarOpt(Tokenizer&, Context&) -> OptAt<BindVar>;
 
-auto ReadBoundValueTypeList(Tokenizer&, Context&, NameMap&, TokenType)
+auto ReadBoundValueTypeList(Tokenizer&, Context&, TokenType)
     -> optional<BoundValueTypeList>;
-auto ReadBoundParamList(Tokenizer&, Context&, NameMap&)
-    -> optional<BoundValueTypeList>;
+auto ReadBoundParamList(Tokenizer&, Context&) -> optional<BoundValueTypeList>;
 
 auto ReadUnboundValueTypeList(Tokenizer&, Context&, TokenType)
     -> optional<ValueTypeList>;
@@ -68,8 +66,7 @@ auto ReadResultList(Tokenizer&, Context&) -> optional<ValueTypeList>;
 auto ReadValueType(Tokenizer&, Context&) -> OptAt<ValueType>;
 auto ReadValueTypeList(Tokenizer&, Context&) -> optional<ValueTypeList>;
 
-auto ReadBoundFunctionType(Tokenizer&, Context&, NameMap&)
-    -> OptAt<BoundFunctionType>;
+auto ReadBoundFunctionType(Tokenizer&, Context&) -> OptAt<BoundFunctionType>;
 auto ReadTypeEntry(Tokenizer&, Context&) -> OptAt<TypeEntry>;
 
 // Section 2: Import
@@ -79,8 +76,7 @@ auto ReadImport(Tokenizer&, Context&) -> OptAt<Import>;
 
 // Section 3: Function
 
-auto ReadLocalList(Tokenizer&, Context&, NameMap&)
-    -> optional<BoundValueTypeList>;
+auto ReadLocalList(Tokenizer&, Context&) -> optional<BoundValueTypeList>;
 auto ReadFunctionType(Tokenizer&, Context&) -> OptAt<FunctionType>;
 auto ReadFunction(Tokenizer&, Context&) -> OptAt<Function>;
 

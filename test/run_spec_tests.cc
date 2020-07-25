@@ -159,6 +159,9 @@ void Tool::Run() {
   text::Tokenizer tokenizer{data};
   text::Context context{features, errors};
   auto script = ReadScript(tokenizer, context);
+  if (script) {
+    Resolve(*script, errors);
+  }
 
   if (!script || errors.has_error()) {
     errors.PrintTo(std::cerr);
@@ -239,6 +242,9 @@ void Tool::OnAssertMalformedText(Location loc,
   tools::TextErrors nested_errors{filename, buffer};
   text::Context context{features, nested_errors};
   auto script = ReadScript(tokenizer, context);
+  if (script) {
+    Resolve(*script, nested_errors);
+  }
   if (!nested_errors.has_error()) {
     errors.OnError(loc, "Expected malformed text module.");
   }

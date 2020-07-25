@@ -120,7 +120,7 @@ int Tool::Run() {
   text::Context read_context{options.features, errors};
   auto text_module =
       ReadModule(tokenizer, read_context).value_or(text::Module{});
-  Resolve(read_context, text_module);
+  Resolve(text_module, errors);
   Desugar(text_module);
 
   if (errors.has_error()) {

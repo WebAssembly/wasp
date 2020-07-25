@@ -99,6 +99,7 @@ add_library(wasplib
   src/text/read.cc
   src/text/read_script.cc
   src/text/resolve.cc
+  src/text/resolve_context.cc
   src/text/token.cc
   src/text/types.cc
 

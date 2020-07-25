@@ -29,7 +29,6 @@ struct NameMap {
   void Reset();
   void NewUnbound();
   bool NewBound(BindVar);
-  bool New(OptAt<BindVar>);
   void Push();
   void Pop();
 

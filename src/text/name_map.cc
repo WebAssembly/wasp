@@ -41,15 +41,6 @@ bool NameMap::NewBound(BindVar var) {
   return true;
 }
 
-bool NameMap::New(OptAt<BindVar> var) {
-  if (var) {
-    return NewBound(*var);
-  } else {
-    NewUnbound();
-    return true;
-  }
-}
-
 void NameMap::Push() {
   stack_.push_back(names_.size());
 }

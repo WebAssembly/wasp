@@ -22,11 +22,20 @@
 #include "wasp/base/errors.h"
 #include "wasp/text/formatters.h"
 #include "wasp/text/read/context.h"
+#include "wasp/text/read/name_map.h"
+#include "wasp/text/resolve_context.h"
 
 using namespace ::wasp;
 using namespace ::wasp::text;
 using namespace ::wasp::text::test;
 using namespace ::wasp::test;
+
+
+namespace {
+
+const SpanU8 loc1 = "A"_su8;
+
+}  // namespace
 
 class TextResolveTest : public ::testing::Test {
  protected:
@@ -42,43 +51,34 @@ class TextResolveTest : public ::testing::Test {
     ExpectNoErrors(errors);
   }
 
-  // TODO: Add fail tests after refactoring to remove ExpectedError. These
-  // can't be used as-is, since there is no good way to get the original span
-  // (as needed by ExpectError).
-#if 0
-  void Fail(
-            const ExpectedError& error,
-            const T& value,
-            SpanU8 orig_data) {
+  template <typename T, typename... Args>
+  void Fail(const ErrorList& expected_error, const T& value, Args&&... args) {
     T copy = value;
-    Resolve(context);
-    ExpectError(error, errors, orig_data);
+    Resolve(context, copy, std::forward<Args>(args)...);
+    ExpectError(expected_error, errors);
     errors.Clear();
   }
 
-  void Fail(const std::vector<ExpectedError>& expected_errors,
-            const T& value,
-            SpanU8 orig_data) {
-    T copy = value;
-    Resolve(context, copy);
-    ExpectErrors(expected_errors, errors, orig_data);
+  template <typename T>
+  void OKDefine(const T& value) {
+    Define(context, value);
+    ExpectNoErrors(errors);
+  }
+
+  template <typename T>
+  void FailDefine(const ErrorList& expected_error, const T& value) {
+    Define(context, value);
+    ExpectError(expected_error, errors);
     errors.Clear();
   }
-#endif
 
   TestErrors errors;
-  Context context{errors};
+  ResolveContext context{errors};
 };
 
 TEST_F(TextResolveTest, Var_Undefined) {
   NameMap name_map;  // Empty name map.
-  At<Var> var = MakeAt(Var{"$a"_sv});
-  Resolve(context, name_map, var);
-  EXPECT_EQ(MakeAt(Var{"$a"_sv}), var);
-  // TODO: Use Fail(...) above.
-  ASSERT_EQ(1u, errors.errors.size());
-  ASSERT_EQ(1u, errors.errors[0].size());
-  EXPECT_EQ("Undefined variable $a", errors.errors[0][0].desc);
+  Fail({{loc1, "Undefined variable $a"}}, MakeAt(loc1, Var{"$a"_sv}), name_map);
 }
 
 TEST_F(TextResolveTest, FunctionTypeUse) {
@@ -103,17 +103,51 @@ TEST_F(TextResolveTest, FunctionTypeUse) {
      FunctionTypeUse{nullopt, FunctionType{{VT_F32}, {}}});
 }
 
+TEST_F(TextResolveTest, FunctionTypeUse_ReuseType) {
+  auto bound_function_type = BoundFunctionType{{BVT{nullopt, VT_I32}}, {}};
+  context.function_type_map.Define(bound_function_type);
+
+  OK(FunctionDesc{nullopt, Var{Index{0}}, bound_function_type},
+     FunctionDesc{nullopt, nullopt, bound_function_type});
+
+  ASSERT_EQ(1u, context.function_type_map.Size());
+}
+
+TEST_F(TextResolveTest, FunctionTypeUse_DeferType) {
+  FunctionTypeMap& ftm = context.function_type_map;
+
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
+  ftm.Define(BoundFunctionType{{BVT{nullopt, VT_I64}}, {}});
+
+  OK(FunctionDesc{nullopt, Var{Index{2}},
+                  BoundFunctionType{{BVT{nullopt, VT_F32}}, {}}},
+     FunctionDesc{nullopt, nullopt,
+                  BoundFunctionType{{BVT{nullopt, VT_F32}}, {}}});
+
+  auto type_entries = ftm.EndModule();
+
+  ASSERT_EQ(3u, ftm.Size());
+
+  // Implicitly defined after other explicitly defined types.
+  EXPECT_EQ((FunctionType{{VT_F32}, {}}), ftm.Get(2));
+
+  // Generated type entry.
+  ASSERT_EQ(1u, type_entries.size());
+  EXPECT_EQ((TypeEntry{nullopt, BoundFunctionType{{BVT{nullopt, VT_F32}}, {}}}),
+            type_entries[0]);
+}
+
 TEST_F(TextResolveTest, FunctionTypeUse_NoFunctionTypeInContext) {
   FunctionTypeUse type_use;
   Resolve(context, type_use);
-  EXPECT_EQ((FunctionTypeUse{}), type_use);
+  EXPECT_EQ((FunctionTypeUse{Var{Index{0}}, {}}), type_use);
 }
 
 TEST_F(TextResolveTest, BoundFunctionTypeUse_NoFunctionTypeInContext) {
   OptAt<Var> type_use;
   At<BoundFunctionType> type;
   Resolve(context, type_use, type);
-  EXPECT_EQ(nullopt, type_use);
+  EXPECT_EQ(Var{Index{0}}, type_use);
   EXPECT_EQ(MakeAt(BoundFunctionType{}), type);
 }
 
@@ -138,6 +172,12 @@ TEST_F(TextResolveTest, BlockImmediate_InlineType) {
        BlockImmediate{
            nullopt, FunctionTypeUse{nullopt, FunctionType{{}, {value_type}}}});
   }
+
+  // None of the inline block types should extend the context's function type
+  // map.
+  auto type_entries = context.function_type_map.EndModule();
+  EXPECT_EQ(0u, context.function_type_map.Size());
+  EXPECT_EQ(0u, type_entries.size());
 }
 
 TEST_F(TextResolveTest, BrOnExnImmediate) {
@@ -458,6 +498,20 @@ TEST_F(TextResolveTest, InstructionList_EndBlock) {
       });
 }
 
+TEST_F(TextResolveTest, TypeEntry_DuplicateName) {
+  context.type_names.NewBound("$t"_sv);
+
+  FailDefine({{loc1, "Variable $t is already bound to index 0"}},
+             TypeEntry{MakeAt(loc1, "$t"_sv), BoundFunctionType{}});
+}
+
+TEST_F(TextResolveTest, TypeEntry_DistinctTypes) {
+  OKDefine(TypeEntry{"$a"_sv, BoundFunctionType{}});
+  OKDefine(TypeEntry{"$b"_sv, BoundFunctionType{}});
+
+  ASSERT_EQ(2u, context.function_type_map.Size());
+}
+
 TEST_F(TextResolveTest, FunctionDesc) {
   context.type_names.NewBound("$a"_sv);
   context.function_type_map.Define(
@@ -473,6 +527,21 @@ TEST_F(TextResolveTest, FunctionDesc) {
                   BoundFunctionType{{BVT{nullopt, VT_I32}}, {}}},
      FunctionDesc{nullopt, nullopt,
                   BoundFunctionType{{BVT{nullopt, VT_I32}}, {}}});
+}
+
+TEST_F(TextResolveTest, FunctionDesc_DuplicateName) {
+  context.function_names.NewBound("$f"_sv);
+
+  FailDefine({{loc1, "Variable $f is already bound to index 0"}},
+             FunctionDesc{MakeAt(loc1, "$f"_sv), nullopt, {}});
+}
+
+TEST_F(TextResolveTest, FunctionDesc_DuplicateParamName) {
+  Fail({{loc1, "Variable $foo is already bound to index 0"}},
+       FunctionDesc{nullopt, nullopt,
+                    BoundFunctionType{{BVT{"$foo"_sv, VT_I32},
+                                       BVT{MakeAt(loc1, "$foo"_sv), VT_I64}},
+                                      {}}});
 }
 
 TEST_F(TextResolveTest, EventType) {
@@ -567,6 +636,23 @@ TEST_F(TextResolveTest, Function) {
               {BVT{"$l"_sv, VT_I32}},
               InstructionList{I{O::LocalGet, Var{"$l"_sv}}},
               {}});
+}
+
+TEST_F(TextResolveTest, Function_DuplicateLocalName) {
+  Fail({{loc1, "Variable $foo is already bound to index 0"}},
+       Function{FunctionDesc{},
+                {BVT{"$foo"_sv, VT_I32}, BVT{MakeAt(loc1, "$foo"_sv), VT_I64}},
+                InstructionList{},
+                {}});
+}
+
+TEST_F(TextResolveTest, Function_DuplicateParamLocalNames) {
+  Fail({{loc1, "Variable $foo is already bound to index 0"}},
+       Function{FunctionDesc{nullopt, nullopt,
+                             BoundFunctionType{{BVT{"$foo"_sv, VT_I32}}, {}}},
+                {BVT{MakeAt(loc1, "$foo"_sv), VT_I64}},
+                InstructionList{},
+                {}});
 }
 
 TEST_F(TextResolveTest, ElementExpressionList) {
@@ -664,6 +750,21 @@ TEST_F(TextResolveTest, Table) {
                            }}}});
 }
 
+TEST_F(TextResolveTest, Table_DuplicateName) {
+  context.table_names.NewBound("$t"_sv);
+
+  FailDefine(
+      {{loc1, "Variable $t is already bound to index 0"}},
+      TableDesc{MakeAt(loc1, "$t"_sv), TableType{Limits{0}, RT_Funcref}});
+}
+
+TEST_F(TextResolveTest, Memory_DuplicateName) {
+  context.memory_names.NewBound("$m"_sv);
+
+  FailDefine({{loc1, "Variable $m is already bound to index 0"}},
+             MemoryDesc{MakeAt(loc1, "$m"_sv), MemoryType{Limits{0}}});
+}
+
 TEST_F(TextResolveTest, Global) {
   context.global_names.NewBound("$g"_sv);
 
@@ -678,6 +779,14 @@ TEST_F(TextResolveTest, Global) {
           ConstantExpression{I{O::GlobalGet, Var{"$g"_sv}}},
           {},
       });
+}
+
+TEST_F(TextResolveTest, Global_DuplicateName) {
+  context.global_names.NewBound("$g"_sv);
+
+  FailDefine(
+      {{loc1, "Variable $g is already bound to index 0"}},
+      GlobalDesc{MakeAt(loc1, "$g"_sv), GlobalType{VT_I32, Mutability::Const}});
 }
 
 TEST_F(TextResolveTest, Export) {
@@ -734,6 +843,14 @@ TEST_F(TextResolveTest, ElementSegment) {
                                                     VarList{Var{"$f"_sv}}}}});
 }
 
+TEST_F(TextResolveTest, ElementSegment_DuplicateName) {
+  context.element_segment_names.NewBound("$e"_sv);
+
+  FailDefine({{loc1, "Variable $e is already bound to index 0"}},
+             ElementSegment{MakeAt(loc1, "$e"_sv), nullopt,
+                            ConstantExpression{}, ElementList{}});
+}
+
 TEST_F(TextResolveTest, DataSegment) {
   context.memory_names.NewBound("$m"_sv);
   context.global_names.NewBound("$g"_sv);
@@ -746,6 +863,14 @@ TEST_F(TextResolveTest, DataSegment) {
                  Var{"$m"_sv},
                  ConstantExpression{I{O::GlobalGet, Var{"$g"_sv}}},
                  {}});
+}
+
+TEST_F(TextResolveTest, DataSegment_DuplicateName) {
+  context.data_segment_names.NewBound("$d"_sv);
+
+  FailDefine(
+      {{loc1, "Variable $d is already bound to index 0"}},
+      DataSegment{MakeAt(loc1, "$d"_sv), nullopt, ConstantExpression{}, {}});
 }
 
 TEST_F(TextResolveTest, Event) {
@@ -761,6 +886,15 @@ TEST_F(TextResolveTest, Event) {
      Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
                                         FunctionTypeUse{Var{"$a"_sv}, {}}}},
            {}});
+}
+
+TEST_F(TextResolveTest, Event_DuplicateName) {
+  context.event_names.NewBound("$e"_sv);
+
+  FailDefine(
+      {{loc1, "Variable $e is already bound to index 0"}},
+      EventDesc{MakeAt(loc1, "$e"_sv),
+                EventType{EventAttribute::Exception, FunctionTypeUse{}}});
 }
 
 TEST_F(TextResolveTest, ModuleItem) {
@@ -870,4 +1004,43 @@ TEST_F(TextResolveTest, ModuleItem) {
          Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
                                             FunctionTypeUse{Var{"$a"_sv}, {}}}},
                {}}});
+}
+
+TEST_F(TextResolveTest, ModuleWithDeferredTypes) {
+  OK(
+      Module{
+          // (func (type 0))
+          ModuleItem{
+              Function{FunctionDesc{nullopt, Var{Index{0}}, {}}, {}, {}, {}}},
+          // (func (type 1) (param i32))
+          ModuleItem{Function{FunctionDesc{
+                                  nullopt,
+                                  Var{Index{1}},
+                                  BoundFunctionType{{BVT{nullopt, VT_I32}}, {}},
+                              },
+                              {},
+                              {},
+                              {}}},
+
+          // The deferred type entries.
+          // (type (func))
+          ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}},
+          // (type (func (param i32))
+          ModuleItem{TypeEntry{
+              nullopt,
+              BoundFunctionType{BoundValueTypeList{BVT{nullopt, VT_I32}}, {}}}},
+      },
+      Module{
+          // (func)
+          ModuleItem{Function{}},
+          // (func (param i32))
+          ModuleItem{Function{FunctionDesc{
+                                  nullopt,
+                                  nullopt,
+                                  BoundFunctionType{{BVT{nullopt, VT_I32}}, {}},
+                              },
+                              {},
+                              {},
+                              {}}},
+      });
 }

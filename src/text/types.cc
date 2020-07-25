@@ -1039,6 +1039,43 @@ auto Const::ref_extern() const -> const RefExternConst& {
   return get<RefExternConst>(value);
 }
 
+bool Assertion::is_module_assertion() const {
+  return holds_alternative<ModuleAssertion>(desc);
+}
+
+bool Assertion::is_action_assertion() const {
+  return holds_alternative<ActionAssertion>(desc);
+}
+
+bool Assertion::is_return_assertion() const {
+  return holds_alternative<ReturnAssertion>(desc);
+}
+
+
+auto Assertion::module_assertion() -> ModuleAssertion& {
+  return get<ModuleAssertion>(desc);
+}
+
+auto Assertion::module_assertion() const -> const ModuleAssertion& {
+  return get<ModuleAssertion>(desc);
+}
+
+auto Assertion::action_assertion() -> ActionAssertion& {
+  return get<ActionAssertion>(desc);
+}
+
+auto Assertion::action_assertion() const -> const ActionAssertion& {
+  return get<ActionAssertion>(desc);
+}
+
+auto Assertion::return_assertion() -> ReturnAssertion& {
+  return get<ReturnAssertion>(desc);
+}
+
+auto Assertion::return_assertion() const -> const ReturnAssertion& {
+  return get<ReturnAssertion>(desc);
+}
+
 
 auto Command::kind() const -> CommandKind {
   return static_cast<CommandKind>(contents.index());

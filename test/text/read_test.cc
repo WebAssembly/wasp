@@ -139,11 +139,7 @@ TEST_F(TextReadTest, VarOpt_Nat32) {
 }
 
 TEST_F(TextReadTest, BindVarOpt) {
-  NameMap name_map;
-  OK(ReadBindVarOpt, BindVar{"$bar"_sv}, "$bar"_su8, name_map);
-
-  ASSERT_TRUE(name_map.Has("$bar"));
-  EXPECT_EQ(0u, name_map.Get("$bar"));
+  OK(ReadBindVarOpt, BindVar{"$bar"_sv}, "$bar"_su8);
 }
 
 TEST_F(TextReadTest, VarList) {
@@ -235,17 +231,7 @@ TEST_F(TextReadTest, BoundParamList) {
              BVT{MakeAt("$foo"_su8, "$foo"_sv), MakeAt("i64"_su8, VT_I64)}),
   };
 
-  NameMap name_map;
-  OKVector(ReadBoundParamList, expected, span, name_map);
-
-  ASSERT_TRUE(name_map.Has("$foo"));
-  EXPECT_EQ(0u, name_map.Get("$foo"));
-}
-
-TEST_F(TextReadTest, BoundParamList_DuplicateName) {
-  NameMap name_map;
-  Fail(ReadBoundParamList, {{24, "Variable $foo is already bound to index 0"}},
-       "(param $foo i32) (param $foo i64)"_su8, name_map);
+  OKVector(ReadBoundParamList, expected, span);
 }
 
 TEST_F(TextReadTest, ParamList) {
@@ -277,17 +263,7 @@ TEST_F(TextReadTest, LocalList) {
              BVT{MakeAt("$foo"_su8, "$foo"_sv), MakeAt("i64"_su8, VT_I64)}),
   };
 
-  NameMap name_map;
-  OKVector(ReadLocalList, expected, span, name_map);
-
-  ASSERT_TRUE(name_map.Has("$foo"));
-  EXPECT_EQ(0u, name_map.Get("$foo"));
-}
-
-TEST_F(TextReadTest, BoundLocalList_DuplicateName) {
-  NameMap name_map;
-  Fail(ReadLocalList, {{24, "Variable $foo is already bound to index 0"}},
-       "(local $foo i32) (local $foo i64)"_su8, name_map);
+  OKVector(ReadLocalList, expected, span);
 }
 
 TEST_F(TextReadTest, TypeUseOpt) {
@@ -320,40 +296,6 @@ TEST_F(TextReadTest, FunctionTypeUse) {
                      MakeAt("(result i32)"_su8,
                             FunctionType{{}, {MakeAt("i32"_su8, VT_I32)}})},
      "(type $t) (result i32)"_su8);
-}
-
-TEST_F(TextReadTest, FunctionTypeUse_ReuseType) {
-  context.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
-
-  Read(ReadFunctionTypeUse, "(param i32)"_su8);
-
-  ASSERT_EQ(1u, context.function_type_map.Size());
-}
-
-TEST_F(TextReadTest, FunctionTypeUse_DeferType) {
-  FunctionTypeMap& ftm = context.function_type_map;
-
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
-  Read(ReadFunctionTypeUse, "(param f32)"_su8);
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT_I64}}, {}});
-  auto type_entries = ftm.EndModule();
-
-  ASSERT_EQ(3u, ftm.Size());
-  EXPECT_EQ((FunctionType{{VT_I32}, {}}), ftm.Get(0));
-  EXPECT_EQ((FunctionType{{VT_I64}, {}}), ftm.Get(1));
-
-  // Implicitly defined after other explicitly defined types.
-  EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT_F32)}, {}}), ftm.Get(2));
-
-  // Generated type entry.
-  ASSERT_EQ(1u, type_entries.size());
-  EXPECT_EQ(
-      (TypeEntry{nullopt,
-                 BoundFunctionType{BoundValueTypeList{
-                                       BVT{nullopt, MakeAt("f32"_su8, VT_F32)}},
-                                   {}}}),
-      type_entries[0]);
 }
 
 TEST_F(TextReadTest, InlineImport) {
@@ -391,7 +333,6 @@ TEST_F(TextReadTest, InlineExportList) {
 TEST_F(TextReadTest, BoundFunctionType) {
   SpanU8 span =
       "(param i32 i32) (param $t i64) (result f32 f32) (result f64)"_su8;
-  NameMap name_map;
   OK(ReadBoundFunctionType,
      BoundFunctionType{
          {MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT_I32)}),
@@ -400,10 +341,7 @@ TEST_F(TextReadTest, BoundFunctionType) {
                  BVT{MakeAt("$t"_su8, "$t"_sv), MakeAt("i64"_su8, VT_I64)})},
          {MakeAt("f32"_su8, VT_F32), MakeAt("f32"_su8, VT_F32),
           MakeAt("f64"_su8, VT_F64)}},
-     span, name_map);
-
-  ASSERT_TRUE(name_map.Has("$t"));
-  EXPECT_EQ(0u, name_map.Get("$t"));
+     span);
 }
 
 TEST_F(TextReadTest, FunctionType) {
@@ -429,20 +367,6 @@ TEST_F(TextReadTest, TypeEntry) {
                                                 MakeAt("i32"_su8, VT_I32)})},
                     {MakeAt("i64"_su8, VT_I64)}})},
      "(type $foo (func (param $bar i32) (result i64)))"_su8);
-}
-
-TEST_F(TextReadTest, TypeEntry_DuplicateName) {
-  context.type_names.NewBound("$t"_sv);
-
-  Fail(ReadTypeEntry, {{6, "Variable $t is already bound to index 0"}},
-       "(type $t (func))"_su8);
-}
-
-TEST_F(TextReadTest, TypeEntry_DistinctTypes) {
-  Read(ReadTypeEntry, "(type $a (func))"_su8);
-  Read(ReadTypeEntry, "(type $b (func))"_su8);
-
-  ASSERT_EQ(2u, context.function_type_map.Size());
 }
 
 TEST_F(TextReadTest, AlignOpt) {
@@ -494,8 +418,6 @@ TEST_F(TextReadTest, BlockImmediate) {
 }
 
 TEST_F(TextReadTest, BlockImmediate_InlineType) {
-  // None of the inline block types should extend the context's function type
-  // map.
   OK(ReadBlockImmediate, BlockImmediate{}, ""_su8);
 
   struct {
@@ -517,10 +439,6 @@ TEST_F(TextReadTest, BlockImmediate_InlineType) {
                MakeAt(test.span, FunctionType{{}, {test.value_type}})}},
        test.span);
   }
-
-  auto type_entries = context.function_type_map.EndModule();
-  EXPECT_EQ(0u, context.function_type_map.Size());
-  EXPECT_EQ(0u, type_entries.size());
 }
 
 TEST_F(TextReadTest, LetImmediate) {
@@ -1616,24 +1534,6 @@ TEST_F(TextReadTest, Function) {
      "(func $f2 (export \"m\") (local i32) nop)"_su8);
 }
 
-TEST_F(TextReadTest, Function_DuplicateName) {
-  context.function_names.NewBound("$f"_sv);
-
-  Fail(ReadFunction, {{6, "Variable $f is already bound to index 0"}},
-       "(func $f)"_su8);
-}
-
-TEST_F(TextReadTest, Function_DuplicateParamLocalNames) {
-  Fail(ReadFunction, {{28, "Variable $p is already bound to index 0"}},
-       "(func (param $p i32) (param $p i32))"_su8);
-
-  Fail(ReadFunction, {{28, "Variable $p is already bound to index 0"}},
-       "(func (param $p i32) (local $p i32))"_su8);
-
-  Fail(ReadFunction, {{28, "Variable $p is already bound to index 0"}},
-       "(func (local $p i32) (local $p i32))"_su8);
-}
-
 TEST_F(TextReadTest, FunctionInlineImport) {
   // Import.
   OK(ReadFunction,
@@ -1660,43 +1560,6 @@ TEST_F(TextReadTest, FunctionInlineImport) {
                   "(export \"m\")"_su8,
                   InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(func $f (export \"m\") (import \"a\" \"b\") (param i32))"_su8);
-}
-
-TEST_F(TextReadTest, Function_DeferType) {
-  FunctionTypeMap& ftm = context.function_type_map;
-
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
-  Read(ReadFunction, "(func (param f32))"_su8);
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT_I64}}, {}});
-  auto type_entries = ftm.EndModule();
-
-  ASSERT_EQ(3u, ftm.Size());
-  EXPECT_EQ((FunctionType{{VT_I32}, {}}), ftm.Get(0));
-  EXPECT_EQ((FunctionType{{VT_I64}, {}}), ftm.Get(1));
-
-  // Implicitly defined after other explicitly defined types.
-  EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT_F32)}, {}}), ftm.Get(2));
-
-  // Generated type entry.
-  ASSERT_EQ(1u, type_entries.size());
-  EXPECT_EQ(
-      (TypeEntry{nullopt,
-                 BoundFunctionType{BoundValueTypeList{
-                                       BVT{nullopt, MakeAt("f32"_su8, VT_F32)}},
-                                   {}}}),
-      type_entries[0]);
-}
-
-TEST_F(TextReadTest, Function_DeferType_Reused) {
-  FunctionTypeMap& ftm = context.function_type_map;
-
-  Read(ReadFunction, "(func (param i64))"_su8);
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT_I64}}, {}});
-  auto type_entries = ftm.EndModule();
-
-  ASSERT_EQ(1u, ftm.Size());
-  EXPECT_EQ((FunctionType{{VT_I64}, {}}), ftm.Get(0));
-  EXPECT_TRUE(type_entries.empty());
 }
 
 TEST_F(TextReadTest, Table) {
@@ -1757,13 +1620,6 @@ TEST_F(TextReadTest, Table) {
                                    MakeAt("2"_su8, Var{Index{2}}),
                                }}},
      "(table funcref (elem 0 1 2))"_su8);
-}
-
-TEST_F(TextReadTest, Table_DuplicateName) {
-  context.table_names.NewBound("$t"_sv);
-
-  Fail(ReadTable, {{7, "Variable $t is already bound to index 0"}},
-       "(table $t 0 funcref)"_su8);
 }
 
 TEST_F(TextReadTest, TableInlineImport) {
@@ -1873,13 +1729,6 @@ TEST_F(TextReadTest, Memory) {
      "(memory (data \"hello\" \"world\"))"_su8);
 }
 
-TEST_F(TextReadTest, Memory_DuplicateName) {
-  context.memory_names.NewBound("$m"_sv);
-
-  Fail(ReadMemory, {{8, "Variable $m is already bound to index 0"}},
-       "(memory $m 0)"_su8);
-}
-
 TEST_F(TextReadTest, MemoryInlineImport) {
   // Inline import.
   OK(ReadMemory,
@@ -1954,13 +1803,6 @@ TEST_F(TextReadTest, Global) {
      "(global $g2 (export \"m\") i32 nop)"_su8);
 }
 
-TEST_F(TextReadTest, Global_DuplicateName) {
-  context.global_names.NewBound("$g"_sv);
-
-  Fail(ReadGlobal, {{8, "Variable $g is already bound to index 0"}},
-       "(global $g i32 (nop))"_su8);
-}
-
 TEST_F(TextReadTest, GlobalInlineImport) {
   // Inline import.
   OK(ReadGlobal,
@@ -2014,14 +1856,6 @@ TEST_F(TextReadTest, Event) {
                MakeAt("(export \"m\")"_su8,
                       InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
      "(event $e2 (export \"m\"))"_su8);
-}
-
-TEST_F(TextReadTest, Event_DuplicateName) {
-  context.features.enable_exceptions();
-  context.event_names.NewBound("$e"_sv);
-
-  Fail(ReadEvent, {{7, "Variable $e is already bound to index 0"}},
-       "(event $e)"_su8);
 }
 
 TEST_F(TextReadTest, EventInlineImport) {
@@ -2094,31 +1928,6 @@ TEST_F(TextReadTest, Import_AfterNonImport) {
   Fail(ReadImport,
        {{1, "Imports must occur before all non-import definitions"}},
        "(import \"m\" \"n\" (func))"_su8);
-}
-
-TEST_F(TextReadTest, Import_FunctionDeferType) {
-  FunctionTypeMap& ftm = context.function_type_map;
-
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
-  Read(ReadImport, "(import \"m\" \"n\" (func (param f32)))"_su8);
-  ftm.Define(BoundFunctionType{{BVT{nullopt, VT_I64}}, {}});
-  auto type_entries = ftm.EndModule();
-
-  ASSERT_EQ(3u, ftm.Size());
-  EXPECT_EQ((FunctionType{{VT_I32}, {}}), ftm.Get(0));
-  EXPECT_EQ((FunctionType{{VT_I64}, {}}), ftm.Get(1));
-
-  // Implicitly defined after other explicitly defined types.
-  EXPECT_EQ((FunctionType{{MakeAt("f32"_su8, VT_F32)}, {}}), ftm.Get(2));
-
-  // Generated type entry.
-  ASSERT_EQ(1u, type_entries.size());
-  EXPECT_EQ(
-      (TypeEntry{nullopt,
-                 BoundFunctionType{BoundValueTypeList{
-                                       BVT{nullopt, MakeAt("f32"_su8, VT_F32)}},
-                                   {}}}),
-      type_entries[0]);
 }
 
 TEST_F(TextReadTest, Import_exceptions) {
@@ -2443,14 +2252,6 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
      "(elem $e3 (nop) func)"_su8);
 }
 
-TEST_F(TextReadTest, ElementSegment_DuplicateName) {
-  context.features.enable_bulk_memory();
-  context.element_segment_names.NewBound("$e"_sv);
-
-  Fail(ReadElementSegment, {{6, "Variable $e is already bound to index 0"}},
-       "(elem $e func)"_su8);
-}
-
 TEST_F(TextReadTest, DataSegment_MVP) {
   // No memory var, empty text list.
   OK(ReadDataSegment,
@@ -2541,14 +2342,6 @@ TEST_F(TextReadTest, DataSegment_bulk_memory) {
                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
          {}},
      "(data $d2 (nop))"_su8);
-}
-
-TEST_F(TextReadTest, DataSegment_DuplicateName) {
-  context.features.enable_bulk_memory();
-  context.data_segment_names.NewBound("$d"_sv);
-
-  Fail(ReadDataSegment, {{6, "Variable $d is already bound to index 0"}},
-       "(data $d)"_su8);
 }
 
 TEST_F(TextReadTest, ModuleItem) {
@@ -2667,38 +2460,6 @@ TEST_F(TextReadTest, Module) {
          MakeAt("(start 0)"_su8,
                 ModuleItem{Start{MakeAt("0"_su8, Var{Index{0}})}})},
      "(type (func)) (func nop) (start 0)"_su8);
-}
-
-TEST_F(TextReadTest, ModuleWithDeferredTypes) {
-  OK(ReadModule,
-     Module{
-         MakeAt("(func)"_su8, ModuleItem{Function{}}),
-         MakeAt(
-             "(func (param i32))"_su8,
-             ModuleItem{Function{
-                 FunctionDesc{
-                     nullopt,
-                     nullopt,
-                     MakeAt("(param i32)"_su8,
-                            BoundFunctionType{
-                                BoundValueTypeList{MakeAt(
-                                    "i32"_su8,
-                                    BVT{nullopt, MakeAt("i32"_su8, VT_I32)})},
-                                {}}),
-                 },
-                 {},
-                 {},
-                 {}}}),
-
-         // The deferred type entries.
-         ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}},
-         ModuleItem{TypeEntry{
-             nullopt,
-             BoundFunctionType{
-                 BoundValueTypeList{BVT{nullopt, MakeAt("i32"_su8, VT_I32)}},
-                 {}}}},
-     },
-     "(func) (func (param i32))"_su8);
 }
 
 TEST_F(TextReadTest, Module_MultipleStart) {

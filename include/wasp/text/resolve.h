@@ -20,45 +20,73 @@
 #include "wasp/text/types.h"
 
 namespace wasp {
+
+class Errors;
+
 namespace text {
 
-struct Context;
+struct ResolveContext;
 struct NameMap;
 
-void Resolve(Context&, NameMap&, At<Var>&);
-void Resolve(Context&, NameMap&, OptAt<Var>&);
-void Resolve(Context&, NameMap&, VarList&);
-void Resolve(Context&, FunctionTypeUse&);
-void Resolve(Context&, OptAt<Var>& type_use, At<BoundFunctionType>&);
-void Resolve(Context&, BlockImmediate&);
-void Resolve(Context&, BrOnExnImmediate&);
-void Resolve(Context&, BrTableImmediate&);
-void Resolve(Context&, CallIndirectImmediate&);
-void Resolve(Context&, NameMap&, CopyImmediate&);
-void Resolve(Context&, NameMap& segment, NameMap& dst, InitImmediate&);
-void Resolve(Context&, Instruction&);
-void Resolve(Context&, InstructionList&);
-void Resolve(Context&, FunctionDesc&);
-void Resolve(Context&, EventType&);
-void Resolve(Context&, EventDesc&);
-void Resolve(Context&, Import&);
-void Resolve(Context&, Function&);
-void Resolve(Context&, ConstantExpression&);
-void Resolve(Context&, ElementExpression&);
-void Resolve(Context&, ElementExpressionList&);
-void Resolve(Context&, ElementListWithExpressions&);
-void Resolve(Context&, ElementListWithVars&);
-void Resolve(Context&, ElementList&);
-void Resolve(Context&, Table&);
-void Resolve(Context&, Global&);
-void Resolve(Context&, Export&);
-void Resolve(Context&, Start&);
-void Resolve(Context&, ElementSegment&);
-void Resolve(Context&, DataSegment&);
-void Resolve(Context&, Event&);
-void Resolve(Context&, ModuleItem&);
-void Resolve(Context&, Module&);
-void Resolve(Context&, ScriptModule&);
+// Primary API; resolve either a Module or a Script.
+
+void Resolve(Module&, Errors&);
+void Resolve(Script&, Errors&);
+
+// The functions below are used to implement the API above, and not meant to be
+// called by most users. They are exposed here primarily for testing purposes.
+
+void Define(ResolveContext&, const OptAt<BindVar>&, NameMap&);
+void Define(ResolveContext&, const BoundValueTypeList&, NameMap&);
+void Define(ResolveContext&, const TypeEntry&);
+void Define(ResolveContext&, const FunctionDesc&);
+void Define(ResolveContext&, const TableDesc&);
+void Define(ResolveContext&, const MemoryDesc&);
+void Define(ResolveContext&, const GlobalDesc&);
+void Define(ResolveContext&, const EventDesc&);
+void Define(ResolveContext&, const Import&);
+void Define(ResolveContext&, const ElementSegment&);
+void Define(ResolveContext&, const DataSegment&);
+void Define(ResolveContext&, const Module&);
+
+void Resolve(ResolveContext&, At<Var>&, NameMap&);
+void Resolve(ResolveContext&, OptAt<Var>&, NameMap&);
+void Resolve(ResolveContext&, VarList&, NameMap&);
+void Resolve(ResolveContext&, FunctionTypeUse&);
+void Resolve(ResolveContext&, OptAt<Var>& type_use, At<BoundFunctionType>&);
+void Resolve(ResolveContext&, BlockImmediate&);
+void Resolve(ResolveContext&, BrOnExnImmediate&);
+void Resolve(ResolveContext&, BrTableImmediate&);
+void Resolve(ResolveContext&, CallIndirectImmediate&);
+void Resolve(ResolveContext&, CopyImmediate&, NameMap&);
+void Resolve(ResolveContext&, InitImmediate&, NameMap& segment, NameMap& dst);
+void Resolve(ResolveContext&, Instruction&);
+void Resolve(ResolveContext&, InstructionList&);
+void Resolve(ResolveContext&, FunctionDesc&);
+void Resolve(ResolveContext&, EventType&);
+void Resolve(ResolveContext&, EventDesc&);
+void Resolve(ResolveContext&, Import&);
+void Resolve(ResolveContext&, Function&);
+void Resolve(ResolveContext&, ConstantExpression&);
+void Resolve(ResolveContext&, ElementExpression&);
+void Resolve(ResolveContext&, ElementExpressionList&);
+void Resolve(ResolveContext&, ElementListWithExpressions&);
+void Resolve(ResolveContext&, ElementListWithVars&);
+void Resolve(ResolveContext&, ElementList&);
+void Resolve(ResolveContext&, Table&);
+void Resolve(ResolveContext&, Global&);
+void Resolve(ResolveContext&, Export&);
+void Resolve(ResolveContext&, Start&);
+void Resolve(ResolveContext&, ElementSegment&);
+void Resolve(ResolveContext&, DataSegment&);
+void Resolve(ResolveContext&, Event&);
+void Resolve(ResolveContext&, ModuleItem&);
+void Resolve(ResolveContext&, Module&);
+void Resolve(ResolveContext&, ScriptModule&);
+void Resolve(ResolveContext&, ModuleAssertion&);
+void Resolve(ResolveContext&, Assertion&);
+void Resolve(ResolveContext&, Command&);
+void Resolve(ResolveContext&, Script&);
 
 }  // namespace text
 }  // namespace wasp

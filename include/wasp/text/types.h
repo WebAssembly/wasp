@@ -301,7 +301,7 @@ FunctionType ToFunctionType(BoundFunctionType);
 BoundFunctionType ToBoundFunctionType(FunctionType);
 
 struct TypeEntry {
-  OptAt<BindVar> bind_var;
+  OptAt<BindVar> name;
   At<BoundFunctionType> type;
 };
 
@@ -822,6 +822,17 @@ struct ReturnAssertion {
 };
 
 struct Assertion {
+  bool is_module_assertion() const;
+  bool is_action_assertion() const;
+  bool is_return_assertion() const;
+
+  auto module_assertion() -> ModuleAssertion&;
+  auto module_assertion() const -> const ModuleAssertion&;
+  auto action_assertion() -> ActionAssertion&;
+  auto action_assertion() const -> const ActionAssertion&;
+  auto return_assertion() -> ReturnAssertion&;
+  auto return_assertion() const -> const ReturnAssertion&;
+
   AssertionKind kind;
   variant<ModuleAssertion, ActionAssertion, ReturnAssertion> desc;
 };
@@ -880,7 +891,7 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::FunctionType, 2, params, results)                         \
   WASP_V(text::FunctionTypeUse, 2, type_use, type)                       \
   WASP_V(text::FunctionDesc, 3, name, type_use, type)                    \
-  WASP_V(text::TypeEntry, 2, bind_var, type)                             \
+  WASP_V(text::TypeEntry, 2, name, type)                                 \
   WASP_V(text::Instruction, 2, opcode, immediate)                        \
   WASP_V(text::BlockImmediate, 2, label, type)                           \
   WASP_V(text::BrOnExnImmediate, 2, target, event)                       \

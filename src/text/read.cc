@@ -178,10 +178,7 @@ auto ReadFunctionTypeUse(Tokenizer& tokenizer, Context& context)
     -> optional<FunctionTypeUse> {
   auto type_use = ReadTypeUseOpt(tokenizer, context);
   WASP_TRY_READ(type, ReadFunctionType(tokenizer, context));
-  auto result = FunctionTypeUse{type_use, type};
-
-  context.function_type_map.Use(result);
-  return result;
+  return FunctionTypeUse{type_use, type};
 }
 
 auto ReadText(Tokenizer& tokenizer, Context& context) -> OptAt<Text> {
@@ -217,39 +214,26 @@ auto ReadTextList(Tokenizer& tokenizer, Context& context)
 
 // Section 1: Type
 
-auto ReadBindVarOpt(Tokenizer& tokenizer, Context& context, NameMap& name_map)
+auto ReadBindVarOpt(Tokenizer& tokenizer, Context& context)
     -> OptAt<BindVar> {
   auto token_opt = tokenizer.Match(TokenType::Id);
   if (!token_opt) {
-    name_map.NewUnbound();
     return nullopt;
   }
 
   auto name = token_opt->as_string_view();
-  if (name_map.Has(name)) {
-    context.errors.OnError(
-        token_opt->loc, format("Variable {} is already bound to index {}", name,
-                               name_map.Get(name)));
-
-    // Use the previous name and treat this object as unbound.
-    name_map.NewUnbound();
-    return nullopt;
-  }
-
-  name_map.NewBound(name);
   return MakeAt(token_opt->loc, BindVar{name});
 }
 
 auto ReadBoundValueTypeList(Tokenizer& tokenizer,
                             Context& context,
-                            NameMap& name_map,
                             TokenType token_type)
     -> optional<BoundValueTypeList> {
   BoundValueTypeList result;
   while (tokenizer.MatchLpar(token_type)) {
     if (tokenizer.Peek().type == TokenType::Id) {
       LocationGuard guard{tokenizer};
-      auto bind_var_opt = ReadBindVarOpt(tokenizer, context, name_map);
+      auto bind_var_opt = ReadBindVarOpt(tokenizer, context);
       WASP_TRY_READ(value_type, ReadValueType(tokenizer, context));
       result.push_back(
           MakeAt(guard.loc(), BoundValueType{bind_var_opt, value_type}));
@@ -265,10 +249,9 @@ auto ReadBoundValueTypeList(Tokenizer& tokenizer,
   return result;
 }
 
-auto ReadBoundParamList(Tokenizer& tokenizer,
-                        Context& context,
-                        NameMap& name_map) -> optional<BoundValueTypeList> {
-  return ReadBoundValueTypeList(tokenizer, context, name_map, TokenType::Param);
+auto ReadBoundParamList(Tokenizer& tokenizer, Context& context)
+    -> optional<BoundValueTypeList> {
+  return ReadBoundValueTypeList(tokenizer, context, TokenType::Param);
 }
 
 auto ReadUnboundValueTypeList(Tokenizer& tokenizer,
@@ -344,11 +327,10 @@ auto ReadValueTypeList(Tokenizer& tokenizer, Context& context)
   return result;
 }
 
-auto ReadBoundFunctionType(Tokenizer& tokenizer,
-                           Context& context,
-                           NameMap& name_map) -> OptAt<BoundFunctionType> {
+auto ReadBoundFunctionType(Tokenizer& tokenizer, Context& context)
+    -> OptAt<BoundFunctionType> {
   LocationGuard guard{tokenizer};
-  WASP_TRY_READ(params, ReadBoundParamList(tokenizer, context, name_map));
+  WASP_TRY_READ(params, ReadBoundParamList(tokenizer, context));
   WASP_TRY_READ(results, ReadResultList(tokenizer, context));
   return MakeAt(guard.loc(), BoundFunctionType{params, results});
 }
@@ -356,17 +338,13 @@ auto ReadBoundFunctionType(Tokenizer& tokenizer,
 auto ReadTypeEntry(Tokenizer& tokenizer, Context& context) -> OptAt<TypeEntry> {
   LocationGuard guard{tokenizer};
   WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Type));
-  auto bind_var = ReadBindVarOpt(tokenizer, context, context.type_names);
+  auto name = ReadBindVarOpt(tokenizer, context);
   WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Func));
 
-  NameMap dummy_name_map;  // Bound names are not used.
-  WASP_TRY_READ(type,
-                ReadBoundFunctionType(tokenizer, context, dummy_name_map));
-  context.function_type_map.Define(type);
-
+  WASP_TRY_READ(type, ReadBoundFunctionType(tokenizer, context));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return MakeAt(guard.loc(), TypeEntry{bind_var, type});
+  return MakeAt(guard.loc(), TypeEntry{name, type});
 }
 
 // Section 2: Import
@@ -415,19 +393,16 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> OptAt<Import> {
   switch (token.type) {
     case TokenType::Func: {
       tokenizer.Read();
-      auto name = ReadBindVarOpt(tokenizer, context, context.function_names);
+      auto name = ReadBindVarOpt(tokenizer, context);
       auto type_use = ReadTypeUseOpt(tokenizer, context);
-      NameMap dummy_name_map;  // Bound names are not used.
-      WASP_TRY_READ(type,
-                    ReadBoundFunctionType(tokenizer, context, dummy_name_map));
-      context.function_type_map.Use(type_use, type);
+      WASP_TRY_READ(type, ReadBoundFunctionType(tokenizer, context));
       result.desc = FunctionDesc{name, type_use, type};
       break;
     }
 
     case TokenType::Table: {
       tokenizer.Read();
-      auto name = ReadBindVarOpt(tokenizer, context, context.table_names);
+      auto name = ReadBindVarOpt(tokenizer, context);
       WASP_TRY_READ(type, ReadTableType(tokenizer, context));
       result.desc = TableDesc{name, type};
       break;
@@ -435,7 +410,7 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> OptAt<Import> {
 
     case TokenType::Memory: {
       tokenizer.Read();
-      auto name = ReadBindVarOpt(tokenizer, context, context.memory_names);
+      auto name = ReadBindVarOpt(tokenizer, context);
       WASP_TRY_READ(type, ReadMemoryType(tokenizer, context));
       result.desc = MemoryDesc{name, type};
       break;
@@ -443,7 +418,7 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> OptAt<Import> {
 
     case TokenType::Global: {
       tokenizer.Read();
-      auto name = ReadBindVarOpt(tokenizer, context, context.global_names);
+      auto name = ReadBindVarOpt(tokenizer, context);
       WASP_TRY_READ(type, ReadGlobalType(tokenizer, context));
       result.desc = GlobalDesc{name, type};
       break;
@@ -455,7 +430,7 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> OptAt<Import> {
         return nullopt;
       }
       tokenizer.Read();
-      auto name = ReadBindVarOpt(tokenizer, context, context.event_names);
+      auto name = ReadBindVarOpt(tokenizer, context);
       WASP_TRY_READ(type, ReadEventType(tokenizer, context));
       result.desc = EventDesc{name, type};
       break;
@@ -474,9 +449,9 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> OptAt<Import> {
 
 // Section 3: Function
 
-auto ReadLocalList(Tokenizer& tokenizer, Context& context, NameMap& name_map)
+auto ReadLocalList(Tokenizer& tokenizer, Context& context)
     -> optional<BoundValueTypeList> {
-  return ReadBoundValueTypeList(tokenizer, context, name_map, TokenType::Local);
+  return ReadBoundValueTypeList(tokenizer, context, TokenType::Local);
 }
 
 auto ReadFunctionType(Tokenizer& tokenizer, Context& context)
@@ -494,20 +469,16 @@ auto ReadFunction(Tokenizer& tokenizer, Context& context) -> OptAt<Function> {
   BoundValueTypeList locals;
   InstructionList instructions;
 
-  auto name = ReadBindVarOpt(tokenizer, context, context.function_names);
+  auto name = ReadBindVarOpt(tokenizer, context);
   WASP_TRY_READ(exports, ReadInlineExportList(tokenizer, context));
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
 
-  context.local_names.Reset();
-
   auto type_use = ReadTypeUseOpt(tokenizer, context);
-  WASP_TRY_READ(type,
-                ReadBoundFunctionType(tokenizer, context, context.local_names));
-  context.function_type_map.Use(type_use, type);
+  WASP_TRY_READ(type, ReadBoundFunctionType(tokenizer, context));
+
   if (!import_opt) {
-    WASP_TRY_READ(locals_,
-                  ReadLocalList(tokenizer, context, context.local_names));
+    WASP_TRY_READ(locals_, ReadLocalList(tokenizer, context));
     locals = locals_;
     WASP_TRY(ReadInstructionList(tokenizer, context, instructions));
   }
@@ -643,7 +614,7 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> OptAt<Table> {
   LocationGuard guard{tokenizer};
   WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Table));
 
-  auto name = ReadBindVarOpt(tokenizer, context, context.table_names);
+  auto name = ReadBindVarOpt(tokenizer, context);
   WASP_TRY_READ(exports, ReadInlineExportList(tokenizer, context));
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
@@ -700,7 +671,7 @@ auto ReadMemory(Tokenizer& tokenizer, Context& context) -> OptAt<Memory> {
   LocationGuard guard{tokenizer};
   WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Memory));
 
-  auto name = ReadBindVarOpt(tokenizer, context, context.memory_names);
+  auto name = ReadBindVarOpt(tokenizer, context);
   WASP_TRY_READ(exports, ReadInlineExportList(tokenizer, context));
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
@@ -764,7 +735,7 @@ auto ReadGlobal(Tokenizer& tokenizer, Context& context) -> OptAt<Global> {
   LocationGuard guard{tokenizer};
   WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Global));
 
-  auto name = ReadBindVarOpt(tokenizer, context, context.global_names);
+  auto name = ReadBindVarOpt(tokenizer, context);
   WASP_TRY_READ(exports, ReadInlineExportList(tokenizer, context));
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
@@ -948,8 +919,7 @@ auto ReadElementSegment(Tokenizer& tokenizer, Context& context)
     // LPAR ELEM * bind_var_opt DECLARE elem_list RPAR
     // LPAR ELEM * bind_var_opt offset elem_list RPAR  /* Sugar */
     // LPAR ELEM * bind_var_opt offset elem_var_list RPAR  /* Sugar */
-    auto name =
-        ReadBindVarOpt(tokenizer, context, context.element_segment_names);
+    auto name = ReadBindVarOpt(tokenizer, context);
     auto table_use_opt = ReadTableUseOpt(tokenizer, context);
 
     SegmentType segment_type;
@@ -1425,23 +1395,18 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
 }
 
 auto ReadLabelOpt(Tokenizer& tokenizer, Context& context) -> OptAt<BindVar> {
-  // Unlike ReadBindVarOpt, labels can be shadowed; don't check for duplicates.
   auto token_opt = tokenizer.Match(TokenType::Id);
   if (!token_opt) {
-    context.label_names.NewUnbound();
     return nullopt;
   }
 
-  BindVar bind_var{token_opt->as_string_view()};
-  context.label_names.NewBound(bind_var);
-  return MakeAt(token_opt->loc, bind_var);
+  return MakeAt(token_opt->loc, BindVar{token_opt->as_string_view()});
 }
 
 bool ReadEndLabelOpt(Tokenizer& tokenizer,
                      Context& context,
                      OptAt<BindVar> label) {
-  NameMap dummy_name_map;
-  auto end_label = ReadBindVarOpt(tokenizer, context, dummy_name_map);
+  auto end_label = ReadBindVarOpt(tokenizer, context);
   if (end_label) {
     if (!label) {
       context.errors.OnError(end_label->loc(),
@@ -1460,7 +1425,6 @@ bool ReadEndLabelOpt(Tokenizer& tokenizer,
 auto ReadBlockImmediate(Tokenizer& tokenizer, Context& context)
     -> OptAt<BlockImmediate> {
   LocationGuard guard{tokenizer};
-  context.label_names.Push();
   auto label = ReadLabelOpt(tokenizer, context);
 
   // Don't use ReadFunctionTypeUse, since that always marks the type signature
@@ -1468,9 +1432,6 @@ auto ReadBlockImmediate(Tokenizer& tokenizer, Context& context)
   auto type_use = ReadTypeUseOpt(tokenizer, context);
   WASP_TRY_READ(type, ReadFunctionType(tokenizer, context));
   auto ftu = FunctionTypeUse{type_use, type};
-  if (!ftu.IsInlineType()) {
-    context.function_type_map.Use(ftu);
-  }
   return MakeAt(guard.loc(), BlockImmediate{label, ftu});
 }
 
@@ -1478,8 +1439,7 @@ auto ReadLetImmediate(Tokenizer& tokenizer, Context& context)
     -> OptAt<LetImmediate> {
   LocationGuard guard{tokenizer};
   WASP_TRY_READ(block, ReadBlockImmediate(tokenizer, context));
-  // TODO: Need to be more careful with locals for let.
-  WASP_TRY_READ(locals, ReadLocalList(tokenizer, context, context.local_names));
+  WASP_TRY_READ(locals, ReadLocalList(tokenizer, context));
   return MakeAt(guard.loc(), LetImmediate{block, locals});
 }
 
@@ -1551,7 +1511,6 @@ bool ReadBlockInstruction(Tokenizer& tokenizer,
 
   WASP_TRY(ExpectOpcode(tokenizer, context, instructions, TokenType::End));
   WASP_TRY(ReadEndLabelOpt(tokenizer, context, block->label));
-  context.EndBlock();
   return true;
 }
 
@@ -1658,7 +1617,6 @@ bool ReadExpression(Tokenizer& tokenizer,
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
     instructions.push_back(
         MakeAt(rpar.loc, Instruction{MakeAt(rpar.loc, Opcode::End)}));
-    context.EndBlock();
   } else {
     context.errors.OnError(token.loc,
                            format("Expected expression, got {}", token.type));
@@ -1691,7 +1649,7 @@ auto ReadDataSegment(Tokenizer& tokenizer, Context& context)
     // LPAR DATA * bind_var_opt string_list RPAR
     // LPAR DATA * bind_var_opt memory_use offset string_list RPAR
     // LPAR DATA * bind_var_opt offset string_list RPAR  /* Sugar */
-    auto name = ReadBindVarOpt(tokenizer, context, context.data_segment_names);
+    auto name = ReadBindVarOpt(tokenizer, context);
     auto memory_use_opt = ReadMemoryUseOpt(tokenizer, context);
 
     SegmentType segment_type;
@@ -1747,7 +1705,7 @@ auto ReadEvent(Tokenizer& tokenizer, Context& context) -> OptAt<Event> {
     return nullopt;
   }
 
-  auto name = ReadBindVarOpt(tokenizer, context, context.event_names);
+  auto name = ReadBindVarOpt(tokenizer, context);
   WASP_TRY_READ(exports, ReadInlineExportList(tokenizer, context));
   auto import_opt = ReadInlineImportOpt(tokenizer, context);
   context.seen_non_import |= !import_opt;
@@ -1856,11 +1814,6 @@ auto ReadModule(Tokenizer& tokenizer, Context& context) -> optional<Module> {
   while (IsModuleItem(tokenizer)) {
     WASP_TRY_READ(item, ReadModuleItem(tokenizer, context));
     module.push_back(item);
-  }
-
-  auto deferred_types = context.EndModule();
-  for (auto& type_entry : deferred_types) {
-    module.push_back(ModuleItem{type_entry});
   }
   return module;
 }

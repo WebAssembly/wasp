@@ -27,23 +27,18 @@
 namespace wasp {
 namespace test {
 
-struct ErrorContext {
-  Location loc;
-  std::string desc;
-};
-
-struct ErrorContextLoc {
+struct ErrorWithPos {
   span_extent_t pos;
-  std::string desc;
+  std::string message;
 };
 
-using Error = std::vector<ErrorContext>;
-using ExpectedError = std::vector<ErrorContextLoc>;
+using ErrorList = std::vector<Error>;
+using ExpectedError = std::vector<ErrorWithPos>;
 
 class TestErrors : public Errors {
  public:
-  std::vector<ErrorContext> context_stack;
-  std::vector<Error> errors;
+  std::vector<Error> context_stack;
+  std::vector<ErrorList> errors;
 
   void Clear();
 
@@ -58,6 +53,10 @@ void ExpectErrors(const std::vector<ExpectedError>&,
                   const TestErrors&,
                   SpanU8 orig_data);
 void ExpectError(const ExpectedError&, const TestErrors&, SpanU8 orig_data);
+
+// Expected errors with full Location.
+void ExpectErrors(const std::vector<ErrorList>&, const TestErrors&);
+void ExpectError(const ErrorList&, const TestErrors&);
 
 }  // namespace test
 }  // namespace wasp

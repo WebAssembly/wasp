@@ -514,7 +514,7 @@ template <typename Iterator>
 Iterator Write(WriteContext& context, const TypeEntry& value, Iterator out) {
   out = WriteLpar(context, "type", out);
   out = WriteLpar(context, "func", out);
-  out = Write(context, value.bind_var, out);
+  out = Write(context, value.name, out);
   out = Write(context, value.type, out);
   out = WriteRpar(context, out);
   out = WriteRpar(context, out);

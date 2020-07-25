@@ -64,13 +64,6 @@ auto ReadScriptModule(Tokenizer& tokenizer, Context& context)
 
     default: {
       WASP_TRY_READ(module, ReadModule(tokenizer, context));
-      // Resolve the module; this has to be done since the module resolver
-      // relies on information that is gathered during parsing. If a new module
-      // is read, then this information will be lost.
-      //
-      // TODO: The information needed should be factored out into a separate
-      // object, so the resolve step can be done independent from reading.
-      Resolve(context, module);
       Expect(tokenizer, context, TokenType::Rpar);
       return MakeAt(
           guard.loc(),
@@ -636,7 +629,6 @@ auto ReadCommand(Tokenizer& tokenizer, Context& context) -> OptAt<Command> {
         // script.
         LocationGuard guard{tokenizer};
         WASP_TRY_READ(module, ReadModule(tokenizer, context));
-        Resolve(context, module);
         auto script_module = MakeAt(
             guard.loc(), ScriptModule{nullopt, ScriptModuleKind::Text, module});
         return MakeAt(script_module.loc(), Command{script_module.value()});

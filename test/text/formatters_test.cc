@@ -268,7 +268,7 @@ TEST(TextFormattersTest, BoundFunctionType) {
 }
 
 TEST(TextFormattersTest, TypeEntry) {
-  EXPECT_EQ(R"({bind_var $a, type {params [], results []}})",
+  EXPECT_EQ(R"({name $a, type {params [], results []}})",
             format("{}", TypeEntry{"$a"_sv, BoundFunctionType{}}));
 }
 
@@ -437,7 +437,7 @@ TEST(TextFormattersTest, Event) {
 
 TEST(TextFormattersTest, ModuleItem) {
   // TypeEntry
-  EXPECT_EQ(R"(type {bind_var $a, type {params [], results []}})",
+  EXPECT_EQ(R"(type {name $a, type {params [], results []}})",
             format("{}", ModuleItem{TypeEntry{"$a"_sv, BoundFunctionType{}}}));
 
   // Import
@@ -503,7 +503,7 @@ TEST(TextFormattersTest, ModuleItem) {
 
 TEST(TextFormattersTest, Module) {
   EXPECT_EQ(
-      R"([type {bind_var $a, type {params [], results []}} start {var 0}])",
+      R"([type {name $a, type {params [], results []}} start {var 0}])",
       format("{}", Module{
                        ModuleItem{TypeEntry{"$a"_sv, BoundFunctionType{}}},
                        ModuleItem{Start{Var{Index{0}}}},
