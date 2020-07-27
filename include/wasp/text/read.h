@@ -86,6 +86,7 @@ enum class AllowFuncref { No, Yes };
 
 auto ReadLimits(Tokenizer&, Context&) -> OptAt<Limits>;
 auto ReadHeapType(Tokenizer&, Context&) -> OptAt<HeapType>;
+auto ReadRefType(Tokenizer&, Context&) -> OptAt<RefType>;
 auto ReadReferenceType(Tokenizer&, Context&, AllowFuncref = AllowFuncref::Yes)
     -> OptAt<ReferenceType>;
 auto ReadReferenceTypeOpt(Tokenizer&,

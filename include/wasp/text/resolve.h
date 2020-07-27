@@ -36,6 +36,18 @@ void Resolve(Script&, Errors&);
 // The functions below are used to implement the API above, and not meant to be
 // called by most users. They are exposed here primarily for testing purposes.
 
+// DefineTypes() is an initial pass over the Module, to gather all type names.
+// This is so a function type can reference type names too, e.g.
+//
+//   (type $A (func))
+//   (type $B (func (param (ref $A)))
+//
+void DefineTypes(ResolveContext&, const TypeEntry&);
+void DefineTypes(ResolveContext&, const ModuleItem&);
+void DefineTypes(ResolveContext&, const Module&);
+
+// Define() is the second pass over the Module, to handle all non-type names,
+// and to create a mapping of function types to indexes.
 void Define(ResolveContext&, const OptAt<BindVar>&, NameMap&);
 void Define(ResolveContext&, const BoundValueTypeList&, NameMap&);
 void Define(ResolveContext&, const TypeEntry&);
@@ -47,13 +59,27 @@ void Define(ResolveContext&, const EventDesc&);
 void Define(ResolveContext&, const Import&);
 void Define(ResolveContext&, const ElementSegment&);
 void Define(ResolveContext&, const DataSegment&);
+void Define(ResolveContext&, const ModuleItem&);
 void Define(ResolveContext&, const Module&);
 
+// Resolve() is the final pass over the Module, which uses all the
+// names/function types defined in DefineTypes() and Define() to convert them
+// to their respective indexes.
 void Resolve(ResolveContext&, At<Var>&, NameMap&);
 void Resolve(ResolveContext&, OptAt<Var>&, NameMap&);
 void Resolve(ResolveContext&, VarList&, NameMap&);
+void Resolve(ResolveContext&, HeapType&);
+void Resolve(ResolveContext&, RefType&);
+void Resolve(ResolveContext&, ReferenceType&);
+void Resolve(ResolveContext&, ValueType&);
+void Resolve(ResolveContext&, ValueTypeList&);
+void Resolve(ResolveContext&, FunctionType&);
 void Resolve(ResolveContext&, FunctionTypeUse&);
+void Resolve(ResolveContext&, BoundValueType&);
+void Resolve(ResolveContext&, BoundValueTypeList&);
+void Resolve(ResolveContext&, BoundFunctionType&);
 void Resolve(ResolveContext&, OptAt<Var>& type_use, At<BoundFunctionType>&);
+void Resolve(ResolveContext&, TypeEntry&);
 void Resolve(ResolveContext&, BlockImmediate&);
 void Resolve(ResolveContext&, BrOnExnImmediate&);
 void Resolve(ResolveContext&, BrTableImmediate&);
@@ -63,6 +89,10 @@ void Resolve(ResolveContext&, InitImmediate&, NameMap& segment, NameMap& dst);
 void Resolve(ResolveContext&, Instruction&);
 void Resolve(ResolveContext&, InstructionList&);
 void Resolve(ResolveContext&, FunctionDesc&);
+void Resolve(ResolveContext&, TableType&);
+void Resolve(ResolveContext&, TableDesc&);
+void Resolve(ResolveContext&, GlobalType&);
+void Resolve(ResolveContext&, GlobalDesc&);
 void Resolve(ResolveContext&, EventType&);
 void Resolve(ResolveContext&, EventDesc&);
 void Resolve(ResolveContext&, Import&);

@@ -114,6 +114,10 @@ auto ReadFloat(Tokenizer& tokenizer, Context& context) -> OptAt<T> {
   return MakeAt(token.loc, *float_opt);
 }
 
+bool IsVar(Token token) {
+  return token.type == TokenType::Id || token.type == TokenType::Nat;
+}
+
 auto ReadVar(Tokenizer& tokenizer, Context& context) -> OptAt<Var> {
   auto token = tokenizer.Peek();
   auto var_opt = ReadVarOpt(tokenizer, context);
@@ -277,9 +281,16 @@ auto ReadResultList(Tokenizer& tokenizer, Context& context)
   return ReadUnboundValueTypeList(tokenizer, context, TokenType::Result);
 }
 
-bool IsValueType(Token token) {
-  return token.type == TokenType::NumericType ||
-         token.type == TokenType::ReferenceKind;
+bool IsReferenceType(Tokenizer& tokenizer) {
+  auto token = tokenizer.Peek();
+  return token.type == TokenType::ReferenceKind ||
+         (token.type == TokenType::Lpar &&
+          tokenizer.Peek(1).type == TokenType::Ref);
+}
+
+bool IsValueType(Tokenizer& tokenizer) {
+  return tokenizer.Peek().type == TokenType::NumericType ||
+         IsReferenceType(tokenizer);
 }
 
 auto ReadValueType(Tokenizer& tokenizer, Context& context) -> OptAt<ValueType> {
@@ -320,7 +331,7 @@ auto ReadValueType(Tokenizer& tokenizer, Context& context) -> OptAt<ValueType> {
 auto ReadValueTypeList(Tokenizer& tokenizer, Context& context)
     -> optional<ValueTypeList> {
   ValueTypeList result;
-  while (IsValueType(tokenizer.Peek())) {
+  while (IsValueType(tokenizer)) {
     WASP_TRY_READ(value, ReadValueType(tokenizer, context));
     result.push_back(value);
   }
@@ -512,18 +523,15 @@ auto ReadLimits(Tokenizer& tokenizer, Context& context) -> OptAt<Limits> {
 }
 
 auto ReadHeapType(Tokenizer& tokenizer, Context& context) -> OptAt<HeapType> {
+  LocationGuard guard{tokenizer};
   auto token = tokenizer.Peek();
-  if (!token.has_heap_kind()) {
-    context.errors.OnError(token.loc,
-                           format("Expected heap type, got {}", token.type));
-    return nullopt;
-  }
-  tokenizer.Read();
+  if (token.has_heap_kind()) {
+    tokenizer.Read();
 
-  bool allowed = true;
-  auto heap_kind = token.heap_kind();
+    bool allowed = true;
+    auto heap_kind = token.heap_kind();
 
-  switch (heap_kind) {
+    switch (heap_kind) {
 #define WASP_V(val, Name, str)
 #define WASP_FEATURE_V(val, Name, str, feature)  \
   case HeapKind::Name:                           \
@@ -535,32 +543,52 @@ auto ReadHeapType(Tokenizer& tokenizer, Context& context) -> OptAt<HeapType> {
 #undef WASP_V
 #undef WASP_FEATURE_V
 
-    default:
-      break;
-  }
-  if (!allowed) {
+      default:
+        break;
+    }
+    if (!allowed) {
+      context.errors.OnError(token.loc,
+                             format("heap type {} not allowed", heap_kind));
+      return nullopt;
+    }
+    return MakeAt(guard.loc(), HeapType{heap_kind});
+  } else if (IsVar(token)) {
+    WASP_TRY_READ(var, ReadVar(tokenizer, context));
+    return MakeAt(guard.loc(), HeapType{var});
+  } else if (tokenizer.MatchLpar(TokenType::Type)) {
+    WASP_TRY_READ(var, ReadVar(tokenizer, context));
+    WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+    return MakeAt(guard.loc(), HeapType{var});
+  } else {
     context.errors.OnError(token.loc,
-                           format("heap type {} not allowed", heap_kind));
+                           format("Expected heap type, got {}", token.type));
     return nullopt;
   }
-  return MakeAt(token.loc, HeapType(MakeAt(token.loc, *heap_kind)));
+}
+
+auto ReadRefType(Tokenizer& tokenizer, Context& context) -> OptAt<RefType> {
+  LocationGuard guard{tokenizer};
+  Null null = Null::No;
+  if (tokenizer.Match(TokenType::Null)) {
+    null = Null::Yes;
+  }
+
+  WASP_TRY_READ(heap_type, ReadHeapType(tokenizer, context));
+  return MakeAt(guard.loc(), RefType{heap_type, null});
 }
 
 auto ReadReferenceType(Tokenizer& tokenizer,
                        Context& context,
                        AllowFuncref allow_funcref) -> OptAt<ReferenceType> {
+  LocationGuard guard{tokenizer};
   auto token = tokenizer.Peek();
-  if (token.type != TokenType::ReferenceKind) {
-    context.errors.OnError(
-        token.loc, format("Expected reference type, got {}", token.type));
-    return nullopt;
-  }
-  tokenizer.Read();
+  if (token.type == TokenType::ReferenceKind) {
+    tokenizer.Read();
 
-  bool allowed = true;
-  auto reference_kind = token.reference_kind();
+    bool allowed = true;
+    auto reference_kind = token.reference_kind();
 
-  switch (reference_kind) {
+    switch (reference_kind) {
 #define WASP_V(val, Name, str)
 #define WASP_FEATURE_V(val, Name, str, feature)  \
   case ReferenceKind::Name:                      \
@@ -572,31 +600,39 @@ auto ReadReferenceType(Tokenizer& tokenizer,
 #undef WASP_V
 #undef WASP_FEATURE_V
 
-    default:
-      break;
-  }
+      default:
+        break;
+    }
 
-  // Ugly check to make sure that we don't allow funcref when reading a value
-  // type, unless the reference types feature is enabled.
-  if (reference_kind == ReferenceKind::Funcref &&
-      allow_funcref == AllowFuncref::No &&
-      !context.features.reference_types_enabled()) {
-    allowed = false;
-  }
+    // Ugly check to make sure that we don't allow funcref when reading a value
+    // type, unless the reference types feature is enabled.
+    if (reference_kind == ReferenceKind::Funcref &&
+        allow_funcref == AllowFuncref::No &&
+        !context.features.reference_types_enabled()) {
+      allowed = false;
+    }
 
-  if (!allowed) {
+    if (!allowed) {
+      context.errors.OnError(
+          token.loc, format("reference type {} not allowed", reference_kind));
+      return nullopt;
+    }
+    return MakeAt(token.loc, ReferenceType{reference_kind});
+  } else if (tokenizer.MatchLpar(TokenType::Ref)) {
+    WASP_TRY_READ(ref_type, ReadRefType(tokenizer, context));
+    WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+    return MakeAt(guard.loc(), ReferenceType{ref_type});
+  } else {
     context.errors.OnError(
-        token.loc, format("reference type {} not allowed", reference_kind));
+        token.loc, format("Expected reference type, got {}", token.type));
     return nullopt;
   }
-  return MakeAt(token.loc, ReferenceType{reference_kind});
 }
 
 auto ReadReferenceTypeOpt(Tokenizer& tokenizer,
                           Context& context,
                           AllowFuncref allow_funcref) -> OptAt<ReferenceType> {
-  auto token = tokenizer.Peek();
-  if (token.type != TokenType::ReferenceKind) {
+  if (!IsReferenceType(tokenizer)) {
     return nullopt;
   }
 

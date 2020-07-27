@@ -53,9 +53,19 @@ void Define(ResolveContext& context,
   }
 }
 
-void Define(ResolveContext& context, const TypeEntry& type_entry) {
+void DefineTypes(ResolveContext& context, const TypeEntry& type_entry) {
   Define(context, type_entry.name, context.type_names);
-  context.function_type_map.Define(type_entry.type);
+}
+
+void Define(ResolveContext& context, const TypeEntry& type_entry) {
+  // Resolve the type, in case the params or results have a value type that
+  // uses a name, e.g. `(type (func (param (ref $T))))`.
+  //
+  // Since Resolve() changes its parameter, we make a copy first. The type
+  // entry is resolved later below in `Resolve(ResolveContext&, TypeEntry&)`.
+  BoundFunctionType bft = type_entry.type;
+  Resolve(context, bft);
+  context.function_type_map.Define(bft);
 }
 
 void Define(ResolveContext& context, const FunctionDesc& desc) {
@@ -110,49 +120,65 @@ void Define(ResolveContext& context, const DataSegment& segment) {
   Define(context, segment.name, context.data_segment_names);
 }
 
+void DefineTypes(ResolveContext& context, const ModuleItem& item) {
+  if (item.is_type_entry()) {
+    DefineTypes(context, item.type_entry());
+  }
+}
+
+void Define(ResolveContext& context, const ModuleItem& item) {
+  switch (item.kind()) {
+    case ModuleItemKind::TypeEntry:
+      Define(context, item.type_entry());
+      break;
+
+    case ModuleItemKind::Import:
+      Define(context, item.import());
+      break;
+
+    case ModuleItemKind::Function:
+      Define(context, item.function()->desc);
+      break;
+
+    case ModuleItemKind::Table:
+      Define(context, item.table()->desc);
+      break;
+
+    case ModuleItemKind::Memory:
+      Define(context, item.memory()->desc);
+      break;
+
+    case ModuleItemKind::Global:
+      Define(context, item.global()->desc);
+      break;
+
+    case ModuleItemKind::ElementSegment:
+      Define(context, item.element_segment());
+      break;
+
+    case ModuleItemKind::DataSegment:
+      Define(context, item.data_segment());
+      break;
+
+    case ModuleItemKind::Event:
+      Define(context, item.event()->desc);
+      break;
+
+    case ModuleItemKind::Export:
+    case ModuleItemKind::Start:
+      break;
+  }
+}
+
+void DefineTypes(ResolveContext& context, const Module& module) {
+  for (const auto& item : module) {
+    DefineTypes(context, item);
+  }
+}
+
 void Define(ResolveContext& context, const Module& module) {
   for (const auto& item : module) {
-    switch (item.kind()) {
-      case ModuleItemKind::TypeEntry:
-        Define(context, item.type_entry());
-        break;
-
-      case ModuleItemKind::Import:
-        Define(context, item.import());
-        break;
-
-      case ModuleItemKind::Function:
-        Define(context, item.function()->desc);
-        break;
-
-      case ModuleItemKind::Table:
-        Define(context, item.table()->desc);
-        break;
-
-      case ModuleItemKind::Memory:
-        Define(context, item.memory()->desc);
-        break;
-
-      case ModuleItemKind::Global:
-        Define(context, item.global()->desc);
-        break;
-
-      case ModuleItemKind::ElementSegment:
-        Define(context, item.element_segment());
-        break;
-
-      case ModuleItemKind::DataSegment:
-        Define(context, item.data_segment());
-        break;
-
-      case ModuleItemKind::Event:
-        Define(context, item.event()->desc);
-        break;
-
-      case ModuleItemKind::Export:
-      case ModuleItemKind::Start:
-        break;
-    }
+    Define(context, item);
   }
 }
 
@@ -193,11 +219,45 @@ void Resolve(ResolveContext& context, VarList& var_list, NameMap& name_map) {
   }
 }
 
+void Resolve(ResolveContext& context, HeapType& heap_type) {
+  if (heap_type.is_var()) {
+    Resolve(context, heap_type.var(), context.type_names);
+  }
+}
+
+void Resolve(ResolveContext& context, RefType& ref_type) {
+  Resolve(context, ref_type.heap_type.value());
+}
+
+void Resolve(ResolveContext& context, ReferenceType& reference_type) {
+  if (reference_type.is_ref()) {
+    Resolve(context, reference_type.ref().value());
+  }
+}
+
+void Resolve(ResolveContext& context, ValueType& value_type) {
+  if (value_type.is_reference_type()) {
+    Resolve(context, value_type.reference_type().value());
+  }
+}
+
+void Resolve(ResolveContext& context, ValueTypeList& value_type_list) {
+  for (auto& value_type : value_type_list) {
+    Resolve(context, value_type.value());
+  }
+}
+
+void Resolve(ResolveContext& context, FunctionType& function_type) {
+  Resolve(context, function_type.params);
+  Resolve(context, function_type.results);
+}
+
 void Resolve(ResolveContext& context, FunctionTypeUse& function_type_use) {
   auto& type_use = function_type_use.type_use;
   auto& type = function_type_use.type;
 
   Resolve(context, type_use, context.type_names);
+  Resolve(context, type.value());
 
   if (type_use) {
     if (type_use->value().is_index()) {
@@ -227,11 +287,28 @@ void Resolve(ResolveContext& context, FunctionTypeUse& function_type_use) {
   }
 }
 
+void Resolve(ResolveContext& context, BoundValueType& bound_value_type) {
+  Resolve(context, bound_value_type.type.value());
+}
+
+void Resolve(ResolveContext& context,
+             BoundValueTypeList& bound_value_type_list) {
+  for (auto& bound_value_type : bound_value_type_list) {
+    Resolve(context, bound_value_type.value());
+  }
+}
+
+void Resolve(ResolveContext& context, BoundFunctionType& bound_function_type) {
+  Resolve(context, bound_function_type.params);
+  Resolve(context, bound_function_type.results);
+}
+
 // TODO: How to combine this with the function above?
 void Resolve(ResolveContext& context,
              OptAt<Var>& type_use,
              At<BoundFunctionType>& type) {
   Resolve(context, type_use, context.type_names);
+  Resolve(context, type.value());
   if (type_use) {
     if (type_use->value().is_index()) {
       auto type_index = type_use->value().index();
@@ -263,8 +340,16 @@ void Resolve(ResolveContext& context,
   Define(context, type->params, context.local_names);
 }
 
+void Resolve(ResolveContext& context, TypeEntry& type_entry) {
+  Resolve(context, type_entry.type.value());
+}
+
 void Resolve(ResolveContext& context, BlockImmediate& immediate) {
-  if (!immediate.type.IsInlineType()) {
+  if (immediate.type.IsInlineType()) {
+    // An inline type still may be `(result (ref $T))`, which needs to be
+    // resolved.
+    Resolve(context, immediate.type.type.value());
+  } else {
     Resolve(context, immediate.type);
   }
 }
@@ -345,6 +430,7 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
         // Label.
         case Opcode::BrIf:
         case Opcode::Br:
+        case Opcode::BrOnNull:
           return Resolve(context, immediate, context.label_names);
 
         // Local.
@@ -363,11 +449,6 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
       auto& immediate = instruction.block_immediate();
       context.label_names.Push();
       Define(context, immediate->label, context.label_names);
-
-      if (!immediate->type.IsInlineType()) {
-        context.function_type_map.Use(immediate->type.type);
-      }
-
       return Resolve(context, *immediate);
     }
 
@@ -401,6 +482,18 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
       }
     }
 
+    case 15: { // HeapType
+      auto& immediate = instruction.heap_type_immediate();
+      if (immediate->is_var()) {
+        Resolve(context, immediate->var(), context.type_names);
+        return;
+      }
+      break;
+    }
+
+    case 16: // SelectImmediate
+      return Resolve(context, instruction.select_immediate().value());
+
     default:
       break;
   }
@@ -416,6 +509,22 @@ void Resolve(ResolveContext& context, FunctionDesc& desc) {
   Resolve(context, desc.type_use, desc.type);
 }
 
+void Resolve(ResolveContext& context, TableType& table_type) {
+  Resolve(context, table_type.elemtype.value());
+}
+
+void Resolve(ResolveContext& context, TableDesc& desc) {
+  Resolve(context, desc.type.value());
+}
+
+void Resolve(ResolveContext& context, GlobalType& global_type) {
+  Resolve(context, global_type.valtype.value());
+}
+
+void Resolve(ResolveContext& context, GlobalDesc& desc) {
+  Resolve(context, desc.type.value());
+}
+
 void Resolve(ResolveContext& context, EventType& event_type) {
   Resolve(context, event_type.type);
 }
@@ -429,6 +538,12 @@ void Resolve(ResolveContext& context, Import& import) {
     case ExternalKind::Function:
       return Resolve(context, import.function_desc());
 
+    case ExternalKind::Table:
+      return Resolve(context, import.table_desc());
+
+    case ExternalKind::Global:
+      return Resolve(context, import.global_desc());
+
     case ExternalKind::Event:
       return Resolve(context, import.event_desc());
 
@@ -441,6 +556,7 @@ void Resolve(ResolveContext& context, Function& function) {
   context.BeginFunction();
   Resolve(context, function.desc);
   Define(context, function.locals, context.local_names);
+  Resolve(context, function.locals);
   Resolve(context, function.instructions);
 }
 
@@ -460,6 +576,7 @@ void Resolve(ResolveContext& context, ElementExpressionList& expression_list) {
 
 void Resolve(ResolveContext& context,
              ElementListWithExpressions& element_list) {
+  Resolve(context, element_list.elemtype.value());
   Resolve(context, element_list.list);
 }
 
@@ -483,12 +600,14 @@ void Resolve(ResolveContext& context, ElementList& element_list) {
 }
 
 void Resolve(ResolveContext& context, Table& table) {
+  Resolve(context, table.desc);
   if (table.elements) {
     Resolve(context, *table.elements);
   }
 }
 
 void Resolve(ResolveContext& context, Global& global) {
+  Resolve(context, global.desc);
   if (global.init) {
     Resolve(context, global.init->value());
   }
@@ -541,6 +660,9 @@ void Resolve(ResolveContext& context, Event& event) {
 
 void Resolve(ResolveContext& context, ModuleItem& item) {
   switch (item.kind()) {
+    case ModuleItemKind::TypeEntry:
+      return Resolve(context, *item.type_entry());
+
     case ModuleItemKind::Import:
       return Resolve(context, *item.import());
 
@@ -575,6 +697,7 @@ void Resolve(ResolveContext& context, ModuleItem& item) {
 
 void Resolve(ResolveContext& context, Module& module) {
   context.BeginModule();
+  DefineTypes(context, module);
   Define(context, module);
   for (auto& item : module) {
     Resolve(context, item);

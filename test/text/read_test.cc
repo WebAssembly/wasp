@@ -172,6 +172,22 @@ TEST_F(TextReadTest, TextList) {
   OKVector(ReadTextList, expected, span);
 }
 
+TEST_F(TextReadTest, HeapType) {
+  context.features.enable_reference_types();
+
+  OK(ReadHeapType, HT_Func, "func"_su8);
+}
+
+TEST_F(TextReadTest, HeapType_reference_types) {
+  context.features.enable_reference_types();
+  OK(ReadHeapType, HT_Extern, "extern"_su8);
+}
+
+TEST_F(TextReadTest, HeapType_exceptions) {
+  context.features.enable_exceptions();
+  OK(ReadHeapType, HT_Exn, "exn"_su8);
+}
+
 TEST_F(TextReadTest, ValueType) {
   OK(ReadValueType, VT_I32, "i32"_su8);
   OK(ReadValueType, VT_I64, "i64"_su8);
@@ -201,6 +217,22 @@ TEST_F(TextReadTest, ValueType_exceptions) {
   OK(ReadValueType, VT_Exnref, "exnref"_su8);
 }
 
+TEST_F(TextReadTest, ValueType_function_references) {
+  context.features.enable_function_references();
+  OK(ReadValueType, VT_Ref0, "(ref 0)"_su8);
+  OK(ReadValueType, VT_RefNull0, "(ref null 0)"_su8);
+  OK(ReadValueType, VT_RefT, "(ref $t)"_su8);
+  OK(ReadValueType, VT_RefNullT, "(ref null $t)"_su8);
+  OK(ReadValueType, VT_RefFunc, "(ref func)"_su8);
+  OK(ReadValueType, VT_RefNullFunc, "(ref null func)"_su8);
+  OK(ReadValueType, VT_RefExtern, "(ref extern)"_su8);
+  OK(ReadValueType, VT_RefNullExtern, "(ref null extern)"_su8);
+  OK(ReadValueType, VT_Ref0, "(ref 0)"_su8);
+  OK(ReadValueType, VT_RefNull0, "(ref null 0)"_su8);
+  OK(ReadValueType, VT_RefT, "(ref $t)"_su8);
+  OK(ReadValueType, VT_RefNullT, "(ref null $t)"_su8);
+}
+
 TEST_F(TextReadTest, ValueTypeList) {
   auto span = "i32 f32 f64 i64"_su8;
   std::vector<At<ValueType>> expected{
@@ -220,6 +252,28 @@ TEST_F(TextReadTest, ReferenceType_reference_types) {
   context.features.enable_reference_types();
   OK(ReadReferenceType, RT_Funcref, "funcref"_su8, AllowFuncref::Yes);
   OK(ReadReferenceType, RT_Externref, "externref"_su8, AllowFuncref::Yes);
+}
+
+TEST_F(TextReadTest, ReferenceType_exceptions) {
+  context.features.enable_exceptions();
+  OK(ReadReferenceType, RT_Exnref, "exnref"_su8, AllowFuncref::Yes);
+}
+
+TEST_F(TextReadTest, ReferenceType_function_references) {
+  context.features.enable_function_references();
+
+  OK(ReadReferenceType, RT_Ref0, "(ref 0)"_su8, AllowFuncref::Yes);
+  OK(ReadReferenceType, RT_RefNull0, "(ref null 0)"_su8, AllowFuncref::Yes);
+  OK(ReadReferenceType, RT_RefT, "(ref $t)"_su8, AllowFuncref::Yes);
+  OK(ReadReferenceType, RT_RefNullT, "(ref null $t)"_su8, AllowFuncref::Yes);
+
+  OK(ReadReferenceType, RT_RefFunc, "(ref func)"_su8, AllowFuncref::Yes);
+  OK(ReadReferenceType, RT_RefNullFunc, "(ref null func)"_su8,
+     AllowFuncref::Yes);
+
+  OK(ReadReferenceType, RT_RefExtern, "(ref extern)"_su8, AllowFuncref::Yes);
+  OK(ReadReferenceType, RT_RefNullExtern, "(ref null extern)"_su8,
+     AllowFuncref::Yes);
 }
 
 TEST_F(TextReadTest, BoundParamList) {
