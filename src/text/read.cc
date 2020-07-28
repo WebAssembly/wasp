@@ -1163,16 +1163,21 @@ bool IsBlockInstruction(Token token) {
   return token.type == TokenType::BlockInstr;
 }
 
+bool IsLetInstruction(Token token) {
+  return token.type == TokenType::LetInstr;
+}
+
 bool IsExpression(Tokenizer& tokenizer) {
   return tokenizer.Peek().type == TokenType::Lpar &&
          (IsPlainInstruction(tokenizer.Peek(1)) ||
-          IsBlockInstruction(tokenizer.Peek(1)));
+          IsBlockInstruction(tokenizer.Peek(1)) ||
+          IsLetInstruction(tokenizer.Peek(1)));
 }
 
 bool IsInstruction(Tokenizer& tokenizer) {
   auto token = tokenizer.Peek();
   return IsPlainInstruction(token) || IsBlockInstruction(token) ||
-         IsExpression(tokenizer);
+         IsLetInstruction(token) || IsExpression(tokenizer);
 }
 
 bool IsElementExpression(Tokenizer& tokenizer) {
@@ -1550,6 +1555,23 @@ bool ReadBlockInstruction(Tokenizer& tokenizer,
   return true;
 }
 
+bool ReadLetInstruction(Tokenizer& tokenizer,
+                        Context& context,
+                        InstructionList& instructions) {
+  LocationGuard guard{tokenizer};
+  auto token_opt = tokenizer.Match(TokenType::LetInstr);
+  // Shouldn't be called when the TokenType is not a LetInstr.
+  assert(token_opt.has_value());
+
+  WASP_TRY_READ(immediate, ReadLetImmediate(tokenizer, context));
+  instructions.push_back(
+      MakeAt(guard.loc(), Instruction{token_opt->opcode(), immediate}));
+  WASP_TRY(ReadInstructionList(tokenizer, context, instructions));
+  WASP_TRY(ExpectOpcode(tokenizer, context, instructions, TokenType::End));
+  WASP_TRY(ReadEndLabelOpt(tokenizer, context, immediate->block.label));
+  return true;
+}
+
 bool ReadInstruction(Tokenizer& tokenizer,
                      Context& context,
                      InstructionList& instructions) {
@@ -1559,6 +1581,8 @@ bool ReadInstruction(Tokenizer& tokenizer,
     instructions.push_back(instruction);
   } else if (IsBlockInstruction(token)) {
     WASP_TRY(ReadBlockInstruction(tokenizer, context, instructions));
+  } else if (IsLetInstruction(token)) {
+    WASP_TRY(ReadLetInstruction(tokenizer, context, instructions));
   } else if (IsExpression(tokenizer)) {
     WASP_TRY(ReadExpression(tokenizer, context, instructions));
   } else {
@@ -1647,6 +1671,24 @@ bool ReadExpression(Tokenizer& tokenizer,
       default:
         WASP_UNREACHABLE();
     }
+
+    // Read final `)` and use its location as the `end` instruction.
+    auto rpar = tokenizer.Peek();
+    WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+    instructions.push_back(
+        MakeAt(rpar.loc, Instruction{MakeAt(rpar.loc, Opcode::End)}));
+  } else if (IsLetInstruction(token)) {
+    LocationGuard guard{tokenizer};
+    tokenizer.Read();
+    if (!context.features.function_references_enabled()) {
+      context.errors.OnError(token.loc, "let instruction not allowed");
+      return false;
+    }
+
+    WASP_TRY_READ(immediate, ReadLetImmediate(tokenizer, context));
+    instructions.push_back(
+        MakeAt(guard.loc(), Instruction{token.opcode(), immediate}));
+    WASP_TRY(ReadInstructionList(tokenizer, context, instructions));
 
     // Read final `)` and use its location as the `end` instruction.
     auto rpar = tokenizer.Peek();

@@ -72,6 +72,7 @@ struct ResolveContext {
 
   void BeginModule();    // Reset all module-specific context.
   void BeginFunction();  // Reset all function-specific context.
+  void BeginBlock(Opcode);
   void EndBlock();
   auto EndModule() -> TypeEntryList;
 
@@ -94,6 +95,7 @@ struct ResolveContext {
   // Function context.
   NameMap local_names;  // Includes params.
   NameMap label_names;
+  std::vector<Opcode> blocks;
 };
 
 }  // namespace text

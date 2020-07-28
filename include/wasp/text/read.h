@@ -154,6 +154,7 @@ void EndBlock(Context&);
 bool ReadOpcodeOpt(Tokenizer&, Context&, InstructionList&, TokenType);
 bool ExpectOpcode(Tokenizer&, Context&, InstructionList&, TokenType);
 bool ReadBlockInstruction(Tokenizer&, Context&, InstructionList&);
+bool ReadLetInstruction(Tokenizer&, Context&, InstructionList&);
 bool ReadInstruction(Tokenizer&, Context&, InstructionList&);
 bool ReadInstructionList(Tokenizer&, Context&, InstructionList&);
 bool ReadExpression(Tokenizer&, Context&, InstructionList&);

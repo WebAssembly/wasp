@@ -96,6 +96,7 @@ auto ToBinary(Context&, const At<text::BrTableImmediate>&) -> At<binary::BrTable
 auto ToBinary(Context&, const At<text::CallIndirectImmediate>&) -> At<binary::CallIndirectImmediate>;
 auto ToBinary(Context&, const At<text::CopyImmediate>&) -> At<binary::CopyImmediate>;
 auto ToBinary(Context&, const At<text::InitImmediate>&) -> At<binary::InitImmediate>;
+auto ToBinary(Context&, const At<text::LetImmediate>&) -> At<binary::LetImmediate>;
 auto ToBinary(Context&, const At<text::MemArgImmediate>&, u32 natural_align) -> At<binary::MemArgImmediate>;
 auto ToBinary(Context&, const At<text::Instruction>&) -> At<binary::Instruction>;
 auto ToBinary(Context&, const text::InstructionList&) -> binary::InstructionList;

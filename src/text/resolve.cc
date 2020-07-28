@@ -345,6 +345,7 @@ void Resolve(ResolveContext& context, TypeEntry& type_entry) {
 }
 
 void Resolve(ResolveContext& context, BlockImmediate& immediate) {
+  Define(context, immediate.label, context.label_names);
   if (immediate.type.IsInlineType()) {
     // An inline type still may be `(result (ref $T))`, which needs to be
     // resolved.
@@ -382,6 +383,12 @@ void Resolve(ResolveContext& context,
              NameMap& dst_name_map) {
   Resolve(context, immediate.segment, segment_name_map);
   Resolve(context, immediate.dst, dst_name_map);
+}
+
+void Resolve(ResolveContext& context, LetImmediate& immediate) {
+  Resolve(context, immediate.block);
+  Define(context, immediate.locals, context.local_names);
+  Resolve(context, immediate.locals);
 }
 
 void Resolve(ResolveContext& context, Instruction& instruction) {
@@ -445,12 +452,9 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
       break;
     }
 
-    case 7: { // BlockImmediate
-      auto& immediate = instruction.block_immediate();
-      context.label_names.Push();
-      Define(context, immediate->label, context.label_names);
-      return Resolve(context, *immediate);
-    }
+    case 7: // BlockImmediate
+      context.BeginBlock(instruction.opcode);
+      return Resolve(context, instruction.block_immediate().value());
 
     case 8: // BrOnExnImmediate
       return Resolve(context, instruction.br_on_exn_immediate().value());
@@ -481,6 +485,10 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
                        context.element_segment_names, context.table_names);
       }
     }
+
+    case 13: // LetImmediate
+      context.BeginBlock(instruction.opcode);
+      return Resolve(context, instruction.let_immediate().value());
 
     case 15: { // HeapType
       auto& immediate = instruction.heap_type_immediate();

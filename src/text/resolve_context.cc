@@ -43,10 +43,24 @@ void ResolveContext::BeginModule() {
 void ResolveContext::BeginFunction() {
   local_names.Reset();
   label_names.Reset();
+  blocks.clear();
+}
+
+void ResolveContext::BeginBlock(Opcode opcode) {
+  blocks.push_back(opcode);
+  label_names.Push();
+  if (opcode == Opcode::Let) {
+    local_names.Push();
+  }
 }
 
 void ResolveContext::EndBlock() {
+  assert(!blocks.empty());
+  if (blocks.back() == Opcode::Let) {
+    local_names.Pop();
+  }
   label_names.Pop();
+  blocks.pop_back();
 }
 
 auto ResolveContext::EndModule() -> TypeEntryList {

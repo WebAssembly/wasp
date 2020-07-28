@@ -449,6 +449,27 @@ TEST(ConvertToBinaryTest, InitImmediate) {
             text::InitImmediate{MakeAt(loc2, text::Var{Index{13}}), nullopt}));
 }
 
+TEST(ConvertToBinaryTest, LetImmediate) {
+  // Empty let immediate.
+  OK(MakeAt(loc1,
+            binary::LetImmediate{binary::BlockType{binary::VoidType{}}, {}}),
+     MakeAt(loc1, text::LetImmediate{}));
+
+  // Let immediate with locals.
+  OK(MakeAt(loc1,
+            binary::LetImmediate{binary::BlockType{binary::VoidType{}},
+                                 MakeAt(loc2, binary::LocalsList{binary::Locals{
+                                                  2, MakeAt(loc3, BVT_I32)}})}),
+     MakeAt(loc1,
+            text::LetImmediate{
+                text::BlockImmediate{},
+                {MakeAt(loc2, text::BoundValueTypeList{
+                                  text::BoundValueType{
+                                      nullopt, MakeAt(loc3, tt::VT_I32)},
+                                  text::BoundValueType{nullopt, tt::VT_I32},
+                              })}}));
+}
+
 TEST(ConvertToBinaryTest, MemArgImmediate) {
   u32 natural_align = 16;
   u32 natural_align_log2 = 4;
@@ -588,6 +609,31 @@ TEST(ConvertToBinaryTest, Instruction) {
                       MakeAt(loc3, text::InitImmediate{
                                        MakeAt(loc4, text::Var{Index{13}}),
                                        MakeAt(loc5, text::Var{Index{14}})})}));
+
+  // LetImmediate.
+  OK(MakeAt(loc1,
+            binary::Instruction{
+                MakeAt(loc2, Opcode::Let),
+                MakeAt(loc3,
+                       binary::LetImmediate{
+                           binary::BlockType{15},
+                           MakeAt(loc4, binary::LocalsList{binary::Locals{
+                                            2, MakeAt(loc6, BVT_I32)}})})}),
+     MakeAt(
+         loc1,
+         text::Instruction{
+             MakeAt(loc2, Opcode::Let),
+             MakeAt(loc3,
+                    text::LetImmediate{
+                        text::BlockImmediate{
+                            nullopt,
+                            text::FunctionTypeUse{text::Var{Index{15}}, {}}},
+                        {MakeAt(
+                            loc4, text::BoundValueTypeList{
+                                      text::BoundValueType{
+                                          nullopt, MakeAt(loc6, tt::VT_I32)},
+                                      text::BoundValueType{nullopt, tt::VT_I32},
+                                  })}})}));
 
   // MemArgImmediate.
   OK(MakeAt(loc1,

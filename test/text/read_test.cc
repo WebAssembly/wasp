@@ -100,6 +100,13 @@ auto ReadBlockInstruction_ForTesting(Tokenizer& tokenizer, Context& context)
   return result;
 }
 
+auto ReadLetInstruction_ForTesting(Tokenizer& tokenizer, Context& context)
+    -> optional<InstructionList> {
+  InstructionList result;
+  WASP_TRY(ReadLetInstruction(tokenizer, context, result));
+  return result;
+}
+
 auto ReadInstructionList_ForTesting(Tokenizer& tokenizer, Context& context)
     -> optional<InstructionList> {
   InstructionList result;
@@ -1151,6 +1158,97 @@ TEST_F(TextReadTest, BlockInstruction_Try_MismatchedLabels) {
        "try $l catch $l2 end $l"_su8);
 }
 
+TEST_F(TextReadTest, LetInstruction) {
+  // Empty Let.
+  OKVector(ReadLetInstruction_ForTesting,
+           InstructionList{
+               MakeAt("let"_su8, I{MakeAt("let"_su8, O::Let), LetImmediate{}}),
+               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+           },
+           "let end"_su8);
+
+  // Let w/ multiple instructions.
+  OKVector(ReadLetInstruction_ForTesting,
+           InstructionList{
+               MakeAt("let"_su8,
+                      I{MakeAt("let"_su8, O::Let), LetImmediate{}}),
+               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+           },
+           "let nop nop end"_su8);
+
+  // Let w/ label.
+  OKVector(ReadLetInstruction_ForTesting,
+           InstructionList{
+               MakeAt("let $l"_su8,
+                      I{MakeAt("let"_su8, O::Let),
+                        MakeAt("$l"_su8,
+                               LetImmediate{BlockImmediate{
+                                                MakeAt("$l"_su8, "$l"_sv), {}},
+                                            {}})}),
+               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+           },
+           "let $l nop end"_su8);
+
+  // Let w/ label and matching end label.
+  OKVector(
+      ReadLetInstruction_ForTesting,
+      InstructionList{
+          MakeAt("let $l2"_su8,
+                 I{MakeAt("let"_su8, O::Let),
+                   MakeAt("$l2"_su8,
+                          LetImmediate{
+                              BlockImmediate{MakeAt("$l2"_su8, "$l2"_sv), {}},
+                              {}})}),
+          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+      },
+      "let $l2 nop end $l2"_su8);
+
+  // Let w/ locals
+  OKVector(ReadLetInstruction_ForTesting,
+           InstructionList{
+               MakeAt("let (local i32)"_su8,
+                      I{MakeAt("let"_su8, O::Let),
+                        MakeAt("(local i32)"_su8,
+                               LetImmediate{
+                                   BlockImmediate{},
+                                   {MakeAt("i32"_su8,
+                                           BVT{nullopt,
+                                               MakeAt("i32"_su8, VT_I32)})}})}),
+               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+           },
+           "let (local i32) nop end"_su8);
+
+  // Let w/ params, results, locals
+  OKVector(
+      ReadLetInstruction_ForTesting,
+      InstructionList{
+          MakeAt(
+              "let (param f32) (result f64) (local i32)"_su8,
+              I{MakeAt("let"_su8, O::Let),
+                MakeAt(
+                    "(param f32) (result f64) (local i32)"_su8,
+                    LetImmediate{
+                        BlockImmediate{
+                            nullopt,
+                            FunctionTypeUse{
+                                nullopt,
+                                MakeAt("(param f32) (result f64)"_su8,
+                                       FunctionType{
+                                           {MakeAt("f32"_su8, VT_F32)},
+                                           {MakeAt("f64"_su8, VT_F64)}})}},
+                        {MakeAt("i32"_su8,
+                                BVT{nullopt, MakeAt("i32"_su8, VT_I32)})}})}),
+          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+      },
+      "let (param f32) (result f64) (local i32) nop end"_su8);
+}
+
 TEST_F(TextReadTest, Label_ReuseNames) {
   OK(ReadInstructionList_ForTesting,
      InstructionList{
@@ -1485,6 +1583,42 @@ TEST_F(TextReadTest, Expression_Try) {
       },
       "(try (nop) (catch (nop)))"_su8);
 }
+
+TEST_F(TextReadTest, Expression_Let) {
+  Fail(ReadExpression_ForTesting, {{1, "let instruction not allowed"}},
+       "(let)"_su8);
+
+  context.features.enable_function_references();
+
+  // Empty Let.
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               MakeAt("let"_su8, I{MakeAt("let"_su8, O::Let), LetImmediate{}}),
+               MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
+           },
+           "(let)"_su8);
+
+  // Let with locals and nops.
+  OKVector(
+      ReadExpression_ForTesting,
+      InstructionList{
+          MakeAt("let (local i32 i64)"_su8,
+                 I{MakeAt("let"_su8, O::Let),
+                   MakeAt("(local i32 i64)"_su8,
+                          LetImmediate{
+                              BlockImmediate{},
+                              {MakeAt("i32"_su8,
+                                      BVT{nullopt, MakeAt("i32"_su8, VT_I32)}),
+                               MakeAt("i64"_su8,
+                                      BVT{nullopt, MakeAt("i64"_su8, VT_I64)})},
+                          })}),
+          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+          MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
+      },
+      "(let (local i32 i64) nop nop)"_su8);
+}
+
 
 TEST_F(TextReadTest, ExpressionList) {
   OKVector(ReadExpressionList_ForTesting,

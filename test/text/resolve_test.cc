@@ -578,6 +578,23 @@ TEST_F(TextResolveTest, Instruction_HeapType) {
   OK(I{O::RefNull, Resolved_HT_0}, I{O::RefNull, HT_T});
 }
 
+TEST_F(TextResolveTest, Instruction_LetImmediate) {
+  context.type_names.NewBound("$t");
+  context.function_type_map.Define(BoundFunctionType{});
+
+  OK(I{O::Let,
+       LetImmediate{
+           BlockImmediate{
+               nullopt, FunctionTypeUse{Var{Index{1}},
+                                        FunctionType{{Resolved_VT_Ref0}, {}}}},
+           {BVT{nullopt, Resolved_VT_Ref0}}}},
+     I{O::Let,
+       LetImmediate{
+           BlockImmediate{
+               nullopt, FunctionTypeUse{nullopt, FunctionType{{VT_RefT}, {}}}},
+           {BVT{nullopt, VT_RefT}}}});
+}
+
 TEST_F(TextResolveTest, Instruction_SelectImmediate) {
   context.type_names.NewBound("$t");
 

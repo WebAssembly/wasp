@@ -86,6 +86,7 @@ void Resolve(ResolveContext&, BrTableImmediate&);
 void Resolve(ResolveContext&, CallIndirectImmediate&);
 void Resolve(ResolveContext&, CopyImmediate&, NameMap&);
 void Resolve(ResolveContext&, InitImmediate&, NameMap& segment, NameMap& dst);
+void Resolve(ResolveContext&, LetImmediate&);
 void Resolve(ResolveContext&, Instruction&);
 void Resolve(ResolveContext&, InstructionList&);
 void Resolve(ResolveContext&, FunctionDesc&);

@@ -364,6 +364,13 @@ auto ToBinary(Context& context, const At<text::InitImmediate>& value)
                                       ToBinary(context, value->dst, 0)});
 }
 
+auto ToBinary(Context& context, const At<text::LetImmediate>& value)
+    -> At<binary::LetImmediate> {
+  return MakeAt(value.loc(), binary::LetImmediate{
+                                 ToBinary(context, value->block),
+                                 ToBinaryLocalsList(context, value->locals)});
+}
+
 u32 GetNaturalAlignment(Opcode opcode) {
   switch (opcode) {
     case Opcode::I32AtomicLoad8U:
@@ -572,9 +579,10 @@ auto ToBinary(Context& context, const At<text::Instruction>& value)
                               ToBinary(context, value->init_immediate())});
 
     case 13:  // LetImmediate
-      assert(false);
-      WASP_UNREACHABLE();
-      break;
+      return MakeAt(
+          value.loc(),
+          binary::Instruction{value->opcode,
+                              ToBinary(context, value->let_immediate())});
 
     case 14:  // MemArgImmediate
       return MakeAt(
