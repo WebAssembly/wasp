@@ -55,14 +55,22 @@ struct StackType {
 using StackTypeList = std::vector<StackType>;
 using StackTypeSpan = span<const StackType>;
 
-binary::ValueType ToValueType(binary::ReferenceType);
-binary::ValueType ToValueType(binary::HeapType);
-StackType ToStackType(binary::ValueType);
-StackType ToStackType(binary::ReferenceType);
-StackType ToStackType(binary::HeapType);
-StackTypeList ToStackTypeList(const binary::ValueTypeList&);
+auto ToValueType(binary::ReferenceType) -> binary::ValueType;
+auto ToValueType(binary::HeapType) -> binary::ValueType;
+auto ToStackType(binary::ValueType) -> StackType;
+auto ToStackType(binary::ReferenceType) -> StackType;
+auto ToStackType(binary::HeapType) -> StackType;
+auto ToStackTypeList(const binary::ValueTypeList&) -> StackTypeList;
 bool IsReferenceTypeOrAny(StackType);
-binary::ReferenceType Canonicalize(binary::ReferenceType);
+auto Canonicalize(binary::ReferenceType) -> binary::ReferenceType;
+
+bool IsNullableType(binary::ValueType);
+bool IsNullableType(StackType);
+
+auto AsNonNullableType(binary::RefType) -> binary::RefType;
+auto AsNonNullableType(binary::ReferenceType) -> binary::ReferenceType;
+auto AsNonNullableType(binary::ValueType) -> binary::ValueType;
+auto AsNonNullableType(StackType) -> StackType;
 
 #define WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_V) \
   WASP_V(valid::Any, 0)            \

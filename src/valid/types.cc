@@ -88,28 +88,29 @@ auto StackType::value_type() const -> const binary::ValueType& {
   return get<binary::ValueType>(type);
 }
 
-binary::ValueType ToValueType(binary::ReferenceType type) {
+auto ToValueType(binary::ReferenceType type) -> binary::ValueType {
   return binary::ValueType{type};
 }
 
-binary::ValueType ToValueType(binary::HeapType type) {
+auto ToValueType(binary::HeapType type) -> binary::ValueType {
   return binary::ValueType{
       binary::ReferenceType{binary::RefType{type, Null::Yes}}};
 }
 
-StackType ToStackType(binary::ValueType type) {
+auto ToStackType(binary::ValueType type) -> StackType {
   return StackType(type);
 }
 
-StackType ToStackType(binary::ReferenceType type) {
+auto ToStackType(binary::ReferenceType type) -> StackType {
   return ToStackType(ToValueType(type));
 }
 
-StackType ToStackType(binary::HeapType type) {
+auto ToStackType(binary::HeapType type) -> StackType {
   return ToStackType(ToValueType(type));
 }
 
-StackTypeList ToStackTypeList(const binary::ValueTypeList& value_types) {
+auto ToStackTypeList(const binary::ValueTypeList& value_types)
+    -> StackTypeList {
   StackTypeList result;
   for (auto value_type : value_types) {
     result.push_back(StackType{*value_type});
@@ -122,7 +123,7 @@ bool IsReferenceTypeOrAny(StackType type) {
          (type.is_value_type() && type.value_type().is_reference_type());
 }
 
-binary::ReferenceType Canonicalize(binary::ReferenceType type) {
+auto Canonicalize(binary::ReferenceType type) -> binary::ReferenceType {
   if (type.is_reference_kind()) {
     switch (type.reference_kind()) {
 #define WASP_V(val, Name, str, ...) \
@@ -139,6 +140,42 @@ binary::ReferenceType Canonicalize(binary::ReferenceType type) {
     }
   } else {
     return type;
+  }
+}
+
+bool IsNullableType(binary::ValueType type) {
+  // All reference types are considered "nullable" for the purpose of
+  // type-checking, even non-nullable reference types. This is because nullable
+  // types are a supertype of non-nullable types.
+  return type.is_reference_type();
+}
+
+bool IsNullableType(StackType type) {
+  return type.is_any() ||
+         (type.is_value_type() && IsNullableType(type.value_type()));
+}
+
+auto AsNonNullableType(binary::RefType type) -> binary::RefType {
+  return binary::RefType{type.heap_type, Null::No};
+}
+
+auto AsNonNullableType(binary::ReferenceType type) -> binary::ReferenceType {
+  type = Canonicalize(type);
+  assert(type.is_ref());
+  return binary::ReferenceType{AsNonNullableType(type.ref())};
+}
+
+auto AsNonNullableType(binary::ValueType type) -> binary::ValueType {
+  assert(IsNullableType(type));
+  return binary::ValueType{AsNonNullableType(type.reference_type())};
+}
+
+auto AsNonNullableType(StackType type) -> StackType {
+  assert(IsNullableType(type));
+  if (type.is_any()) {
+    return type;
+  } else {
+    return StackType{AsNonNullableType(type.value_type())};
   }
 }
 

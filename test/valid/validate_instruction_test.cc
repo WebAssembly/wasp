@@ -2560,3 +2560,37 @@ TEST_F(ValidateInstructionTest, AtomicCmpxchg_MemoryNonShared) {
     Ok(I{O::Drop});
   }
 }
+
+TEST_F(ValidateInstructionTest, BrOnNull_Void) {
+  Ok(I{O::Block, BT_Void});
+
+  // Should be valid with nullable and non-nullable types.
+  TestSignature(I{O::BrOnNull, Index{0}}, {VT_RefNullFunc}, {VT_RefFunc});
+  TestSignature(I{O::BrOnNull, Index{0}}, {VT_RefFunc}, {VT_RefFunc});
+}
+
+TEST_F(ValidateInstructionTest, BrOnNull_SingleResult) {
+  Ok(I{O::Block, BT_I32});
+
+  // Should be valid with nullable and non-nullable types.
+  TestSignature(I{O::BrOnNull, Index{0}}, {VT_I32, VT_RefNullFunc},
+                {VT_I32, VT_RefFunc});
+  TestSignature(I{O::BrOnNull, Index{0}}, {VT_I32, VT_RefFunc},
+                {VT_I32, VT_RefFunc});
+}
+
+TEST_F(ValidateInstructionTest, BrOnNull_MultiResult) {
+  auto v_if = AddFunctionType(FunctionType{{}, {VT_I32, VT_F32}});
+  Ok(I{O::Block, BlockType(v_if)});
+
+  // Should be valid with nullable and non-nullable types.
+  TestSignature(I{O::BrOnNull, Index{0}}, {VT_I32, VT_F32, VT_RefNullFunc},
+                {VT_I32, VT_F32, VT_RefFunc});
+  TestSignature(I{O::BrOnNull, Index{0}}, {VT_I32, VT_F32, VT_RefFunc},
+                {VT_I32, VT_F32, VT_RefFunc});
+}
+
+TEST_F(ValidateInstructionTest, RefAsNonNull) {
+  TestSignature(I{O::RefAsNonNull}, {VT_RefNullFunc}, {VT_RefFunc});
+  TestSignature(I{O::RefAsNonNull}, {VT_RefFunc}, {VT_RefFunc});
+}

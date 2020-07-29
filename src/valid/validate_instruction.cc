@@ -969,6 +969,38 @@ bool BrOnExn(Context& context,
   return AllTrue(event_type, function_type, label, valid);
 }
 
+bool BrOnNull(Context& context, Location loc, const At<Index>& depth) {
+  bool valid = true;
+  auto type = MaybeDefault(PeekType(context, loc));
+
+  const auto* label = GetLabel(context, depth);
+  auto label_ = MaybeDefault(label);
+  valid &= DropTypes(context, loc, 1);
+  valid &= PopAndPushTypes(context, loc, label_.br_types(), label_.br_types());
+
+  if (IsNullableType(type)) {
+    PushType(context, AsNonNullableType(type));
+  } else {
+    context.errors->OnError(loc, format("{} is not a nullable type", type));
+    valid = false;
+  }
+  return AllTrue(label, valid);
+}
+
+bool RefAsNonNull(Context& context, Location loc) {
+  bool valid = true;
+  auto type = MaybeDefault(PeekType(context, loc));
+  valid &= DropTypes(context, loc, 1);
+
+  if (IsNullableType(type)) {
+    PushType(context, AsNonNullableType(type));
+  } else {
+    context.errors->OnError(loc, format("{} is not a nullable type", type));
+    valid = false;
+  }
+  return valid;
+}
+
 bool SimdLane(Context& context,
               Location loc,
               const At<Instruction>& instruction) {
@@ -1201,6 +1233,12 @@ bool Validate(Context& context, const At<Instruction>& value) {
 
     case Opcode::RefFunc:
       return RefFunc(context, loc, value->index_immediate());
+
+    case Opcode::BrOnNull:
+      return BrOnNull(context, loc, value->index_immediate());
+
+    case Opcode::RefAsNonNull:
+      return RefAsNonNull(context, loc);
 
     case Opcode::I32Load:
     case Opcode::I64Load:
