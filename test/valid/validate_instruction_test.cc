@@ -2594,3 +2594,15 @@ TEST_F(ValidateInstructionTest, RefAsNonNull) {
   TestSignature(I{O::RefAsNonNull}, {VT_RefNullFunc}, {VT_RefFunc});
   TestSignature(I{O::RefAsNonNull}, {VT_RefFunc}, {VT_RefFunc});
 }
+
+TEST_F(ValidateInstructionTest, CallRef) {
+  auto index = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {VT_F64}});
+
+  // Can be called with ref type.
+  ValueType ref_type{ReferenceType{RefType{HeapType{index}, Null::No}}};
+  TestSignature(I{O::CallRef}, {VT_I32, VT_F32, ref_type}, {VT_F64});
+
+  // Can be called with ref null type.
+  ValueType ref_null_type{ReferenceType{RefType{HeapType{index}, Null::Yes}}};
+  TestSignature(I{O::CallRef}, {VT_I32, VT_F32, ref_null_type}, {VT_F64});
+}

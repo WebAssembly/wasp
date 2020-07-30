@@ -294,6 +294,19 @@ bool PopType(Context& context, Location loc, StackType type) {
   return PopTypes(context, loc, StackTypeSpan(&type, 1));
 }
 
+optional<StackType> PopReferenceType(Context& context, Location loc) {
+  auto type = PeekType(context, loc);
+  if (type) {
+    if (!IsReferenceTypeOrAny(*type)) {
+      context.errors->OnError(loc, format("Expected reference type, got {}",
+                                          GetTypeStack(context)));
+      return nullopt;
+    }
+    DropTypes(context, loc, 1, false);
+  }
+  return type;
+}
+
 bool PopAndPushTypes(Context& context,
                      Location loc,
                      StackTypeSpan param_types,
@@ -974,11 +987,11 @@ bool BrOnExn(Context& context,
 
 bool BrOnNull(Context& context, Location loc, const At<Index>& depth) {
   bool valid = true;
-  auto type = MaybeDefault(PeekType(context, loc));
+  auto type_opt = PopReferenceType(context, loc);
+  auto type = MaybeDefault(type_opt);
 
   const auto* label = GetLabel(context, depth);
   auto label_ = MaybeDefault(label);
-  valid &= DropTypes(context, loc, 1);
   valid &= PopAndPushTypes(context, loc, label_.br_types(), label_.br_types());
 
   if (IsNullableType(type)) {
@@ -987,13 +1000,13 @@ bool BrOnNull(Context& context, Location loc, const At<Index>& depth) {
     context.errors->OnError(loc, format("{} is not a nullable type", type));
     valid = false;
   }
-  return AllTrue(label, valid);
+  return AllTrue(valid, type_opt, label);
 }
 
 bool RefAsNonNull(Context& context, Location loc) {
   bool valid = true;
-  auto type = MaybeDefault(PeekType(context, loc));
-  valid &= DropTypes(context, loc, 1);
+  auto type_opt = PopReferenceType(context, loc);
+  auto type = MaybeDefault(type_opt);
 
   if (IsNullableType(type)) {
     PushType(context, AsNonNullableType(type));
@@ -1001,7 +1014,30 @@ bool RefAsNonNull(Context& context, Location loc) {
     context.errors->OnError(loc, format("{} is not a nullable type", type));
     valid = false;
   }
-  return valid;
+  return AllTrue(valid, type_opt);
+}
+
+bool CallRef(Context& context, Location loc) {
+  bool valid = true;
+  auto type_opt = PopReferenceType(context, loc);
+  auto type = MaybeDefault(type_opt);
+
+  if (type.is_value_type() && type.value_type().is_reference_type()) {
+    ReferenceType ref_type = Canonicalize(type.value_type().reference_type());
+    assert(ref_type.is_ref());
+    if (ref_type.ref()->heap_type->is_index()) {
+      auto function_type =
+          GetFunctionType(context, ref_type.ref()->heap_type->index());
+      valid &= PopAndPushTypes(context, loc, MaybeDefault(function_type));
+      return AllTrue(valid, type_opt, function_type);
+    } else {
+      context.errors->OnError(
+          loc, format("Expected typed function reference, got {}",
+                      GetTypeStack(context)));
+      valid = false;
+    }
+  }
+  return AllTrue(valid, type_opt);
 }
 
 bool SimdLane(Context& context,
@@ -1222,16 +1258,9 @@ bool Validate(Context& context, const At<Instruction>& value) {
       return true;
 
     case Opcode::RefIsNull: {
-      auto type = MaybeDefault(PeekType(context, loc));
-      bool valid = true;
-      if (!IsReferenceTypeOrAny(type)) {
-        context.errors->OnError(loc, format("Expected reference type, got {}",
-                                            GetTypeStack(context)));
-        valid = false;
-      }
-      valid &= DropTypes(context, loc, 1);
+      auto type = PopReferenceType(context, loc);
       PushType(context, StackType::I32());
-      return valid;
+      return AllTrue(type);
     }
 
     case Opcode::RefFunc:
@@ -1242,6 +1271,9 @@ bool Validate(Context& context, const At<Instruction>& value) {
 
     case Opcode::RefAsNonNull:
       return RefAsNonNull(context, loc);
+
+    case Opcode::CallRef:
+      return CallRef(context, loc);
 
     case Opcode::I32Load:
     case Opcode::I64Load:
