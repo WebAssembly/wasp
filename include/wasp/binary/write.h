@@ -533,9 +533,7 @@ Iterator Write(const Instruction& instr, Iterator out) {
       return Write(instr.init_immediate(), out);
 
     case 13: // LetImmediate
-      // TODO
-      assert(false);
-      return out;
+      return Write(instr.let_immediate(), out);
 
     case 14: // MemArgImmediate
       return Write(instr.mem_arg_immediate(), out);

@@ -785,6 +785,9 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I8X16Abs:
     case Opcode::I16X8Abs:
     case Opcode::I32X4Abs:
+    case Opcode::RefAsNonNull:
+    case Opcode::CallRef:
+    case Opcode::ReturnCallRef:
       return MakeAt(guard.range(data), Instruction{opcode});
 
     // No immediates, but only allowed if there's a matching block/loop/if/try
@@ -863,7 +866,9 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::ElemDrop:
     case Opcode::TableGrow:
     case Opcode::TableSize:
-    case Opcode::TableFill: {
+    case Opcode::TableFill:
+    case Opcode::BrOnNull:
+    case Opcode::FuncBind: {
       WASP_TRY_READ(index, ReadIndex(data, context, "index"));
       return MakeAt(guard.range(data), Instruction{opcode, index});
     }
@@ -1089,12 +1094,11 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
       return MakeAt(guard.range(data), Instruction{opcode, lane});
     }
 
-    case Opcode::CallRef:
-    case Opcode::ReturnCallRef:
-    case Opcode::FuncBind:
+    // Let immediate.
     case Opcode::Let:
-    case Opcode::RefAsNonNull:
-    case Opcode::BrOnNull:
+      WASP_TRY_READ(immediate, Read<LetImmediate>(data, context));
+      return MakeAt(guard.range(data), Instruction{opcode, immediate});
+
       // TODO
       assert(false);
       return nullopt;

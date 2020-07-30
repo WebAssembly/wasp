@@ -2169,6 +2169,26 @@ TEST_F(BinaryReadTest, Instruction_threads) {
      "\xfe\x4e\x01\x02"_su8);
 }
 
+TEST_F(BinaryReadTest, Instruction_function_references) {
+  context.features.enable_function_references();
+
+  OK(Read<I>, I{MakeAt("\x14"_su8, O::CallRef)}, "\x14"_su8);
+  OK(Read<I>, I{MakeAt("\x15"_su8, O::ReturnCallRef)}, "\x15"_su8);
+  OK(Read<I>, I{MakeAt("\x16"_su8, O::FuncBind), MakeAt("\x00"_su8, Index{0})},
+     "\x16\x00"_su8);
+  OK(Read<I>,
+     I{MakeAt("\x17"_su8, O::Let),
+       MakeAt("\x40\x01\x02\x7f"_su8,
+              LetImmediate{MakeAt("\x40"_su8, BT_Void),
+                           {MakeAt("\x02\x7f"_su8,
+                                   Locals{MakeAt("\x02"_su8, Index{2}),
+                                          MakeAt("\x7f"_su8, VT_I32)})}})},
+     "\x17\x40\x01\x02\x7f"_su8);
+  OK(Read<I>, I{MakeAt("\xd3"_su8, O::RefAsNonNull)}, "\xd3"_su8);
+  OK(Read<I>, I{MakeAt("\xd4"_su8, O::BrOnNull), MakeAt("\x00"_su8, Index{0})},
+     "\xd4\x00"_su8);
+}
+
 TEST_F(BinaryReadTest, Limits) {
   OK(Read<Limits>,
      Limits{MakeAt("\x81\x01"_su8, u32{129}), nullopt,
@@ -2963,6 +2983,19 @@ TEST_F(BinaryReadTest, Opcode_Unknown_threads_prefix) {
   FailUnknownOpcode(0xfe, 16384);
   FailUnknownOpcode(0xfe, 2097152);
   FailUnknownOpcode(0xfe, 268435456);
+}
+
+TEST_F(BinaryReadTest, Opcode_function_references) {
+  using O = Opcode;
+
+  context.features.enable_function_references();
+
+  OK(Read<O>, MakeAt("\x14"_su8, O::CallRef), "\x14"_su8);
+  OK(Read<O>, MakeAt("\x15"_su8, O::ReturnCallRef), "\x15"_su8);
+  OK(Read<O>, MakeAt("\x16"_su8, O::FuncBind), "\x16"_su8);
+  OK(Read<O>, MakeAt("\x17"_su8, O::Let), "\x17"_su8);
+  OK(Read<O>, MakeAt("\xd3"_su8, O::RefAsNonNull), "\xd3"_su8);
+  OK(Read<O>, MakeAt("\xd4"_su8, O::BrOnNull), "\xd4"_su8);
 }
 
 TEST_F(BinaryReadTest, S32) {

@@ -599,10 +599,17 @@ TEST(BinaryWriteTest, Instruction_reference_types) {
   ExpectWrite("\xfc\x11\x00"_su8, I{O::TableFill, Index{0}});
   ExpectWrite("\xd0\x70"_su8, I{O::RefNull, HT_Func});
   ExpectWrite("\xd1"_su8, I{O::RefIsNull});
+  ExpectWrite("\xd2\x00"_su8, I{O::RefFunc, Index{0}});
 }
 
 TEST(BinaryWriteTest, Instruction_function_references) {
-  ExpectWrite("\xd2\x00"_su8, I{O::RefFunc, Index{0}});
+  ExpectWrite("\x14"_su8, I{O::CallRef});
+  ExpectWrite("\x15"_su8, I{O::ReturnCallRef});
+  ExpectWrite("\x16\x00"_su8, I{O::FuncBind, Index{0}});
+  ExpectWrite("\x17\x40\x01\x02\x7f"_su8,
+              I{O::Let, LetImmediate{BT_Void, {Locals{Index{2}, VT_I32}}}});
+  ExpectWrite("\xd3"_su8, I{O::RefAsNonNull});
+  ExpectWrite("\xd4\x00"_su8, I{O::BrOnNull, Index{0}});
 }
 
 TEST(BinaryWriteTest, Instruction_saturating_float_to_int) {
@@ -1394,10 +1401,16 @@ TEST(BinaryWriteTest, Opcode_reference_types) {
   ExpectWrite("\xfc\x11"_su8, Opcode::TableFill);
   ExpectWrite("\xd0"_su8, Opcode::RefNull);
   ExpectWrite("\xd1"_su8, Opcode::RefIsNull);
+  ExpectWrite("\xd2"_su8, Opcode::RefFunc);
 }
 
 TEST(BinaryWriteTest, Opcode_function_references) {
-  ExpectWrite("\xd2"_su8, Opcode::RefFunc);
+  ExpectWrite("\x14"_su8, O::CallRef);
+  ExpectWrite("\x15"_su8, O::ReturnCallRef);
+  ExpectWrite("\x16"_su8, O::FuncBind);
+  ExpectWrite("\x17"_su8, O::Let);
+  ExpectWrite("\xd3"_su8, O::RefAsNonNull);
+  ExpectWrite("\xd4"_su8, O::BrOnNull);
 }
 
 TEST(BinaryWriteTest, Opcode_saturating_float_to_int) {
