@@ -92,6 +92,10 @@ auto ToValueType(binary::ReferenceType type) -> binary::ValueType {
   return binary::ValueType{type};
 }
 
+auto ToValueType(binary::RefType type) -> binary::ValueType {
+  return binary::ValueType{binary::ReferenceType{type}};
+}
+
 auto ToValueType(binary::HeapType type) -> binary::ValueType {
   return binary::ValueType{
       binary::ReferenceType{binary::RefType{type, Null::Yes}}};
@@ -102,6 +106,10 @@ auto ToStackType(binary::ValueType type) -> StackType {
 }
 
 auto ToStackType(binary::ReferenceType type) -> StackType {
+  return ToStackType(ToValueType(type));
+}
+
+auto ToStackType(binary::RefType type) -> StackType {
   return ToStackType(ToValueType(type));
 }
 

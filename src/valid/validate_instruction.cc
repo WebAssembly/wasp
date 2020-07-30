@@ -567,7 +567,10 @@ bool RefFunc(Context& context, Location loc, At<Index> index) {
                             format("Undeclared function reference {}", index));
     return false;
   }
-  PushType(context, StackType::Funcref());
+  assert(index < context.functions.size());
+  auto& function = context.functions[index];
+  PushType(context,
+           ToStackType(RefType{HeapType{function.type_index}, Null::No}));
   return true;
 }
 

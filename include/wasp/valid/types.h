@@ -56,11 +56,15 @@ using StackTypeList = std::vector<StackType>;
 using StackTypeSpan = span<const StackType>;
 
 auto ToValueType(binary::ReferenceType) -> binary::ValueType;
+auto ToValueType(binary::RefType) -> binary::ValueType;
 auto ToValueType(binary::HeapType) -> binary::ValueType;
+
 auto ToStackType(binary::ValueType) -> StackType;
 auto ToStackType(binary::ReferenceType) -> StackType;
+auto ToStackType(binary::RefType) -> StackType;
 auto ToStackType(binary::HeapType) -> StackType;
 auto ToStackTypeList(const binary::ValueTypeList&) -> StackTypeList;
+
 bool IsReferenceTypeOrAny(StackType);
 auto Canonicalize(binary::ReferenceType) -> binary::ReferenceType;
 

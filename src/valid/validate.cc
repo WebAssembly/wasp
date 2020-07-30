@@ -204,7 +204,11 @@ bool Validate(Context& context,
                          "func index")) {
         return false;
       }
-      actual_type = binary::ValueType::Funcref_NoLocation();
+
+      assert(index < context.functions.size());
+      auto& function = context.functions[index];
+      actual_type = ToValueType(
+          binary::RefType{binary::HeapType{function.type_index}, Null::No});
       break;
     }
 
