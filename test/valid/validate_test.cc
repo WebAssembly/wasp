@@ -965,6 +965,22 @@ TEST(ValidateTest, ValueType_Mismatch) {
   }
 }
 
+TEST(ValidateTest, ValueType_FuncrefSubtyping) {
+  TestErrors errors;
+  Context context{errors};
+
+  // ref null 0 is a supertype of ref 0.
+  EXPECT_TRUE(Validate(context, VT_RefNull0, VT_Ref0));
+
+  // funcref (aka ref null func) is a supertype of ref N.
+  EXPECT_TRUE(Validate(context, VT_Funcref, VT_RefNullFunc));
+  EXPECT_TRUE(Validate(context, VT_Funcref, VT_RefNull0));
+  EXPECT_TRUE(Validate(context, VT_Funcref, VT_Ref0));
+  EXPECT_TRUE(Validate(context, VT_RefNullFunc, VT_RefNull0));
+  EXPECT_TRUE(Validate(context, VT_RefNullFunc, VT_Ref0));
+  EXPECT_TRUE(Validate(context, VT_RefFunc, VT_Ref0));
+}
+
 TEST(ValidateTest, Module) {
   TestErrors errors;
   Context context{errors};

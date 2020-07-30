@@ -26,6 +26,7 @@ namespace test {
 extern const HeapType HT_Func;
 extern const HeapType HT_Extern;
 extern const HeapType HT_Exn;
+extern const HeapType HT_0;
 
 extern const RefType RefType_Func;
 extern const RefType RefType_NullFunc;
@@ -33,6 +34,8 @@ extern const RefType RefType_Extern;
 extern const RefType RefType_NullExtern;
 extern const RefType RefType_Exn;
 extern const RefType RefType_NullExn;
+extern const RefType RefType_0;
+extern const RefType RefType_Null0;
 
 extern const ReferenceType RT_Funcref;
 extern const ReferenceType RT_Externref;
@@ -43,6 +46,8 @@ extern const ReferenceType RT_RefExtern;
 extern const ReferenceType RT_RefNullExtern;
 extern const ReferenceType RT_RefExn;
 extern const ReferenceType RT_RefNullExn;
+extern const ReferenceType RT_Ref0;
+extern const ReferenceType RT_RefNull0;
 
 extern const ValueType VT_I32;
 extern const ValueType VT_I64;
@@ -58,6 +63,8 @@ extern const ValueType VT_RefExtern;
 extern const ValueType VT_RefNullExtern;
 extern const ValueType VT_RefExn;
 extern const ValueType VT_RefNullExn;
+extern const ValueType VT_Ref0;
+extern const ValueType VT_RefNull0;
 
 extern const BlockType BT_I32;
 extern const BlockType BT_I64;

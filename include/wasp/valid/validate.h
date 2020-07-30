@@ -52,8 +52,8 @@ bool Validate(Context&,
               binary::ReferenceType);
 bool Validate(Context&, const At<binary::ElementSegment>&);
 bool Validate(Context&,
-              const At<binary::ReferenceType>& actual,
-              binary::ReferenceType expected);
+              binary::ReferenceType expected,
+              const At<binary::ReferenceType>& actual);
 bool Validate(Context&, const At<binary::Export>&);
 bool Validate(Context&, const At<binary::Event>&);
 bool Validate(Context&, const At<binary::EventType>&);
@@ -77,8 +77,8 @@ bool Validate(Context&, const At<binary::Table>&);
 bool Validate(Context&, const At<binary::TableType>&);
 bool Validate(Context&, const At<binary::TypeEntry>&);
 bool Validate(Context&,
-              const At<binary::ValueType>& actual,
-              binary::ValueType expected);
+              binary::ValueType expected,
+              const At<binary::ValueType>& actual);
 bool Validate(Context&, const At<binary::UnpackedCode>&);
 bool Validate(Context&, const At<binary::UnpackedExpression>&);
 

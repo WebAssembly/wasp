@@ -61,6 +61,12 @@ bool BeginCode(Context& context, Location loc) {
 }
 
 bool TypesMatch(binary::HeapType expected, binary::HeapType actual) {
+  // "func" is a supertype of all function types.
+  if (expected.is_heap_kind() && expected.heap_kind() == HeapKind::Func &&
+      actual.is_index()) {
+    return true;
+  }
+
   if (expected.is_heap_kind() && actual.is_heap_kind()) {
     return expected.heap_kind().value() == actual.heap_kind().value();
   } else if (expected.is_index() && actual.is_index()) {
@@ -70,8 +76,11 @@ bool TypesMatch(binary::HeapType expected, binary::HeapType actual) {
 }
 
 bool TypesMatch(binary::RefType expected, binary::RefType actual) {
-  return TypesMatch(expected.heap_type, actual.heap_type) &&
-         expected.null == actual.null;
+  // "ref null 0" is a supertype of "ref 0"
+  if (expected.null == Null::No && actual.null == Null::Yes) {
+    return false;
+  }
+  return TypesMatch(expected.heap_type, actual.heap_type);
 }
 
 bool TypesMatch(binary::ReferenceType expected, binary::ReferenceType actual) {
@@ -80,12 +89,8 @@ bool TypesMatch(binary::ReferenceType expected, binary::ReferenceType actual) {
   expected = Canonicalize(expected);
   actual = Canonicalize(actual);
 
-  if (expected.is_reference_kind() && actual.is_reference_kind()) {
-    return expected.reference_kind().value() == actual.reference_kind().value();
-  } else if (expected.is_ref() && actual.is_ref()) {
-    return TypesMatch(expected.ref(), actual.ref());
-  }
-  return false;
+  assert(expected.is_ref() && actual.is_ref());
+  return TypesMatch(expected.ref(), actual.ref());
 }
 
 bool TypesMatch(binary::ValueType expected, binary::ValueType actual) {
@@ -221,7 +226,7 @@ bool Validate(Context& context,
   }
 
   assert(actual_type.has_value());
-  valid &= Validate(context, MakeAt(value.loc(), *actual_type), expected_type);
+  valid &= Validate(context, expected_type, MakeAt(value.loc(), *actual_type));
   return valid;
 }
 
@@ -282,7 +287,7 @@ bool Validate(Context& context,
   }
 
   assert(actual_type.has_value());
-  valid &= Validate(context, MakeAt(value.loc(), *actual_type), reftype);
+  valid &= Validate(context, reftype, MakeAt(value.loc(), *actual_type));
   return valid;
 }
 
@@ -339,8 +344,8 @@ bool Validate(Context& context, const At<binary::ElementSegment>& value) {
 }
 
 bool Validate(Context& context,
-              const At<binary::ReferenceType>& actual,
-              binary::ReferenceType expected) {
+              binary::ReferenceType expected,
+              const At<binary::ReferenceType>& actual) {
   if (!TypesMatch(actual, expected)) {
     context.errors->OnError(
         actual.loc(),
@@ -632,8 +637,8 @@ bool Validate(Context& context, const At<binary::TypeEntry>& value) {
 }
 
 bool Validate(Context& context,
-              const At<binary::ValueType>& actual,
-              binary::ValueType expected) {
+              binary::ValueType expected,
+              const At<binary::ValueType>& actual) {
   if (!TypesMatch(expected, actual)) {
     context.errors->OnError(
         actual.loc(),
