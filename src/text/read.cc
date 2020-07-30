@@ -492,9 +492,11 @@ auto ReadFunction(Tokenizer& tokenizer, Context& context) -> OptAt<Function> {
     WASP_TRY_READ(locals_, ReadLocalList(tokenizer, context));
     locals = locals_;
     WASP_TRY(ReadInstructionList(tokenizer, context, instructions));
+    WASP_TRY(ReadRparAsEndInstruction(tokenizer, context, instructions));
+  } else {
+    WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
   }
 
-  WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
   return MakeAt(guard.loc(),
                 Function{FunctionDesc{name, type_use, type}, locals,
                          instructions, import_opt, exports});
@@ -1602,6 +1604,17 @@ bool ReadInstructionList(Tokenizer& tokenizer,
   return true;
 }
 
+bool ReadRparAsEndInstruction(Tokenizer& tokenizer,
+                              Context& context,
+                              InstructionList& instructions) {
+  // Read final `)` and use its location as the `end` instruction.
+  auto rpar = tokenizer.Peek();
+  WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+  instructions.push_back(
+      MakeAt(rpar.loc, Instruction{MakeAt(rpar.loc, Opcode::End)}));
+  return true;
+}
+
 bool ReadExpression(Tokenizer& tokenizer,
                     Context& context,
                     InstructionList& instructions) {
@@ -1672,11 +1685,7 @@ bool ReadExpression(Tokenizer& tokenizer,
         WASP_UNREACHABLE();
     }
 
-    // Read final `)` and use its location as the `end` instruction.
-    auto rpar = tokenizer.Peek();
-    WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    instructions.push_back(
-        MakeAt(rpar.loc, Instruction{MakeAt(rpar.loc, Opcode::End)}));
+    WASP_TRY(ReadRparAsEndInstruction(tokenizer, context, instructions));
   } else if (IsLetInstruction(token)) {
     LocationGuard guard{tokenizer};
     tokenizer.Read();
@@ -1689,12 +1698,7 @@ bool ReadExpression(Tokenizer& tokenizer,
     instructions.push_back(
         MakeAt(guard.loc(), Instruction{token.opcode(), immediate}));
     WASP_TRY(ReadInstructionList(tokenizer, context, instructions));
-
-    // Read final `)` and use its location as the `end` instruction.
-    auto rpar = tokenizer.Peek();
-    WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    instructions.push_back(
-        MakeAt(rpar.loc, Instruction{MakeAt(rpar.loc, Opcode::End)}));
+    WASP_TRY(ReadRparAsEndInstruction(tokenizer, context, instructions));
   } else {
     context.errors.OnError(token.loc,
                            format("Expected expression, got {}", token.type));

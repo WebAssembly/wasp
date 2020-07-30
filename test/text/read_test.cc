@@ -1670,18 +1670,23 @@ TEST_F(TextReadTest, EventType) {
 
 TEST_F(TextReadTest, Function) {
   // Empty func.
-  OK(ReadFunction, Function{}, "(func)"_su8);
+  OK(ReadFunction,
+     Function{{}, {}, {MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)})}, {}},
+     "(func)"_su8);
 
   // Name.
   OK(ReadFunction,
-     Function{FunctionDesc{MakeAt("$f"_su8, "$f"_sv), nullopt, {}}, {}, {}, {}},
+     Function{FunctionDesc{MakeAt("$f"_su8, "$f"_sv), nullopt, {}},
+              {},
+              {MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)})},
+              {}},
      "(func $f)"_su8);
 
   // Inline export.
   OK(ReadFunction,
      Function{{},
               {},
-              {},
+              {MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)})},
               InlineExportList{MakeAt(
                   "(export \"e\")"_su8,
                   InlineExport{MakeAt("\"e\""_su8, Text{"\"e\""_sv, 1})})}},
@@ -1694,7 +1699,7 @@ TEST_F(TextReadTest, Function) {
                   MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT_I32)}),
                   MakeAt("i64"_su8, BVT{nullopt, MakeAt("i64"_su8, VT_I64)}),
               },
-              {},
+              {MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)})},
               {}},
      "(func (local i32 i64))"_su8);
 
@@ -1706,6 +1711,7 @@ TEST_F(TextReadTest, Function) {
                   MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
                   MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
                   MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+                  MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
               },
               {}},
      "(func nop nop nop)"_su8);
@@ -1715,7 +1721,10 @@ TEST_F(TextReadTest, Function) {
      Function{FunctionDesc{MakeAt("$f2"_su8, "$f2"_sv), nullopt, {}},
               BoundValueTypeList{
                   MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT_I32)})},
-              InstructionList{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+              InstructionList{
+                  MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+                  MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
+              },
               InlineExportList{MakeAt(
                   "(export \"m\")"_su8,
                   InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
@@ -2545,7 +2554,10 @@ TEST_F(TextReadTest, ModuleItem) {
      "(import \"m\" \"n\" (func))"_su8);
 
   // Func.
-  OK(ReadModuleItem, ModuleItem{Function{}}, "(func)"_su8);
+  OK(ReadModuleItem,
+     ModuleItem{
+         Function{{}, {}, {MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)})}, {}}},
+     "(func)"_su8);
 
   // Table.
   OK(ReadModuleItem,
@@ -2632,21 +2644,22 @@ TEST_F(TextReadTest, ModuleItem_exceptions) {
 
 TEST_F(TextReadTest, Module) {
   OK(ReadModule,
-     Module{
-         MakeAt("(type (func))"_su8,
-                ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}}),
-         MakeAt(
-             "(func nop)"_su8,
-             ModuleItem{Function{
-                 FunctionDesc{},
-                 {},
-                 InstructionList{MakeAt(
-                     "nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})},
-                 {}
+     Module{MakeAt("(type (func))"_su8,
+                   ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}}),
+            MakeAt("(func nop)"_su8,
+                   ModuleItem{Function{
+                       FunctionDesc{},
+                       {},
+                       InstructionList{
+                           MakeAt("nop"_su8,
+                                  Instruction{MakeAt("nop"_su8, Opcode::Nop)}),
+                           MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
+                       },
+                       {}
 
-             }}),
-         MakeAt("(start 0)"_su8,
-                ModuleItem{Start{MakeAt("0"_su8, Var{Index{0}})}})},
+                   }}),
+            MakeAt("(start 0)"_su8,
+                   ModuleItem{Start{MakeAt("0"_su8, Var{Index{0}})}})},
      "(type (func)) (func nop) (start 0)"_su8);
 }
 

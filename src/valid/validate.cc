@@ -217,7 +217,7 @@ bool Validate(Context& context,
   }
 
   assert(actual_type.has_value());
-  valid &= Validate(context, *actual_type, expected_type);
+  valid &= Validate(context, MakeAt(value.loc(), *actual_type), expected_type);
   return valid;
 }
 

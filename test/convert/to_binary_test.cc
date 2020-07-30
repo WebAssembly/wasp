@@ -48,6 +48,7 @@ const SpanU8 loc4 = "D"_su8;
 const SpanU8 loc5 = "E"_su8;
 const SpanU8 loc6 = "F"_su8;
 const SpanU8 loc7 = "G"_su8;
+const SpanU8 loc8 = "H"_su8;
 
 // Similar to the definitions in test/binary/constants, but using text
 // locations (e.g. "i32").
@@ -818,13 +819,14 @@ TEST(ConvertToBinaryTest, Expression) {
                          binary::Instruction{MakeAt(loc3, Opcode::I32Const),
                                              MakeAt(loc4, s32{0})}),
                   MakeAt(loc5, binary::Instruction{MakeAt(loc6, Opcode::Drop)}),
-                  binary::Instruction{Opcode::End},
+                  MakeAt(loc7, binary::Instruction{MakeAt(loc8, Opcode::End)}),
               })}),
       MakeAt(loc1,
              text::InstructionList{
                  MakeAt(loc2, text::Instruction{MakeAt(loc3, Opcode::I32Const),
                                                 MakeAt(loc4, s32{0})}),
                  MakeAt(loc5, text::Instruction{MakeAt(loc6, Opcode::Drop)}),
+                 MakeAt(loc7, text::Instruction{MakeAt(loc8, Opcode::End)}),
              }));
 }
 
@@ -854,7 +856,8 @@ TEST(ConvertToBinaryTest, Code) {
                                    binary::InstructionList{
                                        MakeAt(loc5, binary::Instruction{MakeAt(
                                                         loc6, Opcode::Nop)}),
-                                       binary::Instruction{Opcode::End},
+                                       MakeAt(loc6, binary::Instruction{MakeAt(
+                                                        loc8, Opcode::End)}),
                                    })})}),
       MakeAt(
           loc1,
@@ -863,8 +866,12 @@ TEST(ConvertToBinaryTest, Code) {
               MakeAt(loc2, text::BoundValueTypeList{text::BoundValueType{
                                nullopt, MakeAt(loc3, tt::VT_I32)}}),
               MakeAt(loc4,
-                     text::InstructionList{MakeAt(
-                         loc5, text::Instruction{MakeAt(loc6, Opcode::Nop)})}),
+                     text::InstructionList{
+                         MakeAt(loc5,
+                                text::Instruction{MakeAt(loc6, Opcode::Nop)}),
+                         MakeAt(loc6,
+                                text::Instruction{MakeAt(loc8, Opcode::End)}),
+                     }),
               {}}));
 }
 
@@ -923,7 +930,6 @@ TEST(ConvertToBinaryTest, Event) {
 
 TEST(ConvertToBinaryTest, Module) {
   // Additional locations only needed for Module. :-)
-  const SpanU8 loc8 = "H"_su8;
   const SpanU8 loc9 = "I"_su8;
   const SpanU8 loc10 = "J"_su8;
   const SpanU8 loc11 = "K"_su8;
@@ -942,6 +948,8 @@ TEST(ConvertToBinaryTest, Module) {
   const SpanU8 loc24 = "X"_su8;
   const SpanU8 loc25 = "Y"_su8;
   const SpanU8 loc26 = "Z"_su8;
+  const SpanU8 loc27 = "AA"_su8;
+  const SpanU8 loc28 = "BB"_su8;
 
   auto binary_table_type = MakeAt(
       "T0"_su8,
@@ -1023,7 +1031,8 @@ TEST(ConvertToBinaryTest, Module) {
                          binary::UnpackedExpression{binary::InstructionList{
                              MakeAt(loc25, binary::Instruction{MakeAt(
                                                loc26, Opcode::Nop)}),
-                             binary::Instruction{Opcode::End},
+                             MakeAt(loc27, binary::Instruction{MakeAt(
+                                               loc28, Opcode::End)}),
                          }}})},
              // data_segments
              {MakeAt(loc23, binary::DataSegment{MakeAt(loc24, Index{0}),
@@ -1080,7 +1089,9 @@ TEST(ConvertToBinaryTest, Module) {
                             nullopt, MakeAt(loc8, text::Var{Index{0}}), {}},
                         {},
                         {MakeAt(loc25,
-                                text::Instruction{MakeAt(loc26, Opcode::Nop)})},
+                                text::Instruction{MakeAt(loc26, Opcode::Nop)}),
+                         MakeAt(loc27,
+                                text::Instruction{MakeAt(loc28, Opcode::End)})},
                         {}})},
                 // (elem (i32.const 0) func 0)
                 text::ModuleItem{MakeAt(

@@ -157,6 +157,7 @@ bool ReadBlockInstruction(Tokenizer&, Context&, InstructionList&);
 bool ReadLetInstruction(Tokenizer&, Context&, InstructionList&);
 bool ReadInstruction(Tokenizer&, Context&, InstructionList&);
 bool ReadInstructionList(Tokenizer&, Context&, InstructionList&);
+bool ReadRparAsEndInstruction(Tokenizer&, Context&, InstructionList&);
 bool ReadExpression(Tokenizer&, Context&, InstructionList&);
 bool ReadExpressionList(Tokenizer&, Context&, InstructionList&);
 

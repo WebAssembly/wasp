@@ -631,10 +631,8 @@ auto ToBinary(Context& context, const text::InstructionList& value)
 auto ToBinaryUnpackedExpression(Context& context,
                                 const At<text::InstructionList>& value)
     -> At<binary::UnpackedExpression> {
-  binary::UnpackedExpression result;
-  result.instructions = ToBinary(context, value);
-  result.instructions.push_back(binary::Instruction{Opcode::End});
-  return MakeAt(value.loc(), result);
+  return MakeAt(value.loc(),
+                binary::UnpackedExpression{ToBinary(context, value)});
 }
 
 auto ToBinaryLocalsList(Context& context,

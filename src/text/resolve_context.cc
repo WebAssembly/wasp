@@ -44,6 +44,7 @@ void ResolveContext::BeginFunction() {
   local_names.Reset();
   label_names.Reset();
   blocks.clear();
+  BeginBlock(Opcode::Unreachable);  // Begin dummy block for function.
 }
 
 void ResolveContext::BeginBlock(Opcode opcode) {
