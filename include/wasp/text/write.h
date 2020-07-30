@@ -407,8 +407,7 @@ Iterator Write(WriteContext& context, const Instruction& value, Iterator out) {
       break;
 
     case 13: // LetImmediate
-      // TODO
-      assert(false);
+      out = Write(context, value.let_immediate(), out);
       break;
 
     case 14: // MemArgImmediate

@@ -253,6 +253,13 @@ TEST(TextWriteTest, Instruction) {
 
   // Var
   ExpectWrite("local.get $a"_sv, I{O::LocalGet, Var{"$a"_sv}});
+
+  // LetImmediate
+  ExpectWrite(
+      "let $l (local i32)"_sv,
+      I{O::Let,
+        LetImmediate{BlockImmediate{"$l"_sv, FunctionTypeUse{}},
+                     BoundValueTypeList{BoundValueType{nullopt, VT_I32}}}});
 }
 
 TEST(TextWriteTest, InstructionList) {
