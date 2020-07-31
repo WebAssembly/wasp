@@ -17,6 +17,7 @@
 #include "wasp/valid/context.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 
 namespace wasp {
@@ -90,6 +91,11 @@ bool Context::AppendLocals(const binary::ValueTypeList& value_types) {
     }
   }
   return AppendLocals(value_types.size() - last_index, last_type);
+}
+
+bool Context::IsStackPolymorphic() const {
+  assert(!label_stack.empty());
+  return label_stack.back().unreachable;
 }
 
 }  // namespace valid

@@ -2606,3 +2606,74 @@ TEST_F(ValidateInstructionTest, CallRef) {
   ValueType ref_null_type{ReferenceType{RefType{HeapType{index}, Null::Yes}}};
   TestSignature(I{O::CallRef}, {VT_I32, VT_F32, ref_null_type}, {VT_F64});
 }
+
+TEST_F(ValidateInstructionTest, CallRef_ParamTypeMismatch) {
+  auto index = AddFunction(FunctionType{{VT_F32}, {}});
+  context.declared_functions.insert(index);
+
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::RefFunc, index});
+  Fail(I{O::CallRef});
+  ExpectError({"instruction", "Expected stack to contain [f32], got [i32]"},
+              errors);
+}
+
+TEST_F(ValidateInstructionTest, ReturnCallRef) {
+  BeginFunction(FunctionType{{}, {VT_F64}});
+  auto index = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {VT_F64}});
+
+  // Can be called with ref type.
+  ValueType ref_type{ReferenceType{RefType{HeapType{index}, Null::No}}};
+  TestSignature(I{O::ReturnCallRef}, {VT_I32, VT_F32, ref_type}, {});
+
+  // Can be called with ref null type.
+  ValueType ref_null_type{ReferenceType{RefType{HeapType{index}, Null::Yes}}};
+  TestSignature(I{O::ReturnCallRef}, {VT_I32, VT_F32, ref_null_type}, {});
+}
+
+TEST_F(ValidateInstructionTest, ReturnCallRef_ResultType_Subtyping) {
+  BeginFunction(FunctionType{{}, {VT_Funcref}});
+  auto index = AddFunction(FunctionType{{}, {VT_Ref0}});
+  context.declared_functions.insert(index);
+
+  Ok(I{O::RefFunc, index});
+  Ok(I{O::ReturnCallRef});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, ReturnCallRef_Unreachable) {
+  BeginFunction(FunctionType{});
+  auto index = AddFunction(FunctionType{});
+  context.declared_functions.insert(index);
+
+  Ok(I{O::RefFunc, index});
+  Ok(I{O::ReturnCallRef});
+
+  EXPECT_TRUE(context.IsStackPolymorphic());
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, ReturnCallRef_ParamTypeMismatch) {
+  BeginFunction(FunctionType{});
+  auto index = AddFunction(FunctionType{{VT_F32}, {}});
+  context.declared_functions.insert(index);
+
+  Ok(I{O::I32Const, s32{}});
+  Ok(I{O::RefFunc, index});
+  Fail(I{O::ReturnCallRef});
+  ExpectError({"instruction", "Expected stack to contain [f32], got [i32]"},
+              errors);
+}
+
+TEST_F(ValidateInstructionTest, ReturnCallRef_ResultTypeMismatch) {
+  BeginFunction(FunctionType{{}, {VT_F32}});
+  auto index = AddFunction(FunctionType{{}, {VT_I32}});
+  context.declared_functions.insert(index);
+
+  Ok(I{O::RefFunc, index});
+  Fail(I{O::ReturnCallRef});
+  ExpectError(
+      {"instruction",
+       "Callee's result types [f32] must equal caller's result types [i32]"},
+      errors);
+}

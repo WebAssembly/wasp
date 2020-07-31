@@ -69,6 +69,7 @@ struct Context {
   optional<binary::ValueType> GetLocalType(Index) const;
   bool AppendLocals(Index count, binary::ValueType);
   bool AppendLocals(const binary::ValueTypeList&);
+  bool IsStackPolymorphic() const;
 
   Features features;
   Errors* errors;

@@ -247,11 +247,17 @@ bool CheckTypes(Context& context, Location loc, StackTypeSpan expected) {
   return true;
 }
 
+Label* GetFunctionLabel(Context&);
+
 bool CheckResultTypes(Context& context,
                       Location loc,
-                      StackTypeSpan caller,
-                      StackTypeSpan callee) {
-  if (!TypesMatch(caller, callee)) {
+                      const FunctionType& function_type) {
+  auto* label = GetFunctionLabel(context);
+  assert(label != nullptr);
+  auto caller = ToStackTypeList(function_type.result_types);
+  auto callee = label->br_types();
+
+  if (!TypesMatch(callee, caller)) {
     context.errors->OnError(
         loc,
         format("Callee's result types {} must equal caller's result types {}",
@@ -307,6 +313,31 @@ optional<StackType> PopReferenceType(Context& context, Location loc) {
   return type;
 }
 
+optional<StackType> PopTypedFunctionReference(Context& context, Location loc) {
+  auto type = PopReferenceType(context, loc);
+  if (!type) {
+    return nullopt;
+  }
+
+  if (type->is_any()) {
+    return type;
+  }
+
+  assert(type->is_value_type() && type->value_type().is_reference_type());
+
+  ReferenceType ref_type = Canonicalize(type->value_type().reference_type());
+  assert(ref_type.is_ref());
+
+  if (!ref_type.ref()->heap_type->is_index()) {
+    context.errors->OnError(loc,
+                            format("Expected typed function reference, got {}",
+                                   GetTypeStack(context)));
+    return nullopt;
+  }
+
+  return ToStackType(ref_type);
+}
+
 bool PopAndPushTypes(Context& context,
                      Location loc,
                      StackTypeSpan param_types,
@@ -338,6 +369,10 @@ Label* GetLabel(Context& context, At<Index> depth) {
     return nullptr;
   }
   return &context.label_stack[context.label_stack.size() - depth - 1];
+}
+
+Label* GetFunctionLabel(Context& context) {
+  return GetLabel(context, context.label_stack.size() - 1);
 }
 
 bool PushLabel(Context& context,
@@ -929,10 +964,7 @@ bool ReturnCall(Context& context, Location loc, At<Index> function_index) {
   auto function = GetFunction(context, function_index);
   auto function_type =
       GetFunctionType(context, MaybeDefault(function).type_index);
-  auto* label = GetLabel(context, context.label_stack.size() - 1);
-  bool valid = CheckResultTypes(context,
-      loc, ToStackTypeList(MaybeDefault(function_type).result_types),
-      MaybeDefault(label).br_types());
+  bool valid = CheckResultTypes(context, loc, MaybeDefault(function_type));
   valid &= PopTypes(context,
       loc, ToStackTypeList(MaybeDefault(function_type).param_types));
   SetUnreachable(context);
@@ -944,10 +976,7 @@ bool ReturnCallIndirect(Context& context,
                         const At<CallIndirectImmediate>& immediate) {
   auto table_type = GetTableType(context, 0);
   auto function_type = GetFunctionType(context, immediate->index);
-  auto* label = GetLabel(context, context.label_stack.size() - 1);
-  bool valid = CheckResultTypes(context,
-      loc, ToStackTypeList(MaybeDefault(function_type).result_types),
-      MaybeDefault(label).br_types());
+  bool valid = CheckResultTypes(context, loc, MaybeDefault(function_type));
   valid &= PopType(context, loc, StackType::I32());
   valid &= PopTypes(context,
       loc, ToStackTypeList(MaybeDefault(function_type).param_types));
@@ -1018,26 +1047,36 @@ bool RefAsNonNull(Context& context, Location loc) {
 }
 
 bool CallRef(Context& context, Location loc) {
-  bool valid = true;
-  auto type_opt = PopReferenceType(context, loc);
-  auto type = MaybeDefault(type_opt);
-
-  if (type.is_value_type() && type.value_type().is_reference_type()) {
-    ReferenceType ref_type = Canonicalize(type.value_type().reference_type());
-    assert(ref_type.is_ref());
-    if (ref_type.ref()->heap_type->is_index()) {
-      auto function_type =
-          GetFunctionType(context, ref_type.ref()->heap_type->index());
-      valid &= PopAndPushTypes(context, loc, MaybeDefault(function_type));
-      return AllTrue(valid, type_opt, function_type);
-    } else {
-      context.errors->OnError(
-          loc, format("Expected typed function reference, got {}",
-                      GetTypeStack(context)));
-      valid = false;
-    }
+  auto type = PopTypedFunctionReference(context, loc);
+  if (!type) {
+    return false;
   }
-  return AllTrue(valid, type_opt);
+  if (type && type->is_any()) {
+    return true;
+  }
+
+  auto index = type->value_type().reference_type()->ref()->heap_type->index();
+  auto function_type = GetFunctionType(context, index);
+  return AllTrue(function_type,
+                 PopAndPushTypes(context, loc, MaybeDefault(function_type)));
+}
+
+bool ReturnCallRef(Context& context, Location loc) {
+  auto type = PopTypedFunctionReference(context, loc);
+  if (!type) {
+    return false;
+  }
+  if (type && type->is_any()) {
+    return true;
+  }
+
+  auto index = type->value_type().reference_type()->ref()->heap_type->index();
+  auto function_type = GetFunctionType(context, index);
+  bool valid = CheckResultTypes(context, loc, MaybeDefault(function_type));
+  valid &= PopTypes(context, loc,
+                    ToStackTypeList(MaybeDefault(function_type).param_types));
+  SetUnreachable(context);
+  return AllTrue(function_type, valid);
 }
 
 bool SimdLane(Context& context,
@@ -1274,6 +1313,9 @@ bool Validate(Context& context, const At<Instruction>& value) {
 
     case Opcode::CallRef:
       return CallRef(context, loc);
+
+    case Opcode::ReturnCallRef:
+      return ReturnCallRef(context, loc);
 
     case Opcode::I32Load:
     case Opcode::I64Load:
