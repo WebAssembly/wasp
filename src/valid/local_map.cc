@@ -25,34 +25,36 @@ namespace valid {
 LocalMap::LocalMap() {}
 
 void LocalMap::Reset() {
-  partial_sum_.clear();
   types_.clear();
 }
 
 auto LocalMap::GetCount() const -> Index {
-  return partial_sum_.empty() ? 0 : partial_sum_.back();
+  return types_.empty() ? 0 : types_.back().second;
 }
 
 auto LocalMap::GetType(Index index) const -> optional<binary::ValueType>{
+  struct Compare {
+    bool operator()(const Pair& lhs, Index rhs) { return lhs.second < rhs; }
+    bool operator()(Index lhs, const Pair& rhs) { return lhs < rhs.second; }
+  };
+
   const auto iter =
-      std::upper_bound(partial_sum_.begin(), partial_sum_.end(), index);
-  if (iter == partial_sum_.end()) {
+      std::upper_bound(types_.begin(), types_.end(), index, Compare{});
+  if (iter == types_.end()) {
     return nullopt;
   }
-  return types_[iter - partial_sum_.begin()];
+  return iter->first;
 }
 
 bool LocalMap::Append(Index count, binary::ValueType value_type) {
-  if (count > 0) {
-    const Index max = std::numeric_limits<Index>::max();
-    const auto old_count = GetCount();
-    if (old_count > max - count) {
-      return false;
-    }
-
-    partial_sum_.emplace_back(old_count + count);
-    types_.emplace_back(value_type);
+  if (count == 0) {
+    return true;
   }
+  if (!CanAppend(count)) {
+    return false;
+  }
+
+  types_.emplace_back(value_type, GetCount() + count);
   return true;
 }
 
@@ -60,19 +62,22 @@ bool LocalMap::Append(const binary::ValueTypeList& value_types) {
   if (value_types.empty()) {
     return true;
   }
-  if (GetCount() > std::numeric_limits<Index>::max() - value_types.size()) {
+  if (!CanAppend(value_types.size())) {
     return false;
   }
 
   for (auto value_type : value_types) {
-    if (!partial_sum_.empty() && types_.back() == value_type) {
-      partial_sum_.back()++;
+    if (!types_.empty() && types_.back().first == value_type) {
+      types_.back().second++;
     } else {
-      partial_sum_.push_back(GetCount() + 1);
-      types_.push_back(value_type);
+      types_.emplace_back(value_type, GetCount() + 1);
     }
   }
   return true;
+}
+
+bool LocalMap::CanAppend(Index count) const {
+  return GetCount() <= std::numeric_limits<Index>::max() - count;
 }
 
 }  // namespace valid

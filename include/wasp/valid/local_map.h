@@ -17,6 +17,7 @@
 #ifndef WASP_VALID_LOCAL_MAP_H_
 #define WASP_VALID_LOCAL_MAP_H_
 
+#include <utility>
 #include <vector>
 
 #include "wasp/base/optional.h"
@@ -36,8 +37,17 @@ struct LocalMap {
   bool Append(const binary::ValueTypeList&);
 
  private:
-  std::vector<Index> partial_sum_;
-  binary::ValueTypeList types_;
+  bool CanAppend(Index count) const;
+
+  // Index is a partial sum, so the vector can be binary-searched, e.g.
+  //
+  //   {i32, i32, f32, f32, f32, i64}
+  //
+  // would be represented as:
+  //
+  //   {{i32, 2}, {f32, 5}, {i64, 6}}
+  using Pair = std::pair<binary::ValueType, Index>;
+  std::vector<Pair> types_;
 };
 
 }  // namespace valid
