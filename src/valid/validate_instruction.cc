@@ -152,10 +152,11 @@ optional<ReferenceType> GetElementSegmentType(Context& context,
 }
 
 optional<StackType> GetLocalType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, context.GetLocalCount(), "local index")) {
+  if (!ValidateIndex(context, index, context.locals.GetCount(),
+                     "local index")) {
     return nullopt;
   }
-  auto local_type = context.GetLocalType(index);
+  auto local_type = context.locals.GetType(index);
   if (!local_type) {
     return nullopt;
   }
@@ -1169,12 +1170,12 @@ bool SimdShuffle(Context& context,
 
 bool Validate(Context& context, const At<Locals>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "locals"};
-  if (!context.AppendLocals(value->count, value->type)) {
+  if (!context.locals.Append(value->count, value->type)) {
     const Index max = std::numeric_limits<Index>::max();
     context.errors->OnError(
         value.loc(),
         format("Too many locals; max is {}, got {}", max,
-               static_cast<u64>(context.GetLocalCount()) + value->count));
+               static_cast<u64>(context.locals.GetCount()) + value->count));
     return false;
   }
   return true;

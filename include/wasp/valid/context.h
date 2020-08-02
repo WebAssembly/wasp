@@ -26,6 +26,7 @@
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/types.h"
+#include "wasp/valid/local_map.h"
 #include "wasp/valid/types.h"
 
 namespace wasp {
@@ -65,10 +66,6 @@ struct Context {
 
   void Reset();
 
-  Index GetLocalCount() const;
-  optional<binary::ValueType> GetLocalType(Index) const;
-  bool AppendLocals(Index count, binary::ValueType);
-  bool AppendLocals(const binary::ValueTypeList&);
   bool IsStackPolymorphic() const;
 
   Features features;
@@ -85,8 +82,7 @@ struct Context {
   Index imported_global_count = 0;
   optional<Index> declared_data_count;
   Index code_count = 0;
-  std::vector<Index> locals_partial_sum;
-  binary::ValueTypeList locals;
+  LocalMap locals;
   StackTypeList type_stack;
   std::vector<Label> label_stack;
   std::set<string_view> export_names;

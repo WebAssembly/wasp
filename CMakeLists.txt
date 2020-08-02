@@ -85,6 +85,7 @@ add_library(wasplib
   src/convert/to_binary.cc
   src/valid/context.cc
   src/valid/formatters.cc
+  src/valid/local_map.cc
   src/valid/print_to.cc
   src/valid/types.cc
   src/valid/validate.cc
@@ -173,6 +174,7 @@ add_executable(wasp_unittests
   test/text/write_test.cc
   test/tools/argparser_test.cc
   test/valid/test_utils.cc
+  test/valid/local_map_test.cc
   test/valid/validate_test.cc
   test/valid/validate_code_test.cc
   test/valid/validate_instruction_test.cc

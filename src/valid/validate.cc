@@ -43,12 +43,11 @@ bool BeginCode(Context& context, Location loc) {
   const binary::Function& function = context.functions[func_index];
   context.type_stack.clear();
   context.label_stack.clear();
-  context.locals_partial_sum.clear();
-  context.locals.clear();
+  context.locals.Reset();
   // Don't validate the index, should have already been validated at this point.
   if (function.type_index < context.types.size()) {
     const binary::TypeEntry& type_entry = context.types[function.type_index];
-    context.AppendLocals(type_entry.type->param_types);
+    context.locals.Append(type_entry.type->param_types);
     context.label_stack.push_back(Label{
         LabelType::Function, ToStackTypeList(type_entry.type->param_types),
         ToStackTypeList(type_entry.type->result_types), 0});

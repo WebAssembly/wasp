@@ -16,9 +16,7 @@
 
 #include "wasp/valid/context.h"
 
-#include <algorithm>
 #include <cassert>
-#include <limits>
 
 namespace wasp {
 namespace valid {
@@ -45,52 +43,6 @@ Context::Context(const Context& other, Errors& errors) {
 
 void Context::Reset() {
   *this = Context{features, *errors};
-}
-
-Index Context::GetLocalCount() const {
-  return locals_partial_sum.empty() ? 0 : locals_partial_sum.back();
-}
-
-optional<binary::ValueType> Context::GetLocalType(Index index) const {
-  const auto iter = std::upper_bound(locals_partial_sum.begin(),
-                                     locals_partial_sum.end(), index);
-  if (iter == locals_partial_sum.end()) {
-    return nullopt;
-  }
-  return locals[iter - locals_partial_sum.begin()];
-}
-
-bool Context::AppendLocals(Index count, binary::ValueType value_type) {
-  if (count > 0) {
-    const Index max = std::numeric_limits<Index>::max();
-    const auto old_count = GetLocalCount();
-    if (old_count >= max - count) {
-      return false;
-    }
-
-    locals_partial_sum.emplace_back(old_count + count);
-    locals.emplace_back(value_type);
-  }
-  return true;
-}
-
-bool Context::AppendLocals(const binary::ValueTypeList& value_types) {
-  if (value_types.empty()) {
-    return true;
-  }
-
-  size_t last_index = 0;
-  binary::ValueType last_type = value_types[0];
-  for (size_t i = 1; i < value_types.size(); ++i) {
-    if (value_types[i] != last_type) {
-      if (!AppendLocals(i - last_index, last_type)) {
-        return false;
-      }
-      last_index = i;
-      last_type = value_types[i];
-    }
-  }
-  return AppendLocals(value_types.size() - last_index, last_type);
 }
 
 bool Context::IsStackPolymorphic() const {
