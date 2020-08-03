@@ -64,6 +64,7 @@ auto ToStackType(binary::ReferenceType) -> StackType;
 auto ToStackType(binary::RefType) -> StackType;
 auto ToStackType(binary::HeapType) -> StackType;
 auto ToStackTypeList(const binary::ValueTypeList&) -> StackTypeList;
+auto ToStackTypeList(const binary::LocalsList&) -> StackTypeList;
 
 bool IsReferenceTypeOrAny(StackType);
 auto Canonicalize(binary::ReferenceType) -> binary::ReferenceType;

@@ -2677,3 +2677,26 @@ TEST_F(ValidateInstructionTest, ReturnCallRef_ResultTypeMismatch) {
        "Callee's result types [f32] must equal caller's result types [i32]"},
       errors);
 }
+
+TEST_F(ValidateInstructionTest, Let) {
+  // Empty let.
+  TestSignature(I{O::Let, LetImmediate{BT_Void, {}}}, {}, {});
+
+  // A local.
+  TestSignature(I{O::Let, LetImmediate{BT_Void, {Locals{1, VT_I32}}}}, {VT_I32},
+                {});
+
+  // Multiple locals.
+  TestSignature(I{O::Let, LetImmediate{BT_Void, {Locals{2, VT_I32}}}},
+                {VT_I32, VT_I32}, {});
+
+  // Multiple local blocks.
+  TestSignature(
+      I{O::Let, LetImmediate{BT_Void, {Locals{1, VT_I32}, Locals{1, VT_F32}}}},
+      {VT_I32, VT_F32}, {});
+
+  // Params and locals.
+  auto index = AddFunctionType(FunctionType{{VT_F32}, {}});
+  TestSignature(I{O::Let, LetImmediate{BlockType{index}, {Locals{1, VT_I32}}}},
+                {VT_F32, VT_I32}, {VT_F32});
+}

@@ -126,6 +126,16 @@ auto ToStackTypeList(const binary::ValueTypeList& value_types)
   return result;
 }
 
+auto ToStackTypeList(const binary::LocalsList& locals_list) -> StackTypeList {
+  StackTypeList result;
+  for (auto& locals : locals_list) {
+    for (size_t i = 0; i < locals->count; ++i) {
+      result.push_back(StackType{*locals->type});
+    }
+  }
+  return result;
+}
+
 bool IsReferenceTypeOrAny(StackType type) {
   return type.is_any() ||
          (type.is_value_type() && type.value_type().is_reference_type());

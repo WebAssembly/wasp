@@ -29,6 +29,7 @@ LocalMap::LocalMap() {
 
 void LocalMap::Reset() {
   pairs_.clear();
+  let_stack_.clear();
   let_stack_.push_back(0);
 }
 
@@ -134,15 +135,14 @@ void LocalMap::Pop() {
   let_stack_.pop_back();
 
   if (pair_count > 0) {
+    assert(pair_count - 1 < pairs_.size());
     Index var_count = pairs_[pair_count - 1].second;
 
     // Erase all pairs corresponding to this let block.
-    assert(pair_count < pairs_.size());
     pairs_.erase(pairs_.begin(), pairs_.begin() + pair_count);
 
     // Adjust the partial sums to remove the number of variables from this let
     // block.
-    assert(!pairs_.empty());
     AdjustPartialSums(pairs_.begin(), -var_count);
   }
 }

@@ -40,6 +40,7 @@ enum class LabelType {
   Else,
   Try,
   Catch,
+  Let,
 };
 
 struct Label {

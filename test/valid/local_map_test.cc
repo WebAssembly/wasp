@@ -145,3 +145,22 @@ TEST(ValidLocalMapTest, PushPop_TooMany) {
   locals.Pop();
   EXPECT_EQ(100u, locals.GetCount());
 }
+
+TEST(ValidLocalMapTest, PopToEmpty) {
+  LocalMap locals;
+  ExpectTypes(locals, {});
+
+  locals.Push();
+  EXPECT_TRUE(locals.Append(1, VT_I32));
+  ExpectTypes(locals, {VT_I32});
+
+  locals.Push();
+  EXPECT_TRUE(locals.Append(1, VT_I32));
+  ExpectTypes(locals, {VT_I32, VT_I32});
+
+  locals.Pop();
+  ExpectTypes(locals, {VT_I32});
+
+  locals.Pop();
+  ExpectTypes(locals, {});
+}

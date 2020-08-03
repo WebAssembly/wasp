@@ -446,6 +446,8 @@ bool End(Context& context, Location loc) {
   bool valid = true;
   if (top_label.label_type == LabelType::If) {
     valid &= Else(context, loc);
+  } else if (top_label.label_type == LabelType::Let) {
+    context.locals.Pop();
   }
   valid &= PopTypes(context, loc, top_label.result_types);
   valid &= CheckTypeStackEmpty(context, loc);
@@ -1080,6 +1082,14 @@ bool ReturnCallRef(Context& context, Location loc) {
   return AllTrue(function_type, valid);
 }
 
+bool Let(Context& context, Location loc, const At<LetImmediate>& immediate) {
+  bool valid = PopTypes(context, loc, ToStackTypeList(immediate->locals));
+  valid &= PushLabel(context, loc, LabelType::Let, immediate->block_type);
+  context.locals.Push();
+  valid &= Validate(context, immediate->locals);
+  return valid;
+}
+
 bool SimdLane(Context& context,
               Location loc,
               const At<Instruction>& instruction) {
@@ -1317,6 +1327,9 @@ bool Validate(Context& context, const At<Instruction>& value) {
 
     case Opcode::ReturnCallRef:
       return ReturnCallRef(context, loc);
+
+    case Opcode::Let:
+      return Let(context, loc, value->let_immediate());
 
     case Opcode::I32Load:
     case Opcode::I64Load:
