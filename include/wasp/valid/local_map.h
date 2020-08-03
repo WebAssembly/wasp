@@ -36,8 +36,28 @@ struct LocalMap {
   bool Append(Index count, binary::ValueType);
   bool Append(const binary::ValueTypeList&);
 
+  // Push or pop a let-binding, which allocates new locals _before_ the current
+  // set, e.g.
+  //
+  // If the previous set of locals is
+  //
+  //   {i32, i32, i64}
+  //
+  // And then a let binding is pushed and 3 f32 locals are added, then the new
+  // list will be:
+  //
+  //   {f32, f32, f32, i32, i32, i64}
+  //
+  // Popping the binding will restore the list to {i32, i32, i64}.
+  void Push();
+  void Pop();
+
  private:
+  using Pair = std::pair<binary::ValueType, Index>;
+  using Pairs = std::vector<Pair>;
+
   bool CanAppend(Index count) const;
+  void AdjustPartialSums(Pairs::iterator first, Index count);
 
   // Index is a partial sum, so the vector can be binary-searched, e.g.
   //
@@ -46,8 +66,13 @@ struct LocalMap {
   // would be represented as:
   //
   //   {{i32, 2}, {f32, 5}, {i64, 6}}
-  using Pair = std::pair<binary::ValueType, Index>;
-  std::vector<Pair> types_;
+  Pairs pairs_;
+
+  // The Index counts the number of `Pair`s in this let block. As variables are
+  // appended, the most recent let (i.e. `let_stack_.back()`) is updated. This
+  // vector will never be empty; there is an implicit "let" block for the
+  // function itself.
+  std::vector<Index> let_stack_;
 };
 
 }  // namespace valid
