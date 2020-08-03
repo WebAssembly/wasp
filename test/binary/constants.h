@@ -75,6 +75,14 @@ extern const BlockType BT_Funcref;
 extern const BlockType BT_Externref;
 extern const BlockType BT_Exnref;
 extern const BlockType BT_Void;
+extern const BlockType BT_RefFunc;
+extern const BlockType BT_RefNullFunc;
+extern const BlockType BT_RefExtern;
+extern const BlockType BT_RefNullExtern;
+extern const BlockType BT_RefExn;
+extern const BlockType BT_RefNullExn;
+extern const BlockType BT_Ref0;
+extern const BlockType BT_RefNull0;
 
 }  // namespace test
 }  // namespace binary

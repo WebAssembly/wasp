@@ -104,29 +104,42 @@ class ValidateInstructionTest : public ::testing::Test {
     EXPECT_FALSE(Validate(context, instruction)) << format("{}", instruction);
   }
 
+  void OkWithTypeStack(const Instruction& instruction,
+                       const StackTypeList& param_types,
+                       const StackTypeList& result_types) {
+    ErrorsNop errors_nop;
+    Context context_copy{context, errors_nop};
+    context_copy.type_stack = param_types;
+    EXPECT_TRUE(Validate(context_copy, instruction))
+        << format("{} with stack {}", instruction, param_types);
+    EXPECT_TRUE(TypesMatch(result_types, context_copy.type_stack))
+        << format("{}", instruction);
+  }
+
+  void FailWithTypeStack(const Instruction& instruction,
+                         const StackTypeList& param_types) {
+    ErrorsNop errors_nop;
+    Context context_copy{context, errors_nop};
+    context_copy.type_stack = param_types;
+    EXPECT_FALSE(Validate(context_copy, instruction))
+        << format("{} with stack {}", instruction, param_types);
+  }
+
   void TestSignature(const Instruction& instruction,
                      const ValueTypeList& param_types,
                      const ValueTypeList& result_types) {
-    ErrorsNop errors_nop;
-    Context valid_context{context};
-    Context invalid_context{context, errors_nop};
     const StackTypeList stack_param_types = ToStackTypeList(param_types);
-    const StackTypeList stack_result_types = ToStackTypeList(result_types);
 
     // Test that it is only valid when the full list of parameters is on the
     // stack.
     for (size_t n = 0; n <= param_types.size(); ++n) {
       const StackTypeList stack_param_types_slice(stack_param_types.begin() + n,
                                                   stack_param_types.end());
-      valid_context.type_stack = stack_param_types_slice;
       if (n == 0) {
-        EXPECT_TRUE(Validate(valid_context, instruction))
-            << format("{} with stack {}", instruction, stack_param_types_slice);
-        EXPECT_TRUE(TypesMatch(stack_result_types, valid_context.type_stack))
-            << format("{}", instruction);
+        OkWithTypeStack(instruction, stack_param_types_slice,
+                        ToStackTypeList(result_types));
       } else {
-        EXPECT_FALSE(Validate(invalid_context, instruction))
-            << format("{} with stack {}", instruction, stack_param_types_slice);
+        FailWithTypeStack(instruction, stack_param_types_slice);
       }
     }
 
@@ -136,16 +149,18 @@ class ValidateInstructionTest : public ::testing::Test {
       for (auto& stack_type : mismatch_types) {
         stack_type = TypesMatch(stack_type, ST::I32()) ? ST::F64() : ST::I32();
       }
-      invalid_context.type_stack = mismatch_types;
-      EXPECT_FALSE(Validate(invalid_context, instruction))
-          << format("{} with stack", instruction, mismatch_types);
+      FailWithTypeStack(instruction, mismatch_types);
     }
 
     // Test that it is valid with an unreachable stack.
-    valid_context.label_stack.back().unreachable = true;
-    valid_context.type_stack.clear();
-    EXPECT_TRUE(Validate(valid_context, instruction))
-        << format("{}", instruction);
+    {
+      ErrorsNop errors_nop;
+      Context context_copy{context, errors_nop};
+      context_copy.label_stack.back().unreachable = true;
+      context_copy.type_stack.clear();
+      EXPECT_TRUE(Validate(context_copy, instruction))
+          << format("{}", instruction);
+    }
   }
 
   TestErrors errors;
@@ -948,6 +963,17 @@ TEST_F(ValidateInstructionTest, BrTable_References) {
   Ok(I{O::RefNull, HT_Extern});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::BrTable, BrTableImmediate{{0, 1}, 2}});
+  ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, BrTable_FunctionReferences) {
+  context.features.enable_function_references();
+
+  Ok(I{O::Block, BT_RefNull0});
+  Ok(I{O::Block, BT_RefNullFunc});
+  Ok(I{O::Block, BT_Ref0});
+  TestSignature(I{O::BrTable, BrTableImmediate{{0, 1}, 2}}, {VT_Ref0, VT_I32},
+                {});
   ExpectNoErrors(errors);
 }
 

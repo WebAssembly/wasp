@@ -477,32 +477,40 @@ bool BrTable(Context& context,
              Location loc,
              const At<BrTableImmediate>& immediate) {
   bool valid = PopType(context, loc, StackType::I32());
-  optional<StackTypeSpan> br_types;
-  auto handle_target = [&](At<Index> target) {
+  const auto* default_label = GetLabel(context, immediate->default_target);
+  if (!default_label) {
+    return false;
+  }
+
+  StackTypeSpan br_types = default_label->br_types();
+  valid &= CheckTypes(context, immediate->default_target.loc(), br_types);
+
+  for (auto target : immediate->targets) {
     const auto* label = GetLabel(context, target);
     if (label) {
-      StackTypeSpan label_br_types{label->br_types()};
-      if (br_types) {
-        if (*br_types != label_br_types) {
+      if (context.features.function_references_enabled()) {
+        if (br_types.size() != label->br_types().size()) {
+          context.errors->OnError(
+              target.loc(),
+              format("br_table labels must have the same arity; expected "
+                     "{}, got {}",
+                     br_types.size(), label->br_types().size()));
+          valid = false;
+        }
+        valid &= CheckTypes(context, target.loc(), label->br_types());
+      } else {
+        if (br_types != label->br_types()) {
           context.errors->OnError(
               target.loc(),
               format("br_table labels must have the same signature; expected "
                      "{}, got {}",
-                     *br_types, label_br_types));
+                     br_types, label->br_types()));
           valid = false;
         }
-      } else {
-        br_types = label_br_types;
-        valid &= CheckTypes(context, target.loc(), *br_types);
       }
     } else {
       valid = false;
     }
-  };
-
-  handle_target(immediate->default_target);
-  for (auto target : immediate->targets) {
-    handle_target(target);
   }
   SetUnreachable(context);
   return valid;
