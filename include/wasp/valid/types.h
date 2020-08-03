@@ -69,6 +69,10 @@ auto ToStackTypeList(const binary::LocalsList&) -> StackTypeList;
 bool IsReferenceTypeOrAny(StackType);
 auto Canonicalize(binary::ReferenceType) -> binary::ReferenceType;
 
+bool IsDefaultableType(binary::RefType);
+bool IsDefaultableType(binary::ReferenceType);
+bool IsDefaultableType(binary::ValueType);
+
 bool IsNullableType(binary::ValueType);
 bool IsNullableType(StackType);
 

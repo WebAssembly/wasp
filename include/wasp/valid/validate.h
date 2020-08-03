@@ -28,6 +28,11 @@ enum class ConstantExpressionKind {
   Other,
 };
 
+enum class RequireDefaultable {
+  No,
+  Yes,
+};
+
 struct Context;
 
 bool BeginCode(Context&, Location loc);
@@ -68,8 +73,8 @@ bool ValidateIndex(Context&,
                    string_view desc);
 bool Validate(Context&, const At<binary::Instruction>&);
 bool Validate(Context&, const At<Limits>&, Index max);
-bool Validate(Context&, const At<binary::Locals>&);
-bool Validate(Context&, const At<binary::LocalsList>&);
+bool Validate(Context&, const At<binary::Locals>&, RequireDefaultable);
+bool Validate(Context&, const At<binary::LocalsList>&, RequireDefaultable);
 bool Validate(Context&, const At<binary::Memory>&);
 bool Validate(Context&, const At<MemoryType>&);
 bool Validate(Context&, const At<binary::Start>& value);

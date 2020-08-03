@@ -1094,7 +1094,7 @@ bool Let(Context& context, Location loc, const At<LetImmediate>& immediate) {
   bool valid = PopTypes(context, loc, ToStackTypeList(immediate->locals));
   valid &= PushLabel(context, loc, LabelType::Let, immediate->block_type);
   context.locals.Push();
-  valid &= Validate(context, immediate->locals);
+  valid &= Validate(context, immediate->locals, RequireDefaultable::No);
   return valid;
 }
 
@@ -1186,23 +1186,36 @@ bool SimdShuffle(Context& context,
 
 }  // namespace
 
-bool Validate(Context& context, const At<Locals>& value) {
+bool Validate(Context& context,
+              const At<Locals>& value,
+              RequireDefaultable require_defaultable) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "locals"};
+  bool valid = true;
+  if (require_defaultable == RequireDefaultable::Yes &&
+      !IsDefaultableType(value->type)) {
+    context.errors->OnError(
+        value.loc(),
+        format("local type must be defaultable, got {}", value->type));
+    valid = false;
+  }
+
   if (!context.locals.Append(value->count, value->type)) {
     const Index max = std::numeric_limits<Index>::max();
     context.errors->OnError(
         value.loc(),
         format("Too many locals; max is {}, got {}", max,
                static_cast<u64>(context.locals.GetCount()) + value->count));
-    return false;
+    valid = false;
   }
-  return true;
+  return valid;
 }
 
-bool Validate(Context& context, const At<LocalsList>& value) {
+bool Validate(Context& context,
+              const At<LocalsList>& value,
+              RequireDefaultable require_defaultable) {
   bool valid = true;
   for (auto&& locals : *value) {
-    valid &= Validate(context, locals);
+    valid &= Validate(context, locals, require_defaultable);
   }
   return valid;
 }

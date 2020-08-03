@@ -55,5 +55,5 @@ TEST(ValidateCodeTest, BeginCode_TypeIndexOOB) {
 TEST(ValidateCodeTest, Locals) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_TRUE(Validate(context, Locals{10, VT_I32}));
+  EXPECT_TRUE(Validate(context, Locals{10, VT_I32}, RequireDefaultable::Yes));
 }

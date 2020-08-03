@@ -2726,3 +2726,9 @@ TEST_F(ValidateInstructionTest, Let) {
   TestSignature(I{O::Let, LetImmediate{BlockType{index}, {Locals{1, VT_I32}}}},
                 {VT_F32, VT_I32}, {VT_F32});
 }
+
+TEST_F(ValidateInstructionTest, Let_Defaultable) {
+  // Let expressions can bind non-defaultable types (unlike function locals).
+  TestSignature(I{O::Let, LetImmediate{BT_Void, {Locals{1, VT_Ref0}}}},
+                {VT_Ref0}, {});
+}

@@ -136,7 +136,7 @@ bool Validate(Context& context, const At<binary::UnpackedExpression>& value) {
 bool Validate(Context& context, const At<binary::UnpackedCode>& value) {
   bool valid = true;
   valid &= BeginCode(context, value.loc());
-  valid &= Validate(context, value->locals);
+  valid &= Validate(context, value->locals, RequireDefaultable::Yes);
   valid &= Validate(context, value->body);
   return valid;
 }
@@ -622,6 +622,12 @@ bool Validate(Context& context, const At<binary::TableType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "table type"};
   constexpr Index kMaxElements = std::numeric_limits<Index>::max();
   bool valid = Validate(context, value->limits, kMaxElements);
+  if (!IsDefaultableType(value->elemtype)) {
+    context.errors->OnError(
+        value.loc(),
+        format("local type must be defaultable, got {}", value->elemtype));
+    valid = false;
+  }
   if (value->limits->shared == Shared::Yes) {
     context.errors->OnError(value.loc(), "Tables cannot be shared");
     valid = false;

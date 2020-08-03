@@ -161,6 +161,18 @@ auto Canonicalize(binary::ReferenceType type) -> binary::ReferenceType {
   }
 }
 
+bool IsDefaultableType(binary::RefType type) {
+  return type.null == Null::Yes;
+}
+
+bool IsDefaultableType(binary::ReferenceType type) {
+  return type.is_reference_kind() || IsDefaultableType(type.ref());
+}
+
+bool IsDefaultableType(binary::ValueType type) {
+  return type.is_numeric_type() || IsDefaultableType(type.reference_type());
+}
+
 bool IsNullableType(binary::ValueType type) {
   // All reference types are considered "nullable" for the purpose of
   // type-checking, even non-nullable reference types. This is because nullable

@@ -43,6 +43,17 @@ TEST(ValidateTest, UnpackedCode) {
   EXPECT_TRUE(Validate(context, code));
 }
 
+TEST(ValidateTest, UnpackedCode_DefaultableLocals) {
+  UnpackedCode code{
+      LocalsList{Locals{1, VT_Ref0}},
+      UnpackedExpression{InstructionList{Instruction{Opcode::End}}}};
+  TestErrors errors;
+  Context context{errors};
+  context.types.push_back(TypeEntry{});
+  context.functions.push_back(Function{0});
+  EXPECT_FALSE(Validate(context, code));
+}
+
 TEST(ValidateTest, ConstantExpression_Const) {
   const struct {
     Instruction instr;
@@ -536,6 +547,7 @@ TEST(ValidateTest, Function_IndexOOB) {
   EXPECT_FALSE(Validate(context, Function{0}));
 }
 
+
 TEST(ValidateTest, FunctionType) {
   const FunctionType tests[] = {
       FunctionType{},
@@ -928,6 +940,12 @@ TEST(ValidateTest, TableType_Shared) {
   Context context{errors};
   EXPECT_FALSE(
       Validate(context, TableType{Limits{0, 100, Shared::Yes}, RT_Funcref}));
+}
+
+TEST(ValidateTest, TableType_Defaultable) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_FALSE(Validate(context, TableType{Limits{0}, RT_Ref0}));
 }
 
 TEST(ValidateTest, TypeEntry) {

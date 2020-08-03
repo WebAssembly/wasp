@@ -70,7 +70,7 @@ auto ValidateVisitor::OnDataCount(const At<binary::DataCount>& data_count)
 
 auto ValidateVisitor::BeginCode(const At<binary::Code>& code) -> Result {
   return FailUnless(valid::BeginCode(context, code.loc()) &&
-                    Validate(context, code->locals));
+                    Validate(context, code->locals, RequireDefaultable::Yes));
 }
 
 auto ValidateVisitor::OnInstruction(const At<binary::Instruction>& instruction)
