@@ -125,6 +125,30 @@ bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual) {
   return true;
 }
 
+bool CheckDefaultable(Context& context,
+                      const At<binary::ReferenceType>& value,
+                      string_view desc) {
+  if (!IsDefaultableType(value)) {
+    context.errors->OnError(
+        value.loc(),
+        format("{} must be defaultable, got {}", desc, value->type));
+    return false;
+  }
+  return true;
+}
+
+bool CheckDefaultable(Context& context,
+                      const At<binary::ValueType>& value,
+                      string_view desc) {
+  if (!IsDefaultableType(value)) {
+    context.errors->OnError(
+        value.loc(),
+        format("{} must be defaultable, got {}", desc, value->type));
+    return false;
+  }
+  return true;
+}
+
 bool Validate(Context& context, const At<binary::UnpackedExpression>& value) {
   bool valid = true;
   for (auto&& instr : value->instructions) {
@@ -335,23 +359,12 @@ bool Validate(Context& context, const At<binary::ElementSegment>& value) {
   } else if (value->has_expressions()) {
     auto&& elements = value->expressions();
 
+    valid &= Validate(context, elements.elemtype);
     for (const auto& expr : elements.list) {
       valid &= Validate(context, expr, elements.elemtype);
     }
   }
   return valid;
-}
-
-bool Validate(Context& context,
-              binary::ReferenceType expected,
-              const At<binary::ReferenceType>& actual) {
-  if (!TypesMatch(actual, expected)) {
-    context.errors->OnError(
-        actual.loc(),
-        format("Expected reference type {}, got {}", expected, actual));
-    return false;
-  }
-  return true;
 }
 
 bool Validate(Context& context, const At<binary::Export>& value) {
@@ -440,14 +453,17 @@ bool Validate(Context& context, const At<binary::Function>& value) {
 
 bool Validate(Context& context, const At<binary::FunctionType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "function type"};
+  bool valid = true;
   if (value->result_types.size() > 1 &&
       !context.features.multi_value_enabled()) {
     context.errors->OnError(
         value.loc(), format("Expected result type count of 0 or 1, got {}",
                             value->result_types.size()));
-    return false;
+    valid = false;
   }
-  return true;
+  valid &= Validate(context, value->param_types);
+  valid &= Validate(context, value->result_types);
+  return valid;
 }
 
 bool Validate(Context& context, const At<binary::Global>& value) {
@@ -462,6 +478,16 @@ bool Validate(Context& context, const At<binary::Global>& value) {
 }
 
 bool Validate(Context& context, const At<binary::GlobalType>& value) {
+  ErrorsContextGuard guard{*context.errors, value.loc(), "global type"};
+  return Validate(context, value->valtype);
+}
+
+bool Validate(Context& context, const At<binary::HeapType>& value) {
+  ErrorsContextGuard guard{*context.errors, value.loc(), "heap type"};
+  if (value->is_index()) {
+    return ValidateIndex(context, value->index(), context.types.size(),
+                         "heap type index");
+  }
   return true;
 }
 
@@ -576,6 +602,31 @@ bool Validate(Context& context, const At<MemoryType>& value) {
   return valid;
 }
 
+bool Validate(Context& context,
+              binary::ReferenceType expected,
+              const At<binary::ReferenceType>& actual) {
+  if (!TypesMatch(actual, expected)) {
+    context.errors->OnError(
+        actual.loc(),
+        format("Expected reference type {}, got {}", expected, actual));
+    return false;
+  }
+  return true;
+}
+
+bool Validate(Context& context, const At<binary::ReferenceType>& value) {
+  ErrorsContextGuard guard{*context.errors, value.loc(), "reference type"};
+  if (value->is_ref()) {
+    return Validate(context, value->ref());
+  }
+  return true;
+}
+
+bool Validate(Context& context, const At<binary::RefType>& value) {
+  ErrorsContextGuard guard{*context.errors, value.loc(), "ref type"};
+  return Validate(context, value->heap_type);
+}
+
 bool Validate(Context& context, const At<binary::Start>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "start"};
   if (!ValidateIndex(context, value->func_index, context.functions.size(),
@@ -622,12 +673,8 @@ bool Validate(Context& context, const At<binary::TableType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "table type"};
   constexpr Index kMaxElements = std::numeric_limits<Index>::max();
   bool valid = Validate(context, value->limits, kMaxElements);
-  if (!IsDefaultableType(value->elemtype)) {
-    context.errors->OnError(
-        value.loc(),
-        format("local type must be defaultable, got {}", value->elemtype));
-    valid = false;
-  }
+  valid &= Validate(context, value->elemtype);
+  valid &= CheckDefaultable(context, value->elemtype, "local type");
   if (value->limits->shared == Shared::Yes) {
     context.errors->OnError(value.loc(), "Tables cannot be shared");
     valid = false;
@@ -641,6 +688,14 @@ bool Validate(Context& context, const At<binary::TypeEntry>& value) {
   return Validate(context, value->type);
 }
 
+bool Validate(Context& context, const At<binary::ValueType>& value) {
+  ErrorsContextGuard guard{*context.errors, value.loc(), "value type"};
+  if (value->is_reference_type()) {
+    return Validate(context, value->reference_type());
+  }
+  return true;
+}
+
 bool Validate(Context& context,
               binary::ValueType expected,
               const At<binary::ValueType>& actual) {
@@ -651,6 +706,14 @@ bool Validate(Context& context,
     return false;
   }
   return true;
+}
+
+bool Validate(Context& context, const binary::ValueTypeList& values) {
+  bool valid = true;
+  for (const auto& value : values) {
+    valid &= Validate(context, value);
+  }
+  return valid;
 }
 
 template <typename T>

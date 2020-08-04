@@ -89,7 +89,11 @@ optional<FunctionType> GetBlockTypeSignature(Context& context,
   if (block_type.is_void()) {
     return FunctionType{};
   } else if (block_type.is_value_type()) {
-    return FunctionType{{}, {block_type.value_type()}};
+    const auto& value_type = block_type.value_type();
+    if (!Validate(context, value_type)) {
+      return nullopt;
+    }
+    return FunctionType{{}, {value_type}};
   } else {
     assert(block_type.is_index());
     return GetFunctionType(context, block_type.index());
@@ -562,6 +566,7 @@ bool SelectT(Context& context,
             value_types->size()));
     return false;
   }
+  valid &= Validate(context, value_types);
   StackTypeList stack_types = ToStackTypeList(value_types);
   StackType type = stack_types[0];
   const StackType pop_types[] = {type, type};
@@ -1191,13 +1196,10 @@ bool Validate(Context& context,
               RequireDefaultable require_defaultable) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "locals"};
   bool valid = true;
-  if (require_defaultable == RequireDefaultable::Yes &&
-      !IsDefaultableType(value->type)) {
-    context.errors->OnError(
-        value.loc(),
-        format("local type must be defaultable, got {}", value->type));
-    valid = false;
+  if (require_defaultable == RequireDefaultable::Yes) {
+    valid &= CheckDefaultable(context, value->type, "local type");
   }
+  valid &= Validate(context, value->type);
 
   if (!context.locals.Append(value->count, value->type)) {
     const Index max = std::numeric_limits<Index>::max();

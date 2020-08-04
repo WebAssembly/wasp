@@ -363,6 +363,25 @@ TEST(ValidateTest, ElementSegment_Declared) {
   EXPECT_EQ(1u, context.declared_functions.count(0));
 }
 
+TEST(ValidateTest, ElementSegment_RefType) {
+  TestErrors errors;
+  Context context{errors};
+  context.types.push_back(TypeEntry{FunctionType{}});
+
+  ElementSegment element_segment{SegmentType::Passive,
+                                 ElementListWithExpressions{RT_Ref0, {}}};
+  EXPECT_TRUE(Validate(context, element_segment));
+}
+
+TEST(ValidateTest, ElementSegment_RefType_IndexOOB) {
+  TestErrors errors;
+  Context context{errors};
+
+  ElementSegment element_segment{SegmentType::Passive,
+                                 ElementListWithExpressions{RT_Ref0, {}}};
+  EXPECT_FALSE(Validate(context, element_segment));
+}
+
 TEST(ValidateTest, ElementSegment_Active_TypeMismatch) {
   TestErrors errors;
   Context context{errors};
@@ -596,6 +615,23 @@ TEST(ValidateTest, FunctionType_MultiReturn) {
   }
 }
 
+TEST(ValidateTest, FunctionType_RefType) {
+  FunctionType function_type{{VT_Ref0}, {VT_RefNull0}};
+
+  TestErrors errors;
+  Context context{errors};
+  context.types.push_back(TypeEntry{FunctionType{}});
+  EXPECT_TRUE(Validate(context, function_type));
+}
+
+TEST(ValidateTest, FunctionType_RefType_IndexOOB) {
+  FunctionType function_type{{VT_Ref0}, {VT_RefNull0}};
+
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_FALSE(Validate(context, function_type));
+}
+
 TEST(ValidateTest, Global) {
   TestErrors errors;
   Context context{errors};
@@ -681,10 +717,17 @@ TEST(ValidateTest, GlobalType) {
       GlobalType{VT_I64, Mutability::Const},
       GlobalType{VT_F32, Mutability::Const},
       GlobalType{VT_F64, Mutability::Const},
+      GlobalType{VT_V128, Mutability::Const},
+      GlobalType{VT_Funcref, Mutability::Const},
+      GlobalType{VT_Externref, Mutability::Const},
+      GlobalType{VT_Exnref, Mutability::Const},
       GlobalType{VT_I32, Mutability::Var},
       GlobalType{VT_I64, Mutability::Var},
       GlobalType{VT_F32, Mutability::Var},
       GlobalType{VT_F64, Mutability::Var},
+      GlobalType{VT_Funcref, Mutability::Var},
+      GlobalType{VT_Externref, Mutability::Var},
+      GlobalType{VT_Exnref, Mutability::Var},
   };
 
   for (const auto& global_type : tests) {
@@ -692,6 +735,32 @@ TEST(ValidateTest, GlobalType) {
     Context context{errors};
     EXPECT_TRUE(Validate(context, global_type));
   }
+}
+
+TEST(ValidateTest, GlobalType_RefType) {
+  const GlobalType tests[] = {
+      GlobalType{VT_Ref0, Mutability::Const},
+      GlobalType{VT_RefNull0, Mutability::Const},
+      GlobalType{VT_RefFunc, Mutability::Const},
+      GlobalType{VT_RefNullFunc, Mutability::Const},
+      GlobalType{VT_Ref0, Mutability::Var},
+      GlobalType{VT_RefNull0, Mutability::Var},
+      GlobalType{VT_RefFunc, Mutability::Var},
+      GlobalType{VT_RefNullFunc, Mutability::Var},
+  };
+
+  for (const auto& global_type : tests) {
+    TestErrors errors;
+    Context context{errors};
+    context.types.push_back(TypeEntry{FunctionType{}});
+    EXPECT_TRUE(Validate(context, global_type));
+  }
+}
+
+TEST(ValidateTest, GlobalType_RefType_IndexOOB) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_FALSE(Validate(context, GlobalType{VT_Ref0, Mutability::Const}));
 }
 
 TEST(ValidateTest, Import) {
@@ -793,6 +862,27 @@ TEST(ValidateTest, Limits_Invalid) {
   EXPECT_FALSE(Validate(context, Limits{11}, 10));
   EXPECT_FALSE(Validate(context, Limits{9, 11}, 10));
   EXPECT_FALSE(Validate(context, Limits{5, 3}, 10));
+}
+
+TEST(ValidateTest, Locals) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_TRUE(Validate(context, Locals{1, VT_I32}, RequireDefaultable::No));
+}
+
+TEST(ValidateTest, Locals_Defaultable) {
+  TestErrors errors;
+  Context context{errors};
+  context.types.push_back(TypeEntry{FunctionType{}});
+  EXPECT_FALSE(Validate(context, Locals{1, VT_Ref0}, RequireDefaultable::Yes));
+  EXPECT_TRUE(Validate(context, Locals{1, VT_Ref0}, RequireDefaultable::No));
+}
+
+TEST(ValidateTest, Locals_RefType_IndexOOB) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_FALSE(
+      Validate(context, Locals{1, VT_RefNull0}, RequireDefaultable::Yes));
 }
 
 TEST(ValidateTest, Memory) {
@@ -935,6 +1025,19 @@ TEST(ValidateTest, TableType) {
   }
 }
 
+TEST(ValidateTest, TableType_RefType) {
+  TestErrors errors;
+  Context context{errors};
+  context.types.push_back(TypeEntry{FunctionType{}});
+  EXPECT_TRUE(Validate(context, TableType{Limits{0}, RT_RefNull0}));
+}
+
+TEST(ValidateTest, TableType_RefType_IndexOOB) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_FALSE(Validate(context, TableType{Limits{0}, RT_RefNull0}));
+}
+
 TEST(ValidateTest, TableType_Shared) {
   TestErrors errors;
   Context context{errors};
@@ -981,6 +1084,19 @@ TEST(ValidateTest, ValueType_Mismatch) {
       EXPECT_FALSE(Validate(context, value_type1, value_type2));
     }
   }
+}
+
+TEST(ValidateTest, ValueType_RefType) {
+  TestErrors errors;
+  Context context{errors};
+  context.types.push_back(TypeEntry{FunctionType{}});
+  EXPECT_TRUE(Validate(context, VT_Ref0));
+}
+
+TEST(ValidateTest, ValueType_RefType_IndexOOB) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_FALSE(Validate(context, VT_Ref0));
 }
 
 TEST(ValidateTest, ValueType_FuncrefSubtyping) {

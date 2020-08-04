@@ -23,6 +23,8 @@
 
 namespace wasp {
 
+WASP_DEFINE_VARIANT_NAME(binary::RefType, "ref_type")
+WASP_DEFINE_VARIANT_NAME(binary::ReferenceType, "reference_type")
 WASP_DEFINE_VARIANT_NAME(binary::ValueType, "value_type")
 
 }  // namespace wasp

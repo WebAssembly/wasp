@@ -32,6 +32,12 @@ using namespace ::wasp::binary::test;
 using namespace ::wasp::valid;
 using namespace ::wasp::valid::test;
 
+namespace {
+
+const ValueType VT_Ref1{ReferenceType{RefType{HeapType{Index{1}}, Null::No}}};
+
+}  // namespace
+
 class ValidateInstructionTest : public ::testing::Test {
  protected:
   using I = Instruction;
@@ -217,6 +223,17 @@ TEST_F(ValidateInstructionTest, Block_MultiResult) {
   ExpectNoErrors(errors);
 }
 
+TEST_F(ValidateInstructionTest, Block_RefType) {
+  auto index = AddFunctionType(FunctionType{{VT_Ref0}, {}});
+
+  TestSignature(I{O::Block, BT_Ref0}, {}, {});
+  TestSignature(I{O::Block, BlockType{index}}, {VT_Ref0}, {VT_Ref0});
+}
+
+TEST_F(ValidateInstructionTest, Block_RefType_IndexOOB) {
+  Fail(I{O::Block, BlockType{VT_Ref1}});
+}
+
 TEST_F(ValidateInstructionTest, Block_Param) {
   auto index = AddFunctionType(FunctionType{{VT_I64}, {}});
   Ok(I{O::I64Const, s64{}});
@@ -250,6 +267,17 @@ TEST_F(ValidateInstructionTest, Loop_MultiResult) {
   Ok(I{O::F32Const, s32{}});
   Ok(I{O::End});
   ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, Loop_RefType) {
+  auto index = AddFunctionType(FunctionType{{VT_Ref0}, {}});
+
+  TestSignature(I{O::Loop, BT_Ref0}, {}, {});
+  TestSignature(I{O::Loop, BlockType{index}}, {VT_Ref0}, {VT_Ref0});
+}
+
+TEST_F(ValidateInstructionTest, Loop_RefType_IndexOOB) {
+  Fail(I{O::Loop, BlockType{VT_Ref1}});
 }
 
 TEST_F(ValidateInstructionTest, Loop_Param) {
@@ -305,6 +333,17 @@ TEST_F(ValidateInstructionTest, If_Else_MultiResult) {
   Ok(I{O::I32TruncF32S});  // Convert f32 -> i32.
   Ok(I{O::I32Add});        // Should have [i32 i32] on the stack.
   ExpectNoErrors(errors);
+}
+
+TEST_F(ValidateInstructionTest, If_RefType) {
+  auto index = AddFunctionType(FunctionType{{VT_Ref0}, {}});
+
+  TestSignature(I{O::If, BT_Ref0}, {VT_I32}, {});
+  TestSignature(I{O::If, BlockType{index}}, {VT_Ref0, VT_I32}, {VT_Ref0});
+}
+
+TEST_F(ValidateInstructionTest, If_RefType_IndexOOB) {
+  Fail(I{O::If, BlockType{VT_Ref1}});
 }
 
 TEST_F(ValidateInstructionTest, If_Else_Param) {
@@ -1161,6 +1200,17 @@ TEST_F(ValidateInstructionTest, SelectT) {
     TestSignature(I{O::SelectT, SelectImmediate{vt}}, {vt, vt, VT_I32},
                   {vt});
   }
+}
+
+TEST_F(ValidateInstructionTest, SelectT_RefType) {
+  TestSignature(I{O::SelectT, SelectImmediate{VT_Ref0}},
+                {VT_Ref0, VT_Ref0, VT_I32}, {VT_Ref0});
+}
+
+TEST_F(ValidateInstructionTest, SelectT_RefType_IndexOOB) {
+  // Use index 1, since index 0 is always defined (see AddFunction above).
+  FailWithTypeStack(I{O::SelectT, SelectImmediate{VT_Ref1}},
+                    ToStackTypeList(ValueTypeList{VT_Ref1, VT_Ref1, VT_I32}));
 }
 
 TEST_F(ValidateInstructionTest, SelectT_EmptyStack) {

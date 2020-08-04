@@ -973,7 +973,8 @@ auto ReadElementSegment(Tokenizer& tokenizer, Context& context)
         // LPAR ELEM bind_var_opt * DECLARE elem_list RPAR
         tokenizer.Read();
         segment_type = SegmentType::Declared;
-      } else if (token.type == TokenType::Lpar) {
+      } else if (token.type == TokenType::Lpar &&
+                 tokenizer.Peek(1).type != TokenType::Ref) {
         segment_type = SegmentType::Active;
         // LPAR ELEM bind_var_opt * offset elem_list RPAR
         // LPAR ELEM bind_var_opt * offset elem_var_list RPAR

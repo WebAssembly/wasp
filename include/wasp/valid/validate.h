@@ -44,6 +44,12 @@ bool TypesMatch(binary::ValueType expected, binary::ValueType actual);
 bool TypesMatch(StackType expected, StackType actual);
 bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual);
 
+bool CheckDefaultable(Context&,
+                      const At<binary::ReferenceType>&,
+                      string_view desc);
+bool CheckDefaultable(Context&, const At<binary::ValueType>&, string_view desc);
+
+bool Validate(Context&, const At<binary::BlockType>&);
 bool Validate(Context&, const At<binary::DataSegment>&);
 bool Validate(Context&,
               const At<binary::ConstantExpression>&,
@@ -56,9 +62,6 @@ bool Validate(Context&,
               const At<binary::ElementExpression>&,
               binary::ReferenceType);
 bool Validate(Context&, const At<binary::ElementSegment>&);
-bool Validate(Context&,
-              binary::ReferenceType expected,
-              const At<binary::ReferenceType>& actual);
 bool Validate(Context&, const At<binary::Export>&);
 bool Validate(Context&, const At<binary::Event>&);
 bool Validate(Context&, const At<binary::EventType>&);
@@ -66,6 +69,7 @@ bool Validate(Context&, const At<binary::Function>&);
 bool Validate(Context&, const At<binary::FunctionType>&);
 bool Validate(Context&, const At<binary::Global>&);
 bool Validate(Context&, const At<binary::GlobalType>&);
+bool Validate(Context&, const At<binary::HeapType>&);
 bool Validate(Context&, const At<binary::Import>&);
 bool ValidateIndex(Context&,
                    const At<Index>& index,
@@ -77,13 +81,20 @@ bool Validate(Context&, const At<binary::Locals>&, RequireDefaultable);
 bool Validate(Context&, const At<binary::LocalsList>&, RequireDefaultable);
 bool Validate(Context&, const At<binary::Memory>&);
 bool Validate(Context&, const At<MemoryType>&);
+bool Validate(Context&, const At<binary::ReferenceType>&);
+bool Validate(Context&, const At<binary::RefType>&);
+bool Validate(Context&,
+              binary::ReferenceType expected,
+              const At<binary::ReferenceType>& actual);
 bool Validate(Context&, const At<binary::Start>& value);
 bool Validate(Context&, const At<binary::Table>&);
 bool Validate(Context&, const At<binary::TableType>&);
 bool Validate(Context&, const At<binary::TypeEntry>&);
+bool Validate(Context&, const At<binary::ValueType>&);
 bool Validate(Context&,
               binary::ValueType expected,
               const At<binary::ValueType>& actual);
+bool Validate(Context&, const binary::ValueTypeList&);
 bool Validate(Context&, const At<binary::UnpackedCode>&);
 bool Validate(Context&, const At<binary::UnpackedExpression>&);
 
