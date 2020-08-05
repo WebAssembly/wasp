@@ -65,8 +65,8 @@ bool BeginCode(Context& context, Location loc) {
 }
 
 bool TypesMatch(Context& context,
-                binary::HeapType expected,
-                binary::HeapType actual) {
+                const binary::HeapType& expected,
+                const binary::HeapType& actual) {
   // "func" is a supertype of all function types.
   if (expected.is_heap_kind() && expected.heap_kind() == HeapKind::Func &&
       actual.is_index()) {
@@ -82,30 +82,30 @@ bool TypesMatch(Context& context,
 }
 
 bool TypesMatch(Context& context,
-                binary::RefType expected,
-                binary::RefType actual) {
+                const binary::RefType& expected,
+                const binary::RefType& actual) {
   // "ref null 0" is a supertype of "ref 0"
   if (expected.null == Null::No && actual.null == Null::Yes) {
     return false;
   }
-  return TypesMatch(context, expected.heap_type, actual.heap_type);
+  return TypesMatch(context, expected.heap_type.value(), actual.heap_type);
 }
 
 bool TypesMatch(Context& context,
-                binary::ReferenceType expected,
-                binary::ReferenceType actual) {
+                const binary::ReferenceType& expected,
+                const binary::ReferenceType& actual) {
   // Canoicalize in case one of the types is "ref null X" and the other is
   // "Xref".
-  expected = Canonicalize(expected);
-  actual = Canonicalize(actual);
+  binary::ReferenceType expected_canon = Canonicalize(expected);
+  binary::ReferenceType actual_canon = Canonicalize(actual);
 
-  assert(expected.is_ref() && actual.is_ref());
-  return TypesMatch(context, expected.ref(), actual.ref());
+  assert(expected_canon.is_ref() && actual_canon.is_ref());
+  return TypesMatch(context, expected_canon.ref(), actual_canon.ref());
 }
 
 bool TypesMatch(Context& context,
-                binary::ValueType expected,
-                binary::ValueType actual) {
+                const binary::ValueType& expected,
+                const binary::ValueType& actual) {
   if (expected.is_numeric_type() && actual.is_numeric_type()) {
     return expected.numeric_type().value() == actual.numeric_type().value();
   } else if (expected.is_reference_type() && actual.is_reference_type()) {
@@ -115,7 +115,9 @@ bool TypesMatch(Context& context,
   return false;
 }
 
-bool TypesMatch(Context& context, StackType expected, StackType actual) {
+bool TypesMatch(Context& context,
+                const StackType& expected,
+                const StackType& actual) {
   // One of the types is "any" (i.e. universal supertype or subtype), or the
   // value types match.
   return expected.is_any() || actual.is_any() ||

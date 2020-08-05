@@ -38,13 +38,19 @@ struct Context;
 bool BeginTypeSection(Context&, Index type_count);
 bool BeginCode(Context&, Location loc);
 
-bool TypesMatch(Context&, binary::HeapType expected, binary::HeapType actual);
-bool TypesMatch(Context&, binary::RefType expected, binary::RefType actual);
 bool TypesMatch(Context&,
-                binary::ReferenceType expected,
-                binary::ReferenceType actual);
-bool TypesMatch(Context&, binary::ValueType expected, binary::ValueType actual);
-bool TypesMatch(Context&, StackType expected, StackType actual);
+                const binary::HeapType& expected,
+                const binary::HeapType& actual);
+bool TypesMatch(Context&,
+                const binary::RefType& expected,
+                const binary::RefType& actual);
+bool TypesMatch(Context&,
+                const binary::ReferenceType& expected,
+                const binary::ReferenceType& actual);
+bool TypesMatch(Context&,
+                const binary::ValueType& expected,
+                const binary::ValueType& actual);
+bool TypesMatch(Context&, const StackType& expected, const StackType& actual);
 bool TypesMatch(Context&, StackTypeSpan expected, StackTypeSpan actual);
 
 bool CheckDefaultable(Context&,
