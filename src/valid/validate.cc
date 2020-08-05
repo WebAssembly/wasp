@@ -27,6 +27,7 @@
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/lazy_expression.h"
 #include "wasp/valid/context.h"
+#include "wasp/valid/match.h"
 
 namespace wasp {
 namespace valid {
@@ -62,85 +63,6 @@ bool BeginCode(Context& context, Location loc) {
     context.label_stack.push_back(Label{LabelType::Function, {}, {}, 0});
     return false;
   }
-}
-
-bool TypesMatch(Context& context,
-                const binary::HeapType& expected,
-                const binary::HeapType& actual) {
-  // "func" is a supertype of all function types.
-  if (expected.is_heap_kind() && expected.heap_kind() == HeapKind::Func &&
-      actual.is_index()) {
-    return true;
-  }
-
-  if (expected.is_heap_kind() && actual.is_heap_kind()) {
-    return expected.heap_kind().value() == actual.heap_kind().value();
-  } else if (expected.is_index() && actual.is_index()) {
-    return expected.index().value() == actual.index().value();
-  }
-  return false;
-}
-
-bool TypesMatch(Context& context,
-                const binary::RefType& expected,
-                const binary::RefType& actual) {
-  // "ref null 0" is a supertype of "ref 0"
-  if (expected.null == Null::No && actual.null == Null::Yes) {
-    return false;
-  }
-  return TypesMatch(context, expected.heap_type.value(), actual.heap_type);
-}
-
-bool TypesMatch(Context& context,
-                const binary::ReferenceType& expected,
-                const binary::ReferenceType& actual) {
-  // Canoicalize in case one of the types is "ref null X" and the other is
-  // "Xref".
-  binary::ReferenceType expected_canon = Canonicalize(expected);
-  binary::ReferenceType actual_canon = Canonicalize(actual);
-
-  assert(expected_canon.is_ref() && actual_canon.is_ref());
-  return TypesMatch(context, expected_canon.ref(), actual_canon.ref());
-}
-
-bool TypesMatch(Context& context,
-                const binary::ValueType& expected,
-                const binary::ValueType& actual) {
-  if (expected.is_numeric_type() && actual.is_numeric_type()) {
-    return expected.numeric_type().value() == actual.numeric_type().value();
-  } else if (expected.is_reference_type() && actual.is_reference_type()) {
-    return TypesMatch(context, expected.reference_type(),
-                      actual.reference_type());
-  }
-  return false;
-}
-
-bool TypesMatch(Context& context,
-                const StackType& expected,
-                const StackType& actual) {
-  // One of the types is "any" (i.e. universal supertype or subtype), or the
-  // value types match.
-  return expected.is_any() || actual.is_any() ||
-         TypesMatch(context, expected.value_type(), actual.value_type());
-}
-
-bool TypesMatch(Context& context,
-                StackTypeSpan expected,
-                StackTypeSpan actual) {
-  if (expected.size() != actual.size()) {
-    return false;
-  }
-
-  for (auto eiter = expected.begin(), lend = expected.end(),
-            aiter = actual.begin();
-       eiter != lend; ++eiter, ++aiter) {
-    StackType etype = *eiter;
-    StackType atype = *aiter;
-    if (!TypesMatch(context, etype, atype)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 bool CheckDefaultable(Context& context,
@@ -623,7 +545,7 @@ bool Validate(Context& context, const At<MemoryType>& value) {
 bool Validate(Context& context,
               binary::ReferenceType expected,
               const At<binary::ReferenceType>& actual) {
-  if (!TypesMatch(context, actual, expected)) {
+  if (!IsMatch(context, actual, expected)) {
     context.errors->OnError(
         actual.loc(),
         format("Expected reference type {}, got {}", expected, actual));
@@ -717,7 +639,7 @@ bool Validate(Context& context, const At<binary::ValueType>& value) {
 bool Validate(Context& context,
               binary::ValueType expected,
               const At<binary::ValueType>& actual) {
-  if (!TypesMatch(context, expected, actual)) {
+  if (!IsMatch(context, expected, actual)) {
     context.errors->OnError(
         actual.loc(),
         format("Expected value type {}, got {}", expected, actual));

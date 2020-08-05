@@ -86,6 +86,7 @@ add_library(wasplib
   src/valid/context.cc
   src/valid/formatters.cc
   src/valid/local_map.cc
+  src/valid/match.cc
   src/valid/print_to.cc
   src/valid/types.cc
   src/valid/validate.cc

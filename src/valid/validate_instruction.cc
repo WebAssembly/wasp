@@ -28,6 +28,7 @@
 #include "wasp/binary/formatters.h"
 #include "wasp/valid/context.h"
 #include "wasp/valid/formatters.h"
+#include "wasp/valid/match.h"
 #include "wasp/valid/validate.h"
 
 namespace wasp {
@@ -242,7 +243,7 @@ bool CheckTypes(Context& context, Location loc, StackTypeSpan expected) {
     RemovePrefixIfGreater(&expected, type_stack);
   }
 
-  if (!TypesMatch(context, expected, type_stack)) {
+  if (!IsMatch(context, expected, type_stack)) {
     // TODO proper formatting of type stack
     context.errors->OnError(
         loc, format("Expected stack to contain {}, got {}{}", full_expected,
@@ -262,7 +263,7 @@ bool CheckResultTypes(Context& context,
   auto caller = ToStackTypeList(function_type.result_types);
   auto callee = label->br_types();
 
-  if (!TypesMatch(context, callee, caller)) {
+  if (!IsMatch(context, callee, caller)) {
     context.errors->OnError(
         loc,
         format("Callee's result types {} must equal caller's result types {}",
@@ -750,7 +751,7 @@ bool MemoryFill(Context& context, Location loc) {
 bool CheckReferenceType(Context& context,
                         ReferenceType expected,
                         At<ReferenceType> actual) {
-  if (!TypesMatch(context, ToStackType(expected), ToStackType(actual))) {
+  if (!IsMatch(context, ToStackType(expected), ToStackType(actual))) {
     context.errors->OnError(
         actual.loc(),
         format("Expected reference type {}, got {}", expected, actual));
@@ -1023,9 +1024,9 @@ bool BrOnExn(Context& context,
   auto function_type =
       GetFunctionType(context, MaybeDefault(event_type).type_index);
   auto* label = GetLabel(context, immediate->target);
-  bool valid = TypesMatch(
-      context, ToStackTypeList(MaybeDefault(function_type).param_types),
-      MaybeDefault(label).br_types());
+  bool valid =
+      IsMatch(context, ToStackTypeList(MaybeDefault(function_type).param_types),
+              MaybeDefault(label).br_types());
   valid &= PopAndPushTypes(context, loc, span_exnref, span_exnref);
   return AllTrue(event_type, function_type, label, valid);
 }

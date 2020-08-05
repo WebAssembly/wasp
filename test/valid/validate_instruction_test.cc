@@ -24,6 +24,7 @@
 #include "wasp/binary/formatters.h"
 #include "wasp/valid/context.h"
 #include "wasp/valid/formatters.h"
+#include "wasp/valid/match.h"
 #include "wasp/valid/validate.h"
 
 using namespace ::wasp;
@@ -119,7 +120,8 @@ class ValidateInstructionTest : public ::testing::Test {
     context_copy.type_stack = param_types;
     EXPECT_TRUE(Validate(context_copy, instruction))
         << format("{} with stack {}", instruction, param_types);
-    EXPECT_TRUE(TypesMatch(context, result_types, context_copy.type_stack))
+    // TODO: Should compare for equality, not match.
+    EXPECT_TRUE(IsMatch(context, result_types, context_copy.type_stack))
         << format("{}", instruction);
   }
 
@@ -154,8 +156,9 @@ class ValidateInstructionTest : public ::testing::Test {
       // Create a type stack of the right size, but with all mismatched types.
       auto mismatch_types = stack_param_types;
       for (auto& stack_type : mismatch_types) {
+        // TODO: Should compare for equality, not match.
         stack_type =
-            TypesMatch(context, stack_type, ST::I32()) ? ST::F64() : ST::I32();
+            IsMatch(context, stack_type, ST::I32()) ? ST::F64() : ST::I32();
       }
       FailWithTypeStack(instruction, mismatch_types);
     }
