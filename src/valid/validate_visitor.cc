@@ -24,6 +24,10 @@ namespace valid {
 ValidateVisitor::ValidateVisitor(Features features, Errors& errors)
     : context{features, errors}, features{features}, errors{errors} {}
 
+auto ValidateVisitor::BeginTypeSection(binary::LazyTypeSection sec) -> Result {
+  return FailUnless(valid::BeginTypeSection(context, sec.count.value_or(0)));
+}
+
 auto ValidateVisitor::OnType(const At<binary::TypeEntry>& type_entry)
     -> Result {
   return FailUnless(Validate(context, type_entry));

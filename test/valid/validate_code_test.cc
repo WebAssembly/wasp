@@ -31,6 +31,7 @@ TEST(ValidateCodeTest, BeginCode) {
   TestErrors errors;
   Context context{errors};
   context.types.push_back(TypeEntry{FunctionType{}});
+  context.defined_type_count = 1;
   context.functions.push_back(Function{0});
   EXPECT_TRUE(BeginCode(context, Location{}));
 }

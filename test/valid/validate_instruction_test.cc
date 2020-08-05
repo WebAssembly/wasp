@@ -67,6 +67,7 @@ class ValidateInstructionTest : public ::testing::Test {
   }
 
   Index AddFunctionType(const FunctionType& function_type) {
+    context.defined_type_count++;
     return AddItem(context.types, TypeEntry{function_type});
   }
 
@@ -118,7 +119,7 @@ class ValidateInstructionTest : public ::testing::Test {
     context_copy.type_stack = param_types;
     EXPECT_TRUE(Validate(context_copy, instruction))
         << format("{} with stack {}", instruction, param_types);
-    EXPECT_TRUE(TypesMatch(result_types, context_copy.type_stack))
+    EXPECT_TRUE(TypesMatch(context, result_types, context_copy.type_stack))
         << format("{}", instruction);
   }
 
@@ -153,7 +154,8 @@ class ValidateInstructionTest : public ::testing::Test {
       // Create a type stack of the right size, but with all mismatched types.
       auto mismatch_types = stack_param_types;
       for (auto& stack_type : mismatch_types) {
-        stack_type = TypesMatch(stack_type, ST::I32()) ? ST::F64() : ST::I32();
+        stack_type =
+            TypesMatch(context, stack_type, ST::I32()) ? ST::F64() : ST::I32();
       }
       FailWithTypeStack(instruction, mismatch_types);
     }

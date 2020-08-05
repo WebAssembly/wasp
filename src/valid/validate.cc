@@ -31,6 +31,11 @@
 namespace wasp {
 namespace valid {
 
+bool BeginTypeSection(Context& context, Index type_count) {
+  context.defined_type_count = type_count;
+  return true;
+}
+
 bool BeginCode(Context& context, Location loc) {
   Index func_index = context.imported_function_count + context.code_count;
   if (func_index >= context.functions.size()) {
@@ -45,7 +50,7 @@ bool BeginCode(Context& context, Location loc) {
   context.label_stack.clear();
   context.locals.Reset();
   // Don't validate the index, should have already been validated at this point.
-  if (function.type_index < context.types.size()) {
+  if (function.type_index < context.defined_type_count) {
     const binary::TypeEntry& type_entry = context.types[function.type_index];
     context.locals.Append(type_entry.type->param_types);
     context.label_stack.push_back(Label{
@@ -59,7 +64,9 @@ bool BeginCode(Context& context, Location loc) {
   }
 }
 
-bool TypesMatch(binary::HeapType expected, binary::HeapType actual) {
+bool TypesMatch(Context& context,
+                binary::HeapType expected,
+                binary::HeapType actual) {
   // "func" is a supertype of all function types.
   if (expected.is_heap_kind() && expected.heap_kind() == HeapKind::Func &&
       actual.is_index()) {
@@ -74,41 +81,50 @@ bool TypesMatch(binary::HeapType expected, binary::HeapType actual) {
   return false;
 }
 
-bool TypesMatch(binary::RefType expected, binary::RefType actual) {
+bool TypesMatch(Context& context,
+                binary::RefType expected,
+                binary::RefType actual) {
   // "ref null 0" is a supertype of "ref 0"
   if (expected.null == Null::No && actual.null == Null::Yes) {
     return false;
   }
-  return TypesMatch(expected.heap_type, actual.heap_type);
+  return TypesMatch(context, expected.heap_type, actual.heap_type);
 }
 
-bool TypesMatch(binary::ReferenceType expected, binary::ReferenceType actual) {
+bool TypesMatch(Context& context,
+                binary::ReferenceType expected,
+                binary::ReferenceType actual) {
   // Canoicalize in case one of the types is "ref null X" and the other is
   // "Xref".
   expected = Canonicalize(expected);
   actual = Canonicalize(actual);
 
   assert(expected.is_ref() && actual.is_ref());
-  return TypesMatch(expected.ref(), actual.ref());
+  return TypesMatch(context, expected.ref(), actual.ref());
 }
 
-bool TypesMatch(binary::ValueType expected, binary::ValueType actual) {
+bool TypesMatch(Context& context,
+                binary::ValueType expected,
+                binary::ValueType actual) {
   if (expected.is_numeric_type() && actual.is_numeric_type()) {
     return expected.numeric_type().value() == actual.numeric_type().value();
   } else if (expected.is_reference_type() && actual.is_reference_type()) {
-    return TypesMatch(expected.reference_type(), actual.reference_type());
+    return TypesMatch(context, expected.reference_type(),
+                      actual.reference_type());
   }
   return false;
 }
 
-bool TypesMatch(StackType expected, StackType actual) {
+bool TypesMatch(Context& context, StackType expected, StackType actual) {
   // One of the types is "any" (i.e. universal supertype or subtype), or the
   // value types match.
   return expected.is_any() || actual.is_any() ||
-         TypesMatch(expected.value_type(), actual.value_type());
+         TypesMatch(context, expected.value_type(), actual.value_type());
 }
 
-bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual) {
+bool TypesMatch(Context& context,
+                StackTypeSpan expected,
+                StackTypeSpan actual) {
   if (expected.size() != actual.size()) {
     return false;
   }
@@ -118,7 +134,7 @@ bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual) {
        eiter != lend; ++eiter, ++aiter) {
     StackType etype = *eiter;
     StackType atype = *aiter;
-    if (!TypesMatch(etype, atype)) {
+    if (!TypesMatch(context, etype, atype)) {
       return false;
     }
   }
@@ -429,7 +445,7 @@ bool Validate(Context& context, const At<binary::Event>& value) {
 bool Validate(Context& context, const At<binary::EventType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "event type"};
   context.events.push_back(value);
-  if (!ValidateIndex(context, value->type_index, context.types.size(),
+  if (!ValidateIndex(context, value->type_index, context.defined_type_count,
                      "event type index")) {
     return false;
   }
@@ -447,7 +463,7 @@ bool Validate(Context& context, const At<binary::EventType>& value) {
 bool Validate(Context& context, const At<binary::Function>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "function"};
   context.functions.push_back(value);
-  return ValidateIndex(context, value->type_index, context.types.size(),
+  return ValidateIndex(context, value->type_index, context.defined_type_count,
                        "function type index");
 }
 
@@ -485,7 +501,7 @@ bool Validate(Context& context, const At<binary::GlobalType>& value) {
 bool Validate(Context& context, const At<binary::HeapType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "heap type"};
   if (value->is_index()) {
-    return ValidateIndex(context, value->index(), context.types.size(),
+    return ValidateIndex(context, value->index(), context.defined_type_count,
                          "heap type index");
   }
   return true;
@@ -605,7 +621,7 @@ bool Validate(Context& context, const At<MemoryType>& value) {
 bool Validate(Context& context,
               binary::ReferenceType expected,
               const At<binary::ReferenceType>& actual) {
-  if (!TypesMatch(actual, expected)) {
+  if (!TypesMatch(context, actual, expected)) {
     context.errors->OnError(
         actual.loc(),
         format("Expected reference type {}, got {}", expected, actual));
@@ -636,7 +652,7 @@ bool Validate(Context& context, const At<binary::Start>& value) {
 
   bool valid = true;
   auto function = context.functions[value->func_index];
-  if (function.type_index < context.types.size()) {
+  if (function.type_index < context.defined_type_count) {
     const auto& type_entry = context.types[function.type_index];
     if (type_entry.type->param_types.size() != 0) {
       context.errors->OnError(
@@ -699,7 +715,7 @@ bool Validate(Context& context, const At<binary::ValueType>& value) {
 bool Validate(Context& context,
               binary::ValueType expected,
               const At<binary::ValueType>& actual) {
-  if (!TypesMatch(expected, actual)) {
+  if (!TypesMatch(context, expected, actual)) {
     context.errors->OnError(
         actual.loc(),
         format("Expected value type {}, got {}", expected, actual));
@@ -736,6 +752,7 @@ bool ValidateKnownSection(Context& context, const optional<T>& value) {
 
 bool Validate(Context& context, const binary::Module& value) {
   bool valid = true;
+  valid &= BeginTypeSection(context, value.types.size());
   valid &= ValidateKnownSection(context, value.types);
   valid &= ValidateKnownSection(context, value.imports);
   valid &= ValidateKnownSection(context, value.functions);

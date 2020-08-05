@@ -35,14 +35,17 @@ enum class RequireDefaultable {
 
 struct Context;
 
+bool BeginTypeSection(Context&, Index type_count);
 bool BeginCode(Context&, Location loc);
 
-bool TypesMatch(binary::HeapType expected, binary::HeapType actual);
-bool TypesMatch(binary::RefType expected, binary::RefType actual);
-bool TypesMatch(binary::ReferenceType expected, binary::ReferenceType actual);
-bool TypesMatch(binary::ValueType expected, binary::ValueType actual);
-bool TypesMatch(StackType expected, StackType actual);
-bool TypesMatch(StackTypeSpan expected, StackTypeSpan actual);
+bool TypesMatch(Context&, binary::HeapType expected, binary::HeapType actual);
+bool TypesMatch(Context&, binary::RefType expected, binary::RefType actual);
+bool TypesMatch(Context&,
+                binary::ReferenceType expected,
+                binary::ReferenceType actual);
+bool TypesMatch(Context&, binary::ValueType expected, binary::ValueType actual);
+bool TypesMatch(Context&, StackType expected, StackType actual);
+bool TypesMatch(Context&, StackTypeSpan expected, StackTypeSpan actual);
 
 bool CheckDefaultable(Context&,
                       const At<binary::ReferenceType>&,
