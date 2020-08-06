@@ -25,6 +25,27 @@ namespace valid {
 
 struct Context;
 
+bool IsSame(Context&,
+            const binary::HeapType& expected,
+            const binary::HeapType& actual);
+bool IsSame(Context&,
+            const binary::RefType& expected,
+            const binary::RefType& actual);
+bool IsSame(Context&,
+            const binary::ReferenceType& expected,
+            const binary::ReferenceType& actual);
+bool IsSame(Context&,
+            const binary::ValueType& expected,
+            const binary::ValueType& actual);
+bool IsSame(Context&,
+            const binary::ValueTypeList& expected,
+            const binary::ValueTypeList& actual);
+bool IsSame(Context& context,
+            const binary::TypeEntry& expected,
+            const binary::TypeEntry& actual);
+bool IsSame(Context&, const StackType& expected, const StackType& actual);
+bool IsSame(Context&, StackTypeSpan expected, StackTypeSpan actual);
+
 bool IsMatch(Context&,
              const binary::HeapType& expected,
              const binary::HeapType& actual);

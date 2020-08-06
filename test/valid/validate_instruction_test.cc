@@ -33,12 +33,6 @@ using namespace ::wasp::binary::test;
 using namespace ::wasp::valid;
 using namespace ::wasp::valid::test;
 
-namespace {
-
-const ValueType VT_Ref1{ReferenceType{RefType{HeapType{Index{1}}, Null::No}}};
-
-}  // namespace
-
 class ValidateInstructionTest : public ::testing::Test {
  protected:
   using I = Instruction;
@@ -120,8 +114,7 @@ class ValidateInstructionTest : public ::testing::Test {
     context_copy.type_stack = param_types;
     EXPECT_TRUE(Validate(context_copy, instruction))
         << format("{} with stack {}", instruction, param_types);
-    // TODO: Should compare for equality, not match.
-    EXPECT_TRUE(IsMatch(context, result_types, context_copy.type_stack))
+    EXPECT_TRUE(IsSame(context, result_types, context_copy.type_stack))
         << format("{}", instruction);
   }
 
@@ -156,9 +149,8 @@ class ValidateInstructionTest : public ::testing::Test {
       // Create a type stack of the right size, but with all mismatched types.
       auto mismatch_types = stack_param_types;
       for (auto& stack_type : mismatch_types) {
-        // TODO: Should compare for equality, not match.
         stack_type =
-            IsMatch(context, stack_type, ST::I32()) ? ST::F64() : ST::I32();
+            IsSame(context, stack_type, ST::I32()) ? ST::F64() : ST::I32();
       }
       FailWithTypeStack(instruction, mismatch_types);
     }
@@ -1773,7 +1765,7 @@ TEST_F(ValidateInstructionTest, ReferenceTypes) {
 
 TEST_F(ValidateInstructionTest, RefFunc) {
   context.declared_functions.insert(0);
-  TestSignature(I{O::RefFunc, Index{0}}, {}, {VT_Funcref});
+  TestSignature(I{O::RefFunc, Index{0}}, {}, {VT_Ref0});
 }
 
 TEST_F(ValidateInstructionTest, RefFunc_UndeclaredFunctionReference) {

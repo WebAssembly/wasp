@@ -29,6 +29,7 @@ const HT HT_Func{MakeAt("\x70"_su8, HeapKind::Func)};
 const HT HT_Extern{MakeAt("\x6f"_su8, HeapKind::Extern)};
 const HT HT_Exn{MakeAt("\x68"_su8, HeapKind::Exn)};
 const HT HT_0{MakeAt("\x00"_su8, Index{0})};
+const HT HT_1{MakeAt("\x01"_su8, Index{1})};
 
 const RefType RefType_Func{MakeAt("\x70"_su8, HT_Func), Null::No};
 const RefType RefType_NullFunc{MakeAt("\x70"_su8, HT_Func), Null::Yes};
@@ -38,6 +39,8 @@ const RefType RefType_Exn{MakeAt("\x68"_su8, HT_Exn), Null::No};
 const RefType RefType_NullExn{MakeAt("\x68"_su8, HT_Exn), Null::Yes};
 const RefType RefType_0{MakeAt("\x00"_su8, HT_0), Null::No};
 const RefType RefType_Null0{MakeAt("\x00"_su8, HT_0), Null::Yes};
+const RefType RefType_1{MakeAt("\x01"_su8, HT_1), Null::No};
+const RefType RefType_Null1{MakeAt("\x01"_su8, HT_1), Null::Yes};
 
 const RT RT_Funcref{MakeAt("\x70"_su8, ReferenceKind::Funcref)};
 const RT RT_Externref{MakeAt("\x6f"_su8, ReferenceKind::Externref)};
@@ -50,6 +53,8 @@ const RT RT_RefExn{MakeAt("\x6b\x68"_su8, RefType_Exn)};
 const RT RT_RefNullExn{MakeAt("\x6c\x68"_su8, RefType_NullExn)};
 const RT RT_Ref0{MakeAt("\x6b\x00"_su8, RefType_0)};
 const RT RT_RefNull0{MakeAt("\x6c\x00"_su8, RefType_Null0)};
+const RT RT_Ref1{MakeAt("\x6b\x01"_su8, RefType_1)};
+const RT RT_RefNull1{MakeAt("\x6c\x01"_su8, RefType_Null1)};
 
 const VT VT_I32{MakeAt("\x7f"_su8, NumericType::I32)};
 const VT VT_I64{MakeAt("\x7e"_su8, NumericType::I64)};
@@ -67,6 +72,8 @@ const VT VT_RefExn{MakeAt("\x6b\x68"_su8, RT_RefExn)};
 const VT VT_RefNullExn{MakeAt("\x6c\x68"_su8, RT_RefNullExn)};
 const VT VT_Ref0{MakeAt("\x6b\x00"_su8, RT_Ref0)};
 const VT VT_RefNull0{MakeAt("\x6c\x00"_su8, RT_RefNull0)};
+const VT VT_Ref1{MakeAt("\x6b\x01"_su8, RT_Ref1)};
+const VT VT_RefNull1{MakeAt("\x6c\x01"_su8, RT_RefNull1)};
 
 const BT BT_I32{MakeAt("\x7f"_su8, VT_I32)};
 const BT BT_I64{MakeAt("\x7e"_su8, VT_I64)};
@@ -85,6 +92,8 @@ const BT BT_RefExn{MakeAt("\x6b\x68"_su8, VT_RefExn)};
 const BT BT_RefNullExn{MakeAt("\x6c\x68"_su8, VT_RefNullExn)};
 const BT BT_Ref0{MakeAt("\x6b\x00"_su8, VT_Ref0)};
 const BT BT_RefNull0{MakeAt("\x6c\x00"_su8, VT_RefNull0)};
+const BT BT_Ref1{MakeAt("\x6b\x01"_su8, VT_Ref1)};
+const BT BT_RefNull1{MakeAt("\x6c\x01"_su8, VT_RefNull1)};
 
 }  // namespace test
 }  // namespace binary

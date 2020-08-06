@@ -176,6 +176,7 @@ add_executable(wasp_unittests
   test/tools/argparser_test.cc
   test/valid/test_utils.cc
   test/valid/local_map_test.cc
+  test/valid/match_test.cc
   test/valid/validate_test.cc
   test/valid/validate_code_test.cc
   test/valid/validate_instruction_test.cc

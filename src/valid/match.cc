@@ -23,6 +23,109 @@
 namespace wasp {
 namespace valid {
 
+auto CanonicalizeToRefType(const binary::ReferenceType& type)
+    -> binary::RefType {
+  binary::ReferenceType canon = Canonicalize(type);
+  assert(canon.is_ref());
+  return canon.ref();
+}
+
+bool IsSame(Context& context,
+            const binary::HeapType& expected,
+            const binary::HeapType& actual) {
+  if (expected.is_heap_kind() && actual.is_heap_kind()) {
+    return expected.heap_kind().value() == actual.heap_kind().value();
+  } else if (expected.is_index() && actual.is_index()) {
+    return expected.index().value() == actual.index().value();
+  }
+  return false;
+}
+
+bool IsSame(Context& context,
+            const binary::RefType& expected,
+            const binary::RefType& actual) {
+  return IsSame(context, expected.heap_type, actual.heap_type) &&
+         expected.null == actual.null;
+}
+
+bool IsSame(Context& context,
+            const binary::ReferenceType& expected,
+            const binary::ReferenceType& actual) {
+  // Canonicalize in case one of the types is "ref null X" and the other is
+  // "Xref".
+  return IsSame(context, CanonicalizeToRefType(expected),
+                CanonicalizeToRefType(actual));
+}
+
+bool IsSame(Context& context,
+            const binary::ValueType& expected,
+            const binary::ValueType& actual) {
+  if (expected.is_numeric_type() && actual.is_numeric_type()) {
+    return expected.numeric_type().value() == actual.numeric_type().value();
+  } else if (expected.is_reference_type() && actual.is_reference_type()) {
+    return IsSame(context, expected.reference_type(), actual.reference_type());
+  }
+  return false;
+}
+
+bool IsSame(Context& context,
+            const binary::ValueTypeList& expected,
+            const binary::ValueTypeList& actual) {
+  if (expected.size() != actual.size()) {
+    return false;
+  }
+
+  for (auto eiter = expected.begin(), lend = expected.end(),
+            aiter = actual.begin();
+       eiter != lend; ++eiter, ++aiter) {
+    binary::ValueType etype = *eiter;
+    binary::ValueType atype = *aiter;
+    if (!IsSame(context, etype, atype)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool IsSame(Context& context,
+            const binary::FunctionType& expected,
+            const binary::FunctionType& actual) {
+  return IsSame(context, expected.param_types, actual.param_types) &&
+         IsSame(context, expected.result_types, actual.result_types);
+}
+
+bool IsSame(Context& context,
+            const binary::TypeEntry& expected,
+            const binary::TypeEntry& actual) {
+  return IsSame(context, expected.type, actual.type);
+}
+
+bool IsSame(Context& context,
+            const StackType& expected,
+            const StackType& actual) {
+  // One of the types is "any" (i.e. universal supertype or subtype), or the
+  // value types are the same.
+  return expected.is_any() || actual.is_any() ||
+         IsSame(context, expected.value_type(), actual.value_type());
+}
+
+bool IsSame(Context& context, StackTypeSpan expected, StackTypeSpan actual) {
+  if (expected.size() != actual.size()) {
+    return false;
+  }
+
+  for (auto eiter = expected.begin(), lend = expected.end(),
+            aiter = actual.begin();
+       eiter != lend; ++eiter, ++aiter) {
+    StackType etype = *eiter;
+    StackType atype = *aiter;
+    if (!IsSame(context, etype, atype)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool IsMatch(Context& context,
              const binary::HeapType& expected,
              const binary::HeapType& actual) {
@@ -32,12 +135,7 @@ bool IsMatch(Context& context,
     return true;
   }
 
-  if (expected.is_heap_kind() && actual.is_heap_kind()) {
-    return expected.heap_kind().value() == actual.heap_kind().value();
-  } else if (expected.is_index() && actual.is_index()) {
-    return expected.index().value() == actual.index().value();
-  }
-  return false;
+  return IsSame(context, expected, actual);
 }
 
 bool IsMatch(Context& context,
@@ -53,13 +151,10 @@ bool IsMatch(Context& context,
 bool IsMatch(Context& context,
              const binary::ReferenceType& expected,
              const binary::ReferenceType& actual) {
-  // Canoicalize in case one of the types is "ref null X" and the other is
+  // Canonicalize in case one of the types is "ref null X" and the other is
   // "Xref".
-  binary::ReferenceType expected_canon = Canonicalize(expected);
-  binary::ReferenceType actual_canon = Canonicalize(actual);
-
-  assert(expected_canon.is_ref() && actual_canon.is_ref());
-  return IsMatch(context, expected_canon.ref(), actual_canon.ref());
+  return IsMatch(context, CanonicalizeToRefType(expected),
+                 CanonicalizeToRefType(actual));
 }
 
 bool IsMatch(Context& context,
