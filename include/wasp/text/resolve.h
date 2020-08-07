@@ -26,7 +26,7 @@ class Errors;
 namespace text {
 
 struct ResolveContext;
-struct NameMap;
+class NameMap;
 
 // Primary API; resolve either a Module or a Script.
 

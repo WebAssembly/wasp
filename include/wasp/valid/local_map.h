@@ -26,7 +26,8 @@
 namespace wasp {
 namespace valid {
 
-struct LocalMap {
+class LocalMap {
+ public:
   explicit LocalMap();
 
   void Reset();

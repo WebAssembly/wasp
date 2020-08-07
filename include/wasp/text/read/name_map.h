@@ -23,7 +23,8 @@
 namespace wasp {
 namespace text {
 
-struct NameMap {
+class NameMap {
+ public:
   explicit NameMap();
 
   void Reset();

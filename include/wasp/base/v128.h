@@ -50,7 +50,8 @@ struct IsV128Type : std::disjunction<std::is_same<T, s64x2>,
 template <typename T>
 using GetV128Type = std::enable_if_t<IsV128Type<T>::value, T>;
 
-struct v128 {
+class v128 {
+ public:
   explicit v128();
   explicit v128(s64, s64);
   explicit v128(u64, u64);

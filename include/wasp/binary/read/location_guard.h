@@ -23,7 +23,8 @@
 namespace wasp {
 namespace binary {
 
-struct LocationGuard {
+class LocationGuard {
+ public:
   explicit LocationGuard(SpanU8* data) : start_{data->begin()} {}
 
   Location range(SpanU8* end) const { return Location{start_, end->begin()}; }

@@ -44,7 +44,8 @@ using TypeEntryList = std::vector<TypeEntry>;
 // after all defined function types. It's as if they were added to the end of
 // the module, in the order they were used. That's the purpose of the
 // `deferred_list_` set below.
-struct FunctionTypeMap {
+class FunctionTypeMap {
+ public:
   using List = std::vector<FunctionType>;
 
   void BeginModule();

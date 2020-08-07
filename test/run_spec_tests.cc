@@ -45,7 +45,8 @@ namespace fs = std::filesystem;
 
 static int s_verbose = 0;
 
-struct Tool {
+class Tool {
+ public:
   explicit Tool(string_view filename, SpanU8 data, const Features& features)
       : filename{filename},
         data{data},
