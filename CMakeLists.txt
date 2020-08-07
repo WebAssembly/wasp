@@ -84,6 +84,7 @@ add_library(wasplib
   src/binary/types.cc
   src/convert/to_binary.cc
   src/valid/context.cc
+  src/valid/disjoint_set.cc
   src/valid/formatters.cc
   src/valid/local_map.cc
   src/valid/match.cc
@@ -174,6 +175,7 @@ add_executable(wasp_unittests
   test/text/types_test.cc
   test/text/write_test.cc
   test/tools/argparser_test.cc
+  test/valid/disjoint_set_test.cc
   test/valid/test_utils.cc
   test/valid/local_map_test.cc
   test/valid/match_test.cc
