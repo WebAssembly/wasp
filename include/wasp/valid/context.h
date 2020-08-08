@@ -26,6 +26,7 @@
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/types.h"
+#include "wasp/valid/disjoint_set.h"
 #include "wasp/valid/local_map.h"
 #include "wasp/valid/types.h"
 
@@ -60,6 +61,22 @@ struct Label {
   bool unreachable;
 };
 
+enum Equivalent {
+  Unknown,
+  Yes,
+  No,
+};
+
+class EquivalentTypes {
+ public:
+  auto Get(Index, Index) -> Equivalent;
+  auto Assume(Index, Index) -> Assumption;
+  void Resolve(Assumption, Equivalent);
+
+ private:
+  DisjointSet disjoint_set_;
+};
+
 struct Context {
   Context(Errors&);
   Context(const Features&, Errors&);
@@ -89,6 +106,7 @@ struct Context {
   std::vector<Label> label_stack;
   std::set<string_view> export_names;
   std::set<Index> declared_functions;
+  EquivalentTypes equivalent_types;
 };
 
 }  // namespace valid

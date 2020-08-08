@@ -36,7 +36,35 @@ bool IsSame(Context& context,
   if (expected.is_heap_kind() && actual.is_heap_kind()) {
     return expected.heap_kind().value() == actual.heap_kind().value();
   } else if (expected.is_index() && actual.is_index()) {
-    return expected.index().value() == actual.index().value();
+    Index expected_index = expected.index().value();
+    Index actual_index = actual.index().value();
+    if (expected_index == actual_index) {
+      return true;
+    }
+
+    switch (context.equivalent_types.Get(expected_index, actual_index)) {
+      case Equivalent::Unknown:
+        break;
+
+      case Equivalent::Yes:
+        return true;
+
+      case Equivalent::No:
+        return false;
+    }
+
+    // Assume that they are the same and check that everything still is valid.
+    auto assumption =
+        context.equivalent_types.Assume(expected_index, actual_index);
+    if (IsSame(context, types[expected_index], types[actual_index])) {
+      // Everything still validated, so these types are the same.
+      context.equivalent_types.Resolve(assumption, Equivalent::Yes);
+      return true;
+    }
+
+    // Something else didn't match, so these types are not the same.
+    context.equivalent_types.Resolve(assumption, Equivalent::No);
+    return false;
   }
   return false;
 }
