@@ -34,6 +34,7 @@ namespace valid {
 
 bool BeginTypeSection(Context& context, Index type_count) {
   context.defined_type_count = type_count;
+  context.equivalent_types.Reset(type_count);
   return true;
 }
 

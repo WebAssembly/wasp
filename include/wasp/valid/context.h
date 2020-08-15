@@ -17,6 +17,7 @@
 #ifndef WASP_VALID_CONTEXT_H_
 #define WASP_VALID_CONTEXT_H_
 
+#include <map>
 #include <set>
 #include <vector>
 
@@ -61,20 +62,19 @@ struct Label {
   bool unreachable;
 };
 
-enum Equivalent {
-  Unknown,
-  Yes,
-  No,
-};
-
 class EquivalentTypes {
  public:
-  auto Get(Index, Index) -> Equivalent;
-  auto Assume(Index, Index) -> Assumption;
-  void Resolve(Assumption, Equivalent);
+  void Reset(Index);
+
+  auto Get(Index, Index) -> optional<bool>;
+  void Assume(Index, Index);
+  void Resolve(Index, Index, bool);
 
  private:
+  void MaybeSwapIndexes(Index&, Index&);
+
   DisjointSet disjoint_set_;
+  std::map<std::pair<Index, Index>, bool> assume_;
 };
 
 struct Context {

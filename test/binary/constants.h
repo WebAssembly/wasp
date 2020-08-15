@@ -28,6 +28,7 @@ extern const HeapType HT_Extern;
 extern const HeapType HT_Exn;
 extern const HeapType HT_0;
 extern const HeapType HT_1;
+extern const HeapType HT_2;
 
 extern const RefType RefType_Func;
 extern const RefType RefType_NullFunc;
@@ -39,6 +40,8 @@ extern const RefType RefType_0;
 extern const RefType RefType_Null0;
 extern const RefType RefType_1;
 extern const RefType RefType_Null1;
+extern const RefType RefType_2;
+extern const RefType RefType_Null2;
 
 extern const ReferenceType RT_Funcref;
 extern const ReferenceType RT_Externref;
@@ -53,6 +56,8 @@ extern const ReferenceType RT_Ref0;
 extern const ReferenceType RT_RefNull0;
 extern const ReferenceType RT_Ref1;
 extern const ReferenceType RT_RefNull1;
+extern const ReferenceType RT_Ref2;
+extern const ReferenceType RT_RefNull2;
 
 extern const ValueType VT_I32;
 extern const ValueType VT_I64;
@@ -72,6 +77,8 @@ extern const ValueType VT_Ref0;
 extern const ValueType VT_RefNull0;
 extern const ValueType VT_Ref1;
 extern const ValueType VT_RefNull1;
+extern const ValueType VT_Ref2;
+extern const ValueType VT_RefNull2;
 
 extern const BlockType BT_I32;
 extern const BlockType BT_I64;
@@ -92,6 +99,8 @@ extern const BlockType BT_Ref0;
 extern const BlockType BT_RefNull0;
 extern const BlockType BT_Ref1;
 extern const BlockType BT_RefNull1;
+extern const BlockType BT_Ref2;
+extern const BlockType BT_RefNull2;
 
 }  // namespace test
 }  // namespace binary

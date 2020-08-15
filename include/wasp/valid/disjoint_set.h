@@ -29,6 +29,7 @@ namespace valid {
 class DisjointSet {
  public:
   void Reset(Index size);
+  bool IsValid(Index) const;
 
   auto Find(Index) -> Index;  // Find root item for this set.
   bool IsSameSet(Index, Index);

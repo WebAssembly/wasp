@@ -50,5 +50,53 @@ bool Context::IsStackPolymorphic() const {
   return label_stack.back().unreachable;
 }
 
+void EquivalentTypes::Reset(Index size) {
+  disjoint_set_.Reset(size);
+  assume_.clear();
+}
+
+auto EquivalentTypes::Get(Index expected, Index actual) -> optional<bool> {
+  MaybeSwapIndexes(expected, actual);
+  if (!(disjoint_set_.IsValid(expected) && disjoint_set_.IsValid(actual))) {
+    // If the indexes are invalid, then there's no point in checking whether
+    // they're equal.
+    return false;
+  }
+
+  if (disjoint_set_.IsSameSet(expected, actual)) {
+    return true;
+  }
+
+  auto iter = assume_.find({expected, actual});
+  if (iter == assume_.end()) {
+    return nullopt;
+  }
+
+  return iter->second;
+}
+
+void EquivalentTypes::Assume(Index expected, Index actual) {
+  MaybeSwapIndexes(expected, actual);
+  assume_.insert({{expected, actual}, true});
+}
+
+void EquivalentTypes::Resolve(Index expected, Index actual, bool is_same) {
+  MaybeSwapIndexes(expected, actual);
+  auto iter = assume_.find({expected, actual});
+  assert(iter != assume_.end());
+  if (is_same) {
+    disjoint_set_.MergeSets(expected, actual);
+    assume_.erase(iter);
+  } else {
+    iter->second = false;
+  }
+}
+
+void EquivalentTypes::MaybeSwapIndexes(Index& lhs, Index& rhs) {
+  if (lhs > rhs) {
+    std::swap(lhs, rhs);
+  }
+}
+
 }  // namespace valid
 }  // namespace wasp

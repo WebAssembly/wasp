@@ -32,6 +32,18 @@ using namespace ::wasp::valid;
 using namespace ::wasp::valid::test;
 using namespace ::wasp::binary::test;
 
+class ValidMatchTest : public ::testing::Test {
+ protected:
+  void PushFunctionType(const binary::ValueTypeList& params,
+                        const binary::ValueTypeList& results) {
+    context.types.push_back(
+        binary::TypeEntry{binary::FunctionType{params, results}});
+  }
+
+  TestErrors errors;
+  Context context{errors};
+};
+
 enum Comparison {
   SAME,
   DIFF,
@@ -94,10 +106,7 @@ void IsMatchTable(Context& context,
   IsMatchTable(context, values, values, results);
 }
 
-TEST(ValidMatchTest, IsSame_HeapType_Simple) {
-  TestErrors errors;
-  Context context{errors};
-
+TEST_F(ValidMatchTest, IsSame_HeapType_Simple) {
   std::vector<binary::HeapType> heap_types = {HT_Func, HT_Extern, HT_Exn, HT_0};
   IsSameTable(context, heap_types,
               {
@@ -110,10 +119,7 @@ TEST(ValidMatchTest, IsSame_HeapType_Simple) {
               });
 }
 
-TEST(ValidMatchTest, IsSame_RefType_Simple) {
-  TestErrors errors;
-  Context context{errors};
-
+TEST_F(ValidMatchTest, IsSame_RefType_Simple) {
   std::vector<binary::RefType> ref_types = {
       RefType_Func, RefType_NullFunc, RefType_Extern, RefType_NullExtern,
       RefType_Exn,  RefType_NullExn,  RefType_0,      RefType_Null0,
@@ -134,10 +140,7 @@ TEST(ValidMatchTest, IsSame_RefType_Simple) {
               });
 }
 
-TEST(ValidMatchTest, IsSame_ReferenceType_Simple) {
-  TestErrors errors;
-  Context context{errors};
-
+TEST_F(ValidMatchTest, IsSame_ReferenceType_Simple) {
   std::vector<binary::ReferenceType> reference_types = {
       RT_Funcref,     RT_Externref, RT_Exnref,        RT_RefFunc,
       RT_RefNullFunc, RT_RefExtern, RT_RefNullExtern, RT_RefExn,
@@ -164,10 +167,7 @@ TEST(ValidMatchTest, IsSame_ReferenceType_Simple) {
       });
 }
 
-TEST(ValidMatchTest, IsSame_ValueType_Simple) {
-  TestErrors errors;
-  Context context{errors};
-
+TEST_F(ValidMatchTest, IsSame_ValueType_Simple) {
   std::vector<binary::ValueType> value_num_types = {
       VT_I32, VT_I64, VT_F32, VT_F64, VT_V128,
   };
@@ -218,10 +218,7 @@ TEST(ValidMatchTest, IsSame_ValueType_Simple) {
       std::vector(value_num_types.size() * value_ref_types.size(), DIFF));
 }
 
-TEST(ValidMatchTest, IsMatch_HeapType_Simple) {
-  TestErrors errors;
-  Context context{errors};
-
+TEST_F(ValidMatchTest, IsMatch_HeapType_Simple) {
   std::vector<binary::HeapType> heap_types = {HT_Func, HT_Extern, HT_Exn, HT_0};
   IsMatchTable(context, heap_types,
                {
@@ -234,10 +231,7 @@ TEST(ValidMatchTest, IsMatch_HeapType_Simple) {
                });
 }
 
-TEST(ValidMatchTest, IsMatch_RefType_Simple) {
-  TestErrors errors;
-  Context context{errors};
-
+TEST_F(ValidMatchTest, IsMatch_RefType_Simple) {
   std::vector<binary::RefType> ref_types = {
       RefType_Func, RefType_NullFunc, RefType_Extern, RefType_NullExtern,
       RefType_Exn,  RefType_NullExn,  RefType_0,      RefType_Null0,
@@ -259,10 +253,7 @@ TEST(ValidMatchTest, IsMatch_RefType_Simple) {
       });
 }
 
-TEST(ValidMatchTest, Ismatch_ReferenceType_Simple) {
-  TestErrors errors;
-  Context context{errors};
-
+TEST_F(ValidMatchTest, IsMatch_ReferenceType_Simple) {
   std::vector<binary::ReferenceType> reference_types = {
       RT_Funcref,     RT_Externref, RT_Exnref,        RT_RefFunc,
       RT_RefNullFunc, RT_RefExtern, RT_RefNullExtern, RT_RefExn,
@@ -289,10 +280,7 @@ TEST(ValidMatchTest, Ismatch_ReferenceType_Simple) {
       });
 }
 
-TEST(ValidMatchTest, IsMatch_ValueType_Simple) {
-  TestErrors errors;
-  Context context{errors};
-
+TEST_F(ValidMatchTest, IsMatch_ValueType_Simple) {
   std::vector<binary::ValueType> value_num_types = {
       VT_I32, VT_I64, VT_F32, VT_F64, VT_V128,
   };
@@ -341,4 +329,37 @@ TEST(ValidMatchTest, IsMatch_ValueType_Simple) {
   IsMatchTable(
       context, value_ref_types, value_num_types,
       std::vector(value_num_types.size() * value_ref_types.size(), DIFF));
+}
+
+TEST_F(ValidMatchTest, IsSame_ValueType_Var) {
+  context.equivalent_types.Reset(3);
+  PushFunctionType({VT_F32}, {});  // 0
+  PushFunctionType({VT_F32}, {});  // 1
+  PushFunctionType({VT_I32}, {});  // 2
+
+  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref1));
+  EXPECT_FALSE(IsSame(context, VT_Ref0, VT_Ref2));
+  EXPECT_FALSE(IsSame(context, VT_Ref1, VT_Ref2));
+}
+
+TEST_F(ValidMatchTest, IsSame_ValueType_VarRecursive) {
+  context.equivalent_types.Reset(3);
+  PushFunctionType({}, {VT_Ref0});        // 0
+  PushFunctionType({}, {VT_Ref1});        // 1
+  PushFunctionType({VT_I32}, {VT_Ref0});  // 2
+
+  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref1));
+  EXPECT_FALSE(IsSame(context, VT_Ref0, VT_Ref2));
+  EXPECT_FALSE(IsSame(context, VT_Ref1, VT_Ref2));
+}
+
+TEST_F(ValidMatchTest, IsSame_ValueType_VarMutuallyRecursive) {
+  context.equivalent_types.Reset(3);
+  PushFunctionType({VT_I32}, {VT_Ref0});  // 0
+  PushFunctionType({VT_I32}, {VT_Ref2});  // 1
+  PushFunctionType({VT_I32}, {VT_Ref1});  // 2
+
+  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref1));
+  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref2));
+  EXPECT_TRUE(IsSame(context, VT_Ref1, VT_Ref2));
 }

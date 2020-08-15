@@ -29,6 +29,10 @@ void DisjointSet::Reset(Index size) {
   }
 }
 
+bool DisjointSet::IsValid(Index x) const {
+  return x < nodes_.size();
+}
+
 auto DisjointSet::Find(Index x) -> Index {
   // Use path-splitting technique described here:
   // https://en.wikipedia.org/wiki/Disjoint-set_data_structure
