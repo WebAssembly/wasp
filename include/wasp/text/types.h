@@ -153,6 +153,8 @@ struct CopyImmediate {
   OptAt<Var> src;
 };
 
+using FuncBindImmediate = FunctionTypeUse;
+
 struct InitImmediate {
   At<Var> segment;
   OptAt<Var> dst;
@@ -191,6 +193,7 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<BrTableImmediate>);
   explicit Instruction(At<Opcode>, At<CallIndirectImmediate>);
   explicit Instruction(At<Opcode>, At<CopyImmediate>);
+  explicit Instruction(At<Opcode>, At<FuncBindImmediate>);
   explicit Instruction(At<Opcode>, At<InitImmediate>);
   explicit Instruction(At<Opcode>, At<LetImmediate>);
   explicit Instruction(At<Opcode>, At<MemArgImmediate>);
@@ -220,6 +223,7 @@ struct Instruction {
   bool has_br_table_immediate() const;
   bool has_call_indirect_immediate() const;
   bool has_copy_immediate() const;
+  bool has_func_bind_immediate() const;
   bool has_init_immediate() const;
   bool has_let_immediate() const;
   bool has_mem_arg_immediate() const;
@@ -250,6 +254,8 @@ struct Instruction {
   auto call_indirect_immediate() const -> const At<CallIndirectImmediate>&;
   auto copy_immediate() -> At<CopyImmediate>&;
   auto copy_immediate() const -> const At<CopyImmediate>&;
+  auto func_bind_immediate() -> At<FuncBindImmediate>&;
+  auto func_bind_immediate() const -> const At<FuncBindImmediate>&;
   auto init_immediate() -> At<InitImmediate>&;
   auto init_immediate() const -> const At<InitImmediate>&;
   auto let_immediate() -> At<LetImmediate>&;
@@ -266,25 +272,26 @@ struct Instruction {
   auto simd_lane_immediate() const -> const At<SimdLaneImmediate>&;
 
   At<Opcode> opcode;
-  variant<monostate,
-          At<s32>,
-          At<s64>,
-          At<f32>,
-          At<f64>,
-          At<v128>,
-          At<Var>,
-          At<BlockImmediate>,
-          At<BrOnExnImmediate>,
-          At<BrTableImmediate>,
-          At<CallIndirectImmediate>,
-          At<CopyImmediate>,
-          At<InitImmediate>,
-          At<LetImmediate>,
-          At<MemArgImmediate>,
-          At<HeapType>,
-          At<SelectImmediate>,
-          At<ShuffleImmediate>,
-          At<SimdLaneImmediate>>
+  variant<monostate,                  // 0
+          At<s32>,                    // 1
+          At<s64>,                    // 2
+          At<f32>,                    // 3
+          At<f64>,                    // 4
+          At<v128>,                   // 5
+          At<Var>,                    // 6
+          At<BlockImmediate>,         // 7
+          At<BrOnExnImmediate>,       // 8
+          At<BrTableImmediate>,       // 9
+          At<CallIndirectImmediate>,  // 10
+          At<CopyImmediate>,          // 11
+          At<InitImmediate>,          // 12
+          At<LetImmediate>,           // 13
+          At<MemArgImmediate>,        // 14
+          At<HeapType>,               // 15
+          At<SelectImmediate>,        // 16
+          At<ShuffleImmediate>,       // 17
+          At<SimdLaneImmediate>,      // 18
+          At<FuncBindImmediate>>      // 19
       immediate;
 };
 

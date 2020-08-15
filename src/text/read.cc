@@ -1141,6 +1141,7 @@ bool IsPlainInstruction(Token token) {
     case TokenType::CallIndirectInstr:
     case TokenType::F32ConstInstr:
     case TokenType::F64ConstInstr:
+    case TokenType::FuncBindInstr:
     case TokenType::I32ConstInstr:
     case TokenType::I64ConstInstr:
     case TokenType::MemoryInstr:
@@ -1263,6 +1264,15 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
       WASP_TRY_READ(immediate, ReadFloat<f64>(tokenizer, context));
+      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+    }
+
+    case TokenType::FuncBindInstr: {
+      WASP_TRY(CheckOpcodeEnabled(token, context));
+      tokenizer.Read();
+      LocationGuard immediate_guard{tokenizer};
+      WASP_TRY_READ(type, ReadFunctionTypeUse(tokenizer, context));
+      auto immediate = MakeAt(immediate_guard.loc(), FuncBindImmediate{type});
       return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
     }
 

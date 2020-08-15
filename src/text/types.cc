@@ -258,6 +258,9 @@ Instruction::Instruction(At<Opcode> opcode, At<CallIndirectImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<CopyImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
+Instruction::Instruction(At<Opcode> opcode, At<FuncBindImmediate> immediate)
+    : opcode{opcode}, immediate{immediate} {}
+
 Instruction::Instruction(At<Opcode> opcode, At<InitImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
@@ -341,6 +344,10 @@ bool Instruction::has_call_indirect_immediate() const {
 
 bool Instruction::has_copy_immediate() const {
   return holds_alternative<At<CopyImmediate>>(immediate);
+}
+
+bool Instruction::has_func_bind_immediate() const {
+  return holds_alternative<At<FuncBindImmediate>>(immediate);
 }
 
 bool Instruction::has_init_immediate() const {
@@ -458,6 +465,14 @@ At<CopyImmediate>& Instruction::copy_immediate() {
 
 const At<CopyImmediate>& Instruction::copy_immediate() const {
   return get<At<CopyImmediate>>(immediate);
+}
+
+At<FuncBindImmediate>& Instruction::func_bind_immediate() {
+  return get<At<FuncBindImmediate>>(immediate);
+}
+
+const At<FuncBindImmediate>& Instruction::func_bind_immediate() const {
+  return get<At<FuncBindImmediate>>(immediate);
 }
 
 At<InitImmediate>& Instruction::init_immediate() {

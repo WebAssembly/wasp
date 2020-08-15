@@ -599,6 +599,15 @@ TEST(ConvertToBinaryTest, Instruction) {
                                        MakeAt(loc4, text::Var{Index{13}}),
                                        MakeAt(loc5, text::Var{Index{14}})})}));
 
+  // FuncBindImmediate
+  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::FuncBind),
+                                      MakeAt(loc4, Index{13})}),
+     MakeAt(loc1,
+            text::Instruction{
+                MakeAt(loc2, Opcode::FuncBind),
+                MakeAt(loc3, text::FuncBindImmediate{text::FunctionTypeUse{
+                                 MakeAt(loc4, text::Var{Index{13}}), {}}})}));
+
   // InitImmediate.
   OK(MakeAt(loc1,
             binary::Instruction{

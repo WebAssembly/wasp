@@ -614,6 +614,13 @@ auto ToBinary(Context& context, const At<text::Instruction>& value)
           value.loc(),
           binary::Instruction{value->opcode, value->simd_lane_immediate()});
 
+    case 19:  // FuncBindImmediate
+      return MakeAt(
+          value.loc(),
+          binary::Instruction{
+              value->opcode,
+              ToBinary(context, value->func_bind_immediate()->type_use)});
+
     default:
       WASP_UNREACHABLE();
   }

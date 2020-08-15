@@ -132,7 +132,7 @@ f64x2.sub, Opcode::F64X2Sub, Features::Simd
 f64x2, TokenType::F64X2
 funcref, ReferenceKind::Funcref
 func, TokenType::Func, HeapKind::Func
-func.bind, TokenType::VarInstr, Opcode::FuncBind, Features::FunctionReferences
+func.bind, TokenType::FuncBindInstr, Opcode::FuncBind, Features::FunctionReferences
 get, TokenType::Get
 global.get, TokenType::VarInstr, Opcode::GlobalGet
 global.set, TokenType::VarInstr, Opcode::GlobalSet

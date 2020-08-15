@@ -502,6 +502,9 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
     case 16: // SelectImmediate
       return Resolve(context, instruction.select_immediate().value());
 
+    case 19: // FuncBindImmediate
+      return Resolve(context, instruction.func_bind_immediate().value());
+
     default:
       break;
   }

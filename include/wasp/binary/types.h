@@ -303,25 +303,25 @@ struct Instruction {
   auto simd_lane_immediate() const -> const At<SimdLaneImmediate>&;
 
   At<Opcode> opcode;
-  variant<monostate,
-          At<s32>,
-          At<s64>,
-          At<f32>,
-          At<f64>,
-          At<v128>,
-          At<Index>,
-          At<BlockType>,
-          At<BrOnExnImmediate>,
-          At<BrTableImmediate>,
-          At<CallIndirectImmediate>,
-          At<CopyImmediate>,
-          At<InitImmediate>,
-          At<LetImmediate>,
-          At<MemArgImmediate>,
-          At<HeapType>,
-          At<SelectImmediate>,
-          At<ShuffleImmediate>,
-          At<SimdLaneImmediate>>
+  variant<monostate,                  // 0
+          At<s32>,                    // 1
+          At<s64>,                    // 2
+          At<f32>,                    // 3
+          At<f64>,                    // 4
+          At<v128>,                   // 5
+          At<Index>,                  // 6
+          At<BlockType>,              // 7
+          At<BrOnExnImmediate>,       // 8
+          At<BrTableImmediate>,       // 9
+          At<CallIndirectImmediate>,  // 10
+          At<CopyImmediate>,          // 11
+          At<InitImmediate>,          // 12
+          At<LetImmediate>,           // 13
+          At<MemArgImmediate>,        // 14
+          At<HeapType>,               // 15
+          At<SelectImmediate>,        // 16
+          At<ShuffleImmediate>,       // 17
+          At<SimdLaneImmediate>>      // 18
       immediate;
 };
 

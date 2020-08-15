@@ -1535,7 +1535,7 @@ switch (PeekChar(data, 2)) {
       case 'c':
         switch (PeekChar(data, 4)) {
           default: return LexKeyword(data, "func", TokenType::Func, HeapKind::Func);
-          case '.': return LexKeyword(data, "func.bind", TokenType::VarInstr, Opcode::FuncBind, Features::FunctionReferences);
+          case '.': return LexKeyword(data, "func.bind", TokenType::FuncBindInstr, Opcode::FuncBind, Features::FunctionReferences);
           case 'r': return LexKeyword(data, "funcref", ReferenceKind::Funcref);
         }
         break;

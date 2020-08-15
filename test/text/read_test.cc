@@ -644,6 +644,23 @@ TEST_F(TextReadTest, PlainInstruction_Const) {
      "f64.const 78"_su8);
 }
 
+TEST_F(TextReadTest, PlainInstruction_FuncBind) {
+  context.features.enable_function_references();
+
+  // Bare func.bind
+  OK(ReadPlainInstruction,
+     I{MakeAt("func.bind"_su8, O::FuncBind),
+       MakeAt(""_su8, FuncBindImmediate{})},
+     "func.bind"_su8);
+
+  // func.bind w/ function type use.
+  OK(ReadPlainInstruction,
+     I{MakeAt("func.bind"_su8, O::FuncBind),
+       MakeAt("(type 0)"_su8, FuncBindImmediate{FunctionTypeUse{
+                                  MakeAt("(type 0)"_su8, Var{Index{0}}), {}}})},
+     "func.bind (type 0)"_su8);
+}
+
 TEST_F(TextReadTest, PlainInstruction_MemArg) {
   // No align, no offset.
   OK(ReadPlainInstruction,

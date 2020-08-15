@@ -505,6 +505,23 @@ TEST_F(TextResolveTest, Instruction_InitImmediate_Table) {
      I{O::TableInit, InitImmediate{Var{"$e"_sv}, Var{"$t"_sv}}});
 }
 
+TEST_F(TextResolveTest, Instruction_FuncBindImmediate) {
+  context.type_names.NewBound("$a");
+  context.function_type_map.Define(
+      BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
+
+  OK(I{O::FuncBind, FuncBindImmediate{FunctionTypeUse{
+                        Var{Index{0}}, FunctionType{{VT_I32}, {}}}}},
+     I{O::FuncBind, FuncBindImmediate{FunctionTypeUse{Var{"$a"_sv}, {}}}});
+
+  // Populate the type use.
+  OK(I{O::FuncBind,
+       FuncBindImmediate{
+           FunctionTypeUse{Var{Index{0}}, FunctionType{{VT_I32}, {}}}}},
+     I{O::FuncBind, FuncBindImmediate{
+                        FunctionTypeUse{nullopt, FunctionType{{VT_I32}, {}}}}});
+}
+
 TEST_F(TextResolveTest, Instruction_InitImmediate_Memory) {
   context.data_segment_names.NewBound("$d");
   context.memory_names.NewBound("$m");

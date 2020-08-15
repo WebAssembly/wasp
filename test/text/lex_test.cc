@@ -387,7 +387,7 @@ TEST(LexTest, PlainInstr) {
       {"f64x2.splat"_su8, TT::BareInstr, O::F64X2Splat, F::Simd},
       {"f64x2.sqrt"_su8, TT::BareInstr, O::F64X2Sqrt, F::Simd},
       {"f64x2.sub"_su8, TT::BareInstr, O::F64X2Sub, F::Simd},
-      {"func.bind"_su8, TT::VarInstr, O::FuncBind, F::FunctionReferences},
+      {"func.bind"_su8, TT::FuncBindInstr, O::FuncBind, F::FunctionReferences},
       {"global.get"_su8, TT::VarInstr, O::GlobalGet, 0},
       {"global.set"_su8, TT::VarInstr, O::GlobalSet, 0},
       {"i16x8.add_saturate_s"_su8, TT::BareInstr, O::I16X8AddSaturateS, F::Simd},
