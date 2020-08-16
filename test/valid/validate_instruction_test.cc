@@ -98,6 +98,10 @@ class ValidateInstructionTest : public ::testing::Test {
     return context.locals.GetCount() - 1;
   }
 
+  ValueType MakeValueTypeRef(Index index, Null null) {
+    return ValueType{ReferenceType{RefType{HeapType{index}, null}}};
+  }
+
   void Ok(const Instruction& instruction) {
     EXPECT_TRUE(Validate(context, instruction)) << format("{}", instruction);
   }
@@ -2672,11 +2676,11 @@ TEST_F(ValidateInstructionTest, CallRef) {
   auto index = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {VT_F64}});
 
   // Can be called with ref type.
-  ValueType ref_type{ReferenceType{RefType{HeapType{index}, Null::No}}};
+  ValueType ref_type = MakeValueTypeRef(index, Null::No);
   TestSignature(I{O::CallRef}, {VT_I32, VT_F32, ref_type}, {VT_F64});
 
   // Can be called with ref null type.
-  ValueType ref_null_type{ReferenceType{RefType{HeapType{index}, Null::Yes}}};
+  ValueType ref_null_type = MakeValueTypeRef(index, Null::Yes);
   TestSignature(I{O::CallRef}, {VT_I32, VT_F32, ref_null_type}, {VT_F64});
 }
 
@@ -2696,11 +2700,11 @@ TEST_F(ValidateInstructionTest, ReturnCallRef) {
   auto index = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {VT_F64}});
 
   // Can be called with ref type.
-  ValueType ref_type{ReferenceType{RefType{HeapType{index}, Null::No}}};
+  ValueType ref_type = MakeValueTypeRef(index, Null::No);
   TestSignature(I{O::ReturnCallRef}, {VT_I32, VT_F32, ref_type}, {});
 
   // Can be called with ref null type.
-  ValueType ref_null_type{ReferenceType{RefType{HeapType{index}, Null::Yes}}};
+  ValueType ref_null_type = MakeValueTypeRef(index, Null::Yes);
   TestSignature(I{O::ReturnCallRef}, {VT_I32, VT_F32, ref_null_type}, {});
 }
 
@@ -2749,6 +2753,74 @@ TEST_F(ValidateInstructionTest, ReturnCallRef_ResultTypeMismatch) {
       {"instruction",
        "Callee's result types [f32] must equal caller's result types [i32]"},
       errors);
+}
+
+TEST_F(ValidateInstructionTest, FuncBind) {
+  const struct {
+    FunctionType old_ft;
+    FunctionType new_ft;
+    ValueTypeList params;
+  } infos[] = {
+      // Can bind identical function type.
+      {{{}, {}}, {{}, {}}, {}},
+      // Result types must match.
+      {{{}, {VT_I32}}, {{}, {VT_I32}}, {}},
+      // Can bind more than one param.
+      {{{VT_I32, VT_F32}, {}}, {{}, {}}, {VT_I32, VT_F32}},
+      // Can leave unbound types.
+      {{{VT_I32, VT_F32}, {}}, {{VT_F32}, {}}, {VT_I32}},
+      // Function params are covariant.
+      {{{VT_RefFunc}, {}}, {{VT_RefNullFunc}, {}}, {}},
+      // Function results are contravariant.
+      {{{}, {VT_RefNullFunc}}, {{}, {VT_RefFunc}}, {}},
+  };
+
+  for (const auto& info: infos) {
+    context.Reset();
+    BeginFunction(FunctionType{});
+    auto old_index = AddFunctionType(info.old_ft);
+    auto new_index = AddFunctionType(info.new_ft);
+
+    ValueType VT_RefOld = MakeValueTypeRef(old_index, Null::No);
+    ValueType VT_RefNew = MakeValueTypeRef(new_index, Null::No);
+    ValueTypeList params = info.params;
+    params.push_back(VT_RefOld);
+    TestSignature(I{O::FuncBind, new_index}, params, {VT_RefNew});
+  }
+}
+
+TEST_F(ValidateInstructionTest, FuncBind_TypeMismatch) {
+  const struct {
+    FunctionType old_ft;
+    FunctionType new_ft;
+    ValueTypeList params;
+  } infos[] = {
+    // Binding can't add new params.
+    {{{VT_I32}, {}}, {{VT_I32, VT_I32}, {}}, {}},
+    // Params must match.
+    {{{VT_F32}, {}}, {{VT_I32}, {}}, {}},
+    // Param types must be covariant.
+    {{{VT_RefNullFunc}, {}}, {{VT_RefFunc}, {}}, {}},
+    // Result types must match.
+    {{{}, {VT_I32}}, {{}, {VT_I32, VT_I32}}, {}},
+    // Result types must be contravariant.
+    {{{}, {VT_RefFunc}}, {{VT_RefNullFunc}, {}}, {}},
+    // Bound param types must be on operand stack.
+    {{{VT_I32, VT_F32}, {}}, {{VT_F32}, {}}, {VT_F32}},
+  };
+
+  for (const auto& info: infos) {
+    context.Reset();
+    BeginFunction(FunctionType{});
+    auto old_index = AddFunctionType(info.old_ft);
+    auto new_index = AddFunctionType(info.new_ft);
+
+    ValueType VT_RefOld = MakeValueTypeRef(old_index, Null::No);
+    ValueTypeList params = info.params;
+    params.push_back(VT_RefOld);
+    FailWithTypeStack(I{O::FuncBind, new_index}, ToStackTypeList(params));
+    ClearErrors(errors);
+  }
 }
 
 TEST_F(ValidateInstructionTest, Let) {

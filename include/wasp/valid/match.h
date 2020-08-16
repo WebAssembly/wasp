@@ -58,6 +58,9 @@ bool IsMatch(Context&,
 bool IsMatch(Context&,
              const binary::ValueType& expected,
              const binary::ValueType& actual);
+bool IsMatch(Context&,
+             const binary::ValueTypeList& expected,
+             const binary::ValueTypeList& actual);
 bool IsMatch(Context&, const StackType& expected, const StackType& actual);
 bool IsMatch(Context&, StackTypeSpan expected, StackTypeSpan actual);
 

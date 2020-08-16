@@ -95,9 +95,7 @@ bool IsSame(Context& context,
   for (auto eiter = expected.begin(), lend = expected.end(),
             aiter = actual.begin();
        eiter != lend; ++eiter, ++aiter) {
-    binary::ValueType etype = *eiter;
-    binary::ValueType atype = *aiter;
-    if (!IsSame(context, etype, atype)) {
+    if (!IsSame(context, *eiter, *aiter)) {
       return false;
     }
   }
@@ -134,9 +132,7 @@ bool IsSame(Context& context, StackTypeSpan expected, StackTypeSpan actual) {
   for (auto eiter = expected.begin(), lend = expected.end(),
             aiter = actual.begin();
        eiter != lend; ++eiter, ++aiter) {
-    StackType etype = *eiter;
-    StackType atype = *aiter;
-    if (!IsSame(context, etype, atype)) {
+    if (!IsSame(context, *eiter, *aiter)) {
       return false;
     }
   }
@@ -186,6 +182,23 @@ bool IsMatch(Context& context,
 }
 
 bool IsMatch(Context& context,
+             const binary::ValueTypeList& expected,
+             const binary::ValueTypeList& actual) {
+  if (expected.size() != actual.size()) {
+    return false;
+  }
+
+  for (auto eiter = expected.begin(), lend = expected.end(),
+            aiter = actual.begin();
+       eiter != lend; ++eiter, ++aiter) {
+    if (!IsMatch(context, *eiter, *aiter)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool IsMatch(Context& context,
              const StackType& expected,
              const StackType& actual) {
   // One of the types is "any" (i.e. universal supertype or subtype), or the
@@ -202,9 +215,7 @@ bool IsMatch(Context& context, StackTypeSpan expected, StackTypeSpan actual) {
   for (auto eiter = expected.begin(), lend = expected.end(),
             aiter = actual.begin();
        eiter != lend; ++eiter, ++aiter) {
-    StackType etype = *eiter;
-    StackType atype = *aiter;
-    if (!IsMatch(context, etype, atype)) {
+    if (!IsMatch(context, *eiter, *aiter)) {
       return false;
     }
   }

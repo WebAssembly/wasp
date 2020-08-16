@@ -1096,6 +1096,69 @@ bool ReturnCallRef(Context& context, Location loc) {
   return AllTrue(function_type, valid);
 }
 
+bool FuncBind(Context& context, Location loc, At<Index> new_type_index) {
+  auto type = PopTypedFunctionReference(context, loc);
+  if (!type) {
+    return false;
+  }
+  if (type && type->is_any()) {
+    return true;
+  }
+
+  auto old_type_index =
+      type->value_type().reference_type()->ref()->heap_type->index();
+  auto old_function_type = GetFunctionType(context, old_type_index);
+  auto new_function_type = GetFunctionType(context, new_type_index);
+  if (!old_function_type || !new_function_type) {
+    return false;
+  }
+
+  auto& old_params = old_function_type->param_types;
+  auto& new_params = new_function_type->param_types;
+  auto& old_results = old_function_type->result_types;
+  auto& new_results = new_function_type->result_types;
+
+  // If the original function type is   [t0* t1*] -> [t2*],
+  // then the new function type must be    [t1'*] -> [t2'*],
+  // where t1'* <: t1* and t2* <: t2'*
+  //
+  // So the new function type must have fewer parameters than the old function
+  // type.
+  if (old_params.size() < new_params.size()) {
+    context.errors->OnError(
+        loc, format("new type {} has more params than old type {}",
+                    *new_function_type, *old_function_type));
+    return false;
+  }
+
+  Index bound_param_count = old_params.size() - new_params.size();
+  ValueTypeList bound_params(old_params.begin(),
+                             old_params.begin() + bound_param_count);
+  ValueTypeList unbound_params(old_params.begin() + bound_param_count,
+                               old_params.end());
+
+  bool valid = true;
+  if (!IsMatch(context, new_params, unbound_params)) {
+    context.errors->OnError(loc, format("bind params {} does not match {}",
+                                        new_params, unbound_params));
+    valid = false;
+  }
+
+  if (!IsMatch(context, old_results, new_results)) {
+    context.errors->OnError(
+        loc, format("results {} does not match bind results {}", old_results,
+                    new_results));
+    valid = false;
+  }
+
+  StackTypeList stack_results{
+      ToStackType(RefType{HeapType{new_type_index}, Null::No})};
+
+  return AllTrue(valid,
+                 PopAndPushTypes(context, loc, ToStackTypeList(bound_params),
+                                 stack_results));
+}
+
 bool Let(Context& context, Location loc, const At<LetImmediate>& immediate) {
   bool valid = PopTypes(context, loc, ToStackTypeList(immediate->locals));
   valid &= PushLabel(context, loc, LabelType::Let, immediate->block_type);
@@ -1351,6 +1414,9 @@ bool Validate(Context& context, const At<Instruction>& value) {
 
     case Opcode::ReturnCallRef:
       return ReturnCallRef(context, loc);
+
+    case Opcode::FuncBind:
+      return FuncBind(context, loc, value->index_immediate());
 
     case Opcode::Let:
       return Let(context, loc, value->let_immediate());
