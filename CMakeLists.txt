@@ -33,6 +33,9 @@ include_directories(
 )
 
 set(gdtoa_files
+  third_party/gdtoa/gdtoa.h
+  third_party/gdtoa/gdtoaimp.h
+
   third_party/gdtoa/strtorf.c
   third_party/gdtoa/strtord.c
   third_party/gdtoa/strtodg.c
@@ -50,6 +53,39 @@ set(gdtoa_files
 )
 
 add_library(libwasp_base
+  include/wasp/base/at.h
+  include/wasp/base/bitcast.h
+  include/wasp/base/buffer.h
+  include/wasp/base/enumerate-inl.h
+  include/wasp/base/enumerate.h
+  include/wasp/base/error.h
+  include/wasp/base/errors-inl.h
+  include/wasp/base/errors.h
+  include/wasp/base/errors_context_guard.h
+  include/wasp/base/errors_nop.h
+  include/wasp/base/features.h
+  include/wasp/base/file.h
+  include/wasp/base/format.h
+  include/wasp/base/formatter_macros.h
+  include/wasp/base/formatters-inl.h
+  include/wasp/base/formatters.h
+  include/wasp/base/hash.h
+  include/wasp/base/hashmap.h
+  include/wasp/base/macros.h
+  include/wasp/base/operator_eq_ne_macros.h
+  include/wasp/base/optional.h
+  include/wasp/base/print_to_macros.h
+  include/wasp/base/span.h
+  include/wasp/base/std_hash_macros.h
+  include/wasp/base/str_to_u32.h
+  include/wasp/base/string_view.h
+  include/wasp/base/types.h
+  include/wasp/base/utf8.h
+  include/wasp/base/v128-inl.h
+  include/wasp/base/v128.h
+  include/wasp/base/variant.h
+  include/wasp/base/wasm_types.h
+
   src/base/at.cc
   src/base/features.cc
   src/base/file.cc
@@ -64,6 +100,42 @@ add_library(libwasp_base
 )
 
 add_library(libwasp_binary
+  include/wasp/binary/encoding.h
+  include/wasp/binary/formatters-inl.h
+  include/wasp/binary/formatters.h
+  include/wasp/binary/lazy_expression.h
+  include/wasp/binary/lazy_module.h
+  include/wasp/binary/lazy_module_utils-inl.h
+  include/wasp/binary/lazy_module_utils.h
+  include/wasp/binary/lazy_section.h
+  include/wasp/binary/lazy_sequence-inl.h
+  include/wasp/binary/lazy_sequence.h
+  include/wasp/binary/read.h
+  include/wasp/binary/sections.h
+  include/wasp/binary/types.h
+  include/wasp/binary/var_int.h
+  include/wasp/binary/visitor.h
+  include/wasp/binary/write.h
+  include/wasp/binary/linking_section/encoding.h
+  include/wasp/binary/linking_section/formatters-inl.h
+  include/wasp/binary/linking_section/formatters.h
+  include/wasp/binary/linking_section/read.h
+  include/wasp/binary/linking_section/sections.h
+  include/wasp/binary/linking_section/types.h
+  include/wasp/binary/linking_section/write.h
+  include/wasp/binary/name_section/encoding.h
+  include/wasp/binary/name_section/formatters-inl.h
+  include/wasp/binary/name_section/formatters.h
+  include/wasp/binary/name_section/read.h
+  include/wasp/binary/name_section/sections.h
+  include/wasp/binary/name_section/types.h
+  include/wasp/binary/name_section/write.h
+  include/wasp/binary/read/context.h
+  include/wasp/binary/read/location_guard.h
+  include/wasp/binary/read/macros.h
+  include/wasp/binary/read/read_var_int.h
+  include/wasp/binary/read/read_vector.h
+
   src/binary/context.cc
   src/binary/encoding.cc
   src/binary/formatters.cc
@@ -88,6 +160,17 @@ add_library(libwasp_binary
 target_link_libraries(libwasp_binary libwasp_base)
 
 add_library(libwasp_valid
+  include/wasp/valid/context.h
+  include/wasp/valid/disjoint_set.h
+  include/wasp/valid/formatters-inl.h
+  include/wasp/valid/formatters.h
+  include/wasp/valid/local_map.h
+  include/wasp/valid/match.h
+  include/wasp/valid/types.h
+  include/wasp/valid/validate.h
+  include/wasp/valid/validate_visitor.h
+  include/wasp/valid/stack_type.def
+
   src/valid/context.cc
   src/valid/disjoint_set.cc
   src/valid/formatters.cc
@@ -102,6 +185,27 @@ add_library(libwasp_valid
 target_link_libraries(libwasp_valid libwasp_binary)
 
 add_library(libwasp_text
+  include/wasp/text/desugar.h
+  include/wasp/text/formatters-inl.h
+  include/wasp/text/formatters.h
+  include/wasp/text/numeric-inl.h
+  include/wasp/text/numeric.h
+  include/wasp/text/read.h
+  include/wasp/text/resolve.h
+  include/wasp/text/resolve_context.h
+  include/wasp/text/types.h
+  include/wasp/text/write.h
+  include/wasp/text/token_type.def
+  include/wasp/text/read/context.h
+  include/wasp/text/read/lex.h
+  include/wasp/text/read/location_guard.h
+  include/wasp/text/read/macros.h
+  include/wasp/text/read/name_map.h
+  include/wasp/text/read/token-inl.h
+  include/wasp/text/read/token.h
+  include/wasp/text/read/tokenizer-inl.h
+  include/wasp/text/read/tokenizer.h
+
   src/text/context.cc
   src/text/desugar.cc
   src/text/lex.cc
@@ -119,6 +223,8 @@ add_library(libwasp_text
 target_link_libraries(libwasp_text libwasp_base)
 
 add_library(libwasp_convert
+  include/wasp/convert/to_binary.h
+
   src/convert/to_binary.cc
 )
 target_link_libraries(libwasp_convert libwasp_binary libwasp_text)
@@ -251,6 +357,17 @@ if (BUILD_TOOLS)
   set(filesystem_lib "stdc++fs")
 
   add_executable(wasp
+    src/tools/argparser.h
+    src/tools/binary_errors.h
+    src/tools/callgraph.h
+    src/tools/cfg.h
+    src/tools/dfg.h
+    src/tools/dump.h
+    src/tools/pattern.h
+    src/tools/text_errors.h
+    src/tools/validate.h
+    src/tools/wat2wasm.h
+
     src/tools/argparser.cc
     src/tools/binary_errors.cc
     src/tools/callgraph.cc
