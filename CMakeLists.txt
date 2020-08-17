@@ -23,14 +23,6 @@ option(BUILD_TOOLS "Build tools" ON)
 # TODO: Start using target-specific definitions for all of these.
 set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS}")
 add_definitions(-Wall -Wextra -Wno-unused-parameter)
-include_directories(
-  ${wasp_SOURCE_DIR}
-  ${wasp_SOURCE_DIR}/include
-  ${wasp_SOURCE_DIR}/include/gdtoa
-  ${wasp_SOURCE_DIR}/third_party/fmt/include
-  ${wasp_SOURCE_DIR}/third_party/span-lite/include
-  ${wasp_SOURCE_DIR}/third_party/parallel-hashmap
-)
 
 set(gdtoa_files
   third_party/gdtoa/gdtoa.h
@@ -97,6 +89,13 @@ add_library(libwasp_base
   src/base/wasm_types.cc
 
   third_party/fmt/src/format.cc
+)
+target_include_directories(libwasp_base
+  PUBLIC
+  ${wasp_SOURCE_DIR}/include
+  ${wasp_SOURCE_DIR}/third_party/fmt/include
+  ${wasp_SOURCE_DIR}/third_party/span-lite/include
+  ${wasp_SOURCE_DIR}/third_party/parallel-hashmap
 )
 
 add_library(libwasp_binary
@@ -220,6 +219,12 @@ add_library(libwasp_text
   src/text/types.cc
   ${gdtoa_files}
 )
+target_include_directories(libwasp_text
+  PUBLIC
+  ${wasp_SOURCE_DIR}/include/gdtoa
+  PRIVATE
+  ${wasp_SOURCE_DIR}  # for keywords-inl.h
+)
 target_link_libraries(libwasp_text libwasp_base)
 
 add_library(libwasp_convert
@@ -251,6 +256,13 @@ if (BUILD_TESTS)
   add_library(libwasp_test
     src/tools/argparser.cc
     test/test_utils.cc
+  )
+  target_include_directories(libwasp_test
+    PUBLIC
+    ${wasp_SOURCE_DIR}
+  )
+  target_link_libraries(libwasp_test
+    libwasp_base
   )
 
   add_executable(wasp_base_unittests
@@ -356,6 +368,12 @@ if (BUILD_TOOLS)
 # TODO: Link stdc++fs conditionally, only when needed.
   set(filesystem_lib "stdc++fs")
 
+  add_library(wasp_tool INTERFACE)
+  target_include_directories(wasp_tool
+    INTERFACE
+    ${wasp_SOURCE_DIR}
+  )
+
   add_executable(wasp
     src/tools/argparser.h
     src/tools/binary_errors.h
@@ -382,6 +400,7 @@ if (BUILD_TOOLS)
   )
 
   target_link_libraries(wasp
+    wasp_tool
     wasplib
     ${filesystem_lib}
   )
@@ -393,6 +412,7 @@ if (BUILD_TOOLS)
   )
 
   target_link_libraries(run_spec_tests
+    wasp_tool
     wasplib
     ${filesystem_lib}
   )
