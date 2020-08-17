@@ -289,6 +289,7 @@ if (BUILD_TESTS)
   )
   target_link_libraries(libwasp_test
     libwasp_base
+    gtest
   )
 
   add_executable(wasp_base_unittests
@@ -308,8 +309,8 @@ if (BUILD_TESTS)
   target_link_libraries(wasp_base_unittests
     libwasp_base
     libwasp_test
-    gmock
-    gmock_main
+    gtest
+    gtest_main
   )
 
   add_executable(wasp_binary_unittests
@@ -360,8 +361,8 @@ if (BUILD_TESTS)
   target_link_libraries(wasp_text_unittests
     libwasp_text
     libwasp_test
-    gmock
-    gmock_main
+    gtest
+    gtest_main
   )
 
   add_executable(wasp_valid_unittests
@@ -381,8 +382,8 @@ if (BUILD_TESTS)
   target_link_libraries(wasp_valid_unittests
     libwasp_valid
     libwasp_test
-    gmock
-    gmock_main
+    gtest
+    gtest_main
   )
 
   add_executable(wasp_convert_unittests
@@ -397,8 +398,8 @@ if (BUILD_TESTS)
   target_link_libraries(wasp_convert_unittests
     libwasp_convert
     libwasp_test
-    gmock
-    gmock_main
+    gtest
+    gtest_main
   )
 
   add_custom_target(run_tests
