@@ -18,11 +18,11 @@ cmake_minimum_required(VERSION 3.1)
 project(wasp)
 
 option(BUILD_TESTS "Build tests" ON)
+option(BUILD_TOOLS "Build tools" ON)
 
 # TODO: Start using target-specific definitions for all of these.
 set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS}")
 add_definitions(-Wall -Wextra -Wno-unused-parameter)
-add_subdirectory(third_party/gtest)
 include_directories(
   ${wasp_SOURCE_DIR}
   ${wasp_SOURCE_DIR}/include
@@ -139,29 +139,9 @@ set_source_files_properties(
   COMPILE_FLAGS "-Wno-parentheses -Wno-implicit-fallthrough -Wno-unused-label -Wno-sign-compare"
 )
 
-# TODO: Link stdc++fs conditionally, only when needed.
-set(filesystem_lib "stdc++fs")
-
-add_executable(wasp
-  src/tools/argparser.cc
-  src/tools/binary_errors.cc
-  src/tools/callgraph.cc
-  src/tools/cfg.cc
-  src/tools/dfg.cc
-  src/tools/dump.cc
-  src/tools/pattern.cc
-  src/tools/text_errors.cc
-  src/tools/validate.cc
-  src/tools/wasp.cc
-  src/tools/wat2wasm.cc
-)
-
-target_link_libraries(wasp
-  wasplib
-  ${filesystem_lib}
-)
-
 if (BUILD_TESTS)
+  add_subdirectory(third_party/gtest)
+
   add_library(libwasp_test
     src/tools/argparser.cc
     test/test_utils.cc
@@ -266,14 +246,37 @@ if (BUILD_TESTS)
   )
 endif()
 
-add_executable(run_spec_tests
-  src/tools/argparser.cc
-  src/tools/binary_errors.cc
-  src/tools/text_errors.cc
-  test/run_spec_tests.cc
-)
+if (BUILD_TOOLS)
+# TODO: Link stdc++fs conditionally, only when needed.
+  set(filesystem_lib "stdc++fs")
 
-target_link_libraries(run_spec_tests
-  wasplib
-  ${filesystem_lib}
-)
+  add_executable(wasp
+    src/tools/argparser.cc
+    src/tools/binary_errors.cc
+    src/tools/callgraph.cc
+    src/tools/cfg.cc
+    src/tools/dfg.cc
+    src/tools/dump.cc
+    src/tools/pattern.cc
+    src/tools/text_errors.cc
+    src/tools/validate.cc
+    src/tools/wasp.cc
+    src/tools/wat2wasm.cc
+  )
+
+  target_link_libraries(wasp
+    wasplib
+    ${filesystem_lib}
+  )
+  add_executable(run_spec_tests
+    src/tools/argparser.cc
+    src/tools/binary_errors.cc
+    src/tools/text_errors.cc
+    test/run_spec_tests.cc
+  )
+
+  target_link_libraries(run_spec_tests
+    wasplib
+    ${filesystem_lib}
+  )
+endif ()
