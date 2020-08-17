@@ -22,7 +22,9 @@ option(BUILD_TOOLS "Build tools" ON)
 
 # TODO: Start using target-specific definitions for all of these.
 set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS}")
-add_definitions(-Wall -Wextra -Wno-unused-parameter)
+
+# TODO: Different flags for other compilers.
+set(warning_flags -Wall -Wextra -Wno-unused-parameter)
 
 set(gdtoa_files
   third_party/gdtoa/gdtoa.h
@@ -90,6 +92,10 @@ add_library(libwasp_base
 
   third_party/fmt/src/format.cc
 )
+target_compile_options(libwasp_base
+  PRIVATE
+  ${warning_flags}
+)
 target_include_directories(libwasp_base
   PUBLIC
   ${wasp_SOURCE_DIR}/include
@@ -156,6 +162,10 @@ add_library(libwasp_binary
   src/binary/sections.cc
   src/binary/types.cc
 )
+target_compile_options(libwasp_binary
+  PRIVATE
+  ${warning_flags}
+)
 target_link_libraries(libwasp_binary libwasp_base)
 
 add_library(libwasp_valid
@@ -180,6 +190,10 @@ add_library(libwasp_valid
   src/valid/validate.cc
   src/valid/validate_instruction.cc
   src/valid/validate_visitor.cc
+)
+target_compile_options(libwasp_valid
+  PRIVATE
+  ${warning_flags}
 )
 target_link_libraries(libwasp_valid libwasp_binary)
 
@@ -219,6 +233,10 @@ add_library(libwasp_text
   src/text/types.cc
   ${gdtoa_files}
 )
+target_compile_options(libwasp_text
+  PRIVATE
+  ${warning_flags}
+)
 target_include_directories(libwasp_text
   PUBLIC
   ${wasp_SOURCE_DIR}/include/gdtoa
@@ -231,6 +249,10 @@ add_library(libwasp_convert
   include/wasp/convert/to_binary.h
 
   src/convert/to_binary.cc
+)
+target_compile_options(libwasp_convert
+  PRIVATE
+  ${warning_flags}
 )
 target_link_libraries(libwasp_convert libwasp_binary libwasp_text)
 
@@ -257,6 +279,10 @@ if (BUILD_TESTS)
     src/tools/argparser.cc
     test/test_utils.cc
   )
+  target_compile_options(libwasp_test
+    PRIVATE
+    ${warning_flags}
+  )
   target_include_directories(libwasp_test
     PUBLIC
     ${wasp_SOURCE_DIR}
@@ -274,6 +300,10 @@ if (BUILD_TESTS)
     test/base/v128_test.cc
     # TODO: Move to its own executable?
     test/tools/argparser_test.cc
+  )
+  target_compile_options(wasp_base_unittests
+    PRIVATE
+    ${warning_flags}
   )
   target_link_libraries(wasp_base_unittests
     libwasp_base
@@ -298,6 +328,10 @@ if (BUILD_TESTS)
     test/binary/visitor_test.cc
     test/binary/write_test.cc
   )
+  target_compile_options(wasp_binary_unittests
+    PRIVATE
+    ${warning_flags}
+  )
   target_link_libraries(wasp_binary_unittests
     libwasp_binary
     libwasp_test
@@ -319,6 +353,10 @@ if (BUILD_TESTS)
     test/text/types_test.cc
     test/text/write_test.cc
   )
+  target_compile_options(wasp_text_unittests
+    PRIVATE
+    ${warning_flags}
+  )
   target_link_libraries(wasp_text_unittests
     libwasp_text
     libwasp_test
@@ -336,6 +374,10 @@ if (BUILD_TESTS)
     test/valid/validate_code_test.cc
     test/valid/validate_instruction_test.cc
   )
+  target_compile_options(wasp_valid_unittests
+    PRIVATE
+    ${warning_flags}
+  )
   target_link_libraries(wasp_valid_unittests
     libwasp_valid
     libwasp_test
@@ -347,6 +389,10 @@ if (BUILD_TESTS)
     test/binary/constants.cc
     test/text/constants.cc
     test/convert/to_binary_test.cc
+  )
+  target_compile_options(wasp_convert_unittests
+    PRIVATE
+    ${warning_flags}
   )
   target_link_libraries(wasp_convert_unittests
     libwasp_convert
@@ -398,19 +444,26 @@ if (BUILD_TOOLS)
     src/tools/wasp.cc
     src/tools/wat2wasm.cc
   )
-
+  target_compile_options(wasp
+    PRIVATE
+    ${warning_flags}
+  )
   target_link_libraries(wasp
     wasp_tool
     wasplib
     ${filesystem_lib}
   )
+
   add_executable(run_spec_tests
     src/tools/argparser.cc
     src/tools/binary_errors.cc
     src/tools/text_errors.cc
     test/run_spec_tests.cc
   )
-
+  target_compile_options(run_spec_tests
+    PRIVATE
+    ${warning_flags}
+  )
   target_link_libraries(run_spec_tests
     wasp_tool
     wasplib
