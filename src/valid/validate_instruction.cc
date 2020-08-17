@@ -1102,6 +1102,9 @@ bool FuncBind(Context& context, Location loc, At<Index> new_type_index) {
     return false;
   }
   if (type && type->is_any()) {
+    // The result type is always known, so make sure we push the new function
+    // reference even for an unreachable stack.
+    PushType(context, ToStackType(RefType{HeapType{new_type_index}, Null::No}));
     return true;
   }
 

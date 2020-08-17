@@ -122,6 +122,18 @@ class ValidateInstructionTest : public ::testing::Test {
         << format("{}", instruction);
   }
 
+  void OkWithUnreachableStack(const Instruction& instruction,
+                              const StackTypeList& result_types) {
+    ErrorsNop errors_nop;
+    Context context_copy{context, errors_nop};
+    context_copy.label_stack.back().unreachable = true;
+    context_copy.type_stack.clear();
+    EXPECT_TRUE(Validate(context_copy, instruction))
+        << format("{}", instruction);
+    EXPECT_TRUE(IsSame(context, result_types, context_copy.type_stack))
+        << format("{}", instruction);
+  }
+
   void FailWithTypeStack(const Instruction& instruction,
                          const StackTypeList& param_types) {
     ErrorsNop errors_nop;
@@ -131,10 +143,11 @@ class ValidateInstructionTest : public ::testing::Test {
         << format("{} with stack {}", instruction, param_types);
   }
 
-  void TestSignature(const Instruction& instruction,
-                     const ValueTypeList& param_types,
-                     const ValueTypeList& result_types) {
+  void TestSignatureNoUnreachable(const Instruction& instruction,
+                                  const ValueTypeList& param_types,
+                                  const ValueTypeList& result_types) {
     const StackTypeList stack_param_types = ToStackTypeList(param_types);
+    const StackTypeList stack_result_types = ToStackTypeList(result_types);
 
     // Test that it is only valid when the full list of parameters is on the
     // stack.
@@ -143,7 +156,7 @@ class ValidateInstructionTest : public ::testing::Test {
                                                   stack_param_types.end());
       if (n == 0) {
         OkWithTypeStack(instruction, stack_param_types_slice,
-                        ToStackTypeList(result_types));
+                        stack_result_types);
       } else {
         FailWithTypeStack(instruction, stack_param_types_slice);
       }
@@ -158,16 +171,13 @@ class ValidateInstructionTest : public ::testing::Test {
       }
       FailWithTypeStack(instruction, mismatch_types);
     }
+  }
 
-    // Test that it is valid with an unreachable stack.
-    {
-      ErrorsNop errors_nop;
-      Context context_copy{context, errors_nop};
-      context_copy.label_stack.back().unreachable = true;
-      context_copy.type_stack.clear();
-      EXPECT_TRUE(Validate(context_copy, instruction))
-          << format("{}", instruction);
-    }
+  void TestSignature(const Instruction& instruction,
+                     const ValueTypeList& param_types,
+                     const ValueTypeList& result_types) {
+    TestSignatureNoUnreachable(instruction, param_types, result_types);
+    OkWithUnreachableStack(instruction, ToStackTypeList(result_types));
   }
 
   TestErrors errors;
@@ -2677,11 +2687,18 @@ TEST_F(ValidateInstructionTest, CallRef) {
 
   // Can be called with ref type.
   ValueType ref_type = MakeValueTypeRef(index, Null::No);
-  TestSignature(I{O::CallRef}, {VT_I32, VT_F32, ref_type}, {VT_F64});
+  TestSignatureNoUnreachable(I{O::CallRef}, {VT_I32, VT_F32, ref_type},
+                             {VT_F64});
 
   // Can be called with ref null type.
   ValueType ref_null_type = MakeValueTypeRef(index, Null::Yes);
-  TestSignature(I{O::CallRef}, {VT_I32, VT_F32, ref_null_type}, {VT_F64});
+  TestSignatureNoUnreachable(I{O::CallRef}, {VT_I32, VT_F32, ref_null_type},
+                             {VT_F64});
+
+  // It's impossible to know the result types of call_ref with an unreachable
+  // stack, since the signature depends on the typed function reference. So
+  // it's fine to keep the type stack empty.
+  OkWithUnreachableStack(I{O::CallRef}, {});
 }
 
 TEST_F(ValidateInstructionTest, CallRef_ParamTypeMismatch) {
