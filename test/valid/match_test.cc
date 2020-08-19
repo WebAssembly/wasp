@@ -22,8 +22,8 @@
 
 #include "test/binary/constants.h"
 #include "test/valid/test_utils.h"
+#include "wasp/base/concat.h"
 #include "wasp/base/enumerate.h"
-#include "wasp/base/format.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/valid/context.h"
 
@@ -71,7 +71,7 @@ void DoTable(Context& context,
       }
       bool result = cmp == SAME;
       EXPECT_EQ(result, func(context, vi, vj))
-          << format("i:{} j:{} should be {}", vi, vj, result);
+          << concat("i:", vi, " j:", vj, " should be ", result);
     }
   }
 }

@@ -30,7 +30,6 @@
 #include "wasp/base/error.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
-#include "wasp/base/format.h"
 #include "wasp/binary/lazy_expression.h"
 #include "wasp/binary/lazy_module.h"
 #include "wasp/binary/visitor.h"
@@ -225,13 +224,13 @@ void Tool::OnAssertionCommand(text::Assertion& assertion) {
 
     if (assertion.kind == text::AssertionKind::Malformed) {
       if (script_module->kind == text::ScriptModuleKind::Quote) {
-        OnAssertMalformedText(script_module.loc(),
-                              format("malformed_{}.wat", assertion_count++),
-                              buffer);
+        OnAssertMalformedText(
+            script_module.loc(),
+            fmt::format("malformed_{}.wat", assertion_count++), buffer);
       } else {
-        OnAssertMalformedBinary(script_module.loc(),
-                                format("malformed_{}.wasm", assertion_count++),
-                                buffer);
+        OnAssertMalformedBinary(
+            script_module.loc(),
+            fmt::format("malformed_{}.wasm", assertion_count++), buffer);
       }
     } else if (assertion.kind == text::AssertionKind::Invalid) {
       errors.OnError(script_module.loc(), "assert_invalid with quote/bin?");

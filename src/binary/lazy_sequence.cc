@@ -16,8 +16,8 @@
 
 #include "wasp/binary/lazy_sequence.h"
 
+#include "wasp/base/concat.h"
 #include "wasp/base/errors.h"
-#include "wasp/base/format.h"
 
 namespace wasp {
 namespace binary {
@@ -28,7 +28,7 @@ void LazySequenceBase::OnCountError(Errors& errors,
                                     string_view name,
                                     Index expected,
                                     Index actual) {
-  errors.OnError(data, format("Expected ", name, " to have count ", expected,
+  errors.OnError(data, concat("Expected ", name, " to have count ", expected,
                               ", got ", actual));
 }
 

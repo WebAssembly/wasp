@@ -28,6 +28,8 @@
 #include "wasp/binary/read/context.h"
 #include "wasp/binary/read/read_vector.h"
 
+#include "wasp/base/concat.h"
+
 using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::test;
@@ -62,7 +64,7 @@ class BinaryReadTest : public ::testing::Test {
 
   void FailUnknownOpcode(u8 code) {
     const u8 span_buffer[] = {code};
-    auto msg = format("Unknown opcode: ", code);
+    auto msg = concat("Unknown opcode: ", code);
     Fail(Read<Opcode>, {{0, "opcode"}, {1, msg}}, SpanU8{span_buffer, 1});
   }
 
@@ -77,7 +79,7 @@ class BinaryReadTest : public ::testing::Test {
 
     Fail(Read<Opcode>,
          {{0, "opcode"},
-          {0, format("Unknown opcode: ", prefix, " ", orig_code)}},
+          {0, concat("Unknown opcode: ", prefix, " ", orig_code)}},
          SpanU8{data, length});
   }
 

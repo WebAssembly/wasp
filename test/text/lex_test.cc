@@ -24,7 +24,7 @@
 #include "wasp/text/read/tokenizer.h"
 #include "wasp/text/types.h"
 
-#include "wasp/base/format.h"
+#include "wasp/base/concat.h"
 
 using namespace ::wasp;
 using namespace ::wasp::text;
@@ -65,7 +65,7 @@ SpanU8 ExpectLex(ExpectedToken et, SpanU8 data) {
   Token expected{Location{data.begin(), et.size}, et.type, et.immediate};
   auto actual = Lex(&data);
   EXPECT_EQ(actual, expected)
-      << format("expected: {} actual: {} (\"{}\")", expected.loc, actual.loc,
+      << concat("expected: {} actual: {} (\"{}\")", expected.loc, actual.loc,
                 ToStringView(actual.loc));
   return data;
 }

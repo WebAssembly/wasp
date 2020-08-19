@@ -16,8 +16,8 @@
 
 #include "wasp/binary/linking_section/sections.h"
 
+#include "wasp/base/concat.h"
 #include "wasp/base/errors.h"
-#include "wasp/base/format.h"
 #include "wasp/binary/formatters.h"
 
 namespace wasp {
@@ -29,7 +29,7 @@ LinkingSection::LinkingSection(SpanU8 data, Context& context)
       subsections{data, context} {
   constexpr u32 kVersion = 2;
   if (version && version != kVersion) {
-    context.errors.OnError(data, format("Expected linking section version: ",
+    context.errors.OnError(data, concat("Expected linking section version: ",
                                         kVersion, ", got ", *version));
   }
 }

@@ -32,7 +32,7 @@
 #include "wasp/binary/read/read_var_int.h"
 #include "wasp/binary/read/read_vector.h"
 
-#include "wasp/base/format.h"
+#include "wasp/base/concat.h"
 
 namespace wasp {
 namespace binary {
@@ -76,7 +76,7 @@ OptAt<BrTableImmediate> Read(SpanU8* data,
 
 OptAt<SpanU8> ReadBytes(SpanU8* data, span_extent_t N, Context& context) {
   if (data->size() < N) {
-    context.errors.OnError(*data, format("Unable to read ", N, " bytes"));
+    context.errors.OnError(*data, concat("Unable to read ", N, " bytes"));
     return nullopt;
   }
 
@@ -94,7 +94,7 @@ OptAt<SpanU8> ReadBytesExpected(SpanU8* data,
 
   auto actual = ReadBytes(data, expected.size(), context);
   if (actual && **actual != expected) {
-    context.errors.OnError(actual->loc(), format("Mismatch: expected ",
+    context.errors.OnError(actual->loc(), concat("Mismatch: expected ",
                                                  expected, ", got ", *actual));
   }
   return actual;
@@ -126,7 +126,7 @@ OptAt<Index> ReadCheckLength(SpanU8* data,
   if (count > data->size()) {
     context.errors.OnError(
         count.loc(),
-        format(error_name, " extends past end: ", count, " > ", data->size()));
+        concat(error_name, " extends past end: ", count, " > ", data->size()));
     return nullopt;
   }
 
@@ -307,7 +307,7 @@ OptAt<ReferenceType> Read(SpanU8* data, Context& context, Tag<ReferenceType>) {
     if (!decoded) {
       context.errors.OnError(
           guard.range(data),
-          format("Unknown reference type: ", val, " ", code));
+          concat("Unknown reference type: ", val, " ", code));
       return nullopt;
     }
     return MakeAt(guard.range(data), *decoded);
@@ -477,7 +477,7 @@ bool RequireDataCountSection(Context& context, const At<Opcode>& opcode) {
   if (!context.declared_data_count) {
     context.errors.OnError(
         opcode.loc(),
-        format(*opcode, " instruction requires a data count section"));
+        concat(*opcode, " instruction requires a data count section"));
     return false;
   }
   return true;
@@ -488,7 +488,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
   WASP_TRY_READ(opcode, Read<Opcode>(data, context));
 
   if (context.seen_final_end) {
-    context.errors.OnError(opcode.loc(), format("Unexpected ", *opcode,
+    context.errors.OnError(opcode.loc(), concat("Unexpected ", *opcode,
                                                 " instruction after 'end'"));
     return nullopt;
   }
@@ -1152,7 +1152,7 @@ OptAt<Locals> Read(SpanU8* data, Context& context, Tag<Locals>) {
   context.local_count += count;
   if (context.local_count > std::numeric_limits<u32>::max()) {
     context.errors.OnError(count.loc(),
-                           format("Too many locals: ", context.local_count));
+                           concat("Too many locals: ", context.local_count));
     return nullopt;
   }
 
@@ -1206,7 +1206,7 @@ OptAt<Opcode> Read(SpanU8* data, Context& context, Tag<Opcode>) {
     auto decoded = encoding::Opcode::Decode(val, code, context.features);
     if (!decoded) {
       context.errors.OnError(guard.range(data),
-                             format("Unknown opcode: ", val, " ", code));
+                             concat("Unknown opcode: ", val, " ", code));
       return nullopt;
     }
     return MakeAt(guard.range(data), *decoded);
@@ -1222,7 +1222,7 @@ OptAt<u8> ReadReserved(SpanU8* data, Context& context) {
   WASP_TRY_READ(reserved, Read<u8>(data, context));
   if (reserved != 0) {
     context.errors.OnError(reserved.loc(),
-                           format("Expected reserved byte 0, got ", reserved));
+                           concat("Expected reserved byte 0, got ", reserved));
     return nullopt;
   }
   return reserved;
@@ -1260,7 +1260,7 @@ OptAt<Section> Read(SpanU8* data, Context& context, Tag<Section>) {
   } else {
     if (context.last_section_id && *context.last_section_id >= id) {
       context.errors.OnError(
-          id.loc(), format("Section out of order: ", id, " cannot occur after ",
+          id.loc(), concat("Section out of order: ", id, " cannot occur after ",
                            *context.last_section_id));
     }
     context.last_section_id = id;
@@ -1339,7 +1339,7 @@ OptAt<TypeEntry> Read(SpanU8* data, Context& context, Tag<TypeEntry>) {
   WASP_TRY_READ_CONTEXT(form, Read<u8>(data, context), "form");
 
   if (form != encoding::Type::Function) {
-    context.errors.OnError(form.loc(), format("Unknown type form: ", form));
+    context.errors.OnError(form.loc(), concat("Unknown type form: ", form));
     return nullopt;
   }
 
@@ -1381,7 +1381,7 @@ OptAt<ValueType> Read(SpanU8* data, Context& context, Tag<ValueType>) {
     auto decoded = encoding::ValueType::Decode(val, code, context.features);
     if (!decoded) {
       context.errors.OnError(guard.range(data),
-                             format("Unknown value type: ", val, " ", code));
+                             concat("Unknown value type: ", val, " ", code));
       return nullopt;
     }
     return MakeAt(guard.range(data), *decoded);
@@ -1395,7 +1395,7 @@ OptAt<ValueType> Read(SpanU8* data, Context& context, Tag<ValueType>) {
 bool EndCode(SpanU8 data, Context& context) {
   if (!context.open_blocks.empty()) {
     for (auto& [loc, op]: context.open_blocks) {
-      context.errors.OnError(loc, format("Unclosed ", op, " instruction"));
+      context.errors.OnError(loc, concat("Unclosed ", op, " instruction"));
     }
     return false;
   }
@@ -1409,14 +1409,14 @@ bool EndCode(SpanU8 data, Context& context) {
 bool EndModule(SpanU8 data, Context& context) {
   if (context.defined_function_count != context.code_count) {
     context.errors.OnError(
-        data, format("Expected code count of ", context.defined_function_count,
+        data, concat("Expected code count of ", context.defined_function_count,
                      ", but got ", context.code_count));
     return false;
   }
   if (context.declared_data_count &&
       *context.declared_data_count != context.data_count) {
     context.errors.OnError(
-        data, format("Expected data count of ", *context.declared_data_count,
+        data, concat("Expected data count of ", *context.declared_data_count,
                      ", but got ", context.data_count));
     return false;
   }

@@ -30,7 +30,6 @@
 #include "src/tools/validate.h"
 #include "src/tools/wat2wasm.h"
 #include "wasp/base/enumerate.h"
-#include "wasp/base/format.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"

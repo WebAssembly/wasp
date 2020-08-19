@@ -22,8 +22,8 @@
 #include <numeric>
 #include <type_traits>
 
+#include "wasp/base/concat.h"
 #include "wasp/base/errors.h"
-#include "wasp/base/format.h"
 #include "wasp/base/utf8.h"
 #include "wasp/text/formatters.h"
 #include "wasp/text/numeric.h"
@@ -40,7 +40,7 @@ auto Expect(Tokenizer& tokenizer, Context& context, TokenType expected)
   if (!actual_opt) {
     auto token = tokenizer.Peek();
     context.errors.OnError(token.loc,
-                           format("Expected ", expected, ", got ", token.type));
+                           concat("Expected ", expected, ", got ", token.type));
     return nullopt;
   }
   return actual_opt;
@@ -52,7 +52,7 @@ auto ExpectLpar(Tokenizer& tokenizer, Context& context, TokenType expected)
   if (!actual_opt) {
     auto token = tokenizer.Peek();
     context.errors.OnError(
-        token.loc, format("Expected '(' ", expected, ", got ", token.type, " ",
+        token.loc, concat("Expected '(' ", expected, ", got ", token.type, " ",
                           tokenizer.Peek(1).type));
     return nullopt;
   }
@@ -64,13 +64,13 @@ auto ReadNat32(Tokenizer& tokenizer, Context& context) -> OptAt<u32> {
   if (!token_opt) {
     auto token = tokenizer.Peek();
     context.errors.OnError(
-        token.loc, format("Expected a natural number, got ", token.type));
+        token.loc, concat("Expected a natural number, got ", token.type));
     return nullopt;
   }
   auto nat_opt = StrToNat<u32>(token_opt->literal_info(), token_opt->span_u8());
   if (!nat_opt) {
     context.errors.OnError(token_opt->loc,
-                           format("Invalid natural number, got ", *token_opt));
+                           concat("Invalid natural number, got ", *token_opt));
     return nullopt;
   }
   return MakeAt(token_opt->loc, *nat_opt);
@@ -81,7 +81,7 @@ auto ReadInt(Tokenizer& tokenizer, Context& context) -> OptAt<T> {
   auto token = tokenizer.Peek();
   if (!(token.type == TokenType::Nat || token.type == TokenType::Int)) {
     context.errors.OnError(token.loc,
-                           format("Expected an integer, got ", token.type));
+                           concat("Expected an integer, got ", token.type));
     return nullopt;
   }
 
@@ -89,7 +89,7 @@ auto ReadInt(Tokenizer& tokenizer, Context& context) -> OptAt<T> {
   auto int_opt = StrToInt<T>(token.literal_info(), token.span_u8());
   if (!int_opt) {
     context.errors.OnError(token.loc,
-                           format("Invalid integer, got ", token.type));
+                           concat("Invalid integer, got ", token.type));
     return nullopt;
   }
   return MakeAt(token.loc, *int_opt);
@@ -101,14 +101,14 @@ auto ReadFloat(Tokenizer& tokenizer, Context& context) -> OptAt<T> {
   if (!(token.type == TokenType::Nat || token.type == TokenType::Int ||
         token.type == TokenType::Float)) {
     context.errors.OnError(token.loc,
-                           format("Expected a float, got ", token.type));
+                           concat("Expected a float, got ", token.type));
     return nullopt;
   }
 
   tokenizer.Read();
   auto float_opt = StrToFloat<T>(token.literal_info(), token.span_u8());
   if (!float_opt) {
-    context.errors.OnError(token.loc, format("Invalid float, got ", token));
+    context.errors.OnError(token.loc, concat("Invalid float, got ", token));
     return nullopt;
   }
   return MakeAt(token.loc, *float_opt);
@@ -123,7 +123,7 @@ auto ReadVar(Tokenizer& tokenizer, Context& context) -> OptAt<Var> {
   auto var_opt = ReadVarOpt(tokenizer, context);
   if (!var_opt) {
     context.errors.OnError(token.loc,
-                           format("Expected a variable, got ", token.type));
+                           concat("Expected a variable, got ", token.type));
     return nullopt;
   }
   return *var_opt;
@@ -190,7 +190,7 @@ auto ReadText(Tokenizer& tokenizer, Context& context) -> OptAt<Text> {
   if (!token_opt) {
     auto token = tokenizer.Peek();
     context.errors.OnError(token.loc,
-                           format("Expected quoted text, got ", token.type));
+                           concat("Expected quoted text, got ", token.type));
     return nullopt;
   }
   return MakeAt(token_opt->loc, token_opt->text());
@@ -317,7 +317,7 @@ auto ReadValueType(Tokenizer& tokenizer, Context& context) -> OptAt<ValueType> {
 
     if (!allowed) {
       context.errors.OnError(
-          token_opt->loc, format("value type ", numeric_type, " not allowed"));
+          token_opt->loc, concat("value type ", numeric_type, " not allowed"));
       return nullopt;
     }
     return MakeAt(token_opt->loc, ValueType{numeric_type});
@@ -449,7 +449,7 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> OptAt<Import> {
 
     default:
       context.errors.OnError(
-          token.loc, format("Expected an import external kind, got ", token));
+          token.loc, concat("Expected an import external kind, got ", token));
       return nullopt;
   }
 
@@ -550,7 +550,7 @@ auto ReadHeapType(Tokenizer& tokenizer, Context& context) -> OptAt<HeapType> {
     }
     if (!allowed) {
       context.errors.OnError(token.loc,
-                             format("heap type ", heap_kind, " not allowed"));
+                             concat("heap type ", heap_kind, " not allowed"));
       return nullopt;
     }
     return MakeAt(guard.loc(), HeapType{heap_kind});
@@ -563,7 +563,7 @@ auto ReadHeapType(Tokenizer& tokenizer, Context& context) -> OptAt<HeapType> {
     return MakeAt(guard.loc(), HeapType{var});
   } else {
     context.errors.OnError(token.loc,
-                           format("Expected heap type, got ", token.type));
+                           concat("Expected heap type, got ", token.type));
     return nullopt;
   }
 }
@@ -616,7 +616,7 @@ auto ReadReferenceType(Tokenizer& tokenizer,
 
     if (!allowed) {
       context.errors.OnError(
-          token.loc, format("reference type ", reference_kind, " not allowed"));
+          token.loc, concat("reference type ", reference_kind, " not allowed"));
       return nullopt;
     }
     return MakeAt(token.loc, ReferenceType{reference_kind});
@@ -626,7 +626,7 @@ auto ReadReferenceType(Tokenizer& tokenizer,
     return MakeAt(guard.loc(), ReferenceType{ref_type});
   } else {
     context.errors.OnError(token.loc,
-                           format("Expected reference type, got ", token.type));
+                           concat("Expected reference type, got ", token.type));
     return nullopt;
   }
 }
@@ -853,7 +853,7 @@ auto ReadExport(Tokenizer& tokenizer, Context& context) -> OptAt<Export> {
     default:
       context.errors.OnError(
           token.loc,
-          format("Expected an import external kind, got ", token.type));
+          concat("Expected an import external kind, got ", token.type));
       return nullopt;
   }
 
@@ -897,7 +897,7 @@ auto ReadOffsetExpression(Tokenizer& tokenizer, Context& context)
   } else {
     auto token = tokenizer.Peek();
     context.errors.OnError(
-        token.loc, format("Expected offset expression, got ", token.type));
+        token.loc, concat("Expected offset expression, got ", token.type));
     return nullopt;
   }
   return MakeAt(guard.loc(), ConstantExpression{instructions});
@@ -926,7 +926,7 @@ auto ReadElementExpression(Tokenizer& tokenizer, Context& context)
   } else {
     auto token = tokenizer.Peek();
     context.errors.OnError(
-        token.loc, format("Expected element expression, got ", token.type));
+        token.loc, concat("Expected element expression, got ", token.type));
     return nullopt;
   }
   return MakeAt(guard.loc(), ElementExpression{instructions});
@@ -1066,7 +1066,7 @@ auto ReadNameEqNatOpt(Tokenizer& tokenizer,
   if (!nat_opt) {
     context.errors.OnError(
         token_opt->loc,
-        format("Invalid natural number, got ", token_opt->type));
+        concat("Invalid natural number, got ", token_opt->type));
     return nullopt;
   }
 
@@ -1083,7 +1083,7 @@ auto ReadAlignOpt(Tokenizer& tokenizer, Context& context) -> OptAt<u32> {
   if (value == 0 || (value & (value - 1)) != 0) {
     context.errors.OnError(
         nat_opt->loc(),
-        format("Alignment must be a power of two, got ", value));
+        concat("Alignment must be a power of two, got ", value));
     return nullopt;
   }
   return nat_opt;
@@ -1100,7 +1100,7 @@ auto ReadSimdLane(Tokenizer& tokenizer, Context& context) -> OptAt<u8> {
   if (token.type == TokenType::Int &&
       token.literal_info().sign == Sign::Minus) {
     context.errors.OnError(
-        token.loc, format("Expected a positive integer, got ", token.type));
+        token.loc, concat("Expected a positive integer, got ", token.type));
     return nullopt;
   }
   return ReadInt<u8>(tokenizer, context);
@@ -1193,7 +1193,7 @@ bool CheckOpcodeEnabled(Token token, Context& context) {
   assert(token.has_opcode());
   if (!context.features.HasFeatures(Features{token.opcode_features()})) {
     context.errors.OnError(token.loc,
-                           format(token.opcode(), " instruction not allowed"));
+                           concat(token.opcode(), " instruction not allowed"));
     return false;
   }
   return true;
@@ -1377,7 +1377,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       if (!immediate_opt) {
         context.errors.OnError(
             token.loc,
-            format("Invalid SIMD constant token, got ", simd_token.type));
+            concat("Invalid SIMD constant token, got ", simd_token.type));
         return nullopt;
       }
 
@@ -1443,7 +1443,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
 
     default:
       context.errors.OnError(
-          token.loc, format("Expected plain instruction, got ", token.type));
+          token.loc, concat("Expected plain instruction, got ", token.type));
       return nullopt;
   }
 }
@@ -1464,10 +1464,10 @@ bool ReadEndLabelOpt(Tokenizer& tokenizer,
   if (end_label) {
     if (!label) {
       context.errors.OnError(end_label->loc(),
-                             format("Unexpected label ", end_label));
+                             concat("Unexpected label ", end_label));
       return false;
     } else if (*label != *end_label) {
-      context.errors.OnError(end_label->loc(), format("Expected label ", *label,
+      context.errors.OnError(end_label->loc(), concat("Expected label ", *label,
                                                       ", got ", *end_label));
       return false;
     }
@@ -1516,7 +1516,7 @@ bool ExpectOpcode(Tokenizer& tokenizer,
   auto token = tokenizer.Peek();
   if (!ReadOpcodeOpt(tokenizer, context, instructions, token_type)) {
     context.errors.OnError(
-        token.loc, format("Expected ", token_type, ", got ", token.type));
+        token.loc, concat("Expected ", token_type, ", got ", token.type));
     return false;
   }
   return true;
@@ -1599,7 +1599,7 @@ bool ReadInstruction(Tokenizer& tokenizer,
     WASP_TRY(ReadExpression(tokenizer, context, instructions));
   } else {
     context.errors.OnError(token.loc,
-                           format("Expected instruction, got ", token.type));
+                           concat("Expected instruction, got ", token.type));
     return false;
   }
   return true;
@@ -1711,7 +1711,7 @@ bool ReadExpression(Tokenizer& tokenizer,
     WASP_TRY(ReadRparAsEndInstruction(tokenizer, context, instructions));
   } else {
     context.errors.OnError(token.loc,
-                           format("Expected expression, got ", token.type));
+                           concat("Expected expression, got ", token.type));
     return false;
   }
   return true;
@@ -1827,7 +1827,7 @@ auto ReadModuleItem(Tokenizer& tokenizer, Context& context)
     -> OptAt<ModuleItem> {
   auto token = tokenizer.Peek();
   if (token.type != TokenType::Lpar) {
-    context.errors.OnError(token.loc, format("Expected '(', got ", token.type));
+    context.errors.OnError(token.loc, concat("Expected '(', got ", token.type));
     return nullopt;
   }
 
@@ -1891,7 +1891,7 @@ auto ReadModuleItem(Tokenizer& tokenizer, Context& context)
     default:
       context.errors.OnError(
           token.loc,
-          format(
+          concat(
               "Expected 'type', 'import', 'func', 'table', 'memory', 'global', "
               "'export', 'start', 'elem', 'data', or 'event', got ",
               token.type));

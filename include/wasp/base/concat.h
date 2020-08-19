@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BASE_FORMAT_H_
-#define WASP_BASE_FORMAT_H_
+#ifndef WASP_BASE_CONCAT_H_
+#define WASP_BASE_CONCAT_H_
 
 #include <iostream>
 #include <sstream>
@@ -28,41 +28,41 @@ namespace wasp {
 namespace internal {
 
 template <typename T>
-void format_single(std::stringstream& ss, const T& x) {
+void OutputSingle(std::stringstream& ss, const T& x) {
   ss << x;
 }
 
 template <typename T>
-void format_single(std::stringstream& ss, const At<T>& x) {
-  format_single(ss, x.value());
+void OutputSingle(std::stringstream& ss, const At<T>& x) {
+  OutputSingle(ss, x.value());
 }
 
 // Print unsigned/signed char as a number instead of a character.
 
 template <>
-inline void format_single(std::stringstream& ss, const char& x) {
+inline void OutputSingle(std::stringstream& ss, const char& x) {
   ss.operator<<(x);
 }
 
 template <>
-inline void format_single(std::stringstream& ss, const unsigned char& x) {
+inline void OutputSingle(std::stringstream& ss, const unsigned char& x) {
   ss.operator<<(x);
 }
 
 template <>
-inline void format_single(std::stringstream& ss, const signed char& x) {
+inline void OutputSingle(std::stringstream& ss, const signed char& x) {
   ss.operator<<(x);
 }
 
 }  // namespace internal
 
 template <typename... Args>
-std::string format(Args&&... args) {
+std::string concat(Args&&... args) {
   std::stringstream ss;
-  (internal::format_single(ss, args), ...);
+  (internal::OutputSingle(ss, args), ...);
   return ss.str();
 }
 
 }  // namespace wasp
 
-#endif  // WASP_BASE_FORMAT_H_
+#endif  // WASP_BASE_CONCAT_H_

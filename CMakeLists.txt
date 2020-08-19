@@ -50,6 +50,7 @@ add_library(libwasp_base
   include/wasp/base/at.h
   include/wasp/base/bitcast.h
   include/wasp/base/buffer.h
+  include/wasp/base/concat.h
   include/wasp/base/enumerate-inl.h
   include/wasp/base/enumerate.h
   include/wasp/base/error.h
@@ -59,7 +60,6 @@ add_library(libwasp_base
   include/wasp/base/errors_nop.h
   include/wasp/base/features.h
   include/wasp/base/file.h
-  include/wasp/base/format.h
   include/wasp/base/formatter_macros.h
   include/wasp/base/formatters.h
   include/wasp/base/hash.h

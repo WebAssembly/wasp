@@ -30,7 +30,6 @@
 #include "wasp/base/errors_nop.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
-#include "wasp/base/format.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/str_to_u32.h"
@@ -46,6 +45,7 @@ namespace wasp {
 namespace tools {
 namespace dfg {
 
+using fmt::format;
 using fmt::print;
 
 using namespace ::wasp::binary;

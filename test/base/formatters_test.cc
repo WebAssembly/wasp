@@ -21,7 +21,7 @@
 #include "gtest/gtest.h"
 #include "wasp/base/variant.h"
 
-#include "wasp/base/format.h"
+#include "wasp/base/concat.h"
 
 using namespace ::wasp;
 
@@ -46,59 +46,59 @@ WASP_DEFINE_VARIANT_NAME(Point, "Point")
 }  // namespace wasp
 
 TEST(FormattersTest, U32) {
-  EXPECT_EQ("100", format(u32{100u}));
+  EXPECT_EQ("100", concat(u32{100u}));
 }
 
 TEST(FormattersTest, SpanU8) {
-  EXPECT_EQ(R"("")", format(SpanU8{}));
+  EXPECT_EQ(R"("")", concat(SpanU8{}));
 
   const u8 buffer[] = "Hello, World!";
-  EXPECT_EQ(R"("\48\65\6c")", format(SpanU8{buffer, 3}));
+  EXPECT_EQ(R"("\48\65\6c")", concat(SpanU8{buffer, 3}));
 }
 
 TEST(FormattersTest, SpanPoint) {
   using PointSpan = span<const Point>;
   const Point points[] = {Point{1, 1}, Point{2, 3}, Point{0, 0}};
 
-  EXPECT_EQ(R"([])", format(PointSpan{}));
-  EXPECT_EQ(R"([{x:1, y:1} {x:2, y:3}])", format(PointSpan{points, 2}));
+  EXPECT_EQ(R"([])", concat(PointSpan{}));
+  EXPECT_EQ(R"([{x:1, y:1} {x:2, y:3}])", concat(PointSpan{points, 2}));
 }
 
 TEST(FormattersTest, VectorU32) {
-  EXPECT_EQ(R"([])", format(std::vector<u32>{}));
-  EXPECT_EQ(R"([1 2 3])", format(std::vector<u32>{{1u, 2u, 3u}}));
+  EXPECT_EQ(R"([])", concat(std::vector<u32>{}));
+  EXPECT_EQ(R"([1 2 3])", concat(std::vector<u32>{{1u, 2u, 3u}}));
 }
 
 TEST(FormattersTest, VectorPoint) {
-  EXPECT_EQ(R"([])", format(std::vector<Point>{}));
+  EXPECT_EQ(R"([])", concat(std::vector<Point>{}));
   EXPECT_EQ(R"([{x:1, y:1} {x:2, y:3}])",
-            format(std::vector<Point>{{Point{1, 1}, Point{2, 3}}}));
+            concat(std::vector<Point>{{Point{1, 1}, Point{2, 3}}}));
 }
 
 TEST(FormattersTest, V128) {
-  EXPECT_EQ(R"(0x1 0x0 0x2 0x0)", format(v128{u64{1}, u64{2}}));
+  EXPECT_EQ(R"(0x1 0x0 0x2 0x0)", concat(v128{u64{1}, u64{2}}));
 }
 
 TEST(FormattersTest, Optional) {
   using OptU32 = optional<u32>;
 
-  EXPECT_EQ(R"(none)", format(OptU32{}));
-  EXPECT_EQ(R"(1)", format(OptU32{1}));
+  EXPECT_EQ(R"(none)", concat(OptU32{}));
+  EXPECT_EQ(R"(1)", concat(OptU32{1}));
 }
 
 TEST(FormattersTest, Variant) {
   using MyVariant = variant<u32, Point>;
 
-  EXPECT_EQ(R"(u32 123)", format(MyVariant{u32{123}}));
-  EXPECT_EQ(R"(Point {x:1, y:2})", format(MyVariant{Point{1, 2}}));
+  EXPECT_EQ(R"(u32 123)", concat(MyVariant{u32{123}}));
+  EXPECT_EQ(R"(Point {x:1, y:2})", concat(MyVariant{Point{1, 2}}));
 }
 
 TEST(FormattersTest, MemoryType) {
-  EXPECT_EQ(R"({min 1, max 2})", format(MemoryType{Limits{1, 2}}));
+  EXPECT_EQ(R"({min 1, max 2})", concat(MemoryType{Limits{1, 2}}));
 }
 
 TEST(FormattersTest, ShuffleImmediate) {
   EXPECT_EQ(R"([0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15])",
-            format(ShuffleImmediate{
+            concat(ShuffleImmediate{
                 {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}}));
 }

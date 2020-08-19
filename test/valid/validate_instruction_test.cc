@@ -27,6 +27,8 @@
 #include "wasp/valid/match.h"
 #include "wasp/valid/validate.h"
 
+#include "wasp/base/concat.h"
+
 using namespace ::wasp;
 using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
@@ -117,7 +119,7 @@ class ValidateInstructionTest : public ::testing::Test {
     Context context_copy{context, errors_nop};
     context_copy.type_stack = param_types;
     EXPECT_TRUE(Validate(context_copy, instruction))
-        << format(instruction, " with stack ", param_types);
+        << concat(instruction, " with stack ", param_types);
     EXPECT_TRUE(IsSame(context, result_types, context_copy.type_stack))
         << instruction;
   }
@@ -139,7 +141,7 @@ class ValidateInstructionTest : public ::testing::Test {
     Context context_copy{context, errors_nop};
     context_copy.type_stack = param_types;
     EXPECT_FALSE(Validate(context_copy, instruction))
-        << format(instruction, " with stack ", param_types);
+        << concat(instruction, " with stack ", param_types);
   }
 
   void TestSignatureNoUnreachable(const Instruction& instruction,
@@ -1197,7 +1199,7 @@ TEST_F(ValidateInstructionTest, Select_ReferenceTypes) {
     Fail(I{O::Select});
     ExpectError(
         {"instruction",
-         format("select instruction without expected type can only be used "
+         concat("select instruction without expected type can only be used "
                 "with i32, i64, f32, f64; got ",
                 stack_type)},
         errors);

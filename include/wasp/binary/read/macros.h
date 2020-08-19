@@ -17,9 +17,9 @@
 #ifndef WASP_BINARY_MACROS_H_
 #define WASP_BINARY_MACROS_H_
 
+#include "wasp/base/concat.h"
 #include "wasp/base/errors.h"
 #include "wasp/base/errors_context_guard.h"
-#include "wasp/base/format.h"
 #include "wasp/base/span.h"
 
 #define WASP_TRY_READ(var, call) \
@@ -37,7 +37,7 @@
 #define WASP_TRY_DECODE(out_var, in_var_at, Type, name)                      \
   auto out_var##opt = encoding::Type::Decode(in_var_at);                     \
   if (!out_var##opt) {                                                       \
-    context.errors.OnError(*data, format("Unknown " name ": ", *in_var_at)); \
+    context.errors.OnError(*data, concat("Unknown " name ": ", *in_var_at)); \
     return nullopt;                                                          \
   }                                                                          \
   auto out_var = MakeAt(in_var_at.loc(), *out_var##opt) /* No semicolon. */
@@ -45,7 +45,7 @@
 #define WASP_TRY_DECODE_FEATURES(out_var, in_var_at, Type, name, features)   \
   auto out_var##opt = encoding::Type::Decode(in_var_at, features);           \
   if (!out_var##opt) {                                                       \
-    context.errors.OnError(*data, format("Unknown " name ": ", *in_var_at)); \
+    context.errors.OnError(*data, concat("Unknown " name ": ", *in_var_at)); \
     return nullopt;                                                          \
   }                                                                          \
   auto out_var = MakeAt(in_var_at.loc(), *out_var##opt) /* No semicolon. */

@@ -22,7 +22,7 @@
 #include <string>
 #include <type_traits>
 
-#include "wasp/base/format.h"
+#include "wasp/base/concat.h"
 #include "wasp/base/formatters.h"
 #include "wasp/base/types.h"
 #include "wasp/base/v128.h"
@@ -76,7 +76,7 @@ Iterator WriteSeparator(WriteContext& context, Iterator out) {
 template <typename Iterator, typename T>
 Iterator WriteFormat(WriteContext& context, const T& value, Iterator out) {
   out = WriteSeparator(context, out);
-  out = WriteRaw(context, format(value), out);
+  out = WriteRaw(context, concat(value), out);
   context.Space();
   return out;
 }
