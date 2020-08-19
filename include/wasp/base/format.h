@@ -17,26 +17,52 @@
 #ifndef WASP_BASE_FORMAT_H_
 #define WASP_BASE_FORMAT_H_
 
-#include "fmt/format.h"
-#include "fmt/ostream.h"
+#include <iostream>
+#include <sstream>
+#include <string>
+
+#include "wasp/base/at.h"
 
 namespace wasp {
 
-// see http://fmtlib.net/latest/api.html.
+namespace internal {
 
-using fmt::format;
-using fmt::print;
-using fmt::vprint;
-using fmt::make_format_args;
-using fmt::format_arg_store;
-using fmt::basic_format_args;
-using fmt::format_args;
-using fmt::format_to;
-using fmt::formatter;
-using fmt::to_string;
-using fmt::memory_buffer;
+template <typename T>
+void format_single(std::stringstream& ss, const T& x) {
+  ss << x;
+}
+
+template <typename T>
+void format_single(std::stringstream& ss, const At<T>& x) {
+  format_single(ss, x.value());
+}
+
+// Print unsigned/signed char as a number instead of a character.
+
+template <>
+inline void format_single(std::stringstream& ss, const char& x) {
+  ss.operator<<(x);
+}
+
+template <>
+inline void format_single(std::stringstream& ss, const unsigned char& x) {
+  ss.operator<<(x);
+}
+
+template <>
+inline void format_single(std::stringstream& ss, const signed char& x) {
+  ss.operator<<(x);
+}
+
+}  // namespace internal
+
+template <typename... Args>
+std::string format(Args&&... args) {
+  std::stringstream ss;
+  (internal::format_single(ss, args), ...);
+  return ss.str();
+}
 
 }  // namespace wasp
 
 #endif  // WASP_BASE_FORMAT_H_
-

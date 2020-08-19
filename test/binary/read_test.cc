@@ -23,6 +23,7 @@
 #include "test/binary/constants.h"
 #include "test/binary/test_utils.h"
 #include "test/test_utils.h"
+#include "wasp/binary/formatters.h"
 #include "wasp/binary/name_section/read.h"
 #include "wasp/binary/read/context.h"
 #include "wasp/binary/read/read_vector.h"
@@ -61,7 +62,7 @@ class BinaryReadTest : public ::testing::Test {
 
   void FailUnknownOpcode(u8 code) {
     const u8 span_buffer[] = {code};
-    auto msg = format("Unknown opcode: {}", code);
+    auto msg = format("Unknown opcode: ", code);
     Fail(Read<Opcode>, {{0, "opcode"}, {1, msg}}, SpanU8{span_buffer, 1});
   }
 
@@ -76,7 +77,7 @@ class BinaryReadTest : public ::testing::Test {
 
     Fail(Read<Opcode>,
          {{0, "opcode"},
-          {0, format("Unknown opcode: {} {}", prefix, orig_code)}},
+          {0, format("Unknown opcode: ", prefix, " ", orig_code)}},
          SpanU8{data, length});
   }
 

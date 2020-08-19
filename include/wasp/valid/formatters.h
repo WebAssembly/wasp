@@ -17,17 +17,18 @@
 #ifndef WASP_VALID_FORMATTERS_H_
 #define WASP_VALID_FORMATTERS_H_
 
-#include "wasp/base/format.h"
 #include "wasp/base/formatter_macros.h"
-#include "wasp/base/macros.h"
+#include "wasp/base/formatters.h"
 #include "wasp/valid/types.h"
 
-namespace fmt {
+namespace wasp {
+namespace valid {
+
+using wasp::operator<<;
 
 WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_FORMATTER)
 
-}  // namespace fmt
-
-#include "wasp/valid/formatters-inl.h"
+}  // namespace valid
+}  // namespace wasp
 
 #endif  // WASP_VALID_FORMATTERS_H_

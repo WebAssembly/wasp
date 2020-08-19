@@ -18,7 +18,7 @@
 
 #include <utility>
 
-#include "wasp/base/format.h"
+#include "fmt/format.h"
 
 namespace wasp {
 namespace tools {
@@ -57,7 +57,7 @@ auto BinaryErrors::ErrorToString(const Error& error) const -> std::string {
   bool space = false;
   for (auto iter = context.begin(); iter < context.end(); ++iter) {
     u8 x = *iter;
-    line1 += format("{:02x}", x);
+    line1 += fmt::format("{:02x}", x);
     if (iter >= loc.begin() && iter < loc.end()) {
       line2 += "^^";
     } else {
@@ -70,8 +70,8 @@ auto BinaryErrors::ErrorToString(const Error& error) const -> std::string {
     space = !space;
   }
 
-  return format("{}:{:08x}: {}\n{}\n{}\n", filename, loc.begin() - data.begin(),
-                error.message, line1, line2);
+  return fmt::format("{}:{:08x}: {}\n{}\n{}\n", filename,
+                     loc.begin() - data.begin(), error.message, line1, line2);
 }
 
 }  // namespace tools

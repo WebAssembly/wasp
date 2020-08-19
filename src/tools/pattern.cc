@@ -23,6 +23,9 @@
 #include <string>
 #include <vector>
 
+#include "fmt/format.h"
+#include "fmt/ostream.h"
+
 #include "src/tools/argparser.h"
 #include "src/tools/binary_errors.h"
 #include "wasp/base/enumerate.h"
@@ -57,6 +60,8 @@ namespace tools {
 namespace pattern {
 
 const size_t kMaxPatternSize = 5;
+
+using fmt::print;
 
 using namespace ::wasp::binary;
 

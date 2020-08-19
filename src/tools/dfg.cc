@@ -21,6 +21,9 @@
 #include <set>
 #include <string>
 
+#include "fmt/format.h"
+#include "fmt/ostream.h"
+
 #include "src/tools/argparser.h"
 #include "src/tools/binary_errors.h"
 #include "wasp/base/enumerate.h"
@@ -42,6 +45,8 @@
 namespace wasp {
 namespace tools {
 namespace dfg {
+
+using fmt::print;
 
 using namespace ::wasp::binary;
 

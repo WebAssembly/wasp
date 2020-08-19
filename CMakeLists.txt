@@ -61,14 +61,12 @@ add_library(libwasp_base
   include/wasp/base/file.h
   include/wasp/base/format.h
   include/wasp/base/formatter_macros.h
-  include/wasp/base/formatters-inl.h
   include/wasp/base/formatters.h
   include/wasp/base/hash.h
   include/wasp/base/hashmap.h
   include/wasp/base/macros.h
   include/wasp/base/operator_eq_ne_macros.h
   include/wasp/base/optional.h
-  include/wasp/base/print_to_macros.h
   include/wasp/base/span.h
   include/wasp/base/std_hash_macros.h
   include/wasp/base/str_to_u32.h
@@ -83,7 +81,7 @@ add_library(libwasp_base
   src/base/at.cc
   src/base/features.cc
   src/base/file.cc
-  src/base/print_to.cc
+  src/base/formatters.cc
   src/base/span.cc
   src/base/str_to_u32.cc
   src/base/utf8.cc
@@ -106,7 +104,6 @@ target_include_directories(libwasp_base
 
 add_library(libwasp_binary
   include/wasp/binary/encoding.h
-  include/wasp/binary/formatters-inl.h
   include/wasp/binary/formatters.h
   include/wasp/binary/lazy_expression.h
   include/wasp/binary/lazy_module.h
@@ -122,14 +119,12 @@ add_library(libwasp_binary
   include/wasp/binary/visitor.h
   include/wasp/binary/write.h
   include/wasp/binary/linking_section/encoding.h
-  include/wasp/binary/linking_section/formatters-inl.h
   include/wasp/binary/linking_section/formatters.h
   include/wasp/binary/linking_section/read.h
   include/wasp/binary/linking_section/sections.h
   include/wasp/binary/linking_section/types.h
   include/wasp/binary/linking_section/write.h
   include/wasp/binary/name_section/encoding.h
-  include/wasp/binary/name_section/formatters-inl.h
   include/wasp/binary/name_section/formatters.h
   include/wasp/binary/name_section/read.h
   include/wasp/binary/name_section/sections.h
@@ -148,16 +143,15 @@ add_library(libwasp_binary
   src/binary/lazy_module.cc
   src/binary/lazy_sequence.cc
   src/binary/linking_section/encoding.cc
-  src/binary/linking_section/print_to.cc
+  src/binary/linking_section/formatters.cc
   src/binary/linking_section/read.cc
   src/binary/linking_section/sections.cc
   src/binary/linking_section/types.cc
   src/binary/name_section/encoding.cc
-  src/binary/name_section/print_to.cc
+  src/binary/name_section/formatters.cc
   src/binary/name_section/read.cc
   src/binary/name_section/sections.cc
   src/binary/name_section/types.cc
-  src/binary/print_to.cc
   src/binary/read.cc
   src/binary/sections.cc
   src/binary/types.cc
@@ -171,7 +165,6 @@ target_link_libraries(libwasp_binary libwasp_base)
 add_library(libwasp_valid
   include/wasp/valid/context.h
   include/wasp/valid/disjoint_set.h
-  include/wasp/valid/formatters-inl.h
   include/wasp/valid/formatters.h
   include/wasp/valid/local_map.h
   include/wasp/valid/match.h
@@ -185,7 +178,6 @@ add_library(libwasp_valid
   src/valid/formatters.cc
   src/valid/local_map.cc
   src/valid/match.cc
-  src/valid/print_to.cc
   src/valid/types.cc
   src/valid/validate.cc
   src/valid/validate_instruction.cc
@@ -199,7 +191,6 @@ target_link_libraries(libwasp_valid libwasp_binary)
 
 add_library(libwasp_text
   include/wasp/text/desugar.h
-  include/wasp/text/formatters-inl.h
   include/wasp/text/formatters.h
   include/wasp/text/numeric-inl.h
   include/wasp/text/numeric.h
@@ -221,10 +212,10 @@ add_library(libwasp_text
 
   src/text/context.cc
   src/text/desugar.cc
+  src/text/formatters.cc
   src/text/lex.cc
   src/text/name_map.cc
   src/text/numeric.cc
-  src/text/print_to.cc
   src/text/read.cc
   src/text/read_script.cc
   src/text/resolve.cc

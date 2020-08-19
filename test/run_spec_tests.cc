@@ -20,6 +20,9 @@
 #include <iostream>
 #include <utility>
 
+#include "fmt/format.h"
+#include "fmt/ostream.h"
+
 #include "src/tools/argparser.h"
 #include "src/tools/binary_errors.h"
 #include "src/tools/text_errors.h"
@@ -39,6 +42,8 @@
 #include "wasp/text/resolve.h"
 #include "wasp/valid/context.h"
 #include "wasp/valid/validate.h"
+
+using fmt::print;
 
 using namespace ::wasp;
 namespace fs = std::filesystem;

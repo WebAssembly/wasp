@@ -21,6 +21,9 @@
 #include <string>
 #include <vector>
 
+#include "fmt/format.h"
+#include "fmt/ostream.h"
+
 #include "src/tools/argparser.h"
 #include "src/tools/binary_errors.h"
 #include "wasp/base/enumerate.h"
@@ -44,6 +47,9 @@
 namespace wasp {
 namespace tools {
 namespace dump {
+
+using fmt::format;
+using fmt::print;
 
 using namespace ::wasp::binary;
 
@@ -264,7 +270,8 @@ void Tool::Run() {
     return;
   }
 
-  print("\n{}:\tfile format wasm {}\n", filename, *module.version);
+  print("\n{}:\tfile format wasm {}\n", filename,
+        FormatWrapper{*module.version});
   DoPrepass();
   // If we haven't found a function with the given name, try interpreting it as
   // an index.
@@ -1149,7 +1156,7 @@ bool Tool::ShouldPrintDetails(Pass pass) const {
 template <typename... Args>
 void Tool::PrintDetails(Pass pass, const char* format, const Args&... args) {
   if (ShouldPrintDetails(pass)) {
-    vprint(format, make_format_args(args...));
+    vprint(format, fmt::make_format_args(args...));
   }
 }
 

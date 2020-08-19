@@ -18,6 +18,7 @@
 #define WASP_BINARY_READ_READ_VAR_INT_H_
 
 #include <type_traits>
+#include <iomanip>
 
 #include "wasp/base/errors_context_guard.h"
 #include "wasp/base/features.h"
@@ -72,15 +73,17 @@ OptAt<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
       const u8 one_ext = (byte | kLastByteOnes) & kByteMask;
       if (is_signed) {
         context.errors.OnError(
-            byte.loc(),
-            format("Last byte of {} must be sign "
-                   "extension: expected {:#2x} or {:#2x}, got {:#2x}",
-                   desc, zero_ext, one_ext, byte));
+            byte.loc(), format("Last byte of ", desc,
+                               " must be sign extension: expected 0x", std::hex,
+                               std::setfill('0'), zero_ext, " or 0x", one_ext,
+                               ", got 0x", byte, std::dec));
       } else {
         context.errors.OnError(byte.loc(),
-                               format("Last byte of {} must be zero "
-                                      "extension: expected {:#2x}, got {:#2x}",
-                                      desc, zero_ext, byte));
+                               format("Last byte of ", desc,
+                                      " must be zero "
+                                      "extension: expected 0x",
+                                      std::hex, std::setfill('0'), zero_ext,
+                                      ", got 0x", byte, std::dec));
       }
       return nullopt;
     } else if ((byte & VarInt<T>::kExtendBit) == 0) {

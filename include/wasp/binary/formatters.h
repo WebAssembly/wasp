@@ -17,19 +17,45 @@
 #ifndef WASP_BINARY_FORMATTERS_H_
 #define WASP_BINARY_FORMATTERS_H_
 
-#include "wasp/base/format.h"
 #include "wasp/base/formatter_macros.h"
+#include "wasp/base/formatters.h"
 #include "wasp/binary/types.h"
 
-namespace fmt {
+namespace wasp {
+
+WASP_DEFINE_VARIANT_NAME(binary::RefType, "ref_type")
+WASP_DEFINE_VARIANT_NAME(binary::ReferenceType, "reference_type")
+WASP_DEFINE_VARIANT_NAME(binary::ValueType, "value_type")
+WASP_DEFINE_VARIANT_NAME(binary::VoidType, "void")
+WASP_DEFINE_VARIANT_NAME(binary::KnownSection, "known_section")
+WASP_DEFINE_VARIANT_NAME(binary::CustomSection, "custom_section")
+WASP_DEFINE_VARIANT_NAME(binary::BlockType, "block")
+WASP_DEFINE_VARIANT_NAME(binary::BrOnExnImmediate, "br_on_exn")
+WASP_DEFINE_VARIANT_NAME(binary::BrTableImmediate, "br_table")
+WASP_DEFINE_VARIANT_NAME(binary::CallIndirectImmediate, "call_indirect")
+WASP_DEFINE_VARIANT_NAME(binary::CopyImmediate, "copy")
+WASP_DEFINE_VARIANT_NAME(binary::InitImmediate, "init")
+WASP_DEFINE_VARIANT_NAME(binary::LetImmediate, "let")
+WASP_DEFINE_VARIANT_NAME(binary::MemArgImmediate, "mem_arg")
+WASP_DEFINE_VARIANT_NAME(binary::HeapType, "heap_type")
+WASP_DEFINE_VARIANT_NAME(binary::SelectImmediate, "select")
+WASP_DEFINE_VARIANT_NAME(binary::TableType, "table")
+WASP_DEFINE_VARIANT_NAME(binary::GlobalType, "global")
+WASP_DEFINE_VARIANT_NAME(binary::EventType, "event")
+WASP_DEFINE_VARIANT_NAME(binary::ElementListWithIndexes, "index")
+WASP_DEFINE_VARIANT_NAME(binary::ElementListWithExpressions, "expression")
+
+namespace binary {
+
+using wasp::operator<<;
 
 WASP_BINARY_ENUMS(WASP_DECLARE_FORMATTER)
 WASP_BINARY_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_FORMATTER)
+WASP_DECLARE_FORMATTER(binary::Module)
 
 WASP_DECLARE_FORMATTER(binary::InstructionList)
 
-}  // namespace fmt
-
-#include "wasp/binary/formatters-inl.h"
+}  // namespace binary
+}  // namespace wasp
 
 #endif  // WASP_BINARY_FORMATTERS_H_

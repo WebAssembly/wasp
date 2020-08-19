@@ -22,7 +22,6 @@
 
 #include "wasp/base/at.h"
 #include "wasp/base/features.h"
-#include "wasp/base/format.h"
 #include "wasp/base/formatter_macros.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
@@ -31,64 +30,65 @@
 #include "wasp/base/variant.h"
 #include "wasp/base/wasm_types.h"
 
-namespace fmt {
+namespace wasp {
 
-// Convert from a fmt::basic_memory_buffer to a fmt::string_view. Not sure why
-// this conversion was omitted from the fmt library.
-template <typename T, std::size_t SIZE, typename Allocator>
-string_view to_string_view(const basic_memory_buffer<T, SIZE, Allocator>&);
+// We want to be able to overload `operator<<` for types that are not in this
+// namespace. We can do that, but the correct `operator<<` function won't be
+// found by argument-dependent lookup. To print these values, we can wrap them
+// in FormatWrapper, which will forward to `wasp::operator<<`, e.g.:
+//
+//   my_namespace::MyObject my_value;
+//   os << FormatWrapper{my_value};
+template <typename T>
+struct FormatWrapper {
+  T&& contents;
+};
+
+template <typename T>
+FormatWrapper(T&& contents) -> FormatWrapper<T>;
 
 // At<T>
 template <typename T>
-struct formatter<::wasp::At<T>> : formatter<T> {
-  template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::At<T>&, Ctx&);
-};
+std::ostream& operator<<(std::ostream&, const ::wasp::At<T>&);
+
+// Wrapper<T>
+template <typename T>
+std::ostream& operator<<(std::ostream&, const ::wasp::FormatWrapper<T>&);
 
 // span<const T>
 template <typename T>
-struct formatter<::wasp::span<const T>> : formatter<string_view> {
-  template <typename Ctx>
-  typename Ctx::iterator format(::wasp::span<const T>, Ctx&);
-};
+std::ostream& operator<<(std::ostream&, ::wasp::span<const T>);
+template <>
+std::ostream& operator<<(std::ostream&, ::wasp::SpanU8);
 
 // std::array<T, N>
 template <typename T, size_t N>
-struct formatter<std::array<T, N>> : formatter<string_view> {
-  template <typename Ctx>
-  typename Ctx::iterator format(const std::array<T, N>&, Ctx&);
-};
+std::ostream& operator<<(std::ostream&, const ::std::array<T, N>&);
 
 // std::vector<T>
 template <typename T>
-struct formatter<std::vector<T>> : formatter<::wasp::span<const T>> {
-  template <typename Ctx>
-  typename Ctx::iterator format(const std::vector<T>&, Ctx&);
-};
+std::ostream& operator<<(std::ostream&, const ::std::vector<T>&);
 
 // variant<Ts...>
 template <typename... Ts>
-struct formatter<::wasp::variant<Ts...>> : formatter<string_view> {
-  template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::variant<Ts...>&, Ctx&);
-};
+std::ostream& operator<<(std::ostream&, const ::wasp::variant<Ts...>&);
 
 // optional<T>
 template <typename T>
-struct formatter<::wasp::optional<T>> : formatter<string_view> {
-  template <typename Ctx>
-  typename Ctx::iterator format(const ::wasp::optional<T>&, Ctx&);
-};
+std::ostream& operator<<(std::ostream&, const ::wasp::optional<T>&);
+
+// nullopt_t
+std::ostream& operator<<(std::ostream&, const ::std::nullopt_t&);
 
 WASP_BASE_WASM_ENUMS(WASP_DECLARE_FORMATTER)
 WASP_BASE_WASM_STRUCTS(WASP_DECLARE_FORMATTER)
 
-WASP_DECLARE_FORMATTER(SpanU8)
 WASP_DECLARE_FORMATTER(v128);
 WASP_DECLARE_FORMATTER(Features);
 WASP_DECLARE_FORMATTER(monostate);
+WASP_DECLARE_FORMATTER(ShuffleImmediate);
 
-}  // namespace fmt
+}  // namespace wasp
 
 namespace wasp {
 

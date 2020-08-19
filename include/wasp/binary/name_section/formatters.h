@@ -17,17 +17,19 @@
 #ifndef WASP_BINARY_NAME_SECTION_FORMATTERS_H_
 #define WASP_BINARY_NAME_SECTION_FORMATTERS_H_
 
-#include "wasp/base/format.h"
+#include "wasp/base/formatters.h"
 #include "wasp/base/formatter_macros.h"
 #include "wasp/binary/name_section/types.h"
 
-namespace fmt {
+namespace wasp {
+namespace binary {
+
+using wasp::operator<<;
 
 WASP_BINARY_NAME_ENUMS(WASP_DECLARE_FORMATTER)
 WASP_BINARY_NAME_STRUCTS(WASP_DECLARE_FORMATTER)
 
+}  // namespace binary
 }  // namespace fmt
-
-#include "wasp/binary/name_section/formatters-inl.h"
 
 #endif  // WASP_BINARY_NAME_SECTION_FORMATTERS_H_

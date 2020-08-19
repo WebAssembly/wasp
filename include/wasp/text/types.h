@@ -978,13 +978,6 @@ bool operator==(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
 bool operator!=(const BoundValueTypeList& lhs, const ValueTypeList& rhs);
 bool operator!=(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
 
-// Used for gtest.
-
-WASP_TEXT_ENUMS(WASP_DECLARE_PRINT_TO)
-WASP_TEXT_STRUCTS(WASP_DECLARE_PRINT_TO)
-WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_PRINT_TO)
-WASP_TEXT_CONTAINERS(WASP_DECLARE_PRINT_TO)
-
 }  // namespace text
 }  // namespace wasp
 

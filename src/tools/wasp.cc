@@ -18,6 +18,9 @@
 #include <iostream>
 #include <map>
 
+#include "fmt/format.h"
+#include "fmt/ostream.h"
+
 #include "src/tools/argparser.h"
 #include "src/tools/callgraph.h"
 #include "src/tools/cfg.h"
@@ -33,6 +36,8 @@
 #include "wasp/base/string_view.h"
 
 using namespace ::wasp;
+
+using fmt::print;
 
 using Command = int (*)(span<string_view> args);
 

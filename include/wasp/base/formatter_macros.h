@@ -17,73 +17,51 @@
 #ifndef WASP_BASE_FORMATTER_MACROS_H_
 #define WASP_BASE_FORMATTER_MACROS_H_
 
-#define WASP_DECLARE_FORMATTER(Name, ...)                     \
-  template <>                                                 \
-  struct formatter<::wasp::Name> : formatter<string_view> {   \
-    template <typename Ctx>                                   \
-    typename Ctx::iterator format(const ::wasp::Name&, Ctx&); \
-  };
+#define WASP_DECLARE_FORMATTER(Name, ...) \
+  std::ostream& operator<<(std::ostream&, const ::wasp::Name&);
 
 #define WASP_FORMATTER_VARGS(Name, Count, ...) \
   WASP_FORMATTER_##Count(Name, __VA_ARGS__)
 
 // Use ... here so WASP_FORMATTER_VARGS works.
-#define WASP_FORMATTER_0(Name, ...)                                  \
-  template <typename Ctx>                                            \
-  typename Ctx::iterator formatter<::wasp::Name>::format(            \
-      const ::wasp::Name& self, Ctx& ctx) {                          \
-    memory_buffer buf;                                               \
-    format_to(buf, "{{}}");                                          \
-    return formatter<string_view>::format(to_string_view(buf), ctx); \
+#define WASP_FORMATTER_0(Name, ...)                                      \
+  std::ostream& operator<<(std::ostream& os, const ::wasp::Name& self) { \
+    os << "{}";                                                          \
+    return os;                                                           \
   }
 
-#define WASP_FORMATTER_1(Name, f1)                                   \
-  template <typename Ctx>                                            \
-  typename Ctx::iterator formatter<::wasp::Name>::format(            \
-      const ::wasp::Name& self, Ctx& ctx) {                          \
-    memory_buffer buf;                                               \
-    format_to(buf, "{{" #f1 " {}}}", self.f1);                       \
-    return formatter<string_view>::format(to_string_view(buf), ctx); \
+#define WASP_FORMATTER_1(Name, f1)                                       \
+  std::ostream& operator<<(std::ostream& os, const ::wasp::Name& self) { \
+    os << "{" #f1 " " << self.f1 << "}";                                 \
+    return os;                                                           \
   }
 
-#define WASP_FORMATTER_2(Name, f1, f2)                               \
-  template <typename Ctx>                                            \
-  typename Ctx::iterator formatter<::wasp::Name>::format(            \
-      const ::wasp::Name& self, Ctx& ctx) {                          \
-    memory_buffer buf;                                               \
-    format_to(buf, "{{" #f1 " {}, " #f2 " {}}}", self.f1, self.f2);  \
-    return formatter<string_view>::format(to_string_view(buf), ctx); \
+#define WASP_FORMATTER_2(Name, f1, f2)                                   \
+  std::ostream& operator<<(std::ostream& os, const ::wasp::Name& self) { \
+    os << "{" #f1 " " << self.f1 << ", " #f2 " " << self.f2 << "}";      \
+    return os;                                                           \
   }
 
-#define WASP_FORMATTER_3(Name, f1, f2, f3)                                     \
-  template <typename Ctx>                                                      \
-  typename Ctx::iterator formatter<::wasp::Name>::format(                      \
-      const ::wasp::Name& self, Ctx& ctx) {                                    \
-    memory_buffer buf;                                                         \
-    format_to(buf, "{{" #f1 " {}, " #f2 " {}, " #f3 " {}}}", self.f1, self.f2, \
-              self.f3);                                                        \
-    return formatter<string_view>::format(to_string_view(buf), ctx);           \
+#define WASP_FORMATTER_3(Name, f1, f2, f3)                                  \
+  std::ostream& operator<<(std::ostream& os, const ::wasp::Name& self) {    \
+    os << "{" #f1 " " << self.f1 << ", " #f2 " " << self.f2 << ", " #f3 " " \
+       << self.f3 << "}";                                                   \
+    return os;                                                              \
   }
 
-#define WASP_FORMATTER_4(Name, f1, f2, f3, f4)                           \
-  template <typename Ctx>                                                \
-  typename Ctx::iterator formatter<::wasp::Name>::format(                \
-      const ::wasp::Name& self, Ctx& ctx) {                              \
-    memory_buffer buf;                                                   \
-    format_to(buf, "{{" #f1 " {}, " #f2 " {}, " #f3 " {}, " #f4 " {}}}", \
-              self.f1, self.f2, self.f3, self.f4);                       \
-    return formatter<string_view>::format(to_string_view(buf), ctx);     \
+#define WASP_FORMATTER_4(Name, f1, f2, f3, f4)                              \
+  std::ostream& operator<<(std::ostream& os, const ::wasp::Name& self) {    \
+    os << "{" #f1 " " << self.f1 << ", " #f2 " " << self.f2 << ", " #f3 " " \
+       << self.f3 << ", " #f4 " " << self.f4 << "}";                        \
+    return os;                                                              \
   }
 
-#define WASP_FORMATTER_5(Name, f1, f2, f3, f4, f5)                             \
-  template <typename Ctx>                                                      \
-  typename Ctx::iterator formatter<::wasp::Name>::format(                      \
-      const ::wasp::Name& self, Ctx& ctx) {                                    \
-    memory_buffer buf;                                                         \
-    format_to(                                                                 \
-        buf, "{{" #f1 " {}, " #f2 " {}, " #f3 " {}, " #f4 " {}, " #f5 " {}}}", \
-        self.f1, self.f2, self.f3, self.f4, self.f5);                          \
-    return formatter<string_view>::format(to_string_view(buf), ctx);           \
+#define WASP_FORMATTER_5(Name, f1, f2, f3, f4, f5)                          \
+  std::ostream& operator<<(std::ostream& os, const ::wasp::Name& self) {    \
+    os << "{" #f1 " " << self.f1 << ", " #f2 " " << self.f2 << ", " #f3 " " \
+       << self.f3 << ", " #f4 " " << self.f4 << ", " #f5 " " << self.f5     \
+       << "}";                                                              \
+    return os;                                                              \
   }
 
 #endif // WASP_BASE_FORMATTER_MACROS_H_

@@ -20,8 +20,9 @@
 #include <algorithm>
 #include <iostream>
 
+#include "fmt/format.h"
+
 #include "wasp/base/enumerate.h"
-#include "wasp/base/format.h"
 
 namespace wasp {
 namespace tools {
@@ -123,8 +124,8 @@ auto TextErrors::ErrorToString(const Error& error) const -> std::string {
                       std::string(loc_end - loc_start, '^') +
                       std::string(line_end - loc_end, ' ');
 
-  return format("{}:{}:{}: {}\n{}\n{}\n", filename, line, column, error.message,
-                line1, line2);
+  return fmt::format("{}:{}:{}: {}\n{}\n{}\n", filename, line, column,
+                     error.message, line1, line2);
 }
 
 }  // namespace tools

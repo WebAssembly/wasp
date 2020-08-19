@@ -24,6 +24,9 @@
 #include <string>
 #include <vector>
 
+#include "fmt/format.h"
+#include "fmt/ostream.h"
+
 #include "src/tools/argparser.h"
 #include "src/tools/binary_errors.h"
 #include "wasp/base/enumerate.h"
@@ -40,6 +43,8 @@
 namespace wasp {
 namespace tools {
 namespace validate {
+
+using fmt::print;
 
 using namespace ::wasp::binary;
 

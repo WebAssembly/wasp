@@ -28,8 +28,8 @@ void LazySequenceBase::OnCountError(Errors& errors,
                                     string_view name,
                                     Index expected,
                                     Index actual) {
-  errors.OnError(data, format("Expected {} to have count {}, got {}", name,
-                              expected, actual));
+  errors.OnError(data, format("Expected ", name, " to have count ", expected,
+                              ", got ", actual));
 }
 
 }  // namespace binary

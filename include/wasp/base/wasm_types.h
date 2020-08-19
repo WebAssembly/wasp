@@ -22,7 +22,6 @@
 
 #include "wasp/base/at.h"
 #include "wasp/base/operator_eq_ne_macros.h"
-#include "wasp/base/print_to_macros.h"
 #include "wasp/base/std_hash_macros.h"
 #include "wasp/base/types.h"
 
@@ -135,11 +134,6 @@ using ShuffleImmediate = std::array<u8, 16>;
 
 WASP_BASE_WASM_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_BASE_WASM_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
-
-// Used for gtest.
-
-WASP_BASE_WASM_ENUMS(WASP_DECLARE_PRINT_TO)
-WASP_BASE_WASM_STRUCTS(WASP_DECLARE_PRINT_TO)
 
 }  // namespace wasp
 

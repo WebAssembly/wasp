@@ -42,8 +42,8 @@ bool BeginCode(Context& context, Location loc) {
   Index func_index = context.imported_function_count + context.code_count;
   if (func_index >= context.functions.size()) {
     context.errors->OnError(
-        loc, format("Unexpected code index {}, function count is {}",
-                    func_index, context.functions.size()));
+        loc, format("Unexpected code index ", func_index,
+                    ", function count is ", context.functions.size()));
     return false;
   }
   context.code_count++;
@@ -71,8 +71,7 @@ bool CheckDefaultable(Context& context,
                       string_view desc) {
   if (!IsDefaultableType(value)) {
     context.errors->OnError(
-        value.loc(),
-        format("{} must be defaultable, got {}", desc, value->type));
+        value.loc(), format(desc, " must be defaultable, got ", value->type));
     return false;
   }
   return true;
@@ -83,8 +82,7 @@ bool CheckDefaultable(Context& context,
                       string_view desc) {
   if (!IsDefaultableType(value)) {
     context.errors->OnError(
-        value.loc(),
-        format("{} must be defaultable, got {}", desc, value->type));
+        value.loc(), format(desc, " must be defaultable, got ", value->type));
     return false;
   }
   return true;
@@ -184,8 +182,7 @@ bool Validate(Context& context,
     default:
       context.errors->OnError(
           instruction.loc(),
-          format("Invalid instruction in constant expression: {}",
-                 instruction));
+          format("Invalid instruction in constant expression: ", instruction));
       return false;
   }
 
@@ -246,7 +243,7 @@ bool Validate(Context& context,
     default:
       context.errors->OnError(
           instruction.loc(),
-          format("Invalid instruction in element expression: {}", instruction));
+          format("Invalid instruction in element expression: ", instruction));
       return false;
   }
 
@@ -314,7 +311,7 @@ bool Validate(Context& context, const At<binary::Export>& value) {
 
   if (context.export_names.find(value->name) != context.export_names.end()) {
     context.errors->OnError(value.loc(),
-                            format("Duplicate export name {}", value->name));
+                            format("Duplicate export name ", value->name));
     valid = false;
   }
   context.export_names.insert(value->name);
@@ -378,7 +375,7 @@ bool Validate(Context& context, const At<binary::EventType>& value) {
   auto&& entry = context.types[value->type_index];
   if (!entry.type->result_types.empty()) {
     context.errors->OnError(
-        value.loc(), format("Expected an empty exception result type, got {}",
+        value.loc(), format("Expected an empty exception result type, got ",
                             entry.type->result_types));
     return false;
   }
@@ -397,9 +394,9 @@ bool Validate(Context& context, const At<binary::FunctionType>& value) {
   bool valid = true;
   if (value->result_types.size() > 1 &&
       !context.features.multi_value_enabled()) {
-    context.errors->OnError(
-        value.loc(), format("Expected result type count of 0 or 1, got {}",
-                            value->result_types.size()));
+    context.errors->OnError(value.loc(),
+                            format("Expected result type count of 0 or 1, got ",
+                                   value->result_types.size()));
     valid = false;
   }
   valid &= Validate(context, value->param_types);
@@ -478,9 +475,8 @@ bool ValidateIndex(Context& context,
                    Index max,
                    string_view desc) {
   if (index >= max) {
-    context.errors->OnError(
-        index.loc(),
-        format("Invalid {} {}, must be less than {}", desc, index, max));
+    context.errors->OnError(index.loc(), format("Invalid ", desc, " ", index,
+                                                ", must be less than ", max));
     return false;
   }
   return true;
@@ -492,20 +488,20 @@ bool Validate(Context& context, const At<Limits>& value, Index max) {
   if (value->min > max) {
     context.errors->OnError(
         value->min.loc(),
-        format("Expected minimum {} to be <= {}", value->min, max));
+        format("Expected minimum ", value->min, " to be <= ", max));
     valid = false;
   }
   if (value->max.has_value()) {
     if (*value->max > max) {
       context.errors->OnError(
           value->max->loc(),
-          format("Expected maximum {} to be <= {}", *value->max, max));
+          format("Expected maximum ", *value->max, " to be <= ", max));
       valid = false;
     }
     if (value->min.value() > value->max->value()) {
       context.errors->OnError(value->min.loc(),
-                              format("Expected minimum {} to be <= maximum {}",
-                                     value->min, *value->max));
+                              format("Expected minimum ", value->min,
+                                     " to be <= maximum ", *value->max));
       valid = false;
     }
   }
@@ -547,9 +543,8 @@ bool Validate(Context& context,
               binary::ReferenceType expected,
               const At<binary::ReferenceType>& actual) {
   if (!IsMatch(context, actual, expected)) {
-    context.errors->OnError(
-        actual.loc(),
-        format("Expected reference type {}, got {}", expected, actual));
+    context.errors->OnError(actual.loc(), format("Expected reference type ",
+                                                 expected, ", got ", actual));
     return false;
   }
   return true;
@@ -581,17 +576,15 @@ bool Validate(Context& context, const At<binary::Start>& value) {
     const auto& type_entry = context.types[function.type_index];
     if (type_entry.type->param_types.size() != 0) {
       context.errors->OnError(
-          value.loc(),
-          format("Expected start function to have 0 params, got {}",
-                 type_entry.type->param_types.size()));
+          value.loc(), format("Expected start function to have 0 params, got ",
+                              type_entry.type->param_types.size()));
       valid = false;
     }
 
     if (type_entry.type->result_types.size() != 0) {
       context.errors->OnError(
-          value.loc(),
-          format("Expected start function to have 0 results, got {}",
-                 type_entry.type->result_types.size()));
+          value.loc(), format("Expected start function to have 0 results, got ",
+                              type_entry.type->result_types.size()));
       valid = false;
     }
   }
@@ -641,9 +634,8 @@ bool Validate(Context& context,
               binary::ValueType expected,
               const At<binary::ValueType>& actual) {
   if (!IsMatch(context, expected, actual)) {
-    context.errors->OnError(
-        actual.loc(),
-        format("Expected value type {}, got {}", expected, actual));
+    context.errors->OnError(actual.loc(), format("Expected value type ",
+                                                 expected, ", got ", actual));
     return false;
   }
   return true;

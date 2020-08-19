@@ -19,10 +19,13 @@
 #include <algorithm>
 #include <iostream>
 
-#include "wasp/base/format.h"
+#include "fmt/format.h"
+#include "fmt/ostream.h"
 
 namespace wasp {
 namespace tools {
+
+using namespace fmt;
 
 ArgParser::Option::Option(LongName long_name, Help help, FlagCallback cb)
     : Option{kInvalidShortName, long_name, help, cb} {}

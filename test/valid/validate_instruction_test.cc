@@ -103,11 +103,11 @@ class ValidateInstructionTest : public ::testing::Test {
   }
 
   void Ok(const Instruction& instruction) {
-    EXPECT_TRUE(Validate(context, instruction)) << format("{}", instruction);
+    EXPECT_TRUE(Validate(context, instruction)) << instruction;
   }
 
   void Fail(const Instruction& instruction) {
-    EXPECT_FALSE(Validate(context, instruction)) << format("{}", instruction);
+    EXPECT_FALSE(Validate(context, instruction)) << instruction;
   }
 
   void OkWithTypeStack(const Instruction& instruction,
@@ -117,9 +117,9 @@ class ValidateInstructionTest : public ::testing::Test {
     Context context_copy{context, errors_nop};
     context_copy.type_stack = param_types;
     EXPECT_TRUE(Validate(context_copy, instruction))
-        << format("{} with stack {}", instruction, param_types);
+        << format(instruction, " with stack ", param_types);
     EXPECT_TRUE(IsSame(context, result_types, context_copy.type_stack))
-        << format("{}", instruction);
+        << instruction;
   }
 
   void OkWithUnreachableStack(const Instruction& instruction,
@@ -128,10 +128,9 @@ class ValidateInstructionTest : public ::testing::Test {
     Context context_copy{context, errors_nop};
     context_copy.label_stack.back().unreachable = true;
     context_copy.type_stack.clear();
-    EXPECT_TRUE(Validate(context_copy, instruction))
-        << format("{}", instruction);
+    EXPECT_TRUE(Validate(context_copy, instruction)) << instruction;
     EXPECT_TRUE(IsSame(context, result_types, context_copy.type_stack))
-        << format("{}", instruction);
+        << instruction;
   }
 
   void FailWithTypeStack(const Instruction& instruction,
@@ -140,7 +139,7 @@ class ValidateInstructionTest : public ::testing::Test {
     Context context_copy{context, errors_nop};
     context_copy.type_stack = param_types;
     EXPECT_FALSE(Validate(context_copy, instruction))
-        << format("{} with stack {}", instruction, param_types);
+        << format(instruction, " with stack ", param_types);
   }
 
   void TestSignatureNoUnreachable(const Instruction& instruction,
@@ -1199,7 +1198,7 @@ TEST_F(ValidateInstructionTest, Select_ReferenceTypes) {
     ExpectError(
         {"instruction",
          format("select instruction without expected type can only be used "
-                "with i32, i64, f32, f64; got {}",
+                "with i32, i64, f32, f64; got ",
                 stack_type)},
         errors);
   }

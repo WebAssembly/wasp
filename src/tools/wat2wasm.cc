@@ -18,6 +18,9 @@
 #include <fstream>
 #include <iostream>
 
+#include "fmt/format.h"
+#include "fmt/ostream.h"
+
 #include "src/tools/argparser.h"
 #include "src/tools/text_errors.h"
 #include "wasp/base/buffer.h"
@@ -48,6 +51,8 @@ namespace fs = std::filesystem;
 namespace wasp {
 namespace tools {
 namespace wat2wasm {
+
+using fmt::print;
 
 struct Options {
   Features features;

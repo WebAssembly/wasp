@@ -15,3 +15,31 @@
 //
 
 #include "wasp/valid/formatters.h"
+
+#include <cassert>
+
+#include "wasp/base/formatter_macros.h"
+#include "wasp/base/formatters.h"
+#include "wasp/base/macros.h"
+#include "wasp/binary/formatters.h"
+
+namespace wasp {
+namespace valid {
+
+std::ostream& operator<<(std::ostream& os, const ::wasp::valid::Any& self) {
+  return os << "any";
+}
+
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::valid::StackType& self) {
+  if (self.is_value_type()) {
+    os << self.value_type();
+  } else {
+    assert(self.is_any());
+    os << "any";
+  }
+  return os;
+}
+
+}  // namespace valid
+}  // namespace wasp

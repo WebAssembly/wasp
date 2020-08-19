@@ -74,12 +74,9 @@ Iterator WriteSeparator(WriteContext& context, Iterator out) {
 
 // WriteFormat
 template <typename Iterator, typename T>
-Iterator WriteFormat(WriteContext& context,
-                     const T& value,
-                     Iterator out,
-                     string_view format_string = "{}") {
+Iterator WriteFormat(WriteContext& context, const T& value, Iterator out) {
   out = WriteSeparator(context, out);
-  out = WriteRaw(context, format(format_string, value), out);
+  out = WriteRaw(context, format(value), out);
   context.Space();
   return out;
 }

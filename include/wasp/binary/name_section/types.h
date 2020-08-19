@@ -21,7 +21,6 @@
 
 #include "wasp/base/at.h"
 #include "wasp/base/operator_eq_ne_macros.h"
-#include "wasp/base/print_to_macros.h"
 #include "wasp/base/span.h"
 #include "wasp/base/std_hash_macros.h"
 #include "wasp/base/string_view.h"
@@ -66,11 +65,6 @@ struct IndirectNameAssoc {
 
 WASP_BINARY_NAME_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_BINARY_NAME_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
-
-// Used for gtest.
-
-WASP_BINARY_NAME_ENUMS(WASP_DECLARE_PRINT_TO)
-WASP_BINARY_NAME_STRUCTS(WASP_DECLARE_PRINT_TO)
 
 }  // namespace binary
 }  // namespace wasp

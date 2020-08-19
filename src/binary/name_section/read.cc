@@ -17,6 +17,7 @@
 #include "wasp/binary/name_section/read.h"
 
 #include "wasp/base/errors_context_guard.h"
+#include "wasp/base/formatters.h"
 #include "wasp/binary/name_section/encoding.h"
 #include "wasp/binary/read.h"
 #include "wasp/binary/read/context.h"

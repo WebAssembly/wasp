@@ -246,7 +246,7 @@ bool CheckTypes(Context& context, Location loc, StackTypeSpan expected) {
   if (!IsMatch(context, expected, type_stack)) {
     // TODO proper formatting of type stack
     context.errors->OnError(
-        loc, format("Expected stack to contain {}, got {}{}", full_expected,
+        loc, format("Expected stack to contain ", full_expected, ", got ",
                     top_label.unreachable ? "..." : "", type_stack));
     return false;
   }
@@ -265,9 +265,8 @@ bool CheckResultTypes(Context& context,
 
   if (!IsMatch(context, callee, caller)) {
     context.errors->OnError(
-        loc,
-        format("Callee's result types {} must equal caller's result types {}",
-               callee, caller));
+        loc, format("Callee's result types ", callee,
+                    " must equal caller's result types ", caller));
     return false;
   }
   return true;
@@ -286,8 +285,8 @@ bool DropTypes(Context& context,
   if (count > type_stack_size) {
     if (print_errors) {
       context.errors->OnError(
-          loc, format("Expected stack to contain {} value{}, got {}", count,
-                      count == 1 ? "" : "s", type_stack_size));
+          loc, format("Expected stack to contain ", count, " value",
+                      count == 1 ? "" : "s", ", got ", type_stack_size));
     }
     ResetTypeStackToLimit(context);
     return top_label.unreachable;
@@ -310,8 +309,8 @@ optional<StackType> PopReferenceType(Context& context, Location loc) {
   auto type = PeekType(context, loc);
   if (type) {
     if (!IsReferenceTypeOrAny(*type)) {
-      context.errors->OnError(loc, format("Expected reference type, got {}",
-                                          GetTypeStack(context)));
+      context.errors->OnError(
+          loc, format("Expected reference type, got ", GetTypeStack(context)));
       return nullopt;
     }
     DropTypes(context, loc, 1, false);
@@ -336,7 +335,7 @@ optional<StackType> PopTypedFunctionReference(Context& context, Location loc) {
 
   if (!ref_type.ref()->heap_type->is_index()) {
     context.errors->OnError(loc,
-                            format("Expected typed function reference, got {}",
+                            format("Expected typed function reference, got ",
                                    GetTypeStack(context)));
     return nullopt;
   }
@@ -370,7 +369,7 @@ void SetUnreachable(Context& context) {
 Label* GetLabel(Context& context, At<Index> depth) {
   if (depth >= context.label_stack.size()) {
     context.errors->OnError(
-        depth.loc(), format("Invalid label {}, must be less than {}", depth,
+        depth.loc(), format("Invalid label ", depth, ", must be less than ",
                             context.label_stack.size()));
     return nullptr;
   }
@@ -410,7 +409,7 @@ bool CheckTypeStackEmpty(Context& context, Location loc) {
   const auto& top_label = TopLabel(context);
   if (context.type_stack.size() != top_label.type_stack_limit) {
     context.errors->OnError(
-        loc, format("Expected empty stack, got {}", GetTypeStack(context)));
+        loc, format("Expected empty stack, got ", GetTypeStack(context)));
     return false;
   }
   return true;
@@ -497,9 +496,8 @@ bool BrTable(Context& context,
         if (br_types.size() != label->br_types().size()) {
           context.errors->OnError(
               target.loc(),
-              format("br_table labels must have the same arity; expected "
-                     "{}, got {}",
-                     br_types.size(), label->br_types().size()));
+              format("br_table labels must have the same arity; expected ",
+                     br_types.size(), ", got ", label->br_types().size()));
           valid = false;
         }
         valid &= CheckTypes(context, target.loc(), label->br_types());
@@ -507,9 +505,8 @@ bool BrTable(Context& context,
         if (br_types != label->br_types()) {
           context.errors->OnError(
               target.loc(),
-              format("br_table labels must have the same signature; expected "
-                     "{}, got {}",
-                     br_types, label->br_types()));
+              format("br_table labels must have the same signature; expected ",
+                     br_types, ", got ", label->br_types()));
           valid = false;
         }
       }
@@ -546,7 +543,7 @@ bool Select(Context& context, Location loc) {
         type.is_any())) {
     context.errors->OnError(
         loc, format("select instruction without expected type can only be used "
-                    "with i32, i64, f32, f64; got {}",
+                    "with i32, i64, f32, f64; got ",
                     type));
     return false;
   }
@@ -562,9 +559,8 @@ bool SelectT(Context& context,
   if (value_types->size() != 1) {
     context.errors->OnError(
         value_types.loc(),
-        format(
-            "select instruction must have types immediate with size 1, got {}",
-            value_types->size()));
+        format("select instruction must have types immediate with size 1, got ",
+               value_types->size()));
     return false;
   }
   valid &= Validate(context, value_types);
@@ -605,7 +601,7 @@ bool GlobalSet(Context& context, Location loc, At<Index> index) {
   if (type.mut == Mutability::Const) {
     context.errors->OnError(
         index.loc(),
-        format("global.set is invalid on immutable global {}", index));
+        format("global.set is invalid on immutable global ", index));
     valid = false;
   }
   return AllTrue(valid, PopType(context, loc, StackType(*type.valtype)));
@@ -629,7 +625,7 @@ bool RefFunc(Context& context, Location loc, At<Index> index) {
   if (context.declared_functions.find(index) ==
       context.declared_functions.end()) {
     context.errors->OnError(loc,
-                            format("Undeclared function reference {}", index));
+                            format("Undeclared function reference ", index));
     return false;
   }
   assert(index < context.functions.size());
@@ -644,7 +640,7 @@ bool CheckAlignment(Context& context,
                     u32 max_align) {
   if (instruction->mem_arg_immediate()->align_log2 > max_align) {
     context.errors->OnError(instruction.loc(),
-                            format("Invalid alignment {}", instruction));
+                            format("Invalid alignment ", instruction));
     return false;
   }
   return true;
@@ -752,9 +748,8 @@ bool CheckReferenceType(Context& context,
                         ReferenceType expected,
                         At<ReferenceType> actual) {
   if (!IsMatch(context, ToStackType(expected), ToStackType(actual))) {
-    context.errors->OnError(
-        actual.loc(),
-        format("Expected reference type {}, got {}", expected, actual));
+    context.errors->OnError(actual.loc(), format("Expected reference type ",
+                                                 expected, ", got ", actual));
     return false;
   }
   return true;
@@ -813,7 +808,7 @@ bool CheckAtomicAlignment(Context& context,
                           u32 align) {
   if (instruction->mem_arg_immediate()->align_log2 != align) {
     context.errors->OnError(instruction.loc(),
-                            format("Invalid atomic alignment {}", instruction));
+                            format("Invalid atomic alignment ", instruction));
     return false;
   }
   return true;
@@ -1043,7 +1038,7 @@ bool BrOnNull(Context& context, Location loc, const At<Index>& depth) {
   if (IsNullableType(type)) {
     PushType(context, AsNonNullableType(type));
   } else {
-    context.errors->OnError(loc, format("{} is not a nullable type", type));
+    context.errors->OnError(loc, format(type, " is not a nullable type"));
     valid = false;
   }
   return AllTrue(valid, type_opt, label);
@@ -1057,7 +1052,7 @@ bool RefAsNonNull(Context& context, Location loc) {
   if (IsNullableType(type)) {
     PushType(context, AsNonNullableType(type));
   } else {
-    context.errors->OnError(loc, format("{} is not a nullable type", type));
+    context.errors->OnError(loc, format(type, " is not a nullable type"));
     valid = false;
   }
   return AllTrue(valid, type_opt);
@@ -1129,8 +1124,8 @@ bool FuncBind(Context& context, Location loc, At<Index> new_type_index) {
   // type.
   if (old_params.size() < new_params.size()) {
     context.errors->OnError(
-        loc, format("new type {} has more params than old type {}",
-                    *new_function_type, *old_function_type));
+        loc, format("new type ", *new_function_type,
+                    " has more params than old type ", *old_function_type));
     return false;
   }
 
@@ -1142,14 +1137,14 @@ bool FuncBind(Context& context, Location loc, At<Index> new_type_index) {
 
   bool valid = true;
   if (!IsMatch(context, new_params, unbound_params)) {
-    context.errors->OnError(loc, format("bind params {} does not match {}",
-                                        new_params, unbound_params));
+    context.errors->OnError(loc, format("bind params ", new_params,
+                                        " does not match ", unbound_params));
     valid = false;
   }
 
   if (!IsMatch(context, old_results, new_results)) {
     context.errors->OnError(
-        loc, format("results {} does not match bind results {}", old_results,
+        loc, format("results ", old_results, " does not match bind results ",
                     new_results));
     valid = false;
   }
@@ -1230,9 +1225,9 @@ bool SimdLane(Context& context,
 
   bool valid = true;
   if (instruction->simd_lane_immediate() >= num_lanes) {
-    context.errors->OnError(instruction.loc(),
-                            format("Invalid lane immediate {}",
-                                   instruction->simd_lane_immediate()));
+    context.errors->OnError(
+        instruction.loc(),
+        format("Invalid lane immediate ", instruction->simd_lane_immediate()));
     valid = false;
   }
   return AllTrue(valid, PopAndPushTypes(context, loc, params, results));
@@ -1246,7 +1241,7 @@ bool SimdShuffle(Context& context,
   for (auto lane : *immediate) {
     if (lane >= max_lane) {
       context.errors->OnError(immediate.loc(),
-                              format("Invalid shuffle immediate {}", lane));
+                              format("Invalid shuffle immediate ", lane));
       valid = false;
     }
   }
@@ -1272,7 +1267,7 @@ bool Validate(Context& context,
     const Index max = std::numeric_limits<Index>::max();
     context.errors->OnError(
         value.loc(),
-        format("Too many locals; max is {}, got {}", max,
+        format("Too many locals; max is ", max, ", got ",
                static_cast<u64>(context.locals.GetCount()) + value->count));
     valid = false;
   }
@@ -2000,8 +1995,7 @@ bool Validate(Context& context, const At<Instruction>& value) {
       return AtomicRmw(context, loc, value);
 
     default:
-      context.errors->OnError(loc,
-                              format("Unimplemented instruction {}", value));
+      context.errors->OnError(loc, format("Unimplemented instruction ", value));
       return false;
   }
 

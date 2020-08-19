@@ -19,9 +19,10 @@
 #include <cassert>
 
 #include "wasp/base/errors.h"
-#include "wasp/base/format.h"
 #include "wasp/text/formatters.h"
 #include "wasp/text/resolve_context.h"
+
+#include "wasp/base/format.h"
 
 namespace wasp {
 namespace text {
@@ -38,7 +39,7 @@ void Define(ResolveContext& context,
 
     // Use the previous name and treat this object as unbound.
     context.errors.OnError(
-        var->loc(), format("Variable {} is already bound to index {}", name,
+        var->loc(), format("Variable ", name, " is already bound to index ",
                            name_map.Get(name)));
   }
 
@@ -200,7 +201,7 @@ void Resolve(ResolveContext& context, At<Var>& var, NameMap& name_map) {
   auto name = var->name();
   auto opt_index = name_map.Get(name);
   if (!opt_index) {
-    context.errors.OnError(var.loc(), format("Undefined variable {}", name));
+    context.errors.OnError(var.loc(), format("Undefined variable ", name));
     return;
   }
 
@@ -271,9 +272,8 @@ void Resolve(ResolveContext& context, FunctionTypeUse& function_type_use) {
           // Explicit params/results, so check that they match.
           if (type != *type_opt) {
             context.errors.OnError(
-                type.loc(),
-                format("Type use {} does not match explicit type {}", type_use,
-                       type));
+                type.loc(), format("Type use ", type_use,
+                                   " does not match explicit type ", type));
           }
         } else {
           // No params/results given, so populate them.
@@ -322,9 +322,8 @@ void Resolve(ResolveContext& context,
           if (type->params != type_opt->params ||
               type->results != type_opt->results) {
             context.errors.OnError(
-                type.loc(),
-                format("Type use {} does not match explicit type {}", type_use,
-                       type));
+                type.loc(), format("Type use ", type_use,
+                                   " does not match explicit type ", type));
           }
         } else {
           // No params/results given, so populate them.
