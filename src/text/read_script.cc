@@ -174,7 +174,7 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> OptAt<Const> {
         default:
           context.errors.OnError(
               simd_token.loc,
-              concat("Invalid SIMD constant token, got {}", simd_token.type));
+              concat("Invalid SIMD constant token, got ", simd_token.type));
           return nullopt;
       }
 
@@ -206,7 +206,7 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> OptAt<Const> {
 
     default:
       context.errors.OnError(token.loc,
-                             concat("Invalid constant, got {}", token.type));
+                             concat("Invalid constant, got ", token.type));
       return nullopt;
   }
 }
@@ -244,8 +244,7 @@ auto ReadGetAction(Tokenizer& tokenizer, Context& context) -> OptAt<GetAction> {
 auto ReadAction(Tokenizer& tokenizer, Context& context) -> OptAt<Action> {
   auto token = tokenizer.Peek();
   if (token.type != TokenType::Lpar) {
-    context.errors.OnError(token.loc,
-                           concat("Expected '(', got {}", token.type));
+    context.errors.OnError(token.loc, concat("Expected '(', got ", token.type));
     return nullopt;
   }
 
@@ -263,7 +262,7 @@ auto ReadAction(Tokenizer& tokenizer, Context& context) -> OptAt<Action> {
 
     default:
       context.errors.OnError(token.loc,
-                             concat("Invalid action type, got {}", token.type));
+                             concat("Invalid action type, got ", token.type));
       return nullopt;
   }
 }
@@ -425,7 +424,7 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
         default:
           context.errors.OnError(
               simd_token.loc,
-              concat("Invalid SIMD constant token, got {}", simd_token.type));
+              concat("Invalid SIMD constant token, got ", simd_token.type));
           return nullopt;
       }
 
@@ -470,7 +469,7 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
 
     default:
       context.errors.OnError(token.loc,
-                             concat("Invalid result, got {}", token.type));
+                             concat("Invalid result, got ", token.type));
       return nullopt;
   }
 }
@@ -551,7 +550,7 @@ auto ReadAssertion(Tokenizer& tokenizer, Context& context) -> OptAt<Assertion> {
 
     default:
       context.errors.OnError(token.loc,
-                             concat("Invalid action type, got {}", token.type));
+                             concat("Invalid action type, got ", token.type));
       return nullopt;
   }
 }
@@ -585,8 +584,7 @@ bool IsCommand(Tokenizer& tokenizer) {
 auto ReadCommand(Tokenizer& tokenizer, Context& context) -> OptAt<Command> {
   auto token = tokenizer.Peek();
   if (token.type != TokenType::Lpar) {
-    context.errors.OnError(token.loc,
-                           concat("Expected '(', got {}", token.type));
+    context.errors.OnError(token.loc, concat("Expected '(', got ", token.type));
     return nullopt;
   }
 
@@ -629,7 +627,7 @@ auto ReadCommand(Tokenizer& tokenizer, Context& context) -> OptAt<Command> {
         return At{script_module.loc(), Command{script_module.value()}};
       } else {
         context.errors.OnError(token.loc,
-                               concat("Invalid command, got {}", token.type));
+                               concat("Invalid command, got ", token.type));
         return nullopt;
       }
     }
