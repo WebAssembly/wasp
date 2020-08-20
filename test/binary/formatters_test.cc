@@ -112,9 +112,9 @@ TEST(BinaryFormattersTest, Section) {
             concat(Section{KnownSection{static_cast<SectionId>(100), span}}));
 }
 
-TEST(BinaryFormattersTest, TypeEntry) {
-  EXPECT_EQ(R"([] -> [])", concat(TypeEntry{FunctionType{{}, {}}}));
-  EXPECT_EQ(R"([i32] -> [])", concat(TypeEntry{FunctionType{{VT_I32}, {}}}));
+TEST(BinaryFormattersTest, DefinedType) {
+  EXPECT_EQ(R"([] -> [])", concat(DefinedType{FunctionType{{}, {}}}));
+  EXPECT_EQ(R"([i32] -> [])", concat(DefinedType{FunctionType{{VT_I32}, {}}}));
 }
 
 TEST(BinaryFormattersTest, FunctionType) {

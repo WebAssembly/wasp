@@ -51,6 +51,7 @@ bool Validate(Context&,
               Index max_global_index);
 bool Validate(Context&, const At<binary::DataCount>&);
 bool Validate(Context&, const At<binary::DataSegment>&);
+bool Validate(Context&, const At<binary::DefinedType>&);
 bool Validate(Context&,
               const At<binary::ElementExpression>&,
               binary::ReferenceType);
@@ -82,7 +83,6 @@ bool Validate(Context&,
 bool Validate(Context&, const At<binary::Start>& value);
 bool Validate(Context&, const At<binary::Table>&);
 bool Validate(Context&, const At<binary::TableType>&);
-bool Validate(Context&, const At<binary::TypeEntry>&);
 bool Validate(Context&, const At<binary::ValueType>&);
 bool Validate(Context&,
               binary::ValueType expected,

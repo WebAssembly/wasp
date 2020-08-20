@@ -85,6 +85,7 @@ auto Read(SpanU8*, Context&, Tag<CopyImmediate>, BulkImmediateKind)
     -> OptAt<CopyImmediate>;
 auto Read(SpanU8*, Context&, Tag<DataCount>) -> OptAt<DataCount>;
 auto Read(SpanU8*, Context&, Tag<DataSegment>) -> OptAt<DataSegment>;
+auto Read(SpanU8*, Context&, Tag<DefinedType>) -> OptAt<DefinedType>;
 auto Read(SpanU8*, Context&, Tag<ElementExpression>)
     -> OptAt<ElementExpression>;
 auto Read(SpanU8*, Context&, Tag<ElementSegment>) -> OptAt<ElementSegment>;
@@ -122,7 +123,6 @@ auto Read(SpanU8*, Context&, Tag<ShuffleImmediate>) -> OptAt<ShuffleImmediate>;
 auto Read(SpanU8*, Context&, Tag<Start>) -> OptAt<Start>;
 auto Read(SpanU8*, Context&, Tag<Table>) -> OptAt<Table>;
 auto Read(SpanU8*, Context&, Tag<TableType>) -> OptAt<TableType>;
-auto Read(SpanU8*, Context&, Tag<TypeEntry>) -> OptAt<TypeEntry>;
 auto Read(SpanU8*, Context&, Tag<u32>) -> OptAt<u32>;
 auto Read(SpanU8*, Context&, Tag<u8>) -> OptAt<u8>;
 auto Read(SpanU8*, Context&, Tag<v128>) -> OptAt<v128>;

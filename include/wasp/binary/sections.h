@@ -29,7 +29,7 @@ class Errors;
 
 namespace binary {
 
-using LazyTypeSection = LazySection<TypeEntry>;
+using LazyTypeSection = LazySection<DefinedType>;
 using LazyImportSection = LazySection<Import>;
 using LazyFunctionSection = LazySection<Function>;
 using LazyTableSection = LazySection<Table>;

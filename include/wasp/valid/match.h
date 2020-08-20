@@ -40,8 +40,8 @@ bool IsSame(Context&,
             const binary::ValueTypeList& expected,
             const binary::ValueTypeList& actual);
 bool IsSame(Context& context,
-            const binary::TypeEntry& expected,
-            const binary::TypeEntry& actual);
+            const binary::DefinedType& expected,
+            const binary::DefinedType& actual);
 bool IsSame(Context&, const StackType& expected, const StackType& actual);
 bool IsSame(Context&, StackTypeSpan expected, StackTypeSpan actual);
 

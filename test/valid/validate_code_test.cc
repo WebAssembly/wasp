@@ -30,7 +30,7 @@ using namespace ::wasp::valid::test;
 TEST(ValidateCodeTest, BeginCode) {
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.defined_type_count = 1;
   context.functions.push_back(Function{0});
   EXPECT_TRUE(BeginCode(context, Location{}));
@@ -39,7 +39,7 @@ TEST(ValidateCodeTest, BeginCode) {
 TEST(ValidateCodeTest, BeginCode_CodeIndexOOB) {
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.functions.push_back(Function{0});
   context.code_count = 1;
   EXPECT_FALSE(BeginCode(context, Location{}));
@@ -48,7 +48,7 @@ TEST(ValidateCodeTest, BeginCode_CodeIndexOOB) {
 TEST(ValidateCodeTest, BeginCode_TypeIndexOOB) {
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.functions.push_back(Function{1});
   EXPECT_FALSE(BeginCode(context, Location{}));
 }

@@ -68,7 +68,7 @@ struct VisitorMock {
   MOCK_METHOD1(EndModule, visit::Result(LazyModule&));
   MOCK_METHOD1(OnSection, visit::Result(At<Section>));
   MOCK_METHOD1(BeginTypeSection, visit::Result(LazyTypeSection));
-  MOCK_METHOD1(OnType, visit::Result(const At<TypeEntry>&));
+  MOCK_METHOD1(OnType, visit::Result(const At<DefinedType>&));
   MOCK_METHOD1(EndTypeSection, visit::Result(LazyTypeSection));
   MOCK_METHOD1(BeginImportSection, visit::Result(LazyImportSection));
   MOCK_METHOD1(OnImport, visit::Result(const At<Import>&));

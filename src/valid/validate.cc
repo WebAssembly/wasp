@@ -52,11 +52,12 @@ bool BeginCode(Context& context, Location loc) {
   context.locals.Reset();
   // Don't validate the index, should have already been validated at this point.
   if (function.type_index < context.defined_type_count) {
-    const binary::TypeEntry& type_entry = context.types[function.type_index];
-    context.locals.Append(type_entry.type->param_types);
+    const binary::DefinedType& defined_type =
+        context.types[function.type_index];
+    context.locals.Append(defined_type.type->param_types);
     context.label_stack.push_back(Label{
-        LabelType::Function, ToStackTypeList(type_entry.type->param_types),
-        ToStackTypeList(type_entry.type->result_types), 0});
+        LabelType::Function, ToStackTypeList(defined_type.type->param_types),
+        ToStackTypeList(defined_type.type->result_types), 0});
     return true;
   } else {
     // Not valid, but try to continue anyway.
@@ -572,18 +573,18 @@ bool Validate(Context& context, const At<binary::Start>& value) {
   bool valid = true;
   auto function = context.functions[value->func_index];
   if (function.type_index < context.defined_type_count) {
-    const auto& type_entry = context.types[function.type_index];
-    if (type_entry.type->param_types.size() != 0) {
+    const auto& defined_type = context.types[function.type_index];
+    if (defined_type.type->param_types.size() != 0) {
       context.errors->OnError(
           value.loc(), concat("Expected start function to have 0 params, got ",
-                              type_entry.type->param_types.size()));
+                              defined_type.type->param_types.size()));
       valid = false;
     }
 
-    if (type_entry.type->result_types.size() != 0) {
+    if (defined_type.type->result_types.size() != 0) {
       context.errors->OnError(
           value.loc(), concat("Expected start function to have 0 results, got ",
-                              type_entry.type->result_types.size()));
+                              defined_type.type->result_types.size()));
       valid = false;
     }
   }
@@ -615,8 +616,8 @@ bool Validate(Context& context, const At<binary::TableType>& value) {
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::TypeEntry>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "type entry"};
+bool Validate(Context& context, const At<binary::DefinedType>& value) {
+  ErrorsContextGuard guard{*context.errors, value.loc(), "defined type"};
   context.types.push_back(value);
   return Validate(context, value->type);
 }

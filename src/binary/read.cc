@@ -214,6 +214,20 @@ OptAt<DataSegment> Read(SpanU8* data, Context& context, Tag<DataSegment>) {
   }
 }
 
+OptAt<DefinedType> Read(SpanU8* data, Context& context, Tag<DefinedType>) {
+  ErrorsContextGuard error_guard{context.errors, *data, "defined type"};
+  LocationGuard guard{data};
+  WASP_TRY_READ_CONTEXT(form, Read<u8>(data, context), "form");
+
+  if (form != encoding::Type::Function) {
+    context.errors.OnError(form.loc(), concat("Unknown type form: ", form));
+    return nullopt;
+  }
+
+  WASP_TRY_READ(function_type, Read<FunctionType>(data, context));
+  return At{guard.range(data), DefinedType{std::move(function_type)}};
+}
+
 OptAt<ElementExpression> Read(SpanU8* data,
                               Context& context,
                               Tag<ElementExpression>) {
@@ -1346,20 +1360,6 @@ OptAt<TableType> Read(SpanU8* data, Context& context, Tag<TableType>) {
   WASP_TRY_READ(elemtype, Read<ReferenceType>(data, context));
   WASP_TRY_READ(limits, Read<Limits>(data, context));
   return At{guard.range(data), TableType{std::move(limits), elemtype}};
-}
-
-OptAt<TypeEntry> Read(SpanU8* data, Context& context, Tag<TypeEntry>) {
-  ErrorsContextGuard error_guard{context.errors, *data, "type entry"};
-  LocationGuard guard{data};
-  WASP_TRY_READ_CONTEXT(form, Read<u8>(data, context), "form");
-
-  if (form != encoding::Type::Function) {
-    context.errors.OnError(form.loc(), concat("Unknown type form: ", form));
-    return nullopt;
-  }
-
-  WASP_TRY_READ(function_type, Read<FunctionType>(data, context));
-  return At{guard.range(data), TypeEntry{std::move(function_type)}};
 }
 
 OptAt<u32> Read(SpanU8* data, Context& context, Tag<u32>) {

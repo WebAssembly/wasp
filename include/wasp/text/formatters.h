@@ -58,7 +58,7 @@ WASP_DEFINE_VARIANT_NAME(text::ElementListWithExpressions, "expression")
 WASP_DEFINE_VARIANT_NAME(text::ElementListWithVars, "var")
 
 // ModuleItem.
-WASP_DEFINE_VARIANT_NAME(text::TypeEntry, "type")
+WASP_DEFINE_VARIANT_NAME(text::DefinedType, "type")
 WASP_DEFINE_VARIANT_NAME(text::Import, "import")
 WASP_DEFINE_VARIANT_NAME(text::Function, "func")
 WASP_DEFINE_VARIANT_NAME(text::Table, "table")

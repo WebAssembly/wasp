@@ -141,7 +141,7 @@ std::ostream& operator<<(std::ostream& os,
 }
 
 std::ostream& operator<<(std::ostream& os,
-                         const ::wasp::binary::TypeEntry& self) {
+                         const ::wasp::binary::DefinedType& self) {
   return os << self.type;
 }
 

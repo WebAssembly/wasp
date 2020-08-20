@@ -42,7 +42,7 @@ void Resolve(Script&, Errors&);
 //   (type $A (func))
 //   (type $B (func (param (ref $A)))
 //
-void DefineTypes(ResolveContext&, const TypeEntry&);
+void DefineTypes(ResolveContext&, const DefinedType&);
 void DefineTypes(ResolveContext&, const ModuleItem&);
 void DefineTypes(ResolveContext&, const Module&);
 
@@ -50,7 +50,7 @@ void DefineTypes(ResolveContext&, const Module&);
 // and to create a mapping of function types to indexes.
 void Define(ResolveContext&, const OptAt<BindVar>&, NameMap&);
 void Define(ResolveContext&, const BoundValueTypeList&, NameMap&);
-void Define(ResolveContext&, const TypeEntry&);
+void Define(ResolveContext&, const DefinedType&);
 void Define(ResolveContext&, const FunctionDesc&);
 void Define(ResolveContext&, const TableDesc&);
 void Define(ResolveContext&, const MemoryDesc&);
@@ -79,7 +79,7 @@ void Resolve(ResolveContext&, BoundValueType&);
 void Resolve(ResolveContext&, BoundValueTypeList&);
 void Resolve(ResolveContext&, BoundFunctionType&);
 void Resolve(ResolveContext&, OptAt<Var>& type_use, At<BoundFunctionType>&);
-void Resolve(ResolveContext&, TypeEntry&);
+void Resolve(ResolveContext&, DefinedType&);
 void Resolve(ResolveContext&, BlockImmediate&);
 void Resolve(ResolveContext&, BrOnExnImmediate&);
 void Resolve(ResolveContext&, BrTableImmediate&);

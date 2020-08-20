@@ -85,13 +85,14 @@ TEST(ConvertToBinaryTest, FunctionType) {
               }});
 }
 
-TEST(ConvertToBinaryTest, TypeEntry) {
-  OK(At{loc1, binary::TypeEntry{At{loc2,
-                                   binary::FunctionType{
-                                       binary::ValueTypeList{At{loc3, BVT_I32}},
-                                       binary::ValueTypeList{At{loc4, BVT_F32}},
-                                   }}}},
-     At{loc1, text::TypeEntry{
+TEST(ConvertToBinaryTest, DefinedType) {
+  OK(At{loc1,
+        binary::DefinedType{At{loc2,
+                               binary::FunctionType{
+                                   binary::ValueTypeList{At{loc3, BVT_I32}},
+                                   binary::ValueTypeList{At{loc4, BVT_F32}},
+                               }}}},
+     At{loc1, text::DefinedType{
                   {},
                   At{loc2, text::BoundFunctionType{
                                text::BoundValueTypeList{text::BoundValueType{
@@ -928,7 +929,7 @@ TEST(ConvertToBinaryTest, Module) {
   OK(At{loc1,
         binary::Module{
             // types
-            {At{loc2, binary::TypeEntry{}}},
+            {At{loc2, binary::DefinedType{}}},
             // imports
             {At{loc3, binary::Import{At{loc4, "m"_sv}, At{loc5, "n"_sv},
                                      At{loc6, Index{0}}}}},
@@ -974,7 +975,7 @@ TEST(ConvertToBinaryTest, Module) {
      At{loc1,
         text::Module{
             // (type (func))
-            text::ModuleItem{At{loc2, text::TypeEntry{nullopt, {}}}},
+            text::ModuleItem{At{loc2, text::DefinedType{nullopt, {}}}},
             // (import "m" "n" (func (type 0)))
             text::ModuleItem{At{
                 loc3,

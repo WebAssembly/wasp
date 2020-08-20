@@ -595,7 +595,7 @@ Iterator Write(const Table& value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(const TypeEntry& value, Iterator out) {
+Iterator Write(const DefinedType& value, Iterator out) {
   out = Write(encoding::Type::Function, out);
   return Write(value.type, out);
 }

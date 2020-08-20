@@ -88,7 +88,7 @@ struct Context {
   Features features;
   Errors* errors;
 
-  std::vector<binary::TypeEntry> types;
+  std::vector<binary::DefinedType> types;
   std::vector<binary::Function> functions;
   std::vector<binary::TableType> tables;
   std::vector<MemoryType> memories;

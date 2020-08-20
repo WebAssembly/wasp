@@ -131,11 +131,11 @@ auto ToBinary(Context& context, const text::BoundValueTypeList& values)
   return result;
 }
 
-auto ToBinary(Context& context, const At<text::TypeEntry>& value)
-    -> At<binary::TypeEntry> {
+auto ToBinary(Context& context, const At<text::DefinedType>& value)
+    -> At<binary::DefinedType> {
   return At{
       value.loc(),
-      binary::TypeEntry{
+      binary::DefinedType{
           At{value->type.loc(),
              binary::FunctionType{ToBinary(context, value->type->params),
                                   ToBinary(context, value->type->results)}}}};
@@ -705,8 +705,8 @@ auto ToBinary(Context& context, const At<text::Module>& value)
 
   for (auto&& item : *value) {
     switch (item.kind()) {
-      case text::ModuleItemKind::TypeEntry:
-        result.types.push_back(ToBinary(context, item.type_entry()));
+      case text::ModuleItemKind::DefinedType:
+        result.types.push_back(ToBinary(context, item.defined_type()));
         break;
 
       case text::ModuleItemKind::Import:

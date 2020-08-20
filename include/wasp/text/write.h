@@ -506,7 +506,7 @@ Iterator Write(WriteContext& context,
 }
 
 template <typename Iterator>
-Iterator Write(WriteContext& context, const TypeEntry& value, Iterator out) {
+Iterator Write(WriteContext& context, const DefinedType& value, Iterator out) {
   out = WriteLpar(context, "type", out);
   out = WriteLpar(context, "func", out);
   out = Write(context, value.name, out);
@@ -952,8 +952,8 @@ Iterator Write(WriteContext& context, const Event& value, Iterator out) {
 template <typename Iterator>
 Iterator Write(WriteContext& context, const ModuleItem& value, Iterator out) {
   switch (value.kind()) {
-    case ModuleItemKind::TypeEntry:
-      out = Write(context, value.type_entry(), out);
+    case ModuleItemKind::DefinedType:
+      out = Write(context, value.defined_type(), out);
       break;
 
     case ModuleItemKind::Import:

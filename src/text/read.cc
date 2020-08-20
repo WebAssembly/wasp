@@ -344,7 +344,8 @@ auto ReadBoundFunctionType(Tokenizer& tokenizer, Context& context)
   return At{guard.loc(), BoundFunctionType{params, results}};
 }
 
-auto ReadTypeEntry(Tokenizer& tokenizer, Context& context) -> OptAt<TypeEntry> {
+auto ReadDefinedType(Tokenizer& tokenizer, Context& context)
+    -> OptAt<DefinedType> {
   LocationGuard guard{tokenizer};
   WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Type));
   auto name = ReadBindVarOpt(tokenizer, context);
@@ -353,7 +354,7 @@ auto ReadTypeEntry(Tokenizer& tokenizer, Context& context) -> OptAt<TypeEntry> {
   WASP_TRY_READ(type, ReadBoundFunctionType(tokenizer, context));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return At{guard.loc(), TypeEntry{name, type}};
+  return At{guard.loc(), DefinedType{name, type}};
 }
 
 // Section 2: Import
@@ -1823,7 +1824,7 @@ auto ReadModuleItem(Tokenizer& tokenizer, Context& context)
   token = tokenizer.Peek(1);
   switch (token.type) {
     case TokenType::Type: {
-      WASP_TRY_READ(item, ReadTypeEntry(tokenizer, context));
+      WASP_TRY_READ(item, ReadDefinedType(tokenizer, context));
       return At{item.loc(), ModuleItem{*item}};
     }
 

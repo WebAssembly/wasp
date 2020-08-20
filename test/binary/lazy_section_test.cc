@@ -54,8 +54,8 @@ TEST(BinaryLazySectionTest, Type) {
 
   ExpectSection(
       {
-          TypeEntry{At{"\x00\x00"_su8, FunctionType{{}, {}}}},
-          TypeEntry{At{
+          DefinedType{At{"\x00\x00"_su8, FunctionType{{}, {}}}},
+          DefinedType{At{
               "\x02\x7f\x7f\x01\x7f"_su8,
               FunctionType{{At{"\x07f"_su8, VT_I32}, At{"\x07f"_su8, VT_I32}},
                            {At{"\x07f"_su8, VT_I32}}}}},

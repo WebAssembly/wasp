@@ -332,7 +332,7 @@ struct FunctionType {
   ValueTypeList result_types;
 };
 
-struct TypeEntry {
+struct DefinedType {
   At<FunctionType> type;
 };
 
@@ -550,7 +550,7 @@ struct Event {
 // decoding, it's more efficient to lazily decode sections.)
 
 struct Module {
-  std::vector<At<TypeEntry>> types;
+  std::vector<At<DefinedType>> types;
   std::vector<At<Import>> imports;
   std::vector<At<Function>> functions;
   std::vector<At<Table>> tables;
@@ -579,6 +579,7 @@ struct Module {
   WASP_V(binary::CustomSection, 2, name, data)                           \
   WASP_V(binary::DataCount, 1, count)                                    \
   WASP_V(binary::DataSegment, 4, type, memory_index, offset, init)       \
+  WASP_V(binary::DefinedType, 1, type)                                   \
   WASP_V(binary::ElementExpression, 1, instructions)                     \
   WASP_V(binary::ElementSegment, 4, type, table_index, offset, elements) \
   WASP_V(binary::ElementListWithIndexes, 2, kind, list)                  \
@@ -606,7 +607,6 @@ struct Module {
   WASP_V(binary::Start, 1, func_index)                                   \
   WASP_V(binary::Table, 1, table_type)                                   \
   WASP_V(binary::TableType, 2, limits, elemtype)                         \
-  WASP_V(binary::TypeEntry, 1, type)                                     \
   WASP_V(binary::UnpackedCode, 2, locals, body)                          \
   WASP_V(binary::UnpackedExpression, 1, instructions)                    \
   WASP_V(binary::ValueType, 1, type)                                     \

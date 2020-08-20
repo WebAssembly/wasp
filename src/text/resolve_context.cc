@@ -63,7 +63,7 @@ void ResolveContext::EndBlock() {
   blocks.pop_back();
 }
 
-auto ResolveContext::EndModule() -> TypeEntryList {
+auto ResolveContext::EndModule() -> DefinedTypeList {
   return function_type_map.EndModule();
 }
 
@@ -95,14 +95,14 @@ Index FunctionTypeMap::Use(BoundFunctionType type) {
   return Use(ToFunctionType(type));
 }
 
-auto FunctionTypeMap::EndModule() -> TypeEntryList {
-  TypeEntryList type_entries;
+auto FunctionTypeMap::EndModule() -> DefinedTypeList {
+  DefinedTypeList defined_types;
   for (auto&& deferred : deferred_list_) {
     list_.push_back(deferred);
-    type_entries.push_back(ToTypeEntry(deferred));
+    defined_types.push_back(ToDefinedType(deferred));
   }
   deferred_list_.clear();
-  return type_entries;
+  return defined_types;
 }
 
 Index FunctionTypeMap::Size() const {
@@ -122,13 +122,13 @@ optional<FunctionType> FunctionTypeMap::Get(Index index) const {
 }
 
 // static
-TypeEntry FunctionTypeMap::ToTypeEntry(const FunctionType& unbound_type) {
+DefinedType FunctionTypeMap::ToDefinedType(const FunctionType& unbound_type) {
   BoundValueTypeList bound_params;
   for (auto param : unbound_type.params) {
     bound_params.push_back(BoundValueType{nullopt, param});
   }
-  return TypeEntry{nullopt,
-                   BoundFunctionType{bound_params, unbound_type.results}};
+  return DefinedType{nullopt,
+                     BoundFunctionType{bound_params, unbound_type.results}};
 }
 
 // static

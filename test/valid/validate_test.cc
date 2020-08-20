@@ -38,7 +38,7 @@ TEST(ValidateTest, UnpackedCode) {
           Instruction{Opcode::End}}}};
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{{}, {VT_I32}}});
+  context.types.push_back(DefinedType{FunctionType{{}, {VT_I32}}});
   context.defined_type_count = 1;
   context.functions.push_back(Function{0});
   EXPECT_TRUE(Validate(context, code));
@@ -50,7 +50,7 @@ TEST(ValidateTest, UnpackedCode_DefaultableLocals) {
       UnpackedExpression{InstructionList{Instruction{Opcode::End}}}};
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{});
+  context.types.push_back(DefinedType{});
   context.defined_type_count = 1;
   context.functions.push_back(Function{0});
   EXPECT_FALSE(Validate(context, code));
@@ -368,7 +368,7 @@ TEST(ValidateTest, ElementSegment_Declared) {
 TEST(ValidateTest, ElementSegment_RefType) {
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.defined_type_count = 1;
 
   ElementSegment element_segment{SegmentType::Passive,
@@ -456,7 +456,7 @@ TEST(ValidateTest, ReferenceType) {
 TEST(ValidateTest, Export) {
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.defined_type_count = 1;
   context.functions.push_back(Function{0});
   context.tables.push_back(TableType{Limits{1}, RT_Funcref});
@@ -526,7 +526,7 @@ TEST(ValidateTest, Event) {
   Features features;
   TestErrors errors;
   Context context{features, errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.defined_type_count = 1;
   EXPECT_TRUE(
       Validate(context, Event{EventType{EventAttribute::Exception, Index{0}}}));
@@ -536,7 +536,7 @@ TEST(ValidateTest, EventType) {
   Features features;
   TestErrors errors;
   Context context{features, errors};
-  context.types.push_back(TypeEntry{FunctionType{{VT_I32}, {}}});
+  context.types.push_back(DefinedType{FunctionType{{VT_I32}, {}}});
   context.defined_type_count = 1;
   EXPECT_TRUE(
       Validate(context, EventType{EventAttribute::Exception, Index{0}}));
@@ -554,7 +554,7 @@ TEST(ValidateTest, EventType_NonEmptyResult) {
   Features features;
   TestErrors errors;
   Context context{features, errors};
-  context.types.push_back(TypeEntry{FunctionType{{}, {VT_I32}}});
+  context.types.push_back(DefinedType{FunctionType{{}, {VT_I32}}});
   context.defined_type_count = 1;
   EXPECT_FALSE(
       Validate(context, EventType{EventAttribute::Exception, Index{0}}));
@@ -563,7 +563,7 @@ TEST(ValidateTest, EventType_NonEmptyResult) {
 TEST(ValidateTest, Function) {
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.defined_type_count = 1;
   EXPECT_TRUE(Validate(context, Function{0}));
 }
@@ -628,7 +628,7 @@ TEST(ValidateTest, FunctionType_RefType) {
 
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.defined_type_count = 1;
   EXPECT_TRUE(Validate(context, function_type));
 }
@@ -761,7 +761,7 @@ TEST(ValidateTest, GlobalType_RefType) {
   for (const auto& global_type : tests) {
     TestErrors errors;
     Context context{errors};
-    context.types.push_back(TypeEntry{FunctionType{}});
+    context.types.push_back(DefinedType{FunctionType{}});
     context.defined_type_count = 1;
     EXPECT_TRUE(Validate(context, global_type));
   }
@@ -776,7 +776,7 @@ TEST(ValidateTest, GlobalType_RefType_IndexOOB) {
 TEST(ValidateTest, Import) {
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.defined_type_count = 1;
 
   const Import tests[] = {
@@ -844,7 +844,7 @@ TEST(ValidateTest, Import_Event_NonEmptyResult) {
   Features features;
   TestErrors errors;
   Context context{features, errors};
-  context.types.push_back(TypeEntry{FunctionType{{}, {VT_F32}}});
+  context.types.push_back(DefinedType{FunctionType{{}, {VT_F32}}});
   context.defined_type_count = 1;
   EXPECT_FALSE(Validate(
       context, Import{"", "", EventType{EventAttribute::Exception, Index{0}}}));
@@ -885,7 +885,7 @@ TEST(ValidateTest, Locals) {
 TEST(ValidateTest, Locals_Defaultable) {
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.defined_type_count = 1;
   EXPECT_FALSE(Validate(context, Locals{1, VT_Ref0}, RequireDefaultable::Yes));
   EXPECT_TRUE(Validate(context, Locals{1, VT_Ref0}, RequireDefaultable::No));
@@ -973,7 +973,7 @@ TEST(ValidateTest, MemoryType_Shared_NoMax) {
 TEST(ValidateTest, Start) {
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.defined_type_count = 1;
   context.functions.push_back(Function{0});
   EXPECT_TRUE(Validate(context, Start{0}));
@@ -989,7 +989,7 @@ TEST(ValidateTest, Start_InvalidParamCount) {
   FunctionType function_type{{VT_I32}, {}};
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{function_type});
+  context.types.push_back(DefinedType{function_type});
   context.defined_type_count = 1;
   context.functions.push_back(Function{0});
   EXPECT_FALSE(Validate(context, Start{0}));
@@ -999,7 +999,7 @@ TEST(ValidateTest, Start_InvalidResultCount) {
   TestErrors errors;
   Context context{errors};
   const FunctionType function_type{{}, {VT_I32}};
-  context.types.push_back(TypeEntry{function_type});
+  context.types.push_back(DefinedType{function_type});
   context.defined_type_count = 1;
   context.functions.push_back(Function{0});
   EXPECT_FALSE(Validate(context, Start{0}));
@@ -1044,7 +1044,7 @@ TEST(ValidateTest, TableType) {
 TEST(ValidateTest, TableType_RefType) {
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.defined_type_count = 1;
   EXPECT_TRUE(Validate(context, TableType{Limits{0}, RT_RefNull0}));
 }
@@ -1068,10 +1068,10 @@ TEST(ValidateTest, TableType_Defaultable) {
   EXPECT_FALSE(Validate(context, TableType{Limits{0}, RT_Ref0}));
 }
 
-TEST(ValidateTest, TypeEntry) {
+TEST(ValidateTest, DefinedType) {
   TestErrors errors;
   Context context{errors};
-  EXPECT_TRUE(Validate(context, TypeEntry{FunctionType{}}));
+  EXPECT_TRUE(Validate(context, DefinedType{FunctionType{}}));
 }
 
 TEST(ValidateTest, ValueType) {
@@ -1106,7 +1106,7 @@ TEST(ValidateTest, ValueType_Mismatch) {
 TEST(ValidateTest, ValueType_RefType) {
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(TypeEntry{FunctionType{}});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.defined_type_count = 1;
   EXPECT_TRUE(Validate(context, VT_Ref0));
 }
@@ -1138,7 +1138,7 @@ TEST(ValidateTest, Module) {
   Context context{errors};
 
   Module module;
-  module.types.push_back(TypeEntry{});
+  module.types.push_back(DefinedType{});
   module.imports.push_back(Import{"a"_sv, "b"_sv, Index{0}});
   module.functions.push_back(Function{Index{0}});
   module.tables.push_back(Table{TableType{Limits{0}, RT_Funcref}});

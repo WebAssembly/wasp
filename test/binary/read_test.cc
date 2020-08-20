@@ -3264,15 +3264,15 @@ TEST_F(BinaryReadTest, TableType_PastEnd) {
        "\x70"_su8);
 }
 
-TEST_F(BinaryReadTest, TypeEntry) {
-  OK(Read<TypeEntry>,
-     TypeEntry{
+TEST_F(BinaryReadTest, DefinedType) {
+  OK(Read<DefinedType>,
+     DefinedType{
          At{"\x00\x01\x7f"_su8, FunctionType{{}, {At{"\x7f"_su8, VT_I32}}}}},
      "\x60\x00\x01\x7f"_su8);
 }
 
-TEST_F(BinaryReadTest, TypeEntry_BadForm) {
-  Fail(Read<TypeEntry>, {{0, "type entry"}, {0, "Unknown type form: 64"}},
+TEST_F(BinaryReadTest, DefinedType_BadForm) {
+  Fail(Read<DefinedType>, {{0, "defined type"}, {0, "Unknown type form: 64"}},
        "\x40"_su8);
 }
 

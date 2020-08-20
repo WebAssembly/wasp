@@ -143,7 +143,7 @@ struct Tool {
   BinaryErrors errors;
   Options options;
   LazyModule module;
-  std::vector<TypeEntry> type_entries;
+  std::vector<DefinedType> defined_types;
   std::vector<Function> functions;
   std::map<string_view, Index> name_to_function;
   Index imported_function_count = 0;
@@ -237,7 +237,7 @@ void Tool::DoPrepass() {
       switch (known->id) {
         case SectionId::Type: {
           auto seq = ReadTypeSection(known, module.context).sequence;
-          std::copy(seq.begin(), seq.end(), std::back_inserter(type_entries));
+          std::copy(seq.begin(), seq.end(), std::back_inserter(defined_types));
           break;
         }
 
@@ -281,10 +281,10 @@ optional<FunctionType> Tool::GetFunctionType(Index func_index) {
     return nullopt;
   }
   Index type_index = functions[func_index].type_index;
-  if (type_index >= type_entries.size()) {
+  if (type_index >= defined_types.size()) {
     return nullopt;
   }
-  return type_entries[type_index].type;
+  return defined_types[type_index].type;
 }
 
 optional<Code> Tool::GetCode(Index find_index) {
@@ -466,8 +466,8 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::CallIndirect:
     case Opcode::ReturnCallIndirect: {
       auto type_index = instr.call_indirect_immediate()->index;
-      if (type_index < type_entries.size()) {
-        const auto& func_type = type_entries[type_index].type;
+      if (type_index < defined_types.size()) {
+        const auto& func_type = defined_types[type_index].type;
         BasicInstruction(instr, func_type->param_types.size() + 1,
                          func_type->result_types.size());
       } else {

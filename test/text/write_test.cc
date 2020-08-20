@@ -317,15 +317,16 @@ TEST(TextWriteTest, BoundFunctionType) {
                         ValueTypeList{VT_I32}});
 }
 
-TEST(TextWriteTest, TypeEntry) {
-  ExpectWrite("(type (func))"_sv, TypeEntry{});
+TEST(TextWriteTest, DefinedType) {
+  ExpectWrite("(type (func))"_sv, DefinedType{});
 
-  ExpectWrite("(type (func $t (param $a i32) (result i32)))"_sv,
-              TypeEntry{"$t"_sv,
-                        BoundFunctionType{
-                            BoundValueTypeList{BoundValueType{"$a"_sv, VT_I32}},
-                            ValueTypeList{VT_I32},
-                        }});
+  ExpectWrite(
+      "(type (func $t (param $a i32) (result i32)))"_sv,
+      DefinedType{"$t"_sv,
+                  BoundFunctionType{
+                      BoundValueTypeList{BoundValueType{"$a"_sv, VT_I32}},
+                      ValueTypeList{VT_I32},
+                  }});
 }
 
 TEST(TextWriteTest, FunctionDesc) {
@@ -905,7 +906,7 @@ TEST(TextWriteTest, Event) {
 TEST(TextWriteTest, ModuleItem) {
   // Type.
   ExpectWrite("(type (func))"_sv,
-              ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}});
+              ModuleItem{DefinedType{nullopt, BoundFunctionType{}}});
 
   // Import.
   ExpectWrite("(import \"m\" \"n\" (func))"_sv,
@@ -966,7 +967,7 @@ TEST(TextWriteTest, ModuleItem) {
 TEST(TextWriteTest, Module) {
   ExpectWrite(
       "(type (func))\n(func\n  nop)\n(start 0)"_sv,
-      Module{ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}},
+      Module{ModuleItem{DefinedType{nullopt, BoundFunctionType{}}},
              ModuleItem{Function{FunctionDesc{},
                                  {},
                                  InstructionList{Instruction{Opcode::Nop}},

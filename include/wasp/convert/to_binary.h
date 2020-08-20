@@ -56,7 +56,7 @@ auto ToBinary(Context&, const At<text::FunctionType>&) -> At<binary::FunctionTyp
 
 // Section 1: Type
 auto ToBinary(Context&, const text::BoundValueTypeList&) -> binary::ValueTypeList;
-auto ToBinary(Context&, const At<text::TypeEntry>&) -> At<binary::TypeEntry>;
+auto ToBinary(Context&, const At<text::DefinedType>&) -> At<binary::DefinedType>;
 
 // Section 2: Import
 auto ToBinary(Context&, const At<text::Import>&) -> At<binary::Import>;

@@ -34,7 +34,7 @@ struct Visitor {
 
   // Section 1.
   Result BeginTypeSection(LazyTypeSection) { return Result::Ok; }
-  Result OnType(const At<TypeEntry>&) { return Result::Ok; }
+  Result OnType(const At<DefinedType>&) { return Result::Ok; }
   Result EndTypeSection(LazyTypeSection) { return Result::Ok; }
 
   // Section 2.

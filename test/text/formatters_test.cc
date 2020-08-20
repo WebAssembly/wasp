@@ -253,9 +253,9 @@ TEST(TextFormattersTest, BoundFunctionType) {
                 ValueTypeList{VT_F32}}));
 }
 
-TEST(TextFormattersTest, TypeEntry) {
+TEST(TextFormattersTest, DefinedType) {
   EXPECT_EQ(R"({name $a, type {params [], results []}})",
-            concat(TypeEntry{"$a"_sv, BoundFunctionType{}}));
+            concat(DefinedType{"$a"_sv, BoundFunctionType{}}));
 }
 
 TEST(TextFormattersTest, FunctionDesc) {
@@ -416,9 +416,9 @@ TEST(TextFormattersTest, Event) {
 }
 
 TEST(TextFormattersTest, ModuleItem) {
-  // TypeEntry
+  // DefinedType
   EXPECT_EQ(R"(type {name $a, type {params [], results []}})",
-            concat(ModuleItem{TypeEntry{"$a"_sv, BoundFunctionType{}}}));
+            concat(ModuleItem{DefinedType{"$a"_sv, BoundFunctionType{}}}));
 
   // Import
   EXPECT_EQ(
@@ -481,7 +481,7 @@ TEST(TextFormattersTest, ModuleItem) {
 TEST(TextFormattersTest, Module) {
   EXPECT_EQ(R"([type {name $a, type {params [], results []}} start {var 0}])",
             concat(Module{
-                ModuleItem{TypeEntry{"$a"_sv, BoundFunctionType{}}},
+                ModuleItem{DefinedType{"$a"_sv, BoundFunctionType{}}},
                 ModuleItem{Start{Var{Index{0}}}},
             }));
 }

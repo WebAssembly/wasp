@@ -109,8 +109,8 @@ bool IsSame(Context& context,
 }
 
 bool IsSame(Context& context,
-            const binary::TypeEntry& expected,
-            const binary::TypeEntry& actual) {
+            const binary::DefinedType& expected,
+            const binary::DefinedType& actual) {
   return IsSame(context, expected.type, actual.type);
 }
 

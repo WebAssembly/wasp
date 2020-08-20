@@ -29,7 +29,7 @@ class Errors;
 
 namespace text {
 
-using TypeEntryList = std::vector<TypeEntry>;
+using DefinedTypeList = std::vector<DefinedType>;
 
 // In all places function types are used, they can be specified with:
 //   a type use:    `(type $var)`
@@ -52,14 +52,14 @@ class FunctionTypeMap {
   void Define(BoundFunctionType);
   Index Use(FunctionType);
   Index Use(BoundFunctionType);
-  // Returns the deferred type entries.
-  auto EndModule() -> TypeEntryList;
+  // Returns the deferred defined types.
+  auto EndModule() -> DefinedTypeList;
 
   Index Size() const;
   optional<FunctionType> Get(Index) const;
 
  private:
-  static TypeEntry ToTypeEntry(const FunctionType&);
+  static DefinedType ToDefinedType(const FunctionType&);
   static List::const_iterator FindIter(const List&, const FunctionType&);
   static bool IsSame(const FunctionType&, const FunctionType&);
   static bool IsSame(const ValueTypeList&, const ValueTypeList&);
@@ -75,7 +75,7 @@ struct ResolveContext {
   void BeginFunction();  // Reset all function-specific context.
   void BeginBlock(Opcode);
   void EndBlock();
-  auto EndModule() -> TypeEntryList;
+  auto EndModule() -> DefinedTypeList;
 
   Errors& errors;
 

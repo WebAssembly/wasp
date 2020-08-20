@@ -194,17 +194,18 @@ TEST_F(TextResolveTest, FunctionTypeUse_DeferType) {
      FunctionDesc{nullopt, nullopt,
                   BoundFunctionType{{BVT{nullopt, VT_F32}}, {}}});
 
-  auto type_entries = ftm.EndModule();
+  auto defined_types = ftm.EndModule();
 
   ASSERT_EQ(3u, ftm.Size());
 
   // Implicitly defined after other explicitly defined types.
   EXPECT_EQ((FunctionType{{VT_F32}, {}}), ftm.Get(2));
 
-  // Generated type entry.
-  ASSERT_EQ(1u, type_entries.size());
-  EXPECT_EQ((TypeEntry{nullopt, BoundFunctionType{{BVT{nullopt, VT_F32}}, {}}}),
-            type_entries[0]);
+  // Generated defined type.
+  ASSERT_EQ(1u, defined_types.size());
+  EXPECT_EQ(
+      (DefinedType{nullopt, BoundFunctionType{{BVT{nullopt, VT_F32}}, {}}}),
+      defined_types[0]);
 }
 
 TEST_F(TextResolveTest, FunctionTypeUse_NoFunctionTypeInContext) {
@@ -280,9 +281,9 @@ TEST_F(TextResolveTest, BlockImmediate_InlineType) {
 
   // None of the inline block types should extend the context's function type
   // map.
-  auto type_entries = context.function_type_map.EndModule();
+  auto defined_types = context.function_type_map.EndModule();
   EXPECT_EQ(0u, context.function_type_map.Size());
-  EXPECT_EQ(0u, type_entries.size());
+  EXPECT_EQ(0u, defined_types.size());
 }
 
 TEST_F(TextResolveTest, BlockImmediate_InlineRefType) {
@@ -709,32 +710,32 @@ TEST_F(TextResolveTest, InstructionList_EndBlock) {
       });
 }
 
-TEST_F(TextResolveTest, TypeEntry) {
+TEST_F(TextResolveTest, DefinedType) {
   context.type_names.NewBound("$t"_sv);
 
   OK(
       // type (param (ref 0)) (result i32)
-      TypeEntry{
+      DefinedType{
           nullopt,
           BoundFunctionType{{BVT{nullopt, Resolved_VT_Ref0}}, {VT_I32}},
       },
       // type (param (ref $t)) (result i32)
-      TypeEntry{
+      DefinedType{
           nullopt,
           BoundFunctionType{{BVT{nullopt, VT_RefT}}, {VT_I32}},
       });
 }
 
-TEST_F(TextResolveTest, TypeEntry_DuplicateName) {
+TEST_F(TextResolveTest, DefinedType_DuplicateName) {
   context.type_names.NewBound("$t"_sv);
 
   FailDefineTypes({{loc1, "Variable $t is already bound to index 0"}},
-                  TypeEntry{At{loc1, "$t"_sv}, BoundFunctionType{}});
+                  DefinedType{At{loc1, "$t"_sv}, BoundFunctionType{}});
 }
 
-TEST_F(TextResolveTest, TypeEntry_DistinctTypes) {
-  OKDefine(TypeEntry{"$a"_sv, BoundFunctionType{}});
-  OKDefine(TypeEntry{"$b"_sv, BoundFunctionType{}});
+TEST_F(TextResolveTest, DefinedType_DistinctTypes) {
+  OKDefine(DefinedType{"$a"_sv, BoundFunctionType{}});
+  OKDefine(DefinedType{"$b"_sv, BoundFunctionType{}});
 
   ASSERT_EQ(2u, context.function_type_map.Size());
 }
@@ -1301,8 +1302,8 @@ TEST_F(TextResolveTest, ModuleItem) {
   context.function_type_map.Define(
       BoundFunctionType{{BVT{"$p"_sv, VT_I32}}, {}});
 
-  // TypeEntry.
-  OK(ModuleItem{TypeEntry{}}, ModuleItem{TypeEntry{}});
+  // DefinedType.
+  OK(ModuleItem{DefinedType{}}, ModuleItem{DefinedType{}});
 
   // Import.
   OK(ModuleItem{Import{
@@ -1416,11 +1417,11 @@ TEST_F(TextResolveTest, ModuleWithDeferredTypes) {
                               {},
                               {}}},
 
-          // The deferred type entries.
+          // The deferred defined types.
           // (type (func))
-          ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}},
+          ModuleItem{DefinedType{nullopt, BoundFunctionType{}}},
           // (type (func (param i32))
-          ModuleItem{TypeEntry{
+          ModuleItem{DefinedType{
               nullopt,
               BoundFunctionType{BoundValueTypeList{BVT{nullopt, VT_I32}}, {}}}},
       },

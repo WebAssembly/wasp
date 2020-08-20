@@ -66,7 +66,7 @@ auto ReadValueType(Tokenizer&, Context&) -> OptAt<ValueType>;
 auto ReadValueTypeList(Tokenizer&, Context&) -> optional<ValueTypeList>;
 
 auto ReadBoundFunctionType(Tokenizer&, Context&) -> OptAt<BoundFunctionType>;
-auto ReadTypeEntry(Tokenizer&, Context&) -> OptAt<TypeEntry>;
+auto ReadDefinedType(Tokenizer&, Context&) -> OptAt<DefinedType>;
 
 // Section 2: Import
 

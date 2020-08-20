@@ -27,9 +27,9 @@ auto ValidateVisitor::BeginTypeSection(binary::LazyTypeSection sec) -> Result {
   return FailUnless(valid::BeginTypeSection(context, sec.count.value_or(0)));
 }
 
-auto ValidateVisitor::OnType(const At<binary::TypeEntry>& type_entry)
+auto ValidateVisitor::OnType(const At<binary::DefinedType>& defined_type)
     -> Result {
-  return FailUnless(Validate(context, type_entry));
+  return FailUnless(Validate(context, defined_type));
 }
 
 auto ValidateVisitor::OnImport(const At<binary::Import>& import) -> Result {

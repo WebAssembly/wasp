@@ -888,9 +888,9 @@ TEST(BinaryWriteTest, Instruction_threads) {
 }
 
 TEST(BinaryWriteTest, KnownSection_Vector) {
-  std::vector<TypeEntry> types{
-      TypeEntry{FunctionType{{VT_I32, VT_I64}, {}}},
-      TypeEntry{FunctionType{{}, {VT_I32, VT_I64}}},
+  std::vector<DefinedType> types{
+      DefinedType{FunctionType{{VT_I32, VT_I64}, {}}},
+      DefinedType{FunctionType{{}, {VT_I32, VT_I64}}},
   };
   SpanU8 expected =
       "\x01"                       // section "type"
@@ -971,10 +971,10 @@ TEST(BinaryWriteTest, Module) {
   ExpectWrite("\x00\x61\x73\x6d\x01\x00\x00\x00"_su8, Module{});
 }
 
-TEST(BinaryWriteTest, Module_TypeEntry) {
+TEST(BinaryWriteTest, Module_DefinedType) {
   Module module;
-  module.types.push_back(TypeEntry{FunctionType{}});
-  module.types.push_back(TypeEntry{FunctionType{{VT_I32}, {VT_I64}}});
+  module.types.push_back(DefinedType{FunctionType{}});
+  module.types.push_back(DefinedType{FunctionType{{VT_I32}, {VT_I64}}});
 
   ExpectWrite(
       "\x00\x61\x73\x6d\x01\x00\x00\x00"  // magic/version
@@ -1762,8 +1762,8 @@ TEST(BinaryWriteTest, TableType) {
   ExpectWrite("\x70\x01\x01\x02"_su8, TableType{Limits{1, 2}, RT_Funcref});
 }
 
-TEST(BinaryWriteTest, TypeEntry) {
-  ExpectWrite("\x60\x00\x01\x7f"_su8, TypeEntry{FunctionType{{}, {VT_I32}}});
+TEST(BinaryWriteTest, DefinedType) {
+  ExpectWrite("\x60\x00\x01\x7f"_su8, DefinedType{FunctionType{{}, {VT_I32}}});
 }
 
 TEST(BinaryWriteTest, U8) {

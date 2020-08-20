@@ -88,7 +88,7 @@ struct Tool {
 
     visit::Result OnSection(At<Section>);
     visit::Result BeginTypeSection(LazyTypeSection);
-    visit::Result OnType(const At<TypeEntry>&);
+    visit::Result OnType(const At<DefinedType>&);
     visit::Result BeginImportSection(LazyImportSection);
     visit::Result OnImport(const At<Import>&);
     visit::Result BeginFunctionSection(LazyFunctionSection);
@@ -135,7 +135,7 @@ struct Tool {
 
   void InsertFunctionName(Index, string_view name);
   void InsertGlobalName(Index, string_view name);
-  optional<TypeEntry> GetTypeEntry(Index) const;
+  optional<DefinedType> GetDefinedType(Index) const;
   optional<Function> GetFunction(Index) const;
   optional<FunctionType> GetFunctionType(Index) const;
   optional<string_view> GetFunctionName(Index) const;
@@ -182,7 +182,7 @@ struct Tool {
   SpanU8 data;
   BinaryErrors errors;
   LazyModule module;
-  std::vector<TypeEntry> type_entries;
+  std::vector<DefinedType> defined_types;
   std::vector<Function> functions;
   std::map<Index, string_view> function_names;
   std::map<Index, string_view> global_names;
@@ -305,7 +305,7 @@ void Tool::DoPrepass() {
       switch (known->id) {
         case SectionId::Type: {
           auto seq = ReadTypeSection(known, module.context).sequence;
-          std::copy(seq.begin(), seq.end(), std::back_inserter(type_entries));
+          std::copy(seq.begin(), seq.end(), std::back_inserter(defined_types));
           break;
         }
 
@@ -555,8 +555,8 @@ visit::Result Tool::Visitor::BeginTypeSection(LazyTypeSection section) {
   return SkipUnless(tool.ShouldPrintDetails(pass));
 }
 
-visit::Result Tool::Visitor::OnType(const At<TypeEntry>& type_entry) {
-  print(" - type[{}] {}\n", index++, type_entry);
+visit::Result Tool::Visitor::OnType(const At<DefinedType>& defined_type) {
+  print(" - type[{}] {}\n", index++, defined_type);
   return visit::Result::Ok;
 }
 
@@ -1054,11 +1054,11 @@ void Tool::InsertGlobalName(Index index, string_view name) {
   global_names.insert(std::make_pair(index, name));
 }
 
-optional<TypeEntry> Tool::GetTypeEntry(Index type_index) const {
-  if (type_index >= type_entries.size()) {
+optional<DefinedType> Tool::GetDefinedType(Index type_index) const {
+  if (type_index >= defined_types.size()) {
     return nullopt;
   }
-  return type_entries[type_index];
+  return defined_types[type_index];
 }
 
 optional<Function> Tool::GetFunction(Index func_index) const {
@@ -1070,8 +1070,8 @@ optional<Function> Tool::GetFunction(Index func_index) const {
 
 optional<FunctionType> Tool::GetFunctionType(Index func_index) const {
   if (auto func = GetFunction(func_index)) {
-    if (auto type_entry = GetTypeEntry(func->type_index)) {
-      return type_entry->type;
+    if (auto defined_type = GetDefinedType(func->type_index)) {
+      return defined_type->type;
     }
   }
   return nullopt;
@@ -1254,9 +1254,9 @@ void Tool::PrintInstruction(const Instruction& instr,
       } else if (instr.has_block_type_immediate()) {
         auto block_type = instr.block_type_immediate();
         if (block_type->is_index()) {
-          auto type_entry_opt = GetTypeEntry(block_type->index());
-          if (type_entry_opt) {
-            print(" <{}>", type_entry_opt->type);
+          auto defined_type_opt = GetDefinedType(block_type->index());
+          if (defined_type_opt) {
+            print(" <{}>", defined_type_opt->type);
           }
         }
       }

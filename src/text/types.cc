@@ -804,8 +804,8 @@ auto ModuleItem::kind() const -> ModuleItemKind {
   return static_cast<ModuleItemKind>(desc.index());
 }
 
-bool ModuleItem::is_type_entry() const {
-  return holds_alternative<At<TypeEntry>>(desc);
+bool ModuleItem::is_defined_type() const {
+  return holds_alternative<At<DefinedType>>(desc);
 }
 
 bool ModuleItem::is_import() const {
@@ -848,12 +848,12 @@ bool ModuleItem::is_event() const {
   return holds_alternative<At<Event>>(desc);
 }
 
-auto ModuleItem::type_entry() -> At<TypeEntry>& {
-  return get<At<TypeEntry>>(desc);
+auto ModuleItem::defined_type() -> At<DefinedType>& {
+  return get<At<DefinedType>>(desc);
 }
 
-auto ModuleItem::type_entry() const -> const At<TypeEntry>& {
-  return get<At<TypeEntry>>(desc);
+auto ModuleItem::defined_type() const -> const At<DefinedType>& {
+  return get<At<DefinedType>>(desc);
 }
 
 auto ModuleItem::import() -> At<Import>& {

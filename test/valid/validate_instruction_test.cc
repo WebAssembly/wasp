@@ -65,7 +65,7 @@ class ValidateInstructionTest : public ::testing::Test {
 
   Index AddFunctionType(const FunctionType& function_type) {
     context.defined_type_count++;
-    return AddItem(context.types, TypeEntry{function_type});
+    return AddItem(context.types, DefinedType{function_type});
   }
 
   Index AddFunction(const FunctionType& function_type) {

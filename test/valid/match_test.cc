@@ -37,7 +37,7 @@ class ValidMatchTest : public ::testing::Test {
   void PushFunctionType(const binary::ValueTypeList& params,
                         const binary::ValueTypeList& results) {
     context.types.push_back(
-        binary::TypeEntry{binary::FunctionType{params, results}});
+        binary::DefinedType{binary::FunctionType{params, results}});
   }
 
   TestErrors errors;

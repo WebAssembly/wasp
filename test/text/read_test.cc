@@ -406,12 +406,12 @@ TEST_F(TextReadTest, FunctionType) {
      span);
 }
 
-TEST_F(TextReadTest, TypeEntry) {
-  OK(ReadTypeEntry, TypeEntry{nullopt, BoundFunctionType{{}, {}}},
+TEST_F(TextReadTest, DefinedType) {
+  OK(ReadDefinedType, DefinedType{nullopt, BoundFunctionType{{}, {}}},
      "(type (func))"_su8);
 
-  OK(ReadTypeEntry,
-     TypeEntry{
+  OK(ReadDefinedType,
+     DefinedType{
          At{"$foo"_su8, "$foo"_sv},
          At{"(param $bar i32) (result i64)"_su8,
             BoundFunctionType{{At{"$bar i32"_su8, BVT{At{"$bar"_su8, "$bar"_sv},
@@ -2441,7 +2441,7 @@ TEST_F(TextReadTest, DataSegment_bulk_memory) {
 
 TEST_F(TextReadTest, ModuleItem) {
   // Type.
-  OK(ReadModuleItem, ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}},
+  OK(ReadModuleItem, ModuleItem{DefinedType{nullopt, BoundFunctionType{}}},
      "(type (func))"_su8);
 
   // Import.
@@ -2538,7 +2538,7 @@ TEST_F(TextReadTest, ModuleItem_exceptions) {
 TEST_F(TextReadTest, Module) {
   OK(ReadModule,
      Module{At{"(type (func))"_su8,
-               ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}}},
+               ModuleItem{DefinedType{nullopt, BoundFunctionType{}}}},
             At{"(func nop)"_su8,
                ModuleItem{Function{
                    FunctionDesc{},

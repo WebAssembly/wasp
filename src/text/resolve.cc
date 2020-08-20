@@ -53,17 +53,17 @@ void Define(ResolveContext& context,
   }
 }
 
-void DefineTypes(ResolveContext& context, const TypeEntry& type_entry) {
-  Define(context, type_entry.name, context.type_names);
+void DefineTypes(ResolveContext& context, const DefinedType& defined_type) {
+  Define(context, defined_type.name, context.type_names);
 }
 
-void Define(ResolveContext& context, const TypeEntry& type_entry) {
+void Define(ResolveContext& context, const DefinedType& defined_type) {
   // Resolve the type, in case the params or results have a value type that
   // uses a name, e.g. `(type (func (param (ref $T))))`.
   //
   // Since Resolve() changes its parameter, we make a copy first. The type
-  // entry is resolved later below in `Resolve(ResolveContext&, TypeEntry&)`.
-  BoundFunctionType bft = type_entry.type;
+  // entry is resolved later below in `Resolve(ResolveContext&, DefinedType&)`.
+  BoundFunctionType bft = defined_type.type;
   Resolve(context, bft);
   context.function_type_map.Define(bft);
 }
@@ -121,15 +121,15 @@ void Define(ResolveContext& context, const DataSegment& segment) {
 }
 
 void DefineTypes(ResolveContext& context, const ModuleItem& item) {
-  if (item.is_type_entry()) {
-    DefineTypes(context, item.type_entry());
+  if (item.is_defined_type()) {
+    DefineTypes(context, item.defined_type());
   }
 }
 
 void Define(ResolveContext& context, const ModuleItem& item) {
   switch (item.kind()) {
-    case ModuleItemKind::TypeEntry:
-      Define(context, item.type_entry());
+    case ModuleItemKind::DefinedType:
+      Define(context, item.defined_type());
       break;
 
     case ModuleItemKind::Import:
@@ -338,8 +338,8 @@ void Resolve(ResolveContext& context,
   Define(context, type->params, context.local_names);
 }
 
-void Resolve(ResolveContext& context, TypeEntry& type_entry) {
-  Resolve(context, type_entry.type.value());
+void Resolve(ResolveContext& context, DefinedType& defined_type) {
+  Resolve(context, defined_type.type.value());
 }
 
 void Resolve(ResolveContext& context, BlockImmediate& immediate) {
@@ -669,8 +669,8 @@ void Resolve(ResolveContext& context, Event& event) {
 
 void Resolve(ResolveContext& context, ModuleItem& item) {
   switch (item.kind()) {
-    case ModuleItemKind::TypeEntry:
-      return Resolve(context, *item.type_entry());
+    case ModuleItemKind::DefinedType:
+      return Resolve(context, *item.defined_type());
 
     case ModuleItemKind::Import:
       return Resolve(context, *item.import());
@@ -712,8 +712,8 @@ void Resolve(ResolveContext& context, Module& module) {
     Resolve(context, item);
   }
   auto deferred_types = context.EndModule();
-  for (auto& type_entry : deferred_types) {
-    module.push_back(ModuleItem{type_entry});
+  for (auto& defined_type : deferred_types) {
+    module.push_back(ModuleItem{defined_type});
   }
 }
 

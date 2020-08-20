@@ -306,7 +306,7 @@ struct BoundFunctionType {
 FunctionType ToFunctionType(BoundFunctionType);
 BoundFunctionType ToBoundFunctionType(FunctionType);
 
-struct TypeEntry {
+struct DefinedType {
   OptAt<BindVar> name;
   At<BoundFunctionType> type;
 };
@@ -623,7 +623,7 @@ struct Event {
 
 // NOTE this must be kept in sync with the ModuleItem variant below.
 enum class ModuleItemKind {
-  TypeEntry,
+  DefinedType,
   Import,
   Function,
   Table,
@@ -638,7 +638,7 @@ enum class ModuleItemKind {
 
 struct ModuleItem {
   auto kind() const -> ModuleItemKind;
-  bool is_type_entry() const;
+  bool is_defined_type() const;
   bool is_import() const;
   bool is_function() const;
   bool is_table() const;
@@ -650,8 +650,8 @@ struct ModuleItem {
   bool is_data_segment() const;
   bool is_event() const;
 
-  auto type_entry() -> At<TypeEntry>&;
-  auto type_entry() const -> const At<TypeEntry>&;
+  auto defined_type() -> At<DefinedType>&;
+  auto defined_type() const -> const At<DefinedType>&;
   auto import() -> At<Import>&;
   auto import() const -> const At<Import>&;
   auto function() -> At<Function>&;
@@ -673,7 +673,7 @@ struct ModuleItem {
   auto event() -> At<Event>&;
   auto event() const -> const At<Event>&;
 
-  variant<At<TypeEntry>,
+  variant<At<DefinedType>,
           At<Import>,
           At<Function>,
           At<Table>,
@@ -897,7 +897,7 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::FunctionType, 2, params, results)                         \
   WASP_V(text::FunctionTypeUse, 2, type_use, type)                       \
   WASP_V(text::FunctionDesc, 3, name, type_use, type)                    \
-  WASP_V(text::TypeEntry, 2, name, type)                                 \
+  WASP_V(text::DefinedType, 2, name, type)                               \
   WASP_V(text::Instruction, 2, opcode, immediate)                        \
   WASP_V(text::BlockImmediate, 2, label, type)                           \
   WASP_V(text::BrOnExnImmediate, 2, target, event)                       \
