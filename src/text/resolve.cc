@@ -63,7 +63,10 @@ void Define(ResolveContext& context, const DefinedType& defined_type) {
   //
   // Since Resolve() changes its parameter, we make a copy first. The type
   // entry is resolved later below in `Resolve(ResolveContext&, DefinedType&)`.
-  BoundFunctionType bft = defined_type.type;
+
+  // TODO: handle struct and array types
+  assert(defined_type.is_function_type());
+  BoundFunctionType bft = defined_type.function_type();
   Resolve(context, bft);
   context.function_type_map.Define(bft);
 }
@@ -339,7 +342,9 @@ void Resolve(ResolveContext& context,
 }
 
 void Resolve(ResolveContext& context, DefinedType& defined_type) {
-  Resolve(context, defined_type.type.value());
+  // TODO: handle struct and array types
+  assert(defined_type.is_function_type());
+  Resolve(context, defined_type.function_type().value());
 }
 
 void Resolve(ResolveContext& context, BlockImmediate& immediate) {

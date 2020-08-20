@@ -133,12 +133,15 @@ auto ToBinary(Context& context, const text::BoundValueTypeList& values)
 
 auto ToBinary(Context& context, const At<text::DefinedType>& value)
     -> At<binary::DefinedType> {
-  return At{
-      value.loc(),
-      binary::DefinedType{
-          At{value->type.loc(),
-             binary::FunctionType{ToBinary(context, value->type->params),
-                                  ToBinary(context, value->type->results)}}}};
+  // TODO: handle struct and array types
+  assert(value->is_function_type());
+
+  return At{value.loc(),
+            binary::DefinedType{
+                At{value->function_type().loc(),
+                   binary::FunctionType{
+                       ToBinary(context, value->function_type()->params),
+                       ToBinary(context, value->function_type()->results)}}}};
 }
 
 // Section 2: Import

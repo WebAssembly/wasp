@@ -507,10 +507,12 @@ Iterator Write(WriteContext& context,
 
 template <typename Iterator>
 Iterator Write(WriteContext& context, const DefinedType& value, Iterator out) {
+  // TODO: handle struct and array types
+  assert(value.is_function_type());
   out = WriteLpar(context, "type", out);
   out = WriteLpar(context, "func", out);
   out = Write(context, value.name, out);
-  out = Write(context, value.type, out);
+  out = Write(context, value.function_type(), out);
   out = WriteRpar(context, out);
   out = WriteRpar(context, out);
   return out;

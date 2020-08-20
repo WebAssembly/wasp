@@ -318,7 +318,7 @@ TEST(TextWriteTest, BoundFunctionType) {
 }
 
 TEST(TextWriteTest, DefinedType) {
-  ExpectWrite("(type (func))"_sv, DefinedType{});
+  ExpectWrite("(type (func))"_sv, DefinedType{nullopt, BoundFunctionType{}});
 
   ExpectWrite(
       "(type (func $t (param $a i32) (result i32)))"_sv,

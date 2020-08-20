@@ -29,21 +29,33 @@ WASP_DEFINE_VARIANT_NAME(text::RefType, "ref_type")
 // ValueType.
 WASP_DEFINE_VARIANT_NAME(text::ReferenceType, "reference_type")
 
+// StorageType
+WASP_DEFINE_VARIANT_NAME(text::ValueType, "value_type")
+
+// DefinedType
+WASP_DEFINE_VARIANT_NAME(text::BoundFunctionType, "func")
+WASP_DEFINE_VARIANT_NAME(text::StructType, "struct")
+WASP_DEFINE_VARIANT_NAME(text::ArrayType, "array")
+
 // Instruction.
 WASP_DEFINE_VARIANT_NAME(text::OpcodeInfo, "opcode_info")
 WASP_DEFINE_VARIANT_NAME(text::LiteralInfo, "literal_info")
 WASP_DEFINE_VARIANT_NAME(text::Text, "text")
 WASP_DEFINE_VARIANT_NAME(text::BlockImmediate, "block")
 WASP_DEFINE_VARIANT_NAME(text::BrTableImmediate, "br_table")
+WASP_DEFINE_VARIANT_NAME(text::BrOnCastImmediate, "br_on_cast")
 WASP_DEFINE_VARIANT_NAME(text::BrOnExnImmediate, "br_on_exn")
 WASP_DEFINE_VARIANT_NAME(text::CallIndirectImmediate, "call_indirect")
 WASP_DEFINE_VARIANT_NAME(text::CopyImmediate, "copy")
 WASP_DEFINE_VARIANT_NAME(text::FuncBindImmediate, "func.bind")
+WASP_DEFINE_VARIANT_NAME(text::HeapType, "heap_type")
+WASP_DEFINE_VARIANT_NAME(text::HeapType2Immediate, "heap_type_2")
 WASP_DEFINE_VARIANT_NAME(text::InitImmediate, "init")
 WASP_DEFINE_VARIANT_NAME(text::LetImmediate, "let")
 WASP_DEFINE_VARIANT_NAME(text::MemArgImmediate, "mem_arg")
-WASP_DEFINE_VARIANT_NAME(text::HeapType, "heap_type")
+WASP_DEFINE_VARIANT_NAME(text::RttSubImmediate, "rtt.sub")
 WASP_DEFINE_VARIANT_NAME(text::SelectImmediate, "select")
+WASP_DEFINE_VARIANT_NAME(text::StructFieldImmediate, "struct_field")
 WASP_DEFINE_VARIANT_NAME(text::Var, "var")
 
 // Import.

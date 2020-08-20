@@ -975,7 +975,8 @@ TEST(ConvertToBinaryTest, Module) {
      At{loc1,
         text::Module{
             // (type (func))
-            text::ModuleItem{At{loc2, text::DefinedType{nullopt, {}}}},
+            text::ModuleItem{At{
+                loc2, text::DefinedType{nullopt, text::BoundFunctionType{}}}},
             // (import "m" "n" (func (type 0)))
             text::ModuleItem{At{
                 loc3,

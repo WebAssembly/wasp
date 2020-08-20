@@ -1303,7 +1303,8 @@ TEST_F(TextResolveTest, ModuleItem) {
       BoundFunctionType{{BVT{"$p"_sv, VT_I32}}, {}});
 
   // DefinedType.
-  OK(ModuleItem{DefinedType{}}, ModuleItem{DefinedType{}});
+  OK(ModuleItem{DefinedType{nullopt, BoundFunctionType{}}},
+     ModuleItem{DefinedType{nullopt, BoundFunctionType{}}});
 
   // Import.
   OK(ModuleItem{Import{

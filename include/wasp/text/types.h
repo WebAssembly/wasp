@@ -82,6 +82,11 @@ struct ReferenceType {
   variant<At<ReferenceKind>, At<RefType>> type;
 };
 
+struct Rtt {
+  At<Index> depth;
+  At<HeapType> type;
+};
+
 struct ValueType {
   explicit ValueType(At<NumericType>);
   explicit ValueType(At<ReferenceType>);
@@ -96,16 +101,34 @@ struct ValueType {
 
   bool is_numeric_type() const;
   bool is_reference_type() const;
+  bool is_rtt() const;
 
   auto numeric_type() -> At<NumericType>&;
   auto numeric_type() const -> const At<NumericType>&;
   auto reference_type() -> At<ReferenceType>&;
   auto reference_type() const -> const At<ReferenceType>&;
+  auto rtt() -> At<Rtt>&;
+  auto rtt() const -> const At<Rtt>&;
 
-  variant<At<NumericType>, At<ReferenceType>> type;
+  variant<At<NumericType>, At<ReferenceType>, At<Rtt>> type;
 };
 
 using ValueTypeList = std::vector<At<ValueType>>;
+
+struct StorageType {
+  explicit StorageType(At<ValueType>);
+  explicit StorageType(At<PackedType>);
+
+  bool is_value_type() const;
+  bool is_packed_type() const;
+
+  auto value_type() -> At<ValueType>&;
+  auto value_type() const -> const At<ValueType>&;
+  auto packed_type() -> At<PackedType>&;
+  auto packed_type() const -> const At<PackedType>&;
+
+  variant<At<ValueType>, At<PackedType>> type;
+};
 
 using VarList = std::vector<At<Var>>;
 using BindVar = string_view;
@@ -130,6 +153,16 @@ struct FunctionTypeUse {
 struct BlockImmediate {
   OptAt<BindVar> label;
   FunctionTypeUse type;
+};
+
+struct HeapType2Immediate {
+  At<HeapType> parent;
+  At<HeapType> child;
+};
+
+struct BrOnCastImmediate {
+  At<Var> target;
+  HeapType2Immediate types;
 };
 
 struct BrOnExnImmediate {
@@ -176,8 +209,18 @@ struct MemArgImmediate {
   OptAt<u32> offset;
 };
 
+struct RttSubImmediate {
+  At<Index> depth;
+  HeapType2Immediate types;
+};
+
 using SelectImmediate = ValueTypeList;
 using SimdLaneImmediate = u8;
+
+struct StructFieldImmediate {
+  At<Var> struct_;
+  At<Var> field;
+};
 
 struct Instruction {
   explicit Instruction(At<Opcode>);
@@ -188,18 +231,22 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<v128>);
   explicit Instruction(At<Opcode>, At<Var>);
   explicit Instruction(At<Opcode>, At<BlockImmediate>);
+  explicit Instruction(At<Opcode>, At<BrOnCastImmediate>);
   explicit Instruction(At<Opcode>, At<BrOnExnImmediate>);
   explicit Instruction(At<Opcode>, At<BrTableImmediate>);
   explicit Instruction(At<Opcode>, At<CallIndirectImmediate>);
   explicit Instruction(At<Opcode>, At<CopyImmediate>);
   explicit Instruction(At<Opcode>, At<FuncBindImmediate>);
+  explicit Instruction(At<Opcode>, At<HeapType>);
+  explicit Instruction(At<Opcode>, At<HeapType2Immediate>);
   explicit Instruction(At<Opcode>, At<InitImmediate>);
   explicit Instruction(At<Opcode>, At<LetImmediate>);
   explicit Instruction(At<Opcode>, At<MemArgImmediate>);
-  explicit Instruction(At<Opcode>, At<HeapType>);
+  explicit Instruction(At<Opcode>, At<RttSubImmediate>);
   explicit Instruction(At<Opcode>, At<SelectImmediate>);
   explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
   explicit Instruction(At<Opcode>, At<SimdLaneImmediate>);
+  explicit Instruction(At<Opcode>, At<StructFieldImmediate>);
 
   // Convenience constructors w/ no Location for numeric types (since the
   // implicit conversions to At<T> doesn't work properly for these types).
@@ -218,18 +265,22 @@ struct Instruction {
   bool has_v128_immediate() const;
   bool has_var_immediate() const;
   bool has_block_immediate() const;
+  bool has_br_on_cast_immediate() const;
   bool has_br_on_exn_immediate() const;
   bool has_br_table_immediate() const;
   bool has_call_indirect_immediate() const;
   bool has_copy_immediate() const;
   bool has_func_bind_immediate() const;
+  bool has_heap_type_immediate() const;
+  bool has_heap_type_2_immediate() const;
   bool has_init_immediate() const;
   bool has_let_immediate() const;
   bool has_mem_arg_immediate() const;
-  bool has_heap_type_immediate() const;
+  bool has_rtt_sub_immediate() const;
   bool has_select_immediate() const;
   bool has_shuffle_immediate() const;
   bool has_simd_lane_immediate() const;
+  bool has_struct_field_immediate() const;
 
   auto s32_immediate() -> At<s32>&;
   auto s32_immediate() const -> const At<s32>&;
@@ -245,6 +296,8 @@ struct Instruction {
   auto var_immediate() const -> const At<Var>&;
   auto block_immediate() -> At<BlockImmediate>&;
   auto block_immediate() const -> const At<BlockImmediate>&;
+  auto br_on_cast_immediate() -> At<BrOnCastImmediate>&;
+  auto br_on_cast_immediate() const -> const At<BrOnCastImmediate>&;
   auto br_on_exn_immediate() -> At<BrOnExnImmediate>&;
   auto br_on_exn_immediate() const -> const At<BrOnExnImmediate>&;
   auto br_table_immediate() -> At<BrTableImmediate>&;
@@ -255,20 +308,26 @@ struct Instruction {
   auto copy_immediate() const -> const At<CopyImmediate>&;
   auto func_bind_immediate() -> At<FuncBindImmediate>&;
   auto func_bind_immediate() const -> const At<FuncBindImmediate>&;
+  auto heap_type_immediate() -> At<HeapType>&;
+  auto heap_type_immediate() const -> const At<HeapType>&;
+  auto heap_type_2_immediate() -> At<HeapType2Immediate>&;
+  auto heap_type_2_immediate() const -> const At<HeapType2Immediate>&;
   auto init_immediate() -> At<InitImmediate>&;
   auto init_immediate() const -> const At<InitImmediate>&;
   auto let_immediate() -> At<LetImmediate>&;
   auto let_immediate() const -> const At<LetImmediate>&;
   auto mem_arg_immediate() -> At<MemArgImmediate>&;
   auto mem_arg_immediate() const -> const At<MemArgImmediate>&;
-  auto heap_type_immediate() -> At<HeapType>&;
-  auto heap_type_immediate() const -> const At<HeapType>&;
+  auto rtt_sub_immediate() -> At<RttSubImmediate>&;
+  auto rtt_sub_immediate() const -> const At<RttSubImmediate>&;
   auto select_immediate() -> At<SelectImmediate>&;
   auto select_immediate() const -> const At<SelectImmediate>&;
   auto shuffle_immediate() -> At<ShuffleImmediate>&;
   auto shuffle_immediate() const -> const At<ShuffleImmediate>&;
   auto simd_lane_immediate() -> At<SimdLaneImmediate>&;
   auto simd_lane_immediate() const -> const At<SimdLaneImmediate>&;
+  auto struct_field_immediate() -> At<StructFieldImmediate>&;
+  auto struct_field_immediate() const -> const At<StructFieldImmediate>&;
 
   At<Opcode> opcode;
   variant<monostate,                  // 0
@@ -290,7 +349,13 @@ struct Instruction {
           At<SelectImmediate>,        // 16
           At<ShuffleImmediate>,       // 17
           At<SimdLaneImmediate>,      // 18
-          At<FuncBindImmediate>>      // 19
+          At<FuncBindImmediate>,      // 19
+
+          At<BrOnCastImmediate>,    // 20
+          At<HeapType2Immediate>,   // 21
+          At<RttSubImmediate>,      // 22
+          At<StructFieldImmediate>  // 23
+          >
       immediate;
 };
 
@@ -306,9 +371,40 @@ struct BoundFunctionType {
 FunctionType ToFunctionType(BoundFunctionType);
 BoundFunctionType ToBoundFunctionType(FunctionType);
 
-struct DefinedType {
+struct FieldType {
   OptAt<BindVar> name;
-  At<BoundFunctionType> type;
+  At<StorageType> type;
+  At<Mutability> mut;
+};
+
+using FieldTypeList = std::vector<At<FieldType>>;
+
+struct StructType {
+  FieldTypeList fields;
+};
+
+struct ArrayType {
+  At<FieldType> field;
+};
+
+struct DefinedType {
+  explicit DefinedType(OptAt<BindVar>, At<BoundFunctionType>);
+  explicit DefinedType(OptAt<BindVar>, At<StructType>);
+  explicit DefinedType(OptAt<BindVar>, At<ArrayType>);
+
+  bool is_function_type() const;
+  bool is_struct_type() const;
+  bool is_array_type() const;
+
+  auto function_type() -> At<BoundFunctionType>&;
+  auto function_type() const -> const At<BoundFunctionType>&;
+  auto struct_type() -> At<StructType>&;
+  auto struct_type() const -> const At<StructType>&;
+  auto array_type() -> At<ArrayType>&;
+  auto array_type() const -> const At<ArrayType>&;
+
+  OptAt<BindVar> name;
+  variant<At<BoundFunctionType>, At<StructType>, At<ArrayType>> type;
 };
 
 // Section 2: Import
@@ -892,14 +988,21 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::OpcodeInfo, 2, opcode, features)                          \
   WASP_V(text::Text, 2, text, byte_size)                                 \
   WASP_V(text::Token, 3, loc, type, immediate)                           \
+  WASP_V(text::Rtt, 2, depth, type)                                      \
+  WASP_V(text::StorageType, 1, type)                                     \
   WASP_V(text::BoundValueType, 2, name, type)                            \
   WASP_V(text::BoundFunctionType, 2, params, results)                    \
+  WASP_V(text::FieldType, 3, name, type, mut)                            \
+  WASP_V(text::StructType, 1, fields)                                    \
+  WASP_V(text::ArrayType, 1, field)                                      \
   WASP_V(text::FunctionType, 2, params, results)                         \
   WASP_V(text::FunctionTypeUse, 2, type_use, type)                       \
   WASP_V(text::FunctionDesc, 3, name, type_use, type)                    \
   WASP_V(text::DefinedType, 2, name, type)                               \
   WASP_V(text::Instruction, 2, opcode, immediate)                        \
   WASP_V(text::BlockImmediate, 2, label, type)                           \
+  WASP_V(text::HeapType2Immediate, 2, parent, child)                     \
+  WASP_V(text::BrOnCastImmediate, 2, target, types)                      \
   WASP_V(text::BrOnExnImmediate, 2, target, event)                       \
   WASP_V(text::BrTableImmediate, 2, targets, default_target)             \
   WASP_V(text::CallIndirectImmediate, 2, table, type)                    \
@@ -907,6 +1010,8 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::InitImmediate, 2, segment, dst)                           \
   WASP_V(text::LetImmediate, 2, block, locals)                           \
   WASP_V(text::MemArgImmediate, 2, align, offset)                        \
+  WASP_V(text::RttSubImmediate, 2, depth, types)                         \
+  WASP_V(text::StructFieldImmediate, 2, struct_, field)                  \
   WASP_V(text::TableDesc, 2, name, type)                                 \
   WASP_V(text::MemoryDesc, 2, name, type)                                \
   WASP_V(text::GlobalDesc, 2, name, type)                                \
@@ -959,6 +1064,7 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::TextList)              \
   WASP_V(text::InstructionList)       \
   WASP_V(text::BoundValueTypeList)    \
+  WASP_V(text::FieldTypeList)         \
   WASP_V(text::InlineExportList)      \
   WASP_V(text::ElementExpressionList) \
   WASP_V(text::Module)                \
