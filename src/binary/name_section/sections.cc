@@ -16,8 +16,7 @@
 
 #include "wasp/binary/name_section/sections.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 auto ReadNameSection(SpanU8 data, Context& context) -> LazyNameSection {
   return LazyNameSection{data, context};
@@ -58,5 +57,4 @@ auto ReadModuleNameSubsection(NameSubsection sec, Context& context)
   return ReadModuleNameSubsection(sec.data, context);
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

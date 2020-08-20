@@ -25,8 +25,7 @@
 #include "wasp/binary/name_section/types.h"
 #include "wasp/binary/types.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 using LazyNameSection = LazySequence<NameSubsection>;
 using ModuleNameSubsection = optional<string_view>;
@@ -48,7 +47,6 @@ auto ReadLocalNamesSubsection(SpanU8, Context&) -> LazyLocalNamesSubsection;
 auto ReadLocalNamesSubsection(NameSubsection, Context&)
     -> LazyLocalNamesSubsection;
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif // WASP_BINARY_NAME_SECTION_SECTIONS_H_

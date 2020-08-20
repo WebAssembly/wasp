@@ -30,8 +30,7 @@
 #include "wasp/base/wasm_types.h"
 #include "wasp/text/read/token.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 struct Var {
   bool is_index() const;
@@ -978,8 +977,7 @@ bool operator==(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
 bool operator!=(const BoundValueTypeList& lhs, const ValueTypeList& rhs);
 bool operator!=(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text
 
 WASP_TEXT_STRUCTS(WASP_DECLARE_STD_HASH)
 WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_STD_HASH)

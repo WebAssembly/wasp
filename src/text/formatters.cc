@@ -22,8 +22,7 @@
 #include "wasp/base/formatters.h"
 #include "wasp/base/macros.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 WASP_TEXT_STRUCTS(WASP_FORMATTER_VARGS)
 
@@ -254,5 +253,4 @@ std::ostream& operator<<(std::ostream& os,
   return os;
 }
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text

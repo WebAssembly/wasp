@@ -20,14 +20,10 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 
-namespace wasp {
-namespace tools {
-namespace validate {
+namespace wasp::tools::validate {
 
 int Main(span<string_view> args);
 
-}  // namespace validate
-}  // namespace tools
-}  // namespace wasp
+}  // namespace wasp::tools::validate
 
 #endif  // WASP_TOOLS_VALIDATE_H_

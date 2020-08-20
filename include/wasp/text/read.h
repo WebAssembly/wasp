@@ -22,8 +22,7 @@
 #include "wasp/text/read/token.h"
 #include "wasp/text/types.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 struct Context;
 class Tokenizer;
@@ -212,7 +211,6 @@ bool IsCommand(Tokenizer&);
 auto ReadCommand(Tokenizer&, Context&) -> OptAt<Command>;
 auto ReadScript(Tokenizer&, Context&) -> optional<Script>;
 
-}
-}
+}  // namespace wasp::text
 
 #endif  // WASP_TEXT_READ_H_

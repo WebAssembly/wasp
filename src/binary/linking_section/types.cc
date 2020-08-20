@@ -23,8 +23,7 @@
 #include "wasp/base/operator_eq_ne_macros.h"
 #include "wasp/base/std_hash_macros.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 SymbolInfo::SymbolInfo(At<Flags> flags, const Base& base)
     : flags{flags}, desc{base} {
@@ -101,8 +100,7 @@ optional<string_view> SymbolInfo::name() const {
 WASP_BINARY_LINKING_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_BINARY_LINKING_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 WASP_BINARY_LINKING_STRUCTS(WASP_STD_HASH_VARGS)
 WASP_BINARY_LINKING_CONTAINERS(WASP_STD_HASH_CONTAINER)

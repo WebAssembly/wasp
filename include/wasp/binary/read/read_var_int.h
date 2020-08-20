@@ -33,8 +33,7 @@
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/var_int.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 struct Context;
 
@@ -93,7 +92,6 @@ OptAt<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
   }
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif  // WASP_BINARY_READ_READ_VAR_INT_H_

@@ -34,8 +34,7 @@
 
 #include "wasp/base/concat.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 OptAt<BlockType> Read(SpanU8* data, Context& context, Tag<BlockType>) {
   ErrorsContextGuard error_guard{context.errors, *data, "block type"};
@@ -1423,5 +1422,4 @@ bool EndModule(SpanU8 data, Context& context) {
   return true;
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

@@ -23,8 +23,7 @@
 #include "wasp/base/macros.h"
 #include "wasp/binary/formatters.h"
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 std::ostream& operator<<(std::ostream& os, const ::wasp::valid::Any& self) {
   return os << "any";
@@ -41,5 +40,4 @@ std::ostream& operator<<(std::ostream& os,
   return os;
 }
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid

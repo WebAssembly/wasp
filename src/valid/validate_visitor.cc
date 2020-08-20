@@ -18,8 +18,7 @@
 
 #include <cassert>
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 ValidateVisitor::ValidateVisitor(Features features, Errors& errors)
     : context{features, errors}, features{features}, errors{errors} {}
@@ -90,5 +89,4 @@ auto ValidateVisitor::FailUnless(bool b) -> Result {
   return b ? Result::Ok : Result::Fail;
 }
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid

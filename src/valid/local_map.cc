@@ -20,8 +20,7 @@
 #include <cassert>
 #include <limits>
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 LocalMap::LocalMap() {
   Reset();
@@ -147,5 +146,4 @@ void LocalMap::Pop() {
   }
 }
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid

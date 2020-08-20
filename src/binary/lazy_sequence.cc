@@ -19,8 +19,7 @@
 #include "wasp/base/concat.h"
 #include "wasp/base/errors.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 // static
 void LazySequenceBase::OnCountError(Errors& errors,
@@ -32,5 +31,4 @@ void LazySequenceBase::OnCountError(Errors& errors,
                               ", got ", actual));
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

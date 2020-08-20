@@ -21,15 +21,13 @@
 #include "wasp/base/formatter_macros.h"
 #include "wasp/binary/name_section/types.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 using wasp::operator<<;
 
 WASP_BINARY_NAME_ENUMS(WASP_DECLARE_FORMATTER)
 WASP_BINARY_NAME_STRUCTS(WASP_DECLARE_FORMATTER)
 
-}  // namespace binary
-}  // namespace fmt
+}  // namespace wasp::binary
 
 #endif  // WASP_BINARY_NAME_SECTION_FORMATTERS_H_

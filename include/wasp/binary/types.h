@@ -32,8 +32,7 @@
 #include "wasp/base/variant.h"
 #include "wasp/base/wasm_types.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 struct HeapType {
   explicit HeapType(At<HeapKind>);
@@ -625,8 +624,7 @@ WASP_BINARY_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 
 WASP_DECLARE_OPERATOR_EQ_NE(binary::Module)
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 WASP_BINARY_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_STD_HASH)
 WASP_BINARY_CONTAINERS(WASP_DECLARE_STD_HASH)

@@ -26,8 +26,7 @@
 #include "wasp/base/span.h"
 #include "wasp/base/types.h"
 
-namespace wasp {
-namespace tools {
+namespace wasp::tools {
 
 class BinaryErrors : public Errors {
  public:
@@ -50,7 +49,6 @@ class BinaryErrors : public Errors {
   std::vector<Error> errors;
 };
 
-}  // namespace tools
-}  // namespace wasp
+}  // namespace wasp::tools
 
 #endif  // SRC_TOOLS_BINARY_ERRORS_H_

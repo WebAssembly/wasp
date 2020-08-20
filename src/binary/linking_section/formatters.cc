@@ -21,8 +21,7 @@
 #include "wasp/base/formatters.h"
 #include "wasp/base/macros.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 std::ostream& operator<<(std::ostream& os, const ::wasp::binary::Comdat& self) {
   return os << "{name " << self.name << ", flags " << self.flags << ", symbols "
@@ -258,5 +257,4 @@ std::ostream& operator<<(std::ostream& os,
   return os << result;
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

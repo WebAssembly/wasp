@@ -20,8 +20,7 @@
 #include "wasp/base/types.h"
 #include "wasp/valid/types.h"
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 struct Context;
 
@@ -64,7 +63,6 @@ bool IsMatch(Context&,
 bool IsMatch(Context&, const StackType& expected, const StackType& actual);
 bool IsMatch(Context&, StackTypeSpan expected, StackTypeSpan actual);
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid
 
 #endif  // WASP_VALID_MATCH_H_

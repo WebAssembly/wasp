@@ -19,9 +19,7 @@
 
 #include "wasp/text/types.h"
 
-namespace wasp {
-namespace text {
-namespace test {
+namespace wasp::text::test {
 
 extern const HeapType HT_Func;
 extern const HeapType HT_Extern;
@@ -73,8 +71,6 @@ extern const ValueType VT_RefNull0;
 extern const ValueType VT_RefT;
 extern const ValueType VT_RefNullT;
 
-}  // namespace test
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text::test
 
 #endif // WASP_TEST_TEXT_CONSTANTS_H_

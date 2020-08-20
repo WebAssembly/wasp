@@ -19,8 +19,7 @@
 
 #include "wasp/text/read/tokenizer.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 class LocationGuard {
  public:
@@ -37,7 +36,6 @@ class LocationGuard {
   const u8* start_;
 };
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text
 
 #endif  // WASP_TEXT_READ_LOCATION_GUARD_H_

@@ -20,14 +20,10 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 
-namespace wasp {
-namespace tools {
-namespace callgraph {
+namespace wasp::tools::callgraph {
 
 int Main(span<string_view> args);
 
-}  // namespace callgraph
-}  // namespace tools
-}  // namespace wasp
+}  // namespace wasp::tools::callgraph
 
 #endif  // WASP_TOOLS_CALLGRAPH_H_

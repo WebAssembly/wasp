@@ -24,8 +24,7 @@
 
 #include "wasp/base/concat.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 void Define(ResolveContext& context,
             const OptAt<BindVar>& var,
@@ -748,5 +747,4 @@ void Resolve(ResolveContext& context, Script& script) {
   }
 }
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text

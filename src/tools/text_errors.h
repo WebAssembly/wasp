@@ -25,8 +25,7 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 
-namespace wasp {
-namespace tools {
+namespace wasp::tools {
 
 class TextErrors : public Errors {
  public:
@@ -55,7 +54,6 @@ class TextErrors : public Errors {
   mutable std::vector<Offset> line_offsets;
 };
 
-}  // namespace tools
-}  // namespace wasp
+}  // namespace wasp::tools
 
 #endif  // WASP_TOOLS_TEXT_ERRORS_H_

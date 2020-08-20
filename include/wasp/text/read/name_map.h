@@ -20,8 +20,7 @@
 #include "wasp/base/string_view.h"
 #include "wasp/text/types.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 class NameMap {
  public:
@@ -44,7 +43,6 @@ class NameMap {
   std::vector<size_t> stack_;
 };
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text
 
 #endif  // WASP_TEXT_READ_NAME_MAP_H_

@@ -25,8 +25,7 @@ namespace wasp {
 
 class Features;
 
-namespace binary {
-namespace encoding {
+namespace binary::encoding {
 
 struct ComdatSymbolKind {
   static u8 Encode(::wasp::binary::ComdatSymbolKind);
@@ -61,8 +60,7 @@ struct SymbolInfoKind {
   static optional<::wasp::binary::SymbolInfoKind> Decode(u8);
 };
 
-}  // namespace encoding
-}  // namespace binary
+}  // namespace binary::encoding
 }  // namespace wasp
 
 #endif  // WASP_BINARY_LINKING_SECTION_ENCODING_H

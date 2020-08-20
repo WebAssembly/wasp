@@ -21,8 +21,7 @@
 #include "wasp/base/operator_eq_ne_macros.h"
 #include "wasp/base/std_hash_macros.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 BlockType::BlockType(At<ValueType> type) : type{type} {}
 
@@ -736,8 +735,7 @@ bool operator==(const Module& lhs, const Module& rhs) {
 
 bool operator!=(const Module& lhs, const Module& rhs) { return !(lhs == rhs); }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 WASP_BINARY_STRUCTS_CUSTOM_FORMAT(WASP_STD_HASH_VARGS)
 WASP_BINARY_CONTAINERS(WASP_STD_HASH_CONTAINER)

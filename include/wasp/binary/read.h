@@ -25,8 +25,7 @@
 #include "wasp/base/string_view.h"
 #include "wasp/binary/types.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 struct Context;
 
@@ -132,7 +131,6 @@ auto Read(SpanU8*, Context&, Tag<ValueType>) -> OptAt<ValueType>;
 bool EndCode(SpanU8, Context&);
 bool EndModule(SpanU8, Context&);
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif  // WASP_BINARY_READ_H_

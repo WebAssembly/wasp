@@ -21,8 +21,7 @@
 #include "wasp/binary/types_linking.h"
 #include "wasp/binary/write.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 template <typename Iterator>
 Iterator Write(const Comdat& value, Iterator out) {
@@ -66,8 +65,6 @@ Iterator Write(SymbolInfoKind value, Iterator out) {
   return Write(encoding::SymbolInfoKind::Encode(value), out);
 }
 
-
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif  // WASP_BINARY_LINKING_SECTION_WRITE_H_

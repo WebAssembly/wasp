@@ -24,9 +24,7 @@
 #include "wasp/base/types.h"
 #include "wasp/binary/types.h"
 
-namespace wasp {
-namespace binary {
-namespace encoding {
+namespace wasp::binary::encoding {
 
 // BlockType values are 0x40, and 0x7c through 0x7f in the MVP. In the
 // multi-value proposal, a block type is extended to a s32 value, where
@@ -609,6 +607,4 @@ ValueType::Decode(At<u8> prefix, At<s32> code, const Features& features) {
   return nullopt;
 }
 
-}  // namespace encoding
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary::encoding

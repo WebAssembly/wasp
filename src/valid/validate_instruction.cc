@@ -31,8 +31,7 @@
 #include "wasp/valid/match.h"
 #include "wasp/valid/validate.h"
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 namespace {
 
@@ -2002,5 +2001,4 @@ bool Validate(Context& context, const At<Instruction>& value) {
   return PopAndPushTypes(context, loc, params, results);
 }
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid

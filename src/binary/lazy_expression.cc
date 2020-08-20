@@ -17,8 +17,7 @@
 #include "wasp/binary/lazy_expression.h"
 #include "wasp/binary/read/context.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 LazyExpression ReadExpression(SpanU8 data, Context& context) {
   context.seen_final_end = false;
@@ -29,5 +28,4 @@ LazyExpression ReadExpression(Expression expr, Context& context) {
   return ReadExpression(expr.data, context);
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

@@ -19,8 +19,7 @@
 #include <cassert>
 #include "wasp/base/macros.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 NameMap::NameMap() : stack_{0} {}
 
@@ -86,5 +85,4 @@ optional<Index> NameMap::Get(BindVar var) const {
   return nullopt;
 }
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text

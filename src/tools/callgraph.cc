@@ -41,9 +41,7 @@
 #include "wasp/binary/name_section/sections.h"
 #include "wasp/binary/sections.h"
 
-namespace wasp {
-namespace tools {
-namespace callgraph {
+namespace wasp::tools::callgraph {
 
 using fmt::print;
 
@@ -290,6 +288,4 @@ optional<string_view> Tool::GetFunctionName(Index index) const {
   }
 }
 
-}  // namespace callgraph
-}  // namespace tools
-}  // namespace wasp
+}  // namespace wasp::tools::callgraph

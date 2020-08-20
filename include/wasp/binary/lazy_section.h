@@ -23,8 +23,7 @@
 #include "wasp/binary/read.h"
 #include "wasp/binary/read/context.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 struct Context;
 
@@ -41,7 +40,6 @@ template <typename T>
 LazySection<T>::LazySection(SpanU8 data, string_view name, Context& context)
     : count{ReadCount(&data, context)}, sequence{data, count, name, context} {}
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif // WASP_BINARY_LAZY_SECTION_H_

@@ -32,8 +32,7 @@
 #include "wasp/binary/types.h"
 #include "wasp/binary/var_int.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 template <typename Iterator>
 Iterator Write(u8 value, Iterator out) {
@@ -664,7 +663,6 @@ Iterator Write(const Module& value, Iterator out) {
   return out;
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif  // WASP_BINARY_WRITE_H_

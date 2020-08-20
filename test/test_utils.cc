@@ -18,8 +18,7 @@
 
 #include "gtest/gtest.h"
 
-namespace wasp {
-namespace test {
+namespace wasp::test {
 
 std::string ErrorListToString(const ErrorList& error) {
   std::string result;
@@ -108,5 +107,4 @@ void ExpectError(const ErrorList& expected, const TestErrors& errors) {
   ExpectErrors({expected}, errors);
 }
 
-}  // namespace test
-}  // namespace wasp
+}  // namespace wasp::test

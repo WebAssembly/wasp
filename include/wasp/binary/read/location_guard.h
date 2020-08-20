@@ -20,8 +20,7 @@
 #include "wasp/base/at.h"
 #include "wasp/base/span.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 class LocationGuard {
  public:
@@ -33,7 +32,6 @@ class LocationGuard {
   const u8* start_;
 };
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif // WASP_BINARY_READ_LOCATION_GUARD_H_

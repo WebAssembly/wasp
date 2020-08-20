@@ -19,12 +19,10 @@
 
 #include "wasp/text/types.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 void Desugar(Module&);
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text
 
 #endif // WASP_TEXT_DESUGAR_H_

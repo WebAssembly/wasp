@@ -22,8 +22,7 @@
 #include "fmt/format.h"
 #include "fmt/ostream.h"
 
-namespace wasp {
-namespace tools {
+namespace wasp::tools {
 
 using namespace fmt;
 
@@ -229,5 +228,4 @@ ArgParser::ArgsGuard::~ArgsGuard() {
   parser.index_ = 0;
 }
 
-}  // namespace tools
-}  // namespace wasp
+}  // namespace wasp::tools

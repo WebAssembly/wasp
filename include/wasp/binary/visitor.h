@@ -21,9 +21,7 @@
 #include "wasp/binary/lazy_module.h"
 #include "wasp/binary/sections.h"
 
-namespace wasp {
-namespace binary {
-namespace visit {
+namespace wasp::binary::visit {
 
 enum class Result { Ok, Fail, Skip };
 
@@ -254,8 +252,6 @@ inline Result Visit(LazyModule& module, Visitor& visitor) {
 #undef WASP_SECTION
 #undef WASP_OPT_SECTION
 
-}  // namespace visit
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary::visit
 
 #endif  // WASP_BINARY_VISITOR_H_

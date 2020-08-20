@@ -21,15 +21,13 @@
 #include "wasp/base/formatter_macros.h"
 #include "wasp/binary/linking_section/types.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 using wasp::operator<<;
 
 WASP_BINARY_LINKING_ENUMS(WASP_DECLARE_FORMATTER)
 WASP_BINARY_LINKING_STRUCTS(WASP_DECLARE_FORMATTER)
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif  // WASP_BINARY_LINKING_SECTION_FORMATTERS_H_

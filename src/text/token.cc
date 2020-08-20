@@ -18,8 +18,7 @@
 
 #include <cassert>
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 void Text::ToBuffer(Buffer& buffer) const {
   static const char kHexDigit[256] = {
@@ -99,5 +98,4 @@ Token::Token(Location loc, TokenType type, Text text)
 Token::Token(Location loc, TokenType type, Immediate immediate)
     : loc{loc}, type{type}, immediate{immediate} {}
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text

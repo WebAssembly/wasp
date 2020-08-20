@@ -21,14 +21,12 @@
 #include "wasp/base/formatters.h"
 #include "wasp/valid/types.h"
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 using wasp::operator<<;
 
 WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_FORMATTER)
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid
 
 #endif  // WASP_VALID_FORMATTERS_H_

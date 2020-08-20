@@ -14,8 +14,7 @@
 // limitations under the License.
 //
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 // static
 inline LiteralInfo LiteralInfo::HexNat(HasUnderscores underscores) {
@@ -133,5 +132,4 @@ inline Text Token::text() const {
   return get<Text>(immediate);
 }
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text

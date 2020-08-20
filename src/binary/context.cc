@@ -16,8 +16,7 @@
 
 #include "wasp/binary/read/context.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 Context::Context(Errors& errors) : errors(errors) {}
 
@@ -32,5 +31,4 @@ void Context::Reset() {
   data_count = 0;
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

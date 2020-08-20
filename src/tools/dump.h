@@ -20,14 +20,10 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 
-namespace wasp {
-namespace tools {
-namespace dump {
+namespace wasp::tools::dump {
 
 int Main(span<string_view> args);
 
-}  // namespace dump
-}  // namespace tools
-}  // namespace wasp
+}  // namespace wasp::tools::dump
 
 #endif  // WASP_TOOLS_DUMP_H_

@@ -19,8 +19,7 @@
 
 #include <iterator>
 
-namespace wasp {
-namespace test {
+namespace wasp::test {
 
 template <typename Iterator>
 class ClampedIterator {
@@ -77,7 +76,6 @@ ClampedIterator<Iterator> MakeClampedIterator(Iterator begin, Iterator end) {
   return ClampedIterator<Iterator>{begin, end};
 }
 
-}  // namespace test
-}  // namespace wasp
+}  // namespace wasp::test
 
 #endif  // WASP_WRITE_TEST_UTILS_H_

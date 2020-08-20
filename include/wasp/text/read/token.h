@@ -29,8 +29,7 @@
 #include "wasp/base/variant.h"
 #include "wasp/base/wasm_types.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 enum class TokenType {
 #define WASP_V(Name) Name,
@@ -119,8 +118,7 @@ struct Token {
   Immediate immediate;
 };
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text
 
 #include "wasp/text/read/token-inl.h"
 

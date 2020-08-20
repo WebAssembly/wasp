@@ -29,8 +29,7 @@
 #include "wasp/text/numeric.h"
 #include "wasp/text/types.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 // TODO: Rename to Context and put in write namespace?
 struct WriteContext {
@@ -1324,7 +1323,6 @@ Iterator Write(WriteContext& context, const Script& values, Iterator out) {
   return WriteVector(context, values, out);
 }
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text
 
 #endif  // WASP_TEXT_WRITE_H_

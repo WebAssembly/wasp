@@ -24,9 +24,7 @@
 #include "wasp/base/concat.h"
 #include "wasp/base/errors.h"
 
-namespace wasp {
-namespace valid {
-namespace test {
+namespace wasp::valid::test {
 
 using ErrorList = wasp::test::ErrorList;
 using TestErrors = wasp::test::TestErrors;
@@ -39,8 +37,6 @@ void ExpectError(const ExpectedError& expected, TestErrors&);
 void ExpectErrorSubstr(const ExpectedError&, TestErrors&);
 void ClearErrors(TestErrors&);
 
-}  // namespace test
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid::test
 
 #endif // WASP_VALID_TEST_UTILS_H_

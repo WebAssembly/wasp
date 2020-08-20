@@ -25,8 +25,7 @@ namespace wasp {
 
 class Features;
 
-namespace binary {
-namespace encoding {
+namespace binary::encoding {
 
 constexpr u8 Magic[] = {0, 'a', 's', 'm'};
 constexpr u8 Version[] = {1, 0, 0, 0};
@@ -183,8 +182,7 @@ struct ValueType {
                                                     const Features&);
 };
 
-}  // namespace encoding
-}  // namespace binary
+}  // namespace binary::encoding
 }  // namespace wasp
 
 #endif // WASP_BINARY_ENCODING_H

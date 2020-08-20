@@ -23,8 +23,7 @@
 #include "wasp/base/optional.h"
 #include "wasp/binary/types.h"
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 class LocalMap {
  public:
@@ -76,7 +75,6 @@ class LocalMap {
   std::vector<Index> let_stack_;
 };
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid
 
 #endif // WASP_VALID_LOCAL_MAP_H_

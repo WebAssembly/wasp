@@ -18,9 +18,7 @@
 
 #include "gtest/gtest.h"
 
-namespace wasp {
-namespace valid {
-namespace test {
+namespace wasp::valid::test {
 
 void ExpectErrors(const std::vector<ExpectedError>& expected_errors,
                   TestErrors& errors) {
@@ -64,7 +62,4 @@ void ClearErrors(TestErrors& errors) {
   errors.errors.clear();
 }
 
-}  // namespace test
-}  // namespace binary
-}  // namespace wasp
-
+}  // namespace wasp::valid::test

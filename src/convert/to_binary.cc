@@ -21,8 +21,7 @@
 #include "wasp/binary/encoding.h"
 #include "wasp/binary/write.h"
 
-namespace wasp {
-namespace convert {
+namespace wasp::convert {
 
 string_view Context::Add(std::string str) {
   strings.push_back(std::make_unique<std::string>(str));
@@ -784,5 +783,4 @@ auto ToBinary(Context& context, const At<text::Module>& value)
   return MakeAt(value.loc(), result);
 }
 
-}  // namespace convert
-}  // namespace wasp
+}  // namespace wasp::convert

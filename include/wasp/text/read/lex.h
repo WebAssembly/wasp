@@ -20,13 +20,11 @@
 #include "wasp/base/span.h"
 #include "wasp/text/read/token.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 auto Lex(SpanU8* data) -> Token;
 auto LexNoWhitespace(SpanU8* data) -> Token;
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text
 
 #endif  // WASP_TEXT_READ_LEX_H_

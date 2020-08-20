@@ -29,8 +29,7 @@
 #include "wasp/valid/context.h"
 #include "wasp/valid/match.h"
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 bool BeginTypeSection(Context& context, Index type_count) {
   context.defined_type_count = type_count;
@@ -686,5 +685,4 @@ bool Validate(Context& context, const binary::Module& value) {
   return valid;
 }
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid

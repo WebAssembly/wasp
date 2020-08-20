@@ -20,8 +20,7 @@
 #include "wasp/binary/name_section/types.h"
 #include "wasp/binary/read.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 struct Context;
 
@@ -31,7 +30,6 @@ auto Read(SpanU8*, Context&, Tag<NameAssoc>) -> OptAt<NameAssoc>;
 auto Read(SpanU8*, Context&, Tag<NameSubsection>) -> OptAt<NameSubsection>;
 auto Read(SpanU8*, Context&, Tag<NameSubsectionId>) -> OptAt<NameSubsectionId>;
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif  // WASP_BINARY_NAME_SECTION_READ_H_

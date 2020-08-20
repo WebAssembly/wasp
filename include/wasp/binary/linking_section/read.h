@@ -20,8 +20,7 @@
 #include "wasp/binary/linking_section/types.h"
 #include "wasp/binary/read.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 struct Context;
 
@@ -37,7 +36,6 @@ auto Read(SpanU8*, Context&, Tag<SegmentInfo>) -> OptAt<SegmentInfo>;
 auto Read(SpanU8*, Context&, Tag<SymbolInfo>) -> OptAt<SymbolInfo>;
 auto Read(SpanU8*, Context&, Tag<SymbolInfoKind>) -> OptAt<SymbolInfoKind>;
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif  // WASP_BINARY_LINKING_SECTION_READ_H_

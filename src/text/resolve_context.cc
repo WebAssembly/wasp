@@ -22,8 +22,7 @@
 
 #include "wasp/base/macros.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 ResolveContext::ResolveContext(Errors& errors) : errors{errors} {}
 
@@ -156,5 +155,4 @@ bool FunctionTypeMap::IsSame(const ValueTypeList& lhs,
                     });
 }
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text

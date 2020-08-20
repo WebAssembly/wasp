@@ -18,8 +18,7 @@
 
 #include <cassert>
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 Label::Label(LabelType label_type,
              StackTypeSpan param_types,
@@ -98,5 +97,4 @@ void EquivalentTypes::MaybeSwapIndexes(Index& lhs, Index& rhs) {
   }
 }
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid

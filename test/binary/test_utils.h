@@ -24,8 +24,7 @@
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 struct Expression;
 
@@ -35,8 +34,7 @@ namespace test {
 Expression operator"" _expr(const char* str, size_t N);
 
 }  // namespace test
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #include "test/binary/test_utils-inl.h"
 

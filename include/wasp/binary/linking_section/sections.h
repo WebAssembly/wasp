@@ -24,8 +24,7 @@
 #include "wasp/binary/linking_section/types.h"
 #include "wasp/binary/types.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 struct RelocationSection {
   explicit RelocationSection(SpanU8, Context&);
@@ -71,7 +70,6 @@ auto ReadSymbolTableSubsection(SpanU8, Context&) -> LazySymbolTableSubsection;
 auto ReadSymbolTableSubsection(LinkingSubsection, Context&)
     -> LazySymbolTableSubsection;
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif // WASP_BINARY_LINKING_SECTION_SECTIONS_H_

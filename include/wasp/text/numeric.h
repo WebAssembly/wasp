@@ -23,8 +23,7 @@
 #include "wasp/base/span.h"
 #include "wasp/text/read/token.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 template <typename T>
 auto StrToNat(LiteralInfo, SpanU8) -> optional<T>;
@@ -44,8 +43,7 @@ auto IntToStr(T, Base) -> std::string;
 template <typename T>
 auto FloatToStr(T, Base) -> std::string;
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text
 
 #include "wasp/text/numeric-inl.h"
 

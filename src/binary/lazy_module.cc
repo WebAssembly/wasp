@@ -20,8 +20,7 @@
 #include "wasp/binary/encoding.h"  // XXX
 #include "wasp/binary/read.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 namespace {
 
@@ -41,5 +40,4 @@ LazyModule ReadModule(SpanU8 data, const Features& features, Errors& errors) {
   return LazyModule{data, features, errors};
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

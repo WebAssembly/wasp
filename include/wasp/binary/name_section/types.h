@@ -26,8 +26,7 @@
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 enum class NameSubsectionId : u8 {
 #define WASP_V(val, Name, str) Name = val,
@@ -66,8 +65,7 @@ struct IndirectNameAssoc {
 WASP_BINARY_NAME_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_BINARY_NAME_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 WASP_BINARY_NAME_STRUCTS(WASP_DECLARE_STD_HASH)
 WASP_BINARY_NAME_CONTAINERS(WASP_DECLARE_STD_HASH)

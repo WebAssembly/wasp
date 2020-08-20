@@ -20,8 +20,7 @@
 
 #include "wasp/valid/context.h"
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 auto CanonicalizeToRefType(const binary::ReferenceType& type)
     -> binary::RefType {
@@ -222,5 +221,4 @@ bool IsMatch(Context& context, StackTypeSpan expected, StackTypeSpan actual) {
   return true;
 }
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid

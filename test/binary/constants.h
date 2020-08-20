@@ -19,9 +19,7 @@
 
 #include "wasp/binary/types.h"
 
-namespace wasp {
-namespace binary {
-namespace test {
+namespace wasp::binary::test {
 
 extern const HeapType HT_Func;
 extern const HeapType HT_Extern;
@@ -102,8 +100,6 @@ extern const BlockType BT_RefNull1;
 extern const BlockType BT_Ref2;
 extern const BlockType BT_RefNull2;
 
-}  // namespace test
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary::test
 
 #endif // WASP_TEST_BINARY_CONSTANTS_H_

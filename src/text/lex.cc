@@ -18,8 +18,7 @@
 
 #include <cassert>
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 namespace {
 
@@ -601,5 +600,4 @@ auto LexNoWhitespace(SpanU8* data) -> Token {
   }
 }
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text

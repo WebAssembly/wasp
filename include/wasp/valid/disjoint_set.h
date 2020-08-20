@@ -21,8 +21,7 @@
 
 #include "wasp/base/types.h"
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 // See union-find algorithm described here:
 // https://en.wikipedia.org/wiki/Disjoint-set_data_structure
@@ -48,7 +47,6 @@ class DisjointSet {
   std::vector<Node> nodes_;
 };
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid
 
 #endif  // WASP_VALID_DISJOINT_SET_H

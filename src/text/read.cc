@@ -31,8 +31,7 @@
 #include "wasp/text/read/location_guard.h"
 #include "wasp/text/read/macros.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 auto Expect(Tokenizer& tokenizer, Context& context, TokenType expected)
     -> optional<Token> {
@@ -1931,5 +1930,4 @@ template auto ReadSimdValues<u64, 2>(Tokenizer&, Context&) -> OptAt<v128>;
 template auto ReadSimdValues<f32, 4>(Tokenizer&, Context&) -> OptAt<v128>;
 template auto ReadSimdValues<f64, 2>(Tokenizer&, Context&) -> OptAt<v128>;
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text

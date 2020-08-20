@@ -26,8 +26,7 @@
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read_vector.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 OptAt<Comdat> Read(SpanU8* data, Context& context, Tag<Comdat>) {
   ErrorsContextGuard error_guard{context.errors, *data, "comdat"};
@@ -179,5 +178,4 @@ OptAt<SymbolInfoKind> Read(SpanU8* data,
   return decoded;
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

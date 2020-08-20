@@ -19,8 +19,7 @@
 #include <cassert>
 #include <iostream>
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::HeapType& self) {
@@ -409,5 +408,4 @@ std::ostream& operator<<(std::ostream& os,
   return os;
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

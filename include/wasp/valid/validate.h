@@ -20,8 +20,7 @@
 #include "wasp/base/types.h"
 #include "wasp/valid/types.h"
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 enum class ConstantExpressionKind {
   GlobalInit,
@@ -94,7 +93,6 @@ bool Validate(Context&, const At<binary::UnpackedExpression>&);
 
 bool Validate(Context&, const binary::Module&);
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid
 
 #endif  // WASP_VALID_VALIDATE_H_

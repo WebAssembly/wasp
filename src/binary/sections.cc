@@ -19,8 +19,7 @@
 #include "wasp/base/errors.h"
 #include "wasp/binary/formatters.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 auto ReadCodeSection(SpanU8 data, Context& context) -> LazyCodeSection {
   return LazyCodeSection{data, "code section", context};
@@ -126,5 +125,4 @@ auto ReadTypeSection(KnownSection sec, Context& context) -> LazyTypeSection {
   return ReadTypeSection(sec.data, context);
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

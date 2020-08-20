@@ -24,8 +24,7 @@
 #include "wasp/base/types.h"
 #include "wasp/binary/types.h"
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 struct Any {};
 
@@ -92,8 +91,7 @@ auto AsNonNullableType(StackType) -> StackType;
 WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_VALID_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid
 
 WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_STD_HASH)
 WASP_VALID_CONTAINERS(WASP_DECLARE_STD_HASH)

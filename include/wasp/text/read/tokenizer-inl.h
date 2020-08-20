@@ -18,8 +18,7 @@
 
 #include <cassert>
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 inline Tokenizer::Tokenizer(SpanU8 data) : data_{data} {}
 
@@ -78,5 +77,4 @@ inline auto Tokenizer::MatchLpar(TokenType token_type) -> optional<Token> {
   return Read();
 }
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text

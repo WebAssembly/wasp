@@ -24,8 +24,7 @@
 
 #include "wasp/base/enumerate.h"
 
-namespace wasp {
-namespace tools {
+namespace wasp::tools {
 
 TextErrors::TextErrors(string_view filename, SpanU8 data)
     : filename{filename}, data{data} {}
@@ -128,5 +127,4 @@ auto TextErrors::ErrorToString(const Error& error) const -> std::string {
                      error.message, line1, line2);
 }
 
-}  // namespace tools
-}  // namespace wasp
+}  // namespace wasp::tools

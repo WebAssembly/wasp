@@ -41,9 +41,7 @@
 #include "wasp/binary/name_section/sections.h"
 #include "wasp/binary/sections.h"
 
-namespace wasp {
-namespace tools {
-namespace cfg {
+namespace wasp::tools::cfg {
 
 using fmt::format;
 using fmt::print;
@@ -513,6 +511,4 @@ void Tool::Br(Index index, const std::string& name) {
   }
 }
 
-}  // namespace cfg
-}  // namespace tools
-}  // namespace wasp
+}  // namespace wasp::tools::cfg

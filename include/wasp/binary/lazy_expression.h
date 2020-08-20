@@ -21,8 +21,7 @@
 #include "wasp/binary/lazy_sequence.h"
 #include "wasp/binary/types.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 struct Context;
 
@@ -32,7 +31,6 @@ using LazyExpression = LazySequence<Instruction>;
 LazyExpression ReadExpression(SpanU8, Context&);
 LazyExpression ReadExpression(Expression, Context&);
 
-}  // namespace binary
 }  // namespace wasp
 
 #endif  // WASP_BINARY_LAZY_EXPRESSION_H

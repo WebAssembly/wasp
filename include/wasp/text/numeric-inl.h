@@ -25,8 +25,7 @@
 #include "wasp/base/buffer.h"
 #include "wasp/base/macros.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 template <int base>
 bool IsDigit(u8 c);
@@ -406,5 +405,4 @@ auto FloatToStr(T value, Base base) -> std::string {
   return std::string(buffer.begin(), begin);
 }
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text

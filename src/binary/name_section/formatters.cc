@@ -21,8 +21,7 @@
 #include "wasp/base/formatters.h"
 #include "wasp/base/macros.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::NameSubsectionId& self) {
@@ -55,5 +54,4 @@ std::ostream& operator<<(std::ostream& os,
   return os << self.id << " " << self.data;
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

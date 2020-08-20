@@ -19,8 +19,7 @@
 
 #include "wasp/base/types.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 template <typename T>
 struct VarInt {
@@ -36,7 +35,6 @@ struct VarInt {
       sizeof(T) * 8 - kBitsPerByte * (kMaxBytes - 1);
 };
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif  // WASP_BINARY_VAR_INT_H_

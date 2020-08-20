@@ -27,8 +27,7 @@
 #include "wasp/binary/types.h"
 #include "wasp/text/types.h"
 
-namespace wasp {
-namespace convert {
+namespace wasp::convert {
 
 struct Context {
   string_view Add(std::string);
@@ -119,7 +118,6 @@ auto ToBinary(Context&, const At<text::Event>&) -> OptAt<binary::Event>;
 // Module
 auto ToBinary(Context&, const At<text::Module>&) -> At<binary::Module>;
 
-}  // namespace convert
-}  // namespace wasp
+}  // namespace wasp::convert
 
 #endif // WASP_CONVERT_TO_BINARY_H_

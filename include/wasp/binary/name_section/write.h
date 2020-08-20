@@ -21,16 +21,13 @@
 #include "wasp/binary/name_section/types.h"
 #include "wasp/binary/write.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 template <typename Iterator>
 Iterator Write(NameSubsectionId value, Iterator out) {
   return Write(encoding::NameSubsectionId::Encode(value), out);
 }
 
-
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif  // WASP_BINARY_NAME_SECTION_WRITE_H_

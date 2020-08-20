@@ -21,8 +21,7 @@
 #include "wasp/binary/read/context.h"
 #include "wasp/binary/sections.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 template <typename F>
 void ForEachFunctionName(LazyModule& module, F&& f) {
@@ -97,5 +96,4 @@ inline Index GetImportCount(LazyModule& module, ExternalKind kind) {
   return count;
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

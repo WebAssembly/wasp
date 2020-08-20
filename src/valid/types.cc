@@ -23,8 +23,7 @@
 #include "wasp/base/operator_eq_ne_macros.h"
 #include "wasp/base/std_hash_macros.h"
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 StackType::StackType() : type{Any{}} {}
 
@@ -212,8 +211,7 @@ auto AsNonNullableType(StackType type) -> StackType {
 WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_VALID_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid
 
 WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_STD_HASH_VARGS)
 WASP_VALID_CONTAINERS(WASP_STD_HASH_CONTAINER)

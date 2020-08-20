@@ -20,8 +20,7 @@
 
 #include "fmt/format.h"
 
-namespace wasp {
-namespace tools {
+namespace wasp::tools {
 
 BinaryErrors::BinaryErrors(SpanU8 data) : BinaryErrors{"<unknown>", data} {}
 
@@ -74,5 +73,4 @@ auto BinaryErrors::ErrorToString(const Error& error) const -> std::string {
                      loc.begin() - data.begin(), error.message, line1, line2);
 }
 
-}  // namespace tools
-}  // namespace wasp
+}  // namespace wasp::tools

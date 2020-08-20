@@ -22,9 +22,7 @@
 #include "wasp/base/types.h"
 #include "wasp/binary/name_section/types.h"
 
-namespace wasp {
-namespace binary {
-namespace encoding {
+namespace wasp::binary::encoding {
 
 // static
 u8 NameSubsectionId::Encode(::wasp::binary::NameSubsectionId decoded) {
@@ -44,6 +42,4 @@ optional<::wasp::binary::NameSubsectionId> NameSubsectionId::Decode(u8 val) {
   }
 }
 
-}  // namespace encoding
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary::encoding

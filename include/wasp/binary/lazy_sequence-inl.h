@@ -16,8 +16,7 @@
 
 #include "wasp/binary/read.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 template <typename T>
 void LazySequence<T>::NotifyRead(const u8* pos, bool ok) {
@@ -67,5 +66,4 @@ auto LazySequenceIterator<Sequence>::operator++(int) -> LazySequenceIterator {
   return temp;
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

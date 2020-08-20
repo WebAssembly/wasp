@@ -16,14 +16,10 @@
 
 #include "wasp/binary/types.h"
 
-namespace wasp {
-namespace binary {
-namespace test {
+namespace wasp::binary::test {
 
 inline Expression operator"" _expr(const char* str, size_t N) {
   return Expression{operator"" _su8(str, N)};
 }
 
-}  // namespace test
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary::test

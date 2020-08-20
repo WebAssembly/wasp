@@ -23,8 +23,7 @@
 #include "wasp/binary/lazy_sequence.h"
 #include "wasp/binary/sections.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 /// ---
 class LazyModule {
@@ -40,7 +39,6 @@ class LazyModule {
 
 LazyModule ReadModule(SpanU8 data, const Features&, Errors&);
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif // WASP_BINARY_LAZY_MODULE_H

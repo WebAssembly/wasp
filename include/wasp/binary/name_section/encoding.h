@@ -25,16 +25,14 @@ namespace wasp {
 
 class Features;
 
-namespace binary {
-namespace encoding {
+namespace binary::encoding {
 
 struct NameSubsectionId {
   static u8 Encode(::wasp::binary::NameSubsectionId);
   static optional<::wasp::binary::NameSubsectionId> Decode(u8);
 };
 
-}  // namespace encoding
-}  // namespace binary
+}  // namespace binary::encoding
 }  // namespace wasp
 
 #endif  // WASP_BINARY_NAME_SECTION_ENCODING_H

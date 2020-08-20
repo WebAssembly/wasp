@@ -22,8 +22,7 @@
 #include "wasp/base/types.h"
 #include "wasp/text/read/token.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 class Tokenizer {
  public:
@@ -47,8 +46,7 @@ class Tokenizer {
   Token previous_token_;
 };
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text
 
 #include "wasp/text/read/tokenizer-inl.h"
 

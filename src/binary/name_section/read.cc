@@ -25,8 +25,7 @@
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/read/read_vector.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 OptAt<IndirectNameAssoc> Read(SpanU8* data,
                               Context& context,
@@ -68,5 +67,4 @@ OptAt<NameSubsectionId> Read(SpanU8* data,
   return MakeAt(guard.range(data), decoded);
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

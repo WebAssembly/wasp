@@ -20,8 +20,7 @@
 #include "wasp/base/errors.h"
 #include "wasp/binary/formatters.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 LinkingSection::LinkingSection(SpanU8 data, Context& context)
     : data{data},
@@ -98,5 +97,4 @@ auto ReadSymbolTableSubsection(LinkingSubsection sec, Context& context)
   return ReadSymbolTableSubsection(sec.data, context);
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary

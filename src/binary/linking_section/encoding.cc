@@ -22,9 +22,7 @@
 #include "wasp/base/types.h"
 #include "wasp/binary/linking_section/types.h"
 
-namespace wasp {
-namespace binary {
-namespace encoding {
+namespace wasp::binary::encoding {
 
 // static
 u8 ComdatSymbolKind::Encode(::wasp::binary::ComdatSymbolKind decoded) {
@@ -152,6 +150,4 @@ optional<::wasp::binary::SymbolInfoKind> SymbolInfoKind::Decode(u8 val) {
   }
 }
 
-}  // namespace encoding
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary::encoding

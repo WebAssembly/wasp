@@ -18,8 +18,7 @@
 
 #include <cassert>
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 void DisjointSet::Reset(Index size) {
   nodes_.clear();
@@ -78,5 +77,4 @@ auto DisjointSet::Get(Index x) -> Node& {
   return nodes_[x];
 }
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid

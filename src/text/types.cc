@@ -23,8 +23,7 @@
 #include "wasp/base/operator_eq_ne_macros.h"
 #include "wasp/base/std_hash_macros.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 void ToBuffer(const TextList& text_list, Buffer& buffer) {
   for (auto&& text: text_list) {
@@ -1158,8 +1157,7 @@ bool operator!=(const BoundValueTypeList& lhs, const ValueTypeList& rhs) {
   return !(lhs == rhs);
 }
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text
 
 WASP_TEXT_STRUCTS(WASP_STD_HASH_VARGS)
 WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_STD_HASH_VARGS)

@@ -28,8 +28,7 @@
 #include "wasp/binary/read/context.h"
 #include "wasp/binary/read/macros.h"
 
-namespace wasp {
-namespace binary {
+namespace wasp::binary {
 
 template <typename T>
 optional<std::vector<At<T>>> ReadVector(SpanU8* data,
@@ -46,7 +45,6 @@ optional<std::vector<At<T>>> ReadVector(SpanU8* data,
   return result;
 }
 
-}  // namespace binary
-}  // namespace wasp
+}  // namespace wasp::binary
 
 #endif  // WASP_BINARY_READ_READ_VECTOR_H_

@@ -24,8 +24,7 @@
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 
-namespace wasp {
-namespace test {
+namespace wasp::test {
 
 struct ErrorWithPos {
   span_extent_t pos;
@@ -58,7 +57,6 @@ void ExpectError(const ExpectedError&, const TestErrors&, SpanU8 orig_data);
 void ExpectErrors(const std::vector<ErrorList>&, const TestErrors&);
 void ExpectError(const ErrorList&, const TestErrors&);
 
-}  // namespace test
-}  // namespace wasp
+}  // namespace wasp::test
 
 #endif // WASP_TEST_UTILS_H_

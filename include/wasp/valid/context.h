@@ -31,8 +31,7 @@
 #include "wasp/valid/local_map.h"
 #include "wasp/valid/types.h"
 
-namespace wasp {
-namespace valid {
+namespace wasp::valid {
 
 enum class LabelType {
   Function,
@@ -109,7 +108,6 @@ struct Context {
   EquivalentTypes equivalent_types;
 };
 
-}  // namespace valid
-}  // namespace wasp
+}  // namespace wasp::valid
 
 #endif  // WASP_VALID_CONTEXT_H_

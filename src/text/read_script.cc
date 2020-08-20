@@ -26,8 +26,7 @@
 #include "wasp/text/read/macros.h"
 #include "wasp/text/resolve.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 auto ReadModuleVarOpt(Tokenizer& tokenizer, Context& context)
     -> OptAt<ModuleVar> {
@@ -657,5 +656,4 @@ template auto ReadFloatResult<f64>(Tokenizer&, Context&) -> OptAt<FloatResult<f6
 template auto ReadSimdFloatResult<f32, 4>(Tokenizer&, Context&) -> OptAt<ReturnResult>;
 template auto ReadSimdFloatResult<f64, 2>(Tokenizer&, Context&) -> OptAt<ReturnResult>;
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text

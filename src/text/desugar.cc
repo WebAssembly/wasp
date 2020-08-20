@@ -19,8 +19,7 @@
 #include <algorithm>
 #include <iterator>
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 using ModuleItemList = std::vector<ModuleItem>;
 
@@ -124,5 +123,4 @@ void Desugar(Module& module) {
                 std::make_move_iterator(context.new_items.end()));
 }
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text

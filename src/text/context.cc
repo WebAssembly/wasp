@@ -16,8 +16,7 @@
 
 #include "wasp/text/read/context.h"
 
-namespace wasp {
-namespace text {
+namespace wasp::text {
 
 Context::Context(Errors& errors) : errors{errors} {}
 
@@ -29,5 +28,4 @@ void Context::BeginModule() {
   seen_start = false;
 }
 
-}  // namespace text
-}  // namespace wasp
+}  // namespace wasp::text
