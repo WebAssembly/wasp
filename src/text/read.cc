@@ -1132,6 +1132,7 @@ bool IsPlainInstruction(Token token) {
     case TokenType::F32ConstInstr:
     case TokenType::F64ConstInstr:
     case TokenType::FuncBindInstr:
+    case TokenType::HeapTypeInstr:
     case TokenType::I32ConstInstr:
     case TokenType::I64ConstInstr:
     case TokenType::MemoryInstr:
@@ -1199,6 +1200,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       tokenizer.Read();
       return At{token.loc, Instruction{token.opcode()}};
 
+    case TokenType::HeapTypeInstr:
     case TokenType::RefNullInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();

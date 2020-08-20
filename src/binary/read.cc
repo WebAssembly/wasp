@@ -1088,10 +1088,33 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     }
 
     // Let immediate.
-    case Opcode::Let:
+    case Opcode::Let: {
       WASP_TRY_READ(immediate, Read<LetImmediate>(data, context));
       return At{guard.range(data), Instruction{opcode, immediate}};
+    }
 
+    case Opcode::RefEq:
+    case Opcode::StructNewWithRtt:
+    case Opcode::StructNewDefaultWithRtt:
+    case Opcode::StructGet:
+    case Opcode::StructGetS:
+    case Opcode::StructGetU:
+    case Opcode::StructSet:
+    case Opcode::ArrayNewWithRtt:
+    case Opcode::ArrayNewDefaultWithRtt:
+    case Opcode::ArrayGet:
+    case Opcode::ArrayGetS:
+    case Opcode::ArrayGetU:
+    case Opcode::ArraySet:
+    case Opcode::ArrayLen:
+    case Opcode::I31New:
+    case Opcode::I31GetS:
+    case Opcode::I31GetU:
+    case Opcode::RttCanon:
+    case Opcode::RttSub:
+    case Opcode::RefTest:
+    case Opcode::RefCast:
+    case Opcode::BrOnCast:
       // TODO
       assert(false);
       return nullopt;

@@ -65,8 +65,8 @@ SpanU8 ExpectLex(ExpectedToken et, SpanU8 data) {
   Token expected{Location{data.begin(), et.size}, et.type, et.immediate};
   auto actual = Lex(&data);
   EXPECT_EQ(actual, expected)
-      << concat("expected: {} actual: {} (\"{}\")", expected.loc, actual.loc,
-                ToStringView(actual.loc));
+      << concat("expected: ", expected.loc, " actual: ", actual.loc, " (\"",
+                ToStringView(actual.loc), "\")");
   return data;
 }
 
@@ -187,18 +187,23 @@ TEST(LexTest, Keyword) {
       // .wat keywords
       {"("_su8, TT::Lpar},
       {")"_su8, TT::Rpar},
+      {"array"_su8, TT::Array},
       {"binary"_su8, TT::Binary},
       {"data"_su8, TT::Data},
+      {"declare"_su8, TT::Declare},
       {"elem"_su8, TT::Elem},
       {"event"_su8, TT::Event},
       {"export"_su8, TT::Export},
       {"f32x4"_su8, TT::F32X4},
       {"f64x2"_su8, TT::F64X2},
+      {"field"_su8, TT::Field},
       {"global"_su8, TT::Global},
       {"i16x8"_su8, TT::I16X8},
       {"i32x4"_su8, TT::I32X4},
       {"i64x2"_su8, TT::I64X2},
       {"i8x16"_su8, TT::I8X16},
+      {"i8"_su8, TT::I8},  // TODO: Use PackedKind enum instead.
+      {"i16"_su8, TT::I16},
       {"import"_su8, TT::Import},
       {"item"_su8, TT::Item},
       {"local"_su8, TT::Local},
@@ -211,8 +216,10 @@ TEST(LexTest, Keyword) {
       {"quote"_su8, TT::Quote},
       {"ref"_su8, TT::Ref},
       {"result"_su8, TT::Result},
+      {"rtt"_su8, TT::Rtt},
       {"shared"_su8, TT::Shared},
       {"start"_su8, TT::Start},
+      {"struct"_su8, TT::Struct},
       {"table"_su8, TT::Table},
       {"then"_su8, TT::Then},
       {"type"_su8, TT::Type},
@@ -281,7 +288,15 @@ TEST(LexTest, PlainInstr) {
     O opcode;
     F::Bits features;
   } tests[] = {
+      {"array.get"_su8, TT::VarInstr, O::ArrayGet, F::GC},
+      {"array.get_s"_su8, TT::VarInstr, O::ArrayGetS, F::GC},
+      {"array.get_u"_su8, TT::VarInstr, O::ArrayGetU, F::GC},
+      {"array.len"_su8, TT::VarInstr, O::ArrayLen, F::GC},
+      {"array.new_default_with_rtt"_su8, TT::VarInstr, O::ArrayNewDefaultWithRtt, F::GC},
+      {"array.new_with_rtt"_su8, TT::VarInstr, O::ArrayNewWithRtt, F::GC},
+      {"array.set"_su8, TT::VarInstr, O::ArraySet, F::GC},
       {"br_if"_su8, TT::VarInstr, O::BrIf, 0},
+      {"br_on_cast"_su8, TT::BrOnCastInstr, O::BrOnCast, F::GC},
       {"br_on_exn"_su8, TT::BrOnExnInstr, O::BrOnExn, F::Exceptions},
       {"br_on_null"_su8, TT::VarInstr, O::BrOnNull, F::FunctionReferences},
       {"br_table"_su8, TT::BrTableInstr, O::BrTable, 0},
@@ -460,7 +475,9 @@ TEST(LexTest, PlainInstr) {
       {"i32.atomic.store16"_su8, TT::MemoryInstr, O::I32AtomicStore16, F::Threads},
       {"i32.atomic.store8"_su8, TT::MemoryInstr, O::I32AtomicStore8, F::Threads},
       {"i32.atomic.store"_su8, TT::MemoryInstr, O::I32AtomicStore, F::Threads},
-      {"i32.clz"_su8, TT::BareInstr, O::I32Clz, 0},
+      {"i31.new"_su8, TT::BareInstr, O::I31New, F::GC},
+      {"i31.get_s"_su8, TT::BareInstr, O::I31GetS, F::GC},
+      {"i31.get_u"_su8, TT::BareInstr, O::I31GetU, F::GC},
       {"i32.const"_su8, TT::I32ConstInstr, O::I32Const, 0},
       {"i32.ctz"_su8, TT::BareInstr, O::I32Ctz, 0},
       {"i32.div_s"_su8, TT::BareInstr, O::I32DivS, 0},
@@ -692,15 +709,26 @@ TEST(LexTest, PlainInstr) {
       {"memory.size"_su8, TT::BareInstr, O::MemorySize, 0},
       {"nop"_su8, TT::BareInstr, O::Nop, 0},
       {"ref.as_non_null"_su8, TT::BareInstr, O::RefAsNonNull, F::FunctionReferences},
+      {"ref.cast"_su8, TT::HeapType2Instr, O::RefCast, F::GC},
+      {"ref.eq"_su8, TT::BareInstr, O::RefEq, F::GC},
       {"ref.func"_su8, TT::RefFuncInstr, O::RefFunc, F::ReferenceTypes},
       {"ref.is_null"_su8, TT::BareInstr, O::RefIsNull, F::ReferenceTypes},
       {"ref.null"_su8, TT::RefNullInstr, O::RefNull, F::ReferenceTypes},
+      {"ref.test"_su8, TT::HeapType2Instr, O::RefTest, F::GC},
       {"rethrow"_su8, TT::BareInstr, O::Rethrow, F::Exceptions},
       {"return_call_indirect"_su8, TT::CallIndirectInstr, O::ReturnCallIndirect, F::TailCall},
       {"return_call_ref"_su8, TT::BareInstr, O::ReturnCallRef, F::FunctionReferences},
       {"return_call"_su8, TT::VarInstr, O::ReturnCall, F::TailCall},
       {"return"_su8, TT::BareInstr, O::Return, 0},
+      {"rtt.canon"_su8, TT::HeapTypeInstr, O::RttCanon, F::GC},
+      {"rtt.sub"_su8, TT::RttSubInstr, O::RttSub, F::GC},
       {"select"_su8, TT::SelectInstr, O::Select, 0},
+      {"struct.get"_su8, TT::StructFieldInstr, O::StructGet, F::GC},
+      {"struct.get_s"_su8, TT::StructFieldInstr, O::StructGetS, F::GC},
+      {"struct.get_u"_su8, TT::StructFieldInstr, O::StructGetU, F::GC},
+      {"struct.new_default_with_rtt"_su8, TT::VarInstr, O::StructNewDefaultWithRtt, F::GC},
+      {"struct.new_with_rtt"_su8, TT::VarInstr, O::StructNewWithRtt, F::GC},
+      {"struct.set"_su8, TT::StructFieldInstr, O::StructSet, F::GC},
       {"table.copy"_su8, TT::TableCopyInstr, O::TableCopy, F::BulkMemory},
       {"table.fill"_su8, TT::VarInstr, O::TableFill, F::ReferenceTypes},
       {"table.get"_su8, TT::VarInstr, O::TableGet, F::ReferenceTypes},
@@ -1006,9 +1034,12 @@ TEST(LexTest, ReferenceType) {
     ReferenceKind reference_kind;
   } tests[] = {
       {"anyfunc"_su8, ReferenceKind::Funcref},
+      {"anyref"_su8, ReferenceKind::Anyref},
       {"externref"_su8, ReferenceKind::Externref},
       {"exnref"_su8, ReferenceKind::Exnref},
+      {"eqref"_su8, ReferenceKind::Eqref},
       {"funcref"_su8, ReferenceKind::Funcref},
+      {"i31ref"_su8, ReferenceKind::I31ref},
   };
   for (auto test : tests) {
     ExpectLex(
@@ -1024,9 +1055,12 @@ TEST(LexTest, HeapType) {
     TokenType token_type;
     HeapKind heap_kind;
   } tests[] = {
-      {"extern"_su8, TokenType::Extern, HeapKind::Extern},
-      {"exn"_su8, TokenType::Exn, HeapKind::Exn},
+      {"any"_su8, TokenType::HeapKind, HeapKind::Any},
+      {"extern"_su8, TokenType::HeapKind, HeapKind::Extern},
+      {"exn"_su8, TokenType::HeapKind, HeapKind::Exn},
+      {"eq"_su8, TokenType::HeapKind, HeapKind::Eq},
       {"func"_su8, TokenType::Func, HeapKind::Func},
+      {"i31"_su8, TokenType::HeapKind, HeapKind::I31},
   };
   for (auto test : tests) {
     ExpectLex({test.span.size(), test.token_type, test.heap_kind}, test.span);

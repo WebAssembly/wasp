@@ -1,4 +1,14 @@
 align=, TokenType::AlignEqNat
+any, TokenType::HeapKind, HeapKind::Any
+anyref, ReferenceKind::Anyref
+array, TokenType::Array
+array.new_with_rtt, TokenType::VarInstr, Opcode::ArrayNewWithRtt, Features::GC
+array.new_default_with_rtt, TokenType::VarInstr, Opcode::ArrayNewDefaultWithRtt, Features::GC
+array.get, TokenType::VarInstr, Opcode::ArrayGet, Features::GC
+array.get_s, TokenType::VarInstr, Opcode::ArrayGetS, Features::GC
+array.get_u, TokenType::VarInstr, Opcode::ArrayGetU, Features::GC
+array.set, TokenType::VarInstr, Opcode::ArraySet, Features::GC
+array.len, TokenType::VarInstr, Opcode::ArrayLen, Features::GC
 assert_exhaustion, TokenType::AssertExhaustion
 assert_invalid, TokenType::AssertInvalid
 assert_malformed, TokenType::AssertMalformed
@@ -24,12 +34,14 @@ elem.drop, TokenType::VarInstr, Opcode::ElemDrop, Features::BulkMemory
 elem, TokenType::Elem
 else, TokenType::Else, Opcode::Else
 end, TokenType::End, Opcode::End
+eq, TokenType::HeapKind, HeapKind::Eq
+eqref, ReferenceKind::Eqref
 event, TokenType::Event
 exnref, ReferenceKind::Exnref
-exn, TokenType::Exn, HeapKind::Exn
+exn, TokenType::HeapKind, HeapKind::Exn
 export, TokenType::Export
 externref, ReferenceKind::Externref
-extern, TokenType::Extern, HeapKind::Extern
+extern, TokenType::HeapKind, HeapKind::Extern
 f32.abs, Opcode::F32Abs
 f32.add, Opcode::F32Add
 f32.ceil, Opcode::F32Ceil
@@ -130,6 +142,7 @@ f64x2.splat, Opcode::F64X2Splat, Features::Simd
 f64x2.sqrt, Opcode::F64X2Sqrt, Features::Simd
 f64x2.sub, Opcode::F64X2Sub, Features::Simd
 f64x2, TokenType::F64X2
+field, TokenType::Field
 funcref, ReferenceKind::Funcref
 func, TokenType::Func, HeapKind::Func
 func.bind, TokenType::FuncBindInstr, Opcode::FuncBind, Features::FunctionReferences
@@ -137,6 +150,7 @@ get, TokenType::Get
 global.get, TokenType::VarInstr, Opcode::GlobalGet
 global.set, TokenType::VarInstr, Opcode::GlobalSet
 global, TokenType::Global
+i16, TokenType::I16
 i16x8.abs, Opcode::I16X8Abs, Features::Simd
 i16x8.add_saturate_s, Opcode::I16X8AddSaturateS, Features::Simd
 i16x8.add_saturate_u, Opcode::I16X8AddSaturateU, Features::Simd
@@ -179,6 +193,11 @@ i16x8.widen_high_i8x16_u, Opcode::I16X8WidenHighI8X16U, Features::Simd
 i16x8.widen_low_i8x16_s, Opcode::I16X8WidenLowI8X16S, Features::Simd
 i16x8.widen_low_i8x16_u, Opcode::I16X8WidenLowI8X16U, Features::Simd
 i16x8, TokenType::I16X8
+i31, TokenType::HeapKind, HeapKind::I31
+i31ref, ReferenceKind::I31ref
+i31.new, Opcode::I31New, Features::GC
+i31.get_s, Opcode::I31GetS, Features::GC
+i31.get_u, Opcode::I31GetU, Features::GC
 i32.add, Opcode::I32Add
 i32.and, Opcode::I32And
 i32.atomic.load16_u, TokenType::MemoryInstr, Opcode::I32AtomicLoad16U, Features::Threads
@@ -398,6 +417,7 @@ i64x2.splat, Opcode::I64X2Splat, Features::Simd
 i64x2.sub, Opcode::I64X2Sub, Features::Simd
 i64x2, TokenType::I64X2
 i64.xor, Opcode::I64Xor
+i8, TokenType::I8
 i8x16.abs, Opcode::I8X16Abs, Features::Simd
 i8x16.add_saturate_s, Opcode::I8X16AddSaturateS, Features::Simd
 i8x16.add_saturate_u, Opcode::I8X16AddSaturateU, Features::Simd
@@ -467,10 +487,13 @@ param, TokenType::Param
 quote, TokenType::Quote
 ref, TokenType::Ref
 ref.as_non_null, Opcode::RefAsNonNull, Features::FunctionReferences
+ref.cast, TokenType::HeapType2Instr, Opcode::RefCast, Features::GC
+ref.eq, Opcode::RefEq, Features::GC
 ref.extern, TokenType::RefExtern
 ref.func, TokenType::RefFuncInstr, Opcode::RefFunc, Features::ReferenceTypes
 ref.is_null, Opcode::RefIsNull, Features::ReferenceTypes
 ref.null, TokenType::RefNullInstr, Opcode::RefNull, Features::ReferenceTypes
+ref.test, TokenType::HeapType2Instr, Opcode::RefTest, Features::GC
 register, TokenType::Register
 result, TokenType::Result
 rethrow, Opcode::Rethrow, Features::Exceptions
@@ -478,9 +501,20 @@ return_call_indirect, TokenType::CallIndirectInstr, Opcode::ReturnCallIndirect, 
 return_call, TokenType::VarInstr, Opcode::ReturnCall, Features::TailCall
 return_call_ref, Opcode::ReturnCallRef, Features::FunctionReferences
 return, Opcode::Return
+rtt, TokenType::Rtt
+rtt.canon, TokenType::HeapTypeInstr, Opcode::RttCanon, Features::GC
+rtt.sub, TokenType::RttSubInstr, Opcode::RttSub, Features::GC
+br_on_cast, TokenType::BrOnCastInstr, Opcode::BrOnCast, Features::GC
 select, TokenType::SelectInstr, Opcode::Select
 shared, TokenType::Shared
 start, TokenType::Start
+struct, TokenType::Struct
+struct.new_with_rtt, TokenType::VarInstr, Opcode::StructNewWithRtt, Features::GC
+struct.new_default_with_rtt, TokenType::VarInstr, Opcode::StructNewDefaultWithRtt, Features::GC
+struct.get, TokenType::StructFieldInstr, Opcode::StructGet, Features::GC
+struct.get_s, TokenType::StructFieldInstr, Opcode::StructGetS, Features::GC
+struct.get_u, TokenType::StructFieldInstr, Opcode::StructGetU, Features::GC
+struct.set, TokenType::StructFieldInstr, Opcode::StructSet, Features::GC
 table.copy, TokenType::TableCopyInstr, Opcode::TableCopy, Features::BulkMemory
 table.fill, TokenType::VarInstr, Opcode::TableFill, Features::ReferenceTypes
 table.get, TokenType::VarInstr, Opcode::TableGet, Features::ReferenceTypes
