@@ -82,6 +82,7 @@ struct Token {
                             NumericType,
                             ReferenceKind,
                             HeapKind,
+                            PackedType,
                             LiteralInfo,
                             Text>;
 
@@ -91,6 +92,7 @@ struct Token {
   Token(Location, TokenType, NumericType);
   Token(Location, TokenType, ReferenceKind);
   Token(Location, TokenType, HeapKind);
+  Token(Location, TokenType, PackedType);
   Token(Location, TokenType, LiteralInfo);
   Token(Location, TokenType, Text);
   Token(Location, TokenType, Immediate);
@@ -102,6 +104,7 @@ struct Token {
   bool has_numeric_type() const;
   bool has_reference_kind() const;
   bool has_heap_kind() const;
+  bool has_packed_type() const;
   bool has_literal_info() const;
   bool has_text() const;
 
@@ -110,6 +113,7 @@ struct Token {
   At<NumericType> numeric_type() const;
   At<ReferenceKind> reference_kind() const;
   At<HeapKind> heap_kind() const;
+  At<PackedType> packed_type() const;
   LiteralInfo literal_info() const;
   Text text() const;
 

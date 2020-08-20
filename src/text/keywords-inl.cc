@@ -1,7 +1,7 @@
 switch (PeekChar(data, 2)) {
   default:
     switch (PeekChar(data, 1)) {
-      case '8': return LexKeyword(data, "i8", TokenType::I8);
+      case '8': return LexKeyword(data, "i8", PackedType::I8);
       case 'f': return LexKeyword(data, "if", TokenType::BlockInstr, Opcode::If);
       case 'q': return LexKeyword(data, "eq", TokenType::HeapKind, HeapKind::Eq);
       case 'r': return LexKeyword(data, "br", TokenType::VarInstr, Opcode::Br);
@@ -1241,7 +1241,7 @@ switch (PeekChar(data, 2)) {
     break;
   case '6':
     switch (PeekChar(data, 3)) {
-      default: return LexKeyword(data, "i16", TokenType::I16);
+      default: return LexKeyword(data, "i16", PackedType::I16);
       case 'x':
         switch (PeekChar(data, 5)) {
           default: return LexKeyword(data, "i16x8", TokenType::I16X8);

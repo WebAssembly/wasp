@@ -68,6 +68,23 @@ std::ostream& operator<<(std::ostream& os, const ::wasp::Opcode& self) {
   return os << result;
 }
 
+std::ostream& operator<<(std::ostream& os, const ::wasp::PackedType& self) {
+  string_view result;
+  switch (self) {
+#define WASP_V(val, Name, str, ...) \
+  case ::wasp::PackedType::Name:    \
+    result = str;                   \
+    break;
+#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
+#include "wasp/base/def/packed_type.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+    default:
+      WASP_UNREACHABLE();
+  }
+  return os << result;
+}
+
 std::ostream& operator<<(std::ostream& os, const ::wasp::NumericType& self) {
   string_view result;
   switch (self) {

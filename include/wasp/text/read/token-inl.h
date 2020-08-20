@@ -96,12 +96,16 @@ inline bool Token::has_heap_kind() const {
   return immediate.index() == 4;
 }
 
-inline bool Token::has_literal_info() const {
+inline bool Token::has_packed_type() const {
   return immediate.index() == 5;
 }
 
-inline bool Token::has_text() const {
+inline bool Token::has_literal_info() const {
   return immediate.index() == 6;
+}
+
+inline bool Token::has_text() const {
+  return immediate.index() == 7;
 }
 
 inline At<Opcode> Token::opcode() const {
@@ -122,6 +126,10 @@ inline At<ReferenceKind> Token::reference_kind() const {
 
 inline At<HeapKind> Token::heap_kind() const {
   return At{loc, get<HeapKind>(immediate)};
+}
+
+inline At<PackedType> Token::packed_type() const {
+  return At{loc, get<PackedType>(immediate)};
 }
 
 inline LiteralInfo Token::literal_info() const {

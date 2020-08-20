@@ -21,6 +21,7 @@
 
 namespace wasp {
 
+WASP_DEFINE_VARIANT_NAME(wasp::PackedType, "packed_type")
 WASP_DEFINE_VARIANT_NAME(wasp::NumericType, "numeric_type")
 WASP_DEFINE_VARIANT_NAME(wasp::ReferenceKind, "reference_kind")
 WASP_DEFINE_VARIANT_NAME(wasp::HeapKind, "heap_kind")

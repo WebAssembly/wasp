@@ -37,6 +37,14 @@ enum class Opcode : u32 {
 #undef WASP_PREFIX_V
 };
 
+enum class PackedType : u8 {
+#define WASP_V(val, Name, str) Name = val,
+#define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
+#include "wasp/base/def/packed_type.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+};
+
 enum class NumericType : u8 {
 #define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
@@ -115,6 +123,7 @@ using ShuffleImmediate = std::array<u8, 16>;
 
 #define WASP_BASE_WASM_ENUMS(WASP_V) \
   WASP_V(Opcode)                     \
+  WASP_V(PackedType)                 \
   WASP_V(NumericType)                \
   WASP_V(ReferenceKind)              \
   WASP_V(HeapKind)                   \

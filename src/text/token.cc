@@ -89,6 +89,9 @@ Token::Token(Location loc, TokenType type, ReferenceKind reference_kind)
 Token::Token(Location loc, TokenType type, HeapKind heap_kind)
     : loc{loc}, type{type}, immediate{heap_kind} {}
 
+Token::Token(Location loc, TokenType type, PackedType packed_type)
+    : loc{loc}, type{type}, immediate{packed_type} {}
+
 Token::Token(Location loc, TokenType type, LiteralInfo info)
     : loc{loc}, type{type}, immediate{info} {}
 

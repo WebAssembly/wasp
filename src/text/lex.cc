@@ -477,6 +477,14 @@ auto LexKeyword(SpanU8* data, string_view sv, TokenType tt, HeapKind hk)
   return LexReserved(guard.Reset());
 }
 
+auto LexKeyword(SpanU8* data, string_view sv, PackedType pt) -> Token {
+  MatchGuard guard{data};
+  if (MatchString(data, sv) && NoTrailingReservedChars(data)) {
+    return Token(guard.loc(), TokenType::PackedType, pt);
+  }
+  return LexReserved(guard.Reset());
+}
+
 auto LexKeyword(SpanU8* data, string_view sv, TokenType tt, LiteralKind lk)
     -> Token {
   MatchGuard guard{data};

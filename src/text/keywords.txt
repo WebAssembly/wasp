@@ -150,7 +150,7 @@ get, TokenType::Get
 global.get, TokenType::VarInstr, Opcode::GlobalGet
 global.set, TokenType::VarInstr, Opcode::GlobalSet
 global, TokenType::Global
-i16, TokenType::I16
+i16, PackedType::I16
 i16x8.abs, Opcode::I16X8Abs, Features::Simd
 i16x8.add_saturate_s, Opcode::I16X8AddSaturateS, Features::Simd
 i16x8.add_saturate_u, Opcode::I16X8AddSaturateU, Features::Simd
@@ -417,7 +417,7 @@ i64x2.splat, Opcode::I64X2Splat, Features::Simd
 i64x2.sub, Opcode::I64X2Sub, Features::Simd
 i64x2, TokenType::I64X2
 i64.xor, Opcode::I64Xor
-i8, TokenType::I8
+i8, PackedType::I8
 i8x16.abs, Opcode::I8X16Abs, Features::Simd
 i8x16.add_saturate_s, Opcode::I8X16AddSaturateS, Features::Simd
 i8x16.add_saturate_u, Opcode::I8X16AddSaturateU, Features::Simd

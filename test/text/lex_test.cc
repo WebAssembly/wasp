@@ -51,6 +51,8 @@ struct ExpectedToken {
       : size{size}, type{type}, immediate{reference_kind} {}
   ExpectedToken(span_extent_t size, TokenType type, HeapKind heap_kind)
       : size{size}, type{type}, immediate{heap_kind} {}
+  ExpectedToken(span_extent_t size, TokenType type, PackedType packed_type)
+      : size{size}, type{type}, immediate{packed_type} {}
   ExpectedToken(span_extent_t size, TokenType type, Text text)
       : size{size}, type{type}, immediate{text} {}
 
@@ -202,8 +204,6 @@ TEST(LexTest, Keyword) {
       {"i32x4"_su8, TT::I32X4},
       {"i64x2"_su8, TT::I64X2},
       {"i8x16"_su8, TT::I8X16},
-      {"i8"_su8, TT::I8},  // TODO: Use PackedKind enum instead.
-      {"i16"_su8, TT::I16},
       {"import"_su8, TT::Import},
       {"item"_su8, TT::Item},
       {"local"_su8, TT::Local},
@@ -1066,6 +1066,21 @@ TEST(LexTest, HeapType) {
     ExpectLex({test.span.size(), test.token_type, test.heap_kind}, test.span);
   }
 }
+
+TEST(LexTest, PackedType) {
+  struct {
+    SpanU8 span;
+    TokenType token_type;
+    PackedType packed_type;
+  } tests[] = {
+      {"i8"_su8, TokenType::PackedType, PackedType::I8},
+      {"i16"_su8, TokenType::PackedType, PackedType::I16},
+  };
+  for (auto test : tests) {
+    ExpectLex({test.span.size(), test.token_type, test.packed_type}, test.span);
+  }
+}
+
 
 TEST(LexTest, Basic) {
   auto span =
