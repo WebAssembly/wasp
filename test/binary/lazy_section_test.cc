@@ -54,11 +54,11 @@ TEST(BinaryLazySectionTest, Type) {
 
   ExpectSection(
       {
-          TypeEntry{MakeAt("\x00\x00"_su8, FunctionType{{}, {}})},
-          TypeEntry{MakeAt("\x02\x7f\x7f\x01\x7f"_su8,
-                           FunctionType{{MakeAt("\x07f"_su8, VT_I32),
-                                         MakeAt("\x07f"_su8, VT_I32)},
-                                        {MakeAt("\x07f"_su8, VT_I32)}})},
+          TypeEntry{At{"\x00\x00"_su8, FunctionType{{}, {}}}},
+          TypeEntry{At{
+              "\x02\x7f\x7f\x01\x7f"_su8,
+              FunctionType{{At{"\x07f"_su8, VT_I32}, At{"\x07f"_su8, VT_I32}},
+                           {At{"\x07f"_su8, VT_I32}}}}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -75,15 +75,14 @@ TEST(BinaryLazySectionTest, Import) {
 
   ExpectSection(
       {
-          Import{MakeAt("\x01w"_su8, "w"_sv), MakeAt("\x01x"_su8, "x"_sv),
-                 MakeAt("\x02"_su8, Index{2})},
-          Import{MakeAt("\x01y"_su8, "y"_sv), MakeAt("\x01z"_su8, "z"_sv),
-                 MakeAt("\x01\x01\x02"_su8,
-                        MemoryType{
-                            MakeAt("\x01\x01\x02"_su8,
-                                   Limits{MakeAt("\x01"_su8, u32{1}),
-                                          MakeAt("\x02"_su8, u32{2}),
-                                          MakeAt("\x01"_su8, Shared::No)})})},
+          Import{At{"\x01w"_su8, "w"_sv}, At{"\x01x"_su8, "x"_sv},
+                 At{"\x02"_su8, Index{2}}},
+          Import{At{"\x01y"_su8, "y"_sv}, At{"\x01z"_su8, "z"_sv},
+                 At{"\x01\x01\x02"_su8,
+                    MemoryType{At{
+                        "\x01\x01\x02"_su8,
+                        Limits{At{"\x01"_su8, u32{1}}, At{"\x02"_su8, u32{2}},
+                               At{"\x01"_su8, Shared::No}}}}}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -99,9 +98,9 @@ TEST(BinaryLazySectionTest, Function) {
 
   ExpectSection(
       {
-          Function{MakeAt("\x02"_su8, Index{2})},
-          Function{MakeAt("\x80\x01"_su8, Index{128})},
-          Function{MakeAt("\x02"_su8, Index{2})},
+          Function{At{"\x02"_su8, Index{2}}},
+          Function{At{"\x80\x01"_su8, Index{128}}},
+          Function{At{"\x02"_su8, Index{2}}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -119,24 +118,22 @@ TEST(BinaryLazySectionTest, Table) {
 
   ExpectSection(
       {
-          Table{MakeAt(
-              "\x70\x00\x01"_su8,
-              TableType{MakeAt("\x00\x01"_su8,
-                               Limits{MakeAt("\x01"_su8, Index{1}), nullopt,
-                                      MakeAt("\x00"_su8, Shared::No)}),
-                        MakeAt("\x70"_su8, RT_Funcref)})},
-          Table{MakeAt("\x70\x01\x00\x80\x01"_su8,
-                       TableType{MakeAt("\x01\x00\x80\x01"_su8,
-                                        Limits{MakeAt("\x00"_su8, u32{0}),
-                                               MakeAt("\x80\x01"_su8, u32{128}),
-                                               MakeAt("\x01"_su8, Shared::No)}),
-                                 MakeAt("\x70"_su8, RT_Funcref)})},
-          Table{MakeAt(
-              "\x70\x00\x00"_su8,
-              TableType{MakeAt("\x00\x00"_su8,
-                               Limits{MakeAt("\x00"_su8, u32{0}), nullopt,
-                                      MakeAt("\x00"_su8, Shared::No)}),
-                        MakeAt("\x70"_su8, RT_Funcref)})},
+          Table{At{"\x70\x00\x01"_su8,
+                   TableType{At{"\x00\x01"_su8,
+                                Limits{At{"\x01"_su8, Index{1}}, nullopt,
+                                       At{"\x00"_su8, Shared::No}}},
+                             At{"\x70"_su8, RT_Funcref}}}},
+          Table{At{"\x70\x01\x00\x80\x01"_su8,
+                   TableType{At{"\x01\x00\x80\x01"_su8,
+                                Limits{At{"\x00"_su8, u32{0}},
+                                       At{"\x80\x01"_su8, u32{128}},
+                                       At{"\x01"_su8, Shared::No}}},
+                             At{"\x70"_su8, RT_Funcref}}}},
+          Table{At{"\x70\x00\x00"_su8,
+                   TableType{At{"\x00\x00"_su8,
+                                Limits{At{"\x00"_su8, u32{0}}, nullopt,
+                                       At{"\x00"_su8, Shared::No}}},
+                             At{"\x70"_su8, RT_Funcref}}}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -154,22 +151,19 @@ TEST(BinaryLazySectionTest, Memory) {
 
   ExpectSection(
       {
-          Memory{MakeAt(
-              "\x00\x01"_su8,
-              MemoryType{MakeAt("\x00\x01"_su8,
-                                Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
-                                       MakeAt("\x00"_su8, Shared::No)})})},
-          Memory{MakeAt(
-              "\x01\x00\x80\x01"_su8,
-              MemoryType{MakeAt("\x01\x00\x80\x01"_su8,
-                                Limits{MakeAt("\x00"_su8, u32{0}),
-                                       MakeAt("\x80\x01"_su8, u32{128}),
-                                       MakeAt("\x01"_su8, Shared::No)})})},
-          Memory{MakeAt(
-              "\x00\x00"_su8,
-              MemoryType{MakeAt("\x00\x00"_su8,
-                                Limits{MakeAt("\x00"_su8, u32{0}), nullopt,
-                                       MakeAt("\x00"_su8, Shared::No)})})},
+          Memory{At{"\x00\x01"_su8,
+                    MemoryType{At{"\x00\x01"_su8,
+                                  Limits{At{"\x01"_su8, u32{1}}, nullopt,
+                                         At{"\x00"_su8, Shared::No}}}}}},
+          Memory{At{"\x01\x00\x80\x01"_su8,
+                    MemoryType{At{"\x01\x00\x80\x01"_su8,
+                                  Limits{At{"\x00"_su8, u32{0}},
+                                         At{"\x80\x01"_su8, u32{128}},
+                                         At{"\x01"_su8, Shared::No}}}}}},
+          Memory{At{"\x00\x00"_su8,
+                    MemoryType{At{"\x00\x00"_su8,
+                                  Limits{At{"\x00"_su8, u32{0}}, nullopt,
+                                         At{"\x00"_su8, Shared::No}}}}}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -186,22 +180,22 @@ TEST(BinaryLazySectionTest, Global) {
 
   ExpectSection(
       {
-          Global{MakeAt("\x7f\x01"_su8,
-                        GlobalType{MakeAt("\x7f"_su8, VT_I32),
-                                   MakeAt("\x01"_su8, Mutability::Var)}),
-                 MakeAt("\x41\x00\x0b"_su8,
-                        ConstantExpression{MakeAt(
-                            "\x41\x00"_su8,
-                            Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                                        MakeAt("\x00"_su8, s32{0})})})},
-          Global{MakeAt("\x7e\x00"_su8,
-                        GlobalType{MakeAt("\x7e"_su8, VT_I64),
-                                   MakeAt("\x00"_su8, Mutability::Const)}),
-                 MakeAt("\x42\x01\x0b"_su8,
-                        ConstantExpression{MakeAt(
-                            "\x42\x01"_su8,
-                            Instruction{MakeAt("\x42"_su8, Opcode::I64Const),
-                                        MakeAt("\x01"_su8, s64{1})})})},
+          Global{
+              At{"\x7f\x01"_su8, GlobalType{At{"\x7f"_su8, VT_I32},
+                                            At{"\x01"_su8, Mutability::Var}}},
+              At{"\x41\x00\x0b"_su8,
+                 ConstantExpression{
+                     At{"\x41\x00"_su8,
+                        Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                    At{"\x00"_su8, s32{0}}}}}}},
+          Global{
+              At{"\x7e\x00"_su8, GlobalType{At{"\x7e"_su8, VT_I64},
+                                            At{"\x00"_su8, Mutability::Const}}},
+              At{"\x42\x01\x0b"_su8,
+                 ConstantExpression{
+                     At{"\x42\x01"_su8,
+                        Instruction{At{"\x42"_su8, Opcode::I64Const},
+                                    At{"\x01"_su8, s64{1}}}}}}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -219,13 +213,12 @@ TEST(BinaryLazySectionTest, Export) {
 
   ExpectSection(
       {
-          Export{MakeAt("\x00"_su8, ExternalKind::Function),
-                 MakeAt("\x03one"_su8, "one"_sv), MakeAt("\x01"_su8, Index{1})},
-          Export{MakeAt("\x02"_su8, ExternalKind::Memory),
-                 MakeAt("\x03two"_su8, "two"_sv), MakeAt("\x02"_su8, Index{2})},
-          Export{MakeAt("\x03"_su8, ExternalKind::Global),
-                 MakeAt("\x05three"_su8, "three"_sv),
-                 MakeAt("\x02"_su8, Index{2})},
+          Export{At{"\x00"_su8, ExternalKind::Function},
+                 At{"\x03one"_su8, "one"_sv}, At{"\x01"_su8, Index{1}}},
+          Export{At{"\x02"_su8, ExternalKind::Memory},
+                 At{"\x03two"_su8, "two"_sv}, At{"\x02"_su8, Index{2}}},
+          Export{At{"\x03"_su8, ExternalKind::Global},
+                 At{"\x05three"_su8, "three"_sv}, At{"\x02"_su8, Index{2}}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -236,7 +229,7 @@ TEST(BinaryLazySectionTest, Start) {
   Context context{errors};
   auto sec = ReadStartSection("\x03"_su8, context);
 
-  EXPECT_EQ(Start{MakeAt("\x03"_su8, Index{3})}, sec);
+  EXPECT_EQ((Start{At{"\x03"_su8, Index{3}}}), sec);
   ExpectNoErrors(errors);
 }
 
@@ -251,25 +244,23 @@ TEST(BinaryLazySectionTest, Element) {
 
   ExpectSection(
       {
-          ElementSegment{
-              MakeAt("\x00"_su8, Index{0}),
-              MakeAt("\x41\x00\x0b"_su8,
-                     ConstantExpression{MakeAt(
-                         "\x41\x00"_su8,
-                         Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                                     MakeAt("\x00"_su8, s32{0})})}),
-              ElementListWithIndexes{ExternalKind::Function,
-                                     {MakeAt("\x00"_su8, Index{0}),
-                                      MakeAt("\x01"_su8, Index{1})}}},
-          ElementSegment{
-              MakeAt("\x00"_su8, Index{0}),
-              MakeAt("\x41\x02\x0b"_su8,
-                     ConstantExpression{MakeAt(
-                         "\x41\x02"_su8,
-                         Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                                     MakeAt("\x02"_su8, s32{2})})}),
-              ElementListWithIndexes{ExternalKind::Function,
-                                     {MakeAt("\x03"_su8, Index{3})}}},
+          ElementSegment{At{"\x00"_su8, Index{0}},
+                         At{"\x41\x00\x0b"_su8,
+                            ConstantExpression{
+                                At{"\x41\x00"_su8,
+                                   Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                               At{"\x00"_su8, s32{0}}}}}},
+                         ElementListWithIndexes{ExternalKind::Function,
+                                                {At{"\x00"_su8, Index{0}},
+                                                 At{"\x01"_su8, Index{1}}}}},
+          ElementSegment{At{"\x00"_su8, Index{0}},
+                         At{"\x41\x02\x0b"_su8,
+                            ConstantExpression{
+                                At{"\x41\x02"_su8,
+                                   Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                               At{"\x02"_su8, s32{2}}}}}},
+                         ElementListWithIndexes{ExternalKind::Function,
+                                                {At{"\x03"_su8, Index{3}}}}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -286,10 +277,10 @@ TEST(BinaryLazySectionTest, Code) {
 
   ExpectSection(
       {
-          Code{{}, MakeAt("\x0b"_su8, "\x0b"_expr)},
-          Code{{MakeAt("\x01\x7f"_su8, Locals{MakeAt("\x01"_su8, Index{1}),
-                                              MakeAt("\x7f"_su8, VT_I32)})},
-               MakeAt("\x6a\x0b"_su8, "\x6a\x0b"_expr)},
+          Code{{}, At{"\x0b"_su8, "\x0b"_expr}},
+          Code{{At{"\x01\x7f"_su8,
+                   Locals{At{"\x01"_su8, Index{1}}, At{"\x7f"_su8, VT_I32}}}},
+               At{"\x6a\x0b"_su8, "\x6a\x0b"_expr}},
       },
       sec);
   ExpectNoErrors(errors);
@@ -307,30 +298,28 @@ TEST(BinaryLazySectionTest, Data) {
 
   ExpectSection(
       {
+          DataSegment{At{"\x00"_su8, Index{0}},
+                      At{"\x41\x00\x0b"_su8,
+                         ConstantExpression{
+                             At{"\x41\x00"_su8,
+                                Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                            At{"\x00"_su8, s32{0}}}}}},
+                      At{"\x02hi"_su8, "hi"_su8}},
+          DataSegment{At{"\x00"_su8, Index{0}},
+                      At{"\x41\x02\x0b"_su8,
+                         ConstantExpression{
+                             At{"\x41\x02"_su8,
+                                Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                            At{"\x02"_su8, s32{2}}}}}},
+                      At{"\x03see"_su8, "see"_su8}},
           DataSegment{
-              MakeAt("\x00"_su8, Index{0}),
-              MakeAt("\x41\x00\x0b"_su8,
-                     ConstantExpression{MakeAt(
-                         "\x41\x00"_su8,
-                         Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                                     MakeAt("\x00"_su8, s32{0})})}),
-              MakeAt("\x02hi"_su8, "hi"_su8)},
-          DataSegment{
-              MakeAt("\x00"_su8, Index{0}),
-              MakeAt("\x41\x02\x0b"_su8,
-                     ConstantExpression{MakeAt(
-                         "\x41\x02"_su8,
-                         Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                                     MakeAt("\x02"_su8, s32{2})})}),
-              MakeAt("\x03see"_su8, "see"_su8)},
-          DataSegment{
-              MakeAt("\x00"_su8, Index{0}),
-              MakeAt("\x41\x05\x0b"_su8,
-                     ConstantExpression{MakeAt(
-                         "\x41\x05"_su8,
-                         Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                                     MakeAt("\x05"_su8, s32{5})})}),
-              MakeAt("\x03you"_su8, "you"_su8),
+              At{"\x00"_su8, Index{0}},
+              At{"\x41\x05\x0b"_su8,
+                 ConstantExpression{
+                     At{"\x41\x05"_su8,
+                        Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                    At{"\x05"_su8, s32{5}}}}}},
+              At{"\x03you"_su8, "you"_su8},
           },
       },
       sec);
@@ -342,6 +331,6 @@ TEST(BinaryLazySectionTest, DataCount) {
   Context context{errors};
   auto sec = ReadDataCountSection("\x03"_su8, context);
 
-  EXPECT_EQ(DataCount{MakeAt("\x03"_su8, Index{3})}, sec);
+  EXPECT_EQ((DataCount{At{"\x03"_su8, Index{3}}}), sec);
   ExpectNoErrors(errors);
 }

@@ -36,40 +36,38 @@ SpanU8 Context::Add(Buffer buffer) {
 auto ToBinary(Context& context, const At<text::HeapType>& value)
     -> At<binary::HeapType> {
   if (value->is_heap_kind()) {
-    return MakeAt(value.loc(), binary::HeapType{value->heap_kind()});
+    return At{value.loc(), binary::HeapType{value->heap_kind()}};
   } else {
     assert(value->is_var());
-    return MakeAt(value.loc(),
-                  binary::HeapType{ToBinary(context, value->var())});
+    return At{value.loc(), binary::HeapType{ToBinary(context, value->var())}};
   }
 }
 
 auto ToBinary(Context& context, const At<text::RefType>& value)
     -> At<binary::RefType> {
-  return MakeAt(
-      value.loc(),
-      binary::RefType{ToBinary(context, value->heap_type), value->null});
+  return At{value.loc(),
+            binary::RefType{ToBinary(context, value->heap_type), value->null}};
 }
 
 auto ToBinary(Context& context, const At<text::ReferenceType>& value)
     -> At<binary::ReferenceType> {
   if (value->is_reference_kind()) {
-    return MakeAt(value.loc(), binary::ReferenceType{value->reference_kind()});
+    return At{value.loc(), binary::ReferenceType{value->reference_kind()}};
   } else {
     assert(value->is_ref());
-    return MakeAt(value.loc(),
-                  binary::ReferenceType{ToBinary(context, value->ref())});
+    return At{value.loc(),
+              binary::ReferenceType{ToBinary(context, value->ref())}};
   }
 }
 
 auto ToBinary(Context& context, const At<text::ValueType>& value)
     -> At<binary::ValueType> {
   if (value->is_numeric_type()) {
-    return MakeAt(value.loc(), binary::ValueType{value->numeric_type()});
+    return At{value.loc(), binary::ValueType{value->numeric_type()}};
   } else {
     assert(value->is_reference_type());
-    return MakeAt(value.loc(), binary::ValueType{
-                                   ToBinary(context, value->reference_type())});
+    return At{value.loc(),
+              binary::ValueType{ToBinary(context, value->reference_type())}};
   }
 }
 
@@ -84,12 +82,12 @@ auto ToBinary(Context& context, const text::ValueTypeList& values)
 
 auto ToBinary(Context& context, const At<text::Text>& value)
     -> At<string_view> {
-  return MakeAt(value.loc(), context.Add(value->ToString()));
+  return At{value.loc(), context.Add(value->ToString())};
 }
 
 auto ToBinary(Context& context, const At<text::Var>& value) -> At<Index> {
   assert(value->is_index());
-  return MakeAt(value.loc(), value->index());
+  return At{value.loc(), value->index()};
 }
 
 auto ToBinary(Context& context, const OptAt<text::Var>& var) -> At<Index> {
@@ -103,7 +101,7 @@ auto ToBinary(Context& context,
   if (var.has_value()) {
     return ToBinary(context, var.value());
   } else {
-    return MakeAt(default_index);
+    return At{default_index};
   }
 }
 
@@ -119,9 +117,9 @@ auto ToBinary(Context& context, const text::VarList& vars)
 // Section 1: Type
 auto ToBinary(Context& context, const At<text::FunctionType>& value)
     -> At<binary::FunctionType> {
-  return MakeAt(value.loc(),
-                binary::FunctionType{ToBinary(context, value->params),
-                                     ToBinary(context, value->results)});
+  return At{value.loc(),
+            binary::FunctionType{ToBinary(context, value->params),
+                                 ToBinary(context, value->results)}};
 }
 
 auto ToBinary(Context& context, const text::BoundValueTypeList& values)
@@ -135,58 +133,54 @@ auto ToBinary(Context& context, const text::BoundValueTypeList& values)
 
 auto ToBinary(Context& context, const At<text::TypeEntry>& value)
     -> At<binary::TypeEntry> {
-  return MakeAt(
+  return At{
       value.loc(),
-      binary::TypeEntry{MakeAt(
-          value->type.loc(),
-          binary::FunctionType{ToBinary(context, value->type->params),
-                               ToBinary(context, value->type->results)})});
+      binary::TypeEntry{
+          At{value->type.loc(),
+             binary::FunctionType{ToBinary(context, value->type->params),
+                                  ToBinary(context, value->type->results)}}}};
 }
 
 // Section 2: Import
 auto ToBinary(Context& context, const At<text::Import>& value)
     -> At<binary::Import> {
-  auto module = MakeAt(value->module.loc(), ToBinary(context, value->module));
-  auto name = MakeAt(value->name.loc(), ToBinary(context, value->name));
+  auto module = At{value->module.loc(), ToBinary(context, value->module)};
+  auto name = At{value->name.loc(), ToBinary(context, value->name)};
 
   switch (value->kind()) {
     case ExternalKind::Function: {
       auto& desc = value->function_desc();
-      return MakeAt(value.loc(),
-                    binary::Import{module, name,
-                                   MakeAt(desc.type_use->loc(),
-                                          ToBinary(context, desc.type_use))});
+      return At{value.loc(),
+                binary::Import{module, name,
+                               At{desc.type_use->loc(),
+                                  ToBinary(context, desc.type_use)}}};
     }
 
     case ExternalKind::Table: {
       auto& desc = value->table_desc();
-      return MakeAt(value.loc(),
-                    binary::Import{
-                        module, name,
-                        MakeAt(desc.type.loc(), ToBinary(context, desc.type))});
+      return At{value.loc(), binary::Import{module, name,
+                                            At{desc.type.loc(),
+                                               ToBinary(context, desc.type)}}};
     }
 
     case ExternalKind::Memory: {
       auto& desc = value->memory_desc();
-      return MakeAt(
-          value.loc(),
-          binary::Import{module, name, MakeAt(desc.type.loc(), desc.type)});
+      return At{value.loc(),
+                binary::Import{module, name, At{desc.type.loc(), desc.type}}};
     }
 
     case ExternalKind::Global: {
       auto& desc = value->global_desc();
-      return MakeAt(value.loc(),
-                    binary::Import{
-                        module, name,
-                        MakeAt(desc.type.loc(), ToBinary(context, desc.type))});
+      return At{value.loc(), binary::Import{module, name,
+                                            At{desc.type.loc(),
+                                               ToBinary(context, desc.type)}}};
     }
 
     case ExternalKind::Event: {
       auto& desc = value->event_desc();
-      return MakeAt(value.loc(),
-                    binary::Import{
-                        module, name,
-                        MakeAt(desc.type.loc(), ToBinary(context, desc.type))});
+      return At{value.loc(), binary::Import{module, name,
+                                            At{desc.type.loc(),
+                                               ToBinary(context, desc.type)}}};
     }
 
     default:
@@ -200,16 +194,15 @@ auto ToBinary(Context& context, const At<text::Function>& value)
   if (value->import) {
     return nullopt;
   }
-  return MakeAt(value.loc(),
-                binary::Function{ToBinary(context, value->desc.type_use)});
+  return At{value.loc(),
+            binary::Function{ToBinary(context, value->desc.type_use)}};
 }
 
 // Section 4: Table
 auto ToBinary(Context& context, const At<text::TableType>& value)
     -> At<binary::TableType> {
-  return MakeAt(
-      value.loc(),
-      binary::TableType{value->limits, ToBinary(context, value->elemtype)});
+  return At{value.loc(), binary::TableType{value->limits,
+                                           ToBinary(context, value->elemtype)}};
 }
 
 auto ToBinary(Context& context, const At<text::Table>& value)
@@ -217,8 +210,7 @@ auto ToBinary(Context& context, const At<text::Table>& value)
   if (value->import) {
     return nullopt;
   }
-  return MakeAt(value.loc(),
-                binary::Table{ToBinary(context, value->desc.type)});
+  return At{value.loc(), binary::Table{ToBinary(context, value->desc.type)}};
 }
 
 // Section 5: Memory
@@ -227,21 +219,20 @@ auto ToBinary(Context& context, const At<text::Memory>& value)
   if (value->import) {
     return nullopt;
   }
-  return MakeAt(value.loc(), binary::Memory{value->desc.type});
+  return At{value.loc(), binary::Memory{value->desc.type}};
 }
 
 // Section 6: Global
 auto ToBinary(Context& context, const At<text::GlobalType>& value)
     -> At<binary::GlobalType> {
-  return MakeAt(
-      value.loc(),
-      binary::GlobalType{ToBinary(context, value->valtype), value->mut});
+  return At{value.loc(),
+            binary::GlobalType{ToBinary(context, value->valtype), value->mut}};
 }
 
 auto ToBinary(Context& context, const At<text::ConstantExpression>& value)
     -> At<binary::ConstantExpression> {
-  return MakeAt(value.loc(), binary::ConstantExpression{
-                                 ToBinary(context, value->instructions)});
+  return At{value.loc(),
+            binary::ConstantExpression{ToBinary(context, value->instructions)}};
 }
 
 auto ToBinary(Context& context, const At<text::Global>& value)
@@ -250,28 +241,28 @@ auto ToBinary(Context& context, const At<text::Global>& value)
     return nullopt;
   }
   assert(value->init.has_value());
-  return MakeAt(value.loc(), binary::Global{ToBinary(context, value->desc.type),
-                                            ToBinary(context, *value->init)});
+  return At{value.loc(), binary::Global{ToBinary(context, value->desc.type),
+                                        ToBinary(context, *value->init)}};
 }
 
 // Section 7: Export
 auto ToBinary(Context& context, const At<text::Export>& value)
     -> At<binary::Export> {
-  return MakeAt(value.loc(),
-                binary::Export{value->kind, ToBinary(context, value->name),
-                               ToBinary(context, value->var)});
+  return At{value.loc(),
+            binary::Export{value->kind, ToBinary(context, value->name),
+                           ToBinary(context, value->var)}};
 }
 
 // Section 8: Start
 auto ToBinary(Context& context, const At<text::Start>& value)
     -> At<binary::Start> {
-  return MakeAt(value.loc(), binary::Start{ToBinary(context, value->var)});
+  return At{value.loc(), binary::Start{ToBinary(context, value->var)}};
 }
 
 auto ToBinary(Context& context, const At<text::ElementExpression>& value)
     -> At<binary::ElementExpression> {
-  return MakeAt(value.loc(), binary::ElementExpression{
-                                 ToBinary(context, value->instructions)});
+  return At{value.loc(),
+            binary::ElementExpression{ToBinary(context, value->instructions)}};
 }
 
 auto ToBinary(Context& context, const text::ElementExpressionList& value)
@@ -299,14 +290,14 @@ auto ToBinary(Context& context, const text::ElementList& value)
 auto ToBinary(Context& context, const At<text::ElementSegment>& value)
     -> At<binary::ElementSegment> {
   if (value->type == SegmentType::Active) {
-    return MakeAt(value.loc(),
-                  binary::ElementSegment{ToBinary(context, value->table, 0),
-                                         ToBinary(context, *value->offset),
-                                         ToBinary(context, value->elements)});
+    return At{value.loc(),
+              binary::ElementSegment{ToBinary(context, value->table, 0),
+                                     ToBinary(context, *value->offset),
+                                     ToBinary(context, value->elements)}};
   } else {
-    return MakeAt(value.loc(),
-                  binary::ElementSegment{value->type,
-                                         ToBinary(context, value->elements)});
+    return At{value.loc(),
+              binary::ElementSegment{value->type,
+                                     ToBinary(context, value->elements)}};
   }
 }
 
@@ -317,57 +308,56 @@ auto ToBinary(Context& context, const At<text::BlockImmediate>& value)
     // TODO: This is really nasty; find a nicer way.
     auto inline_type = value->type.GetInlineType();
     if (!inline_type) {
-      return MakeAt(value.loc(), binary::BlockType{binary::VoidType{}});
+      return At{value.loc(), binary::BlockType{binary::VoidType{}}};
     }
-    return MakeAt(value.loc(),
-                  binary::BlockType{ToBinary(context, *inline_type)});
+    return At{value.loc(), binary::BlockType{ToBinary(context, *inline_type)}};
   } else {
     auto block_type_index = ToBinary(context, value->type.type_use);
     assert(block_type_index < 0x8000'0000);
-    return MakeAt(value.loc(), binary::BlockType{block_type_index});
+    return At{value.loc(), binary::BlockType{block_type_index}};
   }
 }
 
 auto ToBinary(Context& context, const At<text::BrOnExnImmediate>& value)
     -> At<binary::BrOnExnImmediate> {
-  return MakeAt(value.loc(),
-                binary::BrOnExnImmediate{ToBinary(context, value->target),
-                                         ToBinary(context, value->event)});
+  return At{value.loc(),
+            binary::BrOnExnImmediate{ToBinary(context, value->target),
+                                     ToBinary(context, value->event)}};
 }
 
 auto ToBinary(Context& context, const At<text::BrTableImmediate>& value)
     -> At<binary::BrTableImmediate> {
-  return MakeAt(value.loc(), binary::BrTableImmediate{
-                                 ToBinary(context, value->targets),
-                                 ToBinary(context, value->default_target)});
+  return At{value.loc(),
+            binary::BrTableImmediate{ToBinary(context, value->targets),
+                                     ToBinary(context, value->default_target)}};
 }
 
 auto ToBinary(Context& context, const At<text::CallIndirectImmediate>& value)
     -> At<binary::CallIndirectImmediate> {
-  return MakeAt(value.loc(), binary::CallIndirectImmediate{
-                                 ToBinary(context, value->type.type_use),
-                                 ToBinary(context, value->table, 0)});
+  return At{value.loc(), binary::CallIndirectImmediate{
+                             ToBinary(context, value->type.type_use),
+                             ToBinary(context, value->table, 0)}};
 }
 
 auto ToBinary(Context& context, const At<text::CopyImmediate>& value)
     -> At<binary::CopyImmediate> {
-  return MakeAt(value.loc(),
-                binary::CopyImmediate{ToBinary(context, value->dst, 0),
-                                      ToBinary(context, value->src, 0)});
+  return At{value.loc(),
+            binary::CopyImmediate{ToBinary(context, value->dst, 0),
+                                  ToBinary(context, value->src, 0)}};
 }
 
 auto ToBinary(Context& context, const At<text::InitImmediate>& value)
     -> At<binary::InitImmediate> {
-  return MakeAt(value.loc(),
-                binary::InitImmediate{ToBinary(context, value->segment),
-                                      ToBinary(context, value->dst, 0)});
+  return At{value.loc(),
+            binary::InitImmediate{ToBinary(context, value->segment),
+                                  ToBinary(context, value->dst, 0)}};
 }
 
 auto ToBinary(Context& context, const At<text::LetImmediate>& value)
     -> At<binary::LetImmediate> {
-  return MakeAt(value.loc(), binary::LetImmediate{
-                                 ToBinary(context, value->block),
-                                 ToBinaryLocalsList(context, value->locals)});
+  return At{value.loc(),
+            binary::LetImmediate{ToBinary(context, value->block),
+                                 ToBinaryLocalsList(context, value->locals)}};
 }
 
 u32 GetNaturalAlignment(Opcode opcode) {
@@ -503,122 +493,114 @@ auto ToBinary(Context& context,
               const At<text::MemArgImmediate>& value,
               u32 natural_align) -> At<binary::MemArgImmediate> {
   auto align = value->align
-                   ? MakeAt(value->align->loc(), GetAlignLog2(*value->align))
-                   : MakeAt(GetAlignLog2(natural_align));
-  auto offset = value->offset ? *value->offset : MakeAt(u32{0});
-  return MakeAt(value.loc(), binary::MemArgImmediate{align, offset});
+                   ? At{value->align->loc(), GetAlignLog2(*value->align)}
+                   : At{GetAlignLog2(natural_align)};
+  auto offset = value->offset ? *value->offset : At{u32{0}};
+  return At{value.loc(), binary::MemArgImmediate{align, offset}};
 }
 
 auto ToBinary(Context& context, const At<text::Instruction>& value)
     -> At<binary::Instruction> {
   switch (value->immediate.index()) {
     case 0:  // monostate
-      return MakeAt(value.loc(), binary::Instruction{value->opcode});
+      return At{value.loc(), binary::Instruction{value->opcode}};
 
     case 1:  // s32
-      return MakeAt(value.loc(),
-                    binary::Instruction{value->opcode, value->s32_immediate()});
+      return At{value.loc(),
+                binary::Instruction{value->opcode, value->s32_immediate()}};
 
     case 2:  // s64
-      return MakeAt(value.loc(),
-                    binary::Instruction{value->opcode, value->s64_immediate()});
+      return At{value.loc(),
+                binary::Instruction{value->opcode, value->s64_immediate()}};
 
     case 3:  // f32
-      return MakeAt(value.loc(),
-                    binary::Instruction{value->opcode, value->f32_immediate()});
+      return At{value.loc(),
+                binary::Instruction{value->opcode, value->f32_immediate()}};
 
     case 4:  // f64
-      return MakeAt(value.loc(),
-                    binary::Instruction{value->opcode, value->f64_immediate()});
+      return At{value.loc(),
+                binary::Instruction{value->opcode, value->f64_immediate()}};
 
     case 5:  // v128
-      return MakeAt(value.loc(), binary::Instruction{value->opcode,
-                                                     value->v128_immediate()});
+      return At{value.loc(),
+                binary::Instruction{value->opcode, value->v128_immediate()}};
 
     case 6:  // Var
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{value->opcode,
-                              ToBinary(context, value->var_immediate())});
+      return At{value.loc(),
+                binary::Instruction{value->opcode,
+                                    ToBinary(context, value->var_immediate())}};
 
     case 7:  // BlockImmediate
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{value->opcode,
-                              ToBinary(context, value->block_immediate())});
+      return At{value.loc(), binary::Instruction{
+                                 value->opcode,
+                                 ToBinary(context, value->block_immediate())}};
 
     case 8:  // BrOnExnImmediate
-      return MakeAt(
+      return At{
           value.loc(),
           binary::Instruction{value->opcode,
-                              ToBinary(context, value->br_on_exn_immediate())});
+                              ToBinary(context, value->br_on_exn_immediate())}};
 
     case 9:  // BrTableImmediate
-      return MakeAt(
+      return At{
           value.loc(),
           binary::Instruction{value->opcode,
-                              ToBinary(context, value->br_table_immediate())});
+                              ToBinary(context, value->br_table_immediate())}};
 
     case 10:  // CallIndirectImmediate
-      return MakeAt(value.loc(),
-                    binary::Instruction{
-                        value->opcode,
-                        ToBinary(context, value->call_indirect_immediate())});
+      return At{value.loc(),
+                binary::Instruction{
+                    value->opcode,
+                    ToBinary(context, value->call_indirect_immediate())}};
 
     case 11:  // CopyImmediate
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{value->opcode,
-                              ToBinary(context, value->copy_immediate())});
+      return At{value.loc(),
+                binary::Instruction{
+                    value->opcode, ToBinary(context, value->copy_immediate())}};
 
     case 12:  // InitImmediate
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{value->opcode,
-                              ToBinary(context, value->init_immediate())});
+      return At{value.loc(),
+                binary::Instruction{
+                    value->opcode, ToBinary(context, value->init_immediate())}};
 
     case 13:  // LetImmediate
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{value->opcode,
-                              ToBinary(context, value->let_immediate())});
+      return At{value.loc(),
+                binary::Instruction{value->opcode,
+                                    ToBinary(context, value->let_immediate())}};
 
     case 14:  // MemArgImmediate
-      return MakeAt(
+      return At{
           value.loc(),
           binary::Instruction{value->opcode,
                               ToBinary(context, value->mem_arg_immediate(),
-                                       GetNaturalAlignment(*value->opcode))});
+                                       GetNaturalAlignment(*value->opcode))}};
 
     case 15:  // HeapType
-      return MakeAt(
+      return At{
           value.loc(),
           binary::Instruction{value->opcode,
-                              ToBinary(context, value->heap_type_immediate())});
+                              ToBinary(context, value->heap_type_immediate())}};
 
     case 16:  // SelectImmediate
-      return MakeAt(value.loc(),
-                    binary::Instruction{
-                        value->opcode,
-                        MakeAt(value->select_immediate().loc(),
-                               ToBinary(context, *value->select_immediate()))});
+      return At{value.loc(),
+                binary::Instruction{
+                    value->opcode,
+                    At{value->select_immediate().loc(),
+                       ToBinary(context, *value->select_immediate())}}};
 
     case 17:  // ShuffleImmediate
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{value->opcode, value->shuffle_immediate()});
+      return At{value.loc(),
+                binary::Instruction{value->opcode, value->shuffle_immediate()}};
 
     case 18:  // SimdLaneImmediate
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{value->opcode, value->simd_lane_immediate()});
+      return At{value.loc(), binary::Instruction{value->opcode,
+                                                 value->simd_lane_immediate()}};
 
     case 19:  // FuncBindImmediate
-      return MakeAt(
-          value.loc(),
-          binary::Instruction{
-              value->opcode,
-              ToBinary(context, value->func_bind_immediate()->type_use)});
+      return At{value.loc(),
+                binary::Instruction{
+                    value->opcode,
+                    ToBinary(context, value->func_bind_immediate()->type_use)}};
 
     default:
       WASP_UNREACHABLE();
@@ -637,8 +619,7 @@ auto ToBinary(Context& context, const text::InstructionList& value)
 auto ToBinaryUnpackedExpression(Context& context,
                                 const At<text::InstructionList>& value)
     -> At<binary::UnpackedExpression> {
-  return MakeAt(value.loc(),
-                binary::UnpackedExpression{ToBinary(context, value)});
+  return At{value.loc(), binary::UnpackedExpression{ToBinary(context, value)}};
 }
 
 auto ToBinaryLocalsList(Context& context,
@@ -657,7 +638,7 @@ auto ToBinaryLocalsList(Context& context,
       local_type = bound_local_type;
     }
   }
-  return MakeAt(value.loc(), result);
+  return At{value.loc(), result};
 }
 
 auto ToBinaryCode(Context& context, const At<text::Function>& value)
@@ -666,10 +647,10 @@ auto ToBinaryCode(Context& context, const At<text::Function>& value)
     return nullopt;
   }
 
-  return MakeAt(value.loc(),
-                binary::UnpackedCode{
-                    ToBinaryLocalsList(context, value->locals),
-                    ToBinaryUnpackedExpression(context, value->instructions)});
+  return At{value.loc(),
+            binary::UnpackedCode{
+                ToBinaryLocalsList(context, value->locals),
+                ToBinaryUnpackedExpression(context, value->instructions)}};
 }
 
 // Section 11: Data
@@ -684,13 +665,12 @@ auto ToBinary(Context& context, const At<text::TextList>& value) -> SpanU8 {
 auto ToBinary(Context& context, const At<text::DataSegment>& value)
     -> At<binary::DataSegment> {
   if (value->type == SegmentType::Active) {
-    return MakeAt(value.loc(),
-                  binary::DataSegment{ToBinary(context, value->memory, 0),
-                                      ToBinary(context, *value->offset),
-                                      ToBinary(context, value->data)});
+    return At{value.loc(),
+              binary::DataSegment{ToBinary(context, value->memory, 0),
+                                  ToBinary(context, *value->offset),
+                                  ToBinary(context, value->data)}};
   } else {
-    return MakeAt(value.loc(),
-                  binary::DataSegment{ToBinary(context, value->data)});
+    return At{value.loc(), binary::DataSegment{ToBinary(context, value->data)}};
   }
 }
 
@@ -699,9 +679,9 @@ auto ToBinary(Context& context, const At<text::DataSegment>& value)
 // Section 13: Event
 auto ToBinary(Context& context, const At<text::EventType>& value)
     -> At<binary::EventType> {
-  return MakeAt(value.loc(),
-                binary::EventType{value->attribute,
-                                  ToBinary(context, value->type.type_use)});
+  return At{value.loc(),
+            binary::EventType{value->attribute,
+                              ToBinary(context, value->type.type_use)}};
 }
 
 auto ToBinary(Context& context, const At<text::Event>& value)
@@ -709,8 +689,7 @@ auto ToBinary(Context& context, const At<text::Event>& value)
   if (value->import) {
     return nullopt;
   }
-  return MakeAt(value.loc(),
-                binary::Event{ToBinary(context, value->desc.type)});
+  return At{value.loc(), binary::Event{ToBinary(context, value->desc.type)}};
 }
 
 // Module
@@ -780,7 +759,7 @@ auto ToBinary(Context& context, const At<text::Module>& value)
         break;
     }
   }
-  return MakeAt(value.loc(), result);
+  return At{value.loc(), result};
 }
 
 }  // namespace wasp::convert

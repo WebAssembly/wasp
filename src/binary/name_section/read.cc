@@ -34,8 +34,7 @@ OptAt<IndirectNameAssoc> Read(SpanU8* data,
   LocationGuard guard{data};
   WASP_TRY_READ(index, ReadIndex(data, context, "index"));
   WASP_TRY_READ(name_map, ReadVector<NameAssoc>(data, context, "name map"));
-  return MakeAt(guard.range(data),
-                IndirectNameAssoc{index, std::move(name_map)});
+  return At{guard.range(data), IndirectNameAssoc{index, std::move(name_map)}};
 }
 
 OptAt<NameAssoc> Read(SpanU8* data, Context& context, Tag<NameAssoc>) {
@@ -43,7 +42,7 @@ OptAt<NameAssoc> Read(SpanU8* data, Context& context, Tag<NameAssoc>) {
   LocationGuard guard{data};
   WASP_TRY_READ(index, ReadIndex(data, context, "index"));
   WASP_TRY_READ(name, ReadString(data, context, "name"));
-  return MakeAt(guard.range(data), NameAssoc{index, name});
+  return At{guard.range(data), NameAssoc{index, name}};
 }
 
 OptAt<NameSubsection> Read(SpanU8* data,
@@ -54,7 +53,7 @@ OptAt<NameSubsection> Read(SpanU8* data,
   WASP_TRY_READ(id, Read<NameSubsectionId>(data, context));
   WASP_TRY_READ(length, ReadLength(data, context));
   WASP_TRY_READ(bytes, ReadBytes(data, length, context));
-  return MakeAt(guard.range(data), NameSubsection{id, *bytes});
+  return At{guard.range(data), NameSubsection{id, *bytes}};
 }
 
 OptAt<NameSubsectionId> Read(SpanU8* data,
@@ -64,7 +63,7 @@ OptAt<NameSubsectionId> Read(SpanU8* data,
   LocationGuard guard{data};
   WASP_TRY_READ(val, Read<u8>(data, context));
   WASP_TRY_DECODE(decoded, val, NameSubsectionId, "name subsection id");
-  return MakeAt(guard.range(data), decoded);
+  return At{guard.range(data), decoded};
 }
 
 }  // namespace wasp::binary

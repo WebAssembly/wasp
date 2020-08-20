@@ -40,7 +40,7 @@
     context.errors.OnError(*data, concat("Unknown " name ": ", *in_var_at)); \
     return nullopt;                                                          \
   }                                                                          \
-  auto out_var = MakeAt(in_var_at.loc(), *out_var##opt) /* No semicolon. */
+  auto out_var = At{in_var_at.loc(), *out_var##opt} /* No semicolon. */
 
 #define WASP_TRY_DECODE_FEATURES(out_var, in_var_at, Type, name, features)   \
   auto out_var##opt = encoding::Type::Decode(in_var_at, features);           \
@@ -48,6 +48,6 @@
     context.errors.OnError(*data, concat("Unknown " name ": ", *in_var_at)); \
     return nullopt;                                                          \
   }                                                                          \
-  auto out_var = MakeAt(in_var_at.loc(), *out_var##opt) /* No semicolon. */
+  auto out_var = At{in_var_at.loc(), *out_var##opt} /* No semicolon. */
 
 #endif  // WASP_BINARY_MACROS_H_

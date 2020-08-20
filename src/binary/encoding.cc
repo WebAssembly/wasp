@@ -59,11 +59,11 @@ optional<::wasp::binary::BlockType> BlockType::Decode(
     At<u8> val,
     const Features& features) {
   if (val == Void) {
-    return binary::BlockType{MakeAt(val.loc(), VoidType{})};
+    return binary::BlockType{At{val.loc(), VoidType{}}};
   } else {
     auto opt_valtype = ValueType::Decode(val, features);
     if (opt_valtype) {
-      return binary::BlockType{MakeAt(val.loc(), *opt_valtype)};
+      return binary::BlockType{At{val.loc(), *opt_valtype}};
     }
   }
   return nullopt;
@@ -75,15 +75,15 @@ optional<::wasp::binary::BlockType> BlockType::Decode(
     const Features& features) {
   if (val >= 0) {
     if (features.multi_value_enabled()) {
-      return binary::BlockType{MakeAt(val.loc(), Index(val))};
+      return binary::BlockType{At{val.loc(), Index(val)}};
     }
   } else if (EncodeSLEB128AsU8(val) == Void) {
-    return binary::BlockType{MakeAt(val.loc(), VoidType{})};
+    return binary::BlockType{At{val.loc(), VoidType{}}};
   } else if (val >= -0xff) {
     auto opt_valtype =
-        ValueType::Decode(MakeAt(val.loc(), EncodeSLEB128AsU8(val)), features);
+        ValueType::Decode(At{val.loc(), EncodeSLEB128AsU8(val)}, features);
     if (opt_valtype) {
-      return binary::BlockType{MakeAt(val.loc(), *opt_valtype)};
+      return binary::BlockType{At{val.loc(), *opt_valtype}};
     }
   }
   return nullopt;
@@ -148,7 +148,7 @@ s32 HeapType::Encode(const ::wasp::binary::HeapType& decoded) {
 optional<::wasp::binary::HeapType> HeapType::Decode(At<s32> val,
                                                     const Features& features) {
   if (val >= 0) {
-    return ::wasp::binary::HeapType{MakeAt(val.loc(), Index(val))};
+    return ::wasp::binary::HeapType{At{val.loc(), Index(val)}};
   } else {
     optional<HeapKind> kind_opt;
     switch (val) {
@@ -173,7 +173,7 @@ optional<::wasp::binary::HeapType> HeapType::Decode(At<s32> val,
     }
 
     if (kind_opt) {
-      return ::wasp::binary::HeapType{MakeAt(val.loc(), *kind_opt)};
+      return ::wasp::binary::HeapType{At{val.loc(), *kind_opt}};
     }
   }
   return nullopt;
@@ -381,7 +381,7 @@ optional<::wasp::binary::ReferenceType> ReferenceType::Decode(
   }
 
   if (kind_opt) {
-    return ::wasp::binary::ReferenceType{MakeAt(val.loc(), *kind_opt)};
+    return ::wasp::binary::ReferenceType{At{val.loc(), *kind_opt}};
   }
   return nullopt;
 }
@@ -395,7 +395,7 @@ ReferenceType::Decode(At<u8> prefix, At<s32> code, const Features& features) {
   if (heap_type) {
     Null null = prefix == RefNull ? Null::Yes : Null::No;
     return ::wasp::binary::ReferenceType{
-        ::wasp::binary::RefType{MakeAt(code.loc(), *heap_type), null}};
+        ::wasp::binary::RefType{At{code.loc(), *heap_type}, null}};
   }
   return nullopt;
 }
@@ -587,11 +587,11 @@ optional<::wasp::binary::ValueType> ValueType::Decode(
     const Features& features) {
   auto opt_numeric = NumericType::Decode(val, features);
   if (opt_numeric) {
-    return ::wasp::binary::ValueType{MakeAt(val.loc(), *opt_numeric)};
+    return ::wasp::binary::ValueType{At{val.loc(), *opt_numeric}};
   } else {
     auto opt_ref = ReferenceType::Decode(val, features, AllowFuncref::No);
     if (opt_ref) {
-      return ::wasp::binary::ValueType{MakeAt(val.loc(), *opt_ref)};
+      return ::wasp::binary::ValueType{At{val.loc(), *opt_ref}};
     }
     return nullopt;
   }
@@ -602,7 +602,7 @@ optional<::wasp::binary::ValueType>
 ValueType::Decode(At<u8> prefix, At<s32> code, const Features& features) {
   auto opt_ref = ReferenceType::Decode(prefix, code, features);
   if (opt_ref) {
-    return ::wasp::binary::ValueType{MakeAt(code.loc(), *opt_ref)};
+    return ::wasp::binary::ValueType{At{code.loc(), *opt_ref}};
   }
   return nullopt;
 }

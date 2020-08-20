@@ -50,25 +50,22 @@ TEST(BinaryLazyNameSectionTest, NameSection) {
 
   auto it = sec.begin();
 
-  EXPECT_EQ(
-      MakeAt("\x00\x02\x01m"_su8,
-             NameSubsection{MakeAt("\x00"_su8, NameSubsectionId::ModuleName),
-                            "\x01m"_su8}),
-      *it++);
+  EXPECT_EQ((At{"\x00\x02\x01m"_su8,
+                NameSubsection{At{"\x00"_su8, NameSubsectionId::ModuleName},
+                               "\x01m"_su8}}),
+            *it++);
   ASSERT_NE(sec.end(), it);
 
-  EXPECT_EQ(
-      MakeAt("\x01\x03\x02\x01g"_su8,
-             NameSubsection{MakeAt("\x01"_su8, NameSubsectionId::FunctionNames),
-                            "\x02\x01g"_su8}),
-      *it++);
+  EXPECT_EQ((At{"\x01\x03\x02\x01g"_su8,
+                NameSubsection{At{"\x01"_su8, NameSubsectionId::FunctionNames},
+                               "\x02\x01g"_su8}}),
+            *it++);
   ASSERT_NE(sec.end(), it);
 
-  EXPECT_EQ(
-      MakeAt("\x02\x0a\x03\x02\x04\x02g4\x05\x02g5"_su8,
-             NameSubsection{MakeAt("\x02"_su8, NameSubsectionId::LocalNames),
-                            "\x03\x02\x04\x02g4\x05\x02g5"_su8}),
-      *it++);
+  EXPECT_EQ((At{"\x02\x0a\x03\x02\x04\x02g4\x05\x02g5"_su8,
+                NameSubsection{At{"\x02"_su8, NameSubsectionId::LocalNames},
+                               "\x03\x02\x04\x02g4\x05\x02g5"_su8}}),
+            *it++);
   ASSERT_EQ(sec.end(), it);
 
   ExpectNoErrors(errors);
@@ -90,12 +87,12 @@ TEST(BinaryLazyNameSectionTest, FunctionNamesSubsection) {
       "five"_su8,
       context);
 
-  ExpectSubsection({NameAssoc{MakeAt("\x03"_su8, Index{3}),
-                              MakeAt("\x05three"_su8, "three"_sv)},
-                    NameAssoc{MakeAt("\x05"_su8, Index{5}), MakeAt("\x04"
-                                                                   "five"_su8,
-                                                                   "five"_sv)}},
-                   sec);
+  ExpectSubsection(
+      {NameAssoc{At{"\x03"_su8, Index{3}}, At{"\x05three"_su8, "three"_sv}},
+       NameAssoc{At{"\x05"_su8, Index{5}}, At{"\x04"
+                                              "five"_su8,
+                                              "five"_sv}}},
+      sec);
   ExpectNoErrors(errors);
 }
 
@@ -110,20 +107,19 @@ TEST(BinaryLazyNameSectionTest, LocalNamesSubsection) {
       context);
 
   ExpectSubsection(
-      {IndirectNameAssoc{MakeAt("\x02"_su8, Index{2}),
-                         {MakeAt("\x01\x04ichi"_su8,
-                                 NameAssoc{MakeAt("\x01"_su8, Index{1}),
-                                           MakeAt("\x04ichi"_su8, "ichi"_sv)}),
-                          MakeAt("\x03\x03san"_su8,
-                                 NameAssoc{MakeAt("\x03"_su8, Index{3}),
-                                           MakeAt("\x03san"_su8, "san"_sv)})}},
-       IndirectNameAssoc{MakeAt("\x04"_su8, Index{4}),
-                         {MakeAt("\x05\x05"
-                                 "cinco"_su8,
-                                 NameAssoc{MakeAt("\x05"_su8, Index{5}),
-                                           MakeAt("\x05"
-                                                  "cinco"_su8,
-                                                  "cinco"_sv)})}}},
+      {IndirectNameAssoc{
+           At{"\x02"_su8, Index{2}},
+           {At{"\x01\x04ichi"_su8, NameAssoc{At{"\x01"_su8, Index{1}},
+                                             At{"\x04ichi"_su8, "ichi"_sv}}},
+            At{"\x03\x03san"_su8, NameAssoc{At{"\x03"_su8, Index{3}},
+                                            At{"\x03san"_su8, "san"_sv}}}}},
+       IndirectNameAssoc{
+           At{"\x04"_su8, Index{4}},
+           {At{"\x05\x05"
+               "cinco"_su8,
+               NameAssoc{At{"\x05"_su8, Index{5}}, At{"\x05"
+                                                      "cinco"_su8,
+                                                      "cinco"_sv}}}}}},
       sec);
   ExpectNoErrors(errors);
 }

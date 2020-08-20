@@ -66,7 +66,7 @@ OptAt<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
     if (++i == VarInt<T>::kMaxBytes) {
       if ((byte & kLastByteMask) == 0 ||
           (is_signed && (byte & kLastByteMask) == kLastByteOnes)) {
-        return MakeAt(guard.range(data), T(result));
+        return At{guard.range(data), T(result)};
       }
       const u8 zero_ext = byte & ~kLastByteMask & kByteMask;
       const u8 one_ext = (byte | kLastByteOnes) & kByteMask;
@@ -86,8 +86,8 @@ OptAt<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
       }
       return nullopt;
     } else if ((byte & VarInt<T>::kExtendBit) == 0) {
-      return MakeAt(guard.range(data),
-                    is_signed ? SignExtend<T>(result, 6 + shift) : T(result));
+      return At{guard.range(data),
+                is_signed ? SignExtend<T>(result, 6 + shift) : T(result)};
     }
   }
 }

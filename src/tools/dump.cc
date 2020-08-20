@@ -519,8 +519,7 @@ void Tool::DoCustomSection(Pass pass,
 
 void Tool::DoSectionHeader(Pass pass,
                            Section section) {
-  auto id =
-      section.is_known() ? section.known()->id : MakeAt(SectionId::Custom);
+  auto id = section.is_known() ? section.known()->id : At{SectionId::Custom};
   auto data = section.data();
   auto offset = data.begin() - module.data.begin();
   auto size = data.size();

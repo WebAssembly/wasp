@@ -51,18 +51,15 @@ struct At : std::pair<Location, T> {
   T& operator*() { return this->second; }
 };
 
+// Deduction guides.
+template <typename T>
+At(T v) -> At<T>;
+
+template <typename T>
+At(Location loc, T v) -> At<T>;
+
 template <typename T>
 using OptAt = optional<At<T>>;
-
-template <typename T>
-At<T> MakeAt(T val) {
-  return At<T>{val};
-}
-
-template <typename T>
-At<T> MakeAt(Location loc, T val) {
-  return At<T>{loc, val};
-}
 
 }  // namespace wasp
 

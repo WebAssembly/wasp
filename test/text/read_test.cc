@@ -48,7 +48,7 @@ class TextReadTest : public ::testing::Test {
   void OK(Func&& func, const T& expected, SpanU8 span, Args&&... args) {
     Tokenizer tokenizer{span};
     auto actual = func(tokenizer, context, std::forward<Args>(args)...);
-    ASSERT_EQ(MakeAt(span, expected), actual);
+    ASSERT_EQ((At{span, expected}), actual);
     ExpectNoErrors(errors);
   }
 
@@ -121,7 +121,6 @@ auto ReadExpressionList_ForTesting(Tokenizer& tokenizer, Context& context)
   return result;
 }
 
-
 TEST_F(TextReadTest, Nat32) {
   OK(ReadNat32, u32{123}, "123"_su8);
 }
@@ -152,10 +151,10 @@ TEST_F(TextReadTest, BindVarOpt) {
 TEST_F(TextReadTest, VarList) {
   auto span = "$a $b 1 2"_su8;
   std::vector<At<Var>> expected{
-      MakeAt("$a"_su8, Var{"$a"_sv}),
-      MakeAt("$b"_su8, Var{"$b"_sv}),
-      MakeAt("1"_su8, Var{Index{1}}),
-      MakeAt("2"_su8, Var{Index{2}}),
+      At{"$a"_su8, Var{"$a"_sv}},
+      At{"$b"_su8, Var{"$b"_sv}},
+      At{"1"_su8, Var{Index{1}}},
+      At{"2"_su8, Var{Index{2}}},
   };
   OKVector(ReadVarList, expected, span);
 }
@@ -172,9 +171,9 @@ TEST_F(TextReadTest, Utf8Text) {
 TEST_F(TextReadTest, TextList) {
   auto span = "\"hello, \" \"world\" \"123\""_su8;
   std::vector<At<Text>> expected{
-      MakeAt("\"hello, \""_su8, Text{"\"hello, \""_sv, 7}),
-      MakeAt("\"world\""_su8, Text{"\"world\""_sv, 5}),
-      MakeAt("\"123\""_su8, Text{"\"123\""_sv, 3}),
+      At{"\"hello, \""_su8, Text{"\"hello, \""_sv, 7}},
+      At{"\"world\""_su8, Text{"\"world\""_sv, 5}},
+      At{"\"123\""_su8, Text{"\"123\""_sv, 3}},
   };
   OKVector(ReadTextList, expected, span);
 }
@@ -243,10 +242,10 @@ TEST_F(TextReadTest, ValueType_function_references) {
 TEST_F(TextReadTest, ValueTypeList) {
   auto span = "i32 f32 f64 i64"_su8;
   std::vector<At<ValueType>> expected{
-      MakeAt("i32"_su8, VT_I32),
-      MakeAt("f32"_su8, VT_F32),
-      MakeAt("f64"_su8, VT_F64),
-      MakeAt("i64"_su8, VT_I64),
+      At{"i32"_su8, VT_I32},
+      At{"f32"_su8, VT_F32},
+      At{"f64"_su8, VT_F64},
+      At{"i64"_su8, VT_I64},
   };
   OKVector(ReadValueTypeList, expected, span);
 }
@@ -286,10 +285,9 @@ TEST_F(TextReadTest, ReferenceType_function_references) {
 TEST_F(TextReadTest, BoundParamList) {
   auto span = "(param i32 f32) (param $foo i64) (param)"_su8;
   std::vector<At<BoundValueType>> expected{
-      MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT_I32)}),
-      MakeAt("f32"_su8, BVT{nullopt, MakeAt("f32"_su8, VT_F32)}),
-      MakeAt("$foo i64"_su8,
-             BVT{MakeAt("$foo"_su8, "$foo"_sv), MakeAt("i64"_su8, VT_I64)}),
+      At{"i32"_su8, BVT{nullopt, At{"i32"_su8, VT_I32}}},
+      At{"f32"_su8, BVT{nullopt, At{"f32"_su8, VT_F32}}},
+      At{"$foo i64"_su8, BVT{At{"$foo"_su8, "$foo"_sv}, At{"i64"_su8, VT_I64}}},
   };
 
   OKVector(ReadBoundParamList, expected, span);
@@ -298,9 +296,9 @@ TEST_F(TextReadTest, BoundParamList) {
 TEST_F(TextReadTest, ParamList) {
   auto span = "(param i32 f32) (param i64) (param)"_su8;
   std::vector<At<ValueType>> expected{
-      MakeAt("i32"_su8, VT_I32),
-      MakeAt("f32"_su8, VT_F32),
-      MakeAt("i64"_su8, VT_I64),
+      At{"i32"_su8, VT_I32},
+      At{"f32"_su8, VT_F32},
+      At{"i64"_su8, VT_I64},
   };
   OKVector(ReadParamList, expected, span);
 }
@@ -308,9 +306,9 @@ TEST_F(TextReadTest, ParamList) {
 TEST_F(TextReadTest, ResultList) {
   auto span = "(result i32 f32) (result i64) (result)"_su8;
   std::vector<At<ValueType>> expected{
-      MakeAt("i32"_su8, VT_I32),
-      MakeAt("f32"_su8, VT_F32),
-      MakeAt("i64"_su8, VT_I64),
+      At{"i32"_su8, VT_I32},
+      At{"f32"_su8, VT_F32},
+      At{"i64"_su8, VT_I64},
   };
   OKVector(ReadResultList, expected, span);
 }
@@ -318,10 +316,9 @@ TEST_F(TextReadTest, ResultList) {
 TEST_F(TextReadTest, LocalList) {
   auto span = "(local i32 f32) (local $foo i64) (local)"_su8;
   std::vector<At<BoundValueType>> expected{
-      MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT_I32)}),
-      MakeAt("f32"_su8, BVT{nullopt, MakeAt("f32"_su8, VT_F32)}),
-      MakeAt("$foo i64"_su8,
-             BVT{MakeAt("$foo"_su8, "$foo"_sv), MakeAt("i64"_su8, VT_I64)}),
+      At{"i32"_su8, BVT{nullopt, At{"i32"_su8, VT_I32}}},
+      At{"f32"_su8, BVT{nullopt, At{"f32"_su8, VT_F32}}},
+      At{"$foo i64"_su8, BVT{At{"$foo"_su8, "$foo"_sv}, At{"i64"_su8, VT_I64}}},
   };
 
   OKVector(ReadLocalList, expected, span);
@@ -339,30 +336,28 @@ TEST_F(TextReadTest, FunctionTypeUse) {
 
   // Type use.
   OK(ReadFunctionTypeUse,
-     FunctionTypeUse{MakeAt("(type 0)"_su8, Var{Index{0}}), {}},
-     "(type 0)"_su8);
+     FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}, "(type 0)"_su8);
 
   // Function type.
   OK(ReadFunctionTypeUse,
-     FunctionTypeUse{nullopt,
-                     MakeAt("(param i32 f32) (result f64)"_su8,
-                            FunctionType{{MakeAt("i32"_su8, VT_I32),
-                                          MakeAt("f32"_su8, VT_F32)},
-                                         {MakeAt("f64"_su8, VT_F64)}})},
+     FunctionTypeUse{nullopt, At{"(param i32 f32) (result f64)"_su8,
+                                 FunctionType{{At{"i32"_su8, VT_I32},
+                                               At{"f32"_su8, VT_F32}},
+                                              {At{"f64"_su8, VT_F64}}}}},
      "(param i32 f32) (result f64)"_su8);
 
   // Type use and function type.
   OK(ReadFunctionTypeUse,
-     FunctionTypeUse{MakeAt("(type $t)"_su8, Var{"$t"_sv}),
-                     MakeAt("(result i32)"_su8,
-                            FunctionType{{}, {MakeAt("i32"_su8, VT_I32)}})},
+     FunctionTypeUse{
+         At{"(type $t)"_su8, Var{"$t"_sv}},
+         At{"(result i32)"_su8, FunctionType{{}, {At{"i32"_su8, VT_I32}}}}},
      "(type $t) (result i32)"_su8);
 }
 
 TEST_F(TextReadTest, InlineImport) {
   OK(ReadInlineImportOpt,
-     InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-                  MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})},
+     InlineImport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+                  At{"\"n\""_su8, Text{"\"n\""_sv, 1}}},
      R"((import "m" "n"))"_su8);
   OK(ReadInlineImportOpt, nullopt, ""_su8);
 }
@@ -375,43 +370,39 @@ TEST_F(TextReadTest, InlineImport_AfterNonImport) {
 }
 
 TEST_F(TextReadTest, InlineExport) {
-  OK(ReadInlineExport, InlineExport{MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})},
+  OK(ReadInlineExport, InlineExport{At{"\"n\""_su8, Text{"\"n\""_sv, 1}}},
      R"((export "n"))"_su8);
 }
 
 TEST_F(TextReadTest, InlineExportList) {
   OKVector(ReadInlineExportList,
            InlineExportList{
-               MakeAt("(export \"m\")"_su8,
-                      InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})}),
-               MakeAt("(export \"n\")"_su8,
-                      InlineExport{MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
+               At{"(export \"m\")"_su8,
+                  InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}},
+               At{"(export \"n\")"_su8,
+                  InlineExport{At{"\"n\""_su8, Text{"\"n\""_sv, 1}}}},
            },
            R"((export "m") (export "n"))"_su8);
 }
-
 
 TEST_F(TextReadTest, BoundFunctionType) {
   SpanU8 span =
       "(param i32 i32) (param $t i64) (result f32 f32) (result f64)"_su8;
   OK(ReadBoundFunctionType,
      BoundFunctionType{
-         {MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT_I32)}),
-          MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT_I32)}),
-          MakeAt("$t i64"_su8,
-                 BVT{MakeAt("$t"_su8, "$t"_sv), MakeAt("i64"_su8, VT_I64)})},
-         {MakeAt("f32"_su8, VT_F32), MakeAt("f32"_su8, VT_F32),
-          MakeAt("f64"_su8, VT_F64)}},
+         {At{"i32"_su8, BVT{nullopt, At{"i32"_su8, VT_I32}}},
+          At{"i32"_su8, BVT{nullopt, At{"i32"_su8, VT_I32}}},
+          At{"$t i64"_su8, BVT{At{"$t"_su8, "$t"_sv}, At{"i64"_su8, VT_I64}}}},
+         {At{"f32"_su8, VT_F32}, At{"f32"_su8, VT_F32}, At{"f64"_su8, VT_F64}}},
      span);
 }
 
 TEST_F(TextReadTest, FunctionType) {
   SpanU8 span = "(param i32 i32) (param i64) (result f32 f32) (result f64)"_su8;
   OK(ReadFunctionType,
-     FunctionType{{MakeAt("i32"_su8, VT_I32), MakeAt("i32"_su8, VT_I32),
-                   MakeAt("i64"_su8, VT_I64)},
-                  {MakeAt("f32"_su8, VT_F32), MakeAt("f32"_su8, VT_F32),
-                   MakeAt("f64"_su8, VT_F64)}},
+     FunctionType{
+         {At{"i32"_su8, VT_I32}, At{"i32"_su8, VT_I32}, At{"i64"_su8, VT_I64}},
+         {At{"f32"_su8, VT_F32}, At{"f32"_su8, VT_F32}, At{"f64"_su8, VT_F64}}},
      span);
 }
 
@@ -421,12 +412,11 @@ TEST_F(TextReadTest, TypeEntry) {
 
   OK(ReadTypeEntry,
      TypeEntry{
-         MakeAt("$foo"_su8, "$foo"_sv),
-         MakeAt("(param $bar i32) (result i64)"_su8,
-                BoundFunctionType{
-                    {MakeAt("$bar i32"_su8, BVT{MakeAt("$bar"_su8, "$bar"_sv),
-                                                MakeAt("i32"_su8, VT_I32)})},
-                    {MakeAt("i64"_su8, VT_I64)}})},
+         At{"$foo"_su8, "$foo"_sv},
+         At{"(param $bar i32) (result i64)"_su8,
+            BoundFunctionType{{At{"$bar i32"_su8, BVT{At{"$bar"_su8, "$bar"_sv},
+                                                      At{"i32"_su8, VT_I32}}}},
+                              {At{"i64"_su8, VT_I64}}}}},
      "(type $foo (func (param $bar i32) (result i64)))"_su8);
 }
 
@@ -448,12 +438,10 @@ TEST_F(TextReadTest, OffsetOpt) {
 }
 
 TEST_F(TextReadTest, Limits) {
-  OK(ReadLimits, Limits{MakeAt("1"_su8, 1u)}, "1"_su8);
-  OK(ReadLimits, Limits{MakeAt("1"_su8, 1u), MakeAt("0x11"_su8, 17u)},
-     "1 0x11"_su8);
+  OK(ReadLimits, Limits{At{"1"_su8, 1u}}, "1"_su8);
+  OK(ReadLimits, Limits{At{"1"_su8, 1u}, At{"0x11"_su8, 17u}}, "1 0x11"_su8);
   OK(ReadLimits,
-     Limits{MakeAt("0"_su8, 0u), MakeAt("20"_su8, 20u),
-            MakeAt("shared"_su8, Shared::Yes)},
+     Limits{At{"0"_su8, 0u}, At{"20"_su8, 20u}, At{"shared"_su8, Shared::Yes}},
      "0 20 shared"_su8);
 }
 
@@ -462,19 +450,19 @@ TEST_F(TextReadTest, BlockImmediate) {
   OK(ReadBlockImmediate, BlockImmediate{}, ""_su8);
 
   // block type w/ label.
-  OK(ReadBlockImmediate, BlockImmediate{MakeAt("$l"_su8, BindVar{"$l"_sv}), {}},
+  OK(ReadBlockImmediate, BlockImmediate{At{"$l"_su8, BindVar{"$l"_sv}}, {}},
      "$l"_su8);
 
   // block type w/ function type use.
   OK(ReadBlockImmediate,
      BlockImmediate{nullopt,
-                    FunctionTypeUse{MakeAt("(type 0)"_su8, Var{Index{0}}), {}}},
+                    FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}},
      "(type 0)"_su8);
 
   // block type w/ label and function type use.
   OK(ReadBlockImmediate,
-     BlockImmediate{MakeAt("$l2"_su8, BindVar{"$l2"_sv}),
-                    FunctionTypeUse{MakeAt("(type 0)"_su8, Var{Index{0}}), {}}},
+     BlockImmediate{At{"$l2"_su8, BindVar{"$l2"_sv}},
+                    FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}},
      "$l2 (type 0)"_su8);
 }
 
@@ -485,19 +473,18 @@ TEST_F(TextReadTest, BlockImmediate_InlineType) {
     At<ValueType> value_type;
     SpanU8 span;
   } tests[] = {
-      {MakeAt("i32"_su8, VT_I32), "(result i32)"_su8},
-      {MakeAt("i64"_su8, VT_I64), "(result i64)"_su8},
-      {MakeAt("f32"_su8, VT_F32), "(result f32)"_su8},
-      {MakeAt("f64"_su8, VT_F64), "(result f64)"_su8},
+      {At{"i32"_su8, VT_I32}, "(result i32)"_su8},
+      {At{"i64"_su8, VT_I64}, "(result i64)"_su8},
+      {At{"f32"_su8, VT_F32}, "(result f32)"_su8},
+      {At{"f64"_su8, VT_F64}, "(result f64)"_su8},
   };
 
-  for (auto& test: tests) {
+  for (auto& test : tests) {
     OK(ReadBlockImmediate,
        BlockImmediate{
            nullopt,
-           FunctionTypeUse{
-               nullopt,
-               MakeAt(test.span, FunctionType{{}, {test.value_type}})}},
+           FunctionTypeUse{nullopt,
+                           At{test.span, FunctionType{{}, {test.value_type}}}}},
        test.span);
   }
 }
@@ -508,72 +495,70 @@ TEST_F(TextReadTest, LetImmediate) {
 
   // label, no locals
   OK(ReadLetImmediate,
-     LetImmediate{BlockImmediate{MakeAt("$l"_su8, BindVar{"$l"_sv}), {}}, {}},
+     LetImmediate{BlockImmediate{At{"$l"_su8, BindVar{"$l"_sv}}, {}}, {}},
      "$l"_su8);
 
   // type use, locals
   OK(ReadLetImmediate,
-     LetImmediate{BlockImmediate{nullopt, FunctionTypeUse{MakeAt("(type 0)"_su8,
-                                                                 Var{Index{0}}),
-                                                          {}}},
-                  BoundValueTypeList{MakeAt(
-                      "i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT_I32)})}},
+     LetImmediate{
+         BlockImmediate{nullopt,
+                        FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}},
+         BoundValueTypeList{
+             At{"i32"_su8, BVT{nullopt, At{"i32"_su8, VT_I32}}}}},
      "(type 0) (local i32)"_su8);
 
   // inline type, multiple locals
   OK(ReadLetImmediate,
-     LetImmediate{
-         BlockImmediate{
-             nullopt,
-             FunctionTypeUse{
-                 nullopt, MakeAt("(param i32)"_su8,
-                                 FunctionType{
-                                     ValueTypeList{MakeAt("i32"_su8, VT_I32)},
-                                     {},
-                                 })}},
-         BoundValueTypeList{
-             MakeAt("f32"_su8, BVT{nullopt, MakeAt("f32"_su8, VT_F32)}),
-             MakeAt("f64"_su8, BVT{nullopt, MakeAt("f64"_su8, VT_F64)})}},
+     LetImmediate{BlockImmediate{
+                      nullopt,
+                      FunctionTypeUse{
+                          nullopt, At{"(param i32)"_su8,
+                                      FunctionType{
+                                          ValueTypeList{At{"i32"_su8, VT_I32}},
+                                          {},
+                                      }}}},
+                  BoundValueTypeList{
+                      At{"f32"_su8, BVT{nullopt, At{"f32"_su8, VT_F32}}},
+                      At{"f64"_su8, BVT{nullopt, At{"f64"_su8, VT_F64}}}}},
      "(param i32) (local f32 f64)"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_Bare) {
-  OK(ReadPlainInstruction, I{MakeAt("nop"_su8, O::Nop)}, "nop"_su8);
-  OK(ReadPlainInstruction, I{MakeAt("i32.add"_su8, O::I32Add)}, "i32.add"_su8);
+  OK(ReadPlainInstruction, I{At{"nop"_su8, O::Nop}}, "nop"_su8);
+  OK(ReadPlainInstruction, I{At{"i32.add"_su8, O::I32Add}}, "i32.add"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_Var) {
+  OK(ReadPlainInstruction, I{At{"br"_su8, O::Br}, At{"0"_su8, Var{Index{0}}}},
+     "br 0"_su8);
   OK(ReadPlainInstruction,
-     I{MakeAt("br"_su8, O::Br), MakeAt("0"_su8, Var{Index{0}})}, "br 0"_su8);
-  OK(ReadPlainInstruction,
-     I{MakeAt("local.get"_su8, O::LocalGet), MakeAt("$x"_su8, Var{"$x"_sv})},
+     I{At{"local.get"_su8, O::LocalGet}, At{"$x"_su8, Var{"$x"_sv}}},
      "local.get $x"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_BrOnExn) {
   context.features.enable_exceptions();
   OK(ReadPlainInstruction,
-     I{MakeAt("br_on_exn"_su8, O::BrOnExn),
-       MakeAt("$l $e"_su8, BrOnExnImmediate{MakeAt("$l"_su8, Var{"$l"_sv}),
-                                            MakeAt("$e"_su8, Var{"$e"_sv})})},
+     I{At{"br_on_exn"_su8, O::BrOnExn},
+       At{"$l $e"_su8, BrOnExnImmediate{At{"$l"_su8, Var{"$l"_sv}},
+                                        At{"$e"_su8, Var{"$e"_sv}}}}},
      "br_on_exn $l $e"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_BrTable) {
   // br_table w/ only default target.
   OK(ReadPlainInstruction,
-     I{MakeAt("br_table"_su8, O::BrTable),
-       MakeAt("0"_su8, BrTableImmediate{{}, MakeAt("0"_su8, Var{Index{0}})})},
+     I{At{"br_table"_su8, O::BrTable},
+       At{"0"_su8, BrTableImmediate{{}, At{"0"_su8, Var{Index{0}}}}}},
      "br_table 0"_su8);
 
   // br_table w/ targets and default target.
   OK(ReadPlainInstruction,
-     I{MakeAt("br_table"_su8, O::BrTable),
-       MakeAt("0 1 $a $b"_su8,
-              BrTableImmediate{{MakeAt("0"_su8, Var{Index{0}}),
-                                MakeAt("1"_su8, Var{Index{1}}),
-                                MakeAt("$a"_su8, Var{"$a"_sv})},
-                               MakeAt("$b"_su8, Var{"$b"_sv})})},
+     I{At{"br_table"_su8, O::BrTable},
+       At{"0 1 $a $b"_su8, BrTableImmediate{{At{"0"_su8, Var{Index{0}}},
+                                             At{"1"_su8, Var{Index{1}}},
+                                             At{"$a"_su8, Var{"$a"_sv}}},
+                                            At{"$b"_su8, Var{"$b"_sv}}}}},
      "br_table 0 1 $a $b"_su8);
 }
 
@@ -586,17 +571,17 @@ TEST_F(TextReadTest, PlainInstruction_BrTable_NoVars) {
 TEST_F(TextReadTest, PlainInstruction_CallIndirect) {
   // Bare call_indirect.
   OK(ReadPlainInstruction,
-     I{MakeAt("call_indirect"_su8, O::CallIndirect),
-       MakeAt(""_su8, CallIndirectImmediate{})},
+     I{At{"call_indirect"_su8, O::CallIndirect},
+       At{""_su8, CallIndirectImmediate{}}},
      "call_indirect"_su8);
 
   // call_indirect w/ function type use.
   OK(ReadPlainInstruction,
-     I{MakeAt("call_indirect"_su8, O::CallIndirect),
-       MakeAt("(type 0)"_su8,
-              CallIndirectImmediate{
-                  nullopt,
-                  FunctionTypeUse{MakeAt("(type 0)"_su8, Var{Index{0}}), {}}})},
+     I{At{"call_indirect"_su8, O::CallIndirect},
+       At{"(type 0)"_su8,
+          CallIndirectImmediate{
+              nullopt,
+              FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}}}},
      "call_indirect (type 0)"_su8);
 }
 
@@ -607,40 +592,39 @@ TEST_F(TextReadTest, PlainInstruction_CallIndirect_reference_types) {
 
   // call_indirect w/ table.
   OK(ReadPlainInstruction,
-     I{MakeAt("call_indirect"_su8, O::CallIndirect),
-       MakeAt("$t"_su8,
-              CallIndirectImmediate{MakeAt("$t"_su8, Var{"$t"_sv}), {}})},
+     I{At{"call_indirect"_su8, O::CallIndirect},
+       At{"$t"_su8, CallIndirectImmediate{At{"$t"_su8, Var{"$t"_sv}}, {}}}},
      "call_indirect $t"_su8);
 
   // call_indirect w/ table and type use.
   OK(ReadPlainInstruction,
-     I{MakeAt("call_indirect"_su8, O::CallIndirect),
-       MakeAt("0 (type 0)"_su8,
-              CallIndirectImmediate{
-                  MakeAt("0"_su8, Var{Index{0}}),
-                  FunctionTypeUse{MakeAt("(type 0)"_su8, Var{Index{0}}), {}}})},
+     I{At{"call_indirect"_su8, O::CallIndirect},
+       At{"0 (type 0)"_su8,
+          CallIndirectImmediate{
+              At{"0"_su8, Var{Index{0}}},
+              FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}}}},
      "call_indirect 0 (type 0)"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_Const) {
   // i32.const
   OK(ReadPlainInstruction,
-     I{MakeAt("i32.const"_su8, O::I32Const), MakeAt("12"_su8, s32{12})},
+     I{At{"i32.const"_su8, O::I32Const}, At{"12"_su8, s32{12}}},
      "i32.const 12"_su8);
 
   // i64.const
   OK(ReadPlainInstruction,
-     I{MakeAt("i64.const"_su8, O::I64Const), MakeAt("34"_su8, s64{34})},
+     I{At{"i64.const"_su8, O::I64Const}, At{"34"_su8, s64{34}}},
      "i64.const 34"_su8);
 
   // f32.const
   OK(ReadPlainInstruction,
-     I{MakeAt("f32.const"_su8, O::F32Const), MakeAt("56"_su8, f32{56})},
+     I{At{"f32.const"_su8, O::F32Const}, At{"56"_su8, f32{56}}},
      "f32.const 56"_su8);
 
   // f64.const
   OK(ReadPlainInstruction,
-     I{MakeAt("f64.const"_su8, O::F64Const), MakeAt("78"_su8, f64{78})},
+     I{At{"f64.const"_su8, O::F64Const}, At{"78"_su8, f64{78}}},
      "f64.const 78"_su8);
 }
 
@@ -649,51 +633,50 @@ TEST_F(TextReadTest, PlainInstruction_FuncBind) {
 
   // Bare func.bind
   OK(ReadPlainInstruction,
-     I{MakeAt("func.bind"_su8, O::FuncBind),
-       MakeAt(""_su8, FuncBindImmediate{})},
+     I{At{"func.bind"_su8, O::FuncBind}, At{""_su8, FuncBindImmediate{}}},
      "func.bind"_su8);
 
   // func.bind w/ function type use.
   OK(ReadPlainInstruction,
-     I{MakeAt("func.bind"_su8, O::FuncBind),
-       MakeAt("(type 0)"_su8, FuncBindImmediate{FunctionTypeUse{
-                                  MakeAt("(type 0)"_su8, Var{Index{0}}), {}}})},
+     I{At{"func.bind"_su8, O::FuncBind},
+       At{"(type 0)"_su8, FuncBindImmediate{FunctionTypeUse{
+                              At{"(type 0)"_su8, Var{Index{0}}}, {}}}}},
      "func.bind (type 0)"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_MemArg) {
   // No align, no offset.
   OK(ReadPlainInstruction,
-     I{MakeAt("i32.load"_su8, O::I32Load),
-       MakeAt(""_su8, MemArgImmediate{nullopt, nullopt})},
+     I{At{"i32.load"_su8, O::I32Load},
+       At{""_su8, MemArgImmediate{nullopt, nullopt}}},
      "i32.load"_su8);
 
   // No align, offset.
   OK(ReadPlainInstruction,
-     I{MakeAt("f32.load"_su8, O::F32Load),
-       MakeAt("offset=12"_su8,
-              MemArgImmediate{nullopt, MakeAt("offset=12"_su8, u32{12})})},
+     I{At{"f32.load"_su8, O::F32Load},
+       At{"offset=12"_su8,
+          MemArgImmediate{nullopt, At{"offset=12"_su8, u32{12}}}}},
      "f32.load offset=12"_su8);
 
   // Align, no offset.
   OK(ReadPlainInstruction,
-     I{MakeAt("i32.load8_u"_su8, O::I32Load8U),
-       MakeAt("align=16"_su8,
-              MemArgImmediate{MakeAt("align=16"_su8, u32{16}), nullopt})},
+     I{At{"i32.load8_u"_su8, O::I32Load8U},
+       At{"align=16"_su8,
+          MemArgImmediate{At{"align=16"_su8, u32{16}}, nullopt}}},
      "i32.load8_u align=16"_su8);
 
   // Align and offset.
   OK(ReadPlainInstruction,
-     I{MakeAt("f64.store"_su8, O::F64Store),
-       MakeAt("offset=123 align=32"_su8,
-              MemArgImmediate{MakeAt("align=32"_su8, u32{32}),
-                              MakeAt("offset=123"_su8, u32{123})})},
+     I{At{"f64.store"_su8, O::F64Store},
+       At{"offset=123 align=32"_su8,
+          MemArgImmediate{At{"align=32"_su8, u32{32}},
+                          At{"offset=123"_su8, u32{123}}}}},
      "f64.store offset=123 align=32"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_Select) {
   OK(ReadPlainInstruction,
-     I{MakeAt("select"_su8, O::Select), MakeAt(""_su8, SelectImmediate{})},
+     I{At{"select"_su8, O::Select}, At{""_su8, SelectImmediate{}}},
      "select"_su8);
 }
 
@@ -702,21 +685,20 @@ TEST_F(TextReadTest, PlainInstruction_Select_reference_types) {
 
   // select w/o types
   OK(ReadPlainInstruction,
-     I{MakeAt("select"_su8, O::Select), MakeAt(""_su8, SelectImmediate{})},
+     I{At{"select"_su8, O::Select}, At{""_su8, SelectImmediate{}}},
      "select"_su8);
 
   // select w/ one type
   OK(ReadPlainInstruction,
-     I{MakeAt("select"_su8, O::SelectT),
-       MakeAt("(result i32)"_su8, SelectImmediate{MakeAt("i32"_su8, VT_I32)})},
+     I{At{"select"_su8, O::SelectT},
+       At{"(result i32)"_su8, SelectImmediate{At{"i32"_su8, VT_I32}}}},
      "select (result i32)"_su8);
 
   // select w/ multiple types
   OK(ReadPlainInstruction,
-     I{MakeAt("select"_su8, O::SelectT),
-       MakeAt("(result i32) (result i64)"_su8,
-              SelectImmediate{MakeAt("i32"_su8, VT_I32),
-                              MakeAt("i64"_su8, VT_I64)})},
+     I{At{"select"_su8, O::SelectT},
+       At{"(result i32) (result i64)"_su8,
+          SelectImmediate{At{"i32"_su8, VT_I32}, At{"i64"_su8, VT_I64}}}},
      "select (result i32) (result i64)"_su8);
 }
 
@@ -728,40 +710,38 @@ TEST_F(TextReadTest, PlainInstruction_SimdConst) {
 
   // i8x16
   OK(ReadPlainInstruction,
-     I{MakeAt("v128.const"_su8, O::V128Const),
-       MakeAt("0 1 2 3 4 5 6 7 8 9 0xa 0xb 0xc 0xd 0xe 0xf"_su8,
-              v128{u8x16{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe,
-                         0xf}})},
+     I{At{"v128.const"_su8, O::V128Const},
+       At{"0 1 2 3 4 5 6 7 8 9 0xa 0xb 0xc 0xd 0xe 0xf"_su8,
+          v128{u8x16{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe,
+                     0xf}}}},
      "v128.const i8x16 0 1 2 3 4 5 6 7 8 9 0xa 0xb 0xc 0xd 0xe 0xf"_su8);
 
   // i16x8
   OK(ReadPlainInstruction,
-     I{MakeAt("v128.const"_su8, O::V128Const),
-       MakeAt("0 1 2 3 4 5 6 7"_su8, v128{u16x8{0, 1, 2, 3, 4, 5, 6, 7}})},
+     I{At{"v128.const"_su8, O::V128Const},
+       At{"0 1 2 3 4 5 6 7"_su8, v128{u16x8{0, 1, 2, 3, 4, 5, 6, 7}}}},
      "v128.const i16x8 0 1 2 3 4 5 6 7"_su8);
 
   // i32x4
   OK(ReadPlainInstruction,
-     I{MakeAt("v128.const"_su8, O::V128Const),
-       MakeAt("0 1 2 3"_su8, v128{u32x4{0, 1, 2, 3}})},
+     I{At{"v128.const"_su8, O::V128Const},
+       At{"0 1 2 3"_su8, v128{u32x4{0, 1, 2, 3}}}},
      "v128.const i32x4 0 1 2 3"_su8);
 
   // i64x2
   OK(ReadPlainInstruction,
-     I{MakeAt("v128.const"_su8, O::V128Const),
-       MakeAt("0 1"_su8, v128{u64x2{0, 1}})},
+     I{At{"v128.const"_su8, O::V128Const}, At{"0 1"_su8, v128{u64x2{0, 1}}}},
      "v128.const i64x2 0 1"_su8);
 
   // f32x4
   OK(ReadPlainInstruction,
-     I{MakeAt("v128.const"_su8, O::V128Const),
-       MakeAt("0 1 2 3"_su8, v128{f32x4{0, 1, 2, 3}})},
+     I{At{"v128.const"_su8, O::V128Const},
+       At{"0 1 2 3"_su8, v128{f32x4{0, 1, 2, 3}}}},
      "v128.const f32x4 0 1 2 3"_su8);
 
   // f64x2
   OK(ReadPlainInstruction,
-     I{MakeAt("v128.const"_su8, O::V128Const),
-       MakeAt("0 1"_su8, v128{f64x2{0, 1}})},
+     I{At{"v128.const"_su8, O::V128Const}, At{"0 1"_su8, v128{f64x2{0, 1}}}},
      "v128.const f64x2 0 1"_su8);
 }
 
@@ -773,18 +753,17 @@ TEST_F(TextReadTest, PlainInstruction_SimdLane) {
   context.features.enable_simd();
 
   OK(ReadPlainInstruction,
-     I{MakeAt("i8x16.extract_lane_s"_su8, O::I8X16ExtractLaneS),
-       MakeAt("9"_su8, SimdLaneImmediate{9})},
+     I{At{"i8x16.extract_lane_s"_su8, O::I8X16ExtractLaneS},
+       At{"9"_su8, SimdLaneImmediate{9}}},
      "i8x16.extract_lane_s 9"_su8);
   OK(ReadPlainInstruction,
-     I{MakeAt("f32x4.replace_lane"_su8, O::F32X4ReplaceLane),
-       MakeAt("3"_su8, SimdLaneImmediate{3})},
+     I{At{"f32x4.replace_lane"_su8, O::F32X4ReplaceLane},
+       At{"3"_su8, SimdLaneImmediate{3}}},
      "f32x4.replace_lane 3"_su8);
 }
 
 TEST_F(TextReadTest, InvalidSimdLane) {
-  Fail(ReadSimdLane, {{0, "Expected a positive integer, got Int"}},
-       "-1"_su8);
+  Fail(ReadSimdLane, {{0, "Expected a positive integer, got Int"}}, "-1"_su8);
   Fail(ReadSimdLane, {{0, "Invalid integer, got Nat"}}, "256"_su8);
 }
 
@@ -795,8 +774,8 @@ TEST_F(TextReadTest, PlainInstruction_Shuffle) {
   context.features.enable_simd();
 
   OK(ReadPlainInstruction,
-     I{MakeAt("v8x16.shuffle"_su8, O::V8X16Shuffle),
-       MakeAt("0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8, ShuffleImmediate{})},
+     I{At{"v8x16.shuffle"_su8, O::V8X16Shuffle},
+       At{"0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8, ShuffleImmediate{}}},
      "v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8);
 }
 
@@ -807,7 +786,7 @@ TEST_F(TextReadTest, PlainInstruction_MemoryCopy) {
   // memory.copy w/o dst and src.
   context.features.enable_bulk_memory();
   OK(ReadPlainInstruction,
-     I{MakeAt("memory.copy"_su8, O::MemoryCopy), MakeAt(CopyImmediate{})},
+     I{At{"memory.copy"_su8, O::MemoryCopy}, At{CopyImmediate{}}},
      "memory.copy"_su8);
 }
 
@@ -819,8 +798,8 @@ TEST_F(TextReadTest, PlainInstruction_MemoryInit) {
 
   // memory.init w/ just segment index.
   OK(ReadPlainInstruction,
-     I{MakeAt("memory.init"_su8, O::MemoryInit),
-       MakeAt("2"_su8, InitImmediate{MakeAt("2"_su8, Var{Index{2}}), nullopt})},
+     I{At{"memory.init"_su8, O::MemoryInit},
+       At{"2"_su8, InitImmediate{At{"2"_su8, Var{Index{2}}}, nullopt}}},
      "memory.init 2"_su8);
 }
 
@@ -831,7 +810,7 @@ TEST_F(TextReadTest, PlainInstruction_TableCopy) {
   // table.copy w/o dst and src.
   context.features.enable_bulk_memory();
   OK(ReadPlainInstruction,
-     I{MakeAt("table.copy"_su8, O::TableCopy), MakeAt(""_su8, CopyImmediate{})},
+     I{At{"table.copy"_su8, O::TableCopy}, At{""_su8, CopyImmediate{}}},
      "table.copy"_su8);
 }
 
@@ -840,14 +819,14 @@ TEST_F(TextReadTest, PlainInstruction_TableCopy_reference_types) {
 
   // table.copy w/o dst and src.
   OK(ReadPlainInstruction,
-     I{MakeAt("table.copy"_su8, O::TableCopy), MakeAt(""_su8, CopyImmediate{})},
+     I{At{"table.copy"_su8, O::TableCopy}, At{""_su8, CopyImmediate{}}},
      "table.copy"_su8);
 
   // table.copy w/ dst and src
   OK(ReadPlainInstruction,
-     I{MakeAt("table.copy"_su8, O::TableCopy),
-       MakeAt("$d $s"_su8, CopyImmediate{MakeAt("$d"_su8, Var{"$d"_sv}),
-                                         MakeAt("$s"_su8, Var{"$s"_sv})})},
+     I{At{"table.copy"_su8, O::TableCopy},
+       At{"$d $s"_su8, CopyImmediate{At{"$d"_su8, Var{"$d"_sv}},
+                                     At{"$s"_su8, Var{"$s"_sv}}}}},
      "table.copy $d $s"_su8);
 }
 
@@ -859,15 +838,15 @@ TEST_F(TextReadTest, PlainInstruction_TableInit) {
 
   // table.init w/ segment index and table index.
   OK(ReadPlainInstruction,
-     I{MakeAt("table.init"_su8, O::TableInit),
-       MakeAt("$t $e"_su8, InitImmediate{MakeAt("$e"_su8, Var{"$e"_sv}),
-                                         MakeAt("$t"_su8, Var{"$t"_sv})})},
+     I{At{"table.init"_su8, O::TableInit},
+       At{"$t $e"_su8, InitImmediate{At{"$e"_su8, Var{"$e"_sv}},
+                                     At{"$t"_su8, Var{"$t"_sv}}}}},
      "table.init $t $e"_su8);
 
   // table.init w/ just segment index.
   OK(ReadPlainInstruction,
-     I{MakeAt("table.init"_su8, O::TableInit),
-       MakeAt("2"_su8, InitImmediate{MakeAt("2"_su8, Var{Index{2}}), nullopt})},
+     I{At{"table.init"_su8, O::TableInit},
+       At{"2"_su8, InitImmediate{At{"2"_su8, Var{Index{2}}}, nullopt}}},
      "table.init 2"_su8);
 }
 
@@ -878,7 +857,7 @@ TEST_F(TextReadTest, PlainInstruction_RefNull) {
   context.features.enable_reference_types();
 
   OK(ReadPlainInstruction,
-     I{MakeAt("ref.null"_su8, O::RefNull), MakeAt("extern"_su8, HT_Extern)},
+     I{At{"ref.null"_su8, O::RefNull}, At{"extern"_su8, HT_Extern}},
      "ref.null extern"_su8);
 }
 
@@ -886,32 +865,29 @@ TEST_F(TextReadTest, BlockInstruction_Block) {
   // Empty block.
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
-               MakeAt("block"_su8,
-                      I{MakeAt("block"_su8, O::Block), BlockImmediate{}}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"block"_su8, I{At{"block"_su8, O::Block}, BlockImmediate{}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "block end"_su8);
 
   // block w/ multiple instructions.
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
-               MakeAt("block"_su8,
-                      I{MakeAt("block"_su8, O::Block), BlockImmediate{}}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"block"_su8, I{At{"block"_su8, O::Block}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "block nop nop end"_su8);
 
   // Block w/ label.
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
-               MakeAt("block $l"_su8,
-                      I{MakeAt("block"_su8, O::Block),
-                        MakeAt("$l"_su8,
-                               BlockImmediate{MakeAt("$l"_su8, "$l"_sv), {}})}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"block $l"_su8,
+                  I{At{"block"_su8, O::Block},
+                    At{"$l"_su8, BlockImmediate{At{"$l"_su8, "$l"_sv}, {}}}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "block $l nop end"_su8);
 
@@ -919,12 +895,11 @@ TEST_F(TextReadTest, BlockInstruction_Block) {
   OKVector(
       ReadBlockInstruction_ForTesting,
       InstructionList{
-          MakeAt("block $l2"_su8,
-                 I{MakeAt("block"_su8, O::Block),
-                   MakeAt("$l2"_su8,
-                          BlockImmediate{MakeAt("$l2"_su8, "$l2"_sv), {}})}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+          At{"block $l2"_su8,
+             I{At{"block"_su8, O::Block},
+               At{"$l2"_su8, BlockImmediate{At{"$l2"_su8, "$l2"_sv}, {}}}}},
+          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+          At{"end"_su8, I{At{"end"_su8, O::End}}},
       },
       "block $l2 nop end $l2"_su8);
 }
@@ -938,34 +913,31 @@ TEST_F(TextReadTest, BlockInstruction_Block_MismatchedLabels) {
 
 TEST_F(TextReadTest, BlockInstruction_Loop) {
   // Empty loop.
-  OKVector(
-      ReadBlockInstruction_ForTesting,
-      InstructionList{
-          MakeAt("loop"_su8, I{MakeAt("loop"_su8, O::Loop), BlockImmediate{}}),
-          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
-      },
-      "loop end"_su8);
+  OKVector(ReadBlockInstruction_ForTesting,
+           InstructionList{
+               At{"loop"_su8, I{At{"loop"_su8, O::Loop}, BlockImmediate{}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
+           },
+           "loop end"_su8);
 
   // loop w/ multiple instructions.
-  OKVector(
-      ReadBlockInstruction_ForTesting,
-      InstructionList{
-          MakeAt("loop"_su8, I{MakeAt("loop"_su8, O::Loop), BlockImmediate{}}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
-      },
-      "loop nop nop end"_su8);
+  OKVector(ReadBlockInstruction_ForTesting,
+           InstructionList{
+               At{"loop"_su8, I{At{"loop"_su8, O::Loop}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
+           },
+           "loop nop nop end"_su8);
 
   // Loop w/ label.
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
-               MakeAt("loop $l"_su8,
-                      I{MakeAt("loop"_su8, O::Loop),
-                        MakeAt("$l"_su8,
-                               BlockImmediate{MakeAt("$l"_su8, "$l"_sv), {}})}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"loop $l"_su8,
+                  I{At{"loop"_su8, O::Loop},
+                    At{"$l"_su8, BlockImmediate{At{"$l"_su8, "$l"_sv}, {}}}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "loop $l nop end"_su8);
 
@@ -973,12 +945,11 @@ TEST_F(TextReadTest, BlockInstruction_Loop) {
   OKVector(
       ReadBlockInstruction_ForTesting,
       InstructionList{
-          MakeAt("loop $l2"_su8,
-                 I{MakeAt("loop"_su8, O::Loop),
-                   MakeAt("$l2"_su8,
-                          BlockImmediate{MakeAt("$l2"_su8, "$l2"_sv), {}})}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+          At{"loop $l2"_su8,
+             I{At{"loop"_su8, O::Loop},
+               At{"$l2"_su8, BlockImmediate{At{"$l2"_su8, "$l2"_sv}, {}}}}},
+          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+          At{"end"_su8, I{At{"end"_su8, O::End}}},
       },
       "loop $l2 nop end $l2"_su8);
 }
@@ -994,52 +965,51 @@ TEST_F(TextReadTest, BlockInstruction_If) {
   // Empty if.
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
-               MakeAt("if"_su8, I{MakeAt("if"_su8, O::If), BlockImmediate{}}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"if"_su8, I{At{"if"_su8, O::If}, BlockImmediate{}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "if end"_su8);
 
   // if w/ non-empty block.
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
-               MakeAt("if"_su8, I{MakeAt("if"_su8, O::If), BlockImmediate{}}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"if"_su8, I{At{"if"_su8, O::If}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "if nop nop end"_su8);
 
   // if, w/ else.
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
-               MakeAt("if"_su8, I{MakeAt("if"_su8, O::If), BlockImmediate{}}),
-               MakeAt("else"_su8, I{MakeAt("else"_su8, O::Else)}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"if"_su8, I{At{"if"_su8, O::If}, BlockImmediate{}}},
+               At{"else"_su8, I{At{"else"_su8, O::Else}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "if else end"_su8);
 
   // if, w/ else and non-empty blocks.
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
-               MakeAt("if"_su8, I{MakeAt("if"_su8, O::If), BlockImmediate{}}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("else"_su8, I{MakeAt("else"_su8, O::Else)}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"if"_su8, I{At{"if"_su8, O::If}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"else"_su8, I{At{"else"_su8, O::Else}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "if nop nop else nop nop end"_su8);
 
   // If w/ label.
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
-               MakeAt("if $l"_su8,
-                      I{MakeAt("if"_su8, O::If),
-                        MakeAt("$l"_su8,
-                               BlockImmediate{MakeAt("$l"_su8, "$l"_sv), {}})}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"if $l"_su8,
+                  I{At{"if"_su8, O::If},
+                    At{"$l"_su8, BlockImmediate{At{"$l"_su8, "$l"_sv}, {}}}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "if $l nop end"_su8);
 
@@ -1047,12 +1017,11 @@ TEST_F(TextReadTest, BlockInstruction_If) {
   OKVector(
       ReadBlockInstruction_ForTesting,
       InstructionList{
-          MakeAt("if $l2"_su8,
-                 I{MakeAt("if"_su8, O::If),
-                   MakeAt("$l2"_su8,
-                          BlockImmediate{MakeAt("$l2"_su8, "$l2"_sv), {}})}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+          At{"if $l2"_su8,
+             I{At{"if"_su8, O::If},
+               At{"$l2"_su8, BlockImmediate{At{"$l2"_su8, "$l2"_sv}, {}}}}},
+          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+          At{"end"_su8, I{At{"end"_su8, O::End}}},
       },
       "if $l2 nop end $l2"_su8);
 
@@ -1060,14 +1029,13 @@ TEST_F(TextReadTest, BlockInstruction_If) {
   OKVector(
       ReadBlockInstruction_ForTesting,
       InstructionList{
-          MakeAt("if $l3"_su8,
-                 I{MakeAt("if"_su8, O::If),
-                   MakeAt("$l3"_su8,
-                          BlockImmediate{MakeAt("$l3"_su8, "$l3"_sv), {}})}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("else"_su8, I{MakeAt("else"_su8, O::Else)}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+          At{"if $l3"_su8,
+             I{At{"if"_su8, O::If},
+               At{"$l3"_su8, BlockImmediate{At{"$l3"_su8, "$l3"_sv}, {}}}}},
+          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+          At{"else"_su8, I{At{"else"_su8, O::Else}}},
+          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+          At{"end"_su8, I{At{"end"_su8, O::End}}},
       },
       "if $l3 nop else $l3 nop end $l3"_su8);
 }
@@ -1092,40 +1060,37 @@ TEST_F(TextReadTest, BlockInstruction_Try) {
   context.features.enable_exceptions();
 
   // try/catch.
-  OKVector(
-      ReadBlockInstruction_ForTesting,
-      InstructionList{
-          MakeAt("try"_su8, I{MakeAt("try"_su8, O::Try), BlockImmediate{}}),
-          MakeAt("catch"_su8, I{MakeAt("catch"_su8, O::Catch)}),
-          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
-      },
-      "try catch end"_su8);
+  OKVector(ReadBlockInstruction_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
+           },
+           "try catch end"_su8);
 
   // try/catch and non-empty blocks.
-  OKVector(
-      ReadBlockInstruction_ForTesting,
-      InstructionList{
-          MakeAt("try"_su8, I{MakeAt("try"_su8, O::Try), BlockImmediate{}}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("catch"_su8, I{MakeAt("catch"_su8, O::Catch)}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
-      },
-      "try nop nop catch nop nop end"_su8);
+  OKVector(ReadBlockInstruction_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
+           },
+           "try nop nop catch nop nop end"_su8);
 
   // try w/ label.
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
-               MakeAt("try $l"_su8,
-                      I{MakeAt("try"_su8, O::Try),
-                        MakeAt("$l"_su8,
-                               BlockImmediate{MakeAt("$l"_su8, "$l"_sv), {}})}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("catch"_su8, I{MakeAt("catch"_su8, O::Catch)}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"try $l"_su8,
+                  I{At{"try"_su8, O::Try},
+                    At{"$l"_su8, BlockImmediate{At{"$l"_su8, "$l"_sv}, {}}}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "try $l nop catch nop end"_su8);
 
@@ -1133,14 +1098,13 @@ TEST_F(TextReadTest, BlockInstruction_Try) {
   OKVector(
       ReadBlockInstruction_ForTesting,
       InstructionList{
-          MakeAt("try $l2"_su8,
-                 I{MakeAt("try"_su8, O::Try),
-                   MakeAt("$l2"_su8,
-                          BlockImmediate{MakeAt("$l2"_su8, "$l2"_sv), {}})}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("catch"_su8, I{MakeAt("catch"_su8, O::Catch)}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+          At{"try $l2"_su8,
+             I{At{"try"_su8, O::Try},
+               At{"$l2"_su8, BlockImmediate{At{"$l2"_su8, "$l2"_sv}, {}}}}},
+          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+          At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
+          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+          At{"end"_su8, I{At{"end"_su8, O::End}}},
       },
       "try $l2 nop catch nop end $l2"_su8);
 
@@ -1148,14 +1112,13 @@ TEST_F(TextReadTest, BlockInstruction_Try) {
   OKVector(
       ReadBlockInstruction_ForTesting,
       InstructionList{
-          MakeAt("try $l3"_su8,
-                 I{MakeAt("try"_su8, O::Try),
-                   MakeAt("$l3"_su8,
-                          BlockImmediate{MakeAt("$l3"_su8, "$l3"_sv), {}})}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("catch"_su8, I{MakeAt("catch"_su8, O::Catch)}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+          At{"try $l3"_su8,
+             I{At{"try"_su8, O::Try},
+               At{"$l3"_su8, BlockImmediate{At{"$l3"_su8, "$l3"_sv}, {}}}}},
+          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+          At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
+          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+          At{"end"_su8, I{At{"end"_su8, O::End}}},
       },
       "try $l3 nop catch $l3 nop end $l3"_su8);
 }
@@ -1179,89 +1142,80 @@ TEST_F(TextReadTest, LetInstruction) {
   // Empty Let.
   OKVector(ReadLetInstruction_ForTesting,
            InstructionList{
-               MakeAt("let"_su8, I{MakeAt("let"_su8, O::Let), LetImmediate{}}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"let"_su8, I{At{"let"_su8, O::Let}, LetImmediate{}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "let end"_su8);
 
   // Let w/ multiple instructions.
   OKVector(ReadLetInstruction_ForTesting,
            InstructionList{
-               MakeAt("let"_su8,
-                      I{MakeAt("let"_su8, O::Let), LetImmediate{}}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"let"_su8, I{At{"let"_su8, O::Let}, LetImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "let nop nop end"_su8);
 
   // Let w/ label.
   OKVector(ReadLetInstruction_ForTesting,
            InstructionList{
-               MakeAt("let $l"_su8,
-                      I{MakeAt("let"_su8, O::Let),
-                        MakeAt("$l"_su8,
-                               LetImmediate{BlockImmediate{
-                                                MakeAt("$l"_su8, "$l"_sv), {}},
-                                            {}})}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+               At{"let $l"_su8,
+                  I{At{"let"_su8, O::Let},
+                    At{"$l"_su8,
+                       LetImmediate{BlockImmediate{At{"$l"_su8, "$l"_sv}, {}},
+                                    {}}}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
            "let $l nop end"_su8);
 
   // Let w/ label and matching end label.
+  OKVector(ReadLetInstruction_ForTesting,
+           InstructionList{
+               At{"let $l2"_su8,
+                  I{At{"let"_su8, O::Let},
+                    At{"$l2"_su8,
+                       LetImmediate{BlockImmediate{At{"$l2"_su8, "$l2"_sv}, {}},
+                                    {}}}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
+           },
+           "let $l2 nop end $l2"_su8);
+
+  // Let w/ locals
   OKVector(
       ReadLetInstruction_ForTesting,
       InstructionList{
-          MakeAt("let $l2"_su8,
-                 I{MakeAt("let"_su8, O::Let),
-                   MakeAt("$l2"_su8,
-                          LetImmediate{
-                              BlockImmediate{MakeAt("$l2"_su8, "$l2"_sv), {}},
-                              {}})}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+          At{"let (local i32)"_su8,
+             I{At{"let"_su8, O::Let},
+               At{"(local i32)"_su8,
+                  LetImmediate{
+                      BlockImmediate{},
+                      {At{"i32"_su8, BVT{nullopt, At{"i32"_su8, VT_I32}}}}}}}},
+          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+          At{"end"_su8, I{At{"end"_su8, O::End}}},
       },
-      "let $l2 nop end $l2"_su8);
-
-  // Let w/ locals
-  OKVector(ReadLetInstruction_ForTesting,
-           InstructionList{
-               MakeAt("let (local i32)"_su8,
-                      I{MakeAt("let"_su8, O::Let),
-                        MakeAt("(local i32)"_su8,
-                               LetImmediate{
-                                   BlockImmediate{},
-                                   {MakeAt("i32"_su8,
-                                           BVT{nullopt,
-                                               MakeAt("i32"_su8, VT_I32)})}})}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
-           },
-           "let (local i32) nop end"_su8);
+      "let (local i32) nop end"_su8);
 
   // Let w/ params, results, locals
   OKVector(
       ReadLetInstruction_ForTesting,
       InstructionList{
-          MakeAt(
-              "let (param f32) (result f64) (local i32)"_su8,
-              I{MakeAt("let"_su8, O::Let),
-                MakeAt(
-                    "(param f32) (result f64) (local i32)"_su8,
-                    LetImmediate{
-                        BlockImmediate{
-                            nullopt,
-                            FunctionTypeUse{
-                                nullopt,
-                                MakeAt("(param f32) (result f64)"_su8,
-                                       FunctionType{
-                                           {MakeAt("f32"_su8, VT_F32)},
-                                           {MakeAt("f64"_su8, VT_F64)}})}},
-                        {MakeAt("i32"_su8,
-                                BVT{nullopt, MakeAt("i32"_su8, VT_I32)})}})}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+          At{"let (param f32) (result f64) (local i32)"_su8,
+             I{At{"let"_su8, O::Let},
+               At{"(param f32) (result f64) (local i32)"_su8,
+                  LetImmediate{
+                      BlockImmediate{
+                          nullopt,
+                          FunctionTypeUse{
+                              nullopt,
+                              At{"(param f32) (result f64)"_su8,
+                                 FunctionType{{At{"f32"_su8, VT_F32}},
+                                              {At{"f64"_su8, VT_F64}}}}}},
+                      {At{"i32"_su8, BVT{nullopt, At{"i32"_su8, VT_I32}}}}}}}},
+          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+          At{"end"_su8, I{At{"end"_su8, O::End}}},
       },
       "let (param f32) (result f64) (local i32) nop end"_su8);
 }
@@ -1269,18 +1223,16 @@ TEST_F(TextReadTest, LetInstruction) {
 TEST_F(TextReadTest, Label_ReuseNames) {
   OK(ReadInstructionList_ForTesting,
      InstructionList{
-         MakeAt(
-             "block $l"_su8,
-             I{MakeAt("block"_su8, O::Block),
-               MakeAt("$l"_su8,
-                      BlockImmediate{MakeAt("$l"_su8, BindVar{"$l"_sv}), {}})}),
-         MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
-         MakeAt(
-             "block $l"_su8,
-             I{MakeAt("block"_su8, O::Block),
-               MakeAt("$l"_su8,
-                      BlockImmediate{MakeAt("$l"_su8, BindVar{"$l"_sv}), {}})}),
-         MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+         At{"block $l"_su8,
+            I{At{"block"_su8, O::Block},
+              At{"$l"_su8,
+                 BlockImmediate{At{"$l"_su8, BindVar{"$l"_sv}}, {}}}}},
+         At{"end"_su8, I{At{"end"_su8, O::End}}},
+         At{"block $l"_su8,
+            I{At{"block"_su8, O::Block},
+              At{"$l"_su8,
+                 BlockImmediate{At{"$l"_su8, BindVar{"$l"_sv}}, {}}}}},
+         At{"end"_su8, I{At{"end"_su8, O::End}}},
      },
      "block $l end block $l end"_su8);
 }
@@ -1288,16 +1240,14 @@ TEST_F(TextReadTest, Label_ReuseNames) {
 TEST_F(TextReadTest, Label_DuplicateNames) {
   OK(ReadInstructionList_ForTesting,
      InstructionList{
-         MakeAt("block $b"_su8,
-                I{MakeAt("block"_su8, O::Block),
-                  MakeAt("$b"_su8,
-                         BlockImmediate{MakeAt("$b"_su8, "$b"_sv), {}})}),
-         MakeAt("block $b"_su8,
-                I{MakeAt("block"_su8, O::Block),
-                  MakeAt("$b"_su8,
-                         BlockImmediate{MakeAt("$b"_su8, "$b"_sv), {}})}),
-         MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
-         MakeAt("end"_su8, I{MakeAt("end"_su8, O::End)}),
+         At{"block $b"_su8,
+            I{At{"block"_su8, O::Block},
+              At{"$b"_su8, BlockImmediate{At{"$b"_su8, "$b"_sv}, {}}}}},
+         At{"block $b"_su8,
+            I{At{"block"_su8, O::Block},
+              At{"$b"_su8, BlockImmediate{At{"$b"_su8, "$b"_sv}, {}}}}},
+         At{"end"_su8, I{At{"end"_su8, O::End}}},
+         At{"end"_su8, I{At{"end"_su8, O::End}}},
      },
      "block $b block $b end end"_su8);
 }
@@ -1313,7 +1263,7 @@ TEST_F(TextReadTest, Expression_Plain) {
   // No immediates.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
            },
            "(nop)"_su8);
 
@@ -1321,81 +1271,76 @@ TEST_F(TextReadTest, Expression_Plain) {
   OKVector(
       ReadExpression_ForTesting,
       InstructionList{
-          MakeAt("br_table 0 0 0"_su8,
-                 I{MakeAt("br_table"_su8, O::BrTable),
-                   MakeAt("0 0 0"_su8,
-                          BrTableImmediate{{MakeAt("0"_su8, Var{Index{0}}),
-                                            MakeAt("0"_su8, Var{Index{0}})},
-                                           MakeAt("0"_su8, Var{Index{0}})})}),
+          At{"br_table 0 0 0"_su8,
+             I{At{"br_table"_su8, O::BrTable},
+               At{"0 0 0"_su8, BrTableImmediate{{At{"0"_su8, Var{Index{0}}},
+                                                 At{"0"_su8, Var{Index{0}}}},
+                                                At{"0"_su8, Var{Index{0}}}}}}},
       },
       "(br_table 0 0 0)"_su8);
 
   // CallIndirect immediate.
-  OKVector(
-      ReadExpression_ForTesting,
-      InstructionList{
-          MakeAt("call_indirect (type 0)"_su8,
-                 I{MakeAt("call_indirect"_su8, O::CallIndirect),
-                   MakeAt("(type 0)"_su8,
-                          CallIndirectImmediate{
-                              nullopt, FunctionTypeUse{MakeAt("(type 0)"_su8,
-                                                              Var{Index{0}}),
-                                                       {}}})}),
-      },
-      "(call_indirect (type 0))"_su8);
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"call_indirect (type 0)"_su8,
+                  I{At{"call_indirect"_su8, O::CallIndirect},
+                    At{"(type 0)"_su8,
+                       CallIndirectImmediate{
+                           nullopt,
+                           FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}},
+                                           {}}}}}},
+           },
+           "(call_indirect (type 0))"_su8);
 
   // f32 immediate.
-  OKVector(
-      ReadExpression_ForTesting,
-      InstructionList{
-          MakeAt("f32.const 1.0"_su8, I{MakeAt("f32.const"_su8, O::F32Const),
-                                        MakeAt("1.0"_su8, f32{1.0f})}),
-      },
-      "(f32.const 1.0)"_su8);
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"f32.const 1.0"_su8, I{At{"f32.const"_su8, O::F32Const},
+                                         At{"1.0"_su8, f32{1.0f}}}},
+           },
+           "(f32.const 1.0)"_su8);
 
   // f64 immediate.
-  OKVector(
-      ReadExpression_ForTesting,
-      InstructionList{
-          MakeAt("f64.const 2.0"_su8, I{MakeAt("f64.const"_su8, O::F64Const),
-                                        MakeAt("2.0"_su8, f64{2.0})}),
-      },
-      "(f64.const 2.0)"_su8);
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"f64.const 2.0"_su8,
+                  I{At{"f64.const"_su8, O::F64Const}, At{"2.0"_su8, f64{2.0}}}},
+           },
+           "(f64.const 2.0)"_su8);
 
   // i32 immediate.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("i32.const 3"_su8, I{MakeAt("i32.const"_su8, O::I32Const),
-                                           MakeAt("3"_su8, s32{3})}),
+               At{"i32.const 3"_su8,
+                  I{At{"i32.const"_su8, O::I32Const}, At{"3"_su8, s32{3}}}},
            },
            "(i32.const 3)"_su8);
 
   // i64 immediate.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("i64.const 4"_su8, I{MakeAt("i64.const"_su8, O::I64Const),
-                                           MakeAt("4"_su8, s64{4})}),
+               At{"i64.const 4"_su8,
+                  I{At{"i64.const"_su8, O::I64Const}, At{"4"_su8, s64{4}}}},
            },
            "(i64.const 4)"_su8);
 
   // MemArg immediate
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("i32.load align=1"_su8,
-                      I{MakeAt("i32.load"_su8, O::I32Load),
-                        MakeAt("align=1"_su8,
-                               MemArgImmediate{MakeAt("align=1"_su8, u32{1}),
-                                               nullopt})}),
+               At{"i32.load align=1"_su8,
+                  I{At{"i32.load"_su8, O::I32Load},
+                    At{"align=1"_su8,
+                       MemArgImmediate{At{"align=1"_su8, u32{1}}, nullopt}}}},
            },
            "(i32.load align=1)"_su8);
 
   // Var immediate.
-  OKVector(ReadExpression_ForTesting,
-           InstructionList{
-               MakeAt("br 0"_su8, I{MakeAt("br"_su8, O::Br),
-                                    MakeAt("0"_su8, Var{Index{0}})}),
-           },
-           "(br 0)"_su8);
+  OKVector(
+      ReadExpression_ForTesting,
+      InstructionList{
+          At{"br 0"_su8, I{At{"br"_su8, O::Br}, At{"0"_su8, Var{Index{0}}}}},
+      },
+      "(br 0)"_su8);
 }
 
 TEST_F(TextReadTest, Expression_Plain_exceptions) {
@@ -1408,11 +1353,10 @@ TEST_F(TextReadTest, Expression_Plain_exceptions) {
   OKVector(
       ReadExpression_ForTesting,
       InstructionList{
-          MakeAt("br_on_exn 0 0"_su8,
-                 I{MakeAt("br_on_exn"_su8, O::BrOnExn),
-                   MakeAt("0 0"_su8,
-                          BrOnExnImmediate{MakeAt("0"_su8, Var{Index{0}}),
-                                           MakeAt("0"_su8, Var{Index{0}})})}),
+          At{"br_on_exn 0 0"_su8,
+             I{At{"br_on_exn"_su8, O::BrOnExn},
+               At{"0 0"_su8, BrOnExnImmediate{At{"0"_su8, Var{Index{0}}},
+                                              At{"0"_su8, Var{Index{0}}}}}}},
       },
       "(br_on_exn 0 0)"_su8);
 }
@@ -1426,18 +1370,18 @@ TEST_F(TextReadTest, Expression_Plain_simd) {
   // v128 immediate.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("v128.const i32x4 0 0 0 0"_su8,
-                      I{MakeAt("v128.const"_su8, O::V128Const),
-                        MakeAt("0 0 0 0"_su8, v128{u32x4{0, 0, 0, 0}})}),
+               At{"v128.const i32x4 0 0 0 0"_su8,
+                  I{At{"v128.const"_su8, O::V128Const},
+                    At{"0 0 0 0"_su8, v128{u32x4{0, 0, 0, 0}}}}},
            },
            "(v128.const i32x4 0 0 0 0)"_su8);
 
   // FeaturesSimd lane immediate.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("f32x4.replace_lane 3"_su8,
-                      I{MakeAt("f32x4.replace_lane"_su8, O::F32X4ReplaceLane),
-                        MakeAt("3"_su8, SimdLaneImmediate{3})}),
+               At{"f32x4.replace_lane 3"_su8,
+                  I{At{"f32x4.replace_lane"_su8, O::F32X4ReplaceLane},
+                    At{"3"_su8, SimdLaneImmediate{3}}}},
            },
            "(f32x4.replace_lane 3)"_su8);
 }
@@ -1449,43 +1393,40 @@ TEST_F(TextReadTest, Expression_Plain_bulk_memory) {
   context.features.enable_bulk_memory();
 
   // Init immediate.
-  OKVector(
-      ReadExpression_ForTesting,
-      InstructionList{
-          MakeAt("table.init 0"_su8,
-                 I{MakeAt("table.init"_su8, O::TableInit),
-                   MakeAt("0"_su8, InitImmediate{MakeAt("0"_su8, Var{Index{0}}),
-                                                 nullopt})}),
-      },
-      "(table.init 0)"_su8);
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"table.init 0"_su8,
+                  I{At{"table.init"_su8, O::TableInit},
+                    At{"0"_su8,
+                       InitImmediate{At{"0"_su8, Var{Index{0}}}, nullopt}}}},
+           },
+           "(table.init 0)"_su8);
 
   // Copy immediate.
-  OKVector(
-      ReadExpression_ForTesting,
-      InstructionList{
-          MakeAt("table.copy"_su8,
-                 I{MakeAt("table.copy"_su8, O::TableCopy), CopyImmediate{}}),
-      },
-      "(table.copy)"_su8);
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"table.copy"_su8,
+                  I{At{"table.copy"_su8, O::TableCopy}, CopyImmediate{}}},
+           },
+           "(table.copy)"_su8);
 }
-
 
 TEST_F(TextReadTest, Expression_PlainFolded) {
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("i32.const 0"_su8, I{MakeAt("i32.const"_su8, O::I32Const),
-                                           MakeAt("0"_su8, s32{0})}),
-               MakeAt("i32.add"_su8, I{MakeAt("i32.add"_su8, O::I32Add)}),
+               At{"i32.const 0"_su8,
+                  I{At{"i32.const"_su8, O::I32Const}, At{"0"_su8, s32{0}}}},
+               At{"i32.add"_su8, I{At{"i32.add"_su8, O::I32Add}}},
            },
            "(i32.add (i32.const 0))"_su8);
 
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("i32.const 0"_su8, I{MakeAt("i32.const"_su8, O::I32Const),
-                                           MakeAt("0"_su8, s32{0})}),
-               MakeAt("i32.const 1"_su8, I{MakeAt("i32.const"_su8, O::I32Const),
-                                           MakeAt("1"_su8, s32{1})}),
-               MakeAt("i32.add"_su8, I{MakeAt("i32.add"_su8, O::I32Add)}),
+               At{"i32.const 0"_su8,
+                  I{At{"i32.const"_su8, O::I32Const}, At{"0"_su8, s32{0}}}},
+               At{"i32.const 1"_su8,
+                  I{At{"i32.const"_su8, O::I32Const}, At{"1"_su8, s32{1}}}},
+               At{"i32.add"_su8, I{At{"i32.add"_su8, O::I32Add}}},
            },
            "(i32.add (i32.const 0) (i32.const 1))"_su8);
 }
@@ -1494,70 +1435,68 @@ TEST_F(TextReadTest, Expression_Block) {
   // Block.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("block"_su8,
-                      I{MakeAt("block"_su8, O::Block), BlockImmediate{}}),
-               MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
+               At{"block"_su8, I{At{"block"_su8, O::Block}, BlockImmediate{}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
            },
            "(block)"_su8);
 
   // Loop.
-  OKVector(
-      ReadExpression_ForTesting,
-      InstructionList{
-          MakeAt("loop"_su8, I{MakeAt("loop"_su8, O::Loop), BlockImmediate{}}),
-          MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
-      },
-      "(loop)"_su8);
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"loop"_su8, I{At{"loop"_su8, O::Loop}, BlockImmediate{}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
+           },
+           "(loop)"_su8);
 }
 
 TEST_F(TextReadTest, Expression_If) {
   // If then.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("if"_su8, I{MakeAt("if"_su8, O::If), BlockImmediate{}}),
-               MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
+               At{"if"_su8, I{At{"if"_su8, O::If}, BlockImmediate{}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
            },
            "(if (then))"_su8);
 
   // If then w/ nops.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("if"_su8, I{MakeAt("if"_su8, O::If), BlockImmediate{}}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
+               At{"if"_su8, I{At{"if"_su8, O::If}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
            },
            "(if (then (nop)))"_su8);
 
   // If condition then.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("if"_su8, I{MakeAt("if"_su8, O::If), BlockImmediate{}}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"if"_su8, I{At{"if"_su8, O::If}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
            },
            "(if (nop) (then (nop)))"_su8);
 
   // If then else.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("if"_su8, I{MakeAt("if"_su8, O::If), BlockImmediate{}}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("else"_su8, I{MakeAt("else"_su8, O::Else)}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
+               At{"if"_su8, I{At{"if"_su8, O::If}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"else"_su8, I{At{"else"_su8, O::Else}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
            },
            "(if (then (nop)) (else (nop)))"_su8);
 
   // If condition then else.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("if"_su8, I{MakeAt("if"_su8, O::If), BlockImmediate{}}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("else"_su8, I{MakeAt("else"_su8, O::Else)}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"if"_su8, I{At{"if"_su8, O::If}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"else"_su8, I{At{"else"_su8, O::Else}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
            },
            "(if (nop) (then (nop)) (else (nop)))"_su8);
 }
@@ -1579,26 +1518,24 @@ TEST_F(TextReadTest, Expression_Try) {
   context.features.enable_exceptions();
 
   // Try catch.
-  OKVector(
-      ReadExpression_ForTesting,
-      InstructionList{
-          MakeAt("try"_su8, I{MakeAt("try"_su8, O::Try), BlockImmediate{}}),
-          MakeAt("catch"_su8, I{MakeAt("catch"_su8, O::Catch)}),
-          MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
-      },
-      "(try (catch))"_su8);
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
+           },
+           "(try (catch))"_su8);
 
   // Try catch w/ nops.
-  OKVector(
-      ReadExpression_ForTesting,
-      InstructionList{
-          MakeAt("try"_su8, I{MakeAt("try"_su8, O::Try), BlockImmediate{}}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("catch"_su8, I{MakeAt("catch"_su8, O::Catch)}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
-      },
-      "(try (nop) (catch (nop)))"_su8);
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
+           },
+           "(try (nop) (catch (nop)))"_su8);
 }
 
 TEST_F(TextReadTest, Expression_Let) {
@@ -1610,67 +1547,61 @@ TEST_F(TextReadTest, Expression_Let) {
   // Empty Let.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
-               MakeAt("let"_su8, I{MakeAt("let"_su8, O::Let), LetImmediate{}}),
-               MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
+               At{"let"_su8, I{At{"let"_su8, O::Let}, LetImmediate{}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
            },
            "(let)"_su8);
 
   // Let with locals and nops.
-  OKVector(
-      ReadExpression_ForTesting,
-      InstructionList{
-          MakeAt("let (local i32 i64)"_su8,
-                 I{MakeAt("let"_su8, O::Let),
-                   MakeAt("(local i32 i64)"_su8,
-                          LetImmediate{
-                              BlockImmediate{},
-                              {MakeAt("i32"_su8,
-                                      BVT{nullopt, MakeAt("i32"_su8, VT_I32)}),
-                               MakeAt("i64"_su8,
-                                      BVT{nullopt, MakeAt("i64"_su8, VT_I64)})},
-                          })}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-          MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
-      },
-      "(let (local i32 i64) nop nop)"_su8);
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"let (local i32 i64)"_su8,
+                  I{At{"let"_su8, O::Let},
+                    At{"(local i32 i64)"_su8,
+                       LetImmediate{
+                           BlockImmediate{},
+                           {At{"i32"_su8, BVT{nullopt, At{"i32"_su8, VT_I32}}},
+                            At{"i64"_su8, BVT{nullopt, At{"i64"_su8, VT_I64}}}},
+                       }}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
+           },
+           "(let (local i32 i64) nop nop)"_su8);
 }
-
 
 TEST_F(TextReadTest, ExpressionList) {
   OKVector(ReadExpressionList_ForTesting,
            InstructionList{
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-               MakeAt("drop"_su8, I{MakeAt("drop"_su8, O::Drop)}),
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"drop"_su8, I{At{"drop"_su8, O::Drop}}},
            },
            "(nop) (drop (nop))"_su8);
 }
 
 TEST_F(TextReadTest, TableType) {
   OK(ReadTableType,
-     TableType{MakeAt("1 2"_su8,
-                      Limits{MakeAt("1"_su8, u32{1}), MakeAt("2"_su8, u32{2})}),
-               MakeAt("funcref"_su8, RT_Funcref)},
+     TableType{At{"1 2"_su8, Limits{At{"1"_su8, u32{1}}, At{"2"_su8, u32{2}}}},
+               At{"funcref"_su8, RT_Funcref}},
      "1 2 funcref"_su8);
 }
 
 TEST_F(TextReadTest, MemoryType) {
   OK(ReadMemoryType,
-     MemoryType{MakeAt(
-         "1 2"_su8, Limits{MakeAt("1"_su8, u32{1}), MakeAt("2"_su8, u32{2})})},
+     MemoryType{
+         At{"1 2"_su8, Limits{At{"1"_su8, u32{1}}, At{"2"_su8, u32{2}}}}},
      "1 2"_su8);
 }
 
 TEST_F(TextReadTest, GlobalType) {
   OK(ReadGlobalType,
-     GlobalType{MakeAt("i32"_su8, MakeAt("i32"_su8, VT_I32)),
-                Mutability::Const},
+     GlobalType{At{"i32"_su8, At{"i32"_su8, VT_I32}}, Mutability::Const},
      "i32"_su8);
 
   OK(ReadGlobalType,
-     GlobalType{MakeAt("(mut i32)"_su8, MakeAt("i32"_su8, VT_I32)),
-                MakeAt("mut"_su8, Mutability::Var)},
+     GlobalType{At{"(mut i32)"_su8, At{"i32"_su8, VT_I32}},
+                At{"mut"_su8, Mutability::Var}},
      "(mut i32)"_su8);
 }
 
@@ -1681,21 +1612,20 @@ TEST_F(TextReadTest, EventType) {
   // Function type use.
   OK(ReadEventType,
      EventType{EventAttribute::Exception,
-               FunctionTypeUse{MakeAt("(type 0)"_su8, Var{Index{0}}), {}}},
+               FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}},
      "(type 0)"_su8);
 }
 
 TEST_F(TextReadTest, Function) {
   // Empty func.
-  OK(ReadFunction,
-     Function{{}, {}, {MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)})}, {}},
+  OK(ReadFunction, Function{{}, {}, {At{")"_su8, I{At{")"_su8, O::End}}}}, {}},
      "(func)"_su8);
 
   // Name.
   OK(ReadFunction,
-     Function{FunctionDesc{MakeAt("$f"_su8, "$f"_sv), nullopt, {}},
+     Function{FunctionDesc{At{"$f"_su8, "$f"_sv}, nullopt, {}},
               {},
-              {MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)})},
+              {At{")"_su8, I{At{")"_su8, O::End}}}},
               {}},
      "(func $f)"_su8);
 
@@ -1703,20 +1633,20 @@ TEST_F(TextReadTest, Function) {
   OK(ReadFunction,
      Function{{},
               {},
-              {MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)})},
-              InlineExportList{MakeAt(
-                  "(export \"e\")"_su8,
-                  InlineExport{MakeAt("\"e\""_su8, Text{"\"e\""_sv, 1})})}},
+              {At{")"_su8, I{At{")"_su8, O::End}}}},
+              InlineExportList{
+                  At{"(export \"e\")"_su8,
+                     InlineExport{At{"\"e\""_su8, Text{"\"e\""_sv, 1}}}}}},
      "(func (export \"e\"))"_su8);
 
   // Locals.
   OK(ReadFunction,
      Function{{},
               BoundValueTypeList{
-                  MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT_I32)}),
-                  MakeAt("i64"_su8, BVT{nullopt, MakeAt("i64"_su8, VT_I64)}),
+                  At{"i32"_su8, BVT{nullopt, At{"i32"_su8, VT_I32}}},
+                  At{"i64"_su8, BVT{nullopt, At{"i64"_su8, VT_I64}}},
               },
-              {MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)})},
+              {At{")"_su8, I{At{")"_su8, O::End}}}},
               {}},
      "(func (local i32 i64))"_su8);
 
@@ -1725,26 +1655,26 @@ TEST_F(TextReadTest, Function) {
      Function{{},
               {},
               InstructionList{
-                  MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-                  MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-                  MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-                  MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
+                  At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+                  At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+                  At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+                  At{")"_su8, I{At{")"_su8, O::End}}},
               },
               {}},
      "(func nop nop nop)"_su8);
 
   // Everything for defined Function.
   OK(ReadFunction,
-     Function{FunctionDesc{MakeAt("$f2"_su8, "$f2"_sv), nullopt, {}},
-              BoundValueTypeList{
-                  MakeAt("i32"_su8, BVT{nullopt, MakeAt("i32"_su8, VT_I32)})},
-              InstructionList{
-                  MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
-                  MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
-              },
-              InlineExportList{MakeAt(
-                  "(export \"m\")"_su8,
-                  InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+     Function{
+         FunctionDesc{At{"$f2"_su8, "$f2"_sv}, nullopt, {}},
+         BoundValueTypeList{At{"i32"_su8, BVT{nullopt, At{"i32"_su8, VT_I32}}}},
+         InstructionList{
+             At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+             At{")"_su8, I{At{")"_su8, O::End}}},
+         },
+         InlineExportList{
+             At{"(export \"m\")"_su8,
+                InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(func $f2 (export \"m\") (local i32) nop)"_su8);
 }
 
@@ -1752,27 +1682,26 @@ TEST_F(TextReadTest, FunctionInlineImport) {
   // Import.
   OK(ReadFunction,
      Function{{},
-              MakeAt("(import \"m\" \"n\")"_su8,
-                     InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-                                  MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
+              At{"(import \"m\" \"n\")"_su8,
+                 InlineImport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+                              At{"\"n\""_su8, Text{"\"n\""_sv, 1}}}},
               {}},
      "(func (import \"m\" \"n\"))"_su8);
 
   // Everything for imported Function.
   OK(ReadFunction,
-     Function{FunctionDesc{
-                  MakeAt("$f"_su8, "$f"_sv), nullopt,
-                  MakeAt("(param i32)"_su8,
-                         BoundFunctionType{
-                             {MakeAt("i32"_su8,
-                                     BVT{nullopt, MakeAt("i32"_su8, VT_I32)})},
-                             {}})},
-              MakeAt("(import \"a\" \"b\")"_su8,
-                     InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
-                                  MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
-              InlineExportList{MakeAt(
-                  "(export \"m\")"_su8,
-                  InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+     Function{
+         FunctionDesc{
+             At{"$f"_su8, "$f"_sv}, nullopt,
+             At{"(param i32)"_su8,
+                BoundFunctionType{
+                    {At{"i32"_su8, BVT{nullopt, At{"i32"_su8, VT_I32}}}}, {}}}},
+         At{"(import \"a\" \"b\")"_su8,
+            InlineImport{At{"\"a\""_su8, Text{"\"a\""_sv, 1}},
+                         At{"\"b\""_su8, Text{"\"b\""_sv, 1}}}},
+         InlineExportList{
+             At{"(export \"m\")"_su8,
+                InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(func $f (export \"m\") (import \"a\" \"b\") (param i32))"_su8);
 }
 
@@ -1780,58 +1709,54 @@ TEST_F(TextReadTest, Table) {
   // Simplest table.
   OK(ReadTable,
      Table{TableDesc{{},
-                     MakeAt("0 funcref"_su8,
-                            TableType{MakeAt("0"_su8,
-                                             Limits{MakeAt("0"_su8, u32{0})}),
-                                      MakeAt("funcref"_su8, RT_Funcref)})},
+                     At{"0 funcref"_su8,
+                        TableType{At{"0"_su8, Limits{At{"0"_su8, u32{0}}}},
+                                  At{"funcref"_su8, RT_Funcref}}}},
            {}},
      "(table 0 funcref)"_su8);
 
   // Name.
   OK(ReadTable,
-     Table{TableDesc{MakeAt("$t"_su8, "$t"_sv),
-                     MakeAt("0 funcref"_su8,
-                            TableType{MakeAt("0"_su8,
-                                             Limits{MakeAt("0"_su8, u32{0})}),
-                                      MakeAt("funcref"_su8, RT_Funcref)})},
+     Table{TableDesc{At{"$t"_su8, "$t"_sv},
+                     At{"0 funcref"_su8,
+                        TableType{At{"0"_su8, Limits{At{"0"_su8, u32{0}}}},
+                                  At{"funcref"_su8, RT_Funcref}}}},
            {}},
      "(table $t 0 funcref)"_su8);
 
   // Inline export.
   OK(ReadTable,
      Table{TableDesc{{},
-                     MakeAt("0 funcref"_su8,
-                            TableType{MakeAt("0"_su8,
-                                             Limits{MakeAt("0"_su8, u32{0})}),
-                                      MakeAt("funcref"_su8, RT_Funcref)})},
+                     At{"0 funcref"_su8,
+                        TableType{At{"0"_su8, Limits{At{"0"_su8, u32{0}}}},
+                                  At{"funcref"_su8, RT_Funcref}}}},
            InlineExportList{
-               MakeAt("(export \"m\")"_su8,
-                      InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+               At{"(export \"m\")"_su8,
+                  InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(table (export \"m\") 0 funcref)"_su8);
 
   // Name and inline export.
   OK(ReadTable,
-     Table{TableDesc{MakeAt("$t2"_su8, "$t2"_sv),
-                     MakeAt("0 funcref"_su8,
-                            TableType{MakeAt("0"_su8,
-                                             Limits{MakeAt("0"_su8, u32{0})}),
-                                      MakeAt("funcref"_su8, RT_Funcref)})},
+     Table{TableDesc{At{"$t2"_su8, "$t2"_sv},
+                     At{"0 funcref"_su8,
+                        TableType{At{"0"_su8, Limits{At{"0"_su8, u32{0}}}},
+                                  At{"funcref"_su8, RT_Funcref}}}},
            InlineExportList{
-               MakeAt("(export \"m\")"_su8,
-                      InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+               At{"(export \"m\")"_su8,
+                  InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(table $t2 (export \"m\") 0 funcref)"_su8);
 
   // Inline element var list.
   OK(ReadTable,
      Table{TableDesc{{},
                      TableType{Limits{u32{3}, u32{3}},
-                               MakeAt("funcref"_su8, RT_Funcref)}},
+                               At{"funcref"_su8, RT_Funcref}}},
            {},
            ElementListWithVars{ExternalKind::Function,
                                VarList{
-                                   MakeAt("0"_su8, Var{Index{0}}),
-                                   MakeAt("1"_su8, Var{Index{1}}),
-                                   MakeAt("2"_su8, Var{Index{2}}),
+                                   At{"0"_su8, Var{Index{0}}},
+                                   At{"1"_su8, Var{Index{1}}},
+                                   At{"2"_su8, Var{Index{2}}},
                                }}},
      "(table funcref (elem 0 1 2))"_su8);
 }
@@ -1840,29 +1765,27 @@ TEST_F(TextReadTest, TableInlineImport) {
   // Inline import.
   OK(ReadTable,
      Table{TableDesc{{},
-                     MakeAt("0 funcref"_su8,
-                            TableType{MakeAt("0"_su8,
-                                             Limits{MakeAt("0"_su8, u32{0})}),
-                                      MakeAt("funcref"_su8, RT_Funcref)})},
-           MakeAt("(import \"m\" \"n\")"_su8,
-                  InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-                               MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
+                     At{"0 funcref"_su8,
+                        TableType{At{"0"_su8, Limits{At{"0"_su8, u32{0}}}},
+                                  At{"funcref"_su8, RT_Funcref}}}},
+           At{"(import \"m\" \"n\")"_su8,
+              InlineImport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+                           At{"\"n\""_su8, Text{"\"n\""_sv, 1}}}},
            {}},
      "(table (import \"m\" \"n\") 0 funcref)"_su8);
 
   // Everything for Table import.
   OK(ReadTable,
-     Table{TableDesc{MakeAt("$t"_su8, "$t"_sv),
-                     MakeAt("0 funcref"_su8,
-                            TableType{MakeAt("0"_su8,
-                                             Limits{MakeAt("0"_su8, u32{0})}),
-                                      MakeAt("funcref"_su8, RT_Funcref)})},
-           MakeAt("(import \"a\" \"b\")"_su8,
-                  InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
-                               MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
+     Table{TableDesc{At{"$t"_su8, "$t"_sv},
+                     At{"0 funcref"_su8,
+                        TableType{At{"0"_su8, Limits{At{"0"_su8, u32{0}}}},
+                                  At{"funcref"_su8, RT_Funcref}}}},
+           At{"(import \"a\" \"b\")"_su8,
+              InlineImport{At{"\"a\""_su8, Text{"\"a\""_sv, 1}},
+                           At{"\"b\""_su8, Text{"\"b\""_sv, 1}}}},
            InlineExportList{
-               MakeAt("(export \"m\")"_su8,
-                      InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+               At{"(export \"m\")"_su8,
+                  InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(table $t (export \"m\") (import \"a\" \"b\") 0 funcref)"_su8);
 }
 
@@ -1874,20 +1797,19 @@ TEST_F(TextReadTest, Table_bulk_memory) {
 
   // Inline element var list.
   OK(ReadTable,
-     Table{TableDesc{{},
-                     TableType{Limits{u32{2}, u32{2}},
-                               MakeAt("funcref"_su8, RT_Funcref)}},
-           {},
-           ElementListWithExpressions{
-               MakeAt("funcref"_su8, RT_Funcref),
-               ElementExpressionList{
-                   MakeAt("(nop)"_su8,
-                          ElementExpression{
-                              MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-                   MakeAt("(nop)"_su8,
-                          ElementExpression{
-                              MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-               }}},
+     Table{
+         TableDesc{
+             {},
+             TableType{Limits{u32{2}, u32{2}}, At{"funcref"_su8, RT_Funcref}}},
+         {},
+         ElementListWithExpressions{
+             At{"funcref"_su8, RT_Funcref},
+             ElementExpressionList{
+                 At{"(nop)"_su8,
+                    ElementExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                 At{"(nop)"_su8,
+                    ElementExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+             }}},
      "(table funcref (elem (nop) (nop)))"_su8);
 }
 
@@ -1895,41 +1817,37 @@ TEST_F(TextReadTest, Memory) {
   // Simplest memory.
   OK(ReadMemory,
      Memory{MemoryDesc{{},
-                       MakeAt("0"_su8,
-                              MemoryType{MakeAt(
-                                  "0"_su8, Limits{MakeAt("0"_su8, u32{0})})})},
+                       At{"0"_su8, MemoryType{At{
+                                       "0"_su8, Limits{At{"0"_su8, u32{0}}}}}}},
             {}},
      "(memory 0)"_su8);
 
   // Name.
   OK(ReadMemory,
-     Memory{MemoryDesc{MakeAt("$m"_su8, "$m"_sv),
-                       MakeAt("0"_su8,
-                              MemoryType{MakeAt(
-                                  "0"_su8, Limits{MakeAt("0"_su8, u32{0})})})},
+     Memory{MemoryDesc{At{"$m"_su8, "$m"_sv},
+                       At{"0"_su8, MemoryType{At{
+                                       "0"_su8, Limits{At{"0"_su8, u32{0}}}}}}},
             {}},
      "(memory $m 0)"_su8);
 
   // Inline export.
   OK(ReadMemory,
      Memory{MemoryDesc{{},
-                       MakeAt("0"_su8,
-                              MemoryType{MakeAt(
-                                  "0"_su8, Limits{MakeAt("0"_su8, u32{0})})})},
-            InlineExportList{MakeAt(
-                "(export \"m\")"_su8,
-                InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+                       At{"0"_su8, MemoryType{At{
+                                       "0"_su8, Limits{At{"0"_su8, u32{0}}}}}}},
+            InlineExportList{
+                At{"(export \"m\")"_su8,
+                   InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(memory (export \"m\") 0)"_su8);
 
   // Name and inline export.
   OK(ReadMemory,
-     Memory{MemoryDesc{MakeAt("$t"_su8, "$t"_sv),
-                       MakeAt("0"_su8,
-                              MemoryType{MakeAt(
-                                  "0"_su8, Limits{MakeAt("0"_su8, u32{0})})})},
-            InlineExportList{MakeAt(
-                "(export \"m\")"_su8,
-                InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+     Memory{MemoryDesc{At{"$t"_su8, "$t"_sv},
+                       At{"0"_su8, MemoryType{At{
+                                       "0"_su8, Limits{At{"0"_su8, u32{0}}}}}}},
+            InlineExportList{
+                At{"(export \"m\")"_su8,
+                   InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(memory $t (export \"m\") 0)"_su8);
 
   // Inline data segment.
@@ -1937,8 +1855,8 @@ TEST_F(TextReadTest, Memory) {
      Memory{MemoryDesc{{}, MemoryType{Limits{u32{10}, u32{10}}}},
             {},
             TextList{
-                MakeAt("\"hello\""_su8, Text{"\"hello\""_sv, 5}),
-                MakeAt("\"world\""_su8, Text{"\"world\""_sv, 5}),
+                At{"\"hello\""_su8, Text{"\"hello\""_sv, 5}},
+                At{"\"world\""_su8, Text{"\"world\""_sv, 5}},
             }},
      "(memory (data \"hello\" \"world\"))"_su8);
 }
@@ -1947,27 +1865,25 @@ TEST_F(TextReadTest, MemoryInlineImport) {
   // Inline import.
   OK(ReadMemory,
      Memory{MemoryDesc{{},
-                       MakeAt("0"_su8,
-                              MemoryType{MakeAt(
-                                  "0"_su8, Limits{MakeAt("0"_su8, u32{0})})})},
-            MakeAt("(import \"m\" \"n\")"_su8,
-                   InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-                                MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
+                       At{"0"_su8, MemoryType{At{
+                                       "0"_su8, Limits{At{"0"_su8, u32{0}}}}}}},
+            At{"(import \"m\" \"n\")"_su8,
+               InlineImport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+                            At{"\"n\""_su8, Text{"\"n\""_sv, 1}}}},
             {}},
      "(memory (import \"m\" \"n\") 0)"_su8);
 
   // Everything for Memory import.
   OK(ReadMemory,
-     Memory{MemoryDesc{MakeAt("$t"_su8, "$t"_sv),
-                       MakeAt("0"_su8,
-                              MemoryType{MakeAt(
-                                  "0"_su8, Limits{MakeAt("0"_su8, u32{0})})})},
-            MakeAt("(import \"a\" \"b\")"_su8,
-                   InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
-                                MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
-            InlineExportList{MakeAt(
-                "(export \"m\")"_su8,
-                InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+     Memory{MemoryDesc{At{"$t"_su8, "$t"_sv},
+                       At{"0"_su8, MemoryType{At{
+                                       "0"_su8, Limits{At{"0"_su8, u32{0}}}}}}},
+            At{"(import \"a\" \"b\")"_su8,
+               InlineImport{At{"\"a\""_su8, Text{"\"a\""_sv, 1}},
+                            At{"\"b\""_su8, Text{"\"b\""_sv, 1}}}},
+            InlineExportList{
+                At{"(export \"m\")"_su8,
+                   InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(memory $t (export \"m\") (import \"a\" \"b\") 0)"_su8);
 }
 
@@ -1975,45 +1891,45 @@ TEST_F(TextReadTest, Global) {
   // Simplest global.
   OK(ReadGlobal,
      Global{GlobalDesc{{},
-                       MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT_I32),
-                                                    Mutability::Const})},
-            MakeAt("nop"_su8, ConstantExpression{MakeAt(
-                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+                       At{"i32"_su8, GlobalType{At{"i32"_su8, VT_I32},
+                                                Mutability::Const}}},
+            At{"nop"_su8,
+               ConstantExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
             {}},
      "(global i32 nop)"_su8);
 
   // Name.
   OK(ReadGlobal,
-     Global{GlobalDesc{MakeAt("$g"_su8, "$g"_sv),
-                       MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT_I32),
-                                                    Mutability::Const})},
-            MakeAt("nop"_su8, ConstantExpression{MakeAt(
-                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+     Global{GlobalDesc{At{"$g"_su8, "$g"_sv},
+                       At{"i32"_su8, GlobalType{At{"i32"_su8, VT_I32},
+                                                Mutability::Const}}},
+            At{"nop"_su8,
+               ConstantExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
             {}},
      "(global $g i32 nop)"_su8);
 
   // Inline export.
   OK(ReadGlobal,
      Global{GlobalDesc{{},
-                       MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT_I32),
-                                                    Mutability::Const})},
-            MakeAt("nop"_su8, ConstantExpression{MakeAt(
-                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-            InlineExportList{MakeAt(
-                "(export \"m\")"_su8,
-                InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+                       At{"i32"_su8, GlobalType{At{"i32"_su8, VT_I32},
+                                                Mutability::Const}}},
+            At{"nop"_su8,
+               ConstantExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+            InlineExportList{
+                At{"(export \"m\")"_su8,
+                   InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(global (export \"m\") i32 nop)"_su8);
 
   // Name and inline export.
   OK(ReadGlobal,
-     Global{GlobalDesc{MakeAt("$g2"_su8, "$g2"_sv),
-                       MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT_I32),
-                                                    Mutability::Const})},
-            MakeAt("nop"_su8, ConstantExpression{MakeAt(
-                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-            InlineExportList{MakeAt(
-                "(export \"m\")"_su8,
-                InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+     Global{GlobalDesc{At{"$g2"_su8, "$g2"_sv},
+                       At{"i32"_su8, GlobalType{At{"i32"_su8, VT_I32},
+                                                Mutability::Const}}},
+            At{"nop"_su8,
+               ConstantExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+            InlineExportList{
+                At{"(export \"m\")"_su8,
+                   InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(global $g2 (export \"m\") i32 nop)"_su8);
 }
 
@@ -2021,25 +1937,25 @@ TEST_F(TextReadTest, GlobalInlineImport) {
   // Inline import.
   OK(ReadGlobal,
      Global{GlobalDesc{{},
-                       MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT_I32),
-                                                    Mutability::Const})},
-            MakeAt("(import \"m\" \"n\")"_su8,
-                   InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-                                MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
+                       At{"i32"_su8, GlobalType{At{"i32"_su8, VT_I32},
+                                                Mutability::Const}}},
+            At{"(import \"m\" \"n\")"_su8,
+               InlineImport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+                            At{"\"n\""_su8, Text{"\"n\""_sv, 1}}}},
             {}},
      "(global (import \"m\" \"n\") i32)"_su8);
 
   // Everything for Global import.
   OK(ReadGlobal,
-     Global{GlobalDesc{MakeAt("$g"_su8, "$g"_sv),
-                       MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT_I32),
-                                                    Mutability::Const})},
-            MakeAt("(import \"a\" \"b\")"_su8,
-                   InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
-                                MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
-            InlineExportList{MakeAt(
-                "(export \"m\")"_su8,
-                InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+     Global{GlobalDesc{At{"$g"_su8, "$g"_sv},
+                       At{"i32"_su8, GlobalType{At{"i32"_su8, VT_I32},
+                                                Mutability::Const}}},
+            At{"(import \"a\" \"b\")"_su8,
+               InlineImport{At{"\"a\""_su8, Text{"\"a\""_sv, 1}},
+                            At{"\"b\""_su8, Text{"\"b\""_sv, 1}}}},
+            InlineExportList{
+                At{"(export \"m\")"_su8,
+                   InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(global $g (export \"m\") (import \"a\" \"b\") i32)"_su8);
 }
 
@@ -2052,23 +1968,23 @@ TEST_F(TextReadTest, Event) {
   OK(ReadEvent, Event{}, "(event)"_su8);
 
   // Name.
-  OK(ReadEvent, Event{EventDesc{MakeAt("$e"_su8, "$e"_sv), {}}, {}},
+  OK(ReadEvent, Event{EventDesc{At{"$e"_su8, "$e"_sv}, {}}, {}},
      "(event $e)"_su8);
 
   // Inline export.
   OK(ReadEvent,
      Event{EventDesc{},
            InlineExportList{
-               MakeAt("(export \"m\")"_su8,
-                      InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+               At{"(export \"m\")"_su8,
+                  InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(event (export \"m\"))"_su8);
 
   // Name and inline export.
   OK(ReadEvent,
-     Event{EventDesc{MakeAt("$e2"_su8, "$e2"_sv), {}},
+     Event{EventDesc{At{"$e2"_su8, "$e2"_sv}, {}},
            InlineExportList{
-               MakeAt("(export \"m\")"_su8,
-                      InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+               At{"(export \"m\")"_su8,
+                  InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(event $e2 (export \"m\"))"_su8);
 }
 
@@ -2081,59 +1997,57 @@ TEST_F(TextReadTest, EventInlineImport) {
   // Inline import.
   OK(ReadEvent,
      Event{EventDesc{},
-           MakeAt("(import \"m\" \"n\")"_su8,
-                  InlineImport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-                               MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1})}),
+           At{"(import \"m\" \"n\")"_su8,
+              InlineImport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+                           At{"\"n\""_su8, Text{"\"n\""_sv, 1}}}},
            {}},
      "(event (import \"m\" \"n\"))"_su8);
 
   // Everything for event import.
   OK(ReadEvent,
-     Event{EventDesc{MakeAt("$e"_su8, "$e"_sv), {}},
-           MakeAt("(import \"a\" \"b\")"_su8,
-                  InlineImport{MakeAt("\"a\""_su8, Text{"\"a\""_sv, 1}),
-                               MakeAt("\"b\""_su8, Text{"\"b\""_sv, 1})}),
+     Event{EventDesc{At{"$e"_su8, "$e"_sv}, {}},
+           At{"(import \"a\" \"b\")"_su8,
+              InlineImport{At{"\"a\""_su8, Text{"\"a\""_sv, 1}},
+                           At{"\"b\""_su8, Text{"\"b\""_sv, 1}}}},
            InlineExportList{
-               MakeAt("(export \"m\")"_su8,
-                      InlineExport{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1})})}},
+               At{"(export \"m\")"_su8,
+                  InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(event $e (export \"m\") (import \"a\" \"b\"))"_su8);
 }
 
 TEST_F(TextReadTest, Import) {
   // Function.
   OK(ReadImport,
-     Import{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-            MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1}), FunctionDesc{}},
+     Import{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+            At{"\"n\""_su8, Text{"\"n\""_sv, 1}}, FunctionDesc{}},
      "(import \"m\" \"n\" (func))"_su8);
 
   // Table.
   OK(ReadImport,
-     Import{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-            MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1}),
+     Import{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+            At{"\"n\""_su8, Text{"\"n\""_sv, 1}},
             TableDesc{nullopt,
-                      MakeAt("1 funcref"_su8,
-                             TableType{MakeAt("1"_su8,
-                                              Limits{MakeAt("1"_su8, u32{1})}),
-                                       MakeAt("funcref"_su8, RT_Funcref)})}},
+                      At{"1 funcref"_su8,
+                         TableType{At{"1"_su8, Limits{At{"1"_su8, u32{1}}}},
+                                   At{"funcref"_su8, RT_Funcref}}}}},
      "(import \"m\" \"n\" (table 1 funcref))"_su8);
 
   // Memory.
   OK(ReadImport,
-     Import{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-            MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1}),
-            MemoryDesc{nullopt,
-                       MakeAt("1"_su8,
-                              MemoryType{MakeAt(
-                                  "1"_su8, Limits{MakeAt("1"_su8, u32{1})})})}},
+     Import{
+         At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+         At{"\"n\""_su8, Text{"\"n\""_sv, 1}},
+         MemoryDesc{nullopt,
+                    At{"1"_su8,
+                       MemoryType{At{"1"_su8, Limits{At{"1"_su8, u32{1}}}}}}}},
      "(import \"m\" \"n\" (memory 1))"_su8);
 
   // Global.
   OK(ReadImport,
-     Import{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-            MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1}),
-            GlobalDesc{nullopt,
-                       MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT_I32),
-                                                    Mutability::Const})}},
+     Import{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+            At{"\"n\""_su8, Text{"\"n\""_sv, 1}},
+            GlobalDesc{nullopt, At{"i32"_su8, GlobalType{At{"i32"_su8, VT_I32},
+                                                         Mutability::Const}}}},
      "(import \"m\" \"n\" (global i32))"_su8);
 }
 
@@ -2152,38 +2066,34 @@ TEST_F(TextReadTest, Import_exceptions) {
 
   // Event.
   OK(ReadImport,
-     Import{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-            MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1}), EventDesc{}},
+     Import{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+            At{"\"n\""_su8, Text{"\"n\""_sv, 1}}, EventDesc{}},
      "(import \"m\" \"n\" (event))"_su8);
 }
 
 TEST_F(TextReadTest, Export) {
   // Function.
   OK(ReadExport,
-     Export{MakeAt("func"_su8, ExternalKind::Function),
-            MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-            MakeAt("0"_su8, Var{Index{0}})},
+     Export{At{"func"_su8, ExternalKind::Function},
+            At{"\"m\""_su8, Text{"\"m\""_sv, 1}}, At{"0"_su8, Var{Index{0}}}},
      "(export \"m\" (func 0))"_su8);
 
   // Table.
   OK(ReadExport,
-     Export{MakeAt("table"_su8, ExternalKind::Table),
-            MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-            MakeAt("0"_su8, Var{Index{0}})},
+     Export{At{"table"_su8, ExternalKind::Table},
+            At{"\"m\""_su8, Text{"\"m\""_sv, 1}}, At{"0"_su8, Var{Index{0}}}},
      "(export \"m\" (table 0))"_su8);
 
   // Memory.
   OK(ReadExport,
-     Export{MakeAt("memory"_su8, ExternalKind::Memory),
-            MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-            MakeAt("0"_su8, Var{Index{0}})},
+     Export{At{"memory"_su8, ExternalKind::Memory},
+            At{"\"m\""_su8, Text{"\"m\""_sv, 1}}, At{"0"_su8, Var{Index{0}}}},
      "(export \"m\" (memory 0))"_su8);
 
   // Global.
   OK(ReadExport,
-     Export{MakeAt("global"_su8, ExternalKind::Global),
-            MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-            MakeAt("0"_su8, Var{Index{0}})},
+     Export{At{"global"_su8, ExternalKind::Global},
+            At{"\"m\""_su8, Text{"\"m\""_sv, 1}}, At{"0"_su8, Var{Index{0}}}},
      "(export \"m\" (global 0))"_su8);
 }
 
@@ -2195,14 +2105,13 @@ TEST_F(TextReadTest, Export_exceptions) {
 
   // Event.
   OK(ReadExport,
-     Export{MakeAt("event"_su8, ExternalKind::Event),
-            MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-            MakeAt("0"_su8, Var{Index{0}})},
+     Export{At{"event"_su8, ExternalKind::Event},
+            At{"\"m\""_su8, Text{"\"m\""_sv, 1}}, At{"0"_su8, Var{Index{0}}}},
      "(export \"m\" (event 0))"_su8);
 }
 
 TEST_F(TextReadTest, Start) {
-  OK(ReadStart, Start{MakeAt("0"_su8, Var{Index{0}})}, "(start 0)"_su8);
+  OK(ReadStart, Start{At{"0"_su8, Var{Index{0}}}}, "(start 0)"_su8);
 }
 
 TEST_F(TextReadTest, Start_Multiple) {
@@ -2216,14 +2125,14 @@ TEST_F(TextReadTest, ElementExpression) {
   // Item.
   OK(ReadElementExpression,
      ElementExpression{
-         MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+         At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
      },
      "(item nop)"_su8);
 
   // Expression.
   OK(ReadElementExpression,
      ElementExpression{
-         MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)}),
+         At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
      },
      "(nop)"_su8);
 }
@@ -2231,12 +2140,11 @@ TEST_F(TextReadTest, ElementExpression) {
 TEST_F(TextReadTest, OffsetExpression) {
   // Expression.
   OK(ReadOffsetExpression,
-     ConstantExpression{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
-     "(nop)"_su8);
+     ConstantExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}, "(nop)"_su8);
 
   // Offset keyword.
   OK(ReadOffsetExpression,
-     ConstantExpression{MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})},
+     ConstantExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}},
      "(offset nop)"_su8);
 }
 
@@ -2246,24 +2154,21 @@ TEST_F(TextReadTest, ElementExpressionList) {
   // Item list.
   OKVector(ReadElementExpressionList,
            ElementExpressionList{
-               MakeAt("(item nop)"_su8,
-                      ElementExpression{
-                          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-               MakeAt("(item nop)"_su8,
-                      ElementExpression{
-                          MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+               At{"(item nop)"_su8,
+                  ElementExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+               At{"(item nop)"_su8,
+                  ElementExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
            },
            "(item nop) (item nop)"_su8);
 
   // Expression list.
-  OKVector(
-      ReadElementExpressionList,
-      ElementExpressionList{
-          MakeAt("(nop)"_su8, ElementExpression{MakeAt(
-                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-          MakeAt("(nop)"_su8, ElementExpression{MakeAt(
-                                  "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})})},
-      "(nop) (nop)"_su8);
+  OKVector(ReadElementExpressionList,
+           ElementExpressionList{
+               At{"(nop)"_su8,
+                  ElementExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+               At{"(nop)"_su8,
+                  ElementExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}}},
+           "(nop) (nop)"_su8);
 }
 
 TEST_F(TextReadTest, TableUseOpt) {
@@ -2274,41 +2179,37 @@ TEST_F(TextReadTest, TableUseOpt) {
 TEST_F(TextReadTest, ElementSegment_MVP) {
   // No table var, empty var list.
   OK(ReadElementSegment,
-     ElementSegment{
-         nullopt, nullopt,
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         ElementListWithVars{ExternalKind::Function, {}}},
+     ElementSegment{nullopt, nullopt,
+                    At{"(nop)"_su8, ConstantExpression{At{
+                                        "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                    ElementListWithVars{ExternalKind::Function, {}}},
      "(elem (nop))"_su8);
 
   // No table var, var list.
   OK(ReadElementSegment,
-     ElementSegment{
-         nullopt, nullopt,
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         ElementListWithVars{ExternalKind::Function,
-                             VarList{MakeAt("0"_su8, Var{Index{0}}),
-                                     MakeAt("1"_su8, Var{Index{1}}),
-                                     MakeAt("2"_su8, Var{Index{2}})}}},
+     ElementSegment{nullopt, nullopt,
+                    At{"(nop)"_su8, ConstantExpression{At{
+                                        "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                    ElementListWithVars{ExternalKind::Function,
+                                        VarList{At{"0"_su8, Var{Index{0}}},
+                                                At{"1"_su8, Var{Index{1}}},
+                                                At{"2"_su8, Var{Index{2}}}}}},
      "(elem (nop) 0 1 2)"_su8);
 
   // Table var.
   OK(ReadElementSegment,
-     ElementSegment{
-         nullopt, MakeAt("0"_su8, Var{Index{0}}),
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         ElementListWithVars{ExternalKind::Function, {}}},
+     ElementSegment{nullopt, At{"0"_su8, Var{Index{0}}},
+                    At{"(nop)"_su8, ConstantExpression{At{
+                                        "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                    ElementListWithVars{ExternalKind::Function, {}}},
      "(elem 0 (nop))"_su8);
 
   // Table var as Id.
   OK(ReadElementSegment,
-     ElementSegment{
-         nullopt, MakeAt("$t"_su8, Var{"$t"_sv}),
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         ElementListWithVars{ExternalKind::Function, {}}},
+     ElementSegment{nullopt, At{"$t"_su8, Var{"$t"_sv}},
+                    At{"(nop)"_su8, ConstantExpression{At{
+                                        "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                    ElementListWithVars{ExternalKind::Function, {}}},
      "(elem $t (nop))"_su8);
 }
 
@@ -2327,33 +2228,30 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
      ElementSegment{
          nullopt, SegmentType::Passive,
          ElementListWithExpressions{
-             MakeAt("funcref"_su8, RT_Funcref),
+             At{"funcref"_su8, RT_Funcref},
              ElementExpressionList{
-                 MakeAt("(nop)"_su8,
-                        ElementExpression{
-                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-                 MakeAt("(nop)"_su8,
-                        ElementExpression{
-                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+                 At{"(nop)"_su8,
+                    ElementExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                 At{"(nop)"_su8,
+                    ElementExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
              }}},
      "(elem funcref (nop) (nop))"_su8);
 
   // Passive, w/ var list.
   OK(ReadElementSegment,
-     ElementSegment{
-         nullopt, SegmentType::Passive,
-         ElementListWithVars{MakeAt("func"_su8, ExternalKind::Function),
-                             VarList{
-                                 MakeAt("0"_su8, Var{Index{0}}),
-                                 MakeAt("$e"_su8, Var{"$e"_sv}),
-                             }}},
+     ElementSegment{nullopt, SegmentType::Passive,
+                    ElementListWithVars{At{"func"_su8, ExternalKind::Function},
+                                        VarList{
+                                            At{"0"_su8, Var{Index{0}}},
+                                            At{"$e"_su8, Var{"$e"_sv}},
+                                        }}},
      "(elem func 0 $e)"_su8);
 
   // Passive w/ name.
   OK(ReadElementSegment,
      ElementSegment{
-         MakeAt("$e"_su8, "$e"_sv), SegmentType::Passive,
-         ElementListWithVars{MakeAt("func"_su8, ExternalKind::Function), {}}},
+         At{"$e"_su8, "$e"_sv}, SegmentType::Passive,
+         ElementListWithVars{At{"func"_su8, ExternalKind::Function}, {}}},
      "(elem $e func)"_su8);
 
   // Declared, w/ expression list.
@@ -2361,149 +2259,136 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
      ElementSegment{
          nullopt, SegmentType::Declared,
          ElementListWithExpressions{
-             MakeAt("funcref"_su8, RT_Funcref),
+             At{"funcref"_su8, RT_Funcref},
              ElementExpressionList{
-                 MakeAt("(nop)"_su8,
-                        ElementExpression{
-                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-                 MakeAt("(nop)"_su8,
-                        ElementExpression{
-                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+                 At{"(nop)"_su8,
+                    ElementExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                 At{"(nop)"_su8,
+                    ElementExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
              }}},
      "(elem declare funcref (nop) (nop))"_su8);
 
   // Declared, w/ var list.
   OK(ReadElementSegment,
-     ElementSegment{
-         nullopt, SegmentType::Declared,
-         ElementListWithVars{MakeAt("func"_su8, ExternalKind::Function),
-                             VarList{
-                                 MakeAt("0"_su8, Var{Index{0}}),
-                                 MakeAt("$e"_su8, Var{"$e"_sv}),
-                             }}},
+     ElementSegment{nullopt, SegmentType::Declared,
+                    ElementListWithVars{At{"func"_su8, ExternalKind::Function},
+                                        VarList{
+                                            At{"0"_su8, Var{Index{0}}},
+                                            At{"$e"_su8, Var{"$e"_sv}},
+                                        }}},
      "(elem declare func 0 $e)"_su8);
 
   // Declared w/ name.
   OK(ReadElementSegment,
      ElementSegment{
-         MakeAt("$e2"_su8, "$e2"_sv), SegmentType::Declared,
-         ElementListWithVars{MakeAt("func"_su8, ExternalKind::Function), {}}},
+         At{"$e2"_su8, "$e2"_sv}, SegmentType::Declared,
+         ElementListWithVars{At{"func"_su8, ExternalKind::Function}, {}}},
      "(elem $e2 declare func)"_su8);
 
   // Active legacy, empty
   OK(ReadElementSegment,
-     ElementSegment{
-         nullopt,
-         nullopt,
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         {}},
+     ElementSegment{nullopt,
+                    nullopt,
+                    At{"(nop)"_su8, ConstantExpression{At{
+                                        "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                    {}},
      "(elem (nop))"_su8);
 
   // Active legacy (i.e. no element type or external kind).
   OK(ReadElementSegment,
-     ElementSegment{
-         nullopt, nullopt,
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         ElementListWithVars{ExternalKind::Function,
-                             VarList{
-                                 MakeAt("0"_su8, Var{Index{0}}),
-                                 MakeAt("$e"_su8, Var{"$e"_sv}),
-                             }}},
+     ElementSegment{nullopt, nullopt,
+                    At{"(nop)"_su8, ConstantExpression{At{
+                                        "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                    ElementListWithVars{ExternalKind::Function,
+                                        VarList{
+                                            At{"0"_su8, Var{Index{0}}},
+                                            At{"$e"_su8, Var{"$e"_sv}},
+                                        }}},
      "(elem (nop) 0 $e)"_su8);
 
   // Active, w/ var list.
   OK(ReadElementSegment,
-     ElementSegment{
-         nullopt, nullopt,
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         ElementListWithVars{MakeAt("func"_su8, ExternalKind::Function),
-                             VarList{
-                                 MakeAt("0"_su8, Var{Index{0}}),
-                                 MakeAt("$e"_su8, Var{"$e"_sv}),
-                             }}},
+     ElementSegment{nullopt, nullopt,
+                    At{"(nop)"_su8, ConstantExpression{At{
+                                        "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                    ElementListWithVars{At{"func"_su8, ExternalKind::Function},
+                                        VarList{
+                                            At{"0"_su8, Var{Index{0}}},
+                                            At{"$e"_su8, Var{"$e"_sv}},
+                                        }}},
      "(elem (nop) func 0 $e)"_su8);
 
   // Active, w/ expression list.
   OK(ReadElementSegment,
      ElementSegment{
          nullopt, nullopt,
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+         At{"(nop)"_su8,
+            ConstantExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
          ElementListWithExpressions{
-             MakeAt("funcref"_su8, RT_Funcref),
+             At{"funcref"_su8, RT_Funcref},
              ElementExpressionList{
-                 MakeAt("(nop)"_su8,
-                        ElementExpression{
-                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-                 MakeAt("(nop)"_su8,
-                        ElementExpression{
-                            MakeAt("nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
+                 At{"(nop)"_su8,
+                    ElementExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                 At{"(nop)"_su8,
+                    ElementExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
              }}},
      "(elem (nop) funcref (nop) (nop))"_su8);
 
   // Active w/ table use.
   OK(ReadElementSegment,
-     ElementSegment{
-         nullopt, MakeAt("(table 0)"_su8, Var{Index{0}}),
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         ElementListWithVars{MakeAt("func"_su8, ExternalKind::Function),
-                             VarList{
-                                 MakeAt("1"_su8, Var{Index{1}}),
-                             }}},
+     ElementSegment{nullopt, At{"(table 0)"_su8, Var{Index{0}}},
+                    At{"(nop)"_su8, ConstantExpression{At{
+                                        "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                    ElementListWithVars{At{"func"_su8, ExternalKind::Function},
+                                        VarList{
+                                            At{"1"_su8, Var{Index{1}}},
+                                        }}},
      "(elem (table 0) (nop) func 1)"_su8);
 
   // Active w/ name.
   OK(ReadElementSegment,
      ElementSegment{
-         MakeAt("$e3"_su8, "$e3"_sv), nullopt,
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         ElementListWithVars{MakeAt("func"_su8, ExternalKind::Function), {}}},
+         At{"$e3"_su8, "$e3"_sv}, nullopt,
+         At{"(nop)"_su8,
+            ConstantExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+         ElementListWithVars{At{"func"_su8, ExternalKind::Function}, {}}},
      "(elem $e3 (nop) func)"_su8);
 }
 
 TEST_F(TextReadTest, DataSegment_MVP) {
   // No memory var, empty text list.
   OK(ReadDataSegment,
-     DataSegment{
-         nullopt,
-         nullopt,
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         {}},
+     DataSegment{nullopt,
+                 nullopt,
+                 At{"(nop)"_su8, ConstantExpression{At{
+                                     "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                 {}},
      "(data (nop))"_su8);
 
   // No memory var, text list.
   OK(ReadDataSegment,
-     DataSegment{
-         nullopt, nullopt,
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         TextList{MakeAt("\"hi\""_su8, Text{"\"hi\""_sv, 2})}},
+     DataSegment{nullopt, nullopt,
+                 At{"(nop)"_su8, ConstantExpression{At{
+                                     "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                 TextList{At{"\"hi\""_su8, Text{"\"hi\""_sv, 2}}}},
      "(data (nop) \"hi\")"_su8);
 
   // Memory var.
   OK(ReadDataSegment,
-     DataSegment{
-         nullopt,
-         MakeAt("0"_su8, Var{Index{0}}),
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         {}},
+     DataSegment{nullopt,
+                 At{"0"_su8, Var{Index{0}}},
+                 At{"(nop)"_su8, ConstantExpression{At{
+                                     "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                 {}},
      "(data 0 (nop))"_su8);
 
   // Memory var as Id.
   OK(ReadDataSegment,
-     DataSegment{
-         nullopt,
-         MakeAt("$m"_su8, Var{"$m"_sv}),
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         {}},
+     DataSegment{nullopt,
+                 At{"$m"_su8, Var{"$m"_sv}},
+                 At{"(nop)"_su8, ConstantExpression{At{
+                                     "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                 {}},
      "(data $m (nop))"_su8);
 }
 
@@ -2517,44 +2402,40 @@ TEST_F(TextReadTest, DataSegment_bulk_memory) {
   OK(ReadDataSegment,
      DataSegment{nullopt,
                  TextList{
-                     MakeAt("\"hi\""_su8, Text{"\"hi\""_sv, 2}),
+                     At{"\"hi\""_su8, Text{"\"hi\""_sv, 2}},
                  }},
      "(data \"hi\")"_su8);
 
   // Passive w/ name.
-  OK(ReadDataSegment, DataSegment{MakeAt("$d"_su8, "$d"_sv), {}},
-     "(data $d)"_su8);
+  OK(ReadDataSegment, DataSegment{At{"$d"_su8, "$d"_sv}, {}}, "(data $d)"_su8);
 
   // Active, w/ text list.
   OK(ReadDataSegment,
-     DataSegment{
-         nullopt, nullopt,
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         TextList{
-             MakeAt("\"hi\""_su8, Text{"\"hi\""_sv, 2}),
-         }},
+     DataSegment{nullopt, nullopt,
+                 At{"(nop)"_su8, ConstantExpression{At{
+                                     "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                 TextList{
+                     At{"\"hi\""_su8, Text{"\"hi\""_sv, 2}},
+                 }},
      "(data (nop) \"hi\")"_su8);
 
   // Active w/ memory use.
   OK(ReadDataSegment,
-     DataSegment{
-         nullopt, MakeAt("(memory 0)"_su8, Var{Index{0}}),
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         TextList{
-             MakeAt("\"hi\""_su8, Text{"\"hi\""_sv, 2}),
-         }},
+     DataSegment{nullopt, At{"(memory 0)"_su8, Var{Index{0}}},
+                 At{"(nop)"_su8, ConstantExpression{At{
+                                     "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                 TextList{
+                     At{"\"hi\""_su8, Text{"\"hi\""_sv, 2}},
+                 }},
      "(data (memory 0) (nop) \"hi\")"_su8);
 
   // Active w/ name.
   OK(ReadDataSegment,
-     DataSegment{
-         MakeAt("$d2"_su8, "$d2"_sv),
-         nullopt,
-         MakeAt("(nop)"_su8, ConstantExpression{MakeAt(
-                                 "nop"_su8, I{MakeAt("nop"_su8, O::Nop)})}),
-         {}},
+     DataSegment{At{"$d2"_su8, "$d2"_sv},
+                 nullopt,
+                 At{"(nop)"_su8, ConstantExpression{At{
+                                     "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                 {}},
      "(data $d2 (nop))"_su8);
 }
 
@@ -2565,26 +2446,23 @@ TEST_F(TextReadTest, ModuleItem) {
 
   // Import.
   OK(ReadModuleItem,
-     ModuleItem{Import{MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-                       MakeAt("\"n\""_su8, Text{"\"n\""_sv, 1}),
-                       FunctionDesc{}}},
+     ModuleItem{Import{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+                       At{"\"n\""_su8, Text{"\"n\""_sv, 1}}, FunctionDesc{}}},
      "(import \"m\" \"n\" (func))"_su8);
 
   // Func.
   OK(ReadModuleItem,
-     ModuleItem{
-         Function{{}, {}, {MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)})}, {}}},
+     ModuleItem{Function{{}, {}, {At{")"_su8, I{At{")"_su8, O::End}}}}, {}}},
      "(func)"_su8);
 
   // Table.
   OK(ReadModuleItem,
-     ModuleItem{Table{
-         TableDesc{
-             nullopt,
-             MakeAt("0 funcref"_su8,
-                    TableType{MakeAt("0"_su8, Limits{MakeAt("0"_su8, u32{0})}),
-                              MakeAt("funcref"_su8, RT_Funcref)})},
-         {}}},
+     ModuleItem{
+         Table{TableDesc{nullopt,
+                         At{"0 funcref"_su8,
+                            TableType{At{"0"_su8, Limits{At{"0"_su8, u32{0}}}},
+                                      At{"funcref"_su8, RT_Funcref}}}},
+               {}}},
      "(table 0 funcref)"_su8);
 
   // Memory.
@@ -2592,34 +2470,32 @@ TEST_F(TextReadTest, ModuleItem) {
      ModuleItem{Memory{
          MemoryDesc{
              nullopt,
-             MakeAt("0"_su8, MemoryType{MakeAt(
-                                 "0"_su8, Limits{MakeAt("0"_su8, u32{0})})})},
+             At{"0"_su8, MemoryType{At{"0"_su8, Limits{At{"0"_su8, u32{0}}}}}}},
          {}}},
      "(memory 0)"_su8);
 
   // Global.
   OK(ReadModuleItem,
      ModuleItem{Global{
-         GlobalDesc{nullopt,
-                    MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT_I32),
-                                                 Mutability::Const})},
-         MakeAt("(nop)"_su8,
-                ConstantExpression{MakeAt(
-                    "nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})}),
+         GlobalDesc{nullopt, At{"i32"_su8, GlobalType{At{"i32"_su8, VT_I32},
+                                                      Mutability::Const}}},
+         At{"(nop)"_su8,
+            ConstantExpression{
+                At{"nop"_su8, Instruction{At{"nop"_su8, Opcode::Nop}}}}},
          {}}},
      "(global i32 (nop))"_su8);
 
   // Export.
   OK(ReadModuleItem,
      ModuleItem{Export{
-         MakeAt("func"_su8, ExternalKind::Function),
-         MakeAt("\"m\""_su8, Text{"\"m\""_sv, 1}),
-         MakeAt("0"_su8, Var{Index{0}}),
+         At{"func"_su8, ExternalKind::Function},
+         At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+         At{"0"_su8, Var{Index{0}}},
      }},
      "(export \"m\" (func 0))"_su8);
 
   // Start.
-  OK(ReadModuleItem, ModuleItem{Start{MakeAt("0"_su8, Var{Index{0}})}},
+  OK(ReadModuleItem, ModuleItem{Start{At{"0"_su8, Var{Index{0}}}}},
      "(start 0)"_su8);
 
   // Elem.
@@ -2627,9 +2503,9 @@ TEST_F(TextReadTest, ModuleItem) {
      ModuleItem{ElementSegment{
          nullopt,
          nullopt,
-         MakeAt("(nop)"_su8,
-                ConstantExpression{MakeAt(
-                    "nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})}),
+         At{"(nop)"_su8,
+            ConstantExpression{
+                At{"nop"_su8, Instruction{At{"nop"_su8, Opcode::Nop}}}}},
          {}}},
      "(elem (nop))"_su8);
 
@@ -2638,9 +2514,9 @@ TEST_F(TextReadTest, ModuleItem) {
      ModuleItem{DataSegment{
          nullopt,
          nullopt,
-         MakeAt("(nop)"_su8,
-                ConstantExpression{MakeAt(
-                    "nop"_su8, Instruction{MakeAt("nop"_su8, Opcode::Nop)})}),
+         At{"(nop)"_su8,
+            ConstantExpression{
+                At{"nop"_su8, Instruction{At{"nop"_su8, Opcode::Nop}}}}},
          {}}},
      "(data (nop))"_su8);
 }
@@ -2661,22 +2537,20 @@ TEST_F(TextReadTest, ModuleItem_exceptions) {
 
 TEST_F(TextReadTest, Module) {
   OK(ReadModule,
-     Module{MakeAt("(type (func))"_su8,
-                   ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}}),
-            MakeAt("(func nop)"_su8,
-                   ModuleItem{Function{
-                       FunctionDesc{},
-                       {},
-                       InstructionList{
-                           MakeAt("nop"_su8,
-                                  Instruction{MakeAt("nop"_su8, Opcode::Nop)}),
-                           MakeAt(")"_su8, I{MakeAt(")"_su8, O::End)}),
-                       },
-                       {}
+     Module{At{"(type (func))"_su8,
+               ModuleItem{TypeEntry{nullopt, BoundFunctionType{}}}},
+            At{"(func nop)"_su8,
+               ModuleItem{Function{
+                   FunctionDesc{},
+                   {},
+                   InstructionList{
+                       At{"nop"_su8, Instruction{At{"nop"_su8, Opcode::Nop}}},
+                       At{")"_su8, I{At{")"_su8, O::End}}},
+                   },
+                   {}
 
-                   }}),
-            MakeAt("(start 0)"_su8,
-                   ModuleItem{Start{MakeAt("0"_su8, Var{Index{0}})}})},
+               }}},
+            At{"(start 0)"_su8, ModuleItem{Start{At{"0"_su8, Var{Index{0}}}}}}},
      "(type (func)) (func nop) (start 0)"_su8);
 }
 

@@ -72,7 +72,7 @@ auto ReadNat32(Tokenizer& tokenizer, Context& context) -> OptAt<u32> {
                            concat("Invalid natural number, got ", *token_opt));
     return nullopt;
   }
-  return MakeAt(token_opt->loc, *nat_opt);
+  return At{token_opt->loc, *nat_opt};
 }
 
 template <typename T>
@@ -91,7 +91,7 @@ auto ReadInt(Tokenizer& tokenizer, Context& context) -> OptAt<T> {
                            concat("Invalid integer, got ", token.type));
     return nullopt;
   }
-  return MakeAt(token.loc, *int_opt);
+  return At{token.loc, *int_opt};
 }
 
 template <typename T>
@@ -110,7 +110,7 @@ auto ReadFloat(Tokenizer& tokenizer, Context& context) -> OptAt<T> {
     context.errors.OnError(token.loc, concat("Invalid float, got ", token));
     return nullopt;
   }
-  return MakeAt(token.loc, *float_opt);
+  return At{token.loc, *float_opt};
 }
 
 bool IsVar(Token token) {
@@ -132,10 +132,10 @@ auto ReadVarOpt(Tokenizer& tokenizer, Context& context) -> OptAt<Var> {
   auto token = tokenizer.Peek();
   if (token.type == TokenType::Id) {
     tokenizer.Read();
-    return MakeAt(token.loc, Var{token.as_string_view()});
+    return At{token.loc, Var{token.as_string_view()}};
   } else if (token.type == TokenType::Nat) {
     WASP_TRY_READ(nat, ReadNat32(tokenizer, context));
-    return MakeAt(nat.loc(), Var{nat.value()});
+    return At{nat.loc(), Var{nat.value()}};
   } else {
     return nullopt;
   }
@@ -170,7 +170,7 @@ auto ReadVarUseOpt(Tokenizer& tokenizer, Context& context, TokenType token_type)
   }
   WASP_TRY_READ(var, ReadVar(tokenizer, context));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return MakeAt(guard.loc(), var.value());
+  return At{guard.loc(), var.value()};
 }
 
 auto ReadTypeUseOpt(Tokenizer& tokenizer, Context& context) -> OptAt<Var> {
@@ -192,7 +192,7 @@ auto ReadText(Tokenizer& tokenizer, Context& context) -> OptAt<Text> {
                            concat("Expected quoted text, got ", token.type));
     return nullopt;
   }
-  return MakeAt(token_opt->loc, token_opt->text());
+  return At{token_opt->loc, token_opt->text()};
 }
 
 auto ReadUtf8Text(Tokenizer& tokenizer, Context& context) -> OptAt<Text> {
@@ -217,15 +217,14 @@ auto ReadTextList(Tokenizer& tokenizer, Context& context)
 
 // Section 1: Type
 
-auto ReadBindVarOpt(Tokenizer& tokenizer, Context& context)
-    -> OptAt<BindVar> {
+auto ReadBindVarOpt(Tokenizer& tokenizer, Context& context) -> OptAt<BindVar> {
   auto token_opt = tokenizer.Match(TokenType::Id);
   if (!token_opt) {
     return nullopt;
   }
 
   auto name = token_opt->as_string_view();
-  return MakeAt(token_opt->loc, BindVar{name});
+  return At{token_opt->loc, BindVar{name}};
 }
 
 auto ReadBoundValueTypeList(Tokenizer& tokenizer,
@@ -239,12 +238,12 @@ auto ReadBoundValueTypeList(Tokenizer& tokenizer,
       auto bind_var_opt = ReadBindVarOpt(tokenizer, context);
       WASP_TRY_READ(value_type, ReadValueType(tokenizer, context));
       result.push_back(
-          MakeAt(guard.loc(), BoundValueType{bind_var_opt, value_type}));
+          At{guard.loc(), BoundValueType{bind_var_opt, value_type}});
     } else {
       WASP_TRY_READ(value_types, ReadValueTypeList(tokenizer, context));
       for (auto& value_type : value_types) {
         result.push_back(
-            MakeAt(value_type.loc(), BoundValueType{nullopt, value_type}));
+            At{value_type.loc(), BoundValueType{nullopt, value_type}});
       }
     }
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
@@ -319,11 +318,11 @@ auto ReadValueType(Tokenizer& tokenizer, Context& context) -> OptAt<ValueType> {
           token_opt->loc, concat("value type ", numeric_type, " not allowed"));
       return nullopt;
     }
-    return MakeAt(token_opt->loc, ValueType{numeric_type});
+    return At{token_opt->loc, ValueType{numeric_type}};
   } else {
     WASP_TRY_READ(reference_type,
                   ReadReferenceType(tokenizer, context, AllowFuncref::No));
-    return MakeAt(reference_type.loc(), ValueType{reference_type});
+    return At{reference_type.loc(), ValueType{reference_type}};
   }
 }
 
@@ -342,7 +341,7 @@ auto ReadBoundFunctionType(Tokenizer& tokenizer, Context& context)
   LocationGuard guard{tokenizer};
   WASP_TRY_READ(params, ReadBoundParamList(tokenizer, context));
   WASP_TRY_READ(results, ReadResultList(tokenizer, context));
-  return MakeAt(guard.loc(), BoundFunctionType{params, results});
+  return At{guard.loc(), BoundFunctionType{params, results}};
 }
 
 auto ReadTypeEntry(Tokenizer& tokenizer, Context& context) -> OptAt<TypeEntry> {
@@ -354,7 +353,7 @@ auto ReadTypeEntry(Tokenizer& tokenizer, Context& context) -> OptAt<TypeEntry> {
   WASP_TRY_READ(type, ReadBoundFunctionType(tokenizer, context));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return MakeAt(guard.loc(), TypeEntry{name, type});
+  return At{guard.loc(), TypeEntry{name, type}};
 }
 
 // Section 2: Import
@@ -376,7 +375,7 @@ auto ReadInlineImportOpt(Tokenizer& tokenizer, Context& context)
   WASP_TRY_READ(module, ReadUtf8Text(tokenizer, context));
   WASP_TRY_READ(name, ReadUtf8Text(tokenizer, context));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return MakeAt(guard.loc(), InlineImport{module, name});
+  return At{guard.loc(), InlineImport{module, name}};
 }
 
 auto ReadImport(Tokenizer& tokenizer, Context& context) -> OptAt<Import> {
@@ -454,7 +453,7 @@ auto ReadImport(Tokenizer& tokenizer, Context& context) -> OptAt<Import> {
 
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return MakeAt(guard.loc(), result);
+  return At{guard.loc(), result};
 }
 
 // Section 3: Function
@@ -469,7 +468,7 @@ auto ReadFunctionType(Tokenizer& tokenizer, Context& context)
   LocationGuard guard{tokenizer};
   WASP_TRY_READ(params, ReadParamList(tokenizer, context));
   WASP_TRY_READ(results, ReadResultList(tokenizer, context));
-  return MakeAt(guard.loc(), FunctionType{params, results});
+  return At{guard.loc(), FunctionType{params, results}};
 }
 
 auto ReadFunction(Tokenizer& tokenizer, Context& context) -> OptAt<Function> {
@@ -496,9 +495,8 @@ auto ReadFunction(Tokenizer& tokenizer, Context& context) -> OptAt<Function> {
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
   }
 
-  return MakeAt(guard.loc(),
-                Function{FunctionDesc{name, type_use, type}, locals,
-                         instructions, import_opt, exports});
+  return At{guard.loc(), Function{FunctionDesc{name, type_use, type}, locals,
+                                  instructions, import_opt, exports}};
 }
 
 // Section 4: Table
@@ -517,10 +515,10 @@ auto ReadLimits(Tokenizer& tokenizer, Context& context) -> OptAt<Limits> {
   At<Shared> shared = Shared::No;
   if (token.type == TokenType::Shared) {
     tokenizer.Read();
-    shared = MakeAt(token.loc, Shared::Yes);
+    shared = At{token.loc, Shared::Yes};
   }
 
-  return MakeAt(guard.loc(), Limits{min, max_opt, shared});
+  return At{guard.loc(), Limits{min, max_opt, shared}};
 }
 
 auto ReadHeapType(Tokenizer& tokenizer, Context& context) -> OptAt<HeapType> {
@@ -552,14 +550,14 @@ auto ReadHeapType(Tokenizer& tokenizer, Context& context) -> OptAt<HeapType> {
                              concat("heap type ", heap_kind, " not allowed"));
       return nullopt;
     }
-    return MakeAt(guard.loc(), HeapType{heap_kind});
+    return At{guard.loc(), HeapType{heap_kind}};
   } else if (IsVar(token)) {
     WASP_TRY_READ(var, ReadVar(tokenizer, context));
-    return MakeAt(guard.loc(), HeapType{var});
+    return At{guard.loc(), HeapType{var}};
   } else if (tokenizer.MatchLpar(TokenType::Type)) {
     WASP_TRY_READ(var, ReadVar(tokenizer, context));
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return MakeAt(guard.loc(), HeapType{var});
+    return At{guard.loc(), HeapType{var}};
   } else {
     context.errors.OnError(token.loc,
                            concat("Expected heap type, got ", token.type));
@@ -575,7 +573,7 @@ auto ReadRefType(Tokenizer& tokenizer, Context& context) -> OptAt<RefType> {
   }
 
   WASP_TRY_READ(heap_type, ReadHeapType(tokenizer, context));
-  return MakeAt(guard.loc(), RefType{heap_type, null});
+  return At{guard.loc(), RefType{heap_type, null}};
 }
 
 auto ReadReferenceType(Tokenizer& tokenizer,
@@ -618,11 +616,11 @@ auto ReadReferenceType(Tokenizer& tokenizer,
           token.loc, concat("reference type ", reference_kind, " not allowed"));
       return nullopt;
     }
-    return MakeAt(token.loc, ReferenceType{reference_kind});
+    return At{token.loc, ReferenceType{reference_kind}};
   } else if (tokenizer.MatchLpar(TokenType::Ref)) {
     WASP_TRY_READ(ref_type, ReadRefType(tokenizer, context));
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return MakeAt(guard.loc(), ReferenceType{ref_type});
+    return At{guard.loc(), ReferenceType{ref_type}};
   } else {
     context.errors.OnError(token.loc,
                            concat("Expected reference type, got ", token.type));
@@ -644,7 +642,7 @@ auto ReadTableType(Tokenizer& tokenizer, Context& context) -> OptAt<TableType> {
   LocationGuard guard{tokenizer};
   WASP_TRY_READ(limits, ReadLimits(tokenizer, context));
   WASP_TRY_READ(element, ReadReferenceType(tokenizer, context));
-  return MakeAt(guard.loc(), TableType{limits, element});
+  return At{guard.loc(), TableType{limits, element}};
 }
 
 auto ReadTable(Tokenizer& tokenizer, Context& context) -> OptAt<Table> {
@@ -661,8 +659,7 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> OptAt<Table> {
     // Imported table.
     WASP_TRY_READ(type, ReadTableType(tokenizer, context));
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return MakeAt(guard.loc(),
-                  Table{TableDesc{name, type}, *import_opt, exports});
+    return At{guard.loc(), Table{TableDesc{name, type}, *import_opt, exports}};
   } else if (elemtype_opt) {
     // Inline element segment.
     WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Elem));
@@ -687,12 +684,12 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> OptAt<Table> {
 
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return MakeAt(guard.loc(), Table{TableDesc{name, type}, exports, elements});
+    return At{guard.loc(), Table{TableDesc{name, type}, exports, elements}};
   } else {
     // Defined table.
     WASP_TRY_READ(type, ReadTableType(tokenizer, context));
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return MakeAt(guard.loc(), Table{TableDesc{name, type}, exports});
+    return At{guard.loc(), Table{TableDesc{name, type}, exports}};
   }
 }
 
@@ -701,7 +698,7 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> OptAt<Table> {
 auto ReadMemoryType(Tokenizer& tokenizer, Context& context)
     -> OptAt<MemoryType> {
   WASP_TRY_READ(limits, ReadLimits(tokenizer, context));
-  return MakeAt(limits.loc(), MemoryType{limits});
+  return At{limits.loc(), MemoryType{limits}};
 }
 
 auto ReadMemory(Tokenizer& tokenizer, Context& context) -> OptAt<Memory> {
@@ -717,8 +714,8 @@ auto ReadMemory(Tokenizer& tokenizer, Context& context) -> OptAt<Memory> {
     // Imported memory.
     WASP_TRY_READ(type, ReadMemoryType(tokenizer, context));
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return MakeAt(guard.loc(),
-                  Memory{MemoryDesc{name, type}, *import_opt, exports});
+    return At{guard.loc(),
+              Memory{MemoryDesc{name, type}, *import_opt, exports}};
   } else if (tokenizer.MatchLpar(TokenType::Data)) {
     // Inline data segment.
     WASP_TRY_READ(data, ReadTextList(tokenizer, context));
@@ -731,13 +728,12 @@ auto ReadMemory(Tokenizer& tokenizer, Context& context) -> OptAt<Memory> {
 
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return MakeAt(guard.loc(),
-                  Memory{MemoryDesc{name, type}, exports, data});
+    return At{guard.loc(), Memory{MemoryDesc{name, type}, exports, data}};
   } else {
     // Defined memory.
     WASP_TRY_READ(type, ReadMemoryType(tokenizer, context));
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return MakeAt(guard.loc(), Memory{MemoryDesc{name, type}, exports});
+    return At{guard.loc(), Memory{MemoryDesc{name, type}, exports}};
   }
 }
 
@@ -748,7 +744,7 @@ auto ReadConstantExpression(Tokenizer& tokenizer, Context& context)
   LocationGuard guard{tokenizer};
   InstructionList instructions;
   WASP_TRY(ReadInstructionList(tokenizer, context, instructions));
-  return MakeAt(guard.loc(), ConstantExpression{instructions});
+  return At{guard.loc(), ConstantExpression{instructions}};
 }
 
 auto ReadGlobalType(Tokenizer& tokenizer, Context& context)
@@ -760,12 +756,12 @@ auto ReadGlobalType(Tokenizer& tokenizer, Context& context)
 
   At<Mutability> mut;
   if (token_opt) {
-    mut = MakeAt(token_opt->loc, Mutability::Var);
+    mut = At{token_opt->loc, Mutability::Var};
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
   } else {
     mut = Mutability::Const;
   }
-  return MakeAt(guard.loc(), GlobalType{valtype, mut});
+  return At{guard.loc(), GlobalType{valtype, mut}};
 }
 
 auto ReadGlobal(Tokenizer& tokenizer, Context& context) -> OptAt<Global> {
@@ -784,12 +780,11 @@ auto ReadGlobal(Tokenizer& tokenizer, Context& context) -> OptAt<Global> {
     WASP_TRY_READ(init_, ReadConstantExpression(tokenizer, context));
     init = init_;
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return MakeAt(guard.loc(), Global{GlobalDesc{name, type}, init, exports});
+    return At{guard.loc(), Global{GlobalDesc{name, type}, init, exports}};
   }
 
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return MakeAt(guard.loc(),
-                Global{GlobalDesc{name, type}, *import_opt, exports});
+  return At{guard.loc(), Global{GlobalDesc{name, type}, *import_opt, exports}};
 }
 
 // Section 7: Export
@@ -800,7 +795,7 @@ auto ReadInlineExport(Tokenizer& tokenizer, Context& context)
   WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Export));
   WASP_TRY_READ(name, ReadUtf8Text(tokenizer, context));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return MakeAt(guard.loc(), InlineExport{name});
+  return At{guard.loc(), InlineExport{name}};
 }
 
 auto ReadInlineExportList(Tokenizer& tokenizer, Context& context)
@@ -826,19 +821,19 @@ auto ReadExport(Tokenizer& tokenizer, Context& context) -> OptAt<Export> {
   auto token = tokenizer.Peek();
   switch (token.type) {
     case TokenType::Func:
-      kind = MakeAt(token.loc, ExternalKind::Function);
+      kind = At{token.loc, ExternalKind::Function};
       break;
 
     case TokenType::Table:
-      kind = MakeAt(token.loc, ExternalKind::Table);
+      kind = At{token.loc, ExternalKind::Table};
       break;
 
     case TokenType::Memory:
-      kind = MakeAt(token.loc, ExternalKind::Memory);
+      kind = At{token.loc, ExternalKind::Memory};
       break;
 
     case TokenType::Global:
-      kind = MakeAt(token.loc, ExternalKind::Global);
+      kind = At{token.loc, ExternalKind::Global};
       break;
 
     case TokenType::Event:
@@ -846,7 +841,7 @@ auto ReadExport(Tokenizer& tokenizer, Context& context) -> OptAt<Export> {
         context.errors.OnError(token.loc, "Events not allowed");
         return nullopt;
       }
-      kind = MakeAt(token.loc, ExternalKind::Event);
+      kind = At{token.loc, ExternalKind::Event};
       break;
 
     default:
@@ -862,7 +857,7 @@ auto ReadExport(Tokenizer& tokenizer, Context& context) -> OptAt<Export> {
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
 
-  return MakeAt(guard.loc(), Export{kind, name, var});
+  return At{guard.loc(), Export{kind, name, var}};
 }
 
 // Section 8: Start
@@ -879,7 +874,7 @@ auto ReadStart(Tokenizer& tokenizer, Context& context) -> OptAt<Start> {
 
   WASP_TRY_READ(var, ReadVar(tokenizer, context));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return MakeAt(guard.loc(), Start{var});
+  return At{guard.loc(), Start{var}};
 }
 
 // Section 9: Elem
@@ -899,7 +894,7 @@ auto ReadOffsetExpression(Tokenizer& tokenizer, Context& context)
         token.loc, concat("Expected offset expression, got ", token.type));
     return nullopt;
   }
-  return MakeAt(guard.loc(), ConstantExpression{instructions});
+  return At{guard.loc(), ConstantExpression{instructions}};
 }
 
 auto ReadElementExpression(Tokenizer& tokenizer, Context& context)
@@ -928,7 +923,7 @@ auto ReadElementExpression(Tokenizer& tokenizer, Context& context)
         token.loc, concat("Expected element expression, got ", token.type));
     return nullopt;
   }
-  return MakeAt(guard.loc(), ElementExpression{instructions});
+  return At{guard.loc(), ElementExpression{instructions}};
 }
 
 auto ReadElementExpressionList(Tokenizer& tokenizer, Context& context)
@@ -986,10 +981,10 @@ auto ReadElementSegment(Tokenizer& tokenizer, Context& context)
           // LPAR ELEM bind_var_opt offset * elem_var_list RPAR
           WASP_TRY_READ(init, ReadVarList(tokenizer, context));
           WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-          return MakeAt(guard.loc(),
-                        ElementSegment{
-                            name, nullopt, *offset_opt,
-                            ElementListWithVars{ExternalKind::Function, init}});
+          return At{guard.loc(),
+                    ElementSegment{
+                        name, nullopt, *offset_opt,
+                        ElementListWithVars{ExternalKind::Function, init}}};
         }
 
         // LPAR ELEM bind_var_opt offset * elem_list RPAR
@@ -1003,19 +998,17 @@ auto ReadElementSegment(Tokenizer& tokenizer, Context& context)
     if (token.type == TokenType::Func) {
       tokenizer.Read();
       // * elem_kind elem_var_list
-      auto kind = MakeAt(token.loc, ExternalKind::Function);
+      auto kind = At{token.loc, ExternalKind::Function};
       WASP_TRY_READ(init, ReadVarList(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
 
       if (segment_type == SegmentType::Active) {
         assert(offset_opt.has_value());
-        return MakeAt(guard.loc(),
-                      ElementSegment{name, table_use_opt, *offset_opt,
-                                     ElementListWithVars{kind, init}});
+        return At{guard.loc(), ElementSegment{name, table_use_opt, *offset_opt,
+                                              ElementListWithVars{kind, init}}};
       } else {
-        return MakeAt(guard.loc(),
-                      ElementSegment{name, segment_type,
-                                     ElementListWithVars{kind, init}});
+        return At{guard.loc(), ElementSegment{name, segment_type,
+                                              ElementListWithVars{kind, init}}};
       }
     } else {
       // * ref_type elem_expr_list
@@ -1025,14 +1018,13 @@ auto ReadElementSegment(Tokenizer& tokenizer, Context& context)
 
       if (segment_type == SegmentType::Active) {
         assert(offset_opt.has_value());
-        return MakeAt(
-            guard.loc(),
-            ElementSegment{name, table_use_opt, *offset_opt,
-                           ElementListWithExpressions{elemtype, init}});
+        return At{guard.loc(),
+                  ElementSegment{name, table_use_opt, *offset_opt,
+                                 ElementListWithExpressions{elemtype, init}}};
       } else {
-        return MakeAt(guard.loc(), ElementSegment{name, segment_type,
-                                                  ElementListWithExpressions{
-                                                      elemtype, init}});
+        return At{guard.loc(),
+                  ElementSegment{name, segment_type,
+                                 ElementListWithExpressions{elemtype, init}}};
       }
     }
   } else {
@@ -1042,10 +1034,9 @@ auto ReadElementSegment(Tokenizer& tokenizer, Context& context)
     WASP_TRY_READ(offset, ReadOffsetExpression(tokenizer, context));
     WASP_TRY_READ(init, ReadVarList(tokenizer, context));
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return MakeAt(
-        guard.loc(),
-        ElementSegment{nullopt, table, offset,
-                       ElementListWithVars{ExternalKind::Function, init}});
+    return At{guard.loc(), ElementSegment{nullopt, table, offset,
+                                          ElementListWithVars{
+                                              ExternalKind::Function, init}}};
   }
 }
 
@@ -1069,7 +1060,7 @@ auto ReadNameEqNatOpt(Tokenizer& tokenizer,
     return nullopt;
   }
 
-  return MakeAt(token_opt->loc, *nat_opt);
+  return At{token_opt->loc, *nat_opt};
 }
 
 auto ReadAlignOpt(Tokenizer& tokenizer, Context& context) -> OptAt<u32> {
@@ -1113,7 +1104,7 @@ auto ReadSimdShuffleImmediate(Tokenizer& tokenizer, Context& context)
     WASP_TRY_READ(value, ReadSimdLane(tokenizer, context));
     result[lane] = value;
   }
-  return MakeAt(guard.loc(), result);
+  return At{guard.loc(), result};
 }
 
 template <typename T, size_t N>
@@ -1129,7 +1120,7 @@ auto ReadSimdValues(Tokenizer& tokenizer, Context& context) -> OptAt<v128> {
       result[lane] = int_;
     }
   }
-  return MakeAt(guard.loc(), v128{result});
+  return At{guard.loc(), v128{result}};
 }
 
 bool IsPlainInstruction(Token token) {
@@ -1206,13 +1197,13 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     case TokenType::BareInstr:
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
-      return MakeAt(token.loc, Instruction{token.opcode()});
+      return At{token.loc, Instruction{token.opcode()}};
 
     case TokenType::RefNullInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
       WASP_TRY_READ(type, ReadHeapType(tokenizer, context));
-      return MakeAt(guard.loc(), Instruction{token.opcode(), type});
+      return At{guard.loc(), Instruction{token.opcode(), type}};
     }
 
     case TokenType::BrOnExnInstr: {
@@ -1222,8 +1213,8 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       WASP_TRY_READ(label_var, ReadVar(tokenizer, context));
       WASP_TRY_READ(exn_var, ReadVar(tokenizer, context));
       auto immediate =
-          MakeAt(immediate_guard.loc(), BrOnExnImmediate{label_var, exn_var});
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+          At{immediate_guard.loc(), BrOnExnImmediate{label_var, exn_var}};
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::BrTableInstr: {
@@ -1233,9 +1224,9 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       WASP_TRY_READ(var_list, ReadNonEmptyVarList(tokenizer, context));
       auto default_target = var_list.back();
       var_list.pop_back();
-      auto immediate = MakeAt(immediate_guard.loc(),
-                              BrTableImmediate{var_list, default_target});
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+      auto immediate =
+          At{immediate_guard.loc(), BrTableImmediate{var_list, default_target}};
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::CallIndirectInstr: {
@@ -1247,23 +1238,23 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
         table_var_opt = ReadVarOpt(tokenizer, context);
       }
       WASP_TRY_READ(type, ReadFunctionTypeUse(tokenizer, context));
-      auto immediate = MakeAt(immediate_guard.loc(),
-                              CallIndirectImmediate{table_var_opt, type});
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+      auto immediate =
+          At{immediate_guard.loc(), CallIndirectImmediate{table_var_opt, type}};
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::F32ConstInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
       WASP_TRY_READ(immediate, ReadFloat<f32>(tokenizer, context));
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::F64ConstInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
       WASP_TRY_READ(immediate, ReadFloat<f64>(tokenizer, context));
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::FuncBindInstr: {
@@ -1271,22 +1262,22 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
       WASP_TRY_READ(type, ReadFunctionTypeUse(tokenizer, context));
-      auto immediate = MakeAt(immediate_guard.loc(), FuncBindImmediate{type});
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+      auto immediate = At{immediate_guard.loc(), FuncBindImmediate{type}};
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::I32ConstInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
       WASP_TRY_READ(immediate, ReadInt<s32>(tokenizer, context));
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::I64ConstInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
       WASP_TRY_READ(immediate, ReadInt<s64>(tokenizer, context));
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::MemoryInstr: {
@@ -1296,14 +1287,14 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       auto offset_opt = ReadOffsetOpt(tokenizer, context);
       auto align_opt = ReadAlignOpt(tokenizer, context);
       auto immediate =
-          MakeAt(immediate_guard.loc(), MemArgImmediate{align_opt, offset_opt});
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+          At{immediate_guard.loc(), MemArgImmediate{align_opt, offset_opt}};
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::MemoryCopyInstr:
       CheckOpcodeEnabled(token, context);
       tokenizer.Read();
-      return MakeAt(guard.loc(), Instruction{token.opcode(), CopyImmediate{}});
+      return At{guard.loc(), Instruction{token.opcode(), CopyImmediate{}}};
 
     case TokenType::MemoryInitInstr: {
       CheckOpcodeEnabled(token, context);
@@ -1311,8 +1302,8 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       LocationGuard immediate_guard{tokenizer};
       WASP_TRY_READ(segment_var, ReadVar(tokenizer, context));
       auto immediate =
-          MakeAt(immediate_guard.loc(), InitImmediate{segment_var, nullopt});
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+          At{immediate_guard.loc(), InitImmediate{segment_var, nullopt}};
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::SelectInstr: {
@@ -1323,13 +1314,13 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       if (context.features.reference_types_enabled()) {
         LocationGuard immediate_guard{tokenizer};
         WASP_TRY_READ(value_type_list, ReadResultList(tokenizer, context));
-        immediate = MakeAt(immediate_guard.loc(), value_type_list);
+        immediate = At{immediate_guard.loc(), value_type_list};
         if (!value_type_list.empty()) {
           // Typed select has a different opcode.
-          opcode = MakeAt(opcode.loc(), Opcode::SelectT);
+          opcode = At{opcode.loc(), Opcode::SelectT};
         }
       }
-      return MakeAt(guard.loc(), Instruction{opcode, immediate});
+      return At{guard.loc(), Instruction{opcode, immediate}};
     }
 
     case TokenType::SimdConstInstr: {
@@ -1380,21 +1371,21 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
         return nullopt;
       }
 
-      return MakeAt(guard.loc(), Instruction{token.opcode(), *immediate_opt});
+      return At{guard.loc(), Instruction{token.opcode(), *immediate_opt}};
     }
 
     case TokenType::SimdLaneInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
       WASP_TRY_READ(immediate, ReadSimdLane(tokenizer, context));
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::SimdShuffleInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
       WASP_TRY_READ(immediate, ReadSimdShuffleImmediate(tokenizer, context));
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::TableCopyInstr: {
@@ -1405,12 +1396,11 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       if (context.features.reference_types_enabled()) {
         auto dst_var = ReadVarOpt(tokenizer, context);
         auto src_var = ReadVarOpt(tokenizer, context);
-        immediate =
-            MakeAt(immediate_guard.loc(), CopyImmediate{dst_var, src_var});
+        immediate = At{immediate_guard.loc(), CopyImmediate{dst_var, src_var}};
       } else {
-        immediate = MakeAt(immediate_guard.loc(), CopyImmediate{});
+        immediate = At{immediate_guard.loc(), CopyImmediate{}};
       }
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::TableInitInstr: {
@@ -1422,14 +1412,14 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       At<InitImmediate> immediate;
       if (table_var_opt) {
         // table.init $table $elem ; so vars need to be swapped.
-        immediate = MakeAt(immediate_guard.loc(),
-                           InitImmediate{*table_var_opt, segment_var});
+        immediate = At{immediate_guard.loc(),
+                       InitImmediate{*table_var_opt, segment_var}};
       } else {
         // table.init $elem
         immediate =
-            MakeAt(immediate_guard.loc(), InitImmediate{segment_var, nullopt});
+            At{immediate_guard.loc(), InitImmediate{segment_var, nullopt}};
       }
-      return MakeAt(guard.loc(), Instruction{token.opcode(), immediate});
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::VarInstr:
@@ -1437,7 +1427,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
       WASP_TRY_READ(var, ReadVar(tokenizer, context));
-      return MakeAt(guard.loc(), Instruction{token.opcode(), var});
+      return At{guard.loc(), Instruction{token.opcode(), var}};
     }
 
     default:
@@ -1453,7 +1443,7 @@ auto ReadLabelOpt(Tokenizer& tokenizer, Context& context) -> OptAt<BindVar> {
     return nullopt;
   }
 
-  return MakeAt(token_opt->loc, BindVar{token_opt->as_string_view()});
+  return At{token_opt->loc, BindVar{token_opt->as_string_view()}};
 }
 
 bool ReadEndLabelOpt(Tokenizer& tokenizer,
@@ -1484,7 +1474,7 @@ auto ReadBlockImmediate(Tokenizer& tokenizer, Context& context)
   auto type_use = ReadTypeUseOpt(tokenizer, context);
   WASP_TRY_READ(type, ReadFunctionType(tokenizer, context));
   auto ftu = FunctionTypeUse{type_use, type};
-  return MakeAt(guard.loc(), BlockImmediate{label, ftu});
+  return At{guard.loc(), BlockImmediate{label, ftu}};
 }
 
 auto ReadLetImmediate(Tokenizer& tokenizer, Context& context)
@@ -1492,7 +1482,7 @@ auto ReadLetImmediate(Tokenizer& tokenizer, Context& context)
   LocationGuard guard{tokenizer};
   WASP_TRY_READ(block, ReadBlockImmediate(tokenizer, context));
   WASP_TRY_READ(locals, ReadLocalList(tokenizer, context));
-  return MakeAt(guard.loc(), LetImmediate{block, locals});
+  return At{guard.loc(), LetImmediate{block, locals}};
 }
 
 bool ReadOpcodeOpt(Tokenizer& tokenizer,
@@ -1503,8 +1493,7 @@ bool ReadOpcodeOpt(Tokenizer& tokenizer,
   if (!token_opt) {
     return false;
   }
-  instructions.push_back(
-      MakeAt(token_opt->loc, Instruction{token_opt->opcode()}));
+  instructions.push_back(At{token_opt->loc, Instruction{token_opt->opcode()}});
   return true;
 }
 
@@ -1531,7 +1520,7 @@ bool ReadBlockInstruction(Tokenizer& tokenizer,
 
   WASP_TRY_READ(block, ReadBlockImmediate(tokenizer, context));
   instructions.push_back(
-      MakeAt(guard.loc(), Instruction{token_opt->opcode(), block}));
+      At{guard.loc(), Instruction{token_opt->opcode(), block}});
   WASP_TRY(ReadInstructionList(tokenizer, context, instructions));
 
   switch (token_opt->opcode()) {
@@ -1576,7 +1565,7 @@ bool ReadLetInstruction(Tokenizer& tokenizer,
 
   WASP_TRY_READ(immediate, ReadLetImmediate(tokenizer, context));
   instructions.push_back(
-      MakeAt(guard.loc(), Instruction{token_opt->opcode(), immediate}));
+      At{guard.loc(), Instruction{token_opt->opcode(), immediate}});
   WASP_TRY(ReadInstructionList(tokenizer, context, instructions));
   WASP_TRY(ExpectOpcode(tokenizer, context, instructions, TokenType::End));
   WASP_TRY(ReadEndLabelOpt(tokenizer, context, immediate->block.label));
@@ -1619,8 +1608,7 @@ bool ReadRparAsEndInstruction(Tokenizer& tokenizer,
   // Read final `)` and use its location as the `end` instruction.
   auto rpar = tokenizer.Peek();
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  instructions.push_back(
-      MakeAt(rpar.loc, Instruction{MakeAt(rpar.loc, Opcode::End)}));
+  instructions.push_back(At{rpar.loc, Instruction{At{rpar.loc, Opcode::End}}});
   return true;
 }
 
@@ -1641,7 +1629,7 @@ bool ReadExpression(Tokenizer& tokenizer,
     LocationGuard guard{tokenizer};
     tokenizer.Read();
     WASP_TRY_READ(block, ReadBlockImmediate(tokenizer, context));
-    auto block_instr = MakeAt(guard.loc(), Instruction{token.opcode(), block});
+    auto block_instr = At{guard.loc(), Instruction{token.opcode(), block}};
 
     switch (token.opcode()) {
       case Opcode::Block:
@@ -1705,7 +1693,7 @@ bool ReadExpression(Tokenizer& tokenizer,
 
     WASP_TRY_READ(immediate, ReadLetImmediate(tokenizer, context));
     instructions.push_back(
-        MakeAt(guard.loc(), Instruction{token.opcode(), immediate}));
+        At{guard.loc(), Instruction{token.opcode(), immediate}});
     WASP_TRY(ReadInstructionList(tokenizer, context, instructions));
     WASP_TRY(ReadRparAsEndInstruction(tokenizer, context, instructions));
   } else {
@@ -1761,10 +1749,10 @@ auto ReadDataSegment(Tokenizer& tokenizer, Context& context)
 
     if (segment_type == SegmentType::Active) {
       assert(offset_opt.has_value());
-      return MakeAt(guard.loc(),
-                    DataSegment{name, memory_use_opt, *offset_opt, data});
+      return At{guard.loc(),
+                DataSegment{name, memory_use_opt, *offset_opt, data}};
     } else {
-      return MakeAt(guard.loc(), DataSegment{name, data});
+      return At{guard.loc(), DataSegment{name, data}};
     }
   } else {
     // LPAR DATA var offset string_list RPAR
@@ -1773,7 +1761,7 @@ auto ReadDataSegment(Tokenizer& tokenizer, Context& context)
     WASP_TRY_READ(offset, ReadOffsetExpression(tokenizer, context));
     WASP_TRY_READ(data, ReadTextList(tokenizer, context));
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return MakeAt(guard.loc(), DataSegment{nullopt, memory, offset, data});
+    return At{guard.loc(), DataSegment{nullopt, memory, offset, data}};
   }
 }
 
@@ -1783,7 +1771,7 @@ auto ReadEventType(Tokenizer& tokenizer, Context& context) -> OptAt<EventType> {
   LocationGuard guard{tokenizer};
   auto attribute = EventAttribute::Exception;
   WASP_TRY_READ(type, ReadFunctionTypeUse(tokenizer, context));
-  return MakeAt(guard.loc(), EventType{attribute, type});
+  return At{guard.loc(), EventType{attribute, type}};
 }
 
 auto ReadEvent(Tokenizer& tokenizer, Context& context) -> OptAt<Event> {
@@ -1803,7 +1791,7 @@ auto ReadEvent(Tokenizer& tokenizer, Context& context) -> OptAt<Event> {
 
   WASP_TRY_READ(type, ReadEventType(tokenizer, context));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return MakeAt(guard.loc(), Event{EventDesc{name, type}, import_opt, exports});
+  return At{guard.loc(), Event{EventDesc{name, type}, import_opt, exports}};
 }
 
 // Module
@@ -1834,57 +1822,57 @@ auto ReadModuleItem(Tokenizer& tokenizer, Context& context)
   switch (token.type) {
     case TokenType::Type: {
       WASP_TRY_READ(item, ReadTypeEntry(tokenizer, context));
-      return MakeAt(item.loc(), ModuleItem{*item});
+      return At{item.loc(), ModuleItem{*item}};
     }
 
     case TokenType::Import: {
       WASP_TRY_READ(item, ReadImport(tokenizer, context));
-      return MakeAt(item.loc(), ModuleItem{*item});
+      return At{item.loc(), ModuleItem{*item}};
     }
 
     case TokenType::Func: {
       WASP_TRY_READ(item, ReadFunction(tokenizer, context));
-      return MakeAt(item.loc(), ModuleItem{*item});
+      return At{item.loc(), ModuleItem{*item}};
     }
 
     case TokenType::Table: {
       WASP_TRY_READ(item, ReadTable(tokenizer, context));
-      return MakeAt(item.loc(), ModuleItem{*item});
+      return At{item.loc(), ModuleItem{*item}};
     }
 
     case TokenType::Memory: {
       WASP_TRY_READ(item, ReadMemory(tokenizer, context));
-      return MakeAt(item.loc(), ModuleItem{*item});
+      return At{item.loc(), ModuleItem{*item}};
     }
 
     case TokenType::Global: {
       WASP_TRY_READ(item, ReadGlobal(tokenizer, context));
-      return MakeAt(item.loc(), ModuleItem{*item});
+      return At{item.loc(), ModuleItem{*item}};
     }
 
     case TokenType::Export: {
       WASP_TRY_READ(item, ReadExport(tokenizer, context));
-      return MakeAt(item.loc(), ModuleItem{*item});
+      return At{item.loc(), ModuleItem{*item}};
     }
 
     case TokenType::Start: {
       WASP_TRY_READ(item, ReadStart(tokenizer, context));
-      return MakeAt(item.loc(), ModuleItem{*item});
+      return At{item.loc(), ModuleItem{*item}};
     }
 
     case TokenType::Elem: {
       WASP_TRY_READ(item, ReadElementSegment(tokenizer, context));
-      return MakeAt(item.loc(), ModuleItem{*item});
+      return At{item.loc(), ModuleItem{*item}};
     }
 
     case TokenType::Data: {
       WASP_TRY_READ(item, ReadDataSegment(tokenizer, context));
-      return MakeAt(item.loc(), ModuleItem{*item});
+      return At{item.loc(), ModuleItem{*item}};
     }
 
     case TokenType::Event: {
       WASP_TRY_READ(item, ReadEvent(tokenizer, context));
-      return MakeAt(item.loc(), ModuleItem{*item});
+      return At{item.loc(), ModuleItem{*item}};
     }
 
     default:

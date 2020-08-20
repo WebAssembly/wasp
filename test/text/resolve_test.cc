@@ -30,7 +30,6 @@ using namespace ::wasp::text;
 using namespace ::wasp::text::test;
 using namespace ::wasp::test;
 
-
 namespace {
 
 const SpanU8 loc1 = "A"_su8;
@@ -38,10 +37,10 @@ const SpanU8 loc1 = "A"_su8;
 // These constants are similar to their equivalents in text/constants.h, but
 // they have a different location. For most tests below, the assumption is made
 // that type $t maps to index 0.
-const HeapType Resolved_HT_0{MakeAt("$t"_su8, Var{Index{0}})};
-const RefType Resolved_RefType_0{MakeAt("$t"_su8, Resolved_HT_0), Null::No};
-const ReferenceType Resolved_RT_Ref0{MakeAt("$t"_su8, Resolved_RefType_0)};
-const ValueType Resolved_VT_Ref0{MakeAt("(ref $t)"_su8, Resolved_RT_Ref0)};
+const HeapType Resolved_HT_0{At{"$t"_su8, Var{Index{0}}}};
+const RefType Resolved_RefType_0{At{"$t"_su8, Resolved_HT_0}, Null::No};
+const ReferenceType Resolved_RT_Ref0{At{"$t"_su8, Resolved_RefType_0}};
+const ValueType Resolved_VT_Ref0{At{"(ref $t)"_su8, Resolved_RT_Ref0}};
 
 }  // namespace
 
@@ -93,7 +92,7 @@ class TextResolveTest : public ::testing::Test {
 
 TEST_F(TextResolveTest, Var_Undefined) {
   NameMap name_map;  // Empty name map.
-  Fail({{loc1, "Undefined variable $a"}}, MakeAt(loc1, Var{"$a"_sv}), name_map);
+  Fail({{loc1, "Undefined variable $a"}}, At{loc1, Var{"$a"_sv}}, name_map);
 }
 
 TEST_F(TextResolveTest, HeapType) {
@@ -240,7 +239,7 @@ TEST_F(TextResolveTest, BoundFunctionTypeUse_NoFunctionTypeInContext) {
   At<BoundFunctionType> type;
   Resolve(context, type_use, type);
   EXPECT_EQ(Var{Index{0}}, type_use);
-  EXPECT_EQ(MakeAt(BoundFunctionType{}), type);
+  EXPECT_EQ(At{BoundFunctionType{}}, type);
 }
 
 TEST_F(TextResolveTest, BlockImmediate) {
@@ -384,7 +383,8 @@ TEST_F(TextResolveTest, Instruction_NoOp) {
   OK(I{O::Select, SelectImmediate{}}, I{O::Select, SelectImmediate{}});
 
   // SimdShuffle Immediate.
-  OK(I{O::V8X16Shuffle, ShuffleImmediate{}}, I{O::V8X16Shuffle, ShuffleImmediate{}});
+  OK(I{O::V8X16Shuffle, ShuffleImmediate{}},
+     I{O::V8X16Shuffle, ShuffleImmediate{}});
 }
 
 TEST_F(TextResolveTest, Instruction_BlockImmediate) {
@@ -515,9 +515,8 @@ TEST_F(TextResolveTest, Instruction_FuncBindImmediate) {
      I{O::FuncBind, FuncBindImmediate{FunctionTypeUse{Var{"$a"_sv}, {}}}});
 
   // Populate the type use.
-  OK(I{O::FuncBind,
-       FuncBindImmediate{
-           FunctionTypeUse{Var{Index{0}}, FunctionType{{VT_I32}, {}}}}},
+  OK(I{O::FuncBind, FuncBindImmediate{FunctionTypeUse{
+                        Var{Index{0}}, FunctionType{{VT_I32}, {}}}}},
      I{O::FuncBind, FuncBindImmediate{
                         FunctionTypeUse{nullopt, FunctionType{{VT_I32}, {}}}}});
 }
@@ -730,7 +729,7 @@ TEST_F(TextResolveTest, TypeEntry_DuplicateName) {
   context.type_names.NewBound("$t"_sv);
 
   FailDefineTypes({{loc1, "Variable $t is already bound to index 0"}},
-                  TypeEntry{MakeAt(loc1, "$t"_sv), BoundFunctionType{}});
+                  TypeEntry{At{loc1, "$t"_sv}, BoundFunctionType{}});
 }
 
 TEST_F(TextResolveTest, TypeEntry_DistinctTypes) {
@@ -773,14 +772,14 @@ TEST_F(TextResolveTest, FunctionDesc_DuplicateName) {
   context.function_names.NewBound("$f"_sv);
 
   FailDefine({{loc1, "Variable $f is already bound to index 0"}},
-             FunctionDesc{MakeAt(loc1, "$f"_sv), nullopt, {}});
+             FunctionDesc{At{loc1, "$f"_sv}, nullopt, {}});
 }
 
 TEST_F(TextResolveTest, FunctionDesc_DuplicateParamName) {
   Fail({{loc1, "Variable $foo is already bound to index 0"}},
        FunctionDesc{nullopt, nullopt,
                     BoundFunctionType{{BVT{"$foo"_sv, VT_I32},
-                                       BVT{MakeAt(loc1, "$foo"_sv), VT_I64}},
+                                       BVT{At{loc1, "$foo"_sv}, VT_I64}},
                                       {}}});
 }
 
@@ -1000,7 +999,7 @@ TEST_F(TextResolveTest, Function_RefType) {
 TEST_F(TextResolveTest, Function_DuplicateLocalName) {
   Fail({{loc1, "Variable $foo is already bound to index 0"}},
        Function{FunctionDesc{},
-                {BVT{"$foo"_sv, VT_I32}, BVT{MakeAt(loc1, "$foo"_sv), VT_I64}},
+                {BVT{"$foo"_sv, VT_I32}, BVT{At{loc1, "$foo"_sv}, VT_I64}},
                 InstructionList{},
                 {}});
 }
@@ -1009,7 +1008,7 @@ TEST_F(TextResolveTest, Function_DuplicateParamLocalNames) {
   Fail({{loc1, "Variable $foo is already bound to index 0"}},
        Function{FunctionDesc{nullopt, nullopt,
                              BoundFunctionType{{BVT{"$foo"_sv, VT_I32}}, {}}},
-                {BVT{MakeAt(loc1, "$foo"_sv), VT_I64}},
+                {BVT{At{loc1, "$foo"_sv}, VT_I64}},
                 InstructionList{},
                 {}});
 }
@@ -1039,11 +1038,10 @@ TEST_F(TextResolveTest, ElementListWithExpressions) {
               ElementExpression{I{O::RefFunc, Var{Index{0}}}},
           }},
       ElementListWithExpressions{
-          RT_Funcref,
-          ElementExpressionList{
-              ElementExpression{I{O::RefNull}},
-              ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
-          }});
+          RT_Funcref, ElementExpressionList{
+                          ElementExpression{I{O::RefNull}},
+                          ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
+                      }});
 }
 
 TEST_F(TextResolveTest, ElementListWithExpressions_RefType) {
@@ -1081,11 +1079,10 @@ TEST_F(TextResolveTest, ElementList) {
              ElementExpression{I{O::RefFunc, Var{Index{0}}}},
          }}},
      ElementList{ElementListWithExpressions{
-         RT_Funcref,
-         ElementExpressionList{
-             ElementExpression{I{O::RefNull}},
-             ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
-         }}});
+         RT_Funcref, ElementExpressionList{
+                         ElementExpression{I{O::RefNull}},
+                         ElementExpression{I{O::RefFunc, Var{"$f"_sv}}},
+                     }}});
 
   // Vars.
   OK(ElementList{ElementListWithVars{ExternalKind::Function,
@@ -1138,16 +1135,15 @@ TEST_F(TextResolveTest, Table_RefType) {
 TEST_F(TextResolveTest, Table_DuplicateName) {
   context.table_names.NewBound("$t"_sv);
 
-  FailDefine(
-      {{loc1, "Variable $t is already bound to index 0"}},
-      TableDesc{MakeAt(loc1, "$t"_sv), TableType{Limits{0}, RT_Funcref}});
+  FailDefine({{loc1, "Variable $t is already bound to index 0"}},
+             TableDesc{At{loc1, "$t"_sv}, TableType{Limits{0}, RT_Funcref}});
 }
 
 TEST_F(TextResolveTest, Memory_DuplicateName) {
   context.memory_names.NewBound("$m"_sv);
 
   FailDefine({{loc1, "Variable $m is already bound to index 0"}},
-             MemoryDesc{MakeAt(loc1, "$m"_sv), MemoryType{Limits{0}}});
+             MemoryDesc{At{loc1, "$m"_sv}, MemoryType{Limits{0}}});
 }
 
 TEST_F(TextResolveTest, Global) {
@@ -1186,7 +1182,7 @@ TEST_F(TextResolveTest, Global_DuplicateName) {
 
   FailDefine(
       {{loc1, "Variable $g is already bound to index 0"}},
-      GlobalDesc{MakeAt(loc1, "$g"_sv), GlobalType{VT_I32, Mutability::Const}});
+      GlobalDesc{At{loc1, "$g"_sv}, GlobalType{VT_I32, Mutability::Const}});
 }
 
 TEST_F(TextResolveTest, Export) {
@@ -1247,8 +1243,8 @@ TEST_F(TextResolveTest, ElementSegment_DuplicateName) {
   context.element_segment_names.NewBound("$e"_sv);
 
   FailDefine({{loc1, "Variable $e is already bound to index 0"}},
-             ElementSegment{MakeAt(loc1, "$e"_sv), nullopt,
-                            ConstantExpression{}, ElementList{}});
+             ElementSegment{At{loc1, "$e"_sv}, nullopt, ConstantExpression{},
+                            ElementList{}});
 }
 
 TEST_F(TextResolveTest, DataSegment) {
@@ -1268,9 +1264,8 @@ TEST_F(TextResolveTest, DataSegment) {
 TEST_F(TextResolveTest, DataSegment_DuplicateName) {
   context.data_segment_names.NewBound("$d"_sv);
 
-  FailDefine(
-      {{loc1, "Variable $d is already bound to index 0"}},
-      DataSegment{MakeAt(loc1, "$d"_sv), nullopt, ConstantExpression{}, {}});
+  FailDefine({{loc1, "Variable $d is already bound to index 0"}},
+             DataSegment{At{loc1, "$d"_sv}, nullopt, ConstantExpression{}, {}});
 }
 
 TEST_F(TextResolveTest, Event) {
@@ -1291,10 +1286,9 @@ TEST_F(TextResolveTest, Event) {
 TEST_F(TextResolveTest, Event_DuplicateName) {
   context.event_names.NewBound("$e"_sv);
 
-  FailDefine(
-      {{loc1, "Variable $e is already bound to index 0"}},
-      EventDesc{MakeAt(loc1, "$e"_sv),
-                EventType{EventAttribute::Exception, FunctionTypeUse{}}});
+  FailDefine({{loc1, "Variable $e is already bound to index 0"}},
+             EventDesc{At{loc1, "$e"_sv}, EventType{EventAttribute::Exception,
+                                                    FunctionTypeUse{}}});
 }
 
 TEST_F(TextResolveTest, ModuleItem) {

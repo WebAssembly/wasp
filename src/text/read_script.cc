@@ -34,7 +34,7 @@ auto ReadModuleVarOpt(Tokenizer& tokenizer, Context& context)
   if (!token_opt) {
     return nullopt;
   }
-  return MakeAt(token_opt->loc, ModuleVar{token_opt->as_string_view()});
+  return At{token_opt->loc, ModuleVar{token_opt->as_string_view()}};
 }
 
 auto ReadScriptModule(Tokenizer& tokenizer, Context& context)
@@ -48,25 +48,23 @@ auto ReadScriptModule(Tokenizer& tokenizer, Context& context)
       tokenizer.Read();
       WASP_TRY_READ(text_list, ReadTextList(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(
-          guard.loc(),
-          ScriptModule{name_opt, ScriptModuleKind::Binary, text_list});
+      return At{guard.loc(),
+                ScriptModule{name_opt, ScriptModuleKind::Binary, text_list}};
     }
 
     case TokenType::Quote: {
       tokenizer.Read();
       WASP_TRY_READ(text_list, ReadTextList(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(),
-                    ScriptModule{name_opt, ScriptModuleKind::Quote, text_list});
+      return At{guard.loc(),
+                ScriptModule{name_opt, ScriptModuleKind::Quote, text_list}};
     }
 
     default: {
       WASP_TRY_READ(module, ReadModule(tokenizer, context));
       Expect(tokenizer, context, TokenType::Rpar);
-      return MakeAt(
-          guard.loc(),
-          ScriptModule{name_opt, ScriptModuleKind::Text, module});
+      return At{guard.loc(),
+                ScriptModule{name_opt, ScriptModuleKind::Text, module}};
     }
   }
 }
@@ -97,28 +95,28 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> OptAt<Const> {
       tokenizer.Read();
       WASP_TRY_READ(literal, ReadFloat<f32>(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), Const{literal.value()});
+      return At{guard.loc(), Const{literal.value()}};
     }
 
     case TokenType::F64ConstInstr: {
       tokenizer.Read();
       WASP_TRY_READ(literal, ReadFloat<f64>(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), Const{literal.value()});
+      return At{guard.loc(), Const{literal.value()}};
     }
 
     case TokenType::I32ConstInstr: {
       tokenizer.Read();
       WASP_TRY_READ(literal, ReadInt<u32>(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), Const{literal.value()});
+      return At{guard.loc(), Const{literal.value()}};
     }
 
     case TokenType::I64ConstInstr: {
       tokenizer.Read();
       WASP_TRY_READ(literal, ReadInt<u64>(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), Const{literal.value()});
+      return At{guard.loc(), Const{literal.value()}};
     }
 
     case TokenType::SimdConstInstr: {
@@ -181,7 +179,7 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> OptAt<Const> {
       }
 
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), Const{literal.value()});
+      return At{guard.loc(), Const{literal.value()}};
     }
 
     case TokenType::RefNullInstr: {
@@ -192,7 +190,7 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> OptAt<Const> {
       tokenizer.Read();
       WASP_TRY_READ(type, ReadHeapType(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), Const{RefNullConst{type}});
+      return At{guard.loc(), Const{RefNullConst{type}}};
     }
 
     case TokenType::RefExtern: {
@@ -203,7 +201,7 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> OptAt<Const> {
       tokenizer.Read();
       WASP_TRY_READ(nat, ReadNat32(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), Const{RefExternConst{nat}});
+      return At{guard.loc(), Const{RefExternConst{nat}}};
     }
 
     default:
@@ -231,7 +229,7 @@ auto ReadInvokeAction(Tokenizer& tokenizer, Context& context)
   WASP_TRY_READ(name, ReadUtf8Text(tokenizer, context));
   WASP_TRY_READ(const_list, ReadConstList(tokenizer, context));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return MakeAt(guard.loc(), InvokeAction{module_opt, name, const_list});
+  return At{guard.loc(), InvokeAction{module_opt, name, const_list}};
 }
 
 auto ReadGetAction(Tokenizer& tokenizer, Context& context) -> OptAt<GetAction> {
@@ -240,7 +238,7 @@ auto ReadGetAction(Tokenizer& tokenizer, Context& context) -> OptAt<GetAction> {
   auto module_opt = ReadModuleVarOpt(tokenizer, context);
   WASP_TRY_READ(name, ReadUtf8Text(tokenizer, context));
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return MakeAt(guard.loc(), GetAction{module_opt, name});
+  return At{guard.loc(), GetAction{module_opt, name}};
 }
 
 auto ReadAction(Tokenizer& tokenizer, Context& context) -> OptAt<Action> {
@@ -255,12 +253,12 @@ auto ReadAction(Tokenizer& tokenizer, Context& context) -> OptAt<Action> {
   switch (token.type) {
     case TokenType::Invoke: {
       WASP_TRY_READ(action, ReadInvokeAction(tokenizer, context));
-      return MakeAt(action.loc(), Action{action.value()});
+      return At{action.loc(), Action{action.value()}};
     }
 
     case TokenType::Get: {
       WASP_TRY_READ(action, ReadGetAction(tokenizer, context));
-      return MakeAt(action.loc(), Action{action.value()});
+      return At{action.loc(), Action{action.value()}};
     }
 
     default:
@@ -275,7 +273,7 @@ auto ReadModuleAssertion(Tokenizer& tokenizer, Context& context)
   LocationGuard guard{tokenizer};
   WASP_TRY_READ(module, ReadScriptModule(tokenizer, context));
   WASP_TRY_READ(text, ReadText(tokenizer, context));
-  return MakeAt(guard.loc(), ModuleAssertion{module, text});
+  return At{guard.loc(), ModuleAssertion{module, text}};
 }
 
 auto ReadActionAssertion(Tokenizer& tokenizer, Context& context)
@@ -283,7 +281,7 @@ auto ReadActionAssertion(Tokenizer& tokenizer, Context& context)
   LocationGuard guard{tokenizer};
   WASP_TRY_READ(action, ReadAction(tokenizer, context));
   WASP_TRY_READ(text, ReadText(tokenizer, context));
-  return MakeAt(guard.loc(), ActionAssertion{action, text});
+  return At{guard.loc(), ActionAssertion{action, text}};
 }
 
 template <typename T>
@@ -293,15 +291,15 @@ auto ReadFloatResult(Tokenizer& tokenizer, Context& context)
   switch (token.type) {
     case TokenType::NanArithmetic:
       tokenizer.Read();
-      return MakeAt(token.loc, FloatResult<T>{NanKind::Arithmetic});
+      return At{token.loc, FloatResult<T>{NanKind::Arithmetic}};
 
     case TokenType::NanCanonical:
       tokenizer.Read();
-      return MakeAt(token.loc, FloatResult<T>{NanKind::Canonical});
+      return At{token.loc, FloatResult<T>{NanKind::Canonical}};
 
     default: {
       WASP_TRY_READ(literal, (ReadFloat<T>(tokenizer, context)));
-      return MakeAt(literal.loc(), FloatResult<T>{literal.value()});
+      return At{literal.loc(), FloatResult<T>{literal.value()}};
     }
   }
 }
@@ -316,7 +314,7 @@ auto ReadSimdFloatResult(Tokenizer& tokenizer, Context& context)
     WASP_TRY_READ(value, (ReadFloatResult<T>(tokenizer, context)));
     result[lane] = value;
   }
-  return MakeAt(guard.loc(), ReturnResult{result});
+  return At{guard.loc(), ReturnResult{result}};
 }
 
 bool IsReturnResult(Tokenizer& tokenizer) {
@@ -346,28 +344,28 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
       tokenizer.Read();
       WASP_TRY_READ(result, (ReadFloatResult<f32>(tokenizer, context)));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), ReturnResult{result.value()});
+      return At{guard.loc(), ReturnResult{result.value()}};
     }
 
     case TokenType::F64ConstInstr: {
       tokenizer.Read();
       WASP_TRY_READ(result, (ReadFloatResult<f64>(tokenizer, context)));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), ReturnResult{result.value()});
+      return At{guard.loc(), ReturnResult{result.value()}};
     }
 
     case TokenType::I32ConstInstr: {
       tokenizer.Read();
       WASP_TRY_READ(result, (ReadInt<u32>(tokenizer, context)));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), ReturnResult{result.value()});
+      return At{guard.loc(), ReturnResult{result.value()}};
     }
 
     case TokenType::I64ConstInstr: {
       tokenizer.Read();
       WASP_TRY_READ(result, (ReadInt<u64>(tokenizer, context)));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), ReturnResult{result.value()});
+      return At{guard.loc(), ReturnResult{result.value()}};
     }
 
     case TokenType::SimdConstInstr: {
@@ -432,7 +430,7 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
       }
 
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), ReturnResult{result.value()});
+      return At{guard.loc(), ReturnResult{result.value()}};
     }
 
     case TokenType::RefNullInstr: {
@@ -443,7 +441,7 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
       tokenizer.Read();
       WASP_TRY_READ(type, ReadHeapType(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), ReturnResult{RefNullConst{type}});
+      return At{guard.loc(), ReturnResult{RefNullConst{type}}};
     }
 
     case TokenType::RefExtern:
@@ -455,10 +453,10 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
       if (tokenizer.Peek().type == TokenType::Nat) {
         WASP_TRY_READ(nat, ReadNat32(tokenizer, context));
         WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-        return MakeAt(guard.loc(), ReturnResult{RefExternConst{nat}});
+        return At{guard.loc(), ReturnResult{RefExternConst{nat}}};
       } else {
         WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-        return MakeAt(guard.loc(), ReturnResult{RefExternResult{}});
+        return At{guard.loc(), ReturnResult{RefExternResult{}}};
       }
 
     case TokenType::RefFuncInstr:
@@ -468,7 +466,7 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
       }
       tokenizer.Read();
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), ReturnResult{RefFuncResult{}});
+      return At{guard.loc(), ReturnResult{RefFuncResult{}}};
 
     default:
       context.errors.OnError(token.loc,
@@ -492,7 +490,7 @@ auto ReadReturnAssertion(Tokenizer& tokenizer, Context& context)
   LocationGuard guard{tokenizer};
   WASP_TRY_READ(action, ReadAction(tokenizer, context));
   WASP_TRY_READ(results, ReadReturnResultList(tokenizer, context));
-  return MakeAt(guard.loc(), ReturnAssertion{action, results});
+  return At{guard.loc(), ReturnAssertion{action, results}};
 }
 
 auto ReadAssertion(Tokenizer& tokenizer, Context& context) -> OptAt<Assertion> {
@@ -505,21 +503,21 @@ auto ReadAssertion(Tokenizer& tokenizer, Context& context) -> OptAt<Assertion> {
       tokenizer.Read();
       WASP_TRY_READ(module, ReadModuleAssertion(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), Assertion{AssertionKind::Malformed, module});
+      return At{guard.loc(), Assertion{AssertionKind::Malformed, module}};
     }
 
     case TokenType::AssertInvalid: {
       tokenizer.Read();
       WASP_TRY_READ(module, ReadModuleAssertion(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), Assertion{AssertionKind::Invalid, module});
+      return At{guard.loc(), Assertion{AssertionKind::Invalid, module}};
     }
 
     case TokenType::AssertUnlinkable: {
       tokenizer.Read();
       WASP_TRY_READ(module, ReadModuleAssertion(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), Assertion{AssertionKind::Unlinkable, module});
+      return At{guard.loc(), Assertion{AssertionKind::Unlinkable, module}};
     }
 
     case TokenType::AssertTrap: {
@@ -529,13 +527,11 @@ auto ReadAssertion(Tokenizer& tokenizer, Context& context) -> OptAt<Assertion> {
       if (tokenizer.Peek(1).type == TokenType::Module) {
         WASP_TRY_READ(module, ReadModuleAssertion(tokenizer, context));
         WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-        return MakeAt(guard.loc(),
-                      Assertion{AssertionKind::ModuleTrap, module});
+        return At{guard.loc(), Assertion{AssertionKind::ModuleTrap, module}};
       } else {
         WASP_TRY_READ(action, ReadActionAssertion(tokenizer, context));
         WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-        return MakeAt(guard.loc(),
-                      Assertion{AssertionKind::ActionTrap, action});
+        return At{guard.loc(), Assertion{AssertionKind::ActionTrap, action}};
       }
     }
 
@@ -543,14 +539,14 @@ auto ReadAssertion(Tokenizer& tokenizer, Context& context) -> OptAt<Assertion> {
       tokenizer.Read();
       WASP_TRY_READ(action, ReadReturnAssertion(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), Assertion{AssertionKind::Return, action});
+      return At{guard.loc(), Assertion{AssertionKind::Return, action}};
     }
 
     case TokenType::AssertExhaustion: {
       tokenizer.Read();
       WASP_TRY_READ(action, ReadActionAssertion(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-      return MakeAt(guard.loc(), Assertion{AssertionKind::Exhaustion, action});
+      return At{guard.loc(), Assertion{AssertionKind::Exhaustion, action}};
     }
 
     default:
@@ -566,7 +562,7 @@ auto ReadRegister(Tokenizer& tokenizer, Context& context) -> OptAt<Register> {
   WASP_TRY_READ(name, ReadText(tokenizer, context));
   auto module_opt = ReadModuleVarOpt(tokenizer, context);
   WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return MakeAt(guard.loc(), Register{name, module_opt});
+  return At{guard.loc(), Register{name, module_opt}};
 }
 
 bool IsCommand(Tokenizer& tokenizer) {
@@ -598,18 +594,18 @@ auto ReadCommand(Tokenizer& tokenizer, Context& context) -> OptAt<Command> {
   switch (token.type) {
     case TokenType::Module: {
       WASP_TRY_READ(item, ReadScriptModule(tokenizer, context));
-      return MakeAt(item.loc(), Command{item.value()});
+      return At{item.loc(), Command{item.value()}};
     }
 
     case TokenType::Invoke:
     case TokenType::Get: {
       WASP_TRY_READ(item, ReadAction(tokenizer, context));
-      return MakeAt(item.loc(), Command{item.value()});
+      return At{item.loc(), Command{item.value()}};
     }
 
     case TokenType::Register: {
       WASP_TRY_READ(item, ReadRegister(tokenizer, context));
-      return MakeAt(item.loc(), Command{item.value()});
+      return At{item.loc(), Command{item.value()}};
     }
 
     case TokenType::AssertMalformed:
@@ -619,7 +615,7 @@ auto ReadCommand(Tokenizer& tokenizer, Context& context) -> OptAt<Command> {
     case TokenType::AssertReturn:
     case TokenType::AssertExhaustion: {
       WASP_TRY_READ(item, ReadAssertion(tokenizer, context));
-      return MakeAt(item.loc(), Command{item.value()});
+      return At{item.loc(), Command{item.value()}};
     }
 
     default: {
@@ -628,9 +624,9 @@ auto ReadCommand(Tokenizer& tokenizer, Context& context) -> OptAt<Command> {
         // script.
         LocationGuard guard{tokenizer};
         WASP_TRY_READ(module, ReadModule(tokenizer, context));
-        auto script_module = MakeAt(
-            guard.loc(), ScriptModule{nullopt, ScriptModuleKind::Text, module});
-        return MakeAt(script_module.loc(), Command{script_module.value()});
+        auto script_module = At{
+            guard.loc(), ScriptModule{nullopt, ScriptModuleKind::Text, module}};
+        return At{script_module.loc(), Command{script_module.value()}};
       } else {
         context.errors.OnError(token.loc,
                                concat("Invalid command, got {}", token.type));

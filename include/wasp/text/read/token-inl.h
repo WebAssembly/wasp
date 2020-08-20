@@ -105,7 +105,7 @@ inline bool Token::has_text() const {
 }
 
 inline At<Opcode> Token::opcode() const {
-  return MakeAt(loc, get<OpcodeInfo>(immediate).opcode);
+  return At{loc, get<OpcodeInfo>(immediate).opcode};
 }
 
 inline Features Token::opcode_features() const {
@@ -113,15 +113,15 @@ inline Features Token::opcode_features() const {
 }
 
 inline At<NumericType> Token::numeric_type() const {
-  return MakeAt(loc, get<NumericType>(immediate));
+  return At{loc, get<NumericType>(immediate)};
 }
 
 inline At<ReferenceKind> Token::reference_kind() const {
-  return MakeAt(loc, get<ReferenceKind>(immediate));
+  return At{loc, get<ReferenceKind>(immediate)};
 }
 
 inline At<HeapKind> Token::heap_kind() const {
-  return MakeAt(loc, get<HeapKind>(immediate));
+  return At{loc, get<HeapKind>(immediate)};
 }
 
 inline LiteralInfo Token::literal_info() const {

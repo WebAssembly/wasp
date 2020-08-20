@@ -326,22 +326,22 @@ Instruction::Instruction(At<Opcode> opcode, At<ShuffleImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
 Instruction::Instruction(Opcode opcode, s32 immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
+    : opcode(opcode), immediate(At{immediate}) {}
 
 Instruction::Instruction(Opcode opcode, s64 immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
+    : opcode(opcode), immediate(At{immediate}) {}
 
 Instruction::Instruction(Opcode opcode, f32 immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
+    : opcode(opcode), immediate(At{immediate}) {}
 
 Instruction::Instruction(Opcode opcode, f64 immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
+    : opcode(opcode), immediate(At{immediate}) {}
 
 Instruction::Instruction(Opcode opcode, Index immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
+    : opcode(opcode), immediate(At{immediate}) {}
 
 Instruction::Instruction(Opcode opcode, SimdLaneImmediate immediate)
-    : opcode(opcode), immediate(MakeAt(immediate)) {}
+    : opcode(opcode), immediate(At{immediate}) {}
 
 bool Instruction::has_no_immediate() const {
   return holds_alternative<monostate>(immediate);
@@ -711,7 +711,7 @@ const At<CustomSection>& Section::custom() const {
 }
 
 At<SectionId> Section::id() const {
-  return is_known() ? known()->id : MakeAt(SectionId::Custom);
+  return is_known() ? known()->id : At{SectionId::Custom};
 }
 
 SpanU8 Section::data() const {

@@ -52,423 +52,386 @@ const SpanU8 loc8 = "H"_su8;
 
 // Similar to the definitions in test/binary/constants, but using text
 // locations (e.g. "i32").
-const binary::HeapType BHT_Func{MakeAt("func"_su8, HeapKind::Func)};
-const binary::ReferenceType BRT_Funcref{MakeAt("funcref"_su8, ReferenceKind::Funcref)};
-const binary::ValueType BVT_I32{MakeAt("i32"_su8, NumericType::I32)};
-const binary::ValueType BVT_F32{MakeAt("f32"_su8, NumericType::F32)};
-const binary::ValueType BVT_Funcref{MakeAt("funcref"_su8, BRT_Funcref)};
+const binary::HeapType BHT_Func{At{"func"_su8, HeapKind::Func}};
+const binary::ReferenceType BRT_Funcref{
+    At{"funcref"_su8, ReferenceKind::Funcref}};
+const binary::ValueType BVT_I32{At{"i32"_su8, NumericType::I32}};
+const binary::ValueType BVT_F32{At{"f32"_su8, NumericType::F32}};
+const binary::ValueType BVT_Funcref{At{"funcref"_su8, BRT_Funcref}};
 
 }  // namespace
 
 TEST(ConvertToBinaryTest, VarList) {
   OK(
       binary::IndexList{
-          MakeAt(loc1, Index{0}),
-          MakeAt(loc2, Index{1}),
+          At{loc1, Index{0}},
+          At{loc2, Index{1}},
       },
       text::VarList{
-          MakeAt(loc1, text::Var{Index{0}}),
-          MakeAt(loc2, text::Var{Index{1}}),
+          At{loc1, text::Var{Index{0}}},
+          At{loc2, text::Var{Index{1}}},
       });
 }
 
 TEST(ConvertToBinaryTest, FunctionType) {
-  OK(MakeAt(loc1,
-            binary::FunctionType{
-                binary::ValueTypeList{MakeAt(loc2, BVT_I32)},
-                binary::ValueTypeList{MakeAt(loc3, BVT_F32)},
-            }),
-     MakeAt(loc1, text::FunctionType{
-                      text::ValueTypeList{MakeAt(loc2, tt::VT_I32)},
-                      text::ValueTypeList{MakeAt(loc3, tt::VT_F32)},
-                  }));
+  OK(At{loc1,
+        binary::FunctionType{
+            binary::ValueTypeList{At{loc2, BVT_I32}},
+            binary::ValueTypeList{At{loc3, BVT_F32}},
+        }},
+     At{loc1, text::FunctionType{
+                  text::ValueTypeList{At{loc2, tt::VT_I32}},
+                  text::ValueTypeList{At{loc3, tt::VT_F32}},
+              }});
 }
 
 TEST(ConvertToBinaryTest, TypeEntry) {
-  OK(MakeAt(loc1, binary::TypeEntry{MakeAt(
-                      loc2,
-                      binary::FunctionType{
-                          binary::ValueTypeList{MakeAt(loc3, BVT_I32)},
-                          binary::ValueTypeList{MakeAt(loc4, BVT_F32)},
-                      })}),
-     MakeAt(loc1,
-            text::TypeEntry{
-                {},
-                MakeAt(loc2,
-                       text::BoundFunctionType{
-                           text::BoundValueTypeList{text::BoundValueType{
-                               nullopt, MakeAt(loc3, tt::VT_I32)}},
-                           text::ValueTypeList{MakeAt(loc4, tt::VT_F32)}})}));
+  OK(At{loc1, binary::TypeEntry{At{loc2,
+                                   binary::FunctionType{
+                                       binary::ValueTypeList{At{loc3, BVT_I32}},
+                                       binary::ValueTypeList{At{loc4, BVT_F32}},
+                                   }}}},
+     At{loc1, text::TypeEntry{
+                  {},
+                  At{loc2, text::BoundFunctionType{
+                               text::BoundValueTypeList{text::BoundValueType{
+                                   nullopt, At{loc3, tt::VT_I32}}},
+                               text::ValueTypeList{At{loc4, tt::VT_F32}}}}}});
 }
 
 TEST(ConvertToBinaryTest, Import) {
   // Function
-  OK(MakeAt(loc1, binary::Import{MakeAt(loc2, "m"_sv), MakeAt(loc3, "n"_sv),
-                                 MakeAt(loc4, Index{0})}),
-     MakeAt(loc1,
-            text::Import{MakeAt(loc2, text::Text{"\"m\"", 1}),
-                         MakeAt(loc3, text::Text{"\"n\"", 1}),
-                         text::FunctionDesc{
-                             nullopt, MakeAt(loc4, text::Var{Index{0}}), {}}}));
+  OK(At{loc1,
+        binary::Import{At{loc2, "m"_sv}, At{loc3, "n"_sv}, At{loc4, Index{0}}}},
+     At{loc1,
+        text::Import{
+            At{loc2, text::Text{"\"m\"", 1}}, At{loc3, text::Text{"\"n\"", 1}},
+            text::FunctionDesc{nullopt, At{loc4, text::Var{Index{0}}}, {}}}});
 
   // Table
-  OK(MakeAt(
-         loc1,
-         binary::Import{MakeAt(loc2, "m"_sv), MakeAt(loc3, "n"_sv),
-                        MakeAt(loc4,
-                               binary::TableType{
-                                   MakeAt(loc5, Limits{MakeAt(loc6, u32{1})}),
-                                   MakeAt(loc7, BRT_Funcref),
-                               })}),
-     MakeAt(loc1,
-            text::Import{
-                MakeAt(loc2, text::Text{"\"m\"", 1}),
-                MakeAt(loc3, text::Text{"\"n\"", 1}),
-                text::TableDesc{
-                    nullopt,
-                    MakeAt(loc4, text::TableType{
-                                     MakeAt(loc5, Limits{MakeAt(loc6, u32{1})}),
-                                     MakeAt(loc7, tt::RT_Funcref),
-                                 })}}));
+  OK(At{loc1,
+        binary::Import{At{loc2, "m"_sv}, At{loc3, "n"_sv},
+                       At{loc4,
+                          binary::TableType{
+                              At{loc5, Limits{At{loc6, u32{1}}}},
+                              At{loc7, BRT_Funcref},
+                          }}}},
+     At{loc1,
+        text::Import{
+            At{loc2, text::Text{"\"m\"", 1}}, At{loc3, text::Text{"\"n\"", 1}},
+            text::TableDesc{nullopt,
+                            At{loc4, text::TableType{
+                                         At{loc5, Limits{At{loc6, u32{1}}}},
+                                         At{loc7, tt::RT_Funcref},
+                                     }}}}});
 
   // Memory
-  OK(MakeAt(
-         loc1,
-         binary::Import{MakeAt(loc2, "m"_sv), MakeAt(loc3, "n"_sv),
-                        MakeAt(loc4,
-                               MemoryType{
-                                   MakeAt(loc5, Limits{MakeAt(loc6, u32{1})}),
-                               })}),
-     MakeAt(loc1,
-            text::Import{
-                MakeAt(loc2, text::Text{"\"m\"", 1}),
-                MakeAt(loc3, text::Text{"\"n\"", 1}),
-                text::MemoryDesc{
-                    nullopt,
-                    MakeAt(loc4, MemoryType{
-                                     MakeAt(loc5, Limits{MakeAt(loc6, u32{1})}),
-                                 })}}));
+  OK(At{loc1, binary::Import{At{loc2, "m"_sv}, At{loc3, "n"_sv},
+                             At{loc4,
+                                MemoryType{
+                                    At{loc5, Limits{At{loc6, u32{1}}}},
+                                }}}},
+     At{loc1,
+        text::Import{
+            At{loc2, text::Text{"\"m\"", 1}}, At{loc3, text::Text{"\"n\"", 1}},
+            text::MemoryDesc{nullopt,
+                             At{loc4, MemoryType{
+                                          At{loc5, Limits{At{loc6, u32{1}}}},
+                                      }}}}});
 
   // Global
-  OK(MakeAt(loc1, binary::Import{MakeAt(loc2, "m"_sv), MakeAt(loc3, "n"_sv),
-                                 MakeAt(loc4,
-                                        binary::GlobalType{
-                                            MakeAt(loc5, BVT_I32),
-                                            Mutability::Const,
-                                        })}),
-     MakeAt(loc1,
-            text::Import{MakeAt(loc2, text::Text{"\"m\"", 1}),
-                         MakeAt(loc3, text::Text{"\"n\"", 1}),
-                         text::GlobalDesc{
-                             nullopt, MakeAt(loc4, text::GlobalType{
-                                                       MakeAt(loc5, tt::VT_I32),
-                                                       Mutability::Const,
-                                                   })}}));
+  OK(At{loc1, binary::Import{At{loc2, "m"_sv}, At{loc3, "n"_sv},
+                             At{loc4,
+                                binary::GlobalType{
+                                    At{loc5, BVT_I32},
+                                    Mutability::Const,
+                                }}}},
+     At{loc1,
+        text::Import{
+            At{loc2, text::Text{"\"m\"", 1}}, At{loc3, text::Text{"\"n\"", 1}},
+            text::GlobalDesc{nullopt, At{loc4, text::GlobalType{
+                                                   At{loc5, tt::VT_I32},
+                                                   Mutability::Const,
+                                               }}}}});
 
   // Event
-  OK(MakeAt(loc1, binary::Import{MakeAt(loc2, "m"_sv), MakeAt(loc3, "n"_sv),
-                                 MakeAt(loc4,
-                                        binary::EventType{
-                                            EventAttribute::Exception,
-                                            MakeAt(loc5, Index{0}),
-                                        })}),
-     MakeAt(loc1,
-            text::Import{
-                MakeAt(loc2, text::Text{"\"m\"", 1}),
-                MakeAt(loc3, text::Text{"\"n\"", 1}),
-                text::EventDesc{
-                    nullopt,
-                    MakeAt(loc4,
-                           text::EventType{
-                               EventAttribute::Exception,
-                               text::FunctionTypeUse{
-                                   MakeAt(loc5, text::Var{Index{0}}), {}}})}}));
+  OK(At{loc1, binary::Import{At{loc2, "m"_sv}, At{loc3, "n"_sv},
+                             At{loc4,
+                                binary::EventType{
+                                    EventAttribute::Exception,
+                                    At{loc5, Index{0}},
+                                }}}},
+     At{loc1,
+        text::Import{
+            At{loc2, text::Text{"\"m\"", 1}}, At{loc3, text::Text{"\"n\"", 1}},
+            text::EventDesc{
+                nullopt,
+                At{loc4,
+                   text::EventType{EventAttribute::Exception,
+                                   text::FunctionTypeUse{
+                                       At{loc5, text::Var{Index{0}}}, {}}}}}}});
 }
 
 TEST(ConvertToBinaryTest, Function) {
-  OK(MakeAt(loc1, binary::Function{MakeAt(loc2, Index{13})}),
-     MakeAt(loc1,
-            text::Function{text::FunctionDesc{
-                               nullopt, MakeAt(loc2, text::Var{Index{13}}), {}},
-                           {},
-                           {},
-                           {}}));
+  OK(At{loc1, binary::Function{At{loc2, Index{13}}}},
+     At{loc1, text::Function{text::FunctionDesc{
+                                 nullopt, At{loc2, text::Var{Index{13}}}, {}},
+                             {},
+                             {},
+                             {}}});
 }
 
 TEST(ConvertToBinaryTest, Table) {
   auto binary_table_type =
-      MakeAt(loc1, binary::TableType{Limits{MakeAt(loc2, Index{0})},
-                                     MakeAt(loc3, BRT_Funcref)});
-  auto text_table_type =
-      MakeAt(loc1, text::TableType{Limits{MakeAt(loc2, Index{0})},
-                                   MakeAt(loc3, tt::RT_Funcref)});
+      At{loc1,
+         binary::TableType{Limits{At{loc2, Index{0}}}, At{loc3, BRT_Funcref}}};
+  auto text_table_type = At{loc1, text::TableType{Limits{At{loc2, Index{0}}},
+                                                  At{loc3, tt::RT_Funcref}}};
 
-  OK(MakeAt(loc4, binary::Table{binary_table_type}),
-     MakeAt(loc4, text::Table{text::TableDesc{nullopt, text_table_type}, {}}));
+  OK(At{loc4, binary::Table{binary_table_type}},
+     At{loc4, text::Table{text::TableDesc{nullopt, text_table_type}, {}}});
 }
 
 TEST(ConvertToBinaryTest, Memory) {
-  auto memory_type =
-      MakeAt(loc1, MemoryType{Limits{MakeAt(loc2, Index{0})}});
+  auto memory_type = At{loc1, MemoryType{Limits{At{loc2, Index{0}}}}};
 
-  OK(MakeAt(loc3, binary::Memory{memory_type}),
-     MakeAt(loc3, text::Memory{text::MemoryDesc{nullopt, memory_type}, {}}));
+  OK(At{loc3, binary::Memory{memory_type}},
+     At{loc3, text::Memory{text::MemoryDesc{nullopt, memory_type}, {}}});
 }
 
 TEST(ConvertToBinaryTest, Global) {
-  auto binary_global_type = MakeAt(loc1, binary::GlobalType{
-                                             MakeAt(loc2, BVT_I32),
-                                             MakeAt(Mutability::Const),
-                                         });
+  auto binary_global_type = At{loc1, binary::GlobalType{
+                                         At{loc2, BVT_I32},
+                                         At{Mutability::Const},
+                                     }};
 
-  auto text_global_type = MakeAt(loc1, text::GlobalType{
-                                           MakeAt(loc2, tt::VT_I32),
-                                           MakeAt(Mutability::Const),
-                                       });
+  auto text_global_type = At{loc1, text::GlobalType{
+                                       At{loc2, tt::VT_I32},
+                                       At{Mutability::Const},
+                                   }};
 
-  OK(MakeAt(loc3,
-            binary::Global{
-                binary_global_type,
-                MakeAt(loc4,
-                       binary::ConstantExpression{
-                           MakeAt(loc5, binary::Instruction{MakeAt(
-                                            loc6, Opcode::Nop)}),
-                       }),
-            }),
-     MakeAt(loc3,
-            text::Global{
-                text::GlobalDesc{nullopt, text_global_type},
-                MakeAt(loc4,
-                       text::ConstantExpression{
-                           MakeAt(loc5,
-                                  text::Instruction{MakeAt(loc6, Opcode::Nop)}),
-                       }),
-                {}}));
+  OK(At{loc3,
+        binary::Global{
+            binary_global_type,
+            At{loc4,
+               binary::ConstantExpression{
+                   At{loc5, binary::Instruction{At{loc6, Opcode::Nop}}},
+               }},
+        }},
+     At{loc3,
+        text::Global{text::GlobalDesc{nullopt, text_global_type},
+                     At{loc4,
+                        text::ConstantExpression{
+                            At{loc5, text::Instruction{At{loc6, Opcode::Nop}}},
+                        }},
+                     {}}});
 }
 
 TEST(ConvertToBinaryTest, Export) {
-  OK(MakeAt(loc1,
-            binary::Export{
-                MakeAt(loc2, ExternalKind::Function),
-                MakeAt(loc3, "hello"_sv),
-                MakeAt(loc4, Index{13}),
-            }),
-     MakeAt(loc1, text::Export{
-                      MakeAt(loc2, ExternalKind::Function),
-                      MakeAt(loc3, text::Text{"\"hello\""_sv, 5}),
-                      MakeAt(loc4, text::Var{Index{13}}),
-                  }));
+  OK(At{loc1,
+        binary::Export{
+            At{loc2, ExternalKind::Function},
+            At{loc3, "hello"_sv},
+            At{loc4, Index{13}},
+        }},
+     At{loc1, text::Export{
+                  At{loc2, ExternalKind::Function},
+                  At{loc3, text::Text{"\"hello\""_sv, 5}},
+                  At{loc4, text::Var{Index{13}}},
+              }});
 }
 
 TEST(ConvertToBinaryTest, Start) {
-  OK(MakeAt(loc1, binary::Start{MakeAt(loc2, Index{13})}),
-     MakeAt(loc1, text::Start{MakeAt(loc2, text::Var{Index{13}})}));
+  OK(At{loc1, binary::Start{At{loc2, Index{13}}}},
+     At{loc1, text::Start{At{loc2, text::Var{Index{13}}}}});
 }
 
 TEST(ConvertToBinaryTest, ElementExpression) {
-  OK(MakeAt(loc1,
-            binary::ElementExpression{{
-                MakeAt(loc2,
-                       binary::Instruction{MakeAt(loc3, Opcode::Unreachable)}),
-                MakeAt(loc4, binary::Instruction{MakeAt(loc5, Opcode::Nop)}),
-            }}),
-     MakeAt(
-         loc1,
-         text::ElementExpression{{
-             MakeAt(loc2, text::Instruction{MakeAt(loc3, Opcode::Unreachable)}),
-             MakeAt(loc4, text::Instruction{MakeAt(loc5, Opcode::Nop)}),
-         }}));
+  OK(At{loc1, binary::ElementExpression{{
+                  At{loc2, binary::Instruction{At{loc3, Opcode::Unreachable}}},
+                  At{loc4, binary::Instruction{At{loc5, Opcode::Nop}}},
+              }}},
+     At{loc1, text::ElementExpression{{
+                  At{loc2, text::Instruction{At{loc3, Opcode::Unreachable}}},
+                  At{loc4, text::Instruction{At{loc5, Opcode::Nop}}},
+              }}});
 }
 
 TEST(ConvertToBinaryTest, ElementExpressionList) {
-  OK(MakeAt(
-         loc1,
-         binary::ElementExpressionList{
-             MakeAt(loc2, binary::ElementExpression{MakeAt(
-                              loc3, binary::Instruction{MakeAt(
-                                        loc4, Opcode::Unreachable)})}),
-             MakeAt(loc5,
-                    binary::ElementExpression{MakeAt(
-                        loc6, binary::Instruction{MakeAt(loc7, Opcode::Nop)})}),
-         }),
-     MakeAt(loc1, text::ElementExpressionList{
-                      MakeAt(loc2, text::ElementExpression{MakeAt(
-                                       loc3, text::Instruction{MakeAt(
-                                                 loc4, Opcode::Unreachable)})}),
-                      MakeAt(loc5, text::ElementExpression{MakeAt(
-                                       loc6, text::Instruction{MakeAt(
-                                                 loc7, Opcode::Nop)})}),
-                  }));
+  OK(At{loc1,
+        binary::ElementExpressionList{
+            At{loc2,
+               binary::ElementExpression{At{
+                   loc3, binary::Instruction{At{loc4, Opcode::Unreachable}}}}},
+            At{loc5, binary::ElementExpression{At{
+                         loc6, binary::Instruction{At{loc7, Opcode::Nop}}}}},
+        }},
+     At{loc1,
+        text::ElementExpressionList{
+            At{loc2,
+               text::ElementExpression{
+                   At{loc3, text::Instruction{At{loc4, Opcode::Unreachable}}}}},
+            At{loc5, text::ElementExpression{At{
+                         loc6, text::Instruction{At{loc7, Opcode::Nop}}}}},
+        }});
 }
 
 TEST(ConvertToBinaryTest, ElementList) {
   // text::Var -> binary::Index
   OK(binary::ElementList{binary::ElementListWithIndexes{
-         MakeAt(loc1, ExternalKind::Function),
-         MakeAt(loc2,
-                binary::IndexList{
-                    MakeAt(loc3, Index{0}),
-                    MakeAt(loc4, Index{1}),
-                }),
+         At{loc1, ExternalKind::Function},
+         At{loc2,
+            binary::IndexList{
+                At{loc3, Index{0}},
+                At{loc4, Index{1}},
+            }},
      }},
      text::ElementList{text::ElementListWithVars{
-         MakeAt(loc1, ExternalKind::Function),
-         MakeAt(loc2,
-                text::VarList{
-                    MakeAt(loc3, text::Var{Index{0}}),
-                    MakeAt(loc4, text::Var{Index{1}}),
-                }),
+         At{loc1, ExternalKind::Function},
+         At{loc2,
+            text::VarList{
+                At{loc3, text::Var{Index{0}}},
+                At{loc4, text::Var{Index{1}}},
+            }},
      }});
 
   // ElementExpression.
   OK(binary::ElementList{binary::ElementListWithExpressions{
-         MakeAt(loc1, BRT_Funcref),
-         MakeAt(loc2, binary::ElementExpressionList{MakeAt(
-                          loc3, binary::ElementExpression{MakeAt(
-                                    loc4, binary::Instruction{MakeAt(
-                                              loc5, Opcode::Nop)})})}),
+         At{loc1, BRT_Funcref},
+         At{loc2,
+            binary::ElementExpressionList{At{
+                loc3, binary::ElementExpression{At{
+                          loc4, binary::Instruction{At{loc5, Opcode::Nop}}}}}}},
      }},
      text::ElementList{text::ElementListWithExpressions{
-         MakeAt(loc1, tt::RT_Funcref),
-         MakeAt(loc2, text::ElementExpressionList{MakeAt(
-                          loc3, text::ElementExpression{MakeAt(
-                                    loc4, text::Instruction{MakeAt(
-                                              loc5, Opcode::Nop)})})})}});
+         At{loc1, tt::RT_Funcref},
+         At{loc2, text::ElementExpressionList{
+                      At{loc3, text::ElementExpression{
+                                   At{loc4, text::Instruction{
+                                                At{loc5, Opcode::Nop}}}}}}}}});
 }
 
 TEST(ConvertToBinaryTest, ElementSegment) {
   auto binary_list = binary::ElementList{
-      binary::ElementListWithIndexes{MakeAt(loc1, ExternalKind::Function),
-                                     binary::IndexList{MakeAt(loc2, Index{0})}},
+      binary::ElementListWithIndexes{At{loc1, ExternalKind::Function},
+                                     binary::IndexList{At{loc2, Index{0}}}},
   };
 
   auto text_list = text::ElementList{
-      text::ElementListWithVars{
-          MakeAt(loc1, ExternalKind::Function),
-          text::VarList{MakeAt(loc2, text::Var{Index{0}})}},
+      text::ElementListWithVars{At{loc1, ExternalKind::Function},
+                                text::VarList{At{loc2, text::Var{Index{0}}}}},
   };
 
   // Active.
-  OK(MakeAt(loc1,
-            binary::ElementSegment{
-                MakeAt(loc2, Index{0}),
-                MakeAt(loc3,
-                       binary::ConstantExpression{
-                           MakeAt(loc4, binary::Instruction{MakeAt(
-                                            loc5, Opcode::Nop)}),
-                       }),
-                binary_list}),
-     MakeAt(loc1,
-            text::ElementSegment{
-                nullopt, MakeAt(loc2, text::Var{Index{0}}),
-                MakeAt(loc3,
-                       text::ConstantExpression{
-                           MakeAt(loc4,
-                                  text::Instruction{MakeAt(loc5, Opcode::Nop)}),
-                       }),
-                text_list}));
+  OK(At{loc1,
+        binary::ElementSegment{
+            At{loc2, Index{0}},
+            At{loc3,
+               binary::ConstantExpression{
+                   At{loc4, binary::Instruction{At{loc5, Opcode::Nop}}},
+               }},
+            binary_list}},
+     At{loc1,
+        text::ElementSegment{
+            nullopt, At{loc2, text::Var{Index{0}}},
+            At{loc3,
+               text::ConstantExpression{
+                   At{loc4, text::Instruction{At{loc5, Opcode::Nop}}},
+               }},
+            text_list}});
 
   // Passive.
-  OK(MakeAt(loc1, binary::ElementSegment{SegmentType::Passive, binary_list}),
-     MakeAt(loc1,
-            text::ElementSegment{nullopt, SegmentType::Passive, text_list}));
+  OK(At{loc1, binary::ElementSegment{SegmentType::Passive, binary_list}},
+     At{loc1, text::ElementSegment{nullopt, SegmentType::Passive, text_list}});
 }
 
 TEST(ConvertToBinaryTest, BlockImmediate) {
   // Void inline type.
-  OK(MakeAt(loc1, binary::BlockType{binary::VoidType{}}),
-     MakeAt(loc1, text::BlockImmediate{nullopt, text::FunctionTypeUse{}}));
+  OK(At{loc1, binary::BlockType{binary::VoidType{}}},
+     At{loc1, text::BlockImmediate{nullopt, text::FunctionTypeUse{}}});
 
   // Single inline type.
-  OK(MakeAt(loc1, binary::BlockType{BVT_I32}),
-     MakeAt(loc1,
-            text::BlockImmediate{
-                nullopt, text::FunctionTypeUse{
-                             nullopt, text::FunctionType{{}, {tt::VT_I32}}}}));
+  OK(At{loc1, binary::BlockType{BVT_I32}},
+     At{loc1,
+        text::BlockImmediate{
+            nullopt, text::FunctionTypeUse{
+                         nullopt, text::FunctionType{{}, {tt::VT_I32}}}}});
 
   // Generic type (via multi-value proposal).
-  OK(MakeAt(loc1, binary::BlockType(13)),
-     MakeAt(loc1, text::BlockImmediate{
-                      nullopt, text::FunctionTypeUse{
-                                   text::Var{Index{13}},
-                                   text::FunctionType{{tt::VT_I32}, {}}}}));
+  OK(At{loc1, binary::BlockType(13)},
+     At{loc1, text::BlockImmediate{nullopt,
+                                   text::FunctionTypeUse{
+                                       text::Var{Index{13}},
+                                       text::FunctionType{{tt::VT_I32}, {}}}}});
 }
 
 TEST(ConvertToBinaryTest, BrOnExnImmediate) {
-  OK(MakeAt(loc1, binary::BrOnExnImmediate{MakeAt(loc2, Index{13}),
-                                           MakeAt(loc3, Index{14})}),
-     MakeAt(loc1, text::BrOnExnImmediate{MakeAt(loc2, text::Var{Index{13}}),
-                                         MakeAt(loc3, text::Var{Index{14}})}));
+  OK(At{loc1,
+        binary::BrOnExnImmediate{At{loc2, Index{13}}, At{loc3, Index{14}}}},
+     At{loc1, text::BrOnExnImmediate{At{loc2, text::Var{Index{13}}},
+                                     At{loc3, text::Var{Index{14}}}}});
 }
 
 TEST(ConvertToBinaryTest, BrTableImmediate) {
-  OK(MakeAt(loc1, binary::BrTableImmediate{{MakeAt(loc2, Index{13})},
-                                           MakeAt(loc3, Index{14})}),
-     MakeAt(loc1, text::BrTableImmediate{{MakeAt(loc2, text::Var{Index{13}})},
-                                         MakeAt(loc3, text::Var{Index{14}})}));
+  OK(At{loc1,
+        binary::BrTableImmediate{{At{loc2, Index{13}}}, At{loc3, Index{14}}}},
+     At{loc1, text::BrTableImmediate{{At{loc2, text::Var{Index{13}}}},
+                                     At{loc3, text::Var{Index{14}}}}});
 }
 
 TEST(ConvertToBinaryTest, CallIndirectImmediate) {
   // Table defined.
-  OK(MakeAt(loc1, binary::CallIndirectImmediate{MakeAt(loc3, Index{13}),
-                                                MakeAt(loc2, Index{14})}),
-     MakeAt(loc1, text::CallIndirectImmediate{
-                      MakeAt(loc2, text::Var{Index{14}}),
-                      text::FunctionTypeUse{MakeAt(loc3, text::Var{Index{13}}),
-                                            {}}}));
+  OK(At{loc1, binary::CallIndirectImmediate{At{loc3, Index{13}},
+                                            At{loc2, Index{14}}}},
+     At{loc1, text::CallIndirectImmediate{
+                  At{loc2, text::Var{Index{14}}},
+                  text::FunctionTypeUse{At{loc3, text::Var{Index{13}}}, {}}}});
 
   // Table is nullopt.
-  OK(MakeAt(loc1,
-            binary::CallIndirectImmediate{MakeAt(loc2, Index{13}), Index{0}}),
-     MakeAt(loc1, text::CallIndirectImmediate{
-                      nullopt, text::FunctionTypeUse{
-                                   MakeAt(loc2, text::Var{Index{13}}), {}}}));
+  OK(At{loc1, binary::CallIndirectImmediate{At{loc2, Index{13}}, Index{0}}},
+     At{loc1, text::CallIndirectImmediate{
+                  nullopt,
+                  text::FunctionTypeUse{At{loc2, text::Var{Index{13}}}, {}}}});
 }
 
 TEST(ConvertToBinaryTest, CopyImmediate) {
   // dst and src defined.
-  OK(MakeAt(loc1, binary::CopyImmediate{MakeAt(loc2, Index{13}),
-                                        MakeAt(loc3, Index{14})}),
-     MakeAt(loc1, text::CopyImmediate{MakeAt(loc2, text::Var{Index{13}}),
-                                      MakeAt(loc3, text::Var{Index{14}})}));
+  OK(At{loc1, binary::CopyImmediate{At{loc2, Index{13}}, At{loc3, Index{14}}}},
+     At{loc1, text::CopyImmediate{At{loc2, text::Var{Index{13}}},
+                                  At{loc3, text::Var{Index{14}}}}});
 
   // dst and src are nullopt.
-  OK(MakeAt(loc1, binary::CopyImmediate{Index{0}, Index{0}}),
-     MakeAt(loc1, text::CopyImmediate{}));
+  OK(At{loc1, binary::CopyImmediate{Index{0}, Index{0}}},
+     At{loc1, text::CopyImmediate{}});
 }
 
 TEST(ConvertToBinaryTest, InitImmediate) {
   // dst defined.
-  OK(MakeAt(loc1, binary::InitImmediate{MakeAt(loc2, Index{13}),
-                                        MakeAt(loc3, Index{14})}),
-     MakeAt(loc1, text::InitImmediate{MakeAt(loc2, text::Var{Index{13}}),
-                                      MakeAt(loc3, text::Var{Index{14}})}));
+  OK(At{loc1, binary::InitImmediate{At{loc2, Index{13}}, At{loc3, Index{14}}}},
+     At{loc1, text::InitImmediate{At{loc2, text::Var{Index{13}}},
+                                  At{loc3, text::Var{Index{14}}}}});
 
   // dst is nullopt.
-  OK(MakeAt(loc1, binary::InitImmediate{MakeAt(loc2, Index{13}), Index{0}}),
-     MakeAt(loc1,
-            text::InitImmediate{MakeAt(loc2, text::Var{Index{13}}), nullopt}));
+  OK(At{loc1, binary::InitImmediate{At{loc2, Index{13}}, Index{0}}},
+     At{loc1, text::InitImmediate{At{loc2, text::Var{Index{13}}}, nullopt}});
 }
 
 TEST(ConvertToBinaryTest, LetImmediate) {
   // Empty let immediate.
-  OK(MakeAt(loc1,
-            binary::LetImmediate{binary::BlockType{binary::VoidType{}}, {}}),
-     MakeAt(loc1, text::LetImmediate{}));
+  OK(At{loc1, binary::LetImmediate{binary::BlockType{binary::VoidType{}}, {}}},
+     At{loc1, text::LetImmediate{}});
 
   // Let immediate with locals.
-  OK(MakeAt(loc1,
-            binary::LetImmediate{binary::BlockType{binary::VoidType{}},
-                                 MakeAt(loc2, binary::LocalsList{binary::Locals{
-                                                  2, MakeAt(loc3, BVT_I32)}})}),
-     MakeAt(loc1,
-            text::LetImmediate{
-                text::BlockImmediate{},
-                {MakeAt(loc2, text::BoundValueTypeList{
-                                  text::BoundValueType{
-                                      nullopt, MakeAt(loc3, tt::VT_I32)},
-                                  text::BoundValueType{nullopt, tt::VT_I32},
-                              })}}));
+  OK(At{loc1, binary::LetImmediate{binary::BlockType{binary::VoidType{}},
+                                   At{loc2, binary::LocalsList{binary::Locals{
+                                                2, At{loc3, BVT_I32}}}}}},
+     At{loc1,
+        text::LetImmediate{
+            text::BlockImmediate{},
+            {At{loc2, text::BoundValueTypeList{
+                          text::BoundValueType{nullopt, At{loc3, tt::VT_I32}},
+                          text::BoundValueType{nullopt, tt::VT_I32},
+                      }}}}});
 }
 
 TEST(ConvertToBinaryTest, MemArgImmediate) {
@@ -479,211 +442,193 @@ TEST(ConvertToBinaryTest, MemArgImmediate) {
   u32 offset = 5;
 
   // align and offset defined.
-  OK(MakeAt(loc1, binary::MemArgImmediate{MakeAt(loc2, align_log2),
-                                          MakeAt(loc3, offset)}),
-     MakeAt(loc1,
-            text::MemArgImmediate{MakeAt(loc2, align), MakeAt(loc3, offset)}),
+  OK(At{loc1, binary::MemArgImmediate{At{loc2, align_log2}, At{loc3, offset}}},
+     At{loc1, text::MemArgImmediate{At{loc2, align}, At{loc3, offset}}},
      natural_align);
 
   // offset nullopt.
-  OK(MakeAt(loc1, binary::MemArgImmediate{MakeAt(loc2, align_log2), u32{0}}),
-     MakeAt(loc1, text::MemArgImmediate{MakeAt(loc2, align), nullopt}),
-     natural_align);
+  OK(At{loc1, binary::MemArgImmediate{At{loc2, align_log2}, u32{0}}},
+     At{loc1, text::MemArgImmediate{At{loc2, align}, nullopt}}, natural_align);
 
   // align and offset are nullopt.
-  OK(MakeAt(loc1, binary::MemArgImmediate{natural_align_log2, u32{0}}),
-     MakeAt(loc1, text::MemArgImmediate{nullopt, nullopt}), natural_align);
+  OK(At{loc1, binary::MemArgImmediate{natural_align_log2, u32{0}}},
+     At{loc1, text::MemArgImmediate{nullopt, nullopt}}, natural_align);
 }
 
 TEST(ConvertToBinaryTest, Instruction) {
   // Bare.
-  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::Nop)}),
-     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::Nop)}));
+  OK(At{loc1, binary::Instruction{At{loc2, Opcode::Nop}}},
+     At{loc1, text::Instruction{At{loc2, Opcode::Nop}}});
 
   // s32.
-  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::I32Const),
-                                      MakeAt(loc3, s32{0})}),
-     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::I32Const),
-                                    MakeAt(loc3, s32{0})}));
+  OK(At{loc1,
+        binary::Instruction{At{loc2, Opcode::I32Const}, At{loc3, s32{0}}}},
+     At{loc1, text::Instruction{At{loc2, Opcode::I32Const}, At{loc3, s32{0}}}});
 
   // s64.
-  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::I64Const),
-                                      MakeAt(loc3, s64{0})}),
-     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::I64Const),
-                                    MakeAt(loc3, s64{0})}));
+  OK(At{loc1,
+        binary::Instruction{At{loc2, Opcode::I64Const}, At{loc3, s64{0}}}},
+     At{loc1, text::Instruction{At{loc2, Opcode::I64Const}, At{loc3, s64{0}}}});
 
   // f32.
-  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::F32Const),
-                                      MakeAt(loc3, f32{0})}),
-     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::F32Const),
-                                    MakeAt(loc3, f32{0})}));
+  OK(At{loc1,
+        binary::Instruction{At{loc2, Opcode::F32Const}, At{loc3, f32{0}}}},
+     At{loc1, text::Instruction{At{loc2, Opcode::F32Const}, At{loc3, f32{0}}}});
 
   // f64.
-  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::F64Const),
-                                      MakeAt(loc3, f64{0})}),
-     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::F64Const),
-                                    MakeAt(loc3, f64{0})}));
+  OK(At{loc1,
+        binary::Instruction{At{loc2, Opcode::F64Const}, At{loc3, f64{0}}}},
+     At{loc1, text::Instruction{At{loc2, Opcode::F64Const}, At{loc3, f64{0}}}});
 
   // v128.
-  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::V128Const),
-                                      MakeAt(loc3, v128{})}),
-     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::V128Const),
-                                    MakeAt(loc3, v128{})}));
+  OK(At{loc1,
+        binary::Instruction{At{loc2, Opcode::V128Const}, At{loc3, v128{}}}},
+     At{loc1,
+        text::Instruction{At{loc2, Opcode::V128Const}, At{loc3, v128{}}}});
 
   // Var.
-  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::LocalGet),
-                                      MakeAt(loc3, Index{13})}),
-     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::LocalGet),
-                                    MakeAt(loc3, text::Var{Index{13}})}));
+  OK(At{loc1,
+        binary::Instruction{At{loc2, Opcode::LocalGet}, At{loc3, Index{13}}}},
+     At{loc1, text::Instruction{At{loc2, Opcode::LocalGet},
+                                At{loc3, text::Var{Index{13}}}}});
 
   // BlockImmediate.
-  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::Block),
-                                      binary::BlockType{13}}),
-     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::Block),
-                                    text::BlockImmediate{
-                                        nullopt, text::FunctionTypeUse{
-                                                     text::Var{Index{13}},
-                                                     text::FunctionType{
-                                                         {tt::VT_I32}, {}}}}}));
+  OK(At{loc1,
+        binary::Instruction{At{loc2, Opcode::Block}, binary::BlockType{13}}},
+     At{loc1, text::Instruction{
+                  At{loc2, Opcode::Block},
+                  text::BlockImmediate{
+                      nullopt, text::FunctionTypeUse{
+                                   text::Var{Index{13}},
+                                   text::FunctionType{{tt::VT_I32}, {}}}}}});
 
   // BrOnExnImmediate.
-  OK(MakeAt(
-         loc1,
-         binary::Instruction{
-             MakeAt(loc2, Opcode::BrOnExn),
-             MakeAt(loc3, binary::BrOnExnImmediate{MakeAt(loc4, Index{13}),
-                                                   MakeAt(loc5, Index{14})})}),
-     MakeAt(loc1, text::Instruction{
-                      MakeAt(loc2, Opcode::BrOnExn),
-                      MakeAt(loc3, text::BrOnExnImmediate{
-                                       MakeAt(loc4, text::Var{Index{13}}),
-                                       MakeAt(loc5, text::Var{Index{14}})})}));
+  OK(At{loc1,
+        binary::Instruction{
+            At{loc2, Opcode::BrOnExn},
+            At{loc3, binary::BrOnExnImmediate{At{loc4, Index{13}},
+                                              At{loc5, Index{14}}}}}},
+     At{loc1,
+        text::Instruction{
+            At{loc2, Opcode::BrOnExn},
+            At{loc3, text::BrOnExnImmediate{At{loc4, text::Var{Index{13}}},
+                                            At{loc5, text::Var{Index{14}}}}}}});
 
   // BrTableImmediate.
-  OK(MakeAt(
-         loc1,
-         binary::Instruction{
-             MakeAt(loc2, Opcode::BrTable),
-             MakeAt(loc3, binary::BrTableImmediate{{MakeAt(loc4, Index{13})},
-                                                   MakeAt(loc5, Index{14})})}),
-     MakeAt(loc1, text::Instruction{
-                      MakeAt(loc2, Opcode::BrTable),
-                      MakeAt(loc3, text::BrTableImmediate{
-                                       {MakeAt(loc4, text::Var{Index{13}})},
-                                       MakeAt(loc5, text::Var{Index{14}})})}));
+  OK(At{loc1,
+        binary::Instruction{
+            At{loc2, Opcode::BrTable},
+            At{loc3, binary::BrTableImmediate{{At{loc4, Index{13}}},
+                                              At{loc5, Index{14}}}}}},
+     At{loc1,
+        text::Instruction{
+            At{loc2, Opcode::BrTable},
+            At{loc3, text::BrTableImmediate{{At{loc4, text::Var{Index{13}}}},
+                                            At{loc5, text::Var{Index{14}}}}}}});
 
   // CallIndirectImmediate.
-  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::CallIndirect),
-                                      MakeAt(loc3,
-                                             binary::CallIndirectImmediate{
-                                                 MakeAt(loc5, Index{13}),
-                                                 MakeAt(loc4, Index{14})})}),
-     MakeAt(
-         loc1,
-         text::Instruction{
-             MakeAt(loc2, Opcode::CallIndirect),
-             MakeAt(loc3, text::CallIndirectImmediate{
-                              MakeAt(loc4, text::Var{Index{14}}),
-                              text::FunctionTypeUse{
-                                  MakeAt(loc5, text::Var{Index{13}}), {}}})}));
+  OK(At{loc1,
+        binary::Instruction{
+            At{loc2, Opcode::CallIndirect},
+            At{loc3, binary::CallIndirectImmediate{At{loc5, Index{13}},
+                                                   At{loc4, Index{14}}}}}},
+     At{loc1, text::Instruction{
+                  At{loc2, Opcode::CallIndirect},
+                  At{loc3, text::CallIndirectImmediate{
+                               At{loc4, text::Var{Index{14}}},
+                               text::FunctionTypeUse{
+                                   At{loc5, text::Var{Index{13}}}, {}}}}}});
 
   // CopyImmediate.
-  OK(MakeAt(loc1,
-            binary::Instruction{
-                MakeAt(loc2, Opcode::MemoryCopy),
-                MakeAt(loc3, binary::CopyImmediate{MakeAt(loc4, Index{13}),
-                                                   MakeAt(loc5, Index{14})})}),
-     MakeAt(loc1, text::Instruction{
-                      MakeAt(loc2, Opcode::MemoryCopy),
-                      MakeAt(loc3, text::CopyImmediate{
-                                       MakeAt(loc4, text::Var{Index{13}}),
-                                       MakeAt(loc5, text::Var{Index{14}})})}));
+  OK(At{loc1,
+        binary::Instruction{
+            At{loc2, Opcode::MemoryCopy},
+            At{loc3, binary::CopyImmediate{At{loc4, Index{13}},
+                                           At{loc5, Index{14}}}}}},
+     At{loc1,
+        text::Instruction{
+            At{loc2, Opcode::MemoryCopy},
+            At{loc3, text::CopyImmediate{At{loc4, text::Var{Index{13}}},
+                                         At{loc5, text::Var{Index{14}}}}}}});
 
   // FuncBindImmediate
-  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::FuncBind),
-                                      MakeAt(loc4, Index{13})}),
-     MakeAt(loc1,
-            text::Instruction{
-                MakeAt(loc2, Opcode::FuncBind),
-                MakeAt(loc3, text::FuncBindImmediate{text::FunctionTypeUse{
-                                 MakeAt(loc4, text::Var{Index{13}}), {}}})}));
+  OK(At{loc1,
+        binary::Instruction{At{loc2, Opcode::FuncBind}, At{loc4, Index{13}}}},
+     At{loc1, text::Instruction{
+                  At{loc2, Opcode::FuncBind},
+                  At{loc3, text::FuncBindImmediate{text::FunctionTypeUse{
+                               At{loc4, text::Var{Index{13}}}, {}}}}}});
 
   // InitImmediate.
-  OK(MakeAt(loc1,
-            binary::Instruction{
-                MakeAt(loc2, Opcode::TableInit),
-                MakeAt(loc3, binary::InitImmediate{MakeAt(loc4, Index{13}),
-                                                   MakeAt(loc5, Index{14})})}),
-     MakeAt(loc1, text::Instruction{
-                      MakeAt(loc2, Opcode::TableInit),
-                      MakeAt(loc3, text::InitImmediate{
-                                       MakeAt(loc4, text::Var{Index{13}}),
-                                       MakeAt(loc5, text::Var{Index{14}})})}));
+  OK(At{loc1,
+        binary::Instruction{
+            At{loc2, Opcode::TableInit},
+            At{loc3, binary::InitImmediate{At{loc4, Index{13}},
+                                           At{loc5, Index{14}}}}}},
+     At{loc1,
+        text::Instruction{
+            At{loc2, Opcode::TableInit},
+            At{loc3, text::InitImmediate{At{loc4, text::Var{Index{13}}},
+                                         At{loc5, text::Var{Index{14}}}}}}});
 
   // LetImmediate.
-  OK(MakeAt(loc1,
-            binary::Instruction{
-                MakeAt(loc2, Opcode::Let),
-                MakeAt(loc3,
-                       binary::LetImmediate{
-                           binary::BlockType{15},
-                           MakeAt(loc4, binary::LocalsList{binary::Locals{
-                                            2, MakeAt(loc6, BVT_I32)}})})}),
-     MakeAt(
-         loc1,
-         text::Instruction{
-             MakeAt(loc2, Opcode::Let),
-             MakeAt(loc3,
-                    text::LetImmediate{
-                        text::BlockImmediate{
-                            nullopt,
-                            text::FunctionTypeUse{text::Var{Index{15}}, {}}},
-                        {MakeAt(
-                            loc4, text::BoundValueTypeList{
-                                      text::BoundValueType{
-                                          nullopt, MakeAt(loc6, tt::VT_I32)},
-                                      text::BoundValueType{nullopt, tt::VT_I32},
-                                  })}})}));
+  OK(At{loc1,
+        binary::Instruction{
+            At{loc2, Opcode::Let},
+            At{loc3,
+               binary::LetImmediate{binary::BlockType{15},
+                                    At{loc4, binary::LocalsList{binary::Locals{
+                                                 2, At{loc6, BVT_I32}}}}}}}},
+     At{loc1,
+        text::Instruction{
+            At{loc2, Opcode::Let},
+            At{loc3,
+               text::LetImmediate{
+                   text::BlockImmediate{
+                       nullopt,
+                       text::FunctionTypeUse{text::Var{Index{15}}, {}}},
+                   {At{loc4,
+                       text::BoundValueTypeList{
+                           text::BoundValueType{nullopt, At{loc6, tt::VT_I32}},
+                           text::BoundValueType{nullopt, tt::VT_I32},
+                       }}}}}}});
 
   // MemArgImmediate.
-  OK(MakeAt(loc1,
-            binary::Instruction{
-                MakeAt(loc2, Opcode::I32Load),
-                MakeAt(loc3, binary::MemArgImmediate{MakeAt(loc4, u32{2}),
-                                                     MakeAt(loc5, u32{13})})}),
-     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::I32Load),
-                                    MakeAt(loc3, text::MemArgImmediate{
-                                                     MakeAt(loc4, u32{4}),
-                                                     MakeAt(loc5, u32{13})})}));
+  OK(At{loc1,
+        binary::Instruction{
+            At{loc2, Opcode::I32Load},
+            At{loc3,
+               binary::MemArgImmediate{At{loc4, u32{2}}, At{loc5, u32{13}}}}}},
+     At{loc1,
+        text::Instruction{At{loc2, Opcode::I32Load},
+                          At{loc3, text::MemArgImmediate{At{loc4, u32{4}},
+                                                         At{loc5, u32{13}}}}}});
 
   // HeapType.
-  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::RefNull),
-                                      MakeAt(loc3, BHT_Func)}),
-     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::RefNull),
-                                    MakeAt(loc3, tt::HT_Func)}));
+  OK(At{loc1,
+        binary::Instruction{At{loc2, Opcode::RefNull}, At{loc3, BHT_Func}}},
+     At{loc1,
+        text::Instruction{At{loc2, Opcode::RefNull}, At{loc3, tt::HT_Func}}});
 
   // SelectImmediate.
-  OK(MakeAt(loc1,
-            binary::Instruction{
-                MakeAt(loc2, Opcode::SelectT),
-                MakeAt(loc3, binary::SelectImmediate{MakeAt(loc4, BVT_I32)})}),
-     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::SelectT),
-                                    MakeAt(loc3, text::SelectImmediate{MakeAt(
-                                                     loc4, tt::VT_I32)})}));
+  OK(At{loc1, binary::Instruction{At{loc2, Opcode::SelectT},
+                                  At{loc3, binary::SelectImmediate{At{
+                                               loc4, BVT_I32}}}}},
+     At{loc1, text::Instruction{
+                  At{loc2, Opcode::SelectT},
+                  At{loc3, text::SelectImmediate{At{loc4, tt::VT_I32}}}}});
 
   // ShuffleImmediate.
-  OK(MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::V8X16Shuffle),
-                                      MakeAt(loc3, ShuffleImmediate{})}),
-     MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::V8X16Shuffle),
-                                    MakeAt(loc3, ShuffleImmediate{})}));
+  OK(At{loc1, binary::Instruction{At{loc2, Opcode::V8X16Shuffle},
+                                  At{loc3, ShuffleImmediate{}}}},
+     At{loc1, text::Instruction{At{loc2, Opcode::V8X16Shuffle},
+                                At{loc3, ShuffleImmediate{}}}});
 
   // SimdLaneImmediate.
-  OK(MakeAt(loc1,
-            binary::Instruction{MakeAt(loc2, Opcode::I8X16ExtractLaneS),
-                                MakeAt(loc3, binary::SimdLaneImmediate{13})}),
-     MakeAt(loc1,
-            text::Instruction{MakeAt(loc2, Opcode::I8X16ExtractLaneS),
-                              MakeAt(loc3, text::SimdLaneImmediate{13})}));
+  OK(At{loc1, binary::Instruction{At{loc2, Opcode::I8X16ExtractLaneS},
+                                  At{loc3, binary::SimdLaneImmediate{13}}}},
+     At{loc1, text::Instruction{At{loc2, Opcode::I8X16ExtractLaneS},
+                                At{loc3, text::SimdLaneImmediate{13}}}});
 }
 
 TEST(ConvertToBinaryTest, OpcodeAlignment) {
@@ -807,134 +752,119 @@ TEST(ConvertToBinaryTest, OpcodeAlignment) {
 }
 
 TEST(ConvertToBinaryTest, InstructionList) {
-  OK(
-      binary::InstructionList{
-          MakeAt(loc1, binary::Instruction{MakeAt(loc2, Opcode::Nop)}),
-          MakeAt(loc3, binary::Instruction{MakeAt(loc4, Opcode::Nop)})},
-      text::InstructionList{
-          MakeAt(loc1, text::Instruction{MakeAt(loc2, Opcode::Nop)}),
-          MakeAt(loc3, text::Instruction{MakeAt(loc4, Opcode::Nop)})});
+  OK(binary::InstructionList{At{loc1,
+                                binary::Instruction{At{loc2, Opcode::Nop}}},
+                             At{loc3,
+                                binary::Instruction{At{loc4, Opcode::Nop}}}},
+     text::InstructionList{At{loc1, text::Instruction{At{loc2, Opcode::Nop}}},
+                           At{loc3, text::Instruction{At{loc4, Opcode::Nop}}}});
 }
 
 TEST(ConvertToBinaryTest, Expression) {
-  OKFunc(
-      ToBinaryUnpackedExpression,
-      MakeAt(
-          loc1,
-          binary::UnpackedExpression{MakeAt(
-              loc1,
-              binary::InstructionList{
-                  MakeAt(loc2,
-                         binary::Instruction{MakeAt(loc3, Opcode::I32Const),
-                                             MakeAt(loc4, s32{0})}),
-                  MakeAt(loc5, binary::Instruction{MakeAt(loc6, Opcode::Drop)}),
-                  MakeAt(loc7, binary::Instruction{MakeAt(loc8, Opcode::End)}),
-              })}),
-      MakeAt(loc1,
-             text::InstructionList{
-                 MakeAt(loc2, text::Instruction{MakeAt(loc3, Opcode::I32Const),
-                                                MakeAt(loc4, s32{0})}),
-                 MakeAt(loc5, text::Instruction{MakeAt(loc6, Opcode::Drop)}),
-                 MakeAt(loc7, text::Instruction{MakeAt(loc8, Opcode::End)}),
-             }));
+  OKFunc(ToBinaryUnpackedExpression,
+         At{loc1,
+            binary::UnpackedExpression{At{
+                loc1,
+                binary::InstructionList{
+                    At{loc2, binary::Instruction{At{loc3, Opcode::I32Const},
+                                                 At{loc4, s32{0}}}},
+                    At{loc5, binary::Instruction{At{loc6, Opcode::Drop}}},
+                    At{loc7, binary::Instruction{At{loc8, Opcode::End}}},
+                }}}},
+         At{loc1, text::InstructionList{
+                      At{loc2, text::Instruction{At{loc3, Opcode::I32Const},
+                                                 At{loc4, s32{0}}}},
+                      At{loc5, text::Instruction{At{loc6, Opcode::Drop}}},
+                      At{loc7, text::Instruction{At{loc8, Opcode::End}}},
+                  }});
 }
 
 TEST(ConvertToBinaryTest, LocalsList) {
-  OKFunc(
-      ToBinaryLocalsList,
-      MakeAt(loc1,
-             binary::LocalsList{binary::Locals{2, MakeAt(loc2, BVT_I32)},
-                                binary::Locals{1, MakeAt(loc4, BVT_F32)}}),
-      MakeAt(loc1, text::BoundValueTypeList{
-                       text::BoundValueType{nullopt, MakeAt(loc2, tt::VT_I32)},
-                       text::BoundValueType{nullopt, MakeAt(loc3, tt::VT_I32)},
-                       text::BoundValueType{nullopt, MakeAt(loc4, tt::VT_F32)},
-                   }));
+  OKFunc(ToBinaryLocalsList,
+         At{loc1, binary::LocalsList{binary::Locals{2, At{loc2, BVT_I32}},
+                                     binary::Locals{1, At{loc4, BVT_F32}}}},
+         At{loc1, text::BoundValueTypeList{
+                      text::BoundValueType{nullopt, At{loc2, tt::VT_I32}},
+                      text::BoundValueType{nullopt, At{loc3, tt::VT_I32}},
+                      text::BoundValueType{nullopt, At{loc4, tt::VT_F32}},
+                  }});
 }
 
 TEST(ConvertToBinaryTest, Code) {
   OKFunc(
       ToBinaryCode,
-      MakeAt(loc1,
-             binary::UnpackedCode{
-                 MakeAt(loc2, binary::LocalsList{binary::Locals{
-                                  1, MakeAt(loc3, BVT_I32)}}),
-                 MakeAt(loc4,
-                        binary::UnpackedExpression{
-                            MakeAt(loc4,
-                                   binary::InstructionList{
-                                       MakeAt(loc5, binary::Instruction{MakeAt(
-                                                        loc6, Opcode::Nop)}),
-                                       MakeAt(loc6, binary::Instruction{MakeAt(
-                                                        loc8, Opcode::End)}),
-                                   })})}),
-      MakeAt(
-          loc1,
-          text::Function{
-              {},
-              MakeAt(loc2, text::BoundValueTypeList{text::BoundValueType{
-                               nullopt, MakeAt(loc3, tt::VT_I32)}}),
-              MakeAt(loc4,
-                     text::InstructionList{
-                         MakeAt(loc5,
-                                text::Instruction{MakeAt(loc6, Opcode::Nop)}),
-                         MakeAt(loc6,
-                                text::Instruction{MakeAt(loc8, Opcode::End)}),
-                     }),
-              {}}));
+      At{loc1,
+         binary::UnpackedCode{
+             At{loc2, binary::LocalsList{binary::Locals{1, At{loc3, BVT_I32}}}},
+             At{loc4,
+                binary::UnpackedExpression{
+                    At{loc4,
+                       binary::InstructionList{
+                           At{loc5, binary::Instruction{At{loc6, Opcode::Nop}}},
+                           At{loc6, binary::Instruction{At{loc8, Opcode::End}}},
+                       }}}}}},
+      At{loc1,
+         text::Function{
+             {},
+             At{loc2, text::BoundValueTypeList{text::BoundValueType{
+                          nullopt, At{loc3, tt::VT_I32}}}},
+             At{loc4,
+                text::InstructionList{
+                    At{loc5, text::Instruction{At{loc6, Opcode::Nop}}},
+                    At{loc6, text::Instruction{At{loc8, Opcode::End}}},
+                }},
+             {}}});
 }
 
 TEST(ConvertToBinaryTest, DataSegment) {
   // Active.
-  OK(MakeAt(
-         loc1,
-         binary::DataSegment{MakeAt(loc2, Index{13}),
-                             MakeAt(loc3, binary::ConstantExpression{MakeAt(
-                                              loc4, binary::Instruction{MakeAt(
-                                                        loc5, Opcode::Nop)})}),
-                             "hello\x00"_su8}),
-     MakeAt(loc1,
-            text::DataSegment{nullopt, MakeAt(loc2, text::Var{Index{13}}),
-                              MakeAt(loc3, text::ConstantExpression{MakeAt(
-                                               loc4, text::Instruction{MakeAt(
-                                                         loc5, Opcode::Nop)})}),
-                              text::TextList{text::Text{"\"hello\"", 5},
-                                             text::Text{"\"\\00\"", 1}}}));
+  OK(At{loc1,
+        binary::DataSegment{
+            At{loc2, Index{13}},
+            At{loc3, binary::ConstantExpression{At{
+                         loc4, binary::Instruction{At{loc5, Opcode::Nop}}}}},
+            "hello\x00"_su8}},
+     At{loc1,
+        text::DataSegment{
+            nullopt, At{loc2, text::Var{Index{13}}},
+            At{loc3, text::ConstantExpression{At{
+                         loc4, text::Instruction{At{loc5, Opcode::Nop}}}}},
+            text::TextList{text::Text{"\"hello\"", 5},
+                           text::Text{"\"\\00\"", 1}}}});
 }
 
 TEST(ConvertToBinaryTest, EventType) {
-  OK(MakeAt(loc1,
-            binary::EventType{
-                EventAttribute::Exception,
-                MakeAt(loc2, Index{0}),
-            }),
-     MakeAt(loc1, text::EventType{
-                      EventAttribute::Exception,
-                      text::FunctionTypeUse{
-                          MakeAt(loc2, text::Var{Index{0}}),
-                          {},
-                      },
-                  }));
+  OK(At{loc1,
+        binary::EventType{
+            EventAttribute::Exception,
+            At{loc2, Index{0}},
+        }},
+     At{loc1, text::EventType{
+                  EventAttribute::Exception,
+                  text::FunctionTypeUse{
+                      At{loc2, text::Var{Index{0}}},
+                      {},
+                  },
+              }});
 }
 
 TEST(ConvertToBinaryTest, Event) {
-  OK(MakeAt(loc1, binary::Event{MakeAt(loc2,
-                                       binary::EventType{
-                                           EventAttribute::Exception,
-                                           MakeAt(loc3, Index{0}),
-                                       })}),
-     MakeAt(loc1,
-            text::Event{text::EventDesc{
-                            nullopt,
-                            MakeAt(loc2,
-                                   text::EventType{
-                                       EventAttribute::Exception,
-                                       text::FunctionTypeUse{
-                                           MakeAt(loc3, text::Var{Index{0}}),
-                                           {},
-                                       },
-                                   })},
-                        {}}));
+  OK(At{loc1, binary::Event{At{loc2,
+                               binary::EventType{
+                                   EventAttribute::Exception,
+                                   At{loc3, Index{0}},
+                               }}}},
+     At{loc1,
+        text::Event{text::EventDesc{
+                        nullopt, At{loc2,
+                                    text::EventType{
+                                        EventAttribute::Exception,
+                                        text::FunctionTypeUse{
+                                            At{loc3, text::Var{Index{0}}},
+                                            {},
+                                        },
+                                    }}},
+                    {}}});
 }
 
 TEST(ConvertToBinaryTest, Module) {
@@ -960,169 +890,155 @@ TEST(ConvertToBinaryTest, Module) {
   const SpanU8 loc27 = "AA"_su8;
   const SpanU8 loc28 = "BB"_su8;
 
-  auto binary_table_type = MakeAt(
-      "T0"_su8,
-      binary::TableType{MakeAt("T1"_su8, Limits{MakeAt("T2"_su8, u32{0})}),
-                        MakeAt("T3"_su8, BRT_Funcref)});
+  auto binary_table_type =
+      At{"T0"_su8, binary::TableType{At{"T1"_su8, Limits{At{"T2"_su8, u32{0}}}},
+                                     At{"T3"_su8, BRT_Funcref}}};
 
   auto text_table_type =
-      MakeAt("T0"_su8,
-             text::TableType{MakeAt("T1"_su8, Limits{MakeAt("T2"_su8, u32{0})}),
-                             MakeAt("T3"_su8, tt::RT_Funcref)});
+      At{"T0"_su8, text::TableType{At{"T1"_su8, Limits{At{"T2"_su8, u32{0}}}},
+                                   At{"T3"_su8, tt::RT_Funcref}}};
 
-  auto memory_type = MakeAt(
-      "M0"_su8, MemoryType{MakeAt("M1"_su8, Limits{MakeAt("M2"_su8, u32{0})})});
+  auto memory_type =
+      At{"M0"_su8, MemoryType{At{"M1"_su8, Limits{At{"M2"_su8, u32{0}}}}}};
 
   auto binary_global_type =
-      MakeAt("G0"_su8, binary::GlobalType{MakeAt("G1"_su8, BVT_I32),
-                                          MakeAt("G2"_su8, Mutability::Const)});
+      At{"G0"_su8, binary::GlobalType{At{"G1"_su8, BVT_I32},
+                                      At{"G2"_su8, Mutability::Const}}};
 
   auto text_global_type =
-      MakeAt("G0"_su8, text::GlobalType{MakeAt("G1"_su8, tt::VT_I32),
-                                        MakeAt("G2"_su8, Mutability::Const)});
+      At{"G0"_su8, text::GlobalType{At{"G1"_su8, tt::VT_I32},
+                                    At{"G2"_su8, Mutability::Const}}};
 
-  auto external_kind = MakeAt("EK"_su8, ExternalKind::Function);
+  auto external_kind = At{"EK"_su8, ExternalKind::Function};
 
   // These will be shared between global, data, and element segments. This
   // would never actually happen, but it simplifies the test below.
-  auto binary_constant_expression = MakeAt(
-      "CE0"_su8,
-      binary::ConstantExpression{MakeAt(
-          "CE1"_su8, binary::Instruction{MakeAt("CE2"_su8, Opcode::I32Const),
-                                         MakeAt("CE3"_su8, s32{0})})});
+  auto binary_constant_expression =
+      At{"CE0"_su8,
+         binary::ConstantExpression{
+             At{"CE1"_su8, binary::Instruction{At{"CE2"_su8, Opcode::I32Const},
+                                               At{"CE3"_su8, s32{0}}}}}};
 
-  auto text_constant_expression = MakeAt(
-      "CE0"_su8,
-      text::ConstantExpression{MakeAt(
-          "CE1"_su8, text::Instruction{MakeAt("CE2"_su8, Opcode::I32Const),
-                                       MakeAt("CE3"_su8, s32{0})})});
+  auto text_constant_expression =
+      At{"CE0"_su8,
+         text::ConstantExpression{
+             At{"CE1"_su8, text::Instruction{At{"CE2"_su8, Opcode::I32Const},
+                                             At{"CE3"_su8, s32{0}}}}}};
 
-  OK(MakeAt(
-         loc1,
-         binary::Module{
-             // types
-             {MakeAt(loc2, binary::TypeEntry{})},
-             // imports
-             {MakeAt(loc3,
-                     binary::Import{MakeAt(loc4, "m"_sv), MakeAt(loc5, "n"_sv),
-                                    MakeAt(loc6, Index{0})})},
-             // functions
-             {MakeAt(loc7, binary::Function{MakeAt(loc8, Index{0})})},
-             // tables
-             {MakeAt(loc9, binary::Table{binary_table_type})},
-             // memories
-             {MakeAt(loc10, binary::Memory{memory_type})},
-             // globals
-             {MakeAt(loc11, binary::Global{binary_global_type,
-                                           binary_constant_expression})},
-             // events
-             {MakeAt(loc12,
-                     binary::Event{MakeAt(
-                         loc13, binary::EventType{EventAttribute::Exception,
-                                                  MakeAt(loc14, Index{0})})})},
-             // exports
-             {MakeAt(loc15, binary::Export{external_kind, MakeAt(loc16, "e"_sv),
-                                           MakeAt(loc17, Index{0})})},
-             // starts
-             {MakeAt(loc18, binary::Start{MakeAt(loc19, Index{0})})},
-             // element_segments
-             {MakeAt(loc20,
-                     binary::ElementSegment{
-                         MakeAt(loc21, Index{0}), binary_constant_expression,
-                         binary::ElementList{binary::ElementListWithIndexes{
-                             external_kind, {MakeAt(loc22, Index{0})}}}})},
-             // data_counts
-             {binary::DataCount{Index{1}}},
-             // codes
-             {MakeAt(loc7,
-                     binary::UnpackedCode{
-                         binary::LocalsList{},
-                         binary::UnpackedExpression{binary::InstructionList{
-                             MakeAt(loc25, binary::Instruction{MakeAt(
-                                               loc26, Opcode::Nop)}),
-                             MakeAt(loc27, binary::Instruction{MakeAt(
-                                               loc28, Opcode::End)}),
-                         }}})},
-             // data_segments
-             {MakeAt(loc23, binary::DataSegment{MakeAt(loc24, Index{0}),
-                                                binary_constant_expression,
-                                                "hello"_su8})},
-         }),
-     MakeAt(loc1,
-            text::Module{
-                // (type (func))
-                text::ModuleItem{MakeAt(loc2, text::TypeEntry{nullopt, {}})},
-                // (import "m" "n" (func (type 0)))
-                text::ModuleItem{MakeAt(
-                    loc3,
-                    text::Import{
-                        MakeAt(loc4, text::Text{"\"m\"", 1}),
-                        MakeAt(loc5, text::Text{"\"n\"", 1}),
-                        text::FunctionDesc{
-                            nullopt, MakeAt(loc6, text::Var{Index{0}}), {}}})},
-                // (event)
-                text::ModuleItem{MakeAt(
-                    loc12,
-                    text::Event{
-                        text::EventDesc{
-                            nullopt,
-                            MakeAt(loc13,
-                                   text::EventType{
-                                       EventAttribute::Exception,
-                                       text::FunctionTypeUse{
-                                           MakeAt(loc14, text::Var{Index{0}}),
-                                           {}}})},
-                        {}})},
-                // (global i32 i32.const 0)
-                text::ModuleItem{MakeAt(
-                    loc11,
-                    text::Global{text::GlobalDesc{nullopt, text_global_type},
-                                 text_constant_expression,
-                                 {}})},
-                // (memory 0)
-                text::ModuleItem{MakeAt(
-                    loc10,
-                    text::Memory{text::MemoryDesc{nullopt, memory_type}, {}})},
-                // (table 0 funcref)
-                text::ModuleItem{MakeAt(
-                    loc9, text::Table{text::TableDesc{nullopt, text_table_type},
-                                      {}})},
-                // (start 0)
-                text::ModuleItem{MakeAt(
-                    loc18, text::Start{MakeAt(loc19, text::Var{Index{0}})})},
-                // (func (type 0) nop)
-                text::ModuleItem{MakeAt(
-                    loc7,
-                    text::Function{
-                        text::FunctionDesc{
-                            nullopt, MakeAt(loc8, text::Var{Index{0}}), {}},
-                        {},
-                        {MakeAt(loc25,
-                                text::Instruction{MakeAt(loc26, Opcode::Nop)}),
-                         MakeAt(loc27,
-                                text::Instruction{MakeAt(loc28, Opcode::End)})},
-                        {}})},
-                // (elem (i32.const 0) func 0)
-                text::ModuleItem{MakeAt(
-                    loc20,
-                    text::ElementSegment{
-                        nullopt, MakeAt(loc21, text::Var{Index{0}}),
-                        text_constant_expression,
-                        text::ElementList{text::ElementListWithVars{
-                            external_kind,
-                            {MakeAt(loc22, text::Var{Index{0}})}}}})},
-                // (export "e" (func 0))
-                text::ModuleItem{MakeAt(
-                    loc15,
-                    text::Export{external_kind,
-                                 MakeAt(loc16, text::Text{"\"e\""_sv, 1}),
-                                 MakeAt(loc17, text::Var{Index{0}})})},
-                // (data (i32.const 0) "hello")
-                text::ModuleItem{MakeAt(
-                    loc23,
-                    text::DataSegment{
-                        nullopt, MakeAt(loc24, text::Var{Index{0}}),
-                        text_constant_expression,
-                        text::TextList{text::Text{"\"hello\""_sv, 5}}})},
-            }));
+  OK(At{loc1,
+        binary::Module{
+            // types
+            {At{loc2, binary::TypeEntry{}}},
+            // imports
+            {At{loc3, binary::Import{At{loc4, "m"_sv}, At{loc5, "n"_sv},
+                                     At{loc6, Index{0}}}}},
+            // functions
+            {At{loc7, binary::Function{At{loc8, Index{0}}}}},
+            // tables
+            {At{loc9, binary::Table{binary_table_type}}},
+            // memories
+            {At{loc10, binary::Memory{memory_type}}},
+            // globals
+            {At{loc11, binary::Global{binary_global_type,
+                                      binary_constant_expression}}},
+            // events
+            {At{loc12, binary::Event{At{
+                           loc13, binary::EventType{EventAttribute::Exception,
+                                                    At{loc14, Index{0}}}}}}},
+            // exports
+            {At{loc15, binary::Export{external_kind, At{loc16, "e"_sv},
+                                      At{loc17, Index{0}}}}},
+            // starts
+            {At{loc18, binary::Start{At{loc19, Index{0}}}}},
+            // element_segments
+            {At{loc20,
+                binary::ElementSegment{
+                    At{loc21, Index{0}}, binary_constant_expression,
+                    binary::ElementList{binary::ElementListWithIndexes{
+                        external_kind, {At{loc22, Index{0}}}}}}}},
+            // data_counts
+            {binary::DataCount{Index{1}}},
+            // codes
+            {At{loc7,
+                binary::UnpackedCode{
+                    binary::LocalsList{},
+                    binary::UnpackedExpression{binary::InstructionList{
+                        At{loc25, binary::Instruction{At{loc26, Opcode::Nop}}},
+                        At{loc27, binary::Instruction{At{loc28, Opcode::End}}},
+                    }}}}},
+            // data_segments
+            {At{loc23,
+                binary::DataSegment{At{loc24, Index{0}},
+                                    binary_constant_expression, "hello"_su8}}},
+        }},
+     At{loc1,
+        text::Module{
+            // (type (func))
+            text::ModuleItem{At{loc2, text::TypeEntry{nullopt, {}}}},
+            // (import "m" "n" (func (type 0)))
+            text::ModuleItem{At{
+                loc3,
+                text::Import{At{loc4, text::Text{"\"m\"", 1}},
+                             At{loc5, text::Text{"\"n\"", 1}},
+                             text::FunctionDesc{
+                                 nullopt, At{loc6, text::Var{Index{0}}}, {}}}}},
+            // (event)
+            text::ModuleItem{
+                At{loc12,
+                   text::Event{
+                       text::EventDesc{
+                           nullopt,
+                           At{loc13,
+                              text::EventType{
+                                  EventAttribute::Exception,
+                                  text::FunctionTypeUse{
+                                      At{loc14, text::Var{Index{0}}}, {}}}}},
+                       {}}}},
+            // (global i32 i32.const 0)
+            text::ModuleItem{At{
+                loc11, text::Global{text::GlobalDesc{nullopt, text_global_type},
+                                    text_constant_expression,
+                                    {}}}},
+            // (memory 0)
+            text::ModuleItem{
+                At{loc10,
+                   text::Memory{text::MemoryDesc{nullopt, memory_type}, {}}}},
+            // (table 0 funcref)
+            text::ModuleItem{
+                At{loc9,
+                   text::Table{text::TableDesc{nullopt, text_table_type}, {}}}},
+            // (start 0)
+            text::ModuleItem{
+                At{loc18, text::Start{At{loc19, text::Var{Index{0}}}}}},
+            // (func (type 0) nop)
+            text::ModuleItem{
+                At{loc7,
+                   text::Function{
+                       text::FunctionDesc{
+                           nullopt, At{loc8, text::Var{Index{0}}}, {}},
+                       {},
+                       {At{loc25, text::Instruction{At{loc26, Opcode::Nop}}},
+                        At{loc27, text::Instruction{At{loc28, Opcode::End}}}},
+                       {}}}},
+            // (elem (i32.const 0) func 0)
+            text::ModuleItem{
+                At{loc20,
+                   text::ElementSegment{
+                       nullopt, At{loc21, text::Var{Index{0}}},
+                       text_constant_expression,
+                       text::ElementList{text::ElementListWithVars{
+                           external_kind, {At{loc22, text::Var{Index{0}}}}}}}}},
+            // (export "e" (func 0))
+            text::ModuleItem{
+                At{loc15, text::Export{external_kind,
+                                       At{loc16, text::Text{"\"e\""_sv, 1}},
+                                       At{loc17, text::Var{Index{0}}}}}},
+            // (data (i32.const 0) "hello")
+            text::ModuleItem{
+                At{loc23,
+                   text::DataSegment{
+                       nullopt, At{loc24, text::Var{Index{0}}},
+                       text_constant_expression,
+                       text::TextList{text::Text{"\"hello\""_sv, 5}}}}},
+        }});
 }

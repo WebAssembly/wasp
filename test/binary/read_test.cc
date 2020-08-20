@@ -124,8 +124,8 @@ TEST_F(BinaryReadTest, BlockType_multi_value) {
        "\x01"_su8);
 
   context.features.enable_multi_value();
-  OK(Read<BlockType>, BlockType{MakeAt("\x01"_su8, Index{1})}, "\x01"_su8);
-  OK(Read<BlockType>, BlockType{MakeAt("\xc0\x03"_su8, Index{448})},
+  OK(Read<BlockType>, BlockType{At{"\x01"_su8, Index{1}}}, "\x01"_su8);
+  OK(Read<BlockType>, BlockType{At{"\xc0\x03"_su8, Index{448}}},
      "\xc0\x03"_su8);
 }
 
@@ -148,9 +148,8 @@ TEST_F(BinaryReadTest, BlockType_Unknown) {
 
 TEST_F(BinaryReadTest, BrOnExnImmediate) {
   OK(Read<BrOnExnImmediate>,
-       BrOnExnImmediate{MakeAt("\x00"_su8, Index{0}),
-                        MakeAt("\x00"_su8, Index{0})},
-       "\x00\x00"_su8);
+     BrOnExnImmediate{At{"\x00"_su8, Index{0}}, At{"\x00"_su8, Index{0}}},
+     "\x00\x00"_su8);
 }
 
 TEST_F(BinaryReadTest, BrOnExnImmediate_PastEnd) {
@@ -163,13 +162,12 @@ TEST_F(BinaryReadTest, BrOnExnImmediate_PastEnd) {
 }
 
 TEST_F(BinaryReadTest, BrTableImmediate) {
-  OK(Read<BrTableImmediate>, BrTableImmediate{{}, MakeAt("\x00"_su8, Index{0})},
+  OK(Read<BrTableImmediate>, BrTableImmediate{{}, At{"\x00"_su8, Index{0}}},
      "\x00\x00"_su8);
 
   OK(Read<BrTableImmediate>,
-     BrTableImmediate{
-         {MakeAt("\x01"_su8, Index{1}), MakeAt("\x02"_su8, Index{2})},
-         MakeAt("\x03"_su8, Index{3})},
+     BrTableImmediate{{At{"\x01"_su8, Index{1}}, At{"\x02"_su8, Index{2}}},
+                      At{"\x03"_su8, Index{3}}},
      "\x02\x01\x02\x03"_su8);
 }
 
@@ -212,12 +210,11 @@ TEST_F(BinaryReadTest, ReadBytes_Fail) {
 
 TEST_F(BinaryReadTest, CallIndirectImmediate) {
   OK(Read<CallIndirectImmediate>,
-     CallIndirectImmediate{MakeAt("\x01"_su8, Index{1}),
-                           MakeAt("\x00"_su8, Index{0})},
+     CallIndirectImmediate{At{"\x01"_su8, Index{1}}, At{"\x00"_su8, Index{0}}},
      "\x01\x00"_su8);
   OK(Read<CallIndirectImmediate>,
-     CallIndirectImmediate{MakeAt("\x80\x01"_su8, Index{128}),
-                           MakeAt("\x00"_su8, Index{0})},
+     CallIndirectImmediate{At{"\x80\x01"_su8, Index{128}},
+                           At{"\x00"_su8, Index{0}}},
      "\x80\x01\x00"_su8);
 }
 
@@ -241,20 +238,20 @@ TEST_F(BinaryReadTest, CallIndirectImmediate_PastEnd) {
 
 TEST_F(BinaryReadTest, Code) {
   // Empty body. This will fail validation, but can still be read.
-  OK(Read<Code>, Code{{}, MakeAt(""_su8, ""_expr)}, "\x01\x00"_su8);
+  OK(Read<Code>, Code{{}, At{""_su8, ""_expr}}, "\x01\x00"_su8);
 
   // Smallest valid empty body.
-  OK(Read<Code>, Code{{}, MakeAt("\x0b"_su8, "\x0b"_expr)}, "\x02\x00\x0b"_su8);
+  OK(Read<Code>, Code{{}, At{"\x0b"_su8, "\x0b"_expr}}, "\x02\x00\x0b"_su8);
 
   // (func
   //   (local i32 i32 i64 i64 i64)
   //   (nop))
   OK(Read<Code>,
-     Code{{MakeAt("\x02\x7f"_su8, Locals{MakeAt("\x02"_su8, Index{2}),
-                                         MakeAt("\x7f"_su8, VT_I32)}),
-           MakeAt("\x03\x7e"_su8, Locals{MakeAt("\x03"_su8, Index{3}),
-                                         MakeAt("\x7e"_su8, VT_I64)})},
-          MakeAt("\x01\x0b"_su8, "\x01\x0b"_expr)},
+     Code{{At{"\x02\x7f"_su8,
+              Locals{At{"\x02"_su8, Index{2}}, At{"\x7f"_su8, VT_I32}}},
+           At{"\x03\x7e"_su8,
+              Locals{At{"\x03"_su8, Index{3}}, At{"\x7e"_su8, VT_I64}}}},
+          At{"\x01\x0b"_su8, "\x01\x0b"_expr}},
      "\x07\x02\x02\x7f\x03\x7e\x01\x0b"_su8);
 }
 
@@ -287,47 +284,45 @@ TEST_F(BinaryReadTest, Code_TooManyLocals) {
 TEST_F(BinaryReadTest, ConstantExpression) {
   // i32.const
   OK(Read<ConstantExpression>,
-     ConstantExpression{MakeAt("\x41\x00"_su8,
-                               Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                                           MakeAt("\x00"_su8, s32{0})})},
+     ConstantExpression{
+         At{"\x41\x00"_su8, Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                        At{"\x00"_su8, s32{0}}}}},
      "\x41\x00\x0b"_su8);
 
   // i64.const
   OK(Read<ConstantExpression>,
      ConstantExpression{
-         MakeAt("\x42\x80\x80\x80\x80\x80\x01"_su8,
-                Instruction{
-                    MakeAt("\x42"_su8, Opcode::I64Const),
-                    MakeAt("\x80\x80\x80\x80\x80\x01"_su8, s64{34359738368})})},
+         At{"\x42\x80\x80\x80\x80\x80\x01"_su8,
+            Instruction{At{"\x42"_su8, Opcode::I64Const},
+                        At{"\x80\x80\x80\x80\x80\x01"_su8, s64{34359738368}}}}},
      "\x42\x80\x80\x80\x80\x80\x01\x0b"_su8);
 
   // f32.const
   OK(Read<ConstantExpression>,
-     ConstantExpression{
-         MakeAt("\x43\x00\x00\x00\x00"_su8,
-                Instruction{MakeAt("\x43"_su8, Opcode::F32Const),
-                            MakeAt("\x00\x00\x00\x00"_su8, f32{0})})},
+     ConstantExpression{At{"\x43\x00\x00\x00\x00"_su8,
+                           Instruction{At{"\x43"_su8, Opcode::F32Const},
+                                       At{"\x00\x00\x00\x00"_su8, f32{0}}}}},
      "\x43\x00\x00\x00\x00\x0b"_su8);
 
   // f64.const
   OK(Read<ConstantExpression>,
-     ConstantExpression{MakeAt(
-         "\x44\x00\x00\x00\x00\x00\x00\x00\x00"_su8,
-         Instruction{MakeAt("\x44"_su8, Opcode::F64Const),
-                     MakeAt("\x00\x00\x00\x00\x00\x00\x00\x00"_su8, f64{0})})},
+     ConstantExpression{
+         At{"\x44\x00\x00\x00\x00\x00\x00\x00\x00"_su8,
+            Instruction{At{"\x44"_su8, Opcode::F64Const},
+                        At{"\x00\x00\x00\x00\x00\x00\x00\x00"_su8, f64{0}}}}},
      "\x44\x00\x00\x00\x00\x00\x00\x00\x00\x0b"_su8);
 
   // global.get
   OK(Read<ConstantExpression>,
-     ConstantExpression{MakeAt(
-         "\x23\x00"_su8, Instruction{MakeAt("\x23"_su8, Opcode::GlobalGet),
-                                     MakeAt("\x00"_su8, Index{0})})},
+     ConstantExpression{
+         At{"\x23\x00"_su8, Instruction{At{"\x23"_su8, Opcode::GlobalGet},
+                                        At{"\x00"_su8, Index{0}}}}},
      "\x23\x00\x0b"_su8);
 
   // Other instructions are invalid, but not malformed.
   OK(Read<ConstantExpression>,
      ConstantExpression{
-         MakeAt("\x01"_su8, Instruction{MakeAt("\x01"_su8, Opcode::Nop)})},
+         At{"\x01"_su8, Instruction{At{"\x01"_su8, Opcode::Nop}}}},
      "\x01\x0b"_su8);
 }
 
@@ -347,43 +342,43 @@ TEST_F(BinaryReadTest, ConstantExpression_ReferenceTypes) {
   // ref.null
   OK(Read<ConstantExpression>,
      ConstantExpression{
-         MakeAt("\xd0\x70"_su8, Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
-                                            MakeAt("\x70"_su8, HT_Func)})},
+         At{"\xd0\x70"_su8, Instruction{At{"\xd0"_su8, Opcode::RefNull},
+                                        At{"\x70"_su8, HT_Func}}}},
      "\xd0\x70\x0b"_su8);
 
   // ref.func
   OK(Read<ConstantExpression>,
      ConstantExpression{
-         MakeAt("\xd2\x00"_su8, Instruction{MakeAt("\xd2"_su8, Opcode::RefFunc),
-                                            MakeAt("\x00"_su8, Index{0})})},
+         At{"\xd2\x00"_su8, Instruction{At{"\xd2"_su8, Opcode::RefFunc},
+                                        At{"\x00"_su8, Index{0}}}}},
      "\xd2\x00\x0b"_su8);
 }
 
 TEST_F(BinaryReadTest, ConstantExpression_NoEnd) {
   // i32.const
   Fail(Read<ConstantExpression>,
-     {{0, "constant expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
-     "\x41\x00"_su8);
+       {{0, "constant expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
+       "\x41\x00"_su8);
 
   // i64.const
   Fail(Read<ConstantExpression>,
-     {{0, "constant expression"}, {7, "opcode"}, {7, "Unable to read u8"}},
-     "\x42\x80\x80\x80\x80\x80\x01"_su8);
+       {{0, "constant expression"}, {7, "opcode"}, {7, "Unable to read u8"}},
+       "\x42\x80\x80\x80\x80\x80\x01"_su8);
 
   // f32.const
   Fail(Read<ConstantExpression>,
-     {{0, "constant expression"}, {5, "opcode"}, {5, "Unable to read u8"}},
-     "\x43\x00\x00\x00\x00"_su8);
+       {{0, "constant expression"}, {5, "opcode"}, {5, "Unable to read u8"}},
+       "\x43\x00\x00\x00\x00"_su8);
 
   // f64.const
   Fail(Read<ConstantExpression>,
-     {{0, "constant expression"}, {9, "opcode"}, {9, "Unable to read u8"}},
-     "\x44\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
+       {{0, "constant expression"}, {9, "opcode"}, {9, "Unable to read u8"}},
+       "\x44\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
 
   // global.get
   Fail(Read<ConstantExpression>,
-     {{0, "constant expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
-     "\x23\x00"_su8);
+       {{0, "constant expression"}, {2, "opcode"}, {2, "Unable to read u8"}},
+       "\x23\x00"_su8);
 }
 
 TEST_F(BinaryReadTest, ConstantExpression_TooShort) {
@@ -395,10 +390,9 @@ TEST_F(BinaryReadTest, ConstantExpression_TooLong) {
   // An instruction sequence of length > 1 is invalid, but not malformed.
   OK(Read<ConstantExpression>,
      ConstantExpression{InstructionList{
-         MakeAt("\x41\x00"_su8,
-                Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                            MakeAt("\x00"_su8, s32{0})}),
-         MakeAt("\x01"_su8, Instruction{MakeAt("\x01"_su8, Opcode::Nop)}),
+         At{"\x41\x00"_su8, Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                        At{"\x00"_su8, s32{0}}}},
+         At{"\x01"_su8, Instruction{At{"\x01"_su8, Opcode::Nop}}},
      }},
      "\x41\x00\x01\x0b"_su8);
 }
@@ -427,11 +421,11 @@ auto ReadTableCopyImmediate_ForTesting(SpanU8* data, Context& context)
 
 TEST_F(BinaryReadTest, CopyImmediate) {
   OK(ReadMemoryCopyImmediate_ForTesting,
-     CopyImmediate{MakeAt("\x00"_su8, Index{0}), MakeAt("\x00"_su8, Index{0})},
+     CopyImmediate{At{"\x00"_su8, Index{0}}, At{"\x00"_su8, Index{0}}},
      "\x00\x00"_su8);
 
   OK(ReadTableCopyImmediate_ForTesting,
-     CopyImmediate{MakeAt("\x00"_su8, Index{0}), MakeAt("\x00"_su8, Index{0})},
+     CopyImmediate{At{"\x00"_su8, Index{0}}, At{"\x00"_su8, Index{0}}},
      "\x00\x00"_su8);
 }
 
@@ -483,13 +477,11 @@ TEST_F(BinaryReadTest, CopyImmediate_Table_reference_types) {
   context.features.enable_reference_types();
 
   OK(ReadTableCopyImmediate_ForTesting,
-     CopyImmediate{MakeAt("\x80\x01"_su8, Index{128}),
-                   MakeAt("\x01"_su8, Index{1})},
+     CopyImmediate{At{"\x80\x01"_su8, Index{128}}, At{"\x01"_su8, Index{1}}},
      "\x80\x01\x01"_su8);
 
   OK(ReadTableCopyImmediate_ForTesting,
-     CopyImmediate{MakeAt("\x01"_su8, Index{1}),
-                   MakeAt("\x80\x01"_su8, Index{128})},
+     CopyImmediate{At{"\x01"_su8, Index{1}}, At{"\x80\x01"_su8, Index{128}}},
      "\x01\x80\x01"_su8);
 }
 
@@ -508,7 +500,6 @@ TEST_F(BinaryReadTest, CopyImmediate_Memory_reference_types) {
         {0, "Expected reserved byte 0, got 1"}},
        "\x01\x80\x01"_su8);
 }
-
 
 TEST_F(BinaryReadTest, ShuffleImmediate) {
   OK(Read<ShuffleImmediate>,
@@ -545,13 +536,13 @@ TEST_F(BinaryReadTest, ReadCount_PastEnd) {
 
 TEST_F(BinaryReadTest, DataSegment_MVP) {
   OK(Read<DataSegment>,
-     DataSegment{MakeAt("\x01"_su8, Index{1}),
-                 MakeAt("\x42\x01\x0b"_su8,
-                        ConstantExpression{MakeAt(
-                            "\x42\x01"_su8,
-                            Instruction{MakeAt("\x42"_su8, Opcode::I64Const),
-                                        MakeAt("\x01"_su8, s64{1})})}),
-                 MakeAt("\x04wxyz"_su8, "wxyz"_su8)},
+     DataSegment{
+         At{"\x01"_su8, Index{1}},
+         At{"\x42\x01\x0b"_su8,
+            ConstantExpression{
+                At{"\x42\x01"_su8, Instruction{At{"\x42"_su8, Opcode::I64Const},
+                                               At{"\x01"_su8, s64{1}}}}}},
+         At{"\x04wxyz"_su8, "wxyz"_su8}},
      "\x01\x42\x01\x0b\x04wxyz"_su8);
 }
 
@@ -580,17 +571,17 @@ TEST_F(BinaryReadTest, DataSegment_MVP_PastEnd) {
 TEST_F(BinaryReadTest, DataSegment_BulkMemory) {
   context.features.enable_bulk_memory();
 
-  OK(Read<DataSegment>, DataSegment{MakeAt("\x04wxyz"_su8, "wxyz"_su8)},
+  OK(Read<DataSegment>, DataSegment{At{"\x04wxyz"_su8, "wxyz"_su8}},
      "\x01\x04wxyz"_su8);
 
   OK(Read<DataSegment>,
-     DataSegment{MakeAt("\x01"_su8, Index{1}),
-                 MakeAt("\x41\x02\x0b"_su8,
-                        ConstantExpression{MakeAt(
-                            "\x41\x02"_su8,
-                            Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                                        MakeAt("\x02"_su8, s32{2})})}),
-                 MakeAt("\x03xyz"_su8, "xyz"_su8)},
+     DataSegment{
+         At{"\x01"_su8, Index{1}},
+         At{"\x41\x02\x0b"_su8,
+            ConstantExpression{
+                At{"\x41\x02"_su8, Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                               At{"\x02"_su8, s32{2}}}}}},
+         At{"\x03xyz"_su8, "xyz"_su8}},
      "\x02\x01\x41\x02\x0b\x03xyz"_su8);
 }
 
@@ -644,21 +635,21 @@ TEST_F(BinaryReadTest, ElementExpression) {
   // ref.null
   OK(Read<ElementExpression>,
      ElementExpression{
-         MakeAt("\xd0\x70"_su8, Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
-                                            MakeAt("\x70"_su8, HT_Func)})},
+         At{"\xd0\x70"_su8, Instruction{At{"\xd0"_su8, Opcode::RefNull},
+                                        At{"\x70"_su8, HT_Func}}}},
      "\xd0\x70\x0b"_su8);
 
   // ref.func 2
   OK(Read<ElementExpression>,
      ElementExpression{
-         MakeAt("\xd2\x02"_su8, Instruction{MakeAt("\xd2"_su8, Opcode::RefFunc),
-                                            MakeAt("\x02"_su8, Index{2})})},
+         At{"\xd2\x02"_su8, Instruction{At{"\xd2"_su8, Opcode::RefFunc},
+                                        At{"\x02"_su8, Index{2}}}}},
      "\xd2\x02\x0b"_su8);
 
   // Other instructions are invalid, but not malformed.
   OK(Read<ElementExpression>,
      ElementExpression{
-         MakeAt("\x01"_su8, Instruction{MakeAt("\x01"_su8, Opcode::Nop)})},
+         At{"\x01"_su8, Instruction{At{"\x01"_su8, Opcode::Nop}}}},
      "\x01\x0b"_su8);
 }
 
@@ -688,9 +679,9 @@ TEST_F(BinaryReadTest, ElementExpression_TooLong) {
 
   OK(Read<ElementExpression>,
      ElementExpression{InstructionList{
-         MakeAt("\xd0\x70"_su8, Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
-                                            MakeAt("\x70"_su8, HT_Func)}),
-         MakeAt("\x01"_su8, Instruction{MakeAt("\x01"_su8, Opcode::Nop)}),
+         At{"\xd0\x70"_su8, Instruction{At{"\xd0"_su8, Opcode::RefNull},
+                                        At{"\x70"_su8, HT_Func}}},
+         At{"\x01"_su8, Instruction{At{"\x01"_su8, Opcode::Nop}}},
      }},
      "\xd0\x70\x01\x0b"_su8);
 }
@@ -713,16 +704,16 @@ TEST_F(BinaryReadTest, ElementExpression_PastEnd) {
 
 TEST_F(BinaryReadTest, ElementSegment_MVP) {
   OK(Read<ElementSegment>,
-     ElementSegment{MakeAt("\x00"_su8, Index{0}),
-                    MakeAt("\x41\x01\x0b"_su8,
-                           ConstantExpression{MakeAt(
-                               "\x41\x01"_su8,
-                               Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                                           MakeAt("\x01"_su8, s32{1})})}),
-                    ElementListWithIndexes{ExternalKind::Function,
-                                           {MakeAt("\x01"_su8, Index{1}),
-                                            MakeAt("\x02"_su8, Index{2}),
-                                            MakeAt("\x03"_su8, Index{3})}}},
+     ElementSegment{
+         At{"\x00"_su8, Index{0}},
+         At{"\x41\x01\x0b"_su8,
+            ConstantExpression{
+                At{"\x41\x01"_su8, Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                               At{"\x01"_su8, s32{1}}}}}},
+         ElementListWithIndexes{
+             ExternalKind::Function,
+             {At{"\x01"_su8, Index{1}}, At{"\x02"_su8, Index{2}},
+              At{"\x03"_su8, Index{3}}}}},
      "\x00\x41\x01\x0b\x03\x01\x02\x03"_su8);
 }
 
@@ -752,79 +743,74 @@ TEST_F(BinaryReadTest, ElementSegment_BulkMemory) {
 
   // Flags == 1: Passive, index list
   OK(Read<ElementSegment>,
-     ElementSegment{
-         SegmentType::Passive,
-         ElementListWithIndexes{
-             MakeAt("\x00"_su8, ExternalKind::Function),
-             {MakeAt("\x01"_su8, Index{1}), MakeAt("\x02"_su8, Index{2})}}},
+     ElementSegment{SegmentType::Passive,
+                    ElementListWithIndexes{
+                        At{"\x00"_su8, ExternalKind::Function},
+                        {At{"\x01"_su8, Index{1}}, At{"\x02"_su8, Index{2}}}}},
      "\x01\x00\x02\x01\x02"_su8);
 
   // Flags == 2: Active, table index, index list
   OK(Read<ElementSegment>,  //*
      ElementSegment{
-         MakeAt("\x01"_su8, Index{1}),
-         MakeAt("\x41\x02\x0b"_su8,
-                ConstantExpression{
-                    MakeAt("\x41\x02"_su8,
-                           Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                                       MakeAt("\x02"_su8, s32{2})})}),
+         At{"\x01"_su8, Index{1}},
+         At{"\x41\x02\x0b"_su8,
+            ConstantExpression{
+                At{"\x41\x02"_su8, Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                               At{"\x02"_su8, s32{2}}}}}},
          ElementListWithIndexes{
-             MakeAt("\x00"_su8, ExternalKind::Function),
-             {MakeAt("\x03"_su8, Index{3}), MakeAt("\x04"_su8, Index{4})}}},
+             At{"\x00"_su8, ExternalKind::Function},
+             {At{"\x03"_su8, Index{3}}, At{"\x04"_su8, Index{4}}}}},
      "\x02\x01\x41\x02\x0b\x00\x02\x03\x04"_su8);
 
   // Flags == 4: Active (function only), table 0, expression list
   OK(Read<ElementSegment>,
      ElementSegment{
          Index{0},
-         MakeAt("\x41\x05\x0b"_su8,
-                ConstantExpression{
-                    MakeAt("\x41\x05"_su8,
-                           Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                                       MakeAt("\x05"_su8, s32{5})})}),
+         At{"\x41\x05\x0b"_su8,
+            ConstantExpression{
+                At{"\x41\x05"_su8, Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                               At{"\x05"_su8, s32{5}}}}}},
          ElementListWithExpressions{
              ReferenceType::Funcref_NoLocation(),
-             {MakeAt("\xd2\x06\x0b"_su8,
-                     ElementExpression{
-                         MakeAt("\xd2\x06"_su8,
-                                Instruction{MakeAt("\xd2"_su8, Opcode::RefFunc),
-                                            MakeAt("\x06"_su8, Index{6})})})}}},
+             {At{"\xd2\x06\x0b"_su8,
+                 ElementExpression{
+                     At{"\xd2\x06"_su8,
+                        Instruction{At{"\xd2"_su8, Opcode::RefFunc},
+                                    At{"\x06"_su8, Index{6}}}}}}}}},
      "\x04\x41\x05\x0b\x01\xd2\x06\x0b"_su8);
 
   // Flags == 5: Passive, expression list
   OK(Read<ElementSegment>,
-     ElementSegment{
-         SegmentType::Passive,
-         ElementListWithExpressions{
-             MakeAt("\x70"_su8, RT_Funcref),
-             {MakeAt("\xd2\x07\x0b"_su8,
-                     ElementExpression{
-                         MakeAt("\xd2\x07"_su8,
-                                Instruction{MakeAt("\xd2"_su8, Opcode::RefFunc),
-                                            MakeAt("\x07"_su8, Index{7})})}),
-              MakeAt("\xd0\x70\x0b"_su8,
-                     ElementExpression{
-                         MakeAt("\xd0\x70"_su8,
-                                Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
-                                            MakeAt("\x70"_su8, HT_Func)})})}}},
+     ElementSegment{SegmentType::Passive,
+                    ElementListWithExpressions{
+                        At{"\x70"_su8, RT_Funcref},
+                        {At{"\xd2\x07\x0b"_su8,
+                            ElementExpression{
+                                At{"\xd2\x07"_su8,
+                                   Instruction{At{"\xd2"_su8, Opcode::RefFunc},
+                                               At{"\x07"_su8, Index{7}}}}}},
+                         At{"\xd0\x70\x0b"_su8,
+                            ElementExpression{
+                                At{"\xd0\x70"_su8,
+                                   Instruction{At{"\xd0"_su8, Opcode::RefNull},
+                                               At{"\x70"_su8, HT_Func}}}}}}}},
      "\x05\x70\x02\xd2\x07\x0b\xd0\x70\x0b"_su8);
 
   // Flags == 6: Active, table index, expression list
   OK(Read<ElementSegment>,  //*
      ElementSegment{
-         MakeAt("\x02"_su8, Index{2}),
-         MakeAt("\x41\x08\x0b"_su8,
-                ConstantExpression{
-                    MakeAt("\x41\x08"_su8,
-                           Instruction{MakeAt("\x41"_su8, Opcode::I32Const),
-                                       MakeAt("\x08"_su8, s32{8})})}),
+         At{"\x02"_su8, Index{2}},
+         At{"\x41\x08\x0b"_su8,
+            ConstantExpression{
+                At{"\x41\x08"_su8, Instruction{At{"\x41"_su8, Opcode::I32Const},
+                                               At{"\x08"_su8, s32{8}}}}}},
          ElementListWithExpressions{
-             MakeAt("\x70"_su8, RT_Funcref),
-             {MakeAt("\xd0\x70\x0b"_su8,
-                     ElementExpression{
-                         MakeAt("\xd0\x70"_su8,
-                                Instruction{MakeAt("\xd0"_su8, Opcode::RefNull),
-                                            MakeAt("\x70"_su8, HT_Func)})})}}},
+             At{"\x70"_su8, RT_Funcref},
+             {At{"\xd0\x70\x0b"_su8,
+                 ElementExpression{
+                     At{"\xd0\x70"_su8,
+                        Instruction{At{"\xd0"_su8, Opcode::RefNull},
+                                    At{"\x70"_su8, HT_Func}}}}}}}},
      "\x06\x02\x41\x08\x0b\x70\x01\xd0\x70\x0b"_su8);
 }
 
@@ -867,9 +853,10 @@ TEST_F(BinaryReadTest, ElementSegment_BulkMemory_PastEnd) {
        "\x04"_su8);
 
   // Flags == 5: Passive, expression list
-  Fail(Read<ElementSegment>,
-       {{0, "element segment"}, {1, "reference type"}, {1, "Unable to read u8"}},
-       "\x05"_su8);
+  Fail(
+      Read<ElementSegment>,
+      {{0, "element segment"}, {1, "reference type"}, {1, "Unable to read u8"}},
+      "\x05"_su8);
 
   // Flags == 6: Active, table index, expression list
   Fail(Read<ElementSegment>,
@@ -899,7 +886,6 @@ TEST_F(BinaryReadTest, ReferenceType_Exceptions) {
   OK(Read<ReferenceType>, RT_Exnref, "\x68"_su8);
 }
 
-
 TEST_F(BinaryReadTest, ReferenceType_Unknown) {
   Fail(Read<ReferenceType>,
        {{0, "reference type"}, {1, "Unknown reference type: 0"}}, "\x00"_su8);
@@ -912,9 +898,9 @@ TEST_F(BinaryReadTest, ReferenceType_Unknown) {
 
 TEST_F(BinaryReadTest, Event) {
   OK(Read<Event>,
-     Event{MakeAt("\x00\x01"_su8,
-                  EventType{MakeAt("\x00"_su8, EventAttribute::Exception),
-                            MakeAt("\x01"_su8, Index{1})})},
+     Event{
+         At{"\x00\x01"_su8, EventType{At{"\x00"_su8, EventAttribute::Exception},
+                                      At{"\x01"_su8, Index{1}}}}},
      "\x00\x01"_su8);
 }
 
@@ -937,27 +923,27 @@ TEST_F(BinaryReadTest, Event_PastEnd) {
 
 TEST_F(BinaryReadTest, EventType) {
   OK(Read<EventType>,
-     EventType{MakeAt("\x00"_su8, EventAttribute::Exception),
-               MakeAt("\x01"_su8, Index{1})},
+     EventType{At{"\x00"_su8, EventAttribute::Exception},
+               At{"\x01"_su8, Index{1}}},
      "\x00\x01"_su8);
 }
 
 TEST_F(BinaryReadTest, Export) {
   OK(Read<Export>,
-     Export{MakeAt("\x00"_su8, ExternalKind::Function),
-            MakeAt("\x02hi"_su8, "hi"_sv), MakeAt("\x03"_su8, Index{3})},
+     Export{At{"\x00"_su8, ExternalKind::Function}, At{"\x02hi"_su8, "hi"_sv},
+            At{"\x03"_su8, Index{3}}},
      "\x02hi\x00\x03"_su8);
   OK(Read<Export>,
-     Export{MakeAt("\x01"_su8, ExternalKind::Table), MakeAt("\x00"_su8, ""_sv),
-            MakeAt("\xe8\x07"_su8, Index{1000})},
+     Export{At{"\x01"_su8, ExternalKind::Table}, At{"\x00"_su8, ""_sv},
+            At{"\xe8\x07"_su8, Index{1000}}},
      "\x00\x01\xe8\x07"_su8);
   OK(Read<Export>,
-     Export{MakeAt("\x02"_su8, ExternalKind::Memory),
-            MakeAt("\x03mem"_su8, "mem"_sv), MakeAt("\x00"_su8, Index{0})},
+     Export{At{"\x02"_su8, ExternalKind::Memory}, At{"\x03mem"_su8, "mem"_sv},
+            At{"\x00"_su8, Index{0}}},
      "\x03mem\x02\x00"_su8);
   OK(Read<Export>,
-     Export{MakeAt("\x03"_su8, ExternalKind::Global),
-            MakeAt("\x01g"_su8, "g"_sv), MakeAt("\x01"_su8, Index{1})},
+     Export{At{"\x03"_su8, ExternalKind::Global}, At{"\x01g"_su8, "g"_sv},
+            At{"\x01"_su8, Index{1}}},
      "\x01g\x03\x01"_su8);
 }
 
@@ -976,13 +962,13 @@ TEST_F(BinaryReadTest, Export_PastEnd) {
 
 TEST_F(BinaryReadTest, Export_exceptions) {
   Fail(Read<Export>,
-     {{0, "export"}, {2, "external kind"}, {3, "Unknown external kind: 4"}},
-     "\x01v\x04\x02"_su8);
+       {{0, "export"}, {2, "external kind"}, {3, "Unknown external kind: 4"}},
+       "\x01v\x04\x02"_su8);
 
   context.features.enable_exceptions();
   OK(Read<Export>,
-     Export{MakeAt("\x04"_su8, ExternalKind::Event),
-            MakeAt("\x01v"_su8, "v"_sv), MakeAt("\x02"_su8, Index{2})},
+     Export{At{"\x04"_su8, ExternalKind::Event}, At{"\x01v"_su8, "v"_sv},
+            At{"\x02"_su8, Index{2}}},
      "\x01v\x04\x02"_su8);
 }
 
@@ -995,7 +981,7 @@ TEST_F(BinaryReadTest, ExternalKind) {
 
 TEST_F(BinaryReadTest, ExternalKind_exceptions) {
   Fail(Read<ExternalKind>,
-     {{0, "external kind"}, {1, "Unknown external kind: 4"}}, "\x04"_su8);
+       {{0, "external kind"}, {1, "Unknown external kind: 4"}}, "\x04"_su8);
 
   context.features.enable_exceptions();
 
@@ -1059,7 +1045,7 @@ TEST_F(BinaryReadTest, F64_PastEnd) {
 }
 
 TEST_F(BinaryReadTest, Function) {
-  OK(Read<Function>, Function{MakeAt("\x01"_su8, Index{1})}, "\x01"_su8);
+  OK(Read<Function>, Function{At{"\x01"_su8, Index{1}}}, "\x01"_su8);
 }
 
 TEST_F(BinaryReadTest, Function_PastEnd) {
@@ -1070,8 +1056,8 @@ TEST_F(BinaryReadTest, Function_PastEnd) {
 TEST_F(BinaryReadTest, FunctionType) {
   OK(Read<FunctionType>, FunctionType{{}, {}}, "\x00\x00"_su8);
   OK(Read<FunctionType>,
-     FunctionType{{MakeAt("\x7f"_su8, VT_I32), MakeAt("\x7e"_su8, VT_I64)},
-                  {MakeAt("\x7c"_su8, VT_F64)}},
+     FunctionType{{At{"\x7f"_su8, VT_I32}, At{"\x7e"_su8, VT_I64}},
+                  {At{"\x7c"_su8, VT_F64}}},
      "\x02\x7f\x7e\x01\x7c"_su8);
 }
 
@@ -1107,14 +1093,12 @@ TEST_F(BinaryReadTest, Global) {
   // i32 global with i64.const constant expression. This will fail validation
   // but still can be successfully parsed.
   OK(Read<Global>,
-     Global{MakeAt("\x7f\x01"_su8,
-                   GlobalType{MakeAt("\x7f"_su8, VT_I32),
-                              MakeAt("\x01"_su8, Mutability::Var)}),
-            MakeAt("\x42\x00\x0b"_su8,
-                   ConstantExpression{
-                       MakeAt("\x42\x00"_su8,
-                              Instruction{MakeAt("\x42"_su8, Opcode::I64Const),
-                                          MakeAt("\x00"_su8, s64{0})})})},
+     Global{At{"\x7f\x01"_su8, GlobalType{At{"\x7f"_su8, VT_I32},
+                                          At{"\x01"_su8, Mutability::Var}}},
+            At{"\x42\x00\x0b"_su8,
+               ConstantExpression{At{
+                   "\x42\x00"_su8, Instruction{At{"\x42"_su8, Opcode::I64Const},
+                                               At{"\x00"_su8, s64{0}}}}}}},
      "\x7f\x01\x42\x00\x0b"_su8);
 }
 
@@ -1136,12 +1120,10 @@ TEST_F(BinaryReadTest, Global_PastEnd) {
 
 TEST_F(BinaryReadTest, GlobalType) {
   OK(Read<GlobalType>,
-     GlobalType{MakeAt("\x7f"_su8, VT_I32),
-                MakeAt("\x00"_su8, Mutability::Const)},
+     GlobalType{At{"\x7f"_su8, VT_I32}, At{"\x00"_su8, Mutability::Const}},
      "\x7f\x00"_su8);
   OK(Read<GlobalType>,
-     GlobalType{MakeAt("\x7d"_su8, VT_F32),
-                MakeAt("\x01"_su8, Mutability::Var)},
+     GlobalType{At{"\x7d"_su8, VT_F32}, At{"\x01"_su8, Mutability::Var}},
      "\x7d\x01"_su8);
 }
 
@@ -1157,53 +1139,51 @@ TEST_F(BinaryReadTest, GlobalType_PastEnd) {
 
 TEST_F(BinaryReadTest, Import) {
   OK(Read<Import>,
-     Import{MakeAt("\x01"
-                   "a"_su8,
-                   "a"_sv),
-            MakeAt("\x04"
-                   "func"_su8,
-                   "func"_sv),
-            MakeAt("\x0b"_su8, Index{11})},
+     Import{At{"\x01"
+               "a"_su8,
+               "a"_sv},
+            At{"\x04"
+               "func"_su8,
+               "func"_sv},
+            At{"\x0b"_su8, Index{11}}},
      "\x01"
      "a\x04"
      "func\x00\x0b"_su8);
 
   OK(Read<Import>,
-     Import{MakeAt("\x01"
-                   "b"_su8,
-                   "b"_sv),
-            MakeAt("\x05table"_su8, "table"_sv),
-            MakeAt("\x70\x00\x01"_su8,
-                   TableType{MakeAt("\x00\x01"_su8,
-                                    Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
-                                           MakeAt("\x00"_su8, Shared::No)}),
-                             MakeAt("\x70"_su8, RT_Funcref)})},
+     Import{
+         At{"\x01"
+            "b"_su8,
+            "b"_sv},
+         At{"\x05table"_su8, "table"_sv},
+         At{"\x70\x00\x01"_su8,
+            TableType{At{"\x00\x01"_su8, Limits{At{"\x01"_su8, u32{1}}, nullopt,
+                                                At{"\x00"_su8, Shared::No}}},
+                      At{"\x70"_su8, RT_Funcref}}}},
      "\x01"
      "b\x05table\x01\x70\x00\x01"_su8);
 
   OK(Read<Import>,
-     Import{MakeAt("\x01"
-                   "c"_su8,
-                   "c"_sv),
-            MakeAt("\x06memory"_su8, "memory"_sv),
-            MakeAt("\x01\x00\x02"_su8,
-                   MemoryType{
-                       MakeAt("\x01\x00\x02"_su8,
-                              Limits{MakeAt("\x00"_su8, u32{0}),
-                                     MakeAt("\x02"_su8, u32{2}),
-                                     MakeAt("\x01"_su8, Shared::No)}),
-                   })},
+     Import{At{"\x01"
+               "c"_su8,
+               "c"_sv},
+            At{"\x06memory"_su8, "memory"_sv},
+            At{"\x01\x00\x02"_su8,
+               MemoryType{
+                   At{"\x01\x00\x02"_su8,
+                      Limits{At{"\x00"_su8, u32{0}}, At{"\x02"_su8, u32{2}},
+                             At{"\x01"_su8, Shared::No}}},
+               }}},
      "\x01"
      "c\x06memory\x02\x01\x00\x02"_su8);
 
   OK(Read<Import>,
-     Import{MakeAt("\x01"
-                   "d"_su8,
-                   "d"_sv),
-            MakeAt("\x06global"_su8, "global"_sv),
-            MakeAt("\x7f\x00"_su8,
-                   GlobalType{MakeAt("\x7f"_su8, VT_I32),
-                              MakeAt("\x00"_su8, Mutability::Const)})},
+     Import{At{"\x01"
+               "d"_su8,
+               "d"_sv},
+            At{"\x06global"_su8, "global"_sv},
+            At{"\x7f\x00"_su8, GlobalType{At{"\x7f"_su8, VT_I32},
+                                          At{"\x00"_su8, Mutability::Const}}}},
      "\x01\x64\x06global\x03\x7f\x00"_su8);
 }
 
@@ -1214,10 +1194,10 @@ TEST_F(BinaryReadTest, Import_exceptions) {
 
   context.features.enable_exceptions();
   OK(Read<Import>,
-     Import{MakeAt("\x01v"_su8, "v"_sv), MakeAt("\x06!event"_su8, "!event"_sv),
-            MakeAt("\x00\x02"_su8,
-                   EventType{MakeAt("\x00"_su8, EventAttribute::Exception),
-                             MakeAt("\x02"_su8, Index{2})})},
+     Import{
+         At{"\x01v"_su8, "v"_sv}, At{"\x06!event"_su8, "!event"_sv},
+         At{"\x00\x02"_su8, EventType{At{"\x00"_su8, EventAttribute::Exception},
+                                      At{"\x02"_su8, Index{2}}}}},
      "\x01v\x06!event\x04\x00\x02"_su8);
 }
 
@@ -1269,13 +1249,12 @@ TEST_F(BinaryReadTest, ImportType_PastEnd) {
 
 TEST_F(BinaryReadTest, IndirectNameAssoc) {
   OK(Read<IndirectNameAssoc>,
-     IndirectNameAssoc{MakeAt("\x64"_su8, Index{100}),
-                       {MakeAt("\x00\x04zero"_su8,
-                               NameAssoc{MakeAt("\x00"_su8, Index{0}),
-                                         MakeAt("\x04zero"_su8, "zero"_sv)}),
-                        MakeAt("\x01\x03one"_su8,
-                               NameAssoc{MakeAt("\x01"_su8, Index{1}),
-                                         MakeAt("\x03one"_su8, "one"_sv)})}},
+     IndirectNameAssoc{
+         At{"\x64"_su8, Index{100}},
+         {At{"\x00\x04zero"_su8, NameAssoc{At{"\x00"_su8, Index{0}},
+                                           At{"\x04zero"_su8, "zero"_sv}}},
+          At{"\x01\x03one"_su8, NameAssoc{At{"\x01"_su8, Index{1}},
+                                          At{"\x03one"_su8, "one"_sv}}}}},
      "\x64"             // Index.
      "\x02"             // Count.
      "\x00\x04zero"     // 0 "zero"
@@ -1314,21 +1293,19 @@ auto ReadTableInitImmediate_ForTesting(SpanU8* data, Context& context)
 
 TEST_F(BinaryReadTest, InitImmediate) {
   OK(ReadMemoryInitImmediate_ForTesting,
-     InitImmediate{MakeAt("\x01"_su8, Index{1}), MakeAt("\x00"_su8, Index{0})},
+     InitImmediate{At{"\x01"_su8, Index{1}}, At{"\x00"_su8, Index{0}}},
      "\x01\x00"_su8);
 
   OK(ReadMemoryInitImmediate_ForTesting,
-     InitImmediate{MakeAt("\x80\x01"_su8, Index{128}),
-                   MakeAt("\x00"_su8, Index{0})},
+     InitImmediate{At{"\x80\x01"_su8, Index{128}}, At{"\x00"_su8, Index{0}}},
      "\x80\x01\x00"_su8);
 
   OK(ReadTableInitImmediate_ForTesting,
-     InitImmediate{MakeAt("\x01"_su8, Index{1}), MakeAt("\x00"_su8, Index{0})},
+     InitImmediate{At{"\x01"_su8, Index{1}}, At{"\x00"_su8, Index{0}}},
      "\x01\x00"_su8);
 
   OK(ReadTableInitImmediate_ForTesting,
-     InitImmediate{MakeAt("\x80\x01"_su8, Index{128}),
-                   MakeAt("\x00"_su8, Index{0})},
+     InitImmediate{At{"\x80\x01"_su8, Index{128}}, At{"\x00"_su8, Index{0}}},
      "\x80\x01\x00"_su8);
 }
 
@@ -1368,11 +1345,11 @@ TEST_F(BinaryReadTest, InitImmediate_Table_reference_types) {
   context.features.enable_reference_types();
 
   OK(ReadTableInitImmediate_ForTesting,
-     InitImmediate{MakeAt("\x01"_su8, Index{1}), MakeAt("\x01"_su8, Index{1})},
+     InitImmediate{At{"\x01"_su8, Index{1}}, At{"\x01"_su8, Index{1}}},
      "\x01\x01"_su8);
   OK(ReadTableInitImmediate_ForTesting,
-     InitImmediate{MakeAt("\x80\x01"_su8, Index{128}),
-                   MakeAt("\x80\x01"_su8, Index{128})},
+     InitImmediate{At{"\x80\x01"_su8, Index{128}},
+                   At{"\x80\x01"_su8, Index{128}}},
      "\x80\x01\x80\x01"_su8);
 }
 
@@ -1394,205 +1371,203 @@ TEST_F(BinaryReadTest, InitImmediate_Memory_reference_types) {
 TEST_F(BinaryReadTest, PlainInstruction) {
   using MemArg = MemArgImmediate;
 
-  auto memarg = MakeAt("\x01\x02"_su8, MemArg{MakeAt("\x01"_su8, u32{1}),
-                                              MakeAt("\x02"_su8, u32{2})});
+  auto memarg = At{"\x01\x02"_su8,
+                   MemArg{At{"\x01"_su8, u32{1}}, At{"\x02"_su8, u32{2}}}};
 
-  OK(Read<I>, I{MakeAt("\x00"_su8, O::Unreachable)}, "\x00"_su8);
-  OK(Read<I>, I{MakeAt("\x01"_su8, O::Nop)}, "\x01"_su8);
-  OK(Read<I>, I{MakeAt("\x0c"_su8, O::Br), MakeAt("\x01"_su8, Index{1})},
+  OK(Read<I>, I{At{"\x00"_su8, O::Unreachable}}, "\x00"_su8);
+  OK(Read<I>, I{At{"\x01"_su8, O::Nop}}, "\x01"_su8);
+  OK(Read<I>, I{At{"\x0c"_su8, O::Br}, At{"\x01"_su8, Index{1}}},
      "\x0c\x01"_su8);
-  OK(Read<I>, I{MakeAt("\x0d"_su8, O::BrIf), MakeAt("\x02"_su8, Index{2})},
+  OK(Read<I>, I{At{"\x0d"_su8, O::BrIf}, At{"\x02"_su8, Index{2}}},
      "\x0d\x02"_su8);
   OK(Read<I>,
-     I{MakeAt("\x0e"_su8, O::BrTable),
-       MakeAt("\x03\x03\x04\x05\x06"_su8,
-              BrTableImmediate{
-                  {MakeAt("\x03"_su8, Index{3}), MakeAt("\x04"_su8, Index{4}),
-                   MakeAt("\x05"_su8, Index{5})},
-                  MakeAt("\x06"_su8, Index{6})})},
+     I{At{"\x0e"_su8, O::BrTable},
+       At{"\x03\x03\x04\x05\x06"_su8,
+          BrTableImmediate{{At{"\x03"_su8, Index{3}}, At{"\x04"_su8, Index{4}},
+                            At{"\x05"_su8, Index{5}}},
+                           At{"\x06"_su8, Index{6}}}}},
      "\x0e\x03\x03\x04\x05\x06"_su8);
-  OK(Read<I>, I{MakeAt("\x0f"_su8, O::Return)}, "\x0f"_su8);
-  OK(Read<I>, I{MakeAt("\x10"_su8, O::Call), MakeAt("\x07"_su8, Index{7})},
+  OK(Read<I>, I{At{"\x0f"_su8, O::Return}}, "\x0f"_su8);
+  OK(Read<I>, I{At{"\x10"_su8, O::Call}, At{"\x07"_su8, Index{7}}},
      "\x10\x07"_su8);
   OK(Read<I>,
-     I{MakeAt("\x11"_su8, O::CallIndirect),
-       MakeAt("\x08\x00"_su8,
-              CallIndirectImmediate{MakeAt("\x08"_su8, Index{8}),
-                                    MakeAt("\x00"_su8, Index{0})})},
+     I{At{"\x11"_su8, O::CallIndirect},
+       At{"\x08\x00"_su8, CallIndirectImmediate{At{"\x08"_su8, Index{8}},
+                                                At{"\x00"_su8, Index{0}}}}},
      "\x11\x08\x00"_su8);
-  OK(Read<I>, I{MakeAt("\x1a"_su8, O::Drop)}, "\x1a"_su8);
-  OK(Read<I>, I{MakeAt("\x1b"_su8, O::Select)}, "\x1b"_su8);
-  OK(Read<I>, I{MakeAt("\x20"_su8, O::LocalGet), MakeAt("\x05"_su8, Index{5})},
+  OK(Read<I>, I{At{"\x1a"_su8, O::Drop}}, "\x1a"_su8);
+  OK(Read<I>, I{At{"\x1b"_su8, O::Select}}, "\x1b"_su8);
+  OK(Read<I>, I{At{"\x20"_su8, O::LocalGet}, At{"\x05"_su8, Index{5}}},
      "\x20\x05"_su8);
-  OK(Read<I>, I{MakeAt("\x21"_su8, O::LocalSet), MakeAt("\x06"_su8, Index{6})},
+  OK(Read<I>, I{At{"\x21"_su8, O::LocalSet}, At{"\x06"_su8, Index{6}}},
      "\x21\x06"_su8);
-  OK(Read<I>, I{MakeAt("\x22"_su8, O::LocalTee), MakeAt("\x07"_su8, Index{7})},
+  OK(Read<I>, I{At{"\x22"_su8, O::LocalTee}, At{"\x07"_su8, Index{7}}},
      "\x22\x07"_su8);
-  OK(Read<I>, I{MakeAt("\x23"_su8, O::GlobalGet), MakeAt("\x08"_su8, Index{8})},
+  OK(Read<I>, I{At{"\x23"_su8, O::GlobalGet}, At{"\x08"_su8, Index{8}}},
      "\x23\x08"_su8);
-  OK(Read<I>, I{MakeAt("\x24"_su8, O::GlobalSet), MakeAt("\x09"_su8, Index{9})},
+  OK(Read<I>, I{At{"\x24"_su8, O::GlobalSet}, At{"\x09"_su8, Index{9}}},
      "\x24\x09"_su8);
-  OK(Read<I>, I{MakeAt("\x28"_su8, O::I32Load), memarg}, "\x28\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x29"_su8, O::I64Load), memarg}, "\x29\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x2a"_su8, O::F32Load), memarg}, "\x2a\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x2b"_su8, O::F64Load), memarg}, "\x2b\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x2c"_su8, O::I32Load8S), memarg}, "\x2c\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x2d"_su8, O::I32Load8U), memarg}, "\x2d\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x2e"_su8, O::I32Load16S), memarg}, "\x2e\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x2f"_su8, O::I32Load16U), memarg}, "\x2f\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x30"_su8, O::I64Load8S), memarg}, "\x30\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x31"_su8, O::I64Load8U), memarg}, "\x31\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x32"_su8, O::I64Load16S), memarg}, "\x32\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x33"_su8, O::I64Load16U), memarg}, "\x33\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x34"_su8, O::I64Load32S), memarg}, "\x34\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x35"_su8, O::I64Load32U), memarg}, "\x35\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x36"_su8, O::I32Store), memarg}, "\x36\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x37"_su8, O::I64Store), memarg}, "\x37\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x38"_su8, O::F32Store), memarg}, "\x38\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x39"_su8, O::F64Store), memarg}, "\x39\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x3a"_su8, O::I32Store8), memarg}, "\x3a\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x3b"_su8, O::I32Store16), memarg}, "\x3b\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x3c"_su8, O::I64Store8), memarg}, "\x3c\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x3d"_su8, O::I64Store16), memarg}, "\x3d\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x3e"_su8, O::I64Store32), memarg}, "\x3e\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\x3f"_su8, O::MemorySize), MakeAt("\x00"_su8, u8{0})},
+  OK(Read<I>, I{At{"\x28"_su8, O::I32Load}, memarg}, "\x28\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x29"_su8, O::I64Load}, memarg}, "\x29\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x2a"_su8, O::F32Load}, memarg}, "\x2a\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x2b"_su8, O::F64Load}, memarg}, "\x2b\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x2c"_su8, O::I32Load8S}, memarg}, "\x2c\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x2d"_su8, O::I32Load8U}, memarg}, "\x2d\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x2e"_su8, O::I32Load16S}, memarg}, "\x2e\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x2f"_su8, O::I32Load16U}, memarg}, "\x2f\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x30"_su8, O::I64Load8S}, memarg}, "\x30\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x31"_su8, O::I64Load8U}, memarg}, "\x31\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x32"_su8, O::I64Load16S}, memarg}, "\x32\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x33"_su8, O::I64Load16U}, memarg}, "\x33\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x34"_su8, O::I64Load32S}, memarg}, "\x34\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x35"_su8, O::I64Load32U}, memarg}, "\x35\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x36"_su8, O::I32Store}, memarg}, "\x36\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x37"_su8, O::I64Store}, memarg}, "\x37\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x38"_su8, O::F32Store}, memarg}, "\x38\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x39"_su8, O::F64Store}, memarg}, "\x39\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x3a"_su8, O::I32Store8}, memarg}, "\x3a\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x3b"_su8, O::I32Store16}, memarg}, "\x3b\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x3c"_su8, O::I64Store8}, memarg}, "\x3c\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x3d"_su8, O::I64Store16}, memarg}, "\x3d\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x3e"_su8, O::I64Store32}, memarg}, "\x3e\x01\x02"_su8);
+  OK(Read<I>, I{At{"\x3f"_su8, O::MemorySize}, At{"\x00"_su8, u8{0}}},
      "\x3f\x00"_su8);
-  OK(Read<I>, I{MakeAt("\x40"_su8, O::MemoryGrow), MakeAt("\x00"_su8, u8{0})},
+  OK(Read<I>, I{At{"\x40"_su8, O::MemoryGrow}, At{"\x00"_su8, u8{0}}},
      "\x40\x00"_su8);
-  OK(Read<I>, I{MakeAt("\x41"_su8, O::I32Const), MakeAt("\x00"_su8, s32{0})},
+  OK(Read<I>, I{At{"\x41"_su8, O::I32Const}, At{"\x00"_su8, s32{0}}},
      "\x41\x00"_su8);
-  OK(Read<I>, I{MakeAt("\x42"_su8, O::I64Const), MakeAt("\x00"_su8, s64{0})},
+  OK(Read<I>, I{At{"\x42"_su8, O::I64Const}, At{"\x00"_su8, s64{0}}},
      "\x42\x00"_su8);
   OK(Read<I>,
-     I{MakeAt("\x43"_su8, O::F32Const), MakeAt("\x00\x00\x00\x00"_su8, f32{0})},
+     I{At{"\x43"_su8, O::F32Const}, At{"\x00\x00\x00\x00"_su8, f32{0}}},
      "\x43\x00\x00\x00\x00"_su8);
   OK(Read<I>,
-     I{MakeAt("\x44"_su8, O::F64Const),
-       MakeAt("\x00\x00\x00\x00\x00\x00\x00\x00"_su8, f64{0})},
+     I{At{"\x44"_su8, O::F64Const},
+       At{"\x00\x00\x00\x00\x00\x00\x00\x00"_su8, f64{0}}},
      "\x44\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
-  OK(Read<I>, I{MakeAt("\x45"_su8, O::I32Eqz)}, "\x45"_su8);
-  OK(Read<I>, I{MakeAt("\x46"_su8, O::I32Eq)}, "\x46"_su8);
-  OK(Read<I>, I{MakeAt("\x47"_su8, O::I32Ne)}, "\x47"_su8);
-  OK(Read<I>, I{MakeAt("\x48"_su8, O::I32LtS)}, "\x48"_su8);
-  OK(Read<I>, I{MakeAt("\x49"_su8, O::I32LtU)}, "\x49"_su8);
-  OK(Read<I>, I{MakeAt("\x4a"_su8, O::I32GtS)}, "\x4a"_su8);
-  OK(Read<I>, I{MakeAt("\x4b"_su8, O::I32GtU)}, "\x4b"_su8);
-  OK(Read<I>, I{MakeAt("\x4c"_su8, O::I32LeS)}, "\x4c"_su8);
-  OK(Read<I>, I{MakeAt("\x4d"_su8, O::I32LeU)}, "\x4d"_su8);
-  OK(Read<I>, I{MakeAt("\x4e"_su8, O::I32GeS)}, "\x4e"_su8);
-  OK(Read<I>, I{MakeAt("\x4f"_su8, O::I32GeU)}, "\x4f"_su8);
-  OK(Read<I>, I{MakeAt("\x50"_su8, O::I64Eqz)}, "\x50"_su8);
-  OK(Read<I>, I{MakeAt("\x51"_su8, O::I64Eq)}, "\x51"_su8);
-  OK(Read<I>, I{MakeAt("\x52"_su8, O::I64Ne)}, "\x52"_su8);
-  OK(Read<I>, I{MakeAt("\x53"_su8, O::I64LtS)}, "\x53"_su8);
-  OK(Read<I>, I{MakeAt("\x54"_su8, O::I64LtU)}, "\x54"_su8);
-  OK(Read<I>, I{MakeAt("\x55"_su8, O::I64GtS)}, "\x55"_su8);
-  OK(Read<I>, I{MakeAt("\x56"_su8, O::I64GtU)}, "\x56"_su8);
-  OK(Read<I>, I{MakeAt("\x57"_su8, O::I64LeS)}, "\x57"_su8);
-  OK(Read<I>, I{MakeAt("\x58"_su8, O::I64LeU)}, "\x58"_su8);
-  OK(Read<I>, I{MakeAt("\x59"_su8, O::I64GeS)}, "\x59"_su8);
-  OK(Read<I>, I{MakeAt("\x5a"_su8, O::I64GeU)}, "\x5a"_su8);
-  OK(Read<I>, I{MakeAt("\x5b"_su8, O::F32Eq)}, "\x5b"_su8);
-  OK(Read<I>, I{MakeAt("\x5c"_su8, O::F32Ne)}, "\x5c"_su8);
-  OK(Read<I>, I{MakeAt("\x5d"_su8, O::F32Lt)}, "\x5d"_su8);
-  OK(Read<I>, I{MakeAt("\x5e"_su8, O::F32Gt)}, "\x5e"_su8);
-  OK(Read<I>, I{MakeAt("\x5f"_su8, O::F32Le)}, "\x5f"_su8);
-  OK(Read<I>, I{MakeAt("\x60"_su8, O::F32Ge)}, "\x60"_su8);
-  OK(Read<I>, I{MakeAt("\x61"_su8, O::F64Eq)}, "\x61"_su8);
-  OK(Read<I>, I{MakeAt("\x62"_su8, O::F64Ne)}, "\x62"_su8);
-  OK(Read<I>, I{MakeAt("\x63"_su8, O::F64Lt)}, "\x63"_su8);
-  OK(Read<I>, I{MakeAt("\x64"_su8, O::F64Gt)}, "\x64"_su8);
-  OK(Read<I>, I{MakeAt("\x65"_su8, O::F64Le)}, "\x65"_su8);
-  OK(Read<I>, I{MakeAt("\x66"_su8, O::F64Ge)}, "\x66"_su8);
-  OK(Read<I>, I{MakeAt("\x67"_su8, O::I32Clz)}, "\x67"_su8);
-  OK(Read<I>, I{MakeAt("\x68"_su8, O::I32Ctz)}, "\x68"_su8);
-  OK(Read<I>, I{MakeAt("\x69"_su8, O::I32Popcnt)}, "\x69"_su8);
-  OK(Read<I>, I{MakeAt("\x6a"_su8, O::I32Add)}, "\x6a"_su8);
-  OK(Read<I>, I{MakeAt("\x6b"_su8, O::I32Sub)}, "\x6b"_su8);
-  OK(Read<I>, I{MakeAt("\x6c"_su8, O::I32Mul)}, "\x6c"_su8);
-  OK(Read<I>, I{MakeAt("\x6d"_su8, O::I32DivS)}, "\x6d"_su8);
-  OK(Read<I>, I{MakeAt("\x6e"_su8, O::I32DivU)}, "\x6e"_su8);
-  OK(Read<I>, I{MakeAt("\x6f"_su8, O::I32RemS)}, "\x6f"_su8);
-  OK(Read<I>, I{MakeAt("\x70"_su8, O::I32RemU)}, "\x70"_su8);
-  OK(Read<I>, I{MakeAt("\x71"_su8, O::I32And)}, "\x71"_su8);
-  OK(Read<I>, I{MakeAt("\x72"_su8, O::I32Or)}, "\x72"_su8);
-  OK(Read<I>, I{MakeAt("\x73"_su8, O::I32Xor)}, "\x73"_su8);
-  OK(Read<I>, I{MakeAt("\x74"_su8, O::I32Shl)}, "\x74"_su8);
-  OK(Read<I>, I{MakeAt("\x75"_su8, O::I32ShrS)}, "\x75"_su8);
-  OK(Read<I>, I{MakeAt("\x76"_su8, O::I32ShrU)}, "\x76"_su8);
-  OK(Read<I>, I{MakeAt("\x77"_su8, O::I32Rotl)}, "\x77"_su8);
-  OK(Read<I>, I{MakeAt("\x78"_su8, O::I32Rotr)}, "\x78"_su8);
-  OK(Read<I>, I{MakeAt("\x79"_su8, O::I64Clz)}, "\x79"_su8);
-  OK(Read<I>, I{MakeAt("\x7a"_su8, O::I64Ctz)}, "\x7a"_su8);
-  OK(Read<I>, I{MakeAt("\x7b"_su8, O::I64Popcnt)}, "\x7b"_su8);
-  OK(Read<I>, I{MakeAt("\x7c"_su8, O::I64Add)}, "\x7c"_su8);
-  OK(Read<I>, I{MakeAt("\x7d"_su8, O::I64Sub)}, "\x7d"_su8);
-  OK(Read<I>, I{MakeAt("\x7e"_su8, O::I64Mul)}, "\x7e"_su8);
-  OK(Read<I>, I{MakeAt("\x7f"_su8, O::I64DivS)}, "\x7f"_su8);
-  OK(Read<I>, I{MakeAt("\x80"_su8, O::I64DivU)}, "\x80"_su8);
-  OK(Read<I>, I{MakeAt("\x81"_su8, O::I64RemS)}, "\x81"_su8);
-  OK(Read<I>, I{MakeAt("\x82"_su8, O::I64RemU)}, "\x82"_su8);
-  OK(Read<I>, I{MakeAt("\x83"_su8, O::I64And)}, "\x83"_su8);
-  OK(Read<I>, I{MakeAt("\x84"_su8, O::I64Or)}, "\x84"_su8);
-  OK(Read<I>, I{MakeAt("\x85"_su8, O::I64Xor)}, "\x85"_su8);
-  OK(Read<I>, I{MakeAt("\x86"_su8, O::I64Shl)}, "\x86"_su8);
-  OK(Read<I>, I{MakeAt("\x87"_su8, O::I64ShrS)}, "\x87"_su8);
-  OK(Read<I>, I{MakeAt("\x88"_su8, O::I64ShrU)}, "\x88"_su8);
-  OK(Read<I>, I{MakeAt("\x89"_su8, O::I64Rotl)}, "\x89"_su8);
-  OK(Read<I>, I{MakeAt("\x8a"_su8, O::I64Rotr)}, "\x8a"_su8);
-  OK(Read<I>, I{MakeAt("\x8b"_su8, O::F32Abs)}, "\x8b"_su8);
-  OK(Read<I>, I{MakeAt("\x8c"_su8, O::F32Neg)}, "\x8c"_su8);
-  OK(Read<I>, I{MakeAt("\x8d"_su8, O::F32Ceil)}, "\x8d"_su8);
-  OK(Read<I>, I{MakeAt("\x8e"_su8, O::F32Floor)}, "\x8e"_su8);
-  OK(Read<I>, I{MakeAt("\x8f"_su8, O::F32Trunc)}, "\x8f"_su8);
-  OK(Read<I>, I{MakeAt("\x90"_su8, O::F32Nearest)}, "\x90"_su8);
-  OK(Read<I>, I{MakeAt("\x91"_su8, O::F32Sqrt)}, "\x91"_su8);
-  OK(Read<I>, I{MakeAt("\x92"_su8, O::F32Add)}, "\x92"_su8);
-  OK(Read<I>, I{MakeAt("\x93"_su8, O::F32Sub)}, "\x93"_su8);
-  OK(Read<I>, I{MakeAt("\x94"_su8, O::F32Mul)}, "\x94"_su8);
-  OK(Read<I>, I{MakeAt("\x95"_su8, O::F32Div)}, "\x95"_su8);
-  OK(Read<I>, I{MakeAt("\x96"_su8, O::F32Min)}, "\x96"_su8);
-  OK(Read<I>, I{MakeAt("\x97"_su8, O::F32Max)}, "\x97"_su8);
-  OK(Read<I>, I{MakeAt("\x98"_su8, O::F32Copysign)}, "\x98"_su8);
-  OK(Read<I>, I{MakeAt("\x99"_su8, O::F64Abs)}, "\x99"_su8);
-  OK(Read<I>, I{MakeAt("\x9a"_su8, O::F64Neg)}, "\x9a"_su8);
-  OK(Read<I>, I{MakeAt("\x9b"_su8, O::F64Ceil)}, "\x9b"_su8);
-  OK(Read<I>, I{MakeAt("\x9c"_su8, O::F64Floor)}, "\x9c"_su8);
-  OK(Read<I>, I{MakeAt("\x9d"_su8, O::F64Trunc)}, "\x9d"_su8);
-  OK(Read<I>, I{MakeAt("\x9e"_su8, O::F64Nearest)}, "\x9e"_su8);
-  OK(Read<I>, I{MakeAt("\x9f"_su8, O::F64Sqrt)}, "\x9f"_su8);
-  OK(Read<I>, I{MakeAt("\xa0"_su8, O::F64Add)}, "\xa0"_su8);
-  OK(Read<I>, I{MakeAt("\xa1"_su8, O::F64Sub)}, "\xa1"_su8);
-  OK(Read<I>, I{MakeAt("\xa2"_su8, O::F64Mul)}, "\xa2"_su8);
-  OK(Read<I>, I{MakeAt("\xa3"_su8, O::F64Div)}, "\xa3"_su8);
-  OK(Read<I>, I{MakeAt("\xa4"_su8, O::F64Min)}, "\xa4"_su8);
-  OK(Read<I>, I{MakeAt("\xa5"_su8, O::F64Max)}, "\xa5"_su8);
-  OK(Read<I>, I{MakeAt("\xa6"_su8, O::F64Copysign)}, "\xa6"_su8);
-  OK(Read<I>, I{MakeAt("\xa7"_su8, O::I32WrapI64)}, "\xa7"_su8);
-  OK(Read<I>, I{MakeAt("\xa8"_su8, O::I32TruncF32S)}, "\xa8"_su8);
-  OK(Read<I>, I{MakeAt("\xa9"_su8, O::I32TruncF32U)}, "\xa9"_su8);
-  OK(Read<I>, I{MakeAt("\xaa"_su8, O::I32TruncF64S)}, "\xaa"_su8);
-  OK(Read<I>, I{MakeAt("\xab"_su8, O::I32TruncF64U)}, "\xab"_su8);
-  OK(Read<I>, I{MakeAt("\xac"_su8, O::I64ExtendI32S)}, "\xac"_su8);
-  OK(Read<I>, I{MakeAt("\xad"_su8, O::I64ExtendI32U)}, "\xad"_su8);
-  OK(Read<I>, I{MakeAt("\xae"_su8, O::I64TruncF32S)}, "\xae"_su8);
-  OK(Read<I>, I{MakeAt("\xaf"_su8, O::I64TruncF32U)}, "\xaf"_su8);
-  OK(Read<I>, I{MakeAt("\xb0"_su8, O::I64TruncF64S)}, "\xb0"_su8);
-  OK(Read<I>, I{MakeAt("\xb1"_su8, O::I64TruncF64U)}, "\xb1"_su8);
-  OK(Read<I>, I{MakeAt("\xb2"_su8, O::F32ConvertI32S)}, "\xb2"_su8);
-  OK(Read<I>, I{MakeAt("\xb3"_su8, O::F32ConvertI32U)}, "\xb3"_su8);
-  OK(Read<I>, I{MakeAt("\xb4"_su8, O::F32ConvertI64S)}, "\xb4"_su8);
-  OK(Read<I>, I{MakeAt("\xb5"_su8, O::F32ConvertI64U)}, "\xb5"_su8);
-  OK(Read<I>, I{MakeAt("\xb6"_su8, O::F32DemoteF64)}, "\xb6"_su8);
-  OK(Read<I>, I{MakeAt("\xb7"_su8, O::F64ConvertI32S)}, "\xb7"_su8);
-  OK(Read<I>, I{MakeAt("\xb8"_su8, O::F64ConvertI32U)}, "\xb8"_su8);
-  OK(Read<I>, I{MakeAt("\xb9"_su8, O::F64ConvertI64S)}, "\xb9"_su8);
-  OK(Read<I>, I{MakeAt("\xba"_su8, O::F64ConvertI64U)}, "\xba"_su8);
-  OK(Read<I>, I{MakeAt("\xbb"_su8, O::F64PromoteF32)}, "\xbb"_su8);
-  OK(Read<I>, I{MakeAt("\xbc"_su8, O::I32ReinterpretF32)}, "\xbc"_su8);
-  OK(Read<I>, I{MakeAt("\xbd"_su8, O::I64ReinterpretF64)}, "\xbd"_su8);
-  OK(Read<I>, I{MakeAt("\xbe"_su8, O::F32ReinterpretI32)}, "\xbe"_su8);
-  OK(Read<I>, I{MakeAt("\xbf"_su8, O::F64ReinterpretI64)}, "\xbf"_su8);
+  OK(Read<I>, I{At{"\x45"_su8, O::I32Eqz}}, "\x45"_su8);
+  OK(Read<I>, I{At{"\x46"_su8, O::I32Eq}}, "\x46"_su8);
+  OK(Read<I>, I{At{"\x47"_su8, O::I32Ne}}, "\x47"_su8);
+  OK(Read<I>, I{At{"\x48"_su8, O::I32LtS}}, "\x48"_su8);
+  OK(Read<I>, I{At{"\x49"_su8, O::I32LtU}}, "\x49"_su8);
+  OK(Read<I>, I{At{"\x4a"_su8, O::I32GtS}}, "\x4a"_su8);
+  OK(Read<I>, I{At{"\x4b"_su8, O::I32GtU}}, "\x4b"_su8);
+  OK(Read<I>, I{At{"\x4c"_su8, O::I32LeS}}, "\x4c"_su8);
+  OK(Read<I>, I{At{"\x4d"_su8, O::I32LeU}}, "\x4d"_su8);
+  OK(Read<I>, I{At{"\x4e"_su8, O::I32GeS}}, "\x4e"_su8);
+  OK(Read<I>, I{At{"\x4f"_su8, O::I32GeU}}, "\x4f"_su8);
+  OK(Read<I>, I{At{"\x50"_su8, O::I64Eqz}}, "\x50"_su8);
+  OK(Read<I>, I{At{"\x51"_su8, O::I64Eq}}, "\x51"_su8);
+  OK(Read<I>, I{At{"\x52"_su8, O::I64Ne}}, "\x52"_su8);
+  OK(Read<I>, I{At{"\x53"_su8, O::I64LtS}}, "\x53"_su8);
+  OK(Read<I>, I{At{"\x54"_su8, O::I64LtU}}, "\x54"_su8);
+  OK(Read<I>, I{At{"\x55"_su8, O::I64GtS}}, "\x55"_su8);
+  OK(Read<I>, I{At{"\x56"_su8, O::I64GtU}}, "\x56"_su8);
+  OK(Read<I>, I{At{"\x57"_su8, O::I64LeS}}, "\x57"_su8);
+  OK(Read<I>, I{At{"\x58"_su8, O::I64LeU}}, "\x58"_su8);
+  OK(Read<I>, I{At{"\x59"_su8, O::I64GeS}}, "\x59"_su8);
+  OK(Read<I>, I{At{"\x5a"_su8, O::I64GeU}}, "\x5a"_su8);
+  OK(Read<I>, I{At{"\x5b"_su8, O::F32Eq}}, "\x5b"_su8);
+  OK(Read<I>, I{At{"\x5c"_su8, O::F32Ne}}, "\x5c"_su8);
+  OK(Read<I>, I{At{"\x5d"_su8, O::F32Lt}}, "\x5d"_su8);
+  OK(Read<I>, I{At{"\x5e"_su8, O::F32Gt}}, "\x5e"_su8);
+  OK(Read<I>, I{At{"\x5f"_su8, O::F32Le}}, "\x5f"_su8);
+  OK(Read<I>, I{At{"\x60"_su8, O::F32Ge}}, "\x60"_su8);
+  OK(Read<I>, I{At{"\x61"_su8, O::F64Eq}}, "\x61"_su8);
+  OK(Read<I>, I{At{"\x62"_su8, O::F64Ne}}, "\x62"_su8);
+  OK(Read<I>, I{At{"\x63"_su8, O::F64Lt}}, "\x63"_su8);
+  OK(Read<I>, I{At{"\x64"_su8, O::F64Gt}}, "\x64"_su8);
+  OK(Read<I>, I{At{"\x65"_su8, O::F64Le}}, "\x65"_su8);
+  OK(Read<I>, I{At{"\x66"_su8, O::F64Ge}}, "\x66"_su8);
+  OK(Read<I>, I{At{"\x67"_su8, O::I32Clz}}, "\x67"_su8);
+  OK(Read<I>, I{At{"\x68"_su8, O::I32Ctz}}, "\x68"_su8);
+  OK(Read<I>, I{At{"\x69"_su8, O::I32Popcnt}}, "\x69"_su8);
+  OK(Read<I>, I{At{"\x6a"_su8, O::I32Add}}, "\x6a"_su8);
+  OK(Read<I>, I{At{"\x6b"_su8, O::I32Sub}}, "\x6b"_su8);
+  OK(Read<I>, I{At{"\x6c"_su8, O::I32Mul}}, "\x6c"_su8);
+  OK(Read<I>, I{At{"\x6d"_su8, O::I32DivS}}, "\x6d"_su8);
+  OK(Read<I>, I{At{"\x6e"_su8, O::I32DivU}}, "\x6e"_su8);
+  OK(Read<I>, I{At{"\x6f"_su8, O::I32RemS}}, "\x6f"_su8);
+  OK(Read<I>, I{At{"\x70"_su8, O::I32RemU}}, "\x70"_su8);
+  OK(Read<I>, I{At{"\x71"_su8, O::I32And}}, "\x71"_su8);
+  OK(Read<I>, I{At{"\x72"_su8, O::I32Or}}, "\x72"_su8);
+  OK(Read<I>, I{At{"\x73"_su8, O::I32Xor}}, "\x73"_su8);
+  OK(Read<I>, I{At{"\x74"_su8, O::I32Shl}}, "\x74"_su8);
+  OK(Read<I>, I{At{"\x75"_su8, O::I32ShrS}}, "\x75"_su8);
+  OK(Read<I>, I{At{"\x76"_su8, O::I32ShrU}}, "\x76"_su8);
+  OK(Read<I>, I{At{"\x77"_su8, O::I32Rotl}}, "\x77"_su8);
+  OK(Read<I>, I{At{"\x78"_su8, O::I32Rotr}}, "\x78"_su8);
+  OK(Read<I>, I{At{"\x79"_su8, O::I64Clz}}, "\x79"_su8);
+  OK(Read<I>, I{At{"\x7a"_su8, O::I64Ctz}}, "\x7a"_su8);
+  OK(Read<I>, I{At{"\x7b"_su8, O::I64Popcnt}}, "\x7b"_su8);
+  OK(Read<I>, I{At{"\x7c"_su8, O::I64Add}}, "\x7c"_su8);
+  OK(Read<I>, I{At{"\x7d"_su8, O::I64Sub}}, "\x7d"_su8);
+  OK(Read<I>, I{At{"\x7e"_su8, O::I64Mul}}, "\x7e"_su8);
+  OK(Read<I>, I{At{"\x7f"_su8, O::I64DivS}}, "\x7f"_su8);
+  OK(Read<I>, I{At{"\x80"_su8, O::I64DivU}}, "\x80"_su8);
+  OK(Read<I>, I{At{"\x81"_su8, O::I64RemS}}, "\x81"_su8);
+  OK(Read<I>, I{At{"\x82"_su8, O::I64RemU}}, "\x82"_su8);
+  OK(Read<I>, I{At{"\x83"_su8, O::I64And}}, "\x83"_su8);
+  OK(Read<I>, I{At{"\x84"_su8, O::I64Or}}, "\x84"_su8);
+  OK(Read<I>, I{At{"\x85"_su8, O::I64Xor}}, "\x85"_su8);
+  OK(Read<I>, I{At{"\x86"_su8, O::I64Shl}}, "\x86"_su8);
+  OK(Read<I>, I{At{"\x87"_su8, O::I64ShrS}}, "\x87"_su8);
+  OK(Read<I>, I{At{"\x88"_su8, O::I64ShrU}}, "\x88"_su8);
+  OK(Read<I>, I{At{"\x89"_su8, O::I64Rotl}}, "\x89"_su8);
+  OK(Read<I>, I{At{"\x8a"_su8, O::I64Rotr}}, "\x8a"_su8);
+  OK(Read<I>, I{At{"\x8b"_su8, O::F32Abs}}, "\x8b"_su8);
+  OK(Read<I>, I{At{"\x8c"_su8, O::F32Neg}}, "\x8c"_su8);
+  OK(Read<I>, I{At{"\x8d"_su8, O::F32Ceil}}, "\x8d"_su8);
+  OK(Read<I>, I{At{"\x8e"_su8, O::F32Floor}}, "\x8e"_su8);
+  OK(Read<I>, I{At{"\x8f"_su8, O::F32Trunc}}, "\x8f"_su8);
+  OK(Read<I>, I{At{"\x90"_su8, O::F32Nearest}}, "\x90"_su8);
+  OK(Read<I>, I{At{"\x91"_su8, O::F32Sqrt}}, "\x91"_su8);
+  OK(Read<I>, I{At{"\x92"_su8, O::F32Add}}, "\x92"_su8);
+  OK(Read<I>, I{At{"\x93"_su8, O::F32Sub}}, "\x93"_su8);
+  OK(Read<I>, I{At{"\x94"_su8, O::F32Mul}}, "\x94"_su8);
+  OK(Read<I>, I{At{"\x95"_su8, O::F32Div}}, "\x95"_su8);
+  OK(Read<I>, I{At{"\x96"_su8, O::F32Min}}, "\x96"_su8);
+  OK(Read<I>, I{At{"\x97"_su8, O::F32Max}}, "\x97"_su8);
+  OK(Read<I>, I{At{"\x98"_su8, O::F32Copysign}}, "\x98"_su8);
+  OK(Read<I>, I{At{"\x99"_su8, O::F64Abs}}, "\x99"_su8);
+  OK(Read<I>, I{At{"\x9a"_su8, O::F64Neg}}, "\x9a"_su8);
+  OK(Read<I>, I{At{"\x9b"_su8, O::F64Ceil}}, "\x9b"_su8);
+  OK(Read<I>, I{At{"\x9c"_su8, O::F64Floor}}, "\x9c"_su8);
+  OK(Read<I>, I{At{"\x9d"_su8, O::F64Trunc}}, "\x9d"_su8);
+  OK(Read<I>, I{At{"\x9e"_su8, O::F64Nearest}}, "\x9e"_su8);
+  OK(Read<I>, I{At{"\x9f"_su8, O::F64Sqrt}}, "\x9f"_su8);
+  OK(Read<I>, I{At{"\xa0"_su8, O::F64Add}}, "\xa0"_su8);
+  OK(Read<I>, I{At{"\xa1"_su8, O::F64Sub}}, "\xa1"_su8);
+  OK(Read<I>, I{At{"\xa2"_su8, O::F64Mul}}, "\xa2"_su8);
+  OK(Read<I>, I{At{"\xa3"_su8, O::F64Div}}, "\xa3"_su8);
+  OK(Read<I>, I{At{"\xa4"_su8, O::F64Min}}, "\xa4"_su8);
+  OK(Read<I>, I{At{"\xa5"_su8, O::F64Max}}, "\xa5"_su8);
+  OK(Read<I>, I{At{"\xa6"_su8, O::F64Copysign}}, "\xa6"_su8);
+  OK(Read<I>, I{At{"\xa7"_su8, O::I32WrapI64}}, "\xa7"_su8);
+  OK(Read<I>, I{At{"\xa8"_su8, O::I32TruncF32S}}, "\xa8"_su8);
+  OK(Read<I>, I{At{"\xa9"_su8, O::I32TruncF32U}}, "\xa9"_su8);
+  OK(Read<I>, I{At{"\xaa"_su8, O::I32TruncF64S}}, "\xaa"_su8);
+  OK(Read<I>, I{At{"\xab"_su8, O::I32TruncF64U}}, "\xab"_su8);
+  OK(Read<I>, I{At{"\xac"_su8, O::I64ExtendI32S}}, "\xac"_su8);
+  OK(Read<I>, I{At{"\xad"_su8, O::I64ExtendI32U}}, "\xad"_su8);
+  OK(Read<I>, I{At{"\xae"_su8, O::I64TruncF32S}}, "\xae"_su8);
+  OK(Read<I>, I{At{"\xaf"_su8, O::I64TruncF32U}}, "\xaf"_su8);
+  OK(Read<I>, I{At{"\xb0"_su8, O::I64TruncF64S}}, "\xb0"_su8);
+  OK(Read<I>, I{At{"\xb1"_su8, O::I64TruncF64U}}, "\xb1"_su8);
+  OK(Read<I>, I{At{"\xb2"_su8, O::F32ConvertI32S}}, "\xb2"_su8);
+  OK(Read<I>, I{At{"\xb3"_su8, O::F32ConvertI32U}}, "\xb3"_su8);
+  OK(Read<I>, I{At{"\xb4"_su8, O::F32ConvertI64S}}, "\xb4"_su8);
+  OK(Read<I>, I{At{"\xb5"_su8, O::F32ConvertI64U}}, "\xb5"_su8);
+  OK(Read<I>, I{At{"\xb6"_su8, O::F32DemoteF64}}, "\xb6"_su8);
+  OK(Read<I>, I{At{"\xb7"_su8, O::F64ConvertI32S}}, "\xb7"_su8);
+  OK(Read<I>, I{At{"\xb8"_su8, O::F64ConvertI32U}}, "\xb8"_su8);
+  OK(Read<I>, I{At{"\xb9"_su8, O::F64ConvertI64S}}, "\xb9"_su8);
+  OK(Read<I>, I{At{"\xba"_su8, O::F64ConvertI64U}}, "\xba"_su8);
+  OK(Read<I>, I{At{"\xbb"_su8, O::F64PromoteF32}}, "\xbb"_su8);
+  OK(Read<I>, I{At{"\xbc"_su8, O::I32ReinterpretF32}}, "\xbc"_su8);
+  OK(Read<I>, I{At{"\xbd"_su8, O::I64ReinterpretF64}}, "\xbd"_su8);
+  OK(Read<I>, I{At{"\xbe"_su8, O::F32ReinterpretI32}}, "\xbe"_su8);
+  OK(Read<I>, I{At{"\xbf"_su8, O::F64ReinterpretI64}}, "\xbf"_su8);
 }
 
 TEST_F(BinaryReadTest, Instruction_BadMemoryReserved) {
@@ -1607,9 +1582,9 @@ TEST_F(BinaryReadTest, Instruction_BadMemoryReserved) {
 TEST_F(BinaryReadTest, InstructionList_BlockEnd) {
   OK(Read<InstructionList>,
      InstructionList{
-         MakeAt("\x02\x40"_su8,
-                I{MakeAt("\x02"_su8, O::Block), MakeAt("\x40"_su8, BT_Void)}),
-         MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
+         At{"\x02\x40"_su8,
+            I{At{"\x02"_su8, O::Block}, At{"\x40"_su8, BT_Void}}},
+         At{"\x0b"_su8, I{At{"\x0b"_su8, O::End}}},
      },
      "\x02\x40\x0b\x0b"_su8);
 }
@@ -1622,9 +1597,9 @@ TEST_F(BinaryReadTest, InstructionList_BlockNoEnd) {
 TEST_F(BinaryReadTest, InstructionList_LoopEnd) {
   OK(Read<InstructionList>,
      InstructionList{
-         MakeAt("\x03\x40"_su8,
-                I{MakeAt("\x03"_su8, O::Loop), MakeAt("\x40"_su8, BT_Void)}),
-         MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
+         At{"\x03\x40"_su8,
+            I{At{"\x03"_su8, O::Loop}, At{"\x40"_su8, BT_Void}}},
+         At{"\x0b"_su8, I{At{"\x0b"_su8, O::End}}},
      },
      "\x03\x40\x0b\x0b"_su8);
 }
@@ -1637,9 +1612,8 @@ TEST_F(BinaryReadTest, InstructionList_LoopNoEnd) {
 TEST_F(BinaryReadTest, InstructionList_IfEnd) {
   OK(Read<InstructionList>,
      InstructionList{
-         MakeAt("\x04\x40"_su8,
-                I{MakeAt("\x04"_su8, O::If), MakeAt("\x40"_su8, BT_Void)}),
-         MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
+         At{"\x04\x40"_su8, I{At{"\x04"_su8, O::If}, At{"\x40"_su8, BT_Void}}},
+         At{"\x0b"_su8, I{At{"\x0b"_su8, O::End}}},
      },
      "\x04\x40\x0b\x0b"_su8);
 }
@@ -1647,10 +1621,9 @@ TEST_F(BinaryReadTest, InstructionList_IfEnd) {
 TEST_F(BinaryReadTest, InstructionList_IfElseEnd) {
   OK(Read<InstructionList>,
      InstructionList{
-         MakeAt("\x04\x40"_su8,
-                I{MakeAt("\x04"_su8, O::If), MakeAt("\x40"_su8, BT_Void)}),
-         MakeAt("\x05"_su8, I{MakeAt("\x05"_su8, O::Else)}),
-         MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
+         At{"\x04\x40"_su8, I{At{"\x04"_su8, O::If}, At{"\x40"_su8, BT_Void}}},
+         At{"\x05"_su8, I{At{"\x05"_su8, O::Else}}},
+         At{"\x0b"_su8, I{At{"\x0b"_su8, O::End}}},
      },
      "\x04\x40\x05\x0b\x0b"_su8);
 }
@@ -1663,16 +1636,16 @@ TEST_F(BinaryReadTest, InstructionList_IfNoEnd) {
 TEST_F(BinaryReadTest, Instruction_exceptions) {
   context.features.enable_exceptions();
 
-  OK(Read<I>, I{MakeAt("\x06"_su8, O::Try), MakeAt("\x40"_su8, BT_Void)},
+  OK(Read<I>, I{At{"\x06"_su8, O::Try}, At{"\x40"_su8, BT_Void}},
      "\x06\x40"_su8);
-  OK(Read<I>, I{MakeAt("\x07"_su8, O::Catch)}, "\x07"_su8);
-  OK(Read<I>, I{MakeAt("\x08"_su8, O::Throw), MakeAt("\x00"_su8, Index{0})},
+  OK(Read<I>, I{At{"\x07"_su8, O::Catch}}, "\x07"_su8);
+  OK(Read<I>, I{At{"\x08"_su8, O::Throw}, At{"\x00"_su8, Index{0}}},
      "\x08\x00"_su8);
-  OK(Read<I>, I{MakeAt("\x09"_su8, O::Rethrow)}, "\x09"_su8);
+  OK(Read<I>, I{At{"\x09"_su8, O::Rethrow}}, "\x09"_su8);
   OK(Read<I>,
-     I{MakeAt("\x0a"_su8, O::BrOnExn),
-       MakeAt("\x01\x02"_su8, BrOnExnImmediate{MakeAt("\x01"_su8, Index{1}),
-                                               MakeAt("\x02"_su8, Index{2})})},
+     I{At{"\x0a"_su8, O::BrOnExn},
+       At{"\x01\x02"_su8, BrOnExnImmediate{At{"\x01"_su8, Index{1}},
+                                           At{"\x02"_su8, Index{2}}}}},
      "\x0a\x01\x02"_su8);
 }
 
@@ -1681,10 +1654,9 @@ TEST_F(BinaryReadTest, InstructionList_TryCatchEnd) {
 
   OK(Read<InstructionList>,
      InstructionList{
-         MakeAt("\x06\x40"_su8,
-                I{MakeAt("\x06"_su8, O::Try), MakeAt("\x40"_su8, BT_Void)}),
-         MakeAt("\x07"_su8, I{MakeAt("\x07"_su8, O::Catch)}),
-         MakeAt("\x0b"_su8, I{MakeAt("\x0b"_su8, O::End)}),
+         At{"\x06\x40"_su8, I{At{"\x06"_su8, O::Try}, At{"\x40"_su8, BT_Void}}},
+         At{"\x07"_su8, I{At{"\x07"_su8, O::Catch}}},
+         At{"\x0b"_su8, I{At{"\x0b"_su8, O::End}}},
      },
      "\x06\x40\x07\x0b\x0b"_su8);
 }
@@ -1706,76 +1678,71 @@ TEST_F(BinaryReadTest, InstructionList_TryNoEnd) {
 TEST_F(BinaryReadTest, Instruction_tail_call) {
   context.features.enable_tail_call();
 
-  OK(Read<I>,
-     I{MakeAt("\x12"_su8, O::ReturnCall), MakeAt("\x00"_su8, Index{0})},
+  OK(Read<I>, I{At{"\x12"_su8, O::ReturnCall}, At{"\x00"_su8, Index{0}}},
      "\x12\x00"_su8);
   OK(Read<I>,
-     I{MakeAt("\x13"_su8, O::ReturnCallIndirect),
-       MakeAt("\x08\x00"_su8,
-              CallIndirectImmediate{MakeAt("\x08"_su8, Index{8}),
-                                    MakeAt("\x00"_su8, Index{0})})},
+     I{At{"\x13"_su8, O::ReturnCallIndirect},
+       At{"\x08\x00"_su8, CallIndirectImmediate{At{"\x08"_su8, Index{8}},
+                                                At{"\x00"_su8, Index{0}}}}},
      "\x13\x08\x00"_su8);
 }
 
 TEST_F(BinaryReadTest, Instruction_sign_extension) {
   context.features.enable_sign_extension();
 
-  OK(Read<I>, I{MakeAt("\xc0"_su8, O::I32Extend8S)}, "\xc0"_su8);
-  OK(Read<I>, I{MakeAt("\xc1"_su8, O::I32Extend16S)}, "\xc1"_su8);
-  OK(Read<I>, I{MakeAt("\xc2"_su8, O::I64Extend8S)}, "\xc2"_su8);
-  OK(Read<I>, I{MakeAt("\xc3"_su8, O::I64Extend16S)}, "\xc3"_su8);
-  OK(Read<I>, I{MakeAt("\xc4"_su8, O::I64Extend32S)}, "\xc4"_su8);
+  OK(Read<I>, I{At{"\xc0"_su8, O::I32Extend8S}}, "\xc0"_su8);
+  OK(Read<I>, I{At{"\xc1"_su8, O::I32Extend16S}}, "\xc1"_su8);
+  OK(Read<I>, I{At{"\xc2"_su8, O::I64Extend8S}}, "\xc2"_su8);
+  OK(Read<I>, I{At{"\xc3"_su8, O::I64Extend16S}}, "\xc3"_su8);
+  OK(Read<I>, I{At{"\xc4"_su8, O::I64Extend32S}}, "\xc4"_su8);
 }
 
 TEST_F(BinaryReadTest, Instruction_reference_types) {
   context.features.enable_reference_types();
 
   OK(Read<I>,
-     I{MakeAt("\x1c"_su8, O::SelectT),
-       MakeAt("\x02\x7f\x7e"_su8, ValueTypeList{MakeAt("\x7f"_su8, VT_I32),
-                                                MakeAt("\x7e"_su8, VT_I64)})},
+     I{At{"\x1c"_su8, O::SelectT},
+       At{"\x02\x7f\x7e"_su8,
+          ValueTypeList{At{"\x7f"_su8, VT_I32}, At{"\x7e"_su8, VT_I64}}}},
      "\x1c\x02\x7f\x7e"_su8);
-  OK(Read<I>, I{MakeAt("\x25"_su8, O::TableGet), MakeAt("\x00"_su8, Index{0})},
+  OK(Read<I>, I{At{"\x25"_su8, O::TableGet}, At{"\x00"_su8, Index{0}}},
      "\x25\x00"_su8);
-  OK(Read<I>, I{MakeAt("\x26"_su8, O::TableSet), MakeAt("\x00"_su8, Index{0})},
+  OK(Read<I>, I{At{"\x26"_su8, O::TableSet}, At{"\x00"_su8, Index{0}}},
      "\x26\x00"_su8);
   OK(Read<I>,
-     I{MakeAt("\xfc\x0c"_su8, O::TableInit),
-       MakeAt("\x00\x01"_su8, InitImmediate{MakeAt("\x00"_su8, Index{0}),
-                                            MakeAt("\x01"_su8, Index{1})})},
+     I{At{"\xfc\x0c"_su8, O::TableInit},
+       At{"\x00\x01"_su8,
+          InitImmediate{At{"\x00"_su8, Index{0}}, At{"\x01"_su8, Index{1}}}}},
      "\xfc\x0c\x00\x01"_su8);
   OK(Read<I>,
-     I{MakeAt("\xfc\x0e"_su8, O::TableCopy),
-       MakeAt("\x00\x01"_su8, CopyImmediate{MakeAt("\x00"_su8, Index{0}),
-                                            MakeAt("\x01"_su8, Index{1})})},
+     I{At{"\xfc\x0e"_su8, O::TableCopy},
+       At{"\x00\x01"_su8,
+          CopyImmediate{At{"\x00"_su8, Index{0}}, At{"\x01"_su8, Index{1}}}}},
      "\xfc\x0e\x00\x01"_su8);
-  OK(Read<I>,
-     I{MakeAt("\xfc\x0f"_su8, O::TableGrow), MakeAt("\x00"_su8, Index{0})},
+  OK(Read<I>, I{At{"\xfc\x0f"_su8, O::TableGrow}, At{"\x00"_su8, Index{0}}},
      "\xfc\x0f\x00"_su8);
-  OK(Read<I>,
-     I{MakeAt("\xfc\x10"_su8, O::TableSize), MakeAt("\x00"_su8, Index{0})},
+  OK(Read<I>, I{At{"\xfc\x10"_su8, O::TableSize}, At{"\x00"_su8, Index{0}}},
      "\xfc\x10\x00"_su8);
-  OK(Read<I>,
-     I{MakeAt("\xfc\x11"_su8, O::TableFill), MakeAt("\x00"_su8, Index{0})},
+  OK(Read<I>, I{At{"\xfc\x11"_su8, O::TableFill}, At{"\x00"_su8, Index{0}}},
      "\xfc\x11\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xd0"_su8, O::RefNull), MakeAt("\x70"_su8, HT_Func)},
+  OK(Read<I>, I{At{"\xd0"_su8, O::RefNull}, At{"\x70"_su8, HT_Func}},
      "\xd0\x70"_su8);
-  OK(Read<I>, I{MakeAt("\xd1"_su8, O::RefIsNull)}, "\xd1"_su8);
-  OK(Read<I>, I{MakeAt("\xd2"_su8, O::RefFunc), MakeAt("\x00"_su8, Index{0})},
+  OK(Read<I>, I{At{"\xd1"_su8, O::RefIsNull}}, "\xd1"_su8);
+  OK(Read<I>, I{At{"\xd2"_su8, O::RefFunc}, At{"\x00"_su8, Index{0}}},
      "\xd2\x00"_su8);
 }
 
 TEST_F(BinaryReadTest, Instruction_saturating_float_to_int) {
   context.features.enable_saturating_float_to_int();
 
-  OK(Read<I>, I{MakeAt("\xfc\x00"_su8, O::I32TruncSatF32S)}, "\xfc\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfc\x01"_su8, O::I32TruncSatF32U)}, "\xfc\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfc\x02"_su8, O::I32TruncSatF64S)}, "\xfc\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfc\x03"_su8, O::I32TruncSatF64U)}, "\xfc\x03"_su8);
-  OK(Read<I>, I{MakeAt("\xfc\x04"_su8, O::I64TruncSatF32S)}, "\xfc\x04"_su8);
-  OK(Read<I>, I{MakeAt("\xfc\x05"_su8, O::I64TruncSatF32U)}, "\xfc\x05"_su8);
-  OK(Read<I>, I{MakeAt("\xfc\x06"_su8, O::I64TruncSatF64S)}, "\xfc\x06"_su8);
-  OK(Read<I>, I{MakeAt("\xfc\x07"_su8, O::I64TruncSatF64U)}, "\xfc\x07"_su8);
+  OK(Read<I>, I{At{"\xfc\x00"_su8, O::I32TruncSatF32S}}, "\xfc\x00"_su8);
+  OK(Read<I>, I{At{"\xfc\x01"_su8, O::I32TruncSatF32U}}, "\xfc\x01"_su8);
+  OK(Read<I>, I{At{"\xfc\x02"_su8, O::I32TruncSatF64S}}, "\xfc\x02"_su8);
+  OK(Read<I>, I{At{"\xfc\x03"_su8, O::I32TruncSatF64U}}, "\xfc\x03"_su8);
+  OK(Read<I>, I{At{"\xfc\x04"_su8, O::I64TruncSatF32S}}, "\xfc\x04"_su8);
+  OK(Read<I>, I{At{"\xfc\x05"_su8, O::I64TruncSatF32U}}, "\xfc\x05"_su8);
+  OK(Read<I>, I{At{"\xfc\x06"_su8, O::I64TruncSatF64S}}, "\xfc\x06"_su8);
+  OK(Read<I>, I{At{"\xfc\x07"_su8, O::I64TruncSatF64U}}, "\xfc\x07"_su8);
 }
 
 TEST_F(BinaryReadTest, Instruction_bulk_memory) {
@@ -1783,33 +1750,30 @@ TEST_F(BinaryReadTest, Instruction_bulk_memory) {
   context.declared_data_count = 1;
 
   OK(Read<I>,
-     I{MakeAt("\xfc\x08"_su8, O::MemoryInit),
-       MakeAt("\x01\x00"_su8, InitImmediate{MakeAt("\x01"_su8, Index{1}),
-                                            MakeAt("\x00"_su8, Index{0})})},
+     I{At{"\xfc\x08"_su8, O::MemoryInit},
+       At{"\x01\x00"_su8,
+          InitImmediate{At{"\x01"_su8, Index{1}}, At{"\x00"_su8, Index{0}}}}},
      "\xfc\x08\x01\x00"_su8);
-  OK(Read<I>,
-     I{MakeAt("\xfc\x09"_su8, O::DataDrop), MakeAt("\x02"_su8, Index{2})},
+  OK(Read<I>, I{At{"\xfc\x09"_su8, O::DataDrop}, At{"\x02"_su8, Index{2}}},
      "\xfc\x09\x02"_su8);
   OK(Read<I>,
-     I{MakeAt("\xfc\x0a"_su8, O::MemoryCopy),
-       MakeAt("\x00\x00"_su8, CopyImmediate{MakeAt("\x00"_su8, Index{0}),
-                                            MakeAt("\x00"_su8, Index{0})})},
+     I{At{"\xfc\x0a"_su8, O::MemoryCopy},
+       At{"\x00\x00"_su8,
+          CopyImmediate{At{"\x00"_su8, Index{0}}, At{"\x00"_su8, Index{0}}}}},
      "\xfc\x0a\x00\x00"_su8);
-  OK(Read<I>,
-     I{MakeAt("\xfc\x0b"_su8, O::MemoryFill), MakeAt("\x00"_su8, u8{0})},
+  OK(Read<I>, I{At{"\xfc\x0b"_su8, O::MemoryFill}, At{"\x00"_su8, u8{0}}},
      "\xfc\x0b\x00"_su8);
   OK(Read<I>,
-     I{MakeAt("\xfc\x0c"_su8, O::TableInit),
-       MakeAt("\x03\x00"_su8, InitImmediate{MakeAt("\x03"_su8, Index{3}),
-                                            MakeAt("\x00"_su8, Index{0})})},
+     I{At{"\xfc\x0c"_su8, O::TableInit},
+       At{"\x03\x00"_su8,
+          InitImmediate{At{"\x03"_su8, Index{3}}, At{"\x00"_su8, Index{0}}}}},
      "\xfc\x0c\x03\x00"_su8);
-  OK(Read<I>,
-     I{MakeAt("\xfc\x0d"_su8, O::ElemDrop), MakeAt("\x04"_su8, Index{4})},
+  OK(Read<I>, I{At{"\xfc\x0d"_su8, O::ElemDrop}, At{"\x04"_su8, Index{4}}},
      "\xfc\x0d\x04"_su8);
   OK(Read<I>,
-     I{MakeAt("\xfc\x0e"_su8, O::TableCopy),
-       MakeAt("\x00\x00"_su8, CopyImmediate{MakeAt("\x00"_su8, Index{0}),
-                                            MakeAt("\x00"_su8, Index{0})})},
+     I{At{"\xfc\x0e"_su8, O::TableCopy},
+       At{"\x00\x00"_su8,
+          CopyImmediate{At{"\x00"_su8, Index{0}}, At{"\x00"_su8, Index{0}}}}},
      "\xfc\x0e\x00\x00"_su8);
 }
 
@@ -1840,366 +1804,408 @@ TEST_F(BinaryReadTest, Instruction_NoDataCount_bulk_memory) {
 TEST_F(BinaryReadTest, Instruction_simd) {
   context.features.enable_simd();
 
-  auto memarg = MakeAt(
-      "\x01\x02"_su8,
-      MemArgImmediate{MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, u32{2})});
+  auto memarg = At{"\x01\x02"_su8, MemArgImmediate{At{"\x01"_su8, u32{1}},
+                                                   At{"\x02"_su8, u32{2}}}};
 
-  OK(Read<I>, I{MakeAt("\xfd\x00"_su8, O::V128Load), memarg}, "\xfd\x00\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x01"_su8, O::I16X8Load8X8S), memarg}, "\xfd\x01\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x02"_su8, O::I16X8Load8X8U), memarg}, "\xfd\x02\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x03"_su8, O::I32X4Load16X4S), memarg}, "\xfd\x03\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x04"_su8, O::I32X4Load16X4U), memarg}, "\xfd\x04\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x05"_su8, O::I64X2Load32X2S), memarg}, "\xfd\x05\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x06"_su8, O::I64X2Load32X2U), memarg}, "\xfd\x06\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x07"_su8, O::V8X16LoadSplat), memarg}, "\xfd\x07\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x08"_su8, O::V16X8LoadSplat), memarg}, "\xfd\x08\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x09"_su8, O::V32X4LoadSplat), memarg}, "\xfd\x09\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x0a"_su8, O::V64X2LoadSplat), memarg}, "\xfd\x0a\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x0b"_su8, O::V128Store), memarg}, "\xfd\x0b\x01\x02"_su8);
+  OK(Read<I>, I{At{"\xfd\x00"_su8, O::V128Load}, memarg},
+     "\xfd\x00\x01\x02"_su8);
+  OK(Read<I>, I{At{"\xfd\x01"_su8, O::I16X8Load8X8S}, memarg},
+     "\xfd\x01\x01\x02"_su8);
+  OK(Read<I>, I{At{"\xfd\x02"_su8, O::I16X8Load8X8U}, memarg},
+     "\xfd\x02\x01\x02"_su8);
+  OK(Read<I>, I{At{"\xfd\x03"_su8, O::I32X4Load16X4S}, memarg},
+     "\xfd\x03\x01\x02"_su8);
+  OK(Read<I>, I{At{"\xfd\x04"_su8, O::I32X4Load16X4U}, memarg},
+     "\xfd\x04\x01\x02"_su8);
+  OK(Read<I>, I{At{"\xfd\x05"_su8, O::I64X2Load32X2S}, memarg},
+     "\xfd\x05\x01\x02"_su8);
+  OK(Read<I>, I{At{"\xfd\x06"_su8, O::I64X2Load32X2U}, memarg},
+     "\xfd\x06\x01\x02"_su8);
+  OK(Read<I>, I{At{"\xfd\x07"_su8, O::V8X16LoadSplat}, memarg},
+     "\xfd\x07\x01\x02"_su8);
+  OK(Read<I>, I{At{"\xfd\x08"_su8, O::V16X8LoadSplat}, memarg},
+     "\xfd\x08\x01\x02"_su8);
+  OK(Read<I>, I{At{"\xfd\x09"_su8, O::V32X4LoadSplat}, memarg},
+     "\xfd\x09\x01\x02"_su8);
+  OK(Read<I>, I{At{"\xfd\x0a"_su8, O::V64X2LoadSplat}, memarg},
+     "\xfd\x0a\x01\x02"_su8);
+  OK(Read<I>, I{At{"\xfd\x0b"_su8, O::V128Store}, memarg},
+     "\xfd\x0b\x01\x02"_su8);
   OK(Read<I>,
-     I{MakeAt("\xfd\x0c"_su8, O::V128Const),
-       MakeAt(
-           "\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00"_su8,
-           v128{u64{5}, u64{6}})},
+     I{At{"\xfd\x0c"_su8, O::V128Const},
+       At{"\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00"_su8,
+          v128{u64{5}, u64{6}}}},
      "\xfd\x0c\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00"_su8);
   OK(Read<I>,
-     I{MakeAt("\xfd\x0d"_su8, O::V8X16Shuffle),
-       MakeAt(
-           "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8,
-           ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}})},
+     I{At{"\xfd\x0d"_su8, O::V8X16Shuffle},
+       At{"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8,
+          ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}}},
      "\xfd\x0d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x0e"_su8, O::V8X16Swizzle)}, "\xfd\x0e"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x0f"_su8, O::I8X16Splat)}, "\xfd\x0f"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x10"_su8, O::I16X8Splat)}, "\xfd\x10"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x11"_su8, O::I32X4Splat)}, "\xfd\x11"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x12"_su8, O::I64X2Splat)}, "\xfd\x12"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x13"_su8, O::F32X4Splat)}, "\xfd\x13"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x14"_su8, O::F64X2Splat)}, "\xfd\x14"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x15"_su8, O::I8X16ExtractLaneS), MakeAt("\x00"_su8, u8{0})}, "\xfd\x15\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x16"_su8, O::I8X16ExtractLaneU), MakeAt("\x00"_su8, u8{0})}, "\xfd\x16\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x17"_su8, O::I8X16ReplaceLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x17\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x18"_su8, O::I16X8ExtractLaneS), MakeAt("\x00"_su8, u8{0})}, "\xfd\x18\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x19"_su8, O::I16X8ExtractLaneU), MakeAt("\x00"_su8, u8{0})}, "\xfd\x19\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x1a"_su8, O::I16X8ReplaceLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x1a\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x1b"_su8, O::I32X4ExtractLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x1b\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x1c"_su8, O::I32X4ReplaceLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x1c\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x1d"_su8, O::I64X2ExtractLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x1d\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x1e"_su8, O::I64X2ReplaceLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x1e\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x1f"_su8, O::F32X4ExtractLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x1f\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x20"_su8, O::F32X4ReplaceLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x20\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x21"_su8, O::F64X2ExtractLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x21\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x22"_su8, O::F64X2ReplaceLane), MakeAt("\x00"_su8, u8{0})}, "\xfd\x22\x00"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x23"_su8, O::I8X16Eq)}, "\xfd\x23"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x24"_su8, O::I8X16Ne)}, "\xfd\x24"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x25"_su8, O::I8X16LtS)}, "\xfd\x25"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x26"_su8, O::I8X16LtU)}, "\xfd\x26"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x27"_su8, O::I8X16GtS)}, "\xfd\x27"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x28"_su8, O::I8X16GtU)}, "\xfd\x28"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x29"_su8, O::I8X16LeS)}, "\xfd\x29"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x2a"_su8, O::I8X16LeU)}, "\xfd\x2a"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x2b"_su8, O::I8X16GeS)}, "\xfd\x2b"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x2c"_su8, O::I8X16GeU)}, "\xfd\x2c"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x2d"_su8, O::I16X8Eq)}, "\xfd\x2d"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x2e"_su8, O::I16X8Ne)}, "\xfd\x2e"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x2f"_su8, O::I16X8LtS)}, "\xfd\x2f"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x30"_su8, O::I16X8LtU)}, "\xfd\x30"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x31"_su8, O::I16X8GtS)}, "\xfd\x31"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x32"_su8, O::I16X8GtU)}, "\xfd\x32"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x33"_su8, O::I16X8LeS)}, "\xfd\x33"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x34"_su8, O::I16X8LeU)}, "\xfd\x34"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x35"_su8, O::I16X8GeS)}, "\xfd\x35"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x36"_su8, O::I16X8GeU)}, "\xfd\x36"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x37"_su8, O::I32X4Eq)}, "\xfd\x37"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x38"_su8, O::I32X4Ne)}, "\xfd\x38"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x39"_su8, O::I32X4LtS)}, "\xfd\x39"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x3a"_su8, O::I32X4LtU)}, "\xfd\x3a"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x3b"_su8, O::I32X4GtS)}, "\xfd\x3b"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x3c"_su8, O::I32X4GtU)}, "\xfd\x3c"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x3d"_su8, O::I32X4LeS)}, "\xfd\x3d"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x3e"_su8, O::I32X4LeU)}, "\xfd\x3e"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x3f"_su8, O::I32X4GeS)}, "\xfd\x3f"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x40"_su8, O::I32X4GeU)}, "\xfd\x40"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x41"_su8, O::F32X4Eq)}, "\xfd\x41"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x42"_su8, O::F32X4Ne)}, "\xfd\x42"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x43"_su8, O::F32X4Lt)}, "\xfd\x43"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x44"_su8, O::F32X4Gt)}, "\xfd\x44"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x45"_su8, O::F32X4Le)}, "\xfd\x45"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x46"_su8, O::F32X4Ge)}, "\xfd\x46"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x47"_su8, O::F64X2Eq)}, "\xfd\x47"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x48"_su8, O::F64X2Ne)}, "\xfd\x48"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x49"_su8, O::F64X2Lt)}, "\xfd\x49"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x4a"_su8, O::F64X2Gt)}, "\xfd\x4a"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x4b"_su8, O::F64X2Le)}, "\xfd\x4b"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x4c"_su8, O::F64X2Ge)}, "\xfd\x4c"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x4d"_su8, O::V128Not)}, "\xfd\x4d"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x4e"_su8, O::V128And)}, "\xfd\x4e"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x4f"_su8, O::V128Andnot)}, "\xfd\x4f"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x50"_su8, O::V128Or)}, "\xfd\x50"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x51"_su8, O::V128Xor)}, "\xfd\x51"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x52"_su8, O::V128BitSelect)}, "\xfd\x52"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x60"_su8, O::I8X16Abs)}, "\xfd\x60"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x61"_su8, O::I8X16Neg)}, "\xfd\x61"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x62"_su8, O::I8X16AnyTrue)}, "\xfd\x62"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x63"_su8, O::I8X16AllTrue)}, "\xfd\x63"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x65"_su8, O::I8X16NarrowI16X8S)}, "\xfd\x65"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x66"_su8, O::I8X16NarrowI16X8U)}, "\xfd\x66"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x6b"_su8, O::I8X16Shl)}, "\xfd\x6b"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x6c"_su8, O::I8X16ShrS)}, "\xfd\x6c"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x6d"_su8, O::I8X16ShrU)}, "\xfd\x6d"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x6e"_su8, O::I8X16Add)}, "\xfd\x6e"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x6f"_su8, O::I8X16AddSaturateS)}, "\xfd\x6f"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x70"_su8, O::I8X16AddSaturateU)}, "\xfd\x70"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x71"_su8, O::I8X16Sub)}, "\xfd\x71"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x72"_su8, O::I8X16SubSaturateS)}, "\xfd\x72"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x73"_su8, O::I8X16SubSaturateU)}, "\xfd\x73"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x76"_su8, O::I8X16MinS)}, "\xfd\x76"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x77"_su8, O::I8X16MinU)}, "\xfd\x77"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x78"_su8, O::I8X16MaxS)}, "\xfd\x78"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x79"_su8, O::I8X16MaxU)}, "\xfd\x79"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x7b"_su8, O::I8X16AvgrU)}, "\xfd\x7b"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x80\x01"_su8, O::I16X8Abs)}, "\xfd\x80\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x81\x01"_su8, O::I16X8Neg)}, "\xfd\x81\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x82\x01"_su8, O::I16X8AnyTrue)}, "\xfd\x82\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x83\x01"_su8, O::I16X8AllTrue)}, "\xfd\x83\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x85\x01"_su8, O::I16X8NarrowI32X4S)}, "\xfd\x85\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x86\x01"_su8, O::I16X8NarrowI32X4U)}, "\xfd\x86\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x87\x01"_su8, O::I16X8WidenLowI8X16S)}, "\xfd\x87\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x88\x01"_su8, O::I16X8WidenHighI8X16S)}, "\xfd\x88\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x89\x01"_su8, O::I16X8WidenLowI8X16U)}, "\xfd\x89\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x8a\x01"_su8, O::I16X8WidenHighI8X16U)}, "\xfd\x8a\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x8b\x01"_su8, O::I16X8Shl)}, "\xfd\x8b\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x8c\x01"_su8, O::I16X8ShrS)}, "\xfd\x8c\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x8d\x01"_su8, O::I16X8ShrU)}, "\xfd\x8d\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x8e\x01"_su8, O::I16X8Add)}, "\xfd\x8e\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x8f\x01"_su8, O::I16X8AddSaturateS)}, "\xfd\x8f\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x90\x01"_su8, O::I16X8AddSaturateU)}, "\xfd\x90\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x91\x01"_su8, O::I16X8Sub)}, "\xfd\x91\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x92\x01"_su8, O::I16X8SubSaturateS)}, "\xfd\x92\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x93\x01"_su8, O::I16X8SubSaturateU)}, "\xfd\x93\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x95\x01"_su8, O::I16X8Mul)}, "\xfd\x95\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x96\x01"_su8, O::I16X8MinS)}, "\xfd\x96\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x97\x01"_su8, O::I16X8MinU)}, "\xfd\x97\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x98\x01"_su8, O::I16X8MaxS)}, "\xfd\x98\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x99\x01"_su8, O::I16X8MaxU)}, "\xfd\x99\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\x9b\x01"_su8, O::I16X8AvgrU)}, "\xfd\x9b\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xa0\x01"_su8, O::I32X4Abs)}, "\xfd\xa0\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xa1\x01"_su8, O::I32X4Neg)}, "\xfd\xa1\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xa2\x01"_su8, O::I32X4AnyTrue)}, "\xfd\xa2\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xa3\x01"_su8, O::I32X4AllTrue)}, "\xfd\xa3\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xa7\x01"_su8, O::I32X4WidenLowI16X8S)}, "\xfd\xa7\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xa8\x01"_su8, O::I32X4WidenHighI16X8S)}, "\xfd\xa8\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xa9\x01"_su8, O::I32X4WidenLowI16X8U)}, "\xfd\xa9\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xaa\x01"_su8, O::I32X4WidenHighI16X8U)}, "\xfd\xaa\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xab\x01"_su8, O::I32X4Shl)}, "\xfd\xab\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xac\x01"_su8, O::I32X4ShrS)}, "\xfd\xac\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xad\x01"_su8, O::I32X4ShrU)}, "\xfd\xad\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xae\x01"_su8, O::I32X4Add)}, "\xfd\xae\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xb1\x01"_su8, O::I32X4Sub)}, "\xfd\xb1\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xb5\x01"_su8, O::I32X4Mul)}, "\xfd\xb5\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xb6\x01"_su8, O::I32X4MinS)}, "\xfd\xb6\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xb7\x01"_su8, O::I32X4MinU)}, "\xfd\xb7\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xb8\x01"_su8, O::I32X4MaxS)}, "\xfd\xb8\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xb9\x01"_su8, O::I32X4MaxU)}, "\xfd\xb9\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xc1\x01"_su8, O::I64X2Neg)}, "\xfd\xc1\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xcb\x01"_su8, O::I64X2Shl)}, "\xfd\xcb\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xcc\x01"_su8, O::I64X2ShrS)}, "\xfd\xcc\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xcd\x01"_su8, O::I64X2ShrU)}, "\xfd\xcd\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xce\x01"_su8, O::I64X2Add)}, "\xfd\xce\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xd1\x01"_su8, O::I64X2Sub)}, "\xfd\xd1\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xd5\x01"_su8, O::I64X2Mul)}, "\xfd\xd5\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xe0\x01"_su8, O::F32X4Abs)}, "\xfd\xe0\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xe1\x01"_su8, O::F32X4Neg)}, "\xfd\xe1\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xe3\x01"_su8, O::F32X4Sqrt)}, "\xfd\xe3\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xe4\x01"_su8, O::F32X4Add)}, "\xfd\xe4\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xe5\x01"_su8, O::F32X4Sub)}, "\xfd\xe5\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xe6\x01"_su8, O::F32X4Mul)}, "\xfd\xe6\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xe7\x01"_su8, O::F32X4Div)}, "\xfd\xe7\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xe8\x01"_su8, O::F32X4Min)}, "\xfd\xe8\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xe9\x01"_su8, O::F32X4Max)}, "\xfd\xe9\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xec\x01"_su8, O::F64X2Abs)}, "\xfd\xec\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xed\x01"_su8, O::F64X2Neg)}, "\xfd\xed\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xef\x01"_su8, O::F64X2Sqrt)}, "\xfd\xef\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xf0\x01"_su8, O::F64X2Add)}, "\xfd\xf0\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xf1\x01"_su8, O::F64X2Sub)}, "\xfd\xf1\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xf2\x01"_su8, O::F64X2Mul)}, "\xfd\xf2\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xf3\x01"_su8, O::F64X2Div)}, "\xfd\xf3\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xf4\x01"_su8, O::F64X2Min)}, "\xfd\xf4\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xf5\x01"_su8, O::F64X2Max)}, "\xfd\xf5\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xf8\x01"_su8, O::I32X4TruncSatF32X4S)}, "\xfd\xf8\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xf9\x01"_su8, O::I32X4TruncSatF32X4U)}, "\xfd\xf9\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xfa\x01"_su8, O::F32X4ConvertI32X4S)}, "\xfd\xfa\x01"_su8);
-  OK(Read<I>, I{MakeAt("\xfd\xfb\x01"_su8, O::F32X4ConvertI32X4U)}, "\xfd\xfb\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x0e"_su8, O::V8X16Swizzle}}, "\xfd\x0e"_su8);
+  OK(Read<I>, I{At{"\xfd\x0f"_su8, O::I8X16Splat}}, "\xfd\x0f"_su8);
+  OK(Read<I>, I{At{"\xfd\x10"_su8, O::I16X8Splat}}, "\xfd\x10"_su8);
+  OK(Read<I>, I{At{"\xfd\x11"_su8, O::I32X4Splat}}, "\xfd\x11"_su8);
+  OK(Read<I>, I{At{"\xfd\x12"_su8, O::I64X2Splat}}, "\xfd\x12"_su8);
+  OK(Read<I>, I{At{"\xfd\x13"_su8, O::F32X4Splat}}, "\xfd\x13"_su8);
+  OK(Read<I>, I{At{"\xfd\x14"_su8, O::F64X2Splat}}, "\xfd\x14"_su8);
+  OK(Read<I>,
+     I{At{"\xfd\x15"_su8, O::I8X16ExtractLaneS}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x15\x00"_su8);
+  OK(Read<I>,
+     I{At{"\xfd\x16"_su8, O::I8X16ExtractLaneU}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x16\x00"_su8);
+  OK(Read<I>, I{At{"\xfd\x17"_su8, O::I8X16ReplaceLane}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x17\x00"_su8);
+  OK(Read<I>,
+     I{At{"\xfd\x18"_su8, O::I16X8ExtractLaneS}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x18\x00"_su8);
+  OK(Read<I>,
+     I{At{"\xfd\x19"_su8, O::I16X8ExtractLaneU}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x19\x00"_su8);
+  OK(Read<I>, I{At{"\xfd\x1a"_su8, O::I16X8ReplaceLane}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x1a\x00"_su8);
+  OK(Read<I>, I{At{"\xfd\x1b"_su8, O::I32X4ExtractLane}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x1b\x00"_su8);
+  OK(Read<I>, I{At{"\xfd\x1c"_su8, O::I32X4ReplaceLane}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x1c\x00"_su8);
+  OK(Read<I>, I{At{"\xfd\x1d"_su8, O::I64X2ExtractLane}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x1d\x00"_su8);
+  OK(Read<I>, I{At{"\xfd\x1e"_su8, O::I64X2ReplaceLane}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x1e\x00"_su8);
+  OK(Read<I>, I{At{"\xfd\x1f"_su8, O::F32X4ExtractLane}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x1f\x00"_su8);
+  OK(Read<I>, I{At{"\xfd\x20"_su8, O::F32X4ReplaceLane}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x20\x00"_su8);
+  OK(Read<I>, I{At{"\xfd\x21"_su8, O::F64X2ExtractLane}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x21\x00"_su8);
+  OK(Read<I>, I{At{"\xfd\x22"_su8, O::F64X2ReplaceLane}, At{"\x00"_su8, u8{0}}},
+     "\xfd\x22\x00"_su8);
+  OK(Read<I>, I{At{"\xfd\x23"_su8, O::I8X16Eq}}, "\xfd\x23"_su8);
+  OK(Read<I>, I{At{"\xfd\x24"_su8, O::I8X16Ne}}, "\xfd\x24"_su8);
+  OK(Read<I>, I{At{"\xfd\x25"_su8, O::I8X16LtS}}, "\xfd\x25"_su8);
+  OK(Read<I>, I{At{"\xfd\x26"_su8, O::I8X16LtU}}, "\xfd\x26"_su8);
+  OK(Read<I>, I{At{"\xfd\x27"_su8, O::I8X16GtS}}, "\xfd\x27"_su8);
+  OK(Read<I>, I{At{"\xfd\x28"_su8, O::I8X16GtU}}, "\xfd\x28"_su8);
+  OK(Read<I>, I{At{"\xfd\x29"_su8, O::I8X16LeS}}, "\xfd\x29"_su8);
+  OK(Read<I>, I{At{"\xfd\x2a"_su8, O::I8X16LeU}}, "\xfd\x2a"_su8);
+  OK(Read<I>, I{At{"\xfd\x2b"_su8, O::I8X16GeS}}, "\xfd\x2b"_su8);
+  OK(Read<I>, I{At{"\xfd\x2c"_su8, O::I8X16GeU}}, "\xfd\x2c"_su8);
+  OK(Read<I>, I{At{"\xfd\x2d"_su8, O::I16X8Eq}}, "\xfd\x2d"_su8);
+  OK(Read<I>, I{At{"\xfd\x2e"_su8, O::I16X8Ne}}, "\xfd\x2e"_su8);
+  OK(Read<I>, I{At{"\xfd\x2f"_su8, O::I16X8LtS}}, "\xfd\x2f"_su8);
+  OK(Read<I>, I{At{"\xfd\x30"_su8, O::I16X8LtU}}, "\xfd\x30"_su8);
+  OK(Read<I>, I{At{"\xfd\x31"_su8, O::I16X8GtS}}, "\xfd\x31"_su8);
+  OK(Read<I>, I{At{"\xfd\x32"_su8, O::I16X8GtU}}, "\xfd\x32"_su8);
+  OK(Read<I>, I{At{"\xfd\x33"_su8, O::I16X8LeS}}, "\xfd\x33"_su8);
+  OK(Read<I>, I{At{"\xfd\x34"_su8, O::I16X8LeU}}, "\xfd\x34"_su8);
+  OK(Read<I>, I{At{"\xfd\x35"_su8, O::I16X8GeS}}, "\xfd\x35"_su8);
+  OK(Read<I>, I{At{"\xfd\x36"_su8, O::I16X8GeU}}, "\xfd\x36"_su8);
+  OK(Read<I>, I{At{"\xfd\x37"_su8, O::I32X4Eq}}, "\xfd\x37"_su8);
+  OK(Read<I>, I{At{"\xfd\x38"_su8, O::I32X4Ne}}, "\xfd\x38"_su8);
+  OK(Read<I>, I{At{"\xfd\x39"_su8, O::I32X4LtS}}, "\xfd\x39"_su8);
+  OK(Read<I>, I{At{"\xfd\x3a"_su8, O::I32X4LtU}}, "\xfd\x3a"_su8);
+  OK(Read<I>, I{At{"\xfd\x3b"_su8, O::I32X4GtS}}, "\xfd\x3b"_su8);
+  OK(Read<I>, I{At{"\xfd\x3c"_su8, O::I32X4GtU}}, "\xfd\x3c"_su8);
+  OK(Read<I>, I{At{"\xfd\x3d"_su8, O::I32X4LeS}}, "\xfd\x3d"_su8);
+  OK(Read<I>, I{At{"\xfd\x3e"_su8, O::I32X4LeU}}, "\xfd\x3e"_su8);
+  OK(Read<I>, I{At{"\xfd\x3f"_su8, O::I32X4GeS}}, "\xfd\x3f"_su8);
+  OK(Read<I>, I{At{"\xfd\x40"_su8, O::I32X4GeU}}, "\xfd\x40"_su8);
+  OK(Read<I>, I{At{"\xfd\x41"_su8, O::F32X4Eq}}, "\xfd\x41"_su8);
+  OK(Read<I>, I{At{"\xfd\x42"_su8, O::F32X4Ne}}, "\xfd\x42"_su8);
+  OK(Read<I>, I{At{"\xfd\x43"_su8, O::F32X4Lt}}, "\xfd\x43"_su8);
+  OK(Read<I>, I{At{"\xfd\x44"_su8, O::F32X4Gt}}, "\xfd\x44"_su8);
+  OK(Read<I>, I{At{"\xfd\x45"_su8, O::F32X4Le}}, "\xfd\x45"_su8);
+  OK(Read<I>, I{At{"\xfd\x46"_su8, O::F32X4Ge}}, "\xfd\x46"_su8);
+  OK(Read<I>, I{At{"\xfd\x47"_su8, O::F64X2Eq}}, "\xfd\x47"_su8);
+  OK(Read<I>, I{At{"\xfd\x48"_su8, O::F64X2Ne}}, "\xfd\x48"_su8);
+  OK(Read<I>, I{At{"\xfd\x49"_su8, O::F64X2Lt}}, "\xfd\x49"_su8);
+  OK(Read<I>, I{At{"\xfd\x4a"_su8, O::F64X2Gt}}, "\xfd\x4a"_su8);
+  OK(Read<I>, I{At{"\xfd\x4b"_su8, O::F64X2Le}}, "\xfd\x4b"_su8);
+  OK(Read<I>, I{At{"\xfd\x4c"_su8, O::F64X2Ge}}, "\xfd\x4c"_su8);
+  OK(Read<I>, I{At{"\xfd\x4d"_su8, O::V128Not}}, "\xfd\x4d"_su8);
+  OK(Read<I>, I{At{"\xfd\x4e"_su8, O::V128And}}, "\xfd\x4e"_su8);
+  OK(Read<I>, I{At{"\xfd\x4f"_su8, O::V128Andnot}}, "\xfd\x4f"_su8);
+  OK(Read<I>, I{At{"\xfd\x50"_su8, O::V128Or}}, "\xfd\x50"_su8);
+  OK(Read<I>, I{At{"\xfd\x51"_su8, O::V128Xor}}, "\xfd\x51"_su8);
+  OK(Read<I>, I{At{"\xfd\x52"_su8, O::V128BitSelect}}, "\xfd\x52"_su8);
+  OK(Read<I>, I{At{"\xfd\x60"_su8, O::I8X16Abs}}, "\xfd\x60"_su8);
+  OK(Read<I>, I{At{"\xfd\x61"_su8, O::I8X16Neg}}, "\xfd\x61"_su8);
+  OK(Read<I>, I{At{"\xfd\x62"_su8, O::I8X16AnyTrue}}, "\xfd\x62"_su8);
+  OK(Read<I>, I{At{"\xfd\x63"_su8, O::I8X16AllTrue}}, "\xfd\x63"_su8);
+  OK(Read<I>, I{At{"\xfd\x65"_su8, O::I8X16NarrowI16X8S}}, "\xfd\x65"_su8);
+  OK(Read<I>, I{At{"\xfd\x66"_su8, O::I8X16NarrowI16X8U}}, "\xfd\x66"_su8);
+  OK(Read<I>, I{At{"\xfd\x6b"_su8, O::I8X16Shl}}, "\xfd\x6b"_su8);
+  OK(Read<I>, I{At{"\xfd\x6c"_su8, O::I8X16ShrS}}, "\xfd\x6c"_su8);
+  OK(Read<I>, I{At{"\xfd\x6d"_su8, O::I8X16ShrU}}, "\xfd\x6d"_su8);
+  OK(Read<I>, I{At{"\xfd\x6e"_su8, O::I8X16Add}}, "\xfd\x6e"_su8);
+  OK(Read<I>, I{At{"\xfd\x6f"_su8, O::I8X16AddSaturateS}}, "\xfd\x6f"_su8);
+  OK(Read<I>, I{At{"\xfd\x70"_su8, O::I8X16AddSaturateU}}, "\xfd\x70"_su8);
+  OK(Read<I>, I{At{"\xfd\x71"_su8, O::I8X16Sub}}, "\xfd\x71"_su8);
+  OK(Read<I>, I{At{"\xfd\x72"_su8, O::I8X16SubSaturateS}}, "\xfd\x72"_su8);
+  OK(Read<I>, I{At{"\xfd\x73"_su8, O::I8X16SubSaturateU}}, "\xfd\x73"_su8);
+  OK(Read<I>, I{At{"\xfd\x76"_su8, O::I8X16MinS}}, "\xfd\x76"_su8);
+  OK(Read<I>, I{At{"\xfd\x77"_su8, O::I8X16MinU}}, "\xfd\x77"_su8);
+  OK(Read<I>, I{At{"\xfd\x78"_su8, O::I8X16MaxS}}, "\xfd\x78"_su8);
+  OK(Read<I>, I{At{"\xfd\x79"_su8, O::I8X16MaxU}}, "\xfd\x79"_su8);
+  OK(Read<I>, I{At{"\xfd\x7b"_su8, O::I8X16AvgrU}}, "\xfd\x7b"_su8);
+  OK(Read<I>, I{At{"\xfd\x80\x01"_su8, O::I16X8Abs}}, "\xfd\x80\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x81\x01"_su8, O::I16X8Neg}}, "\xfd\x81\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x82\x01"_su8, O::I16X8AnyTrue}}, "\xfd\x82\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x83\x01"_su8, O::I16X8AllTrue}}, "\xfd\x83\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x85\x01"_su8, O::I16X8NarrowI32X4S}},
+     "\xfd\x85\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x86\x01"_su8, O::I16X8NarrowI32X4U}},
+     "\xfd\x86\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x87\x01"_su8, O::I16X8WidenLowI8X16S}},
+     "\xfd\x87\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x88\x01"_su8, O::I16X8WidenHighI8X16S}},
+     "\xfd\x88\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x89\x01"_su8, O::I16X8WidenLowI8X16U}},
+     "\xfd\x89\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x8a\x01"_su8, O::I16X8WidenHighI8X16U}},
+     "\xfd\x8a\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x8b\x01"_su8, O::I16X8Shl}}, "\xfd\x8b\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x8c\x01"_su8, O::I16X8ShrS}}, "\xfd\x8c\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x8d\x01"_su8, O::I16X8ShrU}}, "\xfd\x8d\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x8e\x01"_su8, O::I16X8Add}}, "\xfd\x8e\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x8f\x01"_su8, O::I16X8AddSaturateS}},
+     "\xfd\x8f\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x90\x01"_su8, O::I16X8AddSaturateU}},
+     "\xfd\x90\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x91\x01"_su8, O::I16X8Sub}}, "\xfd\x91\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x92\x01"_su8, O::I16X8SubSaturateS}},
+     "\xfd\x92\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x93\x01"_su8, O::I16X8SubSaturateU}},
+     "\xfd\x93\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x95\x01"_su8, O::I16X8Mul}}, "\xfd\x95\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x96\x01"_su8, O::I16X8MinS}}, "\xfd\x96\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x97\x01"_su8, O::I16X8MinU}}, "\xfd\x97\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x98\x01"_su8, O::I16X8MaxS}}, "\xfd\x98\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x99\x01"_su8, O::I16X8MaxU}}, "\xfd\x99\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x9b\x01"_su8, O::I16X8AvgrU}}, "\xfd\x9b\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xa0\x01"_su8, O::I32X4Abs}}, "\xfd\xa0\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xa1\x01"_su8, O::I32X4Neg}}, "\xfd\xa1\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xa2\x01"_su8, O::I32X4AnyTrue}}, "\xfd\xa2\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xa3\x01"_su8, O::I32X4AllTrue}}, "\xfd\xa3\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xa7\x01"_su8, O::I32X4WidenLowI16X8S}},
+     "\xfd\xa7\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xa8\x01"_su8, O::I32X4WidenHighI16X8S}},
+     "\xfd\xa8\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xa9\x01"_su8, O::I32X4WidenLowI16X8U}},
+     "\xfd\xa9\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xaa\x01"_su8, O::I32X4WidenHighI16X8U}},
+     "\xfd\xaa\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xab\x01"_su8, O::I32X4Shl}}, "\xfd\xab\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xac\x01"_su8, O::I32X4ShrS}}, "\xfd\xac\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xad\x01"_su8, O::I32X4ShrU}}, "\xfd\xad\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xae\x01"_su8, O::I32X4Add}}, "\xfd\xae\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xb1\x01"_su8, O::I32X4Sub}}, "\xfd\xb1\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xb5\x01"_su8, O::I32X4Mul}}, "\xfd\xb5\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xb6\x01"_su8, O::I32X4MinS}}, "\xfd\xb6\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xb7\x01"_su8, O::I32X4MinU}}, "\xfd\xb7\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xb8\x01"_su8, O::I32X4MaxS}}, "\xfd\xb8\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xb9\x01"_su8, O::I32X4MaxU}}, "\xfd\xb9\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xc1\x01"_su8, O::I64X2Neg}}, "\xfd\xc1\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xcb\x01"_su8, O::I64X2Shl}}, "\xfd\xcb\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xcc\x01"_su8, O::I64X2ShrS}}, "\xfd\xcc\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xcd\x01"_su8, O::I64X2ShrU}}, "\xfd\xcd\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xce\x01"_su8, O::I64X2Add}}, "\xfd\xce\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xd1\x01"_su8, O::I64X2Sub}}, "\xfd\xd1\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xd5\x01"_su8, O::I64X2Mul}}, "\xfd\xd5\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xe0\x01"_su8, O::F32X4Abs}}, "\xfd\xe0\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xe1\x01"_su8, O::F32X4Neg}}, "\xfd\xe1\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xe3\x01"_su8, O::F32X4Sqrt}}, "\xfd\xe3\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xe4\x01"_su8, O::F32X4Add}}, "\xfd\xe4\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xe5\x01"_su8, O::F32X4Sub}}, "\xfd\xe5\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xe6\x01"_su8, O::F32X4Mul}}, "\xfd\xe6\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xe7\x01"_su8, O::F32X4Div}}, "\xfd\xe7\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xe8\x01"_su8, O::F32X4Min}}, "\xfd\xe8\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xe9\x01"_su8, O::F32X4Max}}, "\xfd\xe9\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xec\x01"_su8, O::F64X2Abs}}, "\xfd\xec\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xed\x01"_su8, O::F64X2Neg}}, "\xfd\xed\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xef\x01"_su8, O::F64X2Sqrt}}, "\xfd\xef\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xf0\x01"_su8, O::F64X2Add}}, "\xfd\xf0\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xf1\x01"_su8, O::F64X2Sub}}, "\xfd\xf1\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xf2\x01"_su8, O::F64X2Mul}}, "\xfd\xf2\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xf3\x01"_su8, O::F64X2Div}}, "\xfd\xf3\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xf4\x01"_su8, O::F64X2Min}}, "\xfd\xf4\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xf5\x01"_su8, O::F64X2Max}}, "\xfd\xf5\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xf8\x01"_su8, O::I32X4TruncSatF32X4S}},
+     "\xfd\xf8\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xf9\x01"_su8, O::I32X4TruncSatF32X4U}},
+     "\xfd\xf9\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xfa\x01"_su8, O::F32X4ConvertI32X4S}},
+     "\xfd\xfa\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\xfb\x01"_su8, O::F32X4ConvertI32X4U}},
+     "\xfd\xfb\x01"_su8);
 }
 
 TEST_F(BinaryReadTest, Instruction_threads) {
   context.features.enable_threads();
 
-  auto memarg = MakeAt(
-      "\x01\x02"_su8,
-      MemArgImmediate{MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, u32{2})});
+  auto memarg = At{"\x01\x02"_su8, MemArgImmediate{At{"\x01"_su8, u32{1}},
+                                                   At{"\x02"_su8, u32{2}}}};
 
-  OK(Read<I>, I{MakeAt("\xfe\x00"_su8, O::MemoryAtomicNotify), memarg},
+  OK(Read<I>, I{At{"\xfe\x00"_su8, O::MemoryAtomicNotify}, memarg},
      "\xfe\x00\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x01"_su8, O::MemoryAtomicWait32), memarg},
+  OK(Read<I>, I{At{"\xfe\x01"_su8, O::MemoryAtomicWait32}, memarg},
      "\xfe\x01\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x02"_su8, O::MemoryAtomicWait64), memarg},
+  OK(Read<I>, I{At{"\xfe\x02"_su8, O::MemoryAtomicWait64}, memarg},
      "\xfe\x02\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x10"_su8, O::I32AtomicLoad), memarg},
+  OK(Read<I>, I{At{"\xfe\x10"_su8, O::I32AtomicLoad}, memarg},
      "\xfe\x10\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x11"_su8, O::I64AtomicLoad), memarg},
+  OK(Read<I>, I{At{"\xfe\x11"_su8, O::I64AtomicLoad}, memarg},
      "\xfe\x11\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x12"_su8, O::I32AtomicLoad8U), memarg},
+  OK(Read<I>, I{At{"\xfe\x12"_su8, O::I32AtomicLoad8U}, memarg},
      "\xfe\x12\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x13"_su8, O::I32AtomicLoad16U), memarg},
+  OK(Read<I>, I{At{"\xfe\x13"_su8, O::I32AtomicLoad16U}, memarg},
      "\xfe\x13\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x14"_su8, O::I64AtomicLoad8U), memarg},
+  OK(Read<I>, I{At{"\xfe\x14"_su8, O::I64AtomicLoad8U}, memarg},
      "\xfe\x14\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x15"_su8, O::I64AtomicLoad16U), memarg},
+  OK(Read<I>, I{At{"\xfe\x15"_su8, O::I64AtomicLoad16U}, memarg},
      "\xfe\x15\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x16"_su8, O::I64AtomicLoad32U), memarg},
+  OK(Read<I>, I{At{"\xfe\x16"_su8, O::I64AtomicLoad32U}, memarg},
      "\xfe\x16\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x17"_su8, O::I32AtomicStore), memarg},
+  OK(Read<I>, I{At{"\xfe\x17"_su8, O::I32AtomicStore}, memarg},
      "\xfe\x17\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x18"_su8, O::I64AtomicStore), memarg},
+  OK(Read<I>, I{At{"\xfe\x18"_su8, O::I64AtomicStore}, memarg},
      "\xfe\x18\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x19"_su8, O::I32AtomicStore8), memarg},
+  OK(Read<I>, I{At{"\xfe\x19"_su8, O::I32AtomicStore8}, memarg},
      "\xfe\x19\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x1a"_su8, O::I32AtomicStore16), memarg},
+  OK(Read<I>, I{At{"\xfe\x1a"_su8, O::I32AtomicStore16}, memarg},
      "\xfe\x1a\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x1b"_su8, O::I64AtomicStore8), memarg},
+  OK(Read<I>, I{At{"\xfe\x1b"_su8, O::I64AtomicStore8}, memarg},
      "\xfe\x1b\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x1c"_su8, O::I64AtomicStore16), memarg},
+  OK(Read<I>, I{At{"\xfe\x1c"_su8, O::I64AtomicStore16}, memarg},
      "\xfe\x1c\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x1d"_su8, O::I64AtomicStore32), memarg},
+  OK(Read<I>, I{At{"\xfe\x1d"_su8, O::I64AtomicStore32}, memarg},
      "\xfe\x1d\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x1e"_su8, O::I32AtomicRmwAdd), memarg},
+  OK(Read<I>, I{At{"\xfe\x1e"_su8, O::I32AtomicRmwAdd}, memarg},
      "\xfe\x1e\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x1f"_su8, O::I64AtomicRmwAdd), memarg},
+  OK(Read<I>, I{At{"\xfe\x1f"_su8, O::I64AtomicRmwAdd}, memarg},
      "\xfe\x1f\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x20"_su8, O::I32AtomicRmw8AddU), memarg},
+  OK(Read<I>, I{At{"\xfe\x20"_su8, O::I32AtomicRmw8AddU}, memarg},
      "\xfe\x20\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x21"_su8, O::I32AtomicRmw16AddU), memarg},
+  OK(Read<I>, I{At{"\xfe\x21"_su8, O::I32AtomicRmw16AddU}, memarg},
      "\xfe\x21\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x22"_su8, O::I64AtomicRmw8AddU), memarg},
+  OK(Read<I>, I{At{"\xfe\x22"_su8, O::I64AtomicRmw8AddU}, memarg},
      "\xfe\x22\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x23"_su8, O::I64AtomicRmw16AddU), memarg},
+  OK(Read<I>, I{At{"\xfe\x23"_su8, O::I64AtomicRmw16AddU}, memarg},
      "\xfe\x23\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x24"_su8, O::I64AtomicRmw32AddU), memarg},
+  OK(Read<I>, I{At{"\xfe\x24"_su8, O::I64AtomicRmw32AddU}, memarg},
      "\xfe\x24\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x25"_su8, O::I32AtomicRmwSub), memarg},
+  OK(Read<I>, I{At{"\xfe\x25"_su8, O::I32AtomicRmwSub}, memarg},
      "\xfe\x25\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x26"_su8, O::I64AtomicRmwSub), memarg},
+  OK(Read<I>, I{At{"\xfe\x26"_su8, O::I64AtomicRmwSub}, memarg},
      "\xfe\x26\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x27"_su8, O::I32AtomicRmw8SubU), memarg},
+  OK(Read<I>, I{At{"\xfe\x27"_su8, O::I32AtomicRmw8SubU}, memarg},
      "\xfe\x27\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x28"_su8, O::I32AtomicRmw16SubU), memarg},
+  OK(Read<I>, I{At{"\xfe\x28"_su8, O::I32AtomicRmw16SubU}, memarg},
      "\xfe\x28\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x29"_su8, O::I64AtomicRmw8SubU), memarg},
+  OK(Read<I>, I{At{"\xfe\x29"_su8, O::I64AtomicRmw8SubU}, memarg},
      "\xfe\x29\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x2a"_su8, O::I64AtomicRmw16SubU), memarg},
+  OK(Read<I>, I{At{"\xfe\x2a"_su8, O::I64AtomicRmw16SubU}, memarg},
      "\xfe\x2a\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x2b"_su8, O::I64AtomicRmw32SubU), memarg},
+  OK(Read<I>, I{At{"\xfe\x2b"_su8, O::I64AtomicRmw32SubU}, memarg},
      "\xfe\x2b\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x2c"_su8, O::I32AtomicRmwAnd), memarg},
+  OK(Read<I>, I{At{"\xfe\x2c"_su8, O::I32AtomicRmwAnd}, memarg},
      "\xfe\x2c\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x2d"_su8, O::I64AtomicRmwAnd), memarg},
+  OK(Read<I>, I{At{"\xfe\x2d"_su8, O::I64AtomicRmwAnd}, memarg},
      "\xfe\x2d\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x2e"_su8, O::I32AtomicRmw8AndU), memarg},
+  OK(Read<I>, I{At{"\xfe\x2e"_su8, O::I32AtomicRmw8AndU}, memarg},
      "\xfe\x2e\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x2f"_su8, O::I32AtomicRmw16AndU), memarg},
+  OK(Read<I>, I{At{"\xfe\x2f"_su8, O::I32AtomicRmw16AndU}, memarg},
      "\xfe\x2f\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x30"_su8, O::I64AtomicRmw8AndU), memarg},
+  OK(Read<I>, I{At{"\xfe\x30"_su8, O::I64AtomicRmw8AndU}, memarg},
      "\xfe\x30\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x31"_su8, O::I64AtomicRmw16AndU), memarg},
+  OK(Read<I>, I{At{"\xfe\x31"_su8, O::I64AtomicRmw16AndU}, memarg},
      "\xfe\x31\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x32"_su8, O::I64AtomicRmw32AndU), memarg},
+  OK(Read<I>, I{At{"\xfe\x32"_su8, O::I64AtomicRmw32AndU}, memarg},
      "\xfe\x32\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x33"_su8, O::I32AtomicRmwOr), memarg},
+  OK(Read<I>, I{At{"\xfe\x33"_su8, O::I32AtomicRmwOr}, memarg},
      "\xfe\x33\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x34"_su8, O::I64AtomicRmwOr), memarg},
+  OK(Read<I>, I{At{"\xfe\x34"_su8, O::I64AtomicRmwOr}, memarg},
      "\xfe\x34\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x35"_su8, O::I32AtomicRmw8OrU), memarg},
+  OK(Read<I>, I{At{"\xfe\x35"_su8, O::I32AtomicRmw8OrU}, memarg},
      "\xfe\x35\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x36"_su8, O::I32AtomicRmw16OrU), memarg},
+  OK(Read<I>, I{At{"\xfe\x36"_su8, O::I32AtomicRmw16OrU}, memarg},
      "\xfe\x36\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x37"_su8, O::I64AtomicRmw8OrU), memarg},
+  OK(Read<I>, I{At{"\xfe\x37"_su8, O::I64AtomicRmw8OrU}, memarg},
      "\xfe\x37\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x38"_su8, O::I64AtomicRmw16OrU), memarg},
+  OK(Read<I>, I{At{"\xfe\x38"_su8, O::I64AtomicRmw16OrU}, memarg},
      "\xfe\x38\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x39"_su8, O::I64AtomicRmw32OrU), memarg},
+  OK(Read<I>, I{At{"\xfe\x39"_su8, O::I64AtomicRmw32OrU}, memarg},
      "\xfe\x39\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x3a"_su8, O::I32AtomicRmwXor), memarg},
+  OK(Read<I>, I{At{"\xfe\x3a"_su8, O::I32AtomicRmwXor}, memarg},
      "\xfe\x3a\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x3b"_su8, O::I64AtomicRmwXor), memarg},
+  OK(Read<I>, I{At{"\xfe\x3b"_su8, O::I64AtomicRmwXor}, memarg},
      "\xfe\x3b\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x3c"_su8, O::I32AtomicRmw8XorU), memarg},
+  OK(Read<I>, I{At{"\xfe\x3c"_su8, O::I32AtomicRmw8XorU}, memarg},
      "\xfe\x3c\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x3d"_su8, O::I32AtomicRmw16XorU), memarg},
+  OK(Read<I>, I{At{"\xfe\x3d"_su8, O::I32AtomicRmw16XorU}, memarg},
      "\xfe\x3d\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x3e"_su8, O::I64AtomicRmw8XorU), memarg},
+  OK(Read<I>, I{At{"\xfe\x3e"_su8, O::I64AtomicRmw8XorU}, memarg},
      "\xfe\x3e\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x3f"_su8, O::I64AtomicRmw16XorU), memarg},
+  OK(Read<I>, I{At{"\xfe\x3f"_su8, O::I64AtomicRmw16XorU}, memarg},
      "\xfe\x3f\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x40"_su8, O::I64AtomicRmw32XorU), memarg},
+  OK(Read<I>, I{At{"\xfe\x40"_su8, O::I64AtomicRmw32XorU}, memarg},
      "\xfe\x40\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x41"_su8, O::I32AtomicRmwXchg), memarg},
+  OK(Read<I>, I{At{"\xfe\x41"_su8, O::I32AtomicRmwXchg}, memarg},
      "\xfe\x41\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x42"_su8, O::I64AtomicRmwXchg), memarg},
+  OK(Read<I>, I{At{"\xfe\x42"_su8, O::I64AtomicRmwXchg}, memarg},
      "\xfe\x42\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x43"_su8, O::I32AtomicRmw8XchgU), memarg},
+  OK(Read<I>, I{At{"\xfe\x43"_su8, O::I32AtomicRmw8XchgU}, memarg},
      "\xfe\x43\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x44"_su8, O::I32AtomicRmw16XchgU), memarg},
+  OK(Read<I>, I{At{"\xfe\x44"_su8, O::I32AtomicRmw16XchgU}, memarg},
      "\xfe\x44\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x45"_su8, O::I64AtomicRmw8XchgU), memarg},
+  OK(Read<I>, I{At{"\xfe\x45"_su8, O::I64AtomicRmw8XchgU}, memarg},
      "\xfe\x45\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x46"_su8, O::I64AtomicRmw16XchgU), memarg},
+  OK(Read<I>, I{At{"\xfe\x46"_su8, O::I64AtomicRmw16XchgU}, memarg},
      "\xfe\x46\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x47"_su8, O::I64AtomicRmw32XchgU), memarg},
+  OK(Read<I>, I{At{"\xfe\x47"_su8, O::I64AtomicRmw32XchgU}, memarg},
      "\xfe\x47\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x48"_su8, O::I32AtomicRmwCmpxchg), memarg},
+  OK(Read<I>, I{At{"\xfe\x48"_su8, O::I32AtomicRmwCmpxchg}, memarg},
      "\xfe\x48\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x49"_su8, O::I64AtomicRmwCmpxchg), memarg},
+  OK(Read<I>, I{At{"\xfe\x49"_su8, O::I64AtomicRmwCmpxchg}, memarg},
      "\xfe\x49\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x4a"_su8, O::I32AtomicRmw8CmpxchgU), memarg},
+  OK(Read<I>, I{At{"\xfe\x4a"_su8, O::I32AtomicRmw8CmpxchgU}, memarg},
      "\xfe\x4a\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x4b"_su8, O::I32AtomicRmw16CmpxchgU), memarg},
+  OK(Read<I>, I{At{"\xfe\x4b"_su8, O::I32AtomicRmw16CmpxchgU}, memarg},
      "\xfe\x4b\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x4c"_su8, O::I64AtomicRmw8CmpxchgU), memarg},
+  OK(Read<I>, I{At{"\xfe\x4c"_su8, O::I64AtomicRmw8CmpxchgU}, memarg},
      "\xfe\x4c\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x4d"_su8, O::I64AtomicRmw16CmpxchgU), memarg},
+  OK(Read<I>, I{At{"\xfe\x4d"_su8, O::I64AtomicRmw16CmpxchgU}, memarg},
      "\xfe\x4d\x01\x02"_su8);
-  OK(Read<I>, I{MakeAt("\xfe\x4e"_su8, O::I64AtomicRmw32CmpxchgU), memarg},
+  OK(Read<I>, I{At{"\xfe\x4e"_su8, O::I64AtomicRmw32CmpxchgU}, memarg},
      "\xfe\x4e\x01\x02"_su8);
 }
 
 TEST_F(BinaryReadTest, Instruction_function_references) {
   context.features.enable_function_references();
 
-  OK(Read<I>, I{MakeAt("\x14"_su8, O::CallRef)}, "\x14"_su8);
-  OK(Read<I>, I{MakeAt("\x15"_su8, O::ReturnCallRef)}, "\x15"_su8);
-  OK(Read<I>, I{MakeAt("\x16"_su8, O::FuncBind), MakeAt("\x00"_su8, Index{0})},
+  OK(Read<I>, I{At{"\x14"_su8, O::CallRef}}, "\x14"_su8);
+  OK(Read<I>, I{At{"\x15"_su8, O::ReturnCallRef}}, "\x15"_su8);
+  OK(Read<I>, I{At{"\x16"_su8, O::FuncBind}, At{"\x00"_su8, Index{0}}},
      "\x16\x00"_su8);
   OK(Read<I>,
-     I{MakeAt("\x17"_su8, O::Let),
-       MakeAt("\x40\x01\x02\x7f"_su8,
-              LetImmediate{MakeAt("\x40"_su8, BT_Void),
-                           {MakeAt("\x02\x7f"_su8,
-                                   Locals{MakeAt("\x02"_su8, Index{2}),
-                                          MakeAt("\x7f"_su8, VT_I32)})}})},
+     I{At{"\x17"_su8, O::Let},
+       At{"\x40\x01\x02\x7f"_su8,
+          LetImmediate{At{"\x40"_su8, BT_Void},
+                       {At{"\x02\x7f"_su8, Locals{At{"\x02"_su8, Index{2}},
+                                                  At{"\x7f"_su8, VT_I32}}}}}}},
      "\x17\x40\x01\x02\x7f"_su8);
-  OK(Read<I>, I{MakeAt("\xd3"_su8, O::RefAsNonNull)}, "\xd3"_su8);
-  OK(Read<I>, I{MakeAt("\xd4"_su8, O::BrOnNull), MakeAt("\x00"_su8, Index{0})},
+  OK(Read<I>, I{At{"\xd3"_su8, O::RefAsNonNull}}, "\xd3"_su8);
+  OK(Read<I>, I{At{"\xd4"_su8, O::BrOnNull}, At{"\x00"_su8, Index{0}}},
      "\xd4\x00"_su8);
 }
 
 TEST_F(BinaryReadTest, Limits) {
   OK(Read<Limits>,
-     Limits{MakeAt("\x81\x01"_su8, u32{129}), nullopt,
-            MakeAt("\x00"_su8, Shared::No)},
+     Limits{At{"\x81\x01"_su8, u32{129}}, nullopt, At{"\x00"_su8, Shared::No}},
      "\x00\x81\x01"_su8);
   OK(Read<Limits>,
-     Limits{MakeAt("\x02"_su8, u32{2}), MakeAt("\xe8\x07"_su8, u32{1000}),
-            MakeAt("\x01"_su8, Shared::No)},
+     Limits{At{"\x02"_su8, u32{2}}, At{"\xe8\x07"_su8, u32{1000}},
+            At{"\x01"_su8, Shared::No}},
      "\x01\x02\xe8\x07"_su8);
 }
 
@@ -2214,8 +2220,8 @@ TEST_F(BinaryReadTest, Limits_threads) {
   context.features.enable_threads();
 
   OK(Read<Limits>,
-     Limits{MakeAt("\x02"_su8, u32{2}), MakeAt("\xe8\x07"_su8, u32{1000}),
-            MakeAt("\x03"_su8, Shared::Yes)},
+     Limits{At{"\x02"_su8, u32{2}}, At{"\xe8\x07"_su8, u32{1000}},
+            At{"\x03"_su8, Shared::Yes}},
      "\x03\x02\xe8\x07"_su8);
 }
 
@@ -2229,11 +2235,9 @@ TEST_F(BinaryReadTest, Limits_PastEnd) {
 }
 
 TEST_F(BinaryReadTest, Locals) {
-  OK(Read<Locals>,
-     Locals{MakeAt("\x02"_su8, u32{2}), MakeAt("\x7f"_su8, VT_I32)},
+  OK(Read<Locals>, Locals{At{"\x02"_su8, u32{2}}, At{"\x7f"_su8, VT_I32}},
      "\x02\x7f"_su8);
-  OK(Read<Locals>,
-     Locals{MakeAt("\xc0\x02"_su8, u32{320}), MakeAt("\x7c"_su8, VT_F64)},
+  OK(Read<Locals>, Locals{At{"\xc0\x02"_su8, u32{320}}, At{"\x7c"_su8, VT_F64}},
      "\xc0\x02\x7c"_su8);
 }
 
@@ -2248,39 +2252,36 @@ TEST_F(BinaryReadTest, Locals_PastEnd) {
 
 TEST_F(BinaryReadTest, LetImmediate) {
   OK(Read<LetImmediate>,
-     LetImmediate{MakeAt("\x40"_su8, BT_Void),
-                  MakeAt("\x00"_su8, LocalsList{})},
+     LetImmediate{At{"\x40"_su8, BT_Void}, At{"\x00"_su8, LocalsList{}}},
      "\x40\x00"_su8);
 
   context.features.enable_multi_value();
 
   OK(Read<LetImmediate>,
      LetImmediate{
-         MakeAt("\x00"_su8, BlockType{MakeAt("\x00"_su8, Index{0})}),
-         MakeAt("\x01\x02\x7f"_su8,
-                LocalsList{MakeAt("\x02\x7f"_su8,
-                                  Locals{MakeAt("\x02"_su8, Index{2}),
-                                         MakeAt("\x7f"_su8, VT_I32)})})},
+         At{"\x00"_su8, BlockType{At{"\x00"_su8, Index{0}}}},
+         At{"\x01\x02\x7f"_su8,
+            LocalsList{At{"\x02\x7f"_su8, Locals{At{"\x02"_su8, Index{2}},
+                                                 At{"\x7f"_su8, VT_I32}}}}}},
      "\x00\x01\x02\x7f"_su8);
 }
 
 TEST_F(BinaryReadTest, MemArgImmediate) {
   OK(Read<MemArgImmediate>,
-     MemArgImmediate{MakeAt("\x00"_su8, u32{0}), MakeAt("\x00"_su8, u32{0})},
+     MemArgImmediate{At{"\x00"_su8, u32{0}}, At{"\x00"_su8, u32{0}}},
      "\x00\x00"_su8);
   OK(Read<MemArgImmediate>,
-     MemArgImmediate{MakeAt("\x01"_su8, u32{1}),
-                     MakeAt("\x80\x02"_su8, u32{256})},
+     MemArgImmediate{At{"\x01"_su8, u32{1}}, At{"\x80\x02"_su8, u32{256}}},
      "\x01\x80\x02"_su8);
 }
 
 TEST_F(BinaryReadTest, Memory) {
   OK(Read<Memory>,
-     Memory{MakeAt("\x01\x01\x02"_su8,
-                   MemoryType{MakeAt("\x01\x01\x02"_su8,
-                                     Limits{MakeAt("\x01"_su8, u32{1}),
-                                            MakeAt("\x02"_su8, u32{2}),
-                                            MakeAt("\x01"_su8, Shared::No)})})},
+     Memory{
+         At{"\x01\x01\x02"_su8,
+            MemoryType{At{"\x01\x01\x02"_su8,
+                          Limits{At{"\x01"_su8, u32{1}}, At{"\x02"_su8, u32{2}},
+                                 At{"\x01"_su8, Shared::No}}}}}},
      "\x01\x01\x02"_su8);
 }
 
@@ -2296,15 +2297,13 @@ TEST_F(BinaryReadTest, Memory_PastEnd) {
 
 TEST_F(BinaryReadTest, MemoryType) {
   OK(Read<MemoryType>,
-     MemoryType{
-         MakeAt("\x00\x01"_su8, Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
-                                       MakeAt("\x00"_su8, Shared::No)})},
+     MemoryType{At{"\x00\x01"_su8, Limits{At{"\x01"_su8, u32{1}}, nullopt,
+                                          At{"\x00"_su8, Shared::No}}}},
      "\x00\x01"_su8);
   OK(Read<MemoryType>,
-     MemoryType{MakeAt(
-         "\x01\x00\x80\x01"_su8,
-         Limits{MakeAt("\x00"_su8, u32{0}), MakeAt("\x80\x01"_su8, u32{128}),
-                MakeAt("\x01"_su8, Shared::No)})},
+     MemoryType{At{"\x01\x00\x80\x01"_su8,
+                   Limits{At{"\x00"_su8, u32{0}}, At{"\x80\x01"_su8, u32{128}},
+                          At{"\x01"_su8, Shared::No}}}},
      "\x01\x00\x80\x01"_su8);
 }
 
@@ -2333,7 +2332,7 @@ TEST_F(BinaryReadTest, Mutability_Unknown) {
 
 TEST_F(BinaryReadTest, NameAssoc) {
   OK(Read<NameAssoc>,
-     NameAssoc{MakeAt("\x02"_su8, Index{2}), MakeAt("\x02hi"_su8, "hi"_sv)},
+     NameAssoc{At{"\x02"_su8, Index{2}}, At{"\x02hi"_su8, "hi"_sv}},
      "\x02\x02hi"_su8);
 }
 
@@ -2364,17 +2363,16 @@ TEST_F(BinaryReadTest, NameSubsectionId_Unknown) {
 
 TEST_F(BinaryReadTest, NameSubsection) {
   OK(Read<NameSubsection>,
-     NameSubsection{MakeAt("\x00"_su8, NameSubsectionId::ModuleName), "\0"_su8},
+     NameSubsection{At{"\x00"_su8, NameSubsectionId::ModuleName}, "\0"_su8},
      "\x00\x01\0"_su8);
 
   OK(Read<NameSubsection>,
-     NameSubsection{MakeAt("\x01"_su8, NameSubsectionId::FunctionNames),
+     NameSubsection{At{"\x01"_su8, NameSubsectionId::FunctionNames},
                     "\0\0"_su8},
      "\x01\x02\0\0"_su8);
 
   OK(Read<NameSubsection>,
-     NameSubsection{MakeAt("\x02"_su8, NameSubsectionId::LocalNames),
-                    "\0\0\0"_su8},
+     NameSubsection{At{"\x02"_su8, NameSubsectionId::LocalNames}, "\0\0\0"_su8},
      "\x02\x03\0\0\0"_su8);
 }
 
@@ -2699,181 +2697,193 @@ TEST_F(BinaryReadTest, Opcode_simd) {
 
   context.features.enable_simd();
 
-  OK(Read<O>, MakeAt("\xfd\x00"_su8, O::V128Load), "\xfd\x00"_su8);
-  OK(Read<O>, MakeAt("\xfd\x01"_su8, O::I16X8Load8X8S), "\xfd\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x02"_su8, O::I16X8Load8X8U), "\xfd\x02"_su8);
-  OK(Read<O>, MakeAt("\xfd\x03"_su8, O::I32X4Load16X4S), "\xfd\x03"_su8);
-  OK(Read<O>, MakeAt("\xfd\x04"_su8, O::I32X4Load16X4U), "\xfd\x04"_su8);
-  OK(Read<O>, MakeAt("\xfd\x05"_su8, O::I64X2Load32X2S), "\xfd\x05"_su8);
-  OK(Read<O>, MakeAt("\xfd\x06"_su8, O::I64X2Load32X2U), "\xfd\x06"_su8);
-  OK(Read<O>, MakeAt("\xfd\x07"_su8, O::V8X16LoadSplat), "\xfd\x07"_su8);
-  OK(Read<O>, MakeAt("\xfd\x08"_su8, O::V16X8LoadSplat), "\xfd\x08"_su8);
-  OK(Read<O>, MakeAt("\xfd\x09"_su8, O::V32X4LoadSplat), "\xfd\x09"_su8);
-  OK(Read<O>, MakeAt("\xfd\x0a"_su8, O::V64X2LoadSplat), "\xfd\x0a"_su8);
-  OK(Read<O>, MakeAt("\xfd\x0b"_su8, O::V128Store), "\xfd\x0b"_su8);
-  OK(Read<O>, MakeAt("\xfd\x0c"_su8, O::V128Const), "\xfd\x0c"_su8);
-  OK(Read<O>, MakeAt("\xfd\x0d"_su8, O::V8X16Shuffle), "\xfd\x0d"_su8);
-  OK(Read<O>, MakeAt("\xfd\x0e"_su8, O::V8X16Swizzle), "\xfd\x0e"_su8);
-  OK(Read<O>, MakeAt("\xfd\x0f"_su8, O::I8X16Splat), "\xfd\x0f"_su8);
-  OK(Read<O>, MakeAt("\xfd\x10"_su8, O::I16X8Splat), "\xfd\x10"_su8);
-  OK(Read<O>, MakeAt("\xfd\x11"_su8, O::I32X4Splat), "\xfd\x11"_su8);
-  OK(Read<O>, MakeAt("\xfd\x12"_su8, O::I64X2Splat), "\xfd\x12"_su8);
-  OK(Read<O>, MakeAt("\xfd\x13"_su8, O::F32X4Splat), "\xfd\x13"_su8);
-  OK(Read<O>, MakeAt("\xfd\x14"_su8, O::F64X2Splat), "\xfd\x14"_su8);
-  OK(Read<O>, MakeAt("\xfd\x15"_su8, O::I8X16ExtractLaneS), "\xfd\x15"_su8);
-  OK(Read<O>, MakeAt("\xfd\x16"_su8, O::I8X16ExtractLaneU), "\xfd\x16"_su8);
-  OK(Read<O>, MakeAt("\xfd\x17"_su8, O::I8X16ReplaceLane), "\xfd\x17"_su8);
-  OK(Read<O>, MakeAt("\xfd\x18"_su8, O::I16X8ExtractLaneS), "\xfd\x18"_su8);
-  OK(Read<O>, MakeAt("\xfd\x19"_su8, O::I16X8ExtractLaneU), "\xfd\x19"_su8);
-  OK(Read<O>, MakeAt("\xfd\x1a"_su8, O::I16X8ReplaceLane), "\xfd\x1a"_su8);
-  OK(Read<O>, MakeAt("\xfd\x1b"_su8, O::I32X4ExtractLane), "\xfd\x1b"_su8);
-  OK(Read<O>, MakeAt("\xfd\x1c"_su8, O::I32X4ReplaceLane), "\xfd\x1c"_su8);
-  OK(Read<O>, MakeAt("\xfd\x1d"_su8, O::I64X2ExtractLane), "\xfd\x1d"_su8);
-  OK(Read<O>, MakeAt("\xfd\x1e"_su8, O::I64X2ReplaceLane), "\xfd\x1e"_su8);
-  OK(Read<O>, MakeAt("\xfd\x1f"_su8, O::F32X4ExtractLane), "\xfd\x1f"_su8);
-  OK(Read<O>, MakeAt("\xfd\x20"_su8, O::F32X4ReplaceLane), "\xfd\x20"_su8);
-  OK(Read<O>, MakeAt("\xfd\x21"_su8, O::F64X2ExtractLane), "\xfd\x21"_su8);
-  OK(Read<O>, MakeAt("\xfd\x22"_su8, O::F64X2ReplaceLane), "\xfd\x22"_su8);
-  OK(Read<O>, MakeAt("\xfd\x23"_su8, O::I8X16Eq), "\xfd\x23"_su8);
-  OK(Read<O>, MakeAt("\xfd\x24"_su8, O::I8X16Ne), "\xfd\x24"_su8);
-  OK(Read<O>, MakeAt("\xfd\x25"_su8, O::I8X16LtS), "\xfd\x25"_su8);
-  OK(Read<O>, MakeAt("\xfd\x26"_su8, O::I8X16LtU), "\xfd\x26"_su8);
-  OK(Read<O>, MakeAt("\xfd\x27"_su8, O::I8X16GtS), "\xfd\x27"_su8);
-  OK(Read<O>, MakeAt("\xfd\x28"_su8, O::I8X16GtU), "\xfd\x28"_su8);
-  OK(Read<O>, MakeAt("\xfd\x29"_su8, O::I8X16LeS), "\xfd\x29"_su8);
-  OK(Read<O>, MakeAt("\xfd\x2a"_su8, O::I8X16LeU), "\xfd\x2a"_su8);
-  OK(Read<O>, MakeAt("\xfd\x2b"_su8, O::I8X16GeS), "\xfd\x2b"_su8);
-  OK(Read<O>, MakeAt("\xfd\x2c"_su8, O::I8X16GeU), "\xfd\x2c"_su8);
-  OK(Read<O>, MakeAt("\xfd\x2d"_su8, O::I16X8Eq), "\xfd\x2d"_su8);
-  OK(Read<O>, MakeAt("\xfd\x2e"_su8, O::I16X8Ne), "\xfd\x2e"_su8);
-  OK(Read<O>, MakeAt("\xfd\x2f"_su8, O::I16X8LtS), "\xfd\x2f"_su8);
-  OK(Read<O>, MakeAt("\xfd\x30"_su8, O::I16X8LtU), "\xfd\x30"_su8);
-  OK(Read<O>, MakeAt("\xfd\x31"_su8, O::I16X8GtS), "\xfd\x31"_su8);
-  OK(Read<O>, MakeAt("\xfd\x32"_su8, O::I16X8GtU), "\xfd\x32"_su8);
-  OK(Read<O>, MakeAt("\xfd\x33"_su8, O::I16X8LeS), "\xfd\x33"_su8);
-  OK(Read<O>, MakeAt("\xfd\x34"_su8, O::I16X8LeU), "\xfd\x34"_su8);
-  OK(Read<O>, MakeAt("\xfd\x35"_su8, O::I16X8GeS), "\xfd\x35"_su8);
-  OK(Read<O>, MakeAt("\xfd\x36"_su8, O::I16X8GeU), "\xfd\x36"_su8);
-  OK(Read<O>, MakeAt("\xfd\x37"_su8, O::I32X4Eq), "\xfd\x37"_su8);
-  OK(Read<O>, MakeAt("\xfd\x38"_su8, O::I32X4Ne), "\xfd\x38"_su8);
-  OK(Read<O>, MakeAt("\xfd\x39"_su8, O::I32X4LtS), "\xfd\x39"_su8);
-  OK(Read<O>, MakeAt("\xfd\x3a"_su8, O::I32X4LtU), "\xfd\x3a"_su8);
-  OK(Read<O>, MakeAt("\xfd\x3b"_su8, O::I32X4GtS), "\xfd\x3b"_su8);
-  OK(Read<O>, MakeAt("\xfd\x3c"_su8, O::I32X4GtU), "\xfd\x3c"_su8);
-  OK(Read<O>, MakeAt("\xfd\x3d"_su8, O::I32X4LeS), "\xfd\x3d"_su8);
-  OK(Read<O>, MakeAt("\xfd\x3e"_su8, O::I32X4LeU), "\xfd\x3e"_su8);
-  OK(Read<O>, MakeAt("\xfd\x3f"_su8, O::I32X4GeS), "\xfd\x3f"_su8);
-  OK(Read<O>, MakeAt("\xfd\x40"_su8, O::I32X4GeU), "\xfd\x40"_su8);
-  OK(Read<O>, MakeAt("\xfd\x41"_su8, O::F32X4Eq), "\xfd\x41"_su8);
-  OK(Read<O>, MakeAt("\xfd\x42"_su8, O::F32X4Ne), "\xfd\x42"_su8);
-  OK(Read<O>, MakeAt("\xfd\x43"_su8, O::F32X4Lt), "\xfd\x43"_su8);
-  OK(Read<O>, MakeAt("\xfd\x44"_su8, O::F32X4Gt), "\xfd\x44"_su8);
-  OK(Read<O>, MakeAt("\xfd\x45"_su8, O::F32X4Le), "\xfd\x45"_su8);
-  OK(Read<O>, MakeAt("\xfd\x46"_su8, O::F32X4Ge), "\xfd\x46"_su8);
-  OK(Read<O>, MakeAt("\xfd\x47"_su8, O::F64X2Eq), "\xfd\x47"_su8);
-  OK(Read<O>, MakeAt("\xfd\x48"_su8, O::F64X2Ne), "\xfd\x48"_su8);
-  OK(Read<O>, MakeAt("\xfd\x49"_su8, O::F64X2Lt), "\xfd\x49"_su8);
-  OK(Read<O>, MakeAt("\xfd\x4a"_su8, O::F64X2Gt), "\xfd\x4a"_su8);
-  OK(Read<O>, MakeAt("\xfd\x4b"_su8, O::F64X2Le), "\xfd\x4b"_su8);
-  OK(Read<O>, MakeAt("\xfd\x4c"_su8, O::F64X2Ge), "\xfd\x4c"_su8);
-  OK(Read<O>, MakeAt("\xfd\x4d"_su8, O::V128Not), "\xfd\x4d"_su8);
-  OK(Read<O>, MakeAt("\xfd\x4e"_su8, O::V128And), "\xfd\x4e"_su8);
-  OK(Read<O>, MakeAt("\xfd\x4f"_su8, O::V128Andnot), "\xfd\x4f"_su8);
-  OK(Read<O>, MakeAt("\xfd\x50"_su8, O::V128Or), "\xfd\x50"_su8);
-  OK(Read<O>, MakeAt("\xfd\x51"_su8, O::V128Xor), "\xfd\x51"_su8);
-  OK(Read<O>, MakeAt("\xfd\x52"_su8, O::V128BitSelect), "\xfd\x52"_su8);
-  OK(Read<O>, MakeAt("\xfd\x60"_su8, O::I8X16Abs), "\xfd\x60"_su8);
-  OK(Read<O>, MakeAt("\xfd\x61"_su8, O::I8X16Neg), "\xfd\x61"_su8);
-  OK(Read<O>, MakeAt("\xfd\x62"_su8, O::I8X16AnyTrue), "\xfd\x62"_su8);
-  OK(Read<O>, MakeAt("\xfd\x63"_su8, O::I8X16AllTrue), "\xfd\x63"_su8);
-  OK(Read<O>, MakeAt("\xfd\x65"_su8, O::I8X16NarrowI16X8S), "\xfd\x65"_su8);
-  OK(Read<O>, MakeAt("\xfd\x66"_su8, O::I8X16NarrowI16X8U), "\xfd\x66"_su8);
-  OK(Read<O>, MakeAt("\xfd\x6b"_su8, O::I8X16Shl), "\xfd\x6b"_su8);
-  OK(Read<O>, MakeAt("\xfd\x6c"_su8, O::I8X16ShrS), "\xfd\x6c"_su8);
-  OK(Read<O>, MakeAt("\xfd\x6d"_su8, O::I8X16ShrU), "\xfd\x6d"_su8);
-  OK(Read<O>, MakeAt("\xfd\x6e"_su8, O::I8X16Add), "\xfd\x6e"_su8);
-  OK(Read<O>, MakeAt("\xfd\x6f"_su8, O::I8X16AddSaturateS), "\xfd\x6f"_su8);
-  OK(Read<O>, MakeAt("\xfd\x70"_su8, O::I8X16AddSaturateU), "\xfd\x70"_su8);
-  OK(Read<O>, MakeAt("\xfd\x71"_su8, O::I8X16Sub), "\xfd\x71"_su8);
-  OK(Read<O>, MakeAt("\xfd\x72"_su8, O::I8X16SubSaturateS), "\xfd\x72"_su8);
-  OK(Read<O>, MakeAt("\xfd\x73"_su8, O::I8X16SubSaturateU), "\xfd\x73"_su8);
-  OK(Read<O>, MakeAt("\xfd\x76"_su8, O::I8X16MinS), "\xfd\x76"_su8);
-  OK(Read<O>, MakeAt("\xfd\x77"_su8, O::I8X16MinU), "\xfd\x77"_su8);
-  OK(Read<O>, MakeAt("\xfd\x78"_su8, O::I8X16MaxS), "\xfd\x78"_su8);
-  OK(Read<O>, MakeAt("\xfd\x79"_su8, O::I8X16MaxU), "\xfd\x79"_su8);
-  OK(Read<O>, MakeAt("\xfd\x7b"_su8, O::I8X16AvgrU), "\xfd\x7b"_su8);
-  OK(Read<O>, MakeAt("\xfd\x80\x01"_su8, O::I16X8Abs), "\xfd\x80\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x81\x01"_su8, O::I16X8Neg), "\xfd\x81\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x82\x01"_su8, O::I16X8AnyTrue), "\xfd\x82\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x83\x01"_su8, O::I16X8AllTrue), "\xfd\x83\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x85\x01"_su8, O::I16X8NarrowI32X4S), "\xfd\x85\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x86\x01"_su8, O::I16X8NarrowI32X4U), "\xfd\x86\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x87\x01"_su8, O::I16X8WidenLowI8X16S), "\xfd\x87\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x88\x01"_su8, O::I16X8WidenHighI8X16S), "\xfd\x88\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x89\x01"_su8, O::I16X8WidenLowI8X16U), "\xfd\x89\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x8a\x01"_su8, O::I16X8WidenHighI8X16U), "\xfd\x8a\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x8b\x01"_su8, O::I16X8Shl), "\xfd\x8b\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x8c\x01"_su8, O::I16X8ShrS), "\xfd\x8c\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x8d\x01"_su8, O::I16X8ShrU), "\xfd\x8d\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x8e\x01"_su8, O::I16X8Add), "\xfd\x8e\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x8f\x01"_su8, O::I16X8AddSaturateS), "\xfd\x8f\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x90\x01"_su8, O::I16X8AddSaturateU), "\xfd\x90\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x91\x01"_su8, O::I16X8Sub), "\xfd\x91\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x92\x01"_su8, O::I16X8SubSaturateS), "\xfd\x92\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x93\x01"_su8, O::I16X8SubSaturateU), "\xfd\x93\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x95\x01"_su8, O::I16X8Mul), "\xfd\x95\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x96\x01"_su8, O::I16X8MinS), "\xfd\x96\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x97\x01"_su8, O::I16X8MinU), "\xfd\x97\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x98\x01"_su8, O::I16X8MaxS), "\xfd\x98\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x99\x01"_su8, O::I16X8MaxU), "\xfd\x99\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\x9b\x01"_su8, O::I16X8AvgrU), "\xfd\x9b\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xa0\x01"_su8, O::I32X4Abs), "\xfd\xa0\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xa1\x01"_su8, O::I32X4Neg), "\xfd\xa1\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xa2\x01"_su8, O::I32X4AnyTrue), "\xfd\xa2\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xa3\x01"_su8, O::I32X4AllTrue), "\xfd\xa3\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xa7\x01"_su8, O::I32X4WidenLowI16X8S), "\xfd\xa7\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xa8\x01"_su8, O::I32X4WidenHighI16X8S), "\xfd\xa8\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xa9\x01"_su8, O::I32X4WidenLowI16X8U), "\xfd\xa9\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xaa\x01"_su8, O::I32X4WidenHighI16X8U), "\xfd\xaa\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xab\x01"_su8, O::I32X4Shl), "\xfd\xab\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xac\x01"_su8, O::I32X4ShrS), "\xfd\xac\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xad\x01"_su8, O::I32X4ShrU), "\xfd\xad\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xae\x01"_su8, O::I32X4Add), "\xfd\xae\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xb1\x01"_su8, O::I32X4Sub), "\xfd\xb1\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xb5\x01"_su8, O::I32X4Mul), "\xfd\xb5\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xb6\x01"_su8, O::I32X4MinS), "\xfd\xb6\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xb7\x01"_su8, O::I32X4MinU), "\xfd\xb7\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xb8\x01"_su8, O::I32X4MaxS), "\xfd\xb8\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xb9\x01"_su8, O::I32X4MaxU), "\xfd\xb9\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xc1\x01"_su8, O::I64X2Neg), "\xfd\xc1\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xcb\x01"_su8, O::I64X2Shl), "\xfd\xcb\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xcc\x01"_su8, O::I64X2ShrS), "\xfd\xcc\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xcd\x01"_su8, O::I64X2ShrU), "\xfd\xcd\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xce\x01"_su8, O::I64X2Add), "\xfd\xce\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xd1\x01"_su8, O::I64X2Sub), "\xfd\xd1\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xd5\x01"_su8, O::I64X2Mul), "\xfd\xd5\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xe0\x01"_su8, O::F32X4Abs), "\xfd\xe0\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xe1\x01"_su8, O::F32X4Neg), "\xfd\xe1\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xe3\x01"_su8, O::F32X4Sqrt), "\xfd\xe3\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xe4\x01"_su8, O::F32X4Add), "\xfd\xe4\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xe5\x01"_su8, O::F32X4Sub), "\xfd\xe5\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xe6\x01"_su8, O::F32X4Mul), "\xfd\xe6\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xe7\x01"_su8, O::F32X4Div), "\xfd\xe7\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xe8\x01"_su8, O::F32X4Min), "\xfd\xe8\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xe9\x01"_su8, O::F32X4Max), "\xfd\xe9\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xec\x01"_su8, O::F64X2Abs), "\xfd\xec\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xed\x01"_su8, O::F64X2Neg), "\xfd\xed\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xef\x01"_su8, O::F64X2Sqrt), "\xfd\xef\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xf0\x01"_su8, O::F64X2Add), "\xfd\xf0\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xf1\x01"_su8, O::F64X2Sub), "\xfd\xf1\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xf2\x01"_su8, O::F64X2Mul), "\xfd\xf2\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xf3\x01"_su8, O::F64X2Div), "\xfd\xf3\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xf4\x01"_su8, O::F64X2Min), "\xfd\xf4\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xf5\x01"_su8, O::F64X2Max), "\xfd\xf5\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xf8\x01"_su8, O::I32X4TruncSatF32X4S), "\xfd\xf8\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xf9\x01"_su8, O::I32X4TruncSatF32X4U), "\xfd\xf9\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xfa\x01"_su8, O::F32X4ConvertI32X4S), "\xfd\xfa\x01"_su8);
-  OK(Read<O>, MakeAt("\xfd\xfb\x01"_su8, O::F32X4ConvertI32X4U), "\xfd\xfb\x01"_su8);
+  OK(Read<O>, At{"\xfd\x00"_su8, O::V128Load}, "\xfd\x00"_su8);
+  OK(Read<O>, At{"\xfd\x01"_su8, O::I16X8Load8X8S}, "\xfd\x01"_su8);
+  OK(Read<O>, At{"\xfd\x02"_su8, O::I16X8Load8X8U}, "\xfd\x02"_su8);
+  OK(Read<O>, At{"\xfd\x03"_su8, O::I32X4Load16X4S}, "\xfd\x03"_su8);
+  OK(Read<O>, At{"\xfd\x04"_su8, O::I32X4Load16X4U}, "\xfd\x04"_su8);
+  OK(Read<O>, At{"\xfd\x05"_su8, O::I64X2Load32X2S}, "\xfd\x05"_su8);
+  OK(Read<O>, At{"\xfd\x06"_su8, O::I64X2Load32X2U}, "\xfd\x06"_su8);
+  OK(Read<O>, At{"\xfd\x07"_su8, O::V8X16LoadSplat}, "\xfd\x07"_su8);
+  OK(Read<O>, At{"\xfd\x08"_su8, O::V16X8LoadSplat}, "\xfd\x08"_su8);
+  OK(Read<O>, At{"\xfd\x09"_su8, O::V32X4LoadSplat}, "\xfd\x09"_su8);
+  OK(Read<O>, At{"\xfd\x0a"_su8, O::V64X2LoadSplat}, "\xfd\x0a"_su8);
+  OK(Read<O>, At{"\xfd\x0b"_su8, O::V128Store}, "\xfd\x0b"_su8);
+  OK(Read<O>, At{"\xfd\x0c"_su8, O::V128Const}, "\xfd\x0c"_su8);
+  OK(Read<O>, At{"\xfd\x0d"_su8, O::V8X16Shuffle}, "\xfd\x0d"_su8);
+  OK(Read<O>, At{"\xfd\x0e"_su8, O::V8X16Swizzle}, "\xfd\x0e"_su8);
+  OK(Read<O>, At{"\xfd\x0f"_su8, O::I8X16Splat}, "\xfd\x0f"_su8);
+  OK(Read<O>, At{"\xfd\x10"_su8, O::I16X8Splat}, "\xfd\x10"_su8);
+  OK(Read<O>, At{"\xfd\x11"_su8, O::I32X4Splat}, "\xfd\x11"_su8);
+  OK(Read<O>, At{"\xfd\x12"_su8, O::I64X2Splat}, "\xfd\x12"_su8);
+  OK(Read<O>, At{"\xfd\x13"_su8, O::F32X4Splat}, "\xfd\x13"_su8);
+  OK(Read<O>, At{"\xfd\x14"_su8, O::F64X2Splat}, "\xfd\x14"_su8);
+  OK(Read<O>, At{"\xfd\x15"_su8, O::I8X16ExtractLaneS}, "\xfd\x15"_su8);
+  OK(Read<O>, At{"\xfd\x16"_su8, O::I8X16ExtractLaneU}, "\xfd\x16"_su8);
+  OK(Read<O>, At{"\xfd\x17"_su8, O::I8X16ReplaceLane}, "\xfd\x17"_su8);
+  OK(Read<O>, At{"\xfd\x18"_su8, O::I16X8ExtractLaneS}, "\xfd\x18"_su8);
+  OK(Read<O>, At{"\xfd\x19"_su8, O::I16X8ExtractLaneU}, "\xfd\x19"_su8);
+  OK(Read<O>, At{"\xfd\x1a"_su8, O::I16X8ReplaceLane}, "\xfd\x1a"_su8);
+  OK(Read<O>, At{"\xfd\x1b"_su8, O::I32X4ExtractLane}, "\xfd\x1b"_su8);
+  OK(Read<O>, At{"\xfd\x1c"_su8, O::I32X4ReplaceLane}, "\xfd\x1c"_su8);
+  OK(Read<O>, At{"\xfd\x1d"_su8, O::I64X2ExtractLane}, "\xfd\x1d"_su8);
+  OK(Read<O>, At{"\xfd\x1e"_su8, O::I64X2ReplaceLane}, "\xfd\x1e"_su8);
+  OK(Read<O>, At{"\xfd\x1f"_su8, O::F32X4ExtractLane}, "\xfd\x1f"_su8);
+  OK(Read<O>, At{"\xfd\x20"_su8, O::F32X4ReplaceLane}, "\xfd\x20"_su8);
+  OK(Read<O>, At{"\xfd\x21"_su8, O::F64X2ExtractLane}, "\xfd\x21"_su8);
+  OK(Read<O>, At{"\xfd\x22"_su8, O::F64X2ReplaceLane}, "\xfd\x22"_su8);
+  OK(Read<O>, At{"\xfd\x23"_su8, O::I8X16Eq}, "\xfd\x23"_su8);
+  OK(Read<O>, At{"\xfd\x24"_su8, O::I8X16Ne}, "\xfd\x24"_su8);
+  OK(Read<O>, At{"\xfd\x25"_su8, O::I8X16LtS}, "\xfd\x25"_su8);
+  OK(Read<O>, At{"\xfd\x26"_su8, O::I8X16LtU}, "\xfd\x26"_su8);
+  OK(Read<O>, At{"\xfd\x27"_su8, O::I8X16GtS}, "\xfd\x27"_su8);
+  OK(Read<O>, At{"\xfd\x28"_su8, O::I8X16GtU}, "\xfd\x28"_su8);
+  OK(Read<O>, At{"\xfd\x29"_su8, O::I8X16LeS}, "\xfd\x29"_su8);
+  OK(Read<O>, At{"\xfd\x2a"_su8, O::I8X16LeU}, "\xfd\x2a"_su8);
+  OK(Read<O>, At{"\xfd\x2b"_su8, O::I8X16GeS}, "\xfd\x2b"_su8);
+  OK(Read<O>, At{"\xfd\x2c"_su8, O::I8X16GeU}, "\xfd\x2c"_su8);
+  OK(Read<O>, At{"\xfd\x2d"_su8, O::I16X8Eq}, "\xfd\x2d"_su8);
+  OK(Read<O>, At{"\xfd\x2e"_su8, O::I16X8Ne}, "\xfd\x2e"_su8);
+  OK(Read<O>, At{"\xfd\x2f"_su8, O::I16X8LtS}, "\xfd\x2f"_su8);
+  OK(Read<O>, At{"\xfd\x30"_su8, O::I16X8LtU}, "\xfd\x30"_su8);
+  OK(Read<O>, At{"\xfd\x31"_su8, O::I16X8GtS}, "\xfd\x31"_su8);
+  OK(Read<O>, At{"\xfd\x32"_su8, O::I16X8GtU}, "\xfd\x32"_su8);
+  OK(Read<O>, At{"\xfd\x33"_su8, O::I16X8LeS}, "\xfd\x33"_su8);
+  OK(Read<O>, At{"\xfd\x34"_su8, O::I16X8LeU}, "\xfd\x34"_su8);
+  OK(Read<O>, At{"\xfd\x35"_su8, O::I16X8GeS}, "\xfd\x35"_su8);
+  OK(Read<O>, At{"\xfd\x36"_su8, O::I16X8GeU}, "\xfd\x36"_su8);
+  OK(Read<O>, At{"\xfd\x37"_su8, O::I32X4Eq}, "\xfd\x37"_su8);
+  OK(Read<O>, At{"\xfd\x38"_su8, O::I32X4Ne}, "\xfd\x38"_su8);
+  OK(Read<O>, At{"\xfd\x39"_su8, O::I32X4LtS}, "\xfd\x39"_su8);
+  OK(Read<O>, At{"\xfd\x3a"_su8, O::I32X4LtU}, "\xfd\x3a"_su8);
+  OK(Read<O>, At{"\xfd\x3b"_su8, O::I32X4GtS}, "\xfd\x3b"_su8);
+  OK(Read<O>, At{"\xfd\x3c"_su8, O::I32X4GtU}, "\xfd\x3c"_su8);
+  OK(Read<O>, At{"\xfd\x3d"_su8, O::I32X4LeS}, "\xfd\x3d"_su8);
+  OK(Read<O>, At{"\xfd\x3e"_su8, O::I32X4LeU}, "\xfd\x3e"_su8);
+  OK(Read<O>, At{"\xfd\x3f"_su8, O::I32X4GeS}, "\xfd\x3f"_su8);
+  OK(Read<O>, At{"\xfd\x40"_su8, O::I32X4GeU}, "\xfd\x40"_su8);
+  OK(Read<O>, At{"\xfd\x41"_su8, O::F32X4Eq}, "\xfd\x41"_su8);
+  OK(Read<O>, At{"\xfd\x42"_su8, O::F32X4Ne}, "\xfd\x42"_su8);
+  OK(Read<O>, At{"\xfd\x43"_su8, O::F32X4Lt}, "\xfd\x43"_su8);
+  OK(Read<O>, At{"\xfd\x44"_su8, O::F32X4Gt}, "\xfd\x44"_su8);
+  OK(Read<O>, At{"\xfd\x45"_su8, O::F32X4Le}, "\xfd\x45"_su8);
+  OK(Read<O>, At{"\xfd\x46"_su8, O::F32X4Ge}, "\xfd\x46"_su8);
+  OK(Read<O>, At{"\xfd\x47"_su8, O::F64X2Eq}, "\xfd\x47"_su8);
+  OK(Read<O>, At{"\xfd\x48"_su8, O::F64X2Ne}, "\xfd\x48"_su8);
+  OK(Read<O>, At{"\xfd\x49"_su8, O::F64X2Lt}, "\xfd\x49"_su8);
+  OK(Read<O>, At{"\xfd\x4a"_su8, O::F64X2Gt}, "\xfd\x4a"_su8);
+  OK(Read<O>, At{"\xfd\x4b"_su8, O::F64X2Le}, "\xfd\x4b"_su8);
+  OK(Read<O>, At{"\xfd\x4c"_su8, O::F64X2Ge}, "\xfd\x4c"_su8);
+  OK(Read<O>, At{"\xfd\x4d"_su8, O::V128Not}, "\xfd\x4d"_su8);
+  OK(Read<O>, At{"\xfd\x4e"_su8, O::V128And}, "\xfd\x4e"_su8);
+  OK(Read<O>, At{"\xfd\x4f"_su8, O::V128Andnot}, "\xfd\x4f"_su8);
+  OK(Read<O>, At{"\xfd\x50"_su8, O::V128Or}, "\xfd\x50"_su8);
+  OK(Read<O>, At{"\xfd\x51"_su8, O::V128Xor}, "\xfd\x51"_su8);
+  OK(Read<O>, At{"\xfd\x52"_su8, O::V128BitSelect}, "\xfd\x52"_su8);
+  OK(Read<O>, At{"\xfd\x60"_su8, O::I8X16Abs}, "\xfd\x60"_su8);
+  OK(Read<O>, At{"\xfd\x61"_su8, O::I8X16Neg}, "\xfd\x61"_su8);
+  OK(Read<O>, At{"\xfd\x62"_su8, O::I8X16AnyTrue}, "\xfd\x62"_su8);
+  OK(Read<O>, At{"\xfd\x63"_su8, O::I8X16AllTrue}, "\xfd\x63"_su8);
+  OK(Read<O>, At{"\xfd\x65"_su8, O::I8X16NarrowI16X8S}, "\xfd\x65"_su8);
+  OK(Read<O>, At{"\xfd\x66"_su8, O::I8X16NarrowI16X8U}, "\xfd\x66"_su8);
+  OK(Read<O>, At{"\xfd\x6b"_su8, O::I8X16Shl}, "\xfd\x6b"_su8);
+  OK(Read<O>, At{"\xfd\x6c"_su8, O::I8X16ShrS}, "\xfd\x6c"_su8);
+  OK(Read<O>, At{"\xfd\x6d"_su8, O::I8X16ShrU}, "\xfd\x6d"_su8);
+  OK(Read<O>, At{"\xfd\x6e"_su8, O::I8X16Add}, "\xfd\x6e"_su8);
+  OK(Read<O>, At{"\xfd\x6f"_su8, O::I8X16AddSaturateS}, "\xfd\x6f"_su8);
+  OK(Read<O>, At{"\xfd\x70"_su8, O::I8X16AddSaturateU}, "\xfd\x70"_su8);
+  OK(Read<O>, At{"\xfd\x71"_su8, O::I8X16Sub}, "\xfd\x71"_su8);
+  OK(Read<O>, At{"\xfd\x72"_su8, O::I8X16SubSaturateS}, "\xfd\x72"_su8);
+  OK(Read<O>, At{"\xfd\x73"_su8, O::I8X16SubSaturateU}, "\xfd\x73"_su8);
+  OK(Read<O>, At{"\xfd\x76"_su8, O::I8X16MinS}, "\xfd\x76"_su8);
+  OK(Read<O>, At{"\xfd\x77"_su8, O::I8X16MinU}, "\xfd\x77"_su8);
+  OK(Read<O>, At{"\xfd\x78"_su8, O::I8X16MaxS}, "\xfd\x78"_su8);
+  OK(Read<O>, At{"\xfd\x79"_su8, O::I8X16MaxU}, "\xfd\x79"_su8);
+  OK(Read<O>, At{"\xfd\x7b"_su8, O::I8X16AvgrU}, "\xfd\x7b"_su8);
+  OK(Read<O>, At{"\xfd\x80\x01"_su8, O::I16X8Abs}, "\xfd\x80\x01"_su8);
+  OK(Read<O>, At{"\xfd\x81\x01"_su8, O::I16X8Neg}, "\xfd\x81\x01"_su8);
+  OK(Read<O>, At{"\xfd\x82\x01"_su8, O::I16X8AnyTrue}, "\xfd\x82\x01"_su8);
+  OK(Read<O>, At{"\xfd\x83\x01"_su8, O::I16X8AllTrue}, "\xfd\x83\x01"_su8);
+  OK(Read<O>, At{"\xfd\x85\x01"_su8, O::I16X8NarrowI32X4S}, "\xfd\x85\x01"_su8);
+  OK(Read<O>, At{"\xfd\x86\x01"_su8, O::I16X8NarrowI32X4U}, "\xfd\x86\x01"_su8);
+  OK(Read<O>, At{"\xfd\x87\x01"_su8, O::I16X8WidenLowI8X16S},
+     "\xfd\x87\x01"_su8);
+  OK(Read<O>, At{"\xfd\x88\x01"_su8, O::I16X8WidenHighI8X16S},
+     "\xfd\x88\x01"_su8);
+  OK(Read<O>, At{"\xfd\x89\x01"_su8, O::I16X8WidenLowI8X16U},
+     "\xfd\x89\x01"_su8);
+  OK(Read<O>, At{"\xfd\x8a\x01"_su8, O::I16X8WidenHighI8X16U},
+     "\xfd\x8a\x01"_su8);
+  OK(Read<O>, At{"\xfd\x8b\x01"_su8, O::I16X8Shl}, "\xfd\x8b\x01"_su8);
+  OK(Read<O>, At{"\xfd\x8c\x01"_su8, O::I16X8ShrS}, "\xfd\x8c\x01"_su8);
+  OK(Read<O>, At{"\xfd\x8d\x01"_su8, O::I16X8ShrU}, "\xfd\x8d\x01"_su8);
+  OK(Read<O>, At{"\xfd\x8e\x01"_su8, O::I16X8Add}, "\xfd\x8e\x01"_su8);
+  OK(Read<O>, At{"\xfd\x8f\x01"_su8, O::I16X8AddSaturateS}, "\xfd\x8f\x01"_su8);
+  OK(Read<O>, At{"\xfd\x90\x01"_su8, O::I16X8AddSaturateU}, "\xfd\x90\x01"_su8);
+  OK(Read<O>, At{"\xfd\x91\x01"_su8, O::I16X8Sub}, "\xfd\x91\x01"_su8);
+  OK(Read<O>, At{"\xfd\x92\x01"_su8, O::I16X8SubSaturateS}, "\xfd\x92\x01"_su8);
+  OK(Read<O>, At{"\xfd\x93\x01"_su8, O::I16X8SubSaturateU}, "\xfd\x93\x01"_su8);
+  OK(Read<O>, At{"\xfd\x95\x01"_su8, O::I16X8Mul}, "\xfd\x95\x01"_su8);
+  OK(Read<O>, At{"\xfd\x96\x01"_su8, O::I16X8MinS}, "\xfd\x96\x01"_su8);
+  OK(Read<O>, At{"\xfd\x97\x01"_su8, O::I16X8MinU}, "\xfd\x97\x01"_su8);
+  OK(Read<O>, At{"\xfd\x98\x01"_su8, O::I16X8MaxS}, "\xfd\x98\x01"_su8);
+  OK(Read<O>, At{"\xfd\x99\x01"_su8, O::I16X8MaxU}, "\xfd\x99\x01"_su8);
+  OK(Read<O>, At{"\xfd\x9b\x01"_su8, O::I16X8AvgrU}, "\xfd\x9b\x01"_su8);
+  OK(Read<O>, At{"\xfd\xa0\x01"_su8, O::I32X4Abs}, "\xfd\xa0\x01"_su8);
+  OK(Read<O>, At{"\xfd\xa1\x01"_su8, O::I32X4Neg}, "\xfd\xa1\x01"_su8);
+  OK(Read<O>, At{"\xfd\xa2\x01"_su8, O::I32X4AnyTrue}, "\xfd\xa2\x01"_su8);
+  OK(Read<O>, At{"\xfd\xa3\x01"_su8, O::I32X4AllTrue}, "\xfd\xa3\x01"_su8);
+  OK(Read<O>, At{"\xfd\xa7\x01"_su8, O::I32X4WidenLowI16X8S},
+     "\xfd\xa7\x01"_su8);
+  OK(Read<O>, At{"\xfd\xa8\x01"_su8, O::I32X4WidenHighI16X8S},
+     "\xfd\xa8\x01"_su8);
+  OK(Read<O>, At{"\xfd\xa9\x01"_su8, O::I32X4WidenLowI16X8U},
+     "\xfd\xa9\x01"_su8);
+  OK(Read<O>, At{"\xfd\xaa\x01"_su8, O::I32X4WidenHighI16X8U},
+     "\xfd\xaa\x01"_su8);
+  OK(Read<O>, At{"\xfd\xab\x01"_su8, O::I32X4Shl}, "\xfd\xab\x01"_su8);
+  OK(Read<O>, At{"\xfd\xac\x01"_su8, O::I32X4ShrS}, "\xfd\xac\x01"_su8);
+  OK(Read<O>, At{"\xfd\xad\x01"_su8, O::I32X4ShrU}, "\xfd\xad\x01"_su8);
+  OK(Read<O>, At{"\xfd\xae\x01"_su8, O::I32X4Add}, "\xfd\xae\x01"_su8);
+  OK(Read<O>, At{"\xfd\xb1\x01"_su8, O::I32X4Sub}, "\xfd\xb1\x01"_su8);
+  OK(Read<O>, At{"\xfd\xb5\x01"_su8, O::I32X4Mul}, "\xfd\xb5\x01"_su8);
+  OK(Read<O>, At{"\xfd\xb6\x01"_su8, O::I32X4MinS}, "\xfd\xb6\x01"_su8);
+  OK(Read<O>, At{"\xfd\xb7\x01"_su8, O::I32X4MinU}, "\xfd\xb7\x01"_su8);
+  OK(Read<O>, At{"\xfd\xb8\x01"_su8, O::I32X4MaxS}, "\xfd\xb8\x01"_su8);
+  OK(Read<O>, At{"\xfd\xb9\x01"_su8, O::I32X4MaxU}, "\xfd\xb9\x01"_su8);
+  OK(Read<O>, At{"\xfd\xc1\x01"_su8, O::I64X2Neg}, "\xfd\xc1\x01"_su8);
+  OK(Read<O>, At{"\xfd\xcb\x01"_su8, O::I64X2Shl}, "\xfd\xcb\x01"_su8);
+  OK(Read<O>, At{"\xfd\xcc\x01"_su8, O::I64X2ShrS}, "\xfd\xcc\x01"_su8);
+  OK(Read<O>, At{"\xfd\xcd\x01"_su8, O::I64X2ShrU}, "\xfd\xcd\x01"_su8);
+  OK(Read<O>, At{"\xfd\xce\x01"_su8, O::I64X2Add}, "\xfd\xce\x01"_su8);
+  OK(Read<O>, At{"\xfd\xd1\x01"_su8, O::I64X2Sub}, "\xfd\xd1\x01"_su8);
+  OK(Read<O>, At{"\xfd\xd5\x01"_su8, O::I64X2Mul}, "\xfd\xd5\x01"_su8);
+  OK(Read<O>, At{"\xfd\xe0\x01"_su8, O::F32X4Abs}, "\xfd\xe0\x01"_su8);
+  OK(Read<O>, At{"\xfd\xe1\x01"_su8, O::F32X4Neg}, "\xfd\xe1\x01"_su8);
+  OK(Read<O>, At{"\xfd\xe3\x01"_su8, O::F32X4Sqrt}, "\xfd\xe3\x01"_su8);
+  OK(Read<O>, At{"\xfd\xe4\x01"_su8, O::F32X4Add}, "\xfd\xe4\x01"_su8);
+  OK(Read<O>, At{"\xfd\xe5\x01"_su8, O::F32X4Sub}, "\xfd\xe5\x01"_su8);
+  OK(Read<O>, At{"\xfd\xe6\x01"_su8, O::F32X4Mul}, "\xfd\xe6\x01"_su8);
+  OK(Read<O>, At{"\xfd\xe7\x01"_su8, O::F32X4Div}, "\xfd\xe7\x01"_su8);
+  OK(Read<O>, At{"\xfd\xe8\x01"_su8, O::F32X4Min}, "\xfd\xe8\x01"_su8);
+  OK(Read<O>, At{"\xfd\xe9\x01"_su8, O::F32X4Max}, "\xfd\xe9\x01"_su8);
+  OK(Read<O>, At{"\xfd\xec\x01"_su8, O::F64X2Abs}, "\xfd\xec\x01"_su8);
+  OK(Read<O>, At{"\xfd\xed\x01"_su8, O::F64X2Neg}, "\xfd\xed\x01"_su8);
+  OK(Read<O>, At{"\xfd\xef\x01"_su8, O::F64X2Sqrt}, "\xfd\xef\x01"_su8);
+  OK(Read<O>, At{"\xfd\xf0\x01"_su8, O::F64X2Add}, "\xfd\xf0\x01"_su8);
+  OK(Read<O>, At{"\xfd\xf1\x01"_su8, O::F64X2Sub}, "\xfd\xf1\x01"_su8);
+  OK(Read<O>, At{"\xfd\xf2\x01"_su8, O::F64X2Mul}, "\xfd\xf2\x01"_su8);
+  OK(Read<O>, At{"\xfd\xf3\x01"_su8, O::F64X2Div}, "\xfd\xf3\x01"_su8);
+  OK(Read<O>, At{"\xfd\xf4\x01"_su8, O::F64X2Min}, "\xfd\xf4\x01"_su8);
+  OK(Read<O>, At{"\xfd\xf5\x01"_su8, O::F64X2Max}, "\xfd\xf5\x01"_su8);
+  OK(Read<O>, At{"\xfd\xf8\x01"_su8, O::I32X4TruncSatF32X4S},
+     "\xfd\xf8\x01"_su8);
+  OK(Read<O>, At{"\xfd\xf9\x01"_su8, O::I32X4TruncSatF32X4U},
+     "\xfd\xf9\x01"_su8);
+  OK(Read<O>, At{"\xfd\xfa\x01"_su8, O::F32X4ConvertI32X4S},
+     "\xfd\xfa\x01"_su8);
+  OK(Read<O>, At{"\xfd\xfb\x01"_su8, O::F32X4ConvertI32X4U},
+     "\xfd\xfb\x01"_su8);
 }
 
 TEST_F(BinaryReadTest, Opcode_Unknown_simd_prefix) {
@@ -2902,72 +2912,72 @@ TEST_F(BinaryReadTest, Opcode_threads) {
 
   context.features.enable_threads();
 
-  OK(Read<O>, MakeAt("\xfe\x00"_su8, O::MemoryAtomicNotify), "\xfe\x00"_su8);
-  OK(Read<O>, MakeAt("\xfe\x01"_su8, O::MemoryAtomicWait32), "\xfe\x01"_su8);
-  OK(Read<O>, MakeAt("\xfe\x02"_su8, O::MemoryAtomicWait64), "\xfe\x02"_su8);
-  OK(Read<O>, MakeAt("\xfe\x10"_su8, O::I32AtomicLoad), "\xfe\x10"_su8);
-  OK(Read<O>, MakeAt("\xfe\x11"_su8, O::I64AtomicLoad), "\xfe\x11"_su8);
-  OK(Read<O>, MakeAt("\xfe\x12"_su8, O::I32AtomicLoad8U), "\xfe\x12"_su8);
-  OK(Read<O>, MakeAt("\xfe\x13"_su8, O::I32AtomicLoad16U), "\xfe\x13"_su8);
-  OK(Read<O>, MakeAt("\xfe\x14"_su8, O::I64AtomicLoad8U), "\xfe\x14"_su8);
-  OK(Read<O>, MakeAt("\xfe\x15"_su8, O::I64AtomicLoad16U), "\xfe\x15"_su8);
-  OK(Read<O>, MakeAt("\xfe\x16"_su8, O::I64AtomicLoad32U), "\xfe\x16"_su8);
-  OK(Read<O>, MakeAt("\xfe\x17"_su8, O::I32AtomicStore), "\xfe\x17"_su8);
-  OK(Read<O>, MakeAt("\xfe\x18"_su8, O::I64AtomicStore), "\xfe\x18"_su8);
-  OK(Read<O>, MakeAt("\xfe\x19"_su8, O::I32AtomicStore8), "\xfe\x19"_su8);
-  OK(Read<O>, MakeAt("\xfe\x1a"_su8, O::I32AtomicStore16), "\xfe\x1a"_su8);
-  OK(Read<O>, MakeAt("\xfe\x1b"_su8, O::I64AtomicStore8), "\xfe\x1b"_su8);
-  OK(Read<O>, MakeAt("\xfe\x1c"_su8, O::I64AtomicStore16), "\xfe\x1c"_su8);
-  OK(Read<O>, MakeAt("\xfe\x1d"_su8, O::I64AtomicStore32), "\xfe\x1d"_su8);
-  OK(Read<O>, MakeAt("\xfe\x1e"_su8, O::I32AtomicRmwAdd), "\xfe\x1e"_su8);
-  OK(Read<O>, MakeAt("\xfe\x1f"_su8, O::I64AtomicRmwAdd), "\xfe\x1f"_su8);
-  OK(Read<O>, MakeAt("\xfe\x20"_su8, O::I32AtomicRmw8AddU), "\xfe\x20"_su8);
-  OK(Read<O>, MakeAt("\xfe\x21"_su8, O::I32AtomicRmw16AddU), "\xfe\x21"_su8);
-  OK(Read<O>, MakeAt("\xfe\x22"_su8, O::I64AtomicRmw8AddU), "\xfe\x22"_su8);
-  OK(Read<O>, MakeAt("\xfe\x23"_su8, O::I64AtomicRmw16AddU), "\xfe\x23"_su8);
-  OK(Read<O>, MakeAt("\xfe\x24"_su8, O::I64AtomicRmw32AddU), "\xfe\x24"_su8);
-  OK(Read<O>, MakeAt("\xfe\x25"_su8, O::I32AtomicRmwSub), "\xfe\x25"_su8);
-  OK(Read<O>, MakeAt("\xfe\x26"_su8, O::I64AtomicRmwSub), "\xfe\x26"_su8);
-  OK(Read<O>, MakeAt("\xfe\x27"_su8, O::I32AtomicRmw8SubU), "\xfe\x27"_su8);
-  OK(Read<O>, MakeAt("\xfe\x28"_su8, O::I32AtomicRmw16SubU), "\xfe\x28"_su8);
-  OK(Read<O>, MakeAt("\xfe\x29"_su8, O::I64AtomicRmw8SubU), "\xfe\x29"_su8);
-  OK(Read<O>, MakeAt("\xfe\x2a"_su8, O::I64AtomicRmw16SubU), "\xfe\x2a"_su8);
-  OK(Read<O>, MakeAt("\xfe\x2b"_su8, O::I64AtomicRmw32SubU), "\xfe\x2b"_su8);
-  OK(Read<O>, MakeAt("\xfe\x2c"_su8, O::I32AtomicRmwAnd), "\xfe\x2c"_su8);
-  OK(Read<O>, MakeAt("\xfe\x2d"_su8, O::I64AtomicRmwAnd), "\xfe\x2d"_su8);
-  OK(Read<O>, MakeAt("\xfe\x2e"_su8, O::I32AtomicRmw8AndU), "\xfe\x2e"_su8);
-  OK(Read<O>, MakeAt("\xfe\x2f"_su8, O::I32AtomicRmw16AndU), "\xfe\x2f"_su8);
-  OK(Read<O>, MakeAt("\xfe\x30"_su8, O::I64AtomicRmw8AndU), "\xfe\x30"_su8);
-  OK(Read<O>, MakeAt("\xfe\x31"_su8, O::I64AtomicRmw16AndU), "\xfe\x31"_su8);
-  OK(Read<O>, MakeAt("\xfe\x32"_su8, O::I64AtomicRmw32AndU), "\xfe\x32"_su8);
-  OK(Read<O>, MakeAt("\xfe\x33"_su8, O::I32AtomicRmwOr), "\xfe\x33"_su8);
-  OK(Read<O>, MakeAt("\xfe\x34"_su8, O::I64AtomicRmwOr), "\xfe\x34"_su8);
-  OK(Read<O>, MakeAt("\xfe\x35"_su8, O::I32AtomicRmw8OrU), "\xfe\x35"_su8);
-  OK(Read<O>, MakeAt("\xfe\x36"_su8, O::I32AtomicRmw16OrU), "\xfe\x36"_su8);
-  OK(Read<O>, MakeAt("\xfe\x37"_su8, O::I64AtomicRmw8OrU), "\xfe\x37"_su8);
-  OK(Read<O>, MakeAt("\xfe\x38"_su8, O::I64AtomicRmw16OrU), "\xfe\x38"_su8);
-  OK(Read<O>, MakeAt("\xfe\x39"_su8, O::I64AtomicRmw32OrU), "\xfe\x39"_su8);
-  OK(Read<O>, MakeAt("\xfe\x3a"_su8, O::I32AtomicRmwXor), "\xfe\x3a"_su8);
-  OK(Read<O>, MakeAt("\xfe\x3b"_su8, O::I64AtomicRmwXor), "\xfe\x3b"_su8);
-  OK(Read<O>, MakeAt("\xfe\x3c"_su8, O::I32AtomicRmw8XorU), "\xfe\x3c"_su8);
-  OK(Read<O>, MakeAt("\xfe\x3d"_su8, O::I32AtomicRmw16XorU), "\xfe\x3d"_su8);
-  OK(Read<O>, MakeAt("\xfe\x3e"_su8, O::I64AtomicRmw8XorU), "\xfe\x3e"_su8);
-  OK(Read<O>, MakeAt("\xfe\x3f"_su8, O::I64AtomicRmw16XorU), "\xfe\x3f"_su8);
-  OK(Read<O>, MakeAt("\xfe\x40"_su8, O::I64AtomicRmw32XorU), "\xfe\x40"_su8);
-  OK(Read<O>, MakeAt("\xfe\x41"_su8, O::I32AtomicRmwXchg), "\xfe\x41"_su8);
-  OK(Read<O>, MakeAt("\xfe\x42"_su8, O::I64AtomicRmwXchg), "\xfe\x42"_su8);
-  OK(Read<O>, MakeAt("\xfe\x43"_su8, O::I32AtomicRmw8XchgU), "\xfe\x43"_su8);
-  OK(Read<O>, MakeAt("\xfe\x44"_su8, O::I32AtomicRmw16XchgU), "\xfe\x44"_su8);
-  OK(Read<O>, MakeAt("\xfe\x45"_su8, O::I64AtomicRmw8XchgU), "\xfe\x45"_su8);
-  OK(Read<O>, MakeAt("\xfe\x46"_su8, O::I64AtomicRmw16XchgU), "\xfe\x46"_su8);
-  OK(Read<O>, MakeAt("\xfe\x47"_su8, O::I64AtomicRmw32XchgU), "\xfe\x47"_su8);
-  OK(Read<O>, MakeAt("\xfe\x48"_su8, O::I32AtomicRmwCmpxchg), "\xfe\x48"_su8);
-  OK(Read<O>, MakeAt("\xfe\x49"_su8, O::I64AtomicRmwCmpxchg), "\xfe\x49"_su8);
-  OK(Read<O>, MakeAt("\xfe\x4a"_su8, O::I32AtomicRmw8CmpxchgU), "\xfe\x4a"_su8);
-  OK(Read<O>, MakeAt("\xfe\x4b"_su8, O::I32AtomicRmw16CmpxchgU), "\xfe\x4b"_su8);
-  OK(Read<O>, MakeAt("\xfe\x4c"_su8, O::I64AtomicRmw8CmpxchgU), "\xfe\x4c"_su8);
-  OK(Read<O>, MakeAt("\xfe\x4d"_su8, O::I64AtomicRmw16CmpxchgU), "\xfe\x4d"_su8);
-  OK(Read<O>, MakeAt("\xfe\x4e"_su8, O::I64AtomicRmw32CmpxchgU), "\xfe\x4e"_su8);
+  OK(Read<O>, At{"\xfe\x00"_su8, O::MemoryAtomicNotify}, "\xfe\x00"_su8);
+  OK(Read<O>, At{"\xfe\x01"_su8, O::MemoryAtomicWait32}, "\xfe\x01"_su8);
+  OK(Read<O>, At{"\xfe\x02"_su8, O::MemoryAtomicWait64}, "\xfe\x02"_su8);
+  OK(Read<O>, At{"\xfe\x10"_su8, O::I32AtomicLoad}, "\xfe\x10"_su8);
+  OK(Read<O>, At{"\xfe\x11"_su8, O::I64AtomicLoad}, "\xfe\x11"_su8);
+  OK(Read<O>, At{"\xfe\x12"_su8, O::I32AtomicLoad8U}, "\xfe\x12"_su8);
+  OK(Read<O>, At{"\xfe\x13"_su8, O::I32AtomicLoad16U}, "\xfe\x13"_su8);
+  OK(Read<O>, At{"\xfe\x14"_su8, O::I64AtomicLoad8U}, "\xfe\x14"_su8);
+  OK(Read<O>, At{"\xfe\x15"_su8, O::I64AtomicLoad16U}, "\xfe\x15"_su8);
+  OK(Read<O>, At{"\xfe\x16"_su8, O::I64AtomicLoad32U}, "\xfe\x16"_su8);
+  OK(Read<O>, At{"\xfe\x17"_su8, O::I32AtomicStore}, "\xfe\x17"_su8);
+  OK(Read<O>, At{"\xfe\x18"_su8, O::I64AtomicStore}, "\xfe\x18"_su8);
+  OK(Read<O>, At{"\xfe\x19"_su8, O::I32AtomicStore8}, "\xfe\x19"_su8);
+  OK(Read<O>, At{"\xfe\x1a"_su8, O::I32AtomicStore16}, "\xfe\x1a"_su8);
+  OK(Read<O>, At{"\xfe\x1b"_su8, O::I64AtomicStore8}, "\xfe\x1b"_su8);
+  OK(Read<O>, At{"\xfe\x1c"_su8, O::I64AtomicStore16}, "\xfe\x1c"_su8);
+  OK(Read<O>, At{"\xfe\x1d"_su8, O::I64AtomicStore32}, "\xfe\x1d"_su8);
+  OK(Read<O>, At{"\xfe\x1e"_su8, O::I32AtomicRmwAdd}, "\xfe\x1e"_su8);
+  OK(Read<O>, At{"\xfe\x1f"_su8, O::I64AtomicRmwAdd}, "\xfe\x1f"_su8);
+  OK(Read<O>, At{"\xfe\x20"_su8, O::I32AtomicRmw8AddU}, "\xfe\x20"_su8);
+  OK(Read<O>, At{"\xfe\x21"_su8, O::I32AtomicRmw16AddU}, "\xfe\x21"_su8);
+  OK(Read<O>, At{"\xfe\x22"_su8, O::I64AtomicRmw8AddU}, "\xfe\x22"_su8);
+  OK(Read<O>, At{"\xfe\x23"_su8, O::I64AtomicRmw16AddU}, "\xfe\x23"_su8);
+  OK(Read<O>, At{"\xfe\x24"_su8, O::I64AtomicRmw32AddU}, "\xfe\x24"_su8);
+  OK(Read<O>, At{"\xfe\x25"_su8, O::I32AtomicRmwSub}, "\xfe\x25"_su8);
+  OK(Read<O>, At{"\xfe\x26"_su8, O::I64AtomicRmwSub}, "\xfe\x26"_su8);
+  OK(Read<O>, At{"\xfe\x27"_su8, O::I32AtomicRmw8SubU}, "\xfe\x27"_su8);
+  OK(Read<O>, At{"\xfe\x28"_su8, O::I32AtomicRmw16SubU}, "\xfe\x28"_su8);
+  OK(Read<O>, At{"\xfe\x29"_su8, O::I64AtomicRmw8SubU}, "\xfe\x29"_su8);
+  OK(Read<O>, At{"\xfe\x2a"_su8, O::I64AtomicRmw16SubU}, "\xfe\x2a"_su8);
+  OK(Read<O>, At{"\xfe\x2b"_su8, O::I64AtomicRmw32SubU}, "\xfe\x2b"_su8);
+  OK(Read<O>, At{"\xfe\x2c"_su8, O::I32AtomicRmwAnd}, "\xfe\x2c"_su8);
+  OK(Read<O>, At{"\xfe\x2d"_su8, O::I64AtomicRmwAnd}, "\xfe\x2d"_su8);
+  OK(Read<O>, At{"\xfe\x2e"_su8, O::I32AtomicRmw8AndU}, "\xfe\x2e"_su8);
+  OK(Read<O>, At{"\xfe\x2f"_su8, O::I32AtomicRmw16AndU}, "\xfe\x2f"_su8);
+  OK(Read<O>, At{"\xfe\x30"_su8, O::I64AtomicRmw8AndU}, "\xfe\x30"_su8);
+  OK(Read<O>, At{"\xfe\x31"_su8, O::I64AtomicRmw16AndU}, "\xfe\x31"_su8);
+  OK(Read<O>, At{"\xfe\x32"_su8, O::I64AtomicRmw32AndU}, "\xfe\x32"_su8);
+  OK(Read<O>, At{"\xfe\x33"_su8, O::I32AtomicRmwOr}, "\xfe\x33"_su8);
+  OK(Read<O>, At{"\xfe\x34"_su8, O::I64AtomicRmwOr}, "\xfe\x34"_su8);
+  OK(Read<O>, At{"\xfe\x35"_su8, O::I32AtomicRmw8OrU}, "\xfe\x35"_su8);
+  OK(Read<O>, At{"\xfe\x36"_su8, O::I32AtomicRmw16OrU}, "\xfe\x36"_su8);
+  OK(Read<O>, At{"\xfe\x37"_su8, O::I64AtomicRmw8OrU}, "\xfe\x37"_su8);
+  OK(Read<O>, At{"\xfe\x38"_su8, O::I64AtomicRmw16OrU}, "\xfe\x38"_su8);
+  OK(Read<O>, At{"\xfe\x39"_su8, O::I64AtomicRmw32OrU}, "\xfe\x39"_su8);
+  OK(Read<O>, At{"\xfe\x3a"_su8, O::I32AtomicRmwXor}, "\xfe\x3a"_su8);
+  OK(Read<O>, At{"\xfe\x3b"_su8, O::I64AtomicRmwXor}, "\xfe\x3b"_su8);
+  OK(Read<O>, At{"\xfe\x3c"_su8, O::I32AtomicRmw8XorU}, "\xfe\x3c"_su8);
+  OK(Read<O>, At{"\xfe\x3d"_su8, O::I32AtomicRmw16XorU}, "\xfe\x3d"_su8);
+  OK(Read<O>, At{"\xfe\x3e"_su8, O::I64AtomicRmw8XorU}, "\xfe\x3e"_su8);
+  OK(Read<O>, At{"\xfe\x3f"_su8, O::I64AtomicRmw16XorU}, "\xfe\x3f"_su8);
+  OK(Read<O>, At{"\xfe\x40"_su8, O::I64AtomicRmw32XorU}, "\xfe\x40"_su8);
+  OK(Read<O>, At{"\xfe\x41"_su8, O::I32AtomicRmwXchg}, "\xfe\x41"_su8);
+  OK(Read<O>, At{"\xfe\x42"_su8, O::I64AtomicRmwXchg}, "\xfe\x42"_su8);
+  OK(Read<O>, At{"\xfe\x43"_su8, O::I32AtomicRmw8XchgU}, "\xfe\x43"_su8);
+  OK(Read<O>, At{"\xfe\x44"_su8, O::I32AtomicRmw16XchgU}, "\xfe\x44"_su8);
+  OK(Read<O>, At{"\xfe\x45"_su8, O::I64AtomicRmw8XchgU}, "\xfe\x45"_su8);
+  OK(Read<O>, At{"\xfe\x46"_su8, O::I64AtomicRmw16XchgU}, "\xfe\x46"_su8);
+  OK(Read<O>, At{"\xfe\x47"_su8, O::I64AtomicRmw32XchgU}, "\xfe\x47"_su8);
+  OK(Read<O>, At{"\xfe\x48"_su8, O::I32AtomicRmwCmpxchg}, "\xfe\x48"_su8);
+  OK(Read<O>, At{"\xfe\x49"_su8, O::I64AtomicRmwCmpxchg}, "\xfe\x49"_su8);
+  OK(Read<O>, At{"\xfe\x4a"_su8, O::I32AtomicRmw8CmpxchgU}, "\xfe\x4a"_su8);
+  OK(Read<O>, At{"\xfe\x4b"_su8, O::I32AtomicRmw16CmpxchgU}, "\xfe\x4b"_su8);
+  OK(Read<O>, At{"\xfe\x4c"_su8, O::I64AtomicRmw8CmpxchgU}, "\xfe\x4c"_su8);
+  OK(Read<O>, At{"\xfe\x4d"_su8, O::I64AtomicRmw16CmpxchgU}, "\xfe\x4d"_su8);
+  OK(Read<O>, At{"\xfe\x4e"_su8, O::I64AtomicRmw32CmpxchgU}, "\xfe\x4e"_su8);
 }
 
 TEST_F(BinaryReadTest, Opcode_Unknown_threads_prefix) {
@@ -2993,12 +3003,12 @@ TEST_F(BinaryReadTest, Opcode_function_references) {
 
   context.features.enable_function_references();
 
-  OK(Read<O>, MakeAt("\x14"_su8, O::CallRef), "\x14"_su8);
-  OK(Read<O>, MakeAt("\x15"_su8, O::ReturnCallRef), "\x15"_su8);
-  OK(Read<O>, MakeAt("\x16"_su8, O::FuncBind), "\x16"_su8);
-  OK(Read<O>, MakeAt("\x17"_su8, O::Let), "\x17"_su8);
-  OK(Read<O>, MakeAt("\xd3"_su8, O::RefAsNonNull), "\xd3"_su8);
-  OK(Read<O>, MakeAt("\xd4"_su8, O::BrOnNull), "\xd4"_su8);
+  OK(Read<O>, At{"\x14"_su8, O::CallRef}, "\x14"_su8);
+  OK(Read<O>, At{"\x15"_su8, O::ReturnCallRef}, "\x15"_su8);
+  OK(Read<O>, At{"\x16"_su8, O::FuncBind}, "\x16"_su8);
+  OK(Read<O>, At{"\x17"_su8, O::Let}, "\x17"_su8);
+  OK(Read<O>, At{"\xd3"_su8, O::RefAsNonNull}, "\xd3"_su8);
+  OK(Read<O>, At{"\xd4"_su8, O::BrOnNull}, "\xd4"_su8);
 }
 
 TEST_F(BinaryReadTest, S32) {
@@ -3034,7 +3044,8 @@ TEST_F(BinaryReadTest, S32_PastEnd) {
   Fail(Read<s32>, {{0, "s32"}, {1, "Unable to read u8"}}, "\xc0"_su8);
   Fail(Read<s32>, {{0, "s32"}, {2, "Unable to read u8"}}, "\xd0\x84"_su8);
   Fail(Read<s32>, {{0, "s32"}, {3, "Unable to read u8"}}, "\xa0\xb0\xc0"_su8);
-  Fail(Read<s32>, {{0, "s32"}, {4, "Unable to read u8"}}, "\xf0\xf0\xf0\xf0"_su8);
+  Fail(Read<s32>, {{0, "s32"}, {4, "Unable to read u8"}},
+       "\xf0\xf0\xf0\xf0"_su8);
 }
 
 TEST_F(BinaryReadTest, S64) {
@@ -3056,8 +3067,10 @@ TEST_F(BinaryReadTest, S64) {
   OK(Read<s64>, -124777254608832, "\xc0\xc0\xc0\xc0\xc0\xd0\x63"_su8);
   OK(Read<s64>, 1338117014066474, "\xaa\xaa\xaa\xaa\xaa\xa0\xb0\x02"_su8);
   OK(Read<s64>, -12172681868045014, "\xaa\xaa\xaa\xaa\xaa\xa0\xb0\x6a"_su8);
-  OK(Read<s64>, 1070725794579330814, "\xfe\xed\xfe\xed\xfe\xed\xfe\xed\x0e"_su8);
-  OK(Read<s64>, -3540960223848057090, "\xfe\xed\xfe\xed\xfe\xed\xfe\xed\x4e"_su8);
+  OK(Read<s64>, 1070725794579330814,
+     "\xfe\xed\xfe\xed\xfe\xed\xfe\xed\x0e"_su8);
+  OK(Read<s64>, -3540960223848057090,
+     "\xfe\xed\xfe\xed\xfe\xed\xfe\xed\x4e"_su8);
 }
 
 TEST_F(BinaryReadTest, S64_TooLong) {
@@ -3080,12 +3093,18 @@ TEST_F(BinaryReadTest, S64_PastEnd) {
   Fail(Read<s64>, {{0, "s64"}, {1, "Unable to read u8"}}, "\xc0"_su8);
   Fail(Read<s64>, {{0, "s64"}, {2, "Unable to read u8"}}, "\xd0\x84"_su8);
   Fail(Read<s64>, {{0, "s64"}, {3, "Unable to read u8"}}, "\xa0\xb0\xc0"_su8);
-  Fail(Read<s64>, {{0, "s64"}, {4, "Unable to read u8"}}, "\xf0\xf0\xf0\xf0"_su8);
-  Fail(Read<s64>, {{0, "s64"}, {5, "Unable to read u8"}}, "\xe0\xe0\xe0\xe0\xe0"_su8);
-  Fail(Read<s64>, {{0, "s64"}, {6, "Unable to read u8"}}, "\xd0\xd0\xd0\xd0\xd0\xc0"_su8);
-  Fail(Read<s64>, {{0, "s64"}, {7, "Unable to read u8"}}, "\xc0\xc0\xc0\xc0\xc0\xd0\x84"_su8);
-  Fail(Read<s64>, {{0, "s64"}, {8, "Unable to read u8"}}, "\xaa\xaa\xaa\xaa\xaa\xa0\xb0\xc0"_su8);
-  Fail(Read<s64>, {{0, "s64"}, {9, "Unable to read u8"}}, "\xfe\xed\xfe\xed\xfe\xed\xfe\xed\xfe"_su8);
+  Fail(Read<s64>, {{0, "s64"}, {4, "Unable to read u8"}},
+       "\xf0\xf0\xf0\xf0"_su8);
+  Fail(Read<s64>, {{0, "s64"}, {5, "Unable to read u8"}},
+       "\xe0\xe0\xe0\xe0\xe0"_su8);
+  Fail(Read<s64>, {{0, "s64"}, {6, "Unable to read u8"}},
+       "\xd0\xd0\xd0\xd0\xd0\xc0"_su8);
+  Fail(Read<s64>, {{0, "s64"}, {7, "Unable to read u8"}},
+       "\xc0\xc0\xc0\xc0\xc0\xd0\x84"_su8);
+  Fail(Read<s64>, {{0, "s64"}, {8, "Unable to read u8"}},
+       "\xaa\xaa\xaa\xaa\xaa\xa0\xb0\xc0"_su8);
+  Fail(Read<s64>, {{0, "s64"}, {9, "Unable to read u8"}},
+       "\xfe\xed\xfe\xed\xfe\xed\xfe\xed\xfe"_su8);
 }
 
 TEST_F(BinaryReadTest, SectionId) {
@@ -3116,8 +3135,8 @@ TEST_F(BinaryReadTest, SectionId_bulk_memory) {
 }
 
 TEST_F(BinaryReadTest, SectionId_exceptions) {
-  Fail(Read<SectionId>,
-       {{0, "section id"}, {1, "Unknown section id: 13"}}, "\x0d"_su8);
+  Fail(Read<SectionId>, {{0, "section id"}, {1, "Unknown section id: 13"}},
+       "\x0d"_su8);
 
   context.features.enable_exceptions();
 
@@ -3131,15 +3150,15 @@ TEST_F(BinaryReadTest, SectionId_Unknown) {
 
 TEST_F(BinaryReadTest, Section) {
   OK(Read<Section>,
-     Section{MakeAt("\x01\x03\x01\x02\x03"_su8,
-                    KnownSection{MakeAt("\x01"_su8, SectionId::Type),
-                                 "\x01\x02\x03"_su8})},
+     Section{
+         At{"\x01\x03\x01\x02\x03"_su8,
+            KnownSection{At{"\x01"_su8, SectionId::Type}, "\x01\x02\x03"_su8}}},
      "\x01\x03\x01\x02\x03"_su8);
 
   OK(Read<Section>,
-     Section{MakeAt(
-         "\x00\x08\x04name\x04\x05\x06"_su8,
-         CustomSection{MakeAt("\x04name"_su8, "name"_sv), "\x04\x05\x06"_su8})},
+     Section{
+         At{"\x00\x08\x04name\x04\x05\x06"_su8,
+            CustomSection{At{"\x04name"_su8, "name"_sv}, "\x04\x05\x06"_su8}}},
      "\x00\x08\x04name\x04\x05\x06"_su8);
 }
 
@@ -3157,7 +3176,7 @@ TEST_F(BinaryReadTest, Section_PastEnd) {
 }
 
 TEST_F(BinaryReadTest, Start) {
-  OK(Read<Start>, Start{MakeAt("\x80\x02"_su8, Index{256})}, "\x80\x02"_su8);
+  OK(Read<Start>, Start{At{"\x80\x02"_su8, Index{256}}}, "\x80\x02"_su8);
 }
 
 TEST_F(BinaryReadTest, ReadString) {
@@ -3193,11 +3212,11 @@ TEST_F(BinaryReadTest, ReadString_Fail) {
 
 TEST_F(BinaryReadTest, Table) {
   OK(Read<Table>,
-     Table{MakeAt("\x70\x00\x01"_su8,
-                  TableType{MakeAt("\x00\x01"_su8,
-                                   Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
-                                          MakeAt("\x00"_su8, Shared::No)}),
-                            MakeAt("\x70"_su8, RT_Funcref)})},
+     Table{
+         At{"\x70\x00\x01"_su8,
+            TableType{At{"\x00\x01"_su8, Limits{At{"\x01"_su8, u32{1}}, nullopt,
+                                                At{"\x00"_su8, Shared::No}}},
+                      At{"\x70"_su8, RT_Funcref}}}},
      "\x70\x00\x01"_su8);
 }
 
@@ -3212,17 +3231,15 @@ TEST_F(BinaryReadTest, Table_PastEnd) {
 
 TEST_F(BinaryReadTest, TableType) {
   OK(Read<TableType>,
-     TableType{
-         MakeAt("\x00\x01"_su8, Limits{MakeAt("\x01"_su8, u32{1}), nullopt,
-                                       MakeAt("\x00"_su8, Shared::No)}),
-         MakeAt("\x70"_su8, RT_Funcref)},
+     TableType{At{"\x00\x01"_su8, Limits{At{"\x01"_su8, u32{1}}, nullopt,
+                                         At{"\x00"_su8, Shared::No}}},
+               At{"\x70"_su8, RT_Funcref}},
      "\x70\x00\x01"_su8);
   OK(Read<TableType>,
-     TableType{
-         MakeAt("\x01\x01\x02"_su8,
-                Limits{MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, u32{2}),
-                       MakeAt("\x01"_su8, Shared::No)}),
-         MakeAt("\x70"_su8, RT_Funcref)},
+     TableType{At{"\x01\x01\x02"_su8,
+                  Limits{At{"\x01"_su8, u32{1}}, At{"\x02"_su8, u32{2}},
+                         At{"\x01"_su8, Shared::No}}},
+               At{"\x70"_su8, RT_Funcref}},
      "\x70\x01\x01\x02"_su8);
 }
 
@@ -3249,8 +3266,8 @@ TEST_F(BinaryReadTest, TableType_PastEnd) {
 
 TEST_F(BinaryReadTest, TypeEntry) {
   OK(Read<TypeEntry>,
-     TypeEntry{MakeAt("\x00\x01\x7f"_su8,
-                      FunctionType{{}, {MakeAt("\x7f"_su8, VT_I32)}})},
+     TypeEntry{
+         At{"\x00\x01\x7f"_su8, FunctionType{{}, {At{"\x7f"_su8, VT_I32}}}}},
      "\x60\x00\x01\x7f"_su8);
 }
 
@@ -3279,7 +3296,8 @@ TEST_F(BinaryReadTest, U32_PastEnd) {
   Fail(Read<u32>, {{0, "u32"}, {1, "Unable to read u8"}}, "\xc0"_su8);
   Fail(Read<u32>, {{0, "u32"}, {2, "Unable to read u8"}}, "\xd0\x84"_su8);
   Fail(Read<u32>, {{0, "u32"}, {3, "Unable to read u8"}}, "\xa0\xb0\xc0"_su8);
-  Fail(Read<u32>, {{0, "u32"}, {4, "Unable to read u8"}}, "\xf0\xf0\xf0\xf0"_su8);
+  Fail(Read<u32>, {{0, "u32"}, {4, "Unable to read u8"}},
+       "\xf0\xf0\xf0\xf0"_su8);
 }
 
 TEST_F(BinaryReadTest, U8) {
@@ -3314,8 +3332,8 @@ TEST_F(BinaryReadTest, ValueType_reference_types) {
 }
 
 TEST_F(BinaryReadTest, ValueType_exceptions) {
-  Fail(Read<ValueType>,
-       {{0, "value type"}, {1, "Unknown value type: 104"}}, "\x68"_su8);
+  Fail(Read<ValueType>, {{0, "value type"}, {1, "Unknown value type: 104"}},
+       "\x68"_su8);
 
   context.features.enable_exceptions();
   OK(Read<ValueType>, VT_Exnref, "\x68"_su8);
@@ -3336,11 +3354,11 @@ TEST_F(BinaryReadTest, ReadVector_u8) {
   auto result = ReadVector<u8>(&copy, context, "test");
   ExpectNoErrors(errors);
   EXPECT_EQ((std::vector<At<u8>>{
-                MakeAt("h"_su8, u8{'h'}),
-                MakeAt("e"_su8, u8{'e'}),
-                MakeAt("l"_su8, u8{'l'}),
-                MakeAt("l"_su8, u8{'l'}),
-                MakeAt("o"_su8, u8{'o'}),
+                At{"h"_su8, u8{'h'}},
+                At{"e"_su8, u8{'e'}},
+                At{"l"_su8, u8{'l'}},
+                At{"l"_su8, u8{'l'}},
+                At{"o"_su8, u8{'o'}},
             }),
             result);
   EXPECT_EQ(0u, copy.size());
@@ -3356,9 +3374,9 @@ TEST_F(BinaryReadTest, ReadVector_u32) {
   auto result = ReadVector<u32>(&copy, context, "test");
   ExpectNoErrors(errors);
   EXPECT_EQ((std::vector<At<u32>>{
-                MakeAt("\x05"_su8, u32{5}),
-                MakeAt("\x80\x01"_su8, u32{128}),
-                MakeAt("\xcc\xcc\x0c"_su8, u32{206412}),
+                At{"\x05"_su8, u32{5}},
+                At{"\x80\x01"_su8, u32{128}},
+                At{"\xcc\xcc\x0c"_su8, u32{206412}},
             }),
             result);
   EXPECT_EQ(0u, copy.size());
@@ -3391,7 +3409,7 @@ TEST_F(BinaryReadTest, ReadVector_PastEnd) {
 
 TEST_F(BinaryReadTest, EndCode_UnclosedBlock) {
   const SpanU8 data = "\x02\x40"_su8;  // block void
-  context.open_blocks.push_back(MakeAt(data.first(1), Opcode::Block));
+  context.open_blocks.push_back(At{data.first(1), Opcode::Block});
   EXPECT_FALSE(EndCode(data.last(0), context));
   ExpectError({{0, "Unclosed block instruction"}}, errors, data);
 }

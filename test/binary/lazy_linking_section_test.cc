@@ -53,28 +53,25 @@ TEST(BinaryLinkingSectionTest, LinkingSection) {
   auto it = sec.subsections.begin();
   auto end = sec.subsections.end();
 
+  EXPECT_EQ((LinkingSubsection{At{"\x05"_su8, LinkingSubsectionId::SegmentInfo},
+                               "zzzzz"_su8}),
+            *it++);
+  ASSERT_NE(end, it);
+
   EXPECT_EQ(
-      (LinkingSubsection{MakeAt("\x05"_su8, LinkingSubsectionId::SegmentInfo),
+      (LinkingSubsection{At{"\x06"_su8, LinkingSubsectionId::InitFunctions},
                          "zzzzz"_su8}),
       *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ(
-      (LinkingSubsection{MakeAt("\x06"_su8, LinkingSubsectionId::InitFunctions),
-                         "zzzzz"_su8}),
-      *it++);
+  EXPECT_EQ((LinkingSubsection{At{"\x07"_su8, LinkingSubsectionId::ComdatInfo},
+                               "zzzzz"_su8}),
+            *it++);
   ASSERT_NE(end, it);
 
-  EXPECT_EQ(
-      (LinkingSubsection{MakeAt("\x07"_su8, LinkingSubsectionId::ComdatInfo),
-                         "zzzzz"_su8}),
-      *it++);
-  ASSERT_NE(end, it);
-
-  EXPECT_EQ(
-      (LinkingSubsection{MakeAt("\x08"_su8, LinkingSubsectionId::SymbolTable),
-                         "zzzzz"_su8}),
-      *it++);
+  EXPECT_EQ((LinkingSubsection{At{"\x08"_su8, LinkingSubsectionId::SymbolTable},
+                               "zzzzz"_su8}),
+            *it++);
   ASSERT_EQ(end, it);
 
   ExpectNoErrors(errors);
@@ -90,14 +87,13 @@ TEST(BinaryLinkingSectionTest, SegmentInfoSubsection) {
       "\x01Z\x05\x06"_su8,
       context);
 
-  ExpectSubsection(
-      {SegmentInfo{MakeAt("\x01X"_su8, "X"_sv), MakeAt("\x01"_su8, u32{1}),
-                   MakeAt("\x02"_su8, u32{2})},
-       SegmentInfo{MakeAt("\x01Y"_su8, "Y"_sv), MakeAt("\x03"_su8, u32{3}),
-                   MakeAt("\x04"_su8, u32{4})},
-       SegmentInfo{MakeAt("\x01Z"_su8, "Z"_sv), MakeAt("\x05"_su8, u32{5}),
-                   MakeAt("\x06"_su8, u32{6})}},
-      sec);
+  ExpectSubsection({SegmentInfo{At{"\x01X"_su8, "X"_sv}, At{"\x01"_su8, u32{1}},
+                                At{"\x02"_su8, u32{2}}},
+                    SegmentInfo{At{"\x01Y"_su8, "Y"_sv}, At{"\x03"_su8, u32{3}},
+                                At{"\x04"_su8, u32{4}}},
+                    SegmentInfo{At{"\x01Z"_su8, "Z"_sv}, At{"\x05"_su8, u32{5}},
+                                At{"\x06"_su8, u32{6}}}},
+                   sec);
   ExpectNoErrors(errors);
 }
 
@@ -111,8 +107,8 @@ TEST(BinaryLinkingSectionTest, InitFunctionsSubsection) {
       context);
 
   ExpectSubsection(
-      {InitFunction{MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2})},
-       InitFunction{MakeAt("\x03"_su8, u32{3}), MakeAt("\x04"_su8, Index{4})}},
+      {InitFunction{At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}}},
+       InitFunction{At{"\x03"_su8, u32{3}}, At{"\x04"_su8, Index{4}}}},
       sec);
   ExpectNoErrors(errors);
 }
@@ -127,12 +123,12 @@ TEST(BinaryLinkingSectionTest, ComdatSubsection) {
       context);
 
   ExpectSubsection(
-      {Comdat{MakeAt("\x01X"_su8, "X"_sv),
-              MakeAt("\0"_su8, u32{0}),
-              {MakeAt("\x03\x04"_su8,
-                      ComdatSymbol{MakeAt("\x03"_su8, ComdatSymbolKind::Event),
-                                   MakeAt("\x04"_su8, Index{4})})}},
-       Comdat{MakeAt("\x01Y"_su8, "Y"_sv), MakeAt("\0"_su8, u32{0}), {}}},
+      {Comdat{At{"\x01X"_su8, "X"_sv},
+              At{"\0"_su8, u32{0}},
+              {At{"\x03\x04"_su8,
+                  ComdatSymbol{At{"\x03"_su8, ComdatSymbolKind::Event},
+                               At{"\x04"_su8, Index{4}}}}}},
+       Comdat{At{"\x01Y"_su8, "Y"_sv}, At{"\0"_su8, u32{0}}, {}}},
       sec);
   ExpectNoErrors(errors);
 }
@@ -152,32 +148,29 @@ TEST(BinaryLinkingSectionTest, SymbolTableSubsection) {
 
   ExpectSubsection(
       {SymbolInfo{
-           MakeAt("\x40"_su8, F{MakeAt("\x40"_su8, F::Binding::Global),
-                                MakeAt("\x40"_su8, F::Visibility::Default),
-                                MakeAt("\x40"_su8, F::Undefined::No),
-                                MakeAt("\x40"_su8, F::ExplicitName::Yes)}),
-           MakeAt("\x00\x03YYY"_su8,
-                  SI::Base{MakeAt("\x00"_su8, SymbolInfoKind::Function),
-                           MakeAt("\x00"_su8, Index{0}),
-                           MakeAt("\x03YYY"_su8, "YYY"_sv)})},
+           At{"\x40"_su8, F{At{"\x40"_su8, F::Binding::Global},
+                            At{"\x40"_su8, F::Visibility::Default},
+                            At{"\x40"_su8, F::Undefined::No},
+                            At{"\x40"_su8, F::ExplicitName::Yes}}},
+           At{"\x00\x03YYY"_su8,
+              SI::Base{At{"\x00"_su8, SymbolInfoKind::Function},
+                       At{"\x00"_su8, Index{0}}, At{"\x03YYY"_su8, "YYY"_sv}}}},
        SymbolInfo{
-           MakeAt("\x00"_su8, F{MakeAt("\x00"_su8, F::Binding::Global),
-                                MakeAt("\x00"_su8, F::Visibility::Default),
-                                MakeAt("\x00"_su8, F::Undefined::No),
-                                MakeAt("\x00"_su8, F::ExplicitName::No)}),
-           MakeAt("\x03ZZZ\x00\x00\x00"_su8,
-                  SI::Data{MakeAt("\x03ZZZ"_su8, "ZZZ"_sv),
-                           SI::Data::Defined{
-                               MakeAt("\x00"_su8, Index{0}),
-                               MakeAt("\x00"_su8, u32{0}),
-                               MakeAt("\x00"_su8, u32{0}),
-                           }})},
-       SymbolInfo{
-           MakeAt("\x00"_su8, F{MakeAt("\x00"_su8, F::Binding::Global),
-                                MakeAt("\x00"_su8, F::Visibility::Default),
-                                MakeAt("\x00"_su8, F::Undefined::No),
-                                MakeAt("\x00"_su8, F::ExplicitName::No)}),
-           SI::Section{MakeAt("\x00"_su8, u32{0})}}},
+           At{"\x00"_su8, F{At{"\x00"_su8, F::Binding::Global},
+                            At{"\x00"_su8, F::Visibility::Default},
+                            At{"\x00"_su8, F::Undefined::No},
+                            At{"\x00"_su8, F::ExplicitName::No}}},
+           At{"\x03ZZZ\x00\x00\x00"_su8, SI::Data{At{"\x03ZZZ"_su8, "ZZZ"_sv},
+                                                  SI::Data::Defined{
+                                                      At{"\x00"_su8, Index{0}},
+                                                      At{"\x00"_su8, u32{0}},
+                                                      At{"\x00"_su8, u32{0}},
+                                                  }}}},
+       SymbolInfo{At{"\x00"_su8, F{At{"\x00"_su8, F::Binding::Global},
+                                   At{"\x00"_su8, F::Visibility::Default},
+                                   At{"\x00"_su8, F::Undefined::No},
+                                   At{"\x00"_su8, F::ExplicitName::No}}},
+                  SI::Section{At{"\x00"_su8, u32{0}}}}},
       sec);
   ExpectNoErrors(errors);
 }

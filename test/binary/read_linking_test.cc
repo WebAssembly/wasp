@@ -45,21 +45,21 @@ class BinaryReadLinkingTest : public ::testing::Test {
 
 TEST_F(BinaryReadLinkingTest, Comdat) {
   OK(Read<Comdat>,
-     Comdat{MakeAt("\x04name"_su8, "name"_sv),
-            MakeAt("\x00"_su8, u32{0}),
-            {MakeAt("\x00\x02"_su8,
-                    ComdatSymbol{MakeAt("\x00"_su8, ComdatSymbolKind::Data),
-                                 MakeAt("\x02"_su8, Index{2})}),
-             MakeAt("\x01\x03"_su8,
-                    ComdatSymbol{MakeAt("\x01"_su8, ComdatSymbolKind::Function),
-                                 MakeAt("\x03"_su8, Index{3})})}},
+     Comdat{At{"\x04name"_su8, "name"_sv},
+            At{"\x00"_su8, u32{0}},
+            {At{"\x00\x02"_su8,
+                ComdatSymbol{At{"\x00"_su8, ComdatSymbolKind::Data},
+                             At{"\x02"_su8, Index{2}}}},
+             At{"\x01\x03"_su8,
+                ComdatSymbol{At{"\x01"_su8, ComdatSymbolKind::Function},
+                             At{"\x03"_su8, Index{3}}}}}},
      "\x04name\x00\x02\x00\x02\x01\x03"_su8);
 }
 
 TEST_F(BinaryReadLinkingTest, ComdatSymbol) {
   OK(Read<ComdatSymbol>,
-     ComdatSymbol{MakeAt("\x00"_su8, ComdatSymbolKind::Data),
-                  MakeAt("\x00"_su8, Index{0})},
+     ComdatSymbol{At{"\x00"_su8, ComdatSymbolKind::Data},
+                  At{"\x00"_su8, Index{0}}},
      "\x00\x00"_su8);
 }
 
@@ -72,14 +72,14 @@ TEST_F(BinaryReadLinkingTest, ComdatSymbolKind) {
 
 TEST_F(BinaryReadLinkingTest, InitFunction) {
   OK(Read<InitFunction>,
-     InitFunction{MakeAt("\x0d"_su8, u32{13}), MakeAt("\x0f"_su8, Index{15})},
+     InitFunction{At{"\x0d"_su8, u32{13}}, At{"\x0f"_su8, Index{15}}},
      "\x0d\x0f"_su8);
 }
 
 TEST_F(BinaryReadLinkingTest, LinkingSubsection) {
   OK(Read<LinkingSubsection>,
-     LinkingSubsection{MakeAt("\x05"_su8, LinkingSubsectionId::SegmentInfo),
-                       MakeAt("\x03xyz"_su8, "xyz"_su8)},
+     LinkingSubsection{At{"\x05"_su8, LinkingSubsectionId::SegmentInfo},
+                       At{"\x03xyz"_su8, "xyz"_su8}},
      "\x05\x03xyz"_su8);
 }
 
@@ -93,71 +93,63 @@ TEST_F(BinaryReadLinkingTest, LinkingSubsectionId) {
 TEST_F(BinaryReadLinkingTest, RelocationEntry) {
   // Relocation types without addend.
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x00"_su8, RelocationType::FunctionIndexLEB),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     nullopt},
+     RelocationEntry{At{"\x00"_su8, RelocationType::FunctionIndexLEB},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}}, nullopt},
      "\x00\x01\x02"_su8);
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x01"_su8, RelocationType::TableIndexSLEB),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     nullopt},
+     RelocationEntry{At{"\x01"_su8, RelocationType::TableIndexSLEB},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}}, nullopt},
      "\x01\x01\x02"_su8);
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x02"_su8, RelocationType::TableIndexI32),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     nullopt},
+     RelocationEntry{At{"\x02"_su8, RelocationType::TableIndexI32},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}}, nullopt},
      "\x02\x01\x02"_su8);
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x06"_su8, RelocationType::TypeIndexLEB),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     nullopt},
+     RelocationEntry{At{"\x06"_su8, RelocationType::TypeIndexLEB},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}}, nullopt},
      "\x06\x01\x02"_su8);
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x07"_su8, RelocationType::GlobalIndexLEB),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     nullopt},
+     RelocationEntry{At{"\x07"_su8, RelocationType::GlobalIndexLEB},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}}, nullopt},
      "\x07\x01\x02"_su8);
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x0a"_su8, RelocationType::EventIndexLEB),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     nullopt},
+     RelocationEntry{At{"\x0a"_su8, RelocationType::EventIndexLEB},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}}, nullopt},
      "\x0a\x01\x02"_su8);
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x0b"_su8, RelocationType::MemoryAddressRelSLEB),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     nullopt},
+     RelocationEntry{At{"\x0b"_su8, RelocationType::MemoryAddressRelSLEB},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}}, nullopt},
      "\x0b\x01\x02"_su8);
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x0c"_su8, RelocationType::TableIndexRelSLEB),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     nullopt},
+     RelocationEntry{At{"\x0c"_su8, RelocationType::TableIndexRelSLEB},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}}, nullopt},
      "\x0c\x01\x02"_su8);
 
   // Relocation types with addend.
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x03"_su8, RelocationType::MemoryAddressLEB),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     MakeAt("\x03"_su8, s32{3})},
+     RelocationEntry{At{"\x03"_su8, RelocationType::MemoryAddressLEB},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}},
+                     At{"\x03"_su8, s32{3}}},
      "\x03\x01\x02\x03"_su8);
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x04"_su8, RelocationType::MemoryAddressSLEB),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     MakeAt("\x03"_su8, s32{3})},
+     RelocationEntry{At{"\x04"_su8, RelocationType::MemoryAddressSLEB},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}},
+                     At{"\x03"_su8, s32{3}}},
      "\x04\x01\x02\x03"_su8);
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x05"_su8, RelocationType::MemoryAddressI32),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     MakeAt("\x03"_su8, s32{3})},
+     RelocationEntry{At{"\x05"_su8, RelocationType::MemoryAddressI32},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}},
+                     At{"\x03"_su8, s32{3}}},
      "\x05\x01\x02\x03"_su8);
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x08"_su8, RelocationType::FunctionOffsetI32),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     MakeAt("\x03"_su8, s32{3})},
+     RelocationEntry{At{"\x08"_su8, RelocationType::FunctionOffsetI32},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}},
+                     At{"\x03"_su8, s32{3}}},
      "\x08\x01\x02\x03"_su8);
   OK(Read<RelocationEntry>,
-     RelocationEntry{MakeAt("\x09"_su8, RelocationType::SectionOffsetI32),
-                     MakeAt("\x01"_su8, u32{1}), MakeAt("\x02"_su8, Index{2}),
-                     MakeAt("\x03"_su8, s32{3})},
+     RelocationEntry{At{"\x09"_su8, RelocationType::SectionOffsetI32},
+                     At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}},
+                     At{"\x03"_su8, s32{3}}},
      "\x09\x01\x02\x03"_su8);
 }
 
@@ -179,8 +171,8 @@ TEST_F(BinaryReadLinkingTest, RelocationType) {
 
 TEST_F(BinaryReadLinkingTest, ReadSegmentInfo) {
   OK(Read<SegmentInfo>,
-     SegmentInfo{MakeAt("\x04name"_su8, "name"_sv), MakeAt("\x01"_su8, u32{1}),
-                 MakeAt("\x02"_su8, u32{2})},
+     SegmentInfo{At{"\x04name"_su8, "name"_sv}, At{"\x01"_su8, u32{1}},
+                 At{"\x02"_su8, u32{2}}},
      "\x04name\x01\x02"_su8);
 }
 
@@ -234,72 +226,68 @@ TEST_F(BinaryReadLinkingTest, SymbolInfo_Flags) {
 TEST_F(BinaryReadLinkingTest, SymbolInfo_Function) {
   using SI = SymbolInfo;
   OK(Read<SI>,
-     SI{MakeAt("\x10"_su8, undefined_flags),
-        SI::Base{MakeAt("\x00"_su8, SymbolInfoKind::Function),
-                 MakeAt("\x00"_su8, Index{0}), nullopt}},
+     SI{At{"\x10"_su8, undefined_flags},
+        SI::Base{At{"\x00"_su8, SymbolInfoKind::Function},
+                 At{"\x00"_su8, Index{0}}, nullopt}},
      "\x00\x10\x00"_su8);
 
   OK(Read<SI>,
-     SI{MakeAt("\x40"_su8, explicit_name_flags),
-        SI::Base{MakeAt("\x00"_su8, SymbolInfoKind::Function),
-                 MakeAt("\x00"_su8, Index{0}),
-                 MakeAt("\x04name"_su8, "name"_sv)}},
+     SI{At{"\x40"_su8, explicit_name_flags},
+        SI::Base{At{"\x00"_su8, SymbolInfoKind::Function},
+                 At{"\x00"_su8, Index{0}}, At{"\x04name"_su8, "name"_sv}}},
      "\x00\x40\x00\x04name"_su8);
 }
 
 TEST_F(BinaryReadLinkingTest, SymbolInfo_Data) {
   using SI = SymbolInfo;
   OK(Read<SI>,
-     SI{MakeAt("\x00"_su8, zero_flags),
-        SI::Data{MakeAt("\x04name"_su8, "name"_sv),
-                 SI::Data::Defined{MakeAt("\x00"_su8, Index{0}),
-                                   MakeAt("\x00"_su8, u32{0}),
-                                   MakeAt("\x00"_su8, u32{0})}}},
+     SI{At{"\x00"_su8, zero_flags},
+        SI::Data{
+            At{"\x04name"_su8, "name"_sv},
+            SI::Data::Defined{At{"\x00"_su8, Index{0}}, At{"\x00"_su8, u32{0}},
+                              At{"\x00"_su8, u32{0}}}}},
      "\x01\x00\x04name\x00\x00\x00"_su8);
 
   OK(Read<SI>,
-     SI{MakeAt("\x10"_su8, undefined_flags),
-        SI::Data{MakeAt("\x04name"_su8, "name"_sv), nullopt}},
+     SI{At{"\x10"_su8, undefined_flags},
+        SI::Data{At{"\x04name"_su8, "name"_sv}, nullopt}},
      "\x01\x10\x04name"_su8);
 }
 
 TEST_F(BinaryReadLinkingTest, SymbolInfo_Global) {
   using SI = SymbolInfo;
   OK(Read<SI>,
-     SI{MakeAt("\x10"_su8, undefined_flags),
-        SI::Base{MakeAt("\x02"_su8, SymbolInfoKind::Global),
-                 MakeAt("\x00"_su8, Index{0}), nullopt}},
+     SI{At{"\x10"_su8, undefined_flags},
+        SI::Base{At{"\x02"_su8, SymbolInfoKind::Global},
+                 At{"\x00"_su8, Index{0}}, nullopt}},
      "\x02\x10\x00"_su8);
 
   OK(Read<SI>,
-     SI{MakeAt("\x40"_su8, explicit_name_flags),
-        SI::Base{MakeAt("\x02"_su8, SymbolInfoKind::Global),
-                 MakeAt("\x00"_su8, Index{0}),
-                 MakeAt("\x04name"_su8, "name"_sv)}},
+     SI{At{"\x40"_su8, explicit_name_flags},
+        SI::Base{At{"\x02"_su8, SymbolInfoKind::Global},
+                 At{"\x00"_su8, Index{0}}, At{"\x04name"_su8, "name"_sv}}},
      "\x02\x40\x00\x04name"_su8);
 }
 
 TEST_F(BinaryReadLinkingTest, SymbolInfo_Section) {
   using SI = SymbolInfo;
   OK(Read<SI>,
-     SI{MakeAt("\x00"_su8, zero_flags),
-        SI::Section{MakeAt("\x00"_su8, u32{0})}},
+     SI{At{"\x00"_su8, zero_flags}, SI::Section{At{"\x00"_su8, u32{0}}}},
      "\x03\x00\x00"_su8);
 }
 
 TEST_F(BinaryReadLinkingTest, SymbolInfo_Event) {
   using SI = SymbolInfo;
   OK(Read<SI>,
-     SI{MakeAt("\x10"_su8, undefined_flags),
-        SI::Base{MakeAt("\x04"_su8, SymbolInfoKind::Event),
-                 MakeAt("\x00"_su8, Index{0}), nullopt}},
+     SI{At{"\x10"_su8, undefined_flags},
+        SI::Base{At{"\x04"_su8, SymbolInfoKind::Event},
+                 At{"\x00"_su8, Index{0}}, nullopt}},
      "\x04\x10\x00"_su8);
 
   OK(Read<SI>,
-     SI{MakeAt("\x40"_su8, explicit_name_flags),
-        SI::Base{MakeAt("\x04"_su8, SymbolInfoKind::Event),
-                 MakeAt("\x00"_su8, Index{0}),
-                 MakeAt("\x04name"_su8, "name"_sv)}},
+     SI{At{"\x40"_su8, explicit_name_flags},
+        SI::Base{At{"\x04"_su8, SymbolInfoKind::Event},
+                 At{"\x00"_su8, Index{0}}, At{"\x04name"_su8, "name"_sv}}},
      "\x04\x40\x00\x04name"_su8);
 }
 

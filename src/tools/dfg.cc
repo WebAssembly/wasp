@@ -311,7 +311,7 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
 
   // Add params.
   for (u32 i = 0; i < type.param_types.size(); ++i) {
-    PushValue(NewValue(Instruction{MakeAt(Opcode::LocalGet), MakeAt(i)}));
+    PushValue(NewValue(Instruction{At{Opcode::LocalGet}, At{i}}));
   }
 
   // Add locals, initialized to 0.
@@ -320,32 +320,27 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
       if (locals->type->is_numeric_type()) {
         switch (locals->type->numeric_type()) {
           case NumericType::I32:
-            PushValue(NewValue(
-                Instruction{MakeAt(Opcode::I32Const), MakeAt(s32{0})}));
+            PushValue(NewValue(Instruction{At{Opcode::I32Const}, At{s32{0}}}));
             break;
 
           case NumericType::F32:
-            PushValue(NewValue(
-                Instruction{MakeAt(Opcode::F32Const), MakeAt(f32{0})}));
+            PushValue(NewValue(Instruction{At{Opcode::F32Const}, At{f32{0}}}));
             break;
 
           case NumericType::I64:
-            PushValue(NewValue(
-                Instruction{MakeAt(Opcode::I64Const), MakeAt(s64{0})}));
+            PushValue(NewValue(Instruction{At{Opcode::I64Const}, At{s64{0}}}));
             break;
 
           case NumericType::F64:
-            PushValue(NewValue(
-                Instruction{MakeAt(Opcode::F64Const), MakeAt(f64{0})}));
+            PushValue(NewValue(Instruction{At{Opcode::F64Const}, At{f64{0}}}));
             break;
 
           case NumericType::V128:
-            PushValue(NewValue(
-                Instruction{MakeAt(Opcode::V128Const), MakeAt(v128{})}));
+            PushValue(NewValue(Instruction{At{Opcode::V128Const}, At{v128{}}}));
             break;
         }
       } else {
-        PushValue(NewValue(Instruction{MakeAt(Opcode::RefNull)}));
+        PushValue(NewValue(Instruction{At{Opcode::RefNull}}));
       }
     }
   }
@@ -362,8 +357,8 @@ void Tool::CalculateDFG(const FunctionType& type, Code code) {
     DoInstruction(instr);
   }
 
-  BasicInstruction(Instruction{MakeAt(Opcode::Return)},
-                   type.result_types.size(), 0);
+  BasicInstruction(Instruction{At{Opcode::Return}}, type.result_types.size(),
+                   0);
   SealBlock(return_bbid);
 }
 
@@ -1064,7 +1059,7 @@ ValueID Tool::NewPhi(BBID bbid) {
 
 ValueID Tool::Undef() {
   if (undef == InvalidValueID) {
-    undef = NewValue(Instruction{MakeAt(Opcode::Unreachable)});
+    undef = NewValue(Instruction{At{Opcode::Unreachable}});
   }
   return undef;
 }

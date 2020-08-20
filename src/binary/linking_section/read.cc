@@ -35,7 +35,7 @@ OptAt<Comdat> Read(SpanU8* data, Context& context, Tag<Comdat>) {
   WASP_TRY_READ(flags, Read<u32>(data, context));
   WASP_TRY_READ(symbols, ReadVector<ComdatSymbol>(data, context,
                                                   "comdat symbols vector"));
-  return MakeAt(guard.range(data), Comdat{name, flags, std::move(symbols)});
+  return At{guard.range(data), Comdat{name, flags, std::move(symbols)}};
 }
 
 OptAt<ComdatSymbol> Read(SpanU8* data, Context& context, Tag<ComdatSymbol>) {
@@ -43,7 +43,7 @@ OptAt<ComdatSymbol> Read(SpanU8* data, Context& context, Tag<ComdatSymbol>) {
   LocationGuard guard{data};
   WASP_TRY_READ(kind, Read<ComdatSymbolKind>(data, context));
   WASP_TRY_READ(index, ReadIndex(data, context, "index"));
-  return MakeAt(guard.range(data), ComdatSymbol{kind, index});
+  return At{guard.range(data), ComdatSymbol{kind, index}};
 }
 
 OptAt<ComdatSymbolKind> Read(SpanU8* data,
@@ -61,7 +61,7 @@ OptAt<InitFunction> Read(SpanU8* data, Context& context, Tag<InitFunction>) {
   LocationGuard guard{data};
   WASP_TRY_READ(priority, Read<u32>(data, context));
   WASP_TRY_READ(index, ReadIndex(data, context, "function index"));
-  return MakeAt(guard.range(data), InitFunction{priority, index});
+  return At{guard.range(data), InitFunction{priority, index}};
 }
 
 OptAt<LinkingSubsection> Read(SpanU8* data,
@@ -72,7 +72,7 @@ OptAt<LinkingSubsection> Read(SpanU8* data,
   WASP_TRY_READ(id, Read<LinkingSubsectionId>(data, context));
   WASP_TRY_READ(length, ReadLength(data, context));
   auto bytes = *ReadBytes(data, length, context);
-  return MakeAt(guard.range(data), LinkingSubsection{id, bytes});
+  return At{guard.range(data), LinkingSubsection{id, bytes}};
 }
 
 OptAt<LinkingSubsectionId> Read(SpanU8* data,
@@ -99,13 +99,13 @@ OptAt<RelocationEntry> Read(SpanU8* data,
     case RelocationType::FunctionOffsetI32:
     case RelocationType::SectionOffsetI32: {
       WASP_TRY_READ(addend, Read<s32>(data, context));
-      return MakeAt(guard.range(data),
-                    RelocationEntry{type, offset, index, addend});
+      return At{guard.range(data),
+                RelocationEntry{type, offset, index, addend}};
     }
 
     default:
-      return MakeAt(guard.range(data),
-                    RelocationEntry{type, offset, index, nullopt});
+      return At{guard.range(data),
+                RelocationEntry{type, offset, index, nullopt}};
   }
 }
 
@@ -124,7 +124,7 @@ OptAt<SegmentInfo> Read(SpanU8* data, Context& context, Tag<SegmentInfo>) {
   WASP_TRY_READ(name, ReadString(data, context, "name"));
   WASP_TRY_READ(align_log2, Read<u32>(data, context));
   WASP_TRY_READ(flags, Read<u32>(data, context));
-  return MakeAt(guard.range(data), SegmentInfo{name, align_log2, flags});
+  return At{guard.range(data), SegmentInfo{name, align_log2, flags}};
 }
 
 OptAt<SymbolInfo> Read(SpanU8* data, Context& context, Tag<SymbolInfo>) {
@@ -144,8 +144,8 @@ OptAt<SymbolInfo> Read(SpanU8* data, Context& context, Tag<SymbolInfo>) {
         WASP_TRY_READ(name_, ReadString(data, context, "name"));
         name = name_;
       }
-      return MakeAt(guard.range(data),
-                    SymbolInfo{flags, SymbolInfo::Base{kind, index, name}});
+      return At{guard.range(data),
+                SymbolInfo{flags, SymbolInfo::Base{kind, index, name}}};
     }
 
     case SymbolInfoKind::Data: {
@@ -157,14 +157,14 @@ OptAt<SymbolInfo> Read(SpanU8* data, Context& context, Tag<SymbolInfo>) {
         WASP_TRY_READ(size, Read<u32>(data, context));
         defined = SymbolInfo::Data::Defined{index, offset, size};
       }
-      return MakeAt(guard.range(data),
-                    SymbolInfo{flags, SymbolInfo::Data{name, defined}});
+      return At{guard.range(data),
+                SymbolInfo{flags, SymbolInfo::Data{name, defined}}};
     }
 
     case SymbolInfoKind::Section:
       WASP_TRY_READ(section, Read<u32>(data, context));
-      return MakeAt(guard.range(data),
-                    SymbolInfo{flags, SymbolInfo::Section{section}});
+      return At{guard.range(data),
+                SymbolInfo{flags, SymbolInfo::Section{section}}};
   }
   WASP_UNREACHABLE();
 }

@@ -26,7 +26,7 @@
 namespace wasp::text {
 
 void ToBuffer(const TextList& text_list, Buffer& buffer) {
-  for (auto&& text: text_list) {
+  for (auto&& text : text_list) {
     text->ToBuffer(buffer);
   }
 }
@@ -282,19 +282,19 @@ Instruction::Instruction(At<Opcode> opcode, At<SimdLaneImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
 Instruction::Instruction(Opcode opcode, s32 immediate)
-    : opcode{opcode}, immediate{MakeAt(immediate)} {}
+    : opcode{opcode}, immediate{At{immediate}} {}
 
 Instruction::Instruction(Opcode opcode, s64 immediate)
-    : opcode{opcode}, immediate{MakeAt(immediate)} {}
+    : opcode{opcode}, immediate{At{immediate}} {}
 
 Instruction::Instruction(Opcode opcode, f32 immediate)
-    : opcode{opcode}, immediate{MakeAt(immediate)} {}
+    : opcode{opcode}, immediate{At{immediate}} {}
 
 Instruction::Instruction(Opcode opcode, f64 immediate)
-    : opcode{opcode}, immediate{MakeAt(immediate)} {}
+    : opcode{opcode}, immediate{At{immediate}} {}
 
 Instruction::Instruction(Opcode opcode, SimdLaneImmediate immediate)
-    : opcode{opcode}, immediate{MakeAt(immediate)} {}
+    : opcode{opcode}, immediate{At{immediate}} {}
 
 bool Instruction::has_no_immediate() const {
   return holds_alternative<monostate>(immediate);
@@ -323,7 +323,6 @@ bool Instruction::has_v128_immediate() const {
 bool Instruction::has_var_immediate() const {
   return holds_alternative<At<Var>>(immediate);
 }
-
 
 bool Instruction::has_block_immediate() const {
   return holds_alternative<At<BlockImmediate>>(immediate);
@@ -625,8 +624,8 @@ auto Function::ToImport() const -> OptAt<Import> {
   if (!import) {
     return nullopt;
   }
-  return MakeAt(import->loc(),
-                Import{import.value()->module, import.value()->name, desc});
+  return At{import->loc(),
+            Import{import.value()->module, import.value()->name, desc}};
 }
 
 auto MakeExportList(ExternalKind kind,
@@ -634,9 +633,8 @@ auto MakeExportList(ExternalKind kind,
                     const InlineExportList& inline_exports) -> ExportList {
   ExportList result;
   for (auto& inline_export : inline_exports) {
-    result.push_back(
-        MakeAt(inline_export.loc(),
-               Export{kind, inline_export->name, Var{this_index}}));
+    result.push_back(At{inline_export.loc(),
+                        Export{kind, inline_export->name, Var{this_index}}});
   }
   return result;
 }
@@ -662,8 +660,8 @@ auto Table::ToImport() const -> OptAt<Import> {
   if (!import) {
     return nullopt;
   }
-  return MakeAt(import->loc(),
-                Import{import->value().module, import->value().name, desc});
+  return At{import->loc(),
+            Import{import->value().module, import->value().name, desc}};
 }
 
 auto Table::ToExports(Index this_index) const -> ExportList {
@@ -674,10 +672,10 @@ auto Table::ToElementSegment(Index this_index) const -> OptAt<ElementSegment> {
   if (!elements) {
     return nullopt;
   }
-  return ElementSegment{nullopt, Var{this_index},
-                        MakeAt(ConstantExpression{Instruction{
-                            MakeAt(Opcode::I32Const), MakeAt(s32{0})}}),
-                        *elements};
+  return ElementSegment{
+      nullopt, Var{this_index},
+      At{ConstantExpression{Instruction{At{Opcode::I32Const}, At{s32{0}}}}},
+      *elements};
 }
 
 Memory::Memory(const MemoryDesc& desc, const InlineExportList& exports)
@@ -697,8 +695,8 @@ auto Memory::ToImport() const -> OptAt<Import> {
   if (!import) {
     return nullopt;
   }
-  return MakeAt(import->loc(),
-                Import{import->value().module, import->value().name, desc});
+  return At{import->loc(),
+            Import{import->value().module, import->value().name, desc}};
 }
 
 auto Memory::ToExports(Index this_index) const -> ExportList {
@@ -709,10 +707,10 @@ auto Memory::ToDataSegment(Index this_index) const -> OptAt<DataSegment> {
   if (!data) {
     return nullopt;
   }
-  return DataSegment{nullopt, Var{this_index},
-                     MakeAt(ConstantExpression{Instruction{
-                         MakeAt(Opcode::I32Const), MakeAt(s32{0})}}),
-                     *data};
+  return DataSegment{
+      nullopt, Var{this_index},
+      At{ConstantExpression{Instruction{At{Opcode::I32Const}, At{s32{0}}}}},
+      *data};
 }
 
 ConstantExpression::ConstantExpression(const At<Instruction>& instruction)
@@ -735,8 +733,8 @@ auto Global::ToImport() const -> OptAt<Import> {
   if (!import) {
     return nullopt;
   }
-  return MakeAt(import->loc(),
-                Import{import->value().module, import->value().name, desc});
+  return At{import->loc(),
+            Import{import->value().module, import->value().name, desc}};
 }
 
 auto Global::ToExports(Index this_index) const -> ExportList {
@@ -760,8 +758,8 @@ auto Event::ToImport() const -> OptAt<Import> {
   if (!import) {
     return nullopt;
   }
-  return MakeAt(import->loc(),
-                Import{import->value().module, import->value().name, desc});
+  return At{import->loc(),
+            Import{import->value().module, import->value().name, desc}};
 }
 
 auto Event::ToExports(Index this_index) const -> ExportList {

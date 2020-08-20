@@ -25,142 +25,135 @@ using namespace ::wasp::text;
 using namespace ::wasp::text::test;
 
 TEST(TextTypesTest, FunctionToImport) {
-  auto module = MakeAt("\"m\""_su8, Text{"\"m\"", 1});
-  auto name = MakeAt("\"n\""_su8, Text{"\"n\"", 1});
+  auto module = At{"\"m\""_su8, Text{"\"m\"", 1}};
+  auto name = At{"\"n\""_su8, Text{"\"n\"", 1}};
   auto desc = FunctionDesc{
       nullopt,
-      MakeAt("(type 0)"_su8, Var{Index{0}}),
-      MakeAt("(param $a i32) (result f32)"_su8,
-             BoundFunctionType{
-                 {MakeAt("$a i32"_su8,
-                         BoundValueType{"$a"_sv, MakeAt("i32"_su8, VT_I32)})},
-                 {MakeAt("f32"_su8, VT_F32)}}),
+      At{"(type 0)"_su8, Var{Index{0}}},
+      At{"(param $a i32) (result f32)"_su8,
+         BoundFunctionType{
+             {At{"$a i32"_su8, BoundValueType{"$a"_sv, At{"i32"_su8, VT_I32}}}},
+             {At{"f32"_su8, VT_F32}}}},
   };
 
   EXPECT_EQ(
-      MakeAt("(import \"m\" \"n\")"_su8, Import{module, name, desc}),
+      (At{"(import \"m\" \"n\")"_su8, Import{module, name, desc}}),
       (Function{desc,
-                MakeAt("(import \"m\" \"n\")"_su8, InlineImport{module, name}),
+                At{"(import \"m\" \"n\")"_su8, InlineImport{module, name}},
                 {}})
           .ToImport());
 }
 
 TEST(TextTypesTest, FunctionToExports) {
-  auto name1 = MakeAt("\"e1\""_su8, Text{"\"e1\"", 1});
-  auto name2 = MakeAt("\"e2\""_su8, Text{"\"e2\"", 1});
-  auto desc = FunctionDesc{nullopt, MakeAt("(type 0)"_su8, Var{Index{0}}), {}};
+  auto name1 = At{"\"e1\""_su8, Text{"\"e1\"", 1}};
+  auto name2 = At{"\"e2\""_su8, Text{"\"e2\"", 1}};
+  auto desc = FunctionDesc{nullopt, At{"(type 0)"_su8, Var{Index{0}}}, {}};
   Index this_index = 13;
 
   EXPECT_EQ((ExportList{
-                MakeAt("(export \"e1\")"_su8,
-                       Export{ExternalKind::Function, name1, Var{this_index}}),
-                MakeAt("(export \"e2\")"_su8,
-                       Export{ExternalKind::Function, name2, Var{this_index}}),
+                At{"(export \"e1\")"_su8,
+                   Export{ExternalKind::Function, name1, Var{this_index}}},
+                At{"(export \"e2\")"_su8,
+                   Export{ExternalKind::Function, name2, Var{this_index}}},
             }),
             (Function{desc,
                       {},
                       {},
                       InlineExportList{
-                          MakeAt("(export \"e1\")"_su8, InlineExport{name1}),
-                          MakeAt("(export \"e2\")"_su8, InlineExport{name2}),
+                          At{"(export \"e1\")"_su8, InlineExport{name1}},
+                          At{"(export \"e2\")"_su8, InlineExport{name2}},
                       }})
                 .ToExports(this_index));
 }
 
 TEST(TextTypesTest, TableToImport) {
-  auto module = MakeAt("\"m\""_su8, Text{"\"m\"", 1});
-  auto name = MakeAt("\"n\""_su8, Text{"\"n\"", 1});
+  auto module = At{"\"m\""_su8, Text{"\"m\"", 1}};
+  auto name = At{"\"n\""_su8, Text{"\"n\"", 1}};
   auto desc = TableDesc{
       nullopt,
-      MakeAt("1 funcref"_su8,
-             TableType{MakeAt("1"_su8, Limits{MakeAt("1"_su8, u32{1})}),
-                       MakeAt("funcref"_su8, RT_Funcref)})};
+      At{"1 funcref"_su8, TableType{At{"1"_su8, Limits{At{"1"_su8, u32{1}}}},
+                                    At{"funcref"_su8, RT_Funcref}}}};
 
-  EXPECT_EQ(
-      MakeAt("(import \"m\" \"n\")"_su8, Import{module, name, desc}),
-      (Table{desc,
-             MakeAt("(import \"m\" \"n\")"_su8, InlineImport{module, name}),
-             {}})
-          .ToImport());
+  EXPECT_EQ((At{"(import \"m\" \"n\")"_su8, Import{module, name, desc}}),
+            (Table{desc,
+                   At{"(import \"m\" \"n\")"_su8, InlineImport{module, name}},
+                   {}})
+                .ToImport());
 }
 
 TEST(TextTypesTest, TableToExports) {
-  auto name1 = MakeAt("\"e1\""_su8, Text{"\"e1\"", 1});
-  auto name2 = MakeAt("\"e2\""_su8, Text{"\"e2\"", 1});
+  auto name1 = At{"\"e1\""_su8, Text{"\"e1\"", 1}};
+  auto name2 = At{"\"e2\""_su8, Text{"\"e2\"", 1}};
   auto desc = TableDesc{
       nullopt,
-      MakeAt("1 funcref"_su8,
-             TableType{MakeAt("1"_su8, Limits{MakeAt("1"_su8, u32{1})}),
-                       MakeAt("funcref"_su8, RT_Funcref)})};
+      At{"1 funcref"_su8, TableType{At{"1"_su8, Limits{At{"1"_su8, u32{1}}}},
+                                    At{"funcref"_su8, RT_Funcref}}}};
   Index this_index = 13;
 
   EXPECT_EQ((ExportList{
-                MakeAt("(export \"e1\")"_su8,
-                       Export{ExternalKind::Table, name1, Var{this_index}}),
-                MakeAt("(export \"e2\")"_su8,
-                       Export{ExternalKind::Table, name2, Var{this_index}}),
+                At{"(export \"e1\")"_su8,
+                   Export{ExternalKind::Table, name1, Var{this_index}}},
+                At{"(export \"e2\")"_su8,
+                   Export{ExternalKind::Table, name2, Var{this_index}}},
             }),
             (Table{desc,
                    InlineExportList{
-                       MakeAt("(export \"e1\")"_su8, InlineExport{name1}),
-                       MakeAt("(export \"e2\")"_su8, InlineExport{name2}),
+                       At{"(export \"e1\")"_su8, InlineExport{name1}},
+                       At{"(export \"e2\")"_su8, InlineExport{name2}},
                    }})
                 .ToExports(this_index));
 }
 
 TEST(TextTypesTest, TableToElementSegment) {
-  auto elements = ElementList{
-      ElementListWithVars{MakeAt("func"_su8, ExternalKind::Function),
-                          VarList{
-                              MakeAt("0"_su8, Var{Index{0}}),
-                              MakeAt("$a"_su8, Var{"$a"_sv}),
-                          }}};
+  auto elements = ElementList{ElementListWithVars{
+      At{"func"_su8, ExternalKind::Function}, VarList{
+                                                  At{"0"_su8, Var{Index{0}}},
+                                                  At{"$a"_su8, Var{"$a"_sv}},
+                                              }}};
   auto desc = TableDesc{
-      nullopt,
-      MakeAt("funcref"_su8,
-             TableType{Limits{u32{2}}, MakeAt("funcref"_su8, RT_Funcref)})};
+      nullopt, At{"funcref"_su8,
+                  TableType{Limits{u32{2}}, At{"funcref"_su8, RT_Funcref}}}};
   Index this_index = 13;
 
   EXPECT_EQ((ElementSegment{nullopt, Var{this_index},
-                            ConstantExpression{Instruction{
-                                MakeAt(Opcode::I32Const), MakeAt(s32{0})}},
+                            ConstantExpression{
+                                Instruction{At{Opcode::I32Const}, At{s32{0}}}},
                             elements}),
             (Table{desc, {}, elements}).ToElementSegment(this_index));
 }
 
 TEST(TextTypesTest, MemoryToImport) {
-  auto module = MakeAt("\"m\""_su8, Text{"\"m\"", 1});
-  auto name = MakeAt("\"n\""_su8, Text{"\"n\"", 1});
+  auto module = At{"\"m\""_su8, Text{"\"m\"", 1}};
+  auto name = At{"\"n\""_su8, Text{"\"n\"", 1}};
   auto desc = MemoryDesc{
-      nullopt, MakeAt("1"_su8, MemoryType{MakeAt(
-                                   "1"_su8, Limits{MakeAt("1"_su8, u32{1})})})};
+      nullopt,
+      At{"1"_su8, MemoryType{At{"1"_su8, Limits{At{"1"_su8, u32{1}}}}}}};
 
-  EXPECT_EQ(
-      MakeAt("(import \"m\" \"n\")"_su8, Import{module, name, desc}),
-      (Memory{desc,
-              MakeAt("(import \"m\" \"n\")"_su8, InlineImport{module, name}),
-              {}})
-          .ToImport());
+  EXPECT_EQ((At{"(import \"m\" \"n\")"_su8, Import{module, name, desc}}),
+            (Memory{desc,
+                    At{"(import \"m\" \"n\")"_su8, InlineImport{module, name}},
+                    {}})
+                .ToImport());
 }
 
 TEST(TextTypesTest, MemoryToExports) {
-  auto name1 = MakeAt("\"e1\""_su8, Text{"\"e1\"", 1});
-  auto name2 = MakeAt("\"e2\""_su8, Text{"\"e2\"", 1});
+  auto name1 = At{"\"e1\""_su8, Text{"\"e1\"", 1}};
+  auto name2 = At{"\"e2\""_su8, Text{"\"e2\"", 1}};
   auto desc = MemoryDesc{
-      nullopt, MakeAt("1"_su8, MemoryType{MakeAt(
-                                   "1"_su8, Limits{MakeAt("1"_su8, u32{1})})})};
+      nullopt,
+      At{"1"_su8, MemoryType{At{"1"_su8, Limits{At{"1"_su8, u32{1}}}}}}};
   Index this_index = 13;
 
   EXPECT_EQ((ExportList{
-                MakeAt("(export \"e1\")"_su8,
-                       Export{ExternalKind::Memory, name1, Var{this_index}}),
-                MakeAt("(export \"e2\")"_su8,
-                       Export{ExternalKind::Memory, name2, Var{this_index}}),
+                At{"(export \"e1\")"_su8,
+                   Export{ExternalKind::Memory, name1, Var{this_index}}},
+                At{"(export \"e2\")"_su8,
+                   Export{ExternalKind::Memory, name2, Var{this_index}}},
             }),
             (Memory{desc,
                     InlineExportList{
-                        MakeAt("(export \"e1\")"_su8, InlineExport{name1}),
-                        MakeAt("(export \"e2\")"_su8, InlineExport{name2}),
+                        At{"(export \"e1\")"_su8, InlineExport{name1}},
+                        At{"(export \"e2\")"_su8, InlineExport{name2}},
                     }})
                 .ToExports(this_index));
 }
@@ -174,94 +167,90 @@ TEST(TextTypesTest, MemoryToDataSegment) {
   Index this_index = 13;
 
   EXPECT_EQ((DataSegment{nullopt, Var{this_index},
-                         ConstantExpression{Instruction{
-                             MakeAt(Opcode::I32Const), MakeAt(s32{0})}},
+                         ConstantExpression{
+                             Instruction{At{Opcode::I32Const}, At{s32{0}}}},
                          data}),
             (Memory{desc, {}, data}).ToDataSegment(this_index));
 }
 
 TEST(TextTypesTest, GlobalToImport) {
-  auto module = MakeAt("\"m\""_su8, Text{"\"m\"", 1});
-  auto name = MakeAt("\"n\""_su8, Text{"\"n\"", 1});
-  auto desc = GlobalDesc{nullopt,
-                         MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT_I32),
-                                                      Mutability::Const})};
+  auto module = At{"\"m\""_su8, Text{"\"m\"", 1}};
+  auto name = At{"\"n\""_su8, Text{"\"n\"", 1}};
+  auto desc = GlobalDesc{
+      nullopt,
+      At{"i32"_su8, GlobalType{At{"i32"_su8, VT_I32}, Mutability::Const}}};
 
-  EXPECT_EQ(
-      MakeAt("(import \"m\" \"n\")"_su8, Import{module, name, desc}),
-      (Global{desc,
-              MakeAt("(import \"m\" \"n\")"_su8, InlineImport{module, name}),
-              {}})
-          .ToImport());
+  EXPECT_EQ((At{"(import \"m\" \"n\")"_su8, Import{module, name, desc}}),
+            (Global{desc,
+                    At{"(import \"m\" \"n\")"_su8, InlineImport{module, name}},
+                    {}})
+                .ToImport());
 }
 
 TEST(TextTypesTest, GlobalToExports) {
-  auto name1 = MakeAt("\"e1\""_su8, Text{"\"e1\"", 1});
-  auto name2 = MakeAt("\"e2\""_su8, Text{"\"e2\"", 1});
-  auto desc = GlobalDesc{nullopt,
-                         MakeAt("i32"_su8, GlobalType{MakeAt("i32"_su8, VT_I32),
-                                                      Mutability::Const})};
+  auto name1 = At{"\"e1\""_su8, Text{"\"e1\"", 1}};
+  auto name2 = At{"\"e2\""_su8, Text{"\"e2\"", 1}};
+  auto desc = GlobalDesc{
+      nullopt,
+      At{"i32"_su8, GlobalType{At{"i32"_su8, VT_I32}, Mutability::Const}}};
   Index this_index = 13;
 
   EXPECT_EQ((ExportList{
-                MakeAt("(export \"e1\")"_su8,
-                       Export{ExternalKind::Global, name1, Var{this_index}}),
-                MakeAt("(export \"e2\")"_su8,
-                       Export{ExternalKind::Global, name2, Var{this_index}}),
+                At{"(export \"e1\")"_su8,
+                   Export{ExternalKind::Global, name1, Var{this_index}}},
+                At{"(export \"e2\")"_su8,
+                   Export{ExternalKind::Global, name2, Var{this_index}}},
             }),
             (Global{desc, ConstantExpression{},
                     InlineExportList{
-                        MakeAt("(export \"e1\")"_su8, InlineExport{name1}),
-                        MakeAt("(export \"e2\")"_su8, InlineExport{name2}),
+                        At{"(export \"e1\")"_su8, InlineExport{name1}},
+                        At{"(export \"e2\")"_su8, InlineExport{name2}},
                     }})
                 .ToExports(this_index));
 }
 
 TEST(TextTypesTest, EventToImport) {
-  auto module = MakeAt("\"m\""_su8, Text{"\"m\"", 1});
-  auto name = MakeAt("\"n\""_su8, Text{"\"n\"", 1});
+  auto module = At{"\"m\""_su8, Text{"\"m\"", 1}};
+  auto name = At{"\"n\""_su8, Text{"\"n\"", 1}};
   auto desc = EventDesc{
       nullopt,
-      MakeAt("(type 0)"_su8,
-             EventType{
-                 EventAttribute::Exception,
-                 MakeAt("(type 0)"_su8,
-                        FunctionTypeUse{MakeAt("(type 0)"_su8, Var{Index{0}}),
-                                        {}}),
-             })};
+      At{"(type 0)"_su8,
+         EventType{
+             EventAttribute::Exception,
+             At{"(type 0)"_su8,
+                FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}},
+         }}};
 
-  EXPECT_EQ(
-      MakeAt("(import \"m\" \"n\")"_su8, Import{module, name, desc}),
-      (Event{desc,
-             MakeAt("(import \"m\" \"n\")"_su8, InlineImport{module, name}),
-             {}})
-          .ToImport());
+  EXPECT_EQ((At{"(import \"m\" \"n\")"_su8, Import{module, name, desc}}),
+            (Event{desc,
+                   At{"(import \"m\" \"n\")"_su8, InlineImport{module, name}},
+                   {}})
+                .ToImport());
 }
 
 TEST(TextTypesTest, EventToExports) {
-  auto name1 = MakeAt("\"e1\""_su8, Text{"\"e1\"", 1});
-  auto name2 = MakeAt("\"e2\""_su8, Text{"\"e2\"", 1});
+  auto name1 = At{"\"e1\""_su8, Text{"\"e1\"", 1}};
+  auto name2 = At{"\"e2\""_su8, Text{"\"e2\"", 1}};
   auto desc = EventDesc{
       nullopt,
-      MakeAt("(type 0)"_su8,
-             EventType{
-                 EventAttribute::Exception,
-                 MakeAt("(type 0)"_su8,
-                        FunctionTypeUse{MakeAt("(type 0)"_su8, Var{Index{0}}),
-                                        {}}),
-             })};
+      At{"(type 0)"_su8,
+         EventType{
+             EventAttribute::Exception,
+             At{"(type 0)"_su8,
+                FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}},
+         }}};
   Index this_index = 13;
 
   EXPECT_EQ((ExportList{
-                MakeAt("(export \"e1\")"_su8,
-                       Export{ExternalKind::Event, name1, Var{this_index}}),
-                MakeAt("(export \"e2\")"_su8,
-                       Export{ExternalKind::Event, name2, Var{this_index}}),
+                At{"(export \"e1\")"_su8,
+                   Export{ExternalKind::Event, name1, Var{this_index}}},
+                At{"(export \"e2\")"_su8,
+                   Export{ExternalKind::Event, name2, Var{this_index}}},
             }),
             (Event{desc,
                    InlineExportList{
-                       MakeAt("(export \"e1\")"_su8, InlineExport{name1}),
-                       MakeAt("(export \"e2\")"_su8, InlineExport{name2}),
+                       At{"(export \"e1\")"_su8, InlineExport{name1}},
+                       At{"(export \"e2\")"_su8, InlineExport{name2}},
                    }})
                 .ToExports(this_index));
 }
