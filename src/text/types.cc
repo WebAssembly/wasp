@@ -130,6 +130,8 @@ ValueType::ValueType(At<NumericType> type) : type{type} {}
 
 ValueType::ValueType(At<ReferenceType> type) : type{type} {}
 
+ValueType::ValueType(At<Rtt> type) : type{type} {}
+
 // static
 ValueType ValueType::I32_NoLocation() {
   return ValueType{NumericType::I32};

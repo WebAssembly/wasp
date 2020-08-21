@@ -90,6 +90,7 @@ struct Rtt {
 struct ValueType {
   explicit ValueType(At<NumericType>);
   explicit ValueType(At<ReferenceType>);
+  explicit ValueType(At<Rtt>);
   static ValueType I32_NoLocation();
   static ValueType I64_NoLocation();
   static ValueType F32_NoLocation();

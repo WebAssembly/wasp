@@ -194,6 +194,31 @@ TEST_F(TextReadTest, HeapType_exceptions) {
   OK(ReadHeapType, HT_Exn, "exn"_su8);
 }
 
+TEST_F(TextReadTest, HeapType_gc) {
+  context.features.enable_gc();
+  OK(ReadHeapType, HT_Any, "any"_su8);
+  OK(ReadHeapType, HT_I31, "i31"_su8);
+  OK(ReadHeapType, HT_Eq, "eq"_su8);
+}
+
+TEST_F(TextReadTest, Rtt) {
+  context.features.enable_gc();
+  OK(ReadRtt, RTT_0_Func, "(rtt 0 func)"_su8);
+  OK(ReadRtt, RTT_0_Extern, "(rtt 0 extern)"_su8);
+  OK(ReadRtt, RTT_0_Eq, "(rtt 0 eq)"_su8);
+  OK(ReadRtt, RTT_0_I31, "(rtt 0 i31)"_su8);
+  OK(ReadRtt, RTT_0_Any, "(rtt 0 any)"_su8);
+  OK(ReadRtt, RTT_0_0, "(rtt 0 0)"_su8);
+  OK(ReadRtt, RTT_0_T, "(rtt 0 $t)"_su8);
+  OK(ReadRtt, RTT_1_Func, "(rtt 1 func)"_su8);
+  OK(ReadRtt, RTT_1_Extern, "(rtt 1 extern)"_su8);
+  OK(ReadRtt, RTT_1_Eq, "(rtt 1 eq)"_su8);
+  OK(ReadRtt, RTT_1_I31, "(rtt 1 i31)"_su8);
+  OK(ReadRtt, RTT_1_Any, "(rtt 1 any)"_su8);
+  OK(ReadRtt, RTT_1_0, "(rtt 1 0)"_su8);
+  OK(ReadRtt, RTT_1_T, "(rtt 1 $t)"_su8);
+}
+
 TEST_F(TextReadTest, ValueType) {
   OK(ReadValueType, VT_I32, "i32"_su8);
   OK(ReadValueType, VT_I64, "i64"_su8);
@@ -239,6 +264,37 @@ TEST_F(TextReadTest, ValueType_function_references) {
   OK(ReadValueType, VT_RefNullT, "(ref null $t)"_su8);
 }
 
+TEST_F(TextReadTest, ValueType_gc) {
+  context.features.enable_gc();
+
+  // New reference types
+  OK(ReadValueType, VT_Eqref, "eqref"_su8);
+  OK(ReadValueType, VT_I31ref, "i31ref"_su8);
+  OK(ReadValueType, VT_Anyref, "anyref"_su8);
+  OK(ReadValueType, VT_RefAny, "(ref any)"_su8);
+  OK(ReadValueType, VT_RefNullAny, "(ref null any)"_su8);
+  OK(ReadValueType, VT_RefEq, "(ref eq)"_su8);
+  OK(ReadValueType, VT_RefNullEq, "(ref null eq)"_su8);
+  OK(ReadValueType, VT_RefI31, "(ref i31)"_su8);
+  OK(ReadValueType, VT_RefNullI31, "(ref null i31)"_su8);
+
+  // RTT
+  OK(ReadValueType, VT_RTT_0_Func, "(rtt 0 func)"_su8);
+  OK(ReadValueType, VT_RTT_0_Extern, "(rtt 0 extern)"_su8);
+  OK(ReadValueType, VT_RTT_0_Eq, "(rtt 0 eq)"_su8);
+  OK(ReadValueType, VT_RTT_0_I31, "(rtt 0 i31)"_su8);
+  OK(ReadValueType, VT_RTT_0_Any, "(rtt 0 any)"_su8);
+  OK(ReadValueType, VT_RTT_0_0, "(rtt 0 0)"_su8);
+  OK(ReadValueType, VT_RTT_0_T, "(rtt 0 $t)"_su8);
+  OK(ReadValueType, VT_RTT_1_Func, "(rtt 1 func)"_su8);
+  OK(ReadValueType, VT_RTT_1_Extern, "(rtt 1 extern)"_su8);
+  OK(ReadValueType, VT_RTT_1_Eq, "(rtt 1 eq)"_su8);
+  OK(ReadValueType, VT_RTT_1_I31, "(rtt 1 i31)"_su8);
+  OK(ReadValueType, VT_RTT_1_Any, "(rtt 1 any)"_su8);
+  OK(ReadValueType, VT_RTT_1_0, "(rtt 1 0)"_su8);
+  OK(ReadValueType, VT_RTT_1_T, "(rtt 1 $t)"_su8);
+}
+
 TEST_F(TextReadTest, ValueTypeList) {
   auto span = "i32 f32 f64 i64"_su8;
   std::vector<At<ValueType>> expected{
@@ -280,6 +336,20 @@ TEST_F(TextReadTest, ReferenceType_function_references) {
   OK(ReadReferenceType, RT_RefExtern, "(ref extern)"_su8, AllowFuncref::Yes);
   OK(ReadReferenceType, RT_RefNullExtern, "(ref null extern)"_su8,
      AllowFuncref::Yes);
+}
+
+TEST_F(TextReadTest, ReferenceType_gc) {
+  context.features.enable_gc();
+  OK(ReadReferenceType, RT_Eqref, "eqref"_su8, AllowFuncref::Yes);
+  OK(ReadReferenceType, RT_I31ref, "i31ref"_su8, AllowFuncref::Yes);
+  OK(ReadReferenceType, RT_Anyref, "anyref"_su8, AllowFuncref::Yes);
+
+  OK(ReadReferenceType, RT_RefEq, "(ref eq)"_su8, AllowFuncref::Yes);
+  OK(ReadReferenceType, RT_RefNullEq, "(ref null eq)"_su8, AllowFuncref::Yes);
+  OK(ReadReferenceType, RT_RefI31, "(ref i31)"_su8, AllowFuncref::Yes);
+  OK(ReadReferenceType, RT_RefNullI31, "(ref null i31)"_su8, AllowFuncref::Yes);
+  OK(ReadReferenceType, RT_RefAny, "(ref any)"_su8, AllowFuncref::Yes);
+  OK(ReadReferenceType, RT_RefNullAny, "(ref null any)"_su8, AllowFuncref::Yes);
 }
 
 TEST_F(TextReadTest, BoundParamList) {
@@ -406,6 +476,131 @@ TEST_F(TextReadTest, FunctionType) {
      span);
 }
 
+TEST_F(TextReadTest, StorageType) {
+  context.features.enable_gc();
+  // Numeric type
+  OK(ReadStorageType, StorageType{At{"i32"_su8, VT_I32}}, "i32"_su8);
+
+  // Reference type
+  OK(ReadStorageType, StorageType{At{"funcref"_su8, VT_Funcref}},
+     "funcref"_su8);
+
+  // Packed type
+  OK(ReadStorageType, StorageType{At{"i8"_su8, PackedType::I8}}, "i8"_su8);
+  OK(ReadStorageType, StorageType{At{"i16"_su8, PackedType::I16}}, "i16"_su8);
+}
+
+TEST_F(TextReadTest, FieldType) {
+  context.features.enable_gc();
+
+  // No name
+  OK(ReadFieldType,
+     FieldType{nullopt, At{"i32"_su8, StorageType{At{"i32"_su8, VT_I32}}},
+               Mutability::Const},
+     "(field i32)"_su8);
+
+  // Name
+  OK(ReadFieldType,
+     FieldType{At{"$a"_su8, "$a"_sv},
+               At{"i32"_su8, StorageType{At{"i32"_su8, VT_I32}}},
+               Mutability::Const},
+     "(field $a i32)"_su8);
+
+  // Mutable field
+  OK(ReadFieldType,
+     FieldType{nullopt, At{"i32"_su8, StorageType{At{"i32"_su8, VT_I32}}},
+               At{"mut"_su8, Mutability::Var}},
+     "(field (mut i32))"_su8);
+
+  // Packed type
+  OK(ReadFieldType,
+     FieldType{nullopt, At{"i8"_su8, StorageType{At{"i8"_su8, PackedType::I8}}},
+               Mutability::Const},
+     "(field i8)"_su8);
+
+  // Reference type
+  OK(ReadFieldType,
+     FieldType{nullopt,
+               At{"(ref null any)"_su8,
+                  StorageType{At{"(ref null any)"_su8, VT_RefNullAny}}},
+               Mutability::Const},
+     "(field (ref null any))"_su8);
+}
+
+TEST_F(TextReadTest, FieldTypeList) {
+  context.features.enable_gc();
+
+  // Single field
+  OK(ReadFieldTypeList,
+     FieldTypeList{At{
+         "i32"_su8,
+         FieldType{nullopt, At{"i32"_su8, StorageType{At{"i32"_su8, VT_I32}}},
+                   Mutability::Const}}},
+     "(field i32)"_su8);
+
+  // Combined fields
+  OK(ReadFieldTypeList,
+     FieldTypeList{
+         At{"i32"_su8,
+            FieldType{nullopt,
+                      At{"i32"_su8, StorageType{At{"i32"_su8, VT_I32}}},
+                      Mutability::Const}},
+         At{"i64"_su8,
+            FieldType{nullopt,
+                      At{"i64"_su8, StorageType{At{"i64"_su8, VT_I64}}},
+                      Mutability::Const}}},
+     "(field i32 i64)"_su8);
+
+  // Separate fields
+  OK(ReadFieldTypeList,
+     FieldTypeList{
+         At{"i32"_su8,
+            FieldType{nullopt,
+                      At{"i32"_su8, StorageType{At{"i32"_su8, VT_I32}}},
+                      Mutability::Const}},
+         At{"i64"_su8,
+            FieldType{nullopt,
+                      At{"i64"_su8, StorageType{At{"i64"_su8, VT_I64}}},
+                      Mutability::Const}}},
+     "(field i32) (field i64)"_su8);
+
+  // Bound fields
+  OK(ReadFieldTypeList,
+     FieldTypeList{
+         At{"$a i32"_su8,
+            FieldType{At{"$a"_su8, "$a"_sv},
+                      At{"i32"_su8, StorageType{At{"i32"_su8, VT_I32}}},
+                      Mutability::Const}},
+         At{"$b i64"_su8,
+            FieldType{At{"$b"_su8, "$b"_sv},
+                      At{"i64"_su8, StorageType{At{"i64"_su8, VT_I64}}},
+                      Mutability::Const}}},
+     "(field $a i32) (field $b i64)"_su8);
+}
+
+TEST_F(TextReadTest, StructType) {
+  OK(ReadStructType,
+     StructType{FieldTypeList{
+         At{"i32"_su8,
+            FieldType{nullopt,
+                      At{"i32"_su8, StorageType{At{"i32"_su8, VT_I32}}},
+                      Mutability::Const}},
+         At{"f32"_su8,
+            FieldType{nullopt,
+                      At{"f32"_su8, StorageType{At{"f32"_su8, VT_F32}}},
+                      Mutability::Const}}}},
+     "(struct (field i32 f32))"_su8);
+}
+
+TEST_F(TextReadTest, ArrayType) {
+  OK(ReadArrayType,
+     ArrayType{At{
+         "(field i32)"_su8,
+         FieldType{nullopt, At{"i32"_su8, StorageType{At{"i32"_su8, VT_I32}}},
+                   Mutability::Const}}},
+     "(array (field i32))"_su8);
+}
+
 TEST_F(TextReadTest, DefinedType) {
   OK(ReadDefinedType, DefinedType{nullopt, BoundFunctionType{{}, {}}},
      "(type (func))"_su8);
@@ -419,6 +614,50 @@ TEST_F(TextReadTest, DefinedType) {
                               {At{"i64"_su8, VT_I64}}}}},
      "(type $foo (func (param $bar i32) (result i64)))"_su8);
 }
+
+TEST_F(TextReadTest, DefinedType_GC) {
+  context.features.enable_gc();
+
+  // Empty struct
+  OK(ReadDefinedType, DefinedType{nullopt, At{"(struct)"_su8, StructType{}}},
+     "(type (struct))"_su8);
+
+  // Simple array
+  OK(ReadDefinedType,
+     DefinedType{
+         nullopt,
+         At{"(array (field i32))"_su8,
+            ArrayType{
+                At{"(field i32)"_su8,
+                   FieldType{nullopt,
+                             At{"i32"_su8, StorageType{At{"i32"_su8, VT_I32}}},
+                             Mutability::Const}}}}},
+     "(type (array (field i32)))"_su8);
+
+  // Recursive types
+  OK(ReadDefinedType,
+     DefinedType{At{"$t"_su8, "$t"_sv},
+                 At{"(struct (field (ref $t)))"_su8,
+                    StructType{FieldTypeList{At{
+                        "(ref $t)"_su8,
+                        FieldType{nullopt,
+                                  At{"(ref $t)"_su8,
+                                     StorageType{At{"(ref $t)"_su8, VT_RefT}}},
+                                  Mutability::Const}}}}}},
+     "(type $t (struct (field (ref $t))))"_su8);
+
+  OK(ReadDefinedType,
+     DefinedType{
+         At{"$t"_su8, "$t"_sv},
+         At{"(array (field (ref $t)))"_su8,
+            ArrayType{At{"(field (ref $t))"_su8,
+                         FieldType{nullopt,
+                                   At{"(ref $t)"_su8,
+                                      StorageType{At{"(ref $t)"_su8, VT_RefT}}},
+                                   Mutability::Const}}}}},
+     "(type $t (array (field (ref $t))))"_su8);
+}
+
 
 TEST_F(TextReadTest, AlignOpt) {
   OK(ReadAlignOpt, u32{256}, "align=256"_su8);
@@ -859,6 +1098,93 @@ TEST_F(TextReadTest, PlainInstruction_RefNull) {
   OK(ReadPlainInstruction,
      I{At{"ref.null"_su8, O::RefNull}, At{"extern"_su8, HT_Extern}},
      "ref.null extern"_su8);
+}
+
+TEST_F(TextReadTest, PlainInstruction_BrOnCast) {
+  Fail(ReadPlainInstruction, {{0, "br_on_cast instruction not allowed"}},
+       "br_on_cast 0 0 0"_su8);
+
+  context.features.enable_gc();
+
+  OK(ReadPlainInstruction,
+     I{At{"br_on_cast"_su8, O::BrOnCast},
+       At{"0 0 0"_su8,
+          BrOnCastImmediate{
+              At{"0"_su8, Var{0u}},
+              At{"0 0"_su8,
+                 HeapType2Immediate{At{"0"_su8, HT_0}, At{"0"_su8, HT_0}}}}}},
+     "br_on_cast 0 0 0"_su8);
+
+  OK(ReadPlainInstruction,
+     I{At{"br_on_cast"_su8, O::BrOnCast},
+       At{"$d $t $t"_su8,
+          BrOnCastImmediate{
+              At{"$d"_su8, Var{"$d"_sv}},
+              At{"$t $t"_su8,
+                 HeapType2Immediate{At{"$t"_su8, HT_T}, At{"$t"_su8, HT_T}}}}}},
+     "br_on_cast $d $t $t"_su8);
+}
+
+TEST_F(TextReadTest, PlainInstruction_HeapType2) {
+  Fail(ReadPlainInstruction, {{0, "ref.test instruction not allowed"}},
+       "ref.test 0 0"_su8);
+
+  context.features.enable_gc();
+
+  OK(ReadPlainInstruction,
+     I{At{"ref.test"_su8, O::RefTest},
+       At{"0 0"_su8, HeapType2Immediate{At{"0"_su8, HT_0}, At{"0"_su8, HT_0}}}},
+     "ref.test 0 0"_su8);
+
+  OK(ReadPlainInstruction,
+     I{At{"ref.test"_su8, O::RefTest},
+       At{"$t $t"_su8,
+          HeapType2Immediate{At{"$t"_su8, HT_T}, At{"$t"_su8, HT_T}}}},
+     "ref.test $t $t"_su8);
+}
+
+TEST_F(TextReadTest, PlainInstruction_RttSub) {
+  Fail(ReadPlainInstruction, {{0, "rtt.sub instruction not allowed"}},
+       "rtt.sub 0 0 0"_su8);
+
+  context.features.enable_gc();
+
+  OK(ReadPlainInstruction,
+     I{At{"rtt.sub"_su8, O::RttSub},
+       At{"0 0 0"_su8,
+          RttSubImmediate{
+              At{"0"_su8, 0u},
+              At{"0 0"_su8,
+                 HeapType2Immediate{At{"0"_su8, HT_0}, At{"0"_su8, HT_0}}}}}},
+     "rtt.sub 0 0 0"_su8);
+
+  OK(ReadPlainInstruction,
+     I{At{"rtt.sub"_su8, O::RttSub},
+       At{"0 $t $t"_su8,
+          RttSubImmediate{
+              At{"0"_su8, 0u},
+              At{"$t $t"_su8,
+                 HeapType2Immediate{At{"$t"_su8, HT_T}, At{"$t"_su8, HT_T}}}}}},
+     "rtt.sub 0 $t $t"_su8);
+}
+
+TEST_F(TextReadTest, PlainInstruction_StructField) {
+  Fail(ReadPlainInstruction, {{0, "struct.get instruction not allowed"}},
+       "struct.get 0 0"_su8);
+
+  context.features.enable_gc();
+
+  OK(ReadPlainInstruction,
+     I{At{"struct.get"_su8, O::StructGet},
+       At{"0 0"_su8,
+          StructFieldImmediate{At{"0"_su8, Var{0u}}, At{"0"_su8, Var{0u}}}}},
+     "struct.get 0 0"_su8);
+
+  OK(ReadPlainInstruction,
+     I{At{"struct.get"_su8, O::StructGet},
+       At{"$t $t"_su8, StructFieldImmediate{At{"$t"_su8, Var{"$t"_sv}},
+                                            At{"$t"_su8, Var{"$t"_sv}}}}},
+     "struct.get $t $t"_su8);
 }
 
 TEST_F(TextReadTest, BlockInstruction_Block) {

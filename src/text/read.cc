@@ -279,6 +279,15 @@ auto ReadResultList(Tokenizer& tokenizer, Context& context)
   return ReadUnboundValueTypeList(tokenizer, context, TokenType::Result);
 }
 
+auto ReadRtt(Tokenizer& tokenizer, Context& context) -> OptAt<Rtt> {
+  LocationGuard guard{tokenizer};
+  WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Rtt));
+  WASP_TRY_READ(depth, ReadNat32(tokenizer, context));
+  WASP_TRY_READ(type, ReadHeapType(tokenizer, context));
+  WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+  return At{guard.loc(), Rtt{depth, type}};
+}
+
 bool IsReferenceType(Tokenizer& tokenizer) {
   auto token = tokenizer.Peek();
   return token.type == TokenType::ReferenceKind ||
@@ -287,14 +296,19 @@ bool IsReferenceType(Tokenizer& tokenizer) {
 }
 
 bool IsValueType(Tokenizer& tokenizer) {
-  return tokenizer.Peek().type == TokenType::NumericType ||
+  auto token = tokenizer.Peek();
+  return token.type == TokenType::NumericType ||
+         (token.type == TokenType::Lpar &&
+          tokenizer.Peek(1).type == TokenType::Rtt) ||
          IsReferenceType(tokenizer);
 }
 
 auto ReadValueType(Tokenizer& tokenizer, Context& context) -> OptAt<ValueType> {
-  if (auto token_opt = tokenizer.Match(TokenType::NumericType)) {
-    assert(token_opt->has_numeric_type());
-    auto numeric_type = token_opt->numeric_type();
+  auto token = tokenizer.Peek();
+  if (token.type == TokenType::NumericType) {
+    assert(token.has_numeric_type());
+    tokenizer.Read();
+    auto numeric_type = token.numeric_type();
 
     bool allowed = true;
     switch (numeric_type) {
@@ -315,10 +329,14 @@ auto ReadValueType(Tokenizer& tokenizer, Context& context) -> OptAt<ValueType> {
 
     if (!allowed) {
       context.errors.OnError(
-          token_opt->loc, concat("value type ", numeric_type, " not allowed"));
+          token.loc, concat("value type ", numeric_type, " not allowed"));
       return nullopt;
     }
-    return At{token_opt->loc, ValueType{numeric_type}};
+    return At{token.loc, ValueType{numeric_type}};
+  } else if (token.type == TokenType::Lpar &&
+             tokenizer.Peek(1).type == TokenType::Rtt) {
+    WASP_TRY_READ(rtt, ReadRtt(tokenizer, context));
+    return At{rtt.loc(), ValueType{rtt}};
   } else {
     WASP_TRY_READ(reference_type,
                   ReadReferenceType(tokenizer, context, AllowFuncref::No));
@@ -344,17 +362,138 @@ auto ReadBoundFunctionType(Tokenizer& tokenizer, Context& context)
   return At{guard.loc(), BoundFunctionType{params, results}};
 }
 
+auto ReadStorageType(Tokenizer& tokenizer, Context& context)
+    -> OptAt<StorageType> {
+  if (auto token_opt = tokenizer.Match(TokenType::PackedType)) {
+    assert(token_opt->has_packed_type());
+    return At{token_opt->loc, StorageType{token_opt->packed_type()}};
+  } else {
+    WASP_TRY_READ(value_type, ReadValueType(tokenizer, context));
+    return At{value_type.loc(), StorageType{value_type}};
+  }
+}
+
+bool IsFieldTypeContents(Tokenizer& tokenizer) {
+  auto token = tokenizer.Peek();
+  return (token.type == TokenType::Lpar &&
+          tokenizer.Peek(1).type == TokenType::Mut) ||
+         IsValueType(tokenizer);
+}
+
+auto ReadFieldTypeContents(Tokenizer& tokenizer, Context& context)
+    -> OptAt<FieldType> {
+  LocationGuard guard{tokenizer};
+  auto token_opt = tokenizer.MatchLpar(TokenType::Mut);
+  WASP_TRY_READ(type, ReadStorageType(tokenizer, context));
+
+  At<Mutability> mut;
+  if (token_opt) {
+    mut = At{token_opt->loc, Mutability::Var};
+    WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+  } else {
+    mut = Mutability::Const;
+  }
+  return At{guard.loc(), FieldType{nullopt, type, mut}};
+}
+
+auto ReadFieldType(Tokenizer& tokenizer, Context& context) -> OptAt<FieldType> {
+  LocationGuard guard{tokenizer};
+  WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Field));
+  auto name = ReadBindVarOpt(tokenizer, context);
+  WASP_TRY_READ(field, ReadFieldTypeContents(tokenizer, context));
+  field->name = name;
+  WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+  return At{guard.loc(), field.value()};
+}
+
+auto ReadFieldTypeList(Tokenizer& tokenizer, Context& context)
+    -> optional<FieldTypeList> {
+  FieldTypeList result;
+  while (tokenizer.MatchLpar(TokenType::Field)) {
+    if (tokenizer.Peek().type == TokenType::Id) {
+      // LPAR FIELD bind_var_opt (storagetype | LPAR MUT storagetype RPAR) RPAR
+      LocationGuard guard{tokenizer};
+      auto bind_var_opt = ReadBindVarOpt(tokenizer, context);
+      WASP_TRY_READ(field, ReadFieldTypeContents(tokenizer, context));
+      field->name = bind_var_opt;
+      result.push_back(At{guard.loc(), field.value()});
+    } else {
+      // LPAR FIELD (storagetype | LPAR MUT storagetype RPAR)* RPAR
+      while (IsFieldTypeContents(tokenizer)) {
+        WASP_TRY_READ(field, ReadFieldTypeContents(tokenizer, context));
+        result.push_back(field);
+      }
+    }
+    WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+  }
+  return result;
+}
+
+auto ReadStructType(Tokenizer& tokenizer, Context& context)
+    -> OptAt<StructType> {
+  LocationGuard guard{tokenizer};
+  WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Struct));
+  WASP_TRY_READ(fields, ReadFieldTypeList(tokenizer, context));
+  WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+  return At{guard.loc(), StructType{fields}};
+}
+
+auto ReadArrayType(Tokenizer& tokenizer, Context& context) -> OptAt<ArrayType> {
+  LocationGuard guard{tokenizer};
+  WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Array));
+  WASP_TRY_READ(field, ReadFieldType(tokenizer, context));
+  WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+  return At{guard.loc(), ArrayType{field}};
+}
+
 auto ReadDefinedType(Tokenizer& tokenizer, Context& context)
     -> OptAt<DefinedType> {
   LocationGuard guard{tokenizer};
   WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Type));
   auto name = ReadBindVarOpt(tokenizer, context);
-  WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Func));
 
-  WASP_TRY_READ(type, ReadBoundFunctionType(tokenizer, context));
-  WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-  return At{guard.loc(), DefinedType{name, type}};
+  auto token = tokenizer.Peek();
+  if (token.type != TokenType::Lpar) {
+    context.errors.OnError(token.loc, concat("Expected '(', got ", token.type));
+    return nullopt;
+  }
+
+  token = tokenizer.Peek(1);
+  switch (token.type) {
+    case TokenType::Func: {
+      WASP_TRY(ExpectLpar(tokenizer, context, TokenType::Func));
+      WASP_TRY_READ(func_type, ReadBoundFunctionType(tokenizer, context));
+      WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+      WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+      return At{guard.loc(), DefinedType{name, func_type}};
+    }
+
+    case TokenType::Struct: {
+      if (!context.features.gc_enabled()) {
+        context.errors.OnError(token.loc, "Structs not allowed");
+        return nullopt;
+      }
+      WASP_TRY_READ(struct_type, ReadStructType(tokenizer, context));
+      WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+      return At{guard.loc(), DefinedType{name, struct_type}};
+    }
+
+    case TokenType::Array: {
+      if (!context.features.gc_enabled()) {
+        context.errors.OnError(token.loc, "Arrays not allowed");
+        return nullopt;
+      }
+      WASP_TRY_READ(array_type, ReadArrayType(tokenizer, context));
+      WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+      return At{guard.loc(), DefinedType{name, array_type}};
+    }
+
+    default:
+      context.errors.OnError(
+          token.loc,
+          concat("Expected `func`, `struct`, or `array`, got", token.type));
+      return nullopt;
+  }
 }
 
 // Section 2: Import
@@ -1124,9 +1263,18 @@ auto ReadSimdValues(Tokenizer& tokenizer, Context& context) -> OptAt<v128> {
   return At{guard.loc(), v128{result}};
 }
 
+auto ReadHeapType2Immediate(Tokenizer& tokenizer, Context& context)
+    -> OptAt<HeapType2Immediate> {
+  LocationGuard guard{tokenizer};
+  WASP_TRY_READ(ht1, ReadHeapType(tokenizer, context));
+  WASP_TRY_READ(ht2, ReadHeapType(tokenizer, context));
+  return At{guard.loc(), HeapType2Immediate{ht1, ht2}};
+}
+
 bool IsPlainInstruction(Token token) {
   switch (token.type) {
     case TokenType::BareInstr:
+    case TokenType::BrOnCastInstr:
     case TokenType::BrOnExnInstr:
     case TokenType::BrTableInstr:
     case TokenType::CallIndirectInstr:
@@ -1134,6 +1282,7 @@ bool IsPlainInstruction(Token token) {
     case TokenType::F64ConstInstr:
     case TokenType::FuncBindInstr:
     case TokenType::HeapTypeInstr:
+    case TokenType::HeapType2Instr:
     case TokenType::I32ConstInstr:
     case TokenType::I64ConstInstr:
     case TokenType::MemoryInstr:
@@ -1141,10 +1290,12 @@ bool IsPlainInstruction(Token token) {
     case TokenType::MemoryInitInstr:
     case TokenType::RefFuncInstr:
     case TokenType::RefNullInstr:
+    case TokenType::RttSubInstr:
     case TokenType::SelectInstr:
     case TokenType::SimdConstInstr:
     case TokenType::SimdLaneInstr:
     case TokenType::SimdShuffleInstr:
+    case TokenType::StructFieldInstr:
     case TokenType::TableCopyInstr:
     case TokenType::TableInitInstr:
     case TokenType::VarInstr:
@@ -1209,6 +1360,16 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       return At{guard.loc(), Instruction{token.opcode(), type}};
     }
 
+    case TokenType::BrOnCastInstr: {
+      WASP_TRY(CheckOpcodeEnabled(token, context));
+      tokenizer.Read();
+      LocationGuard immediate_guard{tokenizer};
+      WASP_TRY_READ(var, ReadVar(tokenizer, context));
+      WASP_TRY_READ(types, ReadHeapType2Immediate(tokenizer, context));
+      auto immediate = At{immediate_guard.loc(), BrOnCastImmediate{var, types}};
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
+    }
+
     case TokenType::BrOnExnInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
@@ -1269,6 +1430,13 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
+    case TokenType::HeapType2Instr: {
+      WASP_TRY(CheckOpcodeEnabled(token, context));
+      tokenizer.Read();
+      WASP_TRY_READ(immediate, ReadHeapType2Immediate(tokenizer, context));
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
+    }
+
     case TokenType::I32ConstInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
@@ -1306,6 +1474,16 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       WASP_TRY_READ(segment_var, ReadVar(tokenizer, context));
       auto immediate =
           At{immediate_guard.loc(), InitImmediate{segment_var, nullopt}};
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
+    }
+
+    case TokenType::RttSubInstr: {
+      CheckOpcodeEnabled(token, context);
+      tokenizer.Read();
+      LocationGuard immediate_guard{tokenizer};
+      WASP_TRY_READ(depth, ReadNat32(tokenizer, context));
+      WASP_TRY_READ(types, ReadHeapType2Immediate(tokenizer, context));
+      auto immediate = At{immediate_guard.loc(), RttSubImmediate{depth, types}};
       return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
@@ -1388,6 +1566,17 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
       WASP_TRY_READ(immediate, ReadSimdShuffleImmediate(tokenizer, context));
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
+    }
+
+    case TokenType::StructFieldInstr: {
+      WASP_TRY(CheckOpcodeEnabled(token, context));
+      tokenizer.Read();
+      LocationGuard immediate_guard{tokenizer};
+      WASP_TRY_READ(struct_var, ReadVar(tokenizer, context));
+      WASP_TRY_READ(field_var, ReadVar(tokenizer, context));
+      auto immediate = At{immediate_guard.loc(),
+                          StructFieldImmediate{struct_var, field_var}};
       return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 

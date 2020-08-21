@@ -62,10 +62,21 @@ auto ReadUnboundValueTypeList(Tokenizer&, Context&, TokenType)
 auto ReadParamList(Tokenizer&, Context&) -> optional<ValueTypeList>;
 auto ReadResultList(Tokenizer&, Context&) -> optional<ValueTypeList>;
 
+auto ReadRtt(Tokenizer&, Context&) -> OptAt<Rtt>;
+
 auto ReadValueType(Tokenizer&, Context&) -> OptAt<ValueType>;
 auto ReadValueTypeList(Tokenizer&, Context&) -> optional<ValueTypeList>;
 
 auto ReadBoundFunctionType(Tokenizer&, Context&) -> OptAt<BoundFunctionType>;
+
+auto ReadStorageType(Tokenizer&, Context&) -> OptAt<StorageType>;
+auto ReadFieldTypeContents(Tokenizer&, Context&) -> OptAt<FieldType>;
+auto ReadFieldType(Tokenizer&, Context&) -> OptAt<FieldType>;
+auto ReadFieldTypeList(Tokenizer&, Context&) -> optional<FieldTypeList>;
+
+auto ReadStructType(Tokenizer&, Context&) -> OptAt<StructType>;
+auto ReadArrayType(Tokenizer&, Context&) -> OptAt<ArrayType>;
+
 auto ReadDefinedType(Tokenizer&, Context&) -> OptAt<DefinedType>;
 
 // Section 2: Import
@@ -136,6 +147,8 @@ auto ReadSimdLane(Tokenizer&, Context&) -> OptAt<u8>;
 auto ReadSimdShuffleImmediate(Tokenizer&, Context&) -> OptAt<ShuffleImmediate>;
 template <typename T, size_t N>
 auto ReadSimdValues(Tokenizer&, Context&) -> OptAt<v128>;
+
+auto ReadHeapType2Immediate(Tokenizer&, Context&) -> OptAt<HeapType2Immediate>;
 
 bool IsPlainInstruction(Token);
 bool IsBlockInstruction(Token);

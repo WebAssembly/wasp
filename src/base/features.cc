@@ -39,6 +39,9 @@ void Features::EnableAll() {
 }
 
 void Features::UpdateDependencies(){
+  if (bits_ & GC) {
+    bits_ |= FunctionReferences;
+  }
   if (bits_ & (FunctionReferences | Exceptions)) {
     bits_ |= ReferenceTypes;
   }
