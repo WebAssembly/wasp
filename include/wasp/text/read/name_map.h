@@ -36,6 +36,8 @@ class NameMap {
   bool HasSinceLastPush(BindVar) const;
   optional<Index> Get(BindVar) const;
 
+  auto Size() const -> Index;
+
  private:
   optional<size_t> FindInRange(size_t begin, size_t end, BindVar) const;
 

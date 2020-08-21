@@ -17,6 +17,9 @@
 #ifndef WASP_TEXT_RESOLVE_CONTEXT_H_
 #define WASP_TEXT_RESOLVE_CONTEXT_H_
 
+#include <map>
+#include <vector>
+
 #include "wasp/base/optional.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
@@ -77,6 +80,10 @@ struct ResolveContext {
   void EndBlock();
   auto EndModule() -> DefinedTypeList;
 
+  // Used for struct and array field names.
+  auto NewFieldNameMap(Index) -> NameMap&;
+  auto GetFieldNameMap(Index) -> NameMap*;
+
   Errors& errors;
 
   // Script context.
@@ -84,6 +91,7 @@ struct ResolveContext {
 
   // Module context.
   NameMap type_names;
+  std::map<Index, NameMap> field_names;
   NameMap function_names;
   NameMap table_names;
   NameMap memory_names;

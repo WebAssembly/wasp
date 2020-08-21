@@ -53,8 +53,32 @@ void Define(ResolveContext& context,
   }
 }
 
+void Define(ResolveContext& context,
+            const FieldType& field_type,
+            NameMap& name_map) {
+  Define(context, field_type.name, name_map);
+}
+
+void Define(ResolveContext& context,
+            const FieldTypeList& field_type_list,
+            NameMap& name_map) {
+  for (const auto& field_type : field_type_list) {
+    Define(context, field_type->name, name_map);
+  }
+}
+
 void DefineTypes(ResolveContext& context, const DefinedType& defined_type) {
+  Index type_index = context.type_names.Size();
   Define(context, defined_type.name, context.type_names);
+
+  if (!defined_type.is_function_type()) {
+    auto& name_map = context.NewFieldNameMap(type_index);
+    if (defined_type.is_struct_type()) {
+      Define(context, defined_type.struct_type()->fields, name_map);
+    } else if (defined_type.is_array_type()) {
+      Define(context, defined_type.array_type()->field, name_map);
+    }
+  }
 }
 
 void Define(ResolveContext& context, const DefinedType& defined_type) {
@@ -238,6 +262,10 @@ void Resolve(ResolveContext& context, ReferenceType& reference_type) {
   }
 }
 
+void Resolve(ResolveContext& context, Rtt& rtt) {
+  Resolve(context, rtt.type.value());
+}
+
 void Resolve(ResolveContext& context, ValueType& value_type) {
   if (value_type.is_reference_type()) {
     Resolve(context, value_type.reference_type().value());
@@ -247,6 +275,12 @@ void Resolve(ResolveContext& context, ValueType& value_type) {
 void Resolve(ResolveContext& context, ValueTypeList& value_type_list) {
   for (auto& value_type : value_type_list) {
     Resolve(context, value_type.value());
+  }
+}
+
+void Resolve(ResolveContext& context, StorageType& storage_type) {
+  if (storage_type.is_value_type()) {
+    Resolve(context, storage_type.value_type().value());
   }
 }
 
@@ -341,6 +375,24 @@ void Resolve(ResolveContext& context,
   Define(context, type->params, context.local_names);
 }
 
+void Resolve(ResolveContext& context, FieldType& field_type) {
+  Resolve(context, field_type.type.value());
+}
+
+void Resolve(ResolveContext& context, FieldTypeList& field_type_list) {
+  for (auto& field_type : field_type_list) {
+    Resolve(context, field_type.value());
+  }
+}
+
+void Resolve(ResolveContext& context, StructType& struct_type) {
+  Resolve(context, struct_type.fields);
+}
+
+void Resolve(ResolveContext& context, ArrayType& array_type) {
+  Resolve(context, array_type.field.value());
+}
+
 void Resolve(ResolveContext& context, DefinedType& defined_type) {
   // TODO: handle struct and array types
   assert(defined_type.is_function_type());
@@ -356,6 +408,11 @@ void Resolve(ResolveContext& context, BlockImmediate& immediate) {
   } else {
     Resolve(context, immediate.type);
   }
+}
+
+void Resolve(ResolveContext& context, BrOnCastImmediate& immediate) {
+  Resolve(context, immediate.target, context.label_names);
+  Resolve(context, immediate.types);
 }
 
 void Resolve(ResolveContext& context, BrOnExnImmediate& immediate) {
@@ -380,6 +437,11 @@ void Resolve(ResolveContext& context,
   Resolve(context, immediate.src, name_map);
 }
 
+void Resolve(ResolveContext& context, HeapType2Immediate& immediate) {
+  Resolve(context, immediate.parent.value());
+  Resolve(context, immediate.child.value());
+}
+
 void Resolve(ResolveContext& context,
              InitImmediate& immediate,
              NameMap& segment_name_map,
@@ -392,6 +454,20 @@ void Resolve(ResolveContext& context, LetImmediate& immediate) {
   Resolve(context, immediate.block);
   Define(context, immediate.locals, context.local_names);
   Resolve(context, immediate.locals);
+}
+
+void Resolve(ResolveContext& context, RttSubImmediate& immediate) {
+  Resolve(context, immediate.types);
+}
+
+void Resolve(ResolveContext& context, StructFieldImmediate& immediate) {
+  Resolve(context, immediate.struct_, context.type_names);
+  if (immediate.struct_->is_index()) {
+    if (auto* field_name_map =
+            context.GetFieldNameMap(immediate.struct_->index())) {
+      Resolve(context, immediate.field, *field_name_map);
+    }
+  }
 }
 
 void Resolve(ResolveContext& context, Instruction& instruction) {
@@ -507,6 +583,18 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
 
     case 19: // FuncBindImmediate
       return Resolve(context, instruction.func_bind_immediate().value());
+
+    case 20: // BrOnCastImmediate
+      return Resolve(context, instruction.br_on_cast_immediate().value());
+
+    case 21: // HeapType2Immediate
+      return Resolve(context, instruction.heap_type_2_immediate().value());
+
+    case 22: // RttSubImmediate
+      return Resolve(context, instruction.rtt_sub_immediate().value());
+
+    case 23: // StructFieldImmediate
+      return Resolve(context, instruction.struct_field_immediate().value());
 
     default:
       break;

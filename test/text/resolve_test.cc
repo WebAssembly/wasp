@@ -40,6 +40,8 @@ const SpanU8 loc1 = "A"_su8;
 const HeapType Resolved_HT_0{At{"$t"_su8, Var{Index{0}}}};
 const RefType Resolved_RefType_0{At{"$t"_su8, Resolved_HT_0}, Null::No};
 const ReferenceType Resolved_RT_Ref0{At{"$t"_su8, Resolved_RefType_0}};
+const Rtt Resolved_RTT_0_0{At{"0"_su8, 0u}, At{"$t"_su8, Resolved_HT_0}};
+const Rtt Resolved_RTT_1_0{At{"1"_su8, 1u}, At{"$t"_su8, Resolved_HT_0}};
 const ValueType Resolved_VT_Ref0{At{"(ref $t)"_su8, Resolved_RT_Ref0}};
 
 }  // namespace
@@ -121,6 +123,23 @@ TEST_F(TextResolveTest, ReferenceType) {
   OK(Resolved_RT_Ref0, RT_RefT);
 }
 
+TEST_F(TextResolveTest, Rtt) {
+  context.type_names.NewBound("$t"_sv);
+
+  // RTTs that don't need resolving.
+  OK(RTT_0_Func, RTT_0_Func);
+  OK(RTT_0_Extern, RTT_0_Extern);
+  OK(RTT_0_Exn, RTT_0_Exn);
+  OK(RTT_0_Eq, RTT_0_Eq);
+  OK(RTT_0_I31, RTT_0_I31);
+  OK(RTT_0_Any, RTT_0_Any);
+  OK(RTT_0_0, RTT_0_0);
+
+  // RTTs that need to be resolved.
+  OK(Resolved_RTT_0_0, RTT_0_T);
+  OK(Resolved_RTT_1_0, RTT_1_T);
+}
+
 TEST_F(TextResolveTest, ValueType) {
   context.type_names.NewBound("$t"_sv);
 
@@ -139,6 +158,18 @@ TEST_F(TextResolveTest, ValueTypeList) {
       ValueTypeList{VT_I32, Resolved_VT_Ref0},
       // [i32, ref $t]
       ValueTypeList{VT_I32, VT_RefT});
+}
+
+TEST_F(TextResolveTest, StorageType) {
+  context.type_names.NewBound("$t"_sv);
+
+  // ValueType
+  OK(StorageType{VT_I32}, StorageType{VT_I32});
+  OK(StorageType{Resolved_VT_Ref0}, StorageType{VT_RefT});
+
+  // PackedType
+  OK(StorageType{PackedType::I8}, StorageType{PackedType::I8});
+  OK(StorageType{PackedType::I16}, StorageType{PackedType::I16});
 }
 
 TEST_F(TextResolveTest, FunctionType) {
@@ -299,6 +330,16 @@ TEST_F(TextResolveTest, BlockImmediate_InlineRefType) {
                      FunctionTypeUse{nullopt, FunctionType{{}, {VT_RefT}}}});
 }
 
+TEST_F(TextResolveTest, BrOnCastImmediate) {
+  context.label_names.Push();
+  context.label_names.NewBound("$l");
+  context.type_names.NewBound("$t");
+
+  OK(BrOnCastImmediate{Var{Index{0}},
+                       HeapType2Immediate{Resolved_HT_0, Resolved_HT_0}},
+     BrOnCastImmediate{Var{"$l"_sv}, HeapType2Immediate{HT_T, HT_T}});
+}
+
 TEST_F(TextResolveTest, BrOnExnImmediate) {
   context.label_names.Push();
   context.label_names.NewBound("$l");
@@ -356,6 +397,53 @@ TEST_F(TextResolveTest, CallIndirectImmediate_RefType) {
       // call_indirect (param (ref $t))
       CallIndirectImmediate{
           nullopt, FunctionTypeUse{nullopt, FunctionType{{VT_RefT}, {}}}});
+}
+
+TEST_F(TextResolveTest, HeapType2Immediate) {
+  context.type_names.NewBound("$t");
+
+  OK(HeapType2Immediate{Resolved_HT_0, Resolved_HT_0},
+     HeapType2Immediate{HT_T, HT_T});
+}
+
+TEST_F(TextResolveTest, RttSubImmediate) {
+  context.type_names.NewBound("$t");
+
+  OK(RttSubImmediate{Index{1},
+                     HeapType2Immediate{Resolved_HT_0, Resolved_HT_0}},
+     RttSubImmediate{Index{1}, HeapType2Immediate{HT_T, HT_T}});
+}
+
+TEST_F(TextResolveTest, StructFieldImmediate) {
+  context.type_names.NewBound("$S1");
+  {
+    auto& name_map = context.NewFieldNameMap(0);
+    name_map.NewBound("$F1");
+    name_map.NewBound("$F2");
+  }
+
+  {
+    context.type_names.NewBound("$S2");
+    auto& name_map = context.NewFieldNameMap(1);
+    name_map.NewBound("$F3");
+  }
+
+  OK(StructFieldImmediate{Var{Index{0}}, Var{Index{0}}},
+     StructFieldImmediate{Var{"$S1"_sv}, Var{"$F1"_sv}});
+
+  OK(StructFieldImmediate{Var{Index{0}}, Var{Index{1}}},
+     StructFieldImmediate{Var{"$S1"_sv}, Var{"$F2"_sv}});
+
+  OK(StructFieldImmediate{Var{Index{1}}, Var{Index{0}}},
+     StructFieldImmediate{Var{"$S2"_sv}, Var{"$F3"_sv}});
+
+  // Undefined struct name.
+  Fail({{loc1, "Undefined variable $S"}},
+       StructFieldImmediate{At{loc1, Var{"$S"_sv}}, Var{"$F"_sv}});
+
+  // Struct var is index.
+  OK(StructFieldImmediate{Var{Index{0}}, Var{Index{0}}},
+     StructFieldImmediate{Var{Index{0}}, Var{"$F1"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_NoOp) {
@@ -421,6 +509,18 @@ TEST_F(TextResolveTest, Instruction_BlockImmediate_RefType) {
       I{O::Block,
         BlockImmediate{nullopt,
                        FunctionTypeUse{nullopt, FunctionType{{VT_RefT}, {}}}}});
+}
+
+TEST_F(TextResolveTest, Instruction_BrOnCastImmediate) {
+  context.label_names.Push();
+  context.label_names.NewBound("$l");
+  context.type_names.NewBound("$t");
+
+  OK(I{O::BrOnCast,
+       BrOnCastImmediate{Var{Index{0}},
+                         HeapType2Immediate{Resolved_HT_0, Resolved_HT_0}}},
+     I{O::BrOnCast,
+       BrOnCastImmediate{Var{"$l"_sv}, HeapType2Immediate{HT_T, HT_T}}});
 }
 
 TEST_F(TextResolveTest, Instruction_BrOnExnImmediate) {
@@ -522,6 +622,16 @@ TEST_F(TextResolveTest, Instruction_FuncBindImmediate) {
                         FunctionTypeUse{nullopt, FunctionType{{VT_I32}, {}}}}});
 }
 
+TEST_F(TextResolveTest, Instruction_HeapType2Immediate) {
+  context.type_names.NewBound("$t");
+
+  OK(I{O::RefTest, HeapType2Immediate{Resolved_HT_0, Resolved_HT_0}},
+     I{O::RefTest, HeapType2Immediate{HT_T, HT_T}});
+
+  OK(I{O::RefCast, HeapType2Immediate{Resolved_HT_0, Resolved_HT_0}},
+     I{O::RefCast, HeapType2Immediate{HT_T, HT_T}});
+}
+
 TEST_F(TextResolveTest, Instruction_InitImmediate_Memory) {
   context.data_segment_names.NewBound("$d");
   context.memory_names.NewBound("$m");
@@ -612,11 +722,28 @@ TEST_F(TextResolveTest, Instruction_LetImmediate) {
            {BVT{nullopt, VT_RefT}}}});
 }
 
+TEST_F(TextResolveTest, Instruction_RttSubImmediate) {
+  context.type_names.NewBound("$t");
+
+  OK(I{O::RttSub, RttSubImmediate{Index{1}, HeapType2Immediate{Resolved_HT_0,
+                                                               Resolved_HT_0}}},
+     I{O::RttSub, RttSubImmediate{Index{1}, HeapType2Immediate{HT_T, HT_T}}});
+}
+
 TEST_F(TextResolveTest, Instruction_SelectImmediate) {
   context.type_names.NewBound("$t");
 
   OK(I{O::SelectT, SelectImmediate{VT_I32, Resolved_VT_Ref0}},
      I{O::SelectT, SelectImmediate{VT_I32, VT_RefT}});
+}
+
+TEST_F(TextResolveTest, Instruction_StructFieldImmediate) {
+  context.type_names.NewBound("$S");
+  auto& name_map = context.NewFieldNameMap(0);
+  name_map.NewBound("$F");
+
+  OK(I{O::StructGet, StructFieldImmediate{Var{Index{0}}, Var{Index{0}}}},
+     I{O::StructGet, StructFieldImmediate{Var{"$S"_sv}, Var{"$F"_sv}}});
 }
 
 TEST_F(TextResolveTest, InstructionList) {
@@ -708,6 +835,43 @@ TEST_F(TextResolveTest, InstructionList_EndBlock) {
           I{O::Br, Var{"$outer"_sv}},
           I{O::End},
       });
+}
+
+TEST_F(TextResolveTest, FieldType) {
+  context.type_names.NewBound("$t"_sv);
+
+  OK(FieldType{nullopt, StorageType{Resolved_VT_Ref0}, Mutability::Const},
+     FieldType{nullopt, StorageType{VT_RefT}, Mutability::Const});
+}
+
+TEST_F(TextResolveTest, FieldTypeList) {
+  context.type_names.NewBound("$t"_sv);
+
+  OK(FieldTypeList{FieldType{nullopt, StorageType{VT_Funcref}, Mutability::Var},
+                   FieldType{nullopt, StorageType{Resolved_VT_Ref0},
+                             Mutability::Const}},
+     FieldTypeList{
+         // No resolving required.
+         FieldType{nullopt, StorageType{VT_Funcref}, Mutability::Var},
+         // Resolve field type.
+         FieldType{nullopt, StorageType{VT_RefT}, Mutability::Const}});
+}
+
+TEST_F(TextResolveTest, StructType) {
+  context.type_names.NewBound("$t"_sv);
+
+  OK(StructType{FieldTypeList{
+         FieldType{nullopt, StorageType{Resolved_VT_Ref0}, Mutability::Const}}},
+     StructType{FieldTypeList{
+         FieldType{nullopt, StorageType{VT_RefT}, Mutability::Const}}});
+}
+
+TEST_F(TextResolveTest, ArrayType) {
+  context.type_names.NewBound("$t"_sv);
+
+  OK(ArrayType{FieldType{nullopt, StorageType{Resolved_VT_Ref0},
+                         Mutability::Const}},
+     ArrayType{FieldType{nullopt, StorageType{VT_RefT}, Mutability::Const}});
 }
 
 TEST_F(TextResolveTest, DefinedType) {

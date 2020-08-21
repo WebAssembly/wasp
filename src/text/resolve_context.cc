@@ -28,6 +28,7 @@ ResolveContext::ResolveContext(Errors& errors) : errors{errors} {}
 
 void ResolveContext::BeginModule() {
   type_names.Reset();
+  field_names.clear();
   function_names.Reset();
   table_names.Reset();
   memory_names.Reset();
@@ -65,6 +66,20 @@ void ResolveContext::EndBlock() {
 
 auto ResolveContext::EndModule() -> DefinedTypeList {
   return function_type_map.EndModule();
+}
+
+auto ResolveContext::NewFieldNameMap(Index index) -> NameMap& {
+  auto [iter, ok] = field_names.emplace(index, NameMap{});
+  assert(ok);
+  return iter->second;
+}
+
+auto ResolveContext::GetFieldNameMap(Index index) -> NameMap* {
+  auto iter = field_names.find(index);
+  if (iter == field_names.end()) {
+    return nullptr;
+  }
+  return &iter->second;
 }
 
 void FunctionTypeMap::BeginModule() {

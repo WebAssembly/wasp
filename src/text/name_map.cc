@@ -85,4 +85,8 @@ optional<Index> NameMap::Get(BindVar var) const {
   return nullopt;
 }
 
+auto NameMap::Size() const -> Index {
+  return names_.size();
+}
+
 }  // namespace wasp::text
