@@ -53,6 +53,11 @@ std::ostream& operator<<(std::ostream& os,
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const ::wasp::binary::Rtt& self) {
+  // TODO
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::ValueType& self) {
   if (self.is_numeric_type()) {
@@ -142,12 +147,26 @@ std::ostream& operator<<(std::ostream& os,
 
 std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::DefinedType& self) {
-  return os << self.type;
+  // TODO: Add support for struct and array types.
+  assert(self.is_function_type());
+  return os << self.function_type();
 }
 
 std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::FunctionType& self) {
   return os << self.param_types << " -> " << self.result_types;
+}
+
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::binary::StructType& self) {
+  // TODO
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::binary::ArrayType& self) {
+  // TODO
+  return os;
 }
 
 std::ostream& operator<<(std::ostream& os,

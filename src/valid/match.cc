@@ -111,7 +111,9 @@ bool IsSame(Context& context,
 bool IsSame(Context& context,
             const binary::DefinedType& expected,
             const binary::DefinedType& actual) {
-  return IsSame(context, expected.type, actual.type);
+  // TODO: Add support for struct and array types.
+  assert(expected.is_function_type() && actual.is_function_type());
+  return IsSame(context, expected.function_type(), actual.function_type());
 }
 
 bool IsSame(Context& context,

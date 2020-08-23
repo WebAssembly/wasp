@@ -1071,7 +1071,9 @@ optional<Function> Tool::GetFunction(Index func_index) const {
 optional<FunctionType> Tool::GetFunctionType(Index func_index) const {
   if (auto func = GetFunction(func_index)) {
     if (auto defined_type = GetDefinedType(func->type_index)) {
-      return defined_type->type;
+      if (defined_type->is_function_type()) {
+        return defined_type->function_type();
+      }
     }
   }
   return nullopt;

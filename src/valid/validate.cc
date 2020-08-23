@@ -52,12 +52,14 @@ bool BeginCode(Context& context, Location loc) {
   context.locals.Reset();
   // Don't validate the index, should have already been validated at this point.
   if (function.type_index < context.defined_type_count) {
-    const binary::DefinedType& defined_type =
-        context.types[function.type_index];
-    context.locals.Append(defined_type.type->param_types);
-    context.label_stack.push_back(Label{
-        LabelType::Function, ToStackTypeList(defined_type.type->param_types),
-        ToStackTypeList(defined_type.type->result_types), 0});
+    const auto& defined_type = context.types[function.type_index];
+    // TODO: Add support for struct and array types.
+    assert(defined_type.is_function_type());
+    const auto& function_type = defined_type.function_type();
+    context.locals.Append(function_type->param_types);
+    context.label_stack.push_back(
+        Label{LabelType::Function, ToStackTypeList(function_type->param_types),
+              ToStackTypeList(function_type->result_types), 0});
     return true;
   } else {
     // Not valid, but try to continue anyway.
@@ -372,11 +374,15 @@ bool Validate(Context& context, const At<binary::EventType>& value) {
     return false;
   }
 
-  auto&& entry = context.types[value->type_index];
-  if (!entry.type->result_types.empty()) {
+  const auto& defined_type = context.types[value->type_index];
+  // TODO: Add support for struct and array types.
+  assert(defined_type.is_function_type());
+  const auto& function_type = defined_type.function_type();
+
+  if (!function_type->result_types.empty()) {
     context.errors->OnError(
         value.loc(), concat("Expected an empty exception result type, got ",
-                            entry.type->result_types));
+                            function_type->result_types));
     return false;
   }
   return true;
@@ -574,17 +580,20 @@ bool Validate(Context& context, const At<binary::Start>& value) {
   auto function = context.functions[value->func_index];
   if (function.type_index < context.defined_type_count) {
     const auto& defined_type = context.types[function.type_index];
-    if (defined_type.type->param_types.size() != 0) {
+    // TODO: Add support for struct and array types.
+    const auto& function_type = defined_type.function_type();
+
+    if (function_type->param_types.size() != 0) {
       context.errors->OnError(
           value.loc(), concat("Expected start function to have 0 params, got ",
-                              defined_type.type->param_types.size()));
+                              function_type->param_types.size()));
       valid = false;
     }
 
-    if (defined_type.type->result_types.size() != 0) {
+    if (function_type->result_types.size() != 0) {
       context.errors->OnError(
           value.loc(), concat("Expected start function to have 0 results, got ",
-                              defined_type.type->result_types.size()));
+                              function_type->result_types.size()));
       valid = false;
     }
   }
@@ -619,7 +628,9 @@ bool Validate(Context& context, const At<binary::TableType>& value) {
 bool Validate(Context& context, const At<binary::DefinedType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "defined type"};
   context.types.push_back(value);
-  return Validate(context, value->type);
+  // TODO: Add support for struct and array types.
+  assert(value->is_function_type());
+  return Validate(context, value->function_type());
 }
 
 bool Validate(Context& context, const At<binary::ValueType>& value) {

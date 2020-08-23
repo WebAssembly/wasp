@@ -50,7 +50,7 @@ TEST(ValidateTest, UnpackedCode_DefaultableLocals) {
       UnpackedExpression{InstructionList{Instruction{Opcode::End}}}};
   TestErrors errors;
   Context context{errors};
-  context.types.push_back(DefinedType{});
+  context.types.push_back(DefinedType{FunctionType{}});
   context.defined_type_count = 1;
   context.functions.push_back(Function{0});
   EXPECT_FALSE(Validate(context, code));
@@ -1138,7 +1138,7 @@ TEST(ValidateTest, Module) {
   Context context{errors};
 
   Module module;
-  module.types.push_back(DefinedType{});
+  module.types.push_back(DefinedType{FunctionType{}});
   module.imports.push_back(Import{"a"_sv, "b"_sv, Index{0}});
   module.functions.push_back(Function{Index{0}});
   module.tables.push_back(Table{TableType{Limits{0}, RT_Funcref}});

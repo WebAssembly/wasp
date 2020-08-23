@@ -284,7 +284,10 @@ optional<FunctionType> Tool::GetFunctionType(Index func_index) {
   if (type_index >= defined_types.size()) {
     return nullopt;
   }
-  return defined_types[type_index].type;
+  if (!defined_types[type_index].is_function_type()) {
+    return nullopt;
+  }
+  return defined_types[type_index].function_type();
 }
 
 optional<Code> Tool::GetCode(Index find_index) {
@@ -466,8 +469,9 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::CallIndirect:
     case Opcode::ReturnCallIndirect: {
       auto type_index = instr.call_indirect_immediate()->index;
-      if (type_index < defined_types.size()) {
-        const auto& func_type = defined_types[type_index].type;
+      if (type_index < defined_types.size() &&
+          defined_types[type_index].is_function_type()) {
+        const auto& func_type = defined_types[type_index].function_type();
         BasicInstruction(instr, func_type->param_types.size() + 1,
                          func_type->result_types.size());
       } else {

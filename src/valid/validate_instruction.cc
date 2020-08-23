@@ -81,7 +81,10 @@ optional<FunctionType> GetFunctionType(Context& context, At<Index> index) {
   if (!ValidateIndex(context, index, context.types.size(), "type index")) {
     return nullopt;
   }
-  return context.types[index].type;
+  if (!context.types[index].is_function_type()) {
+    return nullopt;
+  }
+  return context.types[index].function_type();
 }
 
 optional<FunctionType> GetBlockTypeSignature(Context& context,

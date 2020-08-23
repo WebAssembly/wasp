@@ -929,7 +929,7 @@ TEST(ConvertToBinaryTest, Module) {
   OK(At{loc1,
         binary::Module{
             // types
-            {At{loc2, binary::DefinedType{}}},
+            {At{loc2, binary::DefinedType{binary::FunctionType{}}}},
             // imports
             {At{loc3, binary::Import{At{loc4, "m"_sv}, At{loc5, "n"_sv},
                                      At{loc6, Index{0}}}}},

@@ -292,6 +292,9 @@ Instruction::Instruction(At<Opcode> opcode, At<Index> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<BlockType> immediate)
     : opcode(opcode), immediate(immediate) {}
 
+Instruction::Instruction(At<Opcode> opcode, At<BrOnCastImmediate> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
 Instruction::Instruction(At<Opcode> opcode, At<BrOnExnImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
@@ -304,6 +307,12 @@ Instruction::Instruction(At<Opcode> opcode, At<CallIndirectImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<CopyImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
+Instruction::Instruction(At<Opcode> opcode, At<HeapType> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<HeapType2Immediate> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
 Instruction::Instruction(At<Opcode> opcode, At<InitImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
@@ -313,7 +322,7 @@ Instruction::Instruction(At<Opcode> opcode, At<LetImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<MemArgImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
-Instruction::Instruction(At<Opcode> opcode, At<HeapType> immediate)
+Instruction::Instruction(At<Opcode> opcode, At<RttSubImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
 Instruction::Instruction(At<Opcode> opcode, At<SelectImmediate> immediate)
@@ -323,6 +332,9 @@ Instruction::Instruction(At<Opcode> opcode, At<SimdLaneImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
 Instruction::Instruction(At<Opcode> opcode, At<ShuffleImmediate> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
+Instruction::Instruction(At<Opcode> opcode, At<StructFieldImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
 Instruction::Instruction(Opcode opcode, s32 immediate)
@@ -376,6 +388,10 @@ bool Instruction::has_block_type_immediate() const {
   return holds_alternative<At<BlockType>>(immediate);
 }
 
+bool Instruction::has_br_on_cast_immediate() const {
+  return holds_alternative<At<BrOnCastImmediate>>(immediate);
+}
+
 bool Instruction::has_br_on_exn_immediate() const {
   return holds_alternative<At<BrOnExnImmediate>>(immediate);
 }
@@ -392,6 +408,14 @@ bool Instruction::has_copy_immediate() const {
   return holds_alternative<At<CopyImmediate>>(immediate);
 }
 
+bool Instruction::has_heap_type_immediate() const {
+  return holds_alternative<At<HeapType>>(immediate);
+}
+
+bool Instruction::has_heap_type_2_immediate() const {
+  return holds_alternative<At<HeapType2Immediate>>(immediate);
+}
+
 bool Instruction::has_init_immediate() const {
   return holds_alternative<At<InitImmediate>>(immediate);
 }
@@ -404,8 +428,8 @@ bool Instruction::has_mem_arg_immediate() const {
   return holds_alternative<At<MemArgImmediate>>(immediate);
 }
 
-bool Instruction::has_heap_type_immediate() const {
-  return holds_alternative<At<HeapType>>(immediate);
+bool Instruction::has_rtt_sub_immediate() const {
+  return holds_alternative<At<RttSubImmediate>>(immediate);
 }
 
 bool Instruction::has_select_immediate() const {
@@ -418,6 +442,10 @@ bool Instruction::has_shuffle_immediate() const {
 
 bool Instruction::has_simd_lane_immediate() const {
   return holds_alternative<At<SimdLaneImmediate>>(immediate);
+}
+
+bool Instruction::has_struct_field_immediate() const {
+  return holds_alternative<At<StructFieldImmediate>>(immediate);
 }
 
 
@@ -477,6 +505,14 @@ const At<BlockType>& Instruction::block_type_immediate() const {
   return get<At<BlockType>>(immediate);
 }
 
+At<BrOnCastImmediate>& Instruction::br_on_cast_immediate() {
+  return get<At<BrOnCastImmediate>>(immediate);
+}
+
+const At<BrOnCastImmediate>& Instruction::br_on_cast_immediate() const {
+  return get<At<BrOnCastImmediate>>(immediate);
+}
+
 At<BrOnExnImmediate>& Instruction::br_on_exn_immediate() {
   return get<At<BrOnExnImmediate>>(immediate);
 }
@@ -510,6 +546,22 @@ const At<CopyImmediate>& Instruction::copy_immediate() const {
   return get<At<CopyImmediate>>(immediate);
 }
 
+At<HeapType>& Instruction::heap_type_immediate() {
+  return get<At<HeapType>>(immediate);
+}
+
+const At<HeapType>& Instruction::heap_type_immediate() const {
+  return get<At<HeapType>>(immediate);
+}
+
+At<HeapType2Immediate>& Instruction::heap_type_2_immediate() {
+  return get<At<HeapType2Immediate>>(immediate);
+}
+
+const At<HeapType2Immediate>& Instruction::heap_type_2_immediate() const {
+  return get<At<HeapType2Immediate>>(immediate);
+}
+
 At<InitImmediate>& Instruction::init_immediate() {
   return get<At<InitImmediate>>(immediate);
 }
@@ -534,12 +586,12 @@ const At<MemArgImmediate>& Instruction::mem_arg_immediate() const {
   return get<At<MemArgImmediate>>(immediate);
 }
 
-At<HeapType>& Instruction::heap_type_immediate() {
-  return get<At<HeapType>>(immediate);
+At<RttSubImmediate>& Instruction::rtt_sub_immediate() {
+  return get<At<RttSubImmediate>>(immediate);
 }
 
-const At<HeapType>& Instruction::heap_type_immediate() const {
-  return get<At<HeapType>>(immediate);
+const At<RttSubImmediate>& Instruction::rtt_sub_immediate() const {
+  return get<At<RttSubImmediate>>(immediate);
 }
 
 At<SelectImmediate>& Instruction::select_immediate() {
@@ -566,9 +618,19 @@ const At<SimdLaneImmediate>& Instruction::simd_lane_immediate() const {
   return get<At<SimdLaneImmediate>>(immediate);
 }
 
+At<StructFieldImmediate>& Instruction::struct_field_immediate() {
+  return get<At<StructFieldImmediate>>(immediate);
+}
+
+const At<StructFieldImmediate>& Instruction::struct_field_immediate() const {
+  return get<At<StructFieldImmediate>>(immediate);
+}
+
 ValueType::ValueType(At<NumericType> type) : type{type} {}
 
 ValueType::ValueType(At<ReferenceType> type) : type{type} {}
+
+ValueType::ValueType(At<Rtt> type) : type{type} {}
 
 // static
 ValueType ValueType::I32_NoLocation() {
@@ -619,6 +681,10 @@ bool ValueType::is_reference_type() const {
   return holds_alternative<At<ReferenceType>>(type);
 }
 
+bool ValueType::is_rtt() const {
+  return holds_alternative<At<Rtt>>(type);
+}
+
 auto ValueType::numeric_type() -> At<NumericType>& {
   return get<At<NumericType>>(type);
 }
@@ -633,6 +699,42 @@ auto ValueType::reference_type() -> At<ReferenceType>& {
 
 auto ValueType::reference_type() const -> const At<ReferenceType>& {
   return get<At<ReferenceType>>(type);
+}
+
+auto ValueType::rtt() -> At<Rtt>& {
+  return get<At<Rtt>>(type);
+}
+
+auto ValueType::rtt() const -> const At<Rtt>& {
+  return get<At<Rtt>>(type);
+}
+
+StorageType::StorageType(At<ValueType> type) : type{type} {}
+
+StorageType::StorageType(At<PackedType> type) : type{type} {}
+
+bool StorageType::is_value_type() const {
+  return holds_alternative<At<ValueType>>(type);
+}
+
+bool StorageType::is_packed_type() const {
+  return holds_alternative<At<PackedType>>(type);
+}
+
+auto StorageType::value_type() -> At<ValueType>& {
+  return get<At<ValueType>>(type);
+}
+
+auto StorageType::value_type() const -> const At<ValueType>& {
+  return get<At<ValueType>>(type);
+}
+
+auto StorageType::packed_type() -> At<PackedType>& {
+  return get<At<PackedType>>(type);
+}
+
+auto StorageType::packed_type() const -> const At<PackedType>& {
+  return get<At<PackedType>>(type);
 }
 
 ReferenceType::ReferenceType(At<ReferenceKind> type) : type{type} {}
@@ -676,6 +778,48 @@ auto ReferenceType::ref() -> At<RefType>& {
 
 auto ReferenceType::ref() const -> const At<RefType>& {
   return get<At<RefType>>(type);
+}
+
+DefinedType::DefinedType(At<FunctionType> type) : type{type} {}
+
+DefinedType::DefinedType(At<StructType> type) : type{type} {}
+
+DefinedType::DefinedType(At<ArrayType> type) : type{type} {}
+
+bool DefinedType::is_function_type() const {
+  return holds_alternative<At<FunctionType>>(type);
+}
+
+bool DefinedType::is_struct_type() const {
+  return holds_alternative<At<StructType>>(type);
+}
+
+bool DefinedType::is_array_type() const {
+  return holds_alternative<At<ArrayType>>(type);
+}
+
+auto DefinedType::function_type() -> At<FunctionType>& {
+  return get<At<FunctionType>>(type);
+}
+
+auto DefinedType::function_type() const -> const At<FunctionType>& {
+  return get<At<FunctionType>>(type);
+}
+
+auto DefinedType::struct_type() -> At<StructType>& {
+  return get<At<StructType>>(type);
+}
+
+auto DefinedType::struct_type() const -> const At<StructType>& {
+  return get<At<StructType>>(type);
+}
+
+auto DefinedType::array_type() -> At<ArrayType>& {
+  return get<At<ArrayType>>(type);
+}
+
+auto DefinedType::array_type() const -> const At<ArrayType>& {
+  return get<At<ArrayType>>(type);
 }
 
 Section::Section(At<KnownSection> contents) : contents{contents} {}

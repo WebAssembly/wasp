@@ -596,8 +596,9 @@ Iterator Write(const Table& value, Iterator out) {
 
 template <typename Iterator>
 Iterator Write(const DefinedType& value, Iterator out) {
+  // TODO: Add support for struct and array types.
   out = Write(encoding::Type::Function, out);
-  return Write(value.type, out);
+  return Write(value.function_type(), out);
 }
 
 template <typename InputIterator, typename OutputIterator>
