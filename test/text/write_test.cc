@@ -73,19 +73,136 @@ TEST(TextWriteTest, TextList) {
                                    });
 }
 
+TEST(TextWriteTest, ReferenceType) {
+  ExpectWrite("externref"_sv, RT_Externref);
+  ExpectWrite("funcref"_sv, RT_Funcref);
+  ExpectWrite("exnref"_sv, RT_Exnref);
+  ExpectWrite("eqref"_sv, RT_Eqref);
+  ExpectWrite("i31ref"_sv, RT_I31ref);
+  ExpectWrite("anyref"_sv, RT_Anyref);
+  ExpectWrite("(ref func)"_sv, RT_RefFunc);
+  ExpectWrite("(ref null func)"_sv, RT_RefNullFunc);
+  ExpectWrite("(ref extern)"_sv, RT_RefExtern);
+  ExpectWrite("(ref null extern)"_sv, RT_RefNullExtern);
+  ExpectWrite("(ref exn)"_sv, RT_RefExn);
+  ExpectWrite("(ref null exn)"_sv, RT_RefNullExn);
+  ExpectWrite("(ref eq)"_sv, RT_RefEq);
+  ExpectWrite("(ref null eq)"_sv, RT_RefNullEq);
+  ExpectWrite("(ref i31)"_sv, RT_RefI31);
+  ExpectWrite("(ref null i31)"_sv, RT_RefNullI31);
+  ExpectWrite("(ref any)"_sv, RT_RefAny);
+  ExpectWrite("(ref null any)"_sv, RT_RefNullAny);
+  ExpectWrite("(ref 0)"_sv, RT_Ref0);
+  ExpectWrite("(ref null 0)"_sv, RT_RefNull0);
+  ExpectWrite("(ref $t)"_sv, RT_RefT);
+  ExpectWrite("(ref null $t)"_sv, RT_RefNullT);
+}
+
+TEST(TextWriteTest, Rtt) {
+  ExpectWrite("(rtt 0 func)"_sv, RTT_0_Func);
+  ExpectWrite("(rtt 0 extern)"_sv, RTT_0_Extern);
+  ExpectWrite("(rtt 0 exn)"_sv, RTT_0_Exn);
+  ExpectWrite("(rtt 0 eq)"_sv, RTT_0_Eq);
+  ExpectWrite("(rtt 0 i31)"_sv, RTT_0_I31);
+  ExpectWrite("(rtt 0 any)"_sv, RTT_0_Any);
+}
+
 TEST(TextWriteTest, ValueType) {
+  // NumericType
   ExpectWrite("i32"_sv, VT_I32);
   ExpectWrite("i64"_sv, VT_I64);
   ExpectWrite("f32"_sv, VT_F32);
   ExpectWrite("f64"_sv, VT_F64);
   ExpectWrite("v128"_sv, VT_V128);
+
+  // ReferenceType
   ExpectWrite("externref"_sv, VT_Externref);
   ExpectWrite("funcref"_sv, VT_Funcref);
   ExpectWrite("exnref"_sv, VT_Exnref);
+  ExpectWrite("eqref"_sv, VT_Eqref);
+  ExpectWrite("i31ref"_sv, VT_I31ref);
+  ExpectWrite("anyref"_sv, VT_Anyref);
+  ExpectWrite("(ref func)"_sv, VT_RefFunc);
+  ExpectWrite("(ref null func)"_sv, VT_RefNullFunc);
+  ExpectWrite("(ref extern)"_sv, VT_RefExtern);
+  ExpectWrite("(ref null extern)"_sv, VT_RefNullExtern);
+  ExpectWrite("(ref exn)"_sv, VT_RefExn);
+  ExpectWrite("(ref null exn)"_sv, VT_RefNullExn);
+  ExpectWrite("(ref eq)"_sv, VT_RefEq);
+  ExpectWrite("(ref null eq)"_sv, VT_RefNullEq);
+  ExpectWrite("(ref i31)"_sv, VT_RefI31);
+  ExpectWrite("(ref null i31)"_sv, VT_RefNullI31);
+  ExpectWrite("(ref any)"_sv, VT_RefAny);
+  ExpectWrite("(ref null any)"_sv, VT_RefNullAny);
+  ExpectWrite("(ref 0)"_sv, VT_Ref0);
+  ExpectWrite("(ref null 0)"_sv, VT_RefNull0);
+  ExpectWrite("(ref $t)"_sv, VT_RefT);
+  ExpectWrite("(ref null $t)"_sv, VT_RefNullT);
+
+  // Rtt
+  ExpectWrite("(rtt 0 func)"_sv, VT_RTT_0_Func);
+  ExpectWrite("(rtt 0 extern)"_sv, VT_RTT_0_Extern);
+  ExpectWrite("(rtt 0 exn)"_sv, VT_RTT_0_Exn);
+  ExpectWrite("(rtt 0 eq)"_sv, VT_RTT_0_Eq);
+  ExpectWrite("(rtt 0 i31)"_sv, VT_RTT_0_I31);
+  ExpectWrite("(rtt 0 any)"_sv, VT_RTT_0_Any);
 }
 
 TEST(TextWriteTest, ValueTypeList) {
   ExpectWrite("i32 i64"_sv, ValueTypeList{VT_I32, VT_I64});
+}
+
+TEST(TextWriteTest, StorageType) {
+  ExpectWrite("i32"_sv, StorageType{VT_I32});
+  ExpectWrite("i8"_sv, StorageType{PackedType::I8});
+  ExpectWrite("i16"_sv, StorageType{PackedType::I16});
+}
+
+TEST(TextWriteTest, FieldType) {
+  // No name, immutable
+  ExpectWrite("(field i32)"_sv,
+              FieldType{nullopt, StorageType{VT_I32}, Mutability::Const});
+
+  // No name, mutable
+  ExpectWrite("(field (mut i32))"_sv,
+              FieldType{nullopt, StorageType{VT_I32}, Mutability::Var});
+
+  // Named
+  ExpectWrite("(field $a i32)"_sv,
+              FieldType{"$a"_sv, StorageType{VT_I32}, Mutability::Const});
+}
+
+TEST(TextWriteTest, FieldTypeList) {
+  // Combine unbound fields.
+  ExpectWrite("(field i32 (mut i64) f32)"_sv,
+              FieldTypeList{
+                  FieldType{nullopt, StorageType{VT_I32}, Mutability::Const},
+                  FieldType{nullopt, StorageType{VT_I64}, Mutability::Var},
+                  FieldType{nullopt, StorageType{VT_F32}, Mutability::Const},
+              });
+
+  // Bound fields must be separated.
+  ExpectWrite("(field i32) (field $a (mut i64)) (field f32)"_sv,
+              FieldTypeList{
+                  FieldType{nullopt, StorageType{VT_I32}, Mutability::Const},
+                  FieldType{"$a"_sv, StorageType{VT_I64}, Mutability::Var},
+                  FieldType{nullopt, StorageType{VT_F32}, Mutability::Const},
+              });
+}
+
+TEST(TextWriteTest, StructType) {
+  ExpectWrite(
+      "(struct (field i32 i8))",
+      StructType{FieldTypeList{
+          FieldType{nullopt, StorageType{VT_I32}, Mutability::Const},
+          FieldType{nullopt, StorageType{PackedType::I8}, Mutability::Const},
+      }});
+}
+
+TEST(TextWriteTest, ArrayType) {
+  ExpectWrite(
+      "(array (field i32))",
+      ArrayType{FieldType{nullopt, StorageType{VT_I32}, Mutability::Const}});
 }
 
 TEST(TextWriteTest, FunctionType) {
@@ -118,6 +235,12 @@ TEST(TextWriteTest, BlockImmediate) {
               BlockImmediate{"$l"_sv, FunctionTypeUse{Var{Index{0}}, {}}});
 }
 
+TEST(TextWriteTest, BrOnCastImmediate) {
+  ExpectWrite(
+      "$l func 0"_sv,
+      BrOnCastImmediate{Var{"$l"_sv}, HeapType2Immediate{HT_Func, HT_0}});
+}
+
 TEST(TextWriteTest, BrOnExnImmediate) {
   ExpectWrite("$l $e"_sv, BrOnExnImmediate{
                               Var{"$l"_sv},
@@ -146,6 +269,10 @@ TEST(TextWriteTest, CopyImmediate) {
   ExpectWrite("$d"_sv, CopyImmediate{Var{"$d"_sv}, nullopt});
   ExpectWrite("$s"_sv, CopyImmediate{nullopt, Var{"$s"_sv}});
   ExpectWrite("$d $s"_sv, CopyImmediate{Var{"$d"_sv}, Var{"$s"_sv}});
+}
+
+TEST(TextWriteTest, HeapType2Immediate) {
+  ExpectWrite("func 0"_sv, HeapType2Immediate{HT_Func, HT_0});
 }
 
 TEST(TextWriteTest, InitImmediate) {
@@ -177,10 +304,19 @@ TEST(TextWriteTest, MemArgImmediate) {
   ExpectWrite("offset=10 align=4"_sv, MemArgImmediate{u32{4}, u32{10}});
 }
 
+TEST(TextWriteTest, RttSubImmediate) {
+  ExpectWrite("1 func 0"_sv,
+              RttSubImmediate{1u, HeapType2Immediate{HT_Func, HT_0}});
+}
+
 TEST(TextWriteTest, ShuffleImmediate) {
   ExpectWrite("0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_sv, ShuffleImmediate{});
   ExpectWrite("0 1 2 3 4 5 6 7 8 7 6 5 4 3 2 1"_sv,
               ShuffleImmediate{0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1});
+}
+
+TEST(TextWriteTest, StructFieldImmediate) {
+  ExpectWrite("$s $f"_sv, StructFieldImmediate{Var{"$s"_sv}, Var{"$f"_sv}});
 }
 
 TEST(TextWriteTest, Opcode) {
@@ -214,6 +350,12 @@ TEST(TextWriteTest, Instruction) {
         BlockImmediate{"$l"_sv, FunctionTypeUse{Var{Index{0}},
                                                 FunctionType{{VT_I32}, {}}}}});
 
+  // BrOnCastImmediate
+  ExpectWrite(
+      "br_on_cast $l func 0"_sv,
+      I{O::BrOnCast,
+        BrOnCastImmediate{Var{"$l"_sv}, HeapType2Immediate{HT_Func, HT_0}}});
+
   // BrOnExnImmediate
   ExpectWrite("br_on_exn $l $e"_sv,
               I{O::BrOnExn, BrOnExnImmediate{Var{"$l"_sv}, Var{"$e"_sv}}});
@@ -236,6 +378,14 @@ TEST(TextWriteTest, Instruction) {
   ExpectWrite("table.copy $d $s"_sv,
               I{O::TableCopy, CopyImmediate{Var{"$d"_sv}, Var{"$s"_sv}}});
 
+  // FuncBindImmediate
+  ExpectWrite("func.bind (type 0)"_sv,
+              I{O::FuncBind, FuncBindImmediate{Var{Index{0}}, {}}});
+
+  // HeapType2Immediate
+  ExpectWrite("ref.test func 0"_sv,
+              I{O::RefTest, HeapType2Immediate{HT_Func, HT_0}});
+
   // InitImmediate
   ExpectWrite("table.init $table $seg"_sv,
               I{O::TableInit, InitImmediate{Var{"$seg"_sv}, Var{"$table"_sv}}});
@@ -244,12 +394,22 @@ TEST(TextWriteTest, Instruction) {
   ExpectWrite("i32.load offset=10 align=4"_sv,
               I{O::I32Load, MemArgImmediate{u32{4}, u32{10}}});
 
+  // RttSubImmediate
+  ExpectWrite(
+      "rtt.sub 1 func 0"_sv,
+      I{O::RttSub, RttSubImmediate{1u, HeapType2Immediate{HT_Func, HT_0}}});
+
   // SelectImmediate
   ExpectWrite("select i32"_sv, I{O::Select, SelectImmediate{VT_I32}});
 
   // ShuffleImmediate
   ExpectWrite("v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_sv,
               I{O::V8X16Shuffle, ShuffleImmediate{}});
+
+  // StructFieldImmediate
+  ExpectWrite(
+      "struct.get $s $f"_sv,
+      I{O::StructGet, StructFieldImmediate{Var{"$s"_sv}, Var{"$f"_sv}}});
 
   // Var
   ExpectWrite("local.get $a"_sv, I{O::LocalGet, Var{"$a"_sv}});
@@ -321,12 +481,26 @@ TEST(TextWriteTest, DefinedType) {
   ExpectWrite("(type (func))"_sv, DefinedType{nullopt, BoundFunctionType{}});
 
   ExpectWrite(
-      "(type (func $t (param $a i32) (result i32)))"_sv,
-      DefinedType{"$t"_sv,
+      "(type $F (func (param $a i32) (result i32)))"_sv,
+      DefinedType{"$F"_sv,
                   BoundFunctionType{
                       BoundValueTypeList{BoundValueType{"$a"_sv, VT_I32}},
                       ValueTypeList{VT_I32},
                   }});
+
+  ExpectWrite(
+      "(type $A (array (field i32)))"_sv,
+      DefinedType{"$A"_sv, ArrayType{FieldType{nullopt, StorageType{VT_I32},
+                                               Mutability::Const}}});
+
+  ExpectWrite(
+      "(type $S (struct (field i32 i8)))"_sv,
+      DefinedType{"$S"_sv, StructType{FieldTypeList{
+                               FieldType{nullopt, StorageType{VT_I32},
+                                         Mutability::Const},
+                               FieldType{nullopt, StorageType{PackedType::I8},
+                                         Mutability::Const},
+                           }}});
 }
 
 TEST(TextWriteTest, FunctionDesc) {
@@ -355,12 +529,6 @@ TEST(TextWriteTest, Limits) {
   ExpectWrite("0"_sv, Limits{0});
   ExpectWrite("0 0"_sv, Limits{0, 0});
   ExpectWrite("0 0 shared"_sv, Limits{0, 0, Shared::Yes});
-}
-
-TEST(TextWriteTest, ReferenceType) {
-  ExpectWrite("externref"_sv, RT_Externref);
-  ExpectWrite("funcref"_sv, RT_Funcref);
-  ExpectWrite("exnref"_sv, RT_Exnref);
 }
 
 TEST(TextWriteTest, TableType) {

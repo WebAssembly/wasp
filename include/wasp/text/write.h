@@ -213,6 +213,78 @@ Iterator Write(WriteContext& context,
 }
 
 template <typename Iterator>
+Iterator Write(WriteContext& context, const StorageType& value, Iterator out) {
+  return WriteFormat(context, value, out);
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context, const FieldType& value, Iterator out) {
+  out = WriteLpar(context, "field", out);
+  out = Write(context, value.name, out);
+
+  if (value.mut == Mutability::Var) {
+    out = WriteLpar(context, "mut", out);
+  }
+  out = Write(context, value.type, out);
+  if (value.mut == Mutability::Var) {
+    out = WriteRpar(context, out);
+  }
+  out = WriteRpar(context, out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context,
+               const FieldTypeList& values,
+               Iterator out) {
+  bool first = true;
+  bool prev_has_name = false;
+  for (auto& value : values) {
+    bool has_name = value->name.has_value();
+    if ((has_name || prev_has_name) && !first) {
+      out = WriteRpar(context, out);
+    }
+    if (has_name || prev_has_name || first) {
+      out = WriteLpar(context, "field", out);
+    }
+    if (has_name) {
+      out = Write(context, value->name, out);
+    }
+
+    if (value->mut == Mutability::Var) {
+      out = WriteLpar(context, "mut", out);
+    }
+    out = Write(context, value->type, out);
+    if (value->mut == Mutability::Var) {
+      out = WriteRpar(context, out);
+    }
+
+    prev_has_name = has_name;
+    first = false;
+  }
+  if (!values.empty()) {
+    out = WriteRpar(context, out);
+  }
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context, const StructType& value, Iterator out) {
+  out = WriteLpar(context, "struct", out);
+  out = Write(context, value.fields, out);
+  out = WriteRpar(context, out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context, const ArrayType& value, Iterator out) {
+  out = WriteLpar(context, "array", out);
+  out = Write(context, value.field, out);
+  out = WriteRpar(context, out);
+  return out;
+}
+
+template <typename Iterator>
 Iterator Write(WriteContext& context, const FunctionType& value, Iterator out) {
   out = Write(context, value.params, "param", out);
   out = Write(context, value.results, "result", out);
@@ -256,6 +328,24 @@ Iterator Write(WriteContext& context,
                Iterator out) {
   out = Write(context, value.label, out);
   out = Write(context, value.type, out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context,
+               const HeapType2Immediate& value,
+               Iterator out) {
+  out = Write(context, *value.parent, out);
+  out = Write(context, *value.child, out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context,
+               const BrOnCastImmediate& value,
+               Iterator out) {
+  out = Write(context, *value.target, out);
+  out = Write(context, value.types, out);
   return out;
 }
 
@@ -336,9 +426,27 @@ Iterator Write(WriteContext& context,
 
 template <typename Iterator>
 Iterator Write(WriteContext& context,
+               const RttSubImmediate& value,
+               Iterator out) {
+  out = Write(context, *value.depth, out);
+  out = Write(context, value.types, out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context,
                const ShuffleImmediate& value,
                Iterator out) {
   return WriteRange(context, value.begin(), value.end(), out);
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context,
+               const StructFieldImmediate& value,
+               Iterator out) {
+  out = Write(context, *value.struct_, out);
+  out = Write(context, *value.field, out);
+  return out;
 }
 
 template <typename Iterator>
@@ -425,6 +533,26 @@ Iterator Write(WriteContext& context, const Instruction& value, Iterator out) {
     case 18: // SimdLaneImmediate
       out = Write(context, value.simd_lane_immediate(), out);
       break;
+
+    case 19: // FuncBindImmediate
+      out = Write(context, value.func_bind_immediate(), out);
+      break;
+
+    case 20: // BrOnCastImmediate
+      out = Write(context, value.br_on_cast_immediate(), out);
+      break;
+
+    case 21: // HeapType2Immediate
+      out = Write(context, value.heap_type_2_immediate(), out);
+      break;
+
+    case 22: // RttSubImmediate
+      out = Write(context, value.rtt_sub_immediate(), out);
+      break;
+
+    case 23: // StructFieldImmediate
+      out = Write(context, value.struct_field_immediate(), out);
+      break;
   }
   return out;
 }
@@ -507,13 +635,18 @@ Iterator Write(WriteContext& context,
 
 template <typename Iterator>
 Iterator Write(WriteContext& context, const DefinedType& value, Iterator out) {
-  // TODO: handle struct and array types
-  assert(value.is_function_type());
   out = WriteLpar(context, "type", out);
-  out = WriteLpar(context, "func", out);
   out = Write(context, value.name, out);
-  out = Write(context, value.function_type(), out);
-  out = WriteRpar(context, out);
+  if (value.is_function_type()) {
+    out = WriteLpar(context, "func", out);
+    out = Write(context, value.function_type(), out);
+    out = WriteRpar(context, out);
+  } else if (value.is_struct_type()) {
+    out = Write(context, value.struct_type(), out);
+  } else {
+    assert(value.is_array_type());
+    out = Write(context, value.array_type(), out);
+  }
   out = WriteRpar(context, out);
   return out;
 }
@@ -547,6 +680,15 @@ Iterator Write(WriteContext& context, HeapType value, Iterator out) {
 template <typename Iterator>
 Iterator Write(WriteContext& context, ReferenceType value, Iterator out) {
   return WriteFormat(context, value, out);
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context, const Rtt& value, Iterator out) {
+  out = WriteLpar(context, "rtt", out);
+  out = Write(context, value.depth, out);
+  out = Write(context, value.type, out);
+  out = WriteRpar(context, out);
+  return out;
 }
 
 template <typename Iterator>

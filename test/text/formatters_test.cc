@@ -85,8 +85,138 @@ TEST(TextFormattersTest, VarList) {
                                             Var{Index{2}}, Var{"$a"_sv}}));
 }
 
+TEST(TextFormattersTest, RefType) {
+  EXPECT_EQ(R"((ref func))"_sv, concat(RefType_Func));
+  EXPECT_EQ(R"((ref null func))"_sv, concat(RefType_NullFunc));
+  EXPECT_EQ(R"((ref extern))"_sv, concat(RefType_Extern));
+  EXPECT_EQ(R"((ref null extern))"_sv, concat(RefType_NullExtern));
+  EXPECT_EQ(R"((ref exn))"_sv, concat(RefType_Exn));
+  EXPECT_EQ(R"((ref null exn))"_sv, concat(RefType_NullExn));
+  EXPECT_EQ(R"((ref eq))"_sv, concat(RefType_Eq));
+  EXPECT_EQ(R"((ref null eq))"_sv, concat(RefType_NullEq));
+  EXPECT_EQ(R"((ref i31))"_sv, concat(RefType_I31));
+  EXPECT_EQ(R"((ref null i31))"_sv, concat(RefType_NullI31));
+  EXPECT_EQ(R"((ref any))"_sv, concat(RefType_Any));
+  EXPECT_EQ(R"((ref null any))"_sv, concat(RefType_NullAny));
+
+  EXPECT_EQ(R"((ref 0))", concat(RefType_0));
+  EXPECT_EQ(R"((ref null 0))", concat(RefType_Null0));
+  EXPECT_EQ(R"((ref $t))", concat(RefType_T));
+  EXPECT_EQ(R"((ref null $t))", concat(RefType_NullT));
+}
+
+TEST(TextFormattersTest, ReferenceType) {
+  // ReferenceKind
+  EXPECT_EQ(R"(externref)", concat(RT_Externref));
+  EXPECT_EQ(R"(funcref)", concat(RT_Funcref));
+  EXPECT_EQ(R"(exnref)", concat(RT_Exnref));
+  EXPECT_EQ(R"(eqref)", concat(RT_Eqref));
+  EXPECT_EQ(R"(i31ref)", concat(RT_I31ref));
+  EXPECT_EQ(R"(anyref)", concat(RT_Anyref));
+
+  // RefType
+  EXPECT_EQ(R"((ref func))"_sv, concat(RT_RefFunc));
+  EXPECT_EQ(R"((ref null func))"_sv, concat(RT_RefNullFunc));
+  EXPECT_EQ(R"((ref extern))"_sv, concat(RT_RefExtern));
+  EXPECT_EQ(R"((ref null extern))"_sv, concat(RT_RefNullExtern));
+  EXPECT_EQ(R"((ref eq))"_sv, concat(RT_RefEq));
+  EXPECT_EQ(R"((ref null eq))"_sv, concat(RT_RefNullEq));
+  EXPECT_EQ(R"((ref i31))"_sv, concat(RT_RefI31));
+  EXPECT_EQ(R"((ref null i31))"_sv, concat(RT_RefNullI31));
+  EXPECT_EQ(R"((ref any))"_sv, concat(RT_RefAny));
+  EXPECT_EQ(R"((ref null any))"_sv, concat(RT_RefNullAny));
+  EXPECT_EQ(R"((ref 0))", concat(RT_Ref0));
+  EXPECT_EQ(R"((ref null 0))", concat(RT_RefNull0));
+  EXPECT_EQ(R"((ref $t))", concat(RT_RefT));
+  EXPECT_EQ(R"((ref null $t))", concat(RT_RefNullT));
+}
+
+TEST(TextFormattersTest, Rtt) {
+  EXPECT_EQ(R"((rtt 0 func))", concat(RTT_0_Func));
+  EXPECT_EQ(R"((rtt 0 extern))", concat(RTT_0_Extern));
+  EXPECT_EQ(R"((rtt 0 eq))", concat(RTT_0_Eq));
+  EXPECT_EQ(R"((rtt 0 i31))", concat(RTT_0_I31));
+  EXPECT_EQ(R"((rtt 0 any))", concat(RTT_0_Any));
+}
+
+TEST(TextFormattersTest, ValueType) {
+  // NumericType
+  EXPECT_EQ(R"(i32)", concat(VT_I32));
+  EXPECT_EQ(R"(i64)", concat(VT_I64));
+  EXPECT_EQ(R"(f32)", concat(VT_F32));
+  EXPECT_EQ(R"(f64)", concat(VT_F64));
+  EXPECT_EQ(R"(v128)", concat(VT_V128));
+
+  // ReferenceType
+  EXPECT_EQ(R"(externref)", concat(VT_Externref));
+  EXPECT_EQ(R"(funcref)", concat(VT_Funcref));
+  EXPECT_EQ(R"(exnref)", concat(VT_Exnref));
+  EXPECT_EQ(R"(eqref)", concat(VT_Eqref));
+  EXPECT_EQ(R"(i31ref)", concat(VT_I31ref));
+  EXPECT_EQ(R"(anyref)", concat(VT_Anyref));
+  EXPECT_EQ(R"((ref func))"_sv, concat(VT_RefFunc));
+  EXPECT_EQ(R"((ref null func))"_sv, concat(VT_RefNullFunc));
+  EXPECT_EQ(R"((ref extern))"_sv, concat(VT_RefExtern));
+  EXPECT_EQ(R"((ref null extern))"_sv, concat(VT_RefNullExtern));
+  EXPECT_EQ(R"((ref eq))"_sv, concat(VT_RefEq));
+  EXPECT_EQ(R"((ref null eq))"_sv, concat(VT_RefNullEq));
+  EXPECT_EQ(R"((ref i31))"_sv, concat(VT_RefI31));
+  EXPECT_EQ(R"((ref null i31))"_sv, concat(VT_RefNullI31));
+  EXPECT_EQ(R"((ref any))"_sv, concat(VT_RefAny));
+  EXPECT_EQ(R"((ref null any))"_sv, concat(VT_RefNullAny));
+  EXPECT_EQ(R"((ref 0))", concat(VT_Ref0));
+  EXPECT_EQ(R"((ref null 0))", concat(VT_RefNull0));
+  EXPECT_EQ(R"((ref $t))", concat(VT_RefT));
+  EXPECT_EQ(R"((ref null $t))", concat(VT_RefNullT));
+
+  // Rtt
+  EXPECT_EQ(R"((rtt 0 func))", concat(VT_RTT_0_Func));
+  EXPECT_EQ(R"((rtt 0 extern))", concat(VT_RTT_0_Extern));
+  EXPECT_EQ(R"((rtt 0 eq))", concat(VT_RTT_0_Eq));
+  EXPECT_EQ(R"((rtt 0 i31))", concat(VT_RTT_0_I31));
+  EXPECT_EQ(R"((rtt 0 any))", concat(VT_RTT_0_Any));
+}
+
 TEST(TextFormattersTest, ValueTypeList) {
   EXPECT_EQ(R"([i32 f32])", concat(ValueTypeList{VT_I32, VT_F32}));
+}
+
+TEST(TextFormattersTest, StorageType) {
+  // ValueType
+  EXPECT_EQ(R"(i32)", concat(StorageType{VT_I32}));
+
+  // PackedType
+  EXPECT_EQ(R"(i8)", concat(StorageType{PackedType::I8}));
+  EXPECT_EQ(R"(i16)", concat(StorageType{PackedType::I16}));
+}
+
+TEST(TextFormattersTest, FieldType) {
+  EXPECT_EQ(R"({name $f, type i32, mut const})",
+            concat(FieldType{"$f"_sv, StorageType{VT_I32}, Mutability::Const}));
+}
+
+TEST(TextFormattersTest, FieldTypeList) {
+  EXPECT_EQ(
+      R"([{name $f1, type i32, mut const} {name $f2, type f32, mut var}])",
+      concat(FieldTypeList{
+          FieldType{"$f1"_sv, StorageType{VT_I32}, Mutability::Const},
+          FieldType{"$f2"_sv, StorageType{VT_F32}, Mutability::Var},
+      }));
+}
+
+TEST(TextFormattersTest, StructType) {
+  EXPECT_EQ(
+      R"({fields [{name $f1, type i32, mut const} {name $f2, type f32, mut var}]})",
+      concat(StructType{FieldTypeList{
+          FieldType{"$f1"_sv, StorageType{VT_I32}, Mutability::Const},
+          FieldType{"$f2"_sv, StorageType{VT_F32}, Mutability::Var},
+      }}));
+}
+
+TEST(TextFormattersTest, ArrayType) {
+  EXPECT_EQ(R"({field {name $f, type i32, mut const}})",
+            concat(ArrayType{
+                FieldType{"$f"_sv, StorageType{VT_I32}, Mutability::Const}}));
 }
 
 TEST(TextFormattersTest, FunctionType) {
@@ -118,6 +248,12 @@ TEST(TextFormattersTest, BlockImmediate) {
                                             ValueTypeList{VT_I32},
                                             ValueTypeList{VT_F32},
                                         }}}));
+}
+
+TEST(TextFormattersTest, BrOnCastImmediate) {
+  EXPECT_EQ(
+      R"({target 0, types {parent func, child 0}})",
+      concat(BrOnCastImmediate{Var{0u}, HeapType2Immediate{HT_Func, HT_0}}));
 }
 
 TEST(TextFormattersTest, BrOnExnImmediate) {
@@ -153,6 +289,11 @@ TEST(TextFormattersTest, CopyImmediate) {
             concat(CopyImmediate{Var{"$a"_sv}, Var{"$b"_sv}}));
 }
 
+TEST(TextFormattersTest, HeapType2Immediate) {
+  EXPECT_EQ(R"({parent func, child 0})",
+            concat(HeapType2Immediate{HT_Func, HT_0}));
+}
+
 TEST(TextFormattersTest, InitImmediate) {
   EXPECT_EQ(R"({segment $a, dst none})",
             concat(InitImmediate{Var{"$a"_sv}, nullopt}));
@@ -169,6 +310,16 @@ TEST(TextFormattersTest, LetImmediate) {
 TEST(TextFormattersTest, MemArgImmediate) {
   EXPECT_EQ(R"({align none, offset none})", concat(MemArgImmediate{}));
   EXPECT_EQ(R"({align 4, offset 0})", concat(MemArgImmediate{u32{4}, u32{0}}));
+}
+
+TEST(TextFormattersTest, RttSubImmediate) {
+  EXPECT_EQ(R"({depth 0, types {parent func, child 0}})",
+            concat(RttSubImmediate{0u, HeapType2Immediate{HT_Func, HT_0}}));
+}
+
+TEST(TextFormattersTest, StructFieldImmediate) {
+  EXPECT_EQ(R"({struct_ $s, field $f})",
+            concat(StructFieldImmediate{Var{"$s"_sv}, Var{"$f"_sv}}));
 }
 
 TEST(TextFormattersTest, Instruction) {
@@ -194,6 +345,12 @@ TEST(TextFormattersTest, Instruction) {
       R"({opcode block, immediate block {label none, type {type_use none, type {params [], results []}}}})",
       concat(Instruction{Opcode::Block, BlockImmediate{}}));
 
+  EXPECT_EQ(
+      R"({opcode br_on_cast, immediate br_on_cast {target 0, types {parent func, child 0}}})",
+      concat(Instruction{
+          Opcode::BrOnCast,
+          BrOnCastImmediate{Var{0u}, HeapType2Immediate{HT_Func, HT_0}}}));
+
   EXPECT_EQ(R"({opcode br_on_exn, immediate br_on_exn {target $a, event $b}})",
             concat(Instruction{Opcode::BrOnExn,
                                BrOnExnImmediate{Var{"$a"_sv}, Var{"$b"_sv}}}));
@@ -201,6 +358,10 @@ TEST(TextFormattersTest, Instruction) {
   EXPECT_EQ(
       R"({opcode br_table, immediate br_table {targets [], default_target $b}})",
       concat(Instruction{Opcode::BrTable, BrTableImmediate{{}, Var{"$b"_sv}}}));
+
+  EXPECT_EQ(
+      R"({opcode ref.test, immediate heap_type_2 {parent func, child 0}})",
+      concat(Instruction{Opcode::RefTest, HeapType2Immediate{HT_Func, HT_0}}));
 
   EXPECT_EQ(R"({opcode table.copy, immediate copy {dst none, src none}})",
             concat(Instruction{Opcode::TableCopy, CopyImmediate{}}));
@@ -216,8 +377,19 @@ TEST(TextFormattersTest, Instruction) {
   EXPECT_EQ(R"({opcode i32.load, immediate mem_arg {align none, offset none}})",
             concat(Instruction{Opcode::I32Load, MemArgImmediate{}}));
 
+  EXPECT_EQ(
+      R"({opcode rtt.sub, immediate rtt.sub {depth 0, types {parent func, child 0}}})",
+      concat(
+          Instruction{Opcode::RttSub,
+                      RttSubImmediate{0u, HeapType2Immediate{HT_Func, HT_0}}}));
+
   EXPECT_EQ(R"({opcode select, immediate select []})",
             concat(Instruction{Opcode::Select, SelectImmediate{}}));
+
+  EXPECT_EQ(
+      R"({opcode struct.get, immediate struct_field {struct_ $s, field $f}})",
+      concat(Instruction{Opcode::StructGet,
+                         StructFieldImmediate{Var{"$s"_sv}, Var{"$f"_sv}}}));
 
   EXPECT_EQ(
       R"({opcode v8x16.shuffle, immediate shuffle [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]})",
@@ -254,8 +426,22 @@ TEST(TextFormattersTest, BoundFunctionType) {
 }
 
 TEST(TextFormattersTest, DefinedType) {
+  // Func
   EXPECT_EQ(R"({name $a, type func {params [], results []}})",
             concat(DefinedType{"$a"_sv, BoundFunctionType{}}));
+
+  // Struct
+  EXPECT_EQ(
+      R"({name $a, type struct {fields [{name none, type i32, mut const}]}})",
+      concat(DefinedType{
+          "$a"_sv, StructType{FieldTypeList{FieldType{
+                       nullopt, StorageType{VT_I32}, Mutability::Const}}}}));
+
+  // Array
+  EXPECT_EQ(R"({name $a, type array {field {name none, type i32, mut const}}})",
+            concat(DefinedType{"$a"_sv,
+                               ArrayType{FieldType{nullopt, StorageType{VT_I32},
+                                                   Mutability::Const}}}));
 }
 
 TEST(TextFormattersTest, FunctionDesc) {

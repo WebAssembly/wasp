@@ -211,12 +211,11 @@ std::ostream& operator<<(std::ostream& os, const ::wasp::text::HeapType& self) {
 }
 
 std::ostream& operator<<(std::ostream& os, const ::wasp::text::RefType& self) {
-  os << "ref ";
+  os << "(ref ";
   if (self.null == ::wasp::Null::Yes) {
     os << "null ";
   }
-  os << self.heap_type;
-  return os;
+  return os << self.heap_type << ")";
 }
 
 std::ostream& operator<<(std::ostream& os,
@@ -230,13 +229,30 @@ std::ostream& operator<<(std::ostream& os,
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const ::wasp::text::Rtt& self) {
+  return os << "(rtt " << self.depth << " " << self.type << ")";
+}
+
 std::ostream& operator<<(std::ostream& os,
                          const ::wasp::text::ValueType& self) {
   if (self.is_numeric_type()) {
     os << self.numeric_type();
-  } else {
-    assert(self.is_reference_type());
+  } else if (self.is_reference_type()) {
     os << self.reference_type();
+  } else {
+    assert(self.is_rtt());
+    os << self.rtt();
+  }
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::text::StorageType& self) {
+  if (self.is_value_type()) {
+    os << self.value_type();
+  } else {
+    assert(self.is_packed_type());
+    os << self.packed_type();
   }
   return os;
 }

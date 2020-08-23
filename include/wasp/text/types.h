@@ -989,8 +989,6 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::OpcodeInfo, 2, opcode, features)                          \
   WASP_V(text::Text, 2, text, byte_size)                                 \
   WASP_V(text::Token, 3, loc, type, immediate)                           \
-  WASP_V(text::Rtt, 2, depth, type)                                      \
-  WASP_V(text::StorageType, 1, type)                                     \
   WASP_V(text::BoundValueType, 2, name, type)                            \
   WASP_V(text::BoundFunctionType, 2, params, results)                    \
   WASP_V(text::FieldType, 3, name, type, mut)                            \
@@ -1054,8 +1052,10 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::Command, 1, contents)            \
   WASP_V(text::HeapType, 1, type)               \
   WASP_V(text::RefType, 2, heap_type, null)     \
+  WASP_V(text::Rtt, 2, depth, type)             \
   WASP_V(text::ReferenceType, 1, type)          \
   WASP_V(text::ValueType, 1, type)              \
+  WASP_V(text::StorageType, 1, type)            \
   WASP_V(text::TableType, 2, limits, elemtype)  \
   WASP_V(text::GlobalType, 2, valtype, mut)
 
