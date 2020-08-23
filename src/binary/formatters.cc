@@ -34,11 +34,11 @@ std::ostream& operator<<(std::ostream& os,
 
 std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::RefType& self) {
-  os << "ref ";
+  os << "(ref ";
   if (self.null == ::wasp::Null::Yes) {
     os << "null ";
   }
-  os << self.heap_type;
+  os << self.heap_type << ")";
   return os;
 }
 
@@ -54,17 +54,29 @@ std::ostream& operator<<(std::ostream& os,
 }
 
 std::ostream& operator<<(std::ostream& os, const ::wasp::binary::Rtt& self) {
-  // TODO
-  return os;
+  return os << "(rtt " << self.depth << " " << self.type << ")";
 }
 
 std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::ValueType& self) {
   if (self.is_numeric_type()) {
     os << self.numeric_type();
-  } else {
-    assert(self.is_reference_type());
+  } else if (self.is_reference_type()) {
     os << self.reference_type();
+  } else {
+    assert(self.is_rtt());
+    os << self.rtt();
+  }
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::binary::StorageType& self) {
+  if (self.is_value_type()) {
+    os << self.value_type();
+  } else {
+    assert(self.is_packed_type());
+    os << self.packed_type();
   }
   return os;
 }
@@ -147,9 +159,15 @@ std::ostream& operator<<(std::ostream& os,
 
 std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::DefinedType& self) {
-  // TODO: Add support for struct and array types.
-  assert(self.is_function_type());
-  return os << self.function_type();
+  if (self.is_function_type()) {
+    os << self.function_type();
+  } else if (self.is_struct_type()) {
+    os << self.struct_type();
+  } else {
+    assert(self.is_array_type());
+    os << self.array_type();
+  }
+  return os;
 }
 
 std::ostream& operator<<(std::ostream& os,
@@ -158,15 +176,18 @@ std::ostream& operator<<(std::ostream& os,
 }
 
 std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::binary::FieldType& self) {
+  return os << self.mut << " " << self.type;
+}
+
+std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::StructType& self) {
-  // TODO
-  return os;
+  return os << "(struct " << self.fields << ")";
 }
 
 std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::ArrayType& self) {
-  // TODO
-  return os;
+  return os << "(array " << self.field << ")";
 }
 
 std::ostream& operator<<(std::ostream& os,
@@ -248,8 +269,18 @@ std::ostream& operator<<(std::ostream& os,
 }
 
 std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::binary::BrOnCastImmediate& self) {
+  return os << self.target << " " << self.types;
+}
+
+std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::BrOnExnImmediate& self) {
   return os << self.target << " " << self.event_index;
+}
+
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::binary::HeapType2Immediate& self) {
+  return os << self.parent << " " << self.child;
 }
 
 std::ostream& operator<<(std::ostream& os,
@@ -260,6 +291,16 @@ std::ostream& operator<<(std::ostream& os,
 std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::CopyImmediate& self) {
   return os << self.dst_index << " " << self.src_index;
+}
+
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::binary::RttSubImmediate& self) {
+  return os << self.depth << " " << self.types;
+}
+
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::binary::StructFieldImmediate& self) {
+  return os << self.struct_ << " " << self.field;
 }
 
 std::ostream& operator<<(std::ostream& os,
@@ -286,6 +327,10 @@ std::ostream& operator<<(std::ostream& os,
     case 16: os << " " << self.select_immediate(); break;
     case 17: os << " " << self.shuffle_immediate(); break;
     case 18: os << " " << self.simd_lane_immediate(); break;
+    case 19: os << " " << self.br_on_cast_immediate(); break;
+    case 20: os << " " << self.heap_type_2_immediate(); break;
+    case 21: os << " " << self.rtt_sub_immediate(); break;
+    case 22: os << " " << self.struct_field_immediate(); break;
   }
   return os;
 }
