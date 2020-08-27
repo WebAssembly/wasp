@@ -65,7 +65,7 @@ class BinaryReadTest : public ::testing::Test {
   void FailUnknownOpcode(u8 code) {
     const u8 span_buffer[] = {code};
     auto msg = concat("Unknown opcode: ", code);
-    Fail(Read<Opcode>, {{0, "opcode"}, {1, msg}}, SpanU8{span_buffer, 1});
+    Fail(Read<Opcode>, {{0, "opcode"}, {0, msg}}, SpanU8{span_buffer, 1});
   }
 
   void FailUnknownOpcode(u8 prefix, u32 orig_code) {
@@ -106,7 +106,7 @@ TEST_F(BinaryReadTest, BlockType_Basic_multi_value) {
 }
 
 TEST_F(BinaryReadTest, BlockType_simd) {
-  Fail(Read<BlockType>, {{0, "block type"}, {1, "Unknown block type: 123"}},
+  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: 123"}},
        "\x7b"_su8);
 
   context.features.enable_simd();
@@ -115,12 +115,12 @@ TEST_F(BinaryReadTest, BlockType_simd) {
 
 TEST_F(BinaryReadTest, BlockType_MultiValueNegative) {
   context.features.enable_multi_value();
-  Fail(Read<BlockType>, {{0, "block type"}, {1, "Unknown block type: -9"}},
+  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: -9"}},
        "\x77"_su8);
 }
 
 TEST_F(BinaryReadTest, BlockType_multi_value) {
-  Fail(Read<BlockType>, {{0, "block type"}, {1, "Unknown block type: 1"}},
+  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: 1"}},
        "\x01"_su8);
 
   context.features.enable_multi_value();
@@ -130,7 +130,7 @@ TEST_F(BinaryReadTest, BlockType_multi_value) {
 }
 
 TEST_F(BinaryReadTest, BlockType_reference_types) {
-  Fail(Read<BlockType>, {{0, "block type"}, {1, "Unknown block type: 111"}},
+  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: 111"}},
        "\x6f"_su8);
 
   context.features.enable_reference_types();
@@ -138,11 +138,11 @@ TEST_F(BinaryReadTest, BlockType_reference_types) {
 }
 
 TEST_F(BinaryReadTest, BlockType_Unknown) {
-  Fail(Read<BlockType>, {{0, "block type"}, {1, "Unknown block type: 0"}},
+  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: 0"}},
        "\x00"_su8);
 
   // Overlong encoding is not allowed.
-  Fail(Read<BlockType>, {{0, "block type"}, {1, "Unknown block type: 255"}},
+  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: 255"}},
        "\xff\x7f"_su8);
 }
 
@@ -329,12 +329,12 @@ TEST_F(BinaryReadTest, ConstantExpression) {
 TEST_F(BinaryReadTest, ConstantExpression_ReferenceTypes) {
   // ref.null
   Fail(Read<ConstantExpression>,
-       {{0, "constant expression"}, {0, "opcode"}, {1, "Unknown opcode: 208"}},
+       {{0, "constant expression"}, {0, "opcode"}, {0, "Unknown opcode: 208"}},
        "\xd0\x70\x0b"_su8);
 
   // ref.func
   Fail(Read<ConstantExpression>,
-       {{0, "constant expression"}, {0, "opcode"}, {1, "Unknown opcode: 210"}},
+       {{0, "constant expression"}, {0, "opcode"}, {0, "Unknown opcode: 210"}},
        "\xd2\x00\x0b"_su8);
 
   context.features.enable_reference_types();
@@ -399,7 +399,7 @@ TEST_F(BinaryReadTest, ConstantExpression_TooLong) {
 
 TEST_F(BinaryReadTest, ConstantExpression_InvalidInstruction) {
   Fail(Read<ConstantExpression>,
-       {{0, "constant expression"}, {0, "opcode"}, {1, "Unknown opcode: 6"}},
+       {{0, "constant expression"}, {0, "opcode"}, {0, "Unknown opcode: 6"}},
        "\x06"_su8);
 }
 
@@ -588,7 +588,7 @@ TEST_F(BinaryReadTest, DataSegment_BulkMemory) {
 TEST_F(BinaryReadTest, DataSegment_BulkMemory_BadFlags) {
   context.features.enable_bulk_memory();
 
-  Fail(Read<DataSegment>, {{0, "data segment"}, {1, "Unknown flags: 3"}},
+  Fail(Read<DataSegment>, {{0, "data segment"}, {0, "Unknown flags: 3"}},
        "\x03"_su8);
 }
 
@@ -690,7 +690,7 @@ TEST_F(BinaryReadTest, ElementExpression_InvalidInstruction) {
   context.features.enable_bulk_memory();
 
   Fail(Read<ElementExpression>,
-       {{0, "element expression"}, {0, "opcode"}, {1, "Unknown opcode: 6"}},
+       {{0, "element expression"}, {0, "opcode"}, {0, "Unknown opcode: 6"}},
        "\x06"_su8);
 }
 
@@ -818,11 +818,11 @@ TEST_F(BinaryReadTest, ElementSegment_BulkMemory_BadFlags) {
   context.features.enable_bulk_memory();
 
   // Flags == 3: Declared, index list
-  Fail(Read<ElementSegment>, {{0, "element segment"}, {1, "Unknown flags: 3"}},
+  Fail(Read<ElementSegment>, {{0, "element segment"}, {0, "Unknown flags: 3"}},
        "\x03"_su8);
 
   // Flags == 7: Declared, expression list
-  Fail(Read<ElementSegment>, {{0, "element segment"}, {1, "Unknown flags: 7"}},
+  Fail(Read<ElementSegment>, {{0, "element segment"}, {0, "Unknown flags: 7"}},
        "\x07"_su8);
 }
 
@@ -870,7 +870,7 @@ TEST_F(BinaryReadTest, ReferenceType) {
 
 TEST_F(BinaryReadTest, ReferenceType_ReferenceTypes) {
   Fail(Read<ReferenceType>,
-       {{0, "reference type"}, {1, "Unknown reference type: 111"}}, "\x6f"_su8);
+       {{0, "reference type"}, {0, "Unknown reference type: 111"}}, "\x6f"_su8);
 
   context.features.enable_reference_types();
 
@@ -879,7 +879,7 @@ TEST_F(BinaryReadTest, ReferenceType_ReferenceTypes) {
 
 TEST_F(BinaryReadTest, ReferenceType_Exceptions) {
   Fail(Read<ReferenceType>,
-       {{0, "reference type"}, {1, "Unknown reference type: 104"}}, "\x68"_su8);
+       {{0, "reference type"}, {0, "Unknown reference type: 104"}}, "\x68"_su8);
 
   context.features.enable_exceptions();
 
@@ -888,11 +888,11 @@ TEST_F(BinaryReadTest, ReferenceType_Exceptions) {
 
 TEST_F(BinaryReadTest, ReferenceType_Unknown) {
   Fail(Read<ReferenceType>,
-       {{0, "reference type"}, {1, "Unknown reference type: 0"}}, "\x00"_su8);
+       {{0, "reference type"}, {0, "Unknown reference type: 0"}}, "\x00"_su8);
 
   // Overlong encoding is not allowed.
   Fail(Read<ReferenceType>,
-       {{0, "reference type"}, {1, "Unknown reference type: 240"}},
+       {{0, "reference type"}, {0, "Unknown reference type: 240"}},
        "\xf0\x7f"_su8);
 }
 
@@ -962,7 +962,7 @@ TEST_F(BinaryReadTest, Export_PastEnd) {
 
 TEST_F(BinaryReadTest, Export_exceptions) {
   Fail(Read<Export>,
-       {{0, "export"}, {2, "external kind"}, {3, "Unknown external kind: 4"}},
+       {{0, "export"}, {2, "external kind"}, {2, "Unknown external kind: 4"}},
        "\x01v\x04\x02"_su8);
 
   context.features.enable_exceptions();
@@ -981,7 +981,7 @@ TEST_F(BinaryReadTest, ExternalKind) {
 
 TEST_F(BinaryReadTest, ExternalKind_exceptions) {
   Fail(Read<ExternalKind>,
-       {{0, "external kind"}, {1, "Unknown external kind: 4"}}, "\x04"_su8);
+       {{0, "external kind"}, {0, "Unknown external kind: 4"}}, "\x04"_su8);
 
   context.features.enable_exceptions();
 
@@ -990,11 +990,11 @@ TEST_F(BinaryReadTest, ExternalKind_exceptions) {
 
 TEST_F(BinaryReadTest, ExternalKind_Unknown) {
   Fail(Read<ExternalKind>,
-       {{0, "external kind"}, {1, "Unknown external kind: 5"}}, "\x05"_su8);
+       {{0, "external kind"}, {0, "Unknown external kind: 5"}}, "\x05"_su8);
 
   // Overlong encoding is not allowed.
   Fail(Read<ExternalKind>,
-       {{0, "external kind"}, {1, "Unknown external kind: 132"}},
+       {{0, "external kind"}, {0, "Unknown external kind: 132"}},
        "\x84\x00"_su8);
 }
 
@@ -1189,7 +1189,7 @@ TEST_F(BinaryReadTest, Import) {
 
 TEST_F(BinaryReadTest, Import_exceptions) {
   Fail(Read<Import>,
-       {{0, "import"}, {9, "external kind"}, {10, "Unknown external kind: 4"}},
+       {{0, "import"}, {9, "external kind"}, {9, "Unknown external kind: 4"}},
        "\x01v\x06!event\x04\x00\x02"_su8);
 
   context.features.enable_exceptions();
@@ -2210,9 +2210,9 @@ TEST_F(BinaryReadTest, Limits) {
 }
 
 TEST_F(BinaryReadTest, Limits_BadFlags) {
-  Fail(Read<Limits>, {{0, "limits"}, {1, "Unknown flags value: 2"}},
+  Fail(Read<Limits>, {{0, "limits"}, {0, "Unknown flags value: 2"}},
        "\x02\x01"_su8);
-  Fail(Read<Limits>, {{0, "limits"}, {1, "Unknown flags value: 3"}},
+  Fail(Read<Limits>, {{0, "limits"}, {0, "Unknown flags value: 3"}},
        "\x03\x01"_su8);
 }
 
@@ -2322,11 +2322,11 @@ TEST_F(BinaryReadTest, Mutability) {
 }
 
 TEST_F(BinaryReadTest, Mutability_Unknown) {
-  Fail(Read<Mutability>, {{0, "mutability"}, {1, "Unknown mutability: 4"}},
+  Fail(Read<Mutability>, {{0, "mutability"}, {0, "Unknown mutability: 4"}},
        "\x04"_su8);
 
   // Overlong encoding is not allowed.
-  Fail(Read<Mutability>, {{0, "mutability"}, {1, "Unknown mutability: 132"}},
+  Fail(Read<Mutability>, {{0, "mutability"}, {0, "Unknown mutability: 132"}},
        "\x84\x00"_su8);
 }
 
@@ -2354,10 +2354,10 @@ TEST_F(BinaryReadTest, NameSubsectionId) {
 
 TEST_F(BinaryReadTest, NameSubsectionId_Unknown) {
   Fail(Read<NameSubsectionId>,
-       {{0, "name subsection id"}, {1, "Unknown name subsection id: 3"}},
+       {{0, "name subsection id"}, {0, "Unknown name subsection id: 3"}},
        "\x03"_su8);
   Fail(Read<NameSubsectionId>,
-       {{0, "name subsection id"}, {1, "Unknown name subsection id: 255"}},
+       {{0, "name subsection id"}, {0, "Unknown name subsection id: 255"}},
        "\xff"_su8);
 }
 
@@ -2380,7 +2380,7 @@ TEST_F(BinaryReadTest, NameSubsection_BadSubsectionId) {
   Fail(Read<NameSubsection>,
        {{0, "name subsection"},
         {0, "name subsection id"},
-        {1, "Unknown name subsection id: 3"}},
+        {0, "Unknown name subsection id: 3"}},
        "\x03"_su8);
 }
 
@@ -3126,7 +3126,7 @@ TEST_F(BinaryReadTest, SectionId) {
 }
 
 TEST_F(BinaryReadTest, SectionId_bulk_memory) {
-  Fail(Read<SectionId>, {{0, "section id"}, {1, "Unknown section id: 12"}},
+  Fail(Read<SectionId>, {{0, "section id"}, {0, "Unknown section id: 12"}},
        "\x0c"_su8);
 
   context.features.enable_bulk_memory();
@@ -3135,7 +3135,7 @@ TEST_F(BinaryReadTest, SectionId_bulk_memory) {
 }
 
 TEST_F(BinaryReadTest, SectionId_exceptions) {
-  Fail(Read<SectionId>, {{0, "section id"}, {1, "Unknown section id: 13"}},
+  Fail(Read<SectionId>, {{0, "section id"}, {0, "Unknown section id: 13"}},
        "\x0d"_su8);
 
   context.features.enable_exceptions();
@@ -3144,7 +3144,7 @@ TEST_F(BinaryReadTest, SectionId_exceptions) {
 }
 
 TEST_F(BinaryReadTest, SectionId_Unknown) {
-  Fail(Read<SectionId>, {{0, "section id"}, {1, "Unknown section id: 14"}},
+  Fail(Read<SectionId>, {{0, "section id"}, {0, "Unknown section id: 14"}},
        "\x0e"_su8);
 }
 
@@ -3247,7 +3247,7 @@ TEST_F(BinaryReadTest, TableType_BadReferenceType) {
   Fail(Read<TableType>,
        {{0, "table type"},
         {0, "reference type"},
-        {1, "Unknown reference type: 0"}},
+        {0, "Unknown reference type: 0"}},
        "\x00"_su8);
 }
 
@@ -3313,7 +3313,7 @@ TEST_F(BinaryReadTest, ValueType_MVP) {
 }
 
 TEST_F(BinaryReadTest, ValueType_simd) {
-  Fail(Read<ValueType>, {{0, "value type"}, {1, "Unknown value type: 123"}},
+  Fail(Read<ValueType>, {{0, "value type"}, {0, "Unknown value type: 123"}},
        "\x7b"_su8);
 
   context.features.enable_simd();
@@ -3321,9 +3321,9 @@ TEST_F(BinaryReadTest, ValueType_simd) {
 }
 
 TEST_F(BinaryReadTest, ValueType_reference_types) {
-  Fail(Read<ValueType>, {{0, "value type"}, {1, "Unknown value type: 112"}},
+  Fail(Read<ValueType>, {{0, "value type"}, {0, "Unknown value type: 112"}},
        "\x70"_su8);
-  Fail(Read<ValueType>, {{0, "value type"}, {1, "Unknown value type: 111"}},
+  Fail(Read<ValueType>, {{0, "value type"}, {0, "Unknown value type: 111"}},
        "\x6f"_su8);
 
   context.features.enable_reference_types();
@@ -3332,7 +3332,7 @@ TEST_F(BinaryReadTest, ValueType_reference_types) {
 }
 
 TEST_F(BinaryReadTest, ValueType_exceptions) {
-  Fail(Read<ValueType>, {{0, "value type"}, {1, "Unknown value type: 104"}},
+  Fail(Read<ValueType>, {{0, "value type"}, {0, "Unknown value type: 104"}},
        "\x68"_su8);
 
   context.features.enable_exceptions();
@@ -3340,11 +3340,11 @@ TEST_F(BinaryReadTest, ValueType_exceptions) {
 }
 
 TEST_F(BinaryReadTest, ValueType_Unknown) {
-  Fail(Read<ValueType>, {{0, "value type"}, {1, "Unknown value type: 16"}},
+  Fail(Read<ValueType>, {{0, "value type"}, {0, "Unknown value type: 16"}},
        "\x10"_su8);
 
   // Overlong encoding is not allowed.
-  Fail(Read<ValueType>, {{0, "value type"}, {1, "Unknown value type: 255"}},
+  Fail(Read<ValueType>, {{0, "value type"}, {0, "Unknown value type: 255"}},
        "\xff\x7f"_su8);
 }
 
