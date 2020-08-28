@@ -28,7 +28,13 @@ WASP_DEFINE_VARIANT_NAME(wasp::HeapKind, "heap_kind")
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const ::wasp::At<T>& self) {
+  // Useful for printing locations when there are tests that fail, but their
+  // printed values seem to be the same.
+#if 0
+  return os << "At{" << self.loc() << ", " << self.value() << "}";
+#else
   return os << *self;
+#endif
 }
 
 template <typename T>

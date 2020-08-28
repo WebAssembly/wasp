@@ -36,20 +36,84 @@
 
 namespace wasp::binary {
 
+OptAt<ArrayType> Read(SpanU8* data, Context& context, Tag<ArrayType>) {
+  ErrorsContextGuard error_guard{context.errors, *data, "array type"};
+  LocationGuard guard{data};
+  WASP_TRY_READ(field, Read<FieldType>(data, context));
+  return At{guard.range(data), ArrayType{field}};
+}
+
 OptAt<BlockType> Read(SpanU8* data, Context& context, Tag<BlockType>) {
   ErrorsContextGuard error_guard{context.errors, *data, "block type"};
   LocationGuard guard{data};
-  if (context.features.multi_value_enabled()) {
+
+  WASP_TRY_READ(val, PeekU8(data, context));
+
+  if (context.features.multi_value_enabled() &&
+      encoding::BlockType::IsS32(val)) {
     WASP_TRY_READ(val, Read<s32>(data, context));
     WASP_TRY_DECODE_FEATURES(decoded, val, BlockType, "block type",
                              context.features);
     return decoded;
-  } else {
-    WASP_TRY_READ(val, Read<u8>(data, context));
+  } else if (encoding::BlockType::IsBare(val)) {
+    remove_prefix(data, 1);
     WASP_TRY_DECODE_FEATURES(decoded, val, BlockType, "block type",
                              context.features);
     return decoded;
+  } else if (encoding::NumericType::IsBare(val)) {
+    remove_prefix(data, 1);
+    WASP_TRY_DECODE_FEATURES(decoded, val, NumericType, "block type",
+                             context.features);
+    return At{decoded.loc(), BlockType{At{decoded.loc(), ValueType{decoded}}}};
+  } else if (encoding::ReferenceType::IsBare(val)) {
+    remove_prefix(data, 1);
+    auto decoded_opt = encoding::ReferenceType::Decode(
+        val, context.features, encoding::AllowFuncref::No);
+    if (!decoded_opt) {
+      context.errors.OnError(val.loc(), concat("Unknown block type: ", *val));
+      return nullopt;
+    }
+    auto decoded = At{val.loc(), *decoded_opt};
+    return At{decoded.loc(), BlockType{At{decoded.loc(), ValueType{decoded}}}};
+  } else if (encoding::ReferenceType::IsS32(val)) {
+    WASP_TRY_READ(code, Read<s32>(data, context));
+    auto decoded = encoding::ReferenceType::Decode(val, code, context.features);
+    if (!decoded) {
+      context.errors.OnError(guard.range(data),
+                             concat("Unknown block type: ", val, " ", code));
+      return nullopt;
+    }
+    return At{guard.range(data),
+              BlockType{At{guard.range(data), ValueType{*decoded}}}};
+  } else if (encoding::Rtt::IsU32S32(val)) {
+    LocationGuard rtt_guard{data};
+    WASP_TRY_READ(code1, Read<u32>(data, context));
+    WASP_TRY_READ(code2, Read<s32>(data, context));
+    auto decoded = encoding::Rtt::Decode(val, code1, code2, context.features);
+    if (!decoded) {
+      context.errors.OnError(
+          guard.range(data),
+          concat("Unknown block type: ", val, " ", code1, " ", code2));
+      return nullopt;
+    }
+    return At{rtt_guard.range(data),
+              BlockType{At{rtt_guard.range(data), ValueType{*decoded}}}};
+  } else {
+    remove_prefix(data, 1);
+    context.errors.OnError(guard.range(data),
+                           concat("Unknown block type: ", val));
+    return nullopt;
   }
+}
+
+OptAt<BrOnCastImmediate> Read(SpanU8* data,
+                             Context& context,
+                             Tag<BrOnCastImmediate>) {
+  ErrorsContextGuard error_guard{context.errors, *data, "br_on_cast"};
+  LocationGuard guard{data};
+  WASP_TRY_READ(target, ReadIndex(data, context, "target"));
+  WASP_TRY_READ(types, Read<HeapType2Immediate>(data, context));
+  return At{guard.range(data), BrOnCastImmediate{target, types}};
 }
 
 OptAt<BrOnExnImmediate> Read(SpanU8* data,
@@ -310,7 +374,7 @@ OptAt<ReferenceType> Read(SpanU8* data, Context& context, Tag<ReferenceType>) {
   LocationGuard guard{data};
   WASP_TRY_READ(val, Read<u8>(data, context));
 
-  if (encoding::ReferenceType::IsPrefixByte(*val, context.features)) {
+  if (encoding::ReferenceType::IsS32(*val)) {
     WASP_TRY_READ(code, Read<s32>(data, context));
     auto decoded = encoding::ReferenceType::Decode(val, code, context.features);
     if (!decoded) {
@@ -325,6 +389,16 @@ OptAt<ReferenceType> Read(SpanU8* data, Context& context, Tag<ReferenceType>) {
                              context.features);
     return decoded;
   }
+}
+
+OptAt<RttSubImmediate> Read(SpanU8* data,
+                            Context& context,
+                            Tag<RttSubImmediate>) {
+  ErrorsContextGuard error_guard{context.errors, *data, "rtt sub immediate"};
+  LocationGuard guard{data};
+  WASP_TRY_READ(depth, ReadIndex(data, context, "depth"));
+  WASP_TRY_READ(types, Read<HeapType2Immediate>(data, context));
+  return At{guard.range(data), RttSubImmediate{depth, types}};
 }
 
 OptAt<Event> Read(SpanU8* data, Context& context, Tag<Event>) {
@@ -386,6 +460,14 @@ OptAt<f64> Read(SpanU8* data, Context& context, Tag<f64>) {
   return At{bytes.loc(), result};
 }
 
+OptAt<FieldType> Read(SpanU8* data, Context& context, Tag<FieldType>) {
+  ErrorsContextGuard error_guard{context.errors, *data, "field_type"};
+  LocationGuard guard{data};
+  WASP_TRY_READ(type, Read<StorageType>(data, context));
+  WASP_TRY_READ(mut, Read<Mutability>(data, context));
+  return At{guard.range(data), FieldType{type, mut}};
+}
+
 OptAt<Function> Read(SpanU8* data, Context& context, Tag<Function>) {
   ErrorsContextGuard error_guard{context.errors, *data, "function"};
   LocationGuard guard{data};
@@ -427,6 +509,16 @@ OptAt<HeapType> Read(SpanU8* data, Context& context, Tag<HeapType>) {
   WASP_TRY_DECODE_FEATURES(decoded, val, HeapType, "heap type",
                            context.features);
   return decoded;
+}
+
+OptAt<HeapType2Immediate> Read(SpanU8* data,
+                               Context& context,
+                               Tag<HeapType2Immediate>) {
+  ErrorsContextGuard error_guard{context.errors, *data, "heap type 2"};
+  LocationGuard guard{data};
+  WASP_TRY_READ(parent, Read<HeapType>(data, context));
+  WASP_TRY_READ(child, Read<HeapType>(data, context));
+  return At{guard.range(data), HeapType2Immediate{parent, child}};
 }
 
 OptAt<Import> Read(SpanU8* data, Context& context, Tag<Import>) {
@@ -1326,6 +1418,42 @@ OptAt<Start> Read(SpanU8* data, Context& context, Tag<Start>) {
   return At{index.loc(), Start{index}};
 }
 
+auto Read(SpanU8* data, Context& context, Tag<StorageType>)
+    -> OptAt<StorageType> {
+  ErrorsContextGuard error_guard{context.errors, *data, "storage type"};
+  LocationGuard guard{data};
+
+  WASP_TRY_READ(val, PeekU8(data, context));
+
+  if (encoding::PackedType::IsBare(val)) {
+    remove_prefix(data, 1);
+    WASP_TRY_DECODE_FEATURES(decoded, val, PackedType, "packed type",
+                             context.features);
+    return At{decoded.loc(), StorageType{decoded}};
+  } else {
+    WASP_TRY_READ(value_type, Read<ValueType>(data, context));
+    return At{value_type.loc(), StorageType{*value_type}};
+  }
+}
+
+OptAt<StructType> Read(SpanU8* data, Context& context, Tag<StructType>) {
+  ErrorsContextGuard error_guard{context.errors, *data, "struct type"};
+  LocationGuard guard{data};
+  WASP_TRY_READ(fields, ReadVector<FieldType>(data, context, "fields"));
+  return At{guard.range(data), StructType{fields}};
+}
+
+OptAt<StructFieldImmediate> Read(SpanU8* data,
+                                 Context& context,
+                                 Tag<StructFieldImmediate>) {
+  ErrorsContextGuard error_guard{context.errors, *data,
+                                 "struct field immediate"};
+  LocationGuard guard{data};
+  WASP_TRY_READ(struct_, ReadIndex(data, context, "struct"));
+  WASP_TRY_READ(field, ReadIndex(data, context, "field"));
+  return At{guard.range(data), StructFieldImmediate{struct_, field}};
+}
+
 OptAt<string_view> ReadString(SpanU8* data,
                               Context& context,
                               string_view desc) {
@@ -1366,7 +1494,7 @@ OptAt<u32> Read(SpanU8* data, Context& context, Tag<u32>) {
   return ReadVarInt<u32>(data, context, "u32");
 }
 
-OptAt<u8> Read(SpanU8* data, Context& context, Tag<u8>) {
+auto PeekU8(SpanU8* data, Context& context) -> OptAt<u8> {
   if (data->size() < 1) {
     context.errors.OnError(*data, "Unable to read u8");
     return nullopt;
@@ -1374,8 +1502,15 @@ OptAt<u8> Read(SpanU8* data, Context& context, Tag<u8>) {
 
   Location loc = data->subspan(0, 1);
   u8 result{(*data)[0]};
-  remove_prefix(data, 1);
   return At{loc, result};
+}
+
+OptAt<u8> Read(SpanU8* data, Context& context, Tag<u8>) {
+  auto result_opt = PeekU8(data, context);
+  if (result_opt) {
+    remove_prefix(data, 1);
+  }
+  return result_opt;
 }
 
 OptAt<v128> Read(SpanU8* data, Context& context, Tag<v128>) {
@@ -1390,20 +1525,49 @@ OptAt<v128> Read(SpanU8* data, Context& context, Tag<v128>) {
 OptAt<ValueType> Read(SpanU8* data, Context& context, Tag<ValueType>) {
   ErrorsContextGuard error_guard{context.errors, *data, "value type"};
   LocationGuard guard{data};
-  WASP_TRY_READ(val, Read<u8>(data, context));
-  if (encoding::ValueType::IsPrefixByte(*val, context.features)) {
+  WASP_TRY_READ(val, PeekU8(data, context));
+
+  if (encoding::NumericType::IsBare(val)) {
+    remove_prefix(data, 1);
+    WASP_TRY_DECODE_FEATURES(decoded, val, NumericType, "value type",
+                             context.features);
+    return At{decoded.loc(), ValueType{decoded}};
+  } else if (encoding::ReferenceType::IsBare(val)) {
+    remove_prefix(data, 1);
+    auto decoded_opt = encoding::ReferenceType::Decode(
+        val, context.features, encoding::AllowFuncref::No);
+    if (!decoded_opt) {
+      context.errors.OnError(val.loc(), concat("Unknown value type: ", *val));
+      return nullopt;
+    }
+    auto decoded = At{val.loc(), *decoded_opt};
+    return At{decoded.loc(), ValueType{decoded}};
+  } else if (encoding::ReferenceType::IsS32(val)) {
     WASP_TRY_READ(code, Read<s32>(data, context));
-    auto decoded = encoding::ValueType::Decode(val, code, context.features);
+    auto decoded = encoding::ReferenceType::Decode(val, code, context.features);
     if (!decoded) {
       context.errors.OnError(guard.range(data),
                              concat("Unknown value type: ", val, " ", code));
       return nullopt;
     }
-    return At{guard.range(data), *decoded};
+    return At{guard.range(data), ValueType{*decoded}};
+  } else if (encoding::Rtt::IsU32S32(val)) {
+    LocationGuard rtt_guard{data};
+    WASP_TRY_READ(code1, Read<u32>(data, context));
+    WASP_TRY_READ(code2, Read<s32>(data, context));
+    auto decoded = encoding::Rtt::Decode(val, code1, code2, context.features);
+    if (!decoded) {
+      context.errors.OnError(
+          guard.range(data),
+          concat("Unknown value type: ", val, " ", code1, " ", code2));
+      return nullopt;
+    }
+    return At{rtt_guard.range(data), ValueType{*decoded}};
   } else {
-    WASP_TRY_DECODE_FEATURES(decoded, val, ValueType, "value type",
-                             context.features);
-    return decoded;
+    remove_prefix(data, 1);
+    context.errors.OnError(guard.range(data),
+                           concat("Unknown value type: ", val));
+    return nullopt;
   }
 }
 

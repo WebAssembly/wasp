@@ -87,6 +87,16 @@ class BinaryReadTest : public ::testing::Test {
   Context context{errors};
 };
 
+TEST_F(BinaryReadTest, ArrayType) {
+  context.features.enable_gc();
+
+  OK(Read<ArrayType>,
+     ArrayType{At{"\x7f\x00"_su8,
+                  FieldType{At{"\x7f"_su8, StorageType{At{"\x7f"_su8, VT_I32}}},
+                            Mutability::Const}}},
+     "\x7f\x00"_su8);
+}
+
 TEST_F(BinaryReadTest, BlockType_MVP) {
   OK(Read<BlockType>, BT_I32, "\x7f"_su8);
   OK(Read<BlockType>, BT_I64, "\x7e"_su8);
@@ -115,7 +125,7 @@ TEST_F(BinaryReadTest, BlockType_simd) {
 
 TEST_F(BinaryReadTest, BlockType_MultiValueNegative) {
   context.features.enable_multi_value();
-  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: -9"}},
+  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: 119"}},
        "\x77"_su8);
 }
 
