@@ -2884,3 +2884,18 @@ TEST_F(TextReadTest, Module_MultipleStart) {
   Fail(ReadModule, {{11, "Multiple start functions"}},
        "(start 0) (start 0)"_su8);
 }
+
+TEST_F(TextReadTest, SingleModule) {
+  // Can be optionally wrapped in (module).
+  OK(ReadSingleModule, Module{}, "(module)"_su8);
+
+  // Can also have optional module name.
+  OK(ReadSingleModule, Module{}, "(module $mod)"_su8);
+
+  // module keyword can be omitted.
+  OK(ReadSingleModule,
+     Module{
+         At{"(start 0)"_su8, ModuleItem{Start{At{"0"_su8, Var{Index{0}}}}}},
+     },
+     "(start 0)"_su8);
+}

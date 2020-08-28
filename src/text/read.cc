@@ -2088,6 +2088,24 @@ auto ReadModule(Tokenizer& tokenizer, Context& context) -> optional<Module> {
   return module;
 }
 
+auto ReadSingleModule(Tokenizer& tokenizer, Context& context)
+    -> optional<Module> {
+  // Check whether it's wrapped in (module... )
+  bool in_module = false;
+  if (tokenizer.MatchLpar(TokenType::Module).has_value()) {
+    in_module = true;
+    // Read optional module name, but discard it.
+    ReadModuleVarOpt(tokenizer, context);
+  }
+
+  auto module = ReadModule(tokenizer, context);
+
+  if (in_module) {
+    WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+  }
+  return module;
+}
+
 // Explicit instantiations.
 template auto ReadInt<s8>(Tokenizer&, Context&) -> OptAt<s8>;
 template auto ReadInt<u8>(Tokenizer&, Context&) -> OptAt<u8>;

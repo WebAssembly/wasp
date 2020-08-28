@@ -123,7 +123,9 @@ int Tool::Run() {
   tools::TextErrors errors{filename, data};
   text::Context read_context{options.features, errors};
   auto text_module =
-      ReadModule(tokenizer, read_context).value_or(text::Module{});
+      ReadSingleModule(tokenizer, read_context).value_or(text::Module{});
+  Expect(tokenizer, read_context, text::TokenType::Eof);
+
   Resolve(text_module, errors);
   Desugar(text_module);
 

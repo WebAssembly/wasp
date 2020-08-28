@@ -190,6 +190,7 @@ auto ReadEvent(Tokenizer&, Context&) -> OptAt<Event>;
 bool IsModuleItem(Tokenizer&);
 auto ReadModuleItem(Tokenizer&, Context&) -> OptAt<ModuleItem>;
 auto ReadModule(Tokenizer&, Context&) -> optional<Module>;
+auto ReadSingleModule(Tokenizer&, Context&) -> optional<Module>;
 
 // Script
 
