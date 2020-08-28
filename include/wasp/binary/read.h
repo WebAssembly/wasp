@@ -45,6 +45,9 @@ auto ReadBytesExpected(SpanU8* data,
                        Context&,
                        string_view desc) -> OptAt<SpanU8>;
 
+// Read a byte without advancing the span.
+auto PeekU8(SpanU8*, Context&) -> OptAt<u8>;
+
 // Functions to read a length/count. The difference is only in the error word
 // used. Both ReadCount and ReadLength forward to ReadCheckLength.
 auto ReadCount(SpanU8*, Context&) -> OptAt<Index>;
@@ -73,7 +76,10 @@ enum class BulkImmediateKind {
 };
 
 // Read functions for various binary types.
+auto Read(SpanU8*, Context&, Tag<ArrayType>) -> OptAt<ArrayType>;
 auto Read(SpanU8*, Context&, Tag<BlockType>) -> OptAt<BlockType>;
+auto Read(SpanU8*, Context&, Tag<BrOnCastImmediate>)
+    -> OptAt<BrOnCastImmediate>;
 auto Read(SpanU8*, Context&, Tag<BrOnExnImmediate>) -> OptAt<BrOnExnImmediate>;
 auto Read(SpanU8*, Context&, Tag<BrTableImmediate>) -> OptAt<BrTableImmediate>;
 auto Read(SpanU8*, Context&, Tag<CallIndirectImmediate>)
@@ -96,11 +102,14 @@ auto Read(SpanU8*, Context&, Tag<Export>) -> OptAt<Export>;
 auto Read(SpanU8*, Context&, Tag<ExternalKind>) -> OptAt<ExternalKind>;
 auto Read(SpanU8*, Context&, Tag<f32>) -> OptAt<f32>;
 auto Read(SpanU8*, Context&, Tag<f64>) -> OptAt<f64>;
+auto Read(SpanU8*, Context&, Tag<FieldType>) -> OptAt<FieldType>;
 auto Read(SpanU8*, Context&, Tag<Function>) -> OptAt<Function>;
 auto Read(SpanU8*, Context&, Tag<FunctionType>) -> OptAt<FunctionType>;
 auto Read(SpanU8*, Context&, Tag<Global>) -> OptAt<Global>;
 auto Read(SpanU8*, Context&, Tag<GlobalType>) -> OptAt<GlobalType>;
 auto Read(SpanU8*, Context&, Tag<HeapType>) -> OptAt<HeapType>;
+auto Read(SpanU8*, Context&, Tag<HeapType2Immediate>)
+    -> OptAt<HeapType2Immediate>;
 auto Read(SpanU8*, Context&, Tag<Import>) -> OptAt<Import>;
 auto Read(SpanU8*, Context&, Tag<InitImmediate>, BulkImmediateKind)
     -> OptAt<InitImmediate>;
@@ -117,10 +126,15 @@ auto Read(SpanU8*, Context&, Tag<Opcode>) -> OptAt<Opcode>;
 auto Read(SpanU8*, Context&, Tag<s32>) -> OptAt<s32>;
 auto Read(SpanU8*, Context&, Tag<s64>) -> OptAt<s64>;
 auto Read(SpanU8*, Context&, Tag<ReferenceType>) -> OptAt<ReferenceType>;
+auto Read(SpanU8*, Context&, Tag<RttSubImmediate>) -> OptAt<RttSubImmediate>;
 auto Read(SpanU8*, Context&, Tag<SectionId>) -> OptAt<SectionId>;
 auto Read(SpanU8*, Context&, Tag<Section>) -> OptAt<Section>;
 auto Read(SpanU8*, Context&, Tag<ShuffleImmediate>) -> OptAt<ShuffleImmediate>;
 auto Read(SpanU8*, Context&, Tag<Start>) -> OptAt<Start>;
+auto Read(SpanU8*, Context&, Tag<StorageType>) -> OptAt<StorageType>;
+auto Read(SpanU8*, Context&, Tag<StructType>) -> OptAt<StructType>;
+auto Read(SpanU8*, Context&, Tag<StructFieldImmediate>)
+    -> OptAt<StructFieldImmediate>;
 auto Read(SpanU8*, Context&, Tag<Table>) -> OptAt<Table>;
 auto Read(SpanU8*, Context&, Tag<TableType>) -> OptAt<TableType>;
 auto Read(SpanU8*, Context&, Tag<u32>) -> OptAt<u32>;

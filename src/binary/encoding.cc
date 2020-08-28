@@ -35,12 +35,18 @@ namespace wasp::binary::encoding {
 // numbers encoded as signed LEB128. For example, 0x40 is the encoding for -64.
 // Signed LEB128 values have their sign bit as the 6th bit (instead of the 7th
 // bit), so to convert them to a s32 value, we must shift by 25.
-constexpr u8 EncodeSLEB128AsU8(s32 value) {
-  return u32(value) & 0x7f;
-}
-
 constexpr s32 EncodeU8AsSLEB128(u8 value) {
   return (value << 25) >> 25;
+}
+
+// static
+bool BlockType::IsBare(u8 val) {
+  return val == Void;
+}
+
+// static
+bool BlockType::IsS32(u8 val) {
+  return val < 0x40 || val >= 0x80;
 }
 
 // static
@@ -60,11 +66,6 @@ optional<::wasp::binary::BlockType> BlockType::Decode(
     const Features& features) {
   if (val == Void) {
     return binary::BlockType{At{val.loc(), VoidType{}}};
-  } else {
-    auto opt_valtype = ValueType::Decode(val, features);
-    if (opt_valtype) {
-      return binary::BlockType{At{val.loc(), *opt_valtype}};
-    }
   }
   return nullopt;
 }
@@ -73,18 +74,8 @@ optional<::wasp::binary::BlockType> BlockType::Decode(
 optional<::wasp::binary::BlockType> BlockType::Decode(
     At<s32> val,
     const Features& features) {
-  if (val >= 0) {
-    if (features.multi_value_enabled()) {
-      return binary::BlockType{At{val.loc(), Index(val)}};
-    }
-  } else if (EncodeSLEB128AsU8(val) == Void) {
-    return binary::BlockType{At{val.loc(), VoidType{}}};
-  } else if (val >= -0xff) {
-    auto opt_valtype =
-        ValueType::Decode(At{val.loc(), EncodeSLEB128AsU8(val)}, features);
-    if (opt_valtype) {
-      return binary::BlockType{At{val.loc(), *opt_valtype}};
-    }
+  if (val >= 0 && features.multi_value_enabled()) {
+    return binary::BlockType{At{val.loc(), Index(val)}};
   }
   return nullopt;
 }
@@ -165,6 +156,24 @@ optional<::wasp::binary::HeapType> HeapType::Decode(At<s32> val,
       case Exn:
         if (features.exceptions_enabled()) {
           kind_opt = HeapKind::Exn;
+        }
+        break;
+
+      case Any:
+        if (features.gc_enabled()) {
+          kind_opt = HeapKind::Any;
+        }
+        break;
+
+      case Eq:
+        if (features.gc_enabled()) {
+          kind_opt = HeapKind::Eq;
+        }
+        break;
+
+      case I31:
+        if (features.gc_enabled()) {
+          kind_opt = HeapKind::I31;
         }
         break;
 
@@ -329,9 +338,14 @@ optional<::wasp::Opcode> Opcode::Decode(u8 prefix,
 }
 
 // static
-bool ReferenceType::IsPrefixByte(u8 val, const Features& features) {
-  return features.function_references_enabled() &&
-         (val == Ref || val == RefNull);
+bool ReferenceType::IsBare(u8 val) {
+  return val == Funcref || val == Externref || val == Anyref || val == Eqref ||
+         val == I31ref || val == Exnref;
+}
+
+// static
+bool ReferenceType::IsS32(u8 val) {
+  return val == Ref || val == RefNull;
 }
 
 // static
@@ -359,9 +373,21 @@ optional<::wasp::binary::ReferenceType> ReferenceType::Decode(
       }
       break;
 
+    case Anyref:
+      if (features.gc_enabled()) {
+        kind_opt = ReferenceKind::Anyref;
+      }
+      break;
+
     case Externref:
       if (features.reference_types_enabled()) {
         kind_opt = ReferenceKind::Externref;
+      }
+      break;
+
+    case Eqref:
+      if (features.gc_enabled()) {
+        kind_opt = ReferenceKind::Eqref;
       }
       break;
 
@@ -373,6 +399,12 @@ optional<::wasp::binary::ReferenceType> ReferenceType::Decode(
     case Exnref:
       if (features.exceptions_enabled()) {
         kind_opt = ReferenceKind::Exnref;
+      }
+      break;
+
+    case I31ref:
+      if (features.gc_enabled()) {
+        kind_opt = ReferenceKind::I31ref;
       }
       break;
 
@@ -396,6 +428,31 @@ ReferenceType::Decode(At<u8> prefix, At<s32> code, const Features& features) {
     Null null = prefix == RefNull ? Null::Yes : Null::No;
     return ::wasp::binary::ReferenceType{
         ::wasp::binary::RefType{At{code.loc(), *heap_type}, null}};
+  }
+  return nullopt;
+}
+
+// static
+bool Rtt::IsU32S32(u8 val) {
+  return val == RttPrefix;
+}
+
+// static
+EncodedValueType Rtt::Encode(::wasp::binary::Rtt decoded) {
+  // TODO
+  return EncodedValueType{};
+}
+
+// static
+optional<::wasp::binary::Rtt> Rtt::Decode(At<u8> prefix,
+                                          At<u32> code1,
+                                          At<s32> code2,
+                                          const Features& features) {
+  if (features.gc_enabled() && prefix == RttPrefix) {
+    auto heap_type = HeapType::Decode(code2, features);
+    if (heap_type) {
+      return ::wasp::binary::Rtt{code1, At{code2.loc(), *heap_type}};
+    }
   }
   return nullopt;
 }
@@ -539,6 +596,18 @@ optional<DecodedElemSegmentFlags> ElemSegmentFlags::Decode(
 }
 
 // static
+bool NumericType::IsBare(u8 byte) {
+  return false
+#define WASP_V(val, Name, str) || byte == u8(::wasp::NumericType::Name)
+#define WASP_FEATURE_V(val, Name, str, feature) \
+  || byte == u8(::wasp::NumericType::Name)
+#include "wasp/base/def/numeric_type.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+      ;
+}
+
+// static
 u8 NumericType::Encode(::wasp::NumericType decoded) {
   return u8(decoded);
 }
@@ -566,11 +635,6 @@ optional<::wasp::NumericType> NumericType::Decode(u8 val,
 }
 
 // static
-bool ValueType::IsPrefixByte(u8 val, const Features& features) {
-  return ReferenceType::IsPrefixByte(val, features);
-}
-
-// static
 EncodedValueType ValueType::Encode(::wasp::binary::ValueType decoded) {
   if (decoded.is_numeric_type()) {
     return {EncodeU8AsSLEB128(NumericType::Encode(decoded.numeric_type())),
@@ -582,27 +646,40 @@ EncodedValueType ValueType::Encode(::wasp::binary::ValueType decoded) {
 }
 
 // static
-optional<::wasp::binary::ValueType> ValueType::Decode(
-    At<u8> val,
-    const Features& features) {
-  auto opt_numeric = NumericType::Decode(val, features);
-  if (opt_numeric) {
-    return ::wasp::binary::ValueType{At{val.loc(), *opt_numeric}};
-  } else {
-    auto opt_ref = ReferenceType::Decode(val, features, AllowFuncref::No);
-    if (opt_ref) {
-      return ::wasp::binary::ValueType{At{val.loc(), *opt_ref}};
-    }
-    return nullopt;
-  }
+bool PackedType::IsBare(u8 byte) {
+  return false
+#define WASP_V(val, Name, str) || byte == u8(::wasp::PackedType::Name)
+#define WASP_FEATURE_V(val, Name, str, feature) \
+  || byte == u8(::wasp::PackedType::Name)
+#include "wasp/base/def/packed_type.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+      ;
 }
 
 // static
-optional<::wasp::binary::ValueType>
-ValueType::Decode(At<u8> prefix, At<s32> code, const Features& features) {
-  auto opt_ref = ReferenceType::Decode(prefix, code, features);
-  if (opt_ref) {
-    return ::wasp::binary::ValueType{At{code.loc(), *opt_ref}};
+u8 PackedType::Encode(::wasp::PackedType decoded) {
+  return u8(decoded);
+}
+
+// static
+optional<::wasp::PackedType> PackedType::Decode(u8 byte,
+                                                const Features& features) {
+  switch (byte) {
+#define WASP_V(val, Name, str) \
+  case val:                    \
+    return ::wasp::PackedType::Name;
+#define WASP_FEATURE_V(val, Name, str, feature) \
+  case val:                                     \
+    if (features.feature##_enabled()) {         \
+      return ::wasp::PackedType::Name;          \
+    }                                           \
+    break;
+#include "wasp/base/def/packed_type.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+    default:
+      break;
   }
   return nullopt;
 }
