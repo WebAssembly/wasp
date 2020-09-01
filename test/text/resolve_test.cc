@@ -43,6 +43,7 @@ const ReferenceType Resolved_RT_Ref0{At{"$t"_su8, Resolved_RefType_0}};
 const Rtt Resolved_RTT_0_0{At{"0"_su8, 0u}, At{"$t"_su8, Resolved_HT_0}};
 const Rtt Resolved_RTT_1_0{At{"1"_su8, 1u}, At{"$t"_su8, Resolved_HT_0}};
 const ValueType Resolved_VT_Ref0{At{"(ref $t)"_su8, Resolved_RT_Ref0}};
+const ValueType Resolved_VT_RTT_0_0{At{"(rtt 0 $t)"_su8, Resolved_RTT_0_0}};
 
 }  // namespace
 
@@ -148,6 +149,9 @@ TEST_F(TextResolveTest, ValueType) {
 
   // ReferenceType
   OK(Resolved_VT_Ref0, VT_RefT);
+
+  // Rtt
+  OK(Resolved_VT_RTT_0_0, VT_RTT_0_T);
 }
 
 TEST_F(TextResolveTest, ValueTypeList) {
@@ -888,6 +892,31 @@ TEST_F(TextResolveTest, DefinedType) {
           nullopt,
           BoundFunctionType{{BVT{nullopt, VT_RefT}}, {VT_I32}},
       });
+}
+
+TEST_F(TextResolveTest, DefinedType_gc) {
+  context.type_names.NewBound("$t"_sv);
+
+  // StructType
+  OK(
+      // type (struct (field (ref 0)))
+      DefinedType{nullopt, StructType{FieldTypeList{
+                               FieldType{nullopt, StorageType{Resolved_VT_Ref0},
+                                         Mutability::Const}}}},
+      // type (struct (field (ref $t)))
+      DefinedType{nullopt,
+                  StructType{FieldTypeList{FieldType{
+                      nullopt, StorageType{VT_RefT}, Mutability::Const}}}});
+
+  // ArrayType
+  OK(
+      // type (array (field (ref 0)))
+      DefinedType{nullopt,
+                  ArrayType{FieldType{nullopt, StorageType{Resolved_VT_Ref0},
+                                      Mutability::Const}}},
+      // type (array (field (ref $t)))
+      DefinedType{nullopt, ArrayType{FieldType{nullopt, StorageType{VT_RefT},
+                                               Mutability::Const}}});
 }
 
 TEST_F(TextResolveTest, DefinedType_DuplicateName) {
