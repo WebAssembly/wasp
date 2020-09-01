@@ -53,6 +53,7 @@ const SpanU8 loc8 = "H"_su8;
 // Similar to the definitions in test/binary/constants, but using text
 // locations (e.g. "i32").
 const binary::HeapType BHT_Func{At{"func"_su8, HeapKind::Func}};
+const binary::HeapType BHT_0{At{"0"_su8, Index{0}}};
 const binary::ReferenceType BRT_Funcref{
     At{"funcref"_su8, ReferenceKind::Funcref}};
 const binary::ValueType BVT_I32{At{"i32"_su8, NumericType::I32}};
@@ -60,6 +61,67 @@ const binary::ValueType BVT_F32{At{"f32"_su8, NumericType::F32}};
 const binary::ValueType BVT_Funcref{At{"funcref"_su8, BRT_Funcref}};
 
 }  // namespace
+
+TEST(ConvertToBinaryTest, HeapType) {
+  // HeapKind
+  OK(BHT_Func, At{"func"_su8, tt::HT_Func});
+
+  // Index
+  OK(BHT_0, At{"0"_su8, tt::HT_0});
+}
+
+TEST(ConvertToBinaryTest, RefType) {
+  OK(At{loc1, binary::RefType{BHT_Func, At{loc2, Null::No}}},
+     At{loc1, text::RefType{tt::HT_Func, At{loc2, Null::No}}});
+}
+
+TEST(ConvertToBinaryTest, ReferenceType) {
+  // ReferenceKind
+  OK(At{loc1, binary::ReferenceType{At{loc2, ReferenceKind::Funcref}}},
+     At{loc1, text::ReferenceType{At{loc2, ReferenceKind::Funcref}}});
+
+  // RefType
+  OK(At{loc1,
+        binary::ReferenceType{binary::RefType{BHT_Func, At{loc2, Null::No}}}},
+     At{loc1,
+        text::ReferenceType{text::RefType{tt::HT_Func, At{loc2, Null::No}}}});
+}
+
+TEST(ConvertToBinaryTest, Rtt) {
+  OK(At{loc1, binary::Rtt{At{loc2, Index{0}}, At{loc3, BHT_Func}}},
+     At{loc1, text::Rtt{At{loc2, Index{0}}, At{loc3, tt::HT_Func}}});
+}
+
+TEST(ConvertToBinaryTest, ValueType) {
+  // NumericKind
+  OK(At{loc1, BVT_I32}, At{loc1, tt::VT_I32});
+
+  // ReferenceType
+  OK(At{loc1, BVT_Funcref}, At{loc1, tt::VT_Funcref});
+
+  // Rtt
+  OK(At{loc1, binary::ValueType{At{
+                  loc2, binary::Rtt{At{loc3, Index{0}}, At{loc4, BHT_Func}}}}},
+     At{loc1, text::ValueType{At{loc2, text::Rtt{At{loc3, Index{0}},
+                                                 At{loc4, tt::HT_Func}}}}});
+}
+
+TEST(ConvertToBinaryTest, ValueTypeList) {
+  OK(binary::ValueTypeList{binary::ValueType{
+         At{loc2, binary::Rtt{At{loc3, Index{0}}, At{loc4, BHT_Func}}}}},
+     text::ValueTypeList{text::ValueType{
+         At{loc2, text::Rtt{At{loc3, Index{0}}, At{loc4, tt::HT_Func}}}}});
+}
+
+TEST(ConvertToBinaryTest, StorageType) {
+  // ValueType
+  OK(At{loc1, binary::StorageType{At{loc2, BVT_I32}}},
+     At{loc1, text::StorageType{At{loc2, tt::VT_I32}}});
+
+  // PackedType
+  OK(At{loc1, binary::StorageType{At{loc2, PackedType::I8}}},
+     At{loc1, text::StorageType{At{loc2, PackedType::I8}}});
+}
 
 TEST(ConvertToBinaryTest, VarList) {
   OK(
@@ -85,7 +147,54 @@ TEST(ConvertToBinaryTest, FunctionType) {
               }});
 }
 
+TEST(ConvertToBinaryTest, FieldType) {
+  OK(At{loc1,
+        binary::FieldType{At{loc2, binary::StorageType{At{loc3, BVT_I32}}},
+                          At{loc4, Mutability::Const}}},
+     At{loc1, text::FieldType{nullopt,
+                              At{loc2, text::StorageType{At{loc3, tt::VT_I32}}},
+                              At{loc4, Mutability::Const}}});
+}
+
+TEST(ConvertToBinaryTest, FieldTypeList) {
+  OK(binary::FieldTypeList{At{
+         loc1,
+         binary::FieldType{At{loc2, binary::StorageType{At{loc3, BVT_I32}}},
+                           At{loc4, Mutability::Const}}}},
+     text::FieldTypeList{At{
+         loc1, text::FieldType{
+                   nullopt, At{loc2, text::StorageType{At{loc3, tt::VT_I32}}},
+                   At{loc4, Mutability::Const}}}});
+}
+
+TEST(ConvertToBinaryTest, StructType) {
+  OK(At{loc1,
+        binary::StructType{binary::FieldTypeList{At{
+            loc2,
+            binary::FieldType{At{loc3, binary::StorageType{At{loc4, BVT_I32}}},
+                              At{loc5, Mutability::Const}}}}}},
+     At{loc1, text::StructType{text::FieldTypeList{At{
+                  loc2, text::FieldType{
+                            nullopt,
+                            At{loc3, text::StorageType{At{loc4, tt::VT_I32}}},
+                            At{loc5, Mutability::Const}}}}}});
+}
+
+TEST(ConvertToBinaryTest, ArrayType) {
+  OK(At{loc1,
+        binary::ArrayType{At{
+            loc2,
+            binary::FieldType{At{loc3, binary::StorageType{At{loc4, BVT_I32}}},
+                              At{loc5, Mutability::Const}}}}},
+     At{loc1, text::ArrayType{At{
+                  loc2, text::FieldType{
+                            nullopt,
+                            At{loc3, text::StorageType{At{loc4, tt::VT_I32}}},
+                            At{loc5, Mutability::Const}}}}});
+}
+
 TEST(ConvertToBinaryTest, DefinedType) {
+  // FunctionType
   OK(At{loc1,
         binary::DefinedType{At{loc2,
                                binary::FunctionType{
@@ -93,11 +202,46 @@ TEST(ConvertToBinaryTest, DefinedType) {
                                    binary::ValueTypeList{At{loc4, BVT_F32}},
                                }}}},
      At{loc1, text::DefinedType{
-                  {},
+                  nullopt,
                   At{loc2, text::BoundFunctionType{
                                text::BoundValueTypeList{text::BoundValueType{
                                    nullopt, At{loc3, tt::VT_I32}}},
                                text::ValueTypeList{At{loc4, tt::VT_F32}}}}}});
+
+  // StructType
+  OK(At{loc1,
+        binary::DefinedType{
+            At{loc2,
+               binary::StructType{binary::FieldTypeList{At{
+                   loc3, binary::FieldType{At{loc4, binary::StorageType{At{
+                                                        loc5, BVT_I32}}},
+                                           At{loc6, Mutability::Const}}}}}}}},
+     At{loc1,
+        text::DefinedType{
+            nullopt,
+            At{loc2,
+               text::StructType{text::FieldTypeList{At{
+                   loc3, text::FieldType{
+                             nullopt,
+                             At{loc4, text::StorageType{At{loc5, tt::VT_I32}}},
+                             At{loc6, Mutability::Const}}}}}}}});
+
+  // ArrayType
+  OK(At{loc1,
+        binary::DefinedType{At{
+            loc2, binary::ArrayType{At{
+                      loc3, binary::FieldType{At{loc4, binary::StorageType{At{
+                                                           loc5, BVT_I32}}},
+                                              At{loc6, Mutability::Const}}}}}}},
+     At{loc1,
+        text::DefinedType{
+            nullopt,
+            At{loc2,
+               text::ArrayType{At{
+                   loc3, text::FieldType{
+                             nullopt,
+                             At{loc4, text::StorageType{At{loc5, tt::VT_I32}}},
+                             At{loc6, Mutability::Const}}}}}}});
 }
 
 TEST(ConvertToBinaryTest, Import) {
@@ -366,6 +510,18 @@ TEST(ConvertToBinaryTest, BlockImmediate) {
                                        text::FunctionType{{tt::VT_I32}, {}}}}});
 }
 
+TEST(ConvertToBinaryTest, BrOnCastImmediate) {
+  OK(At{loc1,
+        binary::BrOnCastImmediate{
+            At{loc2, Index{13}},
+            At{loc3, binary::HeapType2Immediate{At{loc4, BHT_Func},
+                                                At{loc5, BHT_Func}}}}},
+     At{loc1, text::BrOnCastImmediate{
+                  At{loc2, text::Var{Index{13}}},
+                  At{loc3, text::HeapType2Immediate{At{loc4, tt::HT_Func},
+                                                    At{loc5, tt::HT_Func}}}}});
+}
+
 TEST(ConvertToBinaryTest, BrOnExnImmediate) {
   OK(At{loc1,
         binary::BrOnExnImmediate{At{loc2, Index{13}}, At{loc3, Index{14}}}},
@@ -404,6 +560,13 @@ TEST(ConvertToBinaryTest, CopyImmediate) {
   // dst and src are nullopt.
   OK(At{loc1, binary::CopyImmediate{Index{0}, Index{0}}},
      At{loc1, text::CopyImmediate{}});
+}
+
+TEST(ConvertToBinaryTest, HeapType2Immediate) {
+  OK(At{loc1,
+        binary::HeapType2Immediate{At{loc2, BHT_Func}, At{loc3, BHT_Func}}},
+     At{loc1, text::HeapType2Immediate{At{loc2, tt::HT_Func},
+                                       At{loc3, tt::HT_Func}}});
 }
 
 TEST(ConvertToBinaryTest, InitImmediate) {
@@ -454,6 +617,25 @@ TEST(ConvertToBinaryTest, MemArgImmediate) {
   // align and offset are nullopt.
   OK(At{loc1, binary::MemArgImmediate{natural_align_log2, u32{0}}},
      At{loc1, text::MemArgImmediate{nullopt, nullopt}}, natural_align);
+}
+
+TEST(ConvertToBinaryTest, RttSubImmediate) {
+  OK(At{loc1,
+        binary::RttSubImmediate{
+            At{loc2, Index{13}},
+            At{loc3, binary::HeapType2Immediate{At{loc4, BHT_Func},
+                                                At{loc5, BHT_Func}}}}},
+     At{loc1, text::RttSubImmediate{
+                  At{loc2, Index{13}},
+                  At{loc3, text::HeapType2Immediate{At{loc4, tt::HT_Func},
+                                                    At{loc5, tt::HT_Func}}}}});
+}
+
+TEST(ConvertToBinaryTest, StructFieldImmediate) {
+  OK(At{loc1,
+        binary::StructFieldImmediate{At{loc2, Index{13}}, At{loc3, Index{14}}}},
+     At{loc1, text::StructFieldImmediate{At{loc2, text::Var{Index{13}}},
+                                         At{loc3, text::Var{Index{14}}}}});
 }
 
 TEST(ConvertToBinaryTest, Instruction) {
@@ -630,6 +812,63 @@ TEST(ConvertToBinaryTest, Instruction) {
                                   At{loc3, binary::SimdLaneImmediate{13}}}},
      At{loc1, text::Instruction{At{loc2, Opcode::I8X16ExtractLaneS},
                                 At{loc3, text::SimdLaneImmediate{13}}}});
+
+  // BrOnCastImmediate
+  OK(At{loc1,
+        binary::Instruction{
+            At{loc2, Opcode::BrOnCast},
+            At{loc3,
+               binary::BrOnCastImmediate{
+                   At{loc4, Index{13}},
+                   At{loc5, binary::HeapType2Immediate{At{loc6, BHT_Func},
+                                                       At{loc7, BHT_Func}}}}}}},
+     At{loc1, text::Instruction{
+                  At{loc2, Opcode::BrOnCast},
+                  At{loc3, text::BrOnCastImmediate{
+                               At{loc4, text::Var{Index{13}}},
+                               At{loc5, text::HeapType2Immediate{
+                                            At{loc6, tt::HT_Func},
+                                            At{loc7, tt::HT_Func}}}}}}});
+
+  // HeapType2Immediate
+  OK(At{loc1,
+        binary::Instruction{
+            At{loc2, Opcode::RefTest},
+            At{loc3, binary::HeapType2Immediate{At{loc4, BHT_Func},
+                                                At{loc5, BHT_Func}}}}},
+     At{loc1, text::Instruction{
+                  At{loc2, Opcode::RefTest},
+                  At{loc3, text::HeapType2Immediate{At{loc4, tt::HT_Func},
+                                                    At{loc5, tt::HT_Func}}}}});
+
+  // RttSubImmediate
+  OK(At{loc1,
+        binary::Instruction{
+            At{loc2, Opcode::RttSub},
+            At{loc3,
+               binary::RttSubImmediate{
+                   At{loc4, Index{13}},
+                   At{loc5, binary::HeapType2Immediate{At{loc6, BHT_Func},
+                                                       At{loc7, BHT_Func}}}}}}},
+     At{loc1, text::Instruction{
+                  At{loc2, Opcode::RttSub},
+                  At{loc3, text::RttSubImmediate{
+                               At{loc4, Index{13}},
+                               At{loc5, text::HeapType2Immediate{
+                                            At{loc6, tt::HT_Func},
+                                            At{loc7, tt::HT_Func}}}}}}});
+
+  // StructFieldImmediate
+  OK(At{loc1,
+        binary::Instruction{
+            At{loc2, Opcode::StructGet},
+            At{loc3, binary::StructFieldImmediate{At{loc4, Index{13}},
+                                                  At{loc5, Index{14}}}}}},
+     At{loc1,
+        text::Instruction{At{loc2, Opcode::StructGet},
+                          At{loc3, text::StructFieldImmediate{
+                                       At{loc4, text::Var{Index{13}}},
+                                       At{loc5, text::Var{Index{14}}}}}}});
 }
 
 TEST(ConvertToBinaryTest, OpcodeAlignment) {

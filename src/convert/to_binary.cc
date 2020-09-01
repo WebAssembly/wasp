@@ -60,14 +60,21 @@ auto ToBinary(Context& context, const At<text::ReferenceType>& value)
   }
 }
 
+auto ToBinary(Context& context, const At<text::Rtt>& value) -> At<binary::Rtt> {
+  return At{value.loc(),
+            binary::Rtt{value->depth, ToBinary(context, value->type)}};
+}
+
 auto ToBinary(Context& context, const At<text::ValueType>& value)
     -> At<binary::ValueType> {
   if (value->is_numeric_type()) {
     return At{value.loc(), binary::ValueType{value->numeric_type()}};
-  } else {
-    assert(value->is_reference_type());
+  } else if (value->is_reference_type()) {
     return At{value.loc(),
               binary::ValueType{ToBinary(context, value->reference_type())}};
+  } else {
+    assert(value->is_rtt());
+    return At{value.loc(), binary::ValueType{ToBinary(context, value->rtt())}};
   }
 }
 
@@ -78,6 +85,17 @@ auto ToBinary(Context& context, const text::ValueTypeList& values)
     result.push_back(ToBinary(context, value));
   }
   return result;
+}
+
+auto ToBinary(Context& context, const At<text::StorageType>& value)
+    -> At<binary::StorageType> {
+  if (value->is_value_type()) {
+    return At{value.loc(),
+              binary::StorageType{ToBinary(context, value->value_type())}};
+  } else {
+    assert(value->is_packed_type());
+    return At{value.loc(), binary::StorageType{value->packed_type()}};
+  }
 }
 
 auto ToBinary(Context& context, const At<text::Text>& value)
@@ -131,17 +149,48 @@ auto ToBinary(Context& context, const text::BoundValueTypeList& values)
   return result;
 }
 
+auto ToBinary(Context& context, const At<text::FieldType>& value)
+    -> At<binary::FieldType> {
+  return At{value.loc(),
+            binary::FieldType{ToBinary(context, value->type), value->mut}};
+}
+
+auto ToBinary(Context& context, const text::FieldTypeList& values)
+    -> binary::FieldTypeList {
+  binary::FieldTypeList result;
+  for (auto& value : values) {
+    result.push_back(ToBinary(context, value));
+  }
+  return result;
+}
+
+auto ToBinary(Context& context, const At<text::StructType>& value)
+    -> At<binary::StructType> {
+  return At{value.loc(), binary::StructType{ToBinary(context, value->fields)}};
+}
+
+auto ToBinary(Context& context, const At<text::ArrayType>& value)
+    -> At<binary::ArrayType> {
+  return At{value.loc(), binary::ArrayType{ToBinary(context, value->field)}};
+}
+
 auto ToBinary(Context& context, const At<text::DefinedType>& value)
     -> At<binary::DefinedType> {
-  // TODO: handle struct and array types
-  assert(value->is_function_type());
-
-  return At{value.loc(),
-            binary::DefinedType{
-                At{value->function_type().loc(),
-                   binary::FunctionType{
-                       ToBinary(context, value->function_type()->params),
-                       ToBinary(context, value->function_type()->results)}}}};
+  if (value->is_function_type()) {
+    return At{value.loc(),
+              binary::DefinedType{
+                  At{value->function_type().loc(),
+                     binary::FunctionType{
+                         ToBinary(context, value->function_type()->params),
+                         ToBinary(context, value->function_type()->results)}}}};
+  } else if (value->is_struct_type()) {
+    return At{value.loc(),
+              binary::DefinedType{ToBinary(context, value->struct_type())}};
+  } else {
+    assert(value->is_array_type());
+    return At{value.loc(),
+              binary::DefinedType{ToBinary(context, value->array_type())}};
+  }
 }
 
 // Section 2: Import
@@ -321,6 +370,13 @@ auto ToBinary(Context& context, const At<text::BlockImmediate>& value)
   }
 }
 
+auto ToBinary(Context& context, const At<text::BrOnCastImmediate>& value)
+    -> At<binary::BrOnCastImmediate> {
+  return At{value.loc(),
+            binary::BrOnCastImmediate{ToBinary(context, value->target),
+                                      ToBinary(context, value->types)}};
+}
+
 auto ToBinary(Context& context, const At<text::BrOnExnImmediate>& value)
     -> At<binary::BrOnExnImmediate> {
   return At{value.loc(),
@@ -347,6 +403,13 @@ auto ToBinary(Context& context, const At<text::CopyImmediate>& value)
   return At{value.loc(),
             binary::CopyImmediate{ToBinary(context, value->dst, 0),
                                   ToBinary(context, value->src, 0)}};
+}
+
+auto ToBinary(Context& context, const At<text::HeapType2Immediate>& value)
+    -> At<binary::HeapType2Immediate> {
+  return At{value.loc(),
+            binary::HeapType2Immediate{ToBinary(context, value->parent),
+                                       ToBinary(context, value->child)}};
 }
 
 auto ToBinary(Context& context, const At<text::InitImmediate>& value)
@@ -502,6 +565,19 @@ auto ToBinary(Context& context,
   return At{value.loc(), binary::MemArgImmediate{align, offset}};
 }
 
+auto ToBinary(Context& context, const At<text::RttSubImmediate>& value)
+    -> At<binary::RttSubImmediate> {
+  return At{value.loc(), binary::RttSubImmediate{
+                             value->depth, ToBinary(context, value->types)}};
+}
+
+auto ToBinary(Context& context, const At<text::StructFieldImmediate>& value)
+    -> At<binary::StructFieldImmediate> {
+  return At{value.loc(),
+            binary::StructFieldImmediate{ToBinary(context, value->struct_),
+                                         ToBinary(context, value->field)}};
+}
+
 auto ToBinary(Context& context, const At<text::Instruction>& value)
     -> At<binary::Instruction> {
   switch (value->immediate.index()) {
@@ -604,6 +680,30 @@ auto ToBinary(Context& context, const At<text::Instruction>& value)
                 binary::Instruction{
                     value->opcode,
                     ToBinary(context, value->func_bind_immediate()->type_use)}};
+
+    case 20: // BrOnCastImmediate
+      return At{
+          value.loc(),
+          binary::Instruction{
+              value->opcode, ToBinary(context, value->br_on_cast_immediate())}};
+
+    case 21: // HeapType2Immediate
+      return At{value.loc(),
+                binary::Instruction{
+                    value->opcode,
+                    ToBinary(context, value->heap_type_2_immediate())}};
+
+    case 22: // RttSubImmediate
+      return At{
+          value.loc(),
+          binary::Instruction{value->opcode,
+                              ToBinary(context, value->rtt_sub_immediate())}};
+
+    case 23: // StructFieldImmediate
+      return At{value.loc(),
+                binary::Instruction{
+                    value->opcode,
+                    ToBinary(context, value->struct_field_immediate())}};
 
     default:
       WASP_UNREACHABLE();
