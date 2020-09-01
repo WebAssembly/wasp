@@ -50,17 +50,6 @@ bool BlockType::IsS32(u8 val) {
 }
 
 // static
-EncodedValueType BlockType::Encode(::wasp::binary::BlockType decoded) {
-  if (decoded.is_value_type()) {
-    return ValueType::Encode(decoded.value_type());
-  } else if (decoded.is_void()) {
-    return {EncodeU8AsSLEB128(Void), nullopt};
-  } else {
-    return {s32(decoded.index()), nullopt};
-  }
-}
-
-// static
 optional<::wasp::binary::BlockType> BlockType::Decode(
     At<u8> val,
     const Features& features) {
@@ -126,64 +115,39 @@ optional<::wasp::ExternalKind> ExternalKind::Decode(u8 val,
 }
 
 // static
-s32 HeapType::Encode(const ::wasp::binary::HeapType& decoded) {
-  if (decoded.is_heap_kind()) {
-    return EncodeU8AsSLEB128(u8(*decoded.heap_kind()));
-  } else {
-    assert(decoded.is_index());
-    return s32(decoded.index());
-  }
+bool HeapKind::Is(u8 byte) {
+  return false
+#define WASP_V(val, Name, str) || byte == u8(::wasp::HeapKind::Name)
+#define WASP_FEATURE_V(val, Name, str, feature) \
+  || byte == u8(::wasp::HeapKind::Name)
+#include "wasp/base/def/heap_kind.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+      ;
 }
 
 // static
-optional<::wasp::binary::HeapType> HeapType::Decode(At<s32> val,
-                                                    const Features& features) {
-  if (val >= 0) {
-    return ::wasp::binary::HeapType{At{val.loc(), Index(val)}};
-  } else {
-    optional<HeapKind> kind_opt;
-    switch (val) {
-      case Func:
-        kind_opt = HeapKind::Func;
-        break;
+u8 HeapKind::Encode(const ::wasp::HeapKind& decoded) {
+  return u8(decoded);
+}
 
-      case Extern:
-        if (features.reference_types_enabled()) {
-          kind_opt = HeapKind::Extern;
-        }
-        break;
-
-      case Exn:
-        if (features.exceptions_enabled()) {
-          kind_opt = HeapKind::Exn;
-        }
-        break;
-
-      case Any:
-        if (features.gc_enabled()) {
-          kind_opt = HeapKind::Any;
-        }
-        break;
-
-      case Eq:
-        if (features.gc_enabled()) {
-          kind_opt = HeapKind::Eq;
-        }
-        break;
-
-      case I31:
-        if (features.gc_enabled()) {
-          kind_opt = HeapKind::I31;
-        }
-        break;
-
-      default:
-        break;
-    }
-
-    if (kind_opt) {
-      return ::wasp::binary::HeapType{At{val.loc(), *kind_opt}};
-    }
+// static
+optional<::wasp::HeapKind> HeapKind::Decode(u8 val, const Features& features) {
+  switch (val) {
+#define WASP_V(val, Name, str, ...) \
+  case val:                         \
+    return ::wasp::HeapKind::Name;
+#define WASP_FEATURE_V(val, Name, str, feature) \
+  case val:                                     \
+    if (features.feature##_enabled()) {         \
+      return ::wasp::HeapKind::Name;            \
+    }                                           \
+    break;
+#include "wasp/base/def/heap_kind.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
+    default:
+      break;
   }
   return nullopt;
 }
@@ -249,8 +213,30 @@ optional<::wasp::Mutability> Mutability::Decode(u8 val) {
 }
 
 // static
+u8 Null::Encode(::wasp::Null decoded) {
+  return u8(decoded);
+}
+
+// static
+optional<::wasp::Null> Null::Decode(u8 val) {
+  switch (val) {
+    case u8(::wasp::Null::No):
+      return ::wasp::Null::No;
+
+    case u8(::wasp::Null::Yes):
+      return ::wasp::Null::Yes;
+
+    default:
+      return nullopt;
+  }
+}
+
+// static
 bool Opcode::IsPrefixByte(u8 code, const Features& features) {
   switch (code) {
+    case GcPrefix:
+      return features.gc_enabled();
+
     case MiscPrefix:
       return features.saturating_float_to_int_enabled() ||
              features.bulk_memory_enabled() ||
@@ -338,123 +324,60 @@ optional<::wasp::Opcode> Opcode::Decode(u8 prefix,
 }
 
 // static
-bool ReferenceType::IsBare(u8 val) {
-  return val == Funcref || val == Externref || val == Anyref || val == Eqref ||
-         val == I31ref || val == Exnref;
-}
-
-// static
-bool ReferenceType::IsS32(u8 val) {
+bool RefType::Is(u8 val) {
   return val == Ref || val == RefNull;
 }
 
 // static
-EncodedValueType ReferenceType::Encode(::wasp::binary::ReferenceType decoded) {
-  if (decoded.is_reference_kind()) {
-    return {EncodeU8AsSLEB128(u8(*decoded.reference_kind())), nullopt};
-  } else {
-    assert(decoded.is_ref());
-    return {EncodeU8AsSLEB128(decoded.ref()->null == Null::Yes ? RefNull : Ref),
-            HeapType::Encode(decoded.ref()->heap_type)};
+u8 RefType::Encode(::wasp::Null null) {
+  return null == ::wasp::Null::No ? Ref : RefNull;
+}
+
+// static
+optional<::wasp::Null> RefType::Decode(u8 code, const Features& features) {
+  switch (code) {
+    case RefNull:
+      return ::wasp::Null::Yes;
+
+    case Ref:
+      return ::wasp::Null::No;
+
+    default:
+      return nullopt;
   }
 }
 
 // static
-optional<::wasp::binary::ReferenceType> ReferenceType::Decode(
-    At<u8> val,
-    const Features& features,
-    AllowFuncref allow_funcref) {
-  optional<ReferenceKind> kind_opt;
+u8 ReferenceKind::Encode(::wasp::ReferenceKind decoded) {
+  return u8(decoded);
+}
+
+// static
+optional<::wasp::ReferenceKind> ReferenceKind::Decode(
+    u8 val,
+    const Features& features) {
   switch (val) {
-    case Funcref:
-      if (allow_funcref == AllowFuncref::Yes ||
-          features.reference_types_enabled()) {
-        kind_opt = ReferenceKind::Funcref;
-      }
-      break;
-
-    case Anyref:
-      if (features.gc_enabled()) {
-        kind_opt = ReferenceKind::Anyref;
-      }
-      break;
-
-    case Externref:
-      if (features.reference_types_enabled()) {
-        kind_opt = ReferenceKind::Externref;
-      }
-      break;
-
-    case Eqref:
-      if (features.gc_enabled()) {
-        kind_opt = ReferenceKind::Eqref;
-      }
-      break;
-
-    case RefNull:
-    case Ref:
-      assert(false);  // Use the other Decode function.
-      break;
-
-    case Exnref:
-      if (features.exceptions_enabled()) {
-        kind_opt = ReferenceKind::Exnref;
-      }
-      break;
-
-    case I31ref:
-      if (features.gc_enabled()) {
-        kind_opt = ReferenceKind::I31ref;
-      }
-      break;
-
+#define WASP_V(val, Name, str, ...) \
+  case val:                         \
+    return ::wasp::ReferenceKind::Name;
+#define WASP_FEATURE_V(val, Name, str, feature) \
+  case val:                                     \
+    if (features.feature##_enabled()) {         \
+      return ::wasp::ReferenceKind::Name;       \
+    }                                           \
+    break;
+#include "wasp/base/def/reference_kind.def"
+#undef WASP_V
+#undef WASP_FEATURE_V
     default:
       break;
   }
-
-  if (kind_opt) {
-    return ::wasp::binary::ReferenceType{At{val.loc(), *kind_opt}};
-  }
   return nullopt;
 }
 
 // static
-optional<::wasp::binary::ReferenceType>
-ReferenceType::Decode(At<u8> prefix, At<s32> code, const Features& features) {
-  assert(features.function_references_enabled());
-  assert(prefix == RefNull || prefix == Ref);
-  auto heap_type = HeapType::Decode(code, features);
-  if (heap_type) {
-    Null null = prefix == RefNull ? Null::Yes : Null::No;
-    return ::wasp::binary::ReferenceType{
-        ::wasp::binary::RefType{At{code.loc(), *heap_type}, null}};
-  }
-  return nullopt;
-}
-
-// static
-bool Rtt::IsU32S32(u8 val) {
+bool Rtt::Is(u8 val) {
   return val == RttPrefix;
-}
-
-// static
-EncodedValueType Rtt::Encode(::wasp::binary::Rtt decoded) {
-  // TODO
-  return EncodedValueType{};
-}
-
-// static
-optional<::wasp::binary::Rtt> Rtt::Decode(At<u8> prefix,
-                                          At<u32> code1,
-                                          At<s32> code2,
-                                          const Features& features) {
-  if (features.gc_enabled() && prefix == RttPrefix) {
-    auto heap_type = HeapType::Decode(code2, features);
-    if (heap_type) {
-      return ::wasp::binary::Rtt{code1, At{code2.loc(), *heap_type}};
-    }
-  }
-  return nullopt;
 }
 
 // static
@@ -596,7 +519,7 @@ optional<DecodedElemSegmentFlags> ElemSegmentFlags::Decode(
 }
 
 // static
-bool NumericType::IsBare(u8 byte) {
+bool NumericType::Is(u8 byte) {
   return false
 #define WASP_V(val, Name, str) || byte == u8(::wasp::NumericType::Name)
 #define WASP_FEATURE_V(val, Name, str, feature) \
@@ -635,18 +558,7 @@ optional<::wasp::NumericType> NumericType::Decode(u8 val,
 }
 
 // static
-EncodedValueType ValueType::Encode(::wasp::binary::ValueType decoded) {
-  if (decoded.is_numeric_type()) {
-    return {EncodeU8AsSLEB128(NumericType::Encode(decoded.numeric_type())),
-            nullopt};
-  } else {
-    assert(decoded.is_reference_type());
-    return ReferenceType::Encode(decoded.reference_type());
-  }
-}
-
-// static
-bool PackedType::IsBare(u8 byte) {
+bool PackedType::Is(u8 byte) {
   return false
 #define WASP_V(val, Name, str) || byte == u8(::wasp::PackedType::Name)
 #define WASP_FEATURE_V(val, Name, str, feature) \

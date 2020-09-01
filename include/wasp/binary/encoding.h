@@ -30,13 +30,10 @@ namespace binary::encoding {
 constexpr u8 Magic[] = {0, 'a', 's', 'm'};
 constexpr u8 Version[] = {1, 0, 0, 0};
 
-struct Type {
+struct DefinedType {
   static constexpr u8 Function = 0x60;
-};
-
-struct EncodedValueType {
-  s32 code;
-  optional<s32> immediate;
+  static constexpr u8 Struct = 0x5f;
+  static constexpr u8 Array = 0x5e;
 };
 
 struct BlockType {
@@ -45,7 +42,6 @@ struct BlockType {
   static bool IsBare(u8);
   static bool IsS32(u8);
 
-  static EncodedValueType Encode(::wasp::binary::BlockType);
   static optional<::wasp::binary::BlockType> Decode(At<u8>, const Features&);
   static optional<::wasp::binary::BlockType> Decode(At<s32>, const Features&);
 };
@@ -57,7 +53,7 @@ struct EventAttribute {
 
 struct ExternalKind {
   static u8 Encode(::wasp::ExternalKind);
-  static optional<::wasp::ExternalKind> Decode(u8, const Features& feature);
+  static optional<::wasp::ExternalKind> Decode(u8, const Features&);
 };
 
 enum class HasMax { No, Yes };
@@ -67,16 +63,10 @@ struct DecodedLimitsFlags {
   Shared shared;
 };
 
-struct HeapType {
-  static constexpr s32 Func = -0x10;
-  static constexpr s32 Extern = -0x11;
-  static constexpr s32 Any = -0x12;
-  static constexpr s32 Eq = -0x13;
-  static constexpr s32 I31 = -0x17;
-  static constexpr s32 Exn = -0x18;
-
-  static s32 Encode(const ::wasp::binary::HeapType&);
-  static optional<::wasp::binary::HeapType> Decode(At<s32>, const Features&);
+struct HeapKind {
+  static bool Is(u8);
+  static u8 Encode(const ::wasp::HeapKind&);
+  static optional<::wasp::HeapKind> Decode(u8, const Features&);
 };
 
 struct LimitsFlags {
@@ -94,12 +84,24 @@ struct Mutability {
   static optional<::wasp::Mutability> Decode(u8);
 };
 
+struct Null {
+  static u8 Encode(::wasp::Null);
+  static optional<::wasp::Null> Decode(u8);
+};
+
+struct NumericType {
+  static bool Is(u8);
+  static u8 Encode(::wasp::NumericType);
+  static optional<::wasp::NumericType> Decode(u8, const Features&);
+};
+
 struct EncodedOpcode {
   u8 u8_code;
   optional<u32> u32_code;
 };
 
 struct Opcode {
+  static constexpr u8 GcPrefix = 0xfb;
   static constexpr u8 MiscPrefix = 0xfc;
   static constexpr u8 SimdPrefix = 0xfd;
   static constexpr u8 ThreadsPrefix = 0xfe;
@@ -110,39 +112,30 @@ struct Opcode {
   static optional<::wasp::Opcode> Decode(u8 prefix, u32 code, const Features&);
 };
 
-enum class AllowFuncref { No, Yes };
+struct RefType {
+  static constexpr u8 RefNull = 0x6c;
+  static constexpr u8 Ref = 0x6b;
 
-struct ReferenceType {
-  static constexpr u8 Funcref = 0x70;
-  static constexpr u8 Externref = 0x6f;
-  static constexpr u8 Anyref = 0x6e;
-  static constexpr u8 Eqref = 0x6d;
-  static constexpr u8 RefNull = 0x6c;  // Prefix.
-  static constexpr u8 Ref = 0x6b;      // Prefix.
-  static constexpr u8 I31ref = 0x69;
-  static constexpr u8 Exnref = 0x68;
+  static bool Is(u8);
+  static u8 Encode(::wasp::Null);
+  static optional<::wasp::Null> Decode(u8 code, const Features&);
+};
 
-  static bool IsBare(u8);
-  static bool IsS32(u8);
+struct PackedType {
+  static bool Is(u8);
+  static u8 Encode(::wasp::PackedType);
+  static optional<::wasp::PackedType> Decode(u8, const Features&);
+};
 
-  static EncodedValueType Encode(::wasp::binary::ReferenceType);
-  static optional<::wasp::binary::ReferenceType>
-  Decode(At<u8>, const Features&, AllowFuncref = AllowFuncref::Yes);
-  static optional<::wasp::binary::ReferenceType> Decode(At<u8> prefix,
-                                                        At<s32> code,
-                                                        const Features&);
+struct ReferenceKind {
+  static u8 Encode(::wasp::ReferenceKind);
+  static optional<::wasp::ReferenceKind> Decode(u8, const Features&);
 };
 
 struct Rtt {
-  static constexpr u8 RttPrefix = 0x66;
+  static constexpr u8 RttPrefix = 0x6a;
 
-  static bool IsU32S32(u8);
-
-  static EncodedValueType Encode(::wasp::binary::Rtt);
-  static optional<::wasp::binary::Rtt> Decode(At<u8> prefix,
-                                              At<u32> code1,
-                                              At<s32> code2,
-                                              const Features&);
+  static bool Is(u8);
 };
 
 struct SectionId {
@@ -189,24 +182,6 @@ struct ElemSegmentFlags {
 
   static u8 Encode(DecodedElemSegmentFlags);
   static optional<DecodedElemSegmentFlags> Decode(Index, const Features&);
-};
-
-struct NumericType {
-  static bool IsBare(u8);
-
-  static u8 Encode(::wasp::NumericType);
-  static optional<::wasp::NumericType> Decode(u8, const Features&);
-};
-
-struct ValueType {
-  static EncodedValueType Encode(::wasp::binary::ValueType);
-};
-
-struct PackedType {
-  static bool IsBare(u8);
-
-  static u8 Encode(::wasp::PackedType);
-  static optional<::wasp::PackedType> Decode(u8, const Features&);
 };
 
 }  // namespace binary::encoding
