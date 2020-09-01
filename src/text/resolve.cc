@@ -88,11 +88,11 @@ void Define(ResolveContext& context, const DefinedType& defined_type) {
   // Since Resolve() changes its parameter, we make a copy first. The type
   // entry is resolved later below in `Resolve(ResolveContext&, DefinedType&)`.
 
-  // TODO: handle struct and array types
-  assert(defined_type.is_function_type());
-  BoundFunctionType bft = defined_type.function_type();
-  Resolve(context, bft);
-  context.function_type_map.Define(bft);
+  if (defined_type.is_function_type()) {
+    BoundFunctionType bft = defined_type.function_type();
+    Resolve(context, bft);
+    context.function_type_map.Define(bft);
+  }
 }
 
 void Define(ResolveContext& context, const FunctionDesc& desc) {
@@ -269,6 +269,8 @@ void Resolve(ResolveContext& context, Rtt& rtt) {
 void Resolve(ResolveContext& context, ValueType& value_type) {
   if (value_type.is_reference_type()) {
     Resolve(context, value_type.reference_type().value());
+  } else if (value_type.is_rtt()) {
+    Resolve(context, value_type.rtt().value());
   }
 }
 
@@ -394,9 +396,14 @@ void Resolve(ResolveContext& context, ArrayType& array_type) {
 }
 
 void Resolve(ResolveContext& context, DefinedType& defined_type) {
-  // TODO: handle struct and array types
-  assert(defined_type.is_function_type());
-  Resolve(context, defined_type.function_type().value());
+  if (defined_type.is_function_type()) {
+    Resolve(context, defined_type.function_type().value());
+  } else if (defined_type.is_struct_type()) {
+    Resolve(context, defined_type.struct_type().value());
+  } else {
+    assert(defined_type.is_array_type());
+    Resolve(context, defined_type.array_type().value());
+  }
 }
 
 void Resolve(ResolveContext& context, BlockImmediate& immediate) {
@@ -481,6 +488,18 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
     case 6: {  // Var
       auto& immediate = instruction.var_immediate();
       switch (instruction.opcode) {
+        // Type.
+        case Opcode::ArrayNewWithRtt:
+        case Opcode::ArrayNewDefaultWithRtt:
+        case Opcode::ArrayGet:
+        case Opcode::ArrayGetS:
+        case Opcode::ArrayGetU:
+        case Opcode::ArraySet:
+        case Opcode::ArrayLen:
+        case Opcode::StructNewWithRtt:
+        case Opcode::StructNewDefaultWithRtt:
+          return Resolve(context, immediate, context.type_names);
+
         // Function.
         case Opcode::Call:
         case Opcode::ReturnCall:
@@ -572,8 +591,7 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
     case 15: { // HeapType
       auto& immediate = instruction.heap_type_immediate();
       if (immediate->is_var()) {
-        Resolve(context, immediate->var(), context.type_names);
-        return;
+        return Resolve(context, immediate->var(), context.type_names);
       }
       break;
     }
