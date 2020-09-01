@@ -60,49 +60,9 @@ OptAt<BlockType> Read(SpanU8* data, Context& context, Tag<BlockType>) {
     WASP_TRY_DECODE_FEATURES(decoded, val, BlockType, "block type",
                              context.features);
     return decoded;
-  } else if (encoding::NumericType::IsBare(val)) {
-    remove_prefix(data, 1);
-    WASP_TRY_DECODE_FEATURES(decoded, val, NumericType, "block type",
-                             context.features);
-    return At{decoded.loc(), BlockType{At{decoded.loc(), ValueType{decoded}}}};
-  } else if (encoding::ReferenceType::IsBare(val)) {
-    remove_prefix(data, 1);
-    auto decoded_opt = encoding::ReferenceType::Decode(
-        val, context.features, encoding::AllowFuncref::No);
-    if (!decoded_opt) {
-      context.errors.OnError(val.loc(), concat("Unknown block type: ", *val));
-      return nullopt;
-    }
-    auto decoded = At{val.loc(), *decoded_opt};
-    return At{decoded.loc(), BlockType{At{decoded.loc(), ValueType{decoded}}}};
-  } else if (encoding::ReferenceType::IsS32(val)) {
-    WASP_TRY_READ(code, Read<s32>(data, context));
-    auto decoded = encoding::ReferenceType::Decode(val, code, context.features);
-    if (!decoded) {
-      context.errors.OnError(guard.range(data),
-                             concat("Unknown block type: ", val, " ", code));
-      return nullopt;
-    }
-    return At{guard.range(data),
-              BlockType{At{guard.range(data), ValueType{*decoded}}}};
-  } else if (encoding::Rtt::IsU32S32(val)) {
-    LocationGuard rtt_guard{data};
-    WASP_TRY_READ(code1, Read<u32>(data, context));
-    WASP_TRY_READ(code2, Read<s32>(data, context));
-    auto decoded = encoding::Rtt::Decode(val, code1, code2, context.features);
-    if (!decoded) {
-      context.errors.OnError(
-          guard.range(data),
-          concat("Unknown block type: ", val, " ", code1, " ", code2));
-      return nullopt;
-    }
-    return At{rtt_guard.range(data),
-              BlockType{At{rtt_guard.range(data), ValueType{*decoded}}}};
   } else {
-    remove_prefix(data, 1);
-    context.errors.OnError(guard.range(data),
-                           concat("Unknown block type: ", val));
-    return nullopt;
+    WASP_TRY_READ(value_type, Read<ValueType>(data, context));
+    return At{guard.range(data), BlockType{value_type}};
   }
 }
 
@@ -283,13 +243,26 @@ OptAt<DefinedType> Read(SpanU8* data, Context& context, Tag<DefinedType>) {
   LocationGuard guard{data};
   WASP_TRY_READ_CONTEXT(form, Read<u8>(data, context), "form");
 
-  if (form != encoding::Type::Function) {
-    context.errors.OnError(form.loc(), concat("Unknown type form: ", form));
-    return nullopt;
-  }
+  switch (form) {
+    case encoding::DefinedType::Function: {
+      WASP_TRY_READ(function_type, Read<FunctionType>(data, context));
+      return At{guard.range(data), DefinedType{std::move(function_type)}};
+    }
 
-  WASP_TRY_READ(function_type, Read<FunctionType>(data, context));
-  return At{guard.range(data), DefinedType{std::move(function_type)}};
+    case encoding::DefinedType::Struct: {
+      WASP_TRY_READ(struct_type, Read<StructType>(data, context));
+      return At{guard.range(data), DefinedType{std::move(struct_type)}};
+    }
+
+    case encoding::DefinedType::Array: {
+      WASP_TRY_READ(array_type, Read<ArrayType>(data, context));
+      return At{guard.range(data), DefinedType{std::move(array_type)}};
+    }
+
+    default:
+      context.errors.OnError(form.loc(), concat("Unknown type form: ", form));
+      return nullopt;
+  }
 }
 
 OptAt<ElementExpression> Read(SpanU8* data,
@@ -369,25 +342,42 @@ OptAt<ElementSegment> Read(SpanU8* data,
   }
 }
 
+OptAt<RefType> Read(SpanU8* data, Context& context, Tag<RefType>) {
+  ErrorsContextGuard error_guard{context.errors, *data, "ref type"};
+  LocationGuard guard{data};
+  WASP_TRY_READ(val, Read<u8>(data, context));
+  WASP_TRY_DECODE_FEATURES(null_, val, RefType, "ref type", context.features);
+  WASP_TRY_READ(heap_type, Read<HeapType>(data, context));
+  return At{guard.range(data), RefType{heap_type, null_}};
+}
+
 OptAt<ReferenceType> Read(SpanU8* data, Context& context, Tag<ReferenceType>) {
   ErrorsContextGuard error_guard{context.errors, *data, "reference type"};
   LocationGuard guard{data};
-  WASP_TRY_READ(val, Read<u8>(data, context));
+  WASP_TRY_READ(val, PeekU8(data, context));
 
-  if (encoding::ReferenceType::IsS32(*val)) {
-    WASP_TRY_READ(code, Read<s32>(data, context));
-    auto decoded = encoding::ReferenceType::Decode(val, code, context.features);
-    if (!decoded) {
-      context.errors.OnError(
-          guard.range(data),
-          concat("Unknown reference type: ", val, " ", code));
-      return nullopt;
-    }
-    return At{guard.range(data), *decoded};
+  if (encoding::RefType::Is(*val)) {
+    WASP_TRY_READ(ref_type, Read<RefType>(data, context));
+    return At{ref_type.loc(), ReferenceType{ref_type}};
   } else {
-    WASP_TRY_DECODE_FEATURES(decoded, val, ReferenceType, "reference type",
+    remove_prefix(data, 1);
+    WASP_TRY_DECODE_FEATURES(decoded, val, ReferenceKind, "reference type",
                              context.features);
-    return decoded;
+    return At{decoded.loc(), ReferenceType{decoded}};
+  }
+}
+
+OptAt<Rtt> Read(SpanU8* data, Context& context, Tag<Rtt>) {
+  ErrorsContextGuard error_guard{context.errors, *data, "rtt"};
+  LocationGuard guard{data};
+  WASP_TRY_READ(val, Read<u8>(data, context));
+  if (encoding::Rtt::Is(val)) {
+    WASP_TRY_READ(depth, ReadIndex(data, context, "depth"));
+    WASP_TRY_READ(type, Read<HeapType>(data, context));
+    return At{guard.range(data), Rtt{depth, type}};
+  } else {
+    context.errors.OnError(val.loc(), concat("Unknown rtt code: ", val));
+    return nullopt;
   }
 }
 
@@ -505,10 +495,16 @@ OptAt<GlobalType> Read(SpanU8* data, Context& context, Tag<GlobalType>) {
 
 OptAt<HeapType> Read(SpanU8* data, Context& context, Tag<HeapType>) {
   ErrorsContextGuard error_guard{context.errors, *data, "heap type"};
-  WASP_TRY_READ(val, Read<s32>(data, context));
-  WASP_TRY_DECODE_FEATURES(decoded, val, HeapType, "heap type",
-                           context.features);
-  return decoded;
+  WASP_TRY_READ(val, PeekU8(data, context));
+  if (encoding::HeapKind::Is(val)) {
+    remove_prefix(data, 1);
+    WASP_TRY_DECODE_FEATURES(decoded, val, HeapKind, "heap kind",
+                             context.features);
+    return At{decoded.loc(), HeapType{decoded}};
+  } else {
+    WASP_TRY_READ(val, Read<s32>(data, context));
+    return At{val.loc(), HeapType{At{val.loc(), Index(*val)}}};
+  }
 }
 
 OptAt<HeapType2Immediate> Read(SpanU8* data,
@@ -888,6 +884,10 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::RefAsNonNull:
     case Opcode::CallRef:
     case Opcode::ReturnCallRef:
+    case Opcode::RefEq:
+    case Opcode::I31New:
+    case Opcode::I31GetS:
+    case Opcode::I31GetU:
       return At{guard.range(data), Instruction{opcode}};
 
     // No immediates, but only allowed if there's a matching block/loop/if/try
@@ -927,7 +927,8 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
       return At{guard.range(data), Instruction{opcode}};
 
     // HeapType type immediate.
-    case Opcode::RefNull: {
+    case Opcode::RefNull:
+    case Opcode::RttCanon: {
       WASP_TRY_READ(type, Read<HeapType>(data, context));
       return At{guard.range(data), Instruction{opcode, type}};
     }
@@ -968,7 +969,16 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::TableSize:
     case Opcode::TableFill:
     case Opcode::BrOnNull:
-    case Opcode::FuncBind: {
+    case Opcode::FuncBind:
+    case Opcode::StructNewWithRtt:
+    case Opcode::StructNewDefaultWithRtt:
+    case Opcode::ArrayNewWithRtt:
+    case Opcode::ArrayNewDefaultWithRtt:
+    case Opcode::ArrayGet:
+    case Opcode::ArrayGetS:
+    case Opcode::ArrayGetU:
+    case Opcode::ArraySet:
+    case Opcode::ArrayLen: {
       WASP_TRY_READ(index, ReadIndex(data, context, "index"));
       return At{guard.range(data), Instruction{opcode, index}};
     }
@@ -1199,31 +1209,33 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
       return At{guard.range(data), Instruction{opcode, immediate}};
     }
 
-    case Opcode::RefEq:
-    case Opcode::StructNewWithRtt:
-    case Opcode::StructNewDefaultWithRtt:
+    // StructField immediate.
     case Opcode::StructGet:
     case Opcode::StructGetS:
     case Opcode::StructGetU:
-    case Opcode::StructSet:
-    case Opcode::ArrayNewWithRtt:
-    case Opcode::ArrayNewDefaultWithRtt:
-    case Opcode::ArrayGet:
-    case Opcode::ArrayGetS:
-    case Opcode::ArrayGetU:
-    case Opcode::ArraySet:
-    case Opcode::ArrayLen:
-    case Opcode::I31New:
-    case Opcode::I31GetS:
-    case Opcode::I31GetU:
-    case Opcode::RttCanon:
-    case Opcode::RttSub:
+    case Opcode::StructSet: {
+      WASP_TRY_READ(immediate, Read<StructFieldImmediate>(data, context));
+      return At{guard.range(data), Instruction{opcode, immediate}};
+    }
+
+    // RttSub immediate.
+    case Opcode::RttSub: {
+      WASP_TRY_READ(immediate, Read<RttSubImmediate>(data, context));
+      return At{guard.range(data), Instruction{opcode, immediate}};
+    }
+
+    // Two HeapType immediate.
     case Opcode::RefTest:
-    case Opcode::RefCast:
-    case Opcode::BrOnCast:
-      // TODO
-      assert(false);
-      return nullopt;
+    case Opcode::RefCast: {
+      WASP_TRY_READ(immediate, Read<HeapType2Immediate>(data, context));
+      return At{guard.range(data), Instruction{opcode, immediate}};
+    }
+
+    // BrOnCast immediate.
+    case Opcode::BrOnCast: {
+      WASP_TRY_READ(immediate, Read<BrOnCastImmediate>(data, context));
+      return At{guard.range(data), Instruction{opcode, immediate}};
+    }
   }
   WASP_UNREACHABLE();
 }
@@ -1425,14 +1437,14 @@ auto Read(SpanU8* data, Context& context, Tag<StorageType>)
 
   WASP_TRY_READ(val, PeekU8(data, context));
 
-  if (encoding::PackedType::IsBare(val)) {
+  if (encoding::PackedType::Is(val)) {
     remove_prefix(data, 1);
     WASP_TRY_DECODE_FEATURES(decoded, val, PackedType, "packed type",
                              context.features);
     return At{decoded.loc(), StorageType{decoded}};
   } else {
     WASP_TRY_READ(value_type, Read<ValueType>(data, context));
-    return At{value_type.loc(), StorageType{*value_type}};
+    return At{value_type.loc(), StorageType{value_type}};
   }
 }
 
@@ -1527,47 +1539,27 @@ OptAt<ValueType> Read(SpanU8* data, Context& context, Tag<ValueType>) {
   LocationGuard guard{data};
   WASP_TRY_READ(val, PeekU8(data, context));
 
-  if (encoding::NumericType::IsBare(val)) {
+  if (encoding::NumericType::Is(val)) {
     remove_prefix(data, 1);
     WASP_TRY_DECODE_FEATURES(decoded, val, NumericType, "value type",
                              context.features);
     return At{decoded.loc(), ValueType{decoded}};
-  } else if (encoding::ReferenceType::IsBare(val)) {
-    remove_prefix(data, 1);
-    auto decoded_opt = encoding::ReferenceType::Decode(
-        val, context.features, encoding::AllowFuncref::No);
-    if (!decoded_opt) {
-      context.errors.OnError(val.loc(), concat("Unknown value type: ", *val));
-      return nullopt;
-    }
-    auto decoded = At{val.loc(), *decoded_opt};
-    return At{decoded.loc(), ValueType{decoded}};
-  } else if (encoding::ReferenceType::IsS32(val)) {
-    WASP_TRY_READ(code, Read<s32>(data, context));
-    auto decoded = encoding::ReferenceType::Decode(val, code, context.features);
-    if (!decoded) {
-      context.errors.OnError(guard.range(data),
-                             concat("Unknown value type: ", val, " ", code));
-      return nullopt;
-    }
-    return At{guard.range(data), ValueType{*decoded}};
-  } else if (encoding::Rtt::IsU32S32(val)) {
-    LocationGuard rtt_guard{data};
-    WASP_TRY_READ(code1, Read<u32>(data, context));
-    WASP_TRY_READ(code2, Read<s32>(data, context));
-    auto decoded = encoding::Rtt::Decode(val, code1, code2, context.features);
-    if (!decoded) {
-      context.errors.OnError(
-          guard.range(data),
-          concat("Unknown value type: ", val, " ", code1, " ", code2));
-      return nullopt;
-    }
-    return At{rtt_guard.range(data), ValueType{*decoded}};
+  } else if (encoding::Rtt::Is(val)) {
+    WASP_TRY_READ(rtt, Read<Rtt>(data, context));
+    return At{guard.range(data), ValueType{rtt}};
   } else {
-    remove_prefix(data, 1);
-    context.errors.OnError(guard.range(data),
-                           concat("Unknown value type: ", val));
-    return nullopt;
+    WASP_TRY_READ(reference_type, Read<ReferenceType>(data, context));
+    // Funcref cannot be used as a value type until the reference types
+    // proposal.
+    if (reference_type->is_reference_kind() &&
+        reference_type->reference_kind() == ReferenceKind::Funcref &&
+        !context.features.reference_types_enabled()) {
+      context.errors.OnError(
+          reference_type.loc(),
+          concat(*reference_type, " not allowed"));
+      return nullopt;
+    }
+    return At{reference_type.loc(), ValueType{reference_type}};
   }
 }
 

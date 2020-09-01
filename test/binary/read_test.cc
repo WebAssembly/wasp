@@ -93,7 +93,7 @@ TEST_F(BinaryReadTest, ArrayType) {
   OK(Read<ArrayType>,
      ArrayType{At{"\x7f\x00"_su8,
                   FieldType{At{"\x7f"_su8, StorageType{At{"\x7f"_su8, VT_I32}}},
-                            Mutability::Const}}},
+                            At{"\x00"_su8, Mutability::Const}}}},
      "\x7f\x00"_su8);
 }
 
@@ -116,7 +116,8 @@ TEST_F(BinaryReadTest, BlockType_Basic_multi_value) {
 }
 
 TEST_F(BinaryReadTest, BlockType_simd) {
-  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: 123"}},
+  Fail(Read<BlockType>,
+       {{0, "block type"}, {0, "value type"}, {0, "Unknown value type: 123"}},
        "\x7b"_su8);
 
   context.features.enable_simd();
@@ -125,12 +126,20 @@ TEST_F(BinaryReadTest, BlockType_simd) {
 
 TEST_F(BinaryReadTest, BlockType_MultiValueNegative) {
   context.features.enable_multi_value();
-  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: 119"}},
+  Fail(Read<BlockType>,
+       {{0, "block type"},
+        {0, "value type"},
+        {0, "reference type"},
+        {0, "Unknown reference type: 119"}},
        "\x77"_su8);
 }
 
 TEST_F(BinaryReadTest, BlockType_multi_value) {
-  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: 1"}},
+  Fail(Read<BlockType>,
+       {{0, "block type"},
+        {0, "value type"},
+        {0, "reference type"},
+        {0, "Unknown reference type: 1"}},
        "\x01"_su8);
 
   context.features.enable_multi_value();
@@ -140,20 +149,74 @@ TEST_F(BinaryReadTest, BlockType_multi_value) {
 }
 
 TEST_F(BinaryReadTest, BlockType_reference_types) {
-  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: 111"}},
+  Fail(Read<BlockType>,
+       {{0, "block type"},
+        {0, "value type"},
+        {0, "reference type"},
+        {0, "Unknown reference type: 111"}},
        "\x6f"_su8);
 
   context.features.enable_reference_types();
   OK(Read<BlockType>, BT_Externref, "\x6f"_su8);
 }
 
+TEST_F(BinaryReadTest, BlockType_gc) {
+  Fail(Read<BlockType>,
+       {{0, "block type"},
+        {0, "value type"},
+        {0, "reference type"},
+        {0, "Unknown reference type: 110"}},
+       "\x6e"_su8);
+
+  context.features.enable_gc();
+
+  OK(Read<BlockType>, BT_Anyref, "\x6e"_su8);
+  OK(Read<BlockType>, BT_Eqref, "\x6d"_su8);
+  OK(Read<BlockType>, BT_I31ref, "\x69"_su8);
+  OK(Read<BlockType>, BT_RefFunc, "\x6b\x70"_su8);
+  OK(Read<BlockType>, BT_RefNullFunc, "\x6c\x70"_su8);
+  OK(Read<BlockType>, BT_RefExtern, "\x6b\x6f"_su8);
+  OK(Read<BlockType>, BT_RefNullExtern, "\x6c\x6f"_su8);
+  OK(Read<BlockType>, BT_RefAny, "\x6b\x6e"_su8);
+  OK(Read<BlockType>, BT_RefNullAny, "\x6c\x6e"_su8);
+  OK(Read<BlockType>, BT_RefEq, "\x6b\x6d"_su8);
+  OK(Read<BlockType>, BT_RefNullEq, "\x6c\x6d"_su8);
+  OK(Read<BlockType>, BT_RefI31, "\x6b\x69"_su8);
+  OK(Read<BlockType>, BT_RefNullI31, "\x6c\x69"_su8);
+  OK(Read<BlockType>, BT_Ref0, "\x6b\x00"_su8);
+  OK(Read<BlockType>, BT_RefNull0, "\x6c\x00"_su8);
+  OK(Read<BlockType>, BT_RTT_0_Func, "\x6a\x00\x70"_su8);
+  OK(Read<BlockType>, BT_RTT_0_Extern, "\x6a\x00\x6f"_su8);
+  OK(Read<BlockType>, BT_RTT_0_Any, "\x6a\x00\x6e"_su8);
+  OK(Read<BlockType>, BT_RTT_0_Eq, "\x6a\x00\x6d"_su8);
+  OK(Read<BlockType>, BT_RTT_0_I31, "\x6a\x00\x69"_su8);
+  OK(Read<BlockType>, BT_RTT_0_0, "\x6a\x00\x00"_su8);
+}
+
 TEST_F(BinaryReadTest, BlockType_Unknown) {
-  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: 0"}},
+  Fail(Read<BlockType>,
+       {{0, "block type"},
+        {0, "value type"},
+        {0, "reference type"},
+        {0, "Unknown reference type: 0"}},
        "\x00"_su8);
 
   // Overlong encoding is not allowed.
-  Fail(Read<BlockType>, {{0, "block type"}, {0, "Unknown block type: 255"}},
+  Fail(Read<BlockType>,
+       {{0, "block type"},
+        {0, "value type"},
+        {0, "reference type"},
+        {0, "Unknown reference type: 255"}},
        "\xff\x7f"_su8);
+}
+
+TEST_F(BinaryReadTest, BrOnCastImmediate) {
+  OK(Read<BrOnCastImmediate>,
+     BrOnCastImmediate{
+         At{"\x00"_su8, Index{0}},
+         At{"\x70\x70"_su8, HeapType2Immediate{At{"\x70"_su8, HT_Func},
+                                               At{"\x70"_su8, HT_Func}}}},
+     "\x00\x70\x70"_su8);
 }
 
 TEST_F(BinaryReadTest, BrOnExnImmediate) {
@@ -896,6 +959,32 @@ TEST_F(BinaryReadTest, ReferenceType_Exceptions) {
   OK(Read<ReferenceType>, RT_Exnref, "\x68"_su8);
 }
 
+TEST_F(BinaryReadTest, ReferenceType_gc) {
+  Fail(Read<ValueType>,
+       {{0, "value type"},
+        {0, "reference type"},
+        {0, "Unknown reference type: 110"}},
+       "\x6e"_su8);
+
+  context.features.enable_gc();
+
+  OK(Read<ReferenceType>, RT_Anyref, "\x6e"_su8);
+  OK(Read<ReferenceType>, RT_Eqref, "\x6d"_su8);
+  OK(Read<ReferenceType>, RT_I31ref, "\x69"_su8);
+  OK(Read<ReferenceType>, RT_RefFunc, "\x6b\x70"_su8);
+  OK(Read<ReferenceType>, RT_RefNullFunc, "\x6c\x70"_su8);
+  OK(Read<ReferenceType>, RT_RefExtern, "\x6b\x6f"_su8);
+  OK(Read<ReferenceType>, RT_RefNullExtern, "\x6c\x6f"_su8);
+  OK(Read<ReferenceType>, RT_RefAny, "\x6b\x6e"_su8);
+  OK(Read<ReferenceType>, RT_RefNullAny, "\x6c\x6e"_su8);
+  OK(Read<ReferenceType>, RT_RefEq, "\x6b\x6d"_su8);
+  OK(Read<ReferenceType>, RT_RefNullEq, "\x6c\x6d"_su8);
+  OK(Read<ReferenceType>, RT_RefI31, "\x6b\x69"_su8);
+  OK(Read<ReferenceType>, RT_RefNullI31, "\x6c\x69"_su8);
+  OK(Read<ReferenceType>, RT_Ref0, "\x6b\x00"_su8);
+  OK(Read<ReferenceType>, RT_RefNull0, "\x6c\x00"_su8);
+}
+
 TEST_F(BinaryReadTest, ReferenceType_Unknown) {
   Fail(Read<ReferenceType>,
        {{0, "reference type"}, {0, "Unknown reference type: 0"}}, "\x00"_su8);
@@ -1054,6 +1143,20 @@ TEST_F(BinaryReadTest, F64_PastEnd) {
        "\x00\x00\x00\x00\x00\x00\x00"_su8);
 }
 
+TEST_F(BinaryReadTest, FieldType) {
+  context.features.enable_gc();
+
+  OK(Read<FieldType>,
+     FieldType{At{"\x7f"_su8, StorageType{At{"\x7f"_su8, VT_I32}}},
+               At{"\x00"_su8, Mutability::Const}},
+     "\x7f\x00"_su8);
+
+  OK(Read<FieldType>,
+     FieldType{At{"\x7a"_su8, StorageType{At{"\x7a"_su8, PackedType::I8}}},
+               At{"\x01"_su8, Mutability::Var}},
+     "\x7a\x01"_su8);
+}
+
 TEST_F(BinaryReadTest, Function) {
   OK(Read<Function>, Function{At{"\x01"_su8, Index{1}}}, "\x01"_su8);
 }
@@ -1145,6 +1248,30 @@ TEST_F(BinaryReadTest, GlobalType_PastEnd) {
   Fail(Read<GlobalType>,
        {{0, "global type"}, {1, "mutability"}, {1, "Unable to read u8"}},
        "\x7f"_su8);
+}
+
+TEST_F(BinaryReadTest, HeapType_function_references) {
+  context.features.enable_function_references();
+
+  OK(Read<HeapType>, HT_Func, "\x70"_su8);
+  OK(Read<HeapType>, HT_Extern, "\x6f"_su8);
+  OK(Read<HeapType>, HT_0, "\x00"_su8);
+}
+
+TEST_F(BinaryReadTest, HeapType_gc) {
+  context.features.enable_gc();
+
+  OK(Read<HeapType>, HT_Any, "\x6e"_su8);
+  OK(Read<HeapType>, HT_Eq, "\x6d"_su8);
+  OK(Read<HeapType>, HT_I31, "\x69"_su8);
+}
+
+TEST_F(BinaryReadTest, HeapType2Immediate) {
+  context.features.enable_function_references();
+
+  OK(Read<HeapType2Immediate>,
+     HeapType2Immediate{At{"\x70"_su8, HT_Func}, At{"\x00"_su8, HT_0}},
+     "\x70\x00"_su8);
 }
 
 TEST_F(BinaryReadTest, Import) {
@@ -2209,6 +2336,83 @@ TEST_F(BinaryReadTest, Instruction_function_references) {
      "\xd4\x00"_su8);
 }
 
+TEST_F(BinaryReadTest, Instruction_gc) {
+  context.features.enable_gc();
+
+  OK(Read<I>, I{At{"\xd5"_su8, O::RefEq}}, "\xd5"_su8);
+  OK(Read<I>,
+     I{At{"\xfb\x01"_su8, O::StructNewWithRtt}, At{"\x01"_su8, Index{1}}},
+     "\xfb\x01\x01"_su8);
+  OK(Read<I>,
+     I{At{"\xfb\x02"_su8, O::StructNewDefaultWithRtt},
+       At{"\x01"_su8, Index{1}}},
+     "\xfb\x02\x01"_su8);
+  OK(Read<I>,
+     I{At{"\xfb\x03"_su8, O::StructGet},
+       At{"\x01\x02"_su8, StructFieldImmediate{At{"\x01"_su8, Index{1}},
+                                               At{"\x02"_su8, Index{2}}}}},
+     "\xfb\x03\x01\x02"_su8);
+  OK(Read<I>,
+     I{At{"\xfb\x04"_su8, O::StructGetS},
+       At{"\x01\x02"_su8, StructFieldImmediate{At{"\x01"_su8, Index{1}},
+                                               At{"\x02"_su8, Index{2}}}}},
+     "\xfb\x04\x01\x02"_su8);
+  OK(Read<I>,
+     I{At{"\xfb\x05"_su8, O::StructGetU},
+       At{"\x01\x02"_su8, StructFieldImmediate{At{"\x01"_su8, Index{1}},
+                                               At{"\x02"_su8, Index{2}}}}},
+     "\xfb\x05\x01\x02"_su8);
+  OK(Read<I>,
+     I{At{"\xfb\x06"_su8, O::StructSet},
+       At{"\x01\x02"_su8, StructFieldImmediate{At{"\x01"_su8, Index{1}},
+                                               At{"\x02"_su8, Index{2}}}}},
+     "\xfb\x06\x01\x02"_su8);
+  OK(Read<I>,
+     I{At{"\xfb\x11"_su8, O::ArrayNewWithRtt}, At{"\x01"_su8, Index{1}}},
+     "\xfb\x11\x01"_su8);
+  OK(Read<I>,
+     I{At{"\xfb\x12"_su8, O::ArrayNewDefaultWithRtt}, At{"\x01"_su8, Index{1}}},
+     "\xfb\x12\x01"_su8);
+  OK(Read<I>, I{At{"\xfb\x13"_su8, O::ArrayGet}, At{"\x01"_su8, Index{1}}},
+     "\xfb\x13\x01"_su8);
+  OK(Read<I>, I{At{"\xfb\x14"_su8, O::ArrayGetS}, At{"\x01"_su8, Index{1}}},
+     "\xfb\x14\x01"_su8);
+  OK(Read<I>, I{At{"\xfb\x15"_su8, O::ArrayGetU}, At{"\x01"_su8, Index{1}}},
+     "\xfb\x15\x01"_su8);
+  OK(Read<I>, I{At{"\xfb\x16"_su8, O::ArraySet}, At{"\x01"_su8, Index{1}}},
+     "\xfb\x16\x01"_su8);
+  OK(Read<I>, I{At{"\xfb\x17"_su8, O::ArrayLen}, At{"\x01"_su8, Index{1}}},
+     "\xfb\x17\x01"_su8);
+  OK(Read<I>, I{At{"\xfb\x20"_su8, O::I31New}}, "\xfb\x20"_su8);
+  OK(Read<I>, I{At{"\xfb\x21"_su8, O::I31GetS}}, "\xfb\x21"_su8);
+  OK(Read<I>, I{At{"\xfb\x22"_su8, O::I31GetU}}, "\xfb\x22"_su8);
+  OK(Read<I>, I{At{"\xfb\x30"_su8, O::RttCanon}, At{"\x70"_su8, HT_Func}},
+     "\xfb\x30\x70"_su8);
+  OK(Read<I>,
+     I{At{"\xfb\x31"_su8, O::RttSub},
+       At{"\x01\x70\x6f"_su8, RttSubImmediate{At{"\x01"_su8, Index{1}},
+                                              {At{"\x70"_su8, HT_Func},
+                                               At{"\x6f"_su8, HT_Extern}}}}},
+     "\xfb\x31\x01\x70\x6f"_su8);
+  OK(Read<I>,
+     I{At{"\xfb\x40"_su8, O::RefTest},
+       At{"\x70\x6f"_su8, HeapType2Immediate{At{"\x70"_su8, HT_Func},
+                                             At{"\x6f"_su8, HT_Extern}}}},
+     "\xfb\x40\x70\x6f"_su8);
+  OK(Read<I>,
+     I{At{"\xfb\x41"_su8, O::RefCast},
+       At{"\x70\x6f"_su8, HeapType2Immediate{At{"\x70"_su8, HT_Func},
+                                             At{"\x6f"_su8, HT_Extern}}}},
+     "\xfb\x41\x70\x6f"_su8);
+  OK(Read<I>,
+     I{At{"\xfb\x42"_su8, O::BrOnCast},
+       At{"\x01\x70\x6f"_su8,
+          BrOnCastImmediate{At{"\x01"_su8, Index{1}},
+                            HeapType2Immediate{At{"\x70"_su8, HT_Func},
+                                               At{"\x6f"_su8, HT_Extern}}}}},
+     "\xfb\x42\x01\x70\x6f"_su8);
+}
+
 TEST_F(BinaryReadTest, Limits) {
   OK(Read<Limits>,
      Limits{At{"\x81\x01"_su8, u32{129}}, nullopt, At{"\x00"_su8, Shared::No}},
@@ -2703,8 +2907,6 @@ TEST_F(BinaryReadTest, Opcode_Unknown_misc_prefix) {
 }
 
 TEST_F(BinaryReadTest, Opcode_simd) {
-  using O = Opcode;
-
   context.features.enable_simd();
 
   OK(Read<O>, At{"\xfd\x00"_su8, O::V128Load}, "\xfd\x00"_su8);
@@ -2918,8 +3120,6 @@ TEST_F(BinaryReadTest, Opcode_Unknown_simd_prefix) {
 }
 
 TEST_F(BinaryReadTest, Opcode_threads) {
-  using O = Opcode;
-
   context.features.enable_threads();
 
   OK(Read<O>, At{"\xfe\x00"_su8, O::MemoryAtomicNotify}, "\xfe\x00"_su8);
@@ -3009,8 +3209,6 @@ TEST_F(BinaryReadTest, Opcode_Unknown_threads_prefix) {
 }
 
 TEST_F(BinaryReadTest, Opcode_function_references) {
-  using O = Opcode;
-
   context.features.enable_function_references();
 
   OK(Read<O>, At{"\x14"_su8, O::CallRef}, "\x14"_su8);
@@ -3019,6 +3217,42 @@ TEST_F(BinaryReadTest, Opcode_function_references) {
   OK(Read<O>, At{"\x17"_su8, O::Let}, "\x17"_su8);
   OK(Read<O>, At{"\xd3"_su8, O::RefAsNonNull}, "\xd3"_su8);
   OK(Read<O>, At{"\xd4"_su8, O::BrOnNull}, "\xd4"_su8);
+}
+
+TEST_F(BinaryReadTest, Opcode_gc) {
+  context.features.enable_gc();
+
+  OK(Read<O>, O::RefEq, "\xd5"_su8);
+  OK(Read<O>, O::StructNewWithRtt, "\xfb\x01"_su8);
+  OK(Read<O>, O::StructNewDefaultWithRtt, "\xfb\x02"_su8);
+  OK(Read<O>, O::StructGet, "\xfb\x03"_su8);
+  OK(Read<O>, O::StructGetS, "\xfb\x04"_su8);
+  OK(Read<O>, O::StructGetU, "\xfb\x05"_su8);
+  OK(Read<O>, O::StructSet, "\xfb\x06"_su8);
+  OK(Read<O>, O::ArrayNewWithRtt, "\xfb\x11"_su8);
+  OK(Read<O>, O::ArrayNewDefaultWithRtt, "\xfb\x12"_su8);
+  OK(Read<O>, O::ArrayGet, "\xfb\x13"_su8);
+  OK(Read<O>, O::ArrayGetS, "\xfb\x14"_su8);
+  OK(Read<O>, O::ArrayGetU, "\xfb\x15"_su8);
+  OK(Read<O>, O::ArraySet, "\xfb\x16"_su8);
+  OK(Read<O>, O::ArrayLen, "\xfb\x17"_su8);
+  OK(Read<O>, O::I31New, "\xfb\x20"_su8);
+  OK(Read<O>, O::I31GetS, "\xfb\x21"_su8);
+  OK(Read<O>, O::I31GetU, "\xfb\x22"_su8);
+  OK(Read<O>, O::RttCanon, "\xfb\x30"_su8);
+  OK(Read<O>, O::RttSub, "\xfb\x31"_su8);
+  OK(Read<O>, O::RefTest, "\xfb\x40"_su8);
+  OK(Read<O>, O::RefCast, "\xfb\x41"_su8);
+  OK(Read<O>, O::BrOnCast, "\xfb\x42"_su8);
+}
+
+TEST_F(BinaryReadTest, RttSubImmediate) {
+  OK(Read<RttSubImmediate>,
+     RttSubImmediate{
+         At{"\x00"_su8, Index{0}},
+         At{"\x70\x70"_su8, HeapType2Immediate{At{"\x70"_su8, HT_Func},
+                                               At{"\x70"_su8, HT_Func}}}},
+     "\x00\x70\x70"_su8);
 }
 
 TEST_F(BinaryReadTest, S32) {
@@ -3189,6 +3423,16 @@ TEST_F(BinaryReadTest, Start) {
   OK(Read<Start>, Start{At{"\x80\x02"_su8, Index{256}}}, "\x80\x02"_su8);
 }
 
+TEST_F(BinaryReadTest, StorageType) {
+  context.features.enable_gc();
+
+  OK(Read<StorageType>, StorageType{At{"\x7f"_su8, VT_I32}}, "\x7f"_su8);
+  OK(Read<StorageType>, StorageType{At{"\x7a"_su8, PackedType::I8}},
+     "\x7a"_su8);
+  OK(Read<StorageType>, StorageType{At{"\x79"_su8, PackedType::I16}},
+     "\x79"_su8);
+}
+
 TEST_F(BinaryReadTest, ReadString) {
   OK(ReadString, "hello"_sv, "\x05hello"_su8, "test");
 }
@@ -3218,6 +3462,27 @@ TEST_F(BinaryReadTest, ReadString_Fail) {
               data);
   EXPECT_EQ(nullopt, result);
   EXPECT_EQ(5u, copy.size());
+}
+
+TEST_F(BinaryReadTest, StructType) {
+  context.features.enable_gc();
+
+  OK(Read<StructType>,
+     StructType{FieldTypeList{
+         At{"\x7f\x00"_su8,
+            FieldType{At{"\x7f"_su8, StorageType{At{"\x7f"_su8, VT_I32}}},
+                      At{"\x00"_su8, Mutability::Const}}},
+         At{"\x7e\x01"_su8,
+            FieldType{At{"\x7e"_su8, StorageType{At{"\x7e"_su8, VT_I64}}},
+                      At{"\x01"_su8, Mutability::Var}}},
+     }},
+     "\x02\x7f\x00\x7e\x01"_su8);
+}
+
+TEST_F(BinaryReadTest, StructFieldImmediate) {
+  OK(Read<StructFieldImmediate>,
+     StructFieldImmediate{At{"\x00"_su8, Index{0}}, At{"\x01"_su8, Index{1}}},
+     "\x00\x01"_su8);
 }
 
 TEST_F(BinaryReadTest, Table) {
@@ -3281,6 +3546,33 @@ TEST_F(BinaryReadTest, DefinedType) {
      "\x60\x00\x01\x7f"_su8);
 }
 
+TEST_F(BinaryReadTest, DefinedType_gc) {
+  context.features.enable_gc();
+
+  OK(Read<DefinedType>,
+     DefinedType{At{
+         "\x02\x7f\x00\x7e\x01"_su8,
+         StructType{FieldTypeList{
+             At{"\x7f\x00"_su8,
+                FieldType{At{"\x7f"_su8, StorageType{At{"\x7f"_su8, VT_I32}}},
+                          At{"\x00"_su8, Mutability::Const}}},
+             At{"\x7e\x01"_su8,
+                FieldType{At{"\x7e"_su8, StorageType{At{"\x7e"_su8, VT_I64}}},
+                          At{"\x01"_su8, Mutability::Var}}},
+         }}}},
+     "\x5f\x02\x7f\x00\x7e\x01"_su8);
+
+  OK(Read<DefinedType>,
+     DefinedType{At{
+         "\x7f\x00"_su8,
+         ArrayType{
+             At{"\x7f\x00"_su8,
+                FieldType{At{"\x7f"_su8, StorageType{At{"\x7f"_su8, VT_I32}}},
+                          At{"\x00"_su8, Mutability::Const}}}},
+     }},
+     "\x5e\x7f\x00"_su8);
+}
+
 TEST_F(BinaryReadTest, DefinedType_BadForm) {
   Fail(Read<DefinedType>, {{0, "defined type"}, {0, "Unknown type form: 64"}},
        "\x40"_su8);
@@ -3331,9 +3623,12 @@ TEST_F(BinaryReadTest, ValueType_simd) {
 }
 
 TEST_F(BinaryReadTest, ValueType_reference_types) {
-  Fail(Read<ValueType>, {{0, "value type"}, {0, "Unknown value type: 112"}},
+  Fail(Read<ValueType>, {{0, "value type"}, {0, "funcref not allowed"}},
        "\x70"_su8);
-  Fail(Read<ValueType>, {{0, "value type"}, {0, "Unknown value type: 111"}},
+  Fail(Read<ValueType>,
+       {{0, "value type"},
+        {0, "reference type"},
+        {0, "Unknown reference type: 111"}},
        "\x6f"_su8);
 
   context.features.enable_reference_types();
@@ -3342,19 +3637,60 @@ TEST_F(BinaryReadTest, ValueType_reference_types) {
 }
 
 TEST_F(BinaryReadTest, ValueType_exceptions) {
-  Fail(Read<ValueType>, {{0, "value type"}, {0, "Unknown value type: 104"}},
+  Fail(Read<ValueType>,
+       {{0, "value type"},
+        {0, "reference type"},
+        {0, "Unknown reference type: 104"}},
        "\x68"_su8);
 
   context.features.enable_exceptions();
   OK(Read<ValueType>, VT_Exnref, "\x68"_su8);
 }
 
+TEST_F(BinaryReadTest, ValueType_gc) {
+  Fail(Read<ValueType>,
+       {{0, "value type"},
+        {0, "reference type"},
+        {0, "Unknown reference type: 110"}},
+       "\x6e"_su8);
+
+  context.features.enable_gc();
+
+  OK(Read<ValueType>, VT_Anyref, "\x6e"_su8);
+  OK(Read<ValueType>, VT_Eqref, "\x6d"_su8);
+  OK(Read<ValueType>, VT_I31ref, "\x69"_su8);
+  OK(Read<ValueType>, VT_RefFunc, "\x6b\x70"_su8);
+  OK(Read<ValueType>, VT_RefNullFunc, "\x6c\x70"_su8);
+  OK(Read<ValueType>, VT_RefExtern, "\x6b\x6f"_su8);
+  OK(Read<ValueType>, VT_RefNullExtern, "\x6c\x6f"_su8);
+  OK(Read<ValueType>, VT_RefAny, "\x6b\x6e"_su8);
+  OK(Read<ValueType>, VT_RefNullAny, "\x6c\x6e"_su8);
+  OK(Read<ValueType>, VT_RefEq, "\x6b\x6d"_su8);
+  OK(Read<ValueType>, VT_RefNullEq, "\x6c\x6d"_su8);
+  OK(Read<ValueType>, VT_RefI31, "\x6b\x69"_su8);
+  OK(Read<ValueType>, VT_RefNullI31, "\x6c\x69"_su8);
+  OK(Read<ValueType>, VT_Ref0, "\x6b\x00"_su8);
+  OK(Read<ValueType>, VT_RefNull0, "\x6c\x00"_su8);
+  OK(Read<ValueType>, VT_RTT_0_Func, "\x6a\x00\x70"_su8);
+  OK(Read<ValueType>, VT_RTT_0_Extern, "\x6a\x00\x6f"_su8);
+  OK(Read<ValueType>, VT_RTT_0_Any, "\x6a\x00\x6e"_su8);
+  OK(Read<ValueType>, VT_RTT_0_Eq, "\x6a\x00\x6d"_su8);
+  OK(Read<ValueType>, VT_RTT_0_I31, "\x6a\x00\x69"_su8);
+  OK(Read<ValueType>, VT_RTT_0_0, "\x6a\x00\x00"_su8);
+}
+
 TEST_F(BinaryReadTest, ValueType_Unknown) {
-  Fail(Read<ValueType>, {{0, "value type"}, {0, "Unknown value type: 16"}},
+  Fail(Read<ValueType>,
+       {{0, "value type"},
+        {0, "reference type"},
+        {0, "Unknown reference type: 16"}},
        "\x10"_su8);
 
   // Overlong encoding is not allowed.
-  Fail(Read<ValueType>, {{0, "value type"}, {0, "Unknown value type: 255"}},
+  Fail(Read<ValueType>,
+       {{0, "value type"},
+        {0, "reference type"},
+        {0, "Unknown reference type: 255"}},
        "\xff\x7f"_su8);
 }
 

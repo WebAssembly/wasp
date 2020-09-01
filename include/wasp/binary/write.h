@@ -99,32 +99,62 @@ Iterator Write(Opcode value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(encoding::EncodedValueType value, Iterator out) {
-  out = Write(value.code, out);
-  if (value.immediate) {
-    out = Write(*value.immediate, out);
+Iterator Write(HeapType value, Iterator out) {
+  if (value.is_heap_kind()) {
+    return Write(encoding::HeapKind::Encode(value.heap_kind()), out);
+  } else {
+    assert(value.is_index());
+    return Write(value.index(), out);
   }
+}
+
+template <typename Iterator>
+Iterator Write(RefType value, Iterator out) {
+  out = Write(encoding::RefType::Encode(value.null), out);
+  out = Write(value.heap_type, out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(ReferenceType value, Iterator out) {
+  if (value.is_reference_kind()) {
+    return Write(encoding::ReferenceKind::Encode(value.reference_kind()), out);
+  } else {
+    assert(value.is_ref());
+    return Write(value.ref(), out);
+  }
+}
+
+template <typename Iterator>
+Iterator Write(Rtt value, Iterator out) {
+  out = Write(encoding::Rtt::RttPrefix, out);
+  out = Write(value.depth, out);
+  out = Write(value.type, out);
   return out;
 }
 
 template <typename Iterator>
 Iterator Write(ValueType value, Iterator out) {
-  return Write(encoding::ValueType::Encode(value), out);
+  if (value.is_numeric_type()) {
+    return Write(encoding::NumericType::Encode(value.numeric_type()), out);
+  } else if (value.is_reference_type()) {
+    return Write(value.reference_type(), out);
+  } else {
+    assert(value.is_rtt());
+    return Write(value.rtt(), out);
+  }
 }
 
 template <typename Iterator>
 Iterator Write(BlockType value, Iterator out) {
-  return Write(encoding::BlockType::Encode(value), out);
-}
-
-template <typename Iterator>
-Iterator Write(HeapType value, Iterator out) {
-  return Write(encoding::HeapType::Encode(value), out);
-}
-
-template <typename Iterator>
-Iterator Write(ReferenceType value, Iterator out) {
-  return Write(encoding::ReferenceType::Encode(value), out);
+  if (value.is_value_type()) {
+    return Write(value.value_type(), out);
+  } else if (value.is_void()) {
+    return Write(encoding::BlockType::Void, out);
+  } else {
+    assert(value.is_index());
+    return Write(value.index(), out);
+  }
 }
 
 template <typename Iterator>
@@ -176,12 +206,25 @@ Iterator WriteIndex(Index value, Iterator out) {
 }
 
 template <typename Iterator>
+Iterator Write(const HeapType2Immediate& value, Iterator out) {
+  out = Write(value.parent, out);
+  out = Write(value.child, out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(const BrOnCastImmediate& value, Iterator out) {
+  out = WriteIndex(value.target, out);
+  out = Write(value.types, out);
+  return out;
+}
+
+template <typename Iterator>
 Iterator Write(const BrOnExnImmediate& value, Iterator out) {
   out = WriteIndex(value.target, out);
   out = WriteIndex(value.event_index, out);
   return out;
 }
-
 
 template <typename InputIterator, typename OutputIterator>
 OutputIterator WriteVector(InputIterator in_begin,
@@ -194,6 +237,27 @@ OutputIterator WriteVector(InputIterator in_begin,
     out = Write(*it, out);
   }
   return out;
+}
+
+template <typename Iterator>
+Iterator Write(const StorageType& value, Iterator out) {
+  if (value.is_packed_type()) {
+    return Write(encoding::PackedType::Encode(value.packed_type()), out);
+  } else {
+    return Write(value.value_type(), out);
+  }
+}
+
+template <typename Iterator>
+Iterator Write(const FieldType& value, Iterator out) {
+  out = Write(value.type, out);
+  out = Write(value.mut, out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(const ArrayType& value, Iterator out) {
+  return Write(value.field, out);
 }
 
 template <typename Iterator>
@@ -549,6 +613,18 @@ Iterator Write(const Instruction& instr, Iterator out) {
 
     case 18: // SimdLaneImmediate
       return Write(instr.simd_lane_immediate(), out);
+
+    case 19:
+      return Write(instr.br_on_cast_immediate(), out);
+
+    case 20:
+      return Write(instr.heap_type_2_immediate(), out);
+
+    case 21:
+      return Write(instr.rtt_sub_immediate(), out);
+
+    case 22:
+      return Write(instr.struct_field_immediate(), out);
   }
   WASP_UNREACHABLE();
 }
@@ -580,6 +656,13 @@ Iterator Write(const Memory& value, Iterator out) {
 }
 
 template <typename Iterator>
+Iterator Write(const RttSubImmediate& value, Iterator out) {
+  out = Write(value.depth, out);
+  out = Write(value.types, out);
+  return out;
+}
+
+template <typename Iterator>
 Iterator Write(SectionId value, Iterator out) {
   return Write(encoding::SectionId::Encode(value), out);
 }
@@ -590,15 +673,36 @@ Iterator Write(const Start& value, Iterator out) {
 }
 
 template <typename Iterator>
+Iterator Write(const StructFieldImmediate& value, Iterator out) {
+  out = WriteIndex(value.struct_, out);
+  out = WriteIndex(value.field, out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(const StructType& value, Iterator out) {
+  out = WriteVector(value.fields.begin(), value.fields.end(), out);
+  return out;
+}
+
+template <typename Iterator>
 Iterator Write(const Table& value, Iterator out) {
   return Write(value.table_type, out);
 }
 
 template <typename Iterator>
 Iterator Write(const DefinedType& value, Iterator out) {
-  // TODO: Add support for struct and array types.
-  out = Write(encoding::Type::Function, out);
-  return Write(value.function_type(), out);
+  if (value.is_function_type()) {
+    out = Write(encoding::DefinedType::Function, out);
+    return Write(value.function_type(), out);
+  } else if (value.is_struct_type()) {
+    out = Write(encoding::DefinedType::Struct, out);
+    return Write(value.struct_type(), out);
+  } else {
+    assert(value.is_array_type());
+    out = Write(encoding::DefinedType::Array, out);
+    return Write(value.array_type(), out);
+  }
 }
 
 template <typename InputIterator, typename OutputIterator>
