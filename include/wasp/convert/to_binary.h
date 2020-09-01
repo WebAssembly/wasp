@@ -45,8 +45,10 @@ struct Context {
 auto ToBinary(Context&, const At<text::HeapType>&) -> At<binary::HeapType>;
 auto ToBinary(Context&, const At<text::RefType>&) -> At<binary::RefType>;
 auto ToBinary(Context&, const At<text::ReferenceType>&) -> At<binary::ReferenceType>;
+auto ToBinary(Context&, const At<text::Rtt>&) -> At<binary::Rtt>;
 auto ToBinary(Context&, const At<text::ValueType>&) -> At<binary::ValueType>;
 auto ToBinary(Context&, const text::ValueTypeList&) -> binary::ValueTypeList;
+auto ToBinary(Context&, const At<text::StorageType>&) -> At<binary::StorageType>;
 auto ToBinary(Context&, const At<text::Text>&) -> At<string_view>;
 auto ToBinary(Context&, const At<text::Var>&) -> At<Index>;
 auto ToBinary(Context&, const OptAt<text::Var>&) -> At<Index>;
@@ -56,6 +58,10 @@ auto ToBinary(Context&, const At<text::FunctionType>&) -> At<binary::FunctionTyp
 
 // Section 1: Type
 auto ToBinary(Context&, const text::BoundValueTypeList&) -> binary::ValueTypeList;
+auto ToBinary(Context&, const At<text::FieldType>&) -> At<binary::FieldType>;
+auto ToBinary(Context&, const text::FieldTypeList&) -> binary::FieldTypeList;
+auto ToBinary(Context&, const At<text::StructType>&) -> At<binary::StructType>;
+auto ToBinary(Context&, const At<text::ArrayType>&) -> At<binary::ArrayType>;
 auto ToBinary(Context&, const At<text::DefinedType>&) -> At<binary::DefinedType>;
 
 // Section 2: Import
@@ -90,13 +96,17 @@ auto ToBinary(Context&, const At<text::ElementSegment>&) -> At<binary::ElementSe
 
 // Section 10: Code
 auto ToBinary(Context&, const At<text::BlockImmediate>&) -> At<binary::BlockType>;
+auto ToBinary(Context&, const At<text::BrOnCastImmediate>&) -> At<binary::BrOnCastImmediate>;
 auto ToBinary(Context&, const At<text::BrOnExnImmediate>&) -> At<binary::BrOnExnImmediate>;
 auto ToBinary(Context&, const At<text::BrTableImmediate>&) -> At<binary::BrTableImmediate>;
 auto ToBinary(Context&, const At<text::CallIndirectImmediate>&) -> At<binary::CallIndirectImmediate>;
 auto ToBinary(Context&, const At<text::CopyImmediate>&) -> At<binary::CopyImmediate>;
+auto ToBinary(Context&, const At<text::HeapType2Immediate>&) -> At<binary::HeapType2Immediate>;
 auto ToBinary(Context&, const At<text::InitImmediate>&) -> At<binary::InitImmediate>;
 auto ToBinary(Context&, const At<text::LetImmediate>&) -> At<binary::LetImmediate>;
 auto ToBinary(Context&, const At<text::MemArgImmediate>&, u32 natural_align) -> At<binary::MemArgImmediate>;
+auto ToBinary(Context&, const At<text::RttSubImmediate>&) -> At<binary::RttSubImmediate>;
+auto ToBinary(Context&, const At<text::StructFieldImmediate>&) -> At<binary::StructFieldImmediate>;
 auto ToBinary(Context&, const At<text::Instruction>&) -> At<binary::Instruction>;
 auto ToBinary(Context&, const text::InstructionList&) -> binary::InstructionList;
 
