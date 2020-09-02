@@ -30,27 +30,8 @@
 using namespace ::wasp;
 using namespace ::wasp::valid;
 using namespace ::wasp::valid::test;
+using namespace ::wasp::binary;
 using namespace ::wasp::binary::test;
-
-class ValidMatchTest : public ::testing::Test {
- protected:
-  void PushFunctionType(const binary::ValueTypeList& params,
-                        const binary::ValueTypeList& results) {
-    context.types.push_back(
-        binary::DefinedType{binary::FunctionType{params, results}});
-  }
-
-  void PushStructType(const binary::StructType& struct_type) {
-    context.types.push_back(binary::DefinedType{struct_type});
-  }
-
-  void PushArrayType(const binary::ArrayType& array_type) {
-    context.types.push_back(binary::DefinedType{array_type});
-  }
-
-  TestErrors errors;
-  Context context{errors};
-};
 
 enum Comparison {
   SAME,
@@ -67,78 +48,105 @@ enum Comparison {
   _ = ____,
 };
 
-template <typename T>
-void DoTable(Context& context,
-             std::vector<T> ivalues,
-             std::vector<T> jvalues,
-             std::vector<Comparison> results,
-             bool (&func)(Context&, const T&, const T&)) {
-  assert(ivalues.size() * jvalues.size() == results.size());
+class ValidMatchTest : public ::testing::Test {
+ protected:
+  void PushFunctionType(const ValueTypeList& params,
+                        const ValueTypeList& results) {
+    context.types.push_back(
+        DefinedType{FunctionType{params, results}});
+  }
 
-  int r = 0;
-  for (auto [j, vj] : enumerate(jvalues)) {
-    for (auto [i, vi] : enumerate(ivalues)) {
-      Comparison cmp = results[r++];
-      if (cmp == SKIP) {
-        continue;
+  void PushStructType(const StructType& struct_type) {
+    context.types.push_back(DefinedType{struct_type});
+  }
+
+  void PushArrayType(const ArrayType& array_type) {
+    context.types.push_back(DefinedType{array_type});
+  }
+
+  auto MakeDiagonalMatrix(size_t size) -> std::vector<Comparison>  {
+    std::vector<Comparison> results(size * size, DIFF);
+    for (size_t i = 0; i < size; ++i) {
+      results[i * size + i] = SAME;
+    }
+    return results;
+  }
+
+  template <typename T>
+  void DoTable(std::vector<T> ivalues,
+               std::vector<T> jvalues,
+               std::vector<Comparison> results,
+               bool (&func)(Context&, const T&, const T&)) {
+    assert(ivalues.size() * jvalues.size() == results.size());
+
+    int r = 0;
+    for (auto [j, vj] : enumerate(jvalues)) {
+      for (auto [i, vi] : enumerate(ivalues)) {
+        Comparison cmp = results[r++];
+        if (cmp == SKIP) {
+          continue;
+        }
+        bool result = cmp == SAME;
+        EXPECT_EQ(result, func(context, vi, vj))
+            << concat("i:", vi, " j:", vj, " should be ", result);
       }
-      bool result = cmp == SAME;
-      EXPECT_EQ(result, func(context, vi, vj))
-          << concat("i:", vi, " j:", vj, " should be ", result);
     }
   }
-}
 
-template <typename T>
-void IsSameTable(Context& context,
-                 std::vector<T> ivalues,
-                 std::vector<T> jvalues,
-                 std::vector<Comparison> results) {
-  DoTable(context, ivalues, jvalues, results, IsSame);
-}
-
-template <typename T>
-void IsSameTable(Context& context,
-                 std::vector<T> values,
-                 std::vector<Comparison> results) {
-  IsSameTable(context, values, values, results);
-}
-
-template <typename T>
-void IsSameDiagonal(Context& context, std::vector<T> values) {
-  // Build a table where only the values on the diagonal are SAME.
-  size_t size = values.size();
-  std::vector<Comparison> results(size * size, DIFF);
-  for (size_t i = 0; i < size; ++i) {
-    results[i * size + i] = SAME;
+  template <typename T>
+  void IsSameTable(std::vector<T> ivalues,
+                   std::vector<T> jvalues,
+                   std::vector<Comparison> results) {
+    DoTable(ivalues, jvalues, results, IsSame);
   }
 
-  IsSameTable(context, values, values, results);
-}
+  template <typename T>
+  void IsSameTable(std::vector<T> values, std::vector<Comparison> results) {
+    IsSameTable(values, values, results);
+  }
 
-template <typename T>
-void IsMatchTable(Context& context,
-                  std::vector<T> ivalues,
-                  std::vector<T> jvalues,
-                  std::vector<Comparison> results) {
-  DoTable(context, ivalues, jvalues, results, IsMatch);
-}
+  template <typename T>
+  void IsSameDistinct(std::vector<T> values) {
+    IsSameTable(values, values, MakeDiagonalMatrix(values.size()));
+  }
 
-template <typename T>
-void IsMatchTable(Context& context,
-                  std::vector<T> values,
-                  std::vector<Comparison> results) {
-  IsMatchTable(context, values, values, results);
-}
+  template <typename T>
+  void IsMatchTable(std::vector<T> ivalues,
+                    std::vector<T> jvalues,
+                    std::vector<Comparison> results) {
+    DoTable(ivalues, jvalues, results, IsMatch);
+  }
+
+  template <typename T>
+  void IsMatchDistinct(std::vector<T> ivalues, std::vector<T> jvalues) {
+    std::vector<Comparison> results(ivalues.size() * jvalues.size(), DIFF);
+    // Check in both directions.
+    DoTable(ivalues, jvalues, results, IsMatch);
+    DoTable(jvalues, ivalues, results, IsMatch);
+  }
+
+  template <typename T>
+  void IsMatchTable(std::vector<T> values, std::vector<Comparison> results) {
+    IsMatchTable(values, values, results);
+  }
+
+  template <typename T>
+  void IsMatchDistinct(std::vector<T> values) {
+    IsMatchTable(values, MakeDiagonalMatrix(values.size()));
+  }
+
+  TestErrors errors;
+  Context context{errors};
+};
 
 TEST_F(ValidMatchTest, IsSame_HeapType_Simple) {
-  std::vector<binary::HeapType> heap_types = {HT_Func, HT_Extern, HT_Any, HT_Eq,
-                                              HT_I31,  HT_Exn,    HT_0};
-  IsSameDiagonal(context, heap_types);
+  std::vector<HeapType> types{HT_Func, HT_Extern, HT_Any, HT_Eq,
+                              HT_I31,  HT_Exn,    HT_0};
+  IsSameDistinct(types);
 }
 
 TEST_F(ValidMatchTest, IsSame_RefType_Simple) {
-  std::vector<binary::RefType> ref_types = {
+  std::vector<RefType> types{
       RefType_Func,   RefType_NullFunc,    //
       RefType_Extern, RefType_NullExtern,  //
       RefType_Any,    RefType_NullAny,     //
@@ -147,11 +155,11 @@ TEST_F(ValidMatchTest, IsSame_RefType_Simple) {
       RefType_Exn,    RefType_NullExn,     //
       RefType_0,      RefType_Null0,       //
   };
-  IsSameDiagonal(context, ref_types);
+  IsSameDistinct(types);
 }
 
 TEST_F(ValidMatchTest, IsSame_ReferenceType_Simple) {
-  std::vector<binary::ReferenceType> reference_types = {
+  std::vector<ReferenceType> types{
       RT_Funcref,   RT_Externref,     RT_Anyref, RT_Eqref, RT_I31ref, RT_Exnref,
 
       RT_RefFunc,   RT_RefNullFunc,    //
@@ -163,61 +171,49 @@ TEST_F(ValidMatchTest, IsSame_ReferenceType_Simple) {
       RT_Ref0,      RT_RefNull0,       //
   };
   IsSameTable(
-      context, reference_types,
-      {
-          /*                   n     n     n           n     n
-          F  E                 u     u     u     n     u     u
-          u  x  A     I  E     l     l     l     u     l     l     n
-          n  t  n  E  3  x     l     l     l     l     l     l     u
-          c  .  y  q  1  n  f  f                 l                 l
-          r  r  r  r  r  r  u  u  e  e  a  a        i  i  e  e     l
-          e  e  e  e  e  e  n  n  x  x  n  n  e  e  3  3  x  x
-          f  f  f  f  f  f  c  c  t  t  y  y  q  q  1  1  n  n  0  0   */
-          S, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _, _,  // Funcref
-          _, S, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _,  // Externref
-          _, _, S, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _,  // Anyref
-          _, _, _, S, _, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _,  // Eqref
-          _, _, _, _, S, _, _, _, _, _, _, _, _, _, S, _, _, _, _, _,  // I31ref
-          _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _, S, _, _,  // Exnref
-          _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _, _, _,  // ref func
-          S, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _, _,  // ref null func
-          _, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _,  // ref extern
-          _, S, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _,  // ref null extern
-          _, _, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _,  // ref any
-          _, _, S, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _,  // ref null any
-          _, _, _, _, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _,  // ref eq
-          _, _, _, S, _, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _,  // ref null eq
-          _, _, _, _, S, _, _, _, _, _, _, _, _, _, S, _, _, _, _, _,  // ref i31
-          _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, S, _, _, _, _,  // ref null i31
-          _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, S, _, _, _,  // ref exn
-          _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _, S, _, _,  // ref null exn
-          _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, S, _,  // ref 0
-          _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, S,  // ref null 0
-      });
+      types, {
+      /*                   n     n     n           n     n
+      F  E                 u     u     u     n     u     u
+      u  x  A     I  E     l     l     l     u     l     l     n
+      n  t  n  E  3  x     l     l     l     l     l     l     u
+      c  .  y  q  1  n  f  f                 l                 l
+      r  r  r  r  r  r  u  u  e  e  a  a        i  i  e  e     l
+      e  e  e  e  e  e  n  n  x  x  n  n  e  e  3  3  x  x
+      f  f  f  f  f  f  c  c  t  t  y  y  q  q  1  1  n  n  0  0   */
+      S, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _, _,  // Funcref
+      _, S, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _,  // Externref
+      _, _, S, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _,  // Anyref
+      _, _, _, S, _, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _,  // Eqref
+      _, _, _, _, S, _, _, _, _, _, _, _, _, _, S, _, _, _, _, _,  // I31ref
+      _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _, S, _, _,  // Exnref
+      _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _, _, _,  // ref func
+      S, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _, _,  // ref null func
+      _, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _,  // ref extern
+      _, S, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _,  // ref null extern
+      _, _, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _,  // ref any
+      _, _, S, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _,  // ref null any
+      _, _, _, _, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _,  // ref eq
+      _, _, _, S, _, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _,  // ref null eq
+      _, _, _, _, S, _, _, _, _, _, _, _, _, _, S, _, _, _, _, _,  // ref i31
+      _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, S, _, _, _, _,  // ref null i31
+      _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, S, _, _, _,  // ref exn
+      _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _, S, _, _,  // ref null exn
+      _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, S, _,  // ref 0
+      _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, S,  // ref null 0
+  });
 }
 
 TEST_F(ValidMatchTest, IsSame_Rtt) {
-  std::vector<binary::ValueType> rtts = {
+  std::vector<ValueType> rtts{
       VT_RTT_0_Func, VT_RTT_0_Extern, VT_RTT_0_Exn, VT_RTT_0_Any,
       VT_RTT_0_Eq,   VT_RTT_0_I31,    VT_RTT_0_0,
   };
 
-  IsSameTable(context, rtts,
-              {
-                  /*
-                  Func  Ext.  Exn   Any   Eq    I31   0     */
-                  SAME, ____, ____, ____, ____, ____, ____,  // Func
-                  ____, SAME, ____, ____, ____, ____, ____,  // Extern
-                  ____, ____, SAME, ____, ____, ____, ____,  // Exn
-                  ____, ____, ____, SAME, ____, ____, ____,  // Any
-                  ____, ____, ____, ____, SAME, ____, ____,  // Eq
-                  ____, ____, ____, ____, ____, SAME, ____,  // I31
-                  ____, ____, ____, ____, ____, ____, SAME,  // 0
-              });
+  IsSameDistinct(rtts);
 }
 
 TEST_F(ValidMatchTest, IsSame_ValueType_Simple) {
-  std::vector<binary::ValueType> value_types{
+  std::vector<ValueType> types{
       VT_I32,       VT_I64,           VT_F32,       VT_F64,
       VT_V128,      VT_Funcref,       VT_Externref, VT_Anyref,
       VT_Eqref,     VT_I31ref,        VT_Exnref,
@@ -231,7 +227,7 @@ TEST_F(ValidMatchTest, IsSame_ValueType_Simple) {
       VT_Ref0,      VT_RefNull0,       //
   };
   IsSameTable(
-      context, value_types,
+      types,
       {
           /*                                  n     n     n           n     n
                          F  E                 u     u     u     n     u     u
@@ -269,14 +265,114 @@ TEST_F(ValidMatchTest, IsSame_ValueType_Simple) {
       });
 }
 
+TEST_F(ValidMatchTest, IsSame_ValueType_Var) {
+  context.same_types.Reset(3);
+  PushFunctionType({VT_F32}, {});  // 0
+  PushFunctionType({VT_F32}, {});  // 1
+  PushFunctionType({VT_I32}, {});  // 2
+
+  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref1));
+  EXPECT_FALSE(IsSame(context, VT_Ref0, VT_Ref2));
+  EXPECT_FALSE(IsSame(context, VT_Ref1, VT_Ref2));
+}
+
+TEST_F(ValidMatchTest, IsSame_ValueType_VarRecursive) {
+  context.same_types.Reset(3);
+  PushFunctionType({}, {VT_Ref0});        // 0
+  PushFunctionType({}, {VT_Ref1});        // 1
+  PushFunctionType({VT_I32}, {VT_Ref0});  // 2
+
+  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref1));
+  EXPECT_FALSE(IsSame(context, VT_Ref0, VT_Ref2));
+  EXPECT_FALSE(IsSame(context, VT_Ref1, VT_Ref2));
+}
+
+TEST_F(ValidMatchTest, IsSame_ValueType_VarMutuallyRecursive) {
+  context.same_types.Reset(3);
+  PushFunctionType({VT_I32}, {VT_Ref0});  // 0
+  PushFunctionType({VT_I32}, {VT_Ref2});  // 1
+  PushFunctionType({VT_I32}, {VT_Ref1});  // 2
+
+  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref1));
+  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref2));
+  EXPECT_TRUE(IsSame(context, VT_Ref1, VT_Ref2));
+}
+
+TEST_F(ValidMatchTest, IsSame_StorageType) {
+  std::vector<StorageType> types{
+      StorageType{VT_I32},
+      StorageType{PackedType::I8},
+      StorageType{PackedType::I16},
+  };
+  IsSameDistinct(types);
+}
+
+TEST_F(ValidMatchTest, IsSame_FieldType) {
+  std::vector<FieldType> types{
+      FieldType{StorageType{VT_I32}, Mutability::Const},
+      FieldType{StorageType{VT_Ref0}, Mutability::Const},
+      FieldType{StorageType{VT_I32}, Mutability::Var},
+      FieldType{StorageType{VT_Ref0}, Mutability::Var},
+  };
+  PushFunctionType({}, {});  // 0
+  IsSameDistinct(types);
+}
+
+TEST_F(ValidMatchTest, IsSame_FunctionType) {
+  std::vector<FunctionType> types{
+      FunctionType{{}, {}},
+      FunctionType{{VT_I32}, {VT_F32}},
+      FunctionType{{VT_Ref0, VT_Ref0}, {VT_Ref0}},
+  };
+  PushFunctionType({}, {});  // 0
+  IsSameDistinct(types);
+}
+
+TEST_F(ValidMatchTest, IsSame_StructType) {
+  std::vector<StructType> types{
+      StructType{},
+      StructType{
+          FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Const}}},
+      StructType{
+          FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Var}}},
+      StructType{
+          FieldTypeList{FieldType{StorageType{VT_Ref0}, Mutability::Var}}},
+      StructType{FieldTypeList{
+          FieldType{StorageType{VT_I32}, Mutability::Const},
+          FieldType{StorageType{PackedType::I8}, Mutability::Var}}},
+  };
+  PushFunctionType({}, {});  // 0
+  IsSameDistinct(types);
+}
+
+TEST_F(ValidMatchTest, IsSame_ArrayType) {
+  std::vector<ArrayType> types{
+      ArrayType{FieldType{StorageType{VT_I32}, Mutability::Const}},
+      ArrayType{FieldType{StorageType{VT_I32}, Mutability::Var}},
+      ArrayType{FieldType{StorageType{VT_Ref0}, Mutability::Const}},
+  };
+  PushFunctionType({}, {});  // 0
+  IsSameDistinct(types);
+}
+
+TEST_F(ValidMatchTest, IsSame_DefinedType) {
+  std::vector<DefinedType> types{
+      DefinedType{FunctionType{}},
+      DefinedType{StructType{}},
+      DefinedType{ArrayType{FieldType{StorageType{VT_I32}, Mutability::Const}}},
+  };
+  IsSameDistinct(types);
+}
+
+
 TEST_F(ValidMatchTest, IsMatch_HeapType_Simple) {
-  std::vector<binary::HeapType> heap_types = {HT_Func, HT_Extern, HT_Any, HT_Eq,
-                                              HT_I31,  HT_Exn,    HT_0,   HT_1};
+  std::vector<HeapType> types{HT_Func, HT_Extern, HT_Any, HT_Eq,
+                              HT_I31,  HT_Exn,    HT_0,   HT_1};
 
-  PushFunctionType({}, {});              // type 0
-  PushStructType(binary::StructType{});  // type 1
+  PushFunctionType({}, {});      // type 0
+  PushStructType(StructType{});  // type 1
 
-  IsMatchTable(context, heap_types,
+  IsMatchTable(types,
                {
                    /*
                    Func  Ext.  Any   Eq    I31   Exn.  0     1     */
@@ -291,14 +387,8 @@ TEST_F(ValidMatchTest, IsMatch_HeapType_Simple) {
                });
 }
 
-TEST_F(ValidMatchTest, IsMatch_EqFuncType) {
-  PushFunctionType({}, {});
-  // Function types are not subtypes of eq.
-  EXPECT_FALSE(IsMatch(context, VT_RefEq, VT_Ref0));
-}
-
 TEST_F(ValidMatchTest, IsMatch_RefType_Simple) {
-  std::vector<binary::RefType> ref_types = {
+  std::vector<RefType> types{
       RefType_Func,   RefType_NullFunc,    //
       RefType_Extern, RefType_NullExtern,  //
       RefType_Any,    RefType_NullAny,     //
@@ -309,11 +399,11 @@ TEST_F(ValidMatchTest, IsMatch_RefType_Simple) {
       RefType_1,      RefType_Null1,       //
   };
 
-  PushFunctionType({}, {});              // type 0
-  PushStructType(binary::StructType{});  // type 1
+  PushFunctionType({}, {});      // type 0
+  PushStructType(StructType{});  // type 1
 
   IsMatchTable(
-      context, ref_types,
+      types,
       {
           /* n     n     n           n     n
              u     u     u     n     u     u
@@ -343,7 +433,7 @@ TEST_F(ValidMatchTest, IsMatch_RefType_Simple) {
 }
 
 TEST_F(ValidMatchTest, IsMatch_ReferenceType_Simple) {
-  std::vector<binary::ReferenceType> reference_types = {
+  std::vector<ReferenceType> types{
       RT_Funcref,   RT_Externref,     RT_Anyref, RT_Eqref, RT_I31ref, RT_Exnref,
 
       RT_RefFunc,   RT_RefNullFunc,    //
@@ -357,10 +447,10 @@ TEST_F(ValidMatchTest, IsMatch_ReferenceType_Simple) {
   };
 
   PushFunctionType({}, {});              // type 0
-  PushStructType(binary::StructType{});  // type 1
+  PushStructType(StructType{});  // type 1
 
   IsMatchTable(
-      context, reference_types,
+      types,
       {
           /*                   n     n     n           n     n
           F  E                 u     u     u     n     u     u
@@ -396,30 +486,21 @@ TEST_F(ValidMatchTest, IsMatch_ReferenceType_Simple) {
 }
 
 TEST_F(ValidMatchTest, IsMatch_Rtt) {
-  std::vector<binary::ValueType> rtts = {
+  std::vector<ValueType> rtts{
       VT_RTT_0_Func, VT_RTT_0_Extern, VT_RTT_0_Exn, VT_RTT_0_Any,
       VT_RTT_0_Eq,   VT_RTT_0_I31,    VT_RTT_0_0,
   };
 
-  IsMatchTable(context, rtts,
-               {
-                   /*
-                   Func  Ext.  Exn   Any   Eq    I31   0     */
-                   SAME, ____, ____, ____, ____, ____, ____,  // Func
-                   ____, SAME, ____, ____, ____, ____, ____,  // Extern
-                   ____, ____, SAME, ____, ____, ____, ____,  // Exn
-                   ____, ____, ____, SAME, ____, ____, ____,  // Any
-                   ____, ____, ____, ____, SAME, ____, ____,  // Eq
-                   ____, ____, ____, ____, ____, SAME, ____,  // I31
-                   ____, ____, ____, ____, ____, ____, SAME,  // 0
-               });
+  IsMatchDistinct(rtts);
 }
 
 TEST_F(ValidMatchTest, IsMatch_ValueType_Simple) {
-  std::vector<binary::ValueType> value_types{
-      VT_I32,       VT_I64,           VT_F32,       VT_F64,
-      VT_V128,      VT_Funcref,       VT_Externref, VT_Anyref,
-      VT_Eqref,     VT_I31ref,        VT_Exnref,
+  std::vector<ValueType> numeric_types{
+      VT_I32, VT_I64, VT_F32, VT_F64, VT_V128,
+  };
+
+  std::vector<ValueType> reference_types{
+      VT_Funcref,   VT_Externref,     VT_Anyref, VT_Eqref, VT_I31ref, VT_Exnref,
 
       VT_RefFunc,   VT_RefNullFunc,    //
       VT_RefExtern, VT_RefNullExtern,  //
@@ -431,79 +512,195 @@ TEST_F(ValidMatchTest, IsMatch_ValueType_Simple) {
       VT_Ref1,      VT_RefNull1,       //
   };
 
-  PushFunctionType({}, {});              // type 0
-  PushStructType(binary::StructType{});  // type 1
+  std::vector<ValueType> rtts{
+      VT_RTT_0_Func, VT_RTT_0_Extern, VT_RTT_0_Any, VT_RTT_0_Eq,
+      VT_RTT_0_I31,  VT_RTT_0_Exn,    VT_RTT_0_0,
+  };
 
-  IsMatchTable(
-      context, value_types,
-      {
-          /*                                  n     n     n           n     n
-                         F  E                 u     u     u     n     u     u
-                         u  x  A     I  E     l     l     l     u     l     l     n     n
-                         n  t  n  E  3  x     l     l     l     l     l     l     u     u
-                      v  c  .  y  q  1  n  f  f                 l                 l     l
-          i  i  f  f  1  r  r  r  r  r  r  u  u  e  e  a  a        i  i  e  e     l     l
-          3  6  3  6  2  e  e  e  e  e  e  n  n  x  x  n  n  e  e  3  3  x  x
-          2  4  2  4  8  f  f  f  f  f  f  c  c  t  t  y  y  q  q  1  1  n  n  0  0  1  1   */
-          S, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, // I32
-          _, S, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, // I64
-          _, _, S, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, // F32
-          _, _, _, S, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, // F64
-          _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, // V128
-          _, _, _, _, _, S, _, M, _, _, _, _, S, _, _, _, M, _, _, _, _, _, _, _, _, _, _, // Funcref
-          _, _, _, _, _, _, S, M, _, _, _, _, _, _, S, _, M, _, _, _, _, _, _, _, _, _, _, // Externref
-          _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, // Anyref
-          _, _, _, _, _, _, _, M, S, _, _, _, _, _, _, _, M, _, S, _, _, _, _, _, _, _, _, // Eqref
-          _, _, _, _, _, _, _, M, M, S, _, _, _, _, _, M, M, M, M, S, M, _, _, _, _, _, _, // I31ref
-          _, _, _, _, _, _, _, M, _, _, S, _, _, _, _, _, M, _, _, _, _, _, S, _, _, _, _, // Exnref
-          _, _, _, _, _, M, _, M, _, _, _, S, M, _, _, M, M, _, _, _, _, _, _, _, _, _, _, // ref func
-          _, _, _, _, _, S, _, M, _, _, _, _, S, _, _, _, M, _, _, _, _, _, _, _, _, _, _, // ref null func
-          _, _, _, _, _, _, M, M, _, _, _, _, _, S, M, M, M, _, _, _, _, _, _, _, _, _, _, // ref extern
-          _, _, _, _, _, _, S, M, _, _, _, _, _, _, S, _, M, _, _, _, _, _, _, _, _, _, _, // ref null extern
-          _, _, _, _, _, _, _, M, _, _, _, _, _, _, _, S, M, _, _, _, _, _, _, _, _, _, _, // ref any
-          _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, S, _, _, _, _, _, _, _, _, _, _, // ref null any
-          _, _, _, _, _, _, _, M, M, _, _, _, _, _, _, M, M, S, M, _, _, _, _, _, _, _, _, // ref eq
-          _, _, _, _, _, _, _, M, S, _, _, _, _, _, _, _, M, _, S, _, _, _, _, _, _, _, _, // ref null eq
-          _, _, _, _, _, _, _, M, M, S, _, _, _, _, _, M, M, M, M, S, M, _, _, _, _, _, _, // ref i31
-          _, _, _, _, _, _, _, M, M, _, _, _, _, _, _, _, M, _, M, _, S, _, _, _, _, _, _, // ref null i31
-          _, _, _, _, _, _, _, M, _, _, M, _, _, _, _, M, M, _, _, _, _, S, M, _, _, _, _, // ref exn
-          _, _, _, _, _, _, _, M, _, _, S, _, _, _, _, _, M, _, _, _, _, _, S, _, _, _, _, // ref null exn
-          _, _, _, _, _, M, _, M, _, _, _, M, M, _, _, M, M, _, _, _, _, _, _, S, M, _, _, // ref 0
-          _, _, _, _, _, M, _, M, _, _, _, _, M, _, _, _, M, _, _, _, _, _, _, _, S, _, _, // ref null 0
-          _, _, _, _, _, _, _, M, M, _, _, _, _, _, _, M, M, M, M, _, _, _, _, _, _, S, M, // ref 1
-          _, _, _, _, _, _, _, M, M, _, _, _, _, _, _, _, M, _, M, _, _, _, _, _, _, _, S, // ref null 1
-      });
+  PushFunctionType({}, {});      // type 0
+  PushStructType(StructType{});  // type 1
+
+  IsMatchDistinct(numeric_types, reference_types);
+  IsMatchDistinct(numeric_types, rtts);
+  IsMatchDistinct(reference_types, rtts);
+
+  IsMatchDistinct(rtts);
+  IsMatchDistinct(numeric_types);
 }
 
-TEST_F(ValidMatchTest, IsSame_ValueType_Var) {
-  context.equivalent_types.Reset(3);
-  PushFunctionType({VT_F32}, {});  // 0
-  PushFunctionType({VT_F32}, {});  // 1
-  PushFunctionType({VT_I32}, {});  // 2
+TEST_F(ValidMatchTest, IsMatch_StorageType) {
+  std::vector<StorageType> types{
+      StorageType{VT_I32},          StorageType{VT_Ref0},
+      StorageType{VT_Ref1},         StorageType{PackedType::I8},
+      StorageType{PackedType::I16},
+  };
 
-  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref1));
-  EXPECT_FALSE(IsSame(context, VT_Ref0, VT_Ref2));
-  EXPECT_FALSE(IsSame(context, VT_Ref1, VT_Ref2));
+  PushFunctionType({}, {});      // type 0
+  PushStructType(StructType{});  // type 1
+
+  IsMatchDistinct(types);
 }
 
-TEST_F(ValidMatchTest, IsSame_ValueType_VarRecursive) {
-  context.equivalent_types.Reset(3);
-  PushFunctionType({}, {VT_Ref0});        // 0
-  PushFunctionType({}, {VT_Ref1});        // 1
-  PushFunctionType({VT_I32}, {VT_Ref0});  // 2
+TEST_F(ValidMatchTest, IsMatch_FieldType_Simple) {
+  std::vector<FieldType> types{
+      FieldType{StorageType{VT_I32}, Mutability::Const},
+      FieldType{StorageType{VT_I32}, Mutability::Var},
+      FieldType{StorageType{VT_Ref0}, Mutability::Const},
+      FieldType{StorageType{VT_Ref0}, Mutability::Var},
+      FieldType{StorageType{VT_Ref1}, Mutability::Const},
+      FieldType{StorageType{VT_Ref1}, Mutability::Var},
+      FieldType{StorageType{PackedType::I8}, Mutability::Const},
+      FieldType{StorageType{PackedType::I8}, Mutability::Var},
+  };
 
-  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref1));
-  EXPECT_FALSE(IsSame(context, VT_Ref0, VT_Ref2));
-  EXPECT_FALSE(IsSame(context, VT_Ref1, VT_Ref2));
+  PushFunctionType({}, {});      // type 0
+  PushStructType(StructType{});  // type 1
+
+  IsMatchDistinct(types);
 }
 
-TEST_F(ValidMatchTest, IsSame_ValueType_VarMutuallyRecursive) {
-  context.equivalent_types.Reset(3);
-  PushFunctionType({VT_I32}, {VT_Ref0});  // 0
-  PushFunctionType({VT_I32}, {VT_Ref2});  // 1
-  PushFunctionType({VT_I32}, {VT_Ref1});  // 2
+TEST_F(ValidMatchTest, IsMatch_FieldType_Subtyping) {
+  PushFunctionType({}, {});      // type 0
 
-  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref1));
-  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref2));
-  EXPECT_TRUE(IsSame(context, VT_Ref1, VT_Ref2));
+  // Only const fields are covariant.
+  EXPECT_TRUE(IsMatch(context,
+                      FieldType{StorageType{VT_Funcref}, Mutability::Const},
+                      FieldType{StorageType{VT_Ref0}, Mutability::Const}));
+  EXPECT_FALSE(IsMatch(context,
+                       FieldType{StorageType{VT_Funcref}, Mutability::Var},
+                       FieldType{StorageType{VT_Ref0}, Mutability::Var}));
+}
+
+TEST_F(ValidMatchTest, IsMatch_FieldTypeList) {
+  std::vector<FieldTypeList> types{
+      // (field i32)
+      FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Const}},
+      // (field (mut i32))
+      FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Var}},
+      // (field i64 i32)
+      FieldTypeList{FieldType{StorageType{VT_I64}, Mutability::Const},
+                    FieldType{StorageType{VT_I32}, Mutability::Const}},
+      // (field (mut i64) i32)
+      FieldTypeList{FieldType{StorageType{VT_I64}, Mutability::Var},
+                    FieldType{StorageType{VT_I32}, Mutability::Const}},
+      // (field (mut (ref 0)))
+      FieldTypeList{FieldType{StorageType{VT_Ref0}, Mutability::Var}},
+      // (field (mut (ref 1)))
+      FieldTypeList{FieldType{StorageType{VT_Ref1}, Mutability::Var}},
+  };
+
+  PushFunctionType({}, {});      // type 0
+  PushStructType(StructType{});  // type 1
+
+  IsMatchDistinct(types);
+}
+
+TEST_F(ValidMatchTest, IsMatch_FieldTypeList_Subtyping) {
+  const auto FTL_i32 =
+      FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Const}};
+  const auto FTL_i32_i64 =
+      FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Const},
+                    FieldType{StorageType{VT_I64}, Mutability::Const}};
+
+  // Width subtyping, with the same field type.
+  EXPECT_TRUE(IsMatch(context, FTL_i32, FTL_i32_i64));
+  EXPECT_FALSE(IsMatch(context, FTL_i32_i64, FTL_i32));
+
+  PushFunctionType({}, {});      // type 0
+
+  // Width subtyping and field covariance.
+  EXPECT_TRUE(IsMatch(
+      context,
+      // (field funcref)
+      FieldTypeList{FieldType{StorageType{VT_Funcref}, Mutability::Const}},
+      // (field (ref 0) i32)
+      FieldTypeList{FieldType{StorageType{VT_Ref0}, Mutability::Const},
+                    FieldType{StorageType{VT_I32}, Mutability::Const}}));
+
+  // Width subtyping, but non-const field inhibits covariance.
+  EXPECT_FALSE(IsMatch(
+      context,
+      // (field funcref)
+      FieldTypeList{FieldType{StorageType{VT_Funcref}, Mutability::Var}},
+      // (field (ref 0) i32)
+      FieldTypeList{FieldType{StorageType{VT_Ref0}, Mutability::Var},
+                    FieldType{StorageType{VT_I32}, Mutability::Const}}));
+}
+
+TEST_F(ValidMatchTest, IsMatch_FunctionType) {
+  std::vector<FunctionType> types{
+      FunctionType{{}, {}},
+      FunctionType{{VT_I32}, {VT_F32}},
+      FunctionType{{VT_Ref0, VT_Ref0}, {VT_Ref0}},
+  };
+  PushFunctionType({}, {});  // 0
+  IsMatchDistinct(types);
+}
+
+TEST_F(ValidMatchTest, IsMatch_StructType_Simple) {
+  std::vector<StructType> types{
+      StructType{
+          FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Const}}},
+      StructType{
+          FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Var}}},
+      StructType{
+          FieldTypeList{FieldType{StorageType{VT_Ref0}, Mutability::Var}}},
+      StructType{FieldTypeList{
+          FieldType{StorageType{VT_I64}, Mutability::Const},
+          FieldType{StorageType{PackedType::I8}, Mutability::Var}}},
+  };
+  PushFunctionType({}, {});  // 0
+  IsMatchDistinct(types);
+}
+
+TEST_F(ValidMatchTest, IsMatch_StructType_Subtyping) {
+  PushFunctionType({}, {});  // 0
+
+  // Allow width subtyping (e.g. empty struct is supertype of all structs).
+  EXPECT_TRUE(IsMatch(context, StructType{},
+                      StructType{FieldTypeList{
+                          FieldType{StorageType{VT_I32}, Mutability::Const}}}));
+
+  // Allow depth subtyping, given a const field.
+  EXPECT_TRUE(IsMatch(context,
+                      StructType{FieldTypeList{FieldType{
+                          StorageType{VT_Funcref}, Mutability::Const}}},
+                      StructType{FieldTypeList{FieldType{StorageType{VT_Ref0},
+                                                         Mutability::Const}}}));
+
+  // Width and depth subtyping.
+  EXPECT_TRUE(IsMatch(context,
+                      StructType{FieldTypeList{FieldType{
+                          StorageType{VT_Funcref}, Mutability::Const}}},
+                      StructType{FieldTypeList{
+                          FieldType{StorageType{VT_Ref0}, Mutability::Const},
+                          FieldType{StorageType{VT_I32}, Mutability::Var}}}));
+}
+
+TEST_F(ValidMatchTest, IsMatch_ArrayType_Simple) {
+  std::vector<ArrayType> types{
+      ArrayType{FieldType{StorageType{VT_I32}, Mutability::Const}},
+      ArrayType{FieldType{StorageType{VT_I32}, Mutability::Var}},
+      ArrayType{FieldType{StorageType{VT_Ref0}, Mutability::Const}},
+  };
+  PushFunctionType({}, {});  // 0
+  IsMatchDistinct(types);
+}
+
+TEST_F(ValidMatchTest, IsMatch_ArrayType_Subtyping) {
+  PushFunctionType({}, {});  // 0
+
+  // Allow depth subtyping, given a const field.
+  EXPECT_TRUE(IsMatch(
+      context, ArrayType{FieldType{StorageType{VT_Funcref}, Mutability::Const}},
+      ArrayType{FieldType{StorageType{VT_Ref0}, Mutability::Const}}));
+}
+
+TEST_F(ValidMatchTest, IsMatch_DefinedType) {
+  std::vector<DefinedType> types{
+      DefinedType{FunctionType{}},
+      DefinedType{StructType{}},
+      DefinedType{ArrayType{FieldType{StorageType{VT_I32}, Mutability::Const}}},
+  };
+  IsMatchDistinct(types);
 }

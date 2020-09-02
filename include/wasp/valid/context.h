@@ -61,7 +61,7 @@ struct Label {
   bool unreachable;
 };
 
-class EquivalentTypes {
+class TypeRelationSet {
  public:
   void Reset(Index);
 
@@ -108,7 +108,9 @@ struct Context {
   std::vector<Label> label_stack;
   std::set<string_view> export_names;
   std::set<Index> declared_functions;
-  EquivalentTypes equivalent_types;
+
+  TypeRelationSet same_types;
+  TypeRelationSet match_types;
 };
 
 }  // namespace wasp::valid

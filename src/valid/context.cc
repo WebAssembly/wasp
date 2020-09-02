@@ -61,12 +61,12 @@ bool Context::IsArrayType(Index index) const {
   return index < types.size() && types[index].is_array_type();
 }
 
-void EquivalentTypes::Reset(Index size) {
+void TypeRelationSet::Reset(Index size) {
   disjoint_set_.Reset(size);
   assume_.clear();
 }
 
-auto EquivalentTypes::Get(Index expected, Index actual) -> optional<bool> {
+auto TypeRelationSet::Get(Index expected, Index actual) -> optional<bool> {
   MaybeSwapIndexes(expected, actual);
   if (!(disjoint_set_.IsValid(expected) && disjoint_set_.IsValid(actual))) {
     // If the indexes are invalid, then there's no point in checking whether
@@ -86,12 +86,12 @@ auto EquivalentTypes::Get(Index expected, Index actual) -> optional<bool> {
   return iter->second;
 }
 
-void EquivalentTypes::Assume(Index expected, Index actual) {
+void TypeRelationSet::Assume(Index expected, Index actual) {
   MaybeSwapIndexes(expected, actual);
   assume_.insert({{expected, actual}, true});
 }
 
-void EquivalentTypes::Resolve(Index expected, Index actual, bool is_same) {
+void TypeRelationSet::Resolve(Index expected, Index actual, bool is_same) {
   MaybeSwapIndexes(expected, actual);
   auto iter = assume_.find({expected, actual});
   assert(iter != assume_.end());
@@ -103,7 +103,7 @@ void EquivalentTypes::Resolve(Index expected, Index actual, bool is_same) {
   }
 }
 
-void EquivalentTypes::MaybeSwapIndexes(Index& lhs, Index& rhs) {
+void TypeRelationSet::MaybeSwapIndexes(Index& lhs, Index& rhs) {
   if (lhs > rhs) {
     std::swap(lhs, rhs);
   }

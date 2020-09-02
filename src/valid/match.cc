@@ -29,6 +29,8 @@ auto CanonicalizeToRefType(const binary::ReferenceType& type)
   return canon.ref();
 }
 
+/// IsSame ///
+
 bool IsSame(Context& context,
             const binary::HeapType& expected,
             const binary::HeapType& actual) {
@@ -41,17 +43,16 @@ bool IsSame(Context& context,
       return true;
     }
 
-    auto is_equ_opt =
-        context.equivalent_types.Get(expected_index, actual_index);
-    if (is_equ_opt) {
-      return *is_equ_opt;
+    auto is_same_opt = context.same_types.Get(expected_index, actual_index);
+    if (is_same_opt) {
+      return *is_same_opt;
     }
 
     // Assume that they are the same and check that everything still is valid.
-    context.equivalent_types.Assume(expected_index, actual_index);
+    context.same_types.Assume(expected_index, actual_index);
     bool is_same = IsSame(context, context.types[expected_index],
                           context.types[actual_index]);
-    context.equivalent_types.Resolve(expected_index, actual_index, is_same);
+    context.same_types.Resolve(expected_index, actual_index, is_same);
     return is_same;
   }
   return false;
@@ -118,14 +119,6 @@ bool IsSame(Context& context,
 }
 
 bool IsSame(Context& context,
-            const binary::DefinedType& expected,
-            const binary::DefinedType& actual) {
-  // TODO: Add support for struct and array types.
-  assert(expected.is_function_type() && actual.is_function_type());
-  return IsSame(context, expected.function_type(), actual.function_type());
-}
-
-bool IsSame(Context& context,
             const StackType& expected,
             const StackType& actual) {
   // One of the types is "any" (i.e. universal supertype or subtype), or the
@@ -149,6 +142,68 @@ bool IsSame(Context& context, StackTypeSpan expected, StackTypeSpan actual) {
   return true;
 }
 
+bool IsSame(Context& context,
+            const binary::StorageType& expected,
+            const binary::StorageType& actual) {
+  if (expected.is_value_type() && actual.is_value_type()) {
+    return IsSame(context, expected.value_type(), actual.value_type());
+  } else if (expected.is_packed_type() && actual.is_packed_type()) {
+    return expected.packed_type().value() == actual.packed_type().value();
+  }
+  return false;
+}
+
+bool IsSame(Context& context,
+            const binary::FieldType& expected,
+            const binary::FieldType& actual) {
+  return IsSame(context, expected.type, actual.type) &&
+         expected.mut.value() == actual.mut.value();
+}
+
+bool IsSame(Context& context,
+            const binary::FieldTypeList& expected,
+            const binary::FieldTypeList& actual) {
+  if (expected.size() != actual.size()) {
+    return false;
+  }
+
+  for (auto eiter = expected.begin(), lend = expected.end(),
+            aiter = actual.begin();
+       eiter != lend; ++eiter, ++aiter) {
+    if (!IsSame(context, *eiter, *aiter)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool IsSame(Context& context,
+            const binary::StructType& expected,
+            const binary::StructType& actual) {
+  return IsSame(context, expected.fields, actual.fields);
+}
+
+bool IsSame(Context& context,
+            const binary::ArrayType& expected,
+            const binary::ArrayType& actual) {
+  return IsSame(context, expected.field, actual.field);
+}
+
+bool IsSame(Context& context,
+            const binary::DefinedType& expected,
+            const binary::DefinedType& actual) {
+  if (expected.is_function_type() && actual.is_function_type()) {
+    return IsSame(context, expected.function_type(), actual.function_type());
+  } else if (expected.is_struct_type() && actual.is_struct_type()) {
+    return IsSame(context, expected.struct_type(), actual.struct_type());
+  } else if (expected.is_array_type() && actual.is_array_type()) {
+    return IsSame(context, expected.array_type(), actual.array_type());
+  }
+  return false;
+}
+
+/// IsMatch ///
+
 bool IsMatch(Context& context,
              const binary::HeapType& expected,
              const binary::HeapType& actual) {
@@ -171,6 +226,29 @@ bool IsMatch(Context& context,
                                      context.IsArrayType(actual.index()))) {
       return true;
     }
+  }
+
+  if (expected.is_index() && actual.is_index()) {
+    Index expected_index = expected.index().value();
+    Index actual_index = actual.index().value();
+    if (expected_index == actual_index) {
+      return true;
+    }
+
+    // Check whether heap types match, but make sure to handle recursive
+    // structures. This is the same logic used in IsSame(HeapType, HeapType).
+
+    auto is_match_opt = context.match_types.Get(expected_index, actual_index);
+    if (is_match_opt) {
+      return *is_match_opt;
+    }
+
+    // Assume that they match and check that everything still is valid.
+    context.match_types.Assume(expected_index, actual_index);
+    bool is_match = IsMatch(context, context.types[expected_index],
+                            context.types[actual_index]);
+    context.match_types.Resolve(expected_index, actual_index, is_match);
+    return is_match;
   }
 
   return IsSame(context, expected, actual);
@@ -254,6 +332,78 @@ bool IsMatch(Context& context, StackTypeSpan expected, StackTypeSpan actual) {
     }
   }
   return true;
+}
+
+bool IsMatch(Context& context,
+             const binary::StorageType& expected,
+             const binary::StorageType& actual) {
+  if (expected.is_value_type() && actual.is_value_type()) {
+    return IsMatch(context, expected.value_type(), actual.value_type());
+  } else if (expected.is_packed_type() && actual.is_packed_type()) {
+    return expected.packed_type().value() == actual.packed_type().value();
+  }
+  return false;
+}
+
+bool IsMatch(Context& context,
+             const binary::FieldType& expected,
+             const binary::FieldType& actual) {
+  // Only const fields are covariant.
+  if (expected.mut == Mutability::Const && actual.mut == Mutability::Const) {
+    return IsMatch(context, expected.type, actual.type);
+  }
+  return IsSame(context, expected, actual);
+}
+
+bool IsMatch(Context& context,
+             const binary::FieldTypeList& expected,
+             const binary::FieldTypeList& actual) {
+  // A longer list of fields is a subtype of a shorter list, as long as the
+  // types match.
+  if (expected.size() > actual.size()) {
+    return false;
+  }
+
+  for (auto eiter = expected.begin(), lend = expected.end(),
+            aiter = actual.begin();
+       eiter != lend; ++eiter, ++aiter) {
+    if (!IsMatch(context, *eiter, *aiter)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool IsMatch(Context& context,
+             const binary::FunctionType& expected,
+             const binary::FunctionType& actual) {
+  // Function types have no subtyping, so just check if they are equivalent.
+  return IsSame(context, expected, actual);
+}
+
+bool IsMatch(Context& context,
+             const binary::StructType& expected,
+             const binary::StructType& actual) {
+  return IsMatch(context, expected.fields, actual.fields);
+}
+
+bool IsMatch(Context& context,
+             const binary::ArrayType& expected,
+             const binary::ArrayType& actual) {
+  return IsMatch(context, expected.field, actual.field);
+}
+
+bool IsMatch(Context& context,
+             const binary::DefinedType& expected,
+             const binary::DefinedType& actual) {
+  if (expected.is_function_type() && actual.is_function_type()) {
+    return IsSame(context, expected.function_type(), actual.function_type());
+  } else if (expected.is_struct_type() && actual.is_struct_type()) {
+    return IsMatch(context, expected.struct_type(), actual.struct_type());
+  } else if (expected.is_array_type() && actual.is_array_type()) {
+    return IsMatch(context, expected.array_type(), actual.array_type());
+  }
+  return false;
 }
 
 }  // namespace wasp::valid

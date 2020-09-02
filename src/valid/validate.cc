@@ -33,7 +33,8 @@ namespace wasp::valid {
 
 bool BeginTypeSection(Context& context, Index type_count) {
   context.defined_type_count = type_count;
-  context.equivalent_types.Reset(type_count);
+  context.same_types.Reset(type_count);
+  context.match_types.Reset(type_count);
   return true;
 }
 
