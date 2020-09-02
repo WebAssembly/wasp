@@ -150,6 +150,10 @@ bool HeapType::is_heap_kind() const {
   return holds_alternative<At<HeapKind>>(type);
 }
 
+bool HeapType::is_heap_kind(HeapKind hk) const {
+  return is_heap_kind() && heap_kind() == hk;
+}
+
 bool HeapType::is_index() const {
   return holds_alternative<At<Index>>(type);
 }

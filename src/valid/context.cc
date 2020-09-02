@@ -49,6 +49,18 @@ bool Context::IsStackPolymorphic() const {
   return label_stack.back().unreachable;
 }
 
+bool Context::IsFunctionType(Index index) const {
+  return index < types.size() && types[index].is_function_type();
+}
+
+bool Context::IsStructType(Index index) const {
+  return index < types.size() && types[index].is_struct_type();
+}
+
+bool Context::IsArrayType(Index index) const {
+  return index < types.size() && types[index].is_array_type();
+}
+
 void EquivalentTypes::Reset(Index size) {
   disjoint_set_.Reset(size);
   assume_.clear();

@@ -211,6 +211,7 @@ TEST(ValidateTest, ConstantExpression_WrongInstructionCount) {
 TEST(ValidateTest, ConstantExpression_Funcref) {
   TestErrors errors;
   Context context{errors};
+  context.types.push_back(DefinedType{FunctionType{}});
   context.functions.push_back(Function{0});
 
   // Using ref.func in the global section implicitly declares that function.
@@ -1247,6 +1248,7 @@ TEST(ValidateTest, ValueType_RefType_IndexOOB) {
 TEST(ValidateTest, ValueType_FuncrefSubtyping) {
   TestErrors errors;
   Context context{errors};
+  context.types.push_back(DefinedType{FunctionType{}});
 
   // ref null 0 is a supertype of ref 0.
   EXPECT_TRUE(Validate(context, VT_RefNull0, VT_Ref0));

@@ -39,6 +39,7 @@ struct HeapType {
   explicit HeapType(At<Index>);
 
   bool is_heap_kind() const;
+  bool is_heap_kind(HeapKind) const;
   bool is_index() const;
 
   auto heap_kind() -> At<HeapKind>&;

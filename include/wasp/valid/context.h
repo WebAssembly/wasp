@@ -84,6 +84,9 @@ struct Context {
   void Reset();
 
   bool IsStackPolymorphic() const;
+  bool IsFunctionType(Index) const;
+  bool IsStructType(Index) const;
+  bool IsArrayType(Index) const;
 
   Features features;
   Errors* errors;
