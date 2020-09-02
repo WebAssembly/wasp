@@ -40,11 +40,29 @@ bool IsSame(Context&,
 bool IsSame(Context&,
             const binary::ValueTypeList& expected,
             const binary::ValueTypeList& actual);
+bool IsSame(Context&, const StackType& expected, const StackType& actual);
+bool IsSame(Context&, StackTypeSpan expected, StackTypeSpan actual);
+bool IsSame(Context& context,
+            const binary::StorageType& expected,
+            const binary::StorageType& actual);
+bool IsSame(Context& context,
+            const binary::FieldType& expected,
+            const binary::FieldType& actual);
+bool IsSame(Context& context,
+            const binary::FieldTypeList& expected,
+            const binary::FieldTypeList& actual);
+bool IsSame(Context& context,
+            const binary::FunctionType& expected,
+            const binary::FunctionType& actual);
+bool IsSame(Context& context,
+            const binary::StructType& expected,
+            const binary::StructType& actual);
+bool IsSame(Context& context,
+            const binary::ArrayType& expected,
+            const binary::ArrayType& actual);
 bool IsSame(Context& context,
             const binary::DefinedType& expected,
             const binary::DefinedType& actual);
-bool IsSame(Context&, const StackType& expected, const StackType& actual);
-bool IsSame(Context&, StackTypeSpan expected, StackTypeSpan actual);
 
 bool IsMatch(Context&,
              const binary::HeapType& expected,
@@ -64,6 +82,27 @@ bool IsMatch(Context&,
              const binary::ValueTypeList& actual);
 bool IsMatch(Context&, const StackType& expected, const StackType& actual);
 bool IsMatch(Context&, StackTypeSpan expected, StackTypeSpan actual);
+bool IsMatch(Context& context,
+             const binary::StorageType& expected,
+             const binary::StorageType& actual);
+bool IsMatch(Context& context,
+             const binary::FieldType& expected,
+             const binary::FieldType& actual);
+bool IsMatch(Context& context,
+             const binary::FieldTypeList& expected,
+             const binary::FieldTypeList& actual);
+bool IsMatch(Context& context,
+             const binary::FunctionType& expected,
+             const binary::FunctionType& actual);
+bool IsMatch(Context& context,
+             const binary::StructType& expected,
+             const binary::StructType& actual);
+bool IsMatch(Context& context,
+             const binary::ArrayType& expected,
+             const binary::ArrayType& actual);
+bool IsMatch(Context& context,
+             const binary::DefinedType& expected,
+             const binary::DefinedType& actual);
 
 }  // namespace wasp::valid
 
