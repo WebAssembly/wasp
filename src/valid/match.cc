@@ -74,12 +74,21 @@ bool IsSame(Context& context,
 }
 
 bool IsSame(Context& context,
+            const binary::Rtt& expected,
+            const binary::Rtt& actual) {
+  return expected.depth.value() == actual.depth.value() &&
+         IsSame(context, expected.type, actual.type);
+}
+
+bool IsSame(Context& context,
             const binary::ValueType& expected,
             const binary::ValueType& actual) {
   if (expected.is_numeric_type() && actual.is_numeric_type()) {
     return expected.numeric_type().value() == actual.numeric_type().value();
   } else if (expected.is_reference_type() && actual.is_reference_type()) {
     return IsSame(context, expected.reference_type(), actual.reference_type());
+  } else if (expected.is_rtt() && actual.is_rtt()) {
+    return IsSame(context, expected.rtt(), actual.rtt());
   }
   return false;
 }
@@ -143,10 +152,25 @@ bool IsSame(Context& context, StackTypeSpan expected, StackTypeSpan actual) {
 bool IsMatch(Context& context,
              const binary::HeapType& expected,
              const binary::HeapType& actual) {
-  // "func" is a supertype of all function types.
-  if (expected.is_heap_kind() && expected.heap_kind() == HeapKind::Func &&
-      actual.is_index()) {
+  // `any` is a supertype of all types.
+  if (expected.is_heap_kind(HeapKind::Any)) {
     return true;
+  }
+
+  // `func` is a supertype of all function types.
+  if (expected.is_heap_kind(HeapKind::Func) && actual.is_index() &&
+      context.IsFunctionType(actual.index())) {
+    return true;
+  }
+
+  // `eq` is a supertype of all i31, or any non-function defined type.
+  if (expected.is_heap_kind(HeapKind::Eq)) {
+    if (actual.is_heap_kind(HeapKind::I31)) {
+      return true;
+    } else if (actual.is_index() && (context.IsStructType(actual.index()) ||
+                                     context.IsArrayType(actual.index()))) {
+      return true;
+    }
   }
 
   return IsSame(context, expected, actual);
@@ -172,12 +196,21 @@ bool IsMatch(Context& context,
 }
 
 bool IsMatch(Context& context,
+             const binary::Rtt& expected,
+             const binary::Rtt& actual) {
+  // Rtt's don't have any subtyping, aside from rtt <: any
+  return IsSame(context, expected, actual);
+}
+
+bool IsMatch(Context& context,
              const binary::ValueType& expected,
              const binary::ValueType& actual) {
   if (expected.is_numeric_type() && actual.is_numeric_type()) {
     return expected.numeric_type().value() == actual.numeric_type().value();
   } else if (expected.is_reference_type() && actual.is_reference_type()) {
     return IsMatch(context, expected.reference_type(), actual.reference_type());
+  } else if (expected.is_rtt() && actual.is_rtt()) {
+    return IsMatch(context, expected.rtt(), actual.rtt());
   }
   return false;
 }

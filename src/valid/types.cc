@@ -143,14 +143,30 @@ bool IsReferenceTypeOrAny(StackType type) {
 auto Canonicalize(binary::ReferenceType type) -> binary::ReferenceType {
   if (type.is_reference_kind()) {
     switch (type.reference_kind()) {
-#define WASP_V(val, Name, str, ...) \
-  case ReferenceKind::Name##ref:    \
-    return binary::ReferenceType{   \
-        binary::RefType{binary::HeapType{HeapKind::Name}, Null::Yes}};
-#define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/base/def/heap_kind.def"
-#undef WASP_V
-#undef WASP_FEATURE_V
+      case ReferenceKind::Funcref:
+        return binary::ReferenceType{
+            binary::RefType{binary::HeapType{HeapKind::Func}, Null::Yes}};
+
+      case ReferenceKind::Externref:
+        return binary::ReferenceType{
+            binary::RefType{binary::HeapType{HeapKind::Extern}, Null::Yes}};
+
+      case ReferenceKind::Anyref:
+        return binary::ReferenceType{
+            binary::RefType{binary::HeapType{HeapKind::Any}, Null::Yes}};
+
+      case ReferenceKind::Eqref:
+        return binary::ReferenceType{
+            binary::RefType{binary::HeapType{HeapKind::Eq}, Null::Yes}};
+
+      case ReferenceKind::I31ref:
+        // NOTE: i31ref is equivalent to (ref i31), not (ref null i31).
+        return binary::ReferenceType{
+            binary::RefType{binary::HeapType{HeapKind::I31}, Null::No}};
+
+      case ReferenceKind::Exnref:
+        return binary::ReferenceType{
+            binary::RefType{binary::HeapType{HeapKind::Exn}, Null::Yes}};
 
       default:
         WASP_UNREACHABLE();

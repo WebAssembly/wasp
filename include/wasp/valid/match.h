@@ -33,6 +33,7 @@ bool IsSame(Context&,
 bool IsSame(Context&,
             const binary::ReferenceType& expected,
             const binary::ReferenceType& actual);
+bool IsSame(Context&, const binary::Rtt& expected, const binary::Rtt& actual);
 bool IsSame(Context&,
             const binary::ValueType& expected,
             const binary::ValueType& actual);
@@ -54,6 +55,7 @@ bool IsMatch(Context&,
 bool IsMatch(Context&,
              const binary::ReferenceType& expected,
              const binary::ReferenceType& actual);
+bool IsMatch(Context&, const binary::Rtt& expected, const binary::Rtt& actual);
 bool IsMatch(Context&,
              const binary::ValueType& expected,
              const binary::ValueType& actual);
