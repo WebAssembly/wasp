@@ -56,6 +56,20 @@ TEST(ValidateTest, UnpackedCode_DefaultableLocals) {
   EXPECT_FALSE(Validate(context, code));
 }
 
+TEST(ValidateTest, ArrayType) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_TRUE(Validate(
+      context, ArrayType{FieldType{StorageType{VT_I32}, Mutability::Const}}));
+}
+
+TEST(ValidateTest, ArrayType_IndexOOB) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_FALSE(Validate(
+      context, ArrayType{FieldType{StorageType{VT_Ref1}, Mutability::Const}}));
+}
+
 TEST(ValidateTest, ConstantExpression_Const) {
   const struct {
     Instruction instr;
@@ -530,6 +544,38 @@ TEST(ValidateTest, Event) {
       Validate(context, Event{EventType{EventAttribute::Exception, Index{0}}}));
 }
 
+TEST(ValidateTest, Event_InvalidType) {
+  TestErrors errors;
+  Context context{errors};
+  context.types.push_back(DefinedType{StructType{}});
+  context.defined_type_count = 1;
+  EXPECT_FALSE(
+      Validate(context, Event{EventType{EventAttribute::Exception, Index{0}}}));
+}
+
+TEST(ValidateTest, FieldType) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_TRUE(
+      Validate(context, FieldType{StorageType{VT_I32}, Mutability::Const}));
+}
+
+TEST(ValidateTest, FieldType_IndexOOB) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_FALSE(
+      Validate(context, FieldType{StorageType{VT_Ref1}, Mutability::Const}));
+}
+
+TEST(ValidateTest, FieldTypeList) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_TRUE(Validate(
+      context,
+      FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Const},
+                    FieldType{StorageType{PackedType::I8}, Mutability::Var}}));
+}
+
 TEST(ValidateTest, EventType) {
   Features features;
   TestErrors errors;
@@ -569,6 +615,14 @@ TEST(ValidateTest, Function) {
 TEST(ValidateTest, Function_IndexOOB) {
   TestErrors errors;
   Context context{errors};
+  EXPECT_FALSE(Validate(context, Function{0}));
+}
+
+TEST(ValidateTest, Function_InvalidType) {
+  TestErrors errors;
+  Context context{errors};
+  context.types.push_back(DefinedType{StructType{}});
+  context.defined_type_count = 1;
   EXPECT_FALSE(Validate(context, Function{0}));
 }
 
@@ -968,6 +1022,29 @@ TEST(ValidateTest, MemoryType_Shared_NoMax) {
   EXPECT_FALSE(Validate(context, MemoryType{Limits{0, nullopt, Shared::Yes}}));
 }
 
+TEST(ValidateTest, Rtt) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_TRUE(Validate(context, Rtt{0, HT_Any}));
+  EXPECT_TRUE(Validate(context, Rtt{0, HT_Func}));
+  EXPECT_TRUE(Validate(context, Rtt{0, HT_Extern}));
+  EXPECT_TRUE(Validate(context, Rtt{0, HT_I31}));
+  EXPECT_TRUE(Validate(context, Rtt{0, HT_Eq}));
+  EXPECT_TRUE(Validate(context, Rtt{0, HT_0}));
+  EXPECT_TRUE(Validate(context, Rtt{1, HT_Any}));
+  EXPECT_TRUE(Validate(context, Rtt{1, HT_Func}));
+  EXPECT_TRUE(Validate(context, Rtt{1, HT_Extern}));
+  EXPECT_TRUE(Validate(context, Rtt{1, HT_I31}));
+  EXPECT_TRUE(Validate(context, Rtt{1, HT_Eq}));
+  EXPECT_TRUE(Validate(context, Rtt{1, HT_0}));
+  EXPECT_TRUE(Validate(context, Rtt{123, HT_Any}));
+  EXPECT_TRUE(Validate(context, Rtt{123, HT_Func}));
+  EXPECT_TRUE(Validate(context, Rtt{123, HT_Extern}));
+  EXPECT_TRUE(Validate(context, Rtt{123, HT_I31}));
+  EXPECT_TRUE(Validate(context, Rtt{123, HT_Eq}));
+  EXPECT_TRUE(Validate(context, Rtt{123, HT_0}));
+}
+
 TEST(ValidateTest, Start) {
   TestErrors errors;
   Context context{errors};
@@ -1001,6 +1078,46 @@ TEST(ValidateTest, Start_InvalidResultCount) {
   context.defined_type_count = 1;
   context.functions.push_back(Function{0});
   EXPECT_FALSE(Validate(context, Start{0}));
+}
+
+TEST(ValidateTest, Start_InvalidType) {
+  TestErrors errors;
+  Context context{errors};
+  context.types.push_back(DefinedType{StructType{}});
+  context.defined_type_count = 1;
+  context.functions.push_back(Function{0});
+  EXPECT_FALSE(Validate(context, Start{0}));
+}
+
+TEST(ValidateTest, StorageType) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_TRUE(Validate(context, StorageType{VT_I32}));
+  EXPECT_TRUE(Validate(context, StorageType{PackedType::I8}));
+  EXPECT_TRUE(Validate(context, StorageType{PackedType::I16}));
+}
+
+TEST(ValidateTest, StorageType_IndexOOB) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_FALSE(Validate(context, StorageType{VT_Ref1}));
+}
+
+TEST(ValidateTest, StructType) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_TRUE(
+      Validate(context, StructType{FieldTypeList{
+                            FieldType{StorageType{VT_I32}, Mutability::Const},
+                            FieldType{StorageType{VT_I64}, Mutability::Var}}}));
+}
+
+TEST(ValidateTest, StructType_IndexOOB) {
+  TestErrors errors;
+  Context context{errors};
+  EXPECT_FALSE(
+      Validate(context, StructType{FieldTypeList{FieldType{
+                            StorageType{VT_Ref1}, Mutability::Const}}}));
 }
 
 TEST(ValidateTest, Table) {
@@ -1070,6 +1187,18 @@ TEST(ValidateTest, DefinedType) {
   TestErrors errors;
   Context context{errors};
   EXPECT_TRUE(Validate(context, DefinedType{FunctionType{}}));
+}
+
+TEST(ValidateTest, DefinedType_gc) {
+  TestErrors errors;
+  Context context{errors};
+
+  EXPECT_TRUE(Validate(context, DefinedType{ArrayType{FieldType{
+                                    StorageType{VT_I32}, Mutability::Const}}}));
+
+  EXPECT_TRUE(
+      Validate(context, DefinedType{StructType{FieldTypeList{FieldType{
+                            StorageType{VT_I32}, Mutability::Const}}}}));
 }
 
 TEST(ValidateTest, ValueType) {

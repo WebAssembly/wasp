@@ -37,6 +37,7 @@ bool CheckDefaultable(Context&,
                       string_view desc);
 bool CheckDefaultable(Context&, const At<binary::ValueType>&, string_view desc);
 
+bool Validate(Context&, const At<binary::ArrayType>&);
 bool Validate(Context&, const At<binary::BlockType>&);
 bool Validate(Context&, const At<binary::DataSegment>&);
 bool Validate(Context&,
@@ -53,6 +54,8 @@ bool Validate(Context&, const At<binary::ElementSegment>&);
 bool Validate(Context&, const At<binary::Export>&);
 bool Validate(Context&, const At<binary::Event>&);
 bool Validate(Context&, const At<binary::EventType>&);
+bool Validate(Context&, const At<binary::FieldType>&);
+bool Validate(Context&, const binary::FieldTypeList&);
 bool Validate(Context&, const At<binary::Function>&);
 bool Validate(Context&, const At<binary::FunctionType>&);
 bool Validate(Context&, const At<binary::Global>&);
@@ -74,7 +77,10 @@ bool Validate(Context&, const At<binary::RefType>&);
 bool Validate(Context&,
               binary::ReferenceType expected,
               const At<binary::ReferenceType>& actual);
+bool Validate(Context&, const At<binary::Rtt>&);
 bool Validate(Context&, const At<binary::Start>& value);
+bool Validate(Context&, const At<binary::StorageType>& value);
+bool Validate(Context&, const At<binary::StructType>& value);
 bool Validate(Context&, const At<binary::Table>&);
 bool Validate(Context&, const At<binary::TableType>&);
 bool Validate(Context&, const At<binary::ValueType>&);
