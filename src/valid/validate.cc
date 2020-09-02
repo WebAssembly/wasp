@@ -106,6 +106,11 @@ bool Validate(Context& context, const At<binary::UnpackedCode>& value) {
   return valid;
 }
 
+bool Validate(Context& context, const At<binary::ArrayType>& value) {
+  ErrorsContextGuard guard{*context.errors, value.loc(), "array type"};
+  return Validate(context, value->field);
+}
+
 bool Validate(Context& context,
               const At<binary::ConstantExpression>& value,
               binary::ValueType expected_type,
@@ -374,8 +379,12 @@ bool Validate(Context& context, const At<binary::EventType>& value) {
   }
 
   const auto& defined_type = context.types[value->type_index];
-  // TODO: Add support for struct and array types.
-  assert(defined_type.is_function_type());
+  if (!defined_type.is_function_type()) {
+    context.errors->OnError(value.loc(),
+                            concat("Event type must be a function type."));
+    return false;
+  }
+
   const auto& function_type = defined_type.function_type();
 
   if (!function_type->result_types.empty()) {
@@ -387,11 +396,33 @@ bool Validate(Context& context, const At<binary::EventType>& value) {
   return true;
 }
 
+bool Validate(Context& context, const At<binary::FieldType>& value) {
+  return Validate(context, value->type);
+}
+
+bool Validate(Context& context, const binary::FieldTypeList& values) {
+  bool valid = true;
+  for (const auto& value : values) {
+    valid &= Validate(context, value);
+  }
+  return valid;
+}
+
 bool Validate(Context& context, const At<binary::Function>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "function"};
   context.functions.push_back(value);
-  return ValidateIndex(context, value->type_index, context.defined_type_count,
-                       "function type index");
+  if (!ValidateIndex(context, value->type_index, context.defined_type_count,
+                     "function type index")) {
+    return false;
+  }
+
+  const auto& defined_type = context.types[value->type_index];
+  if (!defined_type.is_function_type()) {
+    context.errors->OnError(value.loc(),
+                            concat("Function must have function type"));
+    return false;
+  }
+  return true;
 }
 
 bool Validate(Context& context, const At<binary::FunctionType>& value) {
@@ -563,6 +594,10 @@ bool Validate(Context& context, const At<binary::ReferenceType>& value) {
   return true;
 }
 
+bool Validate(Context& context, const At<binary::Rtt>& value) {
+  return true;
+}
+
 bool Validate(Context& context, const At<binary::RefType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "ref type"};
   return Validate(context, value->heap_type);
@@ -579,7 +614,12 @@ bool Validate(Context& context, const At<binary::Start>& value) {
   auto function = context.functions[value->func_index];
   if (function.type_index < context.defined_type_count) {
     const auto& defined_type = context.types[function.type_index];
-    // TODO: Add support for struct and array types.
+    if (!defined_type.is_function_type()) {
+      context.errors->OnError(value.loc(),
+                              concat("Start function must have function type"));
+      return false;
+    }
+
     const auto& function_type = defined_type.function_type();
 
     if (function_type->param_types.size() != 0) {
@@ -597,6 +637,19 @@ bool Validate(Context& context, const At<binary::Start>& value) {
     }
   }
   return valid;
+}
+
+bool Validate(Context& context, const At<binary::StorageType>& value) {
+  if (value->is_value_type()) {
+    return Validate(context, value->value_type());
+  } else {
+    return true;
+  }
+}
+
+bool Validate(Context& context, const At<binary::StructType>& value) {
+  ErrorsContextGuard guard{*context.errors, value.loc(), "struct type"};
+  return Validate(context, value->fields);
 }
 
 bool Validate(Context& context, const At<binary::Table>& value) {
@@ -627,9 +680,15 @@ bool Validate(Context& context, const At<binary::TableType>& value) {
 bool Validate(Context& context, const At<binary::DefinedType>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "defined type"};
   context.types.push_back(value);
-  // TODO: Add support for struct and array types.
-  assert(value->is_function_type());
-  return Validate(context, value->function_type());
+
+  if (value->is_function_type()) {
+    return Validate(context, value->function_type());
+  } else if (value->is_struct_type()) {
+    return Validate(context, value->struct_type());
+  } else {
+    assert(value->is_array_type());
+    return Validate(context, value->array_type());
+  }
 }
 
 bool Validate(Context& context, const At<binary::ValueType>& value) {
