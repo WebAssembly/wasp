@@ -1101,6 +1101,7 @@ TEST_F(TextReadTest, PlainInstruction_RefNull) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_BrOnCast) {
+#if 0
   Fail(ReadPlainInstruction, {{0, "br_on_cast instruction not allowed"}},
        "br_on_cast 0 0 0"_su8);
 
@@ -1123,6 +1124,21 @@ TEST_F(TextReadTest, PlainInstruction_BrOnCast) {
               At{"$t $t"_su8,
                  HeapType2Immediate{At{"$t"_su8, HT_T}, At{"$t"_su8, HT_T}}}}}},
      "br_on_cast $d $t $t"_su8);
+#else
+  Fail(ReadPlainInstruction, {{0, "br_on_cast instruction not allowed"}},
+       "br_on_cast 0"_su8);
+
+  context.features.enable_gc();
+
+  OK(ReadPlainInstruction,
+     I{At{"br_on_cast"_su8, O::BrOnCast}, At{"0"_su8, Var{0u}}},
+     "br_on_cast 0"_su8);
+
+  OK(ReadPlainInstruction,
+     I{At{"br_on_cast"_su8, O::BrOnCast}, At{"$d"_su8, Var{"$d"_sv}}},
+     "br_on_cast $d"_su8);
+
+#endif
 }
 
 TEST_F(TextReadTest, PlainInstruction_HeapType2) {
@@ -1144,6 +1160,7 @@ TEST_F(TextReadTest, PlainInstruction_HeapType2) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_RttSub) {
+#if 0
   Fail(ReadPlainInstruction, {{0, "rtt.sub instruction not allowed"}},
        "rtt.sub 0 0 0"_su8);
 
@@ -1166,6 +1183,18 @@ TEST_F(TextReadTest, PlainInstruction_RttSub) {
               At{"$t $t"_su8,
                  HeapType2Immediate{At{"$t"_su8, HT_T}, At{"$t"_su8, HT_T}}}}}},
      "rtt.sub 0 $t $t"_su8);
+#else
+  Fail(ReadPlainInstruction, {{0, "rtt.sub instruction not allowed"}},
+       "rtt.sub 0"_su8);
+
+  context.features.enable_gc();
+
+  OK(ReadPlainInstruction, I{At{"rtt.sub"_su8, O::RttSub}, At{"0"_su8, HT_0}},
+     "rtt.sub 0"_su8);
+
+  OK(ReadPlainInstruction, I{At{"rtt.sub"_su8, O::RttSub}, At{"$t"_su8, HT_T}},
+     "rtt.sub $t"_su8);
+#endif
 }
 
 TEST_F(TextReadTest, PlainInstruction_StructField) {

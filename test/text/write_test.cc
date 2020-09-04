@@ -350,11 +350,16 @@ TEST(TextWriteTest, Instruction) {
         BlockImmediate{"$l"_sv, FunctionTypeUse{Var{Index{0}},
                                                 FunctionType{{VT_I32}, {}}}}});
 
+#if 0
   // BrOnCastImmediate
   ExpectWrite(
       "br_on_cast $l func 0"_sv,
       I{O::BrOnCast,
         BrOnCastImmediate{Var{"$l"_sv}, HeapType2Immediate{HT_Func, HT_0}}});
+#else
+  // BrOnCastImmediate
+  ExpectWrite("br_on_cast $l"_sv, I{O::BrOnCast, Var{"$l"_sv}});
+#endif
 
   // BrOnExnImmediate
   ExpectWrite("br_on_exn $l $e"_sv,
@@ -394,10 +399,15 @@ TEST(TextWriteTest, Instruction) {
   ExpectWrite("i32.load offset=10 align=4"_sv,
               I{O::I32Load, MemArgImmediate{u32{4}, u32{10}}});
 
+#if 0
   // RttSubImmediate
   ExpectWrite(
       "rtt.sub 1 func 0"_sv,
       I{O::RttSub, RttSubImmediate{1u, HeapType2Immediate{HT_Func, HT_0}}});
+#else
+  // RttSubImmediate
+  ExpectWrite("rtt.sub 0"_sv, I{O::RttSub, HT_0});
+#endif
 
   // SelectImmediate
   ExpectWrite("select i32"_sv, I{O::Select, SelectImmediate{VT_I32}});

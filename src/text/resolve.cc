@@ -536,6 +536,11 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
         case Opcode::BrIf:
         case Opcode::Br:
         case Opcode::BrOnNull:
+        // TODO: Keep if br_on_cast continues to use var immediate instead of
+        // BrOnExnImmediate.
+#if 1
+        case Opcode::BrOnCast:
+#endif
           return Resolve(context, immediate, context.label_names);
 
         // Local.

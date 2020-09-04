@@ -1012,8 +1012,12 @@ TEST(BinaryWriteTest, Instruction_gc) {
   ExpectWrite("\xfb\x21"_su8, I{O::I31GetS});
   ExpectWrite("\xfb\x22"_su8, I{O::I31GetU});
   ExpectWrite("\xfb\x30\x70"_su8, I{O::RttCanon, HT_Func});
+#if 0
   ExpectWrite("\xfb\x31\x01\x70\x6f"_su8,
               I{O::RttSub, RttSubImmediate{Index{1}, {HT_Func, HT_Extern}}});
+#else
+  ExpectWrite("\xfb\x31\x6f"_su8, I{O::RttSub, HT_Extern});
+#endif
   ExpectWrite("\xfb\x40\x70\x6f"_su8,
               I{O::RefTest, HeapType2Immediate{HT_Func, HT_Extern}});
   ExpectWrite("\xfb\x41\x70\x6f"_su8,

@@ -1220,8 +1220,15 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
 
     // RttSub immediate.
     case Opcode::RttSub: {
+      // TODO: Determine whether this instruction should have heap type
+      // immediates.
+#if 0
       WASP_TRY_READ(immediate, Read<RttSubImmediate>(data, context));
       return At{guard.range(data), Instruction{opcode, immediate}};
+#else
+      WASP_TRY_READ(type, Read<HeapType>(data, context));
+      return At{guard.range(data), Instruction{opcode, type}};
+#endif
     }
 
     // Two HeapType immediate.
@@ -1233,8 +1240,15 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
 
     // BrOnCast immediate.
     case Opcode::BrOnCast: {
+      // TODO: Determine whether this instruction should have heap type
+      // immediates.
+#if 0
       WASP_TRY_READ(immediate, Read<BrOnCastImmediate>(data, context));
       return At{guard.range(data), Instruction{opcode, immediate}};
+#else
+      WASP_TRY_READ(index, ReadIndex(data, context, "index"));
+      return At{guard.range(data), Instruction{opcode, index}};
+#endif
     }
   }
   WASP_UNREACHABLE();

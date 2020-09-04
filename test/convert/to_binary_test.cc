@@ -510,6 +510,7 @@ TEST(ConvertToBinaryTest, BlockImmediate) {
                                        text::FunctionType{{tt::VT_I32}, {}}}}});
 }
 
+#if 0
 TEST(ConvertToBinaryTest, BrOnCastImmediate) {
   OK(At{loc1,
         binary::BrOnCastImmediate{
@@ -521,6 +522,7 @@ TEST(ConvertToBinaryTest, BrOnCastImmediate) {
                   At{loc3, text::HeapType2Immediate{At{loc4, tt::HT_Func},
                                                     At{loc5, tt::HT_Func}}}}});
 }
+#endif
 
 TEST(ConvertToBinaryTest, BrOnExnImmediate) {
   OK(At{loc1,
@@ -619,6 +621,7 @@ TEST(ConvertToBinaryTest, MemArgImmediate) {
      At{loc1, text::MemArgImmediate{nullopt, nullopt}}, natural_align);
 }
 
+#if 0
 TEST(ConvertToBinaryTest, RttSubImmediate) {
   OK(At{loc1,
         binary::RttSubImmediate{
@@ -630,6 +633,7 @@ TEST(ConvertToBinaryTest, RttSubImmediate) {
                   At{loc3, text::HeapType2Immediate{At{loc4, tt::HT_Func},
                                                     At{loc5, tt::HT_Func}}}}});
 }
+#endif
 
 TEST(ConvertToBinaryTest, StructFieldImmediate) {
   OK(At{loc1,
@@ -813,6 +817,7 @@ TEST(ConvertToBinaryTest, Instruction) {
      At{loc1, text::Instruction{At{loc2, Opcode::I8X16ExtractLaneS},
                                 At{loc3, text::SimdLaneImmediate{13}}}});
 
+#if 0
   // BrOnCastImmediate
   OK(At{loc1,
         binary::Instruction{
@@ -829,6 +834,7 @@ TEST(ConvertToBinaryTest, Instruction) {
                                At{loc5, text::HeapType2Immediate{
                                             At{loc6, tt::HT_Func},
                                             At{loc7, tt::HT_Func}}}}}}});
+#endif
 
   // HeapType2Immediate
   OK(At{loc1,
@@ -841,6 +847,7 @@ TEST(ConvertToBinaryTest, Instruction) {
                   At{loc3, text::HeapType2Immediate{At{loc4, tt::HT_Func},
                                                     At{loc5, tt::HT_Func}}}}});
 
+#if 0
   // RttSubImmediate
   OK(At{loc1,
         binary::Instruction{
@@ -857,6 +864,7 @@ TEST(ConvertToBinaryTest, Instruction) {
                                At{loc5, text::HeapType2Immediate{
                                             At{loc6, tt::HT_Func},
                                             At{loc7, tt::HT_Func}}}}}}});
+#endif
 
   // StructFieldImmediate
   OK(At{loc1,

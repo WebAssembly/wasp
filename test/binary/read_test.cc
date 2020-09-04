@@ -2388,12 +2388,14 @@ TEST_F(BinaryReadTest, Instruction_gc) {
   OK(Read<I>, I{At{"\xfb\x22"_su8, O::I31GetU}}, "\xfb\x22"_su8);
   OK(Read<I>, I{At{"\xfb\x30"_su8, O::RttCanon}, At{"\x70"_su8, HT_Func}},
      "\xfb\x30\x70"_su8);
+#if 0
   OK(Read<I>,
      I{At{"\xfb\x31"_su8, O::RttSub},
        At{"\x01\x70\x6f"_su8, RttSubImmediate{At{"\x01"_su8, Index{1}},
                                               {At{"\x70"_su8, HT_Func},
                                                At{"\x6f"_su8, HT_Extern}}}}},
      "\xfb\x31\x01\x70\x6f"_su8);
+#endif
   OK(Read<I>,
      I{At{"\xfb\x40"_su8, O::RefTest},
        At{"\x70\x6f"_su8, HeapType2Immediate{At{"\x70"_su8, HT_Func},
@@ -2404,6 +2406,7 @@ TEST_F(BinaryReadTest, Instruction_gc) {
        At{"\x70\x6f"_su8, HeapType2Immediate{At{"\x70"_su8, HT_Func},
                                              At{"\x6f"_su8, HT_Extern}}}},
      "\xfb\x41\x70\x6f"_su8);
+#if 0
   OK(Read<I>,
      I{At{"\xfb\x42"_su8, O::BrOnCast},
        At{"\x01\x70\x6f"_su8,
@@ -2411,6 +2414,7 @@ TEST_F(BinaryReadTest, Instruction_gc) {
                             HeapType2Immediate{At{"\x70"_su8, HT_Func},
                                                At{"\x6f"_su8, HT_Extern}}}}},
      "\xfb\x42\x01\x70\x6f"_su8);
+#endif
 }
 
 TEST_F(BinaryReadTest, Limits) {

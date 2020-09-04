@@ -1365,9 +1365,15 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
       WASP_TRY_READ(var, ReadVar(tokenizer, context));
+      // TODO: Determine whether this instruction should have heap type
+      // immediates.
+#if 0
       WASP_TRY_READ(types, ReadHeapType2Immediate(tokenizer, context));
       auto immediate = At{immediate_guard.loc(), BrOnCastImmediate{var, types}};
       return At{guard.loc(), Instruction{token.opcode(), immediate}};
+#else
+      return At{guard.loc(), Instruction{token.opcode(), var}};
+#endif
     }
 
     case TokenType::BrOnExnInstr: {
@@ -1481,10 +1487,17 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
       CheckOpcodeEnabled(token, context);
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
+      // TODO: Determine whether this instruction should have heap type
+      // immediates.
+#if 0
       WASP_TRY_READ(depth, ReadNat32(tokenizer, context));
       WASP_TRY_READ(types, ReadHeapType2Immediate(tokenizer, context));
       auto immediate = At{immediate_guard.loc(), RttSubImmediate{depth, types}};
       return At{guard.loc(), Instruction{token.opcode(), immediate}};
+#else
+      WASP_TRY_READ(type, ReadHeapType(tokenizer, context));
+      return At{guard.loc(), Instruction{token.opcode(), type}};
+#endif
     }
 
     case TokenType::SelectInstr: {
