@@ -54,7 +54,12 @@ bool BeginCode(Context& context, Location loc) {
   // Don't validate the index, should have already been validated at this point.
   if (function.type_index < context.defined_type_count) {
     const auto& defined_type = context.types[function.type_index];
-    // TODO: Add support for struct and array types.
+    if (!defined_type.is_function_type()) {
+      context.errors->OnError(loc,
+                              concat("Function must have a function type."));
+      return false;
+    }
+
     assert(defined_type.is_function_type());
     const auto& function_type = defined_type.function_type();
     context.locals.Append(function_type->param_types);

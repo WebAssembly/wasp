@@ -45,6 +45,9 @@
 #include "wasp/valid/context.h"
 #include "wasp/valid/validate.h"
 
+#include "wasp/text/formatters.h"
+#include "wasp/text/write.h"
+
 namespace fs = std::filesystem;
 
 namespace wasp {

@@ -53,6 +53,15 @@ TEST(ValidateCodeTest, BeginCode_TypeIndexOOB) {
   EXPECT_FALSE(BeginCode(context, Location{}));
 }
 
+TEST(ValidateCodeTest, BeginCode_NonFunctionType) {
+  TestErrors errors;
+  Context context{errors};
+  context.types.push_back(DefinedType{StructType{}});
+  context.defined_type_count = 1;
+  context.functions.push_back(Function{0});
+  EXPECT_FALSE(BeginCode(context, Location{}));
+}
+
 TEST(ValidateCodeTest, Locals) {
   TestErrors errors;
   Context context{errors};
