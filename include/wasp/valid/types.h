@@ -40,6 +40,9 @@ struct StackType {
   static StackType V128();
   static StackType Funcref();
   static StackType Externref();
+  static StackType Anyref();
+  static StackType Eqref();
+  static StackType I31ref();
   static StackType Exnref();
 
   bool is_value_type() const;
@@ -54,10 +57,12 @@ struct StackType {
 using StackTypeList = std::vector<StackType>;
 using StackTypeSpan = span<const StackType>;
 
+auto ToValueType(binary::StorageType) -> binary::ValueType;
 auto ToValueType(binary::ReferenceType) -> binary::ValueType;
 auto ToValueType(binary::RefType) -> binary::ValueType;
 auto ToValueType(binary::HeapType) -> binary::ValueType;
 
+auto ToStackType(binary::StorageType) -> StackType;
 auto ToStackType(binary::ValueType) -> StackType;
 auto ToStackType(binary::ReferenceType) -> StackType;
 auto ToStackType(binary::RefType) -> StackType;
@@ -66,11 +71,13 @@ auto ToStackTypeList(const binary::ValueTypeList&) -> StackTypeList;
 auto ToStackTypeList(const binary::LocalsList&) -> StackTypeList;
 
 bool IsReferenceTypeOrAny(StackType);
+bool IsRttOrAny(StackType);
 auto Canonicalize(binary::ReferenceType) -> binary::ReferenceType;
 
 bool IsDefaultableType(binary::RefType);
 bool IsDefaultableType(binary::ReferenceType);
 bool IsDefaultableType(binary::ValueType);
+bool IsDefaultableType(binary::StorageType);
 
 bool IsNullableType(binary::ValueType);
 bool IsNullableType(StackType);

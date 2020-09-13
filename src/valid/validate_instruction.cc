@@ -44,6 +44,7 @@ using namespace ::wasp::binary;
   V(f64, StackType::F64())                                             \
   V(v128, StackType::V128())                                           \
   V(exnref, StackType::Exnref())                                       \
+  V(i31ref, StackType::I31ref())                                       \
   V(i32_i32, StackType::I32(), StackType::I32())                       \
   V(i32_i64, StackType::I32(), StackType::I64())                       \
   V(i32_f32, StackType::I32(), StackType::F32())                       \
@@ -57,6 +58,7 @@ using namespace ::wasp::binary;
   V(v128_f32, StackType::V128(), StackType::F32())                     \
   V(v128_f64, StackType::V128(), StackType::F64())                     \
   V(v128_v128, StackType::V128(), StackType::V128())                   \
+  V(eqref_eqref, StackType::Eqref(), StackType::Eqref())               \
   V(i32_i32_i32, StackType::I32(), StackType::I32(), StackType::I32()) \
   V(i32_i32_i64, StackType::I32(), StackType::I32(), StackType::I64()) \
   V(i32_i64_i64, StackType::I32(), StackType::I64(), StackType::I64()) \
@@ -82,9 +84,83 @@ optional<FunctionType> GetFunctionType(Context& context, At<Index> index) {
     return nullopt;
   }
   if (!context.types[index].is_function_type()) {
+    context.errors->OnError(index.loc(), "Expected a function type");
     return nullopt;
   }
   return context.types[index].function_type();
+}
+
+optional<StructType> GetStructType(Context& context, At<Index> index) {
+  if (!ValidateIndex(context, index, context.types.size(), "type index")) {
+    return nullopt;
+  }
+  if (!context.types[index].is_struct_type()) {
+    context.errors->OnError(index.loc(), "Expected a struct type");
+    return nullopt;
+  }
+  return context.types[index].struct_type();
+}
+
+optional<ArrayType> GetArrayType(Context& context, At<Index> index) {
+  if (!ValidateIndex(context, index, context.types.size(), "type index")) {
+    return nullopt;
+  }
+  if (!context.types[index].is_array_type()) {
+    context.errors->OnError(index.loc(), "Expected an array type");
+    return nullopt;
+  }
+  return context.types[index].array_type();
+}
+
+optional<FieldType> GetStructFieldType(Context& context,
+                                       const StructType& struct_type,
+                                       At<Index> index) {
+  if (!ValidateIndex(context, index, struct_type.fields.size(), "field index")) {
+    return nullopt;
+  }
+  return struct_type.fields[index];
+}
+
+optional<ValueType> GetFieldValueType(Context& context,
+                                      Location loc,
+                                      const FieldType& field_type) {
+  if (!field_type.type->is_value_type()) {
+    context.errors->OnError(loc, "Expected a non-packed field type");
+    return nullopt;
+  }
+  return field_type.type->value_type();
+}
+
+optional<PackedType> GetFieldPackedType(Context& context,
+                                        Location loc,
+                                        const FieldType& field_type) {
+  if (!field_type.type->is_packed_type()) {
+    context.errors->OnError(loc, "Expected a packed field type");
+    return nullopt;
+  }
+  return field_type.type->packed_type();
+}
+
+optional<ValueType> GetStructFieldValueType(Context& context,
+                                            Location loc,
+                                            const StructType& struct_type,
+                                            At<Index> index) {
+  auto field_type = GetStructFieldType(context, struct_type, index);
+  if (!field_type) {
+    return nullopt;
+  }
+  return GetFieldValueType(context, loc, *field_type);
+}
+
+optional<PackedType> GetStructFieldPackedType(Context& context,
+                                              Location loc,
+                                              const StructType& struct_type,
+                                              At<Index> index) {
+  auto field_type = GetStructFieldType(context, struct_type, index);
+  if (!field_type) {
+    return nullopt;
+  }
+  return GetFieldPackedType(context, loc, *field_type);
 }
 
 optional<FunctionType> GetBlockTypeSignature(Context& context,
@@ -320,14 +396,32 @@ optional<StackType> PopReferenceType(Context& context, Location loc) {
   return type;
 }
 
-optional<StackType> PopTypedFunctionReference(Context& context, Location loc) {
+auto PopRtt(Context& context, Location loc)
+    -> std::pair<optional<StackType>, optional<Rtt>> {
+  auto type = PeekType(context, loc);
+  if (type) {
+    if (!IsRttOrAny(*type)) {
+      context.errors->OnError(
+          loc, concat("Expected rtt type, got ", GetTypeStack(context)));
+      return {nullopt, nullopt};
+    }
+    DropTypes(context, loc, 1, false);
+    if (type->is_value_type()) {
+      return {type, type->value_type().rtt()};
+    }
+  }
+  return {type, nullopt};
+}
+
+auto PopTypedReference(Context& context, Location loc)
+    -> std::pair<optional<StackType>, optional<Index>> {
   auto type = PopReferenceType(context, loc);
   if (!type) {
-    return nullopt;
+    return {nullopt, nullopt};
   }
 
   if (type->is_any()) {
-    return type;
+    return {type, nullopt};
   }
 
   assert(type->is_value_type() && type->value_type().is_reference_type());
@@ -339,10 +433,56 @@ optional<StackType> PopTypedFunctionReference(Context& context, Location loc) {
     context.errors->OnError(loc,
                             concat("Expected typed function reference, got ",
                                    GetTypeStack(context)));
-    return nullopt;
+    return {nullopt, nullopt};
   }
 
-  return ToStackType(ref_type);
+  return {ToStackType(ref_type), ref_type.ref()->heap_type->index()};
+}
+
+auto PopFunctionReference(Context& context, Location loc)
+    -> std::pair<optional<StackType>, std::optional<FunctionType>> {
+  auto [stack_type, index] = PopTypedReference(context, loc);
+  if (stack_type && !stack_type->is_any() && index) {
+    return {stack_type, GetFunctionType(context, *index)};
+  } else {
+    return {stack_type, nullopt};
+  }
+}
+
+auto PopStructReference(Context& context,
+                        Location loc,
+                        const At<Index>& expected)
+    -> std::pair<optional<StackType>, std::optional<StructType>> {
+  auto [stack_type, index] = PopTypedReference(context, loc);
+  if (stack_type) {
+    if (index && !IsMatch(context, HeapType{expected}, HeapType{*index})) {
+      // The index deson't match. Print an error, but assume that it worked to
+      // prevent knock-on errors.
+      context.errors->OnError(loc, concat("Expected struct type ", expected,
+                                          " but got type ", *index));
+    }
+    return {stack_type, GetStructType(context, expected)};
+  } else {
+    return {stack_type, nullopt};
+  }
+}
+
+auto PopArrayReference(Context& context,
+                       Location loc,
+                       const At<Index>& expected)
+    -> std::pair<optional<StackType>, std::optional<ArrayType>> {
+  auto [stack_type, index] = PopTypedReference(context, loc);
+  if (stack_type) {
+    if (index && !IsMatch(context, HeapType{expected}, HeapType{*index})) {
+      // The index deson't match. Print an error, but assume that it worked to
+      // prevent knock-on errors.
+      context.errors->OnError(loc, concat("Expected array type ", expected,
+                                          " but got type ", *index));
+    }
+    return {stack_type, GetArrayType(context, expected)};
+  } else {
+    return {stack_type, nullopt};
+  }
 }
 
 bool PopAndPushTypes(Context& context,
@@ -1061,31 +1201,27 @@ bool RefAsNonNull(Context& context, Location loc) {
 }
 
 bool CallRef(Context& context, Location loc) {
-  auto type = PopTypedFunctionReference(context, loc);
-  if (!type) {
+  auto [stack_type, function_type] = PopFunctionReference(context, loc);
+  if (!stack_type) {
     return false;
   }
-  if (type && type->is_any()) {
+  if (stack_type && stack_type->is_any()) {
     return true;
   }
 
-  auto index = type->value_type().reference_type()->ref()->heap_type->index();
-  auto function_type = GetFunctionType(context, index);
   return AllTrue(function_type,
                  PopAndPushTypes(context, loc, MaybeDefault(function_type)));
 }
 
 bool ReturnCallRef(Context& context, Location loc) {
-  auto type = PopTypedFunctionReference(context, loc);
-  if (!type) {
+  auto [stack_type, function_type] = PopFunctionReference(context, loc);
+  if (!stack_type) {
     return false;
   }
-  if (type && type->is_any()) {
+  if (stack_type && stack_type->is_any()) {
     return true;
   }
 
-  auto index = type->value_type().reference_type()->ref()->heap_type->index();
-  auto function_type = GetFunctionType(context, index);
   bool valid = CheckResultTypes(context, loc, MaybeDefault(function_type));
   valid &= PopTypes(context, loc,
                     ToStackTypeList(MaybeDefault(function_type).param_types));
@@ -1094,20 +1230,17 @@ bool ReturnCallRef(Context& context, Location loc) {
 }
 
 bool FuncBind(Context& context, Location loc, At<Index> new_type_index) {
-  auto type = PopTypedFunctionReference(context, loc);
-  if (!type) {
+  auto [stack_type, old_function_type] = PopFunctionReference(context, loc);
+  if (!stack_type) {
     return false;
   }
-  if (type && type->is_any()) {
+  if (stack_type && stack_type->is_any()) {
     // The result type is always known, so make sure we push the new function
     // reference even for an unreachable stack.
     PushType(context, ToStackType(RefType{HeapType{new_type_index}, Null::No}));
     return true;
   }
 
-  auto old_type_index =
-      type->value_type().reference_type()->ref()->heap_type->index();
-  auto old_function_type = GetFunctionType(context, old_type_index);
   auto new_function_type = GetFunctionType(context, new_type_index);
   if (!old_function_type || !new_function_type) {
     return false;
@@ -1251,6 +1384,344 @@ bool SimdShuffle(Context& context,
   StackTypeSpan params = span_v128_v128;
   StackTypeSpan results = span_v128;
   return AllTrue(valid, PopAndPushTypes(context, loc, params, results));
+}
+
+bool RttCanon(Context& context, Location loc, const At<HeapType>& immediate) {
+  u32 depth = immediate->is_heap_kind(HeapKind::Any) ? 0 : 1;
+  PushType(context, ToStackType(ValueType{Rtt{depth, immediate}}));
+  return true;
+}
+
+bool RttSub(Context& context, Location loc, const At<HeapType>& immediate) {
+  auto [type_opt, old_rtt] = PopRtt(context, loc);
+  if (!type_opt) {
+    return false;
+  }
+  if (type_opt && type_opt->is_any()) {
+    return true;
+  }
+  u32 new_depth = old_rtt->depth + 1;
+  if (new_depth == 0) {
+    context.errors->OnError(loc, concat("Invalid rtt depth", old_rtt->depth));
+    return false;
+  }
+  Rtt new_rtt{new_depth, immediate};
+  if (!IsMatch(context, old_rtt->type, new_rtt.type)) {
+    context.errors->OnError(
+        loc, concat(new_rtt.type, " is not a subtype of ", old_rtt->type));
+    return false;
+  }
+  PushType(context, ToStackType(ValueType{new_rtt}));
+  return true;
+}
+
+bool CheckSame(Context& context,
+               const At<HeapType>& expected,
+               const At<HeapType>& actual) {
+  if (!IsSame(context, expected, actual)) {
+    context.errors->OnError(actual.loc(),
+                            concat(actual, " is not equal to ", expected));
+    return false;
+  }
+  return true;
+}
+
+bool CheckSubtype(Context& context,
+                  const At<HeapType>& expected,
+                  const At<HeapType>& actual) {
+  if (!IsMatch(context, expected, actual)) {
+    context.errors->OnError(actual.loc(),
+                            concat(actual, " is not a subtype of ", expected));
+    return false;
+  }
+  return true;
+}
+
+bool RefTest(Context& context,
+             Location loc,
+             const At<HeapType2Immediate>& immediate) {
+  bool valid = CheckSubtype(context, immediate->parent, immediate->child);
+  StackTypeList stack_types{StackType{ValueType{ReferenceType{
+                                RefType{immediate->parent, Null::Yes}}}},
+                            StackType{ValueType{Rtt{0, immediate->child}}}};
+  return AllTrue(valid, PopAndPushTypes(context, loc, stack_types, span_i32));
+}
+
+bool RefCast(Context& context,
+             Location loc,
+             const At<HeapType2Immediate>& immediate) {
+  bool valid = CheckSubtype(context, immediate->parent, immediate->child);
+  StackTypeList params{StackType{ValueType{ReferenceType{
+                           RefType{immediate->parent, Null::Yes}}}},
+                       StackType{ValueType{Rtt{0, immediate->child}}}};
+  StackTypeList results{
+      StackType{ValueType{ReferenceType{RefType{immediate->child, Null::No}}}}};
+  return AllTrue(valid, PopAndPushTypes(context, loc, params, results));
+}
+
+bool BrOnCast(Context& context, Location loc, const At<Index>& immediate) {
+  // TODO cleanup
+  bool valid = true;
+  auto [type_opt, rtt_opt] = PopRtt(context, loc);
+  if (!type_opt) {
+    return false;
+  }
+  if (type_opt && type_opt->is_any()) {
+    return true;
+  }
+
+  assert(rtt_opt);
+  StackTypeList sub_type{
+      StackType{ValueType{ReferenceType{RefType{rtt_opt->type, Null::Yes}}}}};
+
+  auto* label = GetLabel(context, immediate);
+  auto label_types = MaybeDefault(label).br_types();
+  if (!IsMatch(context, sub_type, label_types)) {
+    context.errors->OnError(
+        loc, concat("Label type is ", label_types, ", got ", sub_type));
+    valid = false;
+  }
+
+  type_opt = PopReferenceType(context, loc);
+  if (!type_opt) {
+    return false;
+  }
+  if (type_opt && type_opt->is_any()) {
+    return valid;
+  }
+
+  auto reference_type = Canonicalize(type_opt->value_type().reference_type());
+  valid &=
+      CheckSubtype(context, reference_type.ref()->heap_type, rtt_opt->type);
+  PushType(context, *type_opt);
+  return valid;
+}
+
+bool StructNewWithRtt(Context& context,
+                      Location loc,
+                      const At<Index>& immediate) {
+  bool valid = true;
+  auto [type_opt, rtt_opt] = PopRtt(context, loc);
+  if (!type_opt) {
+    return false;
+  }
+  HeapType heap_type{immediate};
+  if (!type_opt->is_any()) {
+    valid &= CheckSame(context, rtt_opt->type, heap_type);
+
+    auto struct_type = GetStructType(context, immediate);
+    if (struct_type) {
+      StackTypeList stack_types;
+      for (auto& field : struct_type->fields) {
+        stack_types.push_back(ToStackType(field->type));
+      }
+      valid &= PopTypes(context, loc, stack_types);
+    }
+  }
+
+  PushType(context,
+           StackType{ValueType{ReferenceType{RefType{heap_type, Null::No}}}});
+  return valid;
+}
+
+bool StructNewDefaultWithRtt(Context& context,
+                             Location loc,
+                             const At<Index>& immediate) {
+  bool valid = true;
+  auto [type_opt, rtt_opt] = PopRtt(context, loc);
+  if (!type_opt) {
+    return false;
+  }
+  HeapType heap_type{immediate};
+  if (!type_opt->is_any()) {
+    valid &= CheckSame(context, rtt_opt->type, heap_type);
+
+    auto struct_type = GetStructType(context, immediate);
+    if (struct_type) {
+      for (auto& field : struct_type->fields) {
+        valid &= CheckDefaultable(context, field->type, "field type");
+      }
+    }
+  }
+
+  PushType(context,
+           StackType{ValueType{ReferenceType{RefType{heap_type, Null::No}}}});
+  return valid;
+}
+
+bool StructGet(Context& context,
+               Location loc,
+               const At<StructFieldImmediate>& immediate) {
+  auto [stack_type, struct_type] =
+      PopStructReference(context, loc, immediate->struct_);
+  if (!struct_type) {
+    return false;
+  }
+
+  auto value_type =
+      GetStructFieldValueType(context, loc, *struct_type, immediate->field);
+  if (!value_type) {
+    return false;
+  }
+
+  PushType(context, StackType{*value_type});
+  return true;
+}
+
+bool StructGetPacked(Context& context,
+                     Location loc,
+                     const At<StructFieldImmediate>& immediate) {
+  auto [stack_type, struct_type] =
+      PopStructReference(context, loc, immediate->struct_);
+  if (!struct_type) {
+    return false;
+  }
+
+  auto packed_type =
+      GetStructFieldPackedType(context, loc, *struct_type, immediate->field);
+  if (!packed_type) {
+    return false;
+  }
+
+  PushType(context, StackType::I32());
+  return true;
+}
+
+bool StructSet(Context& context,
+               Location loc,
+               const At<StructFieldImmediate>& immediate) {
+  auto struct_type = GetStructType(context, immediate->struct_);
+  if (!struct_type) {
+    return false;
+  }
+
+  auto field_type = GetStructFieldType(context, *struct_type, immediate->field);
+  if (!field_type) {
+    return false;
+  }
+
+  bool valid = true;
+  if (field_type->mut == Mutability::Const) {
+    context.errors->OnError(
+        loc, concat("Cannot set immutable field ", immediate->field));
+    valid = false;
+  }
+
+  StackTypeList stack_types{StackType{ValueType{ReferenceType{RefType{
+                                HeapType{immediate->struct_}, Null::Yes}}}},
+                            ToStackType(field_type->type)};
+  return AllTrue(valid, PopTypes(context, loc, stack_types));
+}
+
+bool ArrayNewWithRtt(Context& context,
+                     Location loc,
+                     const At<Index>& immediate) {
+  bool valid = true;
+  auto [type_opt, rtt_opt] = PopRtt(context, loc);
+  if (!type_opt) {
+    return false;
+  }
+  HeapType heap_type{immediate};
+  if (!type_opt->is_any()) {
+    valid &= CheckSame(context, rtt_opt->type, heap_type);
+
+    auto array_type = GetArrayType(context, immediate);
+    if (array_type) {
+      StackTypeList stack_types{ToStackType(array_type->field->type),
+                                StackType::I32()};
+      valid &= PopTypes(context, loc, stack_types);
+    }
+  }
+
+  PushType(context,
+           StackType{ValueType{ReferenceType{RefType{heap_type, Null::No}}}});
+  return valid;
+}
+
+bool ArrayNewDefaultWithRtt(Context& context,
+                            Location loc,
+                            const At<Index>& immediate) {
+  bool valid = true;
+  auto [type_opt, rtt_opt] = PopRtt(context, loc);
+  if (!type_opt) {
+    return false;
+  }
+  HeapType heap_type{immediate};
+  if (!type_opt->is_any()) {
+    valid &= CheckSame(context, rtt_opt->type, heap_type);
+
+    auto array_type = GetArrayType(context, immediate);
+    if (array_type) {
+      valid &= CheckDefaultable(context, array_type->field->type, "field type");
+      valid &= PopType(context, loc, StackType::I32());
+    }
+  }
+
+  PushType(context,
+           StackType{ValueType{ReferenceType{RefType{heap_type, Null::No}}}});
+  return valid;
+}
+
+bool ArrayGet(Context& context, Location loc, const At<Index>& immediate) {
+  auto [stack_type, array_type] = PopArrayReference(context, loc, immediate);
+  if (!array_type) {
+    return false;
+  }
+
+  auto value_type = GetFieldValueType(context, loc, array_type->field);
+  if (!value_type) {
+    return false;
+  }
+
+  PushType(context, StackType{*value_type});
+  return true;
+}
+
+bool ArrayGetPacked(Context& context,
+                    Location loc,
+                    const At<Index>& immediate) {
+  auto [stack_type, array_type] = PopArrayReference(context, loc, immediate);
+  if (!array_type) {
+    return false;
+  }
+
+  auto packed_type = GetFieldPackedType(context, loc, array_type->field);
+  if (!packed_type) {
+    return false;
+  }
+
+  PushType(context, StackType::I32());
+  return true;
+}
+
+bool ArraySet(Context& context, Location loc, const At<Index>& immediate) {
+  auto array_type = GetArrayType(context, immediate);
+  if (!array_type) {
+    return false;
+  }
+
+  bool valid = true;
+  if (array_type->field->mut == Mutability::Const) {
+    context.errors->OnError(
+        loc, concat("Cannot set immutable field ", array_type->field->mut));
+    valid = false;
+  }
+
+  StackTypeList stack_types{StackType{ValueType{ReferenceType{
+                                RefType{HeapType{immediate}, Null::Yes}}}},
+                            ToStackType(array_type->field->type)};
+  return AllTrue(valid, PopTypes(context, loc, stack_types));
+}
+
+bool ArrayLen(Context& context, Location loc, const At<Index>& immediate) {
+  auto array_type = GetArrayType(context, immediate);
+  if (!array_type) {
+    return false;
+  }
+
+  StackTypeList params{StackType{ValueType{ReferenceType{
+                           RefType{HeapType{immediate}, Null::Yes}}}}};
+  return PopAndPushTypes(context, loc, params, span_i32);
 }
 
 }  // namespace
@@ -1996,9 +2467,68 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::I64AtomicRmw32CmpxchgU:
       return AtomicRmw(context, loc, value);
 
-    default:
-      context.errors->OnError(loc, concat("Unimplemented instruction ", value));
-      return false;
+    case Opcode:: RefEq:
+      params = span_eqref_eqref, results = span_i32;
+      break;
+
+    case Opcode:: I31New:
+      params = span_i32, results = span_i31ref;
+      break;
+
+    case Opcode:: I31GetS:
+    case Opcode:: I31GetU:
+      params = span_i31ref, results = span_i32;
+      break;
+
+    case Opcode:: RttCanon:
+      return RttCanon(context, loc, value->heap_type_immediate());
+
+    case Opcode:: RttSub:
+      return RttSub(context, loc, value->heap_type_immediate());
+
+    case Opcode:: RefTest:
+      return RefTest(context, loc, value->heap_type_2_immediate());
+
+    case Opcode:: RefCast:
+      return RefCast(context, loc, value->heap_type_2_immediate());
+
+    case Opcode:: BrOnCast:
+      return BrOnCast(context, loc, value->index_immediate());
+
+    case Opcode:: StructNewWithRtt:
+      return StructNewWithRtt(context, loc, value->index_immediate());
+
+    case Opcode:: StructNewDefaultWithRtt:
+      return StructNewDefaultWithRtt(context, loc, value->index_immediate());
+
+    case Opcode:: StructGet:
+      return StructGet(context, loc, value->struct_field_immediate());
+
+    case Opcode:: StructGetS:
+    case Opcode:: StructGetU:
+      return StructGetPacked(context, loc, value->struct_field_immediate());
+
+    case Opcode:: StructSet:
+      return StructSet(context, loc, value->struct_field_immediate());
+
+    case Opcode:: ArrayNewWithRtt:
+      return ArrayNewWithRtt(context, loc, value->index_immediate());
+
+    case Opcode:: ArrayNewDefaultWithRtt:
+      return ArrayNewDefaultWithRtt(context, loc, value->index_immediate());
+
+    case Opcode:: ArrayGet:
+      return ArrayGet(context, loc, value->index_immediate());
+
+    case Opcode:: ArrayGetS:
+    case Opcode:: ArrayGetU:
+      return ArrayGetPacked(context, loc, value->index_immediate());
+
+    case Opcode:: ArraySet:
+      return ArraySet(context, loc, value->index_immediate());
+
+    case Opcode:: ArrayLen:
+      return ArrayLen(context, loc, value->index_immediate());
   }
 
   return PopAndPushTypes(context, loc, params, results);

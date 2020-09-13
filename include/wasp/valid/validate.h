@@ -36,6 +36,9 @@ bool CheckDefaultable(Context&,
                       const At<binary::ReferenceType>&,
                       string_view desc);
 bool CheckDefaultable(Context&, const At<binary::ValueType>&, string_view desc);
+bool CheckDefaultable(Context&,
+                      const At<binary::StorageType>&,
+                      string_view desc);
 
 bool Validate(Context&, const At<binary::ArrayType>&);
 bool Validate(Context&, const At<binary::BlockType>&);

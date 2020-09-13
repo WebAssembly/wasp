@@ -276,8 +276,11 @@ bool IsMatch(Context& context,
 bool IsMatch(Context& context,
              const binary::Rtt& expected,
              const binary::Rtt& actual) {
-  // Rtt's don't have any subtyping, aside from rtt <: any
-  return IsSame(context, expected, actual);
+  // Rtt's don't have any subtyping, aside from rtt <: any. However, unlike
+  // IsSame(Rtt, Rtt) we consider two Rtts to match even if their depths don't
+  // match. This is because for nearly all instructions, the depth is not used
+  // in static validation.
+  return IsSame(context, expected.type, actual.type);
 }
 
 bool IsMatch(Context& context,
