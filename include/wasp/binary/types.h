@@ -62,6 +62,9 @@ struct ReferenceType {
   // Convenience functions, but without any location.
   static ReferenceType Funcref_NoLocation();
   static ReferenceType Externref_NoLocation();
+  static ReferenceType Anyref_NoLocation();
+  static ReferenceType Eqref_NoLocation();
+  static ReferenceType I31ref_NoLocation();
   static ReferenceType Exnref_NoLocation();
 
   bool is_reference_kind() const;
@@ -93,6 +96,9 @@ struct ValueType {
   static ValueType V128_NoLocation();
   static ValueType Funcref_NoLocation();
   static ValueType Externref_NoLocation();
+  static ValueType Anyref_NoLocation();
+  static ValueType Eqref_NoLocation();
+  static ValueType I31ref_NoLocation();
   static ValueType Exnref_NoLocation();
 
   bool is_numeric_type() const;

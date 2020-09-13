@@ -672,6 +672,21 @@ ValueType ValueType::Externref_NoLocation() {
 }
 
 // static
+ValueType ValueType::Anyref_NoLocation() {
+  return ValueType{ReferenceType::Anyref_NoLocation()};
+}
+
+// static
+ValueType ValueType::Eqref_NoLocation() {
+  return ValueType{ReferenceType::Eqref_NoLocation()};
+}
+
+// static
+ValueType ValueType::I31ref_NoLocation() {
+  return ValueType{ReferenceType::I31ref_NoLocation()};
+}
+
+// static
 ValueType ValueType::Exnref_NoLocation() {
   return ValueType{ReferenceType::Exnref_NoLocation()};
 }
@@ -753,6 +768,21 @@ ReferenceType ReferenceType::Funcref_NoLocation() {
 // static
 ReferenceType ReferenceType::Externref_NoLocation() {
   return ReferenceType{ReferenceKind::Externref};
+}
+
+// static
+ReferenceType ReferenceType::Anyref_NoLocation() {
+  return ReferenceType{ReferenceKind::Anyref};
+}
+
+// static
+ReferenceType ReferenceType::Eqref_NoLocation() {
+  return ReferenceType{ReferenceKind::Eqref};
+}
+
+// static
+ReferenceType ReferenceType::I31ref_NoLocation() {
+  return ReferenceType{ReferenceKind::I31ref};
 }
 
 // static

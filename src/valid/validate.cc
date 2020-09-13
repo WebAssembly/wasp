@@ -74,7 +74,7 @@ bool CheckDefaultable(Context& context,
                       string_view desc) {
   if (!IsDefaultableType(value)) {
     context.errors->OnError(
-        value.loc(), concat(desc, " must be defaultable, got ", value->type));
+        value.loc(), concat(desc, " must be defaultable, got ", value));
     return false;
   }
   return true;
@@ -85,7 +85,18 @@ bool CheckDefaultable(Context& context,
                       string_view desc) {
   if (!IsDefaultableType(value)) {
     context.errors->OnError(
-        value.loc(), concat(desc, " must be defaultable, got ", value->type));
+        value.loc(), concat(desc, " must be defaultable, got ", value));
+    return false;
+  }
+  return true;
+}
+
+bool CheckDefaultable(Context& context,
+                      const At<binary::StorageType>& value,
+                      string_view desc) {
+  if (!IsDefaultableType(value)) {
+    context.errors->OnError(
+        value.loc(), concat(desc, " must be defaultable, got ", value));
     return false;
   }
   return true;

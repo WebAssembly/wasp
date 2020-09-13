@@ -63,9 +63,25 @@ class ValidateInstructionTest : public ::testing::Test {
     return vec.size() - 1;
   }
 
-  Index AddFunctionType(const FunctionType& function_type) {
+  void IncrementDefinedTypeCount() {
     context.defined_type_count++;
+    context.same_types.Reset(context.defined_type_count);
+    context.match_types.Reset(context.defined_type_count);
+  }
+
+  Index AddFunctionType(const FunctionType& function_type) {
+    IncrementDefinedTypeCount();
     return AddItem(context.types, DefinedType{function_type});
+  }
+
+  Index AddStructType(const StructType& struct_type) {
+    IncrementDefinedTypeCount();
+    return AddItem(context.types, DefinedType{struct_type});
+  }
+
+  Index AddArrayType(const ArrayType& array_type) {
+    IncrementDefinedTypeCount();
+    return AddItem(context.types, DefinedType{array_type});
   }
 
   Index AddFunction(const FunctionType& function_type) {
@@ -115,24 +131,28 @@ class ValidateInstructionTest : public ::testing::Test {
   void OkWithTypeStack(const Instruction& instruction,
                        const StackTypeList& param_types,
                        const StackTypeList& result_types) {
-    ErrorsNop errors_nop;
-    Context context_copy{context, errors_nop};
+    TestErrors errors;
+    Context context_copy{context, errors};
     context_copy.type_stack = param_types;
     EXPECT_TRUE(Validate(context_copy, instruction))
         << concat(instruction, " with stack ", param_types);
     EXPECT_TRUE(IsSame(context, result_types, context_copy.type_stack))
         << instruction;
+    ExpectNoErrors(errors);
   }
 
   void OkWithUnreachableStack(const Instruction& instruction,
-                              const StackTypeList& result_types) {
-    ErrorsNop errors_nop;
-    Context context_copy{context, errors_nop};
+                              const ValueTypeList& param_types,
+                              const ValueTypeList& result_types) {
+    TestErrors errors;
+    Context context_copy{context, errors};
     context_copy.label_stack.back().unreachable = true;
-    context_copy.type_stack.clear();
+    context_copy.type_stack = ToStackTypeList(param_types);
     EXPECT_TRUE(Validate(context_copy, instruction)) << instruction;
-    EXPECT_TRUE(IsSame(context, result_types, context_copy.type_stack))
+    EXPECT_TRUE(
+        IsSame(context, ToStackTypeList(result_types), context_copy.type_stack))
         << instruction;
+    ExpectNoErrors(errors);
   }
 
   void FailWithTypeStack(const Instruction& instruction,
@@ -143,6 +163,12 @@ class ValidateInstructionTest : public ::testing::Test {
     EXPECT_FALSE(Validate(context_copy, instruction))
         << concat(instruction, " with stack ", param_types);
   }
+
+  void FailWithTypeStack(const Instruction& instruction,
+                         const ValueTypeList& param_types) {
+    FailWithTypeStack(instruction, ToStackTypeList(param_types));
+  }
+
 
   void TestSignatureNoUnreachable(const Instruction& instruction,
                                   const ValueTypeList& param_types,
@@ -178,7 +204,7 @@ class ValidateInstructionTest : public ::testing::Test {
                      const ValueTypeList& param_types,
                      const ValueTypeList& result_types) {
     TestSignatureNoUnreachable(instruction, param_types, result_types);
-    OkWithUnreachableStack(instruction, ToStackTypeList(result_types));
+    OkWithUnreachableStack(instruction, {}, result_types);
   }
 
   TestErrors errors;
@@ -1222,7 +1248,7 @@ TEST_F(ValidateInstructionTest, SelectT_RefType) {
 TEST_F(ValidateInstructionTest, SelectT_RefType_IndexOOB) {
   // Use index 1, since index 0 is always defined (see AddFunction above).
   FailWithTypeStack(I{O::SelectT, SelectImmediate{VT_Ref1}},
-                    ToStackTypeList(ValueTypeList{VT_Ref1, VT_Ref1, VT_I32}));
+                    ValueTypeList{VT_Ref1, VT_Ref1, VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, SelectT_EmptyStack) {
@@ -2699,7 +2725,7 @@ TEST_F(ValidateInstructionTest, CallRef) {
   // It's impossible to know the result types of call_ref with an unreachable
   // stack, since the signature depends on the typed function reference. So
   // it's fine to keep the type stack empty.
-  OkWithUnreachableStack(I{O::CallRef}, {});
+  OkWithUnreachableStack(I{O::CallRef}, {}, {});
 }
 
 TEST_F(ValidateInstructionTest, CallRef_ParamTypeMismatch) {
@@ -2836,7 +2862,7 @@ TEST_F(ValidateInstructionTest, FuncBind_TypeMismatch) {
     ValueType VT_RefOld = MakeValueTypeRef(old_index, Null::No);
     ValueTypeList params = info.params;
     params.push_back(VT_RefOld);
-    FailWithTypeStack(I{O::FuncBind, new_index}, ToStackTypeList(params));
+    FailWithTypeStack(I{O::FuncBind, new_index}, params);
     ClearErrors(errors);
   }
 }
@@ -2868,4 +2894,335 @@ TEST_F(ValidateInstructionTest, Let_Defaultable) {
   // Let expressions can bind non-defaultable types (unlike function locals).
   TestSignature(I{O::Let, LetImmediate{BT_Void, {Locals{1, VT_Ref0}}}},
                 {VT_Ref0}, {});
+}
+
+TEST_F(ValidateInstructionTest, RefEq) {
+  TestSignature(I{O::RefEq}, {VT_RefEq, VT_RefEq}, {VT_I32});
+}
+
+TEST_F(ValidateInstructionTest, I31) {
+  TestSignature(I{O::I31New}, {VT_I32}, {VT_RefI31});
+  TestSignature(I{O::I31GetU}, {VT_RefI31}, {VT_I32});
+  TestSignature(I{O::I31GetS}, {VT_RefI31}, {VT_I32});
+}
+
+TEST_F(ValidateInstructionTest, RttCanon) {
+  TestSignature(I{O::RttCanon, HT_Any}, {}, {VT_RTT_0_Any});
+  TestSignature(I{O::RttCanon, HT_Func}, {}, {VT_RTT_1_Func});
+  TestSignature(I{O::RttCanon, HT_Extern}, {}, {VT_RTT_1_Extern});
+  TestSignature(I{O::RttCanon, HT_Eq}, {}, {VT_RTT_1_Eq});
+  TestSignature(I{O::RttCanon, HT_I31}, {}, {VT_RTT_1_I31});
+  TestSignature(I{O::RttCanon, HT_Exn}, {}, {VT_RTT_1_Exn});
+}
+
+TEST_F(ValidateInstructionTest, RttSub) {
+  auto parent = AddStructType(StructType{
+      FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Const}}});
+
+  auto child = AddStructType(StructType{
+      FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Const},
+                    FieldType{StorageType{VT_I64}, Mutability::Const}}});
+
+  ValueType VT_RTT_1_Parent{Rtt{1u, HeapType{parent}}};
+  ValueType VT_RTT_2_Child{Rtt{2u, HeapType{child}}};
+
+  TestSignatureNoUnreachable(I{O::RttSub, HeapType{parent}}, {VT_RTT_0_Any},
+                             {VT_RTT_1_Parent});
+
+  TestSignatureNoUnreachable(I{O::RttSub, HeapType{child}}, {VT_RTT_1_Parent},
+                             {VT_RTT_2_Child});
+
+  // It's impossible to know the result types of rtt.sub with an unreachable
+  // stack, since the signature depends on the rtt on the stack. So it's fine
+  // to keep the type stack empty.
+  OkWithUnreachableStack(I{O::RttSub, HT_Func}, {}, {});
+}
+
+TEST_F(ValidateInstructionTest, RefTest) {
+  auto index = AddFunctionType({});
+  HeapType HT_index{index};
+
+  // ref.test any func: [(anyref) (rtt 1 func)] -> [i32]
+  TestSignature(I{O::RefTest, HeapType2Immediate{HT_Any, HT_Func}},
+                {VT_Anyref, VT_RTT_1_Func}, {VT_I32});
+
+  // ref.test func i: [(funcref) (rtt 2 i)] -> [i32]
+  TestSignature(I{O::RefTest, HeapType2Immediate{HT_Func, HT_index}},
+                {VT_Funcref, ValueType{Rtt{2, HT_index}}}, {VT_I32});
+}
+
+TEST_F(ValidateInstructionTest, RefTest_NotSubtype) {
+  // extern is not a subtype of func
+  FailWithTypeStack(I{O::RefTest, HeapType2Immediate{HT_Func, HT_Extern}},
+                    {VT_Funcref, VT_RTT_1_Extern});
+}
+
+TEST_F(ValidateInstructionTest, RefCast) {
+  auto index = AddFunctionType({});
+  HeapType HT_index{index};
+
+  // ref.cast any func: [(anyref) (rtt 1 func)] -> [funcref]
+  TestSignature(I{O::RefCast, HeapType2Immediate{HT_Any, HT_Func}},
+                {VT_Anyref, VT_RTT_1_Func}, {VT_RefFunc});
+
+  // ref.cast func i: [(funcref) (rtt 2 i)] -> [ref i]
+  TestSignature(I{O::RefCast, HeapType2Immediate{HT_Func, HT_index}},
+                {VT_Funcref, ValueType{Rtt{2, HT_index}}},
+                {ValueType{ReferenceType{RefType{HT_index, Null::No}}}});
+}
+
+TEST_F(ValidateInstructionTest, RefCast_NotSubtype) {
+  // extern is not a subtype of func
+  FailWithTypeStack(I{O::RefCast, HeapType2Immediate{HT_Func, HT_Extern}},
+                    {VT_Funcref, VT_RTT_1_Extern});
+}
+
+TEST_F(ValidateInstructionTest, BrOnCast) {
+  Ok(I{O::Block, BT_RefFunc});
+
+  // Should be valid with nullable and non-nullable types. The result value is
+  // the first parameter passed through.
+  TestSignatureNoUnreachable(I{O::BrOnCast, Index{0}},
+                             {VT_RefNullAny, VT_RTT_1_Func}, {VT_RefNullAny});
+  TestSignatureNoUnreachable(I{O::BrOnCast, Index{0}},
+                             {VT_RefAny, VT_RTT_1_Func}, {VT_RefAny});
+
+  // It's impossible to know the result types of br_on_cast with an unreachable
+  // stack, since the signature depends on the rtt on the stack. So it's fine
+  // to keep the type stack empty.
+  OkWithUnreachableStack(I{O::BrOnCast, Index{0}}, {}, {});
+  OkWithUnreachableStack(I{O::BrOnCast, Index{0}}, {VT_RTT_1_Func}, {});
+}
+
+TEST_F(ValidateInstructionTest, BrOnCast_NotSubtype) {
+  // extern is not a subtype of func
+  FailWithTypeStack(I{O::BrOnCast, Index{0}}, {VT_Funcref, VT_RTT_1_Extern});
+}
+
+TEST_F(ValidateInstructionTest, StructNewWithRtt) {
+  auto index = AddStructType(StructType{
+      FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Const},
+                    FieldType{StorageType{VT_I64}, Mutability::Const}}});
+
+  ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
+  ValueType VT_Ref_index{ReferenceType{RefType{HeapType{index}, Null::No}}};
+
+  TestSignature(I{O::StructNewWithRtt, index}, {VT_I32, VT_I64, VT_RTT_1_index},
+                {VT_Ref_index});
+}
+
+TEST_F(ValidateInstructionTest, StructNewWithRtt_RttMismatch) {
+  auto index = AddStructType({});
+  ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
+  FailWithTypeStack(I{O::StructNewWithRtt, Index{999}}, {VT_RTT_1_index});
+}
+
+TEST_F(ValidateInstructionTest, StructNewDefaultWithRtt) {
+  auto index = AddStructType(StructType{
+      FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Const},
+                    FieldType{StorageType{VT_I64}, Mutability::Const},
+                    // Nullable reference field
+                    FieldType{StorageType{VT_RefNull0}, Mutability::Const}}});
+
+  ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
+  ValueType VT_Ref_index{ReferenceType{RefType{HeapType{index}, Null::No}}};
+
+  TestSignature(I{O::StructNewDefaultWithRtt, index}, {VT_RTT_1_index},
+                {VT_Ref_index});
+}
+
+TEST_F(ValidateInstructionTest, StructNewDefaultWithRtt_RttMismatch) {
+  auto index = AddStructType({});
+  ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
+  FailWithTypeStack(I{O::StructNewDefaultWithRtt, Index{999}},
+                    {VT_RTT_1_index});
+}
+
+TEST_F(ValidateInstructionTest, StructNewDefaultWithRtt_NonDefaultable) {
+  auto index = AddStructType(StructType{
+      FieldTypeList{FieldType{StorageType{VT_Ref0}, Mutability::Const}}});
+
+  ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
+  FailWithTypeStack(I{O::StructNewDefaultWithRtt, Index{1}},
+                    {VT_RTT_1_index});
+}
+
+TEST_F(ValidateInstructionTest, StructGet) {
+  auto index = AddStructType(StructType{
+      FieldTypeList{FieldType{StorageType{VT_F32}, Mutability::Const}}});
+  ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
+  ValueType VT_Ref_index = MakeValueTypeRef(index, Null::No);
+
+  TestSignature(I{O::StructGet, StructFieldImmediate{index, Index{0}}},
+                {VT_RefNull_index}, {VT_F32});
+  TestSignature(I{O::StructGet, StructFieldImmediate{index, Index{0}}},
+                {VT_Ref_index}, {VT_F32});
+}
+
+TEST_F(ValidateInstructionTest, StructGet_FailPacked) {
+  auto index = AddStructType(StructType{
+      FieldTypeList{FieldType{StorageType{PackedType::I8}, Mutability::Const}}});
+  ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
+
+  FailWithTypeStack(I{O::StructGet, StructFieldImmediate{index, Index{0}}},
+                    {VT_RefNull_index});
+}
+
+TEST_F(ValidateInstructionTest, StructGetPacked) {
+  auto index = AddStructType(StructType{FieldTypeList{
+      FieldType{StorageType{PackedType::I8}, Mutability::Const},
+      FieldType{StorageType{PackedType::I16}, Mutability::Const}}});
+  ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
+  ValueType VT_Ref_index = MakeValueTypeRef(index, Null::No);
+
+  // StructGetS
+  TestSignature(I{O::StructGetS, StructFieldImmediate{index, Index{0}}},
+                {VT_RefNull_index}, {VT_I32});
+  TestSignature(I{O::StructGetS, StructFieldImmediate{index, Index{0}}},
+                {VT_Ref_index}, {VT_I32});
+  TestSignature(I{O::StructGetS, StructFieldImmediate{index, Index{1}}},
+                {VT_RefNull_index}, {VT_I32});
+  TestSignature(I{O::StructGetS, StructFieldImmediate{index, Index{1}}},
+                {VT_Ref_index}, {VT_I32});
+
+  // StructGetU
+  TestSignature(I{O::StructGetU, StructFieldImmediate{index, Index{0}}},
+                {VT_RefNull_index}, {VT_I32});
+  TestSignature(I{O::StructGetU, StructFieldImmediate{index, Index{0}}},
+                {VT_Ref_index}, {VT_I32});
+  TestSignature(I{O::StructGetU, StructFieldImmediate{index, Index{1}}},
+                {VT_RefNull_index}, {VT_I32});
+  TestSignature(I{O::StructGetU, StructFieldImmediate{index, Index{1}}},
+                {VT_Ref_index}, {VT_I32});
+}
+
+TEST_F(ValidateInstructionTest, StructGetPacked_FailUnpacked) {
+  auto index = AddStructType(StructType{
+      FieldTypeList{FieldType{StorageType{VT_F32}, Mutability::Const}}});
+  ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
+
+  FailWithTypeStack(I{O::StructGetS, StructFieldImmediate{index, Index{0}}},
+                    {VT_RefNull_index});
+  FailWithTypeStack(I{O::StructGetU, StructFieldImmediate{index, Index{0}}},
+                    {VT_RefNull_index});
+}
+
+TEST_F(ValidateInstructionTest, StructSet) {
+  auto index = AddStructType(StructType{
+      FieldTypeList{FieldType{StorageType{VT_F32}, Mutability::Var}}});
+  ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
+  ValueType VT_Ref_index = MakeValueTypeRef(index, Null::No);
+
+  TestSignature(I{O::StructSet, StructFieldImmediate{index, Index{0}}},
+                {VT_RefNull_index, VT_F32}, {});
+  TestSignature(I{O::StructSet, StructFieldImmediate{index, Index{0}}},
+                {VT_Ref_index, VT_F32}, {});
+}
+
+TEST_F(ValidateInstructionTest, ArrayNewWithRtt) {
+  auto index = AddArrayType(
+      ArrayType{FieldType{StorageType{VT_I64}, Mutability::Const}});
+
+  ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
+  ValueType VT_Ref_index{ReferenceType{RefType{HeapType{index}, Null::No}}};
+
+  TestSignature(I{O::ArrayNewWithRtt, index}, {VT_I64, VT_I32, VT_RTT_1_index},
+                {VT_Ref_index});
+}
+
+TEST_F(ValidateInstructionTest, ArrayNewWithRtt_RttMismatch) {
+  auto index = AddArrayType(
+      ArrayType{FieldType{StorageType{VT_I64}, Mutability::Const}});
+  ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
+  FailWithTypeStack(I{O::ArrayNewWithRtt, Index{999}}, {VT_RTT_1_index});
+}
+
+TEST_F(ValidateInstructionTest, ArrayNewDefaultWithRtt) {
+  auto index = AddArrayType(
+      ArrayType{FieldType{StorageType{VT_I64}, Mutability::Const}});
+
+  ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
+  ValueType VT_Ref_index{ReferenceType{RefType{HeapType{index}, Null::No}}};
+
+  TestSignature(I{O::ArrayNewDefaultWithRtt, index}, {VT_I32, VT_RTT_1_index},
+                {VT_Ref_index});
+}
+
+TEST_F(ValidateInstructionTest, ArrayNewDefaultWithRtt_RttMismatch) {
+  auto index = AddArrayType(
+      ArrayType{FieldType{StorageType{VT_I64}, Mutability::Const}});
+  ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
+  FailWithTypeStack(I{O::ArrayNewDefaultWithRtt, Index{999}},
+                    {VT_I32, VT_RTT_1_index});
+}
+
+TEST_F(ValidateInstructionTest, ArrayNewDefaultWithRtt_NonDefaultable) {
+  auto index = AddArrayType(
+      ArrayType{FieldType{StorageType{VT_Ref0}, Mutability::Const}});
+
+  ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
+  FailWithTypeStack(I{O::ArrayNewDefaultWithRtt, Index{1}},
+                    {VT_I32, VT_RTT_1_index});
+}
+
+TEST_F(ValidateInstructionTest, ArrayGet) {
+  auto index = AddArrayType(
+      ArrayType{FieldType{StorageType{VT_F32}, Mutability::Const}});
+  ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
+  ValueType VT_Ref_index = MakeValueTypeRef(index, Null::No);
+
+  TestSignature(I{O::ArrayGet, index}, {VT_RefNull_index}, {VT_F32});
+  TestSignature(I{O::ArrayGet, index}, {VT_Ref_index}, {VT_F32});
+}
+
+TEST_F(ValidateInstructionTest, ArrayGet_FailPacked) {
+  auto index = AddArrayType(
+      ArrayType{FieldType{StorageType{PackedType::I8}, Mutability::Const}});
+  ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
+
+  FailWithTypeStack(I{O::ArrayGet, index}, {VT_RefNull_index});
+}
+
+TEST_F(ValidateInstructionTest, ArrayGetPacked) {
+  auto index = AddArrayType(
+      ArrayType{FieldType{StorageType{PackedType::I8}, Mutability::Const}});
+  ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
+  ValueType VT_Ref_index = MakeValueTypeRef(index, Null::No);
+
+  // ArrayGetS
+  TestSignature(I{O::ArrayGetS, index}, {VT_RefNull_index}, {VT_I32});
+  TestSignature(I{O::ArrayGetS, index}, {VT_Ref_index}, {VT_I32});
+
+  // ArrayGetU
+  TestSignature(I{O::ArrayGetU, index}, {VT_RefNull_index}, {VT_I32});
+  TestSignature(I{O::ArrayGetU, index}, {VT_Ref_index}, {VT_I32});
+}
+
+TEST_F(ValidateInstructionTest, ArrayGetPacked_FailUnpacked) {
+  auto index = AddArrayType(
+      ArrayType{FieldType{StorageType{VT_F32}, Mutability::Const}});
+  ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
+
+  FailWithTypeStack(I{O::ArrayGetS, index}, {VT_RefNull_index});
+  FailWithTypeStack(I{O::ArrayGetU, index}, {VT_RefNull_index});
+}
+
+TEST_F(ValidateInstructionTest, ArraySet) {
+  auto index =
+      AddArrayType(ArrayType{FieldType{StorageType{VT_F32}, Mutability::Var}});
+  ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
+  ValueType VT_Ref_index = MakeValueTypeRef(index, Null::No);
+
+  TestSignature(I{O::ArraySet, index}, {VT_RefNull_index, VT_F32}, {});
+  TestSignature(I{O::ArraySet, index}, {VT_Ref_index, VT_F32}, {});
+}
+
+TEST_F(ValidateInstructionTest, ArrayLen) {
+  auto index =
+      AddArrayType(ArrayType{FieldType{StorageType{VT_F32}, Mutability::Var}});
+  ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
+  ValueType VT_Ref_index = MakeValueTypeRef(index, Null::No);
+
+  TestSignature(I{O::ArrayLen, index}, {VT_RefNull_index}, {VT_I32});
+  TestSignature(I{O::ArrayLen, index}, {VT_Ref_index}, {VT_I32});
 }

@@ -67,6 +67,21 @@ StackType StackType::Externref() {
 }
 
 // static
+StackType StackType::Anyref() {
+  return StackType{binary::ValueType::Anyref_NoLocation()};
+}
+
+// static
+StackType StackType::Eqref() {
+  return StackType{binary::ValueType::Eqref_NoLocation()};
+}
+
+// static
+StackType StackType::I31ref() {
+  return StackType{binary::ValueType::I31ref_NoLocation()};
+}
+
+// static
 StackType StackType::Exnref() {
   return StackType{binary::ValueType::Exnref_NoLocation()};
 }
@@ -87,6 +102,11 @@ auto StackType::value_type() const -> const binary::ValueType& {
   return get<binary::ValueType>(type);
 }
 
+auto ToValueType(binary::StorageType type) -> binary::ValueType {
+  return type.is_packed_type() ? binary::ValueType::I32_NoLocation()
+                               : type.value_type().value();
+}
+
 auto ToValueType(binary::ReferenceType type) -> binary::ValueType {
   return binary::ValueType{type};
 }
@@ -98,6 +118,10 @@ auto ToValueType(binary::RefType type) -> binary::ValueType {
 auto ToValueType(binary::HeapType type) -> binary::ValueType {
   return binary::ValueType{
       binary::ReferenceType{binary::RefType{type, Null::Yes}}};
+}
+
+auto ToStackType(binary::StorageType type) -> StackType {
+  return StackType(ToValueType(type));
 }
 
 auto ToStackType(binary::ValueType type) -> StackType {
@@ -138,6 +162,10 @@ auto ToStackTypeList(const binary::LocalsList& locals_list) -> StackTypeList {
 bool IsReferenceTypeOrAny(StackType type) {
   return type.is_any() ||
          (type.is_value_type() && type.value_type().is_reference_type());
+}
+
+bool IsRttOrAny(StackType type) {
+  return type.is_any() || (type.is_value_type() && type.value_type().is_rtt());
 }
 
 auto Canonicalize(binary::ReferenceType type) -> binary::ReferenceType {
@@ -186,6 +214,10 @@ bool IsDefaultableType(binary::ReferenceType type) {
 
 bool IsDefaultableType(binary::ValueType type) {
   return type.is_numeric_type() || IsDefaultableType(type.reference_type());
+}
+
+bool IsDefaultableType(binary::StorageType type) {
+  return type.is_packed_type() || IsDefaultableType(type.value_type());
 }
 
 bool IsNullableType(binary::ValueType type) {
