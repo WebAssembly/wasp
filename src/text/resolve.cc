@@ -92,6 +92,8 @@ void Define(ResolveContext& context, const DefinedType& defined_type) {
     BoundFunctionType bft = defined_type.function_type();
     Resolve(context, bft);
     context.function_type_map.Define(bft);
+  } else {
+    context.function_type_map.SkipIndex();
   }
 }
 

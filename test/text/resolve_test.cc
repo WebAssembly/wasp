@@ -1633,3 +1633,39 @@ TEST_F(TextResolveTest, ModuleWithDeferredTypes) {
                               {}}},
       });
 }
+
+TEST_F(TextResolveTest, ModuleWithDeferredTypes_AndStruct) {
+  OK(
+      Module{
+          // (type (struct))
+          ModuleItem{DefinedType{nullopt, StructType{}}},
+          // (func (type 1) (param i32))
+          ModuleItem{Function{FunctionDesc{
+                                  nullopt,
+                                  Var{Index{1}},
+                                  BoundFunctionType{{BVT{nullopt, VT_I32}}, {}},
+                              },
+                              {},
+                              {},
+                              {}}},
+
+          // The deferred defined types.
+          // (type (func (param i32))
+          ModuleItem{DefinedType{
+              nullopt,
+              BoundFunctionType{BoundValueTypeList{BVT{nullopt, VT_I32}}, {}}}},
+      },
+      Module{
+          // (type (struct))
+          ModuleItem{DefinedType{nullopt, StructType{}}},
+          // (func (param i32))
+          ModuleItem{Function{FunctionDesc{
+                                  nullopt,
+                                  nullopt,
+                                  BoundFunctionType{{BVT{nullopt, VT_I32}}, {}},
+                              },
+                              {},
+                              {},
+                              {}}},
+      });
+}

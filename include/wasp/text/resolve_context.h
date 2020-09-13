@@ -49,10 +49,11 @@ using DefinedTypeList = std::vector<DefinedType>;
 // `deferred_list_` set below.
 class FunctionTypeMap {
  public:
-  using List = std::vector<FunctionType>;
+  using List = std::vector<optional<FunctionType>>;
 
   void BeginModule();
   void Define(BoundFunctionType);
+  void SkipIndex();
   Index Use(FunctionType);
   Index Use(BoundFunctionType);
   // Returns the deferred defined types.

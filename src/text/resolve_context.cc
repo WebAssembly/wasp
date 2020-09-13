@@ -91,6 +91,10 @@ void FunctionTypeMap::Define(BoundFunctionType bound_type) {
   list_.push_back(ToFunctionType(bound_type));
 }
 
+void FunctionTypeMap::SkipIndex() {
+  list_.push_back(nullopt);
+}
+
 Index FunctionTypeMap::Use(FunctionType type) {
   auto iter = FindIter(list_, type);
   if (iter != list_.end()) {
@@ -113,8 +117,9 @@ Index FunctionTypeMap::Use(BoundFunctionType type) {
 auto FunctionTypeMap::EndModule() -> DefinedTypeList {
   DefinedTypeList defined_types;
   for (auto&& deferred : deferred_list_) {
-    list_.push_back(deferred);
-    defined_types.push_back(ToDefinedType(deferred));
+    assert(deferred.has_value());
+    list_.push_back(*deferred);
+    defined_types.push_back(ToDefinedType(*deferred));
   }
   deferred_list_.clear();
   return defined_types;
@@ -151,7 +156,9 @@ FunctionTypeMap::List::const_iterator FunctionTypeMap::FindIter(
     const List& list,
     const FunctionType& type) {
   return std::find_if(list.begin(), list.end(),
-                      [&](const FunctionType& ft) { return IsSame(type, ft); });
+                      [&](const optional<FunctionType>& ft) {
+                        return ft && IsSame(type, *ft);
+                      });
 }
 
 // static
