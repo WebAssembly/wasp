@@ -22,11 +22,6 @@
 
 namespace wasp::valid {
 
-enum class ConstantExpressionKind {
-  GlobalInit,
-  Other,
-};
-
 enum class RequireDefaultable {
   No,
   Yes,
@@ -46,7 +41,6 @@ bool Validate(Context&, const At<binary::BlockType>&);
 bool Validate(Context&, const At<binary::DataSegment>&);
 bool Validate(Context&,
               const At<binary::ConstantExpression>&,
-              ConstantExpressionKind kind,
               binary::ValueType expected_type,
               Index max_global_index);
 bool Validate(Context&, const At<binary::DataCount>&);

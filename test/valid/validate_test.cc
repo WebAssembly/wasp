@@ -71,8 +71,8 @@ TEST(ValidateTest, ConstantExpression_Const) {
   for (const auto& test : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_TRUE(Validate(context, ConstantExpression{test.instr},
-                         ConstantExpressionKind::Other, test.valtype, 0));
+    EXPECT_TRUE(
+        Validate(context, ConstantExpression{test.instr}, test.valtype, 0));
   }
 }
 
@@ -87,16 +87,16 @@ TEST(ValidateTest, ConstantExpression_Global) {
 
   EXPECT_TRUE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-      ConstantExpressionKind::GlobalInit, VT_I32, max));
+      VT_I32, max));
   EXPECT_TRUE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
-      ConstantExpressionKind::GlobalInit, VT_I64, max));
+      VT_I64, max));
   EXPECT_TRUE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{2}}},
-      ConstantExpressionKind::GlobalInit, VT_F32, max));
+      VT_F32, max));
   EXPECT_TRUE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{3}}},
-      ConstantExpressionKind::GlobalInit, VT_F64, max));
+      VT_F64, max));
 }
 
 TEST(ValidateTest, ConstantExpression_InvalidOpcode) {
@@ -112,8 +112,7 @@ TEST(ValidateTest, ConstantExpression_InvalidOpcode) {
   for (const auto& instr : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_FALSE(Validate(context, ConstantExpression{instr},
-                          ConstantExpressionKind::Other, VT_I32, 0));
+    EXPECT_FALSE(Validate(context, ConstantExpression{instr}, VT_I32, 0));
   }
 }
 
@@ -131,8 +130,8 @@ TEST(ValidateTest, ConstantExpression_ConstMismatch) {
   for (const auto& test : tests) {
     TestErrors errors;
     Context context{errors};
-    EXPECT_FALSE(Validate(context, ConstantExpression{test.instr},
-                          ConstantExpressionKind::Other, test.valtype, 0));
+    EXPECT_FALSE(
+        Validate(context, ConstantExpression{test.instr}, test.valtype, 0));
   }
 }
 
@@ -144,7 +143,7 @@ TEST(ValidateTest, ConstantExpression_GlobalIndexOOB) {
 
   EXPECT_FALSE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
-      ConstantExpressionKind::Other, VT_I32, max));
+      VT_I32, max));
 }
 
 TEST(ValidateTest, ConstantExpression_GlobalTypeMismatch) {
@@ -158,16 +157,16 @@ TEST(ValidateTest, ConstantExpression_GlobalTypeMismatch) {
 
   EXPECT_FALSE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-      ConstantExpressionKind::Other, VT_I64, max));
+      VT_I64, max));
   EXPECT_FALSE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
-      ConstantExpressionKind::Other, VT_F32, max));
+      VT_F32, max));
   EXPECT_FALSE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{2}}},
-      ConstantExpressionKind::Other, VT_F64, max));
+      VT_F64, max));
   EXPECT_FALSE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{3}}},
-      ConstantExpressionKind::Other, VT_I32, max));
+      VT_I32, max));
 }
 
 TEST(ValidateTest, ConstantExpression_GlobalMutVar) {
@@ -178,7 +177,7 @@ TEST(ValidateTest, ConstantExpression_GlobalMutVar) {
 
   EXPECT_FALSE(Validate(
       context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-      ConstantExpressionKind::Other, VT_I32, max));
+      VT_I32, max));
 }
 
 TEST(ValidateTest, ConstantExpression_WrongInstructionCount) {
@@ -186,14 +185,13 @@ TEST(ValidateTest, ConstantExpression_WrongInstructionCount) {
   Context context{errors};
 
   // Too few instructions.
-  EXPECT_FALSE(Validate(context, ConstantExpression{},
-                        ConstantExpressionKind::Other, VT_I32, 0));
+  EXPECT_FALSE(Validate(context, ConstantExpression{}, VT_I32, 0));
   // Too many instructions.
   EXPECT_FALSE(Validate(context,
                         ConstantExpression{InstructionList{
                             Instruction{Opcode::GlobalGet, Index{0}},
                             Instruction{Opcode::I32Const, s32{0}}}},
-                        ConstantExpressionKind::Other, VT_I32, 0));
+                        VT_I32, 0));
 }
 
 TEST(ValidateTest, ConstantExpression_Funcref) {
@@ -204,7 +202,7 @@ TEST(ValidateTest, ConstantExpression_Funcref) {
   // Using ref.func in the global section implicitly declares that function.
   EXPECT_TRUE(Validate(
       context, ConstantExpression{Instruction{Opcode::RefFunc, Index{0}}},
-      ConstantExpressionKind::GlobalInit, VT_Funcref, 0));
+      VT_Funcref, 0));
 
   EXPECT_EQ(1u, context.declared_functions.size());
 }

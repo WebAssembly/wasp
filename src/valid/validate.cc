@@ -108,7 +108,6 @@ bool Validate(Context& context, const At<binary::UnpackedCode>& value) {
 
 bool Validate(Context& context,
               const At<binary::ConstantExpression>& value,
-              ConstantExpressionKind kind,
               binary::ValueType expected_type,
               Index max_global_index) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "constant_expression"};
@@ -207,8 +206,8 @@ bool Validate(Context& context, const At<binary::DataSegment>& value) {
   }
   if (value->offset) {
     valid &=
-        Validate(context, *value->offset, ConstantExpressionKind::Other,
-                 binary::ValueType::I32_NoLocation(), context.globals.size());
+        Validate(context, *value->offset, binary::ValueType::I32_NoLocation(),
+                 context.globals.size());
   }
   return valid;
 }
@@ -264,8 +263,8 @@ bool Validate(Context& context, const At<binary::ElementSegment>& value) {
   }
   if (value->offset) {
     valid &=
-        Validate(context, *value->offset, ConstantExpressionKind::GlobalInit,
-                 binary::ValueType::I32_NoLocation(), context.globals.size());
+        Validate(context, *value->offset, binary::ValueType::I32_NoLocation(),
+                 context.globals.size());
   }
   if (value->has_indexes()) {
     auto&& elements = value->indexes();
@@ -416,8 +415,8 @@ bool Validate(Context& context, const At<binary::Global>& value) {
   bool valid = true;
   valid &= Validate(context, value->global_type);
   // Only imported globals can be used in a global's constant expression.
-  valid &= Validate(context, value->init, ConstantExpressionKind::GlobalInit,
-                    value->global_type->valtype, context.imported_global_count);
+  valid &= Validate(context, value->init, value->global_type->valtype,
+                    context.imported_global_count);
   return valid;
 }
 
