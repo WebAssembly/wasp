@@ -13,6 +13,7 @@ It also includes the `wasp` tool, which has the following commands:
 * `wasp dfg`: Generate a [dot graph][] of a function's [data-flow graph][]
 * `wasp validate`: Validate a WebAssembly module
 * `wasp pattern`: Find instruction sequence patterns
+* `wasp wat2wasm`: Convert a Wasm text file to a Wasm binary file
 
 ## wasp dump examples
 
@@ -164,6 +165,32 @@ This produces results similar to those shown below. The columns are as follows:
 15857: [3] [block [] block [] block []] 1.39%
 15314: [2] [end local.get 0] 0.90%
 total instructions: 3417737
+```
+
+## wasp wat2wasm examples
+
+Convert `test.wat` to `test.wasm`.
+
+```sh
+$ wasp wat2wasm test.wat
+```
+
+Convert `test.wat` to `something.wasm`.
+
+```sh
+$ wasp wat2wasm test.wat -o something.wasm
+```
+
+Convert `test.wat` to `test.wasm`, but skip validation.
+
+```sh
+$ wasp wat2wasm test.wat --no-validate
+```
+
+Convert `test.wat` to `test.wasm`, and enable the SIMD feature.
+
+```sh
+$ wasp wat2wasm test.wat --enable-simd
 ```
 
 [wabt]: https://github.com/WebAssembly/wabt
