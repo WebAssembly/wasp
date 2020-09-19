@@ -1405,7 +1405,7 @@ OptAt<Section> Read(SpanU8* data, Context& context, Tag<Section>) {
     return At{guard.range(data),
               Section{At{guard.range(data), CustomSection{name, *bytes}}}};
   } else {
-    if (context.last_section_id && *context.last_section_id >= id) {
+    if (context.last_section_id && *context.last_section_id >= id.value()) {
       context.errors.OnError(
           id.loc(), concat("Section out of order: ", id, " cannot occur after ",
                            *context.last_section_id));

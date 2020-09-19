@@ -61,6 +61,16 @@ At(Location loc, T v) -> At<T>;
 template <typename T>
 using OptAt = optional<At<T>>;
 
+template <typename T>
+bool operator==(const At<T>& lhs, const T& rhs) { return lhs.value() == rhs; }
+template <typename T>
+bool operator==(const T& lhs, const At<T>& rhs) { return lhs == rhs.value(); }
+
+template <typename T>
+bool operator!=(const At<T>& lhs, const T& rhs) { return lhs.value() != rhs; }
+template <typename T>
+bool operator!=(const T& lhs, const At<T>& rhs) { return lhs != rhs.value(); }
+
 }  // namespace wasp
 
 namespace std {

@@ -248,7 +248,7 @@ void Tool::DoPrepass() {
               functions.push_back(Function{import->index()});
             }
           }
-          imported_function_count = functions.size();
+          imported_function_count = static_cast<Index>(functions.size());
           break;
 
         case SectionId::Function: {
@@ -1065,7 +1065,7 @@ void Tool::Br(Index index) {
 }
 
 void Tool::Return() {
-  Br(labels.size() - 2);
+  Br(static_cast<Index>(labels.size() - 2));
 }
 
 ValueID Tool::NewValue(const Instruction& instr, size_t operand_count) {
@@ -1106,7 +1106,7 @@ void Tool::CopyValues(size_t count, ValueIDs& out) {
   if (count <= GetStackSize()) {
     out.resize(count);
     for (size_t i = 0; i < count; ++i) {
-      out[i] = ReadVariable(value_stack_size - count + i, current_bbid);
+      out[i] = ReadVariable(static_cast<VarID>(value_stack_size - count + i), current_bbid);
     }
   } else {
     print(std::cerr, "*** Error: CopyValues({}) past bottom of stack {}\n",
@@ -1118,20 +1118,20 @@ void Tool::ForwardValues(const Label& label, BBID bbid) {
   const auto& block = GetBlock(bbid);
   for (size_t i = 0; i < block.value_count; ++i) {
     auto value =
-        ReadVariable(value_stack_size - block.value_count + i, current_bbid);
-    WriteVariable(label.value_stack_size - block.value_count + i, current_bbid,
+        ReadVariable(static_cast<VarID>(value_stack_size - block.value_count + i), current_bbid);
+    WriteVariable(static_cast<VarID>(label.value_stack_size - block.value_count + i), current_bbid,
                   value);
   }
 }
 
 void Tool::PushValue(ValueID value) {
-  WriteVariable(value_stack_size++, current_bbid, value);
+  WriteVariable(static_cast<VarID>(value_stack_size++), current_bbid, value);
 }
 
 void Tool::PushUndefValues(size_t count) {
   auto undef = Undef();
   for (size_t i = 0; i < count; ++i) {
-    WriteVariable(value_stack_size++, current_bbid, undef);
+    WriteVariable(static_cast<VarID>(value_stack_size++), current_bbid, undef);
   }
 }
 
@@ -1140,7 +1140,7 @@ ValueID Tool::PopValue() {
     return InvalidValueID;
   }
 
-  return ReadVariable(--value_stack_size, current_bbid);
+  return ReadVariable(static_cast<VarID>(--value_stack_size), current_bbid);
 }
 
 void Tool::PopValues(size_t count) {

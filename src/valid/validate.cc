@@ -190,7 +190,7 @@ bool Validate(Context& context,
       // ref.func indexes are implicitly declared by referencing them in a
       // constant expression.
       context.declared_functions.insert(index);
-      if (!ValidateIndex(context, index, context.functions.size(),
+      if (!ValidateIndex(context, index, static_cast<Index>(context.functions.size()),
                          "func index")) {
         return false;
       }
@@ -224,12 +224,12 @@ bool Validate(Context& context, const At<binary::DataSegment>& value) {
   bool valid = true;
   if (value->memory_index) {
     valid &= ValidateIndex(context, *value->memory_index,
-                           context.memories.size(), "memory index");
+                           static_cast<Index>(context.memories.size()), "memory index");
   }
   if (value->offset) {
     valid &=
         Validate(context, *value->offset, binary::ValueType::I32_NoLocation(),
-                 context.globals.size());
+                 static_cast<Index>(context.globals.size()));
   }
   return valid;
 }
@@ -255,7 +255,7 @@ bool Validate(Context& context,
     case Opcode::RefFunc: {
       actual_type = binary::ReferenceType::Funcref_NoLocation();
       auto index = instruction->index_immediate();
-      if (!ValidateIndex(context, index, context.functions.size(),
+      if (!ValidateIndex(context, index, static_cast<Index>(context.functions.size()),
                          "function index")) {
         valid = false;
       }
@@ -280,32 +280,32 @@ bool Validate(Context& context, const At<binary::ElementSegment>& value) {
   context.element_segments.push_back(value->elemtype());
   bool valid = true;
   if (value->table_index) {
-    valid &= ValidateIndex(context, *value->table_index, context.tables.size(),
+    valid &= ValidateIndex(context, *value->table_index, static_cast<Index>(context.tables.size()),
                            "table index");
   }
   if (value->offset) {
     valid &=
         Validate(context, *value->offset, binary::ValueType::I32_NoLocation(),
-                 context.globals.size());
+                 static_cast<Index>(context.globals.size()));
   }
   if (value->has_indexes()) {
     auto&& elements = value->indexes();
     Index max_index;
     switch (elements.kind) {
       case ExternalKind::Function:
-        max_index = context.functions.size();
+        max_index = static_cast<Index>(context.functions.size());
         break;
       case ExternalKind::Table:
-        max_index = context.tables.size();
+        max_index = static_cast<Index>(context.tables.size());
         break;
       case ExternalKind::Memory:
-        max_index = context.memories.size();
+        max_index = static_cast<Index>(context.memories.size());
         break;
       case ExternalKind::Global:
-        max_index = context.globals.size();
+        max_index = static_cast<Index>(context.globals.size());
         break;
       case ExternalKind::Event:
-        max_index = context.events.size();
+        max_index = static_cast<Index>(context.events.size());
         break;
       default:
         WASP_UNREACHABLE();
@@ -341,23 +341,23 @@ bool Validate(Context& context, const At<binary::Export>& value) {
 
   switch (value->kind) {
     case ExternalKind::Function:
-      valid &= ValidateIndex(context, value->index, context.functions.size(),
+      valid &= ValidateIndex(context, value->index, static_cast<Index>(context.functions.size()),
                              "function index");
       context.declared_functions.insert(value->index);
       break;
 
     case ExternalKind::Table:
-      valid &= ValidateIndex(context, value->index, context.tables.size(),
+      valid &= ValidateIndex(context, value->index, static_cast<Index>(context.tables.size()),
                              "table index");
       break;
 
     case ExternalKind::Memory:
-      valid &= ValidateIndex(context, value->index, context.memories.size(),
+      valid &= ValidateIndex(context, value->index, static_cast<Index>(context.memories.size()),
                              "memory index");
       break;
 
     case ExternalKind::Global:
-      if (ValidateIndex(context, value->index, context.globals.size(),
+      if (ValidateIndex(context, value->index, static_cast<Index>(context.globals.size()),
                         "global index")) {
         const auto& global = context.globals[value->index];
         if (global.mut == Mutability::Var &&
@@ -372,7 +372,7 @@ bool Validate(Context& context, const At<binary::Export>& value) {
       break;
 
     case ExternalKind::Event:
-      valid &= ValidateIndex(context, value->index, context.events.size(),
+      valid &= ValidateIndex(context, value->index, static_cast<Index>(context.events.size()),
                              "event index");
       break;
 
@@ -622,7 +622,7 @@ bool Validate(Context& context, const At<binary::RefType>& value) {
 
 bool Validate(Context& context, const At<binary::Start>& value) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "start"};
-  if (!ValidateIndex(context, value->func_index, context.functions.size(),
+  if (!ValidateIndex(context, value->func_index, static_cast<Index>(context.functions.size()),
                      "function index")) {
     return false;
   }
@@ -755,7 +755,7 @@ bool ValidateKnownSection(Context& context, const optional<T>& value) {
 
 bool Validate(Context& context, const binary::Module& value) {
   bool valid = true;
-  valid &= BeginTypeSection(context, value.types.size());
+  valid &= BeginTypeSection(context, static_cast<Index>(value.types.size()));
   valid &= ValidateKnownSection(context, value.types);
   valid &= ValidateKnownSection(context, value.imports);
   valid &= ValidateKnownSection(context, value.functions);

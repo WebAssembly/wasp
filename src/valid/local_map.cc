@@ -102,7 +102,7 @@ bool LocalMap::Append(const binary::ValueTypeList& value_types) {
   if (value_types.empty()) {
     return true;
   }
-  if (!CanAppend(value_types.size())) {
+  if (!CanAppend(static_cast<Index>(value_types.size()))) {
     return false;
   }
 

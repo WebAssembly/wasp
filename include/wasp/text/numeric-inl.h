@@ -20,7 +20,7 @@
 #include <charconv>
 #include <limits>
 
-#include "third_party/gdtoa/gdtoa.h"
+#include "gdtoa/wasp_gdtoa.h"
 #include "wasp/base/bitcast.h"
 #include "wasp/base/buffer.h"
 #include "wasp/base/macros.h"
@@ -330,12 +330,12 @@ auto GFmt(T value, char* first, char* last) -> char*;
 
 template <>
 inline auto GFmt<f32>(f32 value, char* first, char* last) -> char* {
-  return g_ffmt(first, &value, 0, last - first);
+  return g_ffmt(first, &value, 0, static_cast<unsigned>(last - first));
 }
 
 template <>
 inline auto GFmt<f64>(f64 value, char* first, char* last) -> char* {
-  return g_dfmt(first, &value, 0, last - first);
+  return g_dfmt(first, &value, 0, static_cast<unsigned>(last - first));
 }
 
 template <typename T>

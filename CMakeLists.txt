@@ -20,30 +20,25 @@ project(wasp)
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_TOOLS "Build tools" ON)
 
-# TODO: Start using target-specific definitions for all of these.
-set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS}")
+if (NOT MSVC)
+  # TODO: Start using target-specific definitions for all of these.
+  set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS}")
 
-# TODO: Different flags for other compilers.
-set(warning_flags -Wall -Wextra -Wno-unused-parameter)
+  # TODO: Different flags for other compilers.
+  set(warning_flags -Wall -Wextra -Wno-unused-parameter)
+else ()
+  # /Zc:preprocessor enables C++99 and C11 conformance for preprocessor.
+  # -wd5105 disables "warning C5105: macro expansion producing 'defined' has undefined behavior
+  set(CMAKE_CXX_FLAGS "/std:c++17 /Zc:preprocessor ${CMAKE_CXX_FLAGS}")
+  set(warning_flags -W3 -wd5105)
+endif ()
 
 set(gdtoa_files
   third_party/gdtoa/gdtoa.h
   third_party/gdtoa/gdtoaimp.h
 
-  third_party/gdtoa/strtorf.c
-  third_party/gdtoa/strtord.c
-  third_party/gdtoa/strtodg.c
-  third_party/gdtoa/dmisc.c
-  third_party/gdtoa/misc.c
-  third_party/gdtoa/gmisc.c
-  third_party/gdtoa/smisc.c
-  third_party/gdtoa/gethex.c
-  third_party/gdtoa/sum.c
-  third_party/gdtoa/hd_init.c
-  third_party/gdtoa/g_ffmt.c
-  third_party/gdtoa/g_dfmt.c
-  third_party/gdtoa/g__fmt.c
-  third_party/gdtoa/gdtoa.c
+  include/gdtoa/wasp_gdtoa.h
+  src/gdtoa/wasp_gdtoa.cc
 )
 
 add_library(libwasp_base
@@ -87,8 +82,6 @@ add_library(libwasp_base
   src/base/utf8.cc
   src/base/v128.cc
   src/base/wasm_types.cc
-
-  third_party/fmt/src/format.cc
 )
 target_compile_options(libwasp_base
   PRIVATE
@@ -257,11 +250,13 @@ target_link_libraries(wasplib
   libwasp_convert
 )
 
-set_source_files_properties(
-  ${gdtoa_files}
-  PROPERTIES
-  COMPILE_FLAGS "-Wno-parentheses -Wno-implicit-fallthrough -Wno-unused-label -Wno-sign-compare"
-)
+if (NOT MSVC)
+  set_source_files_properties(
+    ${gdtoa_files}
+    PROPERTIES
+    COMPILE_FLAGS "-Wno-parentheses -Wno-implicit-fallthrough -Wno-unused-label -Wno-sign-compare"
+  )
+endif ()
 
 if (BUILD_TESTS)
   add_subdirectory(third_party/gtest)
@@ -403,8 +398,10 @@ if (BUILD_TESTS)
 endif()
 
 if (BUILD_TOOLS)
-# TODO: Link stdc++fs conditionally, only when needed.
-  set(filesystem_lib "stdc++fs")
+  if (NOT MSVC)
+    # TODO: Link stdc++fs conditionally, only when needed.
+    set(filesystem_lib "stdc++fs")
+  endif ()
 
   add_library(wasp_tool INTERFACE)
   target_include_directories(wasp_tool
@@ -435,7 +432,17 @@ if (BUILD_TOOLS)
     src/tools/validate.cc
     src/tools/wasp.cc
     src/tools/wat2wasm.cc
+
+    third_party/fmt/src/format.cc
   )
+  if (MSVC)
+    set_source_files_properties(
+      third_party/fmt/src/format.cc
+      PROPERTIES
+      COMPILE_FLAGS "/Zc:preprocessor-"
+  )
+  endif ()
+
   target_compile_options(wasp
     PRIVATE
     ${warning_flags}
