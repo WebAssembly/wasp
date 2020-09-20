@@ -26,18 +26,18 @@ jobs:
       with:
         submodules: true
 
-    - name: install ninja (linux)
+    - name: install ninja (ubuntu)
       run: sudo apt-get install ninja-build
       if: matrix.os == 'ubuntu-latest'
 
-    - name: install ninja (osx)
+    - name: install ninja (macos)
       run: brew install ninja
       if: matrix.os == 'macos-latest'
 
     - name: mkdir
       run: mkdir -p out
 
-    - name: cmake
+    - name: cmake (ubuntu)
       env:
         CC: gcc-9
         CXX: g++-9
@@ -45,7 +45,7 @@ jobs:
       working-directory: out
       if: matrix.os == 'ubuntu-latest'
 
-    - name: cmake
+    - name: cmake (macos)
       run: cmake .. -G Ninja
       working-directory: out
       if: matrix.os == 'macos-latest'
@@ -60,3 +60,8 @@ jobs:
 
     - name: unittests
       run: cmake --build out --target test
+      if: matrix.os != 'windows-latest'
+
+    - name: unittests (windows)
+      run: cmake --build out --target RUN_TESTS
+      if: matrix.os == 'windows-latest'
