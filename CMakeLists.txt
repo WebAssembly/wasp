@@ -20,16 +20,16 @@ project(wasp)
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_TOOLS "Build tools" ON)
 
-if (NOT MSVC)
-  # TODO: Start using target-specific definitions for all of these.
-  set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if (NOT MSVC)
   # TODO: Different flags for other compilers.
   set(warning_flags -Wall -Wextra -Wno-unused-parameter)
 else ()
   # /Zc:preprocessor enables C++99 and C11 conformance for preprocessor.
   # -wd5105 disables "warning C5105: macro expansion producing 'defined' has undefined behavior
-  set(CMAKE_CXX_FLAGS "/std:c++17 /Zc:preprocessor ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS "/Zc:preprocessor ${CMAKE_CXX_FLAGS}")
   set(warning_flags -W3 -wd5105)
 endif ()
 
