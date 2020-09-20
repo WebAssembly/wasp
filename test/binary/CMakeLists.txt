@@ -42,3 +42,7 @@ target_link_libraries(wasp_binary_unittests
   gmock
   gmock_main
 )
+
+add_test(
+  NAME test_binary_unittests
+  COMMAND $<TARGET_FILE:wasp_binary_unittests>)

@@ -32,7 +32,6 @@ target_include_directories(libwasp_test
 target_link_libraries(libwasp_test
   libwasp_base
   libfmt
-  gtest
 )
 
 add_subdirectory(base)
@@ -53,24 +52,7 @@ if (BUILD_TOOLS)
 
   target_link_libraries(run_spec_tests wasp_tool)
 
-  # TODO: how to share commands between this command and the one below?
-  add_custom_target(run_tests
-    COMMAND $<TARGET_FILE:wasp_base_unittests>
-    COMMAND $<TARGET_FILE:wasp_binary_unittests>
-    COMMAND $<TARGET_FILE:wasp_valid_unittests>
-    COMMAND $<TARGET_FILE:wasp_text_unittests>
-    COMMAND $<TARGET_FILE:wasp_convert_unittests>
-    COMMAND $<TARGET_FILE:run_spec_tests> ${wasp_SOURCE_DIR}/third_party/testsuite
-    USES_TERMINAL
-  )
-else ()
-
-  add_custom_target(run_tests
-    COMMAND $<TARGET_FILE:wasp_base_unittests>
-    COMMAND $<TARGET_FILE:wasp_binary_unittests>
-    COMMAND $<TARGET_FILE:wasp_valid_unittests>
-    COMMAND $<TARGET_FILE:wasp_text_unittests>
-    COMMAND $<TARGET_FILE:wasp_convert_unittests>
-    USES_TERMINAL
-  )
+  add_test(
+    NAME test_run_spec_tests
+    COMMAND $<TARGET_FILE:run_spec_tests> ${wasp_SOURCE_DIR}/third_party/testsuite)
 endif ()

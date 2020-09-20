@@ -31,3 +31,7 @@ target_link_libraries(wasp_convert_unittests
   gtest
   gtest_main
 )
+
+add_test(
+  NAME test_convert_unittests
+  COMMAND $<TARGET_FILE:wasp_convert_unittests>)

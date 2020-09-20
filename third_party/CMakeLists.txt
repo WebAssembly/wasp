@@ -33,7 +33,7 @@ target_include_directories(libfmt
 
 
 ## gtest
-if (BUILD_TESTS)
+if (BUILD_TESTING)
   add_subdirectory(gtest)
 endif ()
 

@@ -37,3 +37,7 @@ target_link_libraries(wasp_base_unittests
   gtest
   gtest_main
 )
+
+add_test(
+  NAME test_base_unittests
+  COMMAND $<TARGET_FILE:wasp_base_unittests>)

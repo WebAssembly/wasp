@@ -40,3 +40,7 @@ target_link_libraries(wasp_text_unittests
   gtest
   gtest_main
 )
+
+add_test(
+  NAME test_text_unittests
+  COMMAND $<TARGET_FILE:wasp_text_unittests>)
