@@ -14,27 +14,35 @@
 # limitations under the License.
 #
 
-## fmt
-add_library(libfmt
-  fmt/src/format.cc
+add_library(libgdtoa
+  arith.h
+  gd_qnan.h
+  gdtoa.h
+  gdtoaimp.h
+
+  dmisc.c
+  g_dfmt.c
+  gdtoa.c
+  gethex.c
+  g_ffmt.c
+  g__fmt.c
+  gmisc.c
+  hd_init.c
+  misc.c
+  smisc.c
+  strtodg.c
+  strtord.c
+  strtorf.c
+  sum.c
 )
 
-if (MSVC)
-  target_compile_options(libfmt
+if (NOT MSVC)
+  target_compile_options(libgdtoa
     PRIVATE
-    /Zc:preprocessor-
+    ${warning_flags}
+    -Wno-parentheses
+    -Wno-implicit-fallthrough
+    -Wno-unused-label
+    -Wno-sign-compare
   )
 endif ()
-
-target_include_directories(libfmt
-  PUBLIC
-  ${wasp_SOURCE_DIR}/third_party/fmt/include
-)
-
-
-## gtest
-if (BUILD_TESTS)
-  add_subdirectory(gtest)
-endif ()
-
-add_subdirectory(gdtoa)
