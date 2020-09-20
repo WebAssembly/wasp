@@ -29,8 +29,8 @@ if (NOT MSVC)
 else ()
   # /Zc:preprocessor enables C++99 and C11 conformance for preprocessor.
   # -wd5105 disables "warning C5105: macro expansion producing 'defined' has undefined behavior
-  set(CMAKE_CXX_FLAGS "/Zc:preprocessor ${CMAKE_CXX_FLAGS}")
-  set(warning_flags -W3 -wd5105)
+  set(CMAKE_CXX_FLAGS "/Zc:preprocessor -wd5105 ${CMAKE_CXX_FLAGS}")
+  set(warning_flags -W3)
 endif ()
 
 

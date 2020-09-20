@@ -36,7 +36,15 @@ add_library(libgdtoa
   sum.c
 )
 
-if (NOT MSVC)
+if (MSVC)
+  target_compile_options(libgdtoa
+    PRIVATE
+    ${warning_flags}
+    -wd4018  # signed/unsigned mismatch
+    -wd4244  # conversion from x to y; possible loss of data
+    -wd4554  # check operator predence for possible error
+  )
+else ()
   target_compile_options(libgdtoa
     PRIVATE
     ${warning_flags}
