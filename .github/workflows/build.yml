@@ -15,30 +15,48 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+
     steps:
+
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
+
     - uses: actions/checkout@v1
       with:
         submodules: true
+
     - name: install ninja (linux)
       run: sudo apt-get install ninja-build
       if: matrix.os == 'ubuntu-latest'
+
     - name: install ninja (osx)
       run: brew install ninja
       if: matrix.os == 'macos-latest'
+
     - name: mkdir
       run: mkdir -p out
+
+    - name: cmake
+      env:
+        CC: gcc-9
+        CXX: g++-9
+      run: cmake .. -G Ninja
+      working-directory: out
+      if: matrix.os == 'ubuntu-latest'
+
     - name: cmake
       run: cmake .. -G Ninja
       working-directory: out
-      if: matrix.os != 'windows-latest'
+      if: matrix.os == 'macos-latest'
+
     - name: cmake (windows)
       run: cmake ..
       working-directory: out
       if: matrix.os == 'windows-latest'
+
     - name: build
       run: cmake --build out
+
     - name: unittests
       run: cmake --build out --target run_tests
