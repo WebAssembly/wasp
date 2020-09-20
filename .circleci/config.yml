@@ -24,12 +24,8 @@ commands:
     parameters:
       target:
         type: string
-      outdir:
-        type: string
     steps:
-      - run: |
-          make << parameters.target >>
-          cp << parameters.outdir >>/run_spec_tests .
+      - run: make << parameters.target >>
 
   test:
     description: test the project
@@ -37,9 +33,7 @@ commands:
       target:
         type: string
     steps:
-      - run: |
-          make << parameters.target >>
-          ./run_spec_tests third_party/testsuite
+      - run: make << parameters.target >>
 
 jobs:
   build-gcc-debug:
@@ -51,7 +45,6 @@ jobs:
           packages: gcc g++
       - compile:
           target: gcc-debug
-          outdir: out/gcc/Debug
       - test:
           target: test-gcc-debug
 
@@ -64,7 +57,6 @@ jobs:
           packages: clang
       - compile:
           target: clang-debug
-          outdir: out/clang/Debug
       - test:
           target: test-clang-debug
 
@@ -77,7 +69,6 @@ jobs:
           packages: clang
       - compile:
           target: clang-release
-          outdir: out/clang/Release
       - test:
           target: test-clang-release
 

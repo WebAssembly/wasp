@@ -543,7 +543,7 @@ void Tool::DoSectionHeader(Pass pass,
       } else {
         print("\nContents of section {}:\n", id);
       }
-      PrintMemory(data, offset, PrintChars::Yes);
+      PrintMemory(data, static_cast<Index>(offset), PrintChars::Yes);
       break;
     }
   }
@@ -1238,7 +1238,7 @@ void Tool::PrintInstruction(const Instruction& instr,
   while (data.begin() < post_data.begin()) {
     print(" {:06x}:", file_offset(data));
     int line_octets =
-        std::min<int>(max_octets_per_line, post_data.begin() - data.begin());
+        std::min<int>(max_octets_per_line, static_cast<int>(post_data.begin() - data.begin()));
     for (int i = 0; i < line_octets; ++i) {
       print(" {:02x}", data[i]);
     }

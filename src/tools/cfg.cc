@@ -380,7 +380,7 @@ void Tool::WriteDotFile() {
   for (const auto& bb: enumerate(cfg)) {
     if (!bb.value.empty()) {
       auto colspan = std::max<int>(
-          1, std::min<int>(bb.value.successors.size(), kMaxSuccessors));
+          1, std::min<int>(static_cast<int>(bb.value.successors.size()), kMaxSuccessors));
       print(*stream,
             "  {} [shape=none;margin=0;label=<"
             "<TABLE BORDER=\"1\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR>"

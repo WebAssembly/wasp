@@ -19,7 +19,6 @@
 
 #define WASP_DECLARE_STD_HASH(Name, ...)          \
   namespace std {                                 \
-  template <typename T> struct hash;              \
   template <>                                     \
   struct hash<::wasp::Name> {                     \
     size_t operator()(const ::wasp::Name&) const; \

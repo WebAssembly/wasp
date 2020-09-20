@@ -103,7 +103,7 @@ endef
 define TEST
 .PHONY: $(call TEST_TARGET,$(1),$(2),$(3))
 $(call TEST_TARGET,$(1),$(2),$(3)): $(call CMAKE_DIR,$(1),$(2),$(3))$$(BUILD_FILE)
-	$$(BUILD_CMD) -C $(call CMAKE_DIR,$(1),$(2),$(3)) run_tests
+	$$(BUILD_CMD) -C $(call CMAKE_DIR,$(1),$(2),$(3)) test
 test-everything: $(CALL TEST_TARGET,$(1),$(2),$(3))
 endef
 

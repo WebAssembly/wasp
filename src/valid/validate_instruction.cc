@@ -80,7 +80,7 @@ bool AllTrue(T first, Args... rest) {
 }
 
 optional<FunctionType> GetFunctionType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, context.types.size(), "type index")) {
+  if (!ValidateIndex(context, index, static_cast<Index>(context.types.size()), "type index")) {
     return nullopt;
   }
   if (!context.types[index].is_function_type()) {
@@ -91,7 +91,7 @@ optional<FunctionType> GetFunctionType(Context& context, At<Index> index) {
 }
 
 optional<StructType> GetStructType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, context.types.size(), "type index")) {
+  if (!ValidateIndex(context, index, static_cast<Index>(context.types.size()), "type index")) {
     return nullopt;
   }
   if (!context.types[index].is_struct_type()) {
@@ -102,7 +102,7 @@ optional<StructType> GetStructType(Context& context, At<Index> index) {
 }
 
 optional<ArrayType> GetArrayType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, context.types.size(), "type index")) {
+  if (!ValidateIndex(context, index, static_cast<Index>(context.types.size()), "type index")) {
     return nullopt;
   }
   if (!context.types[index].is_array_type()) {
@@ -115,7 +115,7 @@ optional<ArrayType> GetArrayType(Context& context, At<Index> index) {
 optional<FieldType> GetStructFieldType(Context& context,
                                        const StructType& struct_type,
                                        At<Index> index) {
-  if (!ValidateIndex(context, index, struct_type.fields.size(), "field index")) {
+  if (!ValidateIndex(context, index, static_cast<Index>(struct_type.fields.size()), "field index")) {
     return nullopt;
   }
   return struct_type.fields[index];
@@ -190,7 +190,7 @@ StackTypeSpan GetTypeStack(Context& context) {
 }
 
 optional<Function> GetFunction(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, context.functions.size(),
+  if (!ValidateIndex(context, index, static_cast<Index>(context.functions.size()),
                      "function index")) {
     return nullopt;
   }
@@ -198,28 +198,28 @@ optional<Function> GetFunction(Context& context, At<Index> index) {
 }
 
 optional<TableType> GetTableType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, context.tables.size(), "table index")) {
+  if (!ValidateIndex(context, index, static_cast<Index>(context.tables.size()), "table index")) {
     return nullopt;
   }
   return context.tables[index];
 }
 
 optional<MemoryType> GetMemoryType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, context.memories.size(), "memory index")) {
+  if (!ValidateIndex(context, index, static_cast<Index>(context.memories.size()), "memory index")) {
     return nullopt;
   }
   return context.memories[index];
 }
 
 optional<GlobalType> GetGlobalType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, context.globals.size(), "global index")) {
+  if (!ValidateIndex(context, index, static_cast<Index>(context.globals.size()), "global index")) {
     return nullopt;
   }
   return context.globals[index];
 }
 
 optional<EventType> GetEventType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, context.events.size(), "event index")) {
+  if (!ValidateIndex(context, index, static_cast<Index>(context.events.size()), "event index")) {
     return nullopt;
   }
   return context.events[index];
@@ -227,7 +227,7 @@ optional<EventType> GetEventType(Context& context, At<Index> index) {
 
 optional<ReferenceType> GetElementSegmentType(Context& context,
                                               At<Index> index) {
-  if (!ValidateIndex(context, index, context.element_segments.size(),
+  if (!ValidateIndex(context, index, static_cast<Index>(context.element_segments.size()),
                      "element segment index")) {
     return nullopt;
   }
@@ -519,7 +519,7 @@ Label* GetLabel(Context& context, At<Index> depth) {
 }
 
 Label* GetFunctionLabel(Context& context) {
-  return GetLabel(context, context.label_stack.size() - 1);
+  return GetLabel(context, static_cast<Index>(context.label_stack.size() - 1));
 }
 
 bool PushLabel(Context& context,
@@ -531,7 +531,7 @@ bool PushLabel(Context& context,
   bool valid = PopTypes(context, loc, stack_param_types);
   context.label_stack.emplace_back(label_type, stack_param_types,
                                    stack_result_types,
-                                   context.type_stack.size());
+                                   static_cast<Index>(context.type_stack.size()));
   PushTypes(context, stack_param_types);
   return valid;
 }
@@ -1264,7 +1264,7 @@ bool FuncBind(Context& context, Location loc, At<Index> new_type_index) {
     return false;
   }
 
-  Index bound_param_count = old_params.size() - new_params.size();
+  Index bound_param_count = static_cast<Index>(old_params.size() - new_params.size());
   ValueTypeList bound_params(old_params.begin(),
                              old_params.begin() + bound_param_count);
   ValueTypeList unbound_params(old_params.begin() + bound_param_count,
@@ -1823,7 +1823,7 @@ bool Validate(Context& context, const At<Instruction>& value) {
       return BrTable(context, loc, value->br_table_immediate());
 
     case Opcode::Return:
-      return Br(context, loc, context.label_stack.size() - 1);
+      return Br(context, loc, static_cast<Index>(context.label_stack.size() - 1));
 
     case Opcode::Call:
       return Call(context, loc, value->index_immediate());

@@ -39,7 +39,7 @@ void Text::ToBuffer(Buffer& buffer) const {
   string_view input = text.substr(1, text.size() - 2);
 
   // Unescape characters.
-  for (const char *p = input.begin(), *end = input.end(); p < end; ++p) {
+  for (auto p = input.begin(), end = input.end(); p < end; ++p) {
     char c = *p;
     if (c == '\\') {
       c = *++p;

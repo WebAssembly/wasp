@@ -809,13 +809,13 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> OptAt<Table> {
     if (context.features.bulk_memory_enabled() && IsExpression(tokenizer)) {
       // Element expression list.
       WASP_TRY_READ(expressions, ReadElementExpressionList(tokenizer, context));
-      size = expressions.size();
+      size = static_cast<u32>(expressions.size());
       elements =
           ElementList{ElementListWithExpressions{*elemtype_opt, expressions}};
     } else {
       // Element var list.
       WASP_TRY_READ(vars, ReadVarList(tokenizer, context));
-      size = vars.size();
+      size = static_cast<u32>(vars.size());
       elements = ElementList{ElementListWithVars{ExternalKind::Function, vars}};
     }
 

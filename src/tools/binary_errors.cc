@@ -16,6 +16,7 @@
 
 #include "src/tools/binary_errors.h"
 
+#include <iostream>
 #include <utility>
 
 #include "fmt/format.h"

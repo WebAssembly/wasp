@@ -27,9 +27,9 @@ namespace wasp::binary {
 
 SymbolInfo::SymbolInfo(At<Flags> flags, const Base& base)
     : flags{flags}, desc{base} {
-  assert(base.kind == SymbolInfoKind::Function ||
-         base.kind == SymbolInfoKind::Global ||
-         base.kind == SymbolInfoKind::Event);
+  assert(base.kind.value() == SymbolInfoKind::Function ||
+         base.kind.value() == SymbolInfoKind::Global ||
+         base.kind.value() == SymbolInfoKind::Event);
 }
 
 SymbolInfo::SymbolInfo(At<Flags> flags, const Data& data)

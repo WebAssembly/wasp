@@ -906,6 +906,7 @@ using F64x2Result = std::array<F64Result, 2>;
 struct RefExternResult {};
 struct RefFuncResult {};
 
+// TODO: u32 and u64 here seem to cause conversion warnings in win32
 using ReturnResult = variant<u32,
                              u64,
                              v128,

@@ -77,16 +77,16 @@ optional<Index> NameMap::Get(BindVar var) const {
     size_t begin = *iter;
     auto found = FindInRange(begin, end, var);
     if (found) {
-      return offset + *found - begin;
+      return offset + static_cast<Index>(*found - begin);
     }
-    offset += end - begin;
+    offset += static_cast<Index>(end - begin);
     end = begin;
   }
   return nullopt;
 }
 
 auto NameMap::Size() const -> Index {
-  return names_.size();
+  return static_cast<Index>(names_.size());
 }
 
 }  // namespace wasp::text

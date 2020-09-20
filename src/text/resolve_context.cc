@@ -98,16 +98,16 @@ void FunctionTypeMap::SkipIndex() {
 Index FunctionTypeMap::Use(FunctionType type) {
   auto iter = FindIter(list_, type);
   if (iter != list_.end()) {
-    return iter - list_.begin();
+    return static_cast<Index>(iter - list_.begin());
   }
 
   iter = FindIter(deferred_list_, type);
   if (iter != deferred_list_.end()) {
-    return list_.size() + (iter - deferred_list_.begin());
+    return static_cast<Index>(list_.size() + (iter - deferred_list_.begin()));
   }
 
   deferred_list_.push_back(type);
-  return list_.size() + deferred_list_.size() - 1;
+  return static_cast<Index>(list_.size() + deferred_list_.size() - 1);
 }
 
 Index FunctionTypeMap::Use(BoundFunctionType type) {
@@ -126,7 +126,7 @@ auto FunctionTypeMap::EndModule() -> DefinedTypeList {
 }
 
 Index FunctionTypeMap::Size() const {
-  return list_.size();
+  return static_cast<Index>(list_.size());
 }
 
 optional<FunctionType> FunctionTypeMap::Get(Index index) const {
@@ -134,7 +134,7 @@ optional<FunctionType> FunctionTypeMap::Get(Index index) const {
     return list_[index];
   }
 
-  index -= list_.size();
+  index -= static_cast<Index>(list_.size());
   if (index < deferred_list_.size()) {
     return deferred_list_[index];
   }
