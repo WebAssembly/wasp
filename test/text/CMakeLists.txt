@@ -37,7 +37,6 @@ target_compile_options(wasp_text_unittests
 target_link_libraries(wasp_text_unittests
   libwasp_text
   libwasp_test
-  gtest
   gtest_main
 )
 

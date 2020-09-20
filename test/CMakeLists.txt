@@ -32,6 +32,7 @@ target_include_directories(libwasp_test
 target_link_libraries(libwasp_test
   libwasp_base
   libfmt
+  gtest
 )
 
 add_subdirectory(base)

@@ -33,7 +33,6 @@ target_compile_options(wasp_valid_unittests
 target_link_libraries(wasp_valid_unittests
   libwasp_valid
   libwasp_test
-  gtest
   gtest_main
 )
 
