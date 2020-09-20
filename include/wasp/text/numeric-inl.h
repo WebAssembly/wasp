@@ -20,7 +20,7 @@
 #include <charconv>
 #include <limits>
 
-#include "gdtoa/wasp_gdtoa.h"
+#include "third_party/gdtoa/gdtoa.h"
 #include "wasp/base/bitcast.h"
 #include "wasp/base/buffer.h"
 #include "wasp/base/macros.h"
