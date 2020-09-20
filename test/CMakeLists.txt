@@ -41,14 +41,6 @@ add_subdirectory(text)
 add_subdirectory(valid)
 add_subdirectory(convert)
 
-add_custom_target(run_tests
-  COMMAND $<TARGET_FILE:wasp_base_unittests>
-  COMMAND $<TARGET_FILE:wasp_binary_unittests>
-  COMMAND $<TARGET_FILE:wasp_valid_unittests>
-  COMMAND $<TARGET_FILE:wasp_text_unittests>
-  COMMAND $<TARGET_FILE:wasp_convert_unittests>
-)
-
 if (BUILD_TOOLS)
   add_executable(run_spec_tests
     run_spec_tests.cc
@@ -60,4 +52,25 @@ if (BUILD_TOOLS)
   )
 
   target_link_libraries(run_spec_tests wasp_tool)
+
+  # TODO: how to share commands between this command and the one below?
+  add_custom_target(run_tests
+    COMMAND $<TARGET_FILE:wasp_base_unittests>
+    COMMAND $<TARGET_FILE:wasp_binary_unittests>
+    COMMAND $<TARGET_FILE:wasp_valid_unittests>
+    COMMAND $<TARGET_FILE:wasp_text_unittests>
+    COMMAND $<TARGET_FILE:wasp_convert_unittests>
+    COMMAND $<TARGET_FILE:run_spec_tests> ${wasp_SOURCE_DIR}/third_party/testsuite
+    USES_TERMINAL
+  )
+else ()
+
+  add_custom_target(run_tests
+    COMMAND $<TARGET_FILE:wasp_base_unittests>
+    COMMAND $<TARGET_FILE:wasp_binary_unittests>
+    COMMAND $<TARGET_FILE:wasp_valid_unittests>
+    COMMAND $<TARGET_FILE:wasp_text_unittests>
+    COMMAND $<TARGET_FILE:wasp_convert_unittests>
+    USES_TERMINAL
+  )
 endif ()
