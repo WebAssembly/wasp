@@ -17,6 +17,8 @@
 #ifndef WASP_BASE_FEATURES_H_
 #define WASP_BASE_FEATURES_H_
 
+#include <functional>  // for std::hash
+
 #include "wasp/base/types.h"
 
 namespace wasp {
@@ -81,8 +83,6 @@ class Features {
 }  // namespace wasp
 
 namespace std {
-template <typename T> struct hash;
-
 template <>
 struct hash<::wasp::Features> {
   size_t operator()(const ::wasp::Features&) const;
