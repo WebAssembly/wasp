@@ -59,4 +59,4 @@ jobs:
       run: cmake --build out
 
     - name: unittests
-      run: cmake --build out --target run_tests
+      run: cmake --build out --target test
