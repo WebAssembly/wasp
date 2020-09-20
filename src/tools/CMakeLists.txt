@@ -14,9 +14,34 @@
 # limitations under the License.
 #
 
+include(CheckCXXSourceCompiles)
+
+set(FILESYSTEM_SOURCE "
+#include <iostream>
+#include <filesystem>
+
+int main(int argc, char** argv) {
+  argc--;
+  argv++;
+  for (auto& dir : std::filesystem::recursive_directory_iterator(argv[0])) {
+    std::cout << dir.path();
+  }
+  return 0;
+}
+")
+
 if (NOT MSVC)
-  # TODO: Link stdc++fs conditionally, only when needed.
-  set(filesystem_lib "stdc++fs")
+  set(CMAKE_REQUIRED_FLAGS "-std=c++17")
+  check_cxx_source_compiles("${FILESYSTEM_SOURCE}" HAS_FILESYSTEM_NO_FLAGS)
+  if (NOT HAS_FILESYSTEM_NO_FLAGS)
+    set(CMAKE_REQUIRED_LIBRARIES "-lstdc++fs")
+    check_cxx_source_compiles("${FILESYSTEM_SOURCE}" HAS_FILESYSTEM_LSTDCPPFS)
+    if (HAS_FILESYSTEM_LSTDCPPFS)
+      set(filesystem_lib "-lstdc++fs")
+    else ()
+      message(FATAL_ERROR "std::filesystem not available")
+    endif ()
+  endif ()
 endif ()
 
 add_library(wasp_tool
