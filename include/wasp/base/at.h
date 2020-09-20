@@ -17,6 +17,7 @@
 #ifndef WASP_BASE_AT_H_
 #define WASP_BASE_AT_H_
 
+#include <functional>
 #include <utility>
 
 #include "wasp/base/optional.h"
@@ -74,8 +75,6 @@ bool operator!=(const T& lhs, const At<T>& rhs) { return lhs != rhs.value(); }
 }  // namespace wasp
 
 namespace std {
-
-template <typename T> struct hash;
 
 template <typename T>
 struct hash<::wasp::At<T>> {
