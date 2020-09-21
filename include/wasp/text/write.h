@@ -145,21 +145,32 @@ Iterator Write(WriteContext& context, string_view value, Iterator out) {
 }
 
 template <typename Iterator, typename T>
+Iterator WriteNat(WriteContext& context, const At<T>& value, Iterator out) {
+  return WriteNat(context, *value, out);
+}
+
+template <typename Iterator, typename T>
+Iterator WriteInt(WriteContext& context, const At<T>& value, Iterator out) {
+  return WriteInt(context, *value, out);
+}
+
+template <typename Iterator, typename T>
+Iterator WriteFloat(WriteContext& context, const At<T>& value, Iterator out) {
+  return WriteFloat(context, *value, out);
+}
+
+template <typename Iterator, typename T>
 Iterator WriteNat(WriteContext& context, T value, Iterator out) {
   return Write(context, string_view{NatToStr<T>(value, context.base)}, out);
 }
 
-template <typename Iterator,
-          typename T,
-          typename std::enable_if_t<std::is_integral_v<T>, int> = 0>
-Iterator Write(WriteContext& context, T value, Iterator out) {
+template <typename Iterator, typename T>
+Iterator WriteInt(WriteContext& context, T value, Iterator out) {
   return Write(context, string_view{IntToStr<T>(value, context.base)}, out);
 }
 
-template <typename Iterator,
-          typename T,
-          typename std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
-Iterator Write(WriteContext& context, T value, Iterator out) {
+template <typename Iterator, typename T >
+Iterator WriteFloat(WriteContext& context, T value, Iterator out) {
   return Write(context, string_view{FloatToStr<T>(value, context.base)}, out);
 }
 
@@ -317,7 +328,7 @@ Iterator Write(WriteContext& context, const v128& value, Iterator out) {
   u32x4 immediate = value.as<u32x4>();
   out = Write(context, "i32x4"_sv, out);
   for (auto& lane : immediate) {
-    out = Write(context, lane, out);
+    out = WriteInt(context, lane, out);
   }
   return out;
 }
@@ -413,13 +424,13 @@ Iterator Write(WriteContext& context,
   if (value.offset) {
     out = Write(context, "offset="_sv, out);
     context.ClearSeparator();
-    out = Write(context, value.offset->value(), out);
+    out = WriteNat(context, value.offset->value(), out);
   }
 
   if (value.align) {
     out = Write(context, "align="_sv, out);
     context.ClearSeparator();
-    out = Write(context, value.align->value(), out);
+    out = WriteNat(context, value.align->value(), out);
   }
   return out;
 }
@@ -428,7 +439,7 @@ template <typename Iterator>
 Iterator Write(WriteContext& context,
                const RttSubImmediate& value,
                Iterator out) {
-  out = Write(context, *value.depth, out);
+  out = WriteNat(context, *value.depth, out);
   out = Write(context, value.types, out);
   return out;
 }
@@ -437,7 +448,10 @@ template <typename Iterator>
 Iterator Write(WriteContext& context,
                const ShuffleImmediate& value,
                Iterator out) {
-  return WriteRange(context, value.begin(), value.end(), out);
+  for (auto& lane : value) {
+    out = WriteNat(context, lane, out);
+  }
+  return out;
 }
 
 template <typename Iterator>
@@ -463,19 +477,19 @@ Iterator Write(WriteContext& context, const Instruction& value, Iterator out) {
       break;
 
     case 1: // s32
-      out = Write(context, value.s32_immediate(), out);
+      out = WriteInt(context, value.s32_immediate(), out);
       break;
 
     case 2: // s64
-      out = Write(context, value.s64_immediate(), out);
+      out = WriteInt(context, value.s64_immediate(), out);
       break;
 
     case 3: // f32
-      out = Write(context, value.f32_immediate(), out);
+      out = WriteFloat(context, value.f32_immediate(), out);
       break;
 
     case 4: // f64
-      out = Write(context, value.f64_immediate(), out);
+      out = WriteFloat(context, value.f64_immediate(), out);
       break;
 
     case 5: // v128
@@ -531,7 +545,7 @@ Iterator Write(WriteContext& context, const Instruction& value, Iterator out) {
       break;
 
     case 18: // SimdLaneImmediate
-      out = Write(context, value.simd_lane_immediate(), out);
+      out = WriteNat(context, value.simd_lane_immediate(), out);
       break;
 
     case 19: // FuncBindImmediate
@@ -662,9 +676,9 @@ Iterator Write(WriteContext& context, const FunctionDesc& value, Iterator out) {
 
 template <typename Iterator>
 Iterator Write(WriteContext& context, const Limits& value, Iterator out) {
-  out = Write(context, value.min, out);
+  out = WriteNat(context, value.min, out);
   if (value.max) {
-    out = Write(context, *value.max, out);
+    out = WriteNat(context, *value.max, out);
   }
   if (value.shared == Shared::Yes) {
     out = Write(context, "shared"_sv, out);
@@ -685,7 +699,7 @@ Iterator Write(WriteContext& context, ReferenceType value, Iterator out) {
 template <typename Iterator>
 Iterator Write(WriteContext& context, const Rtt& value, Iterator out) {
   out = WriteLpar(context, "rtt", out);
-  out = Write(context, value.depth, out);
+  out = WriteNat(context, value.depth, out);
   out = Write(context, value.type, out);
   out = WriteRpar(context, out);
   return out;
@@ -1181,22 +1195,22 @@ Iterator Write(WriteContext& context, const Const& value, Iterator out) {
   switch (value.kind()) {
     case ConstKind::U32:
       out = Write(context, Opcode::I32Const, out);
-      out = Write(context, value.u32_(), out);
+      out = WriteInt(context, value.u32_(), out);
       break;
 
     case ConstKind::U64:
       out = Write(context, Opcode::I64Const, out);
-      out = Write(context, value.u64_(), out);
+      out = WriteInt(context, value.u64_(), out);
       break;
 
     case ConstKind::F32:
       out = Write(context, Opcode::F32Const, out);
-      out = Write(context, value.f32_(), out);
+      out = WriteFloat(context, value.f32_(), out);
       break;
 
     case ConstKind::F64:
       out = Write(context, Opcode::F64Const, out);
-      out = Write(context, value.f64_(), out);
+      out = WriteFloat(context, value.f64_(), out);
       break;
 
     case ConstKind::V128:
@@ -1210,7 +1224,7 @@ Iterator Write(WriteContext& context, const Const& value, Iterator out) {
 
     case ConstKind::RefExtern:
       out = Write(context, "ref.extern"_sv, out);
-      out = Write(context, value.ref_extern().var, out);
+      out = WriteNat(context, value.ref_extern().var, out);
       break;
   }
   out = WriteRpar(context, out);
@@ -1285,7 +1299,7 @@ Iterator Write(WriteContext& context,
                const FloatResult<T>& value,
                Iterator out) {
   if (holds_alternative<T>(value)) {
-    return Write(context, get<T>(value), out);
+    return WriteFloat(context, get<T>(value), out);
   } else {
     return Write(context, get<NanKind>(value), out);
   }
@@ -1304,12 +1318,12 @@ Iterator Write(WriteContext& context, const ReturnResult& value, Iterator out) {
   switch (value.index()) {
     case 0: // u32
       out = Write(context, Opcode::I32Const, out);
-      out = Write(context, get<u32>(value), out);
+      out = WriteInt(context, get<u32>(value), out);
       break;
 
     case 1: // u64
       out = Write(context, Opcode::I64Const, out);
-      out = Write(context, get<u64>(value), out);
+      out = WriteInt(context, get<u64>(value), out);
       break;
 
     case 2: // v128

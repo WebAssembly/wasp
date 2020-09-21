@@ -174,12 +174,12 @@ void Test_StrToInt32() {
       {"-2345"_su8, LI::Number(Sign::Minus, HU::No), T(-2345)},
       {"-345678"_su8, LI::Number(Sign::Minus, HU::No), T(-345678)},
       {"-45678901"_su8, LI::Number(Sign::Minus, HU::No), T(-45678901)},
-      {"-2147483648"_su8, LI::Number(Sign::Minus, HU::No), T(-2147483648)},
+      {"-2147483648"_su8, LI::Number(Sign::Minus, HU::No), T(-2147483647 - 1)},
       {"-1_2"_su8, LI::Number(Sign::Minus, HU::Yes), T(-12)},
       {"-2_34_5"_su8, LI::Number(Sign::Minus, HU::Yes), T(-2345)},
       {"-34_56_78"_su8, LI::Number(Sign::Minus, HU::Yes), T(-345678)},
       {"-4567_8901"_su8, LI::Number(Sign::Minus, HU::Yes), T(-45678901)},
-      {"-2_147_483_648"_su8, LI::Number(Sign::Minus, HU::Yes), T(-2147483648)},
+      {"-2_147_483_648"_su8, LI::Number(Sign::Minus, HU::Yes), T(-2147483647 - 1)},
 
       {"0x123"_su8, LI::HexNumber(Sign::None, HU::No), 0x123},
       {"0x234567"_su8, LI::HexNumber(Sign::None, HU::No), 0x234567},
@@ -572,7 +572,7 @@ void Test_IntToStr32() {
       {"-2345", Base::Decimal, T(-2345)},
       {"-345678", Base::Decimal, T(-345678)},
       {"-45678901", Base::Decimal, T(-45678901)},
-      {"-2147483648", Base::Decimal, T(-2147483648)},
+      {"-2147483648", Base::Decimal, T(-2147483647 - 1)},
 
       {"0x123", Base::Hex, 0x123},
       {"0x234567", Base::Hex, 0x234567},

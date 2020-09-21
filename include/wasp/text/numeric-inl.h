@@ -247,8 +247,8 @@ auto NatToStr(T value, Base base) -> std::string {
   // 2**64-1 = hex 0xffffffffffffffff   (18 chars)
   constexpr size_t max_chars = 20;
   std::array<char, max_chars> buffer;
-  char* begin = buffer.begin();
-  char* end = buffer.end();
+  char* begin = buffer.data();
+  char* end = buffer.data() + buffer.size();
 
   if (base == Base::Decimal) {
     begin = std::to_chars(begin, end, value).ptr;
@@ -257,7 +257,7 @@ auto NatToStr(T value, Base base) -> std::string {
     *begin++ = 'x';
     begin = std::to_chars(begin, end, value, 16).ptr;
   }
-  return std::string(buffer.begin(), begin);
+  return std::string(buffer.data(), begin);
 }
 
 template <typename T>
@@ -272,8 +272,8 @@ auto IntToStr(T value, Base base) -> std::string {
   // -2**63-1 = hex -0x7fffffffffffffff  (19 chars)
   constexpr size_t max_chars = 20;
   std::array<char, max_chars> buffer;
-  char* begin = buffer.begin();
-  char* end = buffer.end();
+  char* begin = buffer.data();
+  char* end = buffer.data() + buffer.size();
 
   if (unsignedval & signbit) {
     *begin++ = '-';
@@ -287,7 +287,7 @@ auto IntToStr(T value, Base base) -> std::string {
     *begin++ = 'x';
     begin = std::to_chars(begin, end, unsignedval, 16).ptr;
   }
-  return std::string(buffer.begin(), begin);
+  return std::string(buffer.data(), begin);
 }
 
 template <typename T>
@@ -343,8 +343,8 @@ auto FloatToStr(T value, Base base) -> std::string {
   // Not sure exactly how many characters are needed, but this should be enough.
   constexpr size_t max_chars = 40;
   std::array<char, max_chars> buffer;
-  char* begin = buffer.begin();
-  char* end = buffer.end();
+  char* begin = buffer.data();
+  char* end = buffer.data() + buffer.size();
 
   auto info = ClassifyFloat(value);
   if (info.kind != LiteralKind::Normal) {
@@ -402,7 +402,7 @@ auto FloatToStr(T value, Base base) -> std::string {
       begin = std::to_chars(begin, end, exp - Traits::exp_shift).ptr;
     }
   }
-  return std::string(buffer.begin(), begin);
+  return std::string(buffer.data(), begin);
 }
 
 }  // namespace wasp::text

@@ -49,7 +49,7 @@ Iterator WriteVarIntLoop(T value, Iterator out, Cond&& end_cond) {
       out = Write(byte, out);
       break;
     } else {
-      out = Write(byte | VarInt<T>::kExtendBit, out);
+      out = Write(static_cast<u8>(byte | VarInt<T>::kExtendBit), out);
     }
   } while (true);
   return out;
