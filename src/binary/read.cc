@@ -745,14 +745,14 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I16X8Mul:
     case Opcode::I32X4Mul:
     case Opcode::I64X2Mul:
-    case Opcode::I8X16AddSaturateS:
-    case Opcode::I8X16AddSaturateU:
-    case Opcode::I16X8AddSaturateS:
-    case Opcode::I16X8AddSaturateU:
-    case Opcode::I8X16SubSaturateS:
-    case Opcode::I8X16SubSaturateU:
-    case Opcode::I16X8SubSaturateS:
-    case Opcode::I16X8SubSaturateU:
+    case Opcode::I8X16AddSatS:
+    case Opcode::I8X16AddSatU:
+    case Opcode::I16X8AddSatS:
+    case Opcode::I16X8AddSatU:
+    case Opcode::I8X16SubSatS:
+    case Opcode::I8X16SubSatU:
+    case Opcode::I16X8SubSatS:
+    case Opcode::I16X8SubSatU:
     case Opcode::I8X16MinS:
     case Opcode::I8X16MinU:
     case Opcode::I8X16MaxS:
@@ -862,7 +862,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::F32X4ConvertI32X4U:
     case Opcode::I32X4TruncSatF32X4S:
     case Opcode::I32X4TruncSatF32X4U:
-    case Opcode::V8X16Swizzle:
+    case Opcode::I8X16Swizzle:
     case Opcode::I8X16NarrowI16X8S:
     case Opcode::I8X16NarrowI16X8U:
     case Opcode::I16X8NarrowI32X4S:
@@ -1028,16 +1028,16 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I64Store16:
     case Opcode::I64Store32:
     case Opcode::V128Store:
-    case Opcode::V8X16LoadSplat:
-    case Opcode::V16X8LoadSplat:
-    case Opcode::V32X4LoadSplat:
-    case Opcode::V64X2LoadSplat:
-    case Opcode::I16X8Load8X8S:
-    case Opcode::I16X8Load8X8U:
-    case Opcode::I32X4Load16X4S:
-    case Opcode::I32X4Load16X4U:
-    case Opcode::I64X2Load32X2S:
-    case Opcode::I64X2Load32X2U:
+    case Opcode::V128Load8Splat:
+    case Opcode::V128Load16Splat:
+    case Opcode::V128Load32Splat:
+    case Opcode::V128Load64Splat:
+    case Opcode::V128Load8X8S:
+    case Opcode::V128Load8X8U:
+    case Opcode::V128Load16X4S:
+    case Opcode::V128Load16X4U:
+    case Opcode::V128Load32X2S:
+    case Opcode::V128Load32X2U:
     case Opcode::MemoryAtomicNotify:
     case Opcode::MemoryAtomicWait32:
     case Opcode::MemoryAtomicWait64:
@@ -1170,7 +1170,7 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     }
 
     // Shuffle immediate.
-    case Opcode::V8X16Shuffle: {
+    case Opcode::I8X16Shuffle: {
       WASP_TRY_READ(immediate, Read<ShuffleImmediate>(data, context));
       return At{guard.range(data), Instruction{opcode, immediate}};
     }
@@ -1419,7 +1419,7 @@ OptAt<Section> Read(SpanU8* data, Context& context, Tag<Section>) {
 
 OptAt<SectionId> Read(SpanU8* data, Context& context, Tag<SectionId>) {
   ErrorsContextGuard guard{context.errors, *data, "section id"};
-  WASP_TRY_READ(val, Read<u32>(data, context));
+  WASP_TRY_READ(val, Read<u8>(data, context));
   WASP_TRY_DECODE_FEATURES(decoded, val, SectionId, "section id",
                            context.features);
   return decoded;

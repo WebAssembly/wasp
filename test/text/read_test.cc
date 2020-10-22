@@ -1002,20 +1002,20 @@ TEST_F(TextReadTest, PlainInstruction_SimdLane) {
 }
 
 TEST_F(TextReadTest, InvalidSimdLane) {
-  Fail(ReadSimdLane, {{0, "Expected a positive integer, got Int"}}, "-1"_su8);
-  Fail(ReadSimdLane, {{0, "Invalid integer, got Nat"}}, "256"_su8);
+  Fail(ReadSimdLane, {{0, "Expected a natural number, got Int"}}, "-1"_su8);
+  Fail(ReadSimdLane, {{0, "Invalid natural number, got Nat"}}, "256"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_Shuffle) {
-  Fail(ReadPlainInstruction, {{0, "v8x16.shuffle instruction not allowed"}},
-       "v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8);
+  Fail(ReadPlainInstruction, {{0, "i8x16.shuffle instruction not allowed"}},
+       "i8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8);
 
   context.features.enable_simd();
 
   OK(ReadPlainInstruction,
-     I{At{"v8x16.shuffle"_su8, O::V8X16Shuffle},
+     I{At{"i8x16.shuffle"_su8, O::I8X16Shuffle},
        At{"0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8, ShuffleImmediate{}}},
-     "v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8);
+     "i8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_MemoryCopy) {

@@ -806,9 +806,9 @@ TEST(ConvertToBinaryTest, Instruction) {
                   At{loc3, text::SelectImmediate{At{loc4, tt::VT_I32}}}}});
 
   // ShuffleImmediate.
-  OK(At{loc1, binary::Instruction{At{loc2, Opcode::V8X16Shuffle},
+  OK(At{loc1, binary::Instruction{At{loc2, Opcode::I8X16Shuffle},
                                   At{loc3, ShuffleImmediate{}}}},
-     At{loc1, text::Instruction{At{loc2, Opcode::V8X16Shuffle},
+     At{loc1, text::Instruction{At{loc2, Opcode::I8X16Shuffle},
                                 At{loc3, ShuffleImmediate{}}}});
 
   // SimdLaneImmediate.
@@ -908,7 +908,7 @@ TEST(ConvertToBinaryTest, OpcodeAlignment) {
       {Opcode::I64Load8S, 0},
       {Opcode::I64Load8U, 0},
       {Opcode::I64Store8, 0},
-      {Opcode::V8X16LoadSplat, 0},
+      {Opcode::V128Load8Splat, 0},
 
       {Opcode::I32AtomicLoad16U, 1},
       {Opcode::I32AtomicRmw16AddU, 1},
@@ -934,7 +934,7 @@ TEST(ConvertToBinaryTest, OpcodeAlignment) {
       {Opcode::I64Load16S, 1},
       {Opcode::I64Load16U, 1},
       {Opcode::I64Store16, 1},
-      {Opcode::V16X8LoadSplat, 1},
+      {Opcode::V128Load16Splat, 1},
 
       {Opcode::F32Load, 2},
       {Opcode::F32Store, 2},
@@ -963,14 +963,10 @@ TEST(ConvertToBinaryTest, OpcodeAlignment) {
       {Opcode::I64Store32, 2},
       {Opcode::MemoryAtomicNotify, 2},
       {Opcode::MemoryAtomicWait32, 2},
-      {Opcode::V32X4LoadSplat, 2},
+      {Opcode::V128Load32Splat, 2},
 
       {Opcode::F64Load, 3},
       {Opcode::F64Store, 3},
-      {Opcode::I16X8Load8X8S, 3},
-      {Opcode::I16X8Load8X8U, 3},
-      {Opcode::I32X4Load16X4S, 3},
-      {Opcode::I32X4Load16X4U, 3},
       {Opcode::I64AtomicLoad, 3},
       {Opcode::I64AtomicRmwAdd, 3},
       {Opcode::I64AtomicRmwAnd, 3},
@@ -982,10 +978,14 @@ TEST(ConvertToBinaryTest, OpcodeAlignment) {
       {Opcode::I64AtomicStore, 3},
       {Opcode::I64Load, 3},
       {Opcode::I64Store, 3},
-      {Opcode::I64X2Load32X2S, 3},
-      {Opcode::I64X2Load32X2U, 3},
       {Opcode::MemoryAtomicWait64, 3},
-      {Opcode::V64X2LoadSplat, 3},
+      {Opcode::V128Load16X4S, 3},
+      {Opcode::V128Load16X4U, 3},
+      {Opcode::V128Load32X2S, 3},
+      {Opcode::V128Load32X2U, 3},
+      {Opcode::V128Load64Splat, 3},
+      {Opcode::V128Load8X8S, 3},
+      {Opcode::V128Load8X8U, 3},
 
       {Opcode::V128Load, 4},
       {Opcode::V128Store, 4},

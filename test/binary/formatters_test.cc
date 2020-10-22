@@ -409,9 +409,9 @@ TEST(BinaryFormattersTest, Instruction) {
   EXPECT_EQ(
       R"(rtt.sub 1 func 0)",
       concat(Instruction{Opcode::RttSub, RttSubImmediate{1, {HT_Func, HT_0}}}));
-  // v8x16.shuffle
-  EXPECT_EQ(R"(v8x16.shuffle [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16])",
-            concat(Instruction{Opcode::V8X16Shuffle,
+  // i8x16.shuffle
+  EXPECT_EQ(R"(i8x16.shuffle [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16])",
+            concat(Instruction{Opcode::I8X16Shuffle,
                                ShuffleImmediate{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
                                                  11, 12, 13, 14, 15, 16}}}));
   // select (result i32)

@@ -58,7 +58,8 @@ auto ExpectLpar(Tokenizer& tokenizer, Context& context, TokenType expected)
   return actual_opt;
 }
 
-auto ReadNat32(Tokenizer& tokenizer, Context& context) -> OptAt<u32> {
+template <typename T>
+auto ReadNat(Tokenizer& tokenizer, Context& context) -> OptAt<T> {
   auto token_opt = tokenizer.Match(TokenType::Nat);
   if (!token_opt) {
     auto token = tokenizer.Peek();
@@ -66,13 +67,18 @@ auto ReadNat32(Tokenizer& tokenizer, Context& context) -> OptAt<u32> {
         token.loc, concat("Expected a natural number, got ", token.type));
     return nullopt;
   }
-  auto nat_opt = StrToNat<u32>(token_opt->literal_info(), token_opt->span_u8());
+  auto nat_opt = StrToNat<T>(token_opt->literal_info(), token_opt->span_u8());
   if (!nat_opt) {
-    context.errors.OnError(token_opt->loc,
-                           concat("Invalid natural number, got ", *token_opt));
+    context.errors.OnError(
+        token_opt->loc,
+        concat("Invalid natural number, got ", token_opt->type));
     return nullopt;
   }
   return At{token_opt->loc, *nat_opt};
+}
+
+auto ReadNat32(Tokenizer& tokenizer, Context& context) -> OptAt<u32> {
+  return ReadNat<u32>(tokenizer, context);
 }
 
 template <typename T>
@@ -1224,16 +1230,7 @@ auto ReadOffsetOpt(Tokenizer& tokenizer, Context& context) -> OptAt<u32> {
 }
 
 auto ReadSimdLane(Tokenizer& tokenizer, Context& context) -> OptAt<u8> {
-  // TODO: This should probably be ReadNat<u8>, but the simd tests currently
-  // allow signed values here.
-  auto token = tokenizer.Peek();
-  if (token.type == TokenType::Int &&
-      token.literal_info().sign == Sign::Minus) {
-    context.errors.OnError(
-        token.loc, concat("Expected a positive integer, got ", token.type));
-    return nullopt;
-  }
-  return ReadInt<u8>(tokenizer, context);
+  return ReadNat<u8>(tokenizer, context);
 }
 
 auto ReadSimdShuffleImmediate(Tokenizer& tokenizer, Context& context)

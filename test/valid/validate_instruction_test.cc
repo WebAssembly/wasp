@@ -2019,10 +2019,10 @@ TEST_F(ValidateInstructionTest, TableFill_TableIndexOOB) {
 
 TEST_F(ValidateInstructionTest, SimdLoad) {
   const Opcode opcodes[] = {
-      O::V128Load,       O::V8X16LoadSplat, O::V16X8LoadSplat,
-      O::V32X4LoadSplat, O::V64X2LoadSplat, O::I16X8Load8X8S,
-      O::I16X8Load8X8U,  O::I32X4Load16X4S, O::I32X4Load16X4U,
-      O::I64X2Load32X2S, O::I64X2Load32X2U,
+      O::V128Load,       O::V128Load8Splat, O::V128Load16Splat,
+      O::V128Load32Splat, O::V128Load64Splat, O::V128Load8X8S,
+      O::V128Load8X8U,   O::V128Load16X4S,  O::V128Load16X4U,
+      O::V128Load32X2S,  O::V128Load32X2U,
   };
 
   AddMemory(MemoryType{Limits{0}});
@@ -2036,10 +2036,10 @@ TEST_F(ValidateInstructionTest, SimdLoad_Alignment) {
     Opcode opcode;
     u32 max_align;
   } const infos[] = {
-      {O::V128Load, 4},       {O::V8X16LoadSplat, 0}, {O::V16X8LoadSplat, 1},
-      {O::V32X4LoadSplat, 2}, {O::V64X2LoadSplat, 3}, {O::I16X8Load8X8S, 3},
-      {O::I16X8Load8X8U, 3},  {O::I32X4Load16X4S, 3}, {O::I32X4Load16X4U, 3},
-      {O::I64X2Load32X2S, 3}, {O::I64X2Load32X2U, 3},
+      {O::V128Load, 4},        {O::V128Load8Splat, 0},  {O::V128Load16Splat, 1},
+      {O::V128Load32Splat, 2}, {O::V128Load64Splat, 3}, {O::V128Load8X8S, 3},
+      {O::V128Load8X8U, 3},    {O::V128Load16X4S, 3},   {O::V128Load16X4U, 3},
+      {O::V128Load32X2S, 3},   {O::V128Load32X2U, 3},
   };
 
   AddMemory(MemoryType{Limits{0}});
@@ -2054,10 +2054,10 @@ TEST_F(ValidateInstructionTest, SimdLoad_Alignment) {
 
 TEST_F(ValidateInstructionTest, SimdLoad_MemoryOOB) {
   const Opcode opcodes[] = {
-      O::V128Load,       O::V8X16LoadSplat, O::V16X8LoadSplat,
-      O::V32X4LoadSplat, O::V64X2LoadSplat, O::I16X8Load8X8S,
-      O::I16X8Load8X8U,  O::I32X4Load16X4S, O::I32X4Load16X4U,
-      O::I64X2Load32X2S, O::I64X2Load32X2U,
+      O::V128Load,        O::V128Load8Splat,  O::V128Load16Splat,
+      O::V128Load32Splat, O::V128Load64Splat, O::V128Load8X8S,
+      O::V128Load8X8U,    O::V128Load16X4S,   O::V128Load16X4U,
+      O::V128Load32X2S,   O::V128Load32X2U,
   };
 
   for (const auto& opcode : opcodes) {
@@ -2159,14 +2159,14 @@ TEST_F(ValidateInstructionTest, SimdBinary) {
       O::F64X2Le,           O::F64X2Ge,
       O::V128And,           O::V128Or,
       O::V128Xor,           O::I8X16Add,
-      O::I8X16AddSaturateS, O::I8X16AddSaturateU,
-      O::I8X16Sub,          O::I8X16SubSaturateS,
-      O::I8X16SubSaturateU, O::I8X16MinS,
+      O::I8X16AddSatS,      O::I8X16AddSatU,
+      O::I8X16Sub,          O::I8X16SubSatS,
+      O::I8X16SubSatU,      O::I8X16MinS,
       O::I8X16MinU,         O::I8X16MaxS,
       O::I8X16MaxU,         O::I16X8Add,
-      O::I16X8AddSaturateS, O::I16X8AddSaturateU,
-      O::I16X8Sub,          O::I16X8SubSaturateS,
-      O::I16X8SubSaturateU, O::I16X8Mul,
+      O::I16X8AddSatS,      O::I16X8AddSatU,
+      O::I16X8Sub,          O::I16X8SubSatS,
+      O::I16X8SubSatU,      O::I16X8Mul,
       O::I16X8MinS,         O::I16X8MinU,
       O::I16X8MaxS,         O::I16X8MaxU,
       O::I32X4Add,          O::I32X4Sub,
@@ -2180,7 +2180,7 @@ TEST_F(ValidateInstructionTest, SimdBinary) {
       O::F64X2Add,          O::F64X2Sub,
       O::F64X2Mul,          O::F64X2Div,
       O::F64X2Min,          O::F64X2Max,
-      O::V8X16Swizzle,      O::I8X16NarrowI16X8S,
+      O::I8X16Swizzle,      O::I8X16NarrowI16X8S,
       O::I8X16NarrowI16X8U, O::I16X8NarrowI32X4S,
       O::I16X8NarrowI32X4U, O::V128Andnot,
       O::I8X16AvgrU,        O::I16X8AvgrU,
@@ -2192,24 +2192,24 @@ TEST_F(ValidateInstructionTest, SimdBinary) {
 }
 
 TEST_F(ValidateInstructionTest, SimdShuffle) {
-  TestSignature(I{O::V8X16Shuffle, ShuffleImmediate{}}, {VT_V128, VT_V128},
+  TestSignature(I{O::I8X16Shuffle, ShuffleImmediate{}}, {VT_V128, VT_V128},
                 {VT_V128});
 }
 
 TEST_F(ValidateInstructionTest, SimdShuffle_ValidLane) {
   // Test valid indexes.
   context.type_stack = StackTypeList{ST::V128(), ST::V128()};
-  Ok(I{O::V8X16Shuffle, ShuffleImmediate{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+  Ok(I{O::I8X16Shuffle, ShuffleImmediate{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
                                           12, 13, 14, 15}}});
 
   // 16 through 31 is also allowed.
   context.type_stack = StackTypeList{ST::V128(), ST::V128()};
-  Ok(I{O::V8X16Shuffle, ShuffleImmediate{{16, 17, 18, 19, 20, 21, 22, 23, 24,
+  Ok(I{O::I8X16Shuffle, ShuffleImmediate{{16, 17, 18, 19, 20, 21, 22, 23, 24,
                                           25, 26, 27, 28, 29, 30, 31}}});
 
   // >= 32 is not allowed.
   context.type_stack = StackTypeList{ST::V128(), ST::V128()};
-  Fail(I{O::V8X16Shuffle,
+  Fail(I{O::I8X16Shuffle,
          ShuffleImmediate{{32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}});
 }
 

@@ -476,8 +476,8 @@ TEST_F(TextResolveTest, Instruction_NoOp) {
   OK(I{O::Select, SelectImmediate{}}, I{O::Select, SelectImmediate{}});
 
   // SimdShuffle Immediate.
-  OK(I{O::V8X16Shuffle, ShuffleImmediate{}},
-     I{O::V8X16Shuffle, ShuffleImmediate{}});
+  OK(I{O::I8X16Shuffle, ShuffleImmediate{}},
+     I{O::I8X16Shuffle, ShuffleImmediate{}});
 }
 
 TEST_F(TextResolveTest, Instruction_BlockImmediate) {

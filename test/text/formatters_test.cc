@@ -392,8 +392,8 @@ TEST(TextFormattersTest, Instruction) {
                          StructFieldImmediate{Var{"$s"_sv}, Var{"$f"_sv}}}));
 
   EXPECT_EQ(
-      R"({opcode v8x16.shuffle, immediate shuffle [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]})",
-      concat(Instruction{Opcode::V8X16Shuffle, ShuffleImmediate{}}));
+      R"({opcode i8x16.shuffle, immediate shuffle [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]})",
+      concat(Instruction{Opcode::I8X16Shuffle, ShuffleImmediate{}}));
 
   EXPECT_EQ(R"({opcode local.get, immediate var 0})",
             concat(Instruction{Opcode::LocalGet, Var{Index{0}}}));

@@ -1946,25 +1946,25 @@ TEST_F(BinaryReadTest, Instruction_simd) {
 
   OK(Read<I>, I{At{"\xfd\x00"_su8, O::V128Load}, memarg},
      "\xfd\x00\x01\x02"_su8);
-  OK(Read<I>, I{At{"\xfd\x01"_su8, O::I16X8Load8X8S}, memarg},
+  OK(Read<I>, I{At{"\xfd\x01"_su8, O::V128Load8X8S}, memarg},
      "\xfd\x01\x01\x02"_su8);
-  OK(Read<I>, I{At{"\xfd\x02"_su8, O::I16X8Load8X8U}, memarg},
+  OK(Read<I>, I{At{"\xfd\x02"_su8, O::V128Load8X8U}, memarg},
      "\xfd\x02\x01\x02"_su8);
-  OK(Read<I>, I{At{"\xfd\x03"_su8, O::I32X4Load16X4S}, memarg},
+  OK(Read<I>, I{At{"\xfd\x03"_su8, O::V128Load16X4S}, memarg},
      "\xfd\x03\x01\x02"_su8);
-  OK(Read<I>, I{At{"\xfd\x04"_su8, O::I32X4Load16X4U}, memarg},
+  OK(Read<I>, I{At{"\xfd\x04"_su8, O::V128Load16X4U}, memarg},
      "\xfd\x04\x01\x02"_su8);
-  OK(Read<I>, I{At{"\xfd\x05"_su8, O::I64X2Load32X2S}, memarg},
+  OK(Read<I>, I{At{"\xfd\x05"_su8, O::V128Load32X2S}, memarg},
      "\xfd\x05\x01\x02"_su8);
-  OK(Read<I>, I{At{"\xfd\x06"_su8, O::I64X2Load32X2U}, memarg},
+  OK(Read<I>, I{At{"\xfd\x06"_su8, O::V128Load32X2U}, memarg},
      "\xfd\x06\x01\x02"_su8);
-  OK(Read<I>, I{At{"\xfd\x07"_su8, O::V8X16LoadSplat}, memarg},
+  OK(Read<I>, I{At{"\xfd\x07"_su8, O::V128Load8Splat}, memarg},
      "\xfd\x07\x01\x02"_su8);
-  OK(Read<I>, I{At{"\xfd\x08"_su8, O::V16X8LoadSplat}, memarg},
+  OK(Read<I>, I{At{"\xfd\x08"_su8, O::V128Load16Splat}, memarg},
      "\xfd\x08\x01\x02"_su8);
-  OK(Read<I>, I{At{"\xfd\x09"_su8, O::V32X4LoadSplat}, memarg},
+  OK(Read<I>, I{At{"\xfd\x09"_su8, O::V128Load32Splat}, memarg},
      "\xfd\x09\x01\x02"_su8);
-  OK(Read<I>, I{At{"\xfd\x0a"_su8, O::V64X2LoadSplat}, memarg},
+  OK(Read<I>, I{At{"\xfd\x0a"_su8, O::V128Load64Splat}, memarg},
      "\xfd\x0a\x01\x02"_su8);
   OK(Read<I>, I{At{"\xfd\x0b"_su8, O::V128Store}, memarg},
      "\xfd\x0b\x01\x02"_su8);
@@ -1974,11 +1974,11 @@ TEST_F(BinaryReadTest, Instruction_simd) {
           v128{u64{5}, u64{6}}}},
      "\xfd\x0c\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00"_su8);
   OK(Read<I>,
-     I{At{"\xfd\x0d"_su8, O::V8X16Shuffle},
+     I{At{"\xfd\x0d"_su8, O::I8X16Shuffle},
        At{"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8,
           ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}}},
      "\xfd\x0d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
-  OK(Read<I>, I{At{"\xfd\x0e"_su8, O::V8X16Swizzle}}, "\xfd\x0e"_su8);
+  OK(Read<I>, I{At{"\xfd\x0e"_su8, O::I8X16Swizzle}}, "\xfd\x0e"_su8);
   OK(Read<I>, I{At{"\xfd\x0f"_su8, O::I8X16Splat}}, "\xfd\x0f"_su8);
   OK(Read<I>, I{At{"\xfd\x10"_su8, O::I16X8Splat}}, "\xfd\x10"_su8);
   OK(Read<I>, I{At{"\xfd\x11"_su8, O::I32X4Splat}}, "\xfd\x11"_su8);
@@ -2075,11 +2075,11 @@ TEST_F(BinaryReadTest, Instruction_simd) {
   OK(Read<I>, I{At{"\xfd\x6c"_su8, O::I8X16ShrS}}, "\xfd\x6c"_su8);
   OK(Read<I>, I{At{"\xfd\x6d"_su8, O::I8X16ShrU}}, "\xfd\x6d"_su8);
   OK(Read<I>, I{At{"\xfd\x6e"_su8, O::I8X16Add}}, "\xfd\x6e"_su8);
-  OK(Read<I>, I{At{"\xfd\x6f"_su8, O::I8X16AddSaturateS}}, "\xfd\x6f"_su8);
-  OK(Read<I>, I{At{"\xfd\x70"_su8, O::I8X16AddSaturateU}}, "\xfd\x70"_su8);
+  OK(Read<I>, I{At{"\xfd\x6f"_su8, O::I8X16AddSatS}}, "\xfd\x6f"_su8);
+  OK(Read<I>, I{At{"\xfd\x70"_su8, O::I8X16AddSatU}}, "\xfd\x70"_su8);
   OK(Read<I>, I{At{"\xfd\x71"_su8, O::I8X16Sub}}, "\xfd\x71"_su8);
-  OK(Read<I>, I{At{"\xfd\x72"_su8, O::I8X16SubSaturateS}}, "\xfd\x72"_su8);
-  OK(Read<I>, I{At{"\xfd\x73"_su8, O::I8X16SubSaturateU}}, "\xfd\x73"_su8);
+  OK(Read<I>, I{At{"\xfd\x72"_su8, O::I8X16SubSatS}}, "\xfd\x72"_su8);
+  OK(Read<I>, I{At{"\xfd\x73"_su8, O::I8X16SubSatU}}, "\xfd\x73"_su8);
   OK(Read<I>, I{At{"\xfd\x76"_su8, O::I8X16MinS}}, "\xfd\x76"_su8);
   OK(Read<I>, I{At{"\xfd\x77"_su8, O::I8X16MinU}}, "\xfd\x77"_su8);
   OK(Read<I>, I{At{"\xfd\x78"_su8, O::I8X16MaxS}}, "\xfd\x78"_su8);
@@ -2105,15 +2105,11 @@ TEST_F(BinaryReadTest, Instruction_simd) {
   OK(Read<I>, I{At{"\xfd\x8c\x01"_su8, O::I16X8ShrS}}, "\xfd\x8c\x01"_su8);
   OK(Read<I>, I{At{"\xfd\x8d\x01"_su8, O::I16X8ShrU}}, "\xfd\x8d\x01"_su8);
   OK(Read<I>, I{At{"\xfd\x8e\x01"_su8, O::I16X8Add}}, "\xfd\x8e\x01"_su8);
-  OK(Read<I>, I{At{"\xfd\x8f\x01"_su8, O::I16X8AddSaturateS}},
-     "\xfd\x8f\x01"_su8);
-  OK(Read<I>, I{At{"\xfd\x90\x01"_su8, O::I16X8AddSaturateU}},
-     "\xfd\x90\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x8f\x01"_su8, O::I16X8AddSatS}}, "\xfd\x8f\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x90\x01"_su8, O::I16X8AddSatU}}, "\xfd\x90\x01"_su8);
   OK(Read<I>, I{At{"\xfd\x91\x01"_su8, O::I16X8Sub}}, "\xfd\x91\x01"_su8);
-  OK(Read<I>, I{At{"\xfd\x92\x01"_su8, O::I16X8SubSaturateS}},
-     "\xfd\x92\x01"_su8);
-  OK(Read<I>, I{At{"\xfd\x93\x01"_su8, O::I16X8SubSaturateU}},
-     "\xfd\x93\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x92\x01"_su8, O::I16X8SubSatS}}, "\xfd\x92\x01"_su8);
+  OK(Read<I>, I{At{"\xfd\x93\x01"_su8, O::I16X8SubSatU}}, "\xfd\x93\x01"_su8);
   OK(Read<I>, I{At{"\xfd\x95\x01"_su8, O::I16X8Mul}}, "\xfd\x95\x01"_su8);
   OK(Read<I>, I{At{"\xfd\x96\x01"_su8, O::I16X8MinS}}, "\xfd\x96\x01"_su8);
   OK(Read<I>, I{At{"\xfd\x97\x01"_su8, O::I16X8MinU}}, "\xfd\x97\x01"_su8);
@@ -2914,20 +2910,20 @@ TEST_F(BinaryReadTest, Opcode_simd) {
   context.features.enable_simd();
 
   OK(Read<O>, At{"\xfd\x00"_su8, O::V128Load}, "\xfd\x00"_su8);
-  OK(Read<O>, At{"\xfd\x01"_su8, O::I16X8Load8X8S}, "\xfd\x01"_su8);
-  OK(Read<O>, At{"\xfd\x02"_su8, O::I16X8Load8X8U}, "\xfd\x02"_su8);
-  OK(Read<O>, At{"\xfd\x03"_su8, O::I32X4Load16X4S}, "\xfd\x03"_su8);
-  OK(Read<O>, At{"\xfd\x04"_su8, O::I32X4Load16X4U}, "\xfd\x04"_su8);
-  OK(Read<O>, At{"\xfd\x05"_su8, O::I64X2Load32X2S}, "\xfd\x05"_su8);
-  OK(Read<O>, At{"\xfd\x06"_su8, O::I64X2Load32X2U}, "\xfd\x06"_su8);
-  OK(Read<O>, At{"\xfd\x07"_su8, O::V8X16LoadSplat}, "\xfd\x07"_su8);
-  OK(Read<O>, At{"\xfd\x08"_su8, O::V16X8LoadSplat}, "\xfd\x08"_su8);
-  OK(Read<O>, At{"\xfd\x09"_su8, O::V32X4LoadSplat}, "\xfd\x09"_su8);
-  OK(Read<O>, At{"\xfd\x0a"_su8, O::V64X2LoadSplat}, "\xfd\x0a"_su8);
+  OK(Read<O>, At{"\xfd\x01"_su8, O::V128Load8X8S}, "\xfd\x01"_su8);
+  OK(Read<O>, At{"\xfd\x02"_su8, O::V128Load8X8U}, "\xfd\x02"_su8);
+  OK(Read<O>, At{"\xfd\x03"_su8, O::V128Load16X4S}, "\xfd\x03"_su8);
+  OK(Read<O>, At{"\xfd\x04"_su8, O::V128Load16X4U}, "\xfd\x04"_su8);
+  OK(Read<O>, At{"\xfd\x05"_su8, O::V128Load32X2S}, "\xfd\x05"_su8);
+  OK(Read<O>, At{"\xfd\x06"_su8, O::V128Load32X2U}, "\xfd\x06"_su8);
+  OK(Read<O>, At{"\xfd\x07"_su8, O::V128Load8Splat}, "\xfd\x07"_su8);
+  OK(Read<O>, At{"\xfd\x08"_su8, O::V128Load16Splat}, "\xfd\x08"_su8);
+  OK(Read<O>, At{"\xfd\x09"_su8, O::V128Load32Splat}, "\xfd\x09"_su8);
+  OK(Read<O>, At{"\xfd\x0a"_su8, O::V128Load64Splat}, "\xfd\x0a"_su8);
   OK(Read<O>, At{"\xfd\x0b"_su8, O::V128Store}, "\xfd\x0b"_su8);
   OK(Read<O>, At{"\xfd\x0c"_su8, O::V128Const}, "\xfd\x0c"_su8);
-  OK(Read<O>, At{"\xfd\x0d"_su8, O::V8X16Shuffle}, "\xfd\x0d"_su8);
-  OK(Read<O>, At{"\xfd\x0e"_su8, O::V8X16Swizzle}, "\xfd\x0e"_su8);
+  OK(Read<O>, At{"\xfd\x0d"_su8, O::I8X16Shuffle}, "\xfd\x0d"_su8);
+  OK(Read<O>, At{"\xfd\x0e"_su8, O::I8X16Swizzle}, "\xfd\x0e"_su8);
   OK(Read<O>, At{"\xfd\x0f"_su8, O::I8X16Splat}, "\xfd\x0f"_su8);
   OK(Read<O>, At{"\xfd\x10"_su8, O::I16X8Splat}, "\xfd\x10"_su8);
   OK(Read<O>, At{"\xfd\x11"_su8, O::I32X4Splat}, "\xfd\x11"_su8);
@@ -3006,11 +3002,11 @@ TEST_F(BinaryReadTest, Opcode_simd) {
   OK(Read<O>, At{"\xfd\x6c"_su8, O::I8X16ShrS}, "\xfd\x6c"_su8);
   OK(Read<O>, At{"\xfd\x6d"_su8, O::I8X16ShrU}, "\xfd\x6d"_su8);
   OK(Read<O>, At{"\xfd\x6e"_su8, O::I8X16Add}, "\xfd\x6e"_su8);
-  OK(Read<O>, At{"\xfd\x6f"_su8, O::I8X16AddSaturateS}, "\xfd\x6f"_su8);
-  OK(Read<O>, At{"\xfd\x70"_su8, O::I8X16AddSaturateU}, "\xfd\x70"_su8);
+  OK(Read<O>, At{"\xfd\x6f"_su8, O::I8X16AddSatS}, "\xfd\x6f"_su8);
+  OK(Read<O>, At{"\xfd\x70"_su8, O::I8X16AddSatU}, "\xfd\x70"_su8);
   OK(Read<O>, At{"\xfd\x71"_su8, O::I8X16Sub}, "\xfd\x71"_su8);
-  OK(Read<O>, At{"\xfd\x72"_su8, O::I8X16SubSaturateS}, "\xfd\x72"_su8);
-  OK(Read<O>, At{"\xfd\x73"_su8, O::I8X16SubSaturateU}, "\xfd\x73"_su8);
+  OK(Read<O>, At{"\xfd\x72"_su8, O::I8X16SubSatS}, "\xfd\x72"_su8);
+  OK(Read<O>, At{"\xfd\x73"_su8, O::I8X16SubSatU}, "\xfd\x73"_su8);
   OK(Read<O>, At{"\xfd\x76"_su8, O::I8X16MinS}, "\xfd\x76"_su8);
   OK(Read<O>, At{"\xfd\x77"_su8, O::I8X16MinU}, "\xfd\x77"_su8);
   OK(Read<O>, At{"\xfd\x78"_su8, O::I8X16MaxS}, "\xfd\x78"_su8);
@@ -3034,11 +3030,11 @@ TEST_F(BinaryReadTest, Opcode_simd) {
   OK(Read<O>, At{"\xfd\x8c\x01"_su8, O::I16X8ShrS}, "\xfd\x8c\x01"_su8);
   OK(Read<O>, At{"\xfd\x8d\x01"_su8, O::I16X8ShrU}, "\xfd\x8d\x01"_su8);
   OK(Read<O>, At{"\xfd\x8e\x01"_su8, O::I16X8Add}, "\xfd\x8e\x01"_su8);
-  OK(Read<O>, At{"\xfd\x8f\x01"_su8, O::I16X8AddSaturateS}, "\xfd\x8f\x01"_su8);
-  OK(Read<O>, At{"\xfd\x90\x01"_su8, O::I16X8AddSaturateU}, "\xfd\x90\x01"_su8);
+  OK(Read<O>, At{"\xfd\x8f\x01"_su8, O::I16X8AddSatS}, "\xfd\x8f\x01"_su8);
+  OK(Read<O>, At{"\xfd\x90\x01"_su8, O::I16X8AddSatU}, "\xfd\x90\x01"_su8);
   OK(Read<O>, At{"\xfd\x91\x01"_su8, O::I16X8Sub}, "\xfd\x91\x01"_su8);
-  OK(Read<O>, At{"\xfd\x92\x01"_su8, O::I16X8SubSaturateS}, "\xfd\x92\x01"_su8);
-  OK(Read<O>, At{"\xfd\x93\x01"_su8, O::I16X8SubSaturateU}, "\xfd\x93\x01"_su8);
+  OK(Read<O>, At{"\xfd\x92\x01"_su8, O::I16X8SubSatS}, "\xfd\x92\x01"_su8);
+  OK(Read<O>, At{"\xfd\x93\x01"_su8, O::I16X8SubSatU}, "\xfd\x93\x01"_su8);
   OK(Read<O>, At{"\xfd\x95\x01"_su8, O::I16X8Mul}, "\xfd\x95\x01"_su8);
   OK(Read<O>, At{"\xfd\x96\x01"_su8, O::I16X8MinS}, "\xfd\x96\x01"_su8);
   OK(Read<O>, At{"\xfd\x97\x01"_su8, O::I16X8MinU}, "\xfd\x97\x01"_su8);
@@ -3369,8 +3365,9 @@ TEST_F(BinaryReadTest, SectionId) {
   OK(Read<SectionId>, SectionId::Code, "\x0a"_su8);
   OK(Read<SectionId>, SectionId::Data, "\x0b"_su8);
 
-  // Overlong encoding.
-  OK(Read<SectionId>, SectionId::Custom, "\x80\x00"_su8);
+  // Overlong encoding is not allowed.
+  Fail(Read<SectionId>, {{0, "section id"}, {0, "Unknown section id: 128"}},
+       "\x80\x00"_su8);
 }
 
 TEST_F(BinaryReadTest, SectionId_bulk_memory) {
@@ -3411,10 +3408,8 @@ TEST_F(BinaryReadTest, Section) {
 }
 
 TEST_F(BinaryReadTest, Section_PastEnd) {
-  Fail(
-      Read<Section>,
-      {{0, "section"}, {0, "section id"}, {0, "u32"}, {0, "Unable to read u8"}},
-      ""_su8);
+  Fail(Read<Section>,
+       {{0, "section"}, {0, "section id"}, {0, "Unable to read u8"}}, ""_su8);
 
   Fail(Read<Section>, {{0, "section"}, {1, "length"}, {1, "Unable to read u8"}},
        "\x01"_su8);

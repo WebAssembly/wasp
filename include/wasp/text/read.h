@@ -30,6 +30,8 @@ class Tokenizer;
 auto Expect(Tokenizer&, Context&, TokenType expected) -> optional<Token>;
 auto ExpectLpar(Tokenizer&, Context&, TokenType expected) -> optional<Token>;
 
+template <typename T>
+auto ReadNat(Tokenizer&, Context&) -> OptAt<T>;
 auto ReadNat32(Tokenizer&, Context&) -> OptAt<u32>;
 template <typename T>
 auto ReadInt(Tokenizer&, Context&) -> OptAt<T>;
