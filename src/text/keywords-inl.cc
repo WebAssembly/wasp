@@ -491,12 +491,18 @@ switch (PeekChar(data, 2)) {
                   case '3':
                     switch (PeekChar(data, 14)) {
                       case 'l': return LexKeyword(data, "v128.load32_splat", TokenType::MemoryInstr, Opcode::V128Load32Splat, Features::Simd);
+                      case 'r': return LexKeyword(data, "v128.load32_zero", TokenType::MemoryInstr, Opcode::V128Load32Zero, Features::Simd);
                       case 's': return LexKeyword(data, "v128.load32x2_s", TokenType::MemoryInstr, Opcode::V128Load32X2S, Features::Simd);
                       case 'u': return LexKeyword(data, "v128.load32x2_u", TokenType::MemoryInstr, Opcode::V128Load32X2U, Features::Simd);
                       default: break;
                     }
                     break;
-                  case '6': return LexKeyword(data, "v128.load64_splat", TokenType::MemoryInstr, Opcode::V128Load64Splat, Features::Simd);
+                  case '6':
+                    switch (PeekChar(data, 16)) {
+                      default: return LexKeyword(data, "v128.load64_zero", TokenType::MemoryInstr, Opcode::V128Load64Zero, Features::Simd);
+                      case 't': return LexKeyword(data, "v128.load64_splat", TokenType::MemoryInstr, Opcode::V128Load64Splat, Features::Simd);
+                    }
+                    break;
                   case '8':
                     switch (PeekChar(data, 13)) {
                       case 'l': return LexKeyword(data, "v128.load8_splat", TokenType::MemoryInstr, Opcode::V128Load8Splat, Features::Simd);
@@ -603,6 +609,12 @@ switch (PeekChar(data, 2)) {
                   default: break;
                 }
                 break;
+              case 'a':
+                switch (PeekChar(data, 10)) {
+                  default: return LexKeyword(data, "f32x4.pmax", Opcode::F32X4Pmax, Features::Simd);
+                  case 'e': return LexKeyword(data, "f32x4.nearest", Opcode::F32X4Nearest, Features::Simd);
+                }
+                break;
               case 'b':
                 switch (PeekChar(data, 0)) {
                   case 'f': return LexKeyword(data, "f32x4.sub", Opcode::F32X4Sub, Features::Simd);
@@ -638,6 +650,13 @@ switch (PeekChar(data, 2)) {
                 switch (PeekChar(data, 0)) {
                   case 'f': return LexKeyword(data, "f32x4.neg", Opcode::F32X4Neg, Features::Simd);
                   case 'i': return LexKeyword(data, "i32x4.neg", Opcode::I32X4Neg, Features::Simd);
+                  default: break;
+                }
+                break;
+              case 'i':
+                switch (PeekChar(data, 9)) {
+                  case 'l': return LexKeyword(data, "f32x4.ceil", Opcode::F32X4Ceil, Features::Simd);
+                  case 'n': return LexKeyword(data, "f32x4.pmin", Opcode::F32X4Pmin, Features::Simd);
                   default: break;
                 }
                 break;
@@ -681,6 +700,7 @@ switch (PeekChar(data, 2)) {
                     break;
                 }
                 break;
+              case 'o': return LexKeyword(data, "f32x4.floor", Opcode::F32X4Floor, Features::Simd);
               case 'p':
                 switch (PeekChar(data, 0)) {
                   case 'f': return LexKeyword(data, "f32x4.replace_lane", TokenType::SimdLaneInstr, Opcode::F32X4ReplaceLane, Features::Simd);
@@ -703,17 +723,28 @@ switch (PeekChar(data, 2)) {
                 }
                 break;
               case 't':
-                switch (PeekChar(data, 0)) {
-                  case 'f': return LexKeyword(data, "f32x4.extract_lane", TokenType::SimdLaneInstr, Opcode::F32X4ExtractLane, Features::Simd);
-                  case 'i': return LexKeyword(data, "i32x4.extract_lane", TokenType::SimdLaneInstr, Opcode::I32X4ExtractLane, Features::Simd);
-                  default: break;
+                switch (PeekChar(data, 13)) {
+                  default: return LexKeyword(data, "i32x4.bitmask", Opcode::I32X4Bitmask, Features::Simd);
+                  case '_':
+                    switch (PeekChar(data, 0)) {
+                      case 'f': return LexKeyword(data, "f32x4.extract_lane", TokenType::SimdLaneInstr, Opcode::F32X4ExtractLane, Features::Simd);
+                      case 'i': return LexKeyword(data, "i32x4.extract_lane", TokenType::SimdLaneInstr, Opcode::I32X4ExtractLane, Features::Simd);
+                      default: break;
+                    }
+                    break;
+                  case 'x': return LexKeyword(data, "i32x4.dot_i16x8_s", Opcode::I32X4DotI16X8S, Features::Simd);
                 }
                 break;
               case 'u':
-                switch (PeekChar(data, 22)) {
-                  case 's': return LexKeyword(data, "i32x4.trunc_sat_f32x4_s", Opcode::I32X4TruncSatF32X4S, Features::Simd);
-                  case 'u': return LexKeyword(data, "i32x4.trunc_sat_f32x4_u", Opcode::I32X4TruncSatF32X4U, Features::Simd);
-                  default: break;
+                switch (PeekChar(data, 11)) {
+                  default: return LexKeyword(data, "f32x4.trunc", Opcode::F32X4Trunc, Features::Simd);
+                  case '_':
+                    switch (PeekChar(data, 22)) {
+                      case 's': return LexKeyword(data, "i32x4.trunc_sat_f32x4_s", Opcode::I32X4TruncSatF32X4S, Features::Simd);
+                      case 'u': return LexKeyword(data, "i32x4.trunc_sat_f32x4_u", Opcode::I32X4TruncSatF32X4U, Features::Simd);
+                      default: break;
+                    }
+                    break;
                 }
                 break;
               case 'v': return LexKeyword(data, "f32x4.div", Opcode::F32X4Div, Features::Simd);
@@ -1237,6 +1268,12 @@ switch (PeekChar(data, 2)) {
                   default: break;
                 }
                 break;
+              case 'a':
+                switch (PeekChar(data, 10)) {
+                  default: return LexKeyword(data, "f64x2.pmax", Opcode::F64X2Pmax, Features::Simd);
+                  case 'e': return LexKeyword(data, "f64x2.nearest", Opcode::F64X2Nearest, Features::Simd);
+                }
+                break;
               case 'b':
                 switch (PeekChar(data, 0)) {
                   case 'f': return LexKeyword(data, "f64x2.sub", Opcode::F64X2Sub, Features::Simd);
@@ -1255,6 +1292,13 @@ switch (PeekChar(data, 2)) {
                 switch (PeekChar(data, 0)) {
                   case 'f': return LexKeyword(data, "f64x2.neg", Opcode::F64X2Neg, Features::Simd);
                   case 'i': return LexKeyword(data, "i64x2.neg", Opcode::I64X2Neg, Features::Simd);
+                  default: break;
+                }
+                break;
+              case 'i':
+                switch (PeekChar(data, 9)) {
+                  case 'l': return LexKeyword(data, "f64x2.ceil", Opcode::F64X2Ceil, Features::Simd);
+                  case 'n': return LexKeyword(data, "f64x2.pmin", Opcode::F64X2Pmin, Features::Simd);
                   default: break;
                 }
                 break;
@@ -1279,6 +1323,7 @@ switch (PeekChar(data, 2)) {
                 }
                 break;
               case 'n': return LexKeyword(data, "f64x2.min", Opcode::F64X2Min, Features::Simd);
+              case 'o': return LexKeyword(data, "f64x2.floor", Opcode::F64X2Floor, Features::Simd);
               case 'p':
                 switch (PeekChar(data, 0)) {
                   case 'f': return LexKeyword(data, "f64x2.replace_lane", TokenType::SimdLaneInstr, Opcode::F64X2ReplaceLane, Features::Simd);
@@ -1301,6 +1346,7 @@ switch (PeekChar(data, 2)) {
                   default: break;
                 }
                 break;
+              case 'u': return LexKeyword(data, "f64x2.trunc", Opcode::F64X2Trunc, Features::Simd);
               case 'v': return LexKeyword(data, "f64x2.div", Opcode::F64X2Div, Features::Simd);
               case 'x': return LexKeyword(data, "f64x2.max", Opcode::F64X2Max, Features::Simd);
             }
@@ -1384,6 +1430,7 @@ switch (PeekChar(data, 2)) {
                 break;
               case 'i':
                 switch (PeekChar(data, 10)) {
+                  case 'a': return LexKeyword(data, "i16x8.bitmask", Opcode::I16X8Bitmask, Features::Simd);
                   case 'n':
                     switch (PeekChar(data, 23)) {
                       default:
@@ -1943,10 +1990,15 @@ switch (PeekChar(data, 2)) {
             break;
           case 's': return LexKeyword(data, "i8x16.abs", Opcode::I8X16Abs, Features::Simd);
           case 't':
-            switch (PeekChar(data, 19)) {
-              case 's': return LexKeyword(data, "i8x16.extract_lane_s", TokenType::SimdLaneInstr, Opcode::I8X16ExtractLaneS, Features::Simd);
-              case 'u': return LexKeyword(data, "i8x16.extract_lane_u", TokenType::SimdLaneInstr, Opcode::I8X16ExtractLaneU, Features::Simd);
-              default: break;
+            switch (PeekChar(data, 13)) {
+              default: return LexKeyword(data, "i8x16.bitmask", Opcode::I8X16Bitmask, Features::Simd);
+              case '_':
+                switch (PeekChar(data, 19)) {
+                  case 's': return LexKeyword(data, "i8x16.extract_lane_s", TokenType::SimdLaneInstr, Opcode::I8X16ExtractLaneS, Features::Simd);
+                  case 'u': return LexKeyword(data, "i8x16.extract_lane_u", TokenType::SimdLaneInstr, Opcode::I8X16ExtractLaneU, Features::Simd);
+                  default: break;
+                }
+                break;
             }
             break;
           case 'u': return LexKeyword(data, "i8x16.shuffle", TokenType::SimdShuffleInstr, Opcode::I8X16Shuffle, Features::Simd);

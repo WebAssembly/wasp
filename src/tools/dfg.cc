@@ -631,19 +631,30 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::I8X16Neg:
     case Opcode::I8X16AnyTrue:
     case Opcode::I8X16AllTrue:
+    case Opcode::I8X16Bitmask:
     case Opcode::I16X8Neg:
     case Opcode::I16X8AnyTrue:
     case Opcode::I16X8AllTrue:
+    case Opcode::I16X8Bitmask:
     case Opcode::I32X4Neg:
     case Opcode::I32X4AnyTrue:
     case Opcode::I32X4AllTrue:
+    case Opcode::I32X4Bitmask:
     case Opcode::I64X2Neg:
     case Opcode::F32X4Abs:
     case Opcode::F32X4Neg:
     case Opcode::F32X4Sqrt:
+    case Opcode::F32X4Ceil:
+    case Opcode::F32X4Floor:
+    case Opcode::F32X4Trunc:
+    case Opcode::F32X4Nearest:
     case Opcode::F64X2Abs:
     case Opcode::F64X2Neg:
     case Opcode::F64X2Sqrt:
+    case Opcode::F64X2Ceil:
+    case Opcode::F64X2Floor:
+    case Opcode::F64X2Trunc:
+    case Opcode::F64X2Nearest:
     case Opcode::I32X4TruncSatF32X4S:
     case Opcode::I32X4TruncSatF32X4U:
     case Opcode::F32X4ConvertI32X4S:
@@ -652,6 +663,8 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::V128Load16Splat:
     case Opcode::V128Load32Splat:
     case Opcode::V128Load64Splat:
+    case Opcode::V128Load32Zero:
+    case Opcode::V128Load64Zero:
     case Opcode::I16X8WidenLowI8X16S:
     case Opcode::I16X8WidenHighI8X16S:
     case Opcode::I16X8WidenLowI8X16U:
@@ -865,6 +878,7 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::I32X4MinU:
     case Opcode::I32X4MaxS:
     case Opcode::I32X4MaxU:
+    case Opcode::I32X4DotI16X8S:
     case Opcode::I64X2Shl:
     case Opcode::I64X2ShrS:
     case Opcode::I64X2ShrU:
@@ -877,12 +891,16 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::F32X4Div:
     case Opcode::F32X4Min:
     case Opcode::F32X4Max:
+    case Opcode::F32X4Pmin:
+    case Opcode::F32X4Pmax:
     case Opcode::F64X2Add:
     case Opcode::F64X2Sub:
     case Opcode::F64X2Mul:
     case Opcode::F64X2Div:
     case Opcode::F64X2Min:
     case Opcode::F64X2Max:
+    case Opcode::F64X2Pmin:
+    case Opcode::F64X2Pmax:
     case Opcode::I8X16NarrowI16X8S:
     case Opcode::I8X16NarrowI16X8U:
     case Opcode::I16X8NarrowI32X4S:
