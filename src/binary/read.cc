@@ -784,6 +784,10 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::F64X2Min:
     case Opcode::F32X4Max:
     case Opcode::F64X2Max:
+    case Opcode::F32X4Pmin:
+    case Opcode::F64X2Pmin:
+    case Opcode::F32X4Pmax:
+    case Opcode::F64X2Pmax:
     case Opcode::F32X4Add:
     case Opcode::F64X2Add:
     case Opcode::F32X4Sub:
@@ -851,12 +855,24 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::I8X16AllTrue:
     case Opcode::I16X8AllTrue:
     case Opcode::I32X4AllTrue:
+    case Opcode::I8X16Bitmask:
+    case Opcode::I16X8Bitmask:
+    case Opcode::I32X4Bitmask:
+    case Opcode::I32X4DotI16X8S:
     case Opcode::F32X4Neg:
     case Opcode::F64X2Neg:
     case Opcode::F32X4Abs:
     case Opcode::F64X2Abs:
     case Opcode::F32X4Sqrt:
     case Opcode::F64X2Sqrt:
+    case Opcode::F32X4Ceil:
+    case Opcode::F32X4Floor:
+    case Opcode::F32X4Trunc:
+    case Opcode::F32X4Nearest:
+    case Opcode::F64X2Ceil:
+    case Opcode::F64X2Floor:
+    case Opcode::F64X2Trunc:
+    case Opcode::F64X2Nearest:
     case Opcode::V128BitSelect:
     case Opcode::F32X4ConvertI32X4S:
     case Opcode::F32X4ConvertI32X4U:
@@ -1038,6 +1054,8 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::V128Load16X4U:
     case Opcode::V128Load32X2S:
     case Opcode::V128Load32X2U:
+    case Opcode::V128Load32Zero:
+    case Opcode::V128Load64Zero:
     case Opcode::MemoryAtomicNotify:
     case Opcode::MemoryAtomicWait32:
     case Opcode::MemoryAtomicWait64:
