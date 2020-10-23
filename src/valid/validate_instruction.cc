@@ -808,16 +808,16 @@ bool Load(Context& context, Location loc, const At<Instruction>& instruction) {
     case Opcode::I64Load32S: span = span_i64; max_align = 2; break;
     case Opcode::I64Load32U: span = span_i64; max_align = 2; break;
     case Opcode::V128Load:   span = span_v128; max_align = 4; break;
-    case Opcode::V8X16LoadSplat:   span = span_v128; max_align = 0; break;
-    case Opcode::V16X8LoadSplat:   span = span_v128; max_align = 1; break;
-    case Opcode::V32X4LoadSplat:   span = span_v128; max_align = 2; break;
-    case Opcode::V64X2LoadSplat:   span = span_v128; max_align = 3; break;
-    case Opcode::I16X8Load8X8S:    span = span_v128; max_align = 3; break;
-    case Opcode::I16X8Load8X8U:    span = span_v128; max_align = 3; break;
-    case Opcode::I32X4Load16X4S:   span = span_v128; max_align = 3; break;
-    case Opcode::I32X4Load16X4U:   span = span_v128; max_align = 3; break;
-    case Opcode::I64X2Load32X2S:   span = span_v128; max_align = 3; break;
-    case Opcode::I64X2Load32X2U:   span = span_v128; max_align = 3; break;
+    case Opcode::V128Load8Splat:  span = span_v128; max_align = 0; break;
+    case Opcode::V128Load16Splat: span = span_v128; max_align = 1; break;
+    case Opcode::V128Load32Splat: span = span_v128; max_align = 2; break;
+    case Opcode::V128Load64Splat: span = span_v128; max_align = 3; break;
+    case Opcode::V128Load8X8S:    span = span_v128; max_align = 3; break;
+    case Opcode::V128Load8X8U:    span = span_v128; max_align = 3; break;
+    case Opcode::V128Load16X4S:   span = span_v128; max_align = 3; break;
+    case Opcode::V128Load16X4U:   span = span_v128; max_align = 3; break;
+    case Opcode::V128Load32X2S:   span = span_v128; max_align = 3; break;
+    case Opcode::V128Load32X2U:   span = span_v128; max_align = 3; break;
     default:
       WASP_UNREACHABLE();
   }
@@ -1907,16 +1907,16 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::I64Load32S:
     case Opcode::I64Load32U:
     case Opcode::V128Load:
-    case Opcode::V8X16LoadSplat:
-    case Opcode::V16X8LoadSplat:
-    case Opcode::V32X4LoadSplat:
-    case Opcode::V64X2LoadSplat:
-    case Opcode::I16X8Load8X8S:
-    case Opcode::I16X8Load8X8U:
-    case Opcode::I32X4Load16X4S:
-    case Opcode::I32X4Load16X4U:
-    case Opcode::I64X2Load32X2S:
-    case Opcode::I64X2Load32X2U:
+    case Opcode::V128Load8Splat:
+    case Opcode::V128Load16Splat:
+    case Opcode::V128Load32Splat:
+    case Opcode::V128Load64Splat:
+    case Opcode::V128Load8X8S:
+    case Opcode::V128Load8X8U:
+    case Opcode::V128Load16X4S:
+    case Opcode::V128Load16X4U:
+    case Opcode::V128Load32X2S:
+    case Opcode::V128Load32X2U:
       return Load(context, loc, value);
 
     case Opcode::I32Store:
@@ -2277,21 +2277,21 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::V128Or:
     case Opcode::V128Xor:
     case Opcode::I8X16Add:
-    case Opcode::I8X16AddSaturateS:
-    case Opcode::I8X16AddSaturateU:
+    case Opcode::I8X16AddSatS:
+    case Opcode::I8X16AddSatU:
     case Opcode::I8X16Sub:
-    case Opcode::I8X16SubSaturateS:
-    case Opcode::I8X16SubSaturateU:
+    case Opcode::I8X16SubSatS:
+    case Opcode::I8X16SubSatU:
     case Opcode::I8X16MinS:
     case Opcode::I8X16MinU:
     case Opcode::I8X16MaxS:
     case Opcode::I8X16MaxU:
     case Opcode::I16X8Add:
-    case Opcode::I16X8AddSaturateS:
-    case Opcode::I16X8AddSaturateU:
+    case Opcode::I16X8AddSatS:
+    case Opcode::I16X8AddSatU:
     case Opcode::I16X8Sub:
-    case Opcode::I16X8SubSaturateS:
-    case Opcode::I16X8SubSaturateU:
+    case Opcode::I16X8SubSatS:
+    case Opcode::I16X8SubSatU:
     case Opcode::I16X8Mul:
     case Opcode::I16X8MinS:
     case Opcode::I16X8MinU:
@@ -2319,7 +2319,7 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::F64X2Div:
     case Opcode::F64X2Min:
     case Opcode::F64X2Max:
-    case Opcode::V8X16Swizzle:
+    case Opcode::I8X16Swizzle:
     case Opcode::I8X16NarrowI16X8S:
     case Opcode::I8X16NarrowI16X8U:
     case Opcode::I16X8NarrowI32X4S:
@@ -2330,7 +2330,7 @@ bool Validate(Context& context, const At<Instruction>& value) {
       params = span_v128_v128, results = span_v128;
       break;
 
-    case Opcode::V8X16Shuffle:
+    case Opcode::I8X16Shuffle:
       return SimdShuffle(context, loc, value->shuffle_immediate());
 
     case Opcode::I8X16Splat:

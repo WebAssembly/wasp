@@ -413,8 +413,8 @@ TEST(TextWriteTest, Instruction) {
   ExpectWrite("select i32"_sv, I{O::Select, SelectImmediate{VT_I32}});
 
   // ShuffleImmediate
-  ExpectWrite("v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_sv,
-              I{O::V8X16Shuffle, ShuffleImmediate{}});
+  ExpectWrite("i8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_sv,
+              I{O::I8X16Shuffle, ShuffleImmediate{}});
 
   // StructFieldImmediate
   ExpectWrite(

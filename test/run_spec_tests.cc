@@ -49,6 +49,24 @@ namespace fs = std::filesystem;
 
 static int s_verbose = 0;
 
+struct DirectoryInfo {
+  std::string directory;        // Name of the directory.
+  bool enabled;                 // Whether to run these tests.
+  Features::Bits feature_bits;  // Features to enable for these tests.
+};
+
+const std::vector<DirectoryInfo> directory_info_map = {
+    {"bulk-memory-operations", true, Features::BulkMemory},
+    {"exception-handling", true, Features::Exceptions},
+    {"function-references", true, Features::FunctionReferences},
+    {"memory64", false, 0},
+    {"mutable-global", true, Features::MutableGlobals},
+    {"reference-types", true, Features::ReferenceTypes},
+    {"simd", true, Features::Simd},
+    {"tail-call", true, Features::TailCall},
+    {"threads", true, Features::Threads},
+};
+
 class Tool {
  public:
   explicit Tool(string_view filename, SpanU8 data, const Features& features)
@@ -113,24 +131,23 @@ int main(int argc, char** argv) {
     }
   }
 
-  std::vector<std::pair<std::string, Features::Bits>> directory_feature_map = {
-      {"bulk-memory-operations", Features::BulkMemory},
-      {"exception-handling", Features::Exceptions},
-      {"function-references", Features::FunctionReferences},
-      {"mutable-global", Features::MutableGlobals},
-      {"reference-types", Features::ReferenceTypes},
-      {"simd", Features::Simd},
-      {"tail-call", Features::TailCall},
-      {"threads", Features::Threads},
-  };
-
   std::sort(sources.begin(), sources.end());
   for (auto& source : sources) {
     Features features;
-    for (auto&& [directory, feature_bits] : directory_feature_map) {
-      if (source.string().find(directory) != std::string::npos) {
-        features = Features{feature_bits};
+    bool enabled = true;
+    for (auto&& info : directory_info_map) {
+      if (source.string().find(info.directory) != std::string::npos) {
+        enabled = info.enabled;
+        features = Features{info.feature_bits};
+        break;
       }
+    }
+
+    if (!enabled) {
+      if (s_verbose) {
+        print("Skipping {}.\n", source.string());
+      }
+      continue;
     }
 
     // TODO: Merge these defaults into features.def, since they're now merged

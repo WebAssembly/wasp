@@ -737,25 +737,25 @@ TEST(BinaryWriteTest, Instruction_bulk_memory) {
 
 TEST(BinaryWriteTest, Instruction_simd) {
   ExpectWrite("\xfd\x00\x01\x02"_su8, I{O::V128Load, MemArgImmediate{1, 2}});
-  ExpectWrite("\xfd\x01\x01\x02"_su8, I{O::I16X8Load8X8S, MemArgImmediate{1, 2}});
-  ExpectWrite("\xfd\x02\x01\x02"_su8, I{O::I16X8Load8X8U, MemArgImmediate{1, 2}});
-  ExpectWrite("\xfd\x03\x01\x02"_su8, I{O::I32X4Load16X4S, MemArgImmediate{1, 2}});
-  ExpectWrite("\xfd\x04\x01\x02"_su8, I{O::I32X4Load16X4U, MemArgImmediate{1, 2}});
-  ExpectWrite("\xfd\x05\x01\x02"_su8, I{O::I64X2Load32X2S, MemArgImmediate{1, 2}});
-  ExpectWrite("\xfd\x06\x01\x02"_su8, I{O::I64X2Load32X2U, MemArgImmediate{1, 2}});
-  ExpectWrite("\xfd\x07\x01\x02"_su8, I{O::V8X16LoadSplat, MemArgImmediate{1, 2}});
-  ExpectWrite("\xfd\x08\x01\x02"_su8, I{O::V16X8LoadSplat, MemArgImmediate{1, 2}});
-  ExpectWrite("\xfd\x09\x01\x02"_su8, I{O::V32X4LoadSplat, MemArgImmediate{1, 2}});
-  ExpectWrite("\xfd\x0a\x01\x02"_su8, I{O::V64X2LoadSplat, MemArgImmediate{1, 2}});
+  ExpectWrite("\xfd\x01\x01\x02"_su8, I{O::V128Load8X8S, MemArgImmediate{1, 2}});
+  ExpectWrite("\xfd\x02\x01\x02"_su8, I{O::V128Load8X8U, MemArgImmediate{1, 2}});
+  ExpectWrite("\xfd\x03\x01\x02"_su8, I{O::V128Load16X4S, MemArgImmediate{1, 2}});
+  ExpectWrite("\xfd\x04\x01\x02"_su8, I{O::V128Load16X4U, MemArgImmediate{1, 2}});
+  ExpectWrite("\xfd\x05\x01\x02"_su8, I{O::V128Load32X2S, MemArgImmediate{1, 2}});
+  ExpectWrite("\xfd\x06\x01\x02"_su8, I{O::V128Load32X2U, MemArgImmediate{1, 2}});
+  ExpectWrite("\xfd\x07\x01\x02"_su8, I{O::V128Load8Splat, MemArgImmediate{1, 2}});
+  ExpectWrite("\xfd\x08\x01\x02"_su8, I{O::V128Load16Splat, MemArgImmediate{1, 2}});
+  ExpectWrite("\xfd\x09\x01\x02"_su8, I{O::V128Load32Splat, MemArgImmediate{1, 2}});
+  ExpectWrite("\xfd\x0a\x01\x02"_su8, I{O::V128Load64Splat, MemArgImmediate{1, 2}});
   ExpectWrite("\xfd\x0b\x03\x04"_su8, I{O::V128Store, MemArgImmediate{3, 4}});
   ExpectWrite(
       "\xfd\x0c\x05\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00"_su8,
       I{O::V128Const, v128{u64{5}, u64{6}}});
   ExpectWrite(
       "\xfd\x0d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_su8,
-      I{O::V8X16Shuffle,
+      I{O::I8X16Shuffle,
         ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}});
-  ExpectWrite("\xfd\x0e"_su8, I{O::V8X16Swizzle});
+  ExpectWrite("\xfd\x0e"_su8, I{O::I8X16Swizzle});
   ExpectWrite("\xfd\x0f"_su8, I{O::I8X16Splat});
   ExpectWrite("\xfd\x10"_su8, I{O::I16X8Splat});
   ExpectWrite("\xfd\x11"_su8, I{O::I32X4Splat});
@@ -834,11 +834,11 @@ TEST(BinaryWriteTest, Instruction_simd) {
   ExpectWrite("\xfd\x6c"_su8, I{O::I8X16ShrS});
   ExpectWrite("\xfd\x6d"_su8, I{O::I8X16ShrU});
   ExpectWrite("\xfd\x6e"_su8, I{O::I8X16Add});
-  ExpectWrite("\xfd\x6f"_su8, I{O::I8X16AddSaturateS});
-  ExpectWrite("\xfd\x70"_su8, I{O::I8X16AddSaturateU});
+  ExpectWrite("\xfd\x6f"_su8, I{O::I8X16AddSatS});
+  ExpectWrite("\xfd\x70"_su8, I{O::I8X16AddSatU});
   ExpectWrite("\xfd\x71"_su8, I{O::I8X16Sub});
-  ExpectWrite("\xfd\x72"_su8, I{O::I8X16SubSaturateS});
-  ExpectWrite("\xfd\x73"_su8, I{O::I8X16SubSaturateU});
+  ExpectWrite("\xfd\x72"_su8, I{O::I8X16SubSatS});
+  ExpectWrite("\xfd\x73"_su8, I{O::I8X16SubSatU});
   ExpectWrite("\xfd\x76"_su8, I{O::I8X16MinS});
   ExpectWrite("\xfd\x77"_su8, I{O::I8X16MinU});
   ExpectWrite("\xfd\x78"_su8, I{O::I8X16MaxS});
@@ -858,11 +858,11 @@ TEST(BinaryWriteTest, Instruction_simd) {
   ExpectWrite("\xfd\x8c\x01"_su8, I{O::I16X8ShrS});
   ExpectWrite("\xfd\x8d\x01"_su8, I{O::I16X8ShrU});
   ExpectWrite("\xfd\x8e\x01"_su8, I{O::I16X8Add});
-  ExpectWrite("\xfd\x8f\x01"_su8, I{O::I16X8AddSaturateS});
-  ExpectWrite("\xfd\x90\x01"_su8, I{O::I16X8AddSaturateU});
+  ExpectWrite("\xfd\x8f\x01"_su8, I{O::I16X8AddSatS});
+  ExpectWrite("\xfd\x90\x01"_su8, I{O::I16X8AddSatU});
   ExpectWrite("\xfd\x91\x01"_su8, I{O::I16X8Sub});
-  ExpectWrite("\xfd\x92\x01"_su8, I{O::I16X8SubSaturateS});
-  ExpectWrite("\xfd\x93\x01"_su8, I{O::I16X8SubSaturateU});
+  ExpectWrite("\xfd\x92\x01"_su8, I{O::I16X8SubSatS});
+  ExpectWrite("\xfd\x93\x01"_su8, I{O::I16X8SubSatU});
   ExpectWrite("\xfd\x95\x01"_su8, I{O::I16X8Mul});
   ExpectWrite("\xfd\x96\x01"_su8, I{O::I16X8MinS});
   ExpectWrite("\xfd\x97\x01"_su8, I{O::I16X8MinU});
@@ -1579,20 +1579,20 @@ TEST(BinaryWriteTest, Opcode_simd) {
   using O = Opcode;
 
   ExpectWrite("\xfd\x00"_su8, O::V128Load);
-  ExpectWrite("\xfd\x01"_su8, O::I16X8Load8X8S);
-  ExpectWrite("\xfd\x02"_su8, O::I16X8Load8X8U);
-  ExpectWrite("\xfd\x03"_su8, O::I32X4Load16X4S);
-  ExpectWrite("\xfd\x04"_su8, O::I32X4Load16X4U);
-  ExpectWrite("\xfd\x05"_su8, O::I64X2Load32X2S);
-  ExpectWrite("\xfd\x06"_su8, O::I64X2Load32X2U);
-  ExpectWrite("\xfd\x07"_su8, O::V8X16LoadSplat);
-  ExpectWrite("\xfd\x08"_su8, O::V16X8LoadSplat);
-  ExpectWrite("\xfd\x09"_su8, O::V32X4LoadSplat);
-  ExpectWrite("\xfd\x0a"_su8, O::V64X2LoadSplat);
+  ExpectWrite("\xfd\x01"_su8, O::V128Load8X8S);
+  ExpectWrite("\xfd\x02"_su8, O::V128Load8X8U);
+  ExpectWrite("\xfd\x03"_su8, O::V128Load16X4S);
+  ExpectWrite("\xfd\x04"_su8, O::V128Load16X4U);
+  ExpectWrite("\xfd\x05"_su8, O::V128Load32X2S);
+  ExpectWrite("\xfd\x06"_su8, O::V128Load32X2U);
+  ExpectWrite("\xfd\x07"_su8, O::V128Load8Splat);
+  ExpectWrite("\xfd\x08"_su8, O::V128Load16Splat);
+  ExpectWrite("\xfd\x09"_su8, O::V128Load32Splat);
+  ExpectWrite("\xfd\x0a"_su8, O::V128Load64Splat);
   ExpectWrite("\xfd\x0b"_su8, O::V128Store);
   ExpectWrite("\xfd\x0c"_su8, O::V128Const);
-  ExpectWrite("\xfd\x0d"_su8, O::V8X16Shuffle);
-  ExpectWrite("\xfd\x0e"_su8, O::V8X16Swizzle);
+  ExpectWrite("\xfd\x0d"_su8, O::I8X16Shuffle);
+  ExpectWrite("\xfd\x0e"_su8, O::I8X16Swizzle);
   ExpectWrite("\xfd\x0f"_su8, O::I8X16Splat);
   ExpectWrite("\xfd\x10"_su8, O::I16X8Splat);
   ExpectWrite("\xfd\x11"_su8, O::I32X4Splat);
@@ -1671,11 +1671,11 @@ TEST(BinaryWriteTest, Opcode_simd) {
   ExpectWrite("\xfd\x6c"_su8, O::I8X16ShrS);
   ExpectWrite("\xfd\x6d"_su8, O::I8X16ShrU);
   ExpectWrite("\xfd\x6e"_su8, O::I8X16Add);
-  ExpectWrite("\xfd\x6f"_su8, O::I8X16AddSaturateS);
-  ExpectWrite("\xfd\x70"_su8, O::I8X16AddSaturateU);
+  ExpectWrite("\xfd\x6f"_su8, O::I8X16AddSatS);
+  ExpectWrite("\xfd\x70"_su8, O::I8X16AddSatU);
   ExpectWrite("\xfd\x71"_su8, O::I8X16Sub);
-  ExpectWrite("\xfd\x72"_su8, O::I8X16SubSaturateS);
-  ExpectWrite("\xfd\x73"_su8, O::I8X16SubSaturateU);
+  ExpectWrite("\xfd\x72"_su8, O::I8X16SubSatS);
+  ExpectWrite("\xfd\x73"_su8, O::I8X16SubSatU);
   ExpectWrite("\xfd\x76"_su8, O::I8X16MinS);
   ExpectWrite("\xfd\x77"_su8, O::I8X16MinU);
   ExpectWrite("\xfd\x78"_su8, O::I8X16MaxS);
@@ -1695,11 +1695,11 @@ TEST(BinaryWriteTest, Opcode_simd) {
   ExpectWrite("\xfd\x8c\x01"_su8, O::I16X8ShrS);
   ExpectWrite("\xfd\x8d\x01"_su8, O::I16X8ShrU);
   ExpectWrite("\xfd\x8e\x01"_su8, O::I16X8Add);
-  ExpectWrite("\xfd\x8f\x01"_su8, O::I16X8AddSaturateS);
-  ExpectWrite("\xfd\x90\x01"_su8, O::I16X8AddSaturateU);
+  ExpectWrite("\xfd\x8f\x01"_su8, O::I16X8AddSatS);
+  ExpectWrite("\xfd\x90\x01"_su8, O::I16X8AddSatU);
   ExpectWrite("\xfd\x91\x01"_su8, O::I16X8Sub);
-  ExpectWrite("\xfd\x92\x01"_su8, O::I16X8SubSaturateS);
-  ExpectWrite("\xfd\x93\x01"_su8, O::I16X8SubSaturateU);
+  ExpectWrite("\xfd\x92\x01"_su8, O::I16X8SubSatS);
+  ExpectWrite("\xfd\x93\x01"_su8, O::I16X8SubSatU);
   ExpectWrite("\xfd\x95\x01"_su8, O::I16X8Mul);
   ExpectWrite("\xfd\x96\x01"_su8, O::I16X8MinS);
   ExpectWrite("\xfd\x97\x01"_su8, O::I16X8MinU);

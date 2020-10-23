@@ -452,7 +452,7 @@ u32 GetNaturalAlignment(Opcode opcode) {
     case Opcode::I64Load8S:
     case Opcode::I64Load8U:
     case Opcode::I64Store8:
-    case Opcode::V8X16LoadSplat:
+    case Opcode::V128Load8Splat:
       return 1;
 
     case Opcode::I32AtomicLoad16U:
@@ -479,7 +479,7 @@ u32 GetNaturalAlignment(Opcode opcode) {
     case Opcode::I64Load16S:
     case Opcode::I64Load16U:
     case Opcode::I64Store16:
-    case Opcode::V16X8LoadSplat:
+    case Opcode::V128Load16Splat:
       return 2;
 
     case Opcode::F32Load:
@@ -509,15 +509,11 @@ u32 GetNaturalAlignment(Opcode opcode) {
     case Opcode::I64Store32:
     case Opcode::MemoryAtomicNotify:
     case Opcode::MemoryAtomicWait32:
-    case Opcode::V32X4LoadSplat:
+    case Opcode::V128Load32Splat:
       return 4;
 
     case Opcode::F64Load:
     case Opcode::F64Store:
-    case Opcode::I16X8Load8X8S:
-    case Opcode::I16X8Load8X8U:
-    case Opcode::I32X4Load16X4S:
-    case Opcode::I32X4Load16X4U:
     case Opcode::I64AtomicLoad:
     case Opcode::I64AtomicRmwAdd:
     case Opcode::I64AtomicRmwAnd:
@@ -529,10 +525,14 @@ u32 GetNaturalAlignment(Opcode opcode) {
     case Opcode::I64AtomicStore:
     case Opcode::I64Load:
     case Opcode::I64Store:
-    case Opcode::I64X2Load32X2S:
-    case Opcode::I64X2Load32X2U:
     case Opcode::MemoryAtomicWait64:
-    case Opcode::V64X2LoadSplat:
+    case Opcode::V128Load16X4S:
+    case Opcode::V128Load16X4U:
+    case Opcode::V128Load32X2S:
+    case Opcode::V128Load32X2U:
+    case Opcode::V128Load64Splat:
+    case Opcode::V128Load8X8S:
+    case Opcode::V128Load8X8U:
       return 8;
 
     case Opcode::V128Load:
