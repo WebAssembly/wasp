@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/binji/wasp.svg?style=svg)](https://circleci.com/gh/binji/wasp)
+[![CircleCI](https://circleci.com/gh/WebAssembly/wasp.svg?style=svg)](https://circleci.com/gh/WebAssembly/wasp)
 
 # wasp
 
