@@ -208,6 +208,25 @@ TEST(ValidateTest, ConstantExpression_WrongInstructionCount) {
                         VT_I32, 0));
 }
 
+TEST(ValidateTest, ConstantExpression_GC) {
+  Features features;
+  features.enable_gc();
+  TestErrors errors;
+  Context context{features, errors};
+
+  // rtt.canon is allowed.
+  EXPECT_TRUE(Validate(
+      context, ConstantExpression{Instruction{Opcode::RttCanon, HT_Any}},
+      VT_RTT_0_Any, 0));
+
+  // Multiple instructions are allowed, and rtt.sub is too.
+  EXPECT_TRUE(Validate(
+      context,
+      ConstantExpression{InstructionList{Instruction{Opcode::RttCanon, HT_Any},
+                                         Instruction{Opcode::RttSub, HT_Eq}}},
+      VT_RTT_1_Eq, 0));
+}
+
 TEST(ValidateTest, ConstantExpression_Funcref) {
   TestErrors errors;
   Context context{errors};

@@ -133,84 +133,88 @@ bool Validate(Context& context,
               binary::ValueType expected_type,
               Index max_global_index) {
   ErrorsContextGuard guard{*context.errors, value.loc(), "constant_expression"};
-  if (value->instructions.size() != 1) {
+  if (value->instructions.size() != 1 && !context.features.gc_enabled()) {
     context.errors->OnError(
         value.loc(), "A constant expression must be a single instruction");
     return false;
   }
 
   bool valid = true;
-  auto&& instruction = value->instructions[0];
-  optional<binary::ValueType> actual_type;
-  switch (instruction->opcode) {
-    case Opcode::I32Const:
-      actual_type = binary::ValueType::I32_NoLocation();
-      break;
+  Context new_context{context};
+  new_context.type_stack.clear();
+  new_context.label_stack.clear();
+  new_context.locals.Reset();
 
-    case Opcode::I64Const:
-      actual_type = binary::ValueType::I64_NoLocation();
-      break;
+  // Validate as if this expression was a function that takes no parameters,
+  // and returns the expected type.
+  new_context.label_stack.push_back(
+      Label{LabelType::Function,
+            {},
+            ToStackTypeList(binary::ValueTypeList{expected_type}),
+            0});
 
-    case Opcode::F32Const:
-      actual_type = binary::ValueType::F32_NoLocation();
-      break;
+  for (auto&& instruction : value->instructions) {
+    switch (instruction->opcode) {
+      case Opcode::I32Const:
+      case Opcode::I64Const:
+      case Opcode::F32Const:
+      case Opcode::F64Const:
+      case Opcode::V128Const:
+      case Opcode::RefNull:
+      case Opcode::RttCanon:
+      case Opcode::RttSub:
+        // Validate normally.
+        break;
 
-    case Opcode::F64Const:
-      actual_type = binary::ValueType::F64_NoLocation();
-      break;
+      case Opcode::GlobalGet: {
+        // global initializers are only allowed to reference imported globals,
+        // so the maximum global index is shorter than specified by the
+        // context. All other constant expressions can use the full range.
+        auto index = instruction->index_immediate();
+        if (!ValidateIndex(context, index, max_global_index, "global index")) {
+          return false;
+        }
 
-    case Opcode::V128Const:
-      actual_type = binary::ValueType::V128_NoLocation();
-      break;
-
-    case Opcode::GlobalGet: {
-      auto index = instruction->index_immediate();
-      if (!ValidateIndex(context, index, max_global_index, "global index")) {
-        return false;
+        if (new_context.globals[index].mut == Mutability::Var) {
+          new_context.errors->OnError(
+              instruction->index_immediate().loc(),
+              "A constant expression cannot contain a mutable global");
+          return false;
+        }
+        break;
       }
 
-      const auto& global = context.globals[index];
-      actual_type = global.valtype;
+      case Opcode::RefFunc: {
+        auto index = instruction->index_immediate();
+        if (!ValidateIndex(new_context, index,
+                           static_cast<Index>(new_context.functions.size()),
+                           "func index")) {
+          return false;
+        }
 
-      if (context.globals[index].mut == Mutability::Var) {
+        // ref.func indexes are implicitly declared by referencing them in a
+        // constant expression.
+        context.declared_functions.insert(index);
+        new_context.declared_functions.insert(index);
+        break;
+      }
+
+      default:
         context.errors->OnError(
-            instruction->index_immediate().loc(),
-            "A constant expression cannot contain a mutable global");
-        valid = false;
-      }
-      break;
-    }
-
-    case Opcode::RefNull:
-      actual_type = ToValueType(instruction->heap_type_immediate());
-      break;
-
-    case Opcode::RefFunc: {
-      auto index = instruction->index_immediate();
-      // ref.func indexes are implicitly declared by referencing them in a
-      // constant expression.
-      context.declared_functions.insert(index);
-      if (!ValidateIndex(context, index, static_cast<Index>(context.functions.size()),
-                         "func index")) {
+            instruction.loc(),
+            concat("Invalid instruction in constant expression: ",
+                   instruction));
         return false;
-      }
-
-      assert(index < context.functions.size());
-      auto& function = context.functions[index];
-      actual_type = ToValueType(
-          binary::RefType{binary::HeapType{function.type_index}, Null::No});
-      break;
     }
 
-    default:
-      context.errors->OnError(
-          instruction.loc(),
-          concat("Invalid instruction in constant expression: ", instruction));
-      return false;
+    // Do normal instruction validation.
+    valid &= Validate(new_context, instruction);
   }
 
-  assert(actual_type.has_value());
-  valid &= Validate(context, expected_type, At{value.loc(), *actual_type});
+  // Insert an implicit end instruction to check that the instruction sequence
+  // actually produces a value of the expected type.
+  valid &=
+      Validate(new_context, At{value.loc(), binary::Instruction{Opcode::End}});
   return valid;
 }
 
