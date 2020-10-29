@@ -550,8 +550,8 @@ Iterator Write(v128 value, Iterator out) {
 template <typename Iterator>
 Iterator Write(const Instruction& instr, Iterator out) {
   out = Write(instr.opcode, out);
-  switch (instr.immediate.index()) {
-    case 0: // monostate
+  switch (instr.kind()) {
+    case InstructionKind::None:
       if (instr.opcode == Opcode::MemorySize ||
           instr.opcode == Opcode::MemoryGrow ||
           instr.opcode == Opcode::MemoryFill) {
@@ -559,71 +559,71 @@ Iterator Write(const Instruction& instr, Iterator out) {
       }
       return out;
 
-    case 1: // s32
+    case InstructionKind::S32:
       return Write(instr.s32_immediate(), out);
 
-    case 2: // s64
+    case InstructionKind::S64:
       return Write(instr.s64_immediate(), out);
 
-    case 3: // f32
+    case InstructionKind::F32:
       return Write(instr.f32_immediate(), out);
 
-    case 4: // f64
+    case InstructionKind::F64:
       return Write(instr.f64_immediate(), out);
 
-    case 5: // v128
+    case InstructionKind::V128:
       return Write(instr.v128_immediate(), out);
 
-    case 6: // Index
+    case InstructionKind::Index:
       return Write(instr.index_immediate(), out);
 
-    case 7: // BlockType
+    case InstructionKind::BlockType:
       return Write(instr.block_type_immediate(), out);
 
-    case 8: // BrOnExnImmediate
+    case InstructionKind::BrOnExn:
       return Write(instr.br_on_exn_immediate(), out);
 
-    case 9: // BrTableImmediate
+    case InstructionKind::BrTable:
       return Write(instr.br_table_immediate(), out);
 
-    case 10: // CallIndirectImmediate
+    case InstructionKind::CallIndirect:
       return Write(instr.call_indirect_immediate(), out);
 
-    case 11: // CopyImmediate
+    case InstructionKind::Copy:
       return Write(instr.copy_immediate(), out);
 
-    case 12: // InitImmediate
+    case InstructionKind::Init:
       return Write(instr.init_immediate(), out);
 
-    case 13: // LetImmediate
+    case InstructionKind::Let:
       return Write(instr.let_immediate(), out);
 
-    case 14: // MemArgImmediate
+    case InstructionKind::MemArg:
       return Write(instr.mem_arg_immediate(), out);
 
-    case 15: // HeapType
+    case InstructionKind::HeapType:
       return Write(instr.heap_type_immediate(), out);
 
-    case 16: // SelectImmediate
+    case InstructionKind::Select:
       return WriteVector(instr.select_immediate()->begin(),
                          instr.select_immediate()->end(), out);
 
-    case 17: // ShuffleImmediate
+    case InstructionKind::Shuffle:
       return Write(instr.shuffle_immediate(), out);
 
-    case 18: // SimdLaneImmediate
+    case InstructionKind::SimdLane:
       return Write(instr.simd_lane_immediate(), out);
 
-    case 19:
+    case InstructionKind::BrOnCast:
       return Write(instr.br_on_cast_immediate(), out);
 
-    case 20:
+    case InstructionKind::HeapType2:
       return Write(instr.heap_type_2_immediate(), out);
 
-    case 21:
+    case InstructionKind::RttSub:
       return Write(instr.rtt_sub_immediate(), out);
 
-    case 22:
+    case InstructionKind::StructField:
       return Write(instr.struct_field_immediate(), out);
   }
   WASP_UNREACHABLE();

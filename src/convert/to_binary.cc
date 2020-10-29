@@ -580,126 +580,126 @@ auto ToBinary(Context& context, const At<text::StructFieldImmediate>& value)
 
 auto ToBinary(Context& context, const At<text::Instruction>& value)
     -> At<binary::Instruction> {
-  switch (value->immediate.index()) {
-    case 0:  // monostate
+  switch (value->kind()) {
+    case text::InstructionKind::None:
       return At{value.loc(), binary::Instruction{value->opcode}};
 
-    case 1:  // s32
+    case text::InstructionKind::S32:
       return At{value.loc(),
                 binary::Instruction{value->opcode, value->s32_immediate()}};
 
-    case 2:  // s64
+    case text::InstructionKind::S64:
       return At{value.loc(),
                 binary::Instruction{value->opcode, value->s64_immediate()}};
 
-    case 3:  // f32
+    case text::InstructionKind::F32:
       return At{value.loc(),
                 binary::Instruction{value->opcode, value->f32_immediate()}};
 
-    case 4:  // f64
+    case text::InstructionKind::F64:
       return At{value.loc(),
                 binary::Instruction{value->opcode, value->f64_immediate()}};
 
-    case 5:  // v128
+    case text::InstructionKind::V128:
       return At{value.loc(),
                 binary::Instruction{value->opcode, value->v128_immediate()}};
 
-    case 6:  // Var
+    case text::InstructionKind::Var:
       return At{value.loc(),
                 binary::Instruction{value->opcode,
                                     ToBinary(context, value->var_immediate())}};
 
-    case 7:  // BlockImmediate
+    case text::InstructionKind::Block:
       return At{value.loc(), binary::Instruction{
                                  value->opcode,
                                  ToBinary(context, value->block_immediate())}};
 
-    case 8:  // BrOnExnImmediate
+    case text::InstructionKind::BrOnExn:
       return At{
           value.loc(),
           binary::Instruction{value->opcode,
                               ToBinary(context, value->br_on_exn_immediate())}};
 
-    case 9:  // BrTableImmediate
+    case text::InstructionKind::BrTable:
       return At{
           value.loc(),
           binary::Instruction{value->opcode,
                               ToBinary(context, value->br_table_immediate())}};
 
-    case 10:  // CallIndirectImmediate
+    case text::InstructionKind::CallIndirect:
       return At{value.loc(),
                 binary::Instruction{
                     value->opcode,
                     ToBinary(context, value->call_indirect_immediate())}};
 
-    case 11:  // CopyImmediate
+    case text::InstructionKind::Copy:
       return At{value.loc(),
                 binary::Instruction{
                     value->opcode, ToBinary(context, value->copy_immediate())}};
 
-    case 12:  // InitImmediate
+    case text::InstructionKind::Init:
       return At{value.loc(),
                 binary::Instruction{
                     value->opcode, ToBinary(context, value->init_immediate())}};
 
-    case 13:  // LetImmediate
+    case text::InstructionKind::Let:
       return At{value.loc(),
                 binary::Instruction{value->opcode,
                                     ToBinary(context, value->let_immediate())}};
 
-    case 14:  // MemArgImmediate
+    case text::InstructionKind::MemArg:
       return At{
           value.loc(),
           binary::Instruction{value->opcode,
                               ToBinary(context, value->mem_arg_immediate(),
                                        GetNaturalAlignment(*value->opcode))}};
 
-    case 15:  // HeapType
+    case text::InstructionKind::HeapType:
       return At{
           value.loc(),
           binary::Instruction{value->opcode,
                               ToBinary(context, value->heap_type_immediate())}};
 
-    case 16:  // SelectImmediate
+    case text::InstructionKind::Select:
       return At{value.loc(),
                 binary::Instruction{
                     value->opcode,
                     At{value->select_immediate().loc(),
                        ToBinary(context, *value->select_immediate())}}};
 
-    case 17:  // ShuffleImmediate
+    case text::InstructionKind::Shuffle:
       return At{value.loc(),
                 binary::Instruction{value->opcode, value->shuffle_immediate()}};
 
-    case 18:  // SimdLaneImmediate
+    case text::InstructionKind::SimdLane:
       return At{value.loc(), binary::Instruction{value->opcode,
                                                  value->simd_lane_immediate()}};
 
-    case 19:  // FuncBindImmediate
+    case text::InstructionKind::FuncBind:
       return At{value.loc(),
                 binary::Instruction{
                     value->opcode,
                     ToBinary(context, value->func_bind_immediate()->type_use)}};
 
-    case 20: // BrOnCastImmediate
+    case text::InstructionKind::BrOnCast:
       return At{
           value.loc(),
           binary::Instruction{
               value->opcode, ToBinary(context, value->br_on_cast_immediate())}};
 
-    case 21: // HeapType2Immediate
+    case text::InstructionKind::HeapType2:
       return At{value.loc(),
                 binary::Instruction{
                     value->opcode,
                     ToBinary(context, value->heap_type_2_immediate())}};
 
-    case 22: // RttSubImmediate
+    case text::InstructionKind::RttSub:
       return At{
           value.loc(),
           binary::Instruction{value->opcode,
                               ToBinary(context, value->rtt_sub_immediate())}};
 
-    case 23: // StructFieldImmediate
+    case text::InstructionKind::StructField:
       return At{value.loc(),
                 binary::Instruction{
                     value->opcode,

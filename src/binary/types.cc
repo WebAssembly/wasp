@@ -359,6 +359,10 @@ Instruction::Instruction(Opcode opcode, Index immediate)
 Instruction::Instruction(Opcode opcode, SimdLaneImmediate immediate)
     : opcode(opcode), immediate(At{immediate}) {}
 
+InstructionKind Instruction::kind() const {
+  return static_cast<InstructionKind>(immediate.index());
+}
+
 bool Instruction::has_no_immediate() const {
   return holds_alternative<monostate>(immediate);
 }

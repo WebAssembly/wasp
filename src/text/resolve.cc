@@ -480,14 +480,14 @@ void Resolve(ResolveContext& context, StructFieldImmediate& immediate) {
 }
 
 void Resolve(ResolveContext& context, Instruction& instruction) {
-  switch (instruction.immediate.index()) {
-    case 0:  // monostate
+  switch (instruction.kind()) {
+    case InstructionKind::None:
       if (instruction.opcode == Opcode::End) {
         context.EndBlock();
       }
       break;
 
-    case 6: {  // Var
+    case InstructionKind::Var: {
       auto& immediate = instruction.var_immediate();
       switch (instruction.opcode) {
         // Type.
@@ -557,20 +557,20 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
       break;
     }
 
-    case 7: // BlockImmediate
+    case InstructionKind::Block:
       context.BeginBlock(instruction.opcode);
       return Resolve(context, instruction.block_immediate().value());
 
-    case 8: // BrOnExnImmediate
+    case InstructionKind::BrOnExn:
       return Resolve(context, instruction.br_on_exn_immediate().value());
 
-    case 9: // BrTableImmediate
+    case InstructionKind::BrTable:
       return Resolve(context, instruction.br_table_immediate().value());
 
-    case 10: // CallIndirectImmediate
+    case InstructionKind::CallIndirect:
       return Resolve(context, instruction.call_indirect_immediate().value());
 
-    case 11: { // CopyImmediate
+    case InstructionKind::Copy: {
       auto& immediate = instruction.copy_immediate();
       if (instruction.opcode == Opcode::TableCopy) {
         return Resolve(context, immediate.value(), context.table_names);
@@ -580,7 +580,7 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
       }
     }
 
-    case 12: { // InitImmediate
+    case InstructionKind::Init: {
       auto& immediate = instruction.init_immediate();
       if (instruction.opcode == Opcode::MemoryInit) {
         return Resolve(context, immediate.value(), context.data_segment_names,
@@ -591,11 +591,11 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
       }
     }
 
-    case 13: // LetImmediate
+    case InstructionKind::Let:
       context.BeginBlock(instruction.opcode);
       return Resolve(context, instruction.let_immediate().value());
 
-    case 15: { // HeapType
+    case InstructionKind::HeapType: {
       auto& immediate = instruction.heap_type_immediate();
       if (immediate->is_var()) {
         return Resolve(context, immediate->var(), context.type_names);
@@ -603,22 +603,22 @@ void Resolve(ResolveContext& context, Instruction& instruction) {
       break;
     }
 
-    case 16: // SelectImmediate
+    case InstructionKind::Select:
       return Resolve(context, instruction.select_immediate().value());
 
-    case 19: // FuncBindImmediate
+    case InstructionKind::FuncBind:
       return Resolve(context, instruction.func_bind_immediate().value());
 
-    case 20: // BrOnCastImmediate
+    case InstructionKind::BrOnCast:
       return Resolve(context, instruction.br_on_cast_immediate().value());
 
-    case 21: // HeapType2Immediate
+    case InstructionKind::HeapType2:
       return Resolve(context, instruction.heap_type_2_immediate().value());
 
-    case 22: // RttSubImmediate
+    case InstructionKind::RttSub:
       return Resolve(context, instruction.rtt_sub_immediate().value());
 
-    case 23: // StructFieldImmediate
+    case InstructionKind::StructField:
       return Resolve(context, instruction.struct_field_immediate().value());
 
     default:

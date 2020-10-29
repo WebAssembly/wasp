@@ -223,6 +223,34 @@ struct StructFieldImmediate {
   At<Var> field;
 };
 
+// NOTE this must be kept in sync with the Instruction variant below.
+enum class InstructionKind {
+  None,
+  S32,
+  S64,
+  F32,
+  F64,
+  V128,
+  Var,
+  Block,
+  BrOnExn,
+  BrTable,
+  CallIndirect,
+  Copy,
+  Init,
+  Let,
+  MemArg,
+  HeapType,
+  Select,
+  Shuffle,
+  SimdLane,
+  FuncBind,
+  BrOnCast,
+  HeapType2,
+  RttSub,
+  StructField,
+};
+
 struct Instruction {
   explicit Instruction(At<Opcode>);
   explicit Instruction(At<Opcode>, At<s32>);
@@ -258,6 +286,7 @@ struct Instruction {
   explicit Instruction(Opcode, f64);
   explicit Instruction(Opcode, SimdLaneImmediate);
 
+  InstructionKind kind() const;
   bool has_no_immediate() const;
   bool has_s32_immediate() const;
   bool has_s64_immediate() const;
@@ -331,32 +360,30 @@ struct Instruction {
   auto struct_field_immediate() const -> const At<StructFieldImmediate>&;
 
   At<Opcode> opcode;
-  variant<monostate,                  // 0
-          At<s32>,                    // 1
-          At<s64>,                    // 2
-          At<f32>,                    // 3
-          At<f64>,                    // 4
-          At<v128>,                   // 5
-          At<Var>,                    // 6
-          At<BlockImmediate>,         // 7
-          At<BrOnExnImmediate>,       // 8
-          At<BrTableImmediate>,       // 9
-          At<CallIndirectImmediate>,  // 10
-          At<CopyImmediate>,          // 11
-          At<InitImmediate>,          // 12
-          At<LetImmediate>,           // 13
-          At<MemArgImmediate>,        // 14
-          At<HeapType>,               // 15
-          At<SelectImmediate>,        // 16
-          At<ShuffleImmediate>,       // 17
-          At<SimdLaneImmediate>,      // 18
-          At<FuncBindImmediate>,      // 19
-
-          At<BrOnCastImmediate>,    // 20
-          At<HeapType2Immediate>,   // 21
-          At<RttSubImmediate>,      // 22
-          At<StructFieldImmediate>  // 23
-          >
+  variant<monostate,
+          At<s32>,
+          At<s64>,
+          At<f32>,
+          At<f64>,
+          At<v128>,
+          At<Var>,
+          At<BlockImmediate>,
+          At<BrOnExnImmediate>,
+          At<BrTableImmediate>,
+          At<CallIndirectImmediate>,
+          At<CopyImmediate>,
+          At<InitImmediate>,
+          At<LetImmediate>,
+          At<MemArgImmediate>,
+          At<HeapType>,
+          At<SelectImmediate>,
+          At<ShuffleImmediate>,
+          At<SimdLaneImmediate>,
+          At<FuncBindImmediate>,
+          At<BrOnCastImmediate>,
+          At<HeapType2Immediate>,
+          At<RttSubImmediate>,
+          At<StructFieldImmediate>>
       immediate;
 };
 
