@@ -307,30 +307,30 @@ std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::Instruction& self) {
   os << self.opcode;
 
-  switch (self.immediate.index()) {
-    case 0: /* Nothing. */ break;
-    case 1: os << " " << self.s32_immediate(); break;
-    case 2: os << " " << self.s64_immediate(); break;
-    case 3: os << " " << self.f32_immediate(); break;
-    case 4: os << " " << self.f64_immediate(); break;
-    case 5: os << " " << self.v128_immediate(); break;
-    case 6: os << " " << self.index_immediate(); break;
-    case 7: os << " " << self.block_type_immediate(); break;
-    case 8: os << " " << self.br_on_exn_immediate(); break;
-    case 9: os << " " << self.br_table_immediate(); break;
-    case 10: os << " " << self.call_indirect_immediate(); break;
-    case 11: os << " " << self.copy_immediate(); break;
-    case 12: os << " " << self.init_immediate(); break;
-    case 13: os << " " << self.let_immediate(); break;
-    case 14: os << " " << self.mem_arg_immediate(); break;
-    case 15: os << " " << self.heap_type_immediate(); break;
-    case 16: os << " " << self.select_immediate(); break;
-    case 17: os << " " << self.shuffle_immediate(); break;
-    case 18: os << " " << self.simd_lane_immediate(); break;
-    case 19: os << " " << self.br_on_cast_immediate(); break;
-    case 20: os << " " << self.heap_type_2_immediate(); break;
-    case 21: os << " " << self.rtt_sub_immediate(); break;
-    case 22: os << " " << self.struct_field_immediate(); break;
+  switch (self.kind()) {
+    case InstructionKind::None: break;
+    case InstructionKind::S32: os << " " << self.s32_immediate(); break;
+    case InstructionKind::S64: os << " " << self.s64_immediate(); break;
+    case InstructionKind::F32: os << " " << self.f32_immediate(); break;
+    case InstructionKind::F64: os << " " << self.f64_immediate(); break;
+    case InstructionKind::V128: os << " " << self.v128_immediate(); break;
+    case InstructionKind::Index: os << " " << self.index_immediate(); break;
+    case InstructionKind::BlockType: os << " " << self.block_type_immediate(); break;
+    case InstructionKind::BrOnExn: os << " " << self.br_on_exn_immediate(); break;
+    case InstructionKind::BrTable: os << " " << self.br_table_immediate(); break;
+    case InstructionKind::CallIndirect: os << " " << self.call_indirect_immediate(); break;
+    case InstructionKind::Copy: os << " " << self.copy_immediate(); break;
+    case InstructionKind::Init: os << " " << self.init_immediate(); break;
+    case InstructionKind::Let: os << " " << self.let_immediate(); break;
+    case InstructionKind::MemArg: os << " " << self.mem_arg_immediate(); break;
+    case InstructionKind::HeapType: os << " " << self.heap_type_immediate(); break;
+    case InstructionKind::Select: os << " " << self.select_immediate(); break;
+    case InstructionKind::Shuffle: os << " " << self.shuffle_immediate(); break;
+    case InstructionKind::SimdLane: os << " " << self.simd_lane_immediate(); break;
+    case InstructionKind::BrOnCast: os << " " << self.br_on_cast_immediate(); break;
+    case InstructionKind::HeapType2: os << " " << self.heap_type_2_immediate(); break;
+    case InstructionKind::RttSub: os << " " << self.rtt_sub_immediate(); break;
+    case InstructionKind::StructField: os << " " << self.struct_field_immediate(); break;
   }
   return os;
 }

@@ -472,99 +472,99 @@ template <typename Iterator>
 Iterator Write(WriteContext& context, const Instruction& value, Iterator out) {
   out = Write(context, *value.opcode, out);
 
-  switch (value.immediate.index()) {
-    case 0: // monostate
+  switch (value.kind()) {
+    case InstructionKind::None:
       break;
 
-    case 1: // s32
+    case InstructionKind::S32:
       out = WriteInt(context, value.s32_immediate(), out);
       break;
 
-    case 2: // s64
+    case InstructionKind::S64:
       out = WriteInt(context, value.s64_immediate(), out);
       break;
 
-    case 3: // f32
+    case InstructionKind::F32:
       out = WriteFloat(context, value.f32_immediate(), out);
       break;
 
-    case 4: // f64
+    case InstructionKind::F64:
       out = WriteFloat(context, value.f64_immediate(), out);
       break;
 
-    case 5: // v128
+    case InstructionKind::V128:
       out = Write(context, value.v128_immediate(), out);
       break;
 
-    case 6: // Var
+    case InstructionKind::Var:
       out = Write(context, value.var_immediate(), out);
       break;
 
-    case 7: // BlockImmediate
+    case InstructionKind::Block:
       out = Write(context, value.block_immediate(), out);
       break;
 
-    case 8: // BrOnExnImmediate
+    case InstructionKind::BrOnExn:
       out = Write(context, value.br_on_exn_immediate(), out);
       break;
 
-    case 9: // BrTableImmediate
+    case InstructionKind::BrTable:
       out = Write(context, value.br_table_immediate(), out);
       break;
 
-    case 10: // CallIndirectImmediate
+    case InstructionKind::CallIndirect:
       out = Write(context, value.call_indirect_immediate(), out);
       break;
 
-    case 11: // CopyImmediate
+    case InstructionKind::Copy:
       out = Write(context, value.copy_immediate(), out);
       break;
 
-    case 12: // InitImmediate
+    case InstructionKind::Init:
       out = Write(context, value.init_immediate(), out);
       break;
 
-    case 13: // LetImmediate
+    case InstructionKind::Let:
       out = Write(context, value.let_immediate(), out);
       break;
 
-    case 14: // MemArgImmediate
+    case InstructionKind::MemArg:
       out = Write(context, value.mem_arg_immediate(), out);
       break;
 
-    case 15: // HeapType
+    case InstructionKind::HeapType:
       out = Write(context, value.heap_type_immediate(), out);
       break;
 
-    case 16: // SelectImmediate
+    case InstructionKind::Select:
       out = Write(context, value.select_immediate(), out);
       break;
 
-    case 17: // ShuffleImmediate
+    case InstructionKind::Shuffle:
       out = Write(context, value.shuffle_immediate(), out);
       break;
 
-    case 18: // SimdLaneImmediate
+    case InstructionKind::SimdLane:
       out = WriteNat(context, value.simd_lane_immediate(), out);
       break;
 
-    case 19: // FuncBindImmediate
+    case InstructionKind::FuncBind:
       out = Write(context, value.func_bind_immediate(), out);
       break;
 
-    case 20: // BrOnCastImmediate
+    case InstructionKind::BrOnCast:
       out = Write(context, value.br_on_cast_immediate(), out);
       break;
 
-    case 21: // HeapType2Immediate
+    case InstructionKind::HeapType2:
       out = Write(context, value.heap_type_2_immediate(), out);
       break;
 
-    case 22: // RttSubImmediate
+    case InstructionKind::RttSub:
       out = Write(context, value.rtt_sub_immediate(), out);
       break;
 
-    case 23: // StructFieldImmediate
+    case InstructionKind::StructField:
       out = Write(context, value.struct_field_immediate(), out);
       break;
   }
