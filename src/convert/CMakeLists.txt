@@ -16,8 +16,10 @@
 
 add_library(libwasp_convert
   ../../include/wasp/convert/to_binary.h
+  ../../include/wasp/convert/to_text.h
 
   to_binary.cc
+  to_text.cc
 )
 
 target_compile_options(libwasp_convert
