@@ -458,6 +458,14 @@ OptAt<FieldType> Read(SpanU8* data, Context& context, Tag<FieldType>) {
   return At{guard.range(data), FieldType{type, mut}};
 }
 
+OptAt<FuncBindImmediate> Read(SpanU8* data,
+                              Context& context,
+                              Tag<FuncBindImmediate>) {
+  LocationGuard guard{data};
+  WASP_TRY_READ(index, ReadIndex(data, context, "func index"));
+  return At{guard.range(data), FuncBindImmediate{index}};
+}
+
 OptAt<Function> Read(SpanU8* data, Context& context, Tag<Function>) {
   ErrorsContextGuard error_guard{context.errors, *data, "function"};
   LocationGuard guard{data};
@@ -985,7 +993,6 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::TableSize:
     case Opcode::TableFill:
     case Opcode::BrOnNull:
-    case Opcode::FuncBind:
     case Opcode::StructNewWithRtt:
     case Opcode::StructNewDefaultWithRtt:
     case Opcode::ArrayNewWithRtt:
@@ -997,6 +1004,12 @@ OptAt<Instruction> Read(SpanU8* data, Context& context, Tag<Instruction>) {
     case Opcode::ArrayLen: {
       WASP_TRY_READ(index, ReadIndex(data, context, "index"));
       return At{guard.range(data), Instruction{opcode, index}};
+    }
+
+    // FuncBind immediate.
+    case Opcode::FuncBind: {
+      WASP_TRY_READ(immediate, Read<FuncBindImmediate>(data, context));
+      return At{guard.range(data), Instruction{opcode, immediate}};
     }
 
     // Index, Index immediates.

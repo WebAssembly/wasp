@@ -2846,7 +2846,8 @@ TEST_F(ValidateInstructionTest, FuncBind) {
     ValueType VT_RefNew = MakeValueTypeRef(new_index, Null::No);
     ValueTypeList params = info.params;
     params.push_back(VT_RefOld);
-    TestSignature(I{O::FuncBind, new_index}, params, {VT_RefNew});
+    TestSignature(I{O::FuncBind, FuncBindImmediate{new_index}}, params,
+                  {VT_RefNew});
   }
 }
 
@@ -2879,7 +2880,7 @@ TEST_F(ValidateInstructionTest, FuncBind_TypeMismatch) {
     ValueType VT_RefOld = MakeValueTypeRef(old_index, Null::No);
     ValueTypeList params = info.params;
     params.push_back(VT_RefOld);
-    FailWithTypeStack(I{O::FuncBind, new_index}, params);
+    FailWithTypeStack(I{O::FuncBind, FuncBindImmediate{new_index}}, params);
     ClearErrors(errors);
   }
 }

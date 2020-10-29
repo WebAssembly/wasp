@@ -429,6 +429,10 @@ TEST(BinaryWriteTest, FixedVarInt_s32) {
   ExpectWriteFixedVarInt<s32>("\xef\xdd\xbb\xf7\x7e"_su8, -0x11111111, 5);
 }
 
+TEST(BinaryWriteTest, FuncBindImmediate) {
+  ExpectWrite("\x00"_su8, FuncBindImmediate{0});
+}
+
 TEST(BinaryWriteTest, Function) {
   ExpectWrite("\x01"_su8, Function{1});
 }
@@ -707,7 +711,7 @@ TEST(BinaryWriteTest, Instruction_reference_types) {
 TEST(BinaryWriteTest, Instruction_function_references) {
   ExpectWrite("\x14"_su8, I{O::CallRef});
   ExpectWrite("\x15"_su8, I{O::ReturnCallRef});
-  ExpectWrite("\x16\x00"_su8, I{O::FuncBind, Index{0}});
+  ExpectWrite("\x16\x00"_su8, I{O::FuncBind, FuncBindImmediate{Index{0}}});
   ExpectWrite("\x17\x40\x01\x02\x7f"_su8,
               I{O::Let, LetImmediate{BT_Void, {Locals{Index{2}, VT_I32}}}});
   ExpectWrite("\xd3"_su8, I{O::RefAsNonNull});

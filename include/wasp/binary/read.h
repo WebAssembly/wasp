@@ -103,6 +103,8 @@ auto Read(SpanU8*, Context&, Tag<ExternalKind>) -> OptAt<ExternalKind>;
 auto Read(SpanU8*, Context&, Tag<f32>) -> OptAt<f32>;
 auto Read(SpanU8*, Context&, Tag<f64>) -> OptAt<f64>;
 auto Read(SpanU8*, Context&, Tag<FieldType>) -> OptAt<FieldType>;
+auto Read(SpanU8*, Context&, Tag<FuncBindImmediate>)
+    -> OptAt<FuncBindImmediate>;
 auto Read(SpanU8*, Context&, Tag<Function>) -> OptAt<Function>;
 auto Read(SpanU8*, Context&, Tag<FunctionType>) -> OptAt<FunctionType>;
 auto Read(SpanU8*, Context&, Tag<Global>) -> OptAt<Global>;

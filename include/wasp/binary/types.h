@@ -228,6 +228,10 @@ struct CopyImmediate {
   At<Index> src_index;
 };
 
+struct FuncBindImmediate {
+  At<Index> index;
+};
+
 struct InitImmediate {
   At<Index> segment_index;
   At<Index> dst_index;
@@ -284,6 +288,7 @@ enum class InstructionKind {
   Select,
   Shuffle,
   SimdLane,
+  FuncBind,
   BrOnCast,
   HeapType2,
   RttSub,
@@ -304,6 +309,7 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<BrTableImmediate>);
   explicit Instruction(At<Opcode>, At<CallIndirectImmediate>);
   explicit Instruction(At<Opcode>, At<CopyImmediate>);
+  explicit Instruction(At<Opcode>, At<FuncBindImmediate>);
   explicit Instruction(At<Opcode>, At<HeapType>);
   explicit Instruction(At<Opcode>, At<HeapType2Immediate>);
   explicit Instruction(At<Opcode>, At<InitImmediate>);
@@ -339,6 +345,7 @@ struct Instruction {
   bool has_br_table_immediate() const;
   bool has_call_indirect_immediate() const;
   bool has_copy_immediate() const;
+  bool has_func_bind_immediate() const;
   bool has_heap_type_immediate() const;
   bool has_heap_type_2_immediate() const;
   bool has_init_immediate() const;
@@ -374,6 +381,8 @@ struct Instruction {
   auto call_indirect_immediate() const -> const At<CallIndirectImmediate>&;
   auto copy_immediate() -> At<CopyImmediate>&;
   auto copy_immediate() const -> const At<CopyImmediate>&;
+  auto func_bind_immediate() -> At<FuncBindImmediate>&;
+  auto func_bind_immediate() const -> const At<FuncBindImmediate>&;
   auto heap_type_immediate() -> At<HeapType>&;
   auto heap_type_immediate() const -> const At<HeapType>&;
   auto heap_type_2_immediate() -> At<HeapType2Immediate>&;
@@ -415,6 +424,7 @@ struct Instruction {
           At<SelectImmediate>,
           At<ShuffleImmediate>,
           At<SimdLaneImmediate>,
+          At<FuncBindImmediate>,
           At<BrOnCastImmediate>,
           At<HeapType2Immediate>,
           At<RttSubImmediate>,
@@ -720,6 +730,7 @@ struct Module {
   WASP_V(binary::Export, 3, kind, name, index)                           \
   WASP_V(binary::Expression, 1, data)                                    \
   WASP_V(binary::FieldType, 2, type, mut)                                \
+  WASP_V(binary::FuncBindImmediate, 1, index)                            \
   WASP_V(binary::Function, 1, type_index)                                \
   WASP_V(binary::FunctionType, 2, param_types, result_types)             \
   WASP_V(binary::Global, 2, global_type, init)                           \

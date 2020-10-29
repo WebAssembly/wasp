@@ -1231,7 +1231,8 @@ bool ReturnCallRef(Context& context, Location loc) {
   return AllTrue(function_type, valid);
 }
 
-bool FuncBind(Context& context, Location loc, At<Index> new_type_index) {
+bool FuncBind(Context& context, Location loc, At<FuncBindImmediate> immediate) {
+  auto new_type_index = immediate->index;
   auto [stack_type, old_function_type] = PopFunctionReference(context, loc);
   if (!stack_type) {
     return false;
@@ -1889,7 +1890,7 @@ bool Validate(Context& context, const At<Instruction>& value) {
       return ReturnCallRef(context, loc);
 
     case Opcode::FuncBind:
-      return FuncBind(context, loc, value->index_immediate());
+      return FuncBind(context, loc, value->func_bind_immediate());
 
     case Opcode::Let:
       return Let(context, loc, value->let_immediate());

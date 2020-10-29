@@ -574,6 +574,11 @@ TEST_F(BinaryReadTest, CopyImmediate_Memory_reference_types) {
        "\x01\x80\x01"_su8);
 }
 
+TEST_F(BinaryReadTest, FuncBindImmediate) {
+  OK(Read<FuncBindImmediate>, FuncBindImmediate{At{"\x00"_su8, Index{0}}},
+     "\x00"_su8);
+}
+
 TEST_F(BinaryReadTest, ShuffleImmediate) {
   OK(Read<ShuffleImmediate>,
      ShuffleImmediate{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
@@ -2338,7 +2343,9 @@ TEST_F(BinaryReadTest, Instruction_function_references) {
 
   OK(Read<I>, I{At{"\x14"_su8, O::CallRef}}, "\x14"_su8);
   OK(Read<I>, I{At{"\x15"_su8, O::ReturnCallRef}}, "\x15"_su8);
-  OK(Read<I>, I{At{"\x16"_su8, O::FuncBind}, At{"\x00"_su8, Index{0}}},
+  OK(Read<I>,
+     I{At{"\x16"_su8, O::FuncBind},
+       At{"\x00"_su8, FuncBindImmediate{At{"\x00"_su8, Index{0}}}}},
      "\x16\x00"_su8);
   OK(Read<I>,
      I{At{"\x17"_su8, O::Let},
