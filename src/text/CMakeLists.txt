@@ -24,7 +24,7 @@ add_library(libwasp_text
   ../../include/wasp/text/resolve_context.h
   ../../include/wasp/text/types.h
   ../../include/wasp/text/write.h
-  ../../include/wasp/text/token_type.def
+  ../../include/wasp/text/token_type.inc
   ../../include/wasp/text/read/context.h
   ../../include/wasp/text/read/lex.h
   ../../include/wasp/text/read/location_guard.h

@@ -33,7 +33,7 @@ namespace wasp::text {
 
 enum class TokenType {
 #define WASP_V(Name) Name,
-#include "wasp/text/token_type.def"
+#include "wasp/text/token_type.inc"
 #undef WASP_V
 };
 

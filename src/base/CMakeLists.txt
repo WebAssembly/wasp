@@ -20,29 +20,38 @@ add_library(libwasp_base
   ../../include/wasp/base/bitcast.h
   ../../include/wasp/base/buffer.h
   ../../include/wasp/base/concat.h
-  ../../include/wasp/base/enumerate-inl.h
   ../../include/wasp/base/enumerate.h
+  ../../include/wasp/base/enumerate-inl.h
   ../../include/wasp/base/error.h
-  ../../include/wasp/base/errors-inl.h
-  ../../include/wasp/base/errors.h
   ../../include/wasp/base/errors_context_guard.h
+  ../../include/wasp/base/errors.h
+  ../../include/wasp/base/errors-inl.h
   ../../include/wasp/base/errors_nop.h
   ../../include/wasp/base/features.h
+  ../../include/wasp/base/features.inc
   ../../include/wasp/base/file.h
   ../../include/wasp/base/formatter_macros.h
   ../../include/wasp/base/formatters.h
   ../../include/wasp/base/hash.h
   ../../include/wasp/base/hashmap.h
+  ../../include/wasp/base/inc/event_attribute.inc
+  ../../include/wasp/base/inc/external_kind.inc
+  ../../include/wasp/base/inc/heap_kind.inc
+  ../../include/wasp/base/inc/mutability.inc
+  ../../include/wasp/base/inc/numeric_type.inc
+  ../../include/wasp/base/inc/opcode.inc
+  ../../include/wasp/base/inc/packed_type.inc
+  ../../include/wasp/base/inc/reference_kind.inc
   ../../include/wasp/base/macros.h
   ../../include/wasp/base/operator_eq_ne_macros.h
   ../../include/wasp/base/optional.h
   ../../include/wasp/base/span.h
-  ../../include/wasp/base/str_to_u32.h
   ../../include/wasp/base/string_view.h
+  ../../include/wasp/base/str_to_u32.h
   ../../include/wasp/base/types.h
   ../../include/wasp/base/utf8.h
-  ../../include/wasp/base/v128-inl.h
   ../../include/wasp/base/v128.h
+  ../../include/wasp/base/v128-inl.h
   ../../include/wasp/base/variant.h
   ../../include/wasp/base/wasm_types.h
 

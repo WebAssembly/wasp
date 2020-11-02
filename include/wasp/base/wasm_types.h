@@ -31,7 +31,7 @@ enum class Opcode : u32 {
 #define WASP_V(prefix, val, Name, str, ...) Name,
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
 #define WASP_PREFIX_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/base/def/opcode.def"
+#include "wasp/base/inc/opcode.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 #undef WASP_PREFIX_V
@@ -40,7 +40,7 @@ enum class Opcode : u32 {
 enum class PackedType : u8 {
 #define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/base/def/packed_type.def"
+#include "wasp/base/inc/packed_type.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
@@ -48,7 +48,7 @@ enum class PackedType : u8 {
 enum class NumericType : u8 {
 #define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/base/def/numeric_type.def"
+#include "wasp/base/inc/numeric_type.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
@@ -56,7 +56,7 @@ enum class NumericType : u8 {
 enum class ReferenceKind : u8 {
 #define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/base/def/reference_kind.def"
+#include "wasp/base/inc/reference_kind.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
@@ -64,7 +64,7 @@ enum class ReferenceKind : u8 {
 enum class HeapKind : u8 {
 #define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/base/def/heap_kind.def"
+#include "wasp/base/inc/heap_kind.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
@@ -72,20 +72,20 @@ enum class HeapKind : u8 {
 enum class ExternalKind : u8 {
 #define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/base/def/external_kind.def"
+#include "wasp/base/inc/external_kind.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
 
 enum class EventAttribute : u8 {
 #define WASP_V(val, Name, str) Name = val,
-#include "wasp/base/def/event_attribute.def"
+#include "wasp/base/inc/event_attribute.inc"
 #undef WASP_V
 };
 
 enum class Mutability : u8 {
 #define WASP_V(val, Name, str) Name = val,
-#include "wasp/base/def/mutability.def"
+#include "wasp/base/inc/mutability.inc"
 #undef WASP_V
 };
 

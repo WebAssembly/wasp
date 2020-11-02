@@ -30,7 +30,7 @@ namespace wasp::binary {
 
 enum class NameSubsectionId : u8 {
 #define WASP_V(val, Name, str) Name = val,
-#include "wasp/binary/def/name_subsection_id.def"
+#include "wasp/binary/inc/name_subsection_id.inc"
 #undef WASP_V
 };
 

@@ -35,7 +35,7 @@ optional<::wasp::binary::ComdatSymbolKind> ComdatSymbolKind::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case val:                    \
     return ::wasp::binary::ComdatSymbolKind::Name;
-#include "wasp/binary/def/comdat_symbol_kind.def"
+#include "wasp/binary/inc/comdat_symbol_kind.inc"
 #undef WASP_V
     default:
       return nullopt;
@@ -54,7 +54,7 @@ optional<::wasp::binary::LinkingSubsectionId> LinkingSubsectionId::Decode(
 #define WASP_V(val, Name, str) \
   case val:                    \
     return ::wasp::binary::LinkingSubsectionId::Name;
-#include "wasp/binary/def/linking_subsection_id.def"
+#include "wasp/binary/inc/linking_subsection_id.inc"
 #undef WASP_V
     default:
       return nullopt;
@@ -72,7 +72,7 @@ optional<::wasp::binary::RelocationType> RelocationType::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case val:                    \
     return ::wasp::binary::RelocationType::Name;
-#include "wasp/binary/def/relocation_type.def"
+#include "wasp/binary/inc/relocation_type.inc"
 #undef WASP_V
     default:
       break;
@@ -143,7 +143,7 @@ optional<::wasp::binary::SymbolInfoKind> SymbolInfoKind::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case val:                    \
     return ::wasp::binary::SymbolInfoKind::Name;
-#include "wasp/binary/def/symbol_info_kind.def"
+#include "wasp/binary/inc/symbol_info_kind.inc"
 #undef WASP_V
     default:
       return nullopt;

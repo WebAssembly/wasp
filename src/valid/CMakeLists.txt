@@ -23,7 +23,7 @@ add_library(libwasp_valid
   ../../include/wasp/valid/types.h
   ../../include/wasp/valid/validate.h
   ../../include/wasp/valid/validate_visitor.h
-  ../../include/wasp/valid/stack_type.def
+  ../../include/wasp/valid/stack_type.inc
 
   context.cc
   disjoint_set.cc

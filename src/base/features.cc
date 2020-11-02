@@ -23,7 +23,7 @@ namespace wasp {
 Features::Features() {
 #define WASP_V(enum_, variable, flag, default_) \
   set_##variable##_enabled(default_);
-#include "wasp/base/features.def"
+#include "wasp/base/features.inc"
 #undef WASP_V
 }
 
@@ -33,7 +33,7 @@ Features::Features(Bits bits) : bits_{bits} {
 
 void Features::EnableAll() {
 #define WASP_V(enum_, variable, flag, default_) enable_##variable();
-#include "wasp/base/features.def"
+#include "wasp/base/features.inc"
 #undef WASP_V
 }
 
