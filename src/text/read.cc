@@ -325,7 +325,7 @@ auto ReadValueType(Tokenizer& tokenizer, Context& context) -> OptAt<ValueType> {
       allowed = false;                           \
     }                                            \
     break;
-#include "wasp/base/def/numeric_type.def"
+#include "wasp/base/inc/numeric_type.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 
@@ -684,7 +684,7 @@ auto ReadHeapType(Tokenizer& tokenizer, Context& context) -> OptAt<HeapType> {
       allowed = false;                           \
     }                                            \
     break;
-#include "wasp/base/def/heap_kind.def"
+#include "wasp/base/inc/heap_kind.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 
@@ -741,7 +741,7 @@ auto ReadReferenceType(Tokenizer& tokenizer,
       allowed = false;                           \
     }                                            \
     break;
-#include "wasp/base/def/reference_kind.def"
+#include "wasp/base/inc/reference_kind.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 

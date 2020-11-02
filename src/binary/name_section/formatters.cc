@@ -31,7 +31,7 @@ std::ostream& operator<<(std::ostream& os,
   case ::wasp::binary::NameSubsectionId::Name: \
     result = str;                              \
     break;
-#include "wasp/binary/def/name_subsection_id.def"
+#include "wasp/binary/inc/name_subsection_id.inc"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();

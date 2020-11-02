@@ -17,19 +17,19 @@
 add_library(libwasp_binary
   ../../include/wasp/binary/encoding.h
   ../../include/wasp/binary/formatters.h
+  ../../include/wasp/binary/inc/comdat_symbol_kind.inc
+  ../../include/wasp/binary/inc/linking_subsection_id.inc
+  ../../include/wasp/binary/inc/name_subsection_id.inc
+  ../../include/wasp/binary/inc/relocation_type.inc
+  ../../include/wasp/binary/inc/section_id.inc
+  ../../include/wasp/binary/inc/symbol_info_kind.inc
   ../../include/wasp/binary/lazy_expression.h
   ../../include/wasp/binary/lazy_module.h
-  ../../include/wasp/binary/lazy_module_utils-inl.h
   ../../include/wasp/binary/lazy_module_utils.h
+  ../../include/wasp/binary/lazy_module_utils-inl.h
   ../../include/wasp/binary/lazy_section.h
-  ../../include/wasp/binary/lazy_sequence-inl.h
   ../../include/wasp/binary/lazy_sequence.h
-  ../../include/wasp/binary/read.h
-  ../../include/wasp/binary/sections.h
-  ../../include/wasp/binary/types.h
-  ../../include/wasp/binary/var_int.h
-  ../../include/wasp/binary/visitor.h
-  ../../include/wasp/binary/write.h
+  ../../include/wasp/binary/lazy_sequence-inl.h
   ../../include/wasp/binary/linking_section/encoding.h
   ../../include/wasp/binary/linking_section/formatters.h
   ../../include/wasp/binary/linking_section/read.h
@@ -43,10 +43,16 @@ add_library(libwasp_binary
   ../../include/wasp/binary/name_section/types.h
   ../../include/wasp/binary/name_section/write.h
   ../../include/wasp/binary/read/context.h
+  ../../include/wasp/binary/read.h
   ../../include/wasp/binary/read/location_guard.h
   ../../include/wasp/binary/read/macros.h
   ../../include/wasp/binary/read/read_var_int.h
   ../../include/wasp/binary/read/read_vector.h
+  ../../include/wasp/binary/sections.h
+  ../../include/wasp/binary/types.h
+  ../../include/wasp/binary/var_int.h
+  ../../include/wasp/binary/visitor.h
+  ../../include/wasp/binary/write.h
 
   context.cc
   encoding.cc

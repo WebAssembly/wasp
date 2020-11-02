@@ -78,7 +78,7 @@ ArgParser& ArgParser::AddFeatureFlags(Features& features) {
 #define WASP_V(enum_, variable, flag, default_)                         \
   Add("--disable-" flag, "", [&]() { features.disable_##variable(); }); \
   Add("--enable-" flag, "", [&]() { features.enable_##variable(); });
-#include "wasp/base/features.def"
+#include "wasp/base/features.inc"
 #undef WASP_V
   return *this;
 }

@@ -32,27 +32,27 @@ namespace wasp::binary {
 
 enum class ComdatSymbolKind : u8 {
 #define WASP_V(val, Name, str) Name = val,
-#include "wasp/binary/def/comdat_symbol_kind.def"
+#include "wasp/binary/inc/comdat_symbol_kind.inc"
 #undef WASP_V
 };
 
 enum class LinkingSubsectionId : u8 {
 #define WASP_V(val, Name, str) Name = val,
-#include "wasp/binary/def/linking_subsection_id.def"
+#include "wasp/binary/inc/linking_subsection_id.inc"
 #undef WASP_V
 };
 
 enum class RelocationType : u8 {
 #define WASP_V(val, Name, str) Name = val,
 #define WASP_FEATURE_V(val, Name, str, feature) WASP_V(val, Name, str)
-#include "wasp/binary/def/relocation_type.def"
+#include "wasp/binary/inc/relocation_type.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 };
 
 enum class SymbolInfoKind : u8 {
 #define WASP_V(val, Name, str) Name = val,
-#include "wasp/binary/def/symbol_info_kind.def"
+#include "wasp/binary/inc/symbol_info_kind.inc"
 #undef WASP_V
 };
 

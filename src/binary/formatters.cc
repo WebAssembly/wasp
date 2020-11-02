@@ -108,7 +108,7 @@ std::ostream& operator<<(std::ostream& os,
     result = str;                       \
     break;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/def/section_id.def"
+#include "wasp/binary/inc/section_id.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default: {

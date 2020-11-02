@@ -35,7 +35,7 @@ optional<::wasp::binary::NameSubsectionId> NameSubsectionId::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case val:                    \
     return ::wasp::binary::NameSubsectionId::Name;
-#include "wasp/binary/def/name_subsection_id.def"
+#include "wasp/binary/inc/name_subsection_id.inc"
 #undef WASP_V
     default:
       return nullopt;

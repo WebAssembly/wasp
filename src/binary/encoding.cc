@@ -80,7 +80,7 @@ optional<::wasp::EventAttribute> EventAttribute::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case val:                    \
     return ::wasp::EventAttribute::Name;
-#include "wasp/base/def/event_attribute.def"
+#include "wasp/base/inc/event_attribute.inc"
 #undef WASP_V
     default:
       return nullopt;
@@ -105,7 +105,7 @@ optional<::wasp::ExternalKind> ExternalKind::Decode(u8 val,
       return ::wasp::ExternalKind::Name;        \
     }                                           \
     break;
-#include "wasp/base/def/external_kind.def"
+#include "wasp/base/inc/external_kind.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -120,7 +120,7 @@ bool HeapKind::Is(u8 byte) {
 #define WASP_V(val, Name, str) || byte == u8(::wasp::HeapKind::Name)
 #define WASP_FEATURE_V(val, Name, str, feature) \
   || byte == u8(::wasp::HeapKind::Name)
-#include "wasp/base/def/heap_kind.def"
+#include "wasp/base/inc/heap_kind.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
       ;
@@ -143,7 +143,7 @@ optional<::wasp::HeapKind> HeapKind::Decode(u8 val, const Features& features) {
       return ::wasp::HeapKind::Name;            \
     }                                           \
     break;
-#include "wasp/base/def/heap_kind.def"
+#include "wasp/base/inc/heap_kind.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -205,7 +205,7 @@ optional<::wasp::Mutability> Mutability::Decode(u8 val) {
 #define WASP_V(val, Name, str) \
   case val:                    \
     return ::wasp::Mutability::Name;
-#include "wasp/base/def/mutability.def"
+#include "wasp/base/inc/mutability.inc"
 #undef WASP_V
     default:
       return nullopt;
@@ -264,7 +264,7 @@ EncodedOpcode Opcode::Encode(::wasp::Opcode decoded) {
 #define WASP_PREFIX_V(prefix, code, Name, str, feature) \
   case ::wasp::Opcode::Name:                            \
     return {prefix, code};
-#include "wasp/base/def/opcode.def"
+#include "wasp/base/inc/opcode.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 #undef WASP_PREFIX_V
@@ -286,7 +286,7 @@ optional<::wasp::Opcode> Opcode::Decode(u8 code, const Features& features) {
     }                                                    \
     break;
 #define WASP_PREFIX_V(...) /* Invalid. */
-#include "wasp/base/def/opcode.def"
+#include "wasp/base/inc/opcode.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 #undef WASP_PREFIX_V
@@ -313,7 +313,7 @@ optional<::wasp::Opcode> Opcode::Decode(u8 prefix,
       return ::wasp::Opcode::Name;                      \
     }                                                   \
     break;
-#include "wasp/base/def/opcode.def"
+#include "wasp/base/inc/opcode.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
 #undef WASP_PREFIX_V
@@ -366,7 +366,7 @@ optional<::wasp::ReferenceKind> ReferenceKind::Decode(
       return ::wasp::ReferenceKind::Name;       \
     }                                           \
     break;
-#include "wasp/base/def/reference_kind.def"
+#include "wasp/base/inc/reference_kind.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -387,7 +387,7 @@ u32 SectionId::Encode(::wasp::binary::SectionId decoded) {
   case ::wasp::binary::SectionId::Name: \
     return val;
 #define WASP_FEATURE_V(...) WASP_V(__VA_ARGS__)
-#include "wasp/binary/def/section_id.def"
+#include "wasp/binary/inc/section_id.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -409,7 +409,7 @@ optional<::wasp::binary::SectionId> SectionId::Decode(
       return ::wasp::binary::SectionId::Name;   \
     }                                           \
     break;
-#include "wasp/binary/def/section_id.def"
+#include "wasp/binary/inc/section_id.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -524,7 +524,7 @@ bool NumericType::Is(u8 byte) {
 #define WASP_V(val, Name, str) || byte == u8(::wasp::NumericType::Name)
 #define WASP_FEATURE_V(val, Name, str, feature) \
   || byte == u8(::wasp::NumericType::Name)
-#include "wasp/base/def/numeric_type.def"
+#include "wasp/base/inc/numeric_type.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
       ;
@@ -548,7 +548,7 @@ optional<::wasp::NumericType> NumericType::Decode(u8 val,
       return ::wasp::NumericType::Name;         \
     }                                           \
     break;
-#include "wasp/base/def/numeric_type.def"
+#include "wasp/base/inc/numeric_type.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:
@@ -563,7 +563,7 @@ bool PackedType::Is(u8 byte) {
 #define WASP_V(val, Name, str) || byte == u8(::wasp::PackedType::Name)
 #define WASP_FEATURE_V(val, Name, str, feature) \
   || byte == u8(::wasp::PackedType::Name)
-#include "wasp/base/def/packed_type.def"
+#include "wasp/base/inc/packed_type.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
       ;
@@ -587,7 +587,7 @@ optional<::wasp::PackedType> PackedType::Decode(u8 byte,
       return ::wasp::PackedType::Name;          \
     }                                           \
     break;
-#include "wasp/base/def/packed_type.def"
+#include "wasp/base/inc/packed_type.inc"
 #undef WASP_V
 #undef WASP_FEATURE_V
     default:

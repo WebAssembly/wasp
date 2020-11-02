@@ -34,7 +34,7 @@ std::ostream& operator<<(std::ostream& os,
   case ::wasp::text::TokenType::Name: \
     result = #Name;                   \
     break;
-#include "wasp/text/token_type.def"
+#include "wasp/text/token_type.inc"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();

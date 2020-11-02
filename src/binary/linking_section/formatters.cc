@@ -41,7 +41,7 @@ std::ostream& operator<<(std::ostream& os,
   case ::wasp::binary::ComdatSymbolKind::Name: \
     result = str;                              \
     break;
-#include "wasp/binary/def/comdat_symbol_kind.def"
+#include "wasp/binary/inc/comdat_symbol_kind.inc"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -62,7 +62,7 @@ std::ostream& operator<<(std::ostream& os,
   case ::wasp::binary::LinkingSubsectionId::Name: \
     result = str;                                 \
     break;
-#include "wasp/binary/def/linking_subsection_id.def"
+#include "wasp/binary/inc/linking_subsection_id.inc"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -93,7 +93,7 @@ std::ostream& operator<<(std::ostream& os,
   case ::wasp::binary::RelocationType::Name: \
     result = str;                            \
     break;
-#include "wasp/binary/def/relocation_type.def"
+#include "wasp/binary/inc/relocation_type.inc"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();
@@ -249,7 +249,7 @@ std::ostream& operator<<(std::ostream& os,
   case ::wasp::binary::SymbolInfoKind::Name: \
     result = str;                            \
     break;
-#include "wasp/binary/def/symbol_info_kind.def"
+#include "wasp/binary/inc/symbol_info_kind.inc"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();

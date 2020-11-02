@@ -30,7 +30,7 @@ class Features {
   // Names look like:  Features::BulkMemoryIndex
   enum {
 #define WASP_V(enum_, variable, flag, default_) enum_##Index,
-#include "wasp/base/features.def"
+#include "wasp/base/features.inc"
 #undef WASP_V
   };
 
@@ -39,7 +39,7 @@ class Features {
   enum {
 #define WASP_V(enum_, variable, flag, default_) \
   enum_ = u64{1} << int(enum_##Index),
-#include "wasp/base/features.def"
+#include "wasp/base/features.inc"
 #undef WASP_V
   };
 
@@ -66,7 +66,7 @@ class Features {
     }                                                            \
     UpdateDependencies();                                        \
   }
-#include "wasp/base/features.def"
+#include "wasp/base/features.inc"
 #undef WASP_V
 
   friend bool operator==(const Features& lhs, const Features& rhs);

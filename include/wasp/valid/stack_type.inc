@@ -14,5 +14,5 @@
 // limitations under the License.
 //
 
-#include "wasp/base/def/value_type.def"
+#include "wasp/base/inc/value_type.inc"
 WASP_V(-1, Any, "any")
