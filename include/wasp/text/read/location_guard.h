@@ -28,7 +28,7 @@ class LocationGuard {
 
   Location loc() const {
     auto* end = tokenizer_.Previous().loc.end();
-    return Location{start_, start_ <= end ? end : start_};
+    return MakeSpan(start_, start_ <= end ? end : start_);
   }
 
  private:

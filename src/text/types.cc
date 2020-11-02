@@ -21,7 +21,6 @@
 
 #include "wasp/base/hash.h"
 #include "wasp/base/operator_eq_ne_macros.h"
-#include "wasp/base/std_hash_macros.h"
 
 namespace wasp::text {
 
@@ -1307,7 +1306,3 @@ bool operator!=(const BoundValueTypeList& lhs, const ValueTypeList& rhs) {
 }
 
 }  // namespace wasp::text
-
-WASP_TEXT_STRUCTS(WASP_STD_HASH_VARGS)
-WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_STD_HASH_VARGS)
-WASP_TEXT_CONTAINERS(WASP_STD_HASH_CONTAINER)

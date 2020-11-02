@@ -18,7 +18,6 @@
 
 #include "wasp/base/hash.h"
 #include "wasp/base/operator_eq_ne_macros.h"
-#include "wasp/base/std_hash_macros.h"
 
 namespace wasp::binary {
 
@@ -26,6 +25,3 @@ WASP_BINARY_NAME_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_BINARY_NAME_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
 
 }  // namespace wasp::binary
-
-WASP_BINARY_NAME_STRUCTS(WASP_STD_HASH_VARGS)
-WASP_BINARY_NAME_CONTAINERS(WASP_STD_HASH_CONTAINER)

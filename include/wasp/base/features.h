@@ -17,8 +17,7 @@
 #ifndef WASP_BASE_FEATURES_H_
 #define WASP_BASE_FEATURES_H_
 
-#include <functional>  // for std::hash
-
+#include "wasp/base/hash.h"
 #include "wasp/base/types.h"
 
 namespace wasp {
@@ -73,6 +72,11 @@ class Features {
   friend bool operator==(const Features& lhs, const Features& rhs);
   friend bool operator!=(const Features& lhs, const Features& rhs);
 
+  template <typename H>
+  friend H AbslHashValue(H h, const Features& f) {
+    return H::combine(std::move(h), f.bits_);
+  }
+
  private:
   void UpdateDependencies();
 
@@ -81,12 +85,5 @@ class Features {
 
 
 }  // namespace wasp
-
-namespace std {
-template <>
-struct hash<::wasp::Features> {
-  size_t operator()(const ::wasp::Features&) const;
-};
-}  // namespace std
 
 #endif  // WASP_BASE_FEATURES_H_

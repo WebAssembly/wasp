@@ -24,8 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "fmt/format.h"
-#include "fmt/ostream.h"
+#include "absl/strings/str_format.h"
 
 #include "src/tools/argparser.h"
 #include "src/tools/binary_errors.h"
@@ -43,7 +42,8 @@ namespace wasp {
 namespace tools {
 namespace validate {
 
-using fmt::print;
+using absl::Format;
+using absl::PrintF;
 
 using namespace ::wasp::binary;
 
@@ -65,7 +65,7 @@ struct Tool {
   valid::ValidateVisitor visitor;
 };
 
-int Main(span<string_view> args) {
+int Main(span<const string_view> args) {
   std::vector<string_view> filenames;
   Options options;
 
@@ -81,7 +81,7 @@ int Main(span<string_view> args) {
   parser.Parse(args);
 
   if (filenames.empty()) {
-    print("No filenames given.\n");
+    PrintF("No filenames given.\n");
     parser.PrintHelpAndExit(1);
   }
 
@@ -89,7 +89,7 @@ int Main(span<string_view> args) {
   for (auto filename : filenames) {
     auto optbuf = ReadFile(filename);
     if (!optbuf) {
-      print(std::cerr, "Error reading file {}.\n", filename);
+      Format(&std::cerr, "Error reading file %s.\n", filename);
       ok = false;
       continue;
     }
@@ -98,7 +98,7 @@ int Main(span<string_view> args) {
     Tool tool{filename, data, options};
     bool valid = tool.Run();
     if (!valid || options.verbose) {
-      print("[{:^4}] {}\n", valid ? "OK" : "FAIL", filename);
+      PrintF("[%4s] %s\n", valid ? " OK " : "FAIL", filename);
       tool.errors.PrintTo(std::cerr);
     }
     ok &= valid;

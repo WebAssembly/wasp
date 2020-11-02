@@ -28,10 +28,9 @@ struct S {
     return lhs.x == rhs.x && lhs.y == rhs.y;
   }
 
-  // Documentation says to use friend function named `hash_value`, but this
-  // only seems to work with a static function.
-  static size_t hash_value(const S& s) {
-    return HashState::combine(0, s.x, s.y);
+  template <typename H>
+  friend H AbslHashValue(H h, const S& s) {
+    return H::combine(std::move(h), s.x, s.y);
   }
 
   int x, y;

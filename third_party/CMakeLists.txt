@@ -14,23 +14,7 @@
 # limitations under the License.
 #
 
-## fmt
-add_library(libfmt
-  fmt/src/format.cc
-)
-
-if (MSVC)
-  target_compile_options(libfmt
-    PRIVATE
-    /Zc:preprocessor-
-  )
-endif ()
-
-target_include_directories(libfmt
-  PUBLIC
-  ${wasp_SOURCE_DIR}/third_party/fmt/include
-)
-
+add_subdirectory(abseil)
 
 ## gtest
 if (BUILD_TESTING)

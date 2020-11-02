@@ -66,7 +66,8 @@ target_link_libraries(wasp_tool
   libwasp_text
   libwasp_binary
   libwasp_base
-  libfmt
+  absl::raw_hash_set
+  absl::str_format
   ${filesystem_lib}
 )
 

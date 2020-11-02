@@ -20,10 +20,10 @@
 #include <iosfwd>
 #include <utility>
 
+#include "wasp/base/absl_hash_value_macros.h"
 #include "wasp/base/at.h"
 #include "wasp/base/operator_eq_ne_macros.h"
 #include "wasp/base/optional.h"
-#include "wasp/base/std_hash_macros.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/v128.h"
 #include "wasp/base/variant.h"
@@ -1112,10 +1112,10 @@ bool operator==(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
 bool operator!=(const BoundValueTypeList& lhs, const ValueTypeList& rhs);
 bool operator!=(const ValueTypeList& lhs, const BoundValueTypeList& rhs);
 
-}  // namespace wasp::text
+WASP_TEXT_STRUCTS(WASP_ABSL_HASH_VALUE_VARGS)
+WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_ABSL_HASH_VALUE_VARGS)
+WASP_TEXT_CONTAINERS(WASP_ABSL_HASH_VALUE_CONTAINER)
 
-WASP_TEXT_STRUCTS(WASP_DECLARE_STD_HASH)
-WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_DECLARE_STD_HASH)
-WASP_TEXT_CONTAINERS(WASP_DECLARE_STD_HASH)
+}  // namespace wasp::text
 
 #endif  // WASP_TEXT_TYPES_H_

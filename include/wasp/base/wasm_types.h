@@ -20,9 +20,9 @@
 #include <iosfwd>
 #include <vector>
 
+#include "wasp/base/absl_hash_value_macros.h"
 #include "wasp/base/at.h"
 #include "wasp/base/operator_eq_ne_macros.h"
-#include "wasp/base/std_hash_macros.h"
 #include "wasp/base/types.h"
 
 namespace wasp {
@@ -144,9 +144,9 @@ using ShuffleImmediate = std::array<u8, 16>;
 WASP_BASE_WASM_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_BASE_WASM_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 
-}  // namespace wasp
+WASP_BASE_WASM_STRUCTS(WASP_ABSL_HASH_VALUE_VARGS)
+WASP_BASE_WASM_CONTAINERS(WASP_ABSL_HASH_VALUE_CONTAINER)
 
-WASP_BASE_WASM_STRUCTS(WASP_DECLARE_STD_HASH)
-WASP_BASE_WASM_CONTAINERS(WASP_DECLARE_STD_HASH)
+}  // namespace wasp
 
 #endif // WASP_BASE_WASM_TYPES_H_

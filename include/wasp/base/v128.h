@@ -81,20 +81,17 @@ class v128 {
   friend bool operator==(const v128&, const v128&);
   friend bool operator!=(const v128&, const v128&);
 
+  template <typename H>
+  friend H AbslHashValue(H h, const v128& f) {
+    auto u = f.as<::wasp::u64x2>();
+    return H::combine(std::move(h), u[0], u[1]);
+  }
+
  private:
   u8x16 data_;
 };
 
 }  // namespace wasp
-
-namespace std {
-
-template <>
-struct hash<::wasp::v128> {
-  size_t operator()(const ::wasp::v128&) const;
-};
-
-}  // namespace std
 
 #include "wasp/base/v128-inl.h"
 

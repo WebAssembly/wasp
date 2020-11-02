@@ -70,8 +70,8 @@ class ArgParser {
 
   ArgParser& AddFeatureFlags(Features&);
 
-  void Parse(span<string_view>);
-  span<string_view> RestOfArgs();
+  void Parse(span<const string_view>);
+  span<const string_view> RestOfArgs();
 
   std::string GetHelpString() const;
   void PrintHelpAndExit(int errcode);
@@ -87,13 +87,13 @@ class ArgParser {
   std::vector<Option> options_;
 
   struct ArgsGuard {
-    explicit ArgsGuard(ArgParser& parser, span<string_view> args);
+    explicit ArgsGuard(ArgParser& parser, span<const string_view> args);
     ~ArgsGuard();
 
     ArgParser& parser;
   };
 
-  span<string_view> args_;
+  span<const string_view> args_;
   span_extent_t index_ = 0;
 };
 

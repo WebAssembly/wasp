@@ -18,8 +18,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "fmt/format.h"
-#include "fmt/ostream.h"
+#include "absl/strings/str_format.h"
 
 #include "src/tools/argparser.h"
 #include "src/tools/text_errors.h"
@@ -54,7 +53,8 @@ namespace wasp {
 namespace tools {
 namespace wat2wasm {
 
-using fmt::print;
+using absl::PrintF;
+using absl::Format;
 
 struct Options {
   Features features;
@@ -74,7 +74,7 @@ struct Tool {
   SpanU8 data;
 };
 
-int Main(span<string_view> args) {
+int Main(span<const string_view> args) {
   string_view filename;
   Options options;
 
@@ -91,19 +91,19 @@ int Main(span<string_view> args) {
         if (filename.empty()) {
           filename = arg;
         } else {
-          print(std::cerr, "Filename already given\n");
+          Format(&std::cerr, "Filename already given\n");
         }
       });
   parser.Parse(args);
 
   if (filename.empty()) {
-    print(std::cerr, "No filenames given.\n");
+    Format(&std::cerr, "No filenames given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   auto optbuf = ReadFile(filename);
   if (!optbuf) {
-    print(std::cerr, "Error reading file {}.\n", filename);
+    Format(&std::cerr, "Error reading file %s.\n", filename);
     return 1;
   }
 
@@ -156,7 +156,7 @@ int Tool::Run() {
   std::ofstream fstream(options.output_filename,
                         std::ios_base::out | std::ios_base::binary);
   if (!fstream) {
-    print(std::cerr, "Unable to open file {}.\n", options.output_filename);
+    Format(&std::cerr, "Unable to open file %s.\n", options.output_filename);
     return 1;
   }
 

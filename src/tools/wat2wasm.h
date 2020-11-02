@@ -22,7 +22,7 @@
 
 namespace wasp::tools::wat2wasm {
 
-int Main(span<string_view> args);
+int Main(span<const string_view> args);
 
 }  // namespace wasp::tools::wat2wasm
 

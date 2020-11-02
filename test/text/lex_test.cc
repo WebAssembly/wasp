@@ -1178,7 +1178,7 @@ R"((  module (; a comment ;) (  func  ) ) ))"_su8;
 
   for (auto&& pair : expected_tokens) {
     span = ExpectLex(pair.token, span);
-    remove_prefix(&span, pair.gap);
+    span.remove_prefix(pair.gap);
   }
 }
 

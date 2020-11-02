@@ -1,18 +1,12 @@
 [submodule "third_party/gtest"]
 	path = third_party/gtest
 	url = https://github.com/google/googletest
-[submodule "third_party/fmt"]
-	path = third_party/fmt
-	url = https://github.com/fmtlib/fmt
-[submodule "third_party/span-lite"]
-	path = third_party/span-lite
-	url = https://github.com/martinmoene/span-lite
-[submodule "third_party/parallel-hashmap"]
-	path = third_party/parallel-hashmap
-	url = https://github.com/greg7mdp/parallel-hashmap
 [submodule "third_party/gdtoa"]
 	path = third_party/gdtoa
 	url = https://github.com/jwiegley/gdtoa
 [submodule "third_party/testsuite"]
 	path = third_party/testsuite
 	url = https://github.com/WebAssembly/testsuite
+[submodule "third_party/abseil"]
+	path = third_party/abseil
+	url = https://github.com/abseil/abseil-cpp

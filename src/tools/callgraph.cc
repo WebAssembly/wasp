@@ -23,8 +23,7 @@
 #include <string>
 #include <vector>
 
-#include "fmt/format.h"
-#include "fmt/ostream.h"
+#include "absl/strings/str_format.h"
 
 #include "src/tools/argparser.h"
 #include "src/tools/binary_errors.h"
@@ -43,7 +42,7 @@
 
 namespace wasp::tools::callgraph {
 
-using fmt::print;
+using absl::Format;
 
 using namespace ::wasp::binary;
 
@@ -81,7 +80,7 @@ struct Tool {
   std::set<std::pair<Index, Index>> call_graph;
 };
 
-int Main(span<string_view> args) {
+int Main(span<const string_view> args) {
   string_view filename;
   Options options;
   options.features.EnableAll();
@@ -106,19 +105,19 @@ int Main(span<string_view> args) {
         if (filename.empty()) {
           filename = arg;
         } else {
-          print(std::cerr, "Filename already given\n");
+          Format(&std::cerr, "Filename already given\n");
         }
       });
   parser.Parse(args);
 
   if (filename.empty()) {
-    print(std::cerr, "No filenames given.\n");
+    Format(&std::cerr, "No filenames given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   auto optbuf = ReadFile(filename);
   if (!optbuf) {
-    print(std::cerr, "Error reading file {}.\n", filename);
+    Format(&std::cerr, "Error reading file %s.\n", filename);
     return 1;
   }
 
@@ -138,7 +137,7 @@ int Tool::Run() {
   DoPrepass();
   GetFunctionIndex();
   if (options.mode != Mode::All && !options.function_index) {
-    print(std::cerr, "Unknown function {}.\n", *options.function);
+    Format(&std::cerr, "Unknown function %s.\n", *options.function);
     return 1;
   }
   CalculateCallGraph();
@@ -247,8 +246,8 @@ void Tool::WriteDotFile() {
     }
   }
 
-  print(*stream, "strict digraph {{\n");
-  print(*stream, "  rankdir = LR;\n");
+  Format(stream, "strict digraph {\n");
+  Format(stream, "  rankdir = LR;\n");
 
   // Write nodes.
   std::set<Index> functions;
@@ -258,24 +257,24 @@ void Tool::WriteDotFile() {
   }
 
   for (auto function : functions) {
-    print(*stream, "  {}", function);
+    Format(stream, "  %d", function);
     auto name = GetFunctionName(function);
     if (name) {
-      print(*stream, " [label = \"{}\"]", *name);
+      Format(stream, " [label = \"%s\"]", *name);
     } else {
-      print(*stream, " [label = \"f{}\"]", function);
+      Format(stream, " [label = \"f%d\"]", function);
     }
-    print(*stream, ";\n");
+    Format(stream, ";\n");
   }
 
   // Write edges.
   for (auto pair : call_graph) {
     Index caller = pair.first;
     Index callee = pair.second;
-    print(*stream, "  {} -> {};\n", caller, callee);
+    Format(stream, "  %d -> %d;\n", caller, callee);
   }
 
-  print(*stream, "}}\n");
+  Format(stream, "}\n");
   stream->flush();
 }
 

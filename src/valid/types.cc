@@ -21,7 +21,6 @@
 #include "wasp/base/hash.h"
 #include "wasp/base/macros.h"
 #include "wasp/base/operator_eq_ne_macros.h"
-#include "wasp/base/std_hash_macros.h"
 
 namespace wasp::valid {
 
@@ -260,6 +259,3 @@ WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_VALID_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)
 
 }  // namespace wasp::valid
-
-WASP_VALID_STRUCTS_CUSTOM_FORMAT(WASP_STD_HASH_VARGS)
-WASP_VALID_CONTAINERS(WASP_STD_HASH_CONTAINER)

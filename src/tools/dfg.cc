@@ -21,11 +21,11 @@
 #include <set>
 #include <string>
 
-#include "fmt/format.h"
-#include "fmt/ostream.h"
+#include "absl/strings/str_format.h"
 
 #include "src/tools/argparser.h"
 #include "src/tools/binary_errors.h"
+#include "wasp/base/concat.h"
 #include "wasp/base/enumerate.h"
 #include "wasp/base/errors_nop.h"
 #include "wasp/base/features.h"
@@ -45,8 +45,8 @@ namespace wasp {
 namespace tools {
 namespace dfg {
 
-using fmt::format;
-using fmt::print;
+using absl::Format;
+using absl::StrFormat;
 
 using namespace ::wasp::binary;
 
@@ -157,7 +157,7 @@ struct Tool {
   ValueID undef = InvalidValueID;
 };
 
-int Main(span<string_view> args) {
+int Main(span<const string_view> args) {
   string_view filename;
   Options options;
   options.features.EnableAll();
@@ -174,24 +174,24 @@ int Main(span<string_view> args) {
         if (filename.empty()) {
           filename = arg;
         } else {
-          print(std::cerr, "Filename already given\n");
+          Format(&std::cerr, "Filename already given\n");
         }
       });
   parser.Parse(args);
 
   if (filename.empty()) {
-    print(std::cerr, "No filename given.\n");
+    Format(&std::cerr, "No filename given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   if (options.function.empty()) {
-    print(std::cerr, "No function given.\n");
+    Format(&std::cerr, "No function given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   auto optbuf = ReadFile(filename);
   if (!optbuf) {
-    print(std::cerr, "Error reading file {}.\n", filename);
+    Format(&std::cerr, "Error reading file %s.\n", filename);
     return 1;
   }
 
@@ -211,13 +211,13 @@ int Tool::Run() {
   DoPrepass();
   auto index_opt = GetFunctionIndex();
   if (!index_opt) {
-    print(std::cerr, "Unknown function {}\n", options.function);
+    Format(&std::cerr, "Unknown function %s\n", options.function);
     return 1;
   }
   auto ft_opt = GetFunctionType(*index_opt);
   auto code_opt = GetCode(*index_opt);
   if (!ft_opt || !code_opt) {
-    print(std::cerr, "Invalid function index {}\n", *index_opt);
+    Format(&std::cerr, "Invalid function index %d\n", *index_opt);
     return 1;
   }
   CalculateDFG(*ft_opt, *code_opt);
@@ -457,7 +457,8 @@ void Tool::DoInstruction(const Instruction& instr) {
         BasicInstruction(instr, func_type_opt->param_types.size(),
                          func_type_opt->result_types.size());
       } else {
-        print(std::cerr, "*** Error: `{}` with unknown function\n", instr);
+        Format(&std::cerr, "*** Error: `%s` with unknown function\n",
+               concat(instr));
       }
       if (instr.opcode == Opcode::ReturnCall) {
         Return();
@@ -475,7 +476,8 @@ void Tool::DoInstruction(const Instruction& instr) {
         BasicInstruction(instr, func_type->param_types.size() + 1,
                          func_type->result_types.size());
       } else {
-        print(std::cerr, "*** Error: `{}` with unknown type\n", instr);
+        Format(&std::cerr, "*** Error: `%s` with unknown type\n",
+               concat(instr));
       }
       if (instr.opcode == Opcode::ReturnCallIndirect) {
         Return();
@@ -1078,7 +1080,7 @@ void Tool::Br(Index index) {
     AddPred(target);
     ForwardValues(label, target);
   } else {
-    print(std::cerr, "*** Error: Invalid br depth {}\n", index);
+    Format(&std::cerr, "*** Error: Invalid br depth %d\n", index);
   }
 }
 
@@ -1127,8 +1129,8 @@ void Tool::CopyValues(size_t count, ValueIDs& out) {
       out[i] = ReadVariable(static_cast<VarID>(value_stack_size - count + i), current_bbid);
     }
   } else {
-    print(std::cerr, "*** Error: CopyValues({}) past bottom of stack {}\n",
-          count, GetStackSize());
+    Format(&std::cerr, "*** Error: CopyValues(%d) past bottom of stack %d\n",
+           count, GetStackSize());
   }
 }
 
@@ -1166,8 +1168,8 @@ void Tool::PopValues(size_t count) {
   if (count <= stack_size) {
     value_stack_size -= count;
   } else {
-    print(std::cerr, "*** Error: PopValues({}) past bottom of stack {}\n",
-          count, GetStackSize());
+    Format(&std::cerr, "*** Error: PopValues(%d) past bottom of stack %d\n",
+           count, GetStackSize());
     value_stack_size -= stack_size;
   }
 }
@@ -1379,26 +1381,26 @@ void Tool::WriteDotFile() {
 
   std::vector<std::pair<ValueID, ValueID>> interblock_edges;
 
-  print(*stream, "strict digraph {{\n");
+  Format(stream, "strict digraph {\n");
 
   // Write clusters.
   for (const auto& pair : blocks) {
     auto bbid = pair.first;
     const auto& block_vids = pair.second;
 
-    print(*stream, "  subgraph cluster_{} {{\n", bbid);
+    Format(stream, "  subgraph cluster_%d {\n", bbid);
 
     // Write nodes.
     for (const auto& vid : block_vids) {
       if (should_display(vid)) {
         const auto& value = GetValue(vid);
-        print(*stream, "    {} [shape=box;label=\"", vid);
+        Format(stream, "    %d [shape=box;label=\"", vid);
         if (value.is_phi()) {
-          print(*stream, "phi");
+          Format(stream, "phi");
         } else {
-          print(*stream, "{}", EscapeString(format("{}", *value.instr)));
+          Format(stream, "%s", EscapeString(concat(*value.instr)));
         }
-        print(*stream, "\"]\n");
+        Format(stream, "\"]\n");
       }
     }
 
@@ -1407,22 +1409,22 @@ void Tool::WriteDotFile() {
       const auto& value = GetValue(vid);
       for (const auto& op : value.operands) {
         if (GetValue(op).block == bbid) {
-          print(*stream, "    {} -> {}\n", op, vid);
+          Format(stream, "    %d -> %d\n", op, vid);
         } else {
           interblock_edges.push_back(std::make_pair(op, vid));
         }
       }
     }
 
-    print(*stream, "  }}\n");
+    Format(stream, "  }\n");
   }
 
   // Write edges that span between blocks.
   for (const auto& pair : interblock_edges) {
-    print(*stream, "  {} -> {}\n", pair.first, pair.second);
+    Format(stream, "  %d -> %d\n", pair.first, pair.second);
   }
 
-  print(*stream, "}}\n");
+  Format(stream, "}\n");
   stream->flush();
 }
 

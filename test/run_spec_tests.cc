@@ -20,8 +20,7 @@
 #include <iostream>
 #include <utility>
 
-#include "fmt/format.h"
-#include "fmt/ostream.h"
+#include "absl/strings/str_format.h"
 
 #include "src/tools/argparser.h"
 #include "src/tools/binary_errors.h"
@@ -42,7 +41,9 @@
 #include "wasp/valid/context.h"
 #include "wasp/valid/validate.h"
 
-using fmt::print;
+using absl::Format;
+using absl::PrintF;
+using absl::StrFormat;
 
 using namespace ::wasp;
 namespace fs = std::filesystem;
@@ -103,17 +104,14 @@ int main(int argc, char** argv) {
   tools::ArgParser parser{"run_spec_tests"};
   parser
       .Add('h', "--help", "print help and exit",
-           [&]() {
-             print(parser.GetHelpString());
-             exit(0);
-           })
+           [&]() { parser.PrintHelpAndExit(0); })
       .Add('v', "--verbose", "verbose output", [&]() { s_verbose++; })
       .Add("<filename>", "filename",
            [&](string_view arg) { filenames.push_back(arg); });
   parser.Parse(args);
 
   if (filenames.empty()) {
-    print(std::cerr, "No filename given.\n");
+    Format(&std::cerr, "No filename given.\n");
     return 1;
   }
 
@@ -145,7 +143,7 @@ int main(int argc, char** argv) {
 
     if (!enabled) {
       if (s_verbose) {
-        print("Skipping {}.\n", source.string());
+        PrintF("Skipping %s.\n", source.string());
       }
       continue;
     }
@@ -163,13 +161,13 @@ int main(int argc, char** argv) {
 
 void DoFile(const fs::path& path, const Features& features) {
   if (s_verbose) {
-    print("Reading {}...\n", path.string());
+    PrintF("Reading %s...\n", path.string());
   }
 
   std::string filename = path.string();
   auto data = ReadFile(filename);
   if (!data) {
-    print(std::cerr, "Error reading file {}", path.filename().string());
+    Format(&std::cerr, "Error reading file %s", path.filename().string());
     return;
   }
 
@@ -241,13 +239,13 @@ void Tool::OnAssertionCommand(text::Assertion& assertion) {
 
     if (assertion.kind == text::AssertionKind::Malformed) {
       if (script_module->kind == text::ScriptModuleKind::Quote) {
-        OnAssertMalformedText(
-            script_module.loc(),
-            fmt::format("malformed_{}.wat", assertion_count++), buffer);
+        OnAssertMalformedText(script_module.loc(),
+                              StrFormat("malformed_%d.wat", assertion_count++),
+                              buffer);
       } else {
         OnAssertMalformedBinary(
             script_module.loc(),
-            fmt::format("malformed_{}.wasm", assertion_count++), buffer);
+            StrFormat("malformed_%d.wasm", assertion_count++), buffer);
       }
     } else if (assertion.kind == text::AssertionKind::Invalid) {
       errors.OnError(script_module.loc(), "assert_invalid with quote/bin?");

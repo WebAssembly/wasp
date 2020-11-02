@@ -21,29 +21,25 @@
 
 #include <functional>
 
-#include "nonstd/span.hpp"
+#include "absl/types/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 
 namespace wasp {
 
-using nonstd::span;
+template <typename T>
+using span = absl::Span<T>;
 
-using nonstd::operator==;
-using nonstd::operator!=;
-using nonstd::operator<;
-using nonstd::operator<=;
-using nonstd::operator>;
-using nonstd::operator>=;
+using absl::operator==;
+using absl::operator!=;
+using absl::operator<;
+using absl::operator<=;
+using absl::operator>;
+using absl::operator>=;
 
-using span_extent_t = nonstd::span_lite::extent_t;
+using absl::MakeSpan;
 
-constexpr span_extent_t dynamic_extent = -1;
-
-template <class T, span_extent_t Extent>
-void remove_prefix(span<T, Extent>* s, span_extent_t offset) {
-  *s = s->subspan(offset);
-}
+using span_extent_t = size_t;
 
 using SpanU8 = span<const u8>;
 using Location = SpanU8;
@@ -60,14 +56,5 @@ inline string_view ToStringView(SpanU8 span) {
 }
 
 }  // namespace wasp
-
-namespace std {
-
-template <>
-struct hash<::wasp::SpanU8> {
-  size_t operator()(::wasp::SpanU8) const;
-};
-
-}
 
 #endif  // WASP_BASE_SPAN_H_

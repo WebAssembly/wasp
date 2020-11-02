@@ -19,11 +19,11 @@
 
 #include <vector>
 
+#include "wasp/base/absl_hash_value_macros.h"
 #include "wasp/base/at.h"
 #include "wasp/base/operator_eq_ne_macros.h"
 #include "wasp/base/optional.h"
 #include "wasp/base/span.h"
-#include "wasp/base/std_hash_macros.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/base/variant.h"
@@ -196,9 +196,9 @@ struct SymbolInfo {
 WASP_BINARY_LINKING_STRUCTS(WASP_DECLARE_OPERATOR_EQ_NE)
 WASP_BINARY_LINKING_CONTAINERS(WASP_DECLARE_OPERATOR_EQ_NE)
 
-}  // namespace wasp::binary
+WASP_BINARY_LINKING_STRUCTS(WASP_ABSL_HASH_VALUE_VARGS)
+WASP_BINARY_LINKING_CONTAINERS(WASP_ABSL_HASH_VALUE_CONTAINER)
 
-WASP_BINARY_LINKING_STRUCTS(WASP_DECLARE_STD_HASH)
-WASP_BINARY_LINKING_CONTAINERS(WASP_DECLARE_STD_HASH)
+}  // namespace wasp::binary
 
 #endif // WASP_BINARY_LINKING_SECTION_TYPES_H_

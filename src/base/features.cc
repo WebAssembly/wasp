@@ -17,7 +17,6 @@
 #include "wasp/base/features.h"
 
 #include "wasp/base/hash.h"
-#include "wasp/base/std_hash_macros.h"
 
 namespace wasp {
 
@@ -59,9 +58,3 @@ bool operator!=(const Features& lhs, const Features& rhs) {
 }
 
 }  // namespace wasp
-
-namespace std {
-size_t hash<::wasp::Features>::operator()(const ::wasp::Features& v) const {
-  return ::wasp::HashState::combine(0, v.bits());
-}
-}  // namespace std

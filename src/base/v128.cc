@@ -134,12 +134,3 @@ v128::v128(u8x16 other) {
 WASP_OPERATOR_EQ_NE_1(v128, data_)
 
 }  // namespace wasp
-
-namespace std {
-
-size_t hash<::wasp::v128>::operator()(const ::wasp::v128& v) const {
-  auto u = v.as<::wasp::u64x2>();
-  return ::wasp::HashState::combine(0, u[0], u[1]);
-}
-
-}  // namespace std

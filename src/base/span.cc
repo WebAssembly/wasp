@@ -17,11 +17,3 @@
 #include "wasp/base/span.h"
 
 #include "wasp/base/hash.h"
-
-namespace std {
-
-size_t hash<::wasp::SpanU8>::operator()(::wasp::SpanU8 v) const {
-  return ::wasp::HashContainer(v);
-}
-
-}  // namespace std

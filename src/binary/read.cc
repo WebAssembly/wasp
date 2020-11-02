@@ -56,7 +56,7 @@ OptAt<BlockType> Read(SpanU8* data, Context& context, Tag<BlockType>) {
                              context.features);
     return decoded;
   } else if (encoding::BlockType::IsBare(val)) {
-    remove_prefix(data, 1);
+    data->remove_prefix(1);
     WASP_TRY_DECODE_FEATURES(decoded, val, BlockType, "block type",
                              context.features);
     return decoded;
@@ -104,7 +104,7 @@ OptAt<SpanU8> ReadBytes(SpanU8* data, span_extent_t N, Context& context) {
   }
 
   SpanU8 result{data->begin(), N};
-  remove_prefix(data, N);
+  data->remove_prefix(N);
   return At{result, result};
 }
 
@@ -360,7 +360,7 @@ OptAt<ReferenceType> Read(SpanU8* data, Context& context, Tag<ReferenceType>) {
     WASP_TRY_READ(ref_type, Read<RefType>(data, context));
     return At{ref_type.loc(), ReferenceType{ref_type}};
   } else {
-    remove_prefix(data, 1);
+    data->remove_prefix(1);
     WASP_TRY_DECODE_FEATURES(decoded, val, ReferenceKind, "reference type",
                              context.features);
     return At{decoded.loc(), ReferenceType{decoded}};
@@ -497,7 +497,7 @@ OptAt<HeapType> Read(SpanU8* data, Context& context, Tag<HeapType>) {
   ErrorsContextGuard error_guard{context.errors, *data, "heap type"};
   WASP_TRY_READ(val, PeekU8(data, context));
   if (encoding::HeapKind::Is(val)) {
-    remove_prefix(data, 1);
+    data->remove_prefix(1);
     WASP_TRY_DECODE_FEATURES(decoded, val, HeapKind, "heap kind",
                              context.features);
     return At{decoded.loc(), HeapType{decoded}};
@@ -1470,7 +1470,7 @@ auto Read(SpanU8* data, Context& context, Tag<StorageType>)
   WASP_TRY_READ(val, PeekU8(data, context));
 
   if (encoding::PackedType::Is(val)) {
-    remove_prefix(data, 1);
+    data->remove_prefix(1);
     WASP_TRY_DECODE_FEATURES(decoded, val, PackedType, "packed type",
                              context.features);
     return At{decoded.loc(), StorageType{decoded}};
@@ -1505,7 +1505,7 @@ OptAt<string_view> ReadString(SpanU8* data,
   LocationGuard guard{data};
   WASP_TRY_READ(len, ReadLength(data, context));
   string_view result{reinterpret_cast<const char*>(data->data()), len};
-  remove_prefix(data, len);
+  data->remove_prefix(len);
   return At{guard.range(data), result};
 }
 
@@ -1552,7 +1552,7 @@ auto PeekU8(SpanU8* data, Context& context) -> OptAt<u8> {
 OptAt<u8> Read(SpanU8* data, Context& context, Tag<u8>) {
   auto result_opt = PeekU8(data, context);
   if (result_opt) {
-    remove_prefix(data, 1);
+    data->remove_prefix(1);
   }
   return result_opt;
 }
@@ -1572,7 +1572,7 @@ OptAt<ValueType> Read(SpanU8* data, Context& context, Tag<ValueType>) {
   WASP_TRY_READ(val, PeekU8(data, context));
 
   if (encoding::NumericType::Is(val)) {
-    remove_prefix(data, 1);
+    data->remove_prefix(1);
     WASP_TRY_DECODE_FEATURES(decoded, val, NumericType, "value type",
                              context.features);
     return At{decoded.loc(), ValueType{decoded}};

@@ -20,7 +20,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include "fmt/format.h"
+#include "absl/strings/str_format.h"
 
 #include "wasp/base/enumerate.h"
 
@@ -117,14 +117,15 @@ auto TextErrors::ErrorToString(const Error& error) const -> std::string {
   loc_start = clamp(line_start, loc_start, line_end);
   loc_end = clamp(line_start, loc_end, line_end);
 
-  Location context = {data.begin() + line_start, data.begin() + line_end};
+  Location context =
+      MakeSpan(data.begin() + line_start, data.begin() + line_end);
   string_view line1 = ToStringView(context);
   std::string line2 = std::string(loc_start - line_start, ' ') +
                       std::string(loc_end - loc_start, '^') +
                       std::string(line_end - loc_end, ' ');
 
-  return fmt::format("{}:{}:{}: {}\n{}\n{}\n", filename, line, column,
-                     error.message, line1, line2);
+  return absl::StrFormat("%s:%d:%d: %s\n%s\n%s\n", filename, line, column,
+                         error.message, line1, line2);
 }
 
 }  // namespace wasp::tools

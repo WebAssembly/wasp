@@ -308,7 +308,7 @@ void PushTypes(Context& context, StackTypeSpan stack_types) {
 
 void RemovePrefixIfGreater(StackTypeSpan* lhs, StackTypeSpan rhs) {
   if (lhs->size() > rhs.size()) {
-    remove_prefix(lhs, lhs->size() - rhs.size());
+    lhs->remove_prefix(lhs->size() - rhs.size());
   }
 }
 

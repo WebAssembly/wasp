@@ -27,7 +27,7 @@ void LazySequence<T>::NotifyRead(const u8* pos, bool ok) {
     } else if (expected_count_ && count_ != *expected_count_) {
       // Reached the end, but there was a mismatch.
       LazySequenceBase::OnCountError(context_.errors,
-                                     SpanU8{last_pos_, data_.end()}, name_,
+                                     MakeSpan(last_pos_, data_.end()), name_,
                                      *expected_count_, count_);
     }
   }
