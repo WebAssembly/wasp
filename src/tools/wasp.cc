@@ -18,8 +18,7 @@
 #include <iostream>
 #include <map>
 
-#include "fmt/format.h"
-#include "fmt/ostream.h"
+#include "absl/strings/str_format.h"
 
 #include "src/tools/argparser.h"
 #include "src/tools/callgraph.h"
@@ -36,9 +35,9 @@
 
 using namespace ::wasp;
 
-using fmt::print;
+using absl::Format;
 
-using Command = int (*)(span<string_view> args);
+using Command = int (*)(span<const string_view> args);
 
 void PrintHelp(int);
 
@@ -61,7 +60,7 @@ int main(int argc, char** argv) {
       .Add("<command>", "command", [&](string_view arg) {
         auto iter = commands.find(arg);
         if (iter == commands.end()) {
-          print(std::cerr, "Unknown command `{}`\n", arg);
+          Format(&std::cerr, "Unknown command `%s`\n", arg);
           PrintHelp(1);
         } else {
           exit(iter->second(parser.RestOfArgs()));
@@ -72,15 +71,15 @@ int main(int argc, char** argv) {
 }
 
 void PrintHelp(int errcode) {
-  print(std::cerr, "usage: wasp <command> [<options>]\n");
-  print(std::cerr, "\n");
-  print(std::cerr, "commands:\n");
-  print(std::cerr, "  dump        Dump the contents of a WebAssembly file.\n");
-  print(std::cerr, "  callgraph   Generate DOT file for the function call graph.\n");
-  print(std::cerr, "  cfg         Generate DOT file of a function's control flow graph.\n");
-  print(std::cerr, "  dfg         Generate DOT file of a function's data flow graph.\n");
-  print(std::cerr, "  validate    Validate a WebAssembly file.\n");
-  print(std::cerr, "  pattern     Find common instruction sequences.\n");
-  print(std::cerr, "  wat2wasm    Convert a WebAssembly text file to binary.\n");
+  Format(&std::cerr, "usage: wasp <command> [<options>]\n");
+  Format(&std::cerr, "\n");
+  Format(&std::cerr, "commands:\n");
+  Format(&std::cerr, "  dump        Dump the contents of a WebAssembly file.\n");
+  Format(&std::cerr, "  callgraph   Generate DOT file for the function call graph.\n");
+  Format(&std::cerr, "  cfg         Generate DOT file of a function's control flow graph.\n");
+  Format(&std::cerr, "  dfg         Generate DOT file of a function's data flow graph.\n");
+  Format(&std::cerr, "  validate    Validate a WebAssembly file.\n");
+  Format(&std::cerr, "  pattern     Find common instruction sequences.\n");
+  Format(&std::cerr, "  wat2wasm    Convert a WebAssembly text file to binary.\n");
   exit(errcode);
 }

@@ -22,11 +22,11 @@
 #include <string>
 #include <vector>
 
-#include "fmt/format.h"
-#include "fmt/ostream.h"
+#include "absl/strings/str_format.h"
 
 #include "src/tools/argparser.h"
 #include "src/tools/binary_errors.h"
+#include "wasp/base/concat.h"
 #include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
@@ -43,8 +43,8 @@
 
 namespace wasp::tools::cfg {
 
-using fmt::format;
-using fmt::print;
+using absl::Format;
+using absl::StrFormat;
 
 using namespace ::wasp::binary;
 
@@ -109,7 +109,7 @@ struct Tool {
   BBID current_bbid = InvalidBBID;
 };
 
-int Main(span<string_view> args) {
+int Main(span<const string_view> args) {
   string_view filename;
   Options options;
   options.features.EnableAll();
@@ -126,24 +126,24 @@ int Main(span<string_view> args) {
         if (filename.empty()) {
           filename = arg;
         } else {
-          print(std::cerr, "Filename already given\n");
+          Format(&std::cerr, "Filename already given\n");
         }
       });
   parser.Parse(args);
 
   if (filename.empty()) {
-    print(std::cerr, "No filename given.\n");
+    Format(&std::cerr, "No filename given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   if (options.function.empty()) {
-    print(std::cerr, "No function given.\n");
+    Format(&std::cerr, "No function given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   auto optbuf = ReadFile(filename);
   if (!optbuf) {
-    print(std::cerr, "Error reading file {}.\n", filename);
+    Format(&std::cerr, "Error reading file %s.\n", filename);
     return 1;
   }
 
@@ -163,12 +163,12 @@ int Tool::Run() {
   DoPrepass();
   auto index_opt = GetFunctionIndex();
   if (!index_opt) {
-    print(std::cerr, "Unknown function {}\n", options.function);
+    Format(&std::cerr, "Unknown function %s\n", options.function);
     return 1;
   }
   auto code_opt = GetCode(*index_opt);
   if (!code_opt) {
-    print(std::cerr, "Invalid function index {}\n", *index_opt);
+    Format(&std::cerr, "Invalid function index %d\n", *index_opt);
     return 1;
   }
   CalculateCFG(*code_opt);
@@ -290,7 +290,7 @@ void Tool::CalculateCFG(Code code) {
         const auto& immediate = instr->br_table_immediate();
         u32 value = 0;
         for (const auto& target : immediate->targets) {
-          Br(target, format("{}", value++));
+          Br(target, StrFormat("%d", value++));
         }
         Br(immediate->default_target, "default");
         MarkUnreachable(ptr);
@@ -374,78 +374,78 @@ void Tool::WriteDotFile() {
     }
   }
 
-  print(*stream, "strict digraph {{\n");
+  Format(stream, "strict digraph {\n");
 
   // Write nodes.
   for (const auto& bb: enumerate(cfg)) {
     if (!bb.value.empty()) {
       auto colspan = std::max<int>(
           1, std::min<int>(static_cast<int>(bb.value.successors.size()), kMaxSuccessors));
-      print(*stream,
-            "  {} [shape=none;margin=0;label=<"
-            "<TABLE BORDER=\"1\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR>"
-            "<TD BORDER=\"0\" ALIGN=\"LEFT\" COLSPAN=\"{}\">",
-            bb.index, colspan);
+      Format(stream,
+             "  %d [shape=none;margin=0;label=<"
+             "<TABLE BORDER=\"1\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR>"
+             "<TD BORDER=\"0\" ALIGN=\"LEFT\" COLSPAN=\"%d\">",
+             bb.index, colspan);
       auto instrs = ReadExpression(bb.value.code, module.context);
       for (const auto& instr: instrs) {
         if (IsExtraneousInstruction(instr)) {
           continue;
         } else if (instr->opcode == Opcode::BrTable) {
-          print(*stream, "{}...", instr->opcode);
+          Format(stream, "%s...", concat(instr->opcode));
         } else {
-          print(*stream, "{}", *instr);
+          Format(stream, "%s", concat(*instr));
         }
-        print(*stream, "<BR ALIGN=\"LEFT\"/>");
+        Format(stream, "<BR ALIGN=\"LEFT\"/>");
       }
-      print(*stream, "</TD></TR>");
+      Format(stream, "</TD></TR>");
       // Add ports.
       if (bb.value.successors.size() > 1) {
-        print(*stream, "<TR>");
+        Format(stream, "<TR>");
         string_view sides = "T";
         for (const auto& succ: enumerate(bb.value.successors)) {
           if (succ.index < kMaxSuccessors) {
             assert(!succ.value.name.empty());
-            print(*stream, "<TD PORT=\"{}\" SIDES=\"{}\">{}</TD>",
+            Format(stream, "<TD PORT=\"%s\" SIDES=\"%s\">%s</TD>",
                   succ.value.name, sides, succ.value.name);
           } else {
-            print(*stream, "<TD PORT=\"trunc\" SIDES=\"TL\">...</TD>");
+            Format(stream, "<TD PORT=\"trunc\" SIDES=\"TL\">...</TD>");
             break;
           }
           sides = "TL";
         }
-        print(*stream, "</TR>");
+        Format(stream, "</TR>");
       }
-      print(*stream, "</TABLE>>]\n");
+      Format(stream, "</TABLE>>]\n");
     }
   }
 
   // Write edges.
-  print(*stream, "  start -> {}\n", start_bbid);
+  Format(stream, "  start -> %d\n", start_bbid);
   for (const auto& bb: enumerate(cfg)) {
     if (!bb.value.empty()) {
       for (const auto& succ : enumerate(bb.value.successors)) {
         if (succ.value.bbid == InvalidBBID) {
-          print(*stream, "  {} -> end", bb.index);
+          Format(stream, "  %d -> end", bb.index);
         } else {
-          print(*stream, "  {}", bb.index);
+          Format(stream, "  %d", bb.index);
           if (!succ.value.name.empty()) {
             if (succ.index < kMaxSuccessors) {
-              print(*stream, ":{}", succ.value.name);
+              Format(stream, ":%s", succ.value.name);
             } else {
-              print(*stream, ":trunc");
+              Format(stream, ":trunc");
             }
           }
-          print(*stream, " -> {}", succ.value.bbid);
+          Format(stream, " -> %d", succ.value.bbid);
           if (succ.index >= kMaxSuccessors && !succ.value.name.empty()) {
-            print(*stream, " [headlabel=\"{}\"]", succ.value.name);
+            Format(stream, " [headlabel=\"%s\"]", succ.value.name);
           }
-          print(*stream, "\n");
+          Format(stream, "\n");
         }
       }
     }
   }
 
-  print(*stream, "}}\n");
+  Format(stream, "}\n");
   stream->flush();
 }
 
@@ -476,14 +476,14 @@ void Tool::StartBasicBlock(BBID bbid, const u8* start) {
   }
   current_bbid = bbid;
   if (current_bbid != InvalidBBID) {
-    GetBasicBlock(current_bbid).code = SpanU8{start, start};
+    GetBasicBlock(current_bbid).code = MakeSpan(start, start);
   }
 }
 
 void Tool::EndBasicBlock(const u8* end) {
   auto& bb = GetBasicBlock(current_bbid);
   const u8* start = bb.code.data();
-  bb.code = SpanU8{start, end};
+  bb.code = MakeSpan(start, end);
 
   auto instrs = ReadExpression(bb.code, module.context);
   if (std::all_of(instrs.begin(), instrs.end(), IsExtraneousInstruction)) {
@@ -507,7 +507,7 @@ void Tool::Br(Index index, const std::string& name) {
   if (index < labels.size()) {
     AddSuccessor(labels[labels.size() - index - 1].br, name);
   } else {
-    print(std::cerr, "Invalid branch depth: {}\n", index);
+    Format(&std::cerr, "Invalid branch depth: %d\n", index);
   }
 }
 

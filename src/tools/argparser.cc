@@ -19,12 +19,12 @@
 #include <algorithm>
 #include <iostream>
 
-#include "fmt/format.h"
-#include "fmt/ostream.h"
+#include "absl/strings/str_format.h"
 
 namespace wasp::tools {
 
-using namespace fmt;
+using absl::StrFormat;
+using absl::Format;
 
 ArgParser::Option::Option(LongName long_name, Help help, FlagCallback cb)
     : Option{kInvalidShortName, long_name, help, cb} {}
@@ -83,7 +83,7 @@ ArgParser& ArgParser::AddFeatureFlags(Features& features) {
   return *this;
 }
 
-void ArgParser::Parse(span<string_view> args) {
+void ArgParser::Parse(span<const string_view> args) {
   ArgsGuard guard{*this, args};
 
   for (index_ = 0; index_ < args.size(); ++index_) {
@@ -94,7 +94,7 @@ void ArgParser::Parse(span<string_view> args) {
         if (index_ + 1 < args.size()) {
           get<ParamCallback>(option.callback)(args[++index_]);
         } else {
-          print(std::cerr, "Argument `{}` requires parameter\n.", arg);
+          Format(&std::cerr, "Argument `%s` requires parameter\n.", arg);
         }
         return true;
       } else {
@@ -107,16 +107,16 @@ void ArgParser::Parse(span<string_view> args) {
       if (auto option = FindLongOption(arg)) {
         call(*option);
       } else {
-        print(std::cerr, "Unknown long argument `{}`.\n", arg);
+        Format(&std::cerr, "Unknown long argument `%s`.\n", arg);
       }
     } else if (arg[0] == '-') {
       optional<char> prev_arg_with_param;
       for (auto c : arg.substr(1)) {
         if (prev_arg_with_param) {
-          print(std::cerr,
-                "Argument `-{}` ignored since it follows `-{}` which has a "
-                "parameter.\n",
-                c, *prev_arg_with_param);
+          Format(&std::cerr,
+                 "Argument `-%c` ignored since it follows `-%c` which has a "
+                 "parameter.\n",
+                 c, *prev_arg_with_param);
           continue;
         }
 
@@ -127,7 +127,7 @@ void ArgParser::Parse(span<string_view> args) {
             prev_arg_with_param = c;
           }
         } else {
-          print(std::cerr, "Unknown short argument `-{}`.\n", c);
+          Format(&std::cerr, "Unknown short argument `-%c`.\n", c);
         }
       }
     } else {
@@ -135,24 +135,24 @@ void ArgParser::Parse(span<string_view> args) {
         --index_;  // Back up so call reads arg as the parameter.
         call(*option);
       } else {
-        print(std::cerr, "Unexpected bare argument `{}`.\n", arg);
+        Format(&std::cerr, "Unexpected bare argument `%s`.\n", arg);
       }
     }
   }
 }
 
-span<string_view> ArgParser::RestOfArgs() {
+span<const string_view> ArgParser::RestOfArgs() {
   return args_.subspan(index_ + 1);
 }
 
 std::string ArgParser::GetHelpString() const {
   std::string result;
-  result += format("usage: {}", program_);
+  result += StrFormat("usage: %s", program_);
   if (!options_.empty()) {
     result += " [options]";
   }
   if (auto bare = FindBare()) {
-    result += format(" {}", bare->metavar);
+    result += StrFormat(" %s", bare->metavar);
   }
 
   if (!options_.empty()) {
@@ -173,26 +173,26 @@ std::string ArgParser::GetHelpString() const {
       }
 
       if (option.short_name != kInvalidShortName) {
-        result += format(" -{}, ", option.short_name);
+        result += StrFormat(" -%c, ", option.short_name);
       } else {
         result += "     ";
       }
-      result += format("{:<{}}  {}\n",
-                       format("{} {}", option.long_name, option.metavar), width,
-                       option.help);
+      result += StrFormat("%-*s  %s\n", width,
+                          StrFormat("%s %s", option.long_name, option.metavar),
+                          option.help);
     }
 
     result += "\npositional:\n";
     if (auto option = FindBare()) {
       result +=
-          format(" {:<{}}      {}\n", option->metavar, width, option->help);
+          StrFormat(" %-*s      %s\n", width, option->metavar, option->help);
     }
   }
   return result;
 }
 
 void ArgParser::PrintHelpAndExit(int errcode) {
-  print(std::cerr, GetHelpString());
+  Format(&std::cerr, "%s", GetHelpString());
   exit(errcode);
 }
 
@@ -217,7 +217,7 @@ auto ArgParser::FindBare() const -> optional<Option> {
   return iter != options_.end() ? optional<Option>{*iter} : nullopt;
 }
 
-ArgParser::ArgsGuard::ArgsGuard(ArgParser& parser, span<string_view> args)
+ArgParser::ArgsGuard::ArgsGuard(ArgParser& parser, span<const string_view> args)
     : parser{parser} {
   parser.args_ = args;
   parser.index_ = 0;

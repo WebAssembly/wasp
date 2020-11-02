@@ -15,6 +15,7 @@
 #
 
 add_library(libwasp_base
+  ../../include/wasp/base/absl_hash_value_macros.h
   ../../include/wasp/base/at.h
   ../../include/wasp/base/bitcast.h
   ../../include/wasp/base/buffer.h
@@ -36,7 +37,6 @@ add_library(libwasp_base
   ../../include/wasp/base/operator_eq_ne_macros.h
   ../../include/wasp/base/optional.h
   ../../include/wasp/base/span.h
-  ../../include/wasp/base/std_hash_macros.h
   ../../include/wasp/base/str_to_u32.h
   ../../include/wasp/base/string_view.h
   ../../include/wasp/base/types.h
@@ -65,6 +65,10 @@ target_compile_options(libwasp_base
 target_include_directories(libwasp_base
   PUBLIC
   ${wasp_SOURCE_DIR}/include
-  ${wasp_SOURCE_DIR}/third_party/span-lite/include
-  ${wasp_SOURCE_DIR}/third_party/parallel-hashmap
+)
+
+target_link_libraries(libwasp_base
+  absl::base
+  absl::container
+  absl::hash
 )

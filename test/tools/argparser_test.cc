@@ -144,7 +144,7 @@ TEST(ArgParserTest, UnknownBare) {
 }
 
 TEST(ArgParserTest, RestOfArgs) {
-  span<string_view> rest;
+  span<const string_view> rest;
 
   ArgParser parser{"prog"};
   parser.Add('a', "--a", "help", []() {})

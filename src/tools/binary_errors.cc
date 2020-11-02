@@ -19,7 +19,7 @@
 #include <iostream>
 #include <utility>
 
-#include "fmt/format.h"
+#include "absl/strings/str_format.h"
 
 namespace wasp::tools {
 
@@ -49,7 +49,7 @@ auto BinaryErrors::ErrorToString(const Error& error) const -> std::string {
   size_t end = data.size() - std::max(after, data.end() - loc.end()) + after;
   end = std::min(end, start + max_size);
 
-  Location context = {data.begin() + start, data.begin() + end};
+  Location context = MakeSpan(data.begin() + start, data.begin() + end);
 
   std::string line1 = "    ";
   std::string line2 = "    ";
@@ -57,7 +57,7 @@ auto BinaryErrors::ErrorToString(const Error& error) const -> std::string {
   bool space = false;
   for (auto iter = context.begin(); iter < context.end(); ++iter) {
     u8 x = *iter;
-    line1 += fmt::format("{:02x}", x);
+    line1 += absl::StrFormat("%02x", x);
     if (iter >= loc.begin() && iter < loc.end()) {
       line2 += "^^";
     } else {
@@ -70,8 +70,9 @@ auto BinaryErrors::ErrorToString(const Error& error) const -> std::string {
     space = !space;
   }
 
-  return fmt::format("{}:{:08x}: {}\n{}\n{}\n", filename,
-                     loc.begin() - data.begin(), error.message, line1, line2);
+  return absl::StrFormat("%s:%08x: %s\n%s\n%s\n", filename,
+                         loc.begin() - data.begin(), error.message, line1,
+                         line2);
 }
 
 }  // namespace wasp::tools

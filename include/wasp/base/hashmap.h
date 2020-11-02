@@ -17,14 +17,17 @@
 #ifndef WASP_BASE_HASHMAP_H_
 #define WASP_BASE_HASHMAP_H_
 
-#include "parallel_hashmap/phmap.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
+#include "absl/container/node_hash_map.h"
+#include "absl/container/node_hash_set.h"
 
 namespace wasp {
 
-using phmap::flat_hash_map;
-using phmap::flat_hash_set;
-using phmap::node_hash_map;
-using phmap::node_hash_set;
+using absl::flat_hash_map;
+using absl::flat_hash_set;
+using absl::node_hash_map;
+using absl::node_hash_set;
 
 }  // namespace wasp
 

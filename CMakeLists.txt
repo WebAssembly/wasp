@@ -34,7 +34,6 @@ else ()
   set(warning_flags -W3)
 endif ()
 
-
 add_subdirectory(src/base)
 add_subdirectory(src/binary)
 add_subdirectory(src/valid)

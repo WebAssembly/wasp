@@ -28,7 +28,7 @@ struct MatchGuard {
   SpanU8* Reset() { *data_ = orig; return data_; }
   void ResetUnless(bool b) { if (!b) { Reset(); } }
 
-  Location loc() const { return Location(orig.begin(), data_->begin()); }
+  Location loc() const { return MakeSpan(orig.begin(), data_->begin()); }
 
   SpanU8* data_;
   SpanU8 orig;
@@ -79,7 +79,7 @@ auto PeekChar(SpanU8* data, span_extent_t offset = 0) -> int {
 
 void SkipChar(SpanU8* data) {
   assert(!data->empty());
-  remove_prefix(data, 1);
+  data->remove_prefix(1);
 }
 
 int ReadReservedChars(SpanU8* data) {

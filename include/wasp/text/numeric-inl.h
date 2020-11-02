@@ -91,7 +91,7 @@ auto StrToNat(LiteralInfo info, SpanU8 span) -> optional<T> {
 
 inline void RemoveSign(SpanU8& span, Sign sign) {
   if (sign != Sign::None) {
-    remove_prefix(&span, 1);  // Remove + or -.
+    span.remove_prefix(1);  // Remove + or -.
   }
 }
 

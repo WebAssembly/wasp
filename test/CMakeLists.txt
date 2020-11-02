@@ -31,7 +31,8 @@ target_include_directories(libwasp_test
 
 target_link_libraries(libwasp_test
   libwasp_base
-  libfmt
+  absl::raw_hash_set
+  absl::str_format
   gtest
 )
 

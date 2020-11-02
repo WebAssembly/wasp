@@ -23,11 +23,11 @@
 #include <string>
 #include <vector>
 
-#include "fmt/format.h"
-#include "fmt/ostream.h"
+#include "absl/strings/str_format.h"
 
 #include "src/tools/argparser.h"
 #include "src/tools/binary_errors.h"
+#include "wasp/base/concat.h"
 #include "wasp/base/enumerate.h"
 #include "wasp/base/features.h"
 #include "wasp/base/file.h"
@@ -43,24 +43,14 @@
 #include "wasp/binary/lazy_module.h"
 #include "wasp/binary/visitor.h"
 
-namespace std {
-
-template <>
-struct hash<std::vector<::wasp::binary::Instruction>> {
-  size_t operator()(const std::vector<::wasp::binary::Instruction>& v) const {
-    return ::wasp::HashContainer(v);
-  }
-};
-
-}  // namespace std
-
 namespace wasp {
 namespace tools {
 namespace pattern {
 
 const size_t kMaxPatternSize = 5;
 
-using fmt::print;
+using absl::PrintF;
+using absl::Format;
 
 using namespace ::wasp::binary;
 
@@ -96,7 +86,7 @@ struct Tool {
   u64 total_instructions = 0;
 };
 
-int Main(span<string_view> args) {
+int Main(span<const string_view> args) {
   string_view filename;
   Options options;
   options.features.EnableAll();
@@ -113,19 +103,19 @@ int Main(span<string_view> args) {
         if (filename.empty()) {
           filename = arg;
         } else {
-          print(std::cerr, "Filename already given\n");
+          Format(&std::cerr, "Filename already given\n");
         }
       });
   parser.Parse(args);
 
   if (filename.empty()) {
-    print(std::cerr, "No filename given.\n");
+    Format(&std::cerr, "No filename given.\n");
     parser.PrintHelpAndExit(1);
   }
 
   auto optbuf = ReadFile(filename);
   if (!optbuf) {
-    print(std::cerr, "Error reading file {}.\n", filename);
+    Format(&std::cerr, "Error reading file %s.\n", filename);
     return 1;
   }
 
@@ -155,11 +145,12 @@ int Tool::Run() {
   for (const auto& pattern : sorted) {
     if (pattern.second > 1) {
       u64 pattern_instructions = u64(pattern.first.size()) * pattern.second;
-      print("{}: [{}] {} {:.2f}%\n", pattern.second, pattern.first.size(),
-            pattern.first, 100.0 * pattern_instructions / total_instructions);
+      PrintF("%d: [%d] %s %.2f%%\n", pattern.second, pattern.first.size(),
+             concat(pattern.first),
+             100.0 * pattern_instructions / total_instructions);
     }
   }
-  print("total instructions: {}\n", total_instructions);
+  PrintF("total instructions: %d\n", total_instructions);
   return 0;
 }
 

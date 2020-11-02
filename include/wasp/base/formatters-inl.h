@@ -71,7 +71,7 @@ std::ostream& operator<<(std::ostream& os, const ::std::array<T, N>& self) {
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const ::std::vector<T>& self) {
-  return os << ::wasp::span{self};
+  return os << ::wasp::MakeSpan(self);
 }
 
 template <typename... Ts>

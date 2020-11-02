@@ -19,7 +19,6 @@
 #include "wasp/base/hash.h"
 #include "wasp/base/macros.h"
 #include "wasp/base/operator_eq_ne_macros.h"
-#include "wasp/base/std_hash_macros.h"
 
 namespace wasp::binary {
 
@@ -918,6 +917,3 @@ bool operator==(const Module& lhs, const Module& rhs) {
 bool operator!=(const Module& lhs, const Module& rhs) { return !(lhs == rhs); }
 
 }  // namespace wasp::binary
-
-WASP_BINARY_STRUCTS_CUSTOM_FORMAT(WASP_STD_HASH_VARGS)
-WASP_BINARY_CONTAINERS(WASP_STD_HASH_CONTAINER)
