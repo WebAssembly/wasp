@@ -18,6 +18,7 @@ add_executable(wasp_convert_unittests
   ../binary/constants.cc
   ../text/constants.cc
   to_binary_test.cc
+  to_text_test.cc
 )
 
 target_compile_options(wasp_convert_unittests
