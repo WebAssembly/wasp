@@ -564,6 +564,11 @@ TEST(ConvertToBinaryTest, CopyImmediate) {
      At{loc1, text::CopyImmediate{}});
 }
 
+TEST(ConvertToBinaryTest, FuncBindImmediate) {
+  OK(At{loc1, binary::FuncBindImmediate{At{loc2, Index{13}}}},
+     At{loc1, text::FuncBindImmediate{At{loc2, text::Var{Index{13}}}, {}}});
+}
+
 TEST(ConvertToBinaryTest, HeapType2Immediate) {
   OK(At{loc1,
         binary::HeapType2Immediate{At{loc2, BHT_Func}, At{loc3, BHT_Func}}},
@@ -739,8 +744,9 @@ TEST(ConvertToBinaryTest, Instruction) {
                                          At{loc5, text::Var{Index{14}}}}}}});
 
   // FuncBindImmediate
-  OK(At{loc1,
-        binary::Instruction{At{loc2, Opcode::FuncBind}, At{loc4, Index{13}}}},
+  OK(At{loc1, binary::Instruction{At{loc2, Opcode::FuncBind},
+                                  At{loc3, binary::FuncBindImmediate{At{
+                                               loc4, Index{13}}}}}},
      At{loc1, text::Instruction{
                   At{loc2, Opcode::FuncBind},
                   At{loc3, text::FuncBindImmediate{text::FunctionTypeUse{

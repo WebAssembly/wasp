@@ -294,6 +294,11 @@ std::ostream& operator<<(std::ostream& os,
 }
 
 std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::binary::FuncBindImmediate& self) {
+  return os << self.index;
+}
+
+std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::RttSubImmediate& self) {
   return os << self.depth << " " << self.types;
 }
@@ -327,6 +332,7 @@ std::ostream& operator<<(std::ostream& os,
     case InstructionKind::Select: os << " " << self.select_immediate(); break;
     case InstructionKind::Shuffle: os << " " << self.shuffle_immediate(); break;
     case InstructionKind::SimdLane: os << " " << self.simd_lane_immediate(); break;
+    case InstructionKind::FuncBind: os << " " << self.func_bind_immediate(); break;
     case InstructionKind::BrOnCast: os << " " << self.br_on_cast_immediate(); break;
     case InstructionKind::HeapType2: os << " " << self.heap_type_2_immediate(); break;
     case InstructionKind::RttSub: os << " " << self.rtt_sub_immediate(); break;

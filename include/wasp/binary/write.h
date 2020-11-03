@@ -464,6 +464,11 @@ WriteFixedVarInt(T value, Iterator out, size_t length = VarInt<T>::kMaxBytes) {
 }
 
 template <typename Iterator>
+Iterator Write(const FuncBindImmediate& immediate, Iterator out) {
+  return Write(immediate.index, out);
+}
+
+template <typename Iterator>
 Iterator Write(const Function& value, Iterator out) {
   return Write(value.type_index, out);
 }
@@ -613,6 +618,9 @@ Iterator Write(const Instruction& instr, Iterator out) {
 
     case InstructionKind::SimdLane:
       return Write(instr.simd_lane_immediate(), out);
+
+    case InstructionKind::FuncBind:
+      return Write(instr.func_bind_immediate(), out);
 
     case InstructionKind::BrOnCast:
       return Write(instr.br_on_cast_immediate(), out);

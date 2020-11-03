@@ -336,6 +336,10 @@ TEST(BinaryFormattersTest, CopyImmediate) {
   EXPECT_EQ(R"(0 0)", concat(CopyImmediate{0, 0}));
 }
 
+TEST(BinaryFormattersTest, FuncBindImmediate) {
+  EXPECT_EQ(R"(0)", concat(FuncBindImmediate{0}));
+}
+
 TEST(BinaryFormattersTest, RttSubImmediate) {
   EXPECT_EQ(R"(1 func 0)", concat(RttSubImmediate{1, {HT_Func, HT_0}}));
 }
@@ -405,6 +409,9 @@ TEST(BinaryFormattersTest, Instruction) {
   // memory.copy 1 2
   EXPECT_EQ(R"(memory.copy 1 2)",
             concat(Instruction{Opcode::MemoryCopy, CopyImmediate{1, 2}}));
+  // func.bind 2
+  EXPECT_EQ(R"(func.bind 2)",
+            concat(Instruction{Opcode::FuncBind, FuncBindImmediate{2}}));
   // rtt.sub 1 func 0
   EXPECT_EQ(
       R"(rtt.sub 1 func 0)",

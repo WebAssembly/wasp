@@ -357,7 +357,6 @@ auto ToBinary(Context& context, const At<text::ElementSegment>& value)
 auto ToBinary(Context& context, const At<text::BlockImmediate>& value)
     -> At<binary::BlockType> {
   if (value->type.IsInlineType()) {
-    // TODO: This is really nasty; find a nicer way.
     auto inline_type = value->type.GetInlineType();
     if (!inline_type) {
       return At{value.loc(), binary::BlockType{binary::VoidType{}}};
@@ -403,6 +402,12 @@ auto ToBinary(Context& context, const At<text::CopyImmediate>& value)
   return At{value.loc(),
             binary::CopyImmediate{ToBinary(context, value->dst, 0),
                                   ToBinary(context, value->src, 0)}};
+}
+
+auto ToBinary(Context& context, const At<text::FuncBindImmediate>& value)
+    -> At<binary::FuncBindImmediate> {
+  return At{value.loc(),
+            binary::FuncBindImmediate{ToBinary(context, value->type_use)}};
 }
 
 auto ToBinary(Context& context, const At<text::HeapType2Immediate>& value)
@@ -676,10 +681,10 @@ auto ToBinary(Context& context, const At<text::Instruction>& value)
                                                  value->simd_lane_immediate()}};
 
     case text::InstructionKind::FuncBind:
-      return At{value.loc(),
-                binary::Instruction{
-                    value->opcode,
-                    ToBinary(context, value->func_bind_immediate()->type_use)}};
+      return At{
+          value.loc(),
+          binary::Instruction{value->opcode,
+                              ToBinary(context, value->func_bind_immediate())}};
 
     case text::InstructionKind::BrOnCast:
       return At{

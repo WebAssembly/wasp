@@ -101,6 +101,7 @@ auto ToBinary(Context&, const At<text::BrOnExnImmediate>&) -> At<binary::BrOnExn
 auto ToBinary(Context&, const At<text::BrTableImmediate>&) -> At<binary::BrTableImmediate>;
 auto ToBinary(Context&, const At<text::CallIndirectImmediate>&) -> At<binary::CallIndirectImmediate>;
 auto ToBinary(Context&, const At<text::CopyImmediate>&) -> At<binary::CopyImmediate>;
+auto ToBinary(Context&, const At<text::FuncBindImmediate>&) -> At<binary::FuncBindImmediate>;
 auto ToBinary(Context&, const At<text::HeapType2Immediate>&) -> At<binary::HeapType2Immediate>;
 auto ToBinary(Context&, const At<text::InitImmediate>&) -> At<binary::InitImmediate>;
 auto ToBinary(Context&, const At<text::LetImmediate>&) -> At<binary::LetImmediate>;
