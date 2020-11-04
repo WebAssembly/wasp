@@ -647,7 +647,8 @@ auto ReadFunction(Tokenizer& tokenizer, Context& context) -> OptAt<Function> {
 
 // Section 4: Table
 
-auto ReadIndexType(Tokenizer& tokenizer, Context& context) -> At<IndexType> {
+auto ReadIndexTypeOpt(Tokenizer& tokenizer, Context& context)
+    -> OptAt<IndexType> {
   LocationGuard guard{tokenizer};
   auto token = tokenizer.Peek();
   if (context.features.memory64_enabled() &&
@@ -660,7 +661,7 @@ auto ReadIndexType(Tokenizer& tokenizer, Context& context) -> At<IndexType> {
       return At{token.loc, IndexType::I64};
     }
   }
-  return At{IndexType::I32};
+  return nullopt;
 }
 
 auto ReadLimits(Tokenizer& tokenizer,
@@ -670,7 +671,7 @@ auto ReadLimits(Tokenizer& tokenizer,
 
   At<IndexType> index_type = IndexType::I32;
   if (allow_index_type == AllowIndexType::Yes) {
-    index_type = ReadIndexType(tokenizer, context);
+    index_type = ReadIndexTypeOpt(tokenizer, context).value_or(IndexType::I32);
   }
 
   WASP_TRY_READ(min, ReadNat32(tokenizer, context));
@@ -901,7 +902,8 @@ auto ReadMemory(Tokenizer& tokenizer, Context& context) -> OptAt<Memory> {
          tokenizer.Peek(1).type == TokenType::Lpar) ||
         tokenizer.Peek().type == TokenType::Lpar) {
       // Inline data segment.
-      auto index_type = ReadIndexType(tokenizer, context);
+      auto index_type =
+          ReadIndexTypeOpt(tokenizer, context).value_or(IndexType::I32);
       WASP_TRY(Expect(tokenizer, context, TokenType::Lpar));
       WASP_TRY(Expect(tokenizer, context, TokenType::Data));
       WASP_TRY_READ(data, ReadTextList(tokenizer, context));
