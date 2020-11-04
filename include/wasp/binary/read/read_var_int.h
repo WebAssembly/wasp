@@ -30,6 +30,7 @@
 #include "wasp/base/types.h"
 #include "wasp/binary/read.h"
 #include "wasp/binary/read/context.h"
+#include "wasp/binary/read/location_guard.h"
 #include "wasp/binary/read/macros.h"
 #include "wasp/binary/var_int.h"
 
