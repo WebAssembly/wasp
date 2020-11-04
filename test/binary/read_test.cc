@@ -2440,58 +2440,71 @@ TEST_F(BinaryReadTest, Instruction_gc) {
 #endif
 }
 
-auto ReadLimits32ForTesting(SpanU8* data, Context& context) -> OptAt<Limits> {
-  return Read<Limits>(data, context, AllowIndexType64::No);
+auto ReadMemoryLimitsForTesting(SpanU8* data, Context& context)
+    -> OptAt<Limits> {
+  return Read<Limits>(data, context, LimitsKind::Memory);
 }
 
-auto ReadLimits64ForTesting(SpanU8* data, Context& context) -> OptAt<Limits> {
-  return Read<Limits>(data, context, AllowIndexType64::Yes);
+auto ReadTableLimitsForTesting(SpanU8* data, Context& context)
+    -> OptAt<Limits> {
+  return Read<Limits>(data, context, LimitsKind::Table);
 }
 
 TEST_F(BinaryReadTest, Limits) {
-  OK(ReadLimits32ForTesting,
+  OK(ReadMemoryLimitsForTesting,
      Limits{At{"\x81\x01"_su8, u32{129}}, nullopt, At{"\x00"_su8, Shared::No}},
      "\x00\x81\x01"_su8);
-  OK(ReadLimits32ForTesting,
+  OK(ReadMemoryLimitsForTesting,
      Limits{At{"\x02"_su8, u32{2}}, At{"\xe8\x07"_su8, u32{1000}},
             At{"\x01"_su8, Shared::No}},
      "\x01\x02\xe8\x07"_su8);
 }
 
 TEST_F(BinaryReadTest, Limits_BadFlags) {
-  Fail(ReadLimits32ForTesting, {{0, "limits"}, {0, "Unknown flags value: 2"}},
-       "\x02\x01"_su8);
-  Fail(ReadLimits32ForTesting, {{0, "limits"}, {0, "Unknown flags value: 3"}},
-       "\x03\x01"_su8);
+  Fail(ReadMemoryLimitsForTesting,
+       {{0, "limits"}, {0, "Unknown flags value: 2"}}, "\x02\x01"_su8);
+  Fail(ReadMemoryLimitsForTesting,
+       {{0, "limits"}, {0, "Unknown flags value: 3"}}, "\x03\x01"_su8);
 }
 
 TEST_F(BinaryReadTest, Limits_threads) {
   context.features.enable_threads();
 
-  OK(ReadLimits32ForTesting,
+  OK(ReadMemoryLimitsForTesting,
      Limits{At{"\x02"_su8, u32{2}}, At{"\xe8\x07"_su8, u32{1000}},
             At{"\x03"_su8, Shared::Yes}},
      "\x03\x02\xe8\x07"_su8);
+
+  Fail(ReadTableLimitsForTesting,
+       {{0, "limits"}, {0, "shared tables are not allowed"}},
+       "\x03\x01\x02"_su8);
 }
 
 TEST_F(BinaryReadTest, Limits_memory64) {
   context.features.enable_memory64();
 
-  OK(ReadLimits64ForTesting,
+  OK(ReadMemoryLimitsForTesting,
      Limits{At{"\x01"_su8, u32{1}}, nullopt, At{"\x04"_su8, Shared::No},
             At{"\x04"_su8, IndexType::I64}},
      "\x04\x01"_su8);
-  OK(ReadLimits64ForTesting,
+  OK(ReadMemoryLimitsForTesting,
      Limits{At{"\x01"_su8, u32{1}}, At{"\x02"_su8, u32{2}},
             At{"\x05"_su8, Shared::No}, At{"\x05"_su8, IndexType::I64}},
      "\x05\x01\x02"_su8);
+
+  // 64-bit tables are not allowed.
+  Fail(ReadTableLimitsForTesting,
+       {{0, "limits"}, {0, "i64 index type is not allowed"}}, "\x04\x01"_su8);
+  Fail(ReadTableLimitsForTesting,
+       {{0, "limits"}, {0, "i64 index type is not allowed"}},
+       "\x05\x01\x02"_su8);
 }
 
 TEST_F(BinaryReadTest, Limits_PastEnd) {
-  Fail(ReadLimits32ForTesting,
+  Fail(ReadMemoryLimitsForTesting,
        {{0, "limits"}, {1, "min"}, {1, "u32"}, {1, "Unable to read u8"}},
        "\x00"_su8);
-  Fail(ReadLimits32ForTesting,
+  Fail(ReadMemoryLimitsForTesting,
        {{0, "limits"}, {2, "max"}, {2, "u32"}, {2, "Unable to read u8"}},
        "\x01\x00"_su8);
 }
