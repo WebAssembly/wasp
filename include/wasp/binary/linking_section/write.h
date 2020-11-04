@@ -17,8 +17,8 @@
 #ifndef WASP_BINARY_LINKING_SECTION_WRITE_H_
 #define WASP_BINARY_LINKING_SECTION_WRITE_H_
 
-#include "wasp/binary/encoding/encoding.h"
-#include "wasp/binary/types_linking.h"
+#include "wasp/binary/linking_section/encoding.h"
+#include "wasp/binary/linking_section/types.h"
 #include "wasp/binary/write.h"
 
 namespace wasp::binary {
