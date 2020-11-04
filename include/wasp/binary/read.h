@@ -75,6 +75,8 @@ enum class BulkImmediateKind {
   Table,
 };
 
+enum class AllowIndexType64 { No, Yes };
+
 // Read functions for various binary types.
 auto Read(SpanU8*, Context&, Tag<ArrayType>) -> OptAt<ArrayType>;
 auto Read(SpanU8*, Context&, Tag<BlockType>) -> OptAt<BlockType>;
@@ -118,7 +120,7 @@ auto Read(SpanU8*, Context&, Tag<InitImmediate>, BulkImmediateKind)
 auto Read(SpanU8*, Context&, Tag<Instruction>) -> OptAt<Instruction>;
 auto Read(SpanU8*, Context&, Tag<InstructionList>) -> OptAt<InstructionList>;
 auto Read(SpanU8*, Context&, Tag<LetImmediate>) -> OptAt<LetImmediate>;
-auto Read(SpanU8*, Context&, Tag<Limits>) -> OptAt<Limits>;
+auto Read(SpanU8*, Context&, Tag<Limits>, AllowIndexType64) -> OptAt<Limits>;
 auto Read(SpanU8*, Context&, Tag<Locals>) -> OptAt<Locals>;
 auto Read(SpanU8*, Context&, Tag<MemArgImmediate>) -> OptAt<MemArgImmediate>;
 auto Read(SpanU8*, Context&, Tag<Memory>) -> OptAt<Memory>;

@@ -1085,6 +1085,9 @@ TEST(BinaryWriteTest, KnownSection_Optional_DoesNotExist) {
 TEST(BinaryWriteTest, Limits) {
   ExpectWrite("\x00\x81\x01"_su8, Limits{129});
   ExpectWrite("\x01\x02\xe8\x07"_su8, Limits{2, 1000});
+  ExpectWrite("\x03\x02\xe8\x07"_su8, Limits{2, 1000, Shared::Yes});
+  ExpectWrite("\x04\x01"_su8, Limits{1, nullopt, Shared::No, IndexType::I64});
+  ExpectWrite("\x05\x01\x02"_su8, Limits{1, 2, Shared::No, IndexType::I64});
 }
 
 TEST(BinaryWriteTest, Locals) {

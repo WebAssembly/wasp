@@ -44,7 +44,7 @@ void Features::UpdateDependencies(){
   if (bits_ & (FunctionReferences | Exceptions)) {
     bits_ |= ReferenceTypes;
   }
-  if (bits_ & ReferenceTypes) {
+  if (bits_ & (ReferenceTypes | Memory64)) {
     bits_ |= BulkMemory;
   }
 }

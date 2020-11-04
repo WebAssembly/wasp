@@ -676,6 +676,9 @@ Iterator Write(WriteContext& context, const FunctionDesc& value, Iterator out) {
 
 template <typename Iterator>
 Iterator Write(WriteContext& context, const Limits& value, Iterator out) {
+  if (value.index_type == IndexType::I64) {
+    out = Write(context, "i64"_sv, out);
+  }
   out = WriteNat(context, value.min, out);
   if (value.max) {
     out = WriteNat(context, *value.max, out);

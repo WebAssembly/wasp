@@ -105,14 +105,21 @@ enum class Null {
   Yes,
 };
 
+enum class IndexType {
+  I32,
+  I64,
+};
+
 struct Limits {
   explicit Limits(At<u32> min);
   explicit Limits(At<u32> min, OptAt<u32> max);
   explicit Limits(At<u32> min, OptAt<u32> max, At<Shared>);
+  explicit Limits(At<u32> min, OptAt<u32> max, At<Shared>, At<IndexType>);
 
   At<u32> min;
   OptAt<u32> max;
   At<Shared> shared;
+  At<IndexType> index_type;
 };
 
 struct MemoryType {
@@ -132,7 +139,8 @@ using ShuffleImmediate = std::array<u8, 16>;
   WASP_V(Mutability)                 \
   WASP_V(SegmentType)                \
   WASP_V(Shared)                     \
-  WASP_V(Null)
+  WASP_V(Null)                       \
+  WASP_V(IndexType)
 
 #define WASP_BASE_WASM_STRUCTS(WASP_V) \
   WASP_V(Limits, 3, min, max, shared)  \

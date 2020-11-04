@@ -60,7 +60,7 @@ const std::vector<DirectoryInfo> directory_info_map = {
     {"bulk-memory-operations", true, Features::BulkMemory},
     {"exception-handling", true, Features::Exceptions},
     {"function-references", true, Features::FunctionReferences},
-    {"memory64", false, 0},
+    {"memory64", true, Features::Memory64},
     {"mutable-global", true, Features::MutableGlobals},
     {"reference-types", true, Features::ReferenceTypes},
     {"simd", true, Features::Simd},

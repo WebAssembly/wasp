@@ -21,13 +21,20 @@
 
 namespace wasp {
 
-Limits::Limits(At<u32> min) : min{min}, shared{Shared::No} {}
+Limits::Limits(At<u32> min)
+    : min{min}, shared{Shared::No}, index_type{IndexType::I32} {}
 
 Limits::Limits(At<u32> min, OptAt<u32> max)
-    : min{min}, max{max}, shared{Shared::No} {}
+    : min{min}, max{max}, shared{Shared::No}, index_type{IndexType::I32} {}
 
 Limits::Limits(At<u32> min, OptAt<u32> max, At<Shared> shared)
-    : min{min}, max{max}, shared{shared} {}
+    : min{min}, max{max}, shared{shared}, index_type{IndexType::I32} {}
+
+Limits::Limits(At<u32> min,
+               OptAt<u32> max,
+               At<Shared> shared,
+               At<IndexType> index_type)
+    : min{min}, max{max}, shared{shared}, index_type{index_type} {}
 
 WASP_BASE_WASM_STRUCTS(WASP_OPERATOR_EQ_NE_VARGS)
 WASP_BASE_WASM_CONTAINERS(WASP_OPERATOR_EQ_NE_CONTAINER)

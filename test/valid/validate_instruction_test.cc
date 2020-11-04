@@ -97,6 +97,10 @@ class ValidateInstructionTest : public ::testing::Test {
     return AddItem(context.memories, memory_type);
   }
 
+  Index AddMemory64() {
+    return AddMemory(MemoryType{Limits{0, 0, Shared::No, IndexType::I64}});
+  }
+
   Index AddGlobal(const GlobalType& global_type) {
     return AddItem(context.globals, global_type);
   }
@@ -1439,6 +1443,24 @@ TEST_F(ValidateInstructionTest, Load) {
   }
 }
 
+TEST_F(ValidateInstructionTest, Load_memory64) {
+  const struct {
+    Opcode opcode;
+    ValueType result;
+  } infos[] = {
+      {O::I32Load, VT_I32},    {O::I32Load8S, VT_I32},  {O::I32Load8U, VT_I32},
+      {O::I32Load16S, VT_I32}, {O::I32Load16U, VT_I32}, {O::I64Load, VT_I64},
+      {O::I64Load8S, VT_I64},  {O::I64Load8U, VT_I64},  {O::I64Load16S, VT_I64},
+      {O::I64Load16U, VT_I64}, {O::I64Load32S, VT_I64}, {O::I64Load32U, VT_I64},
+      {O::F32Load, VT_F32},    {O::F64Load, VT_F64}};
+
+  AddMemory64();
+  for (const auto& info: infos) {
+    TestSignature(I{info.opcode, MemArgImmediate{0, 0}}, {VT_I64},
+                  {info.result});
+  }
+}
+
 TEST_F(ValidateInstructionTest, Load_Alignment) {
   struct {
     Opcode opcode;
@@ -1490,6 +1512,22 @@ TEST_F(ValidateInstructionTest, Store) {
   }
 }
 
+TEST_F(ValidateInstructionTest, Store_memory64) {
+  const struct {
+    Opcode opcode;
+    ValueType value_type;
+  } infos[] = {
+      {O::I32Store, VT_I32},   {O::I32Store8, VT_I32}, {O::I32Store16, VT_I32},
+      {O::I64Store, VT_I64},   {O::I64Store8, VT_I64}, {O::I64Store16, VT_I64},
+      {O::I64Store32, VT_I64}, {O::F32Store, VT_F32},  {O::F64Store, VT_F64}};
+
+  AddMemory64();
+  for (const auto& info: infos) {
+    TestSignature(I{info.opcode, MemArgImmediate{0, 0}},
+                  {VT_I64, info.value_type}, {});
+  }
+}
+
 TEST_F(ValidateInstructionTest, Store_MemoryOOB) {
   const Opcode opcodes[] = {O::I32Store,  O::I64Store,   O::F32Store,
                             O::F64Store,  O::I32Store8,  O::I32Store16,
@@ -1525,6 +1563,11 @@ TEST_F(ValidateInstructionTest, MemorySize) {
   TestSignature(I{O::MemorySize, u8{}}, {}, {VT_I32});
 }
 
+TEST_F(ValidateInstructionTest, MemorySize_memory64) {
+  AddMemory64();
+  TestSignature(I{O::MemorySize, u8{}}, {}, {VT_I64});
+}
+
 TEST_F(ValidateInstructionTest, MemorySize_MemoryIndexOOB) {
   Fail(I{O::MemorySize, u8{}});
   ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
@@ -1534,6 +1577,11 @@ TEST_F(ValidateInstructionTest, MemorySize_MemoryIndexOOB) {
 TEST_F(ValidateInstructionTest, MemoryGrow) {
   AddMemory(MemoryType{Limits{0}});
   TestSignature(I{O::MemoryGrow, u8{}}, {VT_I32}, {VT_I32});
+}
+
+TEST_F(ValidateInstructionTest, MemoryGrow_memory64) {
+  AddMemory64();
+  TestSignature(I{O::MemoryGrow, u8{}}, {VT_I64}, {VT_I64});
 }
 
 TEST_F(ValidateInstructionTest, MemoryGrow_MemoryIndexOOB) {
@@ -1840,6 +1888,13 @@ TEST_F(ValidateInstructionTest, MemoryInit) {
                 {VT_I32, VT_I32, VT_I32}, {});
 }
 
+TEST_F(ValidateInstructionTest, MemoryInit_memory64) {
+  context.declared_data_count = 2;
+  AddMemory64();
+  TestSignature(I{O::MemoryInit, InitImmediate{1, 0}}, {VT_I64, VT_I32, VT_I32},
+                {});
+}
+
 TEST_F(ValidateInstructionTest, MemoryInit_MemoryIndexOOB) {
   context.declared_data_count = 2;
   Ok(I{O::I32Const, s32{}});
@@ -1881,6 +1936,12 @@ TEST_F(ValidateInstructionTest, MemoryCopy) {
                 {});
 }
 
+TEST_F(ValidateInstructionTest, MemoryCopy_memory64) {
+  AddMemory64();
+  TestSignature(I{O::MemoryCopy, CopyImmediate{0, 0}}, {VT_I64, VT_I64, VT_I64},
+                {});
+}
+
 TEST_F(ValidateInstructionTest, MemoryCopy_MemoryIndexOOB) {
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1893,6 +1954,11 @@ TEST_F(ValidateInstructionTest, MemoryCopy_MemoryIndexOOB) {
 TEST_F(ValidateInstructionTest, MemoryFill) {
   AddMemory(MemoryType{Limits{0}});
   TestSignature(I{O::MemoryFill, u8{0}}, {VT_I32, VT_I32, VT_I32}, {});
+}
+
+TEST_F(ValidateInstructionTest, MemoryFill_memory64) {
+  AddMemory64();
+  TestSignature(I{O::MemoryFill, u8{0}}, {VT_I64, VT_I32, VT_I64}, {});
 }
 
 TEST_F(ValidateInstructionTest, MemoryFill_MemoryIndexOOB) {
@@ -2032,6 +2098,21 @@ TEST_F(ValidateInstructionTest, SimdLoad) {
   }
 }
 
+TEST_F(ValidateInstructionTest, SimdLoad_memory64) {
+  const Opcode opcodes[] = {
+      O::V128Load,        O::V128Load8Splat,  O::V128Load16Splat,
+      O::V128Load32Splat, O::V128Load64Splat, O::V128Load8X8S,
+      O::V128Load8X8U,    O::V128Load16X4S,   O::V128Load16X4U,
+      O::V128Load32X2S,   O::V128Load32X2U,   O::V128Load32Zero,
+      O::V128Load64Zero,
+  };
+
+  AddMemory64();
+  for (const auto& opcode : opcodes) {
+    TestSignature(I{opcode, MemArgImmediate{0, 0}}, {VT_I64}, {VT_V128});
+  }
+}
+
 TEST_F(ValidateInstructionTest, SimdLoad_Alignment) {
   struct {
     Opcode opcode;
@@ -2074,6 +2155,11 @@ TEST_F(ValidateInstructionTest, SimdLoad_MemoryOOB) {
 TEST_F(ValidateInstructionTest, SimdStore) {
   AddMemory(MemoryType{Limits{0}});
   TestSignature(I{O::V128Store, MemArgImmediate{0, 0}}, {VT_I32, VT_V128}, {});
+}
+
+TEST_F(ValidateInstructionTest, SimdStore_memory64) {
+  AddMemory64();
+  TestSignature(I{O::V128Store, MemArgImmediate{0, 0}}, {VT_I64, VT_V128}, {});
 }
 
 TEST_F(ValidateInstructionTest, SimdStore_Alignment) {
@@ -2349,6 +2435,16 @@ TEST_F(ValidateInstructionTest, AtomicNotifyAndWait) {
                 {VT_I32, VT_I64, VT_I64}, {VT_I32});
 }
 
+TEST_F(ValidateInstructionTest, AtomicNotifyAndWait_memory64) {
+  AddMemory64();
+  TestSignature(I{O::MemoryAtomicNotify, MemArgImmediate{2, 0}},
+                {VT_I64, VT_I32}, {VT_I32});
+  TestSignature(I{O::MemoryAtomicWait32, MemArgImmediate{2, 0}},
+                {VT_I64, VT_I32, VT_I64}, {VT_I32});
+  TestSignature(I{O::MemoryAtomicWait64, MemArgImmediate{3, 0}},
+                {VT_I64, VT_I64, VT_I64}, {VT_I32});
+}
+
 TEST_F(ValidateInstructionTest, AtomicNotifyAndWait_Alignment) {
   const struct {
     Opcode opcode;
@@ -2401,6 +2497,25 @@ TEST_F(ValidateInstructionTest, AtomicLoad) {
     }
   }
 }
+
+TEST_F(ValidateInstructionTest, AtomicLoad_memory64) {
+  const struct {
+    Opcode opcode;
+    ValueType result;
+    u32 align;
+  } infos[] = {
+      {O::I32AtomicLoad, VT_I32, 2},    {O::I32AtomicLoad8U, VT_I32, 0},
+      {O::I32AtomicLoad16U, VT_I32, 1}, {O::I64AtomicLoad, VT_I64, 3},
+      {O::I64AtomicLoad8U, VT_I64, 0},  {O::I64AtomicLoad16U, VT_I64, 1},
+      {O::I64AtomicLoad32U, VT_I64, 2}};
+
+  AddMemory64();
+  for (const auto& info : infos) {
+    TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}}, {VT_I64},
+                  {info.result});
+  }
+}
+
 
 TEST_F(ValidateInstructionTest, AtomicLoad_MemoryOOB) {
   const struct {
@@ -2463,6 +2578,25 @@ TEST_F(ValidateInstructionTest, AtomicStore) {
     }
   }
 }
+
+TEST_F(ValidateInstructionTest, AtomicStore_memory64) {
+  const struct {
+    Opcode opcode;
+    ValueType value_type;
+    u32 align;
+  } infos[] = {
+      {O::I32AtomicStore, VT_I32, 2},   {O::I32AtomicStore8, VT_I32, 0},
+      {O::I32AtomicStore16, VT_I32, 1}, {O::I64AtomicStore, VT_I64, 3},
+      {O::I64AtomicStore8, VT_I64, 0},  {O::I64AtomicStore16, VT_I64, 1},
+      {O::I64AtomicStore32, VT_I64, 2}};
+
+  AddMemory64();
+  for (const auto& info: infos) {
+    TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}},
+                  {VT_I64, info.value_type}, {});
+  }
+}
+
 
 TEST_F(ValidateInstructionTest, AtomicStore_MemoryOOB) {
   const struct {
@@ -2542,6 +2676,42 @@ TEST_F(ValidateInstructionTest, AtomicRmw) {
         Ok(I{O::Drop});
       }
     }
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicRmw_memory64) {
+  const struct {
+    Opcode opcode;
+    ValueType value_type;
+    u32 align;
+  } infos[] = {
+      {O::I32AtomicRmwAdd, VT_I32, 2},    {O::I32AtomicRmwSub, VT_I32, 2},
+      {O::I32AtomicRmwAnd, VT_I32, 2},    {O::I32AtomicRmwOr, VT_I32, 2},
+      {O::I32AtomicRmwXor, VT_I32, 2},    {O::I32AtomicRmwXchg, VT_I32, 2},
+      {O::I32AtomicRmw16AddU, VT_I32, 1}, {O::I32AtomicRmw16SubU, VT_I32, 1},
+      {O::I32AtomicRmw16AndU, VT_I32, 1}, {O::I32AtomicRmw16OrU, VT_I32, 1},
+      {O::I32AtomicRmw16XorU, VT_I32, 1}, {O::I32AtomicRmw16XchgU, VT_I32, 1},
+      {O::I32AtomicRmw8AddU, VT_I32, 0},  {O::I32AtomicRmw8SubU, VT_I32, 0},
+      {O::I32AtomicRmw8AndU, VT_I32, 0},  {O::I32AtomicRmw8OrU, VT_I32, 0},
+      {O::I32AtomicRmw8XorU, VT_I32, 0},  {O::I32AtomicRmw8XchgU, VT_I32, 0},
+      {O::I64AtomicRmwAdd, VT_I64, 3},    {O::I64AtomicRmwSub, VT_I64, 3},
+      {O::I64AtomicRmwAnd, VT_I64, 3},    {O::I64AtomicRmwOr, VT_I64, 3},
+      {O::I64AtomicRmwXor, VT_I64, 3},    {O::I64AtomicRmwXchg, VT_I64, 3},
+      {O::I64AtomicRmw32AddU, VT_I64, 2}, {O::I64AtomicRmw32SubU, VT_I64, 2},
+      {O::I64AtomicRmw32AndU, VT_I64, 2}, {O::I64AtomicRmw32OrU, VT_I64, 2},
+      {O::I64AtomicRmw32XorU, VT_I64, 2}, {O::I64AtomicRmw32XchgU, VT_I64, 2},
+      {O::I64AtomicRmw16AddU, VT_I64, 1}, {O::I64AtomicRmw16SubU, VT_I64, 1},
+      {O::I64AtomicRmw16AndU, VT_I64, 1}, {O::I64AtomicRmw16OrU, VT_I64, 1},
+      {O::I64AtomicRmw16XorU, VT_I64, 1}, {O::I64AtomicRmw16XchgU, VT_I64, 1},
+      {O::I64AtomicRmw8AddU, VT_I64, 0},  {O::I64AtomicRmw8SubU, VT_I64, 0},
+      {O::I64AtomicRmw8AndU, VT_I64, 0},  {O::I64AtomicRmw8OrU, VT_I64, 0},
+      {O::I64AtomicRmw8XorU, VT_I64, 0},  {O::I64AtomicRmw8XchgU, VT_I64, 0},
+  };
+
+  AddMemory64();
+  for (const auto& info: infos) {
+    TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}},
+                  {VT_I64, info.value_type}, {info.value_type});
   }
 }
 
@@ -2650,6 +2820,29 @@ TEST_F(ValidateInstructionTest, AtomicCmpxchg) {
         Ok(I{O::Drop});
       }
     }
+  }
+}
+
+TEST_F(ValidateInstructionTest, AtomicCmpxchg_memory64) {
+  const struct {
+    Opcode opcode;
+    ValueType value_type;
+    u32 align;
+  } infos[] = {
+      {O::I32AtomicRmwCmpxchg, VT_I32, 2},
+      {O::I32AtomicRmw16CmpxchgU, VT_I32, 1},
+      {O::I32AtomicRmw8CmpxchgU, VT_I32, 0},
+      {O::I64AtomicRmwCmpxchg, VT_I64, 3},
+      {O::I64AtomicRmw32CmpxchgU, VT_I64, 2},
+      {O::I64AtomicRmw16CmpxchgU, VT_I64, 1},
+      {O::I64AtomicRmw8CmpxchgU, VT_I64, 0},
+  };
+
+  AddMemory64();
+  for (const auto& info: infos) {
+    TestSignature(I{info.opcode, MemArgImmediate{info.align, 0}},
+                  {VT_I64, info.value_type, info.value_type},
+                  {info.value_type});
   }
 }
 

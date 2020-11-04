@@ -46,10 +46,6 @@ using namespace ::wasp::binary;
   V(exnref, StackType::Exnref())                                       \
   V(i31ref, StackType::I31ref())                                       \
   V(i32_i32, StackType::I32(), StackType::I32())                       \
-  V(i32_i64, StackType::I32(), StackType::I64())                       \
-  V(i32_f32, StackType::I32(), StackType::F32())                       \
-  V(i32_f64, StackType::I32(), StackType::F64())                       \
-  V(i32_v128, StackType::I32(), StackType::V128())                     \
   V(i64_i64, StackType::I64(), StackType::I64())                       \
   V(f32_f32, StackType::F32(), StackType::F32())                       \
   V(f64_f64, StackType::F64(), StackType::F64())                       \
@@ -60,8 +56,6 @@ using namespace ::wasp::binary;
   V(v128_v128, StackType::V128(), StackType::V128())                   \
   V(eqref_eqref, StackType::Eqref(), StackType::Eqref())               \
   V(i32_i32_i32, StackType::I32(), StackType::I32(), StackType::I32()) \
-  V(i32_i32_i64, StackType::I32(), StackType::I32(), StackType::I64()) \
-  V(i32_i64_i64, StackType::I32(), StackType::I64(), StackType::I64()) \
   V(v128_v128_v128, StackType::V128(), StackType::V128(), StackType::V128())
 
 #define WASP_V(name, ...)                         \
@@ -788,8 +782,23 @@ bool CheckAlignment(Context& context,
   return true;
 }
 
+StackType GetIndexType(const optional<MemoryType>& memory_type) {
+  if (memory_type && *memory_type->limits->index_type == IndexType::I64) {
+    return StackType::I64();
+  }
+  return StackType::I32();
+}
+
+StackTypeSpan GetIndexTypeSpan(const optional<MemoryType>& memory_type) {
+  if (memory_type && *memory_type->limits->index_type == IndexType::I64) {
+    return span_i64;
+  }
+  return span_i32;
+}
+
 bool Load(Context& context, Location loc, const At<Instruction>& instruction) {
   auto memory_type = GetMemoryType(context, 0);
+  auto index_span = GetIndexTypeSpan(memory_type);
   StackTypeSpan span;
   u32 max_align;
   switch (instruction->opcode) {
@@ -826,50 +835,53 @@ bool Load(Context& context, Location loc, const At<Instruction>& instruction) {
 
   bool valid = CheckAlignment(context, instruction, max_align);
   return AllTrue(memory_type, valid,
-                 PopAndPushTypes(context, loc, span_i32, span));
+                 PopAndPushTypes(context, loc, index_span, span));
 }
 
 bool Store(Context& context, Location loc, const At<Instruction>& instruction) {
   auto memory_type = GetMemoryType(context, 0);
-  StackTypeSpan span;
+  StackType type;
   u32 max_align;
   switch (instruction->opcode) {
-    case Opcode::I32Store:   span = span_i32_i32; max_align = 2; break;
-    case Opcode::I64Store:   span = span_i32_i64; max_align = 3; break;
-    case Opcode::F32Store:   span = span_i32_f32; max_align = 2; break;
-    case Opcode::F64Store:   span = span_i32_f64; max_align = 3; break;
-    case Opcode::I32Store8:  span = span_i32_i32; max_align = 0; break;
-    case Opcode::I32Store16: span = span_i32_i32; max_align = 1; break;
-    case Opcode::I64Store8:  span = span_i32_i64; max_align = 0; break;
-    case Opcode::I64Store16: span = span_i32_i64; max_align = 1; break;
-    case Opcode::I64Store32: span = span_i32_i64; max_align = 2; break;
-    case Opcode::V128Store:  span = span_i32_v128; max_align = 4; break;
+    case Opcode::I32Store:   type = StackType::I32(); max_align = 2; break;
+    case Opcode::I64Store:   type = StackType::I64(); max_align = 3; break;
+    case Opcode::F32Store:   type = StackType::F32(); max_align = 2; break;
+    case Opcode::F64Store:   type = StackType::F64(); max_align = 3; break;
+    case Opcode::I32Store8:  type = StackType::I32(); max_align = 0; break;
+    case Opcode::I32Store16: type = StackType::I32(); max_align = 1; break;
+    case Opcode::I64Store8:  type = StackType::I64(); max_align = 0; break;
+    case Opcode::I64Store16: type = StackType::I64(); max_align = 1; break;
+    case Opcode::I64Store32: type = StackType::I64(); max_align = 2; break;
+    case Opcode::V128Store:  type = StackType::V128(); max_align = 4; break;
     default:
       WASP_UNREACHABLE();
   }
 
+  StackTypeList params{GetIndexType(memory_type), type};
   bool valid = CheckAlignment(context, instruction, max_align);
-  return AllTrue(memory_type, valid, PopTypes(context, loc, span));
+  return AllTrue(memory_type, valid, PopTypes(context, loc, params));
 }
 
 bool MemorySize(Context& context) {
   auto memory_type = GetMemoryType(context, 0);
-  PushType(context, StackType::I32());
+  PushType(context, GetIndexType(memory_type));
   return AllTrue(memory_type);
 }
 
 bool MemoryGrow(Context& context, Location loc) {
   auto memory_type = GetMemoryType(context, 0);
-  return AllTrue(memory_type,
-                 PopAndPushTypes(context, loc, span_i32, span_i32));
+  auto span = GetIndexTypeSpan(memory_type);
+  return AllTrue(memory_type, PopAndPushTypes(context, loc, span, span));
 }
 
 bool MemoryInit(Context& context,
                 Location loc,
                 const At<InitImmediate>& immediate) {
   auto memory_type = GetMemoryType(context, 0);
+  StackTypeList params{GetIndexType(memory_type), StackType::I32(),
+                       StackType::I32()};
   bool valid = CheckDataSegment(context, immediate->segment_index);
-  return AllTrue(memory_type, valid, PopTypes(context, loc, span_i32_i32_i32));
+  return AllTrue(memory_type, valid, PopTypes(context, loc, params));
 }
 
 bool DataDrop(Context& context, At<Index> segment_index) {
@@ -880,12 +892,16 @@ bool MemoryCopy(Context& context,
                 Location loc,
                 const At<CopyImmediate>& immediate) {
   auto memory_type = GetMemoryType(context, 0);
-  return AllTrue(memory_type, PopTypes(context, loc, span_i32_i32_i32));
+  auto index_type = GetIndexType(memory_type);
+  StackTypeList params{index_type, index_type, index_type};
+  return AllTrue(memory_type, PopTypes(context, loc, params));
 }
 
 bool MemoryFill(Context& context, Location loc) {
   auto memory_type = GetMemoryType(context, 0);
-  return AllTrue(memory_type, PopTypes(context, loc, span_i32_i32_i32));
+  auto index_type = GetIndexType(memory_type);
+  StackTypeList params{index_type, StackType::I32(), index_type};
+  return AllTrue(memory_type, PopTypes(context, loc, params));
 }
 
 bool CheckReferenceType(Context& context,
@@ -963,33 +979,36 @@ bool MemoryAtomicNotify(Context& context,
                         const At<Instruction>& instruction) {
   const u32 align = 2;
   auto memory_type = GetMemoryType(context, 0);
+  StackTypeList params{GetIndexType(memory_type), StackType::I32()};
   bool valid = CheckAtomicAlignment(context, instruction, align);
   return AllTrue(memory_type, valid,
-                 PopAndPushTypes(context, loc, span_i32_i32, span_i32));
+                 PopAndPushTypes(context, loc, params, span_i32));
 }
 
 bool MemoryAtomicWait(Context& context,
                       Location loc,
                       const At<Instruction>& instruction) {
   auto memory_type = GetMemoryType(context, 0);
-  StackTypeSpan span;
+  StackType type;
   u32 align;
   switch (instruction->opcode) {
-    case Opcode::MemoryAtomicWait32: span = span_i32_i32_i64; align = 2; break;
-    case Opcode::MemoryAtomicWait64: span = span_i32_i64_i64; align = 3; break;
+    case Opcode::MemoryAtomicWait32: type = StackType::I32(); align = 2; break;
+    case Opcode::MemoryAtomicWait64: type = StackType::I64(); align = 3; break;
     default:
       WASP_UNREACHABLE();
   }
 
+  StackTypeList params{GetIndexType(memory_type), type, StackType::I64()};
   bool valid = CheckAtomicAlignment(context, instruction, align);
   return AllTrue(memory_type, valid,
-                 PopAndPushTypes(context, loc, span, span_i32));
+                 PopAndPushTypes(context, loc, params, span_i32));
 }
 
 bool AtomicLoad(Context& context,
                 Location loc,
                 const At<Instruction>& instruction) {
   auto memory_type = GetMemoryType(context, 0);
+  auto index_span = GetIndexTypeSpan(memory_type);
   StackTypeSpan span;
   u32 align;
   switch (instruction->opcode) {
@@ -1006,36 +1025,39 @@ bool AtomicLoad(Context& context,
 
   bool valid = CheckAtomicAlignment(context, instruction, align);
   return AllTrue(memory_type, valid,
-                 PopAndPushTypes(context, loc, span_i32, span));
+                 PopAndPushTypes(context, loc, index_span, span));
 }
 
 bool AtomicStore(Context& context,
                  Location loc,
                  const At<Instruction>& instruction) {
   auto memory_type = GetMemoryType(context, 0);
-  StackTypeSpan span;
+  StackType type;
   u32 align;
   switch (instruction->opcode) {
-    case Opcode::I32AtomicStore:   span = span_i32_i32; align = 2; break;
-    case Opcode::I64AtomicStore:   span = span_i32_i64; align = 3; break;
-    case Opcode::I32AtomicStore8:  span = span_i32_i32; align = 0; break;
-    case Opcode::I32AtomicStore16: span = span_i32_i32; align = 1; break;
-    case Opcode::I64AtomicStore8:  span = span_i32_i64; align = 0; break;
-    case Opcode::I64AtomicStore16: span = span_i32_i64; align = 1; break;
-    case Opcode::I64AtomicStore32: span = span_i32_i64; align = 2; break;
+    case Opcode::I32AtomicStore:   type = StackType::I32(); align = 2; break;
+    case Opcode::I64AtomicStore:   type = StackType::I64(); align = 3; break;
+    case Opcode::I32AtomicStore8:  type = StackType::I32(); align = 0; break;
+    case Opcode::I32AtomicStore16: type = StackType::I32(); align = 1; break;
+    case Opcode::I64AtomicStore8:  type = StackType::I64(); align = 0; break;
+    case Opcode::I64AtomicStore16: type = StackType::I64(); align = 1; break;
+    case Opcode::I64AtomicStore32: type = StackType::I64(); align = 2; break;
     default:
       WASP_UNREACHABLE();
   }
 
+  StackTypeList types{GetIndexType(memory_type), type};
   bool valid = CheckAtomicAlignment(context, instruction, align);
-  return AllTrue(memory_type, valid, PopTypes(context, loc, span));
+  return AllTrue(memory_type, valid, PopTypes(context, loc, types));
 }
 
 bool AtomicRmw(Context& context,
                Location loc,
                const At<Instruction>& instruction) {
   auto memory_type = GetMemoryType(context, 0);
-  StackTypeSpan params, results;
+  StackType index_type = GetIndexType(memory_type);
+  StackTypeList params;
+  StackTypeSpan results;
   u32 align;
   switch (instruction->opcode) {
     case Opcode::I32AtomicRmwAdd:
@@ -1058,7 +1080,8 @@ bool AtomicRmw(Context& context,
     case Opcode::I32AtomicRmw8XchgU:  align = 0; goto rmw32;
 
     rmw32:
-      params = span_i32_i32, results = span_i32;
+      params = {index_type, StackType::I32()};
+      results = span_i32;
       break;
 
     case Opcode::I64AtomicRmwAdd:
@@ -1087,7 +1110,8 @@ bool AtomicRmw(Context& context,
     case Opcode::I64AtomicRmw32XchgU: align = 2; goto rmw64;
 
     rmw64:
-      params = span_i32_i64, results = span_i64;
+      params = {index_type, StackType::I64()};
+      results = span_i64;
       break;
 
     case Opcode::I32AtomicRmwCmpxchg:    align = 2; goto cmpxchg32;
@@ -1095,7 +1119,8 @@ bool AtomicRmw(Context& context,
     case Opcode::I32AtomicRmw16CmpxchgU: align = 1; goto cmpxchg32;
 
     cmpxchg32:
-      params = span_i32_i32_i32, results = span_i32;
+      params = {index_type, StackType::I32(), StackType::I32()};
+      results = span_i32;
       break;
 
     case Opcode::I64AtomicRmwCmpxchg:    align = 3; goto cmpxchg64;
@@ -1104,7 +1129,8 @@ bool AtomicRmw(Context& context,
     case Opcode::I64AtomicRmw32CmpxchgU: align = 2; goto cmpxchg64;
 
     cmpxchg64:
-      params = span_i32_i64_i64, results = span_i64;
+      params = {index_type, StackType::I64(), StackType::I64()};
+      results = span_i64;
       break;
 
     default:

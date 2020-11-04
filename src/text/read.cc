@@ -647,8 +647,33 @@ auto ReadFunction(Tokenizer& tokenizer, Context& context) -> OptAt<Function> {
 
 // Section 4: Table
 
-auto ReadLimits(Tokenizer& tokenizer, Context& context) -> OptAt<Limits> {
+auto ReadIndexTypeOpt(Tokenizer& tokenizer, Context& context)
+    -> OptAt<IndexType> {
   LocationGuard guard{tokenizer};
+  auto token = tokenizer.Peek();
+  if (context.features.memory64_enabled() &&
+      token.type == TokenType::NumericType) {
+    if (token.numeric_type() == NumericType::I32) {
+      tokenizer.Read();
+      return At{token.loc, IndexType::I32};
+    } else if (token.numeric_type() == NumericType::I64) {
+      tokenizer.Read();
+      return At{token.loc, IndexType::I64};
+    }
+  }
+  return nullopt;
+}
+
+auto ReadLimits(Tokenizer& tokenizer,
+                Context& context,
+                AllowIndexType allow_index_type) -> OptAt<Limits> {
+  LocationGuard guard{tokenizer};
+
+  At<IndexType> index_type = IndexType::I32;
+  if (allow_index_type == AllowIndexType::Yes) {
+    index_type = ReadIndexTypeOpt(tokenizer, context).value_or(IndexType::I32);
+  }
+
   WASP_TRY_READ(min, ReadNat32(tokenizer, context));
   auto token = tokenizer.Peek();
   OptAt<u32> max_opt;
@@ -657,6 +682,7 @@ auto ReadLimits(Tokenizer& tokenizer, Context& context) -> OptAt<Limits> {
     max_opt = max;
   }
 
+  // TODO: Only allow this when threads is enabled.
   token = tokenizer.Peek();
   At<Shared> shared = Shared::No;
   if (token.type == TokenType::Shared) {
@@ -664,7 +690,13 @@ auto ReadLimits(Tokenizer& tokenizer, Context& context) -> OptAt<Limits> {
     shared = At{token.loc, Shared::Yes};
   }
 
-  return At{guard.loc(), Limits{min, max_opt, shared}};
+  if (shared == Shared::Yes && index_type == IndexType::I64) {
+    context.errors.OnError(token.loc,
+                           "limits cannot be shared and have i64 index");
+    return nullopt;
+  }
+
+  return At{guard.loc(), Limits{min, max_opt, shared, index_type}};
 }
 
 auto ReadHeapType(Tokenizer& tokenizer, Context& context) -> OptAt<HeapType> {
@@ -786,7 +818,7 @@ auto ReadReferenceTypeOpt(Tokenizer& tokenizer,
 
 auto ReadTableType(Tokenizer& tokenizer, Context& context) -> OptAt<TableType> {
   LocationGuard guard{tokenizer};
-  WASP_TRY_READ(limits, ReadLimits(tokenizer, context));
+  WASP_TRY_READ(limits, ReadLimits(tokenizer, context, AllowIndexType::No));
   WASP_TRY_READ(element, ReadReferenceType(tokenizer, context));
   return At{guard.loc(), TableType{limits, element}};
 }
@@ -843,7 +875,7 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> OptAt<Table> {
 
 auto ReadMemoryType(Tokenizer& tokenizer, Context& context)
     -> OptAt<MemoryType> {
-  WASP_TRY_READ(limits, ReadLimits(tokenizer, context));
+  WASP_TRY_READ(limits, ReadLimits(tokenizer, context, AllowIndexType::Yes));
   return At{limits.loc(), MemoryType{limits}};
 }
 
@@ -862,24 +894,35 @@ auto ReadMemory(Tokenizer& tokenizer, Context& context) -> OptAt<Memory> {
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
     return At{guard.loc(),
               Memory{MemoryDesc{name, type}, *import_opt, exports}};
-  } else if (tokenizer.MatchLpar(TokenType::Data)) {
-    // Inline data segment.
-    WASP_TRY_READ(data, ReadTextList(tokenizer, context));
-    auto size = std::accumulate(
-        data.begin(), data.end(), u32{0},
-        [](u32 total, Text text) { return total + text.byte_size; });
-
-    // Implicit memory type.
-    auto type = MemoryType{Limits{size, size}};
-
-    WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return At{guard.loc(), Memory{MemoryDesc{name, type}, exports, data}};
   } else {
-    // Defined memory.
-    WASP_TRY_READ(type, ReadMemoryType(tokenizer, context));
-    WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
-    return At{guard.loc(), Memory{MemoryDesc{name, type}, exports}};
+    // MEMORY * index_type? LPAR DATA ...
+    // MEMORY * index_type? nat ...
+    if ((context.features.memory64_enabled() &&
+         tokenizer.Peek().type == TokenType::NumericType &&
+         tokenizer.Peek(1).type == TokenType::Lpar) ||
+        tokenizer.Peek().type == TokenType::Lpar) {
+      // Inline data segment.
+      auto index_type =
+          ReadIndexTypeOpt(tokenizer, context).value_or(IndexType::I32);
+      WASP_TRY(Expect(tokenizer, context, TokenType::Lpar));
+      WASP_TRY(Expect(tokenizer, context, TokenType::Data));
+      WASP_TRY_READ(data, ReadTextList(tokenizer, context));
+      auto size = std::accumulate(
+          data.begin(), data.end(), u32{0},
+          [](u32 total, Text text) { return total + text.byte_size; });
+
+      // Implicit memory type.
+      auto type = MemoryType{Limits{size, size, Shared::No, index_type}};
+
+      WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+      WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+      return At{guard.loc(), Memory{MemoryDesc{name, type}, exports, data}};
+    } else {
+      // Defined memory.
+      WASP_TRY_READ(type, ReadMemoryType(tokenizer, context));
+      WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+      return At{guard.loc(), Memory{MemoryDesc{name, type}, exports}};
+    }
   }
 }
 

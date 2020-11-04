@@ -677,11 +677,47 @@ TEST_F(TextReadTest, OffsetOpt) {
 }
 
 TEST_F(TextReadTest, Limits) {
-  OK(ReadLimits, Limits{At{"1"_su8, 1u}}, "1"_su8);
-  OK(ReadLimits, Limits{At{"1"_su8, 1u}, At{"0x11"_su8, 17u}}, "1 0x11"_su8);
+  OK(ReadLimits, Limits{At{"1"_su8, 1u}}, "1"_su8, AllowIndexType::No);
+  OK(ReadLimits, Limits{At{"1"_su8, 1u}, At{"0x11"_su8, 17u}}, "1 0x11"_su8,
+     AllowIndexType::No);
+  // TODO: Should only be allowed when threads feature is enabled.
   OK(ReadLimits,
      Limits{At{"0"_su8, 0u}, At{"20"_su8, 20u}, At{"shared"_su8, Shared::Yes}},
-     "0 20 shared"_su8);
+     "0 20 shared"_su8, AllowIndexType::No);
+}
+
+TEST_F(TextReadTest, Limits_memory64) {
+  Fail(ReadLimits, {{0, "Expected a natural number, got NumericType"}},
+       "i32 1"_su8, AllowIndexType::Yes);
+
+  context.features.enable_memory64();
+
+  OK(ReadLimits,
+     Limits{At{"1"_su8, 1u}, nullopt, Shared::No,
+            At{"i32"_su8, IndexType::I32}},
+     "i32 1"_su8, AllowIndexType::Yes);
+
+  OK(ReadLimits,
+     Limits{At{"1"_su8, 1u}, At{"2"_su8, 2u}, Shared::No,
+            At{"i32"_su8, IndexType::I32}},
+     "i32 1 2"_su8, AllowIndexType::Yes);
+
+  OK(ReadLimits,
+     Limits{At{"1"_su8, 1u}, nullopt, Shared::No,
+            At{"i64"_su8, IndexType::I64}},
+     "i32 1"_su8, AllowIndexType::Yes);
+
+  OK(ReadLimits,
+     Limits{At{"1"_su8, 1u}, At{"2"_su8, 2u}, Shared::No,
+            At{"i64"_su8, IndexType::I64}},
+     "i32 1 2"_su8, AllowIndexType::Yes);
+}
+
+TEST_F(TextReadTest, Limits_No64BitShared) {
+  context.features.enable_memory64();
+
+  Fail(ReadLimits, {{8, "limits cannot be shared and have i64 index"}},
+       "i64 1 2 shared"_su8, AllowIndexType::Yes);
 }
 
 TEST_F(TextReadTest, BlockImmediate) {
@@ -1942,11 +1978,28 @@ TEST_F(TextReadTest, TableType) {
      "1 2 funcref"_su8);
 }
 
+TEST_F(TextReadTest, TableType_memory64) {
+  context.features.enable_memory64();
+
+  Fail(ReadTableType, {{0, "Expected a natural number, got NumericType"}},
+       "i64 1 2 funcref"_su8);
+}
+
 TEST_F(TextReadTest, MemoryType) {
   OK(ReadMemoryType,
      MemoryType{
          At{"1 2"_su8, Limits{At{"1"_su8, u32{1}}, At{"2"_su8, u32{2}}}}},
      "1 2"_su8);
+}
+
+TEST_F(TextReadTest, MemoryType_memory64) {
+  context.features.enable_memory64();
+
+  OK(ReadMemoryType,
+     MemoryType{
+         At{"i64 1 2"_su8, Limits{At{"1"_su8, u32{1}}, At{"2"_su8, u32{2}},
+                                  Shared::No, At{"i64"_su8, IndexType::I64}}}},
+     "i64 1 2"_su8);
 }
 
 TEST_F(TextReadTest, GlobalType) {
@@ -2240,6 +2293,69 @@ TEST_F(TextReadTest, MemoryInlineImport) {
                 At{"(export \"m\")"_su8,
                    InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
      "(memory $t (export \"m\") (import \"a\" \"b\") 0)"_su8);
+}
+
+TEST_F(TextReadTest, Memory_memory64) {
+  context.features.enable_memory64();
+
+  OK(ReadMemory,
+     Memory{MemoryDesc{{},
+                       At{"i64 0"_su8,
+                          MemoryType{At{
+                              "i64 0"_su8,
+                              Limits{At{"0"_su8, u32{0}}, nullopt, Shared::No,
+                                     At{"i64"_su8, IndexType::I64}}}}}},
+            {}},
+     "(memory i64 0)"_su8);
+
+  // Name.
+  OK(ReadMemory,
+     Memory{MemoryDesc{At{"$m"_su8, "$m"_sv},
+                       At{"i64 0"_su8,
+                          MemoryType{At{
+                              "i64 0"_su8,
+                              Limits{At{"0"_su8, u32{0}}, nullopt, Shared::No,
+                                     At{"i64"_su8, IndexType::I64}}}}}},
+            {}},
+     "(memory $m i64 0)"_su8);
+
+  // Inline export.
+  OK(ReadMemory,
+     Memory{MemoryDesc{{},
+                       At{"i64 0"_su8,
+                          MemoryType{At{
+                              "i64 0"_su8,
+                              Limits{At{"0"_su8, u32{0}}, nullopt, Shared::No,
+                                     At{"i64"_su8, IndexType::I64}}}}}},
+            InlineExportList{
+                At{"(export \"m\")"_su8,
+                   InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
+     "(memory (export \"m\") i64 0)"_su8);
+
+  // Name and inline export.
+  OK(ReadMemory,
+     Memory{MemoryDesc{At{"$t"_su8, "$t"_sv},
+                       At{"i64 0"_su8,
+                          MemoryType{At{
+                              "i64 0"_su8,
+                              Limits{At{"0"_su8, u32{0}}, nullopt, Shared::No,
+                                     At{"i64"_su8, IndexType::I64}}}}}},
+            InlineExportList{
+                At{"(export \"m\")"_su8,
+                   InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
+     "(memory $t (export \"m\") i64 0)"_su8);
+
+  // Inline data segment.
+  OK(ReadMemory,
+     Memory{MemoryDesc{{},
+                       MemoryType{Limits{u32{10}, u32{10}, Shared::No,
+                                         At{"i64"_su8, IndexType::I64}}}},
+            {},
+            TextList{
+                At{"\"hello\""_su8, Text{"\"hello\""_sv, 5}},
+                At{"\"world\""_su8, Text{"\"world\""_sv, 5}},
+            }},
+     "(memory i64 (data \"hello\" \"world\"))"_su8);
 }
 
 TEST_F(TextReadTest, Global) {

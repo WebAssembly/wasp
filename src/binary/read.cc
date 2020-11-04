@@ -1305,12 +1305,21 @@ OptAt<Index> ReadLength(SpanU8* data, Context& context) {
   return ReadCheckLength(data, context, "length", "Length");
 }
 
-OptAt<Limits> Read(SpanU8* data, Context& context, Tag<Limits>) {
+OptAt<Limits> Read(SpanU8* data,
+                   Context& context,
+                   Tag<Limits>,
+                   AllowIndexType64 allow_index_type_64) {
   ErrorsContextGuard error_guard{context.errors, *data, "limits"};
   LocationGuard guard{data};
   WASP_TRY_READ_CONTEXT(flags, Read<u8>(data, context), "flags");
   WASP_TRY_DECODE_FEATURES(decoded, flags, LimitsFlags, "flags value",
                            context.features);
+
+  if (allow_index_type_64 == AllowIndexType64::No &&
+      decoded->index_type == IndexType::I64) {
+    context.errors.OnError(flags.loc(), "i64 index type is not allowed");
+    return nullopt;
+  }
 
   WASP_TRY_READ_CONTEXT(min, Read<u32>(data, context), "min");
 
@@ -1320,7 +1329,8 @@ OptAt<Limits> Read(SpanU8* data, Context& context, Tag<Limits>) {
     max = max_;
   }
   return At{guard.range(data),
-            Limits{min, max, At{flags.loc(), decoded->shared}}};
+            Limits{min, max, At{flags.loc(), decoded->shared},
+                   At{flags.loc(), decoded->index_type}}};
 }
 
 OptAt<Locals> Read(SpanU8* data, Context& context, Tag<Locals>) {
@@ -1364,7 +1374,7 @@ OptAt<Memory> Read(SpanU8* data, Context& context, Tag<Memory>) {
 
 OptAt<MemoryType> Read(SpanU8* data, Context& context, Tag<MemoryType>) {
   ErrorsContextGuard error_guard{context.errors, *data, "memory type"};
-  WASP_TRY_READ(limits, Read<Limits>(data, context));
+  WASP_TRY_READ(limits, Read<Limits>(data, context, AllowIndexType64::Yes));
   return At{limits.loc(), MemoryType{limits}};
 }
 
@@ -1543,7 +1553,7 @@ OptAt<TableType> Read(SpanU8* data, Context& context, Tag<TableType>) {
   ErrorsContextGuard error_guard{context.errors, *data, "table type"};
   LocationGuard guard{data};
   WASP_TRY_READ(elemtype, Read<ReferenceType>(data, context));
-  WASP_TRY_READ(limits, Read<Limits>(data, context));
+  WASP_TRY_READ(limits, Read<Limits>(data, context, AllowIndexType64::No));
   return At{guard.range(data), TableType{std::move(limits), elemtype}};
 }
 

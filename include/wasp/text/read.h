@@ -94,9 +94,11 @@ auto ReadFunction(Tokenizer&, Context&) -> OptAt<Function>;
 
 // Section 4: Table
 
+enum class AllowIndexType { No, Yes };
 enum class AllowFuncref { No, Yes };
 
-auto ReadLimits(Tokenizer&, Context&) -> OptAt<Limits>;
+auto ReadIndexTypeOpt(Tokenizer&, Context&) -> OptAt<IndexType>;
+auto ReadLimits(Tokenizer&, Context&, AllowIndexType) -> OptAt<Limits>;
 auto ReadHeapType(Tokenizer&, Context&) -> OptAt<HeapType>;
 auto ReadRefType(Tokenizer&, Context&) -> OptAt<RefType>;
 auto ReadReferenceType(Tokenizer&, Context&, AllowFuncref = AllowFuncref::Yes)

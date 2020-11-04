@@ -61,6 +61,7 @@ enum class HasMax { No, Yes };
 struct DecodedLimitsFlags {
   HasMax has_max;
   Shared shared;
+  IndexType index_type;
 };
 
 struct HeapKind {
@@ -71,8 +72,10 @@ struct HeapKind {
 
 struct LimitsFlags {
   static constexpr u8 NoMax = 0;
+  static constexpr u8 IndexType32 = 0;
   static constexpr u8 HasMax = 1;
   static constexpr u8 HasMaxAndShared = 3;
+  static constexpr u8 IndexType64 = 4;
 
   static u8 Encode(const DecodedLimitsFlags&);
   static u8 Encode(const Limits&);
