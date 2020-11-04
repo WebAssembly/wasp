@@ -663,10 +663,15 @@ auto ReadIndexType(Tokenizer& tokenizer, Context& context) -> At<IndexType> {
   return At{IndexType::I32};
 }
 
-auto ReadLimits(Tokenizer& tokenizer, Context& context) -> OptAt<Limits> {
+auto ReadLimits(Tokenizer& tokenizer,
+                Context& context,
+                AllowIndexType allow_index_type) -> OptAt<Limits> {
   LocationGuard guard{tokenizer};
 
-  auto index_type = ReadIndexType(tokenizer, context);
+  At<IndexType> index_type = IndexType::I32;
+  if (allow_index_type == AllowIndexType::Yes) {
+    index_type = ReadIndexType(tokenizer, context);
+  }
 
   WASP_TRY_READ(min, ReadNat32(tokenizer, context));
   auto token = tokenizer.Peek();
@@ -812,8 +817,7 @@ auto ReadReferenceTypeOpt(Tokenizer& tokenizer,
 
 auto ReadTableType(Tokenizer& tokenizer, Context& context) -> OptAt<TableType> {
   LocationGuard guard{tokenizer};
-  WASP_TRY_READ(limits, ReadLimits(tokenizer, context));
-  // TODO: Don't allow shared/i64 for table limits
+  WASP_TRY_READ(limits, ReadLimits(tokenizer, context, AllowIndexType::No));
   WASP_TRY_READ(element, ReadReferenceType(tokenizer, context));
   return At{guard.loc(), TableType{limits, element}};
 }
@@ -870,7 +874,7 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> OptAt<Table> {
 
 auto ReadMemoryType(Tokenizer& tokenizer, Context& context)
     -> OptAt<MemoryType> {
-  WASP_TRY_READ(limits, ReadLimits(tokenizer, context));
+  WASP_TRY_READ(limits, ReadLimits(tokenizer, context, AllowIndexType::Yes));
   return At{limits.loc(), MemoryType{limits}};
 }
 

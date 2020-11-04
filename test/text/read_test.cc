@@ -677,46 +677,47 @@ TEST_F(TextReadTest, OffsetOpt) {
 }
 
 TEST_F(TextReadTest, Limits) {
-  OK(ReadLimits, Limits{At{"1"_su8, 1u}}, "1"_su8);
-  OK(ReadLimits, Limits{At{"1"_su8, 1u}, At{"0x11"_su8, 17u}}, "1 0x11"_su8);
+  OK(ReadLimits, Limits{At{"1"_su8, 1u}}, "1"_su8, AllowIndexType::No);
+  OK(ReadLimits, Limits{At{"1"_su8, 1u}, At{"0x11"_su8, 17u}}, "1 0x11"_su8,
+     AllowIndexType::No);
   // TODO: Should only be allowed when threads feature is enabled.
   OK(ReadLimits,
      Limits{At{"0"_su8, 0u}, At{"20"_su8, 20u}, At{"shared"_su8, Shared::Yes}},
-     "0 20 shared"_su8);
+     "0 20 shared"_su8, AllowIndexType::No);
 }
 
 TEST_F(TextReadTest, Limits_memory64) {
   Fail(ReadLimits, {{0, "Expected a natural number, got NumericType"}},
-       "i32 1"_su8);
+       "i32 1"_su8, AllowIndexType::Yes);
 
   context.features.enable_memory64();
 
   OK(ReadLimits,
      Limits{At{"1"_su8, 1u}, nullopt, Shared::No,
             At{"i32"_su8, IndexType::I32}},
-     "i32 1"_su8);
+     "i32 1"_su8, AllowIndexType::Yes);
 
   OK(ReadLimits,
      Limits{At{"1"_su8, 1u}, At{"2"_su8, 2u}, Shared::No,
             At{"i32"_su8, IndexType::I32}},
-     "i32 1 2"_su8);
+     "i32 1 2"_su8, AllowIndexType::Yes);
 
   OK(ReadLimits,
      Limits{At{"1"_su8, 1u}, nullopt, Shared::No,
             At{"i64"_su8, IndexType::I64}},
-     "i32 1"_su8);
+     "i32 1"_su8, AllowIndexType::Yes);
 
   OK(ReadLimits,
      Limits{At{"1"_su8, 1u}, At{"2"_su8, 2u}, Shared::No,
             At{"i64"_su8, IndexType::I64}},
-     "i32 1 2"_su8);
+     "i32 1 2"_su8, AllowIndexType::Yes);
 }
 
 TEST_F(TextReadTest, Limits_No64BitShared) {
   context.features.enable_memory64();
 
   Fail(ReadLimits, {{8, "limits cannot be shared and have i64 index"}},
-       "i64 1 2 shared"_su8);
+       "i64 1 2 shared"_su8, AllowIndexType::Yes);
 }
 
 TEST_F(TextReadTest, BlockImmediate) {
@@ -1977,11 +1978,28 @@ TEST_F(TextReadTest, TableType) {
      "1 2 funcref"_su8);
 }
 
+TEST_F(TextReadTest, TableType_memory64) {
+  context.features.enable_memory64();
+
+  Fail(ReadTableType, {{0, "Expected a natural number, got NumericType"}},
+       "i64 1 2 funcref"_su8);
+}
+
 TEST_F(TextReadTest, MemoryType) {
   OK(ReadMemoryType,
      MemoryType{
          At{"1 2"_su8, Limits{At{"1"_su8, u32{1}}, At{"2"_su8, u32{2}}}}},
      "1 2"_su8);
+}
+
+TEST_F(TextReadTest, MemoryType_memory64) {
+  context.features.enable_memory64();
+
+  OK(ReadMemoryType,
+     MemoryType{
+         At{"i64 1 2"_su8, Limits{At{"1"_su8, u32{1}}, At{"2"_su8, u32{2}},
+                                  Shared::No, At{"i64"_su8, IndexType::I64}}}},
+     "i64 1 2"_su8);
 }
 
 TEST_F(TextReadTest, GlobalType) {
