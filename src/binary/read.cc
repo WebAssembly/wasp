@@ -1320,7 +1320,8 @@ OptAt<Limits> Read(SpanU8* data, Context& context, Tag<Limits>) {
     max = max_;
   }
   return At{guard.range(data),
-            Limits{min, max, At{flags.loc(), decoded->shared}}};
+            Limits{min, max, At{flags.loc(), decoded->shared},
+                   At{flags.loc(), decoded->index_type}}};
 }
 
 OptAt<Locals> Read(SpanU8* data, Context& context, Tag<Locals>) {

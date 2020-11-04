@@ -198,6 +198,10 @@ TEST(BinaryFormattersTest, Limits) {
   EXPECT_EQ(R"({min 1})", concat(Limits{1}));
   EXPECT_EQ(R"({min 1, max 2})", concat(Limits{1, 2}));
   EXPECT_EQ(R"({min 1, max 2, shared})", concat(Limits{1, 2, Shared::Yes}));
+  EXPECT_EQ(R"({min 1, i64})",
+            concat(Limits{1, nullopt, Shared::No, IndexType::I64}));
+  EXPECT_EQ(R"({min 1, max 2, i64})",
+            concat(Limits{1, 2, Shared::No, IndexType::I64}));
 }
 
 TEST(BinaryFormattersTest, Locals) {

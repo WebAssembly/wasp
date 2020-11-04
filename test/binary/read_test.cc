@@ -2466,6 +2466,19 @@ TEST_F(BinaryReadTest, Limits_threads) {
      "\x03\x02\xe8\x07"_su8);
 }
 
+TEST_F(BinaryReadTest, Limits_memory64) {
+  context.features.enable_memory64();
+
+  OK(Read<Limits>,
+     Limits{At{"\x01"_su8, u32{1}}, nullopt, At{"\x04"_su8, Shared::No},
+            At{"\x04"_su8, IndexType::I64}},
+     "\x04\x01"_su8);
+  OK(Read<Limits>,
+     Limits{At{"\x01"_su8, u32{1}}, At{"\x02"_su8, u32{2}},
+            At{"\x05"_su8, Shared::No}, At{"\x05"_su8, IndexType::I64}},
+     "\x05\x01\x02"_su8);
+}
+
 TEST_F(BinaryReadTest, Limits_PastEnd) {
   Fail(Read<Limits>,
        {{0, "limits"}, {1, "min"}, {1, "u32"}, {1, "Unable to read u8"}},

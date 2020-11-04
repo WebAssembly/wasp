@@ -93,6 +93,11 @@ TEST(FormattersTest, Variant) {
   EXPECT_EQ(R"(Point {x:1, y:2})", concat(MyVariant{Point{1, 2}}));
 }
 
+TEST(FormattersTest, IndexType) {
+  EXPECT_EQ(R"(i32)", concat(IndexType::I32));
+  EXPECT_EQ(R"(i64)", concat(IndexType::I64));
+}
+
 TEST(FormattersTest, MemoryType) {
   EXPECT_EQ(R"({min 1, max 2})", concat(MemoryType{Limits{1, 2}}));
 }

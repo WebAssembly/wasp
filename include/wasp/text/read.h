@@ -96,6 +96,7 @@ auto ReadFunction(Tokenizer&, Context&) -> OptAt<Function>;
 
 enum class AllowFuncref { No, Yes };
 
+auto ReadIndexType(Tokenizer&, Context&) -> At<IndexType>;
 auto ReadLimits(Tokenizer&, Context&) -> OptAt<Limits>;
 auto ReadHeapType(Tokenizer&, Context&) -> OptAt<HeapType>;
 auto ReadRefType(Tokenizer&, Context&) -> OptAt<RefType>;

@@ -155,36 +155,59 @@ optional<::wasp::HeapKind> HeapKind::Decode(u8 val, const Features& features) {
 // static
 u8 LimitsFlags::Encode(const DecodedLimitsFlags& decoded) {
   if (decoded.shared == Shared::No) {
-    if (decoded.has_max == HasMax::No) {
-      return NoMax;
+    if (decoded.has_max == HasMax::No && decoded.index_type == IndexType::I32) {
+      return NoMax | IndexType32;
+    } else if (decoded.has_max == HasMax::Yes &&
+               decoded.index_type == IndexType::I32) {
+      return HasMax | IndexType32;
+    } else if (decoded.has_max == HasMax::No &&
+               decoded.index_type == IndexType::I64) {
+      return NoMax | IndexType64;
     } else {
-      return HasMax;
+      assert(decoded.has_max == HasMax::Yes);
+      assert(decoded.index_type == IndexType::I64);
+      return HasMax | IndexType64;
     }
   } else {
     assert(decoded.has_max == HasMax::Yes);
+    assert(decoded.index_type == IndexType::I32);
     return HasMaxAndShared;
   }
 }
 
 // static
 u8 LimitsFlags::Encode(const Limits& limits) {
-  return Encode(
-      DecodedLimitsFlags{limits.max ? HasMax::Yes : HasMax::No, limits.shared});
+  return Encode(DecodedLimitsFlags{limits.max ? HasMax::Yes : HasMax::No,
+                                   limits.shared, limits.index_type});
 }
 
 // static
 optional<DecodedLimitsFlags> LimitsFlags::Decode(u8 flags,
                                                  const Features& features) {
   switch (flags) {
-    case LimitsFlags::NoMax:
-      return {{HasMax::No, Shared::No}};
+    case LimitsFlags::NoMax | LimitsFlags::IndexType32:
+      return {{HasMax::No, Shared::No, IndexType::I32}};
 
-    case LimitsFlags::HasMax:
-      return {{HasMax::Yes, Shared::No}};
+    case LimitsFlags::HasMax | LimitsFlags::IndexType32:
+      return {{HasMax::Yes, Shared::No, IndexType::I32}};
+
+    case LimitsFlags::NoMax | LimitsFlags::IndexType64:
+      if (features.memory64_enabled()) {
+        return {{HasMax::No, Shared::No, IndexType::I64}};
+      } else {
+        return nullopt;
+      }
+
+    case LimitsFlags::HasMax | LimitsFlags::IndexType64:
+      if (features.memory64_enabled()) {
+        return {{HasMax::Yes, Shared::No, IndexType::I64}};
+      } else {
+        return nullopt;
+      }
 
     case LimitsFlags::HasMaxAndShared:
       if (features.threads_enabled()) {
-        return {{HasMax::Yes, Shared::Yes}};
+        return {{HasMax::Yes, Shared::Yes, IndexType::I32}};
       } else {
         return nullopt;
       }

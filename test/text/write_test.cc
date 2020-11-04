@@ -539,6 +539,7 @@ TEST(TextWriteTest, Limits) {
   ExpectWrite("0"_sv, Limits{0});
   ExpectWrite("0 0"_sv, Limits{0, 0});
   ExpectWrite("0 0 shared"_sv, Limits{0, 0, Shared::Yes});
+  ExpectWrite("i64 0 0"_sv, Limits{0, 0, Shared::No, IndexType::I64});
 }
 
 TEST(TextWriteTest, TableType) {

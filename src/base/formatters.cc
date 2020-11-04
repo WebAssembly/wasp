@@ -217,6 +217,21 @@ std::ostream& operator<<(std::ostream& os, const ::wasp::Features& self) {
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const ::wasp::IndexType& self) {
+  string_view result;
+  switch (self) {
+    case ::wasp::IndexType::I32:
+      result = "i32";
+      break;
+    case ::wasp::IndexType::I64:
+      result = "i64";
+      break;
+    default:
+      WASP_UNREACHABLE();
+  }
+  return os << result;
+}
+
 std::ostream& operator<<(std::ostream& os, const ::wasp::Null& self) {
   string_view result;
   switch (self) {
@@ -254,6 +269,9 @@ std::ostream& operator<<(std::ostream& os, const ::wasp::Limits& self) {
     if (self.shared == ::wasp::Shared::Yes) {
       os << ", " << self.shared;
     }
+  }
+  if (self.index_type == ::wasp::IndexType::I64) {
+    os << ", " << self.index_type;
   }
   return os << "}";
 }
