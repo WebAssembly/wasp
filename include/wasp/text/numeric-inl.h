@@ -20,7 +20,10 @@
 #include <charconv>
 #include <limits>
 
-#include "third_party/gdtoa/gdtoa.h"
+#include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
+
 #include "wasp/base/bitcast.h"
 #include "wasp/base/buffer.h"
 #include "wasp/base/macros.h"
@@ -126,24 +129,22 @@ inline void RemoveUnderscores(SpanU8 span, Buffer& out) {
 }
 
 template <typename T>
-auto StrToR(const char* str, T* value) -> int;
+auto SimpleAto(const char* str, T* value) -> bool;
 
 template <>
-inline auto StrToR<f32>(const char* str, f32* value) -> int {
-  return strtorf(str, nullptr, FPI_Round_near, value);
+inline auto SimpleAto<f32>(const char* str, f32* value) -> bool {
+  return absl::SimpleAtof(str, value);
 }
 
 template <>
-inline auto StrToR<f64>(const char* str, f64* value) -> int {
-  return strtord(str, nullptr, FPI_Round_near, value);
+inline auto SimpleAto<f64>(const char* str, f64* value) -> bool {
+  return absl::SimpleAtod(str, value);
 }
 
 template <typename T>
 auto ParseFloat(SpanU8 span) -> optional<T> {
   T value;
-  int result = StrToR(reinterpret_cast<const char*>(span.begin()), &value);
-  if ((result & STRTOG_Retmask) == STRTOG_NoNumber ||
-      (result & STRTOG_Overflow) != 0) {
+  if (!SimpleAto(reinterpret_cast<const char*>(span.begin()), &value)) {
     return nullopt;
   }
   return value;
@@ -326,30 +327,26 @@ auto ClassifyFloat(T value) -> FloatInfo<T> {
 }
 
 template <typename T>
-auto GFmt(T value, char* first, char* last) -> char*;
+void FloatFormat(std::string&, T value);
 
 template <>
-inline auto GFmt<f32>(f32 value, char* first, char* last) -> char* {
-  return g_ffmt(first, &value, 0, static_cast<unsigned>(last - first));
+inline void FloatFormat<f32>(std::string& str, f32 value) {
+  absl::StrAppendFormat(&str, "%.9g", value);
 }
 
 template <>
-inline auto GFmt<f64>(f64 value, char* first, char* last) -> char* {
-  return g_dfmt(first, &value, 0, static_cast<unsigned>(last - first));
+inline void FloatFormat<f64>(std::string& str, f64 value) {
+  absl::StrAppendFormat(&str, "%.17g", value);
 }
 
 template <typename T>
 auto FloatToStr(T value, Base base) -> std::string {
-  // Not sure exactly how many characters are needed, but this should be enough.
-  constexpr size_t max_chars = 40;
-  std::array<char, max_chars> buffer;
-  char* begin = buffer.data();
-  char* end = buffer.data() + buffer.size();
+  std::string str;
 
   auto info = ClassifyFloat(value);
   if (info.kind != LiteralKind::Normal) {
     if (info.sign == Sign::Minus) {
-      *begin++ = '-';
+      absl::StrAppend(&str, "-");
     }
 
     string_view keyword;
@@ -360,24 +357,23 @@ auto FloatToStr(T value, Base base) -> std::string {
       case LiteralKind::Normal:
         WASP_UNREACHABLE();
     }
-    begin = std::copy(keyword.begin(), keyword.end(), begin);
+    absl::StrAppend(&str, keyword);
 
     if (info.kind == LiteralKind::NanPayload) {
-      begin = std::to_chars(begin, end, info.payload, 16).ptr;
+      absl::StrAppend(&str, absl::Hex{info.payload});
     }
   } else {
     if (base == Base::Decimal) {
-      begin = GFmt(value, begin, end);
+      FloatFormat(str, value);
     } else {
       // Hex.
       using Traits = FloatTraits<T>;
       using Int = typename Traits::Int;
 
       if (info.sign == Sign::Minus) {
-        *begin++ = '-';
+        absl::StrAppend(&str, "-");
       }
-      *begin++ = '0';
-      *begin++ = 'x';
+      absl::StrAppend(&str, "0x");
 
       Int bits = Bitcast<Int>(value);
       Int sig = bits & Traits::significand_mask;
@@ -397,12 +393,10 @@ auto FloatToStr(T value, Base base) -> std::string {
         exp++;
       }
 
-      begin = std::to_chars(begin, end, sig, 16).ptr;
-      *begin++ = 'p';
-      begin = std::to_chars(begin, end, exp - Traits::exp_shift).ptr;
+      absl::StrAppend(&str, absl::Hex{sig}, "p", exp - Traits::exp_shift);
     }
   }
-  return std::string(buffer.data(), begin);
+  return str;
 }
 
 }  // namespace wasp::text

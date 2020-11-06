@@ -21,5 +21,3 @@ if (BUILD_TESTING)
   set(gtest_force_shared_crt ON CACHE BOOL "Force gtest to use shared library")
   add_subdirectory(gtest)
 endif ()
-
-add_subdirectory(gdtoa)

@@ -59,4 +59,7 @@ target_include_directories(libwasp_text
   ${wasp_SOURCE_DIR}  # for keywords-inl.h
 )
 
-target_link_libraries(libwasp_text libwasp_base libgdtoa)
+target_link_libraries(libwasp_text
+  libwasp_base
+  absl::str_format
+)
