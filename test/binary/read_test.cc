@@ -172,7 +172,7 @@ TEST_F(BinaryReadTest, BlockType_gc) {
 
   OK(Read<BlockType>, BT_Anyref, "\x6e"_su8);
   OK(Read<BlockType>, BT_Eqref, "\x6d"_su8);
-  OK(Read<BlockType>, BT_I31ref, "\x69"_su8);
+  OK(Read<BlockType>, BT_I31ref, "\x6a"_su8);
   OK(Read<BlockType>, BT_RefFunc, "\x6b\x70"_su8);
   OK(Read<BlockType>, BT_RefNullFunc, "\x6c\x70"_su8);
   OK(Read<BlockType>, BT_RefExtern, "\x6b\x6f"_su8);
@@ -181,16 +181,16 @@ TEST_F(BinaryReadTest, BlockType_gc) {
   OK(Read<BlockType>, BT_RefNullAny, "\x6c\x6e"_su8);
   OK(Read<BlockType>, BT_RefEq, "\x6b\x6d"_su8);
   OK(Read<BlockType>, BT_RefNullEq, "\x6c\x6d"_su8);
-  OK(Read<BlockType>, BT_RefI31, "\x6b\x69"_su8);
-  OK(Read<BlockType>, BT_RefNullI31, "\x6c\x69"_su8);
+  OK(Read<BlockType>, BT_RefI31, "\x6b\x6a"_su8);
+  OK(Read<BlockType>, BT_RefNullI31, "\x6c\x6a"_su8);
   OK(Read<BlockType>, BT_Ref0, "\x6b\x00"_su8);
   OK(Read<BlockType>, BT_RefNull0, "\x6c\x00"_su8);
-  OK(Read<BlockType>, BT_RTT_0_Func, "\x6a\x00\x70"_su8);
-  OK(Read<BlockType>, BT_RTT_0_Extern, "\x6a\x00\x6f"_su8);
-  OK(Read<BlockType>, BT_RTT_0_Any, "\x6a\x00\x6e"_su8);
-  OK(Read<BlockType>, BT_RTT_0_Eq, "\x6a\x00\x6d"_su8);
-  OK(Read<BlockType>, BT_RTT_0_I31, "\x6a\x00\x69"_su8);
-  OK(Read<BlockType>, BT_RTT_0_0, "\x6a\x00\x00"_su8);
+  OK(Read<BlockType>, BT_RTT_0_Func, "\x69\x00\x70"_su8);
+  OK(Read<BlockType>, BT_RTT_0_Extern, "\x69\x00\x6f"_su8);
+  OK(Read<BlockType>, BT_RTT_0_Any, "\x69\x00\x6e"_su8);
+  OK(Read<BlockType>, BT_RTT_0_Eq, "\x69\x00\x6d"_su8);
+  OK(Read<BlockType>, BT_RTT_0_I31, "\x69\x00\x6a"_su8);
+  OK(Read<BlockType>, BT_RTT_0_0, "\x69\x00\x00"_su8);
 }
 
 TEST_F(BinaryReadTest, BlockType_Unknown) {
@@ -975,7 +975,7 @@ TEST_F(BinaryReadTest, ReferenceType_gc) {
 
   OK(Read<ReferenceType>, RT_Anyref, "\x6e"_su8);
   OK(Read<ReferenceType>, RT_Eqref, "\x6d"_su8);
-  OK(Read<ReferenceType>, RT_I31ref, "\x69"_su8);
+  OK(Read<ReferenceType>, RT_I31ref, "\x6a"_su8);
   OK(Read<ReferenceType>, RT_RefFunc, "\x6b\x70"_su8);
   OK(Read<ReferenceType>, RT_RefNullFunc, "\x6c\x70"_su8);
   OK(Read<ReferenceType>, RT_RefExtern, "\x6b\x6f"_su8);
@@ -984,8 +984,8 @@ TEST_F(BinaryReadTest, ReferenceType_gc) {
   OK(Read<ReferenceType>, RT_RefNullAny, "\x6c\x6e"_su8);
   OK(Read<ReferenceType>, RT_RefEq, "\x6b\x6d"_su8);
   OK(Read<ReferenceType>, RT_RefNullEq, "\x6c\x6d"_su8);
-  OK(Read<ReferenceType>, RT_RefI31, "\x6b\x69"_su8);
-  OK(Read<ReferenceType>, RT_RefNullI31, "\x6c\x69"_su8);
+  OK(Read<ReferenceType>, RT_RefI31, "\x6b\x6a"_su8);
+  OK(Read<ReferenceType>, RT_RefNullI31, "\x6c\x6a"_su8);
   OK(Read<ReferenceType>, RT_Ref0, "\x6b\x00"_su8);
   OK(Read<ReferenceType>, RT_RefNull0, "\x6c\x00"_su8);
 }
@@ -1268,7 +1268,7 @@ TEST_F(BinaryReadTest, HeapType_gc) {
 
   OK(Read<HeapType>, HT_Any, "\x6e"_su8);
   OK(Read<HeapType>, HT_Eq, "\x6d"_su8);
-  OK(Read<HeapType>, HT_I31, "\x69"_su8);
+  OK(Read<HeapType>, HT_I31, "\x6a"_su8);
 }
 
 TEST_F(BinaryReadTest, HeapType2Immediate) {
@@ -3740,7 +3740,7 @@ TEST_F(BinaryReadTest, ValueType_gc) {
 
   OK(Read<ValueType>, VT_Anyref, "\x6e"_su8);
   OK(Read<ValueType>, VT_Eqref, "\x6d"_su8);
-  OK(Read<ValueType>, VT_I31ref, "\x69"_su8);
+  OK(Read<ValueType>, VT_I31ref, "\x6a"_su8);
   OK(Read<ValueType>, VT_RefFunc, "\x6b\x70"_su8);
   OK(Read<ValueType>, VT_RefNullFunc, "\x6c\x70"_su8);
   OK(Read<ValueType>, VT_RefExtern, "\x6b\x6f"_su8);
@@ -3749,16 +3749,16 @@ TEST_F(BinaryReadTest, ValueType_gc) {
   OK(Read<ValueType>, VT_RefNullAny, "\x6c\x6e"_su8);
   OK(Read<ValueType>, VT_RefEq, "\x6b\x6d"_su8);
   OK(Read<ValueType>, VT_RefNullEq, "\x6c\x6d"_su8);
-  OK(Read<ValueType>, VT_RefI31, "\x6b\x69"_su8);
-  OK(Read<ValueType>, VT_RefNullI31, "\x6c\x69"_su8);
+  OK(Read<ValueType>, VT_RefI31, "\x6b\x6a"_su8);
+  OK(Read<ValueType>, VT_RefNullI31, "\x6c\x6a"_su8);
   OK(Read<ValueType>, VT_Ref0, "\x6b\x00"_su8);
   OK(Read<ValueType>, VT_RefNull0, "\x6c\x00"_su8);
-  OK(Read<ValueType>, VT_RTT_0_Func, "\x6a\x00\x70"_su8);
-  OK(Read<ValueType>, VT_RTT_0_Extern, "\x6a\x00\x6f"_su8);
-  OK(Read<ValueType>, VT_RTT_0_Any, "\x6a\x00\x6e"_su8);
-  OK(Read<ValueType>, VT_RTT_0_Eq, "\x6a\x00\x6d"_su8);
-  OK(Read<ValueType>, VT_RTT_0_I31, "\x6a\x00\x69"_su8);
-  OK(Read<ValueType>, VT_RTT_0_0, "\x6a\x00\x00"_su8);
+  OK(Read<ValueType>, VT_RTT_0_Func, "\x69\x00\x70"_su8);
+  OK(Read<ValueType>, VT_RTT_0_Extern, "\x69\x00\x6f"_su8);
+  OK(Read<ValueType>, VT_RTT_0_Any, "\x69\x00\x6e"_su8);
+  OK(Read<ValueType>, VT_RTT_0_Eq, "\x69\x00\x6d"_su8);
+  OK(Read<ValueType>, VT_RTT_0_I31, "\x69\x00\x6a"_su8);
+  OK(Read<ValueType>, VT_RTT_0_0, "\x69\x00\x00"_su8);
 }
 
 TEST_F(BinaryReadTest, ValueType_Unknown) {
