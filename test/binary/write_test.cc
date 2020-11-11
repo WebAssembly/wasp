@@ -88,19 +88,19 @@ TEST(BinaryWriteTest, BlockType_function_references) {
 TEST(BinaryWriteTest, BlockType_function_gc) {
   ExpectWrite("\x6e"_su8, BT_Anyref);
   ExpectWrite("\x6d"_su8, BT_Eqref);
-  ExpectWrite("\x69"_su8, BT_I31ref);
+  ExpectWrite("\x6a"_su8, BT_I31ref);
   ExpectWrite("\x6b\x6e"_su8, BT_RefAny);
   ExpectWrite("\x6c\x6e"_su8, BT_RefNullAny);
   ExpectWrite("\x6b\x6d"_su8, BT_RefEq);
   ExpectWrite("\x6c\x6d"_su8, BT_RefNullEq);
-  ExpectWrite("\x6b\x69"_su8, BT_RefI31);
-  ExpectWrite("\x6c\x69"_su8, BT_RefNullI31);
-  ExpectWrite("\x6a\x00\x70"_su8, BT_RTT_0_Func);
-  ExpectWrite("\x6a\x00\x6f"_su8, BT_RTT_0_Extern);
-  ExpectWrite("\x6a\x00\x6e"_su8, BT_RTT_0_Any);
-  ExpectWrite("\x6a\x00\x6d"_su8, BT_RTT_0_Eq);
-  ExpectWrite("\x6a\x00\x69"_su8, BT_RTT_0_I31);
-  ExpectWrite("\x6a\x00\x00"_su8, BT_RTT_0_0);
+  ExpectWrite("\x6b\x6a"_su8, BT_RefI31);
+  ExpectWrite("\x6c\x6a"_su8, BT_RefNullI31);
+  ExpectWrite("\x69\x00\x70"_su8, BT_RTT_0_Func);
+  ExpectWrite("\x69\x00\x6f"_su8, BT_RTT_0_Extern);
+  ExpectWrite("\x69\x00\x6e"_su8, BT_RTT_0_Any);
+  ExpectWrite("\x69\x00\x6d"_su8, BT_RTT_0_Eq);
+  ExpectWrite("\x69\x00\x6a"_su8, BT_RTT_0_I31);
+  ExpectWrite("\x69\x00\x00"_su8, BT_RTT_0_0);
 }
 
 TEST(BinaryWriteTest, BrOnCastImmediate) {
@@ -276,13 +276,13 @@ TEST(BinaryWriteTest, ReferenceType_function_references) {
 TEST(BinaryWriteTest, ReferenceType_gc) {
   ExpectWrite("\x6e"_su8, RT_Anyref);
   ExpectWrite("\x6d"_su8, RT_Eqref);
-  ExpectWrite("\x69"_su8, RT_I31ref);
+  ExpectWrite("\x6a"_su8, RT_I31ref);
   ExpectWrite("\x6b\x6e"_su8, RT_RefAny);
   ExpectWrite("\x6c\x6e"_su8, RT_RefNullAny);
   ExpectWrite("\x6b\x6d"_su8, RT_RefEq);
   ExpectWrite("\x6c\x6d"_su8, RT_RefNullEq);
-  ExpectWrite("\x6b\x69"_su8, RT_RefI31);
-  ExpectWrite("\x6c\x69"_su8, RT_RefNullI31);
+  ExpectWrite("\x6b\x6a"_su8, RT_RefI31);
+  ExpectWrite("\x6c\x6a"_su8, RT_RefNullI31);
 }
 
 TEST(BinaryWriteTest, Event) {
@@ -481,7 +481,7 @@ TEST(BinaryWriteTest, HeapType_function_references) {
 TEST(BinaryWriteTest, HeapType_gc) {
   ExpectWrite("\x6e"_su8, HT_Any);
   ExpectWrite("\x6d"_su8, HT_Eq);
-  ExpectWrite("\x69"_su8, HT_I31);
+  ExpectWrite("\x6a"_su8, HT_I31);
 }
 
 TEST(BinaryWriteTest, HeapType2Immediate) {
@@ -2015,19 +2015,19 @@ TEST(BinaryWriteTest, ValueType_function_references) {
 TEST(BinaryWriteTest, ValueType_gc) {
   ExpectWrite("\x6e"_su8, VT_Anyref);
   ExpectWrite("\x6d"_su8, VT_Eqref);
-  ExpectWrite("\x69"_su8, VT_I31ref);
+  ExpectWrite("\x6a"_su8, VT_I31ref);
   ExpectWrite("\x6b\x6e"_su8, VT_RefAny);
   ExpectWrite("\x6c\x6e"_su8, VT_RefNullAny);
   ExpectWrite("\x6b\x6d"_su8, VT_RefEq);
   ExpectWrite("\x6c\x6d"_su8, VT_RefNullEq);
-  ExpectWrite("\x6b\x69"_su8, VT_RefI31);
-  ExpectWrite("\x6c\x69"_su8, VT_RefNullI31);
-  ExpectWrite("\x6a\x00\x70"_su8, VT_RTT_0_Func);
-  ExpectWrite("\x6a\x00\x6f"_su8, VT_RTT_0_Extern);
-  ExpectWrite("\x6a\x00\x6e"_su8, VT_RTT_0_Any);
-  ExpectWrite("\x6a\x00\x6d"_su8, VT_RTT_0_Eq);
-  ExpectWrite("\x6a\x00\x69"_su8, VT_RTT_0_I31);
-  ExpectWrite("\x6a\x00\x00"_su8, VT_RTT_0_0);
+  ExpectWrite("\x6b\x6a"_su8, VT_RefI31);
+  ExpectWrite("\x6c\x6a"_su8, VT_RefNullI31);
+  ExpectWrite("\x69\x00\x70"_su8, VT_RTT_0_Func);
+  ExpectWrite("\x69\x00\x6f"_su8, VT_RTT_0_Extern);
+  ExpectWrite("\x69\x00\x6e"_su8, VT_RTT_0_Any);
+  ExpectWrite("\x69\x00\x6d"_su8, VT_RTT_0_Eq);
+  ExpectWrite("\x69\x00\x6a"_su8, VT_RTT_0_I31);
+  ExpectWrite("\x69\x00\x00"_su8, VT_RTT_0_0);
 }
 
 TEST(BinaryWriteTest, WriteVector_u8) {

@@ -136,7 +136,7 @@ struct ReferenceKind {
 };
 
 struct Rtt {
-  static constexpr u8 RttPrefix = 0x6a;
+  static constexpr u8 RttPrefix = 0x69;
 
   static bool Is(u8);
 };
