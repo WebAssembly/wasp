@@ -466,9 +466,13 @@ bool Validate(Context& context, const At<binary::Global>& value) {
   context.globals.push_back(value->global_type);
   bool valid = true;
   valid &= Validate(context, value->global_type);
-  // Only imported globals can be used in a global's constant expression.
-  valid &= Validate(context, value->init, value->global_type->valtype,
-                    context.imported_global_count);
+  // Normally only imported globals can be used in a global's constant
+  // expression, but the gc proposal extends this to allow any global.
+  auto global_count = context.features.gc_enabled()
+                          ? context.globals.size()
+                          : context.imported_global_count;
+  valid &=
+      Validate(context, value->init, value->global_type->valtype, global_count);
   return valid;
 }
 
