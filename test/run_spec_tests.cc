@@ -235,7 +235,7 @@ void Tool::OnAssertionCommand(text::Assertion& assertion) {
 
   if (script_module->has_text_list()) {
     Buffer buffer;
-    ToBuffer(script_module->text_list(), buffer);
+    AppendToBuffer(script_module->text_list(), buffer);
 
     if (assertion.kind == text::AssertionKind::Malformed) {
       if (script_module->kind == text::ScriptModuleKind::Quote) {

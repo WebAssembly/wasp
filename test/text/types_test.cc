@@ -159,9 +159,9 @@ TEST(TextTypesTest, MemoryToExports) {
 }
 
 TEST(TextTypesTest, MemoryToDataSegment) {
-  auto data = TextList{
-      Text{"\"hello\"", 5},
-      Text{"\"world\"", 5},
+  auto data = DataItemList{
+      DataItem{Text{"\"hello\"", 5}},
+      DataItem{Text{"\"world\"", 5}},
   };
   auto desc = MemoryDesc{nullopt, MemoryType{Limits{u32{1}}}};
   Index this_index = 13;
@@ -253,4 +253,47 @@ TEST(TextTypesTest, EventToExports) {
                        At{"(export \"e2\")"_su8, InlineExport{name2}},
                    }})
                 .ToExports(this_index));
+}
+
+TEST(TextTypesTest, NumericData) {
+  Buffer buffer = ToBuffer(
+      "\x00\x01\x02\x03\x04\x05\x06\x07"
+      "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
+      "\x10\x11\x12\x13\x14\x15\x16\x17"
+      "\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f"
+      "\x20\x21\x22\x23\x24\x25\x26\x27"
+      "\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f"
+      "\x00\x00\x80\x3f\x00\x00\x00\x00"
+      "\x00\x00\x00\x00\x00\x00\xf0\x3f"_su8);
+
+  struct {
+    NumericData data;
+    u32 data_type_size;
+    Index count;
+    u32 byte_size;
+  } tests[] = {
+      {{NumericDataType::I8, buffer}, 1, 64, 64},
+      {{NumericDataType::I16, buffer}, 2, 32, 64},
+      {{NumericDataType::I32, buffer}, 4, 16, 64},
+      {{NumericDataType::I64, buffer}, 8, 8, 64},
+      {{NumericDataType::F32, buffer}, 4, 16, 64},
+      {{NumericDataType::F64, buffer}, 8, 8, 64},
+      {{NumericDataType::V128, buffer}, 16, 4, 64},
+  };
+
+  for (auto&& test : tests) {
+    EXPECT_EQ(test.data_type_size, test.data.data_type_size());
+    EXPECT_EQ(test.count, test.data.count());
+    EXPECT_EQ(test.byte_size, test.data.byte_size());
+  }
+
+  EXPECT_EQ(0x02u, tests[0].data.value<u8>(2));                   // u8
+  EXPECT_EQ(0x0504u, tests[1].data.value<u16>(2));                // u16
+  EXPECT_EQ(0x0b0a0908u, tests[2].data.value<u32>(2));            // u32
+  EXPECT_EQ(0x1716151413121110ull, tests[3].data.value<u64>(2));  // u64
+  EXPECT_EQ(1.0f, tests[4].data.value<f32>(12));                  // f32
+  EXPECT_EQ(1.0, tests[5].data.value<f64>(7));                    // f64
+  EXPECT_EQ((v128{u8x16{{0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+                         0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f}}}),
+            tests[6].data.value<v128>(2));  // f64
 }

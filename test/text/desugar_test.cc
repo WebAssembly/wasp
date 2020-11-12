@@ -53,9 +53,6 @@ class TextDesugarTest : public ::testing::Test {
 
   const ElementList element_list{
       ElementListWithVars{ExternalKind::Function, {Var{Index{0}}}}};
-  const TextList text_list{
-      At{"T5"_su8, Text{"\"hello\""_sv, 5}},
-  };
 
   void OK(const Module& after, const Module& before) {
     Module copy = before;
@@ -196,14 +193,18 @@ TEST_F(TextDesugarTest, Memory_DefinedExport) {
 }
 
 TEST_F(TextDesugarTest, Memory_DefinedSegment) {
+  const DataItemList data_item_list{
+      At{"T5"_su8, DataItem{Text{"\"hello\""_sv, 5}}},
+  };
+
   OK(
       Module{
           ModuleItem{At{loc1, Memory{memory_desc, {}}}},
           ModuleItem{DataSegment{nullopt, Var{Index{0}}, constant_expression,
-                                 text_list}},
+                                 data_item_list}},
       },
       Module{
-          ModuleItem{At{loc1, Memory{memory_desc, {}, text_list}}},
+          ModuleItem{At{loc1, Memory{memory_desc, {}, data_item_list}}},
       });
 }
 

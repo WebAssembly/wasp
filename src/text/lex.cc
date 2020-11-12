@@ -494,6 +494,15 @@ auto LexKeyword(SpanU8* data, string_view sv, TokenType tt, LiteralKind lk)
   return LexReserved(guard.Reset());
 }
 
+auto LexKeyword(SpanU8* data, string_view sv, SimdShape ss)
+    -> Token {
+  MatchGuard guard{data};
+  if (MatchString(data, sv) && NoTrailingReservedChars(data)) {
+    return Token(guard.loc(), TokenType::SimdShape, ss);
+  }
+  return LexReserved(guard.Reset());
+}
+
 }  // namespace
 
 auto Lex(SpanU8* data) -> Token {

@@ -795,6 +795,41 @@ TEST(TextWriteTest, TableInlineImport) {
                     InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
 
+TEST(TextWriteTest, NumericData) {
+  Buffer buffer = ToBuffer(
+      "\x00\x00\x00\x00\x00\x00\x00\x00"
+      "\x00\x00\x00\x00\x00\x00\x00\x00"_su8);
+
+  ExpectWrite("(i8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)"_sv,
+              NumericData{NumericDataType::I8, buffer});
+  ExpectWrite("(i16 0 0 0 0 0 0 0 0)"_sv,
+              NumericData{NumericDataType::I16, buffer});
+  ExpectWrite("(i32 0 0 0 0)"_sv, NumericData{NumericDataType::I32, buffer});
+  ExpectWrite("(i64 0 0)"_sv, NumericData{NumericDataType::I64, buffer});
+  ExpectWrite("(f32 0 0 0 0)"_sv, NumericData{NumericDataType::F32, buffer});
+  ExpectWrite("(f64 0 0)"_sv, NumericData{NumericDataType::F64, buffer});
+  ExpectWrite("(v128 i32x4 0 0 0 0)"_sv,
+              NumericData{NumericDataType::V128, buffer});
+}
+
+TEST(TextWriteTest, DataItem) {
+  // Text
+  ExpectWrite("\"m\""_sv, DataItem{Text{"\"m\""_sv, 1}});
+
+  // NumericData
+  ExpectWrite("(i32 0)"_sv,
+              DataItem{NumericData{NumericDataType::I32,
+                                   ToBuffer("\x00\x00\x00\x00"_su8)}});
+}
+
+TEST(TextWriteTest, DataItemList) {
+  ExpectWrite(
+      "\"m\" (i32 0)"_sv,
+      DataItemList{DataItem{Text{"\"m\""_sv, 1}},
+                   DataItem{NumericData{NumericDataType::I32,
+                                        ToBuffer("\x00\x00\x00\x00"_su8)}}});
+}
+
 TEST(TextWriteTest, Memory) {
   // Simplest memory.
   ExpectWrite("(memory 0)"_sv,
@@ -818,9 +853,9 @@ TEST(TextWriteTest, Memory) {
   ExpectWrite("(memory (data \"hello\" \"world\"))"_sv,
               Memory{MemoryDesc{{}, MemoryType{Limits{u32{10}, u32{10}}}},
                      {},
-                     TextList{
-                         Text{"\"hello\""_sv, 5},
-                         Text{"\"world\""_sv, 5},
+                     DataItemList{
+                         DataItem{Text{"\"hello\""_sv, 5}},
+                         DataItem{Text{"\"world\""_sv, 5}},
                      }});
 }
 
@@ -1023,7 +1058,7 @@ TEST(TextWriteTest, DataSegment) {
   // No memory var, text list.
   ExpectWrite("(data (offset nop) \"hi\")"_sv,
               DataSegment{nullopt, nullopt, ConstantExpression{I{O::Nop}},
-                          TextList{Text{"\"hi\""_sv, 2}}});
+                          DataItemList{DataItem{Text{"\"hi\""_sv, 2}}}});
 
   // Memory var.
   ExpectWrite(
@@ -1037,8 +1072,8 @@ TEST(TextWriteTest, DataSegment) {
 
   // Passive, w/ text list.
   ExpectWrite("(data \"hi\")"_sv,
-              DataSegment{nullopt, TextList{
-                                       Text{"\"hi\""_sv, 2},
+              DataSegment{nullopt, DataItemList{
+                                       DataItem{Text{"\"hi\""_sv, 2}},
                                    }});
 
   // Passive w/ name.
@@ -1047,15 +1082,15 @@ TEST(TextWriteTest, DataSegment) {
   // Active, w/ text list.
   ExpectWrite("(data (offset nop) \"hi\")"_sv,
               DataSegment{nullopt, nullopt, ConstantExpression{I{O::Nop}},
-                          TextList{
-                              Text{"\"hi\""_sv, 2},
+                          DataItemList{
+                              DataItem{Text{"\"hi\""_sv, 2}},
                           }});
 
   // Active w/ memory use.
   ExpectWrite("(data (memory 0) (offset nop) \"hi\")"_sv,
               DataSegment{nullopt, Var{Index{0}}, ConstantExpression{I{O::Nop}},
-                          TextList{
-                              Text{"\"hi\""_sv, 2},
+                          DataItemList{
+                              DataItem{Text{"\"hi\""_sv, 2}},
                           }});
 
   // Active w/ name.

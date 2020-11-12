@@ -940,6 +940,82 @@ Iterator Write(WriteContext& context, const Table& value, Iterator out) {
   return out;
 }
 
+template <typename T, typename Iterator>
+Iterator WriteNumericValues(WriteContext& context,
+                            const NumericData& value,
+                            Iterator out) {
+  for (Index i = 0; i < value.count(); ++i) {
+    if constexpr (std::is_same_v<T, v128>) {
+      out = Write(context, value.value<T>(i), out);
+    } else if constexpr (std::is_floating_point_v<T>) {
+      out = WriteFloat(context, value.value<T>(i), out);
+    } else {
+      out = WriteInt(context, value.value<T>(i), out);
+    }
+  }
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context, const NumericData& value, Iterator out) {
+  switch (value.type) {
+    case NumericDataType::I8:
+      out = WriteLpar(context, "i8", out);
+      out = WriteNumericValues<s8>(context, value, out);
+      break;
+
+    case NumericDataType::I16:
+      out = WriteLpar(context, "i16", out);
+      out = WriteNumericValues<s16>(context, value, out);
+      break;
+
+    case NumericDataType::I32:
+      out = WriteLpar(context, "i32", out);
+      out = WriteNumericValues<s32>(context, value, out);
+      break;
+
+    case NumericDataType::I64:
+      out = WriteLpar(context, "i64", out);
+      out = WriteNumericValues<s64>(context, value, out);
+      break;
+
+    case NumericDataType::F32:
+      out = WriteLpar(context, "f32", out);
+      out = WriteNumericValues<f32>(context, value, out);
+      break;
+
+    case NumericDataType::F64:
+      out = WriteLpar(context, "f64", out);
+      out = WriteNumericValues<f64>(context, value, out);
+      break;
+
+    case NumericDataType::V128:
+      out = WriteLpar(context, "v128", out);
+      out = WriteNumericValues<v128>(context, value, out);
+      break;
+  }
+
+  out = WriteRpar(context, out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context, const DataItem& value, Iterator out) {
+  if (value.is_text()) {
+    return Write(context, value.text(), out);
+  } else {
+    assert(value.is_numeric_data());
+    return Write(context, value.numeric_data(), out);
+  }
+}
+
+template <typename Iterator>
+Iterator Write(WriteContext& context,
+               const DataItemList& values,
+               Iterator out) {
+  return WriteVector(context, values, out);
+}
+
 template <typename Iterator>
 Iterator Write(WriteContext& context, const Memory& value, Iterator out) {
   out = WriteLpar(context, "memory", out);

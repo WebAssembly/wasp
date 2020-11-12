@@ -117,7 +117,7 @@ auto ToBinaryLocalsList(Context&, const At<text::BoundValueTypeList>&) -> At<bin
 auto ToBinaryCode(Context&, const At<text::Function>&) -> OptAt<binary::UnpackedCode>;
 
 // Section 11: Data
-auto ToBinary(Context&, const At<text::TextList>&) -> SpanU8;
+auto ToBinary(Context&, const At<text::DataItemList>&) -> SpanU8;
 auto ToBinary(Context&, const At<text::DataSegment>&) -> At<binary::DataSegment>;
 
 // Section 12: DataCount

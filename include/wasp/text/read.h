@@ -113,6 +113,17 @@ auto ReadTable(Tokenizer&, Context&) -> OptAt<Table>;
 
 // Section 5: Memory
 
+template <typename T>
+bool ReadIntsIntoBuffer(Tokenizer&, Context&, Buffer&);
+template <typename T>
+bool ReadFloatsIntoBuffer(Tokenizer&, Context&, Buffer&);
+
+auto ReadSimdConst(Tokenizer&, Context&) -> OptAt<v128>;
+bool ReadSimdConstsIntoBuffer(Tokenizer&, Context&, Buffer&);
+
+auto ReadNumericData(Tokenizer&, Context&) -> OptAt<NumericData>;
+auto ReadDataItem(Tokenizer&, Context&) -> OptAt<DataItem>;
+auto ReadDataItemList(Tokenizer&, Context&) -> optional<DataItemList>;
 auto ReadMemoryType(Tokenizer&, Context&) -> OptAt<MemoryType>;
 auto ReadMemory(Tokenizer&, Context&) -> OptAt<Memory>;
 

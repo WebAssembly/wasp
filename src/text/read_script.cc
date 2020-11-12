@@ -125,59 +125,7 @@ auto ReadConst(Tokenizer& tokenizer, Context& context) -> OptAt<Const> {
         return nullopt;
       }
       tokenizer.Read();
-      auto simd_token = tokenizer.Peek();
-
-      At<v128> literal;
-      switch (simd_token.type) {
-        case TokenType::I8X16: {
-          tokenizer.Read();
-          WASP_TRY_READ(literal_, (ReadSimdValues<u8, 16>(tokenizer, context)));
-          literal = literal_;
-          break;
-        }
-
-        case TokenType::I16X8: {
-          tokenizer.Read();
-          WASP_TRY_READ(literal_, (ReadSimdValues<u16, 8>(tokenizer, context)));
-          literal = literal_;
-          break;
-        }
-
-        case TokenType::I32X4: {
-          tokenizer.Read();
-          WASP_TRY_READ(literal_, (ReadSimdValues<u32, 4>(tokenizer, context)));
-          literal = literal_;
-          break;
-        }
-
-        case TokenType::I64X2: {
-          tokenizer.Read();
-          WASP_TRY_READ(literal_, (ReadSimdValues<u64, 2>(tokenizer, context)));
-          literal = literal_;
-          break;
-        }
-
-        case TokenType::F32X4: {
-          tokenizer.Read();
-          WASP_TRY_READ(literal_, (ReadSimdValues<f32, 4>(tokenizer, context)));
-          literal = literal_;
-          break;
-        }
-
-        case TokenType::F64X2: {
-          tokenizer.Read();
-          WASP_TRY_READ(literal_, (ReadSimdValues<f64, 2>(tokenizer, context)));
-          literal = literal_;
-          break;
-        }
-
-        default:
-          context.errors.OnError(
-              simd_token.loc,
-              concat("Invalid SIMD constant token, got ", simd_token.type));
-          return nullopt;
-      }
-
+      WASP_TRY_READ(literal, ReadSimdConst(tokenizer, context));
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
       return At{guard.loc(), Const{literal.value()}};
     }
@@ -372,49 +320,50 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
         context.errors.OnError(token.loc, "Simd values not allowed");
         return nullopt;
       }
+
       tokenizer.Read();
-      auto simd_token = tokenizer.Peek();
+      auto simd_token = tokenizer.Match(TokenType::SimdShape);
+      if (!simd_token) {
+        context.errors.OnError(
+            simd_token->loc,
+            concat("Invalid SIMD constant token, got ", tokenizer.Peek().type));
+        return nullopt;
+      }
 
       At<ReturnResult> result;
-      switch (simd_token.type) {
-        case TokenType::I8X16: {
-          tokenizer.Read();
+      switch (simd_token->simd_shape()) {
+        case SimdShape::I8X16: {
           WASP_TRY_READ(result_, (ReadSimdValues<u8, 16>(tokenizer, context)));
           result = result_;
           break;
         }
 
-        case TokenType::I16X8: {
-          tokenizer.Read();
+        case SimdShape::I16X8: {
           WASP_TRY_READ(result_, (ReadSimdValues<u16, 8>(tokenizer, context)));
           result = result_;
           break;
         }
 
-        case TokenType::I32X4: {
-          tokenizer.Read();
+        case SimdShape::I32X4: {
           WASP_TRY_READ(result_, (ReadSimdValues<u32, 4>(tokenizer, context)));
           result = result_;
           break;
         }
 
-        case TokenType::I64X2: {
-          tokenizer.Read();
+        case SimdShape::I64X2: {
           WASP_TRY_READ(result_, (ReadSimdValues<u64, 2>(tokenizer, context)));
           result = result_;
           break;
         }
 
-        case TokenType::F32X4: {
-          tokenizer.Read();
+        case SimdShape::F32X4: {
           WASP_TRY_READ(result_,
                         (ReadSimdFloatResult<f32, 4>(tokenizer, context)));
           result = result_;
           break;
         }
 
-        case TokenType::F64X2: {
-          tokenizer.Read();
+        case SimdShape::F64X2: {
           WASP_TRY_READ(result_,
                         (ReadSimdFloatResult<f64, 2>(tokenizer, context)));
           result = result_;
@@ -422,10 +371,7 @@ auto ReadReturnResult(Tokenizer& tokenizer, Context& context)
         }
 
         default:
-          context.errors.OnError(
-              simd_token.loc,
-              concat("Invalid SIMD constant token, got ", simd_token.type));
-          return nullopt;
+          WASP_UNREACHABLE();
       }
 
       WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));

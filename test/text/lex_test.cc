@@ -55,6 +55,8 @@ struct ExpectedToken {
       : size{size}, type{type}, immediate{packed_type} {}
   ExpectedToken(span_extent_t size, TokenType type, Text text)
       : size{size}, type{type}, immediate{text} {}
+  ExpectedToken(span_extent_t size, TokenType type, SimdShape shape)
+      : size{size}, type{type}, immediate{shape} {}
 
   span_extent_t size;
   TokenType type;
@@ -196,14 +198,8 @@ TEST(LexTest, Keyword) {
       {"elem"_su8, TT::Elem},
       {"event"_su8, TT::Event},
       {"export"_su8, TT::Export},
-      {"f32x4"_su8, TT::F32X4},
-      {"f64x2"_su8, TT::F64X2},
       {"field"_su8, TT::Field},
       {"global"_su8, TT::Global},
-      {"i16x8"_su8, TT::I16X8},
-      {"i32x4"_su8, TT::I32X4},
-      {"i64x2"_su8, TT::I64X2},
-      {"i8x16"_su8, TT::I8X16},
       {"import"_su8, TT::Import},
       {"item"_su8, TT::Item},
       {"local"_su8, TT::Local},
@@ -1096,6 +1092,24 @@ TEST(LexTest, PackedType) {
   };
   for (auto test : tests) {
     ExpectLex({test.span.size(), test.token_type, test.packed_type}, test.span);
+  }
+}
+
+TEST(LexTest, SimdShape) {
+  struct {
+    SpanU8 span;
+    TokenType token_type;
+    SimdShape simd_shape;
+  } tests[] = {
+      {"i8x16"_su8, TokenType::SimdShape, SimdShape::I8X16},
+      {"i16x8"_su8, TokenType::SimdShape, SimdShape::I16X8},
+      {"i32x4"_su8, TokenType::SimdShape, SimdShape::I32X4},
+      {"i64x2"_su8, TokenType::SimdShape, SimdShape::I64X2},
+      {"f32x4"_su8, TokenType::SimdShape, SimdShape::F32X4},
+      {"f64x2"_su8, TokenType::SimdShape, SimdShape::F64X2},
+  };
+  for (auto test : tests) {
+    ExpectLex({test.span.size(), test.token_type, test.simd_shape}, test.span);
   }
 }
 

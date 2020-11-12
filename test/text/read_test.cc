@@ -2221,6 +2221,66 @@ TEST_F(TextReadTest, Table_bulk_memory) {
      "(table funcref (elem (nop) (nop)))"_su8);
 }
 
+TEST_F(TextReadTest, NumericData) {
+  struct {
+    NumericDataType type;
+    SpanU8 output;
+    SpanU8 input;
+  } tests[] = {
+      {NumericDataType::I8, "\x80\xff\x00\xff"_su8, "(i8 -128 -1 0 255)"_su8},
+      {NumericDataType::I16, "\x00\x80\xff\xff\x00\x00\xff\xff"_su8,
+       "(i16 -32768 -1 0 65535)"_su8},
+      {NumericDataType::I32,
+       "\x00\x00\x00\x80"
+       "\xff\xff\xff\xff"
+       "\x00\x00\x00\x00"
+       "\xff\xff\xff\xff"_su8,
+       "(i32 -2147483648 -1 0 4294967295)"_su8},
+      {NumericDataType::I64,
+       "\x00\x00\x00\x00\x00\x00\x00\x80"
+       "\xff\xff\xff\xff\xff\xff\xff\xff"
+       "\x00\x00\x00\x00\x00\x00\x00\x00"
+       "\xff\xff\xff\xff\xff\xff\xff\xff"_su8,
+       "(i64 -9223372036854775808 -1 0 18446744073709551615)"_su8},
+      {NumericDataType::F32,
+       "\x00\x00\x00\x00"
+       "\x00\x00\x80\x3f"
+       "\x00\x00\x80\x7f"
+       "\x00\x00\xc0\x7f"_su8,
+       "(f32 0 1.0 inf nan)"_su8},
+      {NumericDataType::F64,
+       "\x00\x00\x00\x00\x00\x00\x00\x00"
+       "\x00\x00\x00\x00\x00\x00\xf0\x3f"
+       "\x00\x00\x00\x00\x00\x00\xf0\x7f"
+       "\x00\x00\x00\x00\x00\x00\xf8\x7f"_su8,
+       "(f64 0 1.0 inf nan)"_su8},
+      {NumericDataType::V128,
+       "\x01\x00\x00\x00\x00\x00\x00\x00"
+       "\xff\xff\xff\xff\xff\xff\xff\xff"
+       "\x00\x00\x80\x3f"
+       "\x00\x00\x80\x3f"
+       "\x00\x00\x80\x3f"
+       "\x00\x00\x80\x3f"_su8,
+       "(v128 i64x2 1 -1 f32x4 1 1 1 1)"_su8},
+  };
+
+  for (auto&& test : tests) {
+    OK(ReadNumericData, NumericData{test.type, ToBuffer(test.output)},
+       test.input);
+  }
+}
+
+TEST_F(TextReadTest, DataItem) {
+  context.features.enable_numeric_values();
+
+  OK(ReadDataItem,
+     DataItem{
+         NumericData{NumericDataType::I32, ToBuffer("\x05\x00\x00\x00"_su8)}},
+     "(i32 5)"_su8);
+
+  OK(ReadDataItem, DataItem{Text{"\"text\""_sv, 4}}, "\"text\""_su8);
+}
+
 TEST_F(TextReadTest, Memory) {
   // Simplest memory.
   OK(ReadMemory,
@@ -2262,11 +2322,29 @@ TEST_F(TextReadTest, Memory) {
   OK(ReadMemory,
      Memory{MemoryDesc{{}, MemoryType{Limits{u32{10}, u32{10}}}},
             {},
-            TextList{
-                At{"\"hello\""_su8, Text{"\"hello\""_sv, 5}},
-                At{"\"world\""_su8, Text{"\"world\""_sv, 5}},
+            DataItemList{
+                At{"\"hello\""_su8, DataItem{Text{"\"hello\""_sv, 5}}},
+                At{"\"world\""_su8, DataItem{Text{"\"world\""_sv, 5}}},
             }},
      "(memory (data \"hello\" \"world\"))"_su8);
+}
+
+TEST_F(TextReadTest, Memory_numeric_values) {
+  Fail(ReadMemory, {{14, "Numeric values not allowed"}},
+       "(memory (data (i32 1 2 3)))"_su8);
+
+  context.features.enable_numeric_values();
+
+  OK(ReadMemory,
+     Memory{MemoryDesc{{}, MemoryType{Limits{u32{12}, u32{12}}}},
+            {},
+            DataItemList{
+                At{"(i32 1 2 3)"_su8,
+                   DataItem{NumericData{NumericDataType::I32,
+                                        ToBuffer("\x01\x00\x00\x00"
+                                                 "\x02\x00\x00\x00"
+                                                 "\x03\x00\x00\x00"_su8)}}}}},
+     "(memory (data (i32 1 2 3)))"_su8);
 }
 
 TEST_F(TextReadTest, MemoryInlineImport) {
@@ -2351,10 +2429,11 @@ TEST_F(TextReadTest, Memory_memory64) {
                        MemoryType{Limits{u32{10}, u32{10}, Shared::No,
                                          At{"i64"_su8, IndexType::I64}}}},
             {},
-            TextList{
-                At{"\"hello\""_su8, Text{"\"hello\""_sv, 5}},
-                At{"\"world\""_su8, Text{"\"world\""_sv, 5}},
-            }},
+            DataItemList{At{"\"hello\""_su8, DataItem{Text{"\"hello\""_sv, 5}}},
+                         At{
+                             "\"world\""_su8,
+                             DataItem{Text{"\"world\""_sv, 5}},
+                         }}},
      "(memory i64 (data \"hello\" \"world\"))"_su8);
 }
 
@@ -2838,10 +2917,11 @@ TEST_F(TextReadTest, DataSegment_MVP) {
 
   // No memory var, text list.
   OK(ReadDataSegment,
-     DataSegment{nullopt, nullopt,
-                 At{"(nop)"_su8, ConstantExpression{At{
-                                     "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
-                 TextList{At{"\"hi\""_su8, Text{"\"hi\""_sv, 2}}}},
+     DataSegment{
+         nullopt, nullopt,
+         At{"(nop)"_su8,
+            ConstantExpression{At{"nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+         DataItemList{At{"\"hi\""_su8, DataItem{Text{"\"hi\""_sv, 2}}}}},
      "(data (nop) \"hi\")"_su8);
 
   // Memory var.
@@ -2872,8 +2952,8 @@ TEST_F(TextReadTest, DataSegment_bulk_memory) {
   // Passive, w/ text list.
   OK(ReadDataSegment,
      DataSegment{nullopt,
-                 TextList{
-                     At{"\"hi\""_su8, Text{"\"hi\""_sv, 2}},
+                 DataItemList{
+                     At{"\"hi\""_su8, DataItem{Text{"\"hi\""_sv, 2}}},
                  }},
      "(data \"hi\")"_su8);
 
@@ -2885,8 +2965,8 @@ TEST_F(TextReadTest, DataSegment_bulk_memory) {
      DataSegment{nullopt, nullopt,
                  At{"(nop)"_su8, ConstantExpression{At{
                                      "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
-                 TextList{
-                     At{"\"hi\""_su8, Text{"\"hi\""_sv, 2}},
+                 DataItemList{
+                     At{"\"hi\""_su8, DataItem{Text{"\"hi\""_sv, 2}}},
                  }},
      "(data (nop) \"hi\")"_su8);
 
@@ -2895,8 +2975,8 @@ TEST_F(TextReadTest, DataSegment_bulk_memory) {
      DataSegment{nullopt, At{"(memory 0)"_su8, Var{Index{0}}},
                  At{"(nop)"_su8, ConstantExpression{At{
                                      "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
-                 TextList{
-                     At{"\"hi\""_su8, Text{"\"hi\""_sv, 2}},
+                 DataItemList{
+                     At{"\"hi\""_su8, DataItem{Text{"\"hi\""_sv, 2}}},
                  }},
      "(data (memory 0) (nop) \"hi\")"_su8);
 
@@ -2908,6 +2988,23 @@ TEST_F(TextReadTest, DataSegment_bulk_memory) {
                                      "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
                  {}},
      "(data $d2 (nop))"_su8);
+}
+
+TEST_F(TextReadTest, DataSegment_numeric_values) {
+  Fail(ReadDataSegment, {{12, "Numeric values not allowed"}},
+       "(data (nop) (i8 1))"_su8);
+
+  context.features.enable_numeric_values();
+
+  // No memory var, text list.
+  OK(ReadDataSegment,
+     DataSegment{nullopt, nullopt,
+                 At{"(nop)"_su8, ConstantExpression{At{
+                                     "nop"_su8, I{At{"nop"_su8, O::Nop}}}}},
+                 DataItemList{At{"(i8 1)"_su8,
+                                 DataItem{NumericData{NumericDataType::I8,
+                                                      ToBuffer("\x01"_su8)}}}}},
+     "(data (nop) (i8 1))"_su8);
 }
 
 TEST_F(TextReadTest, ModuleItem) {

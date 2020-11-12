@@ -658,8 +658,9 @@ auto ToText(TextContext& context,
 }
 
 // Section 11: Data
-auto ToText(TextContext& context, const At<SpanU8>& value) -> text::TextList {
-  return text::TextList{context.Add(ToStringView(value))};
+auto ToText(TextContext& context, const At<SpanU8>& value)
+    -> text::DataItemList {
+  return text::DataItemList{text::DataItem{context.Add(ToStringView(value))}};
 }
 
 auto ToText(TextContext& context, const At<binary::DataSegment>& value)

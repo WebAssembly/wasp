@@ -14,22 +14,16 @@
 // limitations under the License.
 //
 
-#ifndef WASP_BASE_BUFFER_H_
-#define WASP_BASE_BUFFER_H_
+namespace wasp::text {
 
-#include <vector>
-
-#include "wasp/base/span.h"
-#include "wasp/base/types.h"
-
-namespace wasp {
-
-using Buffer = std::vector<u8>;
-
-inline auto ToBuffer(SpanU8 span) -> Buffer {
-  return Buffer(span.begin(), span.end());
+template <typename T>
+auto NumericData::value(Index index) const -> T {
+  assert(index < count());
+  T result;
+  size_t size = data_type_size();
+  // TODO: Handle big endian.
+  memcpy(&result, data.data() + index * size, size);
+  return result;
 }
 
-}  // namespace wasp
-
-#endif // WASP_BASE_BUFFER_H_
+}  // namespace wasp::text

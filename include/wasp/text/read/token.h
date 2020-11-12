@@ -42,6 +42,8 @@ enum class LiteralKind { Normal, Nan, NanPayload, Infinity };
 enum class Base { Decimal, Hex };
 enum class HasUnderscores { No, Yes };
 
+enum class SimdShape { I8X16, I16X8, I32X4, I64X2, F32X4, F64X2 };
+
 struct LiteralInfo {
   static LiteralInfo HexNat(HasUnderscores);
   static LiteralInfo Nat(HasUnderscores);
@@ -69,7 +71,7 @@ struct OpcodeInfo {
 };
 
 struct Text {
-  void ToBuffer(Buffer& buffer) const;
+  void AppendToBuffer(Buffer& buffer) const;
   auto ToString() const -> std::string;
 
   string_view text;
@@ -84,7 +86,8 @@ struct Token {
                             HeapKind,
                             PackedType,
                             LiteralInfo,
-                            Text>;
+                            Text,
+                            SimdShape>;
 
   Token();
   Token(Location, TokenType);
@@ -96,6 +99,7 @@ struct Token {
   Token(Location, TokenType, LiteralInfo);
   Token(Location, TokenType, Text);
   Token(Location, TokenType, Immediate);
+  Token(Location, TokenType, SimdShape);
 
   SpanU8 span_u8() const;
   string_view as_string_view() const;
@@ -107,6 +111,7 @@ struct Token {
   bool has_packed_type() const;
   bool has_literal_info() const;
   bool has_text() const;
+  bool has_simd_shape() const;
 
   At<Opcode> opcode() const;
   Features opcode_features() const;
@@ -116,6 +121,7 @@ struct Token {
   At<PackedType> packed_type() const;
   LiteralInfo literal_info() const;
   Text text() const;
+  SimdShape simd_shape() const;
 
   Location loc;
   TokenType type;
