@@ -792,6 +792,29 @@ TEST(ValidateTest, Global_GlobalGetIndexOOB) {
   EXPECT_FALSE(Validate(context, global));
 }
 
+TEST(ValidateTest, Global_GlobalGet_gc) {
+  // The gc proposal allows global.get to reference any immutable global (not
+  // just imported ones).
+  Features features;
+  features.enable_gc();
+  TestErrors errors;
+  Context context{features, errors};
+
+  context.imported_global_count = 0;
+  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
+  context.globals.push_back(GlobalType{VT_I32, Mutability::Var});
+
+  // global.get on immutable global is OK.
+  EXPECT_TRUE(Validate(context, Global{GlobalType{VT_I32, Mutability::Const},
+                                       ConstantExpression{Instruction{
+                                           Opcode::GlobalGet, Index{0}}}}));
+
+  // global.get on mutable global is not OK.
+  EXPECT_FALSE(Validate(context, Global{GlobalType{VT_I32, Mutability::Const},
+                                        ConstantExpression{Instruction{
+                                            Opcode::GlobalGet, Index{1}}}}));
+}
+
 TEST(ValidateTest, GlobalType) {
   const GlobalType tests[] = {
       GlobalType{VT_I32, Mutability::Const},
