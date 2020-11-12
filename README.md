@@ -15,6 +15,60 @@ It also includes the `wasp` tool, which has the following commands:
 * `wasp pattern`: Find instruction sequence patterns
 * `wasp wat2wasm`: Convert a Wasm text file to a Wasm binary file
 
+## Building using CMake (Linux and macOS)
+
+You'll need [CMake](https://cmake.org). You can then run CMake, the normal way:
+
+```console
+$ mkdir build
+$ cd build
+$ cmake ..
+$ cmake --build .
+```
+
+## Building (Windows)
+
+You'll need [CMake](https://cmake.org). You'll also need
+[Visual Studio](https://www.visualstudio.com/) (2019 or newer).
+
+_Note: Visual Studio 2017 and later come with CMake (and the Ninja build system)
+out of the box, and should be on your PATH if you open a Developer Command prompt.
+See <https://aka.ms/cmake> for more details._
+
+You can run CMake from the command prompt, or use the CMake GUI tool. See
+[Running CMake](https://cmake.org/runningcmake/) for more information.
+
+When running from the commandline, create a new directory for the build
+artifacts, then run cmake from this directory:
+
+```console
+> cd [build dir]
+> cmake [wasp project root] -DCMAKE_BUILD_TYPE=[config] -DCMAKE_INSTALL_PREFIX=[install directory] -G [generator]
+```
+
+The `[config]` parameter should be a CMake build type, typically `DEBUG` or `RELEASE`.
+
+The `[generator]` parameter should be the type of project you want to generate,
+for example `"Visual Studio 16 2019"`. You can see the list of available
+generators by running `cmake --help`.
+
+To build the project, you can use Visual Studio, or you can tell CMake to do it:
+
+```console
+> cmake --build [wasp project root] --config [config] --target install
+```
+
+This will build and install to the installation directory you provided above.
+
+So, for example, if you want to build the debug configuration on Visual Studio 2019:
+
+```console
+> mkdir build
+> cd build
+> cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DCMAKE_INSTALL_PREFIX=..\ -G "Visual Studio 16 2019"
+> cmake --build . --config DEBUG --target install
+```
+
 ## wasp dump examples
 
 Disassemble all functions in a module:
