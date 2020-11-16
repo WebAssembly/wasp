@@ -37,10 +37,13 @@ WASP_DEFINE_VARIANT_NAME(text::BoundFunctionType, "func")
 WASP_DEFINE_VARIANT_NAME(text::StructType, "struct")
 WASP_DEFINE_VARIANT_NAME(text::ArrayType, "array")
 
-// Instruction.
+// Token.
 WASP_DEFINE_VARIANT_NAME(text::OpcodeInfo, "opcode_info")
 WASP_DEFINE_VARIANT_NAME(text::LiteralInfo, "literal_info")
 WASP_DEFINE_VARIANT_NAME(text::Text, "text")
+WASP_DEFINE_VARIANT_NAME(text::SimdShape, "simd_shape")
+
+// Instruction.
 WASP_DEFINE_VARIANT_NAME(text::BlockImmediate, "block")
 WASP_DEFINE_VARIANT_NAME(text::BrTableImmediate, "br_table")
 WASP_DEFINE_VARIANT_NAME(text::BrOnCastImmediate, "br_on_cast")
@@ -68,6 +71,9 @@ WASP_DEFINE_VARIANT_NAME(text::EventDesc, "event")
 // ElementList.
 WASP_DEFINE_VARIANT_NAME(text::ElementListWithExpressions, "expression")
 WASP_DEFINE_VARIANT_NAME(text::ElementListWithVars, "var")
+
+// DataItem.
+WASP_DEFINE_VARIANT_NAME(text::NumericData, "numeric_data")
 
 // ModuleItem.
 WASP_DEFINE_VARIANT_NAME(text::DefinedType, "type")

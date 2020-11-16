@@ -20,13 +20,14 @@
 #include <cassert>
 
 #include "wasp/base/hash.h"
+#include "wasp/base/macros.h"
 #include "wasp/base/operator_eq_ne_macros.h"
 
 namespace wasp::text {
 
-void ToBuffer(const TextList& text_list, Buffer& buffer) {
+void AppendToBuffer(const TextList& text_list, Buffer& buffer) {
   for (auto&& text : text_list) {
-    text->ToBuffer(buffer);
+    text->AppendToBuffer(buffer);
   }
 }
 
@@ -828,12 +829,77 @@ auto Table::ToElementSegment(Index this_index) const -> OptAt<ElementSegment> {
       *elements};
 }
 
+auto NumericData::data_type_size() const -> u32 {
+  switch (type) {
+    case NumericDataType::I8:   return 1;
+    case NumericDataType::I16:  return 2;
+    case NumericDataType::I32:
+    case NumericDataType::F32:  return 4;
+    case NumericDataType::I64:
+    case NumericDataType::F64:  return 8;
+    case NumericDataType::V128: return 16;
+    default:
+      WASP_UNREACHABLE();
+  }
+}
+
+auto NumericData::byte_size() const -> u32 {
+  return static_cast<u32>(data.size());
+}
+
+auto NumericData::count() const -> Index {
+  return data.size() / data_type_size();
+}
+
+void NumericData::AppendToBuffer(Buffer& buffer) const {
+  auto old_size = buffer.size();
+  buffer.resize(old_size + data.size());
+  std::copy(data.begin(), data.end(), buffer.begin() + old_size);
+}
+
+bool DataItem::is_text() const {
+  return holds_alternative<Text>(value);
+}
+
+bool DataItem::is_numeric_data() const {
+  return holds_alternative<NumericData>(value);
+}
+
+auto DataItem::text() -> Text& {
+  return get<Text>(value);
+}
+
+auto DataItem::text() const -> const Text& {
+  return get<Text>(value);
+}
+
+auto DataItem::numeric_data() -> NumericData& {
+  return get<NumericData>(value);
+}
+
+auto DataItem::numeric_data() const -> const NumericData& {
+  return get<NumericData>(value);
+}
+
+auto DataItem::byte_size() const -> u32 {
+  return is_text() ? text().byte_size : numeric_data().byte_size();
+}
+
+void DataItem::AppendToBuffer(Buffer& buffer) const {
+  if (is_text()) {
+    text().AppendToBuffer(buffer);
+  } else {
+    assert(is_numeric_data());
+    numeric_data().AppendToBuffer(buffer);
+  }
+}
+
 Memory::Memory(const MemoryDesc& desc, const InlineExportList& exports)
     : desc{desc}, exports{exports} {}
 
 Memory::Memory(const MemoryDesc& desc,
                const InlineExportList& exports,
-               const TextList& data)
+               const DataItemList& data)
     : desc{desc}, exports{exports}, data{data} {}
 
 Memory::Memory(const MemoryDesc& desc,
@@ -940,14 +1006,14 @@ ElementSegment::ElementSegment(OptAt<BindVar> name,
 DataSegment::DataSegment(OptAt<BindVar> name,
                          OptAt<Var> memory,
                          const At<ConstantExpression>& offset,
-                         const TextList& data)
+                         const DataItemList& data)
     : name{name},
       type{SegmentType::Active},
       memory{memory},
       offset{offset},
       data{data} {}
 
-DataSegment::DataSegment(OptAt<BindVar> name, const TextList& data)
+DataSegment::DataSegment(OptAt<BindVar> name, const DataItemList& data)
     : name{name}, type{SegmentType::Passive}, data{data} {}
 
 auto ModuleItem::kind() const -> ModuleItemKind {

@@ -23,6 +23,7 @@ WASP_V(GC,                   gc,                      "gc",                     
 WASP_V(Memory64,             memory64,                "memory64",                false)
 WASP_V(MultiValue,           multi_value,             "multi-value",             false)
 WASP_V(MutableGlobals,       mutable_globals,         "mutable-globals",         true )
+WASP_V(NumericValues,        numeric_values,          "numeric-values",          false)
 WASP_V(ReferenceTypes,       reference_types,         "reference-types",         false)
 WASP_V(SaturatingFloatToInt, saturating_float_to_int, "saturating-float-to-int", false)
 WASP_V(SignExtension,        sign_extension,          "sign-extension",          false)

@@ -800,7 +800,8 @@ TEST(ConvertToTextTest, DataSegment) {
             nullopt, At{loc2, text::Var{Index{13}}},
             At{loc3, text::ConstantExpression{At{
                          loc4, text::Instruction{At{loc5, Opcode::Nop}}}}},
-            text::TextList{text::Text{"\"hello\\00\"", 6}}}},
+            text::DataItemList{
+                text::DataItem{text::Text{"\"hello\\00\"", 6}}}}},
      At{loc1,
         binary::DataSegment{
             At{loc2, Index{13}},
@@ -956,10 +957,10 @@ TEST(ConvertToTextTest, Module) {
             // (data (i32.const 0) "hello")
             text::ModuleItem{
                 At{loc23,
-                   text::DataSegment{
-                       nullopt, At{loc24, text::Var{Index{0}}},
-                       text_constant_expression,
-                       text::TextList{text::Text{"\"hello\""_sv, 5}}}}},
+                   text::DataSegment{nullopt, At{loc24, text::Var{Index{0}}},
+                                     text_constant_expression,
+                                     text::DataItemList{text::DataItem{
+                                         text::Text{"\"hello\""_sv, 5}}}}}},
             // (func (type 0) nop)
             text::ModuleItem{
                 At{loc7,

@@ -45,6 +45,10 @@ TEST(TextFormattersTest, HasUnderscores) {
   EXPECT_EQ(R"(No)", concat(HasUnderscores::No));
 }
 
+TEST(TextFormattersTest, SimdShape) {
+  EXPECT_EQ(R"(i8x16)", concat(SimdShape::I8X16));
+}
+
 TEST(TextFormattersTest, LiteralInfo) {
   EXPECT_EQ(R"({sign None, kind NanPayload, base Hex, has_underscores No})",
             concat(LiteralInfo{Sign::None, LiteralKind::NanPayload, Base::Hex,

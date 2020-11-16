@@ -116,7 +116,7 @@ auto ToText(TextContext&, const binary::LocalsList&) -> At<text::BoundValueTypeL
 auto ToText(TextContext&, const At<binary::UnpackedCode>&, At<text::Function>&) -> At<text::Function>&;
 
 // Section 11: Data
-auto ToText(TextContext&, const At<SpanU8>&) -> text::TextList;
+auto ToText(TextContext&, const At<SpanU8>&) -> text::DataItemList;
 auto ToText(TextContext&, const At<binary::DataSegment>&) -> At<text::DataSegment>;
 
 // Section 12: DataCount

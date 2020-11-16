@@ -108,6 +108,10 @@ inline bool Token::has_text() const {
   return immediate.index() == 7;
 }
 
+inline bool Token::has_simd_shape() const {
+  return immediate.index() == 8;
+}
+
 inline At<Opcode> Token::opcode() const {
   return At{loc, get<OpcodeInfo>(immediate).opcode};
 }
@@ -138,6 +142,10 @@ inline LiteralInfo Token::literal_info() const {
 
 inline Text Token::text() const {
   return get<Text>(immediate);
+}
+
+inline SimdShape Token::simd_shape() const {
+  return get<SimdShape>(immediate);
 }
 
 }  // namespace wasp::text

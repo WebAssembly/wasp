@@ -20,7 +20,7 @@
 
 namespace wasp::text {
 
-void Text::ToBuffer(Buffer& buffer) const {
+void Text::AppendToBuffer(Buffer& buffer) const {
   static const char kHexDigit[256] = {
       /*00*/ 0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
       /*10*/ 0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -67,7 +67,7 @@ void Text::ToBuffer(Buffer& buffer) const {
 
 auto Text::ToString() const -> std::string {
   Buffer buffer;
-  ToBuffer(buffer);
+  AppendToBuffer(buffer);
   return std::string(reinterpret_cast<const char*>(buffer.data()),
                      buffer.size());
 }
@@ -99,6 +99,9 @@ Token::Token(Location loc, TokenType type, Text text)
     : loc{loc}, type{type}, immediate{text} {}
 
 Token::Token(Location loc, TokenType type, Immediate immediate)
+    : loc{loc}, type{type}, immediate{immediate} {}
+
+Token::Token(Location loc, TokenType type, SimdShape immediate)
     : loc{loc}, type{type}, immediate{immediate} {}
 
 }  // namespace wasp::text

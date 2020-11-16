@@ -873,6 +873,200 @@ auto ReadTable(Tokenizer& tokenizer, Context& context) -> OptAt<Table> {
 
 // Section 5: Memory
 
+template <typename T>
+void AppendToBuffer(Buffer& buffer, const T& value) {
+  auto old_size = buffer.size();
+  buffer.resize(old_size + sizeof(value));
+  // TODO: Handle big endian.
+  memcpy(buffer.data() + old_size, &value, sizeof(value));
+}
+
+template <typename T>
+bool ReadIntsIntoBuffer(Tokenizer& tokenizer,
+                        Context& context,
+                        Buffer& buffer) {
+  while (true) {
+    auto token = tokenizer.Peek();
+    if (!(token.type == TokenType::Nat || token.type == TokenType::Int)) {
+      break;
+    }
+    WASP_TRY_READ(value, ReadInt<T>(tokenizer, context));
+    AppendToBuffer(buffer, *value);
+  }
+  return true;
+}
+
+template <typename T>
+bool ReadFloatsIntoBuffer(Tokenizer& tokenizer,
+                          Context& context,
+                          Buffer& buffer) {
+  while (true) {
+    auto token = tokenizer.Peek();
+    if (!(token.type == TokenType::Nat || token.type == TokenType::Int ||
+          token.type == TokenType::Float)) {
+      break;
+    }
+    WASP_TRY_READ(value, ReadFloat<T>(tokenizer, context));
+    AppendToBuffer(buffer, *value);
+  }
+  return true;
+}
+
+auto ReadSimdConst(Tokenizer& tokenizer, Context& context) -> OptAt<v128> {
+  auto shape_token = tokenizer.Match(TokenType::SimdShape);
+  if (!shape_token) {
+    context.errors.OnError(shape_token->loc, concat("Invalid SIMD shape, got ",
+                                                    tokenizer.Peek().type));
+    return nullopt;
+  }
+
+  At<v128> literal;
+  switch (shape_token->simd_shape()) {
+    case SimdShape::I8X16: {
+      WASP_TRY_READ(literal_, (ReadSimdValues<u8, 16>(tokenizer, context)));
+      literal = literal_;
+      break;
+    }
+
+    case SimdShape::I16X8: {
+      WASP_TRY_READ(literal_, (ReadSimdValues<u16, 8>(tokenizer, context)));
+      literal = literal_;
+      break;
+    }
+
+    case SimdShape::I32X4: {
+      WASP_TRY_READ(literal_, (ReadSimdValues<u32, 4>(tokenizer, context)));
+      literal = literal_;
+      break;
+    }
+
+    case SimdShape::I64X2: {
+      WASP_TRY_READ(literal_, (ReadSimdValues<u64, 2>(tokenizer, context)));
+      literal = literal_;
+      break;
+    }
+
+    case SimdShape::F32X4: {
+      WASP_TRY_READ(literal_, (ReadSimdValues<f32, 4>(tokenizer, context)));
+      literal = literal_;
+      break;
+    }
+
+    case SimdShape::F64X2: {
+      WASP_TRY_READ(literal_, (ReadSimdValues<f64, 2>(tokenizer, context)));
+      literal = literal_;
+      break;
+    }
+
+    default:
+      WASP_UNREACHABLE();
+  }
+
+  return literal;
+}
+
+bool ReadSimdConstsIntoBuffer(Tokenizer& tokenizer,
+                              Context& context,
+                              Buffer& buffer) {
+  while (true) {
+    if (tokenizer.Peek().type != TokenType::SimdShape) {
+      break;
+    }
+    WASP_TRY_READ(value, ReadSimdConst(tokenizer, context));
+    AppendToBuffer(buffer, *value);
+  }
+  return true;
+}
+
+auto ReadNumericData(Tokenizer& tokenizer, Context& context)
+    -> OptAt<NumericData> {
+  LocationGuard guard{tokenizer};
+  WASP_TRY(Expect(tokenizer, context, TokenType::Lpar));
+
+  NumericDataType type;
+  Buffer buffer;
+  auto token = tokenizer.Peek();
+  if (token.has_numeric_type()) {
+    tokenizer.Read();
+    switch (token.numeric_type()) {
+      case NumericType::I32:
+        type = NumericDataType::I32;
+        WASP_TRY(ReadIntsIntoBuffer<s32>(tokenizer, context, buffer));
+        break;
+      case NumericType::I64:
+        type = NumericDataType::I64;
+        WASP_TRY(ReadIntsIntoBuffer<s64>(tokenizer, context, buffer));
+        break;
+      case NumericType::F32:
+        type = NumericDataType::F32;
+        WASP_TRY(ReadFloatsIntoBuffer<f32>(tokenizer, context, buffer));
+        break;
+      case NumericType::F64:
+        type = NumericDataType::F64;
+        WASP_TRY(ReadFloatsIntoBuffer<f64>(tokenizer, context, buffer));
+        break;
+      case NumericType::V128:
+        type = NumericDataType::V128;
+        WASP_TRY(ReadSimdConstsIntoBuffer(tokenizer, context, buffer));
+        break;
+      default:
+        WASP_UNREACHABLE();
+    }
+  } else if (token.has_packed_type()) {
+    tokenizer.Read();
+    switch (token.packed_type()) {
+      case PackedType::I8:
+        type = NumericDataType::I8;
+        WASP_TRY(ReadIntsIntoBuffer<s8>(tokenizer, context, buffer));
+        break;
+      case PackedType::I16:
+        type = NumericDataType::I16;
+        WASP_TRY(ReadIntsIntoBuffer<s16>(tokenizer, context, buffer));
+        break;
+      default:
+        WASP_UNREACHABLE();
+    }
+  } else {
+    context.errors.OnError(
+        token.loc, "Expected a numeric type: i8, i16, i32, i64, f32, f64");
+    return nullopt;
+  }
+  WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
+  return At{guard.loc(), NumericData{type, std::move(buffer)}};
+}
+
+bool IsDataItem(Tokenizer& tokenizer) {
+  auto token = tokenizer.Peek();
+  return token.type == TokenType::Text ||
+         (token.type == TokenType::Lpar &&
+          (tokenizer.Peek(1).type == TokenType::PackedType ||
+           tokenizer.Peek(1).type == TokenType::NumericType));
+}
+
+auto ReadDataItem(Tokenizer& tokenizer, Context& context) -> OptAt<DataItem> {
+  auto token = tokenizer.Peek();
+  if (token.type == TokenType::Text) {
+    tokenizer.Read();
+    return At{token.loc, DataItem{token.text()}};
+  } else if (context.features.numeric_values_enabled()) {
+    WASP_TRY_READ(numeric_data, ReadNumericData(tokenizer, context));
+    return At{numeric_data.loc(), DataItem{numeric_data}};
+  } else {
+    context.errors.OnError(token.loc, "Numeric values not allowed");
+    return nullopt;
+  }
+}
+
+auto ReadDataItemList(Tokenizer& tokenizer, Context& context)
+    -> optional<DataItemList> {
+  DataItemList result;
+  while (IsDataItem(tokenizer)) {
+    WASP_TRY_READ(value, ReadDataItem(tokenizer, context));
+    result.push_back(value);
+  }
+  return result;
+}
+
 auto ReadMemoryType(Tokenizer& tokenizer, Context& context)
     -> OptAt<MemoryType> {
   WASP_TRY_READ(limits, ReadLimits(tokenizer, context, AllowIndexType::Yes));
@@ -906,10 +1100,10 @@ auto ReadMemory(Tokenizer& tokenizer, Context& context) -> OptAt<Memory> {
           ReadIndexTypeOpt(tokenizer, context).value_or(IndexType::I32);
       WASP_TRY(Expect(tokenizer, context, TokenType::Lpar));
       WASP_TRY(Expect(tokenizer, context, TokenType::Data));
-      WASP_TRY_READ(data, ReadTextList(tokenizer, context));
+      WASP_TRY_READ(data, ReadDataItemList(tokenizer, context));
       auto size = std::accumulate(
           data.begin(), data.end(), u32{0},
-          [](u32 total, Text text) { return total + text.byte_size; });
+          [](u32 total, DataItem item) { return total + item.byte_size(); });
 
       // Implicit memory type.
       auto type = MemoryType{Limits{size, size, Shared::No, index_type}};
@@ -1560,52 +1754,8 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, Context& context)
     case TokenType::SimdConstInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, context));
       tokenizer.Read();
-      auto simd_token = tokenizer.Peek();
-
-      OptAt<v128> immediate_opt;
-      switch (simd_token.type) {
-        case TokenType::I8X16:
-          tokenizer.Read();
-          immediate_opt = ReadSimdValues<u8, 16>(tokenizer, context);
-          break;
-
-        case TokenType::I16X8:
-          tokenizer.Read();
-          immediate_opt = ReadSimdValues<u16, 8>(tokenizer, context);
-          break;
-
-        case TokenType::I32X4:
-          tokenizer.Read();
-          immediate_opt = ReadSimdValues<u32, 4>(tokenizer, context);
-          break;
-
-        case TokenType::I64X2:
-          tokenizer.Read();
-          immediate_opt = ReadSimdValues<u64, 2>(tokenizer, context);
-          break;
-
-        case TokenType::F32X4:
-          tokenizer.Read();
-          immediate_opt = ReadSimdValues<f32, 4>(tokenizer, context);
-          break;
-
-        case TokenType::F64X2:
-          tokenizer.Read();
-          immediate_opt = ReadSimdValues<f64, 2>(tokenizer, context);
-          break;
-
-        default:
-          break;
-      }
-
-      if (!immediate_opt) {
-        context.errors.OnError(
-            token.loc,
-            concat("Invalid SIMD constant token, got ", simd_token.type));
-        return nullopt;
-      }
-
-      return At{guard.loc(), Instruction{token.opcode(), *immediate_opt}};
+      WASP_TRY_READ(immediate, ReadSimdConst(tokenizer, context));
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::SimdLaneInstr: {
@@ -1989,7 +2139,7 @@ auto ReadDataSegment(Tokenizer& tokenizer, Context& context)
       segment_type = SegmentType::Passive;
     }
     // ... * string_list RPAR
-    WASP_TRY_READ(data, ReadTextList(tokenizer, context));
+    WASP_TRY_READ(data, ReadDataItemList(tokenizer, context));
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
 
     if (segment_type == SegmentType::Active) {
@@ -2004,7 +2154,7 @@ auto ReadDataSegment(Tokenizer& tokenizer, Context& context)
     // LPAR DATA offset string_list RPAR  /* Sugar */
     auto memory = ReadVarOpt(tokenizer, context);
     WASP_TRY_READ(offset, ReadOffsetExpression(tokenizer, context));
-    WASP_TRY_READ(data, ReadTextList(tokenizer, context));
+    WASP_TRY_READ(data, ReadDataItemList(tokenizer, context));
     WASP_TRY(Expect(tokenizer, context, TokenType::Rpar));
     return At{guard.loc(), DataSegment{nullopt, memory, offset, data}};
   }

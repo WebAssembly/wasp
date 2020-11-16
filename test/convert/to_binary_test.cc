@@ -1083,8 +1083,25 @@ TEST(ConvertToBinaryTest, DataSegment) {
             nullopt, At{loc2, text::Var{Index{13}}},
             At{loc3, text::ConstantExpression{At{
                          loc4, text::Instruction{At{loc5, Opcode::Nop}}}}},
-            text::TextList{text::Text{"\"hello\"", 5},
-                           text::Text{"\"\\00\"", 1}}}});
+            text::DataItemList{text::DataItem{text::Text{"\"hello\"", 5}},
+                               text::DataItem{text::Text{"\"\\00\"", 1}}}}});
+}
+
+TEST(ConvertToBinaryTest, DataSegment_numeric_values) {
+  OK(At{loc1,
+        binary::DataSegment{
+            At{loc2, Index{13}},
+            At{loc3, binary::ConstantExpression{At{
+                         loc4, binary::Instruction{At{loc5, Opcode::Nop}}}}},
+            "hello\x00"_su8}},
+     At{loc1,
+        text::DataSegment{
+            nullopt, At{loc2, text::Var{Index{13}}},
+            At{loc3, text::ConstantExpression{At{
+                         loc4, text::Instruction{At{loc5, Opcode::Nop}}}}},
+            text::DataItemList{text::DataItem{text::NumericData{
+                text::NumericDataType::I8,
+                ToBuffer("\x68\x65\x6c\x6c\x6f\x00"_su8)}}}}});
 }
 
 TEST(ConvertToBinaryTest, EventType) {
@@ -1291,9 +1308,9 @@ TEST(ConvertToBinaryTest, Module) {
             // (data (i32.const 0) "hello")
             text::ModuleItem{
                 At{loc23,
-                   text::DataSegment{
-                       nullopt, At{loc24, text::Var{Index{0}}},
-                       text_constant_expression,
-                       text::TextList{text::Text{"\"hello\""_sv, 5}}}}},
+                   text::DataSegment{nullopt, At{loc24, text::Var{Index{0}}},
+                                     text_constant_expression,
+                                     text::DataItemList{text::DataItem{
+                                         text::Text{"\"hello\""_sv, 5}}}}}},
         }});
 }

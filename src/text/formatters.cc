@@ -113,6 +113,34 @@ std::ostream& operator<<(std::ostream& os,
   return os << result;
 }
 
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::text::SimdShape& self) {
+  string_view result;
+  switch (self) {
+    case ::wasp::text::SimdShape::I8X16:
+      result = "i8x16";
+      break;
+    case ::wasp::text::SimdShape::I16X8:
+      result = "i16x8";
+      break;
+    case ::wasp::text::SimdShape::I32X4:
+      result = "i32x4";
+      break;
+    case ::wasp::text::SimdShape::I64X2:
+      result = "i64x2";
+      break;
+    case ::wasp::text::SimdShape::F32X4:
+      result = "f32x4";
+      break;
+    case ::wasp::text::SimdShape::F64X2:
+      result = "f64x2";
+      break;
+    default:
+      WASP_UNREACHABLE();
+  }
+  return os << result;
+}
+
 std::ostream& operator<<(std::ostream& os, const ::wasp::text::Var& self) {
   if (self.is_index()) {
     os << self.index();
@@ -189,6 +217,37 @@ std::ostream& operator<<(std::ostream& os, const ::wasp::text::NanKind& self) {
       break;
     case ::wasp::text::NanKind::Arithmetic:
       result = "arithmetic";
+      break;
+    default:
+      WASP_UNREACHABLE();
+  }
+  return os << result;
+}
+
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::text::NumericDataType& self) {
+  string_view result;
+  switch (self) {
+    case ::wasp::text::NumericDataType::I8:
+      result = "i8";
+      break;
+    case ::wasp::text::NumericDataType::I16:
+      result = "i16";
+      break;
+    case ::wasp::text::NumericDataType::I32:
+      result = "i32";
+      break;
+    case ::wasp::text::NumericDataType::I64:
+      result = "i64";
+      break;
+    case ::wasp::text::NumericDataType::F32:
+      result = "f32";
+      break;
+    case ::wasp::text::NumericDataType::F64:
+      result = "f64";
+      break;
+    case ::wasp::text::NumericDataType::V128:
+      result = "v128";
       break;
     default:
       WASP_UNREACHABLE();

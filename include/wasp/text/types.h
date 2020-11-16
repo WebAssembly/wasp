@@ -136,7 +136,7 @@ using BindVar = string_view;
 
 using TextList = std::vector<At<Text>>;
 
-void ToBuffer(const TextList&, Buffer& buffer);
+void AppendToBuffer(const TextList&, Buffer& buffer);
 
 struct FunctionType {
   ValueTypeList params;
@@ -606,12 +606,48 @@ struct Table {
 
 struct DataSegment;
 
+enum class NumericDataType { I8, I16, I32, I64, F32, F64, V128 };
+
+struct NumericData {
+  auto data_type_size() const -> u32;
+  auto byte_size() const -> u32;
+  auto count() const -> Index;
+
+  template <typename T>
+  auto value(Index) const -> T;
+
+  void AppendToBuffer(Buffer&) const;
+
+  NumericDataType type;
+  Buffer data;
+};
+
+struct DataItem {
+  bool is_text() const;
+  bool is_numeric_data() const;
+
+  auto text() -> Text&;
+  auto text() const -> const Text&;
+  auto numeric_data() -> NumericData&;
+  auto numeric_data() const -> const NumericData&;
+
+  auto byte_size() const -> u32;
+
+  void AppendToBuffer(Buffer&) const;
+
+  variant<Text, NumericData> value;
+};
+
+using DataItemList = std::vector<At<DataItem>>;
+
 struct Memory {
   // Defined memory.
   explicit Memory(const MemoryDesc&, const InlineExportList&);
 
   // Defined memory with implicit data segment.
-  explicit Memory(const MemoryDesc&, const InlineExportList&, const TextList&);
+  explicit Memory(const MemoryDesc&,
+                  const InlineExportList&,
+                  const DataItemList&);
 
   // Imported memory.
   explicit Memory(const MemoryDesc&,
@@ -625,7 +661,7 @@ struct Memory {
   MemoryDesc desc;
   OptAt<InlineImport> import;
   InlineExportList exports;
-  optional<TextList> data;
+  optional<DataItemList> data;
 };
 
 // Section 6: Global
@@ -702,16 +738,16 @@ struct DataSegment {
   explicit DataSegment(OptAt<BindVar> name,
                        OptAt<Var> memory,
                        const At<ConstantExpression>& offset,
-                       const TextList&);
+                       const DataItemList&);
 
   // Passive.
-  explicit DataSegment(OptAt<BindVar> name, const TextList&);
+  explicit DataSegment(OptAt<BindVar> name, const DataItemList&);
 
   OptAt<BindVar> name;
   SegmentType type;
   OptAt<Var> memory;
   OptAt<ConstantExpression> offset;
-  TextList data;
+  DataItemList data;
 };
 
 // Section 12: DataCount
@@ -1002,15 +1038,17 @@ struct Command {
 
 using Script = std::vector<At<Command>>;
 
-#define WASP_TEXT_ENUMS(WASP_V) \
-  WASP_V(text::TokenType)             \
-  WASP_V(text::Sign)                  \
-  WASP_V(text::LiteralKind)           \
-  WASP_V(text::Base)                  \
-  WASP_V(text::HasUnderscores)        \
-  WASP_V(text::ScriptModuleKind)      \
-  WASP_V(text::AssertionKind)         \
-  WASP_V(text::NanKind)
+#define WASP_TEXT_ENUMS(WASP_V)  \
+  WASP_V(text::TokenType)        \
+  WASP_V(text::Sign)             \
+  WASP_V(text::LiteralKind)      \
+  WASP_V(text::Base)             \
+  WASP_V(text::HasUnderscores)   \
+  WASP_V(text::ScriptModuleKind) \
+  WASP_V(text::AssertionKind)    \
+  WASP_V(text::NanKind)          \
+  WASP_V(text::SimdShape)        \
+  WASP_V(text::NumericDataType)
 
 #define WASP_TEXT_STRUCTS(WASP_V)                                        \
   WASP_V(text::LiteralInfo, 4, sign, kind, base, has_underscores)        \
@@ -1048,6 +1086,8 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::InlineExport, 1, name)                                    \
   WASP_V(text::Function, 5, desc, locals, instructions, import, exports) \
   WASP_V(text::Table, 4, desc, import, exports, elements)                \
+  WASP_V(text::NumericData, 2, type, data)                               \
+  WASP_V(text::DataItem, 1, value)                                       \
   WASP_V(text::Memory, 4, desc, import, exports, data)                   \
   WASP_V(text::ConstantExpression, 1, instructions)                      \
   WASP_V(text::Global, 4, desc, init, import, exports)                   \
@@ -1095,6 +1135,7 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::BoundValueTypeList)    \
   WASP_V(text::FieldTypeList)         \
   WASP_V(text::InlineExportList)      \
+  WASP_V(text::DataItemList)          \
   WASP_V(text::ElementExpressionList) \
   WASP_V(text::Module)                \
   WASP_V(text::ConstList)             \
@@ -1117,5 +1158,7 @@ WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_ABSL_HASH_VALUE_VARGS)
 WASP_TEXT_CONTAINERS(WASP_ABSL_HASH_VALUE_CONTAINER)
 
 }  // namespace wasp::text
+
+#include "wasp/text/types-inl.h"
 
 #endif  // WASP_TEXT_TYPES_H_

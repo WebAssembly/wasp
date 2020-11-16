@@ -526,8 +526,8 @@ switch (PeekChar(data, 2)) {
         switch (PeekChar(data, 5)) {
           default:
             switch (PeekChar(data, 0)) {
-              case 'f': return LexKeyword(data, "f32x4", TokenType::F32X4);
-              case 'i': return LexKeyword(data, "i32x4", TokenType::I32X4);
+              case 'f': return LexKeyword(data, "f32x4", SimdShape::F32X4);
+              case 'i': return LexKeyword(data, "i32x4", SimdShape::I32X4);
               default: break;
             }
             break;
@@ -1240,8 +1240,8 @@ switch (PeekChar(data, 2)) {
         switch (PeekChar(data, 5)) {
           default:
             switch (PeekChar(data, 0)) {
-              case 'f': return LexKeyword(data, "f64x2", TokenType::F64X2);
-              case 'i': return LexKeyword(data, "i64x2", TokenType::I64X2);
+              case 'f': return LexKeyword(data, "f64x2", SimdShape::F64X2);
+              case 'i': return LexKeyword(data, "i64x2", SimdShape::I64X2);
               default: break;
             }
             break;
@@ -1360,7 +1360,7 @@ switch (PeekChar(data, 2)) {
       default: return LexKeyword(data, "i16", PackedType::I16);
       case 'x':
         switch (PeekChar(data, 5)) {
-          default: return LexKeyword(data, "i16x8", TokenType::I16X8);
+          default: return LexKeyword(data, "i16x8", SimdShape::I16X8);
           case '.':
             switch (PeekChar(data, 7)) {
               case 'a':
@@ -1875,7 +1875,7 @@ switch (PeekChar(data, 2)) {
   case 'v': return LexKeyword(data, "invoke", TokenType::Invoke);
   case 'x':
     switch (PeekChar(data, 5)) {
-      default: return LexKeyword(data, "i8x16", TokenType::I8X16);
+      default: return LexKeyword(data, "i8x16", SimdShape::I8X16);
       case '.':
         switch (PeekChar(data, 8)) {
           default:

@@ -762,10 +762,10 @@ auto ToBinaryCode(Context& context, const At<text::Function>& value)
 }
 
 // Section 11: Data
-auto ToBinary(Context& context, const At<text::TextList>& value) -> SpanU8 {
+auto ToBinary(Context& context, const At<text::DataItemList>& value) -> SpanU8 {
   Buffer buffer;
-  for (auto&& text : *value) {
-    text->ToBuffer(buffer);
+  for (auto&& data_item : *value) {
+    data_item->AppendToBuffer(buffer);
   }
   return context.Add(buffer);
 }
