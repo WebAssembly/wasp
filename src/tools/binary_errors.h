@@ -34,7 +34,7 @@ class BinaryErrors : public Errors {
   explicit BinaryErrors(SpanU8 data);
   explicit BinaryErrors(string_view filename, SpanU8 data);
 
-  bool has_error() const { return !errors.empty(); }
+  bool HasError() const override { return !errors.empty(); }
   void PrintTo(std::ostream&);
 
  protected:

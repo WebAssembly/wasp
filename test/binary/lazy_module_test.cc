@@ -27,7 +27,7 @@ using namespace ::wasp::test;
 TEST(BinaryLazyModuleTest, Basic) {
   Features features;
   TestErrors errors;
-  auto module = ReadModule(
+  auto module = ReadLazyModule(
       "\0asm\x01\0\0\0"
       "\x01\x03\0\0\0"            // Invalid type section.
       "\x03\x05\0\0\0\0\0"        // Invalid function section.
@@ -70,7 +70,7 @@ TEST(BinaryLazyModuleTest, Basic) {
 TEST(BinaryLazyModuleTest, BadMagic) {
   TestErrors errors;
   auto data = "wasm\x01\0\0\0"_su8;
-  auto module = ReadModule(data, Features{}, errors);
+  auto module = ReadLazyModule(data, Features{}, errors);
   WASP_USE(module);
 
   ExpectError({{0, "magic"},
@@ -81,7 +81,7 @@ TEST(BinaryLazyModuleTest, BadMagic) {
 TEST(BinaryLazyModuleTest, Magic_PastEnd) {
   TestErrors errors;
   auto data = "\0as"_su8;
-  auto module = ReadModule(data, Features{}, errors);
+  auto module = ReadLazyModule(data, Features{}, errors);
   WASP_USE(module);
 
   // TODO(binji): This should produce better errors.
@@ -93,7 +93,7 @@ TEST(BinaryLazyModuleTest, Magic_PastEnd) {
 TEST(BinaryLazyModuleTest, BadVersion) {
   TestErrors errors;
   auto data = "\0asm\x02\0\0\0"_su8;
-  auto module = ReadModule(data, Features{}, errors);
+  auto module = ReadLazyModule(data, Features{}, errors);
   WASP_USE(module);
 
   ExpectError({{4, "version"},
@@ -104,7 +104,7 @@ TEST(BinaryLazyModuleTest, BadVersion) {
 TEST(BinaryLazyModuleTest, Version_PastEnd) {
   TestErrors errors;
   auto data = "\0asm\x01"_su8;
-  auto module = ReadModule(data, Features{}, errors);
+  auto module = ReadLazyModule(data, Features{}, errors);
   WASP_USE(module);
 
   ExpectError({{4, "version"}, {4, "Unable to read 4 bytes"}}, errors, data);

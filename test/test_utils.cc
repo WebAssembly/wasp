@@ -46,6 +46,10 @@ void TestErrors::Clear() {
   errors.clear();
 }
 
+bool TestErrors::HasError() const {
+  return !errors.empty();
+}
+
 void TestErrors::HandlePushContext(Location loc, string_view desc) {
   context_stack.push_back(Error{loc, std::string{desc}});
 }

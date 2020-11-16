@@ -36,7 +36,7 @@ class TextErrors : public Errors {
   explicit TextErrors(string_view filename, SpanU8 data);
 
   void PrintTo(std::ostream&) const;
-  bool has_error() const;
+  bool HasError() const override;
 
  protected:
   void HandlePushContext(SpanU8 pos, string_view desc) override;

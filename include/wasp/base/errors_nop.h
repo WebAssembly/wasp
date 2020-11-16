@@ -22,6 +22,9 @@
 namespace wasp {
 
 class ErrorsNop : public Errors {
+ public:
+  bool HasError() const override { return false; }
+
  protected:
   void HandlePushContext(Location loc, string_view desc) override {}
   void HandlePopContext() override {}

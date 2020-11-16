@@ -112,14 +112,14 @@ Tool::Tool(string_view filename, SpanU8 data, Options options)
       options{options},
       data{data},
       errors{data},
-      module{ReadModule(data, options.features, errors)},
+      module{ReadLazyModule(data, options.features, errors)},
       visitor{options.features, errors} {}
 
 bool Tool::Run() {
   if (module.magic && module.version) {
     visit::Visit(module, visitor);
   }
-  return !errors.has_error();
+  return !errors.HasError();
 }
 
 }  // namespace validate

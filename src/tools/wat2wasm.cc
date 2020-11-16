@@ -132,7 +132,7 @@ int Tool::Run() {
   Resolve(text_module, errors);
   Desugar(text_module);
 
-  if (errors.has_error()) {
+  if (errors.HasError()) {
     errors.PrintTo(std::cerr);
     return 1;
   }
@@ -144,7 +144,7 @@ int Tool::Run() {
     valid::Context validate_context{options.features, errors};
     Validate(validate_context, binary_module);
 
-    if (errors.has_error()) {
+    if (errors.HasError()) {
       errors.PrintTo(std::cerr);
       return 1;
     }

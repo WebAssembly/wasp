@@ -117,7 +117,7 @@ class BinaryVisitorTest : public ::testing::Test {
 
   template <typename Visitor>
   visit::Result Visit(Visitor& visitor) {
-    LazyModule module = ReadModule(SpanU8{kTestModule}, features, errors);
+    LazyModule module = ReadLazyModule(SpanU8{kTestModule}, features, errors);
     return visit::Visit(module, visitor);
   }
 

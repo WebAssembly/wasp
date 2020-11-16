@@ -29,6 +29,8 @@ class Errors {
   void PopContext();
   void OnError(Location loc, string_view message);
 
+  virtual bool HasError() const = 0;
+
  protected:
   virtual void HandlePushContext(Location loc, string_view desc) = 0;
   virtual void HandlePopContext() = 0;

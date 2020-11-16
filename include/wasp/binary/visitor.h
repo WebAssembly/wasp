@@ -217,13 +217,13 @@ inline Result Visit(LazyModule& module, Visitor& visitor) {
               {
                 for (const auto& code : sec.sequence) {
                   WASP_IF_OK(
-                      visitor.BeginCode(*code), {
+                      visitor.BeginCode(code), {
                         for (auto&& instr :
                              ReadExpression(*code->body, module.context)) {
                           WASP_CHECK(visitor.OnInstruction(instr));
                         }
                         EndCode(code->body->data.last(0), module.context);
-                        WASP_CHECK(visitor.EndCode(*code));
+                        WASP_CHECK(visitor.EndCode(code));
                       })
                 }
                 WASP_CHECK(visitor.EndCodeSection(sec));

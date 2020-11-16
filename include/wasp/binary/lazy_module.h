@@ -37,7 +37,7 @@ class LazyModule {
   LazySequence<Section> sections;
 };
 
-LazyModule ReadModule(SpanU8 data, const Features&, Errors&);
+LazyModule ReadLazyModule(SpanU8 data, const Features&, Errors&);
 
 }  // namespace wasp::binary
 

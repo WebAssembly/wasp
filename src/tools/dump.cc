@@ -264,7 +264,7 @@ Tool::Tool(string_view filename, SpanU8 data, Options options)
       options{options},
       data{data},
       errors{data},
-      module{ReadModule(data, options.features, errors)} {}
+      module{ReadLazyModule(data, options.features, errors)} {}
 
 void Tool::Run() {
   if (!(module.magic && module.version)) {

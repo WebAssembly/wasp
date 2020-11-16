@@ -46,7 +46,7 @@ SpanU8 GetModuleData() {
 TEST(BinaryLazyModuleUtilsTest, ForEachFunctionName) {
   Features features;
   TestErrors errors;
-  auto module = ReadModule(GetModuleData(), features, errors);
+  auto module = ReadLazyModule(GetModuleData(), features, errors);
 
   ForEachFunctionName(module, [](const std::pair<Index, string_view>& pair) {
     switch (pair.first) {
@@ -72,7 +72,7 @@ TEST(BinaryLazyModuleUtilsTest, ForEachFunctionName) {
 TEST(BinaryLazyModuleUtilsTest, CopyFunctionNames) {
   Features features;
   TestErrors errors;
-  auto module = ReadModule(GetModuleData(), features, errors);
+  auto module = ReadLazyModule(GetModuleData(), features, errors);
 
   using FunctionNameMap = std::map<Index, string_view>;
 
@@ -96,7 +96,7 @@ TEST(BinaryLazyModuleUtilsTest, GetImportCount) {
       "\0\x01x\x03\x7f\0"
       "\0\x01z\x01\x70\0\0"_su8;
 
-  auto module = ReadModule(data, features, errors);
+  auto module = ReadLazyModule(data, features, errors);
 
   EXPECT_EQ(1u, GetImportCount(module, ExternalKind::Function));
   EXPECT_EQ(1u, GetImportCount(module, ExternalKind::Global));
