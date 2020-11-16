@@ -1308,17 +1308,23 @@ OptAt<Index> ReadLength(SpanU8* data, Context& context) {
 OptAt<Limits> Read(SpanU8* data,
                    Context& context,
                    Tag<Limits>,
-                   AllowIndexType64 allow_index_type_64) {
+                   LimitsKind kind) {
   ErrorsContextGuard error_guard{context.errors, *data, "limits"};
   LocationGuard guard{data};
   WASP_TRY_READ_CONTEXT(flags, Read<u8>(data, context), "flags");
   WASP_TRY_DECODE_FEATURES(decoded, flags, LimitsFlags, "flags value",
                            context.features);
 
-  if (allow_index_type_64 == AllowIndexType64::No &&
-      decoded->index_type == IndexType::I64) {
-    context.errors.OnError(flags.loc(), "i64 index type is not allowed");
-    return nullopt;
+  if (kind == LimitsKind::Table) {
+    if (decoded->shared == Shared::Yes) {
+      context.errors.OnError(flags.loc(), "shared tables are not allowed");
+      return nullopt;
+    }
+
+    if (decoded->index_type == IndexType::I64) {
+      context.errors.OnError(flags.loc(), "i64 index type is not allowed");
+      return nullopt;
+    }
   }
 
   WASP_TRY_READ_CONTEXT(min, Read<u32>(data, context), "min");
@@ -1374,7 +1380,7 @@ OptAt<Memory> Read(SpanU8* data, Context& context, Tag<Memory>) {
 
 OptAt<MemoryType> Read(SpanU8* data, Context& context, Tag<MemoryType>) {
   ErrorsContextGuard error_guard{context.errors, *data, "memory type"};
-  WASP_TRY_READ(limits, Read<Limits>(data, context, AllowIndexType64::Yes));
+  WASP_TRY_READ(limits, Read<Limits>(data, context, LimitsKind::Memory));
   return At{limits.loc(), MemoryType{limits}};
 }
 
@@ -1553,7 +1559,7 @@ OptAt<TableType> Read(SpanU8* data, Context& context, Tag<TableType>) {
   ErrorsContextGuard error_guard{context.errors, *data, "table type"};
   LocationGuard guard{data};
   WASP_TRY_READ(elemtype, Read<ReferenceType>(data, context));
-  WASP_TRY_READ(limits, Read<Limits>(data, context, AllowIndexType64::No));
+  WASP_TRY_READ(limits, Read<Limits>(data, context, LimitsKind::Table));
   return At{guard.range(data), TableType{std::move(limits), elemtype}};
 }
 

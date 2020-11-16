@@ -70,12 +70,8 @@ auto ReadReservedIndex(SpanU8*, Context&) -> OptAt<Index>;
 auto ReadString(SpanU8*, Context&, string_view desc) -> OptAt<string_view>;
 auto ReadUtf8String(SpanU8*, Context&, string_view desc) -> OptAt<string_view>;
 
-enum class BulkImmediateKind {
-  Memory,
-  Table,
-};
-
-enum class AllowIndexType64 { No, Yes };
+enum class BulkImmediateKind { Memory, Table };
+enum class LimitsKind { Memory, Table };
 
 // Read functions for various binary types.
 auto Read(SpanU8*, Context&, Tag<ArrayType>) -> OptAt<ArrayType>;
@@ -120,7 +116,7 @@ auto Read(SpanU8*, Context&, Tag<InitImmediate>, BulkImmediateKind)
 auto Read(SpanU8*, Context&, Tag<Instruction>) -> OptAt<Instruction>;
 auto Read(SpanU8*, Context&, Tag<InstructionList>) -> OptAt<InstructionList>;
 auto Read(SpanU8*, Context&, Tag<LetImmediate>) -> OptAt<LetImmediate>;
-auto Read(SpanU8*, Context&, Tag<Limits>, AllowIndexType64) -> OptAt<Limits>;
+auto Read(SpanU8*, Context&, Tag<Limits>, LimitsKind) -> OptAt<Limits>;
 auto Read(SpanU8*, Context&, Tag<Locals>) -> OptAt<Locals>;
 auto Read(SpanU8*, Context&, Tag<MemArgImmediate>) -> OptAt<MemArgImmediate>;
 auto Read(SpanU8*, Context&, Tag<Memory>) -> OptAt<Memory>;

@@ -677,47 +677,52 @@ TEST_F(TextReadTest, OffsetOpt) {
 }
 
 TEST_F(TextReadTest, Limits) {
-  OK(ReadLimits, Limits{At{"1"_su8, 1u}}, "1"_su8, AllowIndexType::No);
+  OK(ReadLimits, Limits{At{"1"_su8, 1u}}, "1"_su8, LimitsKind::Memory);
   OK(ReadLimits, Limits{At{"1"_su8, 1u}, At{"0x11"_su8, 17u}}, "1 0x11"_su8,
-     AllowIndexType::No);
-  // TODO: Should only be allowed when threads feature is enabled.
+     LimitsKind::Memory);
+}
+
+TEST_F(TextReadTest, Limits_threads) {
+  context.features.enable_threads();
+
   OK(ReadLimits,
      Limits{At{"0"_su8, 0u}, At{"20"_su8, 20u}, At{"shared"_su8, Shared::Yes}},
-     "0 20 shared"_su8, AllowIndexType::No);
+     "0 20 shared"_su8, LimitsKind::Memory);
 }
 
 TEST_F(TextReadTest, Limits_memory64) {
   Fail(ReadLimits, {{0, "Expected a natural number, got NumericType"}},
-       "i32 1"_su8, AllowIndexType::Yes);
+       "i32 1"_su8, LimitsKind::Memory);
 
   context.features.enable_memory64();
 
   OK(ReadLimits,
      Limits{At{"1"_su8, 1u}, nullopt, Shared::No,
             At{"i32"_su8, IndexType::I32}},
-     "i32 1"_su8, AllowIndexType::Yes);
+     "i32 1"_su8, LimitsKind::Memory);
 
   OK(ReadLimits,
      Limits{At{"1"_su8, 1u}, At{"2"_su8, 2u}, Shared::No,
             At{"i32"_su8, IndexType::I32}},
-     "i32 1 2"_su8, AllowIndexType::Yes);
+     "i32 1 2"_su8, LimitsKind::Memory);
 
   OK(ReadLimits,
      Limits{At{"1"_su8, 1u}, nullopt, Shared::No,
             At{"i64"_su8, IndexType::I64}},
-     "i32 1"_su8, AllowIndexType::Yes);
+     "i32 1"_su8, LimitsKind::Memory);
 
   OK(ReadLimits,
      Limits{At{"1"_su8, 1u}, At{"2"_su8, 2u}, Shared::No,
             At{"i64"_su8, IndexType::I64}},
-     "i32 1 2"_su8, AllowIndexType::Yes);
+     "i32 1 2"_su8, LimitsKind::Memory);
 }
 
 TEST_F(TextReadTest, Limits_No64BitShared) {
+  context.features.enable_threads();
   context.features.enable_memory64();
 
   Fail(ReadLimits, {{8, "limits cannot be shared and have i64 index"}},
-       "i64 1 2 shared"_su8, AllowIndexType::Yes);
+       "i64 1 2 shared"_su8, LimitsKind::Memory);
 }
 
 TEST_F(TextReadTest, BlockImmediate) {
