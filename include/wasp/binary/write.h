@@ -104,7 +104,7 @@ Iterator Write(HeapType value, Iterator out) {
     return Write(encoding::HeapKind::Encode(value.heap_kind()), out);
   } else {
     assert(value.is_index());
-    return Write(value.index(), out);
+    return Write(static_cast<s32>(value.index()), out);
   }
 }
 
@@ -153,7 +153,7 @@ Iterator Write(BlockType value, Iterator out) {
     return Write(encoding::BlockType::Void, out);
   } else {
     assert(value.is_index());
-    return Write(value.index(), out);
+    return Write(static_cast<s32>(value.index()), out);
   }
 }
 
