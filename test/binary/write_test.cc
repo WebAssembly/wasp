@@ -64,6 +64,7 @@ TEST(BinaryWriteTest, BlockType_MVP) {
 
 TEST(BinaryWriteTest, BlockType_multi_value) {
   ExpectWrite("\x01"_su8, BlockType{Index{1}});
+  ExpectWrite("\xc0\x00"_su8, BlockType{Index{64}});
   ExpectWrite("\xc0\x03"_su8, BlockType{Index{448}});
 }
 
@@ -476,6 +477,7 @@ TEST(BinaryWriteTest, HeapType_function_references) {
   ExpectWrite("\x70"_su8, HT_Func);
   ExpectWrite("\x6f"_su8, HT_Extern);
   ExpectWrite("\x00"_su8, HT_0);
+  ExpectWrite("\xc0\x00"_su8, HeapType{At{"\xc0\x00"_su8, Index{64}}});
 }
 
 TEST(BinaryWriteTest, HeapType_gc) {
