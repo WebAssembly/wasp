@@ -3382,8 +3382,8 @@ TEST_F(ValidateInstructionTest, ArrayGet) {
   ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
   ValueType VT_Ref_index = MakeValueTypeRef(index, Null::No);
 
-  TestSignature(I{O::ArrayGet, index}, {VT_RefNull_index}, {VT_F32});
-  TestSignature(I{O::ArrayGet, index}, {VT_Ref_index}, {VT_F32});
+  TestSignature(I{O::ArrayGet, index}, {VT_RefNull_index, VT_I32}, {VT_F32});
+  TestSignature(I{O::ArrayGet, index}, {VT_Ref_index, VT_I32}, {VT_F32});
 }
 
 TEST_F(ValidateInstructionTest, ArrayGet_FailPacked) {
@@ -3391,7 +3391,7 @@ TEST_F(ValidateInstructionTest, ArrayGet_FailPacked) {
       ArrayType{FieldType{StorageType{PackedType::I8}, Mutability::Const}});
   ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
 
-  FailWithTypeStack(I{O::ArrayGet, index}, {VT_RefNull_index});
+  FailWithTypeStack(I{O::ArrayGet, index}, {VT_RefNull_index, VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, ArrayGetPacked) {
@@ -3401,12 +3401,12 @@ TEST_F(ValidateInstructionTest, ArrayGetPacked) {
   ValueType VT_Ref_index = MakeValueTypeRef(index, Null::No);
 
   // ArrayGetS
-  TestSignature(I{O::ArrayGetS, index}, {VT_RefNull_index}, {VT_I32});
-  TestSignature(I{O::ArrayGetS, index}, {VT_Ref_index}, {VT_I32});
+  TestSignature(I{O::ArrayGetS, index}, {VT_RefNull_index, VT_I32}, {VT_I32});
+  TestSignature(I{O::ArrayGetS, index}, {VT_Ref_index, VT_I32}, {VT_I32});
 
   // ArrayGetU
-  TestSignature(I{O::ArrayGetU, index}, {VT_RefNull_index}, {VT_I32});
-  TestSignature(I{O::ArrayGetU, index}, {VT_Ref_index}, {VT_I32});
+  TestSignature(I{O::ArrayGetU, index}, {VT_RefNull_index, VT_I32}, {VT_I32});
+  TestSignature(I{O::ArrayGetU, index}, {VT_Ref_index, VT_I32}, {VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, ArrayGetPacked_FailUnpacked) {
@@ -3414,8 +3414,8 @@ TEST_F(ValidateInstructionTest, ArrayGetPacked_FailUnpacked) {
       ArrayType{FieldType{StorageType{VT_F32}, Mutability::Const}});
   ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
 
-  FailWithTypeStack(I{O::ArrayGetS, index}, {VT_RefNull_index});
-  FailWithTypeStack(I{O::ArrayGetU, index}, {VT_RefNull_index});
+  FailWithTypeStack(I{O::ArrayGetS, index}, {VT_RefNull_index, VT_I32});
+  FailWithTypeStack(I{O::ArrayGetU, index}, {VT_RefNull_index, VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, ArraySet) {
@@ -3424,8 +3424,8 @@ TEST_F(ValidateInstructionTest, ArraySet) {
   ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
   ValueType VT_Ref_index = MakeValueTypeRef(index, Null::No);
 
-  TestSignature(I{O::ArraySet, index}, {VT_RefNull_index, VT_F32}, {});
-  TestSignature(I{O::ArraySet, index}, {VT_Ref_index, VT_F32}, {});
+  TestSignature(I{O::ArraySet, index}, {VT_RefNull_index, VT_I32, VT_F32}, {});
+  TestSignature(I{O::ArraySet, index}, {VT_Ref_index, VT_I32, VT_F32}, {});
 }
 
 TEST_F(ValidateInstructionTest, ArrayLen) {

@@ -1692,6 +1692,7 @@ bool ArrayNewDefaultWithRtt(Context& context,
 }
 
 bool ArrayGet(Context& context, Location loc, const At<Index>& immediate) {
+  bool valid = PopType(context, loc, StackType::I32());
   auto [stack_type, array_type] = PopArrayReference(context, loc, immediate);
   if (!array_type) {
     return false;
@@ -1703,12 +1704,13 @@ bool ArrayGet(Context& context, Location loc, const At<Index>& immediate) {
   }
 
   PushType(context, StackType{*value_type});
-  return true;
+  return valid;
 }
 
 bool ArrayGetPacked(Context& context,
                     Location loc,
                     const At<Index>& immediate) {
+  bool valid = PopType(context, loc, StackType::I32());
   auto [stack_type, array_type] = PopArrayReference(context, loc, immediate);
   if (!array_type) {
     return false;
@@ -1720,7 +1722,7 @@ bool ArrayGetPacked(Context& context,
   }
 
   PushType(context, StackType::I32());
-  return true;
+  return valid;
 }
 
 bool ArraySet(Context& context, Location loc, const At<Index>& immediate) {
@@ -1736,9 +1738,12 @@ bool ArraySet(Context& context, Location loc, const At<Index>& immediate) {
     valid = false;
   }
 
-  StackTypeList stack_types{StackType{ValueType{ReferenceType{
-                                RefType{HeapType{immediate}, Null::Yes}}}},
-                            ToStackType(array_type->field->type)};
+  StackTypeList stack_types{
+      StackType{
+          ValueType{ReferenceType{RefType{HeapType{immediate}, Null::Yes}}}},
+      StackType::I32(),
+      ToStackType(array_type->field->type),
+  };
   return AllTrue(valid, PopTypes(context, loc, stack_types));
 }
 
