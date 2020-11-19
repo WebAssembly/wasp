@@ -538,6 +538,15 @@ TEST_F(TextReadTest, FieldTypeList) {
                    Mutability::Const}}},
      "(field i32)"_su8);
 
+  // Packed field
+  OK(ReadFieldTypeList,
+     FieldTypeList{
+         At{"i8"_su8,
+            FieldType{nullopt,
+                      At{"i8"_su8, StorageType{At{"i8"_su8, PackedType::I8}}},
+                      Mutability::Const}}},
+     "(field i8)"_su8);
+
   // Combined fields
   OK(ReadFieldTypeList,
      FieldTypeList{

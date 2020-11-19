@@ -383,7 +383,7 @@ bool IsFieldTypeContents(Tokenizer& tokenizer) {
   auto token = tokenizer.Peek();
   return (token.type == TokenType::Lpar &&
           tokenizer.Peek(1).type == TokenType::Mut) ||
-         IsValueType(tokenizer);
+         IsValueType(tokenizer) || token.type == TokenType::PackedType;
 }
 
 auto ReadFieldTypeContents(Tokenizer& tokenizer, Context& context)
