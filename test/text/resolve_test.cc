@@ -249,6 +249,14 @@ TEST_F(TextResolveTest, FunctionTypeUse_NoFunctionTypeInContext) {
   EXPECT_EQ((FunctionTypeUse{Var{Index{0}}, {}}), type_use);
 }
 
+TEST_F(TextResolveTest, FunctionTypeUse_IndexOOBWithExplicitParams) {
+  FunctionTypeUse function_type_use;
+  function_type_use.type_use = At{loc1, Var{Index{0}}};
+  function_type_use.type = At{FunctionType{{VT_I32}, {}}};
+  Resolve(context, function_type_use);
+  ExpectError(ErrorList{{loc1, "Invalid type index 0"}}, errors);
+}
+
 TEST_F(TextResolveTest, BoundValueType) {
   context.type_names.NewBound("$t"_sv);
   OK(BVT{nullopt, Resolved_VT_Ref0}, BVT{nullopt, VT_RefT});
@@ -276,6 +284,14 @@ TEST_F(TextResolveTest, BoundFunctionTypeUse_NoFunctionTypeInContext) {
   Resolve(context, type_use, type);
   EXPECT_EQ(Var{Index{0}}, type_use);
   EXPECT_EQ(At{BoundFunctionType{}}, type);
+}
+
+TEST_F(TextResolveTest, BoundFunctionType_IndexOOBWithExplicitParams) {
+  OptAt<Var> type_use = At{loc1, Var{Index{0}}};
+  At<BoundFunctionType> type =
+      At{BoundFunctionType{{BVT{nullopt, VT_I32}}, {}}};
+  Resolve(context, type_use, type);
+  ExpectError(ErrorList{{loc1, "Invalid type index 0"}}, errors);
 }
 
 TEST_F(TextResolveTest, BlockImmediate) {
