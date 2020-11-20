@@ -304,11 +304,10 @@ void Resolve(ResolveContext& context, FunctionTypeUse& function_type_use) {
     if (type_use->value().is_index()) {
       auto type_index = type_use->value().index();
       auto type_opt = context.function_type_map.Get(type_index);
-      // It's possible that this type use is invalid, but that's a validation
-      // error not a parse/resolve error. We'll only check that the type use and
-      // explicit function type match when the type use is valid.
+      bool has_explicit_params_or_results =
+          type->params.size() || type->results.size();
       if (type_opt) {
-        if (type->params.size() || type->results.size()) {
+        if (has_explicit_params_or_results) {
           // Explicit params/results, so check that they match.
           if (type != *type_opt) {
             context.errors.OnError(
@@ -319,6 +318,11 @@ void Resolve(ResolveContext& context, FunctionTypeUse& function_type_use) {
           // No params/results given, so populate them.
           type = *type_opt;
         }
+      } else if (has_explicit_params_or_results) {
+        // We can't compare the type index to the explicit params/results, so
+        // this must be considered a syntax error.
+        context.errors.OnError(type_use->loc(),
+                               concat("Invalid type index ", type_use));
       }
     }
   } else {
@@ -353,11 +357,10 @@ void Resolve(ResolveContext& context,
     if (type_use->value().is_index()) {
       auto type_index = type_use->value().index();
       auto type_opt = context.function_type_map.Get(type_index);
-      // It's possible that this type use is invalid, but that's a validation
-      // error not a parse/resolve error. We'll only check that the type use and
-      // explicit function type match when the type use is valid.
+      bool has_explicit_params_or_results =
+          type->params.size() || type->results.size();
       if (type_opt) {
-        if (type->params.size() || type->results.size()) {
+        if (has_explicit_params_or_results) {
           // Explicit params/results, so check that they match.
           if (type->params != type_opt->params ||
               type->results != type_opt->results) {
@@ -369,6 +372,11 @@ void Resolve(ResolveContext& context,
           // No params/results given, so populate them.
           type = ToBoundFunctionType(*type_opt);
         }
+      } else if (has_explicit_params_or_results) {
+        // We can't compare the type index to the explicit params/results, so
+        // this must be considered a syntax error.
+        context.errors.OnError(type_use->loc(),
+                               concat("Invalid type index ", type_use));
       }
     }
   } else {
