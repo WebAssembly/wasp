@@ -133,12 +133,17 @@ auto SimpleAto(const char* str, T* value) -> bool;
 
 template <>
 inline auto SimpleAto<f32>(const char* str, f32* value) -> bool {
-  return absl::SimpleAtof(str, value);
+  // Abseil's float conversions will silently convert large values into `inf`,
+  // which is not allowed by the Wasm text format. This function will only be
+  // used for normal values, so we know that if an `inf` is returned it is
+  // invalid.
+  return absl::SimpleAtof(str, value) && !std::isinf(*value);
 }
 
 template <>
 inline auto SimpleAto<f64>(const char* str, f64* value) -> bool {
-  return absl::SimpleAtod(str, value);
+  // See the comment in SimpleAto<f32> above.
+  return absl::SimpleAtod(str, value) && !std::isinf(*value);
 }
 
 template <typename T>

@@ -329,6 +329,32 @@ TEST(TextNumericTest, StrToFloat_f32) {
   }
 }
 
+TEST(TextNumericTest, StrToFloat_f32_OutOfRange) {
+  struct {
+    SpanU8 span;
+    LiteralInfo info;
+  } tests[] = {
+      {"1e39"_su8, LI::Number(Sign::None, HU::No)},
+      {"+1e39"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"-1e39"_su8, LI::Number(Sign::Minus, HU::No)},
+
+      {"340282356779733661637539395458142568448"_su8, LI::Number(Sign::None, HU::No)},
+      {"+340282356779733661637539395458142568448"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"-340282356779733661637539395458142568448"_su8, LI::Number(Sign::Minus, HU::No)},
+
+      {"0x1p128"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"+0x1p128"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"-0x1p128"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+
+      {"0x1.ffffffp127"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"+0x1.ffffffp127"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"-0x1.ffffffp127"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+  };
+  for (auto test : tests) {
+    EXPECT_EQ(nullopt, StrToFloat<f32>(test.info, test.span));
+  }
+}
+
 TEST(TextNumericTest, StrToFloat_f32_BadNanPayload) {
   struct {
     SpanU8 span;
@@ -473,6 +499,33 @@ TEST(TextNumericTest, StrToFloat_f64_BadNanPayload) {
     EXPECT_EQ(nullopt, StrToFloat<f64>(test.info, test.span));
   }
 }
+
+TEST(TextNumericTest, StrToFloat_f64_OutOfRange) {
+  struct {
+    SpanU8 span;
+    LiteralInfo info;
+  } tests[] = {
+      {"1e309"_su8, LI::Number(Sign::None, HU::No)},
+      {"+1e309"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"-1e309"_su8, LI::Number(Sign::Minus, HU::No)},
+
+      {"269653970229347356221791135597556535197105851288767494898376215204735891170042808140884337949150317257310688430271573696351481990334196274152701320055306275479074865864826923114368235135583993416113802762682700913456874855354834422248712838998185022412196739306217084753107265771378949821875606039276187287552"_su8, LI::Number(Sign::None, HU::No)},
+      {"+269653970229347356221791135597556535197105851288767494898376215204735891170042808140884337949150317257310688430271573696351481990334196274152701320055306275479074865864826923114368235135583993416113802762682700913456874855354834422248712838998185022412196739306217084753107265771378949821875606039276187287552"_su8, LI::Number(Sign::Plus, HU::No)},
+      {"-269653970229347356221791135597556535197105851288767494898376215204735891170042808140884337949150317257310688430271573696351481990334196274152701320055306275479074865864826923114368235135583993416113802762682700913456874855354834422248712838998185022412196739306217084753107265771378949821875606039276187287552"_su8, LI::Number(Sign::Minus, HU::No)},
+
+      {"0x1p1024"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"+0x1p1024"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"-0x1p1024"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+
+      {"0x1.fffffffffffff8p1023"_su8, LI::HexNumber(Sign::None, HU::No)},
+      {"+0x1.fffffffffffff8p1023"_su8, LI::HexNumber(Sign::Plus, HU::No)},
+      {"-0x1.fffffffffffff8p1023"_su8, LI::HexNumber(Sign::Minus, HU::No)},
+  };
+  for (auto test : tests) {
+    EXPECT_EQ(nullopt, StrToFloat<f64>(test.info, test.span));
+  }
+}
+
 
 TEST(TextNumericTest, NatToStr_u8) {
   struct {
