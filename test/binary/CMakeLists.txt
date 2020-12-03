@@ -27,6 +27,7 @@ add_executable(wasp_binary_unittests
   lazy_sequence_test.cc
   read_test.cc
   read_linking_test.cc
+  read_module_test.cc
   visitor_test.cc
   write_test.cc
 )

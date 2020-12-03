@@ -71,6 +71,7 @@ add_library(libwasp_binary
   name_section/sections.cc
   name_section/types.cc
   read.cc
+  read_module.cc
   sections.cc
   types.cc
 )

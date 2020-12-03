@@ -30,7 +30,7 @@ TextErrors::TextErrors(string_view filename, SpanU8 data)
     : filename{filename}, data{data} {}
 
 void TextErrors::PrintTo(std::ostream& os) const {
-  if (has_error()) {
+  if (HasError()) {
     CalculateLineNumbers();
     for (const auto& error : errors) {
       os << ErrorToString(error);
@@ -38,7 +38,7 @@ void TextErrors::PrintTo(std::ostream& os) const {
   }
 }
 
-bool TextErrors::has_error() const {
+bool TextErrors::HasError() const {
   return !errors.empty();
 }
 

@@ -40,11 +40,12 @@ class TestErrors : public Errors {
   std::vector<ErrorList> errors;
 
   void Clear();
+  bool HasError() const override;
 
  protected:
-  void HandlePushContext(Location loc, string_view desc);
-  void HandlePopContext();
-  void HandleOnError(Location loc, string_view message);
+  void HandlePushContext(Location loc, string_view desc) override;
+  void HandlePopContext() override;
+  void HandleOnError(Location loc, string_view message) override;
 };
 
 void ExpectNoErrors(const TestErrors&);

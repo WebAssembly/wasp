@@ -183,7 +183,7 @@ void Tool::Run() {
     Resolve(*script, errors);
   }
 
-  if (!script || errors.has_error()) {
+  if (!script || errors.HasError()) {
     errors.PrintTo(std::cerr);
     return;
   }
@@ -192,7 +192,7 @@ void Tool::Run() {
     OnCommand(command);
   }
 
-  if (errors.has_error()) {
+  if (errors.HasError()) {
     errors.PrintTo(std::cerr);
   }
 }
@@ -265,7 +265,7 @@ void Tool::OnAssertMalformedText(Location loc,
   if (script) {
     Resolve(*script, nested_errors);
   }
-  if (!nested_errors.has_error()) {
+  if (!nested_errors.HasError()) {
     errors.OnError(loc, "Expected malformed text module.");
   }
   if (s_verbose > 1) {
@@ -278,10 +278,10 @@ void Tool::OnAssertMalformedBinary(Location loc,
                                  const Buffer& buffer) {
   tools::BinaryErrors nested_errors{filename, buffer};
   binary::LazyModule module =
-      binary::ReadModule(buffer, features, nested_errors);
+      binary::ReadLazyModule(buffer, features, nested_errors);
   binary::visit::Visitor visitor;
   binary::visit::Visit(module, visitor);
-  if (!nested_errors.has_error()) {
+  if (!nested_errors.HasError()) {
     errors.OnError(loc, "Expected malformed binary module.");
   }
   if (s_verbose > 1) {
@@ -299,7 +299,7 @@ void Tool::OnAssertInvalid(Location loc, const text::Module& orig_text_module) {
   auto binary_module = convert::ToBinary(convert_context, text_module);
   valid::Context valid_context{features, nested_errors};
   bool result = Validate(valid_context, binary_module);
-  if (result || !nested_errors.has_error()) {
+  if (result || !nested_errors.HasError()) {
     errors.OnError(loc, "Expected invalid module.");
   }
   if (s_verbose > 1) {

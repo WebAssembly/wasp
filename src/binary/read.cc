@@ -119,6 +119,7 @@ OptAt<SpanU8> ReadBytesExpected(SpanU8* data,
   if (actual && **actual != expected) {
     context.errors.OnError(actual->loc(), concat("Mismatch: expected ",
                                                  expected, ", got ", *actual));
+    return nullopt;
   }
   return actual;
 }

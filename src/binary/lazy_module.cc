@@ -36,7 +36,9 @@ LazyModule::LazyModule(SpanU8 data, const Features& features, Errors& errors)
       version{ReadBytesExpected(&data, kVersionSpan, context, "version")},
       sections{data, context} {}
 
-LazyModule ReadModule(SpanU8 data, const Features& features, Errors& errors) {
+LazyModule ReadLazyModule(SpanU8 data,
+                          const Features& features,
+                          Errors& errors) {
   return LazyModule{data, features, errors};
 }
 

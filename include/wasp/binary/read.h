@@ -29,6 +29,10 @@ namespace wasp::binary {
 
 struct Context;
 
+// Read a full binary module eagerly (see ReadLazyModule to read lazily).
+auto ReadModule(SpanU8, Context&) -> optional<Module>;
+
+
 template <typename T>
 struct Tag {};
 

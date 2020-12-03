@@ -205,7 +205,7 @@ int Main(span<const string_view> args) {
 Tool::Tool(SpanU8 data, Options options)
     : errors{data},
       options{options},
-      module{ReadModule(data, options.features, errors)} {}
+      module{ReadLazyModule(data, options.features, errors)} {}
 
 int Tool::Run() {
   DoPrepass();
