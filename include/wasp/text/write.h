@@ -38,7 +38,15 @@ struct WriteContext {
   void Newline() { separator = indent; }
 
   void Indent() { indent += "  "; }
-  void Dedent() { indent.erase(indent.size() - 2); }
+
+  void DedentWithMinimum(size_t minimum) {
+    if (indent.size() > minimum) {
+      indent.erase(indent.size() - 2);
+    }
+  }
+
+  void Dedent() { DedentWithMinimum(2); }
+  void DedentNoToplevel() { DedentWithMinimum(3); }
 
   std::string separator;
   std::string indent = "\n";
@@ -582,17 +590,23 @@ template <typename Iterator>
 Iterator WriteWithNewlines(WriteContext& context,
                            const InstructionList& values,
                            Iterator out) {
-  for (auto& value : values) {
-    auto opcode = value->opcode;
+  // If the instruction list ends with and `end` instruction, don't write it
+  // (it's implicit in the function definition, in the text format.)
+  span<const At<Instruction>> instrs{values};
+  if (!values.empty() && values.back()->opcode == Opcode::End) {
+    instrs.remove_suffix(1);
+  }
+  for (auto& instr : instrs) {
+    auto opcode = instr->opcode;
     if (opcode == Opcode::End || opcode == Opcode::Else ||
         opcode == Opcode::Catch) {
-      context.Dedent();
+      context.DedentNoToplevel();
       context.Newline();
     }
 
-    out = Write(context, value, out);
+    out = Write(context, instr, out);
 
-    if (value->has_block_immediate() || opcode == Opcode::Else ||
+    if (instr->has_block_immediate() || opcode == Opcode::Else ||
         opcode == Opcode::Catch) {
       context.Indent();
     }

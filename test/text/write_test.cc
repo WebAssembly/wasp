@@ -697,6 +697,21 @@ TEST(TextWriteTest, FunctionInlineImport) {
                        InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
 
+TEST(TextWriteTest, Function_OmitFinalEnd) {
+  ExpectWrite(
+      "(func\n  nop\n  nop)"_sv,
+      Function{{}, {}, InstructionList{I{O::Nop}, I{O::Nop}, I{O::End}}, {}});
+}
+
+
+TEST(TextWriteTest, Function_DontOverDedent) {
+  // Multiple ends like this is syntatically malformed, but still should be
+  // writable.
+  ExpectWrite(
+      "(func\n  end\n  end)"_sv,
+      Function{{}, {}, InstructionList{I{O::End}, I{O::End}, I{O::End}}, {}});
+}
+
 TEST(TextWriteTest, ElementExpressionList) {
   ExpectWrite("(ref.null) (ref.func 0)"_sv,
               ElementExpressionList{
