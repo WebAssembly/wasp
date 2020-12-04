@@ -131,7 +131,7 @@ TEST(ConvertToTextTest, StringView) {
      At{loc1,
         R"(0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ)"_sv});
 
-  // Tab, newline, linefeed.
+  // Tab, line feed, carriage return.
   OK(At{loc1, text::Text{"\"\\t\\n\\r\"", 3}}, At{loc1, "\t\n\r"_sv});
 
   // Other non-printable characters are encoded as \XX.
