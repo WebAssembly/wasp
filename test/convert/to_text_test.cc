@@ -115,6 +115,35 @@ TEST(ConvertToTextTest, StorageType) {
      At{loc1, binary::StorageType{At{loc2, PackedType::I8}}});
 }
 
+TEST(ConvertToTextTest, StringView) {
+  // Required escapes.
+  OK(At{loc1, text::Text{R"("\\\"")", 2}}, At{loc1, R"(\")"_sv});
+
+  // Other symbols.
+  OK(At{loc1, text::Text{R"("!#$%&'()*+,-./:;<=>?[]^_`{|}~")", 29}},
+     At{loc1, R"(!#$%&'()*+,-./:;<=>?[]^_`{|}~)"_sv});
+
+  // Numbers and letters.
+  OK(At{loc1,
+        text::Text{
+            R"("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")",
+            62}},
+     At{loc1,
+        R"(0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ)"_sv});
+
+  // Tab, line feed, carriage return.
+  OK(At{loc1, text::Text{"\"\\t\\n\\r\"", 3}}, At{loc1, "\t\n\r"_sv});
+
+  // Other non-printable characters are encoded as \XX.
+  OK(At{loc1,
+        text::Text{
+            R"("\10\11\12\13\14\15\16\17\18\19\1a\1b\1c\1d\1e\1f\00\80\90\a0\b0\c0\d0\e0\f0")",
+            25}},
+     At{loc1,
+        "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f"
+        "\x00\x80\x90\xa0\xb0\xc0\xd0\xe0\xf0"_sv});
+}
+
 TEST(ConvertToTextTest, IndexList) {
   OK(
       text::VarList{
