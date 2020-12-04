@@ -26,7 +26,7 @@ namespace wasp::convert {
 std::string EncodeAsText(string_view str) {
   const char kHexDigit[] = "0123456789abcdef";
   std::string text = "\"";
-  for (auto byte : str) {
+  for (u8 byte : str) {
     if (byte == '"') {
       text += "\\\"";
     } else if (byte == '\\') {
