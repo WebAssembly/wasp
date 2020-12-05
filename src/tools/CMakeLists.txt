@@ -87,6 +87,7 @@ add_executable(wasp
   pattern.cc
   validate.cc
   wasp.cc
+  wasm2wat.cc
   wat2wasm.cc
 )
 
