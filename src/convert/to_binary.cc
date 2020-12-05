@@ -515,6 +515,7 @@ u32 GetNaturalAlignment(Opcode opcode) {
     case Opcode::MemoryAtomicNotify:
     case Opcode::MemoryAtomicWait32:
     case Opcode::V128Load32Splat:
+    case Opcode::V128Load32Zero:
       return 4;
 
     case Opcode::F64Load:
@@ -536,6 +537,7 @@ u32 GetNaturalAlignment(Opcode opcode) {
     case Opcode::V128Load32X2S:
     case Opcode::V128Load32X2U:
     case Opcode::V128Load64Splat:
+    case Opcode::V128Load64Zero:
     case Opcode::V128Load8X8S:
     case Opcode::V128Load8X8U:
       return 8;
@@ -545,7 +547,7 @@ u32 GetNaturalAlignment(Opcode opcode) {
       return 16;
 
     default:
-      return 0;
+      assert(false);
   }
 }
 

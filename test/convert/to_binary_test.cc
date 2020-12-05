@@ -970,6 +970,7 @@ TEST(ConvertToBinaryTest, OpcodeAlignment) {
       {Opcode::MemoryAtomicNotify, 2},
       {Opcode::MemoryAtomicWait32, 2},
       {Opcode::V128Load32Splat, 2},
+      {Opcode::V128Load32Zero, 2},
 
       {Opcode::F64Load, 3},
       {Opcode::F64Store, 3},
@@ -990,6 +991,7 @@ TEST(ConvertToBinaryTest, OpcodeAlignment) {
       {Opcode::V128Load32X2S, 3},
       {Opcode::V128Load32X2U, 3},
       {Opcode::V128Load64Splat, 3},
+      {Opcode::V128Load64Zero, 3},
       {Opcode::V128Load8X8S, 3},
       {Opcode::V128Load8X8U, 3},
 

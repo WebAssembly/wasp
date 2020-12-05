@@ -85,6 +85,7 @@ class Tool {
   void OnAssertMalformedText(Location, string_view filename, const Buffer&);
   void OnAssertMalformedBinary(Location, string_view filename, const Buffer&);
   void OnAssertInvalid(Location, const text::Module&);
+  void OnAssertInvalidBinary(Location, string_view filename, const Buffer&);
 
   std::string filename;
   SpanU8 data;
@@ -248,7 +249,13 @@ void Tool::OnAssertionCommand(text::Assertion& assertion) {
             StrFormat("malformed_%d.wasm", assertion_count++), buffer);
       }
     } else if (assertion.kind == text::AssertionKind::Invalid) {
-      errors.OnError(script_module.loc(), "assert_invalid with quote/bin?");
+      if (script_module->kind == text::ScriptModuleKind::Binary) {
+        OnAssertInvalidBinary(script_module.loc(),
+                              StrFormat("malformed_%d.wasm", assertion_count++),
+                              buffer);
+      } else {
+        errors.OnError(script_module.loc(), "assert_invalid with quote?");
+      }
     }
   } else if (script_module->has_module()) {
     OnAssertInvalid(script_module.loc(), script_module->module());
@@ -301,6 +308,25 @@ void Tool::OnAssertInvalid(Location loc, const text::Module& orig_text_module) {
   bool result = Validate(valid_context, binary_module);
   if (result || !nested_errors.HasError()) {
     errors.OnError(loc, "Expected invalid module.");
+  }
+  if (s_verbose > 1) {
+    nested_errors.PrintTo(std::cout);
+  }
+}
+
+void Tool::OnAssertInvalidBinary(Location loc,
+                                 string_view filename,
+                                 const Buffer& buffer) {
+  tools::BinaryErrors nested_errors{filename, buffer};
+  binary::Context read_context{features, nested_errors};
+  auto binary_module = binary::ReadModule(buffer, read_context);
+  if (!binary_module.has_value() || nested_errors.HasError()) {
+    errors.OnError(loc, "Expected invalid binary module, not malformed.");
+    return;
+  }
+  valid::Context valid_context{features, nested_errors};
+  if (Validate(valid_context, *binary_module)) {
+    errors.OnError(loc, "Expected invalid binary module.");
   }
   if (s_verbose > 1) {
     nested_errors.PrintTo(std::cout);
