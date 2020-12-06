@@ -23,6 +23,8 @@
 
 namespace wasp::convert {
 
+Context::Context(const Features& features) : features{features} {}
+
 string_view Context::Add(std::string str) {
   strings.push_back(std::make_unique<std::string>(str));
   return string_view{*strings.back()};
@@ -860,8 +862,10 @@ auto ToBinary(Context& context, const At<text::Module>& value)
 
       case text::ModuleItemKind::DataSegment:
         result.data_segments.push_back(ToBinary(context, item.data_segment()));
-        result.data_count =
-            binary::DataCount{Index(result.data_segments.size())};
+        if (context.features.bulk_memory_enabled()) {
+          result.data_count =
+              binary::DataCount{Index(result.data_segments.size())};
+        }
         break;
 
       case text::ModuleItemKind::Event:

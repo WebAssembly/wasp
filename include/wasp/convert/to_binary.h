@@ -23,6 +23,7 @@
 
 #include "wasp/base/at.h"
 #include "wasp/base/buffer.h"
+#include "wasp/base/features.h"
 #include "wasp/base/optional.h"
 #include "wasp/binary/types.h"
 #include "wasp/text/types.h"
@@ -30,8 +31,13 @@
 namespace wasp::convert {
 
 struct Context {
+  explicit Context() = default;
+  explicit Context(const Features&);
+
   string_view Add(std::string);
   SpanU8 Add(Buffer);
+
+  Features features;
 
   // TODO: The buffers need to have stable pointers (for use by string_view or
   // span), so for now they are all std::unique_ptr<T>. This could be optimized
