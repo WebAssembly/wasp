@@ -137,7 +137,7 @@ int Tool::Run() {
     return 1;
   }
 
-  convert::Context convert_context;
+  convert::Context convert_context{options.features};
   auto binary_module = convert::ToBinary(convert_context, text_module);
 
   if (options.validate) {

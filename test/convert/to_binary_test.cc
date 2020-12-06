@@ -28,18 +28,24 @@ namespace tt = ::wasp::text::test;
 
 namespace {
 
-template <typename B, typename T, typename... Args>
-void OK(const B& expected, const T& input, Args&&... args) {
-  Context context;
-  auto actual = ToBinary(context, input, std::forward<Args>(args)...);
-  EXPECT_EQ(expected, actual);
-}
+class ConvertToBinaryTest : public ::testing::Test {
+ protected:
+  template <typename B, typename T, typename... Args>
+  void OK(const B& expected, const T& input, Args&&... args) {
+    auto actual = ToBinary(context, input, std::forward<Args>(args)...);
+    EXPECT_EQ(expected, actual);
+  }
 
-template <typename F, typename B, typename T, typename... Args>
-void OKFunc(const F& func, const B& expected, const T& input, Args&&... args) {
+  template <typename F, typename B, typename T, typename... Args>
+  void OKFunc(const F& func,
+              const B& expected,
+              const T& input,
+              Args&&... args) {
+    EXPECT_EQ(expected, func(context, input, std::forward<Args>(args)...));
+  }
+
   Context context;
-  EXPECT_EQ(expected, func(context, input, std::forward<Args>(args)...));
-}
+};
 
 const SpanU8 loc1 = "A"_su8;
 const SpanU8 loc2 = "B"_su8;
@@ -62,7 +68,7 @@ const binary::ValueType BVT_Funcref{At{"funcref"_su8, BRT_Funcref}};
 
 }  // namespace
 
-TEST(ConvertToBinaryTest, HeapType) {
+TEST_F(ConvertToBinaryTest, HeapType) {
   // HeapKind
   OK(BHT_Func, At{"func"_su8, tt::HT_Func});
 
@@ -70,12 +76,12 @@ TEST(ConvertToBinaryTest, HeapType) {
   OK(BHT_0, At{"0"_su8, tt::HT_0});
 }
 
-TEST(ConvertToBinaryTest, RefType) {
+TEST_F(ConvertToBinaryTest, RefType) {
   OK(At{loc1, binary::RefType{BHT_Func, At{loc2, Null::No}}},
      At{loc1, text::RefType{tt::HT_Func, At{loc2, Null::No}}});
 }
 
-TEST(ConvertToBinaryTest, ReferenceType) {
+TEST_F(ConvertToBinaryTest, ReferenceType) {
   // ReferenceKind
   OK(At{loc1, binary::ReferenceType{At{loc2, ReferenceKind::Funcref}}},
      At{loc1, text::ReferenceType{At{loc2, ReferenceKind::Funcref}}});
@@ -87,12 +93,12 @@ TEST(ConvertToBinaryTest, ReferenceType) {
         text::ReferenceType{text::RefType{tt::HT_Func, At{loc2, Null::No}}}});
 }
 
-TEST(ConvertToBinaryTest, Rtt) {
+TEST_F(ConvertToBinaryTest, Rtt) {
   OK(At{loc1, binary::Rtt{At{loc2, Index{0}}, At{loc3, BHT_Func}}},
      At{loc1, text::Rtt{At{loc2, Index{0}}, At{loc3, tt::HT_Func}}});
 }
 
-TEST(ConvertToBinaryTest, ValueType) {
+TEST_F(ConvertToBinaryTest, ValueType) {
   // NumericKind
   OK(At{loc1, BVT_I32}, At{loc1, tt::VT_I32});
 
@@ -106,14 +112,14 @@ TEST(ConvertToBinaryTest, ValueType) {
                                                  At{loc4, tt::HT_Func}}}}});
 }
 
-TEST(ConvertToBinaryTest, ValueTypeList) {
+TEST_F(ConvertToBinaryTest, ValueTypeList) {
   OK(binary::ValueTypeList{binary::ValueType{
          At{loc2, binary::Rtt{At{loc3, Index{0}}, At{loc4, BHT_Func}}}}},
      text::ValueTypeList{text::ValueType{
          At{loc2, text::Rtt{At{loc3, Index{0}}, At{loc4, tt::HT_Func}}}}});
 }
 
-TEST(ConvertToBinaryTest, StorageType) {
+TEST_F(ConvertToBinaryTest, StorageType) {
   // ValueType
   OK(At{loc1, binary::StorageType{At{loc2, BVT_I32}}},
      At{loc1, text::StorageType{At{loc2, tt::VT_I32}}});
@@ -123,7 +129,7 @@ TEST(ConvertToBinaryTest, StorageType) {
      At{loc1, text::StorageType{At{loc2, PackedType::I8}}});
 }
 
-TEST(ConvertToBinaryTest, VarList) {
+TEST_F(ConvertToBinaryTest, VarList) {
   OK(
       binary::IndexList{
           At{loc1, Index{0}},
@@ -135,7 +141,7 @@ TEST(ConvertToBinaryTest, VarList) {
       });
 }
 
-TEST(ConvertToBinaryTest, FunctionType) {
+TEST_F(ConvertToBinaryTest, FunctionType) {
   OK(At{loc1,
         binary::FunctionType{
             binary::ValueTypeList{At{loc2, BVT_I32}},
@@ -147,7 +153,7 @@ TEST(ConvertToBinaryTest, FunctionType) {
               }});
 }
 
-TEST(ConvertToBinaryTest, FieldType) {
+TEST_F(ConvertToBinaryTest, FieldType) {
   OK(At{loc1,
         binary::FieldType{At{loc2, binary::StorageType{At{loc3, BVT_I32}}},
                           At{loc4, Mutability::Const}}},
@@ -156,7 +162,7 @@ TEST(ConvertToBinaryTest, FieldType) {
                               At{loc4, Mutability::Const}}});
 }
 
-TEST(ConvertToBinaryTest, FieldTypeList) {
+TEST_F(ConvertToBinaryTest, FieldTypeList) {
   OK(binary::FieldTypeList{At{
          loc1,
          binary::FieldType{At{loc2, binary::StorageType{At{loc3, BVT_I32}}},
@@ -167,7 +173,7 @@ TEST(ConvertToBinaryTest, FieldTypeList) {
                    At{loc4, Mutability::Const}}}});
 }
 
-TEST(ConvertToBinaryTest, StructType) {
+TEST_F(ConvertToBinaryTest, StructType) {
   OK(At{loc1,
         binary::StructType{binary::FieldTypeList{At{
             loc2,
@@ -180,7 +186,7 @@ TEST(ConvertToBinaryTest, StructType) {
                             At{loc5, Mutability::Const}}}}}});
 }
 
-TEST(ConvertToBinaryTest, ArrayType) {
+TEST_F(ConvertToBinaryTest, ArrayType) {
   OK(At{loc1,
         binary::ArrayType{At{
             loc2,
@@ -193,7 +199,7 @@ TEST(ConvertToBinaryTest, ArrayType) {
                             At{loc5, Mutability::Const}}}}});
 }
 
-TEST(ConvertToBinaryTest, DefinedType) {
+TEST_F(ConvertToBinaryTest, DefinedType) {
   // FunctionType
   OK(At{loc1,
         binary::DefinedType{At{loc2,
@@ -244,7 +250,7 @@ TEST(ConvertToBinaryTest, DefinedType) {
                              At{loc6, Mutability::Const}}}}}}});
 }
 
-TEST(ConvertToBinaryTest, Import) {
+TEST_F(ConvertToBinaryTest, Import) {
   // Function
   OK(At{loc1,
         binary::Import{At{loc2, "m"_sv}, At{loc3, "n"_sv}, At{loc4, Index{0}}}},
@@ -317,7 +323,7 @@ TEST(ConvertToBinaryTest, Import) {
                                        At{loc5, text::Var{Index{0}}}, {}}}}}}});
 }
 
-TEST(ConvertToBinaryTest, Function) {
+TEST_F(ConvertToBinaryTest, Function) {
   OK(At{loc1, binary::Function{At{loc2, Index{13}}}},
      At{loc1, text::Function{text::FunctionDesc{
                                  nullopt, At{loc2, text::Var{Index{13}}}, {}},
@@ -326,7 +332,7 @@ TEST(ConvertToBinaryTest, Function) {
                              {}}});
 }
 
-TEST(ConvertToBinaryTest, Table) {
+TEST_F(ConvertToBinaryTest, Table) {
   auto binary_table_type =
       At{loc1,
          binary::TableType{Limits{At{loc2, Index{0}}}, At{loc3, BRT_Funcref}}};
@@ -337,14 +343,14 @@ TEST(ConvertToBinaryTest, Table) {
      At{loc4, text::Table{text::TableDesc{nullopt, text_table_type}, {}}});
 }
 
-TEST(ConvertToBinaryTest, Memory) {
+TEST_F(ConvertToBinaryTest, Memory) {
   auto memory_type = At{loc1, MemoryType{Limits{At{loc2, Index{0}}}}};
 
   OK(At{loc3, binary::Memory{memory_type}},
      At{loc3, text::Memory{text::MemoryDesc{nullopt, memory_type}, {}}});
 }
 
-TEST(ConvertToBinaryTest, Global) {
+TEST_F(ConvertToBinaryTest, Global) {
   auto binary_global_type = At{loc1, binary::GlobalType{
                                          At{loc2, BVT_I32},
                                          At{Mutability::Const},
@@ -372,7 +378,7 @@ TEST(ConvertToBinaryTest, Global) {
                      {}}});
 }
 
-TEST(ConvertToBinaryTest, Export) {
+TEST_F(ConvertToBinaryTest, Export) {
   OK(At{loc1,
         binary::Export{
             At{loc2, ExternalKind::Function},
@@ -386,12 +392,12 @@ TEST(ConvertToBinaryTest, Export) {
               }});
 }
 
-TEST(ConvertToBinaryTest, Start) {
+TEST_F(ConvertToBinaryTest, Start) {
   OK(At{loc1, binary::Start{At{loc2, Index{13}}}},
      At{loc1, text::Start{At{loc2, text::Var{Index{13}}}}});
 }
 
-TEST(ConvertToBinaryTest, ElementExpression) {
+TEST_F(ConvertToBinaryTest, ElementExpression) {
   OK(At{loc1, binary::ElementExpression{{
                   At{loc2, binary::Instruction{At{loc3, Opcode::Unreachable}}},
                   At{loc4, binary::Instruction{At{loc5, Opcode::Nop}}},
@@ -402,7 +408,7 @@ TEST(ConvertToBinaryTest, ElementExpression) {
               }}});
 }
 
-TEST(ConvertToBinaryTest, ElementExpressionList) {
+TEST_F(ConvertToBinaryTest, ElementExpressionList) {
   OK(At{loc1,
         binary::ElementExpressionList{
             At{loc2,
@@ -421,7 +427,7 @@ TEST(ConvertToBinaryTest, ElementExpressionList) {
         }});
 }
 
-TEST(ConvertToBinaryTest, ElementList) {
+TEST_F(ConvertToBinaryTest, ElementList) {
   // text::Var -> binary::Index
   OK(binary::ElementList{binary::ElementListWithIndexes{
          At{loc1, ExternalKind::Function},
@@ -456,7 +462,7 @@ TEST(ConvertToBinaryTest, ElementList) {
                                                 At{loc5, Opcode::Nop}}}}}}}}});
 }
 
-TEST(ConvertToBinaryTest, ElementSegment) {
+TEST_F(ConvertToBinaryTest, ElementSegment) {
   auto binary_list = binary::ElementList{
       binary::ElementListWithIndexes{At{loc1, ExternalKind::Function},
                                      binary::IndexList{At{loc2, Index{0}}}},
@@ -490,7 +496,7 @@ TEST(ConvertToBinaryTest, ElementSegment) {
      At{loc1, text::ElementSegment{nullopt, SegmentType::Passive, text_list}});
 }
 
-TEST(ConvertToBinaryTest, BlockImmediate) {
+TEST_F(ConvertToBinaryTest, BlockImmediate) {
   // Void inline type.
   OK(At{loc1, binary::BlockType{binary::VoidType{}}},
      At{loc1, text::BlockImmediate{nullopt, text::FunctionTypeUse{}}});
@@ -511,7 +517,7 @@ TEST(ConvertToBinaryTest, BlockImmediate) {
 }
 
 #if 0
-TEST(ConvertToBinaryTest, BrOnCastImmediate) {
+TEST_F(ConvertToBinaryTest, BrOnCastImmediate) {
   OK(At{loc1,
         binary::BrOnCastImmediate{
             At{loc2, Index{13}},
@@ -524,21 +530,21 @@ TEST(ConvertToBinaryTest, BrOnCastImmediate) {
 }
 #endif
 
-TEST(ConvertToBinaryTest, BrOnExnImmediate) {
+TEST_F(ConvertToBinaryTest, BrOnExnImmediate) {
   OK(At{loc1,
         binary::BrOnExnImmediate{At{loc2, Index{13}}, At{loc3, Index{14}}}},
      At{loc1, text::BrOnExnImmediate{At{loc2, text::Var{Index{13}}},
                                      At{loc3, text::Var{Index{14}}}}});
 }
 
-TEST(ConvertToBinaryTest, BrTableImmediate) {
+TEST_F(ConvertToBinaryTest, BrTableImmediate) {
   OK(At{loc1,
         binary::BrTableImmediate{{At{loc2, Index{13}}}, At{loc3, Index{14}}}},
      At{loc1, text::BrTableImmediate{{At{loc2, text::Var{Index{13}}}},
                                      At{loc3, text::Var{Index{14}}}}});
 }
 
-TEST(ConvertToBinaryTest, CallIndirectImmediate) {
+TEST_F(ConvertToBinaryTest, CallIndirectImmediate) {
   // Table defined.
   OK(At{loc1, binary::CallIndirectImmediate{At{loc3, Index{13}},
                                             At{loc2, Index{14}}}},
@@ -553,7 +559,7 @@ TEST(ConvertToBinaryTest, CallIndirectImmediate) {
                   text::FunctionTypeUse{At{loc2, text::Var{Index{13}}}, {}}}});
 }
 
-TEST(ConvertToBinaryTest, CopyImmediate) {
+TEST_F(ConvertToBinaryTest, CopyImmediate) {
   // dst and src defined.
   OK(At{loc1, binary::CopyImmediate{At{loc2, Index{13}}, At{loc3, Index{14}}}},
      At{loc1, text::CopyImmediate{At{loc2, text::Var{Index{13}}},
@@ -564,19 +570,19 @@ TEST(ConvertToBinaryTest, CopyImmediate) {
      At{loc1, text::CopyImmediate{}});
 }
 
-TEST(ConvertToBinaryTest, FuncBindImmediate) {
+TEST_F(ConvertToBinaryTest, FuncBindImmediate) {
   OK(At{loc1, binary::FuncBindImmediate{At{loc2, Index{13}}}},
      At{loc1, text::FuncBindImmediate{At{loc2, text::Var{Index{13}}}, {}}});
 }
 
-TEST(ConvertToBinaryTest, HeapType2Immediate) {
+TEST_F(ConvertToBinaryTest, HeapType2Immediate) {
   OK(At{loc1,
         binary::HeapType2Immediate{At{loc2, BHT_Func}, At{loc3, BHT_Func}}},
      At{loc1, text::HeapType2Immediate{At{loc2, tt::HT_Func},
                                        At{loc3, tt::HT_Func}}});
 }
 
-TEST(ConvertToBinaryTest, InitImmediate) {
+TEST_F(ConvertToBinaryTest, InitImmediate) {
   // dst defined.
   OK(At{loc1, binary::InitImmediate{At{loc2, Index{13}}, At{loc3, Index{14}}}},
      At{loc1, text::InitImmediate{At{loc2, text::Var{Index{13}}},
@@ -587,7 +593,7 @@ TEST(ConvertToBinaryTest, InitImmediate) {
      At{loc1, text::InitImmediate{At{loc2, text::Var{Index{13}}}, nullopt}});
 }
 
-TEST(ConvertToBinaryTest, LetImmediate) {
+TEST_F(ConvertToBinaryTest, LetImmediate) {
   // Empty let immediate.
   OK(At{loc1, binary::LetImmediate{binary::BlockType{binary::VoidType{}}, {}}},
      At{loc1, text::LetImmediate{}});
@@ -605,7 +611,7 @@ TEST(ConvertToBinaryTest, LetImmediate) {
                       }}}}});
 }
 
-TEST(ConvertToBinaryTest, MemArgImmediate) {
+TEST_F(ConvertToBinaryTest, MemArgImmediate) {
   u32 natural_align = 16;
   u32 natural_align_log2 = 4;
   u32 align = 8;
@@ -627,7 +633,7 @@ TEST(ConvertToBinaryTest, MemArgImmediate) {
 }
 
 #if 0
-TEST(ConvertToBinaryTest, RttSubImmediate) {
+TEST_F(ConvertToBinaryTest, RttSubImmediate) {
   OK(At{loc1,
         binary::RttSubImmediate{
             At{loc2, Index{13}},
@@ -640,14 +646,14 @@ TEST(ConvertToBinaryTest, RttSubImmediate) {
 }
 #endif
 
-TEST(ConvertToBinaryTest, StructFieldImmediate) {
+TEST_F(ConvertToBinaryTest, StructFieldImmediate) {
   OK(At{loc1,
         binary::StructFieldImmediate{At{loc2, Index{13}}, At{loc3, Index{14}}}},
      At{loc1, text::StructFieldImmediate{At{loc2, text::Var{Index{13}}},
                                          At{loc3, text::Var{Index{14}}}}});
 }
 
-TEST(ConvertToBinaryTest, Instruction) {
+TEST_F(ConvertToBinaryTest, Instruction) {
   // Bare.
   OK(At{loc1, binary::Instruction{At{loc2, Opcode::Nop}}},
      At{loc1, text::Instruction{At{loc2, Opcode::Nop}}});
@@ -885,7 +891,7 @@ TEST(ConvertToBinaryTest, Instruction) {
                                        At{loc5, text::Var{Index{14}}}}}}});
 }
 
-TEST(ConvertToBinaryTest, OpcodeAlignment) {
+TEST_F(ConvertToBinaryTest, OpcodeAlignment) {
   struct {
     Opcode opcode;
     u32 expected_align_log2;
@@ -1007,7 +1013,7 @@ TEST(ConvertToBinaryTest, OpcodeAlignment) {
   }
 }
 
-TEST(ConvertToBinaryTest, InstructionList) {
+TEST_F(ConvertToBinaryTest, InstructionList) {
   OK(binary::InstructionList{At{loc1,
                                 binary::Instruction{At{loc2, Opcode::Nop}}},
                              At{loc3,
@@ -1016,7 +1022,7 @@ TEST(ConvertToBinaryTest, InstructionList) {
                            At{loc3, text::Instruction{At{loc4, Opcode::Nop}}}});
 }
 
-TEST(ConvertToBinaryTest, Expression) {
+TEST_F(ConvertToBinaryTest, Expression) {
   OKFunc(ToBinaryUnpackedExpression,
          At{loc1,
             binary::UnpackedExpression{At{
@@ -1035,7 +1041,7 @@ TEST(ConvertToBinaryTest, Expression) {
                   }});
 }
 
-TEST(ConvertToBinaryTest, LocalsList) {
+TEST_F(ConvertToBinaryTest, LocalsList) {
   OKFunc(ToBinaryLocalsList,
          At{loc1, binary::LocalsList{binary::Locals{2, At{loc2, BVT_I32}},
                                      binary::Locals{1, At{loc4, BVT_F32}}}},
@@ -1046,7 +1052,7 @@ TEST(ConvertToBinaryTest, LocalsList) {
                   }});
 }
 
-TEST(ConvertToBinaryTest, Code) {
+TEST_F(ConvertToBinaryTest, Code) {
   OKFunc(
       ToBinaryCode,
       At{loc1,
@@ -1072,7 +1078,7 @@ TEST(ConvertToBinaryTest, Code) {
              {}}});
 }
 
-TEST(ConvertToBinaryTest, DataSegment) {
+TEST_F(ConvertToBinaryTest, DataSegment) {
   // Active.
   OK(At{loc1,
         binary::DataSegment{
@@ -1089,7 +1095,7 @@ TEST(ConvertToBinaryTest, DataSegment) {
                                text::DataItem{text::Text{"\"\\00\"", 1}}}}});
 }
 
-TEST(ConvertToBinaryTest, DataSegment_numeric_values) {
+TEST_F(ConvertToBinaryTest, DataSegment_numeric_values) {
   OK(At{loc1,
         binary::DataSegment{
             At{loc2, Index{13}},
@@ -1106,7 +1112,7 @@ TEST(ConvertToBinaryTest, DataSegment_numeric_values) {
                 ToBuffer("\x68\x65\x6c\x6c\x6f\x00"_su8)}}}}});
 }
 
-TEST(ConvertToBinaryTest, EventType) {
+TEST_F(ConvertToBinaryTest, EventType) {
   OK(At{loc1,
         binary::EventType{
             EventAttribute::Exception,
@@ -1121,7 +1127,7 @@ TEST(ConvertToBinaryTest, EventType) {
               }});
 }
 
-TEST(ConvertToBinaryTest, Event) {
+TEST_F(ConvertToBinaryTest, Event) {
   OK(At{loc1, binary::Event{At{loc2,
                                binary::EventType{
                                    EventAttribute::Exception,
@@ -1140,7 +1146,7 @@ TEST(ConvertToBinaryTest, Event) {
                     {}}});
 }
 
-TEST(ConvertToBinaryTest, Module) {
+TEST_F(ConvertToBinaryTest, Module) {
   // Additional locations only needed for Module. :-)
   const SpanU8 loc9 = "I"_su8;
   const SpanU8 loc10 = "J"_su8;
@@ -1229,8 +1235,8 @@ TEST(ConvertToBinaryTest, Module) {
                     At{loc21, Index{0}}, binary_constant_expression,
                     binary::ElementList{binary::ElementListWithIndexes{
                         external_kind, {At{loc22, Index{0}}}}}}}},
-            // data_counts
-            {binary::DataCount{Index{1}}},
+            // data_count omitted because bulk memory is not enabled.
+            nullopt,
             // codes
             {At{loc7,
                 binary::UnpackedCode{
@@ -1314,5 +1320,60 @@ TEST(ConvertToBinaryTest, Module) {
                                      text_constant_expression,
                                      text::DataItemList{text::DataItem{
                                          text::Text{"\"hello\""_sv, 5}}}}}},
+        }});
+}
+
+TEST_F(ConvertToBinaryTest, DataCount_BulkMemory) {
+  context.features.enable_bulk_memory();
+
+  OK(At{loc1,
+        binary::Module{
+            // types
+            {},
+            // imports
+            {},
+            // functions
+            {},
+            // tables
+            {},
+            // memories
+            {},
+            // globals
+            {},
+            // events
+            {},
+            // exports
+            {},
+            // starts
+            {},
+            // element_segments
+            {},
+            // data_count
+            {binary::DataCount{Index{1}}},
+            // codes
+            {},
+            // data_segments
+            {At{loc2,
+                binary::DataSegment{
+                    At{loc3, Index{0}},
+                    At{loc4, binary::ConstantExpression{At{
+                                 loc5, binary::Instruction{At{loc6,
+                                                              Opcode::I32Const},
+                                                           At{loc7, s32{0}}}}}},
+                    "hello"_su8}}},
+        }},
+     At{loc1,
+        text::Module{
+            // (data (i32.const 0) "hello")
+            text::ModuleItem{At{
+                loc2,
+                text::DataSegment{
+                    nullopt, At{loc3, text::Var{Index{0}}},
+                    At{loc4,
+                       text::ConstantExpression{At{
+                           loc5, text::Instruction{At{loc6, Opcode::I32Const},
+                                                   At{loc7, s32{0}}}}}},
+                    text::DataItemList{
+                        text::DataItem{text::Text{"\"hello\""_sv, 5}}}}}},
         }});
 }
