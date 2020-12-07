@@ -536,6 +536,7 @@ u32 GetNaturalAlignment(Opcode opcode) {
 
     default:
       assert(false);
+      return 0;
   }
 }
 
