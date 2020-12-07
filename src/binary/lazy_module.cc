@@ -31,10 +31,10 @@ constexpr SpanU8 kVersionSpan{encoding::Version};
 
 LazyModule::LazyModule(SpanU8 data, const Features& features, Errors& errors)
     : data{data},
-      context{features, errors},
-      magic{ReadBytesExpected(&data, kMagicSpan, context, "magic")},
-      version{ReadBytesExpected(&data, kVersionSpan, context, "version")},
-      sections{data, context} {}
+      ctx{features, errors},
+      magic{ReadBytesExpected(&data, kMagicSpan, ctx, "magic")},
+      version{ReadBytesExpected(&data, kVersionSpan, ctx, "version")},
+      sections{data, ctx} {}
 
 LazyModule ReadLazyModule(SpanU8 data,
                           const Features& features,

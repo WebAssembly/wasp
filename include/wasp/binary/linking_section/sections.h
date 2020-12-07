@@ -27,7 +27,7 @@
 namespace wasp::binary {
 
 struct RelocationSection {
-  explicit RelocationSection(SpanU8, Context&);
+  explicit RelocationSection(SpanU8, ReadCtx&);
 
   SpanU8 data;
   optional<Index> section_index;
@@ -36,7 +36,7 @@ struct RelocationSection {
 };
 
 struct LinkingSection {
-  explicit LinkingSection(SpanU8, Context&);
+  explicit LinkingSection(SpanU8, ReadCtx&);
 
   SpanU8 data;
   optional<u32> version;
@@ -48,26 +48,26 @@ using LazyInitFunctionsSubsection = LazySection<InitFunction>;
 using LazyComdatSubsection = LazySection<Comdat>;
 using LazySymbolTableSubsection = LazySection<SymbolInfo>;
 
-auto ReadRelocationSection(SpanU8 data, Context&) -> RelocationSection;
-auto ReadRelocationSection(CustomSection sec, Context&) -> RelocationSection;
+auto ReadRelocationSection(SpanU8 data, ReadCtx&) -> RelocationSection;
+auto ReadRelocationSection(CustomSection sec, ReadCtx&) -> RelocationSection;
 
-auto ReadLinkingSection(SpanU8, Context&) -> LinkingSection;
-auto ReadLinkingSection(CustomSection, Context&) -> LinkingSection;
+auto ReadLinkingSection(SpanU8, ReadCtx&) -> LinkingSection;
+auto ReadLinkingSection(CustomSection, ReadCtx&) -> LinkingSection;
 
-auto ReadSegmentInfoSubsection(SpanU8, Context&) -> LazySegmentInfoSubsection;
-auto ReadSegmentInfoSubsection(LinkingSubsection, Context&)
+auto ReadSegmentInfoSubsection(SpanU8, ReadCtx&) -> LazySegmentInfoSubsection;
+auto ReadSegmentInfoSubsection(LinkingSubsection, ReadCtx&)
     -> LazySegmentInfoSubsection;
 
-auto ReadInitFunctionsSubsection(SpanU8, Context&)
+auto ReadInitFunctionsSubsection(SpanU8, ReadCtx&)
     -> LazyInitFunctionsSubsection;
-auto ReadInitFunctionsSubsection(LinkingSubsection, Context&)
+auto ReadInitFunctionsSubsection(LinkingSubsection, ReadCtx&)
     -> LazyInitFunctionsSubsection;
 
-auto ReadComdatSubsection(SpanU8, Context&) -> LazyComdatSubsection;
-auto ReadComdatSubsection(LinkingSubsection, Context&) -> LazyComdatSubsection;
+auto ReadComdatSubsection(SpanU8, ReadCtx&) -> LazyComdatSubsection;
+auto ReadComdatSubsection(LinkingSubsection, ReadCtx&) -> LazyComdatSubsection;
 
-auto ReadSymbolTableSubsection(SpanU8, Context&) -> LazySymbolTableSubsection;
-auto ReadSymbolTableSubsection(LinkingSubsection, Context&)
+auto ReadSymbolTableSubsection(SpanU8, ReadCtx&) -> LazySymbolTableSubsection;
+auto ReadSymbolTableSubsection(LinkingSubsection, ReadCtx&)
     -> LazySymbolTableSubsection;
 
 }  // namespace wasp::binary

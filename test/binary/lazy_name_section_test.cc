@@ -17,7 +17,7 @@
 #include "gtest/gtest.h"
 #include "test/test_utils.h"
 #include "wasp/binary/name_section/sections.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
@@ -40,13 +40,13 @@ void ExpectSubsection(const std::vector<T>& expected, LazySection<T>& sec) {
 
 TEST(BinaryLazyNameSectionTest, NameSection) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadNameSection(
       "\x00\x02\x01m"                              // Module name = "m"
       "\x01\x03\x02\x01g"                          // Function names: 2 => "g"
       "\x02\x0a\x03\x02\x04\x02g4\x05\x02g5"_su8,  // Local names: function 3
                                                    //   4 => "g4", 5 => "g5"
-      context);
+      ctx);
 
   auto it = sec.begin();
 
@@ -73,19 +73,19 @@ TEST(BinaryLazyNameSectionTest, NameSection) {
 
 TEST(BinaryLazyNameSectionTest, ModuleNameSubsection) {
   TestErrors errors;
-  Context context{errors};
-  auto name = ReadModuleNameSubsection("\x04name"_su8, context);
+  ReadCtx ctx{errors};
+  auto name = ReadModuleNameSubsection("\x04name"_su8, ctx);
   EXPECT_EQ("name", name);
   ExpectNoErrors(errors);
 }
 
 TEST(BinaryLazyNameSectionTest, FunctionNamesSubsection) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadFunctionNamesSubsection(
       "\x02\x03\x05three\x05\x04"
       "five"_su8,
-      context);
+      ctx);
 
   ExpectSubsection(
       {NameAssoc{At{"\x03"_su8, Index{3}}, At{"\x05three"_su8, "three"_sv}},
@@ -98,13 +98,13 @@ TEST(BinaryLazyNameSectionTest, FunctionNamesSubsection) {
 
 TEST(BinaryLazyNameSectionTest, LocalNamesSubsection) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadLocalNamesSubsection(
       "\x02"
       "\x02\x02\x01\x04ichi\x03\x03san"
       "\x04\x01\x05\x05"
       "cinco"_su8,
-      context);
+      ctx);
 
   ExpectSubsection(
       {IndirectNameAssoc{

@@ -32,7 +32,7 @@ class ConvertToBinaryTest : public ::testing::Test {
  protected:
   template <typename B, typename T, typename... Args>
   void OK(const B& expected, const T& input, Args&&... args) {
-    auto actual = ToBinary(context, input, std::forward<Args>(args)...);
+    auto actual = ToBinary(ctx, input, std::forward<Args>(args)...);
     EXPECT_EQ(expected, actual);
   }
 
@@ -41,10 +41,10 @@ class ConvertToBinaryTest : public ::testing::Test {
               const B& expected,
               const T& input,
               Args&&... args) {
-    EXPECT_EQ(expected, func(context, input, std::forward<Args>(args)...));
+    EXPECT_EQ(expected, func(ctx, input, std::forward<Args>(args)...));
   }
 
-  Context context;
+  BinCtx ctx;
 };
 
 const SpanU8 loc1 = "A"_su8;
@@ -1005,9 +1005,9 @@ TEST_F(ConvertToBinaryTest, OpcodeAlignment) {
       {Opcode::V128Store, 4},
   };
   for (auto& test : tests) {
-    Context context;
+    BinCtx ctx;
     auto result = ToBinary(
-        context, text::Instruction{test.opcode, text::MemArgImmediate{}});
+        ctx, text::Instruction{test.opcode, text::MemArgImmediate{}});
     EXPECT_EQ(test.expected_align_log2,
               result->mem_arg_immediate()->align_log2);
   }
@@ -1324,7 +1324,7 @@ TEST_F(ConvertToBinaryTest, Module) {
 }
 
 TEST_F(ConvertToBinaryTest, DataCount_BulkMemory) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   OK(At{loc1,
         binary::Module{

@@ -305,14 +305,13 @@ void Tool::DoPrepass() {
       section_names[section.index] = concat(known->id);
       switch (known->id) {
         case SectionId::Type: {
-          auto seq = ReadTypeSection(known, module.context).sequence;
+          auto seq = ReadTypeSection(known, module.ctx).sequence;
           std::copy(seq.begin(), seq.end(), std::back_inserter(defined_types));
           break;
         }
 
         case SectionId::Import: {
-          for (auto import :
-               ReadImportSection(known, module.context).sequence) {
+          for (auto import : ReadImportSection(known, module.ctx).sequence) {
             switch (import->kind()) {
               case ExternalKind::Function:
                 functions.push_back(Function{import->index()});
@@ -343,14 +342,13 @@ void Tool::DoPrepass() {
         }
 
         case SectionId::Function: {
-          auto seq = ReadFunctionSection(known, module.context).sequence;
+          auto seq = ReadFunctionSection(known, module.ctx).sequence;
           std::copy(seq.begin(), seq.end(), std::back_inserter(functions));
           break;
         }
 
         case SectionId::Export: {
-          for (auto export_ :
-               ReadExportSection(known, module.context).sequence) {
+          for (auto export_ : ReadExportSection(known, module.ctx).sequence) {
             switch (export_->kind) {
               case ExternalKind::Function:
                 InsertFunctionName(export_->index, export_->name);
@@ -373,21 +371,20 @@ void Tool::DoPrepass() {
       auto custom = section.value->custom();
       section_names[section.index] = custom->name;
       if (*custom->name == "name") {
-        for (auto subsection : ReadNameSection(custom, module.context)) {
+        for (auto subsection : ReadNameSection(custom, module.ctx)) {
           if (subsection->id == NameSubsectionId::FunctionNames) {
             for (auto name_assoc :
-                 ReadFunctionNamesSubsection(subsection, module.context)
-                     .sequence) {
+                 ReadFunctionNamesSubsection(subsection, module.ctx).sequence) {
               InsertFunctionName(name_assoc->index, name_assoc->name);
             }
           }
         }
       } else if (*custom->name == "linking") {
         for (auto subsection :
-             ReadLinkingSection(custom, module.context).subsections) {
+             ReadLinkingSection(custom, module.ctx).subsections) {
           if (subsection->id == LinkingSubsectionId::SymbolTable) {
             for (auto symbol_pair :
-                 enumerate(ReadSymbolTableSubsection(subsection, module.context)
+                 enumerate(ReadSymbolTableSubsection(subsection, module.ctx)
                                .sequence)) {
               auto symbol_index = symbol_pair.index;
               auto symbol = symbol_pair.value;
@@ -414,7 +411,7 @@ void Tool::DoPrepass() {
           }
         }
       } else if (starts_with(*custom->name, "reloc.")) {
-        auto sec = ReadRelocationSection(custom, module.context);
+        auto sec = ReadRelocationSection(custom, module.ctx);
         if (sec.section_index) {
           section_relocations[*sec.section_index] =
               RelocationEntries{sec.entries.begin(), sec.entries.end()};
@@ -502,14 +499,13 @@ void Tool::DoCustomSection(Pass pass,
     case Pass::Details:
       PrintF(":\n - name: \"%s\"\n", custom.name);
       if (*custom.name == "name") {
-        DoNameSection(pass, section_index,
-                      ReadNameSection(custom, module.context));
+        DoNameSection(pass, section_index, ReadNameSection(custom, module.ctx));
       } else if (*custom.name == "linking") {
         DoLinkingSection(pass, section_index,
-                         ReadLinkingSection(custom, module.context));
+                         ReadLinkingSection(custom, module.ctx));
       } else if (starts_with(*custom.name, "reloc.")) {
         DoRelocationSection(pass, section_index,
-                            ReadRelocationSection(custom, module.context));
+                            ReadRelocationSection(custom, module.ctx));
       }
       break;
 
@@ -804,14 +800,14 @@ void Tool::DoNameSection(Pass pass,
     switch (subsection->id) {
       case NameSubsectionId::ModuleName: {
         auto module_name =
-            ReadModuleNameSubsection(subsection->data, module.context);
+            ReadModuleNameSubsection(subsection->data, module.ctx);
         PrintF("  module name: %s\n", module_name.value_or(""));
         break;
       }
 
       case NameSubsectionId::FunctionNames: {
         auto function_names_subsection =
-            ReadFunctionNamesSubsection(subsection->data, module.context);
+            ReadFunctionNamesSubsection(subsection->data, module.ctx);
         PrintF("  function names[%d]:\n",
               function_names_subsection.count.value_or(0));
         for (auto name_assoc : enumerate(function_names_subsection.sequence)) {
@@ -823,7 +819,7 @@ void Tool::DoNameSection(Pass pass,
 
       case NameSubsectionId::LocalNames: {
         auto local_names_subsection =
-            ReadLocalNamesSubsection(subsection->data, module.context);
+            ReadLocalNamesSubsection(subsection->data, module.ctx);
         PrintF("  local names[%d]:\n", local_names_subsection.count.value_or(0));
         for (auto indirect_name_assoc :
              enumerate(local_names_subsection.sequence)) {
@@ -850,7 +846,7 @@ void Tool::DoLinkingSection(Pass pass,
       case LinkingSubsectionId::SegmentInfo: {
         if (ShouldPrintDetails(pass)) {
           auto segment_infos =
-              ReadSegmentInfoSubsection(subsection->data, module.context);
+              ReadSegmentInfoSubsection(subsection->data, module.ctx);
           PrintF(" - segment info [count=%d]\n",
                  segment_infos.count.value_or(0));
           for (auto segment_info : enumerate(segment_infos.sequence)) {
@@ -865,7 +861,7 @@ void Tool::DoLinkingSection(Pass pass,
       case LinkingSubsectionId::InitFunctions: {
         if (ShouldPrintDetails(pass)) {
           auto init_functions =
-              ReadInitFunctionsSubsection(subsection->data, module.context);
+              ReadInitFunctionsSubsection(subsection->data, module.ctx);
           PrintF(" - init functions [count=%d]\n",
                 init_functions.count.value_or(0));
           for (auto init_function : init_functions.sequence) {
@@ -878,7 +874,7 @@ void Tool::DoLinkingSection(Pass pass,
 
       case LinkingSubsectionId::ComdatInfo: {
         if (ShouldPrintDetails(pass)) {
-          auto comdats = ReadComdatSubsection(subsection->data, module.context);
+          auto comdats = ReadComdatSubsection(subsection->data, module.ctx);
           PrintF(" - comdat [count=%d]\n", comdats.count.value_or(0));
           for (auto comdat : enumerate(comdats.sequence)) {
             PrintF("  - %d: \"%s\" flags=%#x [count=%d]\n", comdat.index,
@@ -907,7 +903,7 @@ void Tool::DoLinkingSection(Pass pass,
           };
 
           auto symbol_table =
-              ReadSymbolTableSubsection(subsection->data, module.context);
+              ReadSymbolTableSubsection(subsection->data, module.ctx);
           PrintF(" - symbol table [count=%d]\n",
                 symbol_table.count.value_or(0));
           for (auto symbol : enumerate(symbol_table.sequence)) {
@@ -1028,7 +1024,7 @@ void Tool::Disassemble(SectionIndex section_index,
                        [&](const RelocationEntry& lhs, size_t offset) {
                          return lhs.offset < offset;
                        });
-  auto instrs = ReadExpression(*code.body, module.context);
+  auto instrs = ReadExpression(*code.body, module.ctx);
   for (auto it = instrs.begin(), end = instrs.end(); it != end; ++it) {
     const auto& instr = *it;
     auto opcode = instr->opcode;

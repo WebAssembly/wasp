@@ -76,10 +76,10 @@ class TypeRelationSet {
   std::map<std::pair<Index, Index>, bool> assume_;
 };
 
-struct Context {
-  Context(Errors&);
-  Context(const Features&, Errors&);
-  Context(const Context&, Errors&);
+struct ValidCtx {
+  ValidCtx(Errors&);
+  ValidCtx(const Features&, Errors&);
+  ValidCtx(const ValidCtx&, Errors&);
 
   void Reset();
 

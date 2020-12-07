@@ -32,13 +32,13 @@
 #include "wasp/binary/encoding.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/read.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 #include "wasp/binary/types.h"
 #include "wasp/convert/to_text.h"
 #include "wasp/text/formatters.h"
 #include "wasp/text/types.h"
 #include "wasp/text/write.h"
-#include "wasp/valid/context.h"
+#include "wasp/valid/valid_ctx.h"
 #include "wasp/valid/validate.h"
 
 namespace fs = std::filesystem;
@@ -117,7 +117,7 @@ Tool::Tool(string_view filename, SpanU8 data, Options options)
 
 int Tool::Run() {
   BinaryErrors errors{data};
-  binary::Context read_context{options.features, errors};
+  binary::ReadCtx read_context{options.features, errors};
   auto binary_module = binary::ReadModule(data, read_context);
   if (errors.HasError()) {
     errors.PrintTo(std::cerr);
@@ -125,7 +125,7 @@ int Tool::Run() {
   }
 
   if (options.validate) {
-    valid::Context validate_context{options.features, errors};
+    valid::ValidCtx validate_context{options.features, errors};
     valid::Validate(validate_context, *binary_module);
 
     if (errors.HasError()) {
@@ -134,10 +134,10 @@ int Tool::Run() {
     }
   }
 
-  convert::TextContext convert_context;
+  convert::TextCtx convert_context;
   auto text_module = convert::ToText(convert_context, *binary_module);
 
-  text::WriteContext write_context;
+  text::WriteCtx write_context;
   Buffer buffer;
   text::Write(write_context, text_module, std::back_inserter(buffer));
 

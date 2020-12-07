@@ -29,14 +29,14 @@
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/read.h"
-#include "wasp/binary/read/context.h"
 #include "wasp/binary/read/location_guard.h"
 #include "wasp/binary/read/macros.h"
+#include "wasp/binary/read/read_ctx.h"
 #include "wasp/binary/var_int.h"
 
 namespace wasp::binary {
 
-struct Context;
+struct ReadCtx;
 
 template <typename S>
 S SignExtend(std::make_unsigned_t<S> x, int N) {
@@ -45,7 +45,7 @@ S SignExtend(std::make_unsigned_t<S> x, int N) {
 }
 
 template <typename T>
-OptAt<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
+OptAt<T> ReadVarInt(SpanU8* data, ReadCtx& ctx, string_view desc) {
   using U = std::make_unsigned_t<T>;
   constexpr bool is_signed = std::is_signed_v<T>;
   constexpr int kByteMask = VarInt<T>::kByteMask;
@@ -54,12 +54,12 @@ OptAt<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
   constexpr u8 kLastByteMask = ~((1 << kLastByteMaskBits) - 1);
   constexpr u8 kLastByteOnes = kLastByteMask & kByteMask;
 
-  ErrorsContextGuard error_guard{context.errors, *data, desc};
+  ErrorsContextGuard error_guard{ctx.errors, *data, desc};
   LocationGuard guard{data};
 
   U result{};
   for (int i = 0;;) {
-    WASP_TRY_READ(byte, Read<u8>(data, context));
+    WASP_TRY_READ(byte, Read<u8>(data, ctx));
 
     const int shift = i * 7;
     result |= U(byte & kByteMask) << shift;
@@ -72,18 +72,18 @@ OptAt<T> ReadVarInt(SpanU8* data, Context& context, string_view desc) {
       const u8 zero_ext = byte & ~kLastByteMask & kByteMask;
       const u8 one_ext = (byte | kLastByteOnes) & kByteMask;
       if (is_signed) {
-        context.errors.OnError(
+        ctx.errors.OnError(
             byte.loc(), concat("Last byte of ", desc,
                                " must be sign extension: expected 0x", std::hex,
                                std::setfill('0'), zero_ext, " or 0x", one_ext,
                                ", got 0x", byte, std::dec));
       } else {
-        context.errors.OnError(byte.loc(),
-                               concat("Last byte of ", desc,
-                                      " must be zero "
-                                      "extension: expected 0x",
-                                      std::hex, std::setfill('0'), zero_ext,
-                                      ", got 0x", byte, std::dec));
+        ctx.errors.OnError(byte.loc(),
+                           concat("Last byte of ", desc,
+                                  " must be zero "
+                                  "extension: expected 0x",
+                                  std::hex, std::setfill('0'), zero_ext,
+                                  ", got 0x", byte, std::dec));
       }
       return nullopt;
     } else if ((byte & VarInt<T>::kExtendBit) == 0) {

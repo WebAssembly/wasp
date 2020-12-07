@@ -42,10 +42,10 @@ add_library(libwasp_binary
   ../../include/wasp/binary/name_section/sections.h
   ../../include/wasp/binary/name_section/types.h
   ../../include/wasp/binary/name_section/write.h
-  ../../include/wasp/binary/read/context.h
   ../../include/wasp/binary/read.h
   ../../include/wasp/binary/read/location_guard.h
   ../../include/wasp/binary/read/macros.h
+  ../../include/wasp/binary/read/read_ctx.h
   ../../include/wasp/binary/read/read_var_int.h
   ../../include/wasp/binary/read/read_vector.h
   ../../include/wasp/binary/sections.h
@@ -54,7 +54,6 @@ add_library(libwasp_binary
   ../../include/wasp/binary/visitor.h
   ../../include/wasp/binary/write.h
 
-  context.cc
   encoding.cc
   formatters.cc
   lazy_expression.cc
@@ -71,6 +70,7 @@ add_library(libwasp_binary
   name_section/sections.cc
   name_section/types.cc
   read.cc
+  read_ctx.cc
   read_module.cc
   sections.cc
   types.cc

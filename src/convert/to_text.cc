@@ -49,176 +49,170 @@ std::string EncodeAsText(string_view str) {
   return text;
 }
 
-text::Text TextContext::Add(string_view str) {
+text::Text TextCtx::Add(string_view str) {
   strings.push_back(std::make_unique<std::string>(EncodeAsText(str)));
   return text::Text{string_view{*strings.back()}, static_cast<u32>(str.size())};
 }
 
 // Helpers.
-auto ToText(TextContext& context, const At<binary::HeapType>& value)
+auto ToText(TextCtx& ctx, const At<binary::HeapType>& value)
     -> At<text::HeapType> {
   if (value->is_heap_kind()) {
     return At{value.loc(), text::HeapType{value->heap_kind()}};
   } else {
     assert(value->is_index());
-    return At{value.loc(), text::HeapType{ToText(context, value->index())}};
+    return At{value.loc(), text::HeapType{ToText(ctx, value->index())}};
   }
 }
 
-auto ToText(TextContext& context, const At<binary::RefType>& value)
+auto ToText(TextCtx& ctx, const At<binary::RefType>& value)
     -> At<text::RefType> {
   return At{value.loc(),
-            text::RefType{ToText(context, value->heap_type), value->null}};
+            text::RefType{ToText(ctx, value->heap_type), value->null}};
 }
 
-auto ToText(TextContext& context, const At<binary::ReferenceType>& value)
+auto ToText(TextCtx& ctx, const At<binary::ReferenceType>& value)
     -> At<text::ReferenceType> {
   if (value->is_reference_kind()) {
     return At{value.loc(), text::ReferenceType{value->reference_kind()}};
   } else {
     assert(value->is_ref());
-    return At{value.loc(), text::ReferenceType{ToText(context, value->ref())}};
+    return At{value.loc(), text::ReferenceType{ToText(ctx, value->ref())}};
   }
 }
 
-auto ToText(TextContext& context, const At<binary::Rtt>& value)
-    -> At<text::Rtt> {
-  return At{value.loc(), text::Rtt{value->depth, ToText(context, value->type)}};
+auto ToText(TextCtx& ctx, const At<binary::Rtt>& value) -> At<text::Rtt> {
+  return At{value.loc(), text::Rtt{value->depth, ToText(ctx, value->type)}};
 }
 
-auto ToText(TextContext& context, const At<binary::ValueType>& value)
+auto ToText(TextCtx& ctx, const At<binary::ValueType>& value)
     -> At<text::ValueType> {
   if (value->is_numeric_type()) {
     return At{value.loc(), text::ValueType{value->numeric_type()}};
   } else if (value->is_reference_type()) {
     return At{value.loc(),
-              text::ValueType{ToText(context, value->reference_type())}};
+              text::ValueType{ToText(ctx, value->reference_type())}};
   } else {
     assert(value->is_rtt());
-    return At{value.loc(), text::ValueType{ToText(context, value->rtt())}};
+    return At{value.loc(), text::ValueType{ToText(ctx, value->rtt())}};
   }
 }
 
-auto ToText(TextContext& context, const binary::ValueTypeList& values)
+auto ToText(TextCtx& ctx, const binary::ValueTypeList& values)
     -> text::ValueTypeList {
   text::ValueTypeList result;
   for (auto&& value : values) {
-    result.push_back(ToText(context, value));
+    result.push_back(ToText(ctx, value));
   }
   return result;
 }
 
-auto ToTextBound(TextContext& context, const binary::ValueTypeList& values)
+auto ToTextBound(TextCtx& ctx, const binary::ValueTypeList& values)
     -> At<text::BoundValueTypeList> {
   text::BoundValueTypeList result;
   for (auto&& value : values) {
     result.push_back(text::BoundValueType{nullopt,  // TODO name
-                                          ToText(context, value)});
+                                          ToText(ctx, value)});
   }
   return result;
 }
 
-auto ToText(TextContext& context, const At<binary::StorageType>& value)
+auto ToText(TextCtx& ctx, const At<binary::StorageType>& value)
     -> At<text::StorageType> {
   if (value->is_value_type()) {
-    return At{value.loc(),
-              text::StorageType{ToText(context, value->value_type())}};
+    return At{value.loc(), text::StorageType{ToText(ctx, value->value_type())}};
   } else {
     assert(value->is_packed_type());
     return At{value.loc(), text::StorageType{value->packed_type()}};
   }
 }
 
-auto ToText(TextContext& context, const At<string_view>& value)
-    -> At<text::Text> {
-  return At{value.loc(), context.Add(*value)};
+auto ToText(TextCtx& ctx, const At<string_view>& value) -> At<text::Text> {
+  return At{value.loc(), ctx.Add(*value)};
 }
 
-auto ToText(TextContext& context, const At<Index>& value) -> At<text::Var> {
+auto ToText(TextCtx& ctx, const At<Index>& value) -> At<text::Var> {
   return At{value.loc(), text::Var{value.value()}};
 }
 
-auto ToText(TextContext& context, const OptAt<Index>& value)
-    -> OptAt<text::Var> {
+auto ToText(TextCtx& ctx, const OptAt<Index>& value) -> OptAt<text::Var> {
   if (!value) {
     return nullopt;
   }
-  return ToText(context, *value);
+  return ToText(ctx, *value);
 }
 
-auto ToText(TextContext& context, const binary::IndexList& values)
-    -> text::VarList {
+auto ToText(TextCtx& ctx, const binary::IndexList& values) -> text::VarList {
   text::VarList result;
   for (auto value : values) {
-    result.push_back(ToText(context, value));
+    result.push_back(ToText(ctx, value));
   }
   return result;
 }
 
-auto ToText(TextContext& context, const At<binary::FunctionType>& value)
+auto ToText(TextCtx& ctx, const At<binary::FunctionType>& value)
     -> At<text::FunctionType> {
-  return At{value.loc(),
-            text::FunctionType{ToText(context, value->param_types),
-                               ToText(context, value->result_types)}};
+  return At{value.loc(), text::FunctionType{ToText(ctx, value->param_types),
+                                            ToText(ctx, value->result_types)}};
 }
 
 // Section 1: Type
-auto ToTextBound(TextContext& context, const At<binary::FunctionType>& value)
+auto ToTextBound(TextCtx& ctx, const At<binary::FunctionType>& value)
     -> At<text::BoundFunctionType> {
   return At{value.loc(),
-            text::BoundFunctionType{ToTextBound(context, value->param_types),
-                                    ToText(context, value->result_types)}};
+            text::BoundFunctionType{ToTextBound(ctx, value->param_types),
+                                    ToText(ctx, value->result_types)}};
 }
 
-auto ToText(TextContext& context, const At<binary::FieldType>& value)
+auto ToText(TextCtx& ctx, const At<binary::FieldType>& value)
     -> At<text::FieldType> {
   return At{value.loc(),
             text::FieldType{nullopt,  // TODO(name)
-                            ToText(context, value->type), value->mut}};
+                            ToText(ctx, value->type), value->mut}};
 }
 
-auto ToText(TextContext& context, const binary::FieldTypeList& values)
+auto ToText(TextCtx& ctx, const binary::FieldTypeList& values)
     -> text::FieldTypeList {
   text::FieldTypeList result;
   for (auto&& value : values) {
-    result.push_back(ToText(context, value));
+    result.push_back(ToText(ctx, value));
   }
   return result;
 }
 
-auto ToText(TextContext& context, const At<binary::StructType>& value)
+auto ToText(TextCtx& ctx, const At<binary::StructType>& value)
     -> At<text::StructType> {
-  return At{value.loc(), text::StructType{ToText(context, value->fields)}};
+  return At{value.loc(), text::StructType{ToText(ctx, value->fields)}};
 }
 
-auto ToText(TextContext& context, const At<binary::ArrayType>& value)
+auto ToText(TextCtx& ctx, const At<binary::ArrayType>& value)
     -> At<text::ArrayType> {
-  return At{value.loc(), text::ArrayType{ToText(context, value->field)}};
+  return At{value.loc(), text::ArrayType{ToText(ctx, value->field)}};
 }
 
-auto ToText(TextContext& context, const At<binary::DefinedType>& value)
+auto ToText(TextCtx& ctx, const At<binary::DefinedType>& value)
     -> At<text::DefinedType> {
   if (value->is_function_type()) {
     return At{value.loc(),
               text::DefinedType{nullopt,  // TODO(name)
-                                ToTextBound(context, value->function_type())}};
+                                ToTextBound(ctx, value->function_type())}};
   } else if (value->is_struct_type()) {
     return At{value.loc(),
               text::DefinedType{nullopt,  // TODO(name)
-                                ToText(context, value->struct_type())}};
+                                ToText(ctx, value->struct_type())}};
   } else {
     assert(value->is_array_type());
     return At{value.loc(),
               text::DefinedType{nullopt,  // TODO(name)
-                                ToText(context, value->array_type())}};
+                                ToText(ctx, value->array_type())}};
   }
 }
 
 // Section 2: Import
-auto ToText(TextContext& context, const At<binary::Import>& value)
+auto ToText(TextCtx& ctx, const At<binary::Import>& value)
     -> At<text::Import> {
-  auto module = ToText(context, value->module);
-  auto name = ToText(context, value->name);
+  auto module = ToText(ctx, value->module);
+  auto name = ToText(ctx, value->name);
 
   switch (value->kind()) {
     case ExternalKind::Function:
@@ -226,7 +220,7 @@ auto ToText(TextContext& context, const At<binary::Import>& value)
                 text::Import{module, name,
                              text::FunctionDesc{
                                  nullopt,  // TODO(name)
-                                 ToText(context, value->index()),
+                                 ToText(ctx, value->index()),
                                  {}  // Unresolved bound function type
                              }}};
 
@@ -235,7 +229,7 @@ auto ToText(TextContext& context, const At<binary::Import>& value)
           value.loc(),
           text::Import{module, name,
                        text::TableDesc{nullopt,  // TODO(name)
-                                       ToText(context, value->table_type())}}};
+                                       ToText(ctx, value->table_type())}}};
 
     case ExternalKind::Memory:
       return At{value.loc(),
@@ -244,18 +238,18 @@ auto ToText(TextContext& context, const At<binary::Import>& value)
                                               value->memory_type()}}};
 
     case ExternalKind::Global:
-      return At{value.loc(),
-                text::Import{
-                    module, name,
-                    text::GlobalDesc{nullopt,  // TODO(name)
-                                     ToText(context, value->global_type())}}};
+      return At{
+          value.loc(),
+          text::Import{module, name,
+                       text::GlobalDesc{nullopt,  // TODO(name)
+                                        ToText(ctx, value->global_type())}}};
 
     case ExternalKind::Event:
       return At{
           value.loc(),
           text::Import{module, name,
                        text::EventDesc{nullopt,  // TODO(name)
-                                       ToText(context, value->event_type())}}};
+                                       ToText(ctx, value->event_type())}}};
 
     default:
       WASP_UNREACHABLE();
@@ -263,12 +257,12 @@ auto ToText(TextContext& context, const At<binary::Import>& value)
 }
 
 // Section 3: Function
-auto ToText(TextContext& context, const At<binary::Function>& value)
+auto ToText(TextCtx& ctx, const At<binary::Function>& value)
     -> At<text::Function> {
   return At{value.loc(),
             text::Function{text::FunctionDesc{
                                nullopt,  // TODO(name)
-                               ToText(context, value->type_index),
+                               ToText(ctx, value->type_index),
                                {}  // Unresolved bound function type
                            },
                            {},
@@ -278,22 +272,22 @@ auto ToText(TextContext& context, const At<binary::Function>& value)
 }
 
 // Section 4: Table
-auto ToText(TextContext& context, const At<binary::TableType>& value)
+auto ToText(TextCtx& ctx, const At<binary::TableType>& value)
     -> At<text::TableType> {
   return At{value.loc(),
-            text::TableType{value->limits, ToText(context, value->elemtype)}};
+            text::TableType{value->limits, ToText(ctx, value->elemtype)}};
 }
 
-auto ToText(TextContext& context, const At<binary::Table>& value)
+auto ToText(TextCtx& ctx, const At<binary::Table>& value)
     -> At<text::Table> {
   return At{value.loc(),
             text::Table{text::TableDesc{nullopt,  // TODO(name)
-                                        ToText(context, value->table_type)},
+                                        ToText(ctx, value->table_type)},
                         {}}};
 }
 
 // Section 5: Memory
-auto ToText(TextContext& context, const At<binary::Memory>& value)
+auto ToText(TextCtx& ctx, const At<binary::Memory>& value)
     -> At<text::Memory> {
   return At{value.loc(),
             text::Memory{text::MemoryDesc{nullopt,  // TODO(name)
@@ -302,95 +296,91 @@ auto ToText(TextContext& context, const At<binary::Memory>& value)
 }
 
 // Section 6: Global
-auto ToText(TextContext& context, const At<binary::ConstantExpression>& value)
+auto ToText(TextCtx& ctx, const At<binary::ConstantExpression>& value)
     -> At<text::ConstantExpression> {
   return At{value.loc(),
-            text::ConstantExpression{ToText(context, value->instructions)}};
+            text::ConstantExpression{ToText(ctx, value->instructions)}};
 }
 
-auto ToText(TextContext& context, const At<binary::GlobalType>& value)
+auto ToText(TextCtx& ctx, const At<binary::GlobalType>& value)
     -> At<text::GlobalType> {
   return At{value.loc(),
-            text::GlobalType{ToText(context, value->valtype), value->mut}};
+            text::GlobalType{ToText(ctx, value->valtype), value->mut}};
 }
 
-auto ToText(TextContext& context, const At<binary::Global>& value)
+auto ToText(TextCtx& ctx, const At<binary::Global>& value)
     -> At<text::Global> {
   return At{value.loc(),
             text::Global{text::GlobalDesc{nullopt,  // TODO(name)
-                                          ToText(context, value->global_type)},
-                         ToText(context, value->init),
+                                          ToText(ctx, value->global_type)},
+                         ToText(ctx, value->init),
                          {}}};
 }
 
 // Section 7: Export
-auto ToText(TextContext& context, const At<binary::Export>& value)
-    -> At<text::Export> {
-  return At{value.loc(), text::Export{value->kind, ToText(context, value->name),
-                                      ToText(context, value->index)}};
+auto ToText(TextCtx& ctx, const At<binary::Export>& value) -> At<text::Export> {
+  return At{value.loc(), text::Export{value->kind, ToText(ctx, value->name),
+                                      ToText(ctx, value->index)}};
 }
 
 // Section 8: Start
-auto ToText(TextContext& context, const At<binary::Start>& value)
-    -> At<text::Start> {
-  return At{value.loc(), text::Start{ToText(context, value->func_index)}};
+auto ToText(TextCtx& ctx, const At<binary::Start>& value) -> At<text::Start> {
+  return At{value.loc(), text::Start{ToText(ctx, value->func_index)}};
 }
 
 // Section 9: Elem
-auto ToText(TextContext& context, const At<binary::ElementExpression>& value)
+auto ToText(TextCtx& ctx, const At<binary::ElementExpression>& value)
     -> At<text::ElementExpression> {
   return At{value.loc(),
-            text::ElementExpression{ToText(context, value->instructions)}};
+            text::ElementExpression{ToText(ctx, value->instructions)}};
 }
 
-auto ToText(TextContext& context, const binary::ElementExpressionList& values)
+auto ToText(TextCtx& ctx, const binary::ElementExpressionList& values)
     -> text::ElementExpressionList {
   text::ElementExpressionList result;
   for (auto&& value : values) {
-    result.push_back(ToText(context, value));
+    result.push_back(ToText(ctx, value));
   }
   return result;
 }
 
-auto ToText(TextContext& context, const binary::ElementList& value)
+auto ToText(TextCtx& ctx, const binary::ElementList& value)
     -> text::ElementList {
   if (holds_alternative<binary::ElementListWithExpressions>(value)) {
     auto&& elements = get<binary::ElementListWithExpressions>(value);
-    return text::ElementListWithExpressions{ToText(context, elements.elemtype),
-                                            ToText(context, elements.list)};
+    return text::ElementListWithExpressions{ToText(ctx, elements.elemtype),
+                                            ToText(ctx, elements.list)};
   } else {
     auto&& elements = get<binary::ElementListWithIndexes>(value);
-    return text::ElementListWithVars{elements.kind,
-                                     ToText(context, elements.list)};
+    return text::ElementListWithVars{elements.kind, ToText(ctx, elements.list)};
   }
 }
 
-auto ToText(TextContext& context, const At<binary::ElementSegment>& value)
+auto ToText(TextCtx& ctx, const At<binary::ElementSegment>& value)
     -> At<text::ElementSegment> {
   if (value->type == SegmentType::Active) {
     return At{value.loc(),
               text::ElementSegment{nullopt,  // TODO(name)
-                                   ToText(context, value->table_index),
-                                   ToText(context, *value->offset),
-                                   ToText(context, value->elements)}};
+                                   ToText(ctx, value->table_index),
+                                   ToText(ctx, *value->offset),
+                                   ToText(ctx, value->elements)}};
   } else {
-    return At{value.loc(), text::ElementSegment{
-                               nullopt,  // TODO(name)
-                               value->type, ToText(context, value->elements)}};
+    return At{value.loc(),
+              text::ElementSegment{nullopt,  // TODO(name)
+                                   value->type, ToText(ctx, value->elements)}};
   }
 }
 
 // Section 10: Code
-auto ToText(TextContext& context, const At<binary::BlockType>& value)
+auto ToText(TextCtx& ctx, const At<binary::BlockType>& value)
     -> At<text::BlockImmediate> {
   if (value->is_value_type()) {
-    return At{
-        value.loc(),
-        text::BlockImmediate{
-            nullopt,  // TODO(name)
-            text::FunctionTypeUse{
-                nullopt, text::FunctionType{
-                             {}, {ToText(context, value->value_type())}}}}};
+    return At{value.loc(),
+              text::BlockImmediate{
+                  nullopt,  // TODO(name)
+                  text::FunctionTypeUse{
+                      nullopt, text::FunctionType{
+                                   {}, {ToText(ctx, value->value_type())}}}}};
   } else if (value->is_void()) {
     return At{value.loc(),
               text::BlockImmediate{
@@ -401,71 +391,66 @@ auto ToText(TextContext& context, const At<binary::BlockType>& value)
     return At{value.loc(),
               text::BlockImmediate{
                   nullopt,  // TODO(name)
-                  text::FunctionTypeUse{ToText(context, value->index()), {}}}};
+                  text::FunctionTypeUse{ToText(ctx, value->index()), {}}}};
   }
 }
 
-auto ToText(TextContext& context, const At<binary::BrOnCastImmediate>& value)
+auto ToText(TextCtx& ctx, const At<binary::BrOnCastImmediate>& value)
     -> At<text::BrOnCastImmediate> {
-  return At{value.loc(),
-            text::BrOnCastImmediate{ToText(context, value->target),
-                                    ToText(context, value->types)}};
+  return At{value.loc(), text::BrOnCastImmediate{ToText(ctx, value->target),
+                                                 ToText(ctx, value->types)}};
 }
 
-auto ToText(TextContext& context, const At<binary::BrOnExnImmediate>& value)
+auto ToText(TextCtx& ctx, const At<binary::BrOnExnImmediate>& value)
     -> At<text::BrOnExnImmediate> {
   return At{value.loc(),
-            text::BrOnExnImmediate{ToText(context, value->target),
-                                   ToText(context, value->event_index)}};
+            text::BrOnExnImmediate{ToText(ctx, value->target),
+                                   ToText(ctx, value->event_index)}};
 }
 
-auto ToText(TextContext& context, const At<binary::BrTableImmediate>& value)
+auto ToText(TextCtx& ctx, const At<binary::BrTableImmediate>& value)
     -> At<text::BrTableImmediate> {
   return At{value.loc(),
-            text::BrTableImmediate{ToText(context, value->targets),
-                                   ToText(context, value->default_target)}};
+            text::BrTableImmediate{ToText(ctx, value->targets),
+                                   ToText(ctx, value->default_target)}};
 }
 
-auto ToText(TextContext& context,
-            const At<binary::CallIndirectImmediate>& value)
+auto ToText(TextCtx& ctx, const At<binary::CallIndirectImmediate>& value)
     -> At<text::CallIndirectImmediate> {
   return At{value.loc(),
             text::CallIndirectImmediate{
-                ToText(context, value->table_index),
-                text::FunctionTypeUse{ToText(context, value->index), {}}}};
+                ToText(ctx, value->table_index),
+                text::FunctionTypeUse{ToText(ctx, value->index), {}}}};
 }
 
-auto ToText(TextContext& context, const At<binary::CopyImmediate>& value)
+auto ToText(TextCtx& ctx, const At<binary::CopyImmediate>& value)
     -> At<text::CopyImmediate> {
-  return At{value.loc(),
-            text::CopyImmediate{ToText(context, value->dst_index),
-                                ToText(context, value->src_index)}};
+  return At{value.loc(), text::CopyImmediate{ToText(ctx, value->dst_index),
+                                             ToText(ctx, value->src_index)}};
 }
 
-auto ToText(TextContext& context, const At<binary::FuncBindImmediate>& value)
+auto ToText(TextCtx& ctx, const At<binary::FuncBindImmediate>& value)
     -> At<text::FuncBindImmediate> {
   return At{value.loc(),
-            text::FuncBindImmediate{ToText(context, value->index), {}}};
+            text::FuncBindImmediate{ToText(ctx, value->index), {}}};
 }
 
-auto ToText(TextContext& context, const At<binary::HeapType2Immediate>& value)
+auto ToText(TextCtx& ctx, const At<binary::HeapType2Immediate>& value)
     -> At<text::HeapType2Immediate> {
-  return At{value.loc(),
-            text::HeapType2Immediate{ToText(context, value->parent),
-                                     ToText(context, value->child)}};
+  return At{value.loc(), text::HeapType2Immediate{ToText(ctx, value->parent),
+                                                  ToText(ctx, value->child)}};
 }
 
-auto ToText(TextContext& context, const At<binary::InitImmediate>& value)
+auto ToText(TextCtx& ctx, const At<binary::InitImmediate>& value)
     -> At<text::InitImmediate> {
-  return At{value.loc(),
-            text::InitImmediate{ToText(context, value->segment_index),
-                                ToText(context, value->dst_index)}};
+  return At{value.loc(), text::InitImmediate{ToText(ctx, value->segment_index),
+                                             ToText(ctx, value->dst_index)}};
 }
 
-auto ToText(TextContext& context, const At<binary::LetImmediate>& value)
+auto ToText(TextCtx& ctx, const At<binary::LetImmediate>& value)
     -> At<text::LetImmediate> {
-  return At{value.loc(), text::LetImmediate{ToText(context, value->block_type),
-                                            ToText(context, value->locals)}};
+  return At{value.loc(), text::LetImmediate{ToText(ctx, value->block_type),
+                                            ToText(ctx, value->locals)}};
 }
 
 auto GetAlignPow2(At<u32> align_log2) -> At<u32> {
@@ -474,26 +459,25 @@ auto GetAlignPow2(At<u32> align_log2) -> At<u32> {
   return At{align_log2.loc(), 1u << align_log2};
 }
 
-auto ToText(TextContext& context, const At<binary::MemArgImmediate>& value)
+auto ToText(TextCtx& ctx, const At<binary::MemArgImmediate>& value)
     -> At<text::MemArgImmediate> {
   return At{value.loc(), text::MemArgImmediate{GetAlignPow2(value->align_log2),
                                                value->offset}};
 }
 
-auto ToText(TextContext& context, const At<binary::RttSubImmediate>& value)
+auto ToText(TextCtx& ctx, const At<binary::RttSubImmediate>& value)
     -> At<text::RttSubImmediate> {
   return At{value.loc(),
-            text::RttSubImmediate{value->depth, ToText(context, value->types)}};
+            text::RttSubImmediate{value->depth, ToText(ctx, value->types)}};
 }
 
-auto ToText(TextContext& context, const At<binary::StructFieldImmediate>& value)
+auto ToText(TextCtx& ctx, const At<binary::StructFieldImmediate>& value)
     -> At<text::StructFieldImmediate> {
-  return At{value.loc(),
-            text::StructFieldImmediate{ToText(context, value->struct_),
-                                       ToText(context, value->field)}};
+  return At{value.loc(), text::StructFieldImmediate{ToText(ctx, value->struct_),
+                                                    ToText(ctx, value->field)}};
 }
 
-auto ToText(TextContext& context, const At<binary::Instruction>& value)
+auto ToText(TextCtx& ctx, const At<binary::Instruction>& value)
     -> At<text::Instruction> {
   switch (value->immediate.index()) {
     case 0:  // monostate
@@ -522,63 +506,59 @@ auto ToText(TextContext& context, const At<binary::Instruction>& value)
     case 6:  // Index
       return At{value.loc(),
                 text::Instruction{value->opcode,
-                                  ToText(context, value->index_immediate())}};
+                                  ToText(ctx, value->index_immediate())}};
 
     case 7:  // BlockType
-      return At{
-          value.loc(),
-          text::Instruction{value->opcode,
-                            ToText(context, value->block_type_immediate())}};
+      return At{value.loc(),
+                text::Instruction{value->opcode,
+                                  ToText(ctx, value->block_type_immediate())}};
 
     case 8:  // BrOnExnImmediate
-      return At{
-          value.loc(),
-          text::Instruction{value->opcode,
-                            ToText(context, value->br_on_exn_immediate())}};
+      return At{value.loc(),
+                text::Instruction{value->opcode,
+                                  ToText(ctx, value->br_on_exn_immediate())}};
 
     case 9:  // BrTableImmediate
-      return At{value.loc(), text::Instruction{
-                                 value->opcode,
-                                 ToText(context, value->br_table_immediate())}};
+      return At{value.loc(),
+                text::Instruction{value->opcode,
+                                  ToText(ctx, value->br_table_immediate())}};
 
     case 10:  // CallIndirectImmediate
       return At{
           value.loc(),
           text::Instruction{value->opcode,
-                            ToText(context, value->call_indirect_immediate())}};
+                            ToText(ctx, value->call_indirect_immediate())}};
 
     case 11:  // CopyImmediate
       return At{value.loc(),
                 text::Instruction{value->opcode,
-                                  ToText(context, value->copy_immediate())}};
+                                  ToText(ctx, value->copy_immediate())}};
 
     case 12:  // InitImmediate
       return At{value.loc(),
                 text::Instruction{value->opcode,
-                                  ToText(context, value->init_immediate())}};
+                                  ToText(ctx, value->init_immediate())}};
 
     case 13:  // LetImmediate
       return At{value.loc(),
                 text::Instruction{value->opcode,
-                                  ToText(context, value->let_immediate())}};
+                                  ToText(ctx, value->let_immediate())}};
 
     case 14:  // MemArgImmediate
       return At{value.loc(),
                 text::Instruction{value->opcode,
-                                  ToText(context, value->mem_arg_immediate())}};
+                                  ToText(ctx, value->mem_arg_immediate())}};
 
     case 15:  // HeapType
-      return At{
-          value.loc(),
-          text::Instruction{value->opcode,
-                            ToText(context, value->heap_type_immediate())}};
+      return At{value.loc(),
+                text::Instruction{value->opcode,
+                                  ToText(ctx, value->heap_type_immediate())}};
 
     case 16:  // SelectImmediate
-      return At{
-          value.loc(),
-          text::Instruction{value->opcode,
-                            At{value->select_immediate().loc(),
-                               ToText(context, *value->select_immediate())}}};
+      return At{value.loc(),
+                text::Instruction{value->opcode,
+                                  At{value->select_immediate().loc(),
+                                     ToText(ctx, *value->select_immediate())}}};
 
     case 17:  // ShuffleImmediate
       return At{value.loc(),
@@ -589,58 +569,54 @@ auto ToText(TextContext& context, const At<binary::Instruction>& value)
                 text::Instruction{value->opcode, value->simd_lane_immediate()}};
 
     case 19:  // FuncBindImmediate
-      return At{
-          value.loc(),
-          text::Instruction{value->opcode,
-                            ToText(context, value->func_bind_immediate())}};
+      return At{value.loc(),
+                text::Instruction{value->opcode,
+                                  ToText(ctx, value->func_bind_immediate())}};
 
     case 20:  // BrOnCastImmediate
-      return At{
-          value.loc(),
-          text::Instruction{value->opcode,
-                            ToText(context, value->br_on_cast_immediate())}};
+      return At{value.loc(),
+                text::Instruction{value->opcode,
+                                  ToText(ctx, value->br_on_cast_immediate())}};
 
     case 21:  // HeapType2Immediate
-      return At{
-          value.loc(),
-          text::Instruction{value->opcode,
-                            ToText(context, value->heap_type_2_immediate())}};
+      return At{value.loc(),
+                text::Instruction{value->opcode,
+                                  ToText(ctx, value->heap_type_2_immediate())}};
 
     case 22:  // RttSubImmediate
       return At{value.loc(),
                 text::Instruction{value->opcode,
-                                  ToText(context, value->rtt_sub_immediate())}};
+                                  ToText(ctx, value->rtt_sub_immediate())}};
 
     case 23:  // StructFieldImmediate
-      return At{
-          value.loc(),
-          text::Instruction{value->opcode,
-                            ToText(context, value->struct_field_immediate())}};
+      return At{value.loc(), text::Instruction{
+                                 value->opcode,
+                                 ToText(ctx, value->struct_field_immediate())}};
 
     default:
       WASP_UNREACHABLE();
   }
 }
 
-auto ToText(TextContext& context, const binary::InstructionList& values)
+auto ToText(TextCtx& ctx, const binary::InstructionList& values)
     -> text::InstructionList {
   text::InstructionList result;
   for (auto&& value : values) {
-    result.push_back(ToText(context, value));
+    result.push_back(ToText(ctx, value));
   }
   return result;
 }
 
-auto ToText(TextContext& context, const At<binary::UnpackedExpression>& value)
+auto ToText(TextCtx& ctx, const At<binary::UnpackedExpression>& value)
     -> text::InstructionList {
-  return ToText(context, value->instructions);
+  return ToText(ctx, value->instructions);
 }
 
-auto ToText(TextContext& context, const binary::LocalsList& values)
+auto ToText(TextCtx& ctx, const binary::LocalsList& values)
     -> At<text::BoundValueTypeList> {
   text::BoundValueTypeList result;
   for (auto&& locals : values) {
-    auto type = ToText(context, locals->type);
+    auto type = ToText(ctx, locals->type);
     for (Index i = 0; i < *locals->count; ++i) {
       result.push_back(text::BoundValueType{nullopt,  // TODO(name)
                                             type});
@@ -649,69 +625,66 @@ auto ToText(TextContext& context, const binary::LocalsList& values)
   return result;
 }
 
-auto ToText(TextContext& context,
+auto ToText(TextCtx& ctx,
             const At<binary::UnpackedCode>& value,
             At<text::Function>& function) -> At<text::Function>& {
-  function->locals = ToText(context, value->locals);
-  function->instructions = ToText(context, value->body);
+  function->locals = ToText(ctx, value->locals);
+  function->instructions = ToText(ctx, value->body);
   return function;
 }
 
 // Section 11: Data
-auto ToText(TextContext& context, const At<SpanU8>& value)
-    -> text::DataItemList {
-  return text::DataItemList{text::DataItem{context.Add(ToStringView(value))}};
+auto ToText(TextCtx& ctx, const At<SpanU8>& value) -> text::DataItemList {
+  return text::DataItemList{text::DataItem{ctx.Add(ToStringView(value))}};
 }
 
-auto ToText(TextContext& context, const At<binary::DataSegment>& value)
+auto ToText(TextCtx& ctx, const At<binary::DataSegment>& value)
     -> At<text::DataSegment> {
   if (value->type == SegmentType::Active) {
     return At{value.loc(),
               text::DataSegment{nullopt,  // TODO(name)
-                                ToText(context, value->memory_index),
-                                ToText(context, *value->offset),
-                                ToText(context, value->init)}};
+                                ToText(ctx, value->memory_index),
+                                ToText(ctx, *value->offset),
+                                ToText(ctx, value->init)}};
   } else {
     return At{value.loc(),
               text::DataSegment{nullopt,  // TODO(name)
-                                ToText(context, value->init)}};
+                                ToText(ctx, value->init)}};
   }
 }
 
 // Section 12: DataCount
 
 // Section 13: Event
-auto ToText(TextContext& context, const At<binary::EventType>& value)
+auto ToText(TextCtx& ctx, const At<binary::EventType>& value)
     -> At<text::EventType> {
   return At{value.loc(),
             text::EventType{
                 value->attribute,
-                text::FunctionTypeUse{ToText(context, value->type_index), {}}}};
+                text::FunctionTypeUse{ToText(ctx, value->type_index), {}}}};
 }
 
-auto ToText(TextContext& context, const At<binary::Event>& value)
-    -> At<text::Event> {
+auto ToText(TextCtx& ctx, const At<binary::Event>& value) -> At<text::Event> {
   return At{value.loc(),
             text::Event{text::EventDesc{nullopt,  // TODO(name)
-                                        ToText(context, value->event_type)},
+                                        ToText(ctx, value->event_type)},
                         nullopt,
                         {}}};
 }
 
 // Module
-auto ToText(TextContext& context, const At<binary::Module>& value)
-    -> At<text::Module> {
+auto ToText(TextCtx& ctx, const At<binary::Module>& value) -> At<text::Module> {
   text::Module module;
 
   auto do_vector = [&](const auto& items) {
     for (auto&& item : items) {
-      module.push_back(At{item.loc(), text::ModuleItem{ToText(context, item)}});
+      module.push_back(At{item.loc(), text::ModuleItem{ToText(ctx, item)}});
     }
   };
   auto do_optional = [&](const auto& maybe_item) {
     if (maybe_item) {
-      module.push_back(At{maybe_item->loc(),
-                          text::ModuleItem{ToText(context, *maybe_item)}});
+      module.push_back(
+          At{maybe_item->loc(), text::ModuleItem{ToText(ctx, *maybe_item)}});
     }
   };
 
@@ -729,10 +702,9 @@ auto ToText(TextContext& context, const At<binary::Module>& value)
   // Combine binary::Function and binary::UnpackedCode into text::Function.
   assert(value->functions.size() == value->codes.size());
   for (size_t i = 0; i < value->functions.size(); ++i) {
-    At<text::Function> function = ToText(context, value->functions[i]);
-    module.push_back(
-        At{function.loc(),
-           text::ModuleItem{ToText(context, value->codes[i], function)}});
+    At<text::Function> function = ToText(ctx, value->functions[i]);
+    module.push_back(At{function.loc(), text::ModuleItem{ToText(
+                                            ctx, value->codes[i], function)}});
   }
 
   return At{value.loc(), module};

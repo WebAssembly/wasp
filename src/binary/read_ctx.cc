@@ -14,18 +14,21 @@
 // limitations under the License.
 //
 
-#include "wasp/text/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 
-namespace wasp::text {
+namespace wasp::binary {
 
-Context::Context(Errors& errors) : errors{errors} {}
+ReadCtx::ReadCtx(Errors& errors) : errors(errors) {}
 
-Context::Context(const Features& features, Errors& errors)
-    : features{features}, errors{errors} {}
+ReadCtx::ReadCtx(const Features& features, Errors& errors)
+    : features(features), errors(errors) {}
 
-void Context::BeginModule() {
-  seen_non_import = false;
-  seen_start = false;
+void ReadCtx::Reset() {
+  last_section_id.reset();
+  defined_function_count = 0;
+  declared_data_count.reset();
+  code_count = 0;
+  data_count = 0;
 }
 
-}  // namespace wasp::text
+}  // namespace wasp::binary

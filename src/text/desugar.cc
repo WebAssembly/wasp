@@ -23,7 +23,7 @@ namespace wasp::text {
 
 using ModuleItemList = std::vector<ModuleItem>;
 
-struct DesugarContext {
+struct DesugarCtx {
   Index function_count = 0;
   Index table_count = 0;
   Index memory_count = 0;
@@ -47,69 +47,69 @@ void AppendExports(ModuleItemList& items, At<T>& value, Index this_index) {
 }
 
 void Desugar(Module& module) {
-  DesugarContext context;
+  DesugarCtx ctx;
 
   for (auto&& item : module) {
     switch (item.kind()) {
       case ModuleItemKind::Import: {
         auto import = item.import();
         switch (import->kind()) {
-          case ExternalKind::Function: context.function_count++; break;
-          case ExternalKind::Table: context.table_count++; break;
-          case ExternalKind::Memory: context.memory_count++; break;
-          case ExternalKind::Global: context.global_count++; break;
-          case ExternalKind::Event: context.event_count++; break;
+          case ExternalKind::Function: ctx.function_count++; break;
+          case ExternalKind::Table: ctx.table_count++; break;
+          case ExternalKind::Memory: ctx.memory_count++; break;
+          case ExternalKind::Global: ctx.global_count++; break;
+          case ExternalKind::Event: ctx.event_count++; break;
         }
         break;
       }
 
       case ModuleItemKind::Function: {
         auto& function = item.function();
-        AppendExports(context.new_items, function, context.function_count);
+        AppendExports(ctx.new_items, function, ctx.function_count);
         ReplaceImportOpt(item, function->ToImport());
-        context.function_count++;
+        ctx.function_count++;
         break;
       }
 
       case ModuleItemKind::Table: {
         auto& table = item.table();
-        auto segment_opt = table->ToElementSegment(context.table_count);
+        auto segment_opt = table->ToElementSegment(ctx.table_count);
         if (segment_opt) {
-          context.new_items.push_back(ModuleItem{*segment_opt});
+          ctx.new_items.push_back(ModuleItem{*segment_opt});
           table->elements = nullopt;
         }
-        AppendExports(context.new_items, table, context.table_count);
+        AppendExports(ctx.new_items, table, ctx.table_count);
         ReplaceImportOpt(item, table->ToImport());
-        context.table_count++;
+        ctx.table_count++;
         break;
       }
 
       case ModuleItemKind::Memory: {
         auto& memory = item.memory();
-        auto segment_opt = memory->ToDataSegment(context.memory_count);
+        auto segment_opt = memory->ToDataSegment(ctx.memory_count);
         if (segment_opt) {
-          context.new_items.push_back(ModuleItem{*segment_opt});
+          ctx.new_items.push_back(ModuleItem{*segment_opt});
           memory->data = nullopt;
         }
-        AppendExports(context.new_items, memory, context.memory_count);
+        AppendExports(ctx.new_items, memory, ctx.memory_count);
         ReplaceImportOpt(item, memory->ToImport());
-        context.memory_count++;
+        ctx.memory_count++;
         break;
       }
 
       case ModuleItemKind::Global: {
         auto& global = item.global();
-        AppendExports(context.new_items, global, context.global_count);
+        AppendExports(ctx.new_items, global, ctx.global_count);
         ReplaceImportOpt(item, global->ToImport());
-        context.global_count++;
+        ctx.global_count++;
         break;
       }
 
       case ModuleItemKind::Event: {
         auto& event = item.event();
-        AppendExports(context.new_items, event, context.event_count);
+        AppendExports(ctx.new_items, event, ctx.event_count);
         ReplaceImportOpt(item, event->ToImport());
-        context.event_count++;
+        ctx.event_count++;
         break;
       }
 
@@ -118,9 +118,8 @@ void Desugar(Module& module) {
     }
   }
 
-  module.insert(module.end(),
-                std::make_move_iterator(context.new_items.begin()),
-                std::make_move_iterator(context.new_items.end()));
+  module.insert(module.end(), std::make_move_iterator(ctx.new_items.begin()),
+                std::make_move_iterator(ctx.new_items.end()));
 }
 
 }  // namespace wasp::text

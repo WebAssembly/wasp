@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "wasp/valid/context.h"
+#include "wasp/valid/valid_ctx.h"
 
 #include <cassert>
 
@@ -30,34 +30,34 @@ Label::Label(LabelType label_type,
       type_stack_limit{type_stack_limit},
       unreachable{false} {}
 
-Context::Context(Errors& errors) : errors{&errors} {}
+ValidCtx::ValidCtx(Errors& errors) : errors{&errors} {}
 
-Context::Context(const Features& features, Errors& errors)
+ValidCtx::ValidCtx(const Features& features, Errors& errors)
     : features{features}, errors{&errors} {}
 
-Context::Context(const Context& other, Errors& errors) {
+ValidCtx::ValidCtx(const ValidCtx& other, Errors& errors) {
   *this = other;
   this->errors = &errors;
 }
 
-void Context::Reset() {
-  *this = Context{features, *errors};
+void ValidCtx::Reset() {
+  *this = ValidCtx{features, *errors};
 }
 
-bool Context::IsStackPolymorphic() const {
+bool ValidCtx::IsStackPolymorphic() const {
   assert(!label_stack.empty());
   return label_stack.back().unreachable;
 }
 
-bool Context::IsFunctionType(Index index) const {
+bool ValidCtx::IsFunctionType(Index index) const {
   return index < types.size() && types[index].is_function_type();
 }
 
-bool Context::IsStructType(Index index) const {
+bool ValidCtx::IsStructType(Index index) const {
   return index < types.size() && types[index].is_struct_type();
 }
 
-bool Context::IsArrayType(Index index) const {
+bool ValidCtx::IsArrayType(Index index) const {
   return index < types.size() && types[index].is_array_type();
 }
 

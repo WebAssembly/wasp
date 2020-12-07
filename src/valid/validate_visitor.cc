@@ -21,68 +21,68 @@
 namespace wasp::valid {
 
 ValidateVisitor::ValidateVisitor(Features features, Errors& errors)
-    : context{features, errors}, features{features}, errors{errors} {}
+    : ctx{features, errors}, features{features}, errors{errors} {}
 
 auto ValidateVisitor::BeginTypeSection(binary::LazyTypeSection sec) -> Result {
-  return FailUnless(valid::BeginTypeSection(context, sec.count.value_or(0)));
+  return FailUnless(valid::BeginTypeSection(ctx, sec.count.value_or(0)));
 }
 
 auto ValidateVisitor::OnType(const At<binary::DefinedType>& defined_type)
     -> Result {
-  return FailUnless(Validate(context, defined_type));
+  return FailUnless(Validate(ctx, defined_type));
 }
 
 auto ValidateVisitor::OnImport(const At<binary::Import>& import) -> Result {
-  return FailUnless(Validate(context, import));
+  return FailUnless(Validate(ctx, import));
 }
 
 auto ValidateVisitor::OnFunction(const At<binary::Function>& function)
     -> Result {
-  return FailUnless(Validate(context, function));
+  return FailUnless(Validate(ctx, function));
 }
 
 auto ValidateVisitor::OnTable(const At<binary::Table>& table) -> Result {
-  return FailUnless(Validate(context, table));
+  return FailUnless(Validate(ctx, table));
 }
 
 auto ValidateVisitor::OnMemory(const At<binary::Memory>& memory) -> Result {
-  return FailUnless(Validate(context, memory));
+  return FailUnless(Validate(ctx, memory));
 }
 
 auto ValidateVisitor::OnGlobal(const At<binary::Global>& global) -> Result {
-  return FailUnless(Validate(context, global));
+  return FailUnless(Validate(ctx, global));
 }
 
 auto ValidateVisitor::OnExport(const At<binary::Export>& export_) -> Result {
-  return FailUnless(Validate(context, export_));
+  return FailUnless(Validate(ctx, export_));
 }
 
 auto ValidateVisitor::OnStart(const At<binary::Start>& start) -> Result {
-  return FailUnless(Validate(context, start));
+  return FailUnless(Validate(ctx, start));
 }
 
 auto ValidateVisitor::OnElement(const At<binary::ElementSegment>& segment)
     -> Result {
-  return FailUnless(Validate(context, segment));
+  return FailUnless(Validate(ctx, segment));
 }
 
 auto ValidateVisitor::OnDataCount(const At<binary::DataCount>& data_count)
     -> Result {
-  return FailUnless(Validate(context, data_count));
+  return FailUnless(Validate(ctx, data_count));
 }
 
 auto ValidateVisitor::BeginCode(const At<binary::Code>& code) -> Result {
-  return FailUnless(valid::BeginCode(context, code.loc()) &&
-                    Validate(context, code->locals, RequireDefaultable::Yes));
+  return FailUnless(valid::BeginCode(ctx, code.loc()) &&
+                    Validate(ctx, code->locals, RequireDefaultable::Yes));
 }
 
 auto ValidateVisitor::OnInstruction(const At<binary::Instruction>& instruction)
     -> Result {
-  return FailUnless(Validate(context, instruction));
+  return FailUnless(Validate(ctx, instruction));
 }
 
 auto ValidateVisitor::OnData(const At<binary::DataSegment>& segment) -> Result {
-  return FailUnless(Validate(context, segment));
+  return FailUnless(Validate(ctx, segment));
 }
 
 auto ValidateVisitor::FailUnless(bool b) -> Result {

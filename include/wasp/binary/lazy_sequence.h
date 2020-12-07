@@ -24,7 +24,7 @@
 #include "wasp/base/span.h"
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 
 namespace wasp {
 
@@ -32,7 +32,7 @@ class Errors;
 
 namespace binary {
 
-struct Context;
+struct ReadCtx;
 
 template <typename Sequence>
 class LazySequenceIterator;
@@ -60,17 +60,13 @@ class LazySequence : public LazySequenceBase {
   using iterator = LazySequenceIterator<LazySequence>;
   using const_iterator = LazySequenceIterator<LazySequence>;
 
-  explicit LazySequence(SpanU8 data, Context& context)
-      : data_{data}, context_{context} {}
+  explicit LazySequence(SpanU8 data, ReadCtx& ctx) : data_{data}, ctx_{ctx} {}
 
   explicit LazySequence(SpanU8 data,
                         optional<Index> expected_count,
                         string_view name,
-                        Context& context)
-      : data_{data},
-        context_{context},
-        name_{name},
-        expected_count_{expected_count} {}
+                        ReadCtx& ctx)
+      : data_{data}, ctx_{ctx}, name_{name}, expected_count_{expected_count} {}
 
   iterator begin() { return iterator{this, data_}; }
   iterator end() { return iterator{this, SpanU8{}}; }
@@ -86,7 +82,7 @@ class LazySequence : public LazySequenceBase {
   void NotifyRead(const u8*, bool);
 
   SpanU8 data_;
-  Context& context_;
+  ReadCtx& ctx_;
 
   // Check for errors when there is an expected count.
   string_view name_;

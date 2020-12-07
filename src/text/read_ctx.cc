@@ -14,31 +14,18 @@
 // limitations under the License.
 //
 
-#ifndef WASP_TEXT_READ_CONTEXT_H_
-#define WASP_TEXT_READ_CONTEXT_H_
+#include "wasp/text/read/read_ctx.h"
 
-#include "wasp/base/features.h"
+namespace wasp::text {
 
-namespace wasp {
+ReadCtx::ReadCtx(Errors& errors) : errors{errors} {}
 
-class Errors;
+ReadCtx::ReadCtx(const Features& features, Errors& errors)
+    : features{features}, errors{errors} {}
 
-namespace text {
+void ReadCtx::BeginModule() {
+  seen_non_import = false;
+  seen_start = false;
+}
 
-struct Context {
-  explicit Context(Errors&);
-  explicit Context(const Features&, Errors&);
-
-  void BeginModule();    // Reset all module-specific context.
-
-  Features features;
-  Errors& errors;
-
-  bool seen_non_import = false;
-  bool seen_start = false;
-};
-
-}  // namespace text
-}  // namespace wasp
-
-#endif  // WASP_TEXT_READ_CONTEXT_H_
+}  // namespace wasp::text

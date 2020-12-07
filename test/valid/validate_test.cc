@@ -20,7 +20,7 @@
 #include "test/valid/test_utils.h"
 #include "wasp/base/features.h"
 #include "wasp/binary/formatters.h"
-#include "wasp/valid/context.h"
+#include "wasp/valid/valid_ctx.h"
 #include "wasp/valid/validate.h"
 
 using namespace ::wasp;
@@ -37,11 +37,11 @@ TEST(ValidateTest, UnpackedCode) {
           Instruction{Opcode::LocalGet, Index{1}}, Instruction{Opcode::I32Add},
           Instruction{Opcode::End}}}};
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{{}, {VT_I32}}});
-  context.defined_type_count = 1;
-  context.functions.push_back(Function{0});
-  EXPECT_TRUE(Validate(context, code));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{{}, {VT_I32}}});
+  ctx.defined_type_count = 1;
+  ctx.functions.push_back(Function{0});
+  EXPECT_TRUE(Validate(ctx, code));
 }
 
 TEST(ValidateTest, UnpackedCode_DefaultableLocals) {
@@ -49,25 +49,25 @@ TEST(ValidateTest, UnpackedCode_DefaultableLocals) {
       LocalsList{Locals{1, VT_Ref0}},
       UnpackedExpression{InstructionList{Instruction{Opcode::End}}}};
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.defined_type_count = 1;
-  context.functions.push_back(Function{0});
-  EXPECT_FALSE(Validate(context, code));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.defined_type_count = 1;
+  ctx.functions.push_back(Function{0});
+  EXPECT_FALSE(Validate(ctx, code));
 }
 
 TEST(ValidateTest, ArrayType) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   EXPECT_TRUE(Validate(
-      context, ArrayType{FieldType{StorageType{VT_I32}, Mutability::Const}}));
+      ctx, ArrayType{FieldType{StorageType{VT_I32}, Mutability::Const}}));
 }
 
 TEST(ValidateTest, ArrayType_IndexOOB) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   EXPECT_FALSE(Validate(
-      context, ArrayType{FieldType{StorageType{VT_Ref1}, Mutability::Const}}));
+      ctx, ArrayType{FieldType{StorageType{VT_Ref1}, Mutability::Const}}));
 }
 
 TEST(ValidateTest, ConstantExpression_Const) {
@@ -84,33 +84,32 @@ TEST(ValidateTest, ConstantExpression_Const) {
 
   for (const auto& test : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_TRUE(
-        Validate(context, ConstantExpression{test.instr}, test.valtype, 0));
+    ValidCtx ctx{errors};
+    EXPECT_TRUE(Validate(ctx, ConstantExpression{test.instr}, test.valtype, 0));
   }
 }
 
 TEST(ValidateTest, ConstantExpression_Global) {
   TestErrors errors;
-  Context context{errors};
-  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
-  context.globals.push_back(GlobalType{VT_I64, Mutability::Const});
-  context.globals.push_back(GlobalType{VT_F32, Mutability::Const});
-  context.globals.push_back(GlobalType{VT_F64, Mutability::Const});
-  auto max = context.globals.size();
+  ValidCtx ctx{errors};
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Const});
+  ctx.globals.push_back(GlobalType{VT_I64, Mutability::Const});
+  ctx.globals.push_back(GlobalType{VT_F32, Mutability::Const});
+  ctx.globals.push_back(GlobalType{VT_F64, Mutability::Const});
+  auto max = ctx.globals.size();
 
   EXPECT_TRUE(Validate(
-      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-      VT_I32, max));
+      ctx, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}, VT_I32,
+      max));
   EXPECT_TRUE(Validate(
-      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
-      VT_I64, max));
+      ctx, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}}, VT_I64,
+      max));
   EXPECT_TRUE(Validate(
-      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{2}}},
-      VT_F32, max));
+      ctx, ConstantExpression{Instruction{Opcode::GlobalGet, Index{2}}}, VT_F32,
+      max));
   EXPECT_TRUE(Validate(
-      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{3}}},
-      VT_F64, max));
+      ctx, ConstantExpression{Instruction{Opcode::GlobalGet, Index{3}}}, VT_F64,
+      max));
 }
 
 TEST(ValidateTest, ConstantExpression_InvalidOpcode) {
@@ -125,8 +124,8 @@ TEST(ValidateTest, ConstantExpression_InvalidOpcode) {
 
   for (const auto& instr : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_FALSE(Validate(context, ConstantExpression{instr}, VT_I32, 0));
+    ValidCtx ctx{errors};
+    EXPECT_FALSE(Validate(ctx, ConstantExpression{instr}, VT_I32, 0));
   }
 }
 
@@ -143,65 +142,65 @@ TEST(ValidateTest, ConstantExpression_ConstMismatch) {
 
   for (const auto& test : tests) {
     TestErrors errors;
-    Context context{errors};
+    ValidCtx ctx{errors};
     EXPECT_FALSE(
-        Validate(context, ConstantExpression{test.instr}, test.valtype, 0));
+        Validate(ctx, ConstantExpression{test.instr}, test.valtype, 0));
   }
 }
 
 TEST(ValidateTest, ConstantExpression_GlobalIndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
-  auto max = context.globals.size();
+  ValidCtx ctx{errors};
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Const});
+  auto max = ctx.globals.size();
 
   EXPECT_FALSE(Validate(
-      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
-      VT_I32, max));
+      ctx, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}}, VT_I32,
+      max));
 }
 
 TEST(ValidateTest, ConstantExpression_GlobalTypeMismatch) {
   TestErrors errors;
-  Context context{errors};
-  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
-  context.globals.push_back(GlobalType{VT_I64, Mutability::Const});
-  context.globals.push_back(GlobalType{VT_F32, Mutability::Const});
-  context.globals.push_back(GlobalType{VT_F64, Mutability::Const});
-  auto max = context.globals.size();
+  ValidCtx ctx{errors};
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Const});
+  ctx.globals.push_back(GlobalType{VT_I64, Mutability::Const});
+  ctx.globals.push_back(GlobalType{VT_F32, Mutability::Const});
+  ctx.globals.push_back(GlobalType{VT_F64, Mutability::Const});
+  auto max = ctx.globals.size();
 
   EXPECT_FALSE(Validate(
-      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-      VT_I64, max));
+      ctx, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}, VT_I64,
+      max));
   EXPECT_FALSE(Validate(
-      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}},
-      VT_F32, max));
+      ctx, ConstantExpression{Instruction{Opcode::GlobalGet, Index{1}}}, VT_F32,
+      max));
   EXPECT_FALSE(Validate(
-      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{2}}},
-      VT_F64, max));
+      ctx, ConstantExpression{Instruction{Opcode::GlobalGet, Index{2}}}, VT_F64,
+      max));
   EXPECT_FALSE(Validate(
-      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{3}}},
-      VT_I32, max));
+      ctx, ConstantExpression{Instruction{Opcode::GlobalGet, Index{3}}}, VT_I32,
+      max));
 }
 
 TEST(ValidateTest, ConstantExpression_GlobalMutVar) {
   TestErrors errors;
-  Context context{errors};
-  context.globals.push_back(GlobalType{VT_I32, Mutability::Var});
-  auto max = context.globals.size();
+  ValidCtx ctx{errors};
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Var});
+  auto max = ctx.globals.size();
 
   EXPECT_FALSE(Validate(
-      context, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
-      VT_I32, max));
+      ctx, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}, VT_I32,
+      max));
 }
 
 TEST(ValidateTest, ConstantExpression_WrongInstructionCount) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
 
   // Too few instructions.
-  EXPECT_FALSE(Validate(context, ConstantExpression{}, VT_I32, 0));
+  EXPECT_FALSE(Validate(ctx, ConstantExpression{}, VT_I32, 0));
   // Too many instructions.
-  EXPECT_FALSE(Validate(context,
+  EXPECT_FALSE(Validate(ctx,
                         ConstantExpression{InstructionList{
                             Instruction{Opcode::GlobalGet, Index{0}},
                             Instruction{Opcode::I32Const, s32{0}}}},
@@ -212,16 +211,16 @@ TEST(ValidateTest, ConstantExpression_GC) {
   Features features;
   features.enable_gc();
   TestErrors errors;
-  Context context{features, errors};
+  ValidCtx ctx{features, errors};
 
   // rtt.canon is allowed.
-  EXPECT_TRUE(Validate(
-      context, ConstantExpression{Instruction{Opcode::RttCanon, HT_Any}},
-      VT_RTT_0_Any, 0));
+  EXPECT_TRUE(
+      Validate(ctx, ConstantExpression{Instruction{Opcode::RttCanon, HT_Any}},
+               VT_RTT_0_Any, 0));
 
   // Multiple instructions are allowed, and rtt.sub is too.
   EXPECT_TRUE(Validate(
-      context,
+      ctx,
       ConstantExpression{InstructionList{Instruction{Opcode::RttCanon, HT_Any},
                                          Instruction{Opcode::RttSub, HT_Eq}}},
       VT_RTT_1_Eq, 0));
@@ -229,31 +228,31 @@ TEST(ValidateTest, ConstantExpression_GC) {
 
 TEST(ValidateTest, ConstantExpression_Funcref) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.functions.push_back(Function{0});
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.functions.push_back(Function{0});
 
   // Using ref.func in the global section implicitly declares that function.
-  EXPECT_TRUE(Validate(
-      context, ConstantExpression{Instruction{Opcode::RefFunc, Index{0}}},
-      VT_Funcref, 0));
+  EXPECT_TRUE(
+      Validate(ctx, ConstantExpression{Instruction{Opcode::RefFunc, Index{0}}},
+               VT_Funcref, 0));
 
-  EXPECT_EQ(1u, context.declared_functions.size());
+  EXPECT_EQ(1u, ctx.declared_functions.size());
 }
 
 TEST(ValidateTest, DataCount) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_TRUE(Validate(context, DataCount{1}));
-  ASSERT_TRUE(context.declared_data_count);
-  EXPECT_EQ(1u, context.declared_data_count);
+  ValidCtx ctx{errors};
+  EXPECT_TRUE(Validate(ctx, DataCount{1}));
+  ASSERT_TRUE(ctx.declared_data_count);
+  EXPECT_EQ(1u, ctx.declared_data_count);
 }
 
 TEST(ValidateTest, DataSegment_Active) {
   TestErrors errors;
-  Context context{errors};
-  context.memories.push_back(MemoryType{Limits{0}});
-  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
+  ValidCtx ctx{errors};
+  ctx.memories.push_back(MemoryType{Limits{0}});
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Const});
 
   const SpanU8 span{reinterpret_cast<const u8*>("123"), 3};
   const DataSegment tests[] = {
@@ -265,33 +264,33 @@ TEST(ValidateTest, DataSegment_Active) {
   };
 
   for (const auto& data_segment : tests) {
-    EXPECT_TRUE(Validate(context, data_segment));
+    EXPECT_TRUE(Validate(ctx, data_segment));
   }
 }
 
 TEST(ValidateTest, DataSegment_Active_MemoryIndexOOB) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   const SpanU8 span{reinterpret_cast<const u8*>("123"), 3};
   const DataSegment data_segment{
       0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}, span};
-  EXPECT_FALSE(Validate(context, data_segment));
+  EXPECT_FALSE(Validate(ctx, data_segment));
 }
 
 TEST(ValidateTest, DataSegment_Active_GlobalIndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  context.memories.push_back(MemoryType{Limits{0}});
+  ValidCtx ctx{errors};
+  ctx.memories.push_back(MemoryType{Limits{0}});
   const SpanU8 span{reinterpret_cast<const u8*>("123"), 3};
   const DataSegment data_segment{
       0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}, span};
-  EXPECT_FALSE(Validate(context, data_segment));
+  EXPECT_FALSE(Validate(ctx, data_segment));
 }
 
 TEST(ValidateTest, ElementExpression) {
   TestErrors errors;
-  Context context{errors};
-  context.functions.push_back(Function{0});
+  ValidCtx ctx{errors};
+  ctx.functions.push_back(Function{0});
 
   const Instruction tests[] = {
       Instruction{Opcode::RefNull},
@@ -299,7 +298,7 @@ TEST(ValidateTest, ElementExpression) {
   };
 
   for (const auto& instr : tests) {
-    EXPECT_TRUE(Validate(context, ElementExpression{instr}, RT_Funcref));
+    EXPECT_TRUE(Validate(ctx, ElementExpression{instr}, RT_Funcref));
   }
 }
 
@@ -318,27 +317,27 @@ TEST(ValidateTest, ElementExpression_InvalidOpcode) {
 
   for (const auto& instr : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_FALSE(Validate(context, ElementExpression{instr}, RT_Funcref));
+    ValidCtx ctx{errors};
+    EXPECT_FALSE(Validate(ctx, ElementExpression{instr}, RT_Funcref));
   }
 }
 
 TEST(ValidateTest, ElementExpression_FunctionIndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  context.functions.push_back(Function{0});
-  EXPECT_FALSE(Validate(
-      context, ElementExpression{Instruction{Opcode::RefFunc, Index{1}}},
-      RT_Funcref));
+  ValidCtx ctx{errors};
+  ctx.functions.push_back(Function{0});
+  EXPECT_FALSE(
+      Validate(ctx, ElementExpression{Instruction{Opcode::RefFunc, Index{1}}},
+               RT_Funcref));
 }
 
 TEST(ValidateTest, ElementSegment_Active) {
   TestErrors errors;
-  Context context{errors};
-  context.functions.push_back(Function{0});
-  context.functions.push_back(Function{0});
-  context.tables.push_back(TableType{Limits{0}, RT_Funcref});
-  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
+  ValidCtx ctx{errors};
+  ctx.functions.push_back(Function{0});
+  ctx.functions.push_back(Function{0});
+  ctx.tables.push_back(TableType{Limits{0}, RT_Funcref});
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Const});
 
   const ElementSegment tests[] = {
       ElementSegment{0,
@@ -350,14 +349,14 @@ TEST(ValidateTest, ElementSegment_Active) {
   };
 
   for (const auto& element_segment : tests) {
-    EXPECT_TRUE(Validate(context, element_segment));
+    EXPECT_TRUE(Validate(ctx, element_segment));
   }
 }
 
 TEST(ValidateTest, ElementSegment_Passive) {
   TestErrors errors;
-  Context context{errors};
-  context.functions.push_back(Function{0});
+  ValidCtx ctx{errors};
+  ctx.functions.push_back(Function{0});
 
   const ElementSegment tests[] = {
       ElementSegment{SegmentType::Passive,
@@ -371,14 +370,14 @@ TEST(ValidateTest, ElementSegment_Passive) {
   };
 
   for (const auto& element_segment : tests) {
-    EXPECT_TRUE(Validate(context, element_segment));
+    EXPECT_TRUE(Validate(ctx, element_segment));
   }
 }
 
 TEST(ValidateTest, ElementSegment_Declared) {
   TestErrors errors;
-  Context context{errors};
-  context.functions.push_back(Function{0});
+  ValidCtx ctx{errors};
+  ctx.functions.push_back(Function{0});
 
   const ElementSegment tests[] = {
       ElementSegment{SegmentType::Declared,
@@ -390,39 +389,39 @@ TEST(ValidateTest, ElementSegment_Declared) {
               {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}}},
   };
 
-  EXPECT_EQ(0u, context.declared_functions.count(0));
+  EXPECT_EQ(0u, ctx.declared_functions.count(0));
   for (const auto& element_segment : tests) {
-    EXPECT_TRUE(Validate(context, element_segment));
+    EXPECT_TRUE(Validate(ctx, element_segment));
   }
-  EXPECT_EQ(1u, context.declared_functions.count(0));
+  EXPECT_EQ(1u, ctx.declared_functions.count(0));
 }
 
 TEST(ValidateTest, ElementSegment_RefType) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.defined_type_count = 1;
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.defined_type_count = 1;
 
   ElementSegment element_segment{SegmentType::Passive,
                                  ElementListWithExpressions{RT_Ref0, {}}};
-  EXPECT_TRUE(Validate(context, element_segment));
+  EXPECT_TRUE(Validate(ctx, element_segment));
 }
 
 TEST(ValidateTest, ElementSegment_RefType_IndexOOB) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
 
   ElementSegment element_segment{SegmentType::Passive,
                                  ElementListWithExpressions{RT_Ref0, {}}};
-  EXPECT_FALSE(Validate(context, element_segment));
+  EXPECT_FALSE(Validate(ctx, element_segment));
 }
 
 TEST(ValidateTest, ElementSegment_Active_TypeMismatch) {
   TestErrors errors;
-  Context context{errors};
-  context.functions.push_back(Function{0});
-  context.tables.push_back(TableType{Limits{0}, RT_Funcref});
-  context.globals.push_back(GlobalType{VT_F32, Mutability::Const});
+  ValidCtx ctx{errors};
+  ctx.functions.push_back(Function{0});
+  ctx.tables.push_back(TableType{Limits{0}, RT_Funcref});
+  ctx.globals.push_back(GlobalType{VT_F32, Mutability::Const});
 
   const ElementSegment tests[] = {
       ElementSegment{0,
@@ -434,67 +433,67 @@ TEST(ValidateTest, ElementSegment_Active_TypeMismatch) {
   };
 
   for (const auto& element_segment : tests) {
-    EXPECT_FALSE(Validate(context, element_segment));
+    EXPECT_FALSE(Validate(ctx, element_segment));
   }
 }
 
 TEST(ValidateTest, ElementSegment_Active_TableIndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  context.functions.push_back(Function{0});
+  ValidCtx ctx{errors};
+  ctx.functions.push_back(Function{0});
   const ElementSegment element_segment{
       0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
       ElementListWithIndexes{ExternalKind::Function, {}}};
-  EXPECT_FALSE(Validate(context, element_segment));
+  EXPECT_FALSE(Validate(ctx, element_segment));
 }
 
 TEST(ValidateTest, ElementSegment_Active_GlobalIndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  context.tables.push_back(TableType{Limits{0}, RT_Funcref});
+  ValidCtx ctx{errors};
+  ctx.tables.push_back(TableType{Limits{0}, RT_Funcref});
   const ElementSegment element_segment{
       0, ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}},
       ElementListWithIndexes{ExternalKind::Function, {}}};
-  EXPECT_FALSE(Validate(context, element_segment));
+  EXPECT_FALSE(Validate(ctx, element_segment));
 }
 
 TEST(ValidateTest, ElementSegment_Active_FunctionIndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  context.tables.push_back(TableType{Limits{0}, RT_Funcref});
+  ValidCtx ctx{errors};
+  ctx.tables.push_back(TableType{Limits{0}, RT_Funcref});
   const ElementSegment element_segment{
       0, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
       ElementListWithIndexes{ExternalKind::Function, {0}}};
-  EXPECT_FALSE(Validate(context, element_segment));
+  EXPECT_FALSE(Validate(ctx, element_segment));
 }
 
 TEST(ValidateTest, ElementSegment_Passive_FunctionIndexOOB) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   const ElementSegment element_segment{
       SegmentType::Passive,
       ElementListWithExpressions{
           RT_Funcref,
           {ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}}};
-  EXPECT_FALSE(Validate(context, element_segment));
+  EXPECT_FALSE(Validate(ctx, element_segment));
 }
 
 TEST(ValidateTest, ReferenceType) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_TRUE(Validate(context, RT_Funcref, RT_Funcref));
+  ValidCtx ctx{errors};
+  EXPECT_TRUE(Validate(ctx, RT_Funcref, RT_Funcref));
 }
 
 TEST(ValidateTest, Export) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.defined_type_count = 1;
-  context.functions.push_back(Function{0});
-  context.tables.push_back(TableType{Limits{1}, RT_Funcref});
-  context.memories.push_back(MemoryType{Limits{1}});
-  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
-  context.events.push_back(EventType{EventAttribute::Exception, Index{0}});
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.defined_type_count = 1;
+  ctx.functions.push_back(Function{0});
+  ctx.tables.push_back(TableType{Limits{1}, RT_Funcref});
+  ctx.memories.push_back(MemoryType{Limits{1}});
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Const});
+  ctx.events.push_back(EventType{EventAttribute::Exception, Index{0}});
 
   const Export tests[] = {
       Export{ExternalKind::Function, "f", 0},
@@ -505,11 +504,11 @@ TEST(ValidateTest, Export) {
   };
 
   for (const auto& export_ : tests) {
-    EXPECT_TRUE(Validate(context, export_));
+    EXPECT_TRUE(Validate(ctx, export_));
   }
 
   // Exporting a function marks it as declared.
-  EXPECT_EQ(1u, context.declared_functions.size());
+  EXPECT_EQ(1u, ctx.declared_functions.size());
 }
 
 TEST(ValidateTest, Export_IndexOOB) {
@@ -523,8 +522,8 @@ TEST(ValidateTest, Export_IndexOOB) {
 
   for (const auto& export_ : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_FALSE(Validate(context, export_));
+    ValidCtx ctx{errors};
+    EXPECT_FALSE(Validate(ctx, export_));
   }
 }
 
@@ -532,66 +531,65 @@ TEST(ValidateTest, Export_GlobalMutVar_MVP) {
   Features features;
   features.disable_mutable_globals();
   TestErrors errors;
-  Context context{features, errors};
-  context.globals.push_back(GlobalType{VT_I32, Mutability::Var});
-  EXPECT_FALSE(Validate(context, Export{ExternalKind::Global, "", 0}));
+  ValidCtx ctx{features, errors};
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Var});
+  EXPECT_FALSE(Validate(ctx, Export{ExternalKind::Global, "", 0}));
 }
 
 TEST(ValidateTest, Export_GlobalMutVar_MutableGlobals) {
   Features features;
   TestErrors errors;
-  Context context{features, errors};
-  context.globals.push_back(GlobalType{VT_I32, Mutability::Var});
-  EXPECT_TRUE(Validate(context, Export{ExternalKind::Global, "", 0}));
+  ValidCtx ctx{features, errors};
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Var});
+  EXPECT_TRUE(Validate(ctx, Export{ExternalKind::Global, "", 0}));
 }
 
 TEST(ValidateTest, Export_Duplicate) {
   Features features;
   TestErrors errors;
-  Context context{features, errors};
-  context.functions.push_back(Function{0});
-  EXPECT_TRUE(Validate(context, Export{ExternalKind::Function, "hi", 0}));
-  EXPECT_FALSE(Validate(context, Export{ExternalKind::Function, "hi", 0}));
+  ValidCtx ctx{features, errors};
+  ctx.functions.push_back(Function{0});
+  EXPECT_TRUE(Validate(ctx, Export{ExternalKind::Function, "hi", 0}));
+  EXPECT_FALSE(Validate(ctx, Export{ExternalKind::Function, "hi", 0}));
 }
 
 TEST(ValidateTest, Event) {
   Features features;
   TestErrors errors;
-  Context context{features, errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.defined_type_count = 1;
+  ValidCtx ctx{features, errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.defined_type_count = 1;
   EXPECT_TRUE(
-      Validate(context, Event{EventType{EventAttribute::Exception, Index{0}}}));
+      Validate(ctx, Event{EventType{EventAttribute::Exception, Index{0}}}));
 }
 
 TEST(ValidateTest, Event_InvalidType) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{StructType{}});
-  context.defined_type_count = 1;
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{StructType{}});
+  ctx.defined_type_count = 1;
   EXPECT_FALSE(
-      Validate(context, Event{EventType{EventAttribute::Exception, Index{0}}}));
+      Validate(ctx, Event{EventType{EventAttribute::Exception, Index{0}}}));
 }
 
 TEST(ValidateTest, FieldType) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_TRUE(
-      Validate(context, FieldType{StorageType{VT_I32}, Mutability::Const}));
+  ValidCtx ctx{errors};
+  EXPECT_TRUE(Validate(ctx, FieldType{StorageType{VT_I32}, Mutability::Const}));
 }
 
 TEST(ValidateTest, FieldType_IndexOOB) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   EXPECT_FALSE(
-      Validate(context, FieldType{StorageType{VT_Ref1}, Mutability::Const}));
+      Validate(ctx, FieldType{StorageType{VT_Ref1}, Mutability::Const}));
 }
 
 TEST(ValidateTest, FieldTypeList) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   EXPECT_TRUE(Validate(
-      context,
+      ctx,
       FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Const},
                     FieldType{StorageType{PackedType::I8}, Mutability::Var}}));
 }
@@ -599,53 +597,49 @@ TEST(ValidateTest, FieldTypeList) {
 TEST(ValidateTest, EventType) {
   Features features;
   TestErrors errors;
-  Context context{features, errors};
-  context.types.push_back(DefinedType{FunctionType{{VT_I32}, {}}});
-  context.defined_type_count = 1;
-  EXPECT_TRUE(
-      Validate(context, EventType{EventAttribute::Exception, Index{0}}));
+  ValidCtx ctx{features, errors};
+  ctx.types.push_back(DefinedType{FunctionType{{VT_I32}, {}}});
+  ctx.defined_type_count = 1;
+  EXPECT_TRUE(Validate(ctx, EventType{EventAttribute::Exception, Index{0}}));
 }
 
 TEST(ValidateTest, EventType_IndexOOB) {
   Features features;
   TestErrors errors;
-  Context context{features, errors};
-  EXPECT_FALSE(
-      Validate(context, EventType{EventAttribute::Exception, Index{0}}));
+  ValidCtx ctx{features, errors};
+  EXPECT_FALSE(Validate(ctx, EventType{EventAttribute::Exception, Index{0}}));
 }
 
 TEST(ValidateTest, EventType_NonEmptyResult) {
   Features features;
   TestErrors errors;
-  Context context{features, errors};
-  context.types.push_back(DefinedType{FunctionType{{}, {VT_I32}}});
-  context.defined_type_count = 1;
-  EXPECT_FALSE(
-      Validate(context, EventType{EventAttribute::Exception, Index{0}}));
+  ValidCtx ctx{features, errors};
+  ctx.types.push_back(DefinedType{FunctionType{{}, {VT_I32}}});
+  ctx.defined_type_count = 1;
+  EXPECT_FALSE(Validate(ctx, EventType{EventAttribute::Exception, Index{0}}));
 }
 
 TEST(ValidateTest, Function) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.defined_type_count = 1;
-  EXPECT_TRUE(Validate(context, Function{0}));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.defined_type_count = 1;
+  EXPECT_TRUE(Validate(ctx, Function{0}));
 }
 
 TEST(ValidateTest, Function_IndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(Validate(context, Function{0}));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, Function{0}));
 }
 
 TEST(ValidateTest, Function_InvalidType) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{StructType{}});
-  context.defined_type_count = 1;
-  EXPECT_FALSE(Validate(context, Function{0}));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{StructType{}});
+  ctx.defined_type_count = 1;
+  EXPECT_FALSE(Validate(ctx, Function{0}));
 }
-
 
 TEST(ValidateTest, FunctionType) {
   const FunctionType tests[] = {
@@ -661,8 +655,8 @@ TEST(ValidateTest, FunctionType) {
 
   for (const auto& function_type : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_TRUE(Validate(context, function_type));
+    ValidCtx ctx{errors};
+    EXPECT_TRUE(Validate(ctx, function_type));
   }
 }
 
@@ -674,8 +668,8 @@ TEST(ValidateTest, FunctionType_MultiReturn_MVP) {
 
   for (const auto& function_type : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_FALSE(Validate(context, function_type));
+    ValidCtx ctx{errors};
+    EXPECT_FALSE(Validate(ctx, function_type));
   }
 }
 
@@ -690,8 +684,8 @@ TEST(ValidateTest, FunctionType_MultiReturn) {
 
   for (const auto& function_type : tests) {
     TestErrors errors;
-    Context context{features, errors};
-    EXPECT_TRUE(Validate(context, function_type));
+    ValidCtx ctx{features, errors};
+    EXPECT_TRUE(Validate(ctx, function_type));
   }
 }
 
@@ -699,25 +693,25 @@ TEST(ValidateTest, FunctionType_RefType) {
   FunctionType function_type{{VT_Ref0}, {VT_RefNull0}};
 
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.defined_type_count = 1;
-  EXPECT_TRUE(Validate(context, function_type));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.defined_type_count = 1;
+  EXPECT_TRUE(Validate(ctx, function_type));
 }
 
 TEST(ValidateTest, FunctionType_RefType_IndexOOB) {
   FunctionType function_type{{VT_Ref0}, {VT_RefNull0}};
 
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(Validate(context, function_type));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, function_type));
 }
 
 TEST(ValidateTest, Global) {
   TestErrors errors;
-  Context context{errors};
-  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
-  context.imported_global_count = 1;
+  ValidCtx ctx{errors};
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Const});
+  ctx.imported_global_count = 1;
 
   const Global tests[] = {
       Global{GlobalType{VT_I32, Mutability::Const},
@@ -744,15 +738,15 @@ TEST(ValidateTest, Global) {
   };
 
   for (const auto& global : tests) {
-    EXPECT_TRUE(Validate(context, global));
+    EXPECT_TRUE(Validate(ctx, global));
   }
 }
 
 TEST(ValidateTest, Global_TypeMismatch) {
   TestErrors errors;
-  Context context{errors};
-  context.globals.push_back(GlobalType{VT_F32, Mutability::Const});
-  context.imported_global_count = 1;
+  ValidCtx ctx{errors};
+  ctx.globals.push_back(GlobalType{VT_F32, Mutability::Const});
+  ctx.imported_global_count = 1;
 
   const Global tests[] = {
       Global{GlobalType{VT_F32, Mutability::Const},
@@ -779,17 +773,17 @@ TEST(ValidateTest, Global_TypeMismatch) {
   };
 
   for (const auto& global : tests) {
-    EXPECT_FALSE(Validate(context, global));
+    EXPECT_FALSE(Validate(ctx, global));
   }
 }
 
 TEST(ValidateTest, Global_GlobalGetIndexOOB) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   const Global global{
       GlobalType{VT_I32, Mutability::Const},
       ConstantExpression{Instruction{Opcode::GlobalGet, Index{0}}}};
-  EXPECT_FALSE(Validate(context, global));
+  EXPECT_FALSE(Validate(ctx, global));
 }
 
 TEST(ValidateTest, Global_GlobalGet_gc) {
@@ -798,21 +792,21 @@ TEST(ValidateTest, Global_GlobalGet_gc) {
   Features features;
   features.enable_gc();
   TestErrors errors;
-  Context context{features, errors};
+  ValidCtx ctx{features, errors};
 
-  context.imported_global_count = 0;
-  context.globals.push_back(GlobalType{VT_I32, Mutability::Const});
-  context.globals.push_back(GlobalType{VT_I32, Mutability::Var});
+  ctx.imported_global_count = 0;
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Const});
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Var});
 
   // global.get on immutable global is OK.
-  EXPECT_TRUE(Validate(context, Global{GlobalType{VT_I32, Mutability::Const},
-                                       ConstantExpression{Instruction{
-                                           Opcode::GlobalGet, Index{0}}}}));
+  EXPECT_TRUE(Validate(ctx, Global{GlobalType{VT_I32, Mutability::Const},
+                                   ConstantExpression{Instruction{
+                                       Opcode::GlobalGet, Index{0}}}}));
 
   // global.get on mutable global is not OK.
-  EXPECT_FALSE(Validate(context, Global{GlobalType{VT_I32, Mutability::Const},
-                                        ConstantExpression{Instruction{
-                                            Opcode::GlobalGet, Index{1}}}}));
+  EXPECT_FALSE(Validate(ctx, Global{GlobalType{VT_I32, Mutability::Const},
+                                    ConstantExpression{Instruction{
+                                        Opcode::GlobalGet, Index{1}}}}));
 }
 
 TEST(ValidateTest, GlobalType) {
@@ -836,8 +830,8 @@ TEST(ValidateTest, GlobalType) {
 
   for (const auto& global_type : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_TRUE(Validate(context, global_type));
+    ValidCtx ctx{errors};
+    EXPECT_TRUE(Validate(ctx, global_type));
   }
 }
 
@@ -855,24 +849,24 @@ TEST(ValidateTest, GlobalType_RefType) {
 
   for (const auto& global_type : tests) {
     TestErrors errors;
-    Context context{errors};
-    context.types.push_back(DefinedType{FunctionType{}});
-    context.defined_type_count = 1;
-    EXPECT_TRUE(Validate(context, global_type));
+    ValidCtx ctx{errors};
+    ctx.types.push_back(DefinedType{FunctionType{}});
+    ctx.defined_type_count = 1;
+    EXPECT_TRUE(Validate(ctx, global_type));
   }
 }
 
 TEST(ValidateTest, GlobalType_RefType_IndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(Validate(context, GlobalType{VT_Ref0, Mutability::Const}));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, GlobalType{VT_Ref0, Mutability::Const}));
 }
 
 TEST(ValidateTest, Import) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.defined_type_count = 1;
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.defined_type_count = 1;
 
   const Import tests[] = {
       Import{"", "", Index{0}},
@@ -883,114 +877,113 @@ TEST(ValidateTest, Import) {
   };
 
   for (const auto& import : tests) {
-    EXPECT_TRUE(Validate(context, import));
+    EXPECT_TRUE(Validate(ctx, import));
   }
 }
 
 TEST(ValidateTest, Import_FunctionIndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(Validate(context, Import{"", "", Index{0}}));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, Import{"", "", Index{0}}));
 }
 
 TEST(ValidateTest, Import_TooManyTables) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   const TableType table_type{Limits{0}, RT_Funcref};
-  context.tables.push_back(table_type);
+  ctx.tables.push_back(table_type);
 
-  EXPECT_FALSE(Validate(context, Import{"", "", table_type}));
+  EXPECT_FALSE(Validate(ctx, Import{"", "", table_type}));
 }
 
 TEST(ValidateTest, Import_TooManyMemories) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   const MemoryType memory_type{Limits{0}};
-  context.memories.push_back(memory_type);
+  ctx.memories.push_back(memory_type);
 
-  EXPECT_FALSE(Validate(context, Import{"", "", memory_type}));
+  EXPECT_FALSE(Validate(ctx, Import{"", "", memory_type}));
 }
 
 TEST(ValidateTest, Import_GlobalMutVar_MVP) {
   Features features;
   features.disable_mutable_globals();
   TestErrors errors;
-  Context context{features, errors};
-  EXPECT_FALSE(Validate(
-      context, Import{"", "", GlobalType{VT_I32, Mutability::Var}}));
+  ValidCtx ctx{features, errors};
+  EXPECT_FALSE(
+      Validate(ctx, Import{"", "", GlobalType{VT_I32, Mutability::Var}}));
 }
 
 TEST(ValidateTest, Import_GlobalMutVar_MutableGlobals) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_TRUE(Validate(
-      context, Import{"", "", GlobalType{VT_I32, Mutability::Var}}));
+  ValidCtx ctx{errors};
+  EXPECT_TRUE(
+      Validate(ctx, Import{"", "", GlobalType{VT_I32, Mutability::Var}}));
 }
 
 TEST(ValidateTest, Import_Event_IndexOOB) {
   Features features;
   TestErrors errors;
-  Context context{features, errors};
+  ValidCtx ctx{features, errors};
   EXPECT_FALSE(Validate(
-      context, Import{"", "", EventType{EventAttribute::Exception, Index{0}}}));
+      ctx, Import{"", "", EventType{EventAttribute::Exception, Index{0}}}));
 }
 
 TEST(ValidateTest, Import_Event_NonEmptyResult) {
   Features features;
   TestErrors errors;
-  Context context{features, errors};
-  context.types.push_back(DefinedType{FunctionType{{}, {VT_F32}}});
-  context.defined_type_count = 1;
+  ValidCtx ctx{features, errors};
+  ctx.types.push_back(DefinedType{FunctionType{{}, {VT_F32}}});
+  ctx.defined_type_count = 1;
   EXPECT_FALSE(Validate(
-      context, Import{"", "", EventType{EventAttribute::Exception, Index{0}}}));
+      ctx, Import{"", "", EventType{EventAttribute::Exception, Index{0}}}));
 }
 
 TEST(ValidateTest, Index) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_TRUE(ValidateIndex(context, 1, 3, "index"));
-  EXPECT_FALSE(ValidateIndex(context, 3, 3, "index"));
-  EXPECT_FALSE(ValidateIndex(context, 0, 0, "index"));
+  ValidCtx ctx{errors};
+  EXPECT_TRUE(ValidateIndex(ctx, 1, 3, "index"));
+  EXPECT_FALSE(ValidateIndex(ctx, 3, 3, "index"));
+  EXPECT_FALSE(ValidateIndex(ctx, 0, 0, "index"));
 }
 
 TEST(ValidateTest, Limits) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_TRUE(Validate(context, Limits{0}, 10));
-  EXPECT_TRUE(Validate(context, Limits{9, 10}, 10));
+  ValidCtx ctx{errors};
+  EXPECT_TRUE(Validate(ctx, Limits{0}, 10));
+  EXPECT_TRUE(Validate(ctx, Limits{9, 10}, 10));
   // Test that the value is compared, not the string.
-  EXPECT_TRUE(Validate(context,
-                       Limits{At{"9"_su8, u32{9}}, At{"10"_su8, u32{10}}}, 10));
+  EXPECT_TRUE(
+      Validate(ctx, Limits{At{"9"_su8, u32{9}}, At{"10"_su8, u32{10}}}, 10));
 }
 
 TEST(ValidateTest, Limits_Invalid) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(Validate(context, Limits{11}, 10));
-  EXPECT_FALSE(Validate(context, Limits{9, 11}, 10));
-  EXPECT_FALSE(Validate(context, Limits{5, 3}, 10));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, Limits{11}, 10));
+  EXPECT_FALSE(Validate(ctx, Limits{9, 11}, 10));
+  EXPECT_FALSE(Validate(ctx, Limits{5, 3}, 10));
 }
 
 TEST(ValidateTest, Locals) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_TRUE(Validate(context, Locals{1, VT_I32}, RequireDefaultable::No));
+  ValidCtx ctx{errors};
+  EXPECT_TRUE(Validate(ctx, Locals{1, VT_I32}, RequireDefaultable::No));
 }
 
 TEST(ValidateTest, Locals_Defaultable) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.defined_type_count = 1;
-  EXPECT_FALSE(Validate(context, Locals{1, VT_Ref0}, RequireDefaultable::Yes));
-  EXPECT_TRUE(Validate(context, Locals{1, VT_Ref0}, RequireDefaultable::No));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.defined_type_count = 1;
+  EXPECT_FALSE(Validate(ctx, Locals{1, VT_Ref0}, RequireDefaultable::Yes));
+  EXPECT_TRUE(Validate(ctx, Locals{1, VT_Ref0}, RequireDefaultable::No));
 }
 
 TEST(ValidateTest, Locals_RefType_IndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(
-      Validate(context, Locals{1, VT_RefNull0}, RequireDefaultable::Yes));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, Locals{1, VT_RefNull0}, RequireDefaultable::Yes));
 }
 
 TEST(ValidateTest, Memory) {
@@ -1001,31 +994,29 @@ TEST(ValidateTest, Memory) {
 
   for (const auto& memory : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_TRUE(Validate(context, memory));
+    ValidCtx ctx{errors};
+    EXPECT_TRUE(Validate(ctx, memory));
   }
 }
 
 TEST(ValidateTest, Memory_TooManyMemories) {
   TestErrors errors;
-  Context context{errors};
-  context.memories.push_back(MemoryType{Limits{0}});
-  EXPECT_FALSE(Validate(context, Memory{MemoryType{Limits{0}}}));
+  ValidCtx ctx{errors};
+  ctx.memories.push_back(MemoryType{Limits{0}});
+  EXPECT_FALSE(Validate(ctx, Memory{MemoryType{Limits{0}}}));
 }
 
 TEST(ValidateTest, MemoryType) {
   const MemoryType tests[] = {
-      MemoryType{Limits{0}},
-      MemoryType{Limits{1000}},
-      MemoryType{Limits{100, 12345}},
-      MemoryType{Limits{0, 65535}},
+      MemoryType{Limits{0}},          MemoryType{Limits{1000}},
+      MemoryType{Limits{100, 12345}}, MemoryType{Limits{0, 65535}},
       MemoryType{Limits{0, 65536}},
   };
 
   for (const auto& memory_type : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_TRUE(Validate(context, memory_type));
+    ValidCtx ctx{errors};
+    EXPECT_TRUE(Validate(ctx, memory_type));
   }
 }
 
@@ -1038,129 +1029,128 @@ TEST(ValidateTest, MemoryType_TooLarge) {
 
   for (const auto& memory_type : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_FALSE(Validate(context, memory_type));
+    ValidCtx ctx{errors};
+    EXPECT_FALSE(Validate(ctx, memory_type));
   }
 }
 
 TEST(ValidateTest, MemoryType_Shared_MVP) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(Validate(context, MemoryType{Limits{0, 100, Shared::Yes}}));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, MemoryType{Limits{0, 100, Shared::Yes}}));
 }
 
 TEST(ValidateTest, MemoryType_Shared_Threads) {
   Features features;
   features.enable_threads();
   TestErrors errors;
-  Context context{features, errors};
-  EXPECT_TRUE(Validate(context, MemoryType{Limits{0, 100, Shared::Yes}}));
+  ValidCtx ctx{features, errors};
+  EXPECT_TRUE(Validate(ctx, MemoryType{Limits{0, 100, Shared::Yes}}));
 }
 
 TEST(ValidateTest, MemoryType_Shared_NoMax) {
   Features features;
   features.enable_threads();
   TestErrors errors;
-  Context context{features, errors};
-  EXPECT_FALSE(Validate(context, MemoryType{Limits{0, nullopt, Shared::Yes}}));
+  ValidCtx ctx{features, errors};
+  EXPECT_FALSE(Validate(ctx, MemoryType{Limits{0, nullopt, Shared::Yes}}));
 }
 
 TEST(ValidateTest, Rtt) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_TRUE(Validate(context, Rtt{0, HT_Any}));
-  EXPECT_TRUE(Validate(context, Rtt{0, HT_Func}));
-  EXPECT_TRUE(Validate(context, Rtt{0, HT_Extern}));
-  EXPECT_TRUE(Validate(context, Rtt{0, HT_I31}));
-  EXPECT_TRUE(Validate(context, Rtt{0, HT_Eq}));
-  EXPECT_TRUE(Validate(context, Rtt{0, HT_0}));
-  EXPECT_TRUE(Validate(context, Rtt{1, HT_Any}));
-  EXPECT_TRUE(Validate(context, Rtt{1, HT_Func}));
-  EXPECT_TRUE(Validate(context, Rtt{1, HT_Extern}));
-  EXPECT_TRUE(Validate(context, Rtt{1, HT_I31}));
-  EXPECT_TRUE(Validate(context, Rtt{1, HT_Eq}));
-  EXPECT_TRUE(Validate(context, Rtt{1, HT_0}));
-  EXPECT_TRUE(Validate(context, Rtt{123, HT_Any}));
-  EXPECT_TRUE(Validate(context, Rtt{123, HT_Func}));
-  EXPECT_TRUE(Validate(context, Rtt{123, HT_Extern}));
-  EXPECT_TRUE(Validate(context, Rtt{123, HT_I31}));
-  EXPECT_TRUE(Validate(context, Rtt{123, HT_Eq}));
-  EXPECT_TRUE(Validate(context, Rtt{123, HT_0}));
+  ValidCtx ctx{errors};
+  EXPECT_TRUE(Validate(ctx, Rtt{0, HT_Any}));
+  EXPECT_TRUE(Validate(ctx, Rtt{0, HT_Func}));
+  EXPECT_TRUE(Validate(ctx, Rtt{0, HT_Extern}));
+  EXPECT_TRUE(Validate(ctx, Rtt{0, HT_I31}));
+  EXPECT_TRUE(Validate(ctx, Rtt{0, HT_Eq}));
+  EXPECT_TRUE(Validate(ctx, Rtt{0, HT_0}));
+  EXPECT_TRUE(Validate(ctx, Rtt{1, HT_Any}));
+  EXPECT_TRUE(Validate(ctx, Rtt{1, HT_Func}));
+  EXPECT_TRUE(Validate(ctx, Rtt{1, HT_Extern}));
+  EXPECT_TRUE(Validate(ctx, Rtt{1, HT_I31}));
+  EXPECT_TRUE(Validate(ctx, Rtt{1, HT_Eq}));
+  EXPECT_TRUE(Validate(ctx, Rtt{1, HT_0}));
+  EXPECT_TRUE(Validate(ctx, Rtt{123, HT_Any}));
+  EXPECT_TRUE(Validate(ctx, Rtt{123, HT_Func}));
+  EXPECT_TRUE(Validate(ctx, Rtt{123, HT_Extern}));
+  EXPECT_TRUE(Validate(ctx, Rtt{123, HT_I31}));
+  EXPECT_TRUE(Validate(ctx, Rtt{123, HT_Eq}));
+  EXPECT_TRUE(Validate(ctx, Rtt{123, HT_0}));
 }
 
 TEST(ValidateTest, Start) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.defined_type_count = 1;
-  context.functions.push_back(Function{0});
-  EXPECT_TRUE(Validate(context, Start{0}));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.defined_type_count = 1;
+  ctx.functions.push_back(Function{0});
+  EXPECT_TRUE(Validate(ctx, Start{0}));
 }
 
 TEST(ValidateTest, Start_FunctionIndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(Validate(context, Start{0}));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, Start{0}));
 }
 
 TEST(ValidateTest, Start_InvalidParamCount) {
   FunctionType function_type{{VT_I32}, {}};
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{function_type});
-  context.defined_type_count = 1;
-  context.functions.push_back(Function{0});
-  EXPECT_FALSE(Validate(context, Start{0}));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{function_type});
+  ctx.defined_type_count = 1;
+  ctx.functions.push_back(Function{0});
+  EXPECT_FALSE(Validate(ctx, Start{0}));
 }
 
 TEST(ValidateTest, Start_InvalidResultCount) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   const FunctionType function_type{{}, {VT_I32}};
-  context.types.push_back(DefinedType{function_type});
-  context.defined_type_count = 1;
-  context.functions.push_back(Function{0});
-  EXPECT_FALSE(Validate(context, Start{0}));
+  ctx.types.push_back(DefinedType{function_type});
+  ctx.defined_type_count = 1;
+  ctx.functions.push_back(Function{0});
+  EXPECT_FALSE(Validate(ctx, Start{0}));
 }
 
 TEST(ValidateTest, Start_InvalidType) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{StructType{}});
-  context.defined_type_count = 1;
-  context.functions.push_back(Function{0});
-  EXPECT_FALSE(Validate(context, Start{0}));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{StructType{}});
+  ctx.defined_type_count = 1;
+  ctx.functions.push_back(Function{0});
+  EXPECT_FALSE(Validate(ctx, Start{0}));
 }
 
 TEST(ValidateTest, StorageType) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_TRUE(Validate(context, StorageType{VT_I32}));
-  EXPECT_TRUE(Validate(context, StorageType{PackedType::I8}));
-  EXPECT_TRUE(Validate(context, StorageType{PackedType::I16}));
+  ValidCtx ctx{errors};
+  EXPECT_TRUE(Validate(ctx, StorageType{VT_I32}));
+  EXPECT_TRUE(Validate(ctx, StorageType{PackedType::I8}));
+  EXPECT_TRUE(Validate(ctx, StorageType{PackedType::I16}));
 }
 
 TEST(ValidateTest, StorageType_IndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(Validate(context, StorageType{VT_Ref1}));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, StorageType{VT_Ref1}));
 }
 
 TEST(ValidateTest, StructType) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   EXPECT_TRUE(
-      Validate(context, StructType{FieldTypeList{
-                            FieldType{StorageType{VT_I32}, Mutability::Const},
-                            FieldType{StorageType{VT_I64}, Mutability::Var}}}));
+      Validate(ctx, StructType{FieldTypeList{
+                        FieldType{StorageType{VT_I32}, Mutability::Const},
+                        FieldType{StorageType{VT_I64}, Mutability::Var}}}));
 }
 
 TEST(ValidateTest, StructType_IndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(
-      Validate(context, StructType{FieldTypeList{FieldType{
-                            StorageType{VT_Ref1}, Mutability::Const}}}));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, StructType{FieldTypeList{FieldType{
+                                 StorageType{VT_Ref1}, Mutability::Const}}}));
 }
 
 TEST(ValidateTest, Table) {
@@ -1171,17 +1161,17 @@ TEST(ValidateTest, Table) {
 
   for (const auto& table : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_TRUE(Validate(context, table));
+    ValidCtx ctx{errors};
+    EXPECT_TRUE(Validate(ctx, table));
   }
 }
 
 TEST(ValidateTest, Table_TooManyTables) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   const TableType table_type{Limits{0}, RT_Funcref};
-  context.tables.push_back(table_type);
-  EXPECT_FALSE(Validate(context, Table{table_type}));
+  ctx.tables.push_back(table_type);
+  EXPECT_FALSE(Validate(ctx, Table{table_type}));
 }
 
 TEST(ValidateTest, TableType) {
@@ -1194,54 +1184,53 @@ TEST(ValidateTest, TableType) {
 
   for (const auto& table_type : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_TRUE(Validate(context, table_type));
+    ValidCtx ctx{errors};
+    EXPECT_TRUE(Validate(ctx, table_type));
   }
 }
 
 TEST(ValidateTest, TableType_RefType) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.defined_type_count = 1;
-  EXPECT_TRUE(Validate(context, TableType{Limits{0}, RT_RefNull0}));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.defined_type_count = 1;
+  EXPECT_TRUE(Validate(ctx, TableType{Limits{0}, RT_RefNull0}));
 }
 
 TEST(ValidateTest, TableType_RefType_IndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(Validate(context, TableType{Limits{0}, RT_RefNull0}));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, TableType{Limits{0}, RT_RefNull0}));
 }
 
 TEST(ValidateTest, TableType_Shared) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
   EXPECT_FALSE(
-      Validate(context, TableType{Limits{0, 100, Shared::Yes}, RT_Funcref}));
+      Validate(ctx, TableType{Limits{0, 100, Shared::Yes}, RT_Funcref}));
 }
 
 TEST(ValidateTest, TableType_Defaultable) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(Validate(context, TableType{Limits{0}, RT_Ref0}));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, TableType{Limits{0}, RT_Ref0}));
 }
 
 TEST(ValidateTest, DefinedType) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_TRUE(Validate(context, DefinedType{FunctionType{}}));
+  ValidCtx ctx{errors};
+  EXPECT_TRUE(Validate(ctx, DefinedType{FunctionType{}}));
 }
 
 TEST(ValidateTest, DefinedType_gc) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
 
-  EXPECT_TRUE(Validate(context, DefinedType{ArrayType{FieldType{
-                                    StorageType{VT_I32}, Mutability::Const}}}));
+  EXPECT_TRUE(Validate(ctx, DefinedType{ArrayType{FieldType{
+                                StorageType{VT_I32}, Mutability::Const}}}));
 
-  EXPECT_TRUE(
-      Validate(context, DefinedType{StructType{FieldTypeList{FieldType{
-                            StorageType{VT_I32}, Mutability::Const}}}}));
+  EXPECT_TRUE(Validate(ctx, DefinedType{StructType{FieldTypeList{FieldType{
+                                StorageType{VT_I32}, Mutability::Const}}}}));
 }
 
 TEST(ValidateTest, ValueType) {
@@ -1251,8 +1240,8 @@ TEST(ValidateTest, ValueType) {
 
   for (auto value_type : tests) {
     TestErrors errors;
-    Context context{errors};
-    EXPECT_TRUE(Validate(context, value_type, value_type));
+    ValidCtx ctx{errors};
+    EXPECT_TRUE(Validate(ctx, value_type, value_type));
   }
 }
 
@@ -1267,46 +1256,46 @@ TEST(ValidateTest, ValueType_Mismatch) {
         continue;
       }
       TestErrors errors;
-      Context context{errors};
-      EXPECT_FALSE(Validate(context, value_type1, value_type2));
+      ValidCtx ctx{errors};
+      EXPECT_FALSE(Validate(ctx, value_type1, value_type2));
     }
   }
 }
 
 TEST(ValidateTest, ValueType_RefType) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.defined_type_count = 1;
-  EXPECT_TRUE(Validate(context, VT_Ref0));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.defined_type_count = 1;
+  EXPECT_TRUE(Validate(ctx, VT_Ref0));
 }
 
 TEST(ValidateTest, ValueType_RefType_IndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_FALSE(Validate(context, VT_Ref0));
+  ValidCtx ctx{errors};
+  EXPECT_FALSE(Validate(ctx, VT_Ref0));
 }
 
 TEST(ValidateTest, ValueType_FuncrefSubtyping) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
 
   // ref null 0 is a supertype of ref 0.
-  EXPECT_TRUE(Validate(context, VT_RefNull0, VT_Ref0));
+  EXPECT_TRUE(Validate(ctx, VT_RefNull0, VT_Ref0));
 
   // funcref (aka ref null func) is a supertype of ref N.
-  EXPECT_TRUE(Validate(context, VT_Funcref, VT_RefNullFunc));
-  EXPECT_TRUE(Validate(context, VT_Funcref, VT_RefNull0));
-  EXPECT_TRUE(Validate(context, VT_Funcref, VT_Ref0));
-  EXPECT_TRUE(Validate(context, VT_RefNullFunc, VT_RefNull0));
-  EXPECT_TRUE(Validate(context, VT_RefNullFunc, VT_Ref0));
-  EXPECT_TRUE(Validate(context, VT_RefFunc, VT_Ref0));
+  EXPECT_TRUE(Validate(ctx, VT_Funcref, VT_RefNullFunc));
+  EXPECT_TRUE(Validate(ctx, VT_Funcref, VT_RefNull0));
+  EXPECT_TRUE(Validate(ctx, VT_Funcref, VT_Ref0));
+  EXPECT_TRUE(Validate(ctx, VT_RefNullFunc, VT_RefNull0));
+  EXPECT_TRUE(Validate(ctx, VT_RefNullFunc, VT_Ref0));
+  EXPECT_TRUE(Validate(ctx, VT_RefFunc, VT_Ref0));
 }
 
 TEST(ValidateTest, Module) {
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
 
   Module module;
   module.types.push_back(DefinedType{FunctionType{}});
@@ -1331,5 +1320,5 @@ TEST(ValidateTest, Module) {
       Index{0}, ConstantExpression{Instruction{Opcode::I32Const, s32{0}}},
       "hi"_su8});
 
-  EXPECT_TRUE(Validate(context, module));
+  EXPECT_TRUE(Validate(ctx, module));
 }

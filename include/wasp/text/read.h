@@ -24,146 +24,146 @@
 
 namespace wasp::text {
 
-struct Context;
+struct ReadCtx;
 class Tokenizer;
 
-auto Expect(Tokenizer&, Context&, TokenType expected) -> optional<Token>;
-auto ExpectLpar(Tokenizer&, Context&, TokenType expected) -> optional<Token>;
+auto Expect(Tokenizer&, ReadCtx&, TokenType expected) -> optional<Token>;
+auto ExpectLpar(Tokenizer&, ReadCtx&, TokenType expected) -> optional<Token>;
 
 template <typename T>
-auto ReadNat(Tokenizer&, Context&) -> OptAt<T>;
-auto ReadNat32(Tokenizer&, Context&) -> OptAt<u32>;
+auto ReadNat(Tokenizer&, ReadCtx&) -> OptAt<T>;
+auto ReadNat32(Tokenizer&, ReadCtx&) -> OptAt<u32>;
 template <typename T>
-auto ReadInt(Tokenizer&, Context&) -> OptAt<T>;
+auto ReadInt(Tokenizer&, ReadCtx&) -> OptAt<T>;
 template <typename T>
-auto ReadFloat(Tokenizer&, Context&) -> OptAt<T>;
+auto ReadFloat(Tokenizer&, ReadCtx&) -> OptAt<T>;
 
-auto ReadVar(Tokenizer&, Context&) -> OptAt<Var>;
-auto ReadVarOpt(Tokenizer&, Context&) -> OptAt<Var>;
-auto ReadVarList(Tokenizer&, Context&) -> optional<VarList>;
-auto ReadNonEmptyVarList(Tokenizer&, Context&) -> optional<VarList>;
+auto ReadVar(Tokenizer&, ReadCtx&) -> OptAt<Var>;
+auto ReadVarOpt(Tokenizer&, ReadCtx&) -> OptAt<Var>;
+auto ReadVarList(Tokenizer&, ReadCtx&) -> optional<VarList>;
+auto ReadNonEmptyVarList(Tokenizer&, ReadCtx&) -> optional<VarList>;
 
-auto ReadVarUseOpt(Tokenizer&, Context&, TokenType) -> OptAt<Var>;
-auto ReadTypeUseOpt(Tokenizer&, Context&) -> OptAt<Var>;
-auto ReadFunctionTypeUse(Tokenizer&, Context&) -> optional<FunctionTypeUse>;
+auto ReadVarUseOpt(Tokenizer&, ReadCtx&, TokenType) -> OptAt<Var>;
+auto ReadTypeUseOpt(Tokenizer&, ReadCtx&) -> OptAt<Var>;
+auto ReadFunctionTypeUse(Tokenizer&, ReadCtx&) -> optional<FunctionTypeUse>;
 
-auto ReadText(Tokenizer&, Context&) -> OptAt<Text>;
-auto ReadUtf8Text(Tokenizer&, Context&) -> OptAt<Text>;
-auto ReadTextList(Tokenizer&, Context&) -> optional<TextList>;
+auto ReadText(Tokenizer&, ReadCtx&) -> OptAt<Text>;
+auto ReadUtf8Text(Tokenizer&, ReadCtx&) -> OptAt<Text>;
+auto ReadTextList(Tokenizer&, ReadCtx&) -> optional<TextList>;
 
 // Section 1: Type
 
-auto ReadBindVarOpt(Tokenizer&, Context&) -> OptAt<BindVar>;
+auto ReadBindVarOpt(Tokenizer&, ReadCtx&) -> OptAt<BindVar>;
 
-auto ReadBoundValueTypeList(Tokenizer&, Context&, TokenType)
+auto ReadBoundValueTypeList(Tokenizer&, ReadCtx&, TokenType)
     -> optional<BoundValueTypeList>;
-auto ReadBoundParamList(Tokenizer&, Context&) -> optional<BoundValueTypeList>;
+auto ReadBoundParamList(Tokenizer&, ReadCtx&) -> optional<BoundValueTypeList>;
 
-auto ReadUnboundValueTypeList(Tokenizer&, Context&, TokenType)
+auto ReadUnboundValueTypeList(Tokenizer&, ReadCtx&, TokenType)
     -> optional<ValueTypeList>;
-auto ReadParamList(Tokenizer&, Context&) -> optional<ValueTypeList>;
-auto ReadResultList(Tokenizer&, Context&) -> optional<ValueTypeList>;
+auto ReadParamList(Tokenizer&, ReadCtx&) -> optional<ValueTypeList>;
+auto ReadResultList(Tokenizer&, ReadCtx&) -> optional<ValueTypeList>;
 
-auto ReadRtt(Tokenizer&, Context&) -> OptAt<Rtt>;
+auto ReadRtt(Tokenizer&, ReadCtx&) -> OptAt<Rtt>;
 
-auto ReadValueType(Tokenizer&, Context&) -> OptAt<ValueType>;
-auto ReadValueTypeList(Tokenizer&, Context&) -> optional<ValueTypeList>;
+auto ReadValueType(Tokenizer&, ReadCtx&) -> OptAt<ValueType>;
+auto ReadValueTypeList(Tokenizer&, ReadCtx&) -> optional<ValueTypeList>;
 
-auto ReadBoundFunctionType(Tokenizer&, Context&) -> OptAt<BoundFunctionType>;
+auto ReadBoundFunctionType(Tokenizer&, ReadCtx&) -> OptAt<BoundFunctionType>;
 
-auto ReadStorageType(Tokenizer&, Context&) -> OptAt<StorageType>;
-auto ReadFieldTypeContents(Tokenizer&, Context&) -> OptAt<FieldType>;
-auto ReadFieldType(Tokenizer&, Context&) -> OptAt<FieldType>;
-auto ReadFieldTypeList(Tokenizer&, Context&) -> optional<FieldTypeList>;
+auto ReadStorageType(Tokenizer&, ReadCtx&) -> OptAt<StorageType>;
+auto ReadFieldTypeContents(Tokenizer&, ReadCtx&) -> OptAt<FieldType>;
+auto ReadFieldType(Tokenizer&, ReadCtx&) -> OptAt<FieldType>;
+auto ReadFieldTypeList(Tokenizer&, ReadCtx&) -> optional<FieldTypeList>;
 
-auto ReadStructType(Tokenizer&, Context&) -> OptAt<StructType>;
-auto ReadArrayType(Tokenizer&, Context&) -> OptAt<ArrayType>;
+auto ReadStructType(Tokenizer&, ReadCtx&) -> OptAt<StructType>;
+auto ReadArrayType(Tokenizer&, ReadCtx&) -> OptAt<ArrayType>;
 
-auto ReadDefinedType(Tokenizer&, Context&) -> OptAt<DefinedType>;
+auto ReadDefinedType(Tokenizer&, ReadCtx&) -> OptAt<DefinedType>;
 
 // Section 2: Import
 
-auto ReadInlineImportOpt(Tokenizer&, Context&) -> OptAt<InlineImport>;
-auto ReadImport(Tokenizer&, Context&) -> OptAt<Import>;
+auto ReadInlineImportOpt(Tokenizer&, ReadCtx&) -> OptAt<InlineImport>;
+auto ReadImport(Tokenizer&, ReadCtx&) -> OptAt<Import>;
 
 // Section 3: Function
 
-auto ReadLocalList(Tokenizer&, Context&) -> optional<BoundValueTypeList>;
-auto ReadFunctionType(Tokenizer&, Context&) -> OptAt<FunctionType>;
-auto ReadFunction(Tokenizer&, Context&) -> OptAt<Function>;
+auto ReadLocalList(Tokenizer&, ReadCtx&) -> optional<BoundValueTypeList>;
+auto ReadFunctionType(Tokenizer&, ReadCtx&) -> OptAt<FunctionType>;
+auto ReadFunction(Tokenizer&, ReadCtx&) -> OptAt<Function>;
 
 // Section 4: Table
 
 enum class LimitsKind { Memory, Table };
 enum class AllowFuncref { No, Yes };
 
-auto ReadIndexTypeOpt(Tokenizer&, Context&) -> OptAt<IndexType>;
-auto ReadLimits(Tokenizer&, Context&, LimitsKind) -> OptAt<Limits>;
-auto ReadHeapType(Tokenizer&, Context&) -> OptAt<HeapType>;
-auto ReadRefType(Tokenizer&, Context&) -> OptAt<RefType>;
-auto ReadReferenceType(Tokenizer&, Context&, AllowFuncref = AllowFuncref::Yes)
+auto ReadIndexTypeOpt(Tokenizer&, ReadCtx&) -> OptAt<IndexType>;
+auto ReadLimits(Tokenizer&, ReadCtx&, LimitsKind) -> OptAt<Limits>;
+auto ReadHeapType(Tokenizer&, ReadCtx&) -> OptAt<HeapType>;
+auto ReadRefType(Tokenizer&, ReadCtx&) -> OptAt<RefType>;
+auto ReadReferenceType(Tokenizer&, ReadCtx&, AllowFuncref = AllowFuncref::Yes)
     -> OptAt<ReferenceType>;
 auto ReadReferenceTypeOpt(Tokenizer&,
-                          Context&,
+                          ReadCtx&,
                           AllowFuncref = AllowFuncref::Yes)
     -> OptAt<ReferenceType>;
 
-auto ReadTableType(Tokenizer&, Context&) -> OptAt<TableType>;
-auto ReadTable(Tokenizer&, Context&) -> OptAt<Table>;
+auto ReadTableType(Tokenizer&, ReadCtx&) -> OptAt<TableType>;
+auto ReadTable(Tokenizer&, ReadCtx&) -> OptAt<Table>;
 
 // Section 5: Memory
 
 template <typename T>
-bool ReadIntsIntoBuffer(Tokenizer&, Context&, Buffer&);
+bool ReadIntsIntoBuffer(Tokenizer&, ReadCtx&, Buffer&);
 template <typename T>
-bool ReadFloatsIntoBuffer(Tokenizer&, Context&, Buffer&);
+bool ReadFloatsIntoBuffer(Tokenizer&, ReadCtx&, Buffer&);
 
-auto ReadSimdConst(Tokenizer&, Context&) -> OptAt<v128>;
-bool ReadSimdConstsIntoBuffer(Tokenizer&, Context&, Buffer&);
+auto ReadSimdConst(Tokenizer&, ReadCtx&) -> OptAt<v128>;
+bool ReadSimdConstsIntoBuffer(Tokenizer&, ReadCtx&, Buffer&);
 
-auto ReadNumericData(Tokenizer&, Context&) -> OptAt<NumericData>;
-auto ReadDataItem(Tokenizer&, Context&) -> OptAt<DataItem>;
-auto ReadDataItemList(Tokenizer&, Context&) -> optional<DataItemList>;
-auto ReadMemoryType(Tokenizer&, Context&) -> OptAt<MemoryType>;
-auto ReadMemory(Tokenizer&, Context&) -> OptAt<Memory>;
+auto ReadNumericData(Tokenizer&, ReadCtx&) -> OptAt<NumericData>;
+auto ReadDataItem(Tokenizer&, ReadCtx&) -> OptAt<DataItem>;
+auto ReadDataItemList(Tokenizer&, ReadCtx&) -> optional<DataItemList>;
+auto ReadMemoryType(Tokenizer&, ReadCtx&) -> OptAt<MemoryType>;
+auto ReadMemory(Tokenizer&, ReadCtx&) -> OptAt<Memory>;
 
 // Section 6: Global
 
-auto ReadConstantExpression(Tokenizer&, Context&) -> OptAt<ConstantExpression>;
-auto ReadGlobalType(Tokenizer&, Context&) -> OptAt<GlobalType>;
-auto ReadGlobal(Tokenizer&, Context&) -> OptAt<Global>;
+auto ReadConstantExpression(Tokenizer&, ReadCtx&) -> OptAt<ConstantExpression>;
+auto ReadGlobalType(Tokenizer&, ReadCtx&) -> OptAt<GlobalType>;
+auto ReadGlobal(Tokenizer&, ReadCtx&) -> OptAt<Global>;
 
 // Section 7: Export
 
-auto ReadInlineExport(Tokenizer&, Context&) -> OptAt<InlineExport>;
-auto ReadInlineExportList(Tokenizer&, Context&) -> optional<InlineExportList>;
-auto ReadExport(Tokenizer&, Context&) -> OptAt<Export>;
+auto ReadInlineExport(Tokenizer&, ReadCtx&) -> OptAt<InlineExport>;
+auto ReadInlineExportList(Tokenizer&, ReadCtx&) -> optional<InlineExportList>;
+auto ReadExport(Tokenizer&, ReadCtx&) -> OptAt<Export>;
 
 // Section 8: Start
 
-auto ReadStart(Tokenizer&, Context&) -> OptAt<Start>;
+auto ReadStart(Tokenizer&, ReadCtx&) -> OptAt<Start>;
 
 // Section 9: Elem
 
-auto ReadOffsetExpression(Tokenizer&, Context&) -> OptAt<ConstantExpression>;
-auto ReadElementExpression(Tokenizer&, Context&) -> OptAt<ElementExpression>;
-auto ReadElementExpressionList(Tokenizer&, Context&)
+auto ReadOffsetExpression(Tokenizer&, ReadCtx&) -> OptAt<ConstantExpression>;
+auto ReadElementExpression(Tokenizer&, ReadCtx&) -> OptAt<ElementExpression>;
+auto ReadElementExpressionList(Tokenizer&, ReadCtx&)
     -> optional<ElementExpressionList>;
-auto ReadTableUseOpt(Tokenizer&, Context&) -> OptAt<Var>;
-auto ReadElementSegment(Tokenizer&, Context&) -> OptAt<ElementSegment>;
+auto ReadTableUseOpt(Tokenizer&, ReadCtx&) -> OptAt<Var>;
+auto ReadElementSegment(Tokenizer&, ReadCtx&) -> OptAt<ElementSegment>;
 
 // Section 10: Code
 
-auto ReadNameEqNatOpt(Tokenizer&, Context&, TokenType, u32) -> OptAt<u32>;
-auto ReadAlignOpt(Tokenizer&, Context&) -> OptAt<u32>;
-auto ReadOffsetOpt(Tokenizer&, Context&) -> OptAt<u32>;
+auto ReadNameEqNatOpt(Tokenizer&, ReadCtx&, TokenType, u32) -> OptAt<u32>;
+auto ReadAlignOpt(Tokenizer&, ReadCtx&) -> OptAt<u32>;
+auto ReadOffsetOpt(Tokenizer&, ReadCtx&) -> OptAt<u32>;
 
-auto ReadSimdLane(Tokenizer&, Context&) -> OptAt<u8>;
-auto ReadSimdShuffleImmediate(Tokenizer&, Context&) -> OptAt<ShuffleImmediate>;
+auto ReadSimdLane(Tokenizer&, ReadCtx&) -> OptAt<u8>;
+auto ReadSimdShuffleImmediate(Tokenizer&, ReadCtx&) -> OptAt<ShuffleImmediate>;
 template <typename T, size_t N>
-auto ReadSimdValues(Tokenizer&, Context&) -> OptAt<v128>;
+auto ReadSimdValues(Tokenizer&, ReadCtx&) -> OptAt<v128>;
 
-auto ReadHeapType2Immediate(Tokenizer&, Context&) -> OptAt<HeapType2Immediate>;
+auto ReadHeapType2Immediate(Tokenizer&, ReadCtx&) -> OptAt<HeapType2Immediate>;
 
 bool IsPlainInstruction(Token);
 bool IsBlockInstruction(Token);
@@ -171,74 +171,74 @@ bool IsExpression(Tokenizer&);
 bool IsElementExpression(Tokenizer&);
 bool IsInstruction(Tokenizer&);
 
-auto ReadPlainInstruction(Tokenizer&, Context&) -> OptAt<Instruction>;
-auto ReadLabelOpt(Tokenizer&, Context&) -> OptAt<BindVar>;
-bool ReadEndLabelOpt(Tokenizer&, Context&, OptAt<BindVar>);
-auto ReadBlockImmediate(Tokenizer&, Context&) -> OptAt<BlockImmediate>;
-auto ReadLetImmediate(Tokenizer&, Context&) -> OptAt<LetImmediate>;
-void EndBlock(Context&);
+auto ReadPlainInstruction(Tokenizer&, ReadCtx&) -> OptAt<Instruction>;
+auto ReadLabelOpt(Tokenizer&, ReadCtx&) -> OptAt<BindVar>;
+bool ReadEndLabelOpt(Tokenizer&, ReadCtx&, OptAt<BindVar>);
+auto ReadBlockImmediate(Tokenizer&, ReadCtx&) -> OptAt<BlockImmediate>;
+auto ReadLetImmediate(Tokenizer&, ReadCtx&) -> OptAt<LetImmediate>;
+void EndBlock(ReadCtx&);
 
-bool ReadOpcodeOpt(Tokenizer&, Context&, InstructionList&, TokenType);
-bool ExpectOpcode(Tokenizer&, Context&, InstructionList&, TokenType);
-bool ReadBlockInstruction(Tokenizer&, Context&, InstructionList&);
-bool ReadLetInstruction(Tokenizer&, Context&, InstructionList&);
-bool ReadInstruction(Tokenizer&, Context&, InstructionList&);
-bool ReadInstructionList(Tokenizer&, Context&, InstructionList&);
-bool ReadRparAsEndInstruction(Tokenizer&, Context&, InstructionList&);
-bool ReadExpression(Tokenizer&, Context&, InstructionList&);
-bool ReadExpressionList(Tokenizer&, Context&, InstructionList&);
+bool ReadOpcodeOpt(Tokenizer&, ReadCtx&, InstructionList&, TokenType);
+bool ExpectOpcode(Tokenizer&, ReadCtx&, InstructionList&, TokenType);
+bool ReadBlockInstruction(Tokenizer&, ReadCtx&, InstructionList&);
+bool ReadLetInstruction(Tokenizer&, ReadCtx&, InstructionList&);
+bool ReadInstruction(Tokenizer&, ReadCtx&, InstructionList&);
+bool ReadInstructionList(Tokenizer&, ReadCtx&, InstructionList&);
+bool ReadRparAsEndInstruction(Tokenizer&, ReadCtx&, InstructionList&);
+bool ReadExpression(Tokenizer&, ReadCtx&, InstructionList&);
+bool ReadExpressionList(Tokenizer&, ReadCtx&, InstructionList&);
 
 // Section 11: Data
 
-auto ReadMemoryUseOpt(Tokenizer&, Context&) -> OptAt<Var>;
-auto ReadDataSegment(Tokenizer&, Context&) -> OptAt<DataSegment>;
+auto ReadMemoryUseOpt(Tokenizer&, ReadCtx&) -> OptAt<Var>;
+auto ReadDataSegment(Tokenizer&, ReadCtx&) -> OptAt<DataSegment>;
 
 // Section 12: DataCount
 
 // Section 13: Event
 
-auto ReadEventType(Tokenizer&, Context&) -> OptAt<EventType>;
-auto ReadEvent(Tokenizer&, Context&) -> OptAt<Event>;
+auto ReadEventType(Tokenizer&, ReadCtx&) -> OptAt<EventType>;
+auto ReadEvent(Tokenizer&, ReadCtx&) -> OptAt<Event>;
 
 // Module
 
 bool IsModuleItem(Tokenizer&);
-auto ReadModuleItem(Tokenizer&, Context&) -> OptAt<ModuleItem>;
-auto ReadModule(Tokenizer&, Context&) -> optional<Module>;
-auto ReadSingleModule(Tokenizer&, Context&) -> optional<Module>;
+auto ReadModuleItem(Tokenizer&, ReadCtx&) -> OptAt<ModuleItem>;
+auto ReadModule(Tokenizer&, ReadCtx&) -> optional<Module>;
+auto ReadSingleModule(Tokenizer&, ReadCtx&) -> optional<Module>;
 
 // Script
 
-auto ReadModuleVarOpt(Tokenizer&, Context&) -> OptAt<ModuleVar>;
-auto ReadScriptModule(Tokenizer&, Context&) -> OptAt<ScriptModule>;
+auto ReadModuleVarOpt(Tokenizer&, ReadCtx&) -> OptAt<ModuleVar>;
+auto ReadScriptModule(Tokenizer&, ReadCtx&) -> OptAt<ScriptModule>;
 
 // Action
 bool IsConst(Tokenizer&);
-auto ReadConst(Tokenizer&, Context&) -> OptAt<Const>;
-auto ReadConstList(Tokenizer&, Context&) -> optional<ConstList>;
-auto ReadInvokeAction(Tokenizer&, Context&) -> OptAt<InvokeAction>;
-auto ReadGetAction(Tokenizer&, Context&) -> OptAt<GetAction>;
-auto ReadAction(Tokenizer&, Context&) -> OptAt<Action>;
+auto ReadConst(Tokenizer&, ReadCtx&) -> OptAt<Const>;
+auto ReadConstList(Tokenizer&, ReadCtx&) -> optional<ConstList>;
+auto ReadInvokeAction(Tokenizer&, ReadCtx&) -> OptAt<InvokeAction>;
+auto ReadGetAction(Tokenizer&, ReadCtx&) -> OptAt<GetAction>;
+auto ReadAction(Tokenizer&, ReadCtx&) -> OptAt<Action>;
 
 // Assertion
-auto ReadModuleAssertion(Tokenizer&, Context&) -> OptAt<ModuleAssertion>;
-auto ReadActionAssertion(Tokenizer&, Context&) -> OptAt<ActionAssertion>;
+auto ReadModuleAssertion(Tokenizer&, ReadCtx&) -> OptAt<ModuleAssertion>;
+auto ReadActionAssertion(Tokenizer&, ReadCtx&) -> OptAt<ActionAssertion>;
 template <typename T>
-auto ReadFloatResult(Tokenizer&, Context&) -> OptAt<FloatResult<T>>;
+auto ReadFloatResult(Tokenizer&, ReadCtx&) -> OptAt<FloatResult<T>>;
 template <typename T, size_t N>
-auto ReadSimdFloatResult(Tokenizer&, Context&) -> OptAt<ReturnResult>;
+auto ReadSimdFloatResult(Tokenizer&, ReadCtx&) -> OptAt<ReturnResult>;
 
 bool IsReturnResult(Tokenizer&);
-auto ReadReturnResult(Tokenizer&, Context&) -> OptAt<ReturnResult>;
-auto ReadReturnResultList(Tokenizer&, Context&) -> optional<ReturnResultList>;
-auto ReadReturnAssertion(Tokenizer&, Context&) -> OptAt<ReturnAssertion>;
-auto ReadAssertion(Tokenizer&, Context&) -> OptAt<Assertion>;
+auto ReadReturnResult(Tokenizer&, ReadCtx&) -> OptAt<ReturnResult>;
+auto ReadReturnResultList(Tokenizer&, ReadCtx&) -> optional<ReturnResultList>;
+auto ReadReturnAssertion(Tokenizer&, ReadCtx&) -> OptAt<ReturnAssertion>;
+auto ReadAssertion(Tokenizer&, ReadCtx&) -> OptAt<Assertion>;
 
-auto ReadRegister(Tokenizer&, Context&) -> OptAt<Register>;
+auto ReadRegister(Tokenizer&, ReadCtx&) -> OptAt<Register>;
 
 bool IsCommand(Tokenizer&);
-auto ReadCommand(Tokenizer&, Context&) -> OptAt<Command>;
-auto ReadScript(Tokenizer&, Context&) -> optional<Script>;
+auto ReadCommand(Tokenizer&, ReadCtx&) -> OptAt<Command>;
+auto ReadScript(Tokenizer&, ReadCtx&) -> optional<Script>;
 
 }  // namespace wasp::text
 

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "wasp/text/resolve_context.h"
+#include "wasp/text/resolve_ctx.h"
 
 #include <algorithm>
 #include <cassert>
@@ -24,9 +24,9 @@
 
 namespace wasp::text {
 
-ResolveContext::ResolveContext(Errors& errors) : errors{errors} {}
+ResolveCtx::ResolveCtx(Errors& errors) : errors{errors} {}
 
-void ResolveContext::BeginModule() {
+void ResolveCtx::BeginModule() {
   type_names.Reset();
   field_names.clear();
   function_names.Reset();
@@ -40,14 +40,14 @@ void ResolveContext::BeginModule() {
   BeginFunction();
 }
 
-void ResolveContext::BeginFunction() {
+void ResolveCtx::BeginFunction() {
   local_names.Reset();
   label_names.Reset();
   blocks.clear();
   BeginBlock(Opcode::Unreachable);  // Begin dummy block for function.
 }
 
-void ResolveContext::BeginBlock(Opcode opcode) {
+void ResolveCtx::BeginBlock(Opcode opcode) {
   blocks.push_back(opcode);
   label_names.Push();
   if (opcode == Opcode::Let) {
@@ -55,7 +55,7 @@ void ResolveContext::BeginBlock(Opcode opcode) {
   }
 }
 
-void ResolveContext::EndBlock() {
+void ResolveCtx::EndBlock() {
   assert(!blocks.empty());
   if (blocks.back() == Opcode::Let) {
     local_names.Pop();
@@ -64,17 +64,17 @@ void ResolveContext::EndBlock() {
   blocks.pop_back();
 }
 
-auto ResolveContext::EndModule() -> DefinedTypeList {
+auto ResolveCtx::EndModule() -> DefinedTypeList {
   return function_type_map.EndModule();
 }
 
-auto ResolveContext::NewFieldNameMap(Index index) -> NameMap& {
+auto ResolveCtx::NewFieldNameMap(Index index) -> NameMap& {
   auto [iter, ok] = field_names.emplace(index, NameMap{});
   assert(ok);
   return iter->second;
 }
 
-auto ResolveContext::GetFieldNameMap(Index index) -> NameMap* {
+auto ResolveCtx::GetFieldNameMap(Index index) -> NameMap* {
   auto iter = field_names.find(index);
   if (iter == field_names.end()) {
     return nullptr;

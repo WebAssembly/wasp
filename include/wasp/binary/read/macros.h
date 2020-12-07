@@ -29,27 +29,27 @@
   }                              \
   auto var = *opt_##var /* No semicolon. */
 
-#define WASP_TRY_READ_CONTEXT(var, call, desc)         \
-  ErrorsContextGuard guard_##var(context.errors, *data, desc); \
-  WASP_TRY_READ(var, call);                            \
+#define WASP_TRY_READ_CONTEXT(var, call, desc)             \
+  ErrorsContextGuard guard_##var(ctx.errors, *data, desc); \
+  WASP_TRY_READ(var, call);                                \
   guard_##var.PopContext() /* No semicolon. */
 
-#define WASP_TRY_DECODE(out_var, in_var_at, Type, name)               \
-  auto out_var##opt = encoding::Type::Decode(in_var_at);              \
-  if (!out_var##opt) {                                                \
-    context.errors.OnError(in_var_at.loc(),                           \
-                           concat("Unknown " name ": ", *in_var_at)); \
-    return nullopt;                                                   \
-  }                                                                   \
-  auto out_var = At{in_var_at.loc(), *out_var##opt} /* No semicolon. */
+#define WASP_TRY_DECODE(out_var, in_var_at, Type, name)           \
+  auto out_var##opt = encoding::Type::Decode(in_var_at);          \
+  if (!out_var##opt) {                                            \
+    ctx.errors.OnError(in_var_at.loc(),                           \
+                       concat("Unknown " name ": ", *in_var_at)); \
+    return nullopt;                                               \
+  }                                                               \
+  auto out_var = At { in_var_at.loc(), *out_var##opt } /* No semicolon. */
 
 #define WASP_TRY_DECODE_FEATURES(out_var, in_var_at, Type, name, features) \
   auto out_var##opt = encoding::Type::Decode(in_var_at, features);         \
   if (!out_var##opt) {                                                     \
-    context.errors.OnError(in_var_at.loc(),                                \
-                           concat("Unknown " name ": ", *in_var_at));      \
+    ctx.errors.OnError(in_var_at.loc(),                                    \
+                       concat("Unknown " name ": ", *in_var_at));          \
     return nullopt;                                                        \
   }                                                                        \
-  auto out_var = At{in_var_at.loc(), *out_var##opt} /* No semicolon. */
+  auto out_var = At { in_var_at.loc(), *out_var##opt } /* No semicolon. */
 
 #endif  // WASP_BINARY_MACROS_H_

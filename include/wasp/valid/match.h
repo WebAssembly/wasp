@@ -22,85 +22,85 @@
 
 namespace wasp::valid {
 
-struct Context;
+struct ValidCtx;
 
-bool IsSame(Context&,
+bool IsSame(ValidCtx&,
             const binary::HeapType& expected,
             const binary::HeapType& actual);
-bool IsSame(Context&,
+bool IsSame(ValidCtx&,
             const binary::RefType& expected,
             const binary::RefType& actual);
-bool IsSame(Context&,
+bool IsSame(ValidCtx&,
             const binary::ReferenceType& expected,
             const binary::ReferenceType& actual);
-bool IsSame(Context&, const binary::Rtt& expected, const binary::Rtt& actual);
-bool IsSame(Context&,
+bool IsSame(ValidCtx&, const binary::Rtt& expected, const binary::Rtt& actual);
+bool IsSame(ValidCtx&,
             const binary::ValueType& expected,
             const binary::ValueType& actual);
-bool IsSame(Context&,
+bool IsSame(ValidCtx&,
             const binary::ValueTypeList& expected,
             const binary::ValueTypeList& actual);
-bool IsSame(Context&, const StackType& expected, const StackType& actual);
-bool IsSame(Context&, StackTypeSpan expected, StackTypeSpan actual);
-bool IsSame(Context& context,
+bool IsSame(ValidCtx&, const StackType& expected, const StackType& actual);
+bool IsSame(ValidCtx&, StackTypeSpan expected, StackTypeSpan actual);
+bool IsSame(ValidCtx& ctx,
             const binary::StorageType& expected,
             const binary::StorageType& actual);
-bool IsSame(Context& context,
+bool IsSame(ValidCtx& ctx,
             const binary::FieldType& expected,
             const binary::FieldType& actual);
-bool IsSame(Context& context,
+bool IsSame(ValidCtx& ctx,
             const binary::FieldTypeList& expected,
             const binary::FieldTypeList& actual);
-bool IsSame(Context& context,
+bool IsSame(ValidCtx& ctx,
             const binary::FunctionType& expected,
             const binary::FunctionType& actual);
-bool IsSame(Context& context,
+bool IsSame(ValidCtx& ctx,
             const binary::StructType& expected,
             const binary::StructType& actual);
-bool IsSame(Context& context,
+bool IsSame(ValidCtx& ctx,
             const binary::ArrayType& expected,
             const binary::ArrayType& actual);
-bool IsSame(Context& context,
+bool IsSame(ValidCtx& ctx,
             const binary::DefinedType& expected,
             const binary::DefinedType& actual);
 
-bool IsMatch(Context&,
+bool IsMatch(ValidCtx&,
              const binary::HeapType& expected,
              const binary::HeapType& actual);
-bool IsMatch(Context&,
+bool IsMatch(ValidCtx&,
              const binary::RefType& expected,
              const binary::RefType& actual);
-bool IsMatch(Context&,
+bool IsMatch(ValidCtx&,
              const binary::ReferenceType& expected,
              const binary::ReferenceType& actual);
-bool IsMatch(Context&, const binary::Rtt& expected, const binary::Rtt& actual);
-bool IsMatch(Context&,
+bool IsMatch(ValidCtx&, const binary::Rtt& expected, const binary::Rtt& actual);
+bool IsMatch(ValidCtx&,
              const binary::ValueType& expected,
              const binary::ValueType& actual);
-bool IsMatch(Context&,
+bool IsMatch(ValidCtx&,
              const binary::ValueTypeList& expected,
              const binary::ValueTypeList& actual);
-bool IsMatch(Context&, const StackType& expected, const StackType& actual);
-bool IsMatch(Context&, StackTypeSpan expected, StackTypeSpan actual);
-bool IsMatch(Context& context,
+bool IsMatch(ValidCtx&, const StackType& expected, const StackType& actual);
+bool IsMatch(ValidCtx&, StackTypeSpan expected, StackTypeSpan actual);
+bool IsMatch(ValidCtx& ctx,
              const binary::StorageType& expected,
              const binary::StorageType& actual);
-bool IsMatch(Context& context,
+bool IsMatch(ValidCtx& ctx,
              const binary::FieldType& expected,
              const binary::FieldType& actual);
-bool IsMatch(Context& context,
+bool IsMatch(ValidCtx& ctx,
              const binary::FieldTypeList& expected,
              const binary::FieldTypeList& actual);
-bool IsMatch(Context& context,
+bool IsMatch(ValidCtx& ctx,
              const binary::FunctionType& expected,
              const binary::FunctionType& actual);
-bool IsMatch(Context& context,
+bool IsMatch(ValidCtx& ctx,
              const binary::StructType& expected,
              const binary::StructType& actual);
-bool IsMatch(Context& context,
+bool IsMatch(ValidCtx& ctx,
              const binary::ArrayType& expected,
              const binary::ArrayType& actual);
-bool IsMatch(Context& context,
+bool IsMatch(ValidCtx& ctx,
              const binary::DefinedType& expected,
              const binary::DefinedType& actual);
 

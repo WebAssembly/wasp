@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"
 #include "test/test_utils.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
@@ -26,8 +26,8 @@ using namespace ::wasp::test;
 
 TEST(BinaryLazyExprTest, Basic) {
   TestErrors errors;
-  Context context{errors};
-  auto expr = ReadExpression("\x00"_su8, context);
+  ReadCtx ctx{errors};
+  auto expr = ReadExpression("\x00"_su8, ctx);
   auto it = expr.begin(), end = expr.end();
   EXPECT_EQ((At{"\x00"_su8, Instruction{At{"\x00"_su8, Opcode::Unreachable}}}),
             *it++);
@@ -36,8 +36,8 @@ TEST(BinaryLazyExprTest, Basic) {
 
 TEST(BinaryLazyExprTest, Multiple) {
   TestErrors errors;
-  Context context{errors};
-  auto expr = ReadExpression("\x01\x01"_su8, context);
+  ReadCtx ctx{errors};
+  auto expr = ReadExpression("\x01\x01"_su8, ctx);
   auto it = expr.begin(), end = expr.end();
   EXPECT_EQ((At{"\x01"_su8, Instruction{At{"\x01"_su8, Opcode::Nop}}}), *it++);
   ASSERT_NE(end, it);
@@ -47,11 +47,11 @@ TEST(BinaryLazyExprTest, Multiple) {
 
 TEST(BinaryLazyExprTest, SimpleFunction) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   // local.get 0
   // local.get 1
   // i32.add
-  auto expr = ReadExpression("\x20\x00\x20\x01\x6a"_su8, context);
+  auto expr = ReadExpression("\x20\x00\x20\x01\x6a"_su8, ctx);
   auto it = expr.begin(), end = expr.end();
   EXPECT_EQ((At{"\x20\x00"_su8, Instruction{At{"\x20"_su8, Opcode::LocalGet},
                                             At{"\x00"_su8, Index{0}}}}),

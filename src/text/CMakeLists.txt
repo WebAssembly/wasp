@@ -21,30 +21,30 @@ add_library(libwasp_text
   ../../include/wasp/text/numeric.h
   ../../include/wasp/text/read.h
   ../../include/wasp/text/resolve.h
-  ../../include/wasp/text/resolve_context.h
+  ../../include/wasp/text/resolve_ctx.h
   ../../include/wasp/text/types.h
   ../../include/wasp/text/write.h
   ../../include/wasp/text/token_type.inc
-  ../../include/wasp/text/read/context.h
   ../../include/wasp/text/read/lex.h
   ../../include/wasp/text/read/location_guard.h
   ../../include/wasp/text/read/macros.h
   ../../include/wasp/text/read/name_map.h
+  ../../include/wasp/text/read/read_ctx.h
   ../../include/wasp/text/read/token-inl.h
   ../../include/wasp/text/read/token.h
   ../../include/wasp/text/read/tokenizer-inl.h
   ../../include/wasp/text/read/tokenizer.h
 
-  context.cc
   desugar.cc
   formatters.cc
   lex.cc
   name_map.cc
   numeric.cc
   read.cc
+  read_ctx.cc
   read_script.cc
   resolve.cc
-  resolve_context.cc
+  resolve_ctx.cc
   token.cc
   types.cc
 )

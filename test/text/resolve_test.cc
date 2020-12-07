@@ -21,9 +21,9 @@
 #include "test/text/constants.h"
 #include "wasp/base/errors.h"
 #include "wasp/text/formatters.h"
-#include "wasp/text/read/context.h"
 #include "wasp/text/read/name_map.h"
-#include "wasp/text/resolve_context.h"
+#include "wasp/text/read/read_ctx.h"
+#include "wasp/text/resolve_ctx.h"
 
 using namespace ::wasp;
 using namespace ::wasp::text;
@@ -56,7 +56,7 @@ class TextResolveTest : public ::testing::Test {
   template <typename T>
   void OK(const T& expected, const T& before) {
     T actual = before;
-    Resolve(context, actual);
+    Resolve(ctx, actual);
     EXPECT_EQ(expected, actual);
     ExpectNoErrors(errors);
   }
@@ -64,33 +64,33 @@ class TextResolveTest : public ::testing::Test {
   template <typename T, typename... Args>
   void Fail(const ErrorList& expected_error, const T& value, Args&&... args) {
     T copy = value;
-    Resolve(context, copy, std::forward<Args>(args)...);
+    Resolve(ctx, copy, std::forward<Args>(args)...);
     ExpectError(expected_error, errors);
     errors.Clear();
   }
 
   template <typename T>
   void OKDefine(const T& value) {
-    Define(context, value);
+    Define(ctx, value);
     ExpectNoErrors(errors);
   }
 
   template <typename T>
   void FailDefine(const ErrorList& expected_error, const T& value) {
-    Define(context, value);
+    Define(ctx, value);
     ExpectError(expected_error, errors);
     errors.Clear();
   }
 
   template <typename T>
   void FailDefineTypes(const ErrorList& expected_error, const T& value) {
-    DefineTypes(context, value);
+    DefineTypes(ctx, value);
     ExpectError(expected_error, errors);
     errors.Clear();
   }
 
   TestErrors errors;
-  ResolveContext context{errors};
+  ResolveCtx ctx{errors};
 };
 
 TEST_F(TextResolveTest, Var_Undefined) {
@@ -99,7 +99,7 @@ TEST_F(TextResolveTest, Var_Undefined) {
 }
 
 TEST_F(TextResolveTest, HeapType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   // HeapKind
   OK(HeapType{HeapKind::Func}, HeapType{HeapKind::Func});
@@ -109,13 +109,13 @@ TEST_F(TextResolveTest, HeapType) {
 }
 
 TEST_F(TextResolveTest, RefType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   OK(Resolved_RefType_0, RefType_T);
 }
 
 TEST_F(TextResolveTest, ReferenceType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   // ReferenceKind
   OK(RT_Funcref, RT_Funcref);
@@ -125,7 +125,7 @@ TEST_F(TextResolveTest, ReferenceType) {
 }
 
 TEST_F(TextResolveTest, Rtt) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   // RTTs that don't need resolving.
   OK(RTT_0_Func, RTT_0_Func);
@@ -142,7 +142,7 @@ TEST_F(TextResolveTest, Rtt) {
 }
 
 TEST_F(TextResolveTest, ValueType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   // NumericType
   OK(VT_I32, VT_I32);
@@ -155,7 +155,7 @@ TEST_F(TextResolveTest, ValueType) {
 }
 
 TEST_F(TextResolveTest, ValueTypeList) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   OK(
       // [i32, ref 0]
@@ -165,7 +165,7 @@ TEST_F(TextResolveTest, ValueTypeList) {
 }
 
 TEST_F(TextResolveTest, StorageType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   // ValueType
   OK(StorageType{VT_I32}, StorageType{VT_I32});
@@ -177,7 +177,7 @@ TEST_F(TextResolveTest, StorageType) {
 }
 
 TEST_F(TextResolveTest, FunctionType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   OK(
       // (func (param i32) (result ref 0))
@@ -187,12 +187,12 @@ TEST_F(TextResolveTest, FunctionType) {
 }
 
 TEST_F(TextResolveTest, FunctionTypeUse) {
-  context.type_names.NewBound("$a"_sv);
-  context.function_type_map.Define(
+  ctx.type_names.NewBound("$a"_sv);
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
 
-  context.type_names.NewBound("$b"_sv);
-  context.function_type_map.Define(
+  ctx.type_names.NewBound("$b"_sv);
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT_F32}}, {}});
 
   // Resolve the variable name to an index, and populate the function type.
@@ -210,16 +210,16 @@ TEST_F(TextResolveTest, FunctionTypeUse) {
 
 TEST_F(TextResolveTest, FunctionTypeUse_ReuseType) {
   auto bound_function_type = BoundFunctionType{{BVT{nullopt, VT_I32}}, {}};
-  context.function_type_map.Define(bound_function_type);
+  ctx.function_type_map.Define(bound_function_type);
 
   OK(FunctionDesc{nullopt, Var{Index{0}}, bound_function_type},
      FunctionDesc{nullopt, nullopt, bound_function_type});
 
-  ASSERT_EQ(1u, context.function_type_map.Size());
+  ASSERT_EQ(1u, ctx.function_type_map.Size());
 }
 
 TEST_F(TextResolveTest, FunctionTypeUse_DeferType) {
-  FunctionTypeMap& ftm = context.function_type_map;
+  FunctionTypeMap& ftm = ctx.function_type_map;
 
   ftm.Define(BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
   ftm.Define(BoundFunctionType{{BVT{nullopt, VT_I64}}, {}});
@@ -245,7 +245,7 @@ TEST_F(TextResolveTest, FunctionTypeUse_DeferType) {
 
 TEST_F(TextResolveTest, FunctionTypeUse_NoFunctionTypeInContext) {
   FunctionTypeUse type_use;
-  Resolve(context, type_use);
+  Resolve(ctx, type_use);
   EXPECT_EQ((FunctionTypeUse{Var{Index{0}}, {}}), type_use);
 }
 
@@ -253,17 +253,17 @@ TEST_F(TextResolveTest, FunctionTypeUse_IndexOOBWithExplicitParams) {
   FunctionTypeUse function_type_use;
   function_type_use.type_use = At{loc1, Var{Index{0}}};
   function_type_use.type = At{FunctionType{{VT_I32}, {}}};
-  Resolve(context, function_type_use);
+  Resolve(ctx, function_type_use);
   ExpectError(ErrorList{{loc1, "Invalid type index 0"}}, errors);
 }
 
 TEST_F(TextResolveTest, BoundValueType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
   OK(BVT{nullopt, Resolved_VT_Ref0}, BVT{nullopt, VT_RefT});
 }
 
 TEST_F(TextResolveTest, BoundValueTypeList) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
   OK(  // (param $a i32) (param ref 0)
       BoundValueTypeList{BVT{"$a"_sv, VT_I32}, BVT{nullopt, Resolved_VT_Ref0}},
       // (param $a i32) (param ref $t)
@@ -271,7 +271,7 @@ TEST_F(TextResolveTest, BoundValueTypeList) {
 }
 
 TEST_F(TextResolveTest, BoundFunctionType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
   OK(  // (func (param $a i32) (result ref 0))
       BoundFunctionType{{BVT{"$a"_sv, VT_I32}}, {Resolved_VT_Ref0}},
       // (func (param $a i32) (result ref $t))
@@ -281,7 +281,7 @@ TEST_F(TextResolveTest, BoundFunctionType) {
 TEST_F(TextResolveTest, BoundFunctionTypeUse_NoFunctionTypeInContext) {
   OptAt<Var> type_use;
   At<BoundFunctionType> type;
-  Resolve(context, type_use, type);
+  Resolve(ctx, type_use, type);
   EXPECT_EQ(Var{Index{0}}, type_use);
   EXPECT_EQ(At{BoundFunctionType{}}, type);
 }
@@ -290,13 +290,13 @@ TEST_F(TextResolveTest, BoundFunctionType_IndexOOBWithExplicitParams) {
   OptAt<Var> type_use = At{loc1, Var{Index{0}}};
   At<BoundFunctionType> type =
       At{BoundFunctionType{{BVT{nullopt, VT_I32}}, {}}};
-  Resolve(context, type_use, type);
+  Resolve(ctx, type_use, type);
   ExpectError(ErrorList{{loc1, "Invalid type index 0"}}, errors);
 }
 
 TEST_F(TextResolveTest, BlockImmediate) {
-  context.type_names.NewBound("$a"_sv);
-  context.function_type_map.Define(
+  ctx.type_names.NewBound("$a"_sv);
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
 
   OK(BlockImmediate{nullopt,
@@ -305,8 +305,8 @@ TEST_F(TextResolveTest, BlockImmediate) {
 }
 
 TEST_F(TextResolveTest, BlockImmediate_RefType) {
-  context.type_names.NewBound("$t"_sv);
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t"_sv);
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(
       // (type 1) (param (ref 0))
@@ -330,15 +330,15 @@ TEST_F(TextResolveTest, BlockImmediate_InlineType) {
            nullopt, FunctionTypeUse{nullopt, FunctionType{{}, {value_type}}}});
   }
 
-  // None of the inline block types should extend the context's function type
+  // None of the inline block types should extend the ctx's function type
   // map.
-  auto defined_types = context.function_type_map.EndModule();
-  EXPECT_EQ(0u, context.function_type_map.Size());
+  auto defined_types = ctx.function_type_map.EndModule();
+  EXPECT_EQ(0u, ctx.function_type_map.Size());
   EXPECT_EQ(0u, defined_types.size());
 }
 
 TEST_F(TextResolveTest, BlockImmediate_InlineRefType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   OK(
       // (func (result (ref 0)))
@@ -351,9 +351,9 @@ TEST_F(TextResolveTest, BlockImmediate_InlineRefType) {
 }
 
 TEST_F(TextResolveTest, BrOnCastImmediate) {
-  context.label_names.Push();
-  context.label_names.NewBound("$l");
-  context.type_names.NewBound("$t");
+  ctx.label_names.Push();
+  ctx.label_names.NewBound("$l");
+  ctx.type_names.NewBound("$t");
 
   OK(BrOnCastImmediate{Var{Index{0}},
                        HeapType2Immediate{Resolved_HT_0, Resolved_HT_0}},
@@ -361,23 +361,23 @@ TEST_F(TextResolveTest, BrOnCastImmediate) {
 }
 
 TEST_F(TextResolveTest, BrOnExnImmediate) {
-  context.label_names.Push();
-  context.label_names.NewBound("$l");
-  context.event_names.NewBound("$e");
+  ctx.label_names.Push();
+  ctx.label_names.NewBound("$l");
+  ctx.event_names.NewBound("$e");
 
   OK(BrOnExnImmediate{Var{Index{0}}, Var{Index{0}}},
      BrOnExnImmediate{Var{"$l"_sv}, Var{"$e"_sv}});
 }
 
 TEST_F(TextResolveTest, BrTableImmediate) {
-  context.label_names.Push();
-  context.label_names.NewBound("$l0");
-  context.label_names.Push();
-  context.label_names.NewBound("$l1");
-  context.label_names.Push();
-  context.label_names.NewUnbound();
-  context.label_names.Push();
-  context.label_names.NewBound("$l3");
+  ctx.label_names.Push();
+  ctx.label_names.NewBound("$l0");
+  ctx.label_names.Push();
+  ctx.label_names.NewBound("$l1");
+  ctx.label_names.Push();
+  ctx.label_names.NewUnbound();
+  ctx.label_names.Push();
+  ctx.label_names.NewBound("$l3");
 
   OK(BrTableImmediate{{
                           Var{Index{3}},
@@ -394,9 +394,9 @@ TEST_F(TextResolveTest, BrTableImmediate) {
 }
 
 TEST_F(TextResolveTest, CallIndirectImmediate) {
-  context.table_names.NewBound("$t");
-  context.type_names.NewBound("$a");
-  context.function_type_map.Define(
+  ctx.table_names.NewBound("$t");
+  ctx.type_names.NewBound("$a");
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
 
   OK(CallIndirectImmediate{Var{Index{0}},
@@ -406,8 +406,8 @@ TEST_F(TextResolveTest, CallIndirectImmediate) {
 }
 
 TEST_F(TextResolveTest, CallIndirectImmediate_RefType) {
-  context.type_names.NewBound("$t");
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t");
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(
       // call_indirect (type 0) (param (ref 0))
@@ -420,14 +420,14 @@ TEST_F(TextResolveTest, CallIndirectImmediate_RefType) {
 }
 
 TEST_F(TextResolveTest, HeapType2Immediate) {
-  context.type_names.NewBound("$t");
+  ctx.type_names.NewBound("$t");
 
   OK(HeapType2Immediate{Resolved_HT_0, Resolved_HT_0},
      HeapType2Immediate{HT_T, HT_T});
 }
 
 TEST_F(TextResolveTest, RttSubImmediate) {
-  context.type_names.NewBound("$t");
+  ctx.type_names.NewBound("$t");
 
   OK(RttSubImmediate{Index{1},
                      HeapType2Immediate{Resolved_HT_0, Resolved_HT_0}},
@@ -435,16 +435,16 @@ TEST_F(TextResolveTest, RttSubImmediate) {
 }
 
 TEST_F(TextResolveTest, StructFieldImmediate) {
-  context.type_names.NewBound("$S1");
+  ctx.type_names.NewBound("$S1");
   {
-    auto& name_map = context.NewFieldNameMap(0);
+    auto& name_map = ctx.NewFieldNameMap(0);
     name_map.NewBound("$F1");
     name_map.NewBound("$F2");
   }
 
   {
-    context.type_names.NewBound("$S2");
-    auto& name_map = context.NewFieldNameMap(1);
+    ctx.type_names.NewBound("$S2");
+    auto& name_map = ctx.NewFieldNameMap(1);
     name_map.NewBound("$F3");
   }
 
@@ -497,8 +497,8 @@ TEST_F(TextResolveTest, Instruction_NoOp) {
 }
 
 TEST_F(TextResolveTest, Instruction_BlockImmediate) {
-  context.type_names.NewBound("$a"_sv);
-  context.function_type_map.Define(
+  ctx.type_names.NewBound("$a"_sv);
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
 
   OK(I{O::Block,
@@ -516,8 +516,8 @@ TEST_F(TextResolveTest, Instruction_BlockImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_BlockImmediate_RefType) {
-  context.type_names.NewBound("$t"_sv);
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t"_sv);
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(
       // block (type 1) (param (ref 0))
@@ -532,9 +532,9 @@ TEST_F(TextResolveTest, Instruction_BlockImmediate_RefType) {
 }
 
 TEST_F(TextResolveTest, Instruction_BrOnCastImmediate) {
-  context.label_names.Push();
-  context.label_names.NewBound("$l");
-  context.type_names.NewBound("$t");
+  ctx.label_names.Push();
+  ctx.label_names.NewBound("$l");
+  ctx.type_names.NewBound("$t");
 
   OK(I{O::BrOnCast,
        BrOnCastImmediate{Var{Index{0}},
@@ -544,28 +544,28 @@ TEST_F(TextResolveTest, Instruction_BrOnCastImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_BrOnExnImmediate) {
-  context.label_names.Push();
-  context.label_names.NewBound("$l");
-  context.event_names.NewBound("$e");
+  ctx.label_names.Push();
+  ctx.label_names.NewBound("$l");
+  ctx.event_names.NewBound("$e");
 
   OK(I{O::BrOnExn, BrOnExnImmediate{Var{Index{0}}, Var{Index{0}}}},
      I{O::BrOnExn, BrOnExnImmediate{Var{"$l"_sv}, Var{"$e"_sv}}});
 }
 
 TEST_F(TextResolveTest, Instruction_BrTableImmediate) {
-  context.label_names.Push();
-  context.label_names.NewBound("$l0");
-  context.label_names.Push();
-  context.label_names.NewBound("$l1");
+  ctx.label_names.Push();
+  ctx.label_names.NewBound("$l0");
+  ctx.label_names.Push();
+  ctx.label_names.NewBound("$l1");
 
   OK(I{O::BrTable, BrTableImmediate{{Var{Index{1}}}, Var{Index{0}}}},
      I{O::BrTable, BrTableImmediate{{Var{"$l0"_sv}}, Var{"$l1"_sv}}});
 }
 
 TEST_F(TextResolveTest, Instruction_CallIndirectImmediate) {
-  context.table_names.NewBound("$t");
-  context.type_names.NewBound("$a");
-  context.function_type_map.Define(
+  ctx.table_names.NewBound("$t");
+  ctx.type_names.NewBound("$a");
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
 
   OK(I{O::CallIndirect,
@@ -587,8 +587,8 @@ TEST_F(TextResolveTest, Instruction_CallIndirectImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_CallIndirectImmediate_RefType) {
-  context.type_names.NewBound("$t");
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t");
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(
       // call_indirect (type 1) (param (ref 0))
@@ -603,32 +603,32 @@ TEST_F(TextResolveTest, Instruction_CallIndirectImmediate_RefType) {
 }
 
 TEST_F(TextResolveTest, Instruction_CopyImmediate_Table) {
-  context.table_names.NewBound("$t0");
-  context.table_names.NewBound("$t1");
+  ctx.table_names.NewBound("$t0");
+  ctx.table_names.NewBound("$t1");
 
   OK(I{O::TableCopy, CopyImmediate{Var{Index{0}}, Var{Index{1}}}},
      I{O::TableCopy, CopyImmediate{Var{"$t0"_sv}, Var{"$t1"_sv}}});
 }
 
 TEST_F(TextResolveTest, Instruction_CopyImmediate_Memory) {
-  context.memory_names.NewBound("$m0");
-  context.memory_names.NewBound("$m1");
+  ctx.memory_names.NewBound("$m0");
+  ctx.memory_names.NewBound("$m1");
 
   OK(I{O::MemoryCopy, CopyImmediate{Var{Index{0}}, Var{Index{1}}}},
      I{O::MemoryCopy, CopyImmediate{Var{"$m0"_sv}, Var{"$m1"_sv}}});
 }
 
 TEST_F(TextResolveTest, Instruction_InitImmediate_Table) {
-  context.element_segment_names.NewBound("$e");
-  context.table_names.NewBound("$t");
+  ctx.element_segment_names.NewBound("$e");
+  ctx.table_names.NewBound("$t");
 
   OK(I{O::TableInit, InitImmediate{Var{Index{0}}, Var{Index{0}}}},
      I{O::TableInit, InitImmediate{Var{"$e"_sv}, Var{"$t"_sv}}});
 }
 
 TEST_F(TextResolveTest, Instruction_FuncBindImmediate) {
-  context.type_names.NewBound("$a");
-  context.function_type_map.Define(
+  ctx.type_names.NewBound("$a");
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
 
   OK(I{O::FuncBind, FuncBindImmediate{FunctionTypeUse{
@@ -643,7 +643,7 @@ TEST_F(TextResolveTest, Instruction_FuncBindImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_HeapType2Immediate) {
-  context.type_names.NewBound("$t");
+  ctx.type_names.NewBound("$t");
 
   OK(I{O::RefTest, HeapType2Immediate{Resolved_HT_0, Resolved_HT_0}},
      I{O::RefTest, HeapType2Immediate{HT_T, HT_T}});
@@ -653,15 +653,15 @@ TEST_F(TextResolveTest, Instruction_HeapType2Immediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_InitImmediate_Memory) {
-  context.data_segment_names.NewBound("$d");
-  context.memory_names.NewBound("$m");
+  ctx.data_segment_names.NewBound("$d");
+  ctx.memory_names.NewBound("$m");
 
   OK(I{O::MemoryInit, InitImmediate{Var{Index{0}}, Var{Index{0}}}},
      I{O::MemoryInit, InitImmediate{Var{"$d"_sv}, Var{"$m"_sv}}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Function) {
-  context.function_names.NewBound("$f");
+  ctx.function_names.NewBound("$f");
 
   OK(I{O::Call, Var{Index{0}}}, I{O::Call, Var{"$f"_sv}});
   OK(I{O::ReturnCall, Var{Index{0}}}, I{O::ReturnCall, Var{"$f"_sv}});
@@ -669,7 +669,7 @@ TEST_F(TextResolveTest, Instruction_Var_Function) {
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Table) {
-  context.table_names.NewBound("$t");
+  ctx.table_names.NewBound("$t");
 
   OK(I{O::TableFill, Var{Index{0}}}, I{O::TableFill, Var{"$t"_sv}});
   OK(I{O::TableGet, Var{Index{0}}}, I{O::TableGet, Var{"$t"_sv}});
@@ -679,40 +679,40 @@ TEST_F(TextResolveTest, Instruction_Var_Table) {
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Global) {
-  context.global_names.NewBound("$t");
+  ctx.global_names.NewBound("$t");
 
   OK(I{O::GlobalGet, Var{Index{0}}}, I{O::GlobalGet, Var{"$t"_sv}});
   OK(I{O::GlobalSet, Var{Index{0}}}, I{O::GlobalSet, Var{"$t"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Event) {
-  context.event_names.NewBound("$e");
+  ctx.event_names.NewBound("$e");
 
   OK(I{O::Throw, Var{Index{0}}}, I{O::Throw, Var{"$e"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Element) {
-  context.element_segment_names.NewBound("$e");
+  ctx.element_segment_names.NewBound("$e");
 
   OK(I{O::ElemDrop, Var{Index{0}}}, I{O::ElemDrop, Var{"$e"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Data) {
-  context.data_segment_names.NewBound("$d");
+  ctx.data_segment_names.NewBound("$d");
 
   OK(I{O::DataDrop, Var{Index{0}}}, I{O::DataDrop, Var{"$d"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Label) {
-  context.label_names.Push();
-  context.label_names.NewBound("$l");
+  ctx.label_names.Push();
+  ctx.label_names.NewBound("$l");
 
   OK(I{O::BrIf, Var{Index{0}}}, I{O::BrIf, Var{"$l"_sv}});
   OK(I{O::Br, Var{Index{0}}}, I{O::Br, Var{"$l"_sv}});
 }
 
 TEST_F(TextResolveTest, Instruction_Var_Local) {
-  context.local_names.NewBound("$l");
+  ctx.local_names.NewBound("$l");
 
   OK(I{O::LocalGet, Var{Index{0}}}, I{O::LocalGet, Var{"$l"_sv}});
   OK(I{O::LocalSet, Var{Index{0}}}, I{O::LocalSet, Var{"$l"_sv}});
@@ -720,14 +720,14 @@ TEST_F(TextResolveTest, Instruction_Var_Local) {
 }
 
 TEST_F(TextResolveTest, Instruction_HeapType) {
-  context.type_names.NewBound("$t");
+  ctx.type_names.NewBound("$t");
 
   OK(I{O::RefNull, Resolved_HT_0}, I{O::RefNull, HT_T});
 }
 
 TEST_F(TextResolveTest, Instruction_LetImmediate) {
-  context.type_names.NewBound("$t");
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t");
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(I{O::Let,
        LetImmediate{
@@ -743,7 +743,7 @@ TEST_F(TextResolveTest, Instruction_LetImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_RttSubImmediate) {
-  context.type_names.NewBound("$t");
+  ctx.type_names.NewBound("$t");
 
   OK(I{O::RttSub, RttSubImmediate{Index{1}, HeapType2Immediate{Resolved_HT_0,
                                                                Resolved_HT_0}}},
@@ -751,15 +751,15 @@ TEST_F(TextResolveTest, Instruction_RttSubImmediate) {
 }
 
 TEST_F(TextResolveTest, Instruction_SelectImmediate) {
-  context.type_names.NewBound("$t");
+  ctx.type_names.NewBound("$t");
 
   OK(I{O::SelectT, SelectImmediate{VT_I32, Resolved_VT_Ref0}},
      I{O::SelectT, SelectImmediate{VT_I32, VT_RefT}});
 }
 
 TEST_F(TextResolveTest, Instruction_StructFieldImmediate) {
-  context.type_names.NewBound("$S");
-  auto& name_map = context.NewFieldNameMap(0);
+  ctx.type_names.NewBound("$S");
+  auto& name_map = ctx.NewFieldNameMap(0);
   name_map.NewBound("$F");
 
   OK(I{O::StructGet, StructFieldImmediate{Var{Index{0}}, Var{Index{0}}}},
@@ -767,8 +767,8 @@ TEST_F(TextResolveTest, Instruction_StructFieldImmediate) {
 }
 
 TEST_F(TextResolveTest, InstructionList) {
-  context.function_names.NewBound("$f");
-  context.local_names.NewBound("$l");
+  ctx.function_names.NewBound("$f");
+  ctx.local_names.NewBound("$l");
 
   OK(
       InstructionList{
@@ -784,7 +784,7 @@ TEST_F(TextResolveTest, InstructionList) {
 }
 
 TEST_F(TextResolveTest, InstructionList_LabelReuse) {
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(
       InstructionList{
@@ -812,7 +812,7 @@ TEST_F(TextResolveTest, InstructionList_LabelReuse) {
 }
 
 TEST_F(TextResolveTest, InstructionList_LabelDuplicate) {
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(
       InstructionList{
@@ -834,7 +834,7 @@ TEST_F(TextResolveTest, InstructionList_LabelDuplicate) {
 }
 
 TEST_F(TextResolveTest, InstructionList_EndBlock) {
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(
       InstructionList{
@@ -858,14 +858,14 @@ TEST_F(TextResolveTest, InstructionList_EndBlock) {
 }
 
 TEST_F(TextResolveTest, FieldType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   OK(FieldType{nullopt, StorageType{Resolved_VT_Ref0}, Mutability::Const},
      FieldType{nullopt, StorageType{VT_RefT}, Mutability::Const});
 }
 
 TEST_F(TextResolveTest, FieldTypeList) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   OK(FieldTypeList{FieldType{nullopt, StorageType{VT_Funcref}, Mutability::Var},
                    FieldType{nullopt, StorageType{Resolved_VT_Ref0},
@@ -878,7 +878,7 @@ TEST_F(TextResolveTest, FieldTypeList) {
 }
 
 TEST_F(TextResolveTest, StructType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   OK(StructType{FieldTypeList{
          FieldType{nullopt, StorageType{Resolved_VT_Ref0}, Mutability::Const}}},
@@ -887,7 +887,7 @@ TEST_F(TextResolveTest, StructType) {
 }
 
 TEST_F(TextResolveTest, ArrayType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   OK(ArrayType{FieldType{nullopt, StorageType{Resolved_VT_Ref0},
                          Mutability::Const}},
@@ -895,7 +895,7 @@ TEST_F(TextResolveTest, ArrayType) {
 }
 
 TEST_F(TextResolveTest, DefinedType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   OK(
       // type (param (ref 0)) (result i32)
@@ -911,7 +911,7 @@ TEST_F(TextResolveTest, DefinedType) {
 }
 
 TEST_F(TextResolveTest, DefinedType_gc) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   // StructType
   OK(
@@ -936,7 +936,7 @@ TEST_F(TextResolveTest, DefinedType_gc) {
 }
 
 TEST_F(TextResolveTest, DefinedType_DuplicateName) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   FailDefineTypes({{loc1, "Variable $t is already bound to index 0"}},
                   DefinedType{At{loc1, "$t"_sv}, BoundFunctionType{}});
@@ -946,12 +946,12 @@ TEST_F(TextResolveTest, DefinedType_DistinctTypes) {
   OKDefine(DefinedType{"$a"_sv, BoundFunctionType{}});
   OKDefine(DefinedType{"$b"_sv, BoundFunctionType{}});
 
-  ASSERT_EQ(2u, context.function_type_map.Size());
+  ASSERT_EQ(2u, ctx.function_type_map.Size());
 }
 
 TEST_F(TextResolveTest, FunctionDesc) {
-  context.type_names.NewBound("$a"_sv);
-  context.function_type_map.Define(
+  ctx.type_names.NewBound("$a"_sv);
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{"$p"_sv, VT_I32}}, {}});
 
   // $p param name is not copied.
@@ -967,8 +967,8 @@ TEST_F(TextResolveTest, FunctionDesc) {
 }
 
 TEST_F(TextResolveTest, FunctionDesc_RefType) {
-  context.type_names.NewBound("$t"_sv);
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t"_sv);
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(  // type (type 1) (param (ref 0))
       FunctionDesc{nullopt, Var{Index{1}},
@@ -979,7 +979,7 @@ TEST_F(TextResolveTest, FunctionDesc_RefType) {
 }
 
 TEST_F(TextResolveTest, FunctionDesc_DuplicateName) {
-  context.function_names.NewBound("$f"_sv);
+  ctx.function_names.NewBound("$f"_sv);
 
   FailDefine({{loc1, "Variable $f is already bound to index 0"}},
              FunctionDesc{At{loc1, "$f"_sv}, nullopt, {}});
@@ -994,39 +994,39 @@ TEST_F(TextResolveTest, FunctionDesc_DuplicateParamName) {
 }
 
 TEST_F(TextResolveTest, TableType) {
-  context.type_names.NewBound("$t");
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t");
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(TableType{Limits{0}, Resolved_RT_Ref0}, TableType{Limits{0}, RT_RefT});
 }
 
 TEST_F(TextResolveTest, TableDesc) {
-  context.type_names.NewBound("$t");
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t");
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(TableDesc{nullopt, TableType{Limits{0}, Resolved_RT_Ref0}},
      TableDesc{nullopt, TableType{Limits{0}, RT_RefT}});
 }
 
 TEST_F(TextResolveTest, GlobalType) {
-  context.type_names.NewBound("$t");
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t");
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(GlobalType{Resolved_VT_Ref0, Mutability::Const},
      GlobalType{VT_RefT, Mutability::Const});
 }
 
 TEST_F(TextResolveTest, GlobalDesc) {
-  context.type_names.NewBound("$t");
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t");
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(GlobalDesc{nullopt, GlobalType{Resolved_VT_Ref0, Mutability::Const}},
      GlobalDesc{nullopt, GlobalType{VT_RefT, Mutability::Const}});
 }
 
 TEST_F(TextResolveTest, EventType) {
-  context.type_names.NewBound("$a");
-  context.function_type_map.Define(
+  ctx.type_names.NewBound("$a");
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
 
   OK(EventType{EventAttribute::Exception,
@@ -1041,8 +1041,8 @@ TEST_F(TextResolveTest, EventType) {
 }
 
 TEST_F(TextResolveTest, EventType_RefType) {
-  context.type_names.NewBound("$t");
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t");
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(  // type (type 1) (param (ref 0))
       EventType{
@@ -1054,8 +1054,8 @@ TEST_F(TextResolveTest, EventType_RefType) {
 }
 
 TEST_F(TextResolveTest, EventDesc) {
-  context.type_names.NewBound("$a");
-  context.function_type_map.Define(
+  ctx.type_names.NewBound("$a");
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
 
   OK(EventDesc{nullopt, EventType{EventAttribute::Exception,
@@ -1066,8 +1066,8 @@ TEST_F(TextResolveTest, EventDesc) {
 }
 
 TEST_F(TextResolveTest, Import_Function) {
-  context.type_names.NewBound("$a"_sv);
-  context.function_type_map.Define(
+  ctx.type_names.NewBound("$a"_sv);
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{"$p"_sv, VT_I32}}, {}});
 
   // $p param name is not copied.
@@ -1079,8 +1079,8 @@ TEST_F(TextResolveTest, Import_Function) {
 }
 
 TEST_F(TextResolveTest, Import_Function_RefType) {
-  context.type_names.NewBound("$t"_sv);
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t"_sv);
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(  // (import "m" "n" (func (param (ref 0))))
       Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
@@ -1101,7 +1101,7 @@ TEST_F(TextResolveTest, Import_Table) {
 }
 
 TEST_F(TextResolveTest, Import_Table_RefType) {
-  context.type_names.NewBound("$t"_sv);
+  ctx.type_names.NewBound("$t"_sv);
 
   OK(  // (import "m" "n" (table 0 (ref 0)))
       Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
@@ -1126,8 +1126,8 @@ TEST_F(TextResolveTest, Import_Global) {
 }
 
 TEST_F(TextResolveTest, Import_Global_RefType) {
-  context.type_names.NewBound("$t"_sv);
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t"_sv);
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
             GlobalDesc{nullopt,
@@ -1137,8 +1137,8 @@ TEST_F(TextResolveTest, Import_Global_RefType) {
 }
 
 TEST_F(TextResolveTest, Import_Event) {
-  context.type_names.NewBound("$a"_sv);
-  context.function_type_map.Define(
+  ctx.type_names.NewBound("$a"_sv);
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{"$p"_sv, VT_I32}}, {}});
 
   // $p param name is not copied.
@@ -1153,8 +1153,8 @@ TEST_F(TextResolveTest, Import_Event) {
 }
 
 TEST_F(TextResolveTest, Import_Event_RefType) {
-  context.type_names.NewBound("$t"_sv);
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t"_sv);
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(  // import "m" "n" (event (type 1) (param (ref 0)))
       Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
@@ -1172,8 +1172,8 @@ TEST_F(TextResolveTest, Import_Event_RefType) {
 }
 
 TEST_F(TextResolveTest, Function) {
-  context.type_names.NewBound("$a"_sv);
-  context.function_type_map.Define(
+  ctx.type_names.NewBound("$a"_sv);
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{"$p"_sv, VT_I32}}, {}});
 
   OK(Function{FunctionDesc{nullopt, Var{Index{0}},
@@ -1188,8 +1188,8 @@ TEST_F(TextResolveTest, Function) {
 }
 
 TEST_F(TextResolveTest, Function_RefType) {
-  context.type_names.NewBound("$t"_sv);
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t"_sv);
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(  // (func (type 1) (param (ref 0)) (local (ref 0)))
       Function{
@@ -1224,7 +1224,7 @@ TEST_F(TextResolveTest, Function_DuplicateParamLocalNames) {
 }
 
 TEST_F(TextResolveTest, ElementExpressionList) {
-  context.function_names.NewBound("$f"_sv);
+  ctx.function_names.NewBound("$f"_sv);
 
   OK(
       ElementExpressionList{
@@ -1238,7 +1238,7 @@ TEST_F(TextResolveTest, ElementExpressionList) {
 }
 
 TEST_F(TextResolveTest, ElementListWithExpressions) {
-  context.function_names.NewBound("$f"_sv);
+  ctx.function_names.NewBound("$f"_sv);
 
   OK(
       ElementListWithExpressions{
@@ -1255,16 +1255,16 @@ TEST_F(TextResolveTest, ElementListWithExpressions) {
 }
 
 TEST_F(TextResolveTest, ElementListWithExpressions_RefType) {
-  context.type_names.NewBound("$t"_sv);
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t"_sv);
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(ElementListWithExpressions{Resolved_RT_Ref0, {}},
      ElementListWithExpressions{RT_RefT, {}});
 }
 
 TEST_F(TextResolveTest, ElementListWithVars) {
-  context.function_names.NewBound("$f"_sv);
-  context.function_names.NewUnbound();
+  ctx.function_names.NewBound("$f"_sv);
+  ctx.function_names.NewUnbound();
 
   OK(ElementListWithVars{ExternalKind::Function,
                          VarList{
@@ -1278,8 +1278,8 @@ TEST_F(TextResolveTest, ElementListWithVars) {
 }
 
 TEST_F(TextResolveTest, ElementList) {
-  context.function_names.NewBound("$f"_sv);
-  context.function_names.NewUnbound();
+  ctx.function_names.NewBound("$f"_sv);
+  ctx.function_names.NewUnbound();
 
   // Expressions.
   OK(ElementList{ElementListWithExpressions{
@@ -1307,7 +1307,7 @@ TEST_F(TextResolveTest, ElementList) {
 }
 
 TEST_F(TextResolveTest, Table) {
-  context.function_names.NewBound("$f"_sv);
+  ctx.function_names.NewBound("$f"_sv);
 
   OK(Table{TableDesc{nullopt, TableType{Limits{0}, RT_Funcref}},
            {},
@@ -1325,8 +1325,8 @@ TEST_F(TextResolveTest, Table) {
 }
 
 TEST_F(TextResolveTest, Table_RefType) {
-  context.type_names.NewBound("$t"_sv);
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t"_sv);
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(  // (table 0 (ref 0))
       Table{
@@ -1343,21 +1343,21 @@ TEST_F(TextResolveTest, Table_RefType) {
 }
 
 TEST_F(TextResolveTest, Table_DuplicateName) {
-  context.table_names.NewBound("$t"_sv);
+  ctx.table_names.NewBound("$t"_sv);
 
   FailDefine({{loc1, "Variable $t is already bound to index 0"}},
              TableDesc{At{loc1, "$t"_sv}, TableType{Limits{0}, RT_Funcref}});
 }
 
 TEST_F(TextResolveTest, Memory_DuplicateName) {
-  context.memory_names.NewBound("$m"_sv);
+  ctx.memory_names.NewBound("$m"_sv);
 
   FailDefine({{loc1, "Variable $m is already bound to index 0"}},
              MemoryDesc{At{loc1, "$m"_sv}, MemoryType{Limits{0}}});
 }
 
 TEST_F(TextResolveTest, Global) {
-  context.global_names.NewBound("$g"_sv);
+  ctx.global_names.NewBound("$g"_sv);
 
   OK(
       Global{
@@ -1373,8 +1373,8 @@ TEST_F(TextResolveTest, Global) {
 }
 
 TEST_F(TextResolveTest, Global_RefType) {
-  context.type_names.NewBound("$t"_sv);
-  context.function_type_map.Define(BoundFunctionType{});
+  ctx.type_names.NewBound("$t"_sv);
+  ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(  // (global (ref 0))
       Global{
@@ -1388,7 +1388,7 @@ TEST_F(TextResolveTest, Global_RefType) {
 }
 
 TEST_F(TextResolveTest, Global_DuplicateName) {
-  context.global_names.NewBound("$g"_sv);
+  ctx.global_names.NewBound("$g"_sv);
 
   FailDefine(
       {{loc1, "Variable $g is already bound to index 0"}},
@@ -1396,21 +1396,21 @@ TEST_F(TextResolveTest, Global_DuplicateName) {
 }
 
 TEST_F(TextResolveTest, Export) {
-  context.function_names.NewBound("$f"_sv);  // 0
-  context.table_names.NewUnbound();
-  context.table_names.NewBound("$t"_sv);  // 1
-  context.memory_names.NewUnbound();
-  context.memory_names.NewUnbound();
-  context.memory_names.NewBound("$m"_sv);  // 2
-  context.global_names.NewUnbound();
-  context.global_names.NewUnbound();
-  context.global_names.NewUnbound();
-  context.global_names.NewBound("$g"_sv);  // 3
-  context.event_names.NewUnbound();
-  context.event_names.NewUnbound();
-  context.event_names.NewUnbound();
-  context.event_names.NewUnbound();
-  context.event_names.NewBound("$e"_sv);  // 4
+  ctx.function_names.NewBound("$f"_sv);  // 0
+  ctx.table_names.NewUnbound();
+  ctx.table_names.NewBound("$t"_sv);  // 1
+  ctx.memory_names.NewUnbound();
+  ctx.memory_names.NewUnbound();
+  ctx.memory_names.NewBound("$m"_sv);  // 2
+  ctx.global_names.NewUnbound();
+  ctx.global_names.NewUnbound();
+  ctx.global_names.NewUnbound();
+  ctx.global_names.NewBound("$g"_sv);  // 3
+  ctx.event_names.NewUnbound();
+  ctx.event_names.NewUnbound();
+  ctx.event_names.NewUnbound();
+  ctx.event_names.NewUnbound();
+  ctx.event_names.NewBound("$e"_sv);  // 4
 
   OK(Export{ExternalKind::Function, Text{"\"f\"", 1}, Var{Index{0}}},
      Export{ExternalKind::Function, Text{"\"f\"", 1}, Var{"$f"_sv}});
@@ -1429,15 +1429,15 @@ TEST_F(TextResolveTest, Export) {
 }
 
 TEST_F(TextResolveTest, Start) {
-  context.function_names.NewBound("$f"_sv);
+  ctx.function_names.NewBound("$f"_sv);
 
   OK(Start{Var{Index{0}}}, Start{Var{"$f"_sv}});
 }
 
 TEST_F(TextResolveTest, ElementSegment) {
-  context.function_names.NewBound("$f"_sv);
-  context.table_names.NewBound("$t"_sv);
-  context.global_names.NewBound("$g"_sv);
+  ctx.function_names.NewBound("$f"_sv);
+  ctx.table_names.NewBound("$t"_sv);
+  ctx.global_names.NewBound("$g"_sv);
 
   OK(ElementSegment{nullopt, Var{Index{0}},
                     ConstantExpression{I{O::GlobalGet, Var{Index{0}}}},
@@ -1450,7 +1450,7 @@ TEST_F(TextResolveTest, ElementSegment) {
 }
 
 TEST_F(TextResolveTest, ElementSegment_DuplicateName) {
-  context.element_segment_names.NewBound("$e"_sv);
+  ctx.element_segment_names.NewBound("$e"_sv);
 
   FailDefine({{loc1, "Variable $e is already bound to index 0"}},
              ElementSegment{At{loc1, "$e"_sv}, nullopt, ConstantExpression{},
@@ -1458,8 +1458,8 @@ TEST_F(TextResolveTest, ElementSegment_DuplicateName) {
 }
 
 TEST_F(TextResolveTest, DataSegment) {
-  context.memory_names.NewBound("$m"_sv);
-  context.global_names.NewBound("$g"_sv);
+  ctx.memory_names.NewBound("$m"_sv);
+  ctx.global_names.NewBound("$g"_sv);
 
   OK(DataSegment{nullopt,
                  Var{Index{0}},
@@ -1472,15 +1472,15 @@ TEST_F(TextResolveTest, DataSegment) {
 }
 
 TEST_F(TextResolveTest, DataSegment_DuplicateName) {
-  context.data_segment_names.NewBound("$d"_sv);
+  ctx.data_segment_names.NewBound("$d"_sv);
 
   FailDefine({{loc1, "Variable $d is already bound to index 0"}},
              DataSegment{At{loc1, "$d"_sv}, nullopt, ConstantExpression{}, {}});
 }
 
 TEST_F(TextResolveTest, Event) {
-  context.type_names.NewBound("$a");
-  context.function_type_map.Define(
+  ctx.type_names.NewBound("$a");
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
 
   OK(Event{EventDesc{nullopt,
@@ -1494,7 +1494,7 @@ TEST_F(TextResolveTest, Event) {
 }
 
 TEST_F(TextResolveTest, Event_DuplicateName) {
-  context.event_names.NewBound("$e"_sv);
+  ctx.event_names.NewBound("$e"_sv);
 
   FailDefine({{loc1, "Variable $e is already bound to index 0"}},
              EventDesc{At{loc1, "$e"_sv}, EventType{EventAttribute::Exception,
@@ -1502,13 +1502,13 @@ TEST_F(TextResolveTest, Event_DuplicateName) {
 }
 
 TEST_F(TextResolveTest, ModuleItem) {
-  context.type_names.NewBound("$a");
-  context.function_names.NewBound("$f");
-  context.table_names.NewBound("$t");
-  context.memory_names.NewBound("$m");
-  context.global_names.NewBound("$g");
+  ctx.type_names.NewBound("$a");
+  ctx.function_names.NewBound("$f");
+  ctx.table_names.NewBound("$t");
+  ctx.memory_names.NewBound("$m");
+  ctx.global_names.NewBound("$g");
 
-  context.function_type_map.Define(
+  ctx.function_type_map.Define(
       BoundFunctionType{{BVT{"$p"_sv, VT_I32}}, {}});
 
   // DefinedType.

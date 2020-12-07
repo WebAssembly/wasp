@@ -18,7 +18,7 @@
 #include "test/binary/constants.h"
 #include "test/valid/test_utils.h"
 #include "wasp/base/features.h"
-#include "wasp/valid/context.h"
+#include "wasp/valid/valid_ctx.h"
 #include "wasp/valid/validate.h"
 
 using namespace ::wasp;
@@ -29,41 +29,41 @@ using namespace ::wasp::valid::test;
 
 TEST(ValidateCodeTest, BeginCode) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.defined_type_count = 1;
-  context.functions.push_back(Function{0});
-  EXPECT_TRUE(BeginCode(context, Location{}));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.defined_type_count = 1;
+  ctx.functions.push_back(Function{0});
+  EXPECT_TRUE(BeginCode(ctx, Location{}));
 }
 
 TEST(ValidateCodeTest, BeginCode_CodeIndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.functions.push_back(Function{0});
-  context.code_count = 1;
-  EXPECT_FALSE(BeginCode(context, Location{}));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.functions.push_back(Function{0});
+  ctx.code_count = 1;
+  EXPECT_FALSE(BeginCode(ctx, Location{}));
 }
 
 TEST(ValidateCodeTest, BeginCode_TypeIndexOOB) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{FunctionType{}});
-  context.functions.push_back(Function{1});
-  EXPECT_FALSE(BeginCode(context, Location{}));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{FunctionType{}});
+  ctx.functions.push_back(Function{1});
+  EXPECT_FALSE(BeginCode(ctx, Location{}));
 }
 
 TEST(ValidateCodeTest, BeginCode_NonFunctionType) {
   TestErrors errors;
-  Context context{errors};
-  context.types.push_back(DefinedType{StructType{}});
-  context.defined_type_count = 1;
-  context.functions.push_back(Function{0});
-  EXPECT_FALSE(BeginCode(context, Location{}));
+  ValidCtx ctx{errors};
+  ctx.types.push_back(DefinedType{StructType{}});
+  ctx.defined_type_count = 1;
+  ctx.functions.push_back(Function{0});
+  EXPECT_FALSE(BeginCode(ctx, Location{}));
 }
 
 TEST(ValidateCodeTest, Locals) {
   TestErrors errors;
-  Context context{errors};
-  EXPECT_TRUE(Validate(context, Locals{10, VT_I32}, RequireDefaultable::Yes));
+  ValidCtx ctx{errors};
+  EXPECT_TRUE(Validate(ctx, Locals{10, VT_I32}, RequireDefaultable::Yes));
 }

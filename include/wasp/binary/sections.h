@@ -43,38 +43,38 @@ using DataCountSection = OptAt<DataCount>;
 using LazyCodeSection = LazySection<Code>;
 using LazyDataSection = LazySection<DataSegment>;
 
-auto ReadTypeSection(SpanU8, Context&) -> LazyTypeSection;
-auto ReadTypeSection(KnownSection, Context&) -> LazyTypeSection;
-auto ReadImportSection(SpanU8, Context&) -> LazyImportSection;
-auto ReadImportSection(KnownSection, Context&) -> LazyImportSection;
-auto ReadFunctionSection(SpanU8, Context&) -> LazyFunctionSection;
-auto ReadFunctionSection(KnownSection, Context&) -> LazyFunctionSection;
-auto ReadTableSection(SpanU8, Context&) -> LazyTableSection;
-auto ReadTableSection(KnownSection, Context&) -> LazyTableSection;
-auto ReadMemorySection(SpanU8, Context&) -> LazyMemorySection;
-auto ReadMemorySection(KnownSection, Context&) -> LazyMemorySection;
-auto ReadGlobalSection(SpanU8, Context&) -> LazyGlobalSection;
-auto ReadGlobalSection(KnownSection, Context&) -> LazyGlobalSection;
-auto ReadEventSection(SpanU8, Context&) -> LazyEventSection;
-auto ReadEventSection(KnownSection, Context&) -> LazyEventSection;
-auto ReadExportSection(SpanU8, Context&) -> LazyExportSection;
-auto ReadExportSection(KnownSection, Context&) -> LazyExportSection;
-auto ReadElementSection(SpanU8, Context&) -> LazyElementSection;
-auto ReadElementSection(KnownSection, Context&) -> LazyElementSection;
-auto ReadDataCountSection(SpanU8, Context&) -> DataCountSection;
-auto ReadDataCountSection(KnownSection, Context&) -> DataCountSection;
-auto ReadCodeSection(SpanU8, Context&) -> LazyCodeSection;
-auto ReadCodeSection(KnownSection, Context&) -> LazyCodeSection;
-auto ReadDataSection(SpanU8, Context&) -> LazyDataSection;
-auto ReadDataSection(KnownSection, Context&) -> LazyDataSection;
+auto ReadTypeSection(SpanU8, ReadCtx&) -> LazyTypeSection;
+auto ReadTypeSection(KnownSection, ReadCtx&) -> LazyTypeSection;
+auto ReadImportSection(SpanU8, ReadCtx&) -> LazyImportSection;
+auto ReadImportSection(KnownSection, ReadCtx&) -> LazyImportSection;
+auto ReadFunctionSection(SpanU8, ReadCtx&) -> LazyFunctionSection;
+auto ReadFunctionSection(KnownSection, ReadCtx&) -> LazyFunctionSection;
+auto ReadTableSection(SpanU8, ReadCtx&) -> LazyTableSection;
+auto ReadTableSection(KnownSection, ReadCtx&) -> LazyTableSection;
+auto ReadMemorySection(SpanU8, ReadCtx&) -> LazyMemorySection;
+auto ReadMemorySection(KnownSection, ReadCtx&) -> LazyMemorySection;
+auto ReadGlobalSection(SpanU8, ReadCtx&) -> LazyGlobalSection;
+auto ReadGlobalSection(KnownSection, ReadCtx&) -> LazyGlobalSection;
+auto ReadEventSection(SpanU8, ReadCtx&) -> LazyEventSection;
+auto ReadEventSection(KnownSection, ReadCtx&) -> LazyEventSection;
+auto ReadExportSection(SpanU8, ReadCtx&) -> LazyExportSection;
+auto ReadExportSection(KnownSection, ReadCtx&) -> LazyExportSection;
+auto ReadElementSection(SpanU8, ReadCtx&) -> LazyElementSection;
+auto ReadElementSection(KnownSection, ReadCtx&) -> LazyElementSection;
+auto ReadDataCountSection(SpanU8, ReadCtx&) -> DataCountSection;
+auto ReadDataCountSection(KnownSection, ReadCtx&) -> DataCountSection;
+auto ReadCodeSection(SpanU8, ReadCtx&) -> LazyCodeSection;
+auto ReadCodeSection(KnownSection, ReadCtx&) -> LazyCodeSection;
+auto ReadDataSection(SpanU8, ReadCtx&) -> LazyDataSection;
+auto ReadDataSection(KnownSection, ReadCtx&) -> LazyDataSection;
 
-inline StartSection ReadStartSection(SpanU8 data, Context& context) {
+inline StartSection ReadStartSection(SpanU8 data, ReadCtx& ctx) {
   SpanU8 copy = data;
-  return Read<Start>(&copy, context);
+  return Read<Start>(&copy, ctx);
 }
 
-inline StartSection ReadStartSection(KnownSection sec, Context& context) {
-  return ReadStartSection(sec.data, context);
+inline StartSection ReadStartSection(KnownSection sec, ReadCtx& ctx) {
+  return ReadStartSection(sec.data, ctx);
 }
 
 }  // namespace binary

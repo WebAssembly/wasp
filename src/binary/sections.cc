@@ -21,108 +21,102 @@
 
 namespace wasp::binary {
 
-auto ReadCodeSection(SpanU8 data, Context& context) -> LazyCodeSection {
-  return LazyCodeSection{data, "code section", context};
+auto ReadCodeSection(SpanU8 data, ReadCtx& ctx) -> LazyCodeSection {
+  return LazyCodeSection{data, "code section", ctx};
 }
 
-auto ReadCodeSection(KnownSection sec, Context& context) -> LazyCodeSection {
-  return ReadCodeSection(sec.data, context);
+auto ReadCodeSection(KnownSection sec, ReadCtx& ctx) -> LazyCodeSection {
+  return ReadCodeSection(sec.data, ctx);
 }
 
-auto ReadDataSection(SpanU8 data, Context& context) -> LazyDataSection {
-  return LazyDataSection{data, "data section", context};
+auto ReadDataSection(SpanU8 data, ReadCtx& ctx) -> LazyDataSection {
+  return LazyDataSection{data, "data section", ctx};
 }
 
-auto ReadDataSection(KnownSection sec, Context& context) -> LazyDataSection {
-  return ReadDataSection(sec.data, context);
+auto ReadDataSection(KnownSection sec, ReadCtx& ctx) -> LazyDataSection {
+  return ReadDataSection(sec.data, ctx);
 }
 
-auto ReadDataCountSection(SpanU8 data, Context& context) -> DataCountSection {
+auto ReadDataCountSection(SpanU8 data, ReadCtx& ctx) -> DataCountSection {
   SpanU8 copy = data;
-  return Read<DataCount>(&copy, context);
+  return Read<DataCount>(&copy, ctx);
 }
 
-auto ReadDataCountSection(KnownSection sec, Context& context)
-    -> DataCountSection {
-  return ReadDataCountSection(sec.data, context);
+auto ReadDataCountSection(KnownSection sec, ReadCtx& ctx) -> DataCountSection {
+  return ReadDataCountSection(sec.data, ctx);
 }
 
-auto ReadElementSection(SpanU8 data, Context& context) -> LazyElementSection {
-  return LazyElementSection{data, "element section", context};
+auto ReadElementSection(SpanU8 data, ReadCtx& ctx) -> LazyElementSection {
+  return LazyElementSection{data, "element section", ctx};
 }
 
-auto ReadElementSection(KnownSection sec, Context& context)
-    -> LazyElementSection {
-  return ReadElementSection(sec.data, context);
+auto ReadElementSection(KnownSection sec, ReadCtx& ctx) -> LazyElementSection {
+  return ReadElementSection(sec.data, ctx);
 }
 
-auto ReadEventSection(SpanU8 data, Context& context) -> LazyEventSection {
-  return LazyEventSection{data, "event section", context};
+auto ReadEventSection(SpanU8 data, ReadCtx& ctx) -> LazyEventSection {
+  return LazyEventSection{data, "event section", ctx};
 }
 
-auto ReadEventSection(KnownSection sec, Context& context) -> LazyEventSection {
-  return ReadEventSection(sec.data, context);
+auto ReadEventSection(KnownSection sec, ReadCtx& ctx) -> LazyEventSection {
+  return ReadEventSection(sec.data, ctx);
 }
 
-auto ReadExportSection(SpanU8 data, Context& context) -> LazyExportSection {
-  return LazyExportSection{data, "export section", context};
+auto ReadExportSection(SpanU8 data, ReadCtx& ctx) -> LazyExportSection {
+  return LazyExportSection{data, "export section", ctx};
 }
 
-auto ReadExportSection(KnownSection sec, Context& context)
-    -> LazyExportSection {
-  return ReadExportSection(sec.data, context);
+auto ReadExportSection(KnownSection sec, ReadCtx& ctx) -> LazyExportSection {
+  return ReadExportSection(sec.data, ctx);
 }
 
-auto ReadFunctionSection(SpanU8 data, Context& context) -> LazyFunctionSection {
-  return LazyFunctionSection{data, "function section", context};
+auto ReadFunctionSection(SpanU8 data, ReadCtx& ctx) -> LazyFunctionSection {
+  return LazyFunctionSection{data, "function section", ctx};
 }
 
-auto ReadFunctionSection(KnownSection sec, Context& context)
+auto ReadFunctionSection(KnownSection sec, ReadCtx& ctx)
     -> LazyFunctionSection {
-  return ReadFunctionSection(sec.data, context);
+  return ReadFunctionSection(sec.data, ctx);
 }
 
-auto ReadGlobalSection(SpanU8 data, Context& context) -> LazyGlobalSection {
-  return LazyGlobalSection{data, "global section", context};
+auto ReadGlobalSection(SpanU8 data, ReadCtx& ctx) -> LazyGlobalSection {
+  return LazyGlobalSection{data, "global section", ctx};
 }
 
-auto ReadGlobalSection(KnownSection sec, Context& context)
-    -> LazyGlobalSection {
-  return ReadGlobalSection(sec.data, context);
+auto ReadGlobalSection(KnownSection sec, ReadCtx& ctx) -> LazyGlobalSection {
+  return ReadGlobalSection(sec.data, ctx);
 }
 
-auto ReadImportSection(SpanU8 data, Context& context) -> LazyImportSection {
-  return LazyImportSection{data, "import section", context};
+auto ReadImportSection(SpanU8 data, ReadCtx& ctx) -> LazyImportSection {
+  return LazyImportSection{data, "import section", ctx};
 }
 
-auto ReadImportSection(KnownSection sec, Context& context)
-    -> LazyImportSection {
-  return ReadImportSection(sec.data, context);
+auto ReadImportSection(KnownSection sec, ReadCtx& ctx) -> LazyImportSection {
+  return ReadImportSection(sec.data, ctx);
 }
 
-auto ReadMemorySection(SpanU8 data, Context& context) -> LazyMemorySection {
-  return LazyMemorySection{data, "memory section", context};
+auto ReadMemorySection(SpanU8 data, ReadCtx& ctx) -> LazyMemorySection {
+  return LazyMemorySection{data, "memory section", ctx};
 }
 
-auto ReadMemorySection(KnownSection sec, Context& context)
-    -> LazyMemorySection {
-  return ReadMemorySection(sec.data, context);
+auto ReadMemorySection(KnownSection sec, ReadCtx& ctx) -> LazyMemorySection {
+  return ReadMemorySection(sec.data, ctx);
 }
 
-auto ReadTableSection(SpanU8 data, Context& context) -> LazyTableSection {
-  return LazyTableSection{data, "table section", context};
+auto ReadTableSection(SpanU8 data, ReadCtx& ctx) -> LazyTableSection {
+  return LazyTableSection{data, "table section", ctx};
 }
 
-auto ReadTableSection(KnownSection sec, Context& context) -> LazyTableSection {
-  return ReadTableSection(sec.data, context);
+auto ReadTableSection(KnownSection sec, ReadCtx& ctx) -> LazyTableSection {
+  return ReadTableSection(sec.data, ctx);
 }
 
-auto ReadTypeSection(SpanU8 data, Context& context) -> LazyTypeSection {
-  return LazyTypeSection{data, "type section", context};
+auto ReadTypeSection(SpanU8 data, ReadCtx& ctx) -> LazyTypeSection {
+  return LazyTypeSection{data, "type section", ctx};
 }
 
-auto ReadTypeSection(KnownSection sec, Context& context) -> LazyTypeSection {
-  return ReadTypeSection(sec.data, context);
+auto ReadTypeSection(KnownSection sec, ReadCtx& ctx) -> LazyTypeSection {
+  return ReadTypeSection(sec.data, ctx);
 }
 
 }  // namespace wasp::binary

@@ -18,7 +18,7 @@
 #include "test/test_utils.h"
 #include "wasp/binary/linking_section/sections.h"
 #include "wasp/binary/linking_section/types.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
@@ -41,14 +41,14 @@ void ExpectSubsection(const std::vector<T>& expected, LazySection<T>& sec) {
 
 TEST(BinaryLinkingSectionTest, LinkingSection) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadLinkingSection(
       "\x02"                // Linking version.
       "\x05\x05zzzzz"       // Segment info
       "\x06\x05zzzzz"       // Init functions
       "\x07\x05zzzzz"       // Comdat info
       "\x08\x05zzzzz"_su8,  // Symbol table
-      context);
+      ctx);
 
   auto it = sec.subsections.begin();
   auto end = sec.subsections.end();
@@ -79,13 +79,13 @@ TEST(BinaryLinkingSectionTest, LinkingSection) {
 
 TEST(BinaryLinkingSectionTest, SegmentInfoSubsection) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadSegmentInfoSubsection(
       "\x03"
       "\x01X\x01\x02"
       "\x01Y\x03\x04"
       "\x01Z\x05\x06"_su8,
-      context);
+      ctx);
 
   ExpectSubsection({SegmentInfo{At{"\x01X"_su8, "X"_sv}, At{"\x01"_su8, u32{1}},
                                 At{"\x02"_su8, u32{2}}},
@@ -99,12 +99,12 @@ TEST(BinaryLinkingSectionTest, SegmentInfoSubsection) {
 
 TEST(BinaryLinkingSectionTest, InitFunctionsSubsection) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadInitFunctionsSubsection(
       "\x02"
       "\x01\x02"
       "\x03\x04"_su8,
-      context);
+      ctx);
 
   ExpectSubsection(
       {InitFunction{At{"\x01"_su8, u32{1}}, At{"\x02"_su8, Index{2}}},
@@ -115,12 +115,12 @@ TEST(BinaryLinkingSectionTest, InitFunctionsSubsection) {
 
 TEST(BinaryLinkingSectionTest, ComdatSubsection) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadComdatSubsection(
       "\x02"
       "\x01X\0\x01\x03\x04"
       "\x01Y\0\x00"_su8,
-      context);
+      ctx);
 
   ExpectSubsection(
       {Comdat{At{"\x01X"_su8, "X"_sv},
@@ -135,13 +135,13 @@ TEST(BinaryLinkingSectionTest, ComdatSubsection) {
 
 TEST(BinaryLinkingSectionTest, SymbolTableSubsection) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadSymbolTableSubsection(
       "\x03"
       "\x00\x40\x00\x03YYY"
       "\x01\x00\x03ZZZ\x00\x00\x00"
       "\x03\x00\x00"_su8,
-      context);
+      ctx);
 
   using SI = SymbolInfo;
   using F = SymbolInfo::Flags;

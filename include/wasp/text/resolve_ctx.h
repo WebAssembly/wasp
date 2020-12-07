@@ -72,8 +72,8 @@ class FunctionTypeMap {
   List deferred_list_;
 };
 
-struct ResolveContext {
-  explicit ResolveContext(Errors&);
+struct ResolveCtx {
+  explicit ResolveCtx(Errors&);
 
   void BeginModule();    // Reset all module-specific context.
   void BeginFunction();  // Reset all function-specific context.

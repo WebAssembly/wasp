@@ -27,9 +27,9 @@ class Errors;
 
 namespace binary {
 
-struct Context {
-  explicit Context(Errors&);
-  explicit Context(const Features&, Errors&);
+struct ReadCtx {
+  explicit ReadCtx(Errors&);
+  explicit ReadCtx(const Features&, Errors&);
 
   void Reset();
 

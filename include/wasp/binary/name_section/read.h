@@ -22,13 +22,13 @@
 
 namespace wasp::binary {
 
-struct Context;
+struct ReadCtx;
 
-auto Read(SpanU8*, Context&, Tag<IndirectNameAssoc>)
+auto Read(SpanU8*, ReadCtx&, Tag<IndirectNameAssoc>)
     -> OptAt<IndirectNameAssoc>;
-auto Read(SpanU8*, Context&, Tag<NameAssoc>) -> OptAt<NameAssoc>;
-auto Read(SpanU8*, Context&, Tag<NameSubsection>) -> OptAt<NameSubsection>;
-auto Read(SpanU8*, Context&, Tag<NameSubsectionId>) -> OptAt<NameSubsectionId>;
+auto Read(SpanU8*, ReadCtx&, Tag<NameAssoc>) -> OptAt<NameAssoc>;
+auto Read(SpanU8*, ReadCtx&, Tag<NameSubsection>) -> OptAt<NameSubsection>;
+auto Read(SpanU8*, ReadCtx&, Tag<NameSubsectionId>) -> OptAt<NameSubsectionId>;
 
 }  // namespace wasp::binary
 

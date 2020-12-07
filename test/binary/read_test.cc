@@ -25,7 +25,7 @@
 #include "test/test_utils.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/name_section/read.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 #include "wasp/binary/read/read_vector.h"
 
 #include "wasp/base/concat.h"
@@ -42,7 +42,7 @@ class BinaryReadTest : public ::testing::Test {
  protected:
   template <typename Func, typename T, typename... Args>
   void OK(Func&& func, const T& expected, SpanU8 data, Args&&... args) {
-    auto actual = func(&data, context, std::forward<Args>(args)...);
+    auto actual = func(&data, ctx, std::forward<Args>(args)...);
     ExpectNoErrors(errors);
     EXPECT_EQ(0u, data.size());
     EXPECT_NE(nullptr, actual->loc().data());
@@ -56,7 +56,7 @@ class BinaryReadTest : public ::testing::Test {
             SpanU8 data,
             Args&&... args) {
     auto orig_data = data;
-    auto actual = func(&data, context, std::forward<Args>(args)...);
+    auto actual = func(&data, ctx, std::forward<Args>(args)...);
     EXPECT_FALSE(actual.has_value());
     ExpectError(error, errors, orig_data);
     errors.Clear();
@@ -84,11 +84,11 @@ class BinaryReadTest : public ::testing::Test {
   }
 
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
 };
 
 TEST_F(BinaryReadTest, ArrayType) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(Read<ArrayType>,
      ArrayType{At{"\x7f\x00"_su8,
@@ -106,7 +106,7 @@ TEST_F(BinaryReadTest, BlockType_MVP) {
 }
 
 TEST_F(BinaryReadTest, BlockType_Basic_multi_value) {
-  context.features.enable_multi_value();
+  ctx.features.enable_multi_value();
 
   OK(Read<BlockType>, BT_I32, "\x7f"_su8);
   OK(Read<BlockType>, BT_I64, "\x7e"_su8);
@@ -120,12 +120,12 @@ TEST_F(BinaryReadTest, BlockType_simd) {
        {{0, "block type"}, {0, "value type"}, {0, "Unknown value type: 123"}},
        "\x7b"_su8);
 
-  context.features.enable_simd();
+  ctx.features.enable_simd();
   OK(Read<BlockType>, BT_V128, "\x7b"_su8);
 }
 
 TEST_F(BinaryReadTest, BlockType_MultiValueNegative) {
-  context.features.enable_multi_value();
+  ctx.features.enable_multi_value();
   Fail(Read<BlockType>,
        {{0, "block type"},
         {0, "value type"},
@@ -142,7 +142,7 @@ TEST_F(BinaryReadTest, BlockType_multi_value) {
         {0, "Unknown reference type: 1"}},
        "\x01"_su8);
 
-  context.features.enable_multi_value();
+  ctx.features.enable_multi_value();
   OK(Read<BlockType>, BlockType{At{"\x01"_su8, Index{1}}}, "\x01"_su8);
   OK(Read<BlockType>, BlockType{At{"\xc0\x03"_su8, Index{448}}},
      "\xc0\x03"_su8);
@@ -156,7 +156,7 @@ TEST_F(BinaryReadTest, BlockType_reference_types) {
         {0, "Unknown reference type: 111"}},
        "\x6f"_su8);
 
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
   OK(Read<BlockType>, BT_Externref, "\x6f"_su8);
 }
 
@@ -168,7 +168,7 @@ TEST_F(BinaryReadTest, BlockType_gc) {
         {0, "Unknown reference type: 110"}},
        "\x6e"_su8);
 
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(Read<BlockType>, BT_Anyref, "\x6e"_su8);
   OK(Read<BlockType>, BT_Eqref, "\x6d"_su8);
@@ -258,7 +258,7 @@ TEST_F(BinaryReadTest, BrTableImmediate_PastEnd) {
 TEST_F(BinaryReadTest, ReadBytes) {
   const SpanU8 data = "\x12\x34\x56"_su8;
   SpanU8 copy = data;
-  auto result = ReadBytes(&copy, 3, context);
+  auto result = ReadBytes(&copy, 3, ctx);
   ExpectNoErrors(errors);
   EXPECT_EQ(data, **result);
   EXPECT_EQ(0u, copy.size());
@@ -267,7 +267,7 @@ TEST_F(BinaryReadTest, ReadBytes) {
 TEST_F(BinaryReadTest, ReadBytes_Leftovers) {
   const SpanU8 data = "\x12\x34\x56"_su8;
   SpanU8 copy = data;
-  auto result = ReadBytes(&copy, 2, context);
+  auto result = ReadBytes(&copy, 2, ctx);
   ExpectNoErrors(errors);
   EXPECT_EQ(data.subspan(0, 2), **result);
   EXPECT_EQ(1u, copy.size());
@@ -276,7 +276,7 @@ TEST_F(BinaryReadTest, ReadBytes_Leftovers) {
 TEST_F(BinaryReadTest, ReadBytes_Fail) {
   const SpanU8 data = "\x12\x34\x56"_su8;
   SpanU8 copy = data;
-  auto result = ReadBytes(&copy, 4, context);
+  auto result = ReadBytes(&copy, 4, ctx);
   EXPECT_EQ(nullopt, result);
   ExpectError({{0, "Unable to read 4 bytes"}}, errors, data);
 }
@@ -410,7 +410,7 @@ TEST_F(BinaryReadTest, ConstantExpression_ReferenceTypes) {
        {{0, "constant expression"}, {0, "opcode"}, {0, "Unknown opcode: 210"}},
        "\xd2\x00\x0b"_su8);
 
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   // ref.null
   OK(Read<ConstantExpression>,
@@ -482,14 +482,14 @@ TEST_F(BinaryReadTest, ConstantExpression_PastEnd) {
        ""_su8);
 }
 
-auto ReadMemoryCopyImmediate_ForTesting(SpanU8* data, Context& context)
+auto ReadMemoryCopyImmediate_ForTesting(SpanU8* data, ReadCtx& ctx)
     -> OptAt<CopyImmediate> {
-  return Read<CopyImmediate>(data, context, BulkImmediateKind::Memory);
+  return Read<CopyImmediate>(data, ctx, BulkImmediateKind::Memory);
 }
 
-auto ReadTableCopyImmediate_ForTesting(SpanU8* data, Context& context)
+auto ReadTableCopyImmediate_ForTesting(SpanU8* data, ReadCtx& ctx)
     -> OptAt<CopyImmediate> {
-  return Read<CopyImmediate>(data, context, BulkImmediateKind::Table);
+  return Read<CopyImmediate>(data, ctx, BulkImmediateKind::Table);
 }
 
 TEST_F(BinaryReadTest, CopyImmediate) {
@@ -547,7 +547,7 @@ TEST_F(BinaryReadTest, CopyImmediate_PastEnd) {
 }
 
 TEST_F(BinaryReadTest, CopyImmediate_Table_reference_types) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   OK(ReadTableCopyImmediate_ForTesting,
      CopyImmediate{At{"\x80\x01"_su8, Index{128}}, At{"\x01"_su8, Index{1}}},
@@ -559,7 +559,7 @@ TEST_F(BinaryReadTest, CopyImmediate_Table_reference_types) {
 }
 
 TEST_F(BinaryReadTest, CopyImmediate_Memory_reference_types) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   Fail(ReadMemoryCopyImmediate_ForTesting,
        {{0, "copy immediate"},
@@ -597,7 +597,7 @@ TEST_F(BinaryReadTest, ShuffleImmediate_PastEnd) {
 TEST_F(BinaryReadTest, ReadCount) {
   const SpanU8 data = "\x01\x00\x00\x00"_su8;
   SpanU8 copy = data;
-  auto result = ReadCount(&copy, context);
+  auto result = ReadCount(&copy, ctx);
   ExpectNoErrors(errors);
   EXPECT_EQ(1u, result);
   EXPECT_EQ(3u, copy.size());
@@ -606,7 +606,7 @@ TEST_F(BinaryReadTest, ReadCount) {
 TEST_F(BinaryReadTest, ReadCount_PastEnd) {
   const SpanU8 data = "\x05\x00\x00\x00"_su8;
   SpanU8 copy = data;
-  auto result = ReadCount(&copy, context);
+  auto result = ReadCount(&copy, ctx);
   ExpectError({{0, "Count extends past end: 5 > 3"}}, errors, data);
   EXPECT_EQ(nullopt, result);
   EXPECT_EQ(3u, copy.size());
@@ -647,7 +647,7 @@ TEST_F(BinaryReadTest, DataSegment_MVP_PastEnd) {
 }
 
 TEST_F(BinaryReadTest, DataSegment_BulkMemory) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   OK(Read<DataSegment>, DataSegment{At{"\x04wxyz"_su8, "wxyz"_su8}},
      "\x01\x04wxyz"_su8);
@@ -664,14 +664,14 @@ TEST_F(BinaryReadTest, DataSegment_BulkMemory) {
 }
 
 TEST_F(BinaryReadTest, DataSegment_BulkMemory_BadFlags) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   Fail(Read<DataSegment>, {{0, "data segment"}, {0, "Unknown flags: 3"}},
        "\x03"_su8);
 }
 
 TEST_F(BinaryReadTest, DataSegment_BulkMemory_PastEnd) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   Fail(Read<DataSegment>,
        {{0, "data segment"}, {0, "flags"}, {0, "Unable to read u8"}}, ""_su8);
@@ -708,7 +708,7 @@ TEST_F(BinaryReadTest, DataSegment_BulkMemory_PastEnd) {
 }
 
 TEST_F(BinaryReadTest, ElementExpression) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // ref.null
   OK(Read<ElementExpression>,
@@ -732,7 +732,7 @@ TEST_F(BinaryReadTest, ElementExpression) {
 }
 
 TEST_F(BinaryReadTest, ElementExpression_NoEnd) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // ref.null
   Fail(Read<ElementExpression>,
@@ -746,14 +746,14 @@ TEST_F(BinaryReadTest, ElementExpression_NoEnd) {
 }
 
 TEST_F(BinaryReadTest, ElementExpression_TooShort) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // An instruction sequence of length 0 is invalid, but not malformed.
   OK(Read<ElementExpression>, ElementExpression{}, "\x0b"_su8);
 }
 
 TEST_F(BinaryReadTest, ElementExpression_TooLong) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   OK(Read<ElementExpression>,
      ElementExpression{InstructionList{
@@ -765,7 +765,7 @@ TEST_F(BinaryReadTest, ElementExpression_TooLong) {
 }
 
 TEST_F(BinaryReadTest, ElementExpression_InvalidInstruction) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   Fail(Read<ElementExpression>,
        {{0, "element expression"}, {0, "opcode"}, {0, "Unknown opcode: 6"}},
@@ -773,7 +773,7 @@ TEST_F(BinaryReadTest, ElementExpression_InvalidInstruction) {
 }
 
 TEST_F(BinaryReadTest, ElementExpression_PastEnd) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   Fail(Read<ElementExpression>,
        {{0, "element expression"}, {0, "opcode"}, {0, "Unable to read u8"}},
@@ -817,7 +817,7 @@ TEST_F(BinaryReadTest, ElementSegment_MVP_PastEnd) {
 }
 
 TEST_F(BinaryReadTest, ElementSegment_BulkMemory) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // Flags == 1: Passive, index list
   OK(Read<ElementSegment>,
@@ -893,7 +893,7 @@ TEST_F(BinaryReadTest, ElementSegment_BulkMemory) {
 }
 
 TEST_F(BinaryReadTest, ElementSegment_BulkMemory_BadFlags) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // Flags == 3: Declared, index list
   Fail(Read<ElementSegment>, {{0, "element segment"}, {0, "Unknown flags: 3"}},
@@ -905,7 +905,7 @@ TEST_F(BinaryReadTest, ElementSegment_BulkMemory_BadFlags) {
 }
 
 TEST_F(BinaryReadTest, ElementSegment_BulkMemory_PastEnd) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   Fail(Read<ElementSegment>,
        {{0, "element segment"}, {0, "flags"}, {0, "Unable to read u8"}},
@@ -950,7 +950,7 @@ TEST_F(BinaryReadTest, ReferenceType_ReferenceTypes) {
   Fail(Read<ReferenceType>,
        {{0, "reference type"}, {0, "Unknown reference type: 111"}}, "\x6f"_su8);
 
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   OK(Read<ReferenceType>, RT_Externref, "\x6f"_su8);
 }
@@ -959,7 +959,7 @@ TEST_F(BinaryReadTest, ReferenceType_Exceptions) {
   Fail(Read<ReferenceType>,
        {{0, "reference type"}, {0, "Unknown reference type: 104"}}, "\x68"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   OK(Read<ReferenceType>, RT_Exnref, "\x68"_su8);
 }
@@ -971,7 +971,7 @@ TEST_F(BinaryReadTest, ReferenceType_gc) {
         {0, "Unknown reference type: 110"}},
        "\x6e"_su8);
 
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(Read<ReferenceType>, RT_Anyref, "\x6e"_su8);
   OK(Read<ReferenceType>, RT_Eqref, "\x6d"_su8);
@@ -1069,7 +1069,7 @@ TEST_F(BinaryReadTest, Export_exceptions) {
        {{0, "export"}, {2, "external kind"}, {2, "Unknown external kind: 4"}},
        "\x01v\x04\x02"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
   OK(Read<Export>,
      Export{At{"\x04"_su8, ExternalKind::Event}, At{"\x01v"_su8, "v"_sv},
             At{"\x02"_su8, Index{2}}},
@@ -1087,7 +1087,7 @@ TEST_F(BinaryReadTest, ExternalKind_exceptions) {
   Fail(Read<ExternalKind>,
        {{0, "external kind"}, {0, "Unknown external kind: 4"}}, "\x04"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   OK(Read<ExternalKind>, ExternalKind::Event, "\x04"_su8);
 }
@@ -1112,7 +1112,7 @@ TEST_F(BinaryReadTest, F32) {
   // NaN
   {
     auto data = "\x00\x00\xc0\x7f"_su8;
-    auto result = Read<f32>(&data, context);
+    auto result = Read<f32>(&data, ctx);
     ExpectNoErrors(errors);
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(std::isnan(*result));
@@ -1135,7 +1135,7 @@ TEST_F(BinaryReadTest, F64) {
   // NaN
   {
     auto data = "\x00\x00\x00\x00\x00\x00\xf8\x7f"_su8;
-    auto result = Read<f64>(&data, context);
+    auto result = Read<f64>(&data, ctx);
     ExpectNoErrors(errors);
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(std::isnan(*result));
@@ -1149,7 +1149,7 @@ TEST_F(BinaryReadTest, F64_PastEnd) {
 }
 
 TEST_F(BinaryReadTest, FieldType) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(Read<FieldType>,
      FieldType{At{"\x7f"_su8, StorageType{At{"\x7f"_su8, VT_I32}}},
@@ -1256,7 +1256,7 @@ TEST_F(BinaryReadTest, GlobalType_PastEnd) {
 }
 
 TEST_F(BinaryReadTest, HeapType_function_references) {
-  context.features.enable_function_references();
+  ctx.features.enable_function_references();
 
   OK(Read<HeapType>, HT_Func, "\x70"_su8);
   OK(Read<HeapType>, HT_Extern, "\x6f"_su8);
@@ -1264,7 +1264,7 @@ TEST_F(BinaryReadTest, HeapType_function_references) {
 }
 
 TEST_F(BinaryReadTest, HeapType_gc) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(Read<HeapType>, HT_Any, "\x6e"_su8);
   OK(Read<HeapType>, HT_Eq, "\x6d"_su8);
@@ -1272,7 +1272,7 @@ TEST_F(BinaryReadTest, HeapType_gc) {
 }
 
 TEST_F(BinaryReadTest, HeapType2Immediate) {
-  context.features.enable_function_references();
+  ctx.features.enable_function_references();
 
   OK(Read<HeapType2Immediate>,
      HeapType2Immediate{At{"\x70"_su8, HT_Func}, At{"\x00"_su8, HT_0}},
@@ -1334,7 +1334,7 @@ TEST_F(BinaryReadTest, Import_exceptions) {
        {{0, "import"}, {9, "external kind"}, {9, "Unknown external kind: 4"}},
        "\x01v\x06!event\x04\x00\x02"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
   OK(Read<Import>,
      Import{
          At{"\x01v"_su8, "v"_sv}, At{"\x06!event"_su8, "!event"_sv},
@@ -1423,14 +1423,14 @@ TEST_F(BinaryReadTest, IndirectNameAssoc_PastEnd) {
        "\x00\x01"_su8);
 }
 
-auto ReadMemoryInitImmediate_ForTesting(SpanU8* data, Context& context)
+auto ReadMemoryInitImmediate_ForTesting(SpanU8* data, ReadCtx& ctx)
     -> OptAt<InitImmediate> {
-  return Read<InitImmediate>(data, context, BulkImmediateKind::Memory);
+  return Read<InitImmediate>(data, ctx, BulkImmediateKind::Memory);
 }
 
-auto ReadTableInitImmediate_ForTesting(SpanU8* data, Context& context)
+auto ReadTableInitImmediate_ForTesting(SpanU8* data, ReadCtx& ctx)
     -> OptAt<InitImmediate> {
-  return Read<InitImmediate>(data, context, BulkImmediateKind::Table);
+  return Read<InitImmediate>(data, ctx, BulkImmediateKind::Table);
 }
 
 TEST_F(BinaryReadTest, InitImmediate) {
@@ -1484,7 +1484,7 @@ TEST_F(BinaryReadTest, InitImmediate_PastEnd) {
 }
 
 TEST_F(BinaryReadTest, InitImmediate_Table_reference_types) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   OK(ReadTableInitImmediate_ForTesting,
      InitImmediate{At{"\x01"_su8, Index{1}}, At{"\x01"_su8, Index{1}}},
@@ -1496,7 +1496,7 @@ TEST_F(BinaryReadTest, InitImmediate_Table_reference_types) {
 }
 
 TEST_F(BinaryReadTest, InitImmediate_Memory_reference_types) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   Fail(ReadMemoryInitImmediate_ForTesting,
        {{0, "init immediate"},
@@ -1776,7 +1776,7 @@ TEST_F(BinaryReadTest, InstructionList_IfNoEnd) {
 }
 
 TEST_F(BinaryReadTest, Instruction_exceptions) {
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   OK(Read<I>, I{At{"\x06"_su8, O::Try}, At{"\x40"_su8, BT_Void}},
      "\x06\x40"_su8);
@@ -1792,7 +1792,7 @@ TEST_F(BinaryReadTest, Instruction_exceptions) {
 }
 
 TEST_F(BinaryReadTest, InstructionList_TryCatchEnd) {
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   OK(Read<InstructionList>,
      InstructionList{
@@ -1804,21 +1804,21 @@ TEST_F(BinaryReadTest, InstructionList_TryCatchEnd) {
 }
 
 TEST_F(BinaryReadTest, InstructionList_TryNoCatch) {
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   Fail(Read<InstructionList>, {{2, "Expected catch instruction in try block"}},
        "\x06\x40\x0b\x0b"_su8);
 }
 
 TEST_F(BinaryReadTest, InstructionList_TryNoEnd) {
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   Fail(Read<InstructionList>, {{4, "opcode"}, {4, "Unable to read u8"}},
        "\x06\x40\07\x0b"_su8);
 }
 
 TEST_F(BinaryReadTest, Instruction_tail_call) {
-  context.features.enable_tail_call();
+  ctx.features.enable_tail_call();
 
   OK(Read<I>, I{At{"\x12"_su8, O::ReturnCall}, At{"\x00"_su8, Index{0}}},
      "\x12\x00"_su8);
@@ -1830,7 +1830,7 @@ TEST_F(BinaryReadTest, Instruction_tail_call) {
 }
 
 TEST_F(BinaryReadTest, Instruction_sign_extension) {
-  context.features.enable_sign_extension();
+  ctx.features.enable_sign_extension();
 
   OK(Read<I>, I{At{"\xc0"_su8, O::I32Extend8S}}, "\xc0"_su8);
   OK(Read<I>, I{At{"\xc1"_su8, O::I32Extend16S}}, "\xc1"_su8);
@@ -1840,7 +1840,7 @@ TEST_F(BinaryReadTest, Instruction_sign_extension) {
 }
 
 TEST_F(BinaryReadTest, Instruction_reference_types) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   OK(Read<I>,
      I{At{"\x1c"_su8, O::SelectT},
@@ -1875,7 +1875,7 @@ TEST_F(BinaryReadTest, Instruction_reference_types) {
 }
 
 TEST_F(BinaryReadTest, Instruction_saturating_float_to_int) {
-  context.features.enable_saturating_float_to_int();
+  ctx.features.enable_saturating_float_to_int();
 
   OK(Read<I>, I{At{"\xfc\x00"_su8, O::I32TruncSatF32S}}, "\xfc\x00"_su8);
   OK(Read<I>, I{At{"\xfc\x01"_su8, O::I32TruncSatF32U}}, "\xfc\x01"_su8);
@@ -1888,8 +1888,8 @@ TEST_F(BinaryReadTest, Instruction_saturating_float_to_int) {
 }
 
 TEST_F(BinaryReadTest, Instruction_bulk_memory) {
-  context.features.enable_bulk_memory();
-  context.declared_data_count = 1;
+  ctx.features.enable_bulk_memory();
+  ctx.declared_data_count = 1;
 
   OK(Read<I>,
      I{At{"\xfc\x08"_su8, O::MemoryInit},
@@ -1920,7 +1920,7 @@ TEST_F(BinaryReadTest, Instruction_bulk_memory) {
 }
 
 TEST_F(BinaryReadTest, Instruction_BadReserved_bulk_memory) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   Fail(Read<I>,
        {{2, "init immediate"},
@@ -1935,7 +1935,7 @@ TEST_F(BinaryReadTest, Instruction_BadReserved_bulk_memory) {
 }
 
 TEST_F(BinaryReadTest, Instruction_NoDataCount_bulk_memory) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   Fail(Read<I>, {{0, "memory.init instruction requires a data count section"}},
        "\xfc\x08\x01\x00"_su8);
@@ -1944,7 +1944,7 @@ TEST_F(BinaryReadTest, Instruction_NoDataCount_bulk_memory) {
 }
 
 TEST_F(BinaryReadTest, Instruction_simd) {
-  context.features.enable_simd();
+  ctx.features.enable_simd();
 
   auto memarg = At{"\x01\x02"_su8, MemArgImmediate{At{"\x01"_su8, u32{1}},
                                                    At{"\x02"_su8, u32{2}}}};
@@ -2199,7 +2199,7 @@ TEST_F(BinaryReadTest, Instruction_simd) {
 }
 
 TEST_F(BinaryReadTest, Instruction_threads) {
-  context.features.enable_threads();
+  ctx.features.enable_threads();
 
   auto memarg = At{"\x01\x02"_su8, MemArgImmediate{At{"\x01"_su8, u32{1}},
                                                    At{"\x02"_su8, u32{2}}}};
@@ -2339,7 +2339,7 @@ TEST_F(BinaryReadTest, Instruction_threads) {
 }
 
 TEST_F(BinaryReadTest, Instruction_function_references) {
-  context.features.enable_function_references();
+  ctx.features.enable_function_references();
 
   OK(Read<I>, I{At{"\x14"_su8, O::CallRef}}, "\x14"_su8);
   OK(Read<I>, I{At{"\x15"_su8, O::ReturnCallRef}}, "\x15"_su8);
@@ -2360,7 +2360,7 @@ TEST_F(BinaryReadTest, Instruction_function_references) {
 }
 
 TEST_F(BinaryReadTest, Instruction_gc) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(Read<I>, I{At{"\xd5"_su8, O::RefEq}}, "\xd5"_su8);
   OK(Read<I>,
@@ -2440,14 +2440,14 @@ TEST_F(BinaryReadTest, Instruction_gc) {
 #endif
 }
 
-auto ReadMemoryLimitsForTesting(SpanU8* data, Context& context)
+auto ReadMemoryLimitsForTesting(SpanU8* data, ReadCtx& ctx)
     -> OptAt<Limits> {
-  return Read<Limits>(data, context, LimitsKind::Memory);
+  return Read<Limits>(data, ctx, LimitsKind::Memory);
 }
 
-auto ReadTableLimitsForTesting(SpanU8* data, Context& context)
+auto ReadTableLimitsForTesting(SpanU8* data, ReadCtx& ctx)
     -> OptAt<Limits> {
-  return Read<Limits>(data, context, LimitsKind::Table);
+  return Read<Limits>(data, ctx, LimitsKind::Table);
 }
 
 TEST_F(BinaryReadTest, Limits) {
@@ -2468,7 +2468,7 @@ TEST_F(BinaryReadTest, Limits_BadFlags) {
 }
 
 TEST_F(BinaryReadTest, Limits_threads) {
-  context.features.enable_threads();
+  ctx.features.enable_threads();
 
   OK(ReadMemoryLimitsForTesting,
      Limits{At{"\x02"_su8, u32{2}}, At{"\xe8\x07"_su8, u32{1000}},
@@ -2481,7 +2481,7 @@ TEST_F(BinaryReadTest, Limits_threads) {
 }
 
 TEST_F(BinaryReadTest, Limits_memory64) {
-  context.features.enable_memory64();
+  ctx.features.enable_memory64();
 
   OK(ReadMemoryLimitsForTesting,
      Limits{At{"\x01"_su8, u32{1}}, nullopt, At{"\x04"_su8, Shared::No},
@@ -2530,7 +2530,7 @@ TEST_F(BinaryReadTest, LetImmediate) {
      LetImmediate{At{"\x40"_su8, BT_Void}, At{"\x00"_su8, LocalsList{}}},
      "\x40\x00"_su8);
 
-  context.features.enable_multi_value();
+  ctx.features.enable_multi_value();
 
   OK(Read<LetImmediate>,
      LetImmediate{
@@ -2583,7 +2583,7 @@ TEST_F(BinaryReadTest, MemoryType) {
 }
 
 TEST_F(BinaryReadTest, MemoryType_memory64) {
-  context.features.enable_memory64();
+  ctx.features.enable_memory64();
 
   OK(Read<MemoryType>,
      MemoryType{At{"\x04\x01"_su8, Limits{At{"\x01"_su8, u32{1}}, nullopt,
@@ -2872,7 +2872,7 @@ TEST_F(BinaryReadTest, Opcode_Unknown) {
 }
 
 TEST_F(BinaryReadTest, Opcode_exceptions) {
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   OK(Read<Opcode>, Opcode::Try, "\x06"_su8);
   OK(Read<Opcode>, Opcode::Catch, "\x07"_su8);
@@ -2882,14 +2882,14 @@ TEST_F(BinaryReadTest, Opcode_exceptions) {
 }
 
 TEST_F(BinaryReadTest, Opcode_tail_call) {
-  context.features.enable_tail_call();
+  ctx.features.enable_tail_call();
 
   OK(Read<Opcode>, Opcode::ReturnCall, "\x12"_su8);
   OK(Read<Opcode>, Opcode::ReturnCallIndirect, "\x13"_su8);
 }
 
 TEST_F(BinaryReadTest, Opcode_sign_extension) {
-  context.features.enable_sign_extension();
+  ctx.features.enable_sign_extension();
 
   OK(Read<Opcode>, Opcode::I32Extend8S, "\xc0"_su8);
   OK(Read<Opcode>, Opcode::I32Extend16S, "\xc1"_su8);
@@ -2899,7 +2899,7 @@ TEST_F(BinaryReadTest, Opcode_sign_extension) {
 }
 
 TEST_F(BinaryReadTest, Opcode_reference_types) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   OK(Read<Opcode>, Opcode::SelectT, "\x1c"_su8);
   OK(Read<Opcode>, Opcode::TableGet, "\x25"_su8);
@@ -2913,7 +2913,7 @@ TEST_F(BinaryReadTest, Opcode_reference_types) {
 }
 
 TEST_F(BinaryReadTest, Opcode_saturating_float_to_int) {
-  context.features.enable_saturating_float_to_int();
+  ctx.features.enable_saturating_float_to_int();
 
   OK(Read<Opcode>, Opcode::I32TruncSatF32S, "\xfc\x00"_su8);
   OK(Read<Opcode>, Opcode::I32TruncSatF32U, "\xfc\x01"_su8);
@@ -2926,7 +2926,7 @@ TEST_F(BinaryReadTest, Opcode_saturating_float_to_int) {
 }
 
 TEST_F(BinaryReadTest, Opcode_bulk_memory) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   OK(Read<Opcode>, Opcode::MemoryInit, "\xfc\x08"_su8);
   OK(Read<Opcode>, Opcode::DataDrop, "\xfc\x09"_su8);
@@ -2939,7 +2939,7 @@ TEST_F(BinaryReadTest, Opcode_bulk_memory) {
 
 TEST_F(BinaryReadTest, Opcode_disabled_misc_prefix) {
   {
-    context.features = Features{Features::SaturatingFloatToInt};
+    ctx.features = Features{Features::SaturatingFloatToInt};
     FailUnknownOpcode(0xfc, 8);
     FailUnknownOpcode(0xfc, 9);
     FailUnknownOpcode(0xfc, 10);
@@ -2950,7 +2950,7 @@ TEST_F(BinaryReadTest, Opcode_disabled_misc_prefix) {
   }
 
   {
-    context.features = Features{Features::BulkMemory};
+    ctx.features = Features{Features::BulkMemory};
     FailUnknownOpcode(0xfc, 0);
     FailUnknownOpcode(0xfc, 1);
     FailUnknownOpcode(0xfc, 2);
@@ -2963,8 +2963,8 @@ TEST_F(BinaryReadTest, Opcode_disabled_misc_prefix) {
 }
 
 TEST_F(BinaryReadTest, Opcode_Unknown_misc_prefix) {
-  context.features.enable_saturating_float_to_int();
-  context.features.enable_bulk_memory();
+  ctx.features.enable_saturating_float_to_int();
+  ctx.features.enable_bulk_memory();
 
   for (u8 code = 0x0f; code < 0x7f; ++code) {
     FailUnknownOpcode(0xfc, code);
@@ -2978,7 +2978,7 @@ TEST_F(BinaryReadTest, Opcode_Unknown_misc_prefix) {
 }
 
 TEST_F(BinaryReadTest, Opcode_simd) {
-  context.features.enable_simd();
+  ctx.features.enable_simd();
 
   OK(Read<O>, At{"\xfd\x00"_su8, O::V128Load}, "\xfd\x00"_su8);
   OK(Read<O>, At{"\xfd\x01"_su8, O::V128Load8X8S}, "\xfd\x01"_su8);
@@ -3188,7 +3188,7 @@ TEST_F(BinaryReadTest, Opcode_simd) {
 }
 
 TEST_F(BinaryReadTest, Opcode_Unknown_simd_prefix) {
-  context.features.enable_simd();
+  ctx.features.enable_simd();
 
   const u8 kInvalidOpcodes[] = {
       0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e,
@@ -3208,7 +3208,7 @@ TEST_F(BinaryReadTest, Opcode_Unknown_simd_prefix) {
 }
 
 TEST_F(BinaryReadTest, Opcode_threads) {
-  context.features.enable_threads();
+  ctx.features.enable_threads();
 
   OK(Read<O>, At{"\xfe\x00"_su8, O::MemoryAtomicNotify}, "\xfe\x00"_su8);
   OK(Read<O>, At{"\xfe\x01"_su8, O::MemoryAtomicWait32}, "\xfe\x01"_su8);
@@ -3279,7 +3279,7 @@ TEST_F(BinaryReadTest, Opcode_threads) {
 }
 
 TEST_F(BinaryReadTest, Opcode_Unknown_threads_prefix) {
-  context.features.enable_threads();
+  ctx.features.enable_threads();
 
   const u8 kInvalidOpcodes[] = {
       0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
@@ -3297,7 +3297,7 @@ TEST_F(BinaryReadTest, Opcode_Unknown_threads_prefix) {
 }
 
 TEST_F(BinaryReadTest, Opcode_function_references) {
-  context.features.enable_function_references();
+  ctx.features.enable_function_references();
 
   OK(Read<O>, At{"\x14"_su8, O::CallRef}, "\x14"_su8);
   OK(Read<O>, At{"\x15"_su8, O::ReturnCallRef}, "\x15"_su8);
@@ -3308,7 +3308,7 @@ TEST_F(BinaryReadTest, Opcode_function_references) {
 }
 
 TEST_F(BinaryReadTest, Opcode_gc) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(Read<O>, O::RefEq, "\xd5"_su8);
   OK(Read<O>, O::StructNewWithRtt, "\xfb\x01"_su8);
@@ -3462,7 +3462,7 @@ TEST_F(BinaryReadTest, SectionId_bulk_memory) {
   Fail(Read<SectionId>, {{0, "section id"}, {0, "Unknown section id: 12"}},
        "\x0c"_su8);
 
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   OK(Read<SectionId>, SectionId::DataCount, "\x0c"_su8);
 }
@@ -3471,7 +3471,7 @@ TEST_F(BinaryReadTest, SectionId_exceptions) {
   Fail(Read<SectionId>, {{0, "section id"}, {0, "Unknown section id: 13"}},
        "\x0d"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   OK(Read<SectionId>, SectionId::Event, "\x0d"_su8);
 }
@@ -3511,7 +3511,7 @@ TEST_F(BinaryReadTest, Start) {
 }
 
 TEST_F(BinaryReadTest, StorageType) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(Read<StorageType>, StorageType{At{"\x7f"_su8, VT_I32}}, "\x7f"_su8);
   OK(Read<StorageType>, StorageType{At{"\x7a"_su8, PackedType::I8}},
@@ -3527,7 +3527,7 @@ TEST_F(BinaryReadTest, ReadString) {
 TEST_F(BinaryReadTest, ReadString_Leftovers) {
   const SpanU8 data = "\x01more"_su8;
   SpanU8 copy = data;
-  auto result = ReadString(&copy, context, "test");
+  auto result = ReadString(&copy, ctx, "test");
   ExpectNoErrors(errors);
   EXPECT_EQ(string_view{"m"}, result);
   EXPECT_EQ(3u, copy.size());
@@ -3544,7 +3544,7 @@ TEST_F(BinaryReadTest, ReadString_BadLength) {
 TEST_F(BinaryReadTest, ReadString_Fail) {
   const SpanU8 data = "\x06small"_su8;
   SpanU8 copy = data;
-  auto result = ReadString(&copy, context, "test");
+  auto result = ReadString(&copy, ctx, "test");
   ExpectError({{0, "test"}, {0, "Length extends past end: 6 > 5"}}, errors,
               data);
   EXPECT_EQ(nullopt, result);
@@ -3552,7 +3552,7 @@ TEST_F(BinaryReadTest, ReadString_Fail) {
 }
 
 TEST_F(BinaryReadTest, StructType) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(Read<StructType>,
      StructType{FieldTypeList{
@@ -3606,7 +3606,7 @@ TEST_F(BinaryReadTest, TableType) {
 }
 
 TEST_F(BinaryReadTest, TableType_memory64) {
-  context.features.enable_memory64();
+  ctx.features.enable_memory64();
 
   Fail(Read<TableType>,
        {{0, "table type"}, {1, "limits"}, {1, "i64 index type is not allowed"}},
@@ -3642,7 +3642,7 @@ TEST_F(BinaryReadTest, DefinedType) {
 }
 
 TEST_F(BinaryReadTest, DefinedType_gc) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(Read<DefinedType>,
      DefinedType{At{
@@ -3713,7 +3713,7 @@ TEST_F(BinaryReadTest, ValueType_simd) {
   Fail(Read<ValueType>, {{0, "value type"}, {0, "Unknown value type: 123"}},
        "\x7b"_su8);
 
-  context.features.enable_simd();
+  ctx.features.enable_simd();
   OK(Read<ValueType>, VT_V128, "\x7b"_su8);
 }
 
@@ -3726,7 +3726,7 @@ TEST_F(BinaryReadTest, ValueType_reference_types) {
         {0, "Unknown reference type: 111"}},
        "\x6f"_su8);
 
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
   OK(Read<ValueType>, VT_Funcref, "\x70"_su8);
   OK(Read<ValueType>, VT_Externref, "\x6f"_su8);
 }
@@ -3738,7 +3738,7 @@ TEST_F(BinaryReadTest, ValueType_exceptions) {
         {0, "Unknown reference type: 104"}},
        "\x68"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
   OK(Read<ValueType>, VT_Exnref, "\x68"_su8);
 }
 
@@ -3749,7 +3749,7 @@ TEST_F(BinaryReadTest, ValueType_gc) {
         {0, "Unknown reference type: 110"}},
        "\x6e"_su8);
 
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(Read<ValueType>, VT_Anyref, "\x6e"_su8);
   OK(Read<ValueType>, VT_Eqref, "\x6d"_su8);
@@ -3792,7 +3792,7 @@ TEST_F(BinaryReadTest, ValueType_Unknown) {
 TEST_F(BinaryReadTest, ReadVector_u8) {
   const SpanU8 data = "\x05hello"_su8;
   SpanU8 copy = data;
-  auto result = ReadVector<u8>(&copy, context, "test");
+  auto result = ReadVector<u8>(&copy, ctx, "test");
   ExpectNoErrors(errors);
   EXPECT_EQ((std::vector<At<u8>>{
                 At{"h"_su8, u8{'h'}},
@@ -3812,7 +3812,7 @@ TEST_F(BinaryReadTest, ReadVector_u32) {
       "\x80\x01"
       "\xcc\xcc\x0c"_su8;
   SpanU8 copy = data;
-  auto result = ReadVector<u32>(&copy, context, "test");
+  auto result = ReadVector<u32>(&copy, ctx, "test");
   ExpectNoErrors(errors);
   EXPECT_EQ((std::vector<At<u32>>{
                 At{"\x05"_su8, u32{5}},
@@ -3828,7 +3828,7 @@ TEST_F(BinaryReadTest, ReadVector_FailLength) {
       "\x02"  // Count.
       "\x05"_su8;
   SpanU8 copy = data;
-  auto result = ReadVector<u32>(&copy, context, "test");
+  auto result = ReadVector<u32>(&copy, ctx, "test");
   ExpectError({{0, "test"}, {0, "Count extends past end: 2 > 1"}}, errors,
               data);
   EXPECT_EQ(nullopt, result);
@@ -3841,7 +3841,7 @@ TEST_F(BinaryReadTest, ReadVector_PastEnd) {
       "\x05"
       "\x80"_su8;
   SpanU8 copy = data;
-  auto result = ReadVector<u32>(&copy, context, "test");
+  auto result = ReadVector<u32>(&copy, ctx, "test");
   ExpectError({{0, "test"}, {2, "u32"}, {3, "Unable to read u8"}}, errors,
               data);
   EXPECT_EQ(nullopt, result);
@@ -3850,15 +3850,15 @@ TEST_F(BinaryReadTest, ReadVector_PastEnd) {
 
 TEST_F(BinaryReadTest, EndCode_UnclosedBlock) {
   const SpanU8 data = "\x02\x40"_su8;  // block void
-  context.open_blocks.push_back(At{data.first(1), Opcode::Block});
-  EXPECT_FALSE(EndCode(data.last(0), context));
+  ctx.open_blocks.push_back(At{data.first(1), Opcode::Block});
+  EXPECT_FALSE(EndCode(data.last(0), ctx));
   ExpectError({{0, "Unclosed block instruction"}}, errors, data);
 }
 
 TEST_F(BinaryReadTest, EndCode_MissingEnd) {
   const SpanU8 data = "\x01"_su8;  // nop
-  context.seen_final_end = false;
-  EXPECT_FALSE(EndCode(data.last(0), context));
+  ctx.seen_final_end = false;
+  EXPECT_FALSE(EndCode(data.last(0), ctx));
   ExpectError({{1, "Expected final end instruction"}}, errors, data);
 }
 
@@ -3867,9 +3867,9 @@ TEST_F(BinaryReadTest, EndModule_FunctionCodeMismatch) {
       "\0asm\x01\x00\x00\x00"  // magic + version
       "\x01\x04\x60\x00"       // (type (func))
       "\x03\x02\x01\x00"_su8;  // (func (type 0)), no code section
-  context.defined_function_count = 1;
-  context.code_count = 0;
-  EXPECT_FALSE(EndModule(data.last(0), context));
+  ctx.defined_function_count = 1;
+  ctx.code_count = 0;
+  EXPECT_FALSE(EndModule(data.last(0), ctx));
   ExpectError({{16, "Expected code count of 1, but got 0"}}, errors, data);
 }
 
@@ -3877,9 +3877,9 @@ TEST_F(BinaryReadTest, EndModule_DataCount_DataMissing) {
   const SpanU8 data =
       "\0asm\x01\x00\x00\x00"  // magic + version
       "\x0c\x01\x01"_su8;      // data count = 1
-  context.declared_data_count = 1;
-  context.data_count = 0;
-  EXPECT_FALSE(EndModule(data.last(0), context));
+  ctx.declared_data_count = 1;
+  ctx.data_count = 0;
+  EXPECT_FALSE(EndModule(data.last(0), ctx));
   ExpectError({{11, "Expected data count of 1, but got 0"}}, errors, data);
 }
 
@@ -3888,8 +3888,8 @@ TEST_F(BinaryReadTest, EndModule_DataCountMismatch) {
       "\0asm\x01\x00\x00\x00"      // magic + version
       "\x0c\x01\x00"               // data count = 0
       "\x0b\x03\x01\x01\x00"_su8;  // empty passive data segment
-  context.declared_data_count = 0;
-  context.data_count = 1;
-  EXPECT_FALSE(EndModule(data.last(0), context));
+  ctx.declared_data_count = 0;
+  ctx.data_count = 1;
+  EXPECT_FALSE(EndModule(data.last(0), ctx));
   ExpectError({{16, "Expected data count of 0, but got 1"}}, errors, data);
 }

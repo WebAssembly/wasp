@@ -168,7 +168,7 @@ visit::Result Tool::Visitor::BeginCodeSection(LazyCodeSection) {
 visit::Result Tool::Visitor::BeginCode(const At<Code>& code) {
   Instructions instructions;
 
-  auto instrs = ReadExpression(code->body, tool.module.context);
+  auto instrs = ReadExpression(code->body, tool.module.ctx);
   for (auto it = instrs.begin(), end = instrs.end(); it != end; ++it) {
     auto instr = *it;
 #if 0

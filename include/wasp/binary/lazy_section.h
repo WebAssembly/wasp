@@ -21,24 +21,24 @@
 #include "wasp/base/span.h"
 #include "wasp/binary/lazy_sequence.h"
 #include "wasp/binary/read.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 
 namespace wasp::binary {
 
-struct Context;
+struct ReadCtx;
 
 template <typename T>
 class LazySection {
  public:
-  explicit LazySection(SpanU8, string_view name, Context&);
+  explicit LazySection(SpanU8, string_view name, ReadCtx&);
 
   OptAt<Index> count;
   LazySequence<T> sequence;
 };
 
 template <typename T>
-LazySection<T>::LazySection(SpanU8 data, string_view name, Context& context)
-    : count{ReadCount(&data, context)}, sequence{data, count, name, context} {}
+LazySection<T>::LazySection(SpanU8 data, string_view name, ReadCtx& ctx)
+    : count{ReadCount(&data, ctx)}, sequence{data, count, name, ctx} {}
 
 }  // namespace wasp::binary
 
