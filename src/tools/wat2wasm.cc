@@ -37,11 +37,11 @@
 #include "wasp/convert/to_binary.h"
 #include "wasp/text/desugar.h"
 #include "wasp/text/read.h"
-#include "wasp/text/read/context.h"
+#include "wasp/text/read/read_ctx.h"
 #include "wasp/text/read/tokenizer.h"
 #include "wasp/text/resolve.h"
 #include "wasp/text/types.h"
-#include "wasp/valid/context.h"
+#include "wasp/valid/valid_ctx.h"
 #include "wasp/valid/validate.h"
 
 #include "wasp/text/formatters.h"
@@ -124,7 +124,7 @@ Tool::Tool(string_view filename, SpanU8 data, Options options)
 int Tool::Run() {
   text::Tokenizer tokenizer{data};
   tools::TextErrors errors{filename, data};
-  text::Context read_context{options.features, errors};
+  text::ReadCtx read_context{options.features, errors};
   auto text_module =
       ReadSingleModule(tokenizer, read_context).value_or(text::Module{});
   Expect(tokenizer, read_context, text::TokenType::Eof);
@@ -137,11 +137,11 @@ int Tool::Run() {
     return 1;
   }
 
-  convert::Context convert_context{options.features};
+  convert::BinCtx convert_context{options.features};
   auto binary_module = convert::ToBinary(convert_context, text_module);
 
   if (options.validate) {
-    valid::Context validate_context{options.features, errors};
+    valid::ValidCtx validate_context{options.features, errors};
     Validate(validate_context, binary_module);
 
     if (errors.HasError()) {

@@ -23,13 +23,13 @@
 
 namespace wasp::binary {
 
-struct Context;
+struct ReadCtx;
 
 /// ---
 using LazyExpression = LazySequence<Instruction>;
 
-LazyExpression ReadExpression(SpanU8, Context&);
-LazyExpression ReadExpression(Expression, Context&);
+LazyExpression ReadExpression(SpanU8, ReadCtx&);
+LazyExpression ReadExpression(Expression, ReadCtx&);
 
 }  // namespace wasp
 

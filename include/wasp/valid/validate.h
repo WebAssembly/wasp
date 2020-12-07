@@ -27,74 +27,76 @@ enum class RequireDefaultable {
   Yes,
 };
 
-struct Context;
+struct ValidCtx;
 
-bool BeginTypeSection(Context&, Index type_count);
-bool BeginCode(Context&, Location loc);
+bool BeginTypeSection(ValidCtx&, Index type_count);
+bool BeginCode(ValidCtx&, Location loc);
 
-bool CheckDefaultable(Context&,
+bool CheckDefaultable(ValidCtx&,
                       const At<binary::ReferenceType>&,
                       string_view desc);
-bool CheckDefaultable(Context&, const At<binary::ValueType>&, string_view desc);
-bool CheckDefaultable(Context&,
+bool CheckDefaultable(ValidCtx&,
+                      const At<binary::ValueType>&,
+                      string_view desc);
+bool CheckDefaultable(ValidCtx&,
                       const At<binary::StorageType>&,
                       string_view desc);
 
-bool Validate(Context&, const At<binary::ArrayType>&);
-bool Validate(Context&, const At<binary::BlockType>&);
-bool Validate(Context&, const At<binary::DataSegment>&);
-bool Validate(Context&,
+bool Validate(ValidCtx&, const At<binary::ArrayType>&);
+bool Validate(ValidCtx&, const At<binary::BlockType>&);
+bool Validate(ValidCtx&, const At<binary::DataSegment>&);
+bool Validate(ValidCtx&,
               const At<binary::ConstantExpression>&,
               binary::ValueType expected_type,
               Index max_global_index);
-bool Validate(Context&, const At<binary::DataCount>&);
-bool Validate(Context&, const At<binary::DataSegment>&);
-bool Validate(Context&, const At<binary::DefinedType>&);
-bool Validate(Context&,
+bool Validate(ValidCtx&, const At<binary::DataCount>&);
+bool Validate(ValidCtx&, const At<binary::DataSegment>&);
+bool Validate(ValidCtx&, const At<binary::DefinedType>&);
+bool Validate(ValidCtx&,
               const At<binary::ElementExpression>&,
               binary::ReferenceType);
-bool Validate(Context&, const At<binary::ElementSegment>&);
-bool Validate(Context&, const At<binary::Export>&);
-bool Validate(Context&, const At<binary::Event>&);
-bool Validate(Context&, const At<binary::EventType>&);
-bool Validate(Context&, const At<binary::FieldType>&);
-bool Validate(Context&, const binary::FieldTypeList&);
-bool Validate(Context&, const At<binary::Function>&);
-bool Validate(Context&, const At<binary::FunctionType>&);
-bool Validate(Context&, const At<binary::Global>&);
-bool Validate(Context&, const At<binary::GlobalType>&);
-bool Validate(Context&, const At<binary::HeapType>&);
-bool Validate(Context&, const At<binary::Import>&);
-bool ValidateIndex(Context&,
+bool Validate(ValidCtx&, const At<binary::ElementSegment>&);
+bool Validate(ValidCtx&, const At<binary::Export>&);
+bool Validate(ValidCtx&, const At<binary::Event>&);
+bool Validate(ValidCtx&, const At<binary::EventType>&);
+bool Validate(ValidCtx&, const At<binary::FieldType>&);
+bool Validate(ValidCtx&, const binary::FieldTypeList&);
+bool Validate(ValidCtx&, const At<binary::Function>&);
+bool Validate(ValidCtx&, const At<binary::FunctionType>&);
+bool Validate(ValidCtx&, const At<binary::Global>&);
+bool Validate(ValidCtx&, const At<binary::GlobalType>&);
+bool Validate(ValidCtx&, const At<binary::HeapType>&);
+bool Validate(ValidCtx&, const At<binary::Import>&);
+bool ValidateIndex(ValidCtx&,
                    const At<Index>& index,
                    Index max,
                    string_view desc);
-bool Validate(Context&, const At<binary::Instruction>&);
-bool Validate(Context&, const At<Limits>&, Index max);
-bool Validate(Context&, const At<binary::Locals>&, RequireDefaultable);
-bool Validate(Context&, const At<binary::LocalsList>&, RequireDefaultable);
-bool Validate(Context&, const At<binary::Memory>&);
-bool Validate(Context&, const At<MemoryType>&);
-bool Validate(Context&, const At<binary::ReferenceType>&);
-bool Validate(Context&, const At<binary::RefType>&);
-bool Validate(Context&,
+bool Validate(ValidCtx&, const At<binary::Instruction>&);
+bool Validate(ValidCtx&, const At<Limits>&, Index max);
+bool Validate(ValidCtx&, const At<binary::Locals>&, RequireDefaultable);
+bool Validate(ValidCtx&, const At<binary::LocalsList>&, RequireDefaultable);
+bool Validate(ValidCtx&, const At<binary::Memory>&);
+bool Validate(ValidCtx&, const At<MemoryType>&);
+bool Validate(ValidCtx&, const At<binary::ReferenceType>&);
+bool Validate(ValidCtx&, const At<binary::RefType>&);
+bool Validate(ValidCtx&,
               binary::ReferenceType expected,
               const At<binary::ReferenceType>& actual);
-bool Validate(Context&, const At<binary::Rtt>&);
-bool Validate(Context&, const At<binary::Start>& value);
-bool Validate(Context&, const At<binary::StorageType>& value);
-bool Validate(Context&, const At<binary::StructType>& value);
-bool Validate(Context&, const At<binary::Table>&);
-bool Validate(Context&, const At<binary::TableType>&);
-bool Validate(Context&, const At<binary::ValueType>&);
-bool Validate(Context&,
+bool Validate(ValidCtx&, const At<binary::Rtt>&);
+bool Validate(ValidCtx&, const At<binary::Start>& value);
+bool Validate(ValidCtx&, const At<binary::StorageType>& value);
+bool Validate(ValidCtx&, const At<binary::StructType>& value);
+bool Validate(ValidCtx&, const At<binary::Table>&);
+bool Validate(ValidCtx&, const At<binary::TableType>&);
+bool Validate(ValidCtx&, const At<binary::ValueType>&);
+bool Validate(ValidCtx&,
               binary::ValueType expected,
               const At<binary::ValueType>& actual);
-bool Validate(Context&, const binary::ValueTypeList&);
-bool Validate(Context&, const At<binary::UnpackedCode>&);
-bool Validate(Context&, const At<binary::UnpackedExpression>&);
+bool Validate(ValidCtx&, const binary::ValueTypeList&);
+bool Validate(ValidCtx&, const At<binary::UnpackedCode>&);
+bool Validate(ValidCtx&, const At<binary::UnpackedExpression>&);
 
-bool Validate(Context&, const binary::Module&);
+bool Validate(ValidCtx&, const binary::Module&);
 
 }  // namespace wasp::valid
 

@@ -22,79 +22,77 @@
 
 namespace wasp::binary {
 
-LinkingSection::LinkingSection(SpanU8 data, Context& context)
+LinkingSection::LinkingSection(SpanU8 data, ReadCtx& ctx)
     : data{data},
-      version{Read<u32>(&data, context)},
-      subsections{data, context} {
+      version{Read<u32>(&data, ctx)},
+      subsections{data, ctx} {
   constexpr u32 kVersion = 2;
   if (version && version != kVersion) {
-    context.errors.OnError(data, concat("Expected linking section version: ",
-                                        kVersion, ", got ", *version));
+    ctx.errors.OnError(data, concat("Expected linking section version: ",
+                                    kVersion, ", got ", *version));
   }
 }
 
-auto ReadLinkingSection(SpanU8 data, Context& context) -> LinkingSection {
-  return LinkingSection{data, context};
+auto ReadLinkingSection(SpanU8 data, ReadCtx& ctx) -> LinkingSection {
+  return LinkingSection{data, ctx};
 }
 
-auto ReadLinkingSection(CustomSection sec, Context& context) -> LinkingSection {
-  return LinkingSection{sec.data, context};
+auto ReadLinkingSection(CustomSection sec, ReadCtx& ctx) -> LinkingSection {
+  return LinkingSection{sec.data, ctx};
 }
 
-RelocationSection::RelocationSection(SpanU8 data, Context& context)
+RelocationSection::RelocationSection(SpanU8 data, ReadCtx& ctx)
     : data{data},
-      section_index{Read<u32>(&data, context)},
-      count{ReadCount(&data, context)},
-      entries{data, count, "relocation section", context} {}
+      section_index{Read<u32>(&data, ctx)},
+      count{ReadCount(&data, ctx)},
+      entries{data, count, "relocation section", ctx} {}
 
-auto ReadRelocationSection(SpanU8 data, Context& context) -> RelocationSection {
-  return RelocationSection{data, context};
+auto ReadRelocationSection(SpanU8 data, ReadCtx& ctx) -> RelocationSection {
+  return RelocationSection{data, ctx};
 }
 
-auto ReadRelocationSection(CustomSection sec, Context& context)
+auto ReadRelocationSection(CustomSection sec, ReadCtx& ctx)
     -> RelocationSection {
-  return RelocationSection{sec.data, context};
+  return RelocationSection{sec.data, ctx};
 }
 
-auto ReadComdatSubsection(SpanU8 data, Context& context)
+auto ReadComdatSubsection(SpanU8 data, ReadCtx& ctx) -> LazyComdatSubsection {
+  return LazyComdatSubsection{data, "comdat subsection", ctx};
+}
+
+auto ReadComdatSubsection(LinkingSubsection sec, ReadCtx& ctx)
     -> LazyComdatSubsection {
-  return LazyComdatSubsection{data, "comdat subsection", context};
+  return ReadComdatSubsection(sec.data, ctx);
 }
 
-auto ReadComdatSubsection(LinkingSubsection sec, Context& context)
-    -> LazyComdatSubsection {
-  return ReadComdatSubsection(sec.data, context);
-}
-
-auto ReadInitFunctionsSubsection(SpanU8 data, Context& context)
+auto ReadInitFunctionsSubsection(SpanU8 data, ReadCtx& ctx)
     -> LazyInitFunctionsSubsection {
-  return LazyInitFunctionsSubsection{data, "init functions subsection",
-                                     context};
+  return LazyInitFunctionsSubsection{data, "init functions subsection", ctx};
 }
 
-auto ReadInitFunctionsSubsection(LinkingSubsection sec, Context& context)
+auto ReadInitFunctionsSubsection(LinkingSubsection sec, ReadCtx& ctx)
     -> LazyInitFunctionsSubsection {
-  return ReadInitFunctionsSubsection(sec.data, context);
+  return ReadInitFunctionsSubsection(sec.data, ctx);
 }
 
-auto ReadSegmentInfoSubsection(SpanU8 data, Context& context)
+auto ReadSegmentInfoSubsection(SpanU8 data, ReadCtx& ctx)
     -> LazySegmentInfoSubsection {
-  return LazySegmentInfoSubsection{data, "segment info subsection", context};
+  return LazySegmentInfoSubsection{data, "segment info subsection", ctx};
 }
 
-auto ReadSegmentInfoSubsection(LinkingSubsection sec, Context& context)
+auto ReadSegmentInfoSubsection(LinkingSubsection sec, ReadCtx& ctx)
     -> LazySegmentInfoSubsection {
-  return ReadSegmentInfoSubsection(sec.data, context);
+  return ReadSegmentInfoSubsection(sec.data, ctx);
 }
 
-auto ReadSymbolTableSubsection(SpanU8 data, Context& context)
+auto ReadSymbolTableSubsection(SpanU8 data, ReadCtx& ctx)
     -> LazySymbolTableSubsection {
-  return LazySymbolTableSubsection{data, "symbol table subsection", context};
+  return LazySymbolTableSubsection{data, "symbol table subsection", ctx};
 }
 
-auto ReadSymbolTableSubsection(LinkingSubsection sec, Context& context)
+auto ReadSymbolTableSubsection(LinkingSubsection sec, ReadCtx& ctx)
     -> LazySymbolTableSubsection {
-  return ReadSymbolTableSubsection(sec.data, context);
+  return ReadSymbolTableSubsection(sec.data, ctx);
 }
 
 }  // namespace wasp::binary

@@ -200,7 +200,7 @@ optional<Code> Tool::GetCode(Index find_index) {
     if (section->is_known()) {
       auto known = section->known();
       if (known->id == SectionId::Code) {
-        auto section = ReadCodeSection(known, module.context);
+        auto section = ReadCodeSection(known, module.ctx);
         for (auto code : enumerate(section.sequence, imported_function_count)) {
           if (code.index == find_index) {
             return code.value;
@@ -219,7 +219,7 @@ void Tool::CalculateCFG(Code code) {
   StartBasicBlock(start_bbid, ptr);
 
   const u8* prev_ptr = ptr;
-  auto instrs = ReadExpression(code.body, module.context);
+  auto instrs = ReadExpression(code.body, module.ctx);
   for (auto it = instrs.begin(), end = instrs.end(); it != end;
        ++it, prev_ptr = ptr) {
     const auto& instr = *it;
@@ -386,7 +386,7 @@ void Tool::WriteDotFile() {
              "<TABLE BORDER=\"1\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR>"
              "<TD BORDER=\"0\" ALIGN=\"LEFT\" COLSPAN=\"%d\">",
              bb.index, colspan);
-      auto instrs = ReadExpression(bb.value.code, module.context);
+      auto instrs = ReadExpression(bb.value.code, module.ctx);
       for (const auto& instr: instrs) {
         if (IsExtraneousInstruction(instr)) {
           continue;
@@ -485,7 +485,7 @@ void Tool::EndBasicBlock(const u8* end) {
   const u8* start = bb.code.data();
   bb.code = MakeSpan(start, end);
 
-  auto instrs = ReadExpression(bb.code, module.context);
+  auto instrs = ReadExpression(bb.code, module.ctx);
   if (std::all_of(instrs.begin(), instrs.end(), IsExtraneousInstruction)) {
     bb.code = SpanU8{};
   }

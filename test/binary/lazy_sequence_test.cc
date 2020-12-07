@@ -20,7 +20,7 @@
 #include "test/test_utils.h"
 #include "wasp/base/errors_nop.h"
 #include "wasp/binary/read.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
@@ -28,8 +28,8 @@ using namespace ::wasp::test;
 
 TEST(BinaryLazySequenceTest, Basic) {
   ErrorsNop errors;
-  Context context{errors};
-  LazySequence<u32> seq{"\x01\x80\x02\x00\x80\x80\x01"_su8, context};
+  ReadCtx ctx{errors};
+  LazySequence<u32> seq{"\x01\x80\x02\x00\x80\x80\x01"_su8, ctx};
   auto it = seq.begin();
 
   EXPECT_EQ(1u, *it++);
@@ -47,17 +47,17 @@ TEST(BinaryLazySequenceTest, Basic) {
 
 TEST(BinaryLazySequenceTest, Empty) {
   ErrorsNop errors;
-  Context context{errors};
-  LazySequence<u8> seq{""_su8, context};
+  ReadCtx ctx{errors};
+  LazySequence<u8> seq{""_su8, ctx};
 
   EXPECT_EQ(seq.begin(), seq.end());
 }
 
 TEST(BinaryLazySequenceTest, Error) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   const auto data = "\x40\x30\x80"_su8;
-  LazySequence<s32> seq{data, context};
+  LazySequence<s32> seq{data, ctx};
 
   auto it = seq.begin();
 
@@ -72,9 +72,9 @@ TEST(BinaryLazySequenceTest, Error) {
 
 TEST(BinaryLazySequenceTest, ExpectedCount_Match) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   const auto data = "\x00\x01"_su8;
-  LazySequence<s32> seq{data, 2, "MySequence", context};
+  LazySequence<s32> seq{data, 2, "MySequence", ctx};
 
   auto it = seq.begin();
   it++;
@@ -84,9 +84,9 @@ TEST(BinaryLazySequenceTest, ExpectedCount_Match) {
 
 TEST(BinaryLazySequenceTest, ExpectedCount_ActualLess) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   const auto data = "\x00"_su8;
-  LazySequence<s32> seq{data, 2, "MySequence", context};
+  LazySequence<s32> seq{data, 2, "MySequence", ctx};
 
   auto it = seq.begin();
   it++;
@@ -96,9 +96,9 @@ TEST(BinaryLazySequenceTest, ExpectedCount_ActualLess) {
 
 TEST(BinaryLazySequenceTest, ExpectedCount_ActualMore) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   const auto data = "\x00\x01\x02\x03"_su8;
-  LazySequence<s32> seq{data, 2, "MySequence", context};
+  LazySequence<s32> seq{data, 2, "MySequence", ctx};
 
   auto it = seq.begin();
   it++;

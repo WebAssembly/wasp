@@ -19,7 +19,7 @@
 #include "test/test_utils.h"
 #include "wasp/binary/linking_section/encoding.h"
 #include "wasp/binary/linking_section/read.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
@@ -31,7 +31,7 @@ class BinaryReadLinkingTest : public ::testing::Test {
  protected:
   template <typename Func, typename T, typename... Args>
   void OK(Func&& func, const T& expected, SpanU8 data, Args&&... args) {
-    auto actual = func(&data, context, std::forward<Args>(args)...);
+    auto actual = func(&data, ctx, std::forward<Args>(args)...);
     ExpectNoErrors(errors);
     EXPECT_EQ(0u, data.size());
     EXPECT_NE(nullptr, actual->loc().data());
@@ -40,7 +40,7 @@ class BinaryReadLinkingTest : public ::testing::Test {
   }
 
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
 };
 
 TEST_F(BinaryReadLinkingTest, Comdat) {

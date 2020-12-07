@@ -29,7 +29,7 @@ class Errors;
 
 namespace binary {
 
-struct Context;
+struct ReadCtx;
 
 using IndexNamePair = std::pair<Index, string_view>;
 

@@ -22,9 +22,9 @@
 #include "wasp/base/errors_nop.h"
 #include "wasp/base/features.h"
 #include "wasp/binary/formatters.h"
-#include "wasp/valid/context.h"
 #include "wasp/valid/formatters.h"
 #include "wasp/valid/match.h"
+#include "wasp/valid/valid_ctx.h"
 #include "wasp/valid/validate.h"
 
 #include "wasp/base/concat.h"
@@ -43,7 +43,7 @@ class ValidateInstructionTest : public ::testing::Test {
   using ST = StackType;
   using HT = HeapType;
 
-  ValidateInstructionTest() : context{errors} {}
+  ValidateInstructionTest() : ctx{errors} {}
 
   virtual void SetUp() {
     BeginFunction(FunctionType{});
@@ -52,9 +52,9 @@ class ValidateInstructionTest : public ::testing::Test {
   virtual void TearDown() {}
 
   void BeginFunction(const FunctionType& function_type) {
-    context.Reset();
+    ctx.Reset();
     AddFunction(function_type);
-    EXPECT_TRUE(BeginCode(context, Location{}));
+    EXPECT_TRUE(BeginCode(ctx, Location{}));
   }
 
   template <typename T>
@@ -64,37 +64,37 @@ class ValidateInstructionTest : public ::testing::Test {
   }
 
   void IncrementDefinedTypeCount() {
-    context.defined_type_count++;
-    context.same_types.Reset(context.defined_type_count);
-    context.match_types.Reset(context.defined_type_count);
+    ctx.defined_type_count++;
+    ctx.same_types.Reset(ctx.defined_type_count);
+    ctx.match_types.Reset(ctx.defined_type_count);
   }
 
   Index AddFunctionType(const FunctionType& function_type) {
     IncrementDefinedTypeCount();
-    return AddItem(context.types, DefinedType{function_type});
+    return AddItem(ctx.types, DefinedType{function_type});
   }
 
   Index AddStructType(const StructType& struct_type) {
     IncrementDefinedTypeCount();
-    return AddItem(context.types, DefinedType{struct_type});
+    return AddItem(ctx.types, DefinedType{struct_type});
   }
 
   Index AddArrayType(const ArrayType& array_type) {
     IncrementDefinedTypeCount();
-    return AddItem(context.types, DefinedType{array_type});
+    return AddItem(ctx.types, DefinedType{array_type});
   }
 
   Index AddFunction(const FunctionType& function_type) {
     Index type_index = AddFunctionType(function_type);
-    return AddItem(context.functions, Function{type_index});
+    return AddItem(ctx.functions, Function{type_index});
   }
 
   Index AddTable(const TableType& table_type) {
-    return AddItem(context.tables, table_type);
+    return AddItem(ctx.tables, table_type);
   }
 
   Index AddMemory(const MemoryType& memory_type) {
-    return AddItem(context.memories, memory_type);
+    return AddItem(ctx.memories, memory_type);
   }
 
   Index AddMemory64() {
@@ -102,22 +102,22 @@ class ValidateInstructionTest : public ::testing::Test {
   }
 
   Index AddGlobal(const GlobalType& global_type) {
-    return AddItem(context.globals, global_type);
+    return AddItem(ctx.globals, global_type);
   }
 
   Index AddEvent(const EventType& event_type) {
-    return AddItem(context.events, event_type);
+    return AddItem(ctx.events, event_type);
   }
 
   Index AddElementSegment(ReferenceType elem_type) {
-    return AddItem(context.element_segments, elem_type);
+    return AddItem(ctx.element_segments, elem_type);
   }
 
   Index AddLocal(const ValueType& value_type) {
-    bool ok = context.locals.Append(1, value_type);
+    bool ok = ctx.locals.Append(1, value_type);
     WASP_USE(ok);
     assert(ok);
-    return context.locals.GetCount() - 1;
+    return ctx.locals.GetCount() - 1;
   }
 
   ValueType MakeValueTypeRef(Index index, Null null) {
@@ -125,22 +125,22 @@ class ValidateInstructionTest : public ::testing::Test {
   }
 
   void Ok(const Instruction& instruction) {
-    EXPECT_TRUE(Validate(context, instruction)) << instruction;
+    EXPECT_TRUE(Validate(ctx, instruction)) << instruction;
   }
 
   void Fail(const Instruction& instruction) {
-    EXPECT_FALSE(Validate(context, instruction)) << instruction;
+    EXPECT_FALSE(Validate(ctx, instruction)) << instruction;
   }
 
   void OkWithTypeStack(const Instruction& instruction,
                        const StackTypeList& param_types,
                        const StackTypeList& result_types) {
     TestErrors errors;
-    Context context_copy{context, errors};
+    ValidCtx context_copy{ctx, errors};
     context_copy.type_stack = param_types;
     EXPECT_TRUE(Validate(context_copy, instruction))
         << concat(instruction, " with stack ", param_types);
-    EXPECT_TRUE(IsSame(context, result_types, context_copy.type_stack))
+    EXPECT_TRUE(IsSame(ctx, result_types, context_copy.type_stack))
         << instruction;
     ExpectNoErrors(errors);
   }
@@ -149,12 +149,12 @@ class ValidateInstructionTest : public ::testing::Test {
                               const ValueTypeList& param_types,
                               const ValueTypeList& result_types) {
     TestErrors errors;
-    Context context_copy{context, errors};
+    ValidCtx context_copy{ctx, errors};
     context_copy.label_stack.back().unreachable = true;
     context_copy.type_stack = ToStackTypeList(param_types);
     EXPECT_TRUE(Validate(context_copy, instruction)) << instruction;
     EXPECT_TRUE(
-        IsSame(context, ToStackTypeList(result_types), context_copy.type_stack))
+        IsSame(ctx, ToStackTypeList(result_types), context_copy.type_stack))
         << instruction;
     ExpectNoErrors(errors);
   }
@@ -162,7 +162,7 @@ class ValidateInstructionTest : public ::testing::Test {
   void FailWithTypeStack(const Instruction& instruction,
                          const StackTypeList& param_types) {
     ErrorsNop errors_nop;
-    Context context_copy{context, errors_nop};
+    ValidCtx context_copy{ctx, errors_nop};
     context_copy.type_stack = param_types;
     EXPECT_FALSE(Validate(context_copy, instruction))
         << concat(instruction, " with stack ", param_types);
@@ -198,7 +198,7 @@ class ValidateInstructionTest : public ::testing::Test {
       auto mismatch_types = stack_param_types;
       for (auto& stack_type : mismatch_types) {
         stack_type =
-            IsSame(context, stack_type, ST::I32()) ? ST::F64() : ST::I32();
+            IsSame(ctx, stack_type, ST::I32()) ? ST::F64() : ST::I32();
       }
       FailWithTypeStack(instruction, mismatch_types);
     }
@@ -212,7 +212,7 @@ class ValidateInstructionTest : public ::testing::Test {
   }
 
   TestErrors errors;
-  Context context;
+  ValidCtx ctx;
 };
 
 struct ValueTypeInfo {
@@ -742,7 +742,7 @@ TEST_F(ValidateInstructionTest, Throw_TypeMismatch) {
 }
 
 TEST_F(ValidateInstructionTest, Rethrow) {
-  context.type_stack = {ST::Exnref()};
+  ctx.type_stack = {ST::Exnref()};
   Ok(I{O::Rethrow});
   ExpectNoErrors(errors);
 }
@@ -1036,7 +1036,7 @@ TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
 }
 
 TEST_F(ValidateInstructionTest, BrTable_References) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   Ok(I{O::Block, BT_Externref});
   Ok(I{O::Block, BT_Externref});
@@ -1048,7 +1048,7 @@ TEST_F(ValidateInstructionTest, BrTable_References) {
 }
 
 TEST_F(ValidateInstructionTest, BrTable_FunctionReferences) {
-  context.features.enable_function_references();
+  ctx.features.enable_function_references();
 
   Ok(I{O::Block, BT_RefNull0});
   Ok(I{O::Block, BT_RefNullFunc});
@@ -1114,8 +1114,8 @@ TEST_F(ValidateInstructionTest, Call_FunctionIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, Call_TypeIndexOOB) {
-  context.functions.push_back(Function{100});
-  Index index = context.functions.size() - 1;
+  ctx.functions.push_back(Function{100});
+  Index index = ctx.functions.size() - 1;
   Fail(I{O::Call, Index{index}});
   ExpectError({"instruction", "Invalid type index 100, must be less than 1"},
                errors);
@@ -1225,7 +1225,7 @@ TEST_F(ValidateInstructionTest, Select_InconsistentTypes) {
 TEST_F(ValidateInstructionTest, Select_ReferenceTypes) {
   // Select can only be used with {i,f}{32,64} value types.
   for (auto stack_type : {ST::Externref(), ST::Funcref()}) {
-    context.type_stack = {stack_type, stack_type, ST::I32()};
+    ctx.type_stack = {stack_type, stack_type, ST::I32()};
     Fail(I{O::Select});
     ExpectError(
         {"instruction",
@@ -1393,7 +1393,7 @@ TEST_F(ValidateInstructionTest, TableGet_Externref) {
 }
 
 TEST_F(ValidateInstructionTest, TableGet_IndexOOB) {
-  context.type_stack = {ST::I32()};
+  ctx.type_stack = {ST::I32()};
   Fail(I{O::TableGet, Index{0}});
   ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
                errors);
@@ -1410,7 +1410,7 @@ TEST_F(ValidateInstructionTest, TableSet_Externref) {
 }
 
 TEST_F(ValidateInstructionTest, TableSet_IndexOOB) {
-  context.type_stack = {ST::I32(), ST::Funcref()};
+  ctx.type_stack = {ST::I32(), ST::Funcref()};
   Fail(I{O::TableSet, Index{0}});
   ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
               errors);
@@ -1418,7 +1418,7 @@ TEST_F(ValidateInstructionTest, TableSet_IndexOOB) {
 
 TEST_F(ValidateInstructionTest, TableSet_InvalidType) {
   AddTable(TableType{Limits{0}, RT_Funcref});
-  context.type_stack = {ST::I32(), ST::Externref()};
+  ctx.type_stack = {ST::I32(), ST::Externref()};
   Fail(I{O::TableSet, Index{0}});
   ExpectError({"instruction",
                "Expected stack to contain [i32 funcref], got [i32 externref]"},
@@ -1720,7 +1720,7 @@ TEST_F(ValidateInstructionTest, ReturnCall_Unreachable) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCall_FunctionIndexOOB) {
-  Index index = context.functions.size();
+  Index index = ctx.functions.size();
   Fail(I{O::ReturnCall, Index{index}});
   ExpectError(
       {"instruction", "Invalid function index 1, must be less than 1"},
@@ -1728,8 +1728,8 @@ TEST_F(ValidateInstructionTest, ReturnCall_FunctionIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, ReturnCall_TypeIndexOOB) {
-  context.functions.push_back(Function{100});
-  Index index = context.functions.size() - 1;
+  ctx.functions.push_back(Function{100});
+  Index index = ctx.functions.size() - 1;
   Fail(I{O::ReturnCall, Index{index}});
   ExpectError({"instruction", "Invalid type index 100, must be less than 1"},
                errors);
@@ -1853,7 +1853,7 @@ TEST_F(ValidateInstructionTest, ReferenceTypes) {
 }
 
 TEST_F(ValidateInstructionTest, RefFunc) {
-  context.declared_functions.insert(0);
+  ctx.declared_functions.insert(0);
   TestSignature(I{O::RefFunc, Index{0}}, {}, {VT_Ref0});
 }
 
@@ -1882,21 +1882,21 @@ TEST_F(ValidateInstructionTest, SaturatingFloatToInt) {
 }
 
 TEST_F(ValidateInstructionTest, MemoryInit) {
-  context.declared_data_count = 2;
+  ctx.declared_data_count = 2;
   AddMemory(MemoryType{Limits{0}});
   TestSignature(I{O::MemoryInit, InitImmediate{1, 0}},
                 {VT_I32, VT_I32, VT_I32}, {});
 }
 
 TEST_F(ValidateInstructionTest, MemoryInit_memory64) {
-  context.declared_data_count = 2;
+  ctx.declared_data_count = 2;
   AddMemory64();
   TestSignature(I{O::MemoryInit, InitImmediate{1, 0}}, {VT_I64, VT_I32, VT_I32},
                 {});
 }
 
 TEST_F(ValidateInstructionTest, MemoryInit_MemoryIndexOOB) {
-  context.declared_data_count = 2;
+  ctx.declared_data_count = 2;
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1906,7 +1906,7 @@ TEST_F(ValidateInstructionTest, MemoryInit_MemoryIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, MemoryInit_SegmentIndexOOB) {
-  context.declared_data_count = 2;
+  ctx.declared_data_count = 2;
   AddMemory(MemoryType{Limits{0}});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::I32Const, s32{}});
@@ -1918,12 +1918,12 @@ TEST_F(ValidateInstructionTest, MemoryInit_SegmentIndexOOB) {
 }
 
 TEST_F(ValidateInstructionTest, DataDrop) {
-  context.declared_data_count = 2;
+  ctx.declared_data_count = 2;
   TestSignature(I{O::DataDrop, Index{1}}, {}, {});
 }
 
 TEST_F(ValidateInstructionTest, DataDrop_SegmentIndexOOB) {
-  context.declared_data_count = 2;
+  ctx.declared_data_count = 2;
   Fail(I{O::DataDrop, Index{2}});
   ExpectError(
       {"instruction", "Invalid data segment index 2, must be less than 2"},
@@ -2054,7 +2054,7 @@ TEST_F(ValidateInstructionTest, TableGrow) {
 }
 
 TEST_F(ValidateInstructionTest, TableGrow_TableIndexOOB) {
-  context.type_stack = StackTypeList{ST::Funcref(), ST::I32()};
+  ctx.type_stack = StackTypeList{ST::Funcref(), ST::I32()};
   Fail(I{O::TableGrow, Index{0}});
   ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
                errors);
@@ -2077,7 +2077,7 @@ TEST_F(ValidateInstructionTest, TableFill) {
 }
 
 TEST_F(ValidateInstructionTest, TableFill_TableIndexOOB) {
-  context.type_stack = StackTypeList{ST::I32(), ST::Funcref(), ST::I32()};
+  ctx.type_stack = StackTypeList{ST::I32(), ST::Funcref(), ST::I32()};
   Fail(I{O::TableFill, Index{0}});
   ExpectError({"instruction", "Invalid table index 0, must be less than 0"},
                errors);
@@ -2298,17 +2298,17 @@ TEST_F(ValidateInstructionTest, SimdShuffle) {
 
 TEST_F(ValidateInstructionTest, SimdShuffle_ValidLane) {
   // Test valid indexes.
-  context.type_stack = StackTypeList{ST::V128(), ST::V128()};
+  ctx.type_stack = StackTypeList{ST::V128(), ST::V128()};
   Ok(I{O::I8X16Shuffle, ShuffleImmediate{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
                                           12, 13, 14, 15}}});
 
   // 16 through 31 is also allowed.
-  context.type_stack = StackTypeList{ST::V128(), ST::V128()};
+  ctx.type_stack = StackTypeList{ST::V128(), ST::V128()};
   Ok(I{O::I8X16Shuffle, ShuffleImmediate{{16, 17, 18, 19, 20, 21, 22, 23, 24,
                                           25, 26, 27, 28, 29, 30, 31}}});
 
   // >= 32 is not allowed.
-  context.type_stack = StackTypeList{ST::V128(), ST::V128()};
+  ctx.type_stack = StackTypeList{ST::V128(), ST::V128()};
   Fail(I{O::I8X16Shuffle,
          ShuffleImmediate{{32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}});
 }
@@ -2365,12 +2365,12 @@ TEST_F(ValidateInstructionTest, SimdExtractLanes_ValidLane) {
   for (const auto& info: infos) {
     // Test valid indexes.
     for (SimdLaneImmediate imm = 0; imm < info.max_valid_lane; ++imm) {
-      context.type_stack = StackTypeList{ST::V128()};
+      ctx.type_stack = StackTypeList{ST::V128()};
       Ok(I{info.opcode, imm});
     }
 
     // Test invalid indexes.
-    context.type_stack = StackTypeList{ST::V128()};
+    ctx.type_stack = StackTypeList{ST::V128()};
     Fail(I{info.opcode, SimdLaneImmediate(info.max_valid_lane + 1)});
   }
 }
@@ -2404,12 +2404,12 @@ TEST_F(ValidateInstructionTest, SimdReplaceLanes_ValidLane) {
   for (const auto& info: infos) {
     // Test valid indexes.
     for (SimdLaneImmediate imm = 0; imm < info.max_valid_lane; ++imm) {
-      context.type_stack = StackTypeList{ST::V128(), info.stack_type};
+      ctx.type_stack = StackTypeList{ST::V128(), info.stack_type};
       Ok(I{info.opcode, imm});
     }
 
     // Test invalid indexes.
-    context.type_stack = StackTypeList{ST::V128(), info.stack_type};
+    ctx.type_stack = StackTypeList{ST::V128(), info.stack_type};
     Fail(I{info.opcode, SimdLaneImmediate(info.max_valid_lane + 1)});
   }
 }
@@ -2940,7 +2940,7 @@ TEST_F(ValidateInstructionTest, CallRef) {
 
 TEST_F(ValidateInstructionTest, CallRef_ParamTypeMismatch) {
   auto index = AddFunction(FunctionType{{VT_F32}, {}});
-  context.declared_functions.insert(index);
+  ctx.declared_functions.insert(index);
 
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::RefFunc, index});
@@ -2965,7 +2965,7 @@ TEST_F(ValidateInstructionTest, ReturnCallRef) {
 TEST_F(ValidateInstructionTest, ReturnCallRef_ResultType_Subtyping) {
   BeginFunction(FunctionType{{}, {VT_Funcref}});
   auto index = AddFunction(FunctionType{{}, {VT_Ref0}});
-  context.declared_functions.insert(index);
+  ctx.declared_functions.insert(index);
 
   Ok(I{O::RefFunc, index});
   Ok(I{O::ReturnCallRef});
@@ -2975,19 +2975,19 @@ TEST_F(ValidateInstructionTest, ReturnCallRef_ResultType_Subtyping) {
 TEST_F(ValidateInstructionTest, ReturnCallRef_Unreachable) {
   BeginFunction(FunctionType{});
   auto index = AddFunction(FunctionType{});
-  context.declared_functions.insert(index);
+  ctx.declared_functions.insert(index);
 
   Ok(I{O::RefFunc, index});
   Ok(I{O::ReturnCallRef});
 
-  EXPECT_TRUE(context.IsStackPolymorphic());
+  EXPECT_TRUE(ctx.IsStackPolymorphic());
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, ReturnCallRef_ParamTypeMismatch) {
   BeginFunction(FunctionType{});
   auto index = AddFunction(FunctionType{{VT_F32}, {}});
-  context.declared_functions.insert(index);
+  ctx.declared_functions.insert(index);
 
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::RefFunc, index});
@@ -2999,7 +2999,7 @@ TEST_F(ValidateInstructionTest, ReturnCallRef_ParamTypeMismatch) {
 TEST_F(ValidateInstructionTest, ReturnCallRef_ResultTypeMismatch) {
   BeginFunction(FunctionType{{}, {VT_F32}});
   auto index = AddFunction(FunctionType{{}, {VT_I32}});
-  context.declared_functions.insert(index);
+  ctx.declared_functions.insert(index);
 
   Ok(I{O::RefFunc, index});
   Fail(I{O::ReturnCallRef});
@@ -3030,7 +3030,7 @@ TEST_F(ValidateInstructionTest, FuncBind) {
   };
 
   for (const auto& info: infos) {
-    context.Reset();
+    ctx.Reset();
     BeginFunction(FunctionType{});
     auto old_index = AddFunctionType(info.old_ft);
     auto new_index = AddFunctionType(info.new_ft);
@@ -3065,7 +3065,7 @@ TEST_F(ValidateInstructionTest, FuncBind_TypeMismatch) {
   };
 
   for (const auto& info: infos) {
-    context.Reset();
+    ctx.Reset();
     BeginFunction(FunctionType{});
     auto old_index = AddFunctionType(info.old_ft);
     auto new_index = AddFunctionType(info.new_ft);

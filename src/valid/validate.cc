@@ -26,121 +26,120 @@
 #include "wasp/base/types.h"
 #include "wasp/binary/formatters.h"
 #include "wasp/binary/lazy_expression.h"
-#include "wasp/valid/context.h"
 #include "wasp/valid/match.h"
+#include "wasp/valid/valid_ctx.h"
 
 namespace wasp::valid {
 
-bool BeginTypeSection(Context& context, Index type_count) {
-  context.defined_type_count = type_count;
-  context.same_types.Reset(type_count);
-  context.match_types.Reset(type_count);
+bool BeginTypeSection(ValidCtx& ctx, Index type_count) {
+  ctx.defined_type_count = type_count;
+  ctx.same_types.Reset(type_count);
+  ctx.match_types.Reset(type_count);
   return true;
 }
 
-bool BeginCode(Context& context, Location loc) {
-  Index func_index = context.imported_function_count + context.code_count;
-  if (func_index >= context.functions.size()) {
-    context.errors->OnError(
-        loc, concat("Unexpected code index ", func_index,
-                    ", function count is ", context.functions.size()));
+bool BeginCode(ValidCtx& ctx, Location loc) {
+  Index func_index = ctx.imported_function_count + ctx.code_count;
+  if (func_index >= ctx.functions.size()) {
+    ctx.errors->OnError(loc,
+                        concat("Unexpected code index ", func_index,
+                               ", function count is ", ctx.functions.size()));
     return false;
   }
-  context.code_count++;
-  const binary::Function& function = context.functions[func_index];
-  context.type_stack.clear();
-  context.label_stack.clear();
-  context.locals.Reset();
+  ctx.code_count++;
+  const binary::Function& function = ctx.functions[func_index];
+  ctx.type_stack.clear();
+  ctx.label_stack.clear();
+  ctx.locals.Reset();
   // Don't validate the index, should have already been validated at this point.
-  if (function.type_index < context.defined_type_count) {
-    const auto& defined_type = context.types[function.type_index];
+  if (function.type_index < ctx.defined_type_count) {
+    const auto& defined_type = ctx.types[function.type_index];
     if (!defined_type.is_function_type()) {
-      context.errors->OnError(loc,
-                              concat("Function must have a function type."));
+      ctx.errors->OnError(loc, concat("Function must have a function type."));
       return false;
     }
 
     assert(defined_type.is_function_type());
     const auto& function_type = defined_type.function_type();
-    context.locals.Append(function_type->param_types);
-    context.label_stack.push_back(
+    ctx.locals.Append(function_type->param_types);
+    ctx.label_stack.push_back(
         Label{LabelType::Function, ToStackTypeList(function_type->param_types),
               ToStackTypeList(function_type->result_types), 0});
     return true;
   } else {
     // Not valid, but try to continue anyway.
-    context.label_stack.push_back(Label{LabelType::Function, {}, {}, 0});
+    ctx.label_stack.push_back(Label{LabelType::Function, {}, {}, 0});
     return false;
   }
 }
 
-bool CheckDefaultable(Context& context,
+bool CheckDefaultable(ValidCtx& ctx,
                       const At<binary::ReferenceType>& value,
                       string_view desc) {
   if (!IsDefaultableType(value)) {
-    context.errors->OnError(
-        value.loc(), concat(desc, " must be defaultable, got ", value));
+    ctx.errors->OnError(value.loc(),
+                        concat(desc, " must be defaultable, got ", value));
     return false;
   }
   return true;
 }
 
-bool CheckDefaultable(Context& context,
+bool CheckDefaultable(ValidCtx& ctx,
                       const At<binary::ValueType>& value,
                       string_view desc) {
   if (!IsDefaultableType(value)) {
-    context.errors->OnError(
-        value.loc(), concat(desc, " must be defaultable, got ", value));
+    ctx.errors->OnError(value.loc(),
+                        concat(desc, " must be defaultable, got ", value));
     return false;
   }
   return true;
 }
 
-bool CheckDefaultable(Context& context,
+bool CheckDefaultable(ValidCtx& ctx,
                       const At<binary::StorageType>& value,
                       string_view desc) {
   if (!IsDefaultableType(value)) {
-    context.errors->OnError(
-        value.loc(), concat(desc, " must be defaultable, got ", value));
+    ctx.errors->OnError(value.loc(),
+                        concat(desc, " must be defaultable, got ", value));
     return false;
   }
   return true;
 }
 
-bool Validate(Context& context, const At<binary::UnpackedExpression>& value) {
+bool Validate(ValidCtx& ctx, const At<binary::UnpackedExpression>& value) {
   bool valid = true;
   for (auto&& instr : value->instructions) {
-    valid &= Validate(context, instr);
+    valid &= Validate(ctx, instr);
   }
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::UnpackedCode>& value) {
+bool Validate(ValidCtx& ctx, const At<binary::UnpackedCode>& value) {
   bool valid = true;
-  valid &= BeginCode(context, value.loc());
-  valid &= Validate(context, value->locals, RequireDefaultable::Yes);
-  valid &= Validate(context, value->body);
+  valid &= BeginCode(ctx, value.loc());
+  valid &= Validate(ctx, value->locals, RequireDefaultable::Yes);
+  valid &= Validate(ctx, value->body);
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::ArrayType>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "array type"};
-  return Validate(context, value->field);
+bool Validate(ValidCtx& ctx, const At<binary::ArrayType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "array type"};
+  return Validate(ctx, value->field);
 }
 
-bool Validate(Context& context,
+bool Validate(ValidCtx& ctx,
               const At<binary::ConstantExpression>& value,
               binary::ValueType expected_type,
               Index max_global_index) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "constant_expression"};
-  if (value->instructions.size() != 1 && !context.features.gc_enabled()) {
-    context.errors->OnError(
-        value.loc(), "A constant expression must be a single instruction");
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "constant_expression"};
+  if (value->instructions.size() != 1 && !ctx.features.gc_enabled()) {
+    ctx.errors->OnError(value.loc(),
+                        "A constant expression must be a single instruction");
     return false;
   }
 
   bool valid = true;
-  Context new_context{context};
+  ValidCtx new_context{ctx};
   new_context.type_stack.clear();
   new_context.label_stack.clear();
   new_context.locals.Reset();
@@ -169,9 +168,9 @@ bool Validate(Context& context,
       case Opcode::GlobalGet: {
         // global initializers are only allowed to reference imported globals,
         // so the maximum global index is shorter than specified by the
-        // context. All other constant expressions can use the full range.
+        // ctx. All other constant expressions can use the full range.
         auto index = instruction->index_immediate();
-        if (!ValidateIndex(context, index, max_global_index, "global index")) {
+        if (!ValidateIndex(ctx, index, max_global_index, "global index")) {
           return false;
         }
 
@@ -194,13 +193,13 @@ bool Validate(Context& context,
 
         // ref.func indexes are implicitly declared by referencing them in a
         // constant expression.
-        context.declared_functions.insert(index);
+        ctx.declared_functions.insert(index);
         new_context.declared_functions.insert(index);
         break;
       }
 
       default:
-        context.errors->OnError(
+        ctx.errors->OnError(
             instruction.loc(),
             concat("Invalid instruction in constant expression: ",
                    instruction));
@@ -218,33 +217,33 @@ bool Validate(Context& context,
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::DataCount>& value) {
-  context.declared_data_count = value->count;
+bool Validate(ValidCtx& ctx, const At<binary::DataCount>& value) {
+  ctx.declared_data_count = value->count;
   return true;
 }
 
-bool Validate(Context& context, const At<binary::DataSegment>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "data segment"};
+bool Validate(ValidCtx& ctx, const At<binary::DataSegment>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "data segment"};
   bool valid = true;
   if (value->memory_index) {
-    valid &= ValidateIndex(context, *value->memory_index,
-                           static_cast<Index>(context.memories.size()), "memory index");
+    valid &=
+        ValidateIndex(ctx, *value->memory_index,
+                      static_cast<Index>(ctx.memories.size()), "memory index");
   }
   if (value->offset) {
-    valid &=
-        Validate(context, *value->offset, binary::ValueType::I32_NoLocation(),
-                 static_cast<Index>(context.globals.size()));
+    valid &= Validate(ctx, *value->offset, binary::ValueType::I32_NoLocation(),
+                      static_cast<Index>(ctx.globals.size()));
   }
   return valid;
 }
 
-bool Validate(Context& context,
+bool Validate(ValidCtx& ctx,
               const At<binary::ElementExpression>& value,
               binary::ReferenceType reftype) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "element expression"};
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "element expression"};
   if (value->instructions.size() != 1) {
-    context.errors->OnError(
-        value.loc(), "An element expression must be a single instruction");
+    ctx.errors->OnError(value.loc(),
+                        "An element expression must be a single instruction");
     return false;
   }
 
@@ -259,115 +258,119 @@ bool Validate(Context& context,
     case Opcode::RefFunc: {
       actual_type = binary::ReferenceType::Funcref_NoLocation();
       auto index = instruction->index_immediate();
-      if (!ValidateIndex(context, index, static_cast<Index>(context.functions.size()),
+      if (!ValidateIndex(ctx, index, static_cast<Index>(ctx.functions.size()),
                          "function index")) {
         valid = false;
       }
-      context.declared_functions.insert(index);
+      ctx.declared_functions.insert(index);
       break;
     }
 
     default:
-      context.errors->OnError(
+      ctx.errors->OnError(
           instruction.loc(),
           concat("Invalid instruction in element expression: ", instruction));
       return false;
   }
 
   assert(actual_type.has_value());
-  valid &= Validate(context, reftype, At{value.loc(), *actual_type});
+  valid &= Validate(ctx, reftype, At{value.loc(), *actual_type});
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::ElementSegment>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "element segment"};
-  context.element_segments.push_back(value->elemtype());
+bool Validate(ValidCtx& ctx, const At<binary::ElementSegment>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "element segment"};
+  ctx.element_segments.push_back(value->elemtype());
   bool valid = true;
   if (value->table_index) {
-    valid &= ValidateIndex(context, *value->table_index, static_cast<Index>(context.tables.size()),
-                           "table index");
+    valid &=
+        ValidateIndex(ctx, *value->table_index,
+                      static_cast<Index>(ctx.tables.size()), "table index");
   }
   if (value->offset) {
-    valid &=
-        Validate(context, *value->offset, binary::ValueType::I32_NoLocation(),
-                 static_cast<Index>(context.globals.size()));
+    valid &= Validate(ctx, *value->offset, binary::ValueType::I32_NoLocation(),
+                      static_cast<Index>(ctx.globals.size()));
   }
   if (value->has_indexes()) {
     auto&& elements = value->indexes();
     Index max_index;
     switch (elements.kind) {
       case ExternalKind::Function:
-        max_index = static_cast<Index>(context.functions.size());
+        max_index = static_cast<Index>(ctx.functions.size());
         break;
       case ExternalKind::Table:
-        max_index = static_cast<Index>(context.tables.size());
+        max_index = static_cast<Index>(ctx.tables.size());
         break;
       case ExternalKind::Memory:
-        max_index = static_cast<Index>(context.memories.size());
+        max_index = static_cast<Index>(ctx.memories.size());
         break;
       case ExternalKind::Global:
-        max_index = static_cast<Index>(context.globals.size());
+        max_index = static_cast<Index>(ctx.globals.size());
         break;
       case ExternalKind::Event:
-        max_index = static_cast<Index>(context.events.size());
+        max_index = static_cast<Index>(ctx.events.size());
         break;
       default:
         WASP_UNREACHABLE();
     }
 
     for (auto index : elements.list) {
-      valid &= ValidateIndex(context, index, max_index, "index");
+      valid &= ValidateIndex(ctx, index, max_index, "index");
       if (elements.kind == ExternalKind::Function) {
-        context.declared_functions.insert(index);
+        ctx.declared_functions.insert(index);
       }
     }
   } else if (value->has_expressions()) {
     auto&& elements = value->expressions();
 
-    valid &= Validate(context, elements.elemtype);
+    valid &= Validate(ctx, elements.elemtype);
     for (const auto& expr : elements.list) {
-      valid &= Validate(context, expr, elements.elemtype);
+      valid &= Validate(ctx, expr, elements.elemtype);
     }
   }
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::Export>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "export"};
+bool Validate(ValidCtx& ctx, const At<binary::Export>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "export"};
   bool valid = true;
 
-  if (context.export_names.find(value->name) != context.export_names.end()) {
-    context.errors->OnError(value.loc(),
-                            concat("Duplicate export name ", value->name));
+  if (ctx.export_names.find(value->name) != ctx.export_names.end()) {
+    ctx.errors->OnError(value.loc(),
+                        concat("Duplicate export name ", value->name));
     valid = false;
   }
-  context.export_names.insert(value->name);
+  ctx.export_names.insert(value->name);
 
   switch (value->kind) {
     case ExternalKind::Function:
-      valid &= ValidateIndex(context, value->index, static_cast<Index>(context.functions.size()),
+      valid &= ValidateIndex(ctx, value->index,
+                             static_cast<Index>(ctx.functions.size()),
                              "function index");
-      context.declared_functions.insert(value->index);
+      ctx.declared_functions.insert(value->index);
       break;
 
     case ExternalKind::Table:
-      valid &= ValidateIndex(context, value->index, static_cast<Index>(context.tables.size()),
-                             "table index");
+      valid &=
+          ValidateIndex(ctx, value->index,
+                        static_cast<Index>(ctx.tables.size()), "table index");
       break;
 
     case ExternalKind::Memory:
-      valid &= ValidateIndex(context, value->index, static_cast<Index>(context.memories.size()),
+      valid &= ValidateIndex(ctx, value->index,
+                             static_cast<Index>(ctx.memories.size()),
                              "memory index");
       break;
 
     case ExternalKind::Global:
-      if (ValidateIndex(context, value->index, static_cast<Index>(context.globals.size()),
+      if (ValidateIndex(ctx, value->index,
+                        static_cast<Index>(ctx.globals.size()),
                         "global index")) {
-        const auto& global = context.globals[value->index];
+        const auto& global = ctx.globals[value->index];
         if (global.mut == Mutability::Var &&
-            !context.features.mutable_globals_enabled()) {
-          context.errors->OnError(value->index.loc(),
-                                  "Mutable globals cannot be exported");
+            !ctx.features.mutable_globals_enabled()) {
+          ctx.errors->OnError(value->index.loc(),
+                              "Mutable globals cannot be exported");
           valid = false;
         }
       } else {
@@ -376,8 +379,9 @@ bool Validate(Context& context, const At<binary::Export>& value) {
       break;
 
     case ExternalKind::Event:
-      valid &= ValidateIndex(context, value->index, static_cast<Index>(context.events.size()),
-                             "event index");
+      valid &=
+          ValidateIndex(ctx, value->index,
+                        static_cast<Index>(ctx.events.size()), "event index");
       break;
 
     default:
@@ -386,142 +390,140 @@ bool Validate(Context& context, const At<binary::Export>& value) {
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::Event>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "event"};
-  return Validate(context, value->event_type);
+bool Validate(ValidCtx& ctx, const At<binary::Event>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "event"};
+  return Validate(ctx, value->event_type);
 }
 
-bool Validate(Context& context, const At<binary::EventType>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "event type"};
-  context.events.push_back(value);
-  if (!ValidateIndex(context, value->type_index, context.defined_type_count,
+bool Validate(ValidCtx& ctx, const At<binary::EventType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "event type"};
+  ctx.events.push_back(value);
+  if (!ValidateIndex(ctx, value->type_index, ctx.defined_type_count,
                      "event type index")) {
     return false;
   }
 
-  const auto& defined_type = context.types[value->type_index];
+  const auto& defined_type = ctx.types[value->type_index];
   if (!defined_type.is_function_type()) {
-    context.errors->OnError(value.loc(),
-                            concat("Event type must be a function type."));
+    ctx.errors->OnError(value.loc(),
+                        concat("Event type must be a function type."));
     return false;
   }
 
   const auto& function_type = defined_type.function_type();
 
   if (!function_type->result_types.empty()) {
-    context.errors->OnError(
-        value.loc(), concat("Expected an empty exception result type, got ",
-                            function_type->result_types));
+    ctx.errors->OnError(value.loc(),
+                        concat("Expected an empty exception result type, got ",
+                               function_type->result_types));
     return false;
   }
   return true;
 }
 
-bool Validate(Context& context, const At<binary::FieldType>& value) {
-  return Validate(context, value->type);
+bool Validate(ValidCtx& ctx, const At<binary::FieldType>& value) {
+  return Validate(ctx, value->type);
 }
 
-bool Validate(Context& context, const binary::FieldTypeList& values) {
+bool Validate(ValidCtx& ctx, const binary::FieldTypeList& values) {
   bool valid = true;
   for (const auto& value : values) {
-    valid &= Validate(context, value);
+    valid &= Validate(ctx, value);
   }
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::Function>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "function"};
-  context.functions.push_back(value);
-  if (!ValidateIndex(context, value->type_index, context.defined_type_count,
+bool Validate(ValidCtx& ctx, const At<binary::Function>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "function"};
+  ctx.functions.push_back(value);
+  if (!ValidateIndex(ctx, value->type_index, ctx.defined_type_count,
                      "function type index")) {
     return false;
   }
 
-  const auto& defined_type = context.types[value->type_index];
+  const auto& defined_type = ctx.types[value->type_index];
   if (!defined_type.is_function_type()) {
-    context.errors->OnError(value.loc(),
-                            concat("Function must have function type"));
+    ctx.errors->OnError(value.loc(),
+                        concat("Function must have function type"));
     return false;
   }
   return true;
 }
 
-bool Validate(Context& context, const At<binary::FunctionType>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "function type"};
+bool Validate(ValidCtx& ctx, const At<binary::FunctionType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "function type"};
   bool valid = true;
-  if (value->result_types.size() > 1 &&
-      !context.features.multi_value_enabled()) {
-    context.errors->OnError(value.loc(),
-                            concat("Expected result type count of 0 or 1, got ",
-                                   value->result_types.size()));
+  if (value->result_types.size() > 1 && !ctx.features.multi_value_enabled()) {
+    ctx.errors->OnError(value.loc(),
+                        concat("Expected result type count of 0 or 1, got ",
+                               value->result_types.size()));
     valid = false;
   }
-  valid &= Validate(context, value->param_types);
-  valid &= Validate(context, value->result_types);
+  valid &= Validate(ctx, value->param_types);
+  valid &= Validate(ctx, value->result_types);
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::Global>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "global"};
-  context.globals.push_back(value->global_type);
+bool Validate(ValidCtx& ctx, const At<binary::Global>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "global"};
+  ctx.globals.push_back(value->global_type);
   bool valid = true;
-  valid &= Validate(context, value->global_type);
+  valid &= Validate(ctx, value->global_type);
   // Normally only imported globals can be used in a global's constant
   // expression, but the gc proposal extends this to allow any global.
-  auto global_count = context.features.gc_enabled()
-                          ? context.globals.size()
-                          : context.imported_global_count;
+  auto global_count = ctx.features.gc_enabled() ? ctx.globals.size()
+                                                : ctx.imported_global_count;
   valid &=
-      Validate(context, value->init, value->global_type->valtype, global_count);
+      Validate(ctx, value->init, value->global_type->valtype, global_count);
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::GlobalType>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "global type"};
-  return Validate(context, value->valtype);
+bool Validate(ValidCtx& ctx, const At<binary::GlobalType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "global type"};
+  return Validate(ctx, value->valtype);
 }
 
-bool Validate(Context& context, const At<binary::HeapType>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "heap type"};
+bool Validate(ValidCtx& ctx, const At<binary::HeapType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "heap type"};
   if (value->is_index()) {
-    return ValidateIndex(context, value->index(), context.defined_type_count,
+    return ValidateIndex(ctx, value->index(), ctx.defined_type_count,
                          "heap type index");
   }
   return true;
 }
 
-bool Validate(Context& context, const At<binary::Import>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "import"};
+bool Validate(ValidCtx& ctx, const At<binary::Import>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "import"};
   bool valid = true;
 
   switch (value->kind()) {
     case ExternalKind::Function:
-      valid &= Validate(context, binary::Function{value->index()});
-      context.imported_function_count++;
+      valid &= Validate(ctx, binary::Function{value->index()});
+      ctx.imported_function_count++;
       break;
 
     case ExternalKind::Table:
-      valid &= Validate(context, binary::Table{value->table_type()});
+      valid &= Validate(ctx, binary::Table{value->table_type()});
       break;
 
     case ExternalKind::Memory:
-      valid &= Validate(context, binary::Memory{value->memory_type()});
+      valid &= Validate(ctx, binary::Memory{value->memory_type()});
       break;
 
     case ExternalKind::Global:
-      context.globals.push_back(value->global_type());
-      context.imported_global_count++;
-      valid &= Validate(context, value->global_type());
+      ctx.globals.push_back(value->global_type());
+      ctx.imported_global_count++;
+      valid &= Validate(ctx, value->global_type());
       if (value->global_type()->mut == Mutability::Var &&
-          !context.features.mutable_globals_enabled()) {
-        context.errors->OnError(value->global_type().loc(),
-                                "Mutable globals cannot be imported");
+          !ctx.features.mutable_globals_enabled()) {
+        ctx.errors->OnError(value->global_type().loc(),
+                            "Mutable globals cannot be imported");
         valid = false;
       }
       break;
 
     case ExternalKind::Event:
-      valid &= Validate(context, binary::Event{value->event_type()});
+      valid &= Validate(ctx, binary::Event{value->event_type()});
       break;
 
     default:
@@ -531,131 +533,130 @@ bool Validate(Context& context, const At<binary::Import>& value) {
   return valid;
 }
 
-bool ValidateIndex(Context& context,
+bool ValidateIndex(ValidCtx& ctx,
                    const At<Index>& index,
                    Index max,
                    string_view desc) {
   if (index >= max) {
-    context.errors->OnError(index.loc(), concat("Invalid ", desc, " ", index,
-                                                ", must be less than ", max));
+    ctx.errors->OnError(index.loc(), concat("Invalid ", desc, " ", index,
+                                            ", must be less than ", max));
     return false;
   }
   return true;
 }
 
-bool Validate(Context& context, const At<Limits>& value, Index max) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "limits"};
+bool Validate(ValidCtx& ctx, const At<Limits>& value, Index max) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "limits"};
   bool valid = true;
   if (value->min > max) {
-    context.errors->OnError(
+    ctx.errors->OnError(
         value->min.loc(),
         concat("Expected minimum ", value->min, " to be <= ", max));
     valid = false;
   }
   if (value->max.has_value()) {
     if (*value->max > max) {
-      context.errors->OnError(
+      ctx.errors->OnError(
           value->max->loc(),
           concat("Expected maximum ", *value->max, " to be <= ", max));
       valid = false;
     }
     if (value->min.value() > value->max->value()) {
-      context.errors->OnError(value->min.loc(),
-                              concat("Expected minimum ", value->min,
-                                     " to be <= maximum ", *value->max));
+      ctx.errors->OnError(value->min.loc(),
+                          concat("Expected minimum ", value->min,
+                                 " to be <= maximum ", *value->max));
       valid = false;
     }
   }
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::Memory>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "memory"};
-  context.memories.push_back(value->memory_type);
-  bool valid = Validate(context, value->memory_type);
-  if (context.memories.size() > 1) {
-    context.errors->OnError(value.loc(),
-                            "Too many memories, must be 1 or fewer");
+bool Validate(ValidCtx& ctx, const At<binary::Memory>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "memory"};
+  ctx.memories.push_back(value->memory_type);
+  bool valid = Validate(ctx, value->memory_type);
+  if (ctx.memories.size() > 1) {
+    ctx.errors->OnError(value.loc(), "Too many memories, must be 1 or fewer");
     valid = false;
   }
   return valid;
 }
 
-bool Validate(Context& context, const At<MemoryType>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "memory type"};
+bool Validate(ValidCtx& ctx, const At<MemoryType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "memory type"};
   constexpr Index kMaxPages = 65536;
-  bool valid = Validate(context, value->limits, kMaxPages);
+  bool valid = Validate(ctx, value->limits, kMaxPages);
   if (value->limits->shared == Shared::Yes) {
-    if (!context.features.threads_enabled()) {
-      context.errors->OnError(value.loc(), "Memories cannot be shared");
+    if (!ctx.features.threads_enabled()) {
+      ctx.errors->OnError(value.loc(), "Memories cannot be shared");
       valid = false;
     }
 
     if (!value->limits->max) {
-      context.errors->OnError(value.loc(),
-                              "Shared memories must have a maximum");
+      ctx.errors->OnError(value.loc(), "Shared memories must have a maximum");
       valid = false;
     }
   }
   return valid;
 }
 
-bool Validate(Context& context,
+bool Validate(ValidCtx& ctx,
               binary::ReferenceType expected,
               const At<binary::ReferenceType>& actual) {
-  if (!IsMatch(context, actual, expected)) {
-    context.errors->OnError(actual.loc(), concat("Expected reference type ",
-                                                 expected, ", got ", actual));
+  if (!IsMatch(ctx, actual, expected)) {
+    ctx.errors->OnError(actual.loc(), concat("Expected reference type ",
+                                             expected, ", got ", actual));
     return false;
   }
   return true;
 }
 
-bool Validate(Context& context, const At<binary::ReferenceType>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "reference type"};
+bool Validate(ValidCtx& ctx, const At<binary::ReferenceType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "reference type"};
   if (value->is_ref()) {
-    return Validate(context, value->ref());
+    return Validate(ctx, value->ref());
   }
   return true;
 }
 
-bool Validate(Context& context, const At<binary::Rtt>& value) {
+bool Validate(ValidCtx& ctx, const At<binary::Rtt>& value) {
   return true;
 }
 
-bool Validate(Context& context, const At<binary::RefType>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "ref type"};
-  return Validate(context, value->heap_type);
+bool Validate(ValidCtx& ctx, const At<binary::RefType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "ref type"};
+  return Validate(ctx, value->heap_type);
 }
 
-bool Validate(Context& context, const At<binary::Start>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "start"};
-  if (!ValidateIndex(context, value->func_index, static_cast<Index>(context.functions.size()),
+bool Validate(ValidCtx& ctx, const At<binary::Start>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "start"};
+  if (!ValidateIndex(ctx, value->func_index,
+                     static_cast<Index>(ctx.functions.size()),
                      "function index")) {
     return false;
   }
 
   bool valid = true;
-  auto function = context.functions[value->func_index];
-  if (function.type_index < context.defined_type_count) {
-    const auto& defined_type = context.types[function.type_index];
+  auto function = ctx.functions[value->func_index];
+  if (function.type_index < ctx.defined_type_count) {
+    const auto& defined_type = ctx.types[function.type_index];
     if (!defined_type.is_function_type()) {
-      context.errors->OnError(value.loc(),
-                              concat("Start function must have function type"));
+      ctx.errors->OnError(value.loc(),
+                          concat("Start function must have function type"));
       return false;
     }
 
     const auto& function_type = defined_type.function_type();
 
     if (function_type->param_types.size() != 0) {
-      context.errors->OnError(
+      ctx.errors->OnError(
           value.loc(), concat("Expected start function to have 0 params, got ",
                               function_type->param_types.size()));
       valid = false;
     }
 
     if (function_type->result_types.size() != 0) {
-      context.errors->OnError(
+      ctx.errors->OnError(
           value.loc(), concat("Expected start function to have 0 results, got ",
                               function_type->result_types.size()));
       valid = false;
@@ -664,119 +665,118 @@ bool Validate(Context& context, const At<binary::Start>& value) {
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::StorageType>& value) {
+bool Validate(ValidCtx& ctx, const At<binary::StorageType>& value) {
   if (value->is_value_type()) {
-    return Validate(context, value->value_type());
+    return Validate(ctx, value->value_type());
   } else {
     return true;
   }
 }
 
-bool Validate(Context& context, const At<binary::StructType>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "struct type"};
-  return Validate(context, value->fields);
+bool Validate(ValidCtx& ctx, const At<binary::StructType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "struct type"};
+  return Validate(ctx, value->fields);
 }
 
-bool Validate(Context& context, const At<binary::Table>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "table"};
-  context.tables.push_back(value->table_type);
-  bool valid = Validate(context, value->table_type);
-  if (context.tables.size() > 1 &&
-      !context.features.reference_types_enabled()) {
-    context.errors->OnError(value.loc(), "Too many tables, must be 1 or fewer");
+bool Validate(ValidCtx& ctx, const At<binary::Table>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "table"};
+  ctx.tables.push_back(value->table_type);
+  bool valid = Validate(ctx, value->table_type);
+  if (ctx.tables.size() > 1 && !ctx.features.reference_types_enabled()) {
+    ctx.errors->OnError(value.loc(), "Too many tables, must be 1 or fewer");
     valid = false;
   }
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::TableType>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "table type"};
+bool Validate(ValidCtx& ctx, const At<binary::TableType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "table type"};
   constexpr Index kMaxElements = std::numeric_limits<Index>::max();
-  bool valid = Validate(context, value->limits, kMaxElements);
-  valid &= Validate(context, value->elemtype);
-  valid &= CheckDefaultable(context, value->elemtype, "local type");
+  bool valid = Validate(ctx, value->limits, kMaxElements);
+  valid &= Validate(ctx, value->elemtype);
+  valid &= CheckDefaultable(ctx, value->elemtype, "local type");
   if (value->limits->shared == Shared::Yes) {
-    context.errors->OnError(value.loc(), "Tables cannot be shared");
+    ctx.errors->OnError(value.loc(), "Tables cannot be shared");
     valid = false;
   }
   return valid;
 }
 
-bool Validate(Context& context, const At<binary::DefinedType>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "defined type"};
-  context.types.push_back(value);
+bool Validate(ValidCtx& ctx, const At<binary::DefinedType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "defined type"};
+  ctx.types.push_back(value);
 
   if (value->is_function_type()) {
-    return Validate(context, value->function_type());
+    return Validate(ctx, value->function_type());
   } else if (value->is_struct_type()) {
-    return Validate(context, value->struct_type());
+    return Validate(ctx, value->struct_type());
   } else {
     assert(value->is_array_type());
-    return Validate(context, value->array_type());
+    return Validate(ctx, value->array_type());
   }
 }
 
-bool Validate(Context& context, const At<binary::ValueType>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "value type"};
+bool Validate(ValidCtx& ctx, const At<binary::ValueType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "value type"};
   if (value->is_reference_type()) {
-    return Validate(context, value->reference_type());
+    return Validate(ctx, value->reference_type());
   }
   return true;
 }
 
-bool Validate(Context& context,
+bool Validate(ValidCtx& ctx,
               binary::ValueType expected,
               const At<binary::ValueType>& actual) {
-  if (!IsMatch(context, expected, actual)) {
-    context.errors->OnError(actual.loc(), concat("Expected value type ",
-                                                 expected, ", got ", actual));
+  if (!IsMatch(ctx, expected, actual)) {
+    ctx.errors->OnError(actual.loc(), concat("Expected value type ", expected,
+                                             ", got ", actual));
     return false;
   }
   return true;
 }
 
-bool Validate(Context& context, const binary::ValueTypeList& values) {
+bool Validate(ValidCtx& ctx, const binary::ValueTypeList& values) {
   bool valid = true;
   for (const auto& value : values) {
-    valid &= Validate(context, value);
+    valid &= Validate(ctx, value);
   }
   return valid;
 }
 
 template <typename T>
-bool ValidateKnownSection(Context& context, const std::vector<T>& values) {
+bool ValidateKnownSection(ValidCtx& ctx, const std::vector<T>& values) {
   bool valid = true;
   for (auto& value : values) {
-    valid &= Validate(context, value);
+    valid &= Validate(ctx, value);
   }
   return valid;
 }
 
 template <typename T>
-bool ValidateKnownSection(Context& context, const optional<T>& value) {
+bool ValidateKnownSection(ValidCtx& ctx, const optional<T>& value) {
   bool valid = true;
   if (value) {
-    valid &= Validate(context, *value);
+    valid &= Validate(ctx, *value);
   }
   return valid;
 }
 
-bool Validate(Context& context, const binary::Module& value) {
+bool Validate(ValidCtx& ctx, const binary::Module& value) {
   bool valid = true;
-  valid &= BeginTypeSection(context, static_cast<Index>(value.types.size()));
-  valid &= ValidateKnownSection(context, value.types);
-  valid &= ValidateKnownSection(context, value.imports);
-  valid &= ValidateKnownSection(context, value.functions);
-  valid &= ValidateKnownSection(context, value.tables);
-  valid &= ValidateKnownSection(context, value.memories);
-  valid &= ValidateKnownSection(context, value.globals);
-  valid &= ValidateKnownSection(context, value.events);
-  valid &= ValidateKnownSection(context, value.exports);
-  valid &= ValidateKnownSection(context, value.start);
-  valid &= ValidateKnownSection(context, value.element_segments);
-  valid &= ValidateKnownSection(context, value.data_count);
-  valid &= ValidateKnownSection(context, value.codes);
-  valid &= ValidateKnownSection(context, value.data_segments);
+  valid &= BeginTypeSection(ctx, static_cast<Index>(value.types.size()));
+  valid &= ValidateKnownSection(ctx, value.types);
+  valid &= ValidateKnownSection(ctx, value.imports);
+  valid &= ValidateKnownSection(ctx, value.functions);
+  valid &= ValidateKnownSection(ctx, value.tables);
+  valid &= ValidateKnownSection(ctx, value.memories);
+  valid &= ValidateKnownSection(ctx, value.globals);
+  valid &= ValidateKnownSection(ctx, value.events);
+  valid &= ValidateKnownSection(ctx, value.exports);
+  valid &= ValidateKnownSection(ctx, value.start);
+  valid &= ValidateKnownSection(ctx, value.element_segments);
+  valid &= ValidateKnownSection(ctx, value.data_count);
+  valid &= ValidateKnownSection(ctx, value.codes);
+  valid &= ValidateKnownSection(ctx, value.data_segments);
   return valid;
 }
 

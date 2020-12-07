@@ -26,7 +26,7 @@ void LazySequence<T>::NotifyRead(const u8* pos, bool ok) {
       count_++;
     } else if (expected_count_ && count_ != *expected_count_) {
       // Reached the end, but there was a mismatch.
-      LazySequenceBase::OnCountError(context_.errors,
+      LazySequenceBase::OnCountError(ctx_.errors,
                                      MakeSpan(last_pos_, data_.end()), name_,
                                      *expected_count_, count_);
     }
@@ -50,7 +50,7 @@ auto LazySequenceIterator<Sequence>::operator++() -> LazySequenceIterator& {
     sequence_->NotifyRead(pos, false);
     clear();
   } else {
-    value_ = Read<typename value_type::value_type>(&data_, sequence_->context_);
+    value_ = Read<typename value_type::value_type>(&data_, sequence_->ctx_);
     sequence_->NotifyRead(pos, !!value_);
     if (!value_) {
       clear();

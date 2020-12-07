@@ -15,22 +15,22 @@
 #
 
 add_library(libwasp_valid
-  ../../include/wasp/valid/context.h
   ../../include/wasp/valid/disjoint_set.h
   ../../include/wasp/valid/formatters.h
   ../../include/wasp/valid/local_map.h
   ../../include/wasp/valid/match.h
   ../../include/wasp/valid/types.h
+  ../../include/wasp/valid/valid_ctx.h
   ../../include/wasp/valid/validate.h
   ../../include/wasp/valid/validate_visitor.h
   ../../include/wasp/valid/stack_type.inc
 
-  context.cc
   disjoint_set.cc
   formatters.cc
   local_map.cc
   match.cc
   types.cc
+  valid_ctx.cc
   validate.cc
   validate_instruction.cc
   validate_visitor.cc

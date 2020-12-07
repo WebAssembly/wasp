@@ -102,17 +102,16 @@ struct EagerModuleVisitor : visit::Visitor {
   Module& module;
 };
 
-auto ReadModule(SpanU8 data, Context& context) -> optional<Module> {
-  ErrorsContextGuard error_guard{context.errors, data, "module"};
-  LazyModule lazy_module{data, context.features, context.errors};
+auto ReadModule(SpanU8 data, ReadCtx& ctx) -> optional<Module> {
+  ErrorsContextGuard error_guard{ctx.errors, data, "module"};
+  LazyModule lazy_module{data, ctx.features, ctx.errors};
   if (!(lazy_module.magic.has_value() && lazy_module.version.has_value())) {
     return nullopt;
   }
 
   Module module;
   EagerModuleVisitor visitor{module};
-  if (Visit(lazy_module, visitor) == Result::Fail ||
-      context.errors.HasError()) {
+  if (Visit(lazy_module, visitor) == Result::Fail || ctx.errors.HasError()) {
     return nullopt;
   }
   return module;

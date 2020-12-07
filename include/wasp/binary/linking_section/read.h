@@ -22,19 +22,19 @@
 
 namespace wasp::binary {
 
-struct Context;
+struct ReadCtx;
 
-auto Read(SpanU8*, Context&, Tag<Comdat>) -> OptAt<Comdat>;
-auto Read(SpanU8*, Context&, Tag<ComdatSymbol>) -> OptAt<ComdatSymbol>;
-auto Read(SpanU8*, Context&, Tag<ComdatSymbolKind>) -> OptAt<ComdatSymbolKind>;
-auto Read(SpanU8*, Context&, Tag<InitFunction>) -> OptAt<InitFunction>;
-auto Read(SpanU8*, Context&, Tag<LinkingSubsection>) -> OptAt<LinkingSubsection>;
-auto Read(SpanU8*, Context&, Tag<LinkingSubsectionId>) -> OptAt<LinkingSubsectionId>;
-auto Read(SpanU8*, Context&, Tag<RelocationEntry>) -> OptAt<RelocationEntry>;
-auto Read(SpanU8*, Context&, Tag<RelocationType>) -> OptAt<RelocationType>;
-auto Read(SpanU8*, Context&, Tag<SegmentInfo>) -> OptAt<SegmentInfo>;
-auto Read(SpanU8*, Context&, Tag<SymbolInfo>) -> OptAt<SymbolInfo>;
-auto Read(SpanU8*, Context&, Tag<SymbolInfoKind>) -> OptAt<SymbolInfoKind>;
+auto Read(SpanU8*, ReadCtx&, Tag<Comdat>) -> OptAt<Comdat>;
+auto Read(SpanU8*, ReadCtx&, Tag<ComdatSymbol>) -> OptAt<ComdatSymbol>;
+auto Read(SpanU8*, ReadCtx&, Tag<ComdatSymbolKind>) -> OptAt<ComdatSymbolKind>;
+auto Read(SpanU8*, ReadCtx&, Tag<InitFunction>) -> OptAt<InitFunction>;
+auto Read(SpanU8*, ReadCtx&, Tag<LinkingSubsection>) -> OptAt<LinkingSubsection>;
+auto Read(SpanU8*, ReadCtx&, Tag<LinkingSubsectionId>) -> OptAt<LinkingSubsectionId>;
+auto Read(SpanU8*, ReadCtx&, Tag<RelocationEntry>) -> OptAt<RelocationEntry>;
+auto Read(SpanU8*, ReadCtx&, Tag<RelocationType>) -> OptAt<RelocationType>;
+auto Read(SpanU8*, ReadCtx&, Tag<SegmentInfo>) -> OptAt<SegmentInfo>;
+auto Read(SpanU8*, ReadCtx&, Tag<SymbolInfo>) -> OptAt<SymbolInfo>;
+auto Read(SpanU8*, ReadCtx&, Tag<SymbolInfoKind>) -> OptAt<SymbolInfoKind>;
 
 }  // namespace wasp::binary
 

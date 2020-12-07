@@ -25,7 +25,7 @@ class Errors;
 
 namespace text {
 
-struct ResolveContext;
+struct ResolveCtx;
 class NameMap;
 
 // Primary API; resolve either a Module or a Script.
@@ -42,94 +42,94 @@ void Resolve(Script&, Errors&);
 //   (type $A (func))
 //   (type $B (func (param (ref $A)))
 //
-void DefineTypes(ResolveContext&, const DefinedType&);
-void DefineTypes(ResolveContext&, const ModuleItem&);
-void DefineTypes(ResolveContext&, const Module&);
+void DefineTypes(ResolveCtx&, const DefinedType&);
+void DefineTypes(ResolveCtx&, const ModuleItem&);
+void DefineTypes(ResolveCtx&, const Module&);
 
 // Define() is the second pass over the Module, to handle all non-type names,
 // and to create a mapping of function types to indexes.
-void Define(ResolveContext&, const OptAt<BindVar>&, NameMap&);
-void Define(ResolveContext&, const BoundValueTypeList&, NameMap&);
-void Define(ResolveContext&, const FieldType&);
-void Define(ResolveContext&, const FieldTypeList&);
-void Define(ResolveContext&, const DefinedType&);
-void Define(ResolveContext&, const FunctionDesc&);
-void Define(ResolveContext&, const TableDesc&);
-void Define(ResolveContext&, const MemoryDesc&);
-void Define(ResolveContext&, const GlobalDesc&);
-void Define(ResolveContext&, const EventDesc&);
-void Define(ResolveContext&, const Import&);
-void Define(ResolveContext&, const ElementSegment&);
-void Define(ResolveContext&, const DataSegment&);
-void Define(ResolveContext&, const ModuleItem&);
-void Define(ResolveContext&, const Module&);
+void Define(ResolveCtx&, const OptAt<BindVar>&, NameMap&);
+void Define(ResolveCtx&, const BoundValueTypeList&, NameMap&);
+void Define(ResolveCtx&, const FieldType&);
+void Define(ResolveCtx&, const FieldTypeList&);
+void Define(ResolveCtx&, const DefinedType&);
+void Define(ResolveCtx&, const FunctionDesc&);
+void Define(ResolveCtx&, const TableDesc&);
+void Define(ResolveCtx&, const MemoryDesc&);
+void Define(ResolveCtx&, const GlobalDesc&);
+void Define(ResolveCtx&, const EventDesc&);
+void Define(ResolveCtx&, const Import&);
+void Define(ResolveCtx&, const ElementSegment&);
+void Define(ResolveCtx&, const DataSegment&);
+void Define(ResolveCtx&, const ModuleItem&);
+void Define(ResolveCtx&, const Module&);
 
 // Resolve() is the final pass over the Module, which uses all the
 // names/function types defined in DefineTypes() and Define() to convert them
 // to their respective indexes.
-void Resolve(ResolveContext&, At<Var>&, NameMap&);
-void Resolve(ResolveContext&, OptAt<Var>&, NameMap&);
-void Resolve(ResolveContext&, VarList&, NameMap&);
-void Resolve(ResolveContext&, HeapType&);
-void Resolve(ResolveContext&, RefType&);
-void Resolve(ResolveContext&, ReferenceType&);
-void Resolve(ResolveContext&, Rtt&);
-void Resolve(ResolveContext&, ValueType&);
-void Resolve(ResolveContext&, ValueTypeList&);
-void Resolve(ResolveContext&, StorageType&);
-void Resolve(ResolveContext&, FunctionType&);
-void Resolve(ResolveContext&, FunctionTypeUse&);
-void Resolve(ResolveContext&, BoundValueType&);
-void Resolve(ResolveContext&, BoundValueTypeList&);
-void Resolve(ResolveContext&, BoundFunctionType&);
-void Resolve(ResolveContext&, OptAt<Var>& type_use, At<BoundFunctionType>&);
-void Resolve(ResolveContext&, FieldType&);
-void Resolve(ResolveContext&, FieldTypeList&);
-void Resolve(ResolveContext&, StructType&);
-void Resolve(ResolveContext&, ArrayType&);
-void Resolve(ResolveContext&, DefinedType&);
-void Resolve(ResolveContext&, BlockImmediate&);
-void Resolve(ResolveContext&, BrOnCastImmediate&);
-void Resolve(ResolveContext&, BrOnExnImmediate&);
-void Resolve(ResolveContext&, BrTableImmediate&);
-void Resolve(ResolveContext&, CallIndirectImmediate&);
-void Resolve(ResolveContext&, CopyImmediate&, NameMap&);
-void Resolve(ResolveContext&, HeapType2Immediate&);
-void Resolve(ResolveContext&, InitImmediate&, NameMap& segment, NameMap& dst);
-void Resolve(ResolveContext&, LetImmediate&);
-void Resolve(ResolveContext&, RttSubImmediate&);
-void Resolve(ResolveContext&, StructFieldImmediate&);
-void Resolve(ResolveContext&, Instruction&);
-void Resolve(ResolveContext&, InstructionList&);
-void Resolve(ResolveContext&, FunctionDesc&);
-void Resolve(ResolveContext&, TableType&);
-void Resolve(ResolveContext&, TableDesc&);
-void Resolve(ResolveContext&, GlobalType&);
-void Resolve(ResolveContext&, GlobalDesc&);
-void Resolve(ResolveContext&, EventType&);
-void Resolve(ResolveContext&, EventDesc&);
-void Resolve(ResolveContext&, Import&);
-void Resolve(ResolveContext&, Function&);
-void Resolve(ResolveContext&, ConstantExpression&);
-void Resolve(ResolveContext&, ElementExpression&);
-void Resolve(ResolveContext&, ElementExpressionList&);
-void Resolve(ResolveContext&, ElementListWithExpressions&);
-void Resolve(ResolveContext&, ElementListWithVars&);
-void Resolve(ResolveContext&, ElementList&);
-void Resolve(ResolveContext&, Table&);
-void Resolve(ResolveContext&, Global&);
-void Resolve(ResolveContext&, Export&);
-void Resolve(ResolveContext&, Start&);
-void Resolve(ResolveContext&, ElementSegment&);
-void Resolve(ResolveContext&, DataSegment&);
-void Resolve(ResolveContext&, Event&);
-void Resolve(ResolveContext&, ModuleItem&);
-void Resolve(ResolveContext&, Module&);
-void Resolve(ResolveContext&, ScriptModule&);
-void Resolve(ResolveContext&, ModuleAssertion&);
-void Resolve(ResolveContext&, Assertion&);
-void Resolve(ResolveContext&, Command&);
-void Resolve(ResolveContext&, Script&);
+void Resolve(ResolveCtx&, At<Var>&, NameMap&);
+void Resolve(ResolveCtx&, OptAt<Var>&, NameMap&);
+void Resolve(ResolveCtx&, VarList&, NameMap&);
+void Resolve(ResolveCtx&, HeapType&);
+void Resolve(ResolveCtx&, RefType&);
+void Resolve(ResolveCtx&, ReferenceType&);
+void Resolve(ResolveCtx&, Rtt&);
+void Resolve(ResolveCtx&, ValueType&);
+void Resolve(ResolveCtx&, ValueTypeList&);
+void Resolve(ResolveCtx&, StorageType&);
+void Resolve(ResolveCtx&, FunctionType&);
+void Resolve(ResolveCtx&, FunctionTypeUse&);
+void Resolve(ResolveCtx&, BoundValueType&);
+void Resolve(ResolveCtx&, BoundValueTypeList&);
+void Resolve(ResolveCtx&, BoundFunctionType&);
+void Resolve(ResolveCtx&, OptAt<Var>& type_use, At<BoundFunctionType>&);
+void Resolve(ResolveCtx&, FieldType&);
+void Resolve(ResolveCtx&, FieldTypeList&);
+void Resolve(ResolveCtx&, StructType&);
+void Resolve(ResolveCtx&, ArrayType&);
+void Resolve(ResolveCtx&, DefinedType&);
+void Resolve(ResolveCtx&, BlockImmediate&);
+void Resolve(ResolveCtx&, BrOnCastImmediate&);
+void Resolve(ResolveCtx&, BrOnExnImmediate&);
+void Resolve(ResolveCtx&, BrTableImmediate&);
+void Resolve(ResolveCtx&, CallIndirectImmediate&);
+void Resolve(ResolveCtx&, CopyImmediate&, NameMap&);
+void Resolve(ResolveCtx&, HeapType2Immediate&);
+void Resolve(ResolveCtx&, InitImmediate&, NameMap& segment, NameMap& dst);
+void Resolve(ResolveCtx&, LetImmediate&);
+void Resolve(ResolveCtx&, RttSubImmediate&);
+void Resolve(ResolveCtx&, StructFieldImmediate&);
+void Resolve(ResolveCtx&, Instruction&);
+void Resolve(ResolveCtx&, InstructionList&);
+void Resolve(ResolveCtx&, FunctionDesc&);
+void Resolve(ResolveCtx&, TableType&);
+void Resolve(ResolveCtx&, TableDesc&);
+void Resolve(ResolveCtx&, GlobalType&);
+void Resolve(ResolveCtx&, GlobalDesc&);
+void Resolve(ResolveCtx&, EventType&);
+void Resolve(ResolveCtx&, EventDesc&);
+void Resolve(ResolveCtx&, Import&);
+void Resolve(ResolveCtx&, Function&);
+void Resolve(ResolveCtx&, ConstantExpression&);
+void Resolve(ResolveCtx&, ElementExpression&);
+void Resolve(ResolveCtx&, ElementExpressionList&);
+void Resolve(ResolveCtx&, ElementListWithExpressions&);
+void Resolve(ResolveCtx&, ElementListWithVars&);
+void Resolve(ResolveCtx&, ElementList&);
+void Resolve(ResolveCtx&, Table&);
+void Resolve(ResolveCtx&, Global&);
+void Resolve(ResolveCtx&, Export&);
+void Resolve(ResolveCtx&, Start&);
+void Resolve(ResolveCtx&, ElementSegment&);
+void Resolve(ResolveCtx&, DataSegment&);
+void Resolve(ResolveCtx&, Event&);
+void Resolve(ResolveCtx&, ModuleItem&);
+void Resolve(ResolveCtx&, Module&);
+void Resolve(ResolveCtx&, ScriptModule&);
+void Resolve(ResolveCtx&, ModuleAssertion&);
+void Resolve(ResolveCtx&, Assertion&);
+void Resolve(ResolveCtx&, Command&);
+void Resolve(ResolveCtx&, Script&);
 
 }  // namespace text
 }  // namespace wasp

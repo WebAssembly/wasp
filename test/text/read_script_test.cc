@@ -21,8 +21,8 @@
 #include "test/text/constants.h"
 #include "wasp/base/errors.h"
 #include "wasp/text/formatters.h"
-#include "wasp/text/read/context.h"
 #include "wasp/text/read/macros.h"
+#include "wasp/text/read/read_ctx.h"
 #include "wasp/text/read/tokenizer.h"
 
 using namespace ::wasp;
@@ -37,14 +37,14 @@ class TextReadScriptTest : public ::testing::Test {
   template <typename Func, typename... Args>
   void Read(Func&& func, SpanU8 span, Args&&... args) {
     Tokenizer tokenizer{span};
-    func(tokenizer, context, std::forward<Args>(args)...);
+    func(tokenizer, ctx, std::forward<Args>(args)...);
     ExpectNoErrors(errors);
   }
 
   template <typename Func, typename T, typename... Args>
   void OK(Func&& func, const T& expected, SpanU8 span, Args&&... args) {
     Tokenizer tokenizer{span};
-    auto actual = func(tokenizer, context, std::forward<Args>(args)...);
+    auto actual = func(tokenizer, ctx, std::forward<Args>(args)...);
     ASSERT_EQ((At{span, expected}), actual);
     ExpectNoErrors(errors);
   }
@@ -53,7 +53,7 @@ class TextReadScriptTest : public ::testing::Test {
   template <typename Func, typename T, typename... Args>
   void OKVector(Func&& func, const T& expected, SpanU8 span, Args&&... args) {
     Tokenizer tokenizer{span};
-    auto actual = func(tokenizer, context, std::forward<Args>(args)...);
+    auto actual = func(tokenizer, ctx, std::forward<Args>(args)...);
     ASSERT_TRUE(actual.has_value());
     ASSERT_EQ(expected.size(), actual->size());
     for (size_t i = 0; i < expected.size(); ++i) {
@@ -68,7 +68,7 @@ class TextReadScriptTest : public ::testing::Test {
             SpanU8 span,
             Args&&... args) {
     Tokenizer tokenizer{span};
-    func(tokenizer, context, std::forward<Args>(args)...);
+    func(tokenizer, ctx, std::forward<Args>(args)...);
     ExpectError(error, errors, span);
     errors.Clear();
   }
@@ -79,13 +79,13 @@ class TextReadScriptTest : public ::testing::Test {
             SpanU8 span,
             Args&&... args) {
     Tokenizer tokenizer{span};
-    func(tokenizer, context, std::forward<Args>(args)...);
+    func(tokenizer, ctx, std::forward<Args>(args)...);
     ExpectErrors(expected_errors, errors, span);
     errors.Clear();
   }
 
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
 };
 
 TEST_F(TextReadScriptTest, ModuleVarOpt) {
@@ -146,7 +146,7 @@ TEST_F(TextReadScriptTest, Const_simd) {
   Fail(ReadConst, {{1, "Simd values not allowed"}},
        "(v128.const i32x4 0 0 0 0)"_su8);
 
-  context.features.enable_simd();
+  ctx.features.enable_simd();
 
   OK(ReadConst, Const{v128{}}, "(v128.const i32x4 0 0 0 0)"_su8);
 }
@@ -156,7 +156,7 @@ TEST_F(TextReadScriptTest, Const_reference_types) {
   Fail(ReadConst, {{1, "ref.null not allowed"}}, "(ref.null extern)"_su8);
   Fail(ReadConst, {{1, "ref.extern not allowed"}}, "(ref.extern 0)"_su8);
 
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   OK(ReadConst, Const{RefNullConst{HT_Func}}, "(ref.null func)"_su8);
   OK(ReadConst, Const{RefNullConst{HT_Extern}}, "(ref.null extern)"_su8);
@@ -305,7 +305,7 @@ TEST_F(TextReadScriptTest, ReturnResult_simd) {
   Fail(ReadConst, {{1, "Simd values not allowed"}},
        "(v128.const i32x4 0 0 0 0)"_su8);
 
-  context.features.enable_simd();
+  ctx.features.enable_simd();
 
   OK(ReadReturnResult, ReturnResult{v128{}},
      "(v128.const i8x16 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0)"_su8);
@@ -343,7 +343,7 @@ TEST_F(TextReadScriptTest, ReturnResult_reference_types) {
   Fail(ReadReturnResult, {{1, "ref.extern not allowed"}}, "(ref.extern)"_su8);
   Fail(ReadReturnResult, {{1, "ref.func not allowed"}}, "(ref.func)"_su8);
 
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   OK(ReadReturnResult, ReturnResult{RefNullConst{HT_Func}},
      "(ref.null func)"_su8);

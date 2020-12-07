@@ -35,10 +35,10 @@
 #include "wasp/convert/to_binary.h"
 #include "wasp/text/desugar.h"
 #include "wasp/text/read.h"
-#include "wasp/text/read/context.h"
+#include "wasp/text/read/read_ctx.h"
 #include "wasp/text/read/tokenizer.h"
 #include "wasp/text/resolve.h"
-#include "wasp/valid/context.h"
+#include "wasp/valid/valid_ctx.h"
 #include "wasp/valid/validate.h"
 
 using absl::Format;
@@ -178,8 +178,8 @@ void DoFile(const fs::path& path, const Features& features) {
 
 void Tool::Run() {
   text::Tokenizer tokenizer{data};
-  text::Context context{features, errors};
-  auto script = ReadScript(tokenizer, context);
+  text::ReadCtx ctx{features, errors};
+  auto script = ReadScript(tokenizer, ctx);
   if (script) {
     Resolve(*script, errors);
   }
@@ -217,9 +217,9 @@ void Tool::OnScriptModuleCommand(const text::ScriptModule& script_module) {
   if (script_module.has_module()) {
     auto text_module = script_module.module();
     text::Desugar(text_module);
-    convert::Context convert_context;
+    convert::BinCtx convert_context;
     auto binary_module = convert::ToBinary(convert_context, text_module);
-    valid::Context valid_context{features, errors};
+    valid::ValidCtx valid_context{features, errors};
     Validate(valid_context, binary_module);
   }
 }
@@ -267,8 +267,8 @@ void Tool::OnAssertMalformedText(Location loc,
                                  const Buffer& buffer) {
   text::Tokenizer tokenizer{buffer};
   tools::TextErrors nested_errors{filename, buffer};
-  text::Context context{features, nested_errors};
-  auto script = ReadScript(tokenizer, context);
+  text::ReadCtx ctx{features, nested_errors};
+  auto script = ReadScript(tokenizer, ctx);
   if (script) {
     Resolve(*script, nested_errors);
   }
@@ -302,9 +302,9 @@ void Tool::OnAssertInvalid(Location loc, const text::Module& orig_text_module) {
   // have a version that returns a new Module too?
   text::Module text_module = orig_text_module;
   text::Desugar(text_module);
-  convert::Context convert_context;
+  convert::BinCtx convert_context;
   auto binary_module = convert::ToBinary(convert_context, text_module);
-  valid::Context valid_context{features, nested_errors};
+  valid::ValidCtx valid_context{features, nested_errors};
   bool result = Validate(valid_context, binary_module);
   if (result || !nested_errors.HasError()) {
     errors.OnError(loc, "Expected invalid module.");
@@ -318,13 +318,13 @@ void Tool::OnAssertInvalidBinary(Location loc,
                                  string_view filename,
                                  const Buffer& buffer) {
   tools::BinaryErrors nested_errors{filename, buffer};
-  binary::Context read_context{features, nested_errors};
+  binary::ReadCtx read_context{features, nested_errors};
   auto binary_module = binary::ReadModule(buffer, read_context);
   if (!binary_module.has_value() || nested_errors.HasError()) {
     errors.OnError(loc, "Expected invalid binary module, not malformed.");
     return;
   }
-  valid::Context valid_context{features, nested_errors};
+  valid::ValidCtx valid_context{features, nested_errors};
   if (Validate(valid_context, *binary_module)) {
     errors.OnError(loc, "Expected invalid binary module.");
   }

@@ -30,8 +30,8 @@ namespace {
 
 template <typename T, typename B, typename... Args>
 void OK(const T& expected, const B& input, Args&&... args) {
-  TextContext context;
-  auto actual = ToText(context, input, std::forward<Args>(args)...);
+  TextCtx ctx;
+  auto actual = ToText(ctx, input, std::forward<Args>(args)...);
   EXPECT_EQ(expected, actual);
 }
 

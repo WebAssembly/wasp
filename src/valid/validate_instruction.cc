@@ -26,9 +26,9 @@
 #include "wasp/base/macros.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/formatters.h"
-#include "wasp/valid/context.h"
 #include "wasp/valid/formatters.h"
 #include "wasp/valid/match.h"
+#include "wasp/valid/valid_ctx.h"
 #include "wasp/valid/validate.h"
 
 namespace wasp::valid {
@@ -67,181 +67,186 @@ STACK_TYPE_SPANS(WASP_V)
 #undef STACK_TYPE_SPANS
 
 bool AllTrue() { return true; }
-
 template <typename T, typename... Args>
 bool AllTrue(T first, Args... rest) {
   return !!first & AllTrue(rest...);
 }
 
-optional<FunctionType> GetFunctionType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, static_cast<Index>(context.types.size()), "type index")) {
+optional<FunctionType> GetFunctionType(ValidCtx& ctx, At<Index> index) {
+  if (!ValidateIndex(ctx, index, static_cast<Index>(ctx.types.size()),
+                     "type index")) {
     return nullopt;
   }
-  if (!context.types[index].is_function_type()) {
-    context.errors->OnError(index.loc(), "Expected a function type");
+  if (!ctx.types[index].is_function_type()) {
+    ctx.errors->OnError(index.loc(), "Expected a function type");
     return nullopt;
   }
-  return context.types[index].function_type();
+  return ctx.types[index].function_type();
 }
 
-optional<StructType> GetStructType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, static_cast<Index>(context.types.size()), "type index")) {
+optional<StructType> GetStructType(ValidCtx& ctx, At<Index> index) {
+  if (!ValidateIndex(ctx, index, static_cast<Index>(ctx.types.size()),
+                     "type index")) {
     return nullopt;
   }
-  if (!context.types[index].is_struct_type()) {
-    context.errors->OnError(index.loc(), "Expected a struct type");
+  if (!ctx.types[index].is_struct_type()) {
+    ctx.errors->OnError(index.loc(), "Expected a struct type");
     return nullopt;
   }
-  return context.types[index].struct_type();
+  return ctx.types[index].struct_type();
 }
 
-optional<ArrayType> GetArrayType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, static_cast<Index>(context.types.size()), "type index")) {
+optional<ArrayType> GetArrayType(ValidCtx& ctx, At<Index> index) {
+  if (!ValidateIndex(ctx, index, static_cast<Index>(ctx.types.size()),
+                     "type index")) {
     return nullopt;
   }
-  if (!context.types[index].is_array_type()) {
-    context.errors->OnError(index.loc(), "Expected an array type");
+  if (!ctx.types[index].is_array_type()) {
+    ctx.errors->OnError(index.loc(), "Expected an array type");
     return nullopt;
   }
-  return context.types[index].array_type();
+  return ctx.types[index].array_type();
 }
 
-optional<FieldType> GetStructFieldType(Context& context,
+optional<FieldType> GetStructFieldType(ValidCtx& ctx,
                                        const StructType& struct_type,
                                        At<Index> index) {
-  if (!ValidateIndex(context, index, static_cast<Index>(struct_type.fields.size()), "field index")) {
+  if (!ValidateIndex(ctx, index, static_cast<Index>(struct_type.fields.size()),
+                     "field index")) {
     return nullopt;
   }
   return struct_type.fields[index];
 }
 
-optional<ValueType> GetFieldValueType(Context& context,
+optional<ValueType> GetFieldValueType(ValidCtx& ctx,
                                       Location loc,
                                       const FieldType& field_type) {
   if (!field_type.type->is_value_type()) {
-    context.errors->OnError(loc, "Expected a non-packed field type");
+    ctx.errors->OnError(loc, "Expected a non-packed field type");
     return nullopt;
   }
   return field_type.type->value_type();
 }
 
-optional<PackedType> GetFieldPackedType(Context& context,
+optional<PackedType> GetFieldPackedType(ValidCtx& ctx,
                                         Location loc,
                                         const FieldType& field_type) {
   if (!field_type.type->is_packed_type()) {
-    context.errors->OnError(loc, "Expected a packed field type");
+    ctx.errors->OnError(loc, "Expected a packed field type");
     return nullopt;
   }
   return field_type.type->packed_type();
 }
 
-optional<ValueType> GetStructFieldValueType(Context& context,
+optional<ValueType> GetStructFieldValueType(ValidCtx& ctx,
                                             Location loc,
                                             const StructType& struct_type,
                                             At<Index> index) {
-  auto field_type = GetStructFieldType(context, struct_type, index);
+  auto field_type = GetStructFieldType(ctx, struct_type, index);
   if (!field_type) {
     return nullopt;
   }
-  return GetFieldValueType(context, loc, *field_type);
+  return GetFieldValueType(ctx, loc, *field_type);
 }
 
-optional<PackedType> GetStructFieldPackedType(Context& context,
+optional<PackedType> GetStructFieldPackedType(ValidCtx& ctx,
                                               Location loc,
                                               const StructType& struct_type,
                                               At<Index> index) {
-  auto field_type = GetStructFieldType(context, struct_type, index);
+  auto field_type = GetStructFieldType(ctx, struct_type, index);
   if (!field_type) {
     return nullopt;
   }
-  return GetFieldPackedType(context, loc, *field_type);
+  return GetFieldPackedType(ctx, loc, *field_type);
 }
 
-optional<FunctionType> GetBlockTypeSignature(Context& context,
+optional<FunctionType> GetBlockTypeSignature(ValidCtx& ctx,
                                              BlockType block_type) {
   if (block_type.is_void()) {
     return FunctionType{};
   } else if (block_type.is_value_type()) {
     const auto& value_type = block_type.value_type();
-    if (!Validate(context, value_type)) {
+    if (!Validate(ctx, value_type)) {
       return nullopt;
     }
     return FunctionType{{}, {value_type}};
   } else {
     assert(block_type.is_index());
-    return GetFunctionType(context, block_type.index());
+    return GetFunctionType(ctx, block_type.index());
   }
 }
 
-Label& TopLabel(Context& context) {
-  assert(!context.label_stack.empty());
-  return context.label_stack.back();
+Label& TopLabel(ValidCtx& ctx) {
+  assert(!ctx.label_stack.empty());
+  return ctx.label_stack.back();
 }
 
-StackTypeSpan GetTypeStack(Context& context) {
-  return StackTypeSpan{context.type_stack}.subspan(
-      TopLabel(context).type_stack_limit);
+StackTypeSpan GetTypeStack(ValidCtx& ctx) {
+  return StackTypeSpan{ctx.type_stack}.subspan(TopLabel(ctx).type_stack_limit);
 }
 
-optional<Function> GetFunction(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, static_cast<Index>(context.functions.size()),
+optional<Function> GetFunction(ValidCtx& ctx, At<Index> index) {
+  if (!ValidateIndex(ctx, index, static_cast<Index>(ctx.functions.size()),
                      "function index")) {
     return nullopt;
   }
-  return context.functions[index];
+  return ctx.functions[index];
 }
 
-optional<TableType> GetTableType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, static_cast<Index>(context.tables.size()), "table index")) {
+optional<TableType> GetTableType(ValidCtx& ctx, At<Index> index) {
+  if (!ValidateIndex(ctx, index, static_cast<Index>(ctx.tables.size()),
+                     "table index")) {
     return nullopt;
   }
-  return context.tables[index];
+  return ctx.tables[index];
 }
 
-optional<MemoryType> GetMemoryType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, static_cast<Index>(context.memories.size()), "memory index")) {
+optional<MemoryType> GetMemoryType(ValidCtx& ctx, At<Index> index) {
+  if (!ValidateIndex(ctx, index, static_cast<Index>(ctx.memories.size()),
+                     "memory index")) {
     return nullopt;
   }
-  return context.memories[index];
+  return ctx.memories[index];
 }
 
-optional<GlobalType> GetGlobalType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, static_cast<Index>(context.globals.size()), "global index")) {
+optional<GlobalType> GetGlobalType(ValidCtx& ctx, At<Index> index) {
+  if (!ValidateIndex(ctx, index, static_cast<Index>(ctx.globals.size()),
+                     "global index")) {
     return nullopt;
   }
-  return context.globals[index];
+  return ctx.globals[index];
 }
 
-optional<EventType> GetEventType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, static_cast<Index>(context.events.size()), "event index")) {
+optional<EventType> GetEventType(ValidCtx& ctx, At<Index> index) {
+  if (!ValidateIndex(ctx, index, static_cast<Index>(ctx.events.size()),
+                     "event index")) {
     return nullopt;
   }
-  return context.events[index];
+  return ctx.events[index];
 }
 
-optional<ReferenceType> GetElementSegmentType(Context& context,
-                                              At<Index> index) {
-  if (!ValidateIndex(context, index, static_cast<Index>(context.element_segments.size()),
+optional<ReferenceType> GetElementSegmentType(ValidCtx& ctx, At<Index> index) {
+  if (!ValidateIndex(ctx, index,
+                     static_cast<Index>(ctx.element_segments.size()),
                      "element segment index")) {
     return nullopt;
   }
-  return context.element_segments[index];
+  return ctx.element_segments[index];
 }
 
-optional<StackType> GetLocalType(Context& context, At<Index> index) {
-  if (!ValidateIndex(context, index, context.locals.GetCount(),
-                     "local index")) {
+optional<StackType> GetLocalType(ValidCtx& ctx, At<Index> index) {
+  if (!ValidateIndex(ctx, index, ctx.locals.GetCount(), "local index")) {
     return nullopt;
   }
-  auto local_type = context.locals.GetType(index);
+  auto local_type = ctx.locals.GetType(index);
   if (!local_type) {
     return nullopt;
   }
   return StackType(*local_type);
 }
 
-bool CheckDataSegment(Context& context, At<Index> index) {
-  return ValidateIndex(context, index, context.declared_data_count.value_or(0),
+bool CheckDataSegment(ValidCtx& ctx, At<Index> index) {
+  return ValidateIndex(ctx, index, ctx.declared_data_count.value_or(0),
                        "data segment index");
 }
 
@@ -279,11 +284,11 @@ Label MaybeDefault(const Label* value) {
   return value ? *value : Label{LabelType::Block, {}, {}, 0};
 }
 
-optional<StackType> PeekType(Context& context, Location loc) {
-  auto type_stack = GetTypeStack(context);
+optional<StackType> PeekType(ValidCtx& ctx, Location loc) {
+  auto type_stack = GetTypeStack(ctx);
   if (type_stack.empty()) {
-    if (!TopLabel(context).unreachable) {
-      context.errors->OnError(loc, "Expected stack to have 1 value, got 0");
+    if (!TopLabel(ctx).unreachable) {
+      ctx.errors->OnError(loc, "Expected stack to have 1 value, got 0");
       return nullopt;
     }
     return StackType{Any{}};
@@ -291,13 +296,13 @@ optional<StackType> PeekType(Context& context, Location loc) {
   return type_stack[type_stack.size() - 1];
 }
 
-void PushType(Context& context, StackType stack_type) {
-  context.type_stack.push_back(stack_type);
+void PushType(ValidCtx& ctx, StackType stack_type) {
+  ctx.type_stack.push_back(stack_type);
 }
 
-void PushTypes(Context& context, StackTypeSpan stack_types) {
-  context.type_stack.insert(context.type_stack.end(), stack_types.begin(),
-                            stack_types.end());
+void PushTypes(ValidCtx& ctx, StackTypeSpan stack_types) {
+  ctx.type_stack.insert(ctx.type_stack.end(), stack_types.begin(),
+                        stack_types.end());
 }
 
 void RemovePrefixIfGreater(StackTypeSpan* lhs, StackTypeSpan rhs) {
@@ -306,18 +311,18 @@ void RemovePrefixIfGreater(StackTypeSpan* lhs, StackTypeSpan rhs) {
   }
 }
 
-bool CheckTypes(Context& context, Location loc, StackTypeSpan expected) {
+bool CheckTypes(ValidCtx& ctx, Location loc, StackTypeSpan expected) {
   StackTypeSpan full_expected = expected;
-  const auto& top_label = TopLabel(context);
-  auto type_stack = GetTypeStack(context);
+  const auto& top_label = TopLabel(ctx);
+  auto type_stack = GetTypeStack(ctx);
   RemovePrefixIfGreater(&type_stack, expected);
   if (top_label.unreachable) {
     RemovePrefixIfGreater(&expected, type_stack);
   }
 
-  if (!IsMatch(context, expected, type_stack)) {
+  if (!IsMatch(ctx, expected, type_stack)) {
     // TODO proper formatting of type stack
-    context.errors->OnError(
+    ctx.errors->OnError(
         loc, concat("Expected stack to contain ", full_expected, ", got ",
                     top_label.unreachable ? "..." : "", type_stack));
     return false;
@@ -325,81 +330,81 @@ bool CheckTypes(Context& context, Location loc, StackTypeSpan expected) {
   return true;
 }
 
-Label* GetFunctionLabel(Context&);
+Label* GetFunctionLabel(ValidCtx&);
 
-bool CheckResultTypes(Context& context,
+bool CheckResultTypes(ValidCtx& ctx,
                       Location loc,
                       const FunctionType& function_type) {
-  auto* label = GetFunctionLabel(context);
+  auto* label = GetFunctionLabel(ctx);
   assert(label != nullptr);
   auto caller = ToStackTypeList(function_type.result_types);
   auto callee = label->br_types();
 
-  if (!IsMatch(context, callee, caller)) {
-    context.errors->OnError(
-        loc, concat("Callee's result types ", callee,
-                    " must equal caller's result types ", caller));
+  if (!IsMatch(ctx, callee, caller)) {
+    ctx.errors->OnError(loc,
+                        concat("Callee's result types ", callee,
+                               " must equal caller's result types ", caller));
     return false;
   }
   return true;
 }
 
-void ResetTypeStackToLimit(Context& context) {
-  context.type_stack.resize(TopLabel(context).type_stack_limit);
+void ResetTypeStackToLimit(ValidCtx& ctx) {
+  ctx.type_stack.resize(TopLabel(ctx).type_stack_limit);
 }
 
-bool DropTypes(Context& context,
+bool DropTypes(ValidCtx& ctx,
                Location loc,
                size_t count,
                bool print_errors = true) {
-  const auto& top_label = TopLabel(context);
-  auto type_stack_size = context.type_stack.size() - top_label.type_stack_limit;
+  const auto& top_label = TopLabel(ctx);
+  auto type_stack_size = ctx.type_stack.size() - top_label.type_stack_limit;
   if (count > type_stack_size) {
     if (print_errors) {
-      context.errors->OnError(
+      ctx.errors->OnError(
           loc, concat("Expected stack to contain ", count, " value",
                       count == 1 ? "" : "s", ", got ", type_stack_size));
     }
-    ResetTypeStackToLimit(context);
+    ResetTypeStackToLimit(ctx);
     return top_label.unreachable;
   }
-  context.type_stack.resize(context.type_stack.size() - count);
+  ctx.type_stack.resize(ctx.type_stack.size() - count);
   return true;
 }
 
-bool PopTypes(Context& context, Location loc, StackTypeSpan expected) {
-  bool valid = CheckTypes(context, loc, expected);
-  valid &= DropTypes(context, loc, expected.size(), false);
+bool PopTypes(ValidCtx& ctx, Location loc, StackTypeSpan expected) {
+  bool valid = CheckTypes(ctx, loc, expected);
+  valid &= DropTypes(ctx, loc, expected.size(), false);
   return valid;
 }
 
-bool PopType(Context& context, Location loc, StackType type) {
-  return PopTypes(context, loc, StackTypeSpan(&type, 1));
+bool PopType(ValidCtx& ctx, Location loc, StackType type) {
+  return PopTypes(ctx, loc, StackTypeSpan(&type, 1));
 }
 
-optional<StackType> PopReferenceType(Context& context, Location loc) {
-  auto type = PeekType(context, loc);
+optional<StackType> PopReferenceType(ValidCtx& ctx, Location loc) {
+  auto type = PeekType(ctx, loc);
   if (type) {
     if (!IsReferenceTypeOrAny(*type)) {
-      context.errors->OnError(
-          loc, concat("Expected reference type, got ", GetTypeStack(context)));
+      ctx.errors->OnError(
+          loc, concat("Expected reference type, got ", GetTypeStack(ctx)));
       return nullopt;
     }
-    DropTypes(context, loc, 1, false);
+    DropTypes(ctx, loc, 1, false);
   }
   return type;
 }
 
-auto PopRtt(Context& context, Location loc)
+auto PopRtt(ValidCtx& ctx, Location loc)
     -> std::pair<optional<StackType>, optional<Rtt>> {
-  auto type = PeekType(context, loc);
+  auto type = PeekType(ctx, loc);
   if (type) {
     if (!IsRttOrAny(*type)) {
-      context.errors->OnError(
-          loc, concat("Expected rtt type, got ", GetTypeStack(context)));
+      ctx.errors->OnError(loc,
+                          concat("Expected rtt type, got ", GetTypeStack(ctx)));
       return {nullopt, nullopt};
     }
-    DropTypes(context, loc, 1, false);
+    DropTypes(ctx, loc, 1, false);
     if (type->is_value_type()) {
       return {type, type->value_type().rtt()};
     }
@@ -407,9 +412,9 @@ auto PopRtt(Context& context, Location loc)
   return {type, nullopt};
 }
 
-auto PopTypedReference(Context& context, Location loc)
+auto PopTypedReference(ValidCtx& ctx, Location loc)
     -> std::pair<optional<StackType>, optional<Index>> {
-  auto type = PopReferenceType(context, loc);
+  auto type = PopReferenceType(ctx, loc);
   if (!type) {
     return {nullopt, nullopt};
   }
@@ -424,222 +429,216 @@ auto PopTypedReference(Context& context, Location loc)
   assert(ref_type.is_ref());
 
   if (!ref_type.ref()->heap_type->is_index()) {
-    context.errors->OnError(loc,
-                            concat("Expected typed function reference, got ",
-                                   GetTypeStack(context)));
+    ctx.errors->OnError(loc, concat("Expected typed function reference, got ",
+                                    GetTypeStack(ctx)));
     return {nullopt, nullopt};
   }
 
   return {ToStackType(ref_type), ref_type.ref()->heap_type->index()};
 }
 
-auto PopFunctionReference(Context& context, Location loc)
+auto PopFunctionReference(ValidCtx& ctx, Location loc)
     -> std::pair<optional<StackType>, std::optional<FunctionType>> {
-  auto [stack_type, index] = PopTypedReference(context, loc);
+  auto [stack_type, index] = PopTypedReference(ctx, loc);
   if (stack_type && !stack_type->is_any() && index) {
-    return {stack_type, GetFunctionType(context, *index)};
+    return {stack_type, GetFunctionType(ctx, *index)};
   } else {
     return {stack_type, nullopt};
   }
 }
 
-auto PopStructReference(Context& context,
-                        Location loc,
-                        const At<Index>& expected)
+auto PopStructReference(ValidCtx& ctx, Location loc, const At<Index>& expected)
     -> std::pair<optional<StackType>, std::optional<StructType>> {
-  auto [stack_type, index] = PopTypedReference(context, loc);
+  auto [stack_type, index] = PopTypedReference(ctx, loc);
   if (stack_type) {
-    if (index && !IsMatch(context, HeapType{expected}, HeapType{*index})) {
+    if (index && !IsMatch(ctx, HeapType{expected}, HeapType{*index})) {
       // The index deson't match. Print an error, but assume that it worked to
       // prevent knock-on errors.
-      context.errors->OnError(loc, concat("Expected struct type ", expected,
-                                          " but got type ", *index));
+      ctx.errors->OnError(loc, concat("Expected struct type ", expected,
+                                      " but got type ", *index));
     }
-    return {stack_type, GetStructType(context, expected)};
+    return {stack_type, GetStructType(ctx, expected)};
   } else {
     return {stack_type, nullopt};
   }
 }
 
-auto PopArrayReference(Context& context,
-                       Location loc,
-                       const At<Index>& expected)
+auto PopArrayReference(ValidCtx& ctx, Location loc, const At<Index>& expected)
     -> std::pair<optional<StackType>, std::optional<ArrayType>> {
-  auto [stack_type, index] = PopTypedReference(context, loc);
+  auto [stack_type, index] = PopTypedReference(ctx, loc);
   if (stack_type) {
-    if (index && !IsMatch(context, HeapType{expected}, HeapType{*index})) {
+    if (index && !IsMatch(ctx, HeapType{expected}, HeapType{*index})) {
       // The index deson't match. Print an error, but assume that it worked to
       // prevent knock-on errors.
-      context.errors->OnError(loc, concat("Expected array type ", expected,
-                                          " but got type ", *index));
+      ctx.errors->OnError(loc, concat("Expected array type ", expected,
+                                      " but got type ", *index));
     }
-    return {stack_type, GetArrayType(context, expected)};
+    return {stack_type, GetArrayType(ctx, expected)};
   } else {
     return {stack_type, nullopt};
   }
 }
 
-bool PopAndPushTypes(Context& context,
+bool PopAndPushTypes(ValidCtx& ctx,
                      Location loc,
                      StackTypeSpan param_types,
                      StackTypeSpan result_types) {
-  bool valid = PopTypes(context, loc, param_types);
-  PushTypes(context, result_types);
+  bool valid = PopTypes(ctx, loc, param_types);
+  PushTypes(ctx, result_types);
   return valid;
 }
 
-bool PopAndPushTypes(Context& context,
+bool PopAndPushTypes(ValidCtx& ctx,
                      Location loc,
                      const FunctionType& function_type) {
-  return PopAndPushTypes(context, loc,
-                         ToStackTypeList(function_type.param_types),
+  return PopAndPushTypes(ctx, loc, ToStackTypeList(function_type.param_types),
                          ToStackTypeList(function_type.result_types));
 }
 
-void SetUnreachable(Context& context) {
-  auto& top_label = TopLabel(context);
+void SetUnreachable(ValidCtx& ctx) {
+  auto& top_label = TopLabel(ctx);
   top_label.unreachable = true;
-  ResetTypeStackToLimit(context);
+  ResetTypeStackToLimit(ctx);
 }
 
-Label* GetLabel(Context& context, At<Index> depth) {
-  if (depth >= context.label_stack.size()) {
-    context.errors->OnError(
-        depth.loc(), concat("Invalid label ", depth, ", must be less than ",
-                            context.label_stack.size()));
+Label* GetLabel(ValidCtx& ctx, At<Index> depth) {
+  if (depth >= ctx.label_stack.size()) {
+    ctx.errors->OnError(depth.loc(),
+                        concat("Invalid label ", depth, ", must be less than ",
+                               ctx.label_stack.size()));
     return nullptr;
   }
-  return &context.label_stack[context.label_stack.size() - depth - 1];
+  return &ctx.label_stack[ctx.label_stack.size() - depth - 1];
 }
 
-Label* GetFunctionLabel(Context& context) {
-  return GetLabel(context, static_cast<Index>(context.label_stack.size() - 1));
+Label* GetFunctionLabel(ValidCtx& ctx) {
+  return GetLabel(ctx, static_cast<Index>(ctx.label_stack.size() - 1));
 }
 
-bool PushLabel(Context& context,
+bool PushLabel(ValidCtx& ctx,
                Location loc,
                LabelType label_type,
                const FunctionType& type) {
   auto stack_param_types = ToStackTypeList(type.param_types);
   auto stack_result_types = ToStackTypeList(type.result_types);
-  bool valid = PopTypes(context, loc, stack_param_types);
-  context.label_stack.emplace_back(label_type, stack_param_types,
-                                   stack_result_types,
-                                   static_cast<Index>(context.type_stack.size()));
-  PushTypes(context, stack_param_types);
+  bool valid = PopTypes(ctx, loc, stack_param_types);
+  ctx.label_stack.emplace_back(label_type, stack_param_types,
+                               stack_result_types,
+                               static_cast<Index>(ctx.type_stack.size()));
+  PushTypes(ctx, stack_param_types);
   return valid;
 }
 
-bool PushLabel(Context& context,
+bool PushLabel(ValidCtx& ctx,
                Location loc,
                LabelType label_type,
                BlockType block_type) {
-  auto sig = GetBlockTypeSignature(context, block_type);
+  auto sig = GetBlockTypeSignature(ctx, block_type);
   if (!sig) {
     return false;
   }
-  return PushLabel(context, loc, label_type, *sig);
+  return PushLabel(ctx, loc, label_type, *sig);
 }
 
-bool CheckTypeStackEmpty(Context& context, Location loc) {
-  const auto& top_label = TopLabel(context);
-  if (context.type_stack.size() != top_label.type_stack_limit) {
-    context.errors->OnError(
-        loc, concat("Expected empty stack, got ", GetTypeStack(context)));
+bool CheckTypeStackEmpty(ValidCtx& ctx, Location loc) {
+  const auto& top_label = TopLabel(ctx);
+  if (ctx.type_stack.size() != top_label.type_stack_limit) {
+    ctx.errors->OnError(
+        loc, concat("Expected empty stack, got ", GetTypeStack(ctx)));
     return false;
   }
   return true;
 }
 
-bool Catch(Context& context, Location loc) {
-  auto& top_label = TopLabel(context);
+bool Catch(ValidCtx& ctx, Location loc) {
+  auto& top_label = TopLabel(ctx);
   if (top_label.label_type != LabelType::Try) {
-    context.errors->OnError(loc, "Got catch instruction without try");
+    ctx.errors->OnError(loc, "Got catch instruction without try");
     return false;
   }
-  bool valid = PopTypes(context, loc, top_label.result_types);
-  valid &= CheckTypeStackEmpty(context, loc);
-  ResetTypeStackToLimit(context);
-  PushTypes(context, span_exnref);
+  bool valid = PopTypes(ctx, loc, top_label.result_types);
+  valid &= CheckTypeStackEmpty(ctx, loc);
+  ResetTypeStackToLimit(ctx);
+  PushTypes(ctx, span_exnref);
   top_label.label_type = LabelType::Catch;
   top_label.unreachable = false;
   return valid;
 }
 
-bool Else(Context& context, Location loc) {
-  auto& top_label = TopLabel(context);
+bool Else(ValidCtx& ctx, Location loc) {
+  auto& top_label = TopLabel(ctx);
   if (top_label.label_type != LabelType::If) {
-    context.errors->OnError(loc, "Got else instruction without if");
+    ctx.errors->OnError(loc, "Got else instruction without if");
     return false;
   }
-  bool valid = PopTypes(context, loc, top_label.result_types);
-  valid &= CheckTypeStackEmpty(context, loc);
-  ResetTypeStackToLimit(context);
-  PushTypes(context, top_label.param_types);
+  bool valid = PopTypes(ctx, loc, top_label.result_types);
+  valid &= CheckTypeStackEmpty(ctx, loc);
+  ResetTypeStackToLimit(ctx);
+  PushTypes(ctx, top_label.param_types);
   top_label.label_type = LabelType::Else;
   top_label.unreachable = false;
   return valid;
 }
 
-bool End(Context& context, Location loc) {
-  auto& top_label = TopLabel(context);
+bool End(ValidCtx& ctx, Location loc) {
+  auto& top_label = TopLabel(ctx);
   bool valid = true;
   if (top_label.label_type == LabelType::If) {
-    valid &= Else(context, loc);
+    valid &= Else(ctx, loc);
   } else if (top_label.label_type == LabelType::Let) {
-    context.locals.Pop();
+    ctx.locals.Pop();
   }
-  valid &= PopTypes(context, loc, top_label.result_types);
-  valid &= CheckTypeStackEmpty(context, loc);
-  ResetTypeStackToLimit(context);
-  PushTypes(context, top_label.result_types);
-  context.label_stack.pop_back();
+  valid &= PopTypes(ctx, loc, top_label.result_types);
+  valid &= CheckTypeStackEmpty(ctx, loc);
+  ResetTypeStackToLimit(ctx);
+  PushTypes(ctx, top_label.result_types);
+  ctx.label_stack.pop_back();
   return valid;
 }
 
-bool Br(Context& context, Location loc, At<Index> depth) {
-  const auto* label = GetLabel(context, depth);
-  bool valid = PopTypes(context, loc, MaybeDefault(label).br_types());
-  SetUnreachable(context);
+bool Br(ValidCtx& ctx, Location loc, At<Index> depth) {
+  const auto* label = GetLabel(ctx, depth);
+  bool valid = PopTypes(ctx, loc, MaybeDefault(label).br_types());
+  SetUnreachable(ctx);
   return AllTrue(label, valid);
 }
 
-bool BrIf(Context& context, Location loc, At<Index> depth) {
-  bool valid = PopType(context, loc, StackType::I32());
-  const auto* label = GetLabel(context, depth);
+bool BrIf(ValidCtx& ctx, Location loc, At<Index> depth) {
+  bool valid = PopType(ctx, loc, StackType::I32());
+  const auto* label = GetLabel(ctx, depth);
   auto label_ = MaybeDefault(label);
   return AllTrue(
       valid, label,
-      PopAndPushTypes(context, loc, label_.br_types(), label_.br_types()));
+      PopAndPushTypes(ctx, loc, label_.br_types(), label_.br_types()));
 }
 
-bool BrTable(Context& context,
+bool BrTable(ValidCtx& ctx,
              Location loc,
              const At<BrTableImmediate>& immediate) {
-  bool valid = PopType(context, loc, StackType::I32());
-  const auto* default_label = GetLabel(context, immediate->default_target);
+  bool valid = PopType(ctx, loc, StackType::I32());
+  const auto* default_label = GetLabel(ctx, immediate->default_target);
   if (!default_label) {
     return false;
   }
 
   StackTypeSpan br_types = default_label->br_types();
-  valid &= CheckTypes(context, immediate->default_target.loc(), br_types);
+  valid &= CheckTypes(ctx, immediate->default_target.loc(), br_types);
 
   for (auto target : immediate->targets) {
-    const auto* label = GetLabel(context, target);
+    const auto* label = GetLabel(ctx, target);
     if (label) {
-      if (context.features.function_references_enabled()) {
+      if (ctx.features.function_references_enabled()) {
         if (br_types.size() != label->br_types().size()) {
-          context.errors->OnError(
+          ctx.errors->OnError(
               target.loc(),
               concat("br_table labels must have the same arity; expected ",
                      br_types.size(), ", got ", label->br_types().size()));
           valid = false;
         }
-        valid &= CheckTypes(context, target.loc(), label->br_types());
+        valid &= CheckTypes(ctx, target.loc(), label->br_types());
       } else {
         if (br_types != label->br_types()) {
-          context.errors->OnError(
+          ctx.errors->OnError(
               target.loc(),
               concat("br_table labels must have the same signature; expected ",
                      br_types, ", got ", label->br_types()));
@@ -650,34 +649,33 @@ bool BrTable(Context& context,
       valid = false;
     }
   }
-  SetUnreachable(context);
+  SetUnreachable(ctx);
   return valid;
 }
 
-bool Call(Context& context, Location loc, At<Index> function_index) {
-  auto function = GetFunction(context, function_index);
-  auto function_type =
-      GetFunctionType(context, MaybeDefault(function).type_index);
+bool Call(ValidCtx& ctx, Location loc, At<Index> function_index) {
+  auto function = GetFunction(ctx, function_index);
+  auto function_type = GetFunctionType(ctx, MaybeDefault(function).type_index);
   return AllTrue(function, function_type,
-                 PopAndPushTypes(context, loc, MaybeDefault(function_type)));
+                 PopAndPushTypes(ctx, loc, MaybeDefault(function_type)));
 }
 
-bool CallIndirect(Context& context,
+bool CallIndirect(ValidCtx& ctx,
                   Location loc,
                   const At<CallIndirectImmediate>& immediate) {
-  auto table_type = GetTableType(context, immediate->table_index);
-  auto function_type = GetFunctionType(context, immediate->index);
-  bool valid = PopType(context, loc, StackType::I32());
+  auto table_type = GetTableType(ctx, immediate->table_index);
+  auto function_type = GetFunctionType(ctx, immediate->index);
+  bool valid = PopType(ctx, loc, StackType::I32());
   return AllTrue(table_type, function_type, valid,
-                 PopAndPushTypes(context, loc, MaybeDefault(function_type)));
+                 PopAndPushTypes(ctx, loc, MaybeDefault(function_type)));
 }
 
-bool Select(Context& context, Location loc) {
-  bool valid = PopType(context, loc, StackType::I32());
-  auto type = MaybeDefault(PeekType(context, loc));
+bool Select(ValidCtx& ctx, Location loc) {
+  bool valid = PopType(ctx, loc, StackType::I32());
+  auto type = MaybeDefault(PeekType(ctx, loc));
   if (!((type.is_value_type() && type.value_type().is_numeric_type()) ||
         type.is_any())) {
-    context.errors->OnError(
+    ctx.errors->OnError(
         loc, concat("select instruction without expected type can only be used "
                     "with i32, i64, f32, f64; got ",
                     type));
@@ -685,98 +683,95 @@ bool Select(Context& context, Location loc) {
   }
   const StackType pop_types[] = {type, type};
   const StackType push_type[] = {type};
-  return AllTrue(valid, PopAndPushTypes(context, loc, pop_types, push_type));
+  return AllTrue(valid, PopAndPushTypes(ctx, loc, pop_types, push_type));
 }
 
-bool SelectT(Context& context,
+bool SelectT(ValidCtx& ctx,
              Location loc,
              const At<ValueTypeList>& value_types) {
-  bool valid = PopType(context, loc, StackType::I32());
+  bool valid = PopType(ctx, loc, StackType::I32());
   if (value_types->size() != 1) {
-    context.errors->OnError(
+    ctx.errors->OnError(
         value_types.loc(),
         concat("select instruction must have types immediate with size 1, got ",
                value_types->size()));
     return false;
   }
-  valid &= Validate(context, value_types);
+  valid &= Validate(ctx, value_types);
   StackTypeList stack_types = ToStackTypeList(value_types);
   StackType type = stack_types[0];
   const StackType pop_types[] = {type, type};
   const StackType push_type[] = {type};
-  return AllTrue(valid, PopAndPushTypes(context, loc, pop_types, push_type));
+  return AllTrue(valid, PopAndPushTypes(ctx, loc, pop_types, push_type));
 }
 
-bool LocalGet(Context& context, At<Index> index) {
-  auto local_type = GetLocalType(context, index);
-  PushType(context, MaybeDefault(local_type));
+bool LocalGet(ValidCtx& ctx, At<Index> index) {
+  auto local_type = GetLocalType(ctx, index);
+  PushType(ctx, MaybeDefault(local_type));
   return AllTrue(local_type);
 }
 
-bool LocalSet(Context& context, Location loc, At<Index> index) {
-  auto local_type = GetLocalType(context, index);
-  return AllTrue(local_type, PopType(context, loc, MaybeDefault(local_type)));
+bool LocalSet(ValidCtx& ctx, Location loc, At<Index> index) {
+  auto local_type = GetLocalType(ctx, index);
+  return AllTrue(local_type, PopType(ctx, loc, MaybeDefault(local_type)));
 }
 
-bool LocalTee(Context& context, Location loc, At<Index> index) {
-  auto local_type = GetLocalType(context, index);
+bool LocalTee(ValidCtx& ctx, Location loc, At<Index> index) {
+  auto local_type = GetLocalType(ctx, index);
   const StackType type[] = {MaybeDefault(local_type)};
-  return AllTrue(local_type, PopAndPushTypes(context, loc, type, type));
+  return AllTrue(local_type, PopAndPushTypes(ctx, loc, type, type));
 }
 
-bool GlobalGet(Context& context, At<Index> index) {
-  auto global_type = GetGlobalType(context, index);
-  PushType(context, StackType(*MaybeDefault(global_type).valtype));
+bool GlobalGet(ValidCtx& ctx, At<Index> index) {
+  auto global_type = GetGlobalType(ctx, index);
+  PushType(ctx, StackType(*MaybeDefault(global_type).valtype));
   return AllTrue(global_type);
 }
 
-bool GlobalSet(Context& context, Location loc, At<Index> index) {
-  auto global_type = GetGlobalType(context, index);
+bool GlobalSet(ValidCtx& ctx, Location loc, At<Index> index) {
+  auto global_type = GetGlobalType(ctx, index);
   auto type = MaybeDefault(global_type);
   bool valid = true;
   if (type.mut == Mutability::Const) {
-    context.errors->OnError(
+    ctx.errors->OnError(
         index.loc(),
         concat("global.set is invalid on immutable global ", index));
     valid = false;
   }
-  return AllTrue(valid, PopType(context, loc, StackType(*type.valtype)));
+  return AllTrue(valid, PopType(ctx, loc, StackType(*type.valtype)));
 }
 
-bool TableGet(Context& context, Location loc, At<Index> index) {
-  auto table_type = GetTableType(context, index);
+bool TableGet(ValidCtx& ctx, Location loc, At<Index> index) {
+  auto table_type = GetTableType(ctx, index);
   auto stack_type = ToStackType(MaybeDefault(table_type).elemtype);
   const StackType type[] = {stack_type};
-  return AllTrue(table_type, PopAndPushTypes(context, loc, span_i32, type));
+  return AllTrue(table_type, PopAndPushTypes(ctx, loc, span_i32, type));
 }
 
-bool TableSet(Context& context, Location loc, At<Index> index) {
-  auto table_type = GetTableType(context, index);
+bool TableSet(ValidCtx& ctx, Location loc, At<Index> index) {
+  auto table_type = GetTableType(ctx, index);
   auto stack_type = ToStackType(MaybeDefault(table_type).elemtype);
   const StackType types[] = {StackType::I32(), stack_type};
-  return AllTrue(table_type, PopTypes(context, loc, types));
+  return AllTrue(table_type, PopTypes(ctx, loc, types));
 }
 
-bool RefFunc(Context& context, Location loc, At<Index> index) {
-  if (context.declared_functions.find(index) ==
-      context.declared_functions.end()) {
-    context.errors->OnError(loc,
-                            concat("Undeclared function reference ", index));
+bool RefFunc(ValidCtx& ctx, Location loc, At<Index> index) {
+  if (ctx.declared_functions.find(index) == ctx.declared_functions.end()) {
+    ctx.errors->OnError(loc, concat("Undeclared function reference ", index));
     return false;
   }
-  assert(index < context.functions.size());
-  auto& function = context.functions[index];
-  PushType(context,
-           ToStackType(RefType{HeapType{function.type_index}, Null::No}));
+  assert(index < ctx.functions.size());
+  auto& function = ctx.functions[index];
+  PushType(ctx, ToStackType(RefType{HeapType{function.type_index}, Null::No}));
   return true;
 }
 
-bool CheckAlignment(Context& context,
+bool CheckAlignment(ValidCtx& ctx,
                     const At<Instruction>& instruction,
                     u32 max_align) {
   if (instruction->mem_arg_immediate()->align_log2 > max_align) {
-    context.errors->OnError(instruction.loc(),
-                            concat("Invalid alignment ", instruction));
+    ctx.errors->OnError(instruction.loc(),
+                        concat("Invalid alignment ", instruction));
     return false;
   }
   return true;
@@ -796,8 +791,8 @@ StackTypeSpan GetIndexTypeSpan(const optional<MemoryType>& memory_type) {
   return span_i32;
 }
 
-bool Load(Context& context, Location loc, const At<Instruction>& instruction) {
-  auto memory_type = GetMemoryType(context, 0);
+bool Load(ValidCtx& ctx, Location loc, const At<Instruction>& instruction) {
+  auto memory_type = GetMemoryType(ctx, 0);
   auto index_span = GetIndexTypeSpan(memory_type);
   StackTypeSpan span;
   u32 max_align;
@@ -833,13 +828,13 @@ bool Load(Context& context, Location loc, const At<Instruction>& instruction) {
       WASP_UNREACHABLE();
   }
 
-  bool valid = CheckAlignment(context, instruction, max_align);
+  bool valid = CheckAlignment(ctx, instruction, max_align);
   return AllTrue(memory_type, valid,
-                 PopAndPushTypes(context, loc, index_span, span));
+                 PopAndPushTypes(ctx, loc, index_span, span));
 }
 
-bool Store(Context& context, Location loc, const At<Instruction>& instruction) {
-  auto memory_type = GetMemoryType(context, 0);
+bool Store(ValidCtx& ctx, Location loc, const At<Instruction>& instruction) {
+  auto memory_type = GetMemoryType(ctx, 0);
   StackType type;
   u32 max_align;
   switch (instruction->opcode) {
@@ -858,137 +853,136 @@ bool Store(Context& context, Location loc, const At<Instruction>& instruction) {
   }
 
   StackTypeList params{GetIndexType(memory_type), type};
-  bool valid = CheckAlignment(context, instruction, max_align);
-  return AllTrue(memory_type, valid, PopTypes(context, loc, params));
+  bool valid = CheckAlignment(ctx, instruction, max_align);
+  return AllTrue(memory_type, valid, PopTypes(ctx, loc, params));
 }
 
-bool MemorySize(Context& context) {
-  auto memory_type = GetMemoryType(context, 0);
-  PushType(context, GetIndexType(memory_type));
+bool MemorySize(ValidCtx& ctx) {
+  auto memory_type = GetMemoryType(ctx, 0);
+  PushType(ctx, GetIndexType(memory_type));
   return AllTrue(memory_type);
 }
 
-bool MemoryGrow(Context& context, Location loc) {
-  auto memory_type = GetMemoryType(context, 0);
+bool MemoryGrow(ValidCtx& ctx, Location loc) {
+  auto memory_type = GetMemoryType(ctx, 0);
   auto span = GetIndexTypeSpan(memory_type);
-  return AllTrue(memory_type, PopAndPushTypes(context, loc, span, span));
+  return AllTrue(memory_type, PopAndPushTypes(ctx, loc, span, span));
 }
 
-bool MemoryInit(Context& context,
+bool MemoryInit(ValidCtx& ctx,
                 Location loc,
                 const At<InitImmediate>& immediate) {
-  auto memory_type = GetMemoryType(context, 0);
+  auto memory_type = GetMemoryType(ctx, 0);
   StackTypeList params{GetIndexType(memory_type), StackType::I32(),
                        StackType::I32()};
-  bool valid = CheckDataSegment(context, immediate->segment_index);
-  return AllTrue(memory_type, valid, PopTypes(context, loc, params));
+  bool valid = CheckDataSegment(ctx, immediate->segment_index);
+  return AllTrue(memory_type, valid, PopTypes(ctx, loc, params));
 }
 
-bool DataDrop(Context& context, At<Index> segment_index) {
-  return CheckDataSegment(context, segment_index);
+bool DataDrop(ValidCtx& ctx, At<Index> segment_index) {
+  return CheckDataSegment(ctx, segment_index);
 }
 
-bool MemoryCopy(Context& context,
+bool MemoryCopy(ValidCtx& ctx,
                 Location loc,
                 const At<CopyImmediate>& immediate) {
-  auto memory_type = GetMemoryType(context, 0);
+  auto memory_type = GetMemoryType(ctx, 0);
   auto index_type = GetIndexType(memory_type);
   StackTypeList params{index_type, index_type, index_type};
-  return AllTrue(memory_type, PopTypes(context, loc, params));
+  return AllTrue(memory_type, PopTypes(ctx, loc, params));
 }
 
-bool MemoryFill(Context& context, Location loc) {
-  auto memory_type = GetMemoryType(context, 0);
+bool MemoryFill(ValidCtx& ctx, Location loc) {
+  auto memory_type = GetMemoryType(ctx, 0);
   auto index_type = GetIndexType(memory_type);
   StackTypeList params{index_type, StackType::I32(), index_type};
-  return AllTrue(memory_type, PopTypes(context, loc, params));
+  return AllTrue(memory_type, PopTypes(ctx, loc, params));
 }
 
-bool CheckReferenceType(Context& context,
+bool CheckReferenceType(ValidCtx& ctx,
                         ReferenceType expected,
                         At<ReferenceType> actual) {
-  if (!IsMatch(context, ToStackType(expected), ToStackType(actual))) {
-    context.errors->OnError(actual.loc(), concat("Expected reference type ",
-                                                 expected, ", got ", actual));
+  if (!IsMatch(ctx, ToStackType(expected), ToStackType(actual))) {
+    ctx.errors->OnError(actual.loc(), concat("Expected reference type ",
+                                             expected, ", got ", actual));
     return false;
   }
   return true;
 }
 
-bool TableInit(Context& context,
+bool TableInit(ValidCtx& ctx,
                Location loc,
                const At<InitImmediate>& immediate) {
-  auto table_type = GetTableType(context, immediate->dst_index);
-  auto elemtype = GetElementSegmentType(context, immediate->segment_index);
-  bool valid = CheckReferenceType(context, MaybeDefault(table_type).elemtype,
+  auto table_type = GetTableType(ctx, immediate->dst_index);
+  auto elemtype = GetElementSegmentType(ctx, immediate->segment_index);
+  bool valid = CheckReferenceType(ctx, MaybeDefault(table_type).elemtype,
                                   MaybeDefault(elemtype));
   return AllTrue(table_type, elemtype, valid,
-                 PopTypes(context, loc, span_i32_i32_i32));
+                 PopTypes(ctx, loc, span_i32_i32_i32));
 }
 
-bool ElemDrop(Context& context, At<Index> segment_index) {
-  auto elem_type = GetElementSegmentType(context, segment_index);
+bool ElemDrop(ValidCtx& ctx, At<Index> segment_index) {
+  auto elem_type = GetElementSegmentType(ctx, segment_index);
   return AllTrue(elem_type);
 }
 
-bool TableCopy(Context& context,
+bool TableCopy(ValidCtx& ctx,
                Location loc,
                const At<CopyImmediate>& immediate) {
-  auto dst_table_type = GetTableType(context, immediate->dst_index);
-  auto src_table_type = GetTableType(context, immediate->src_index);
-  bool valid =
-      CheckReferenceType(context, MaybeDefault(dst_table_type).elemtype,
-                         MaybeDefault(src_table_type).elemtype);
+  auto dst_table_type = GetTableType(ctx, immediate->dst_index);
+  auto src_table_type = GetTableType(ctx, immediate->src_index);
+  bool valid = CheckReferenceType(ctx, MaybeDefault(dst_table_type).elemtype,
+                                  MaybeDefault(src_table_type).elemtype);
   return AllTrue(dst_table_type, src_table_type, valid,
-                 PopTypes(context, loc, span_i32_i32_i32));
+                 PopTypes(ctx, loc, span_i32_i32_i32));
 }
 
-bool TableGrow(Context& context, Location loc, At<Index> index) {
-  auto table_type = GetTableType(context, index);
+bool TableGrow(ValidCtx& ctx, Location loc, At<Index> index) {
+  auto table_type = GetTableType(ctx, index);
   auto stack_type = ToStackType(MaybeDefault(table_type).elemtype);
   const StackType types[] = {stack_type, StackType::I32()};
-  return AllTrue(table_type, PopAndPushTypes(context, loc, types, span_i32));
+  return AllTrue(table_type, PopAndPushTypes(ctx, loc, types, span_i32));
 }
 
-bool TableSize(Context& context, At<Index> index) {
-  auto table_type = GetTableType(context, 0);
-  PushTypes(context, span_i32);
+bool TableSize(ValidCtx& ctx, At<Index> index) {
+  auto table_type = GetTableType(ctx, 0);
+  PushTypes(ctx, span_i32);
   return AllTrue(table_type);
 }
 
-bool TableFill(Context& context, Location loc, At<Index> index) {
-  auto table_type = GetTableType(context, index);
+bool TableFill(ValidCtx& ctx, Location loc, At<Index> index) {
+  auto table_type = GetTableType(ctx, index);
   auto stack_type = ToStackType(MaybeDefault(table_type).elemtype);
   const StackType types[] = {StackType::I32(), stack_type, StackType::I32()};
-  return AllTrue(table_type, PopTypes(context, loc, types));
+  return AllTrue(table_type, PopTypes(ctx, loc, types));
 }
 
-bool CheckAtomicAlignment(Context& context,
+bool CheckAtomicAlignment(ValidCtx& ctx,
                           const At<Instruction>& instruction,
                           u32 align) {
   if (instruction->mem_arg_immediate()->align_log2 != align) {
-    context.errors->OnError(instruction.loc(),
-                            concat("Invalid atomic alignment ", instruction));
+    ctx.errors->OnError(instruction.loc(),
+                        concat("Invalid atomic alignment ", instruction));
     return false;
   }
   return true;
 }
 
-bool MemoryAtomicNotify(Context& context,
+bool MemoryAtomicNotify(ValidCtx& ctx,
                         Location loc,
                         const At<Instruction>& instruction) {
   const u32 align = 2;
-  auto memory_type = GetMemoryType(context, 0);
+  auto memory_type = GetMemoryType(ctx, 0);
   StackTypeList params{GetIndexType(memory_type), StackType::I32()};
-  bool valid = CheckAtomicAlignment(context, instruction, align);
+  bool valid = CheckAtomicAlignment(ctx, instruction, align);
   return AllTrue(memory_type, valid,
-                 PopAndPushTypes(context, loc, params, span_i32));
+                 PopAndPushTypes(ctx, loc, params, span_i32));
 }
 
-bool MemoryAtomicWait(Context& context,
+bool MemoryAtomicWait(ValidCtx& ctx,
                       Location loc,
                       const At<Instruction>& instruction) {
-  auto memory_type = GetMemoryType(context, 0);
+  auto memory_type = GetMemoryType(ctx, 0);
   StackType type;
   u32 align;
   switch (instruction->opcode) {
@@ -999,15 +993,15 @@ bool MemoryAtomicWait(Context& context,
   }
 
   StackTypeList params{GetIndexType(memory_type), type, StackType::I64()};
-  bool valid = CheckAtomicAlignment(context, instruction, align);
+  bool valid = CheckAtomicAlignment(ctx, instruction, align);
   return AllTrue(memory_type, valid,
-                 PopAndPushTypes(context, loc, params, span_i32));
+                 PopAndPushTypes(ctx, loc, params, span_i32));
 }
 
-bool AtomicLoad(Context& context,
+bool AtomicLoad(ValidCtx& ctx,
                 Location loc,
                 const At<Instruction>& instruction) {
-  auto memory_type = GetMemoryType(context, 0);
+  auto memory_type = GetMemoryType(ctx, 0);
   auto index_span = GetIndexTypeSpan(memory_type);
   StackTypeSpan span;
   u32 align;
@@ -1023,15 +1017,15 @@ bool AtomicLoad(Context& context,
       WASP_UNREACHABLE();
   }
 
-  bool valid = CheckAtomicAlignment(context, instruction, align);
+  bool valid = CheckAtomicAlignment(ctx, instruction, align);
   return AllTrue(memory_type, valid,
-                 PopAndPushTypes(context, loc, index_span, span));
+                 PopAndPushTypes(ctx, loc, index_span, span));
 }
 
-bool AtomicStore(Context& context,
+bool AtomicStore(ValidCtx& ctx,
                  Location loc,
                  const At<Instruction>& instruction) {
-  auto memory_type = GetMemoryType(context, 0);
+  auto memory_type = GetMemoryType(ctx, 0);
   StackType type;
   u32 align;
   switch (instruction->opcode) {
@@ -1047,14 +1041,14 @@ bool AtomicStore(Context& context,
   }
 
   StackTypeList types{GetIndexType(memory_type), type};
-  bool valid = CheckAtomicAlignment(context, instruction, align);
-  return AllTrue(memory_type, valid, PopTypes(context, loc, types));
+  bool valid = CheckAtomicAlignment(ctx, instruction, align);
+  return AllTrue(memory_type, valid, PopTypes(ctx, loc, types));
 }
 
-bool AtomicRmw(Context& context,
+bool AtomicRmw(ValidCtx& ctx,
                Location loc,
                const At<Instruction>& instruction) {
-  auto memory_type = GetMemoryType(context, 0);
+  auto memory_type = GetMemoryType(ctx, 0);
   StackType index_type = GetIndexType(memory_type);
   StackTypeList params;
   StackTypeSpan results;
@@ -1137,99 +1131,98 @@ bool AtomicRmw(Context& context,
       WASP_UNREACHABLE();
   }
 
-  bool valid = CheckAtomicAlignment(context, instruction, align);
+  bool valid = CheckAtomicAlignment(ctx, instruction, align);
   return AllTrue(memory_type, valid,
-                 PopAndPushTypes(context, loc, params, results));
+                 PopAndPushTypes(ctx, loc, params, results));
 }
 
-bool ReturnCall(Context& context, Location loc, At<Index> function_index) {
-  auto function = GetFunction(context, function_index);
-  auto function_type =
-      GetFunctionType(context, MaybeDefault(function).type_index);
-  bool valid = CheckResultTypes(context, loc, MaybeDefault(function_type));
-  valid &= PopTypes(context,
-      loc, ToStackTypeList(MaybeDefault(function_type).param_types));
-  SetUnreachable(context);
+bool ReturnCall(ValidCtx& ctx, Location loc, At<Index> function_index) {
+  auto function = GetFunction(ctx, function_index);
+  auto function_type = GetFunctionType(ctx, MaybeDefault(function).type_index);
+  bool valid = CheckResultTypes(ctx, loc, MaybeDefault(function_type));
+  valid &= PopTypes(ctx, loc,
+                    ToStackTypeList(MaybeDefault(function_type).param_types));
+  SetUnreachable(ctx);
   return AllTrue(function, function_type, valid);
 }
 
-bool ReturnCallIndirect(Context& context,
+bool ReturnCallIndirect(ValidCtx& ctx,
                         Location loc,
                         const At<CallIndirectImmediate>& immediate) {
-  auto table_type = GetTableType(context, 0);
-  auto function_type = GetFunctionType(context, immediate->index);
-  bool valid = CheckResultTypes(context, loc, MaybeDefault(function_type));
-  valid &= PopType(context, loc, StackType::I32());
-  valid &= PopTypes(context,
-      loc, ToStackTypeList(MaybeDefault(function_type).param_types));
-  SetUnreachable(context);
+  auto table_type = GetTableType(ctx, 0);
+  auto function_type = GetFunctionType(ctx, immediate->index);
+  bool valid = CheckResultTypes(ctx, loc, MaybeDefault(function_type));
+  valid &= PopType(ctx, loc, StackType::I32());
+  valid &= PopTypes(ctx, loc,
+                    ToStackTypeList(MaybeDefault(function_type).param_types));
+  SetUnreachable(ctx);
   return AllTrue(table_type, function_type, valid);
 }
 
-bool Throw(Context& context, Location loc, At<Index> index) {
-  auto event_type = GetEventType(context, index);
+bool Throw(ValidCtx& ctx, Location loc, At<Index> index) {
+  auto event_type = GetEventType(ctx, index);
   auto function_type =
-      GetFunctionType(context, MaybeDefault(event_type).type_index);
-  bool valid = PopTypes(context,
-      loc, ToStackTypeList(MaybeDefault(function_type).param_types));
-  SetUnreachable(context);
+      GetFunctionType(ctx, MaybeDefault(event_type).type_index);
+  bool valid = PopTypes(
+      ctx, loc, ToStackTypeList(MaybeDefault(function_type).param_types));
+  SetUnreachable(ctx);
   return AllTrue(event_type, function_type, valid);
 }
 
-bool Rethrow(Context& context, Location loc) {
-  bool valid = PopTypes(context, loc, span_exnref);
-  SetUnreachable(context);
+bool Rethrow(ValidCtx& ctx, Location loc) {
+  bool valid = PopTypes(ctx, loc, span_exnref);
+  SetUnreachable(ctx);
   return valid;
 }
 
-bool BrOnExn(Context& context,
+bool BrOnExn(ValidCtx& ctx,
              Location loc,
              const At<BrOnExnImmediate>& immediate) {
-  auto event_type = GetEventType(context, immediate->event_index);
+  auto event_type = GetEventType(ctx, immediate->event_index);
   auto function_type =
-      GetFunctionType(context, MaybeDefault(event_type).type_index);
-  auto* label = GetLabel(context, immediate->target);
+      GetFunctionType(ctx, MaybeDefault(event_type).type_index);
+  auto* label = GetLabel(ctx, immediate->target);
   bool valid =
-      IsMatch(context, ToStackTypeList(MaybeDefault(function_type).param_types),
+      IsMatch(ctx, ToStackTypeList(MaybeDefault(function_type).param_types),
               MaybeDefault(label).br_types());
-  valid &= PopAndPushTypes(context, loc, span_exnref, span_exnref);
+  valid &= PopAndPushTypes(ctx, loc, span_exnref, span_exnref);
   return AllTrue(event_type, function_type, label, valid);
 }
 
-bool BrOnNull(Context& context, Location loc, const At<Index>& depth) {
+bool BrOnNull(ValidCtx& ctx, Location loc, const At<Index>& depth) {
   bool valid = true;
-  auto type_opt = PopReferenceType(context, loc);
+  auto type_opt = PopReferenceType(ctx, loc);
   auto type = MaybeDefault(type_opt);
 
-  const auto* label = GetLabel(context, depth);
+  const auto* label = GetLabel(ctx, depth);
   auto label_ = MaybeDefault(label);
-  valid &= PopAndPushTypes(context, loc, label_.br_types(), label_.br_types());
+  valid &= PopAndPushTypes(ctx, loc, label_.br_types(), label_.br_types());
 
   if (IsNullableType(type)) {
-    PushType(context, AsNonNullableType(type));
+    PushType(ctx, AsNonNullableType(type));
   } else {
-    context.errors->OnError(loc, concat(type, " is not a nullable type"));
+    ctx.errors->OnError(loc, concat(type, " is not a nullable type"));
     valid = false;
   }
   return AllTrue(valid, type_opt, label);
 }
 
-bool RefAsNonNull(Context& context, Location loc) {
+bool RefAsNonNull(ValidCtx& ctx, Location loc) {
   bool valid = true;
-  auto type_opt = PopReferenceType(context, loc);
+  auto type_opt = PopReferenceType(ctx, loc);
   auto type = MaybeDefault(type_opt);
 
   if (IsNullableType(type)) {
-    PushType(context, AsNonNullableType(type));
+    PushType(ctx, AsNonNullableType(type));
   } else {
-    context.errors->OnError(loc, concat(type, " is not a nullable type"));
+    ctx.errors->OnError(loc, concat(type, " is not a nullable type"));
     valid = false;
   }
   return AllTrue(valid, type_opt);
 }
 
-bool CallRef(Context& context, Location loc) {
-  auto [stack_type, function_type] = PopFunctionReference(context, loc);
+bool CallRef(ValidCtx& ctx, Location loc) {
+  auto [stack_type, function_type] = PopFunctionReference(ctx, loc);
   if (!stack_type) {
     return false;
   }
@@ -1238,11 +1231,11 @@ bool CallRef(Context& context, Location loc) {
   }
 
   return AllTrue(function_type,
-                 PopAndPushTypes(context, loc, MaybeDefault(function_type)));
+                 PopAndPushTypes(ctx, loc, MaybeDefault(function_type)));
 }
 
-bool ReturnCallRef(Context& context, Location loc) {
-  auto [stack_type, function_type] = PopFunctionReference(context, loc);
+bool ReturnCallRef(ValidCtx& ctx, Location loc) {
+  auto [stack_type, function_type] = PopFunctionReference(ctx, loc);
   if (!stack_type) {
     return false;
   }
@@ -1250,27 +1243,27 @@ bool ReturnCallRef(Context& context, Location loc) {
     return true;
   }
 
-  bool valid = CheckResultTypes(context, loc, MaybeDefault(function_type));
-  valid &= PopTypes(context, loc,
+  bool valid = CheckResultTypes(ctx, loc, MaybeDefault(function_type));
+  valid &= PopTypes(ctx, loc,
                     ToStackTypeList(MaybeDefault(function_type).param_types));
-  SetUnreachable(context);
+  SetUnreachable(ctx);
   return AllTrue(function_type, valid);
 }
 
-bool FuncBind(Context& context, Location loc, At<FuncBindImmediate> immediate) {
+bool FuncBind(ValidCtx& ctx, Location loc, At<FuncBindImmediate> immediate) {
   auto new_type_index = immediate->index;
-  auto [stack_type, old_function_type] = PopFunctionReference(context, loc);
+  auto [stack_type, old_function_type] = PopFunctionReference(ctx, loc);
   if (!stack_type) {
     return false;
   }
   if (stack_type && stack_type->is_any()) {
     // The result type is always known, so make sure we push the new function
     // reference even for an unreachable stack.
-    PushType(context, ToStackType(RefType{HeapType{new_type_index}, Null::No}));
+    PushType(ctx, ToStackType(RefType{HeapType{new_type_index}, Null::No}));
     return true;
   }
 
-  auto new_function_type = GetFunctionType(context, new_type_index);
+  auto new_function_type = GetFunctionType(ctx, new_type_index);
   if (!old_function_type || !new_function_type) {
     return false;
   }
@@ -1287,27 +1280,28 @@ bool FuncBind(Context& context, Location loc, At<FuncBindImmediate> immediate) {
   // So the new function type must have fewer parameters than the old function
   // type.
   if (old_params.size() < new_params.size()) {
-    context.errors->OnError(
+    ctx.errors->OnError(
         loc, concat("new type ", *new_function_type,
                     " has more params than old type ", *old_function_type));
     return false;
   }
 
-  Index bound_param_count = static_cast<Index>(old_params.size() - new_params.size());
+  Index bound_param_count =
+      static_cast<Index>(old_params.size() - new_params.size());
   ValueTypeList bound_params(old_params.begin(),
                              old_params.begin() + bound_param_count);
   ValueTypeList unbound_params(old_params.begin() + bound_param_count,
                                old_params.end());
 
   bool valid = true;
-  if (!IsMatch(context, new_params, unbound_params)) {
-    context.errors->OnError(loc, concat("bind params ", new_params,
-                                        " does not match ", unbound_params));
+  if (!IsMatch(ctx, new_params, unbound_params)) {
+    ctx.errors->OnError(loc, concat("bind params ", new_params,
+                                    " does not match ", unbound_params));
     valid = false;
   }
 
-  if (!IsMatch(context, old_results, new_results)) {
-    context.errors->OnError(
+  if (!IsMatch(ctx, old_results, new_results)) {
+    ctx.errors->OnError(
         loc, concat("results ", old_results, " does not match bind results ",
                     new_results));
     valid = false;
@@ -1316,22 +1310,19 @@ bool FuncBind(Context& context, Location loc, At<FuncBindImmediate> immediate) {
   StackTypeList stack_results{
       ToStackType(RefType{HeapType{new_type_index}, Null::No})};
 
-  return AllTrue(valid,
-                 PopAndPushTypes(context, loc, ToStackTypeList(bound_params),
-                                 stack_results));
+  return AllTrue(valid, PopAndPushTypes(ctx, loc, ToStackTypeList(bound_params),
+                                        stack_results));
 }
 
-bool Let(Context& context, Location loc, const At<LetImmediate>& immediate) {
-  bool valid = PopTypes(context, loc, ToStackTypeList(immediate->locals));
-  valid &= PushLabel(context, loc, LabelType::Let, immediate->block_type);
-  context.locals.Push();
-  valid &= Validate(context, immediate->locals, RequireDefaultable::No);
+bool Let(ValidCtx& ctx, Location loc, const At<LetImmediate>& immediate) {
+  bool valid = PopTypes(ctx, loc, ToStackTypeList(immediate->locals));
+  valid &= PushLabel(ctx, loc, LabelType::Let, immediate->block_type);
+  ctx.locals.Push();
+  valid &= Validate(ctx, immediate->locals, RequireDefaultable::No);
   return valid;
 }
 
-bool SimdLane(Context& context,
-              Location loc,
-              const At<Instruction>& instruction) {
+bool SimdLane(ValidCtx& ctx, Location loc, const At<Instruction>& instruction) {
   StackTypeSpan params, results;
   u8 num_lanes;
   switch (instruction->opcode) {
@@ -1389,40 +1380,40 @@ bool SimdLane(Context& context,
 
   bool valid = true;
   if (instruction->simd_lane_immediate() >= num_lanes) {
-    context.errors->OnError(
+    ctx.errors->OnError(
         instruction.loc(),
         concat("Invalid lane immediate ", instruction->simd_lane_immediate()));
     valid = false;
   }
-  return AllTrue(valid, PopAndPushTypes(context, loc, params, results));
+  return AllTrue(valid, PopAndPushTypes(ctx, loc, params, results));
 }
 
-bool SimdShuffle(Context& context,
+bool SimdShuffle(ValidCtx& ctx,
                  Location loc,
                  const At<ShuffleImmediate>& immediate) {
   const SimdLaneImmediate max_lane = 32;  // Two i8x16 values.
   bool valid = true;
   for (auto lane : *immediate) {
     if (lane >= max_lane) {
-      context.errors->OnError(immediate.loc(),
-                              concat("Invalid shuffle immediate ", lane));
+      ctx.errors->OnError(immediate.loc(),
+                          concat("Invalid shuffle immediate ", lane));
       valid = false;
     }
   }
 
   StackTypeSpan params = span_v128_v128;
   StackTypeSpan results = span_v128;
-  return AllTrue(valid, PopAndPushTypes(context, loc, params, results));
+  return AllTrue(valid, PopAndPushTypes(ctx, loc, params, results));
 }
 
-bool RttCanon(Context& context, Location loc, const At<HeapType>& immediate) {
+bool RttCanon(ValidCtx& ctx, Location loc, const At<HeapType>& immediate) {
   u32 depth = immediate->is_heap_kind(HeapKind::Any) ? 0 : 1;
-  PushType(context, ToStackType(ValueType{Rtt{depth, immediate}}));
+  PushType(ctx, ToStackType(ValueType{Rtt{depth, immediate}}));
   return true;
 }
 
-bool RttSub(Context& context, Location loc, const At<HeapType>& immediate) {
-  auto [type_opt, old_rtt] = PopRtt(context, loc);
+bool RttSub(ValidCtx& ctx, Location loc, const At<HeapType>& immediate) {
+  auto [type_opt, old_rtt] = PopRtt(ctx, loc);
   if (!type_opt) {
     return false;
   }
@@ -1431,67 +1422,67 @@ bool RttSub(Context& context, Location loc, const At<HeapType>& immediate) {
   }
   u32 new_depth = old_rtt->depth + 1;
   if (new_depth == 0) {
-    context.errors->OnError(loc, concat("Invalid rtt depth", old_rtt->depth));
+    ctx.errors->OnError(loc, concat("Invalid rtt depth", old_rtt->depth));
     return false;
   }
   Rtt new_rtt{new_depth, immediate};
-  if (!IsMatch(context, old_rtt->type, new_rtt.type)) {
-    context.errors->OnError(
+  if (!IsMatch(ctx, old_rtt->type, new_rtt.type)) {
+    ctx.errors->OnError(
         loc, concat(new_rtt.type, " is not a subtype of ", old_rtt->type));
     return false;
   }
-  PushType(context, ToStackType(ValueType{new_rtt}));
+  PushType(ctx, ToStackType(ValueType{new_rtt}));
   return true;
 }
 
-bool CheckSame(Context& context,
+bool CheckSame(ValidCtx& ctx,
                const At<HeapType>& expected,
                const At<HeapType>& actual) {
-  if (!IsSame(context, expected, actual)) {
-    context.errors->OnError(actual.loc(),
-                            concat(actual, " is not equal to ", expected));
+  if (!IsSame(ctx, expected, actual)) {
+    ctx.errors->OnError(actual.loc(),
+                        concat(actual, " is not equal to ", expected));
     return false;
   }
   return true;
 }
 
-bool CheckSubtype(Context& context,
+bool CheckSubtype(ValidCtx& ctx,
                   const At<HeapType>& expected,
                   const At<HeapType>& actual) {
-  if (!IsMatch(context, expected, actual)) {
-    context.errors->OnError(actual.loc(),
-                            concat(actual, " is not a subtype of ", expected));
+  if (!IsMatch(ctx, expected, actual)) {
+    ctx.errors->OnError(actual.loc(),
+                        concat(actual, " is not a subtype of ", expected));
     return false;
   }
   return true;
 }
 
-bool RefTest(Context& context,
+bool RefTest(ValidCtx& ctx,
              Location loc,
              const At<HeapType2Immediate>& immediate) {
-  bool valid = CheckSubtype(context, immediate->parent, immediate->child);
+  bool valid = CheckSubtype(ctx, immediate->parent, immediate->child);
   StackTypeList stack_types{StackType{ValueType{ReferenceType{
                                 RefType{immediate->parent, Null::Yes}}}},
                             StackType{ValueType{Rtt{0, immediate->child}}}};
-  return AllTrue(valid, PopAndPushTypes(context, loc, stack_types, span_i32));
+  return AllTrue(valid, PopAndPushTypes(ctx, loc, stack_types, span_i32));
 }
 
-bool RefCast(Context& context,
+bool RefCast(ValidCtx& ctx,
              Location loc,
              const At<HeapType2Immediate>& immediate) {
-  bool valid = CheckSubtype(context, immediate->parent, immediate->child);
+  bool valid = CheckSubtype(ctx, immediate->parent, immediate->child);
   StackTypeList params{StackType{ValueType{ReferenceType{
                            RefType{immediate->parent, Null::Yes}}}},
                        StackType{ValueType{Rtt{0, immediate->child}}}};
   StackTypeList results{
       StackType{ValueType{ReferenceType{RefType{immediate->child, Null::No}}}}};
-  return AllTrue(valid, PopAndPushTypes(context, loc, params, results));
+  return AllTrue(valid, PopAndPushTypes(ctx, loc, params, results));
 }
 
-bool BrOnCast(Context& context, Location loc, const At<Index>& immediate) {
+bool BrOnCast(ValidCtx& ctx, Location loc, const At<Index>& immediate) {
   // TODO cleanup
   bool valid = true;
-  auto [type_opt, rtt_opt] = PopRtt(context, loc);
+  auto [type_opt, rtt_opt] = PopRtt(ctx, loc);
   if (!type_opt) {
     return false;
   }
@@ -1503,15 +1494,15 @@ bool BrOnCast(Context& context, Location loc, const At<Index>& immediate) {
   StackTypeList sub_type{
       StackType{ValueType{ReferenceType{RefType{rtt_opt->type, Null::Yes}}}}};
 
-  auto* label = GetLabel(context, immediate);
+  auto* label = GetLabel(ctx, immediate);
   auto label_types = MaybeDefault(label).br_types();
-  if (!IsMatch(context, sub_type, label_types)) {
-    context.errors->OnError(
+  if (!IsMatch(ctx, sub_type, label_types)) {
+    ctx.errors->OnError(
         loc, concat("Label type is ", label_types, ", got ", sub_type));
     valid = false;
   }
 
-  type_opt = PopReferenceType(context, loc);
+  type_opt = PopReferenceType(ctx, loc);
   if (!type_opt) {
     return false;
   }
@@ -1520,118 +1511,115 @@ bool BrOnCast(Context& context, Location loc, const At<Index>& immediate) {
   }
 
   auto reference_type = Canonicalize(type_opt->value_type().reference_type());
-  valid &=
-      CheckSubtype(context, reference_type.ref()->heap_type, rtt_opt->type);
-  PushType(context, *type_opt);
+  valid &= CheckSubtype(ctx, reference_type.ref()->heap_type, rtt_opt->type);
+  PushType(ctx, *type_opt);
   return valid;
 }
 
-bool StructNewWithRtt(Context& context,
-                      Location loc,
-                      const At<Index>& immediate) {
+bool StructNewWithRtt(ValidCtx& ctx, Location loc, const At<Index>& immediate) {
   bool valid = true;
-  auto [type_opt, rtt_opt] = PopRtt(context, loc);
+  auto [type_opt, rtt_opt] = PopRtt(ctx, loc);
   if (!type_opt) {
     return false;
   }
   HeapType heap_type{immediate};
   if (!type_opt->is_any()) {
-    valid &= CheckSame(context, rtt_opt->type, heap_type);
+    valid &= CheckSame(ctx, rtt_opt->type, heap_type);
 
-    auto struct_type = GetStructType(context, immediate);
+    auto struct_type = GetStructType(ctx, immediate);
     if (struct_type) {
       StackTypeList stack_types;
       for (auto& field : struct_type->fields) {
         stack_types.push_back(ToStackType(field->type));
       }
-      valid &= PopTypes(context, loc, stack_types);
+      valid &= PopTypes(ctx, loc, stack_types);
     }
   }
 
-  PushType(context,
+  PushType(ctx,
            StackType{ValueType{ReferenceType{RefType{heap_type, Null::No}}}});
   return valid;
 }
 
-bool StructNewDefaultWithRtt(Context& context,
+bool StructNewDefaultWithRtt(ValidCtx& ctx,
                              Location loc,
                              const At<Index>& immediate) {
   bool valid = true;
-  auto [type_opt, rtt_opt] = PopRtt(context, loc);
+  auto [type_opt, rtt_opt] = PopRtt(ctx, loc);
   if (!type_opt) {
     return false;
   }
   HeapType heap_type{immediate};
   if (!type_opt->is_any()) {
-    valid &= CheckSame(context, rtt_opt->type, heap_type);
+    valid &= CheckSame(ctx, rtt_opt->type, heap_type);
 
-    auto struct_type = GetStructType(context, immediate);
+    auto struct_type = GetStructType(ctx, immediate);
     if (struct_type) {
       for (auto& field : struct_type->fields) {
-        valid &= CheckDefaultable(context, field->type, "field type");
+        valid &= CheckDefaultable(ctx, field->type, "field type");
       }
     }
   }
 
-  PushType(context,
+  PushType(ctx,
            StackType{ValueType{ReferenceType{RefType{heap_type, Null::No}}}});
   return valid;
 }
 
-bool StructGet(Context& context,
+bool StructGet(ValidCtx& ctx,
                Location loc,
                const At<StructFieldImmediate>& immediate) {
   auto [stack_type, struct_type] =
-      PopStructReference(context, loc, immediate->struct_);
+      PopStructReference(ctx, loc, immediate->struct_);
   if (!struct_type) {
     return false;
   }
 
   auto value_type =
-      GetStructFieldValueType(context, loc, *struct_type, immediate->field);
+      GetStructFieldValueType(ctx, loc, *struct_type, immediate->field);
   if (!value_type) {
     return false;
   }
 
-  PushType(context, StackType{*value_type});
+  PushType(ctx, StackType{*value_type});
   return true;
 }
 
-bool StructGetPacked(Context& context,
+bool StructGetPacked(ValidCtx& ctx,
                      Location loc,
                      const At<StructFieldImmediate>& immediate) {
   auto [stack_type, struct_type] =
-      PopStructReference(context, loc, immediate->struct_);
+      PopStructReference(ctx, loc, immediate->struct_);
   if (!struct_type) {
     return false;
   }
 
   auto packed_type =
-      GetStructFieldPackedType(context, loc, *struct_type, immediate->field);
+      GetStructFieldPackedType(ctx, loc, *struct_type, immediate->field);
   if (!packed_type) {
     return false;
   }
 
-  PushType(context, StackType::I32());
+  PushType(ctx, StackType::I32());
   return true;
 }
 
-bool StructSet(Context& context,
+bool StructSet(ValidCtx& ctx,
                Location loc,
                const At<StructFieldImmediate>& immediate) {
-  auto struct_type = GetStructType(context, immediate->struct_);
+  auto struct_type = GetStructType(ctx, immediate->struct_);
   if (!struct_type) {
     return false;
   }
 
-  auto field_type = GetStructFieldType(context, *struct_type, immediate->field);
+  auto field_type = GetStructFieldType(ctx, *struct_type, immediate->field);
   if (!field_type) {
     return false;
   }
 
   bool valid = true;
   if (field_type->mut == Mutability::Const) {
-    context.errors->OnError(
+    ctx.errors->OnError(
         loc, concat("Cannot set immutable field ", immediate->field));
     valid = false;
   }
@@ -1639,101 +1627,97 @@ bool StructSet(Context& context,
   StackTypeList stack_types{StackType{ValueType{ReferenceType{RefType{
                                 HeapType{immediate->struct_}, Null::Yes}}}},
                             ToStackType(field_type->type)};
-  return AllTrue(valid, PopTypes(context, loc, stack_types));
+  return AllTrue(valid, PopTypes(ctx, loc, stack_types));
 }
 
-bool ArrayNewWithRtt(Context& context,
-                     Location loc,
-                     const At<Index>& immediate) {
+bool ArrayNewWithRtt(ValidCtx& ctx, Location loc, const At<Index>& immediate) {
   bool valid = true;
-  auto [type_opt, rtt_opt] = PopRtt(context, loc);
+  auto [type_opt, rtt_opt] = PopRtt(ctx, loc);
   if (!type_opt) {
     return false;
   }
   HeapType heap_type{immediate};
   if (!type_opt->is_any()) {
-    valid &= CheckSame(context, rtt_opt->type, heap_type);
+    valid &= CheckSame(ctx, rtt_opt->type, heap_type);
 
-    auto array_type = GetArrayType(context, immediate);
+    auto array_type = GetArrayType(ctx, immediate);
     if (array_type) {
       StackTypeList stack_types{ToStackType(array_type->field->type),
                                 StackType::I32()};
-      valid &= PopTypes(context, loc, stack_types);
+      valid &= PopTypes(ctx, loc, stack_types);
     }
   }
 
-  PushType(context,
+  PushType(ctx,
            StackType{ValueType{ReferenceType{RefType{heap_type, Null::No}}}});
   return valid;
 }
 
-bool ArrayNewDefaultWithRtt(Context& context,
+bool ArrayNewDefaultWithRtt(ValidCtx& ctx,
                             Location loc,
                             const At<Index>& immediate) {
   bool valid = true;
-  auto [type_opt, rtt_opt] = PopRtt(context, loc);
+  auto [type_opt, rtt_opt] = PopRtt(ctx, loc);
   if (!type_opt) {
     return false;
   }
   HeapType heap_type{immediate};
   if (!type_opt->is_any()) {
-    valid &= CheckSame(context, rtt_opt->type, heap_type);
+    valid &= CheckSame(ctx, rtt_opt->type, heap_type);
 
-    auto array_type = GetArrayType(context, immediate);
+    auto array_type = GetArrayType(ctx, immediate);
     if (array_type) {
-      valid &= CheckDefaultable(context, array_type->field->type, "field type");
-      valid &= PopType(context, loc, StackType::I32());
+      valid &= CheckDefaultable(ctx, array_type->field->type, "field type");
+      valid &= PopType(ctx, loc, StackType::I32());
     }
   }
 
-  PushType(context,
+  PushType(ctx,
            StackType{ValueType{ReferenceType{RefType{heap_type, Null::No}}}});
   return valid;
 }
 
-bool ArrayGet(Context& context, Location loc, const At<Index>& immediate) {
-  bool valid = PopType(context, loc, StackType::I32());
-  auto [stack_type, array_type] = PopArrayReference(context, loc, immediate);
+bool ArrayGet(ValidCtx& ctx, Location loc, const At<Index>& immediate) {
+  bool valid = PopType(ctx, loc, StackType::I32());
+  auto [stack_type, array_type] = PopArrayReference(ctx, loc, immediate);
   if (!array_type) {
     return false;
   }
 
-  auto value_type = GetFieldValueType(context, loc, array_type->field);
+  auto value_type = GetFieldValueType(ctx, loc, array_type->field);
   if (!value_type) {
     return false;
   }
 
-  PushType(context, StackType{*value_type});
+  PushType(ctx, StackType{*value_type});
   return valid;
 }
 
-bool ArrayGetPacked(Context& context,
-                    Location loc,
-                    const At<Index>& immediate) {
-  bool valid = PopType(context, loc, StackType::I32());
-  auto [stack_type, array_type] = PopArrayReference(context, loc, immediate);
+bool ArrayGetPacked(ValidCtx& ctx, Location loc, const At<Index>& immediate) {
+  bool valid = PopType(ctx, loc, StackType::I32());
+  auto [stack_type, array_type] = PopArrayReference(ctx, loc, immediate);
   if (!array_type) {
     return false;
   }
 
-  auto packed_type = GetFieldPackedType(context, loc, array_type->field);
+  auto packed_type = GetFieldPackedType(ctx, loc, array_type->field);
   if (!packed_type) {
     return false;
   }
 
-  PushType(context, StackType::I32());
+  PushType(ctx, StackType::I32());
   return valid;
 }
 
-bool ArraySet(Context& context, Location loc, const At<Index>& immediate) {
-  auto array_type = GetArrayType(context, immediate);
+bool ArraySet(ValidCtx& ctx, Location loc, const At<Index>& immediate) {
+  auto array_type = GetArrayType(ctx, immediate);
   if (!array_type) {
     return false;
   }
 
   bool valid = true;
   if (array_type->field->mut == Mutability::Const) {
-    context.errors->OnError(
+    ctx.errors->OnError(
         loc, concat("Cannot set immutable field ", array_type->field->mut));
     valid = false;
   }
@@ -1744,58 +1728,58 @@ bool ArraySet(Context& context, Location loc, const At<Index>& immediate) {
       StackType::I32(),
       ToStackType(array_type->field->type),
   };
-  return AllTrue(valid, PopTypes(context, loc, stack_types));
+  return AllTrue(valid, PopTypes(ctx, loc, stack_types));
 }
 
-bool ArrayLen(Context& context, Location loc, const At<Index>& immediate) {
-  auto array_type = GetArrayType(context, immediate);
+bool ArrayLen(ValidCtx& ctx, Location loc, const At<Index>& immediate) {
+  auto array_type = GetArrayType(ctx, immediate);
   if (!array_type) {
     return false;
   }
 
-  StackTypeList params{StackType{ValueType{ReferenceType{
-                           RefType{HeapType{immediate}, Null::Yes}}}}};
-  return PopAndPushTypes(context, loc, params, span_i32);
+  StackTypeList params{StackType{
+      ValueType{ReferenceType{RefType{HeapType{immediate}, Null::Yes}}}}};
+  return PopAndPushTypes(ctx, loc, params, span_i32);
 }
 
 }  // namespace
 
-bool Validate(Context& context,
+bool Validate(ValidCtx& ctx,
               const At<Locals>& value,
               RequireDefaultable require_defaultable) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "locals"};
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "locals"};
   bool valid = true;
   if (require_defaultable == RequireDefaultable::Yes) {
-    valid &= CheckDefaultable(context, value->type, "local type");
+    valid &= CheckDefaultable(ctx, value->type, "local type");
   }
-  valid &= Validate(context, value->type);
+  valid &= Validate(ctx, value->type);
 
-  if (!context.locals.Append(value->count, value->type)) {
+  if (!ctx.locals.Append(value->count, value->type)) {
     const Index max = std::numeric_limits<Index>::max();
-    context.errors->OnError(
+    ctx.errors->OnError(
         value.loc(),
         concat("Too many locals; max is ", max, ", got ",
-               static_cast<u64>(context.locals.GetCount()) + value->count));
+               static_cast<u64>(ctx.locals.GetCount()) + value->count));
     valid = false;
   }
   return valid;
 }
 
-bool Validate(Context& context,
+bool Validate(ValidCtx& ctx,
               const At<LocalsList>& value,
               RequireDefaultable require_defaultable) {
   bool valid = true;
   for (auto&& locals : *value) {
-    valid &= Validate(context, locals, require_defaultable);
+    valid &= Validate(ctx, locals, require_defaultable);
   }
   return valid;
 }
 
-bool Validate(Context& context, const At<Instruction>& value) {
-  ErrorsContextGuard guard{*context.errors, value.loc(), "instruction"};
-  if (context.label_stack.empty()) {
-    context.errors->OnError(value.loc(),
-                            "Unexpected instruction after function end");
+bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "instruction"};
+  if (ctx.label_stack.empty()) {
+    ctx.errors->OnError(value.loc(),
+                        "Unexpected instruction after function end");
     return false;
   }
 
@@ -1804,127 +1788,126 @@ bool Validate(Context& context, const At<Instruction>& value) {
   StackTypeSpan params, results;
   switch (value->opcode) {
     case Opcode::Unreachable:
-      SetUnreachable(context);
+      SetUnreachable(ctx);
       return true;
 
     case Opcode::Nop:
       return true;
 
     case Opcode::Block:
-      return PushLabel(context, loc, LabelType::Block,
+      return PushLabel(ctx, loc, LabelType::Block,
                        value->block_type_immediate());
 
     case Opcode::Loop:
-      return PushLabel(context, loc, LabelType::Loop,
+      return PushLabel(ctx, loc, LabelType::Loop,
                        value->block_type_immediate());
 
     case Opcode::If: {
-      bool valid = PopType(context, loc, StackType::I32());
+      bool valid = PopType(ctx, loc, StackType::I32());
       valid &=
-          PushLabel(context, loc, LabelType::If, value->block_type_immediate());
+          PushLabel(ctx, loc, LabelType::If, value->block_type_immediate());
       return valid;
     }
 
     case Opcode::Else:
-      return Else(context, loc);
+      return Else(ctx, loc);
 
     case Opcode::End:
-      return End(context, loc);
+      return End(ctx, loc);
 
     case Opcode::Try:
-      return PushLabel(context, loc, LabelType::Try,
-                       value->block_type_immediate());
+      return PushLabel(ctx, loc, LabelType::Try, value->block_type_immediate());
 
     case Opcode::Catch:
-      return Catch(context, loc);
+      return Catch(ctx, loc);
 
     case Opcode::Throw:
-      return Throw(context, loc, value->index_immediate());
+      return Throw(ctx, loc, value->index_immediate());
 
     case Opcode::Rethrow:
-      return Rethrow(context, loc);
+      return Rethrow(ctx, loc);
 
     case Opcode::BrOnExn:
-      return BrOnExn(context, loc, value->br_on_exn_immediate());
+      return BrOnExn(ctx, loc, value->br_on_exn_immediate());
 
     case Opcode::Br:
-      return Br(context, loc, value->index_immediate());
+      return Br(ctx, loc, value->index_immediate());
 
     case Opcode::BrIf:
-      return BrIf(context, loc, value->index_immediate());
+      return BrIf(ctx, loc, value->index_immediate());
 
     case Opcode::BrTable:
-      return BrTable(context, loc, value->br_table_immediate());
+      return BrTable(ctx, loc, value->br_table_immediate());
 
     case Opcode::Return:
-      return Br(context, loc, static_cast<Index>(context.label_stack.size() - 1));
+      return Br(ctx, loc, static_cast<Index>(ctx.label_stack.size() - 1));
 
     case Opcode::Call:
-      return Call(context, loc, value->index_immediate());
+      return Call(ctx, loc, value->index_immediate());
 
     case Opcode::CallIndirect:
-      return CallIndirect(context, loc, value->call_indirect_immediate());
+      return CallIndirect(ctx, loc, value->call_indirect_immediate());
 
     case Opcode::Drop:
-      return DropTypes(context, loc, 1);
+      return DropTypes(ctx, loc, 1);
 
     case Opcode::Select:
-      return Select(context, loc);
+      return Select(ctx, loc);
 
     case Opcode::SelectT:
-      return SelectT(context, loc, value->select_immediate());
+      return SelectT(ctx, loc, value->select_immediate());
 
     case Opcode::LocalGet:
-      return LocalGet(context, value->index_immediate());
+      return LocalGet(ctx, value->index_immediate());
 
     case Opcode::LocalSet:
-      return LocalSet(context, loc, value->index_immediate());
+      return LocalSet(ctx, loc, value->index_immediate());
 
     case Opcode::LocalTee:
-      return LocalTee(context, loc, value->index_immediate());
+      return LocalTee(ctx, loc, value->index_immediate());
 
     case Opcode::GlobalGet:
-      return GlobalGet(context, value->index_immediate());
+      return GlobalGet(ctx, value->index_immediate());
 
     case Opcode::GlobalSet:
-      return GlobalSet(context, loc, value->index_immediate());
+      return GlobalSet(ctx, loc, value->index_immediate());
 
     case Opcode::TableGet:
-      return TableGet(context, loc, value->index_immediate());
+      return TableGet(ctx, loc, value->index_immediate());
 
     case Opcode::TableSet:
-      return TableSet(context, loc, value->index_immediate());
+      return TableSet(ctx, loc, value->index_immediate());
 
     case Opcode::RefNull:
-      PushType(context, ToStackType(value->heap_type_immediate()));
+      PushType(ctx, ToStackType(value->heap_type_immediate()));
       return true;
 
     case Opcode::RefIsNull: {
-      auto type = PopReferenceType(context, loc);
-      PushType(context, StackType::I32());
+      auto type = PopReferenceType(ctx, loc);
+      PushType(ctx, StackType::I32());
       return AllTrue(type);
     }
 
     case Opcode::RefFunc:
-      return RefFunc(context, loc, value->index_immediate());
+      return RefFunc(ctx, loc, value->index_immediate());
 
     case Opcode::BrOnNull:
-      return BrOnNull(context, loc, value->index_immediate());
+      return BrOnNull(ctx, loc, value->index_immediate());
 
     case Opcode::RefAsNonNull:
-      return RefAsNonNull(context, loc);
+      return RefAsNonNull(ctx, loc);
 
     case Opcode::CallRef:
-      return CallRef(context, loc);
+      return CallRef(ctx, loc);
 
     case Opcode::ReturnCallRef:
-      return ReturnCallRef(context, loc);
+      return ReturnCallRef(ctx, loc);
 
     case Opcode::FuncBind:
-      return FuncBind(context, loc, value->func_bind_immediate());
+      return FuncBind(ctx, loc, value->func_bind_immediate());
 
     case Opcode::Let:
-      return Let(context, loc, value->let_immediate());
+      return Let(ctx, loc, value->let_immediate());
 
     case Opcode::I32Load:
     case Opcode::I64Load:
@@ -1953,7 +1936,7 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::V128Load32X2U:
     case Opcode::V128Load32Zero:
     case Opcode::V128Load64Zero:
-      return Load(context, loc, value);
+      return Load(ctx, loc, value);
 
     case Opcode::I32Store:
     case Opcode::I64Store:
@@ -1965,28 +1948,28 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::I64Store16:
     case Opcode::I64Store32:
     case Opcode::V128Store:
-      return Store(context, loc, value);
+      return Store(ctx, loc, value);
 
     case Opcode::MemorySize:
-      return MemorySize(context);
+      return MemorySize(ctx);
 
     case Opcode::MemoryGrow:
-      return MemoryGrow(context, loc);
+      return MemoryGrow(ctx, loc);
 
     case Opcode::I32Const:
-      PushType(context, StackType::I32());
+      PushType(ctx, StackType::I32());
       return true;
 
     case Opcode::I64Const:
-      PushType(context, StackType::I64());
+      PushType(ctx, StackType::I64());
       return true;
 
     case Opcode::F32Const:
-      PushType(context, StackType::F32());
+      PushType(ctx, StackType::F32());
       return true;
 
     case Opcode::F64Const:
-      PushType(context, StackType::F64());
+      PushType(ctx, StackType::F64());
       return true;
 
     case Opcode::I32Eqz:
@@ -2195,43 +2178,43 @@ bool Validate(Context& context, const At<Instruction>& value) {
       break;
 
     case Opcode::ReturnCall:
-      return ReturnCall(context, loc, value->index_immediate());
+      return ReturnCall(ctx, loc, value->index_immediate());
 
     case Opcode::ReturnCallIndirect:
-      return ReturnCallIndirect(context, loc, value->call_indirect_immediate());
+      return ReturnCallIndirect(ctx, loc, value->call_indirect_immediate());
 
     case Opcode::MemoryInit:
-      return MemoryInit(context, loc, value->init_immediate());
+      return MemoryInit(ctx, loc, value->init_immediate());
 
     case Opcode::DataDrop:
-      return DataDrop(context, value->index_immediate());
+      return DataDrop(ctx, value->index_immediate());
 
     case Opcode::MemoryCopy:
-      return MemoryCopy(context, loc, value->copy_immediate());
+      return MemoryCopy(ctx, loc, value->copy_immediate());
 
     case Opcode::MemoryFill:
-      return MemoryFill(context, loc);
+      return MemoryFill(ctx, loc);
 
     case Opcode::TableInit:
-      return TableInit(context, loc, value->init_immediate());
+      return TableInit(ctx, loc, value->init_immediate());
 
     case Opcode::ElemDrop:
-      return ElemDrop(context, value->index_immediate());
+      return ElemDrop(ctx, value->index_immediate());
 
     case Opcode::TableCopy:
-      return TableCopy(context, loc, value->copy_immediate());
+      return TableCopy(ctx, loc, value->copy_immediate());
 
     case Opcode::TableGrow:
-      return TableGrow(context, loc, value->index_immediate());
+      return TableGrow(ctx, loc, value->index_immediate());
 
     case Opcode::TableSize:
-      return TableSize(context, value->index_immediate());
+      return TableSize(ctx, value->index_immediate());
 
     case Opcode::TableFill:
-      return TableFill(context, loc, value->index_immediate());
+      return TableFill(ctx, loc, value->index_immediate());
 
     case Opcode::V128Const:
-      PushType(context, StackType::V128());
+      PushType(ctx, StackType::V128());
       return true;
 
     case Opcode::V128Not:
@@ -2380,7 +2363,7 @@ bool Validate(Context& context, const At<Instruction>& value) {
       break;
 
     case Opcode::I8X16Shuffle:
-      return SimdShuffle(context, loc, value->shuffle_immediate());
+      return SimdShuffle(ctx, loc, value->shuffle_immediate());
 
     case Opcode::I8X16Splat:
     case Opcode::I16X8Splat:
@@ -2414,7 +2397,7 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::I64X2ReplaceLane:
     case Opcode::F32X4ReplaceLane:
     case Opcode::F64X2ReplaceLane:
-      return SimdLane(context, loc, value);
+      return SimdLane(ctx, loc, value);
 
     case Opcode::I8X16AnyTrue:
     case Opcode::I8X16AllTrue:
@@ -2444,11 +2427,11 @@ bool Validate(Context& context, const At<Instruction>& value) {
       break;
 
     case Opcode::MemoryAtomicNotify:
-      return MemoryAtomicNotify(context, loc, value);
+      return MemoryAtomicNotify(ctx, loc, value);
 
     case Opcode::MemoryAtomicWait32:
     case Opcode::MemoryAtomicWait64:
-      return MemoryAtomicWait(context, loc, value);
+      return MemoryAtomicWait(ctx, loc, value);
 
     case Opcode::I32AtomicLoad:
     case Opcode::I64AtomicLoad:
@@ -2457,7 +2440,7 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::I64AtomicLoad8U:
     case Opcode::I64AtomicLoad16U:
     case Opcode::I64AtomicLoad32U:
-      return AtomicLoad(context, loc, value);
+      return AtomicLoad(ctx, loc, value);
 
     case Opcode::I32AtomicStore:
     case Opcode::I64AtomicStore:
@@ -2466,7 +2449,7 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::I64AtomicStore8:
     case Opcode::I64AtomicStore16:
     case Opcode::I64AtomicStore32:
-      return AtomicStore(context, loc, value);
+      return AtomicStore(ctx, loc, value);
 
     case Opcode::I32AtomicRmwAdd:
     case Opcode::I32AtomicRmw8AddU:
@@ -2517,73 +2500,73 @@ bool Validate(Context& context, const At<Instruction>& value) {
     case Opcode::I64AtomicRmw8CmpxchgU:
     case Opcode::I64AtomicRmw16CmpxchgU:
     case Opcode::I64AtomicRmw32CmpxchgU:
-      return AtomicRmw(context, loc, value);
+      return AtomicRmw(ctx, loc, value);
 
-    case Opcode:: RefEq:
+    case Opcode::RefEq:
       params = span_eqref_eqref, results = span_i32;
       break;
 
-    case Opcode:: I31New:
+    case Opcode::I31New:
       params = span_i32, results = span_i31ref;
       break;
 
-    case Opcode:: I31GetS:
-    case Opcode:: I31GetU:
+    case Opcode::I31GetS:
+    case Opcode::I31GetU:
       params = span_i31ref, results = span_i32;
       break;
 
-    case Opcode:: RttCanon:
-      return RttCanon(context, loc, value->heap_type_immediate());
+    case Opcode::RttCanon:
+      return RttCanon(ctx, loc, value->heap_type_immediate());
 
-    case Opcode:: RttSub:
-      return RttSub(context, loc, value->heap_type_immediate());
+    case Opcode::RttSub:
+      return RttSub(ctx, loc, value->heap_type_immediate());
 
-    case Opcode:: RefTest:
-      return RefTest(context, loc, value->heap_type_2_immediate());
+    case Opcode::RefTest:
+      return RefTest(ctx, loc, value->heap_type_2_immediate());
 
-    case Opcode:: RefCast:
-      return RefCast(context, loc, value->heap_type_2_immediate());
+    case Opcode::RefCast:
+      return RefCast(ctx, loc, value->heap_type_2_immediate());
 
-    case Opcode:: BrOnCast:
-      return BrOnCast(context, loc, value->index_immediate());
+    case Opcode::BrOnCast:
+      return BrOnCast(ctx, loc, value->index_immediate());
 
-    case Opcode:: StructNewWithRtt:
-      return StructNewWithRtt(context, loc, value->index_immediate());
+    case Opcode::StructNewWithRtt:
+      return StructNewWithRtt(ctx, loc, value->index_immediate());
 
-    case Opcode:: StructNewDefaultWithRtt:
-      return StructNewDefaultWithRtt(context, loc, value->index_immediate());
+    case Opcode::StructNewDefaultWithRtt:
+      return StructNewDefaultWithRtt(ctx, loc, value->index_immediate());
 
-    case Opcode:: StructGet:
-      return StructGet(context, loc, value->struct_field_immediate());
+    case Opcode::StructGet:
+      return StructGet(ctx, loc, value->struct_field_immediate());
 
-    case Opcode:: StructGetS:
-    case Opcode:: StructGetU:
-      return StructGetPacked(context, loc, value->struct_field_immediate());
+    case Opcode::StructGetS:
+    case Opcode::StructGetU:
+      return StructGetPacked(ctx, loc, value->struct_field_immediate());
 
-    case Opcode:: StructSet:
-      return StructSet(context, loc, value->struct_field_immediate());
+    case Opcode::StructSet:
+      return StructSet(ctx, loc, value->struct_field_immediate());
 
-    case Opcode:: ArrayNewWithRtt:
-      return ArrayNewWithRtt(context, loc, value->index_immediate());
+    case Opcode::ArrayNewWithRtt:
+      return ArrayNewWithRtt(ctx, loc, value->index_immediate());
 
-    case Opcode:: ArrayNewDefaultWithRtt:
-      return ArrayNewDefaultWithRtt(context, loc, value->index_immediate());
+    case Opcode::ArrayNewDefaultWithRtt:
+      return ArrayNewDefaultWithRtt(ctx, loc, value->index_immediate());
 
-    case Opcode:: ArrayGet:
-      return ArrayGet(context, loc, value->index_immediate());
+    case Opcode::ArrayGet:
+      return ArrayGet(ctx, loc, value->index_immediate());
 
-    case Opcode:: ArrayGetS:
-    case Opcode:: ArrayGetU:
-      return ArrayGetPacked(context, loc, value->index_immediate());
+    case Opcode::ArrayGetS:
+    case Opcode::ArrayGetU:
+      return ArrayGetPacked(ctx, loc, value->index_immediate());
 
-    case Opcode:: ArraySet:
-      return ArraySet(context, loc, value->index_immediate());
+    case Opcode::ArraySet:
+      return ArraySet(ctx, loc, value->index_immediate());
 
-    case Opcode:: ArrayLen:
-      return ArrayLen(context, loc, value->index_immediate());
+    case Opcode::ArrayLen:
+      return ArrayLen(ctx, loc, value->index_immediate());
   }
 
-  return PopAndPushTypes(context, loc, params, results);
+  return PopAndPushTypes(ctx, loc, params, results);
 }
 
 }  // namespace wasp::valid

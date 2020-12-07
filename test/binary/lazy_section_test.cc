@@ -20,7 +20,7 @@
 #include "test/binary/constants.h"
 #include "test/binary/test_utils.h"
 #include "test/test_utils.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 #include "wasp/binary/sections.h"
 
 using namespace ::wasp;
@@ -45,12 +45,12 @@ void ExpectSection(const std::vector<T>& expected, LazySection<T>& sec) {
 
 TEST(BinaryLazySectionTest, Type) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadTypeSection(
       "\x02"                           // Count.
       "\x60\x00\x00"                   // (param) (result)
       "\x60\x02\x7f\x7f\x01\x7f"_su8,  // (param i32 i32) (result i32)
-      context);
+      ctx);
 
   ExpectSection(
       {
@@ -66,12 +66,12 @@ TEST(BinaryLazySectionTest, Type) {
 
 TEST(BinaryLazySectionTest, Import) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadImportSection(
       "\x02"                             // Count.
       "\x01w\x01x\x00\x02"               // (import "w" "x" (func 2))
       "\x01y\x01z\x02\x01\x01\x02"_su8,  // (import "y" "z" (memory 1 2))
-      context);
+      ctx);
 
   ExpectSection(
       {
@@ -90,11 +90,11 @@ TEST(BinaryLazySectionTest, Import) {
 
 TEST(BinaryLazySectionTest, Function) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadFunctionSection(
       "\x03"                   // Count.
       "\x02\x80\x01\x02"_su8,  // 2, 128, 2
-      context);
+      ctx);
 
   ExpectSection(
       {
@@ -108,13 +108,13 @@ TEST(BinaryLazySectionTest, Function) {
 
 TEST(BinaryLazySectionTest, Table) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadTableSection(
       "\x03"                  // Count.
       "\x70\x00\x01"          // (table 1 funcref)
       "\x70\x01\x00\x80\x01"  // (table 0 128 funcref)
       "\x70\x00\x00"_su8,     // (table 0 funcref)
-      context);
+      ctx);
 
   ExpectSection(
       {
@@ -141,13 +141,13 @@ TEST(BinaryLazySectionTest, Table) {
 
 TEST(BinaryLazySectionTest, Memory) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadMemorySection(
       "\x03"              // Count.
       "\x00\x01"          // (memory 1)
       "\x01\x00\x80\x01"  // (memory 0 128)
       "\x00\x00"_su8,     // (memory 0)
-      context);
+      ctx);
 
   ExpectSection(
       {
@@ -171,12 +171,12 @@ TEST(BinaryLazySectionTest, Memory) {
 
 TEST(BinaryLazySectionTest, Global) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadGlobalSection(
       "\x02"                       // Count.
       "\x7f\x01\x41\x00\x0b"       // (global (mut i32) (i32.const 0))
       "\x7e\x00\x42\x01\x0b"_su8,  // (global i64 (i64.const 1))
-      context);
+      ctx);
 
   ExpectSection(
       {
@@ -203,13 +203,13 @@ TEST(BinaryLazySectionTest, Global) {
 
 TEST(BinaryLazySectionTest, Export) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadExportSection(
       "\x03"                    // Count.
       "\x03one\x00\x01"         // (export "one" (func 1))
       "\x03two\x02\x02"         // (export "two" (memory 2))
       "\x05three\x03\x02"_su8,  // (export "three" (global 2))
-      context);
+      ctx);
 
   ExpectSection(
       {
@@ -226,8 +226,8 @@ TEST(BinaryLazySectionTest, Export) {
 
 TEST(BinaryLazySectionTest, Start) {
   TestErrors errors;
-  Context context{errors};
-  auto sec = ReadStartSection("\x03"_su8, context);
+  ReadCtx ctx{errors};
+  auto sec = ReadStartSection("\x03"_su8, ctx);
 
   EXPECT_EQ((Start{At{"\x03"_su8, Index{3}}}), sec);
   ExpectNoErrors(errors);
@@ -235,12 +235,12 @@ TEST(BinaryLazySectionTest, Start) {
 
 TEST(BinaryLazySectionTest, Element) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadElementSection(
       "\x02"                           // Count.
       "\x00\x41\x00\x0b\x02\x00\x01"   // (elem (offset i32.const 0) 0 1)
       "\x00\x41\x02\x0b\x01\x03"_su8,  // (elem (offset i32.const 2) 3)
-      context);
+      ctx);
 
   ExpectSection(
       {
@@ -268,12 +268,12 @@ TEST(BinaryLazySectionTest, Element) {
 
 TEST(BinaryLazySectionTest, Code) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadCodeSection(
       "\x02"                           // Count.
       "\x02\x00\x0b"                   // (func)
       "\x05\x01\x01\x7f\x6a\x0b"_su8,  // (func (local i32) i32.add)
-      context);
+      ctx);
 
   ExpectSection(
       {
@@ -288,13 +288,13 @@ TEST(BinaryLazySectionTest, Code) {
 
 TEST(BinaryLazySectionTest, Data) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadDataSection(
       "\x03"                          // Count.
       "\x00\x41\x00\x0b\x02hi"        // (data (offset i32.const 0) "hi")
       "\x00\x41\x02\x0b\x03see"       // (data (offset i32.const 2) "see")
       "\x00\x41\x05\x0b\x03you"_su8,  // (data (offset i32.const 5) "you")
-      context);
+      ctx);
 
   ExpectSection(
       {
@@ -328,8 +328,8 @@ TEST(BinaryLazySectionTest, Data) {
 
 TEST(BinaryLazySectionTest, DataCount) {
   TestErrors errors;
-  Context context{errors};
-  auto sec = ReadDataCountSection("\x03"_su8, context);
+  ReadCtx ctx{errors};
+  auto sec = ReadDataCountSection("\x03"_su8, ctx);
 
   EXPECT_EQ((DataCount{At{"\x03"_su8, Index{3}}}), sec);
   ExpectNoErrors(errors);

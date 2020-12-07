@@ -25,7 +25,7 @@
 #include "wasp/base/concat.h"
 #include "wasp/base/enumerate.h"
 #include "wasp/binary/formatters.h"
-#include "wasp/valid/context.h"
+#include "wasp/valid/valid_ctx.h"
 
 using namespace ::wasp;
 using namespace ::wasp::valid;
@@ -52,16 +52,15 @@ class ValidMatchTest : public ::testing::Test {
  protected:
   void PushFunctionType(const ValueTypeList& params,
                         const ValueTypeList& results) {
-    context.types.push_back(
-        DefinedType{FunctionType{params, results}});
+    ctx.types.push_back(DefinedType{FunctionType{params, results}});
   }
 
   void PushStructType(const StructType& struct_type) {
-    context.types.push_back(DefinedType{struct_type});
+    ctx.types.push_back(DefinedType{struct_type});
   }
 
   void PushArrayType(const ArrayType& array_type) {
-    context.types.push_back(DefinedType{array_type});
+    ctx.types.push_back(DefinedType{array_type});
   }
 
   auto MakeDiagonalMatrix(size_t size) -> std::vector<Comparison>  {
@@ -76,7 +75,7 @@ class ValidMatchTest : public ::testing::Test {
   void DoTable(std::vector<T> ivalues,
                std::vector<T> jvalues,
                std::vector<Comparison> results,
-               bool (&func)(Context&, const T&, const T&)) {
+               bool (&func)(ValidCtx&, const T&, const T&)) {
     assert(ivalues.size() * jvalues.size() == results.size());
 
     int r = 0;
@@ -87,7 +86,7 @@ class ValidMatchTest : public ::testing::Test {
           continue;
         }
         bool result = cmp == SAME;
-        EXPECT_EQ(result, func(context, vi, vj))
+        EXPECT_EQ(result, func(ctx, vi, vj))
             << concat("i:", vi, " j:", vj, " should be ", result);
       }
     }
@@ -136,7 +135,7 @@ class ValidMatchTest : public ::testing::Test {
   }
 
   TestErrors errors;
-  Context context{errors};
+  ValidCtx ctx{errors};
 };
 
 TEST_F(ValidMatchTest, IsSame_HeapType_Simple) {
@@ -266,36 +265,36 @@ TEST_F(ValidMatchTest, IsSame_ValueType_Simple) {
 }
 
 TEST_F(ValidMatchTest, IsSame_ValueType_Var) {
-  context.same_types.Reset(3);
+  ctx.same_types.Reset(3);
   PushFunctionType({VT_F32}, {});  // 0
   PushFunctionType({VT_F32}, {});  // 1
   PushFunctionType({VT_I32}, {});  // 2
 
-  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref1));
-  EXPECT_FALSE(IsSame(context, VT_Ref0, VT_Ref2));
-  EXPECT_FALSE(IsSame(context, VT_Ref1, VT_Ref2));
+  EXPECT_TRUE(IsSame(ctx, VT_Ref0, VT_Ref1));
+  EXPECT_FALSE(IsSame(ctx, VT_Ref0, VT_Ref2));
+  EXPECT_FALSE(IsSame(ctx, VT_Ref1, VT_Ref2));
 }
 
 TEST_F(ValidMatchTest, IsSame_ValueType_VarRecursive) {
-  context.same_types.Reset(3);
+  ctx.same_types.Reset(3);
   PushFunctionType({}, {VT_Ref0});        // 0
   PushFunctionType({}, {VT_Ref1});        // 1
   PushFunctionType({VT_I32}, {VT_Ref0});  // 2
 
-  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref1));
-  EXPECT_FALSE(IsSame(context, VT_Ref0, VT_Ref2));
-  EXPECT_FALSE(IsSame(context, VT_Ref1, VT_Ref2));
+  EXPECT_TRUE(IsSame(ctx, VT_Ref0, VT_Ref1));
+  EXPECT_FALSE(IsSame(ctx, VT_Ref0, VT_Ref2));
+  EXPECT_FALSE(IsSame(ctx, VT_Ref1, VT_Ref2));
 }
 
 TEST_F(ValidMatchTest, IsSame_ValueType_VarMutuallyRecursive) {
-  context.same_types.Reset(3);
+  ctx.same_types.Reset(3);
   PushFunctionType({VT_I32}, {VT_Ref0});  // 0
   PushFunctionType({VT_I32}, {VT_Ref2});  // 1
   PushFunctionType({VT_I32}, {VT_Ref1});  // 2
 
-  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref1));
-  EXPECT_TRUE(IsSame(context, VT_Ref0, VT_Ref2));
-  EXPECT_TRUE(IsSame(context, VT_Ref1, VT_Ref2));
+  EXPECT_TRUE(IsSame(ctx, VT_Ref0, VT_Ref1));
+  EXPECT_TRUE(IsSame(ctx, VT_Ref0, VT_Ref2));
+  EXPECT_TRUE(IsSame(ctx, VT_Ref1, VT_Ref2));
 }
 
 TEST_F(ValidMatchTest, IsSame_StorageType) {
@@ -563,10 +562,10 @@ TEST_F(ValidMatchTest, IsMatch_FieldType_Subtyping) {
   PushFunctionType({}, {});      // type 0
 
   // Only const fields are covariant.
-  EXPECT_TRUE(IsMatch(context,
+  EXPECT_TRUE(IsMatch(ctx,
                       FieldType{StorageType{VT_Funcref}, Mutability::Const},
                       FieldType{StorageType{VT_Ref0}, Mutability::Const}));
-  EXPECT_FALSE(IsMatch(context,
+  EXPECT_FALSE(IsMatch(ctx,
                        FieldType{StorageType{VT_Funcref}, Mutability::Var},
                        FieldType{StorageType{VT_Ref0}, Mutability::Var}));
 }
@@ -603,14 +602,14 @@ TEST_F(ValidMatchTest, IsMatch_FieldTypeList_Subtyping) {
                     FieldType{StorageType{VT_I64}, Mutability::Const}};
 
   // Width subtyping, with the same field type.
-  EXPECT_TRUE(IsMatch(context, FTL_i32, FTL_i32_i64));
-  EXPECT_FALSE(IsMatch(context, FTL_i32_i64, FTL_i32));
+  EXPECT_TRUE(IsMatch(ctx, FTL_i32, FTL_i32_i64));
+  EXPECT_FALSE(IsMatch(ctx, FTL_i32_i64, FTL_i32));
 
   PushFunctionType({}, {});      // type 0
 
   // Width subtyping and field covariance.
   EXPECT_TRUE(IsMatch(
-      context,
+      ctx,
       // (field funcref)
       FieldTypeList{FieldType{StorageType{VT_Funcref}, Mutability::Const}},
       // (field (ref 0) i32)
@@ -619,7 +618,7 @@ TEST_F(ValidMatchTest, IsMatch_FieldTypeList_Subtyping) {
 
   // Width subtyping, but non-const field inhibits covariance.
   EXPECT_FALSE(IsMatch(
-      context,
+      ctx,
       // (field funcref)
       FieldTypeList{FieldType{StorageType{VT_Funcref}, Mutability::Var}},
       // (field (ref 0) i32)
@@ -657,19 +656,19 @@ TEST_F(ValidMatchTest, IsMatch_StructType_Subtyping) {
   PushFunctionType({}, {});  // 0
 
   // Allow width subtyping (e.g. empty struct is supertype of all structs).
-  EXPECT_TRUE(IsMatch(context, StructType{},
+  EXPECT_TRUE(IsMatch(ctx, StructType{},
                       StructType{FieldTypeList{
                           FieldType{StorageType{VT_I32}, Mutability::Const}}}));
 
   // Allow depth subtyping, given a const field.
-  EXPECT_TRUE(IsMatch(context,
+  EXPECT_TRUE(IsMatch(ctx,
                       StructType{FieldTypeList{FieldType{
                           StorageType{VT_Funcref}, Mutability::Const}}},
                       StructType{FieldTypeList{FieldType{StorageType{VT_Ref0},
                                                          Mutability::Const}}}));
 
   // Width and depth subtyping.
-  EXPECT_TRUE(IsMatch(context,
+  EXPECT_TRUE(IsMatch(ctx,
                       StructType{FieldTypeList{FieldType{
                           StorageType{VT_Funcref}, Mutability::Const}}},
                       StructType{FieldTypeList{
@@ -692,7 +691,7 @@ TEST_F(ValidMatchTest, IsMatch_ArrayType_Subtyping) {
 
   // Allow depth subtyping, given a const field.
   EXPECT_TRUE(IsMatch(
-      context, ArrayType{FieldType{StorageType{VT_Funcref}, Mutability::Const}},
+      ctx, ArrayType{FieldType{StorageType{VT_Funcref}, Mutability::Const}},
       ArrayType{FieldType{StorageType{VT_Ref0}, Mutability::Const}}));
 }
 

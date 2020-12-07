@@ -18,43 +18,42 @@
 
 namespace wasp::binary {
 
-auto ReadNameSection(SpanU8 data, Context& context) -> LazyNameSection {
-  return LazyNameSection{data, context};
+auto ReadNameSection(SpanU8 data, ReadCtx& ctx) -> LazyNameSection {
+  return LazyNameSection{data, ctx};
 }
 
-auto ReadNameSection(CustomSection sec, Context& context) -> LazyNameSection {
-  return LazyNameSection{sec.data, context};
+auto ReadNameSection(CustomSection sec, ReadCtx& ctx) -> LazyNameSection {
+  return LazyNameSection{sec.data, ctx};
 }
 
-auto ReadFunctionNamesSubsection(SpanU8 data, Context& context)
+auto ReadFunctionNamesSubsection(SpanU8 data, ReadCtx& ctx)
     -> LazyFunctionNamesSubsection {
-  return LazyFunctionNamesSubsection{data, "function names subsection",
-                                     context};
+  return LazyFunctionNamesSubsection{data, "function names subsection", ctx};
 }
 
-auto ReadFunctionNamesSubsection(NameSubsection sec, Context& context)
+auto ReadFunctionNamesSubsection(NameSubsection sec, ReadCtx& ctx)
     -> LazyFunctionNamesSubsection {
-  return ReadFunctionNamesSubsection(sec.data, context);
+  return ReadFunctionNamesSubsection(sec.data, ctx);
 }
 
-auto ReadLocalNamesSubsection(SpanU8 data, Context& context)
+auto ReadLocalNamesSubsection(SpanU8 data, ReadCtx& ctx)
     -> LazyLocalNamesSubsection {
-  return LazyLocalNamesSubsection{data, "local names subsection", context};
+  return LazyLocalNamesSubsection{data, "local names subsection", ctx};
 }
 
-auto ReadLocalNamesSubsection(NameSubsection sec, Context& context)
+auto ReadLocalNamesSubsection(NameSubsection sec, ReadCtx& ctx)
     -> LazyLocalNamesSubsection {
-  return ReadLocalNamesSubsection(sec.data, context);
+  return ReadLocalNamesSubsection(sec.data, ctx);
 }
 
-auto ReadModuleNameSubsection(SpanU8 data, Context& context)
+auto ReadModuleNameSubsection(SpanU8 data, ReadCtx& ctx)
     -> ModuleNameSubsection {
-  return ReadString(&data, context, "module name");
+  return ReadString(&data, ctx, "module name");
 }
 
-auto ReadModuleNameSubsection(NameSubsection sec, Context& context)
+auto ReadModuleNameSubsection(NameSubsection sec, ReadCtx& ctx)
     -> ModuleNameSubsection {
-  return ReadModuleNameSubsection(sec.data, context);
+  return ReadModuleNameSubsection(sec.data, ctx);
 }
 
 }  // namespace wasp::binary

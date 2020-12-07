@@ -21,8 +21,8 @@
 #include "test/text/constants.h"
 #include "wasp/base/errors.h"
 #include "wasp/text/formatters.h"
-#include "wasp/text/read/context.h"
 #include "wasp/text/read/macros.h"
+#include "wasp/text/read/read_ctx.h"
 #include "wasp/text/read/tokenizer.h"
 
 using namespace ::wasp;
@@ -40,14 +40,14 @@ class TextReadTest : public ::testing::Test {
   template <typename Func, typename... Args>
   void Read(Func&& func, SpanU8 span, Args&&... args) {
     Tokenizer tokenizer{span};
-    func(tokenizer, context, std::forward<Args>(args)...);
+    func(tokenizer, ctx, std::forward<Args>(args)...);
     ExpectNoErrors(errors);
   }
 
   template <typename Func, typename T, typename... Args>
   void OK(Func&& func, const T& expected, SpanU8 span, Args&&... args) {
     Tokenizer tokenizer{span};
-    auto actual = func(tokenizer, context, std::forward<Args>(args)...);
+    auto actual = func(tokenizer, ctx, std::forward<Args>(args)...);
     ASSERT_EQ((At{span, expected}), actual);
     ExpectNoErrors(errors);
   }
@@ -56,7 +56,7 @@ class TextReadTest : public ::testing::Test {
   template <typename Func, typename T, typename... Args>
   void OKVector(Func&& func, const T& expected, SpanU8 span, Args&&... args) {
     Tokenizer tokenizer{span};
-    auto actual = func(tokenizer, context, std::forward<Args>(args)...);
+    auto actual = func(tokenizer, ctx, std::forward<Args>(args)...);
     ASSERT_TRUE(actual.has_value());
     ASSERT_EQ(expected.size(), actual->size());
     for (size_t i = 0; i < expected.size(); ++i) {
@@ -71,7 +71,7 @@ class TextReadTest : public ::testing::Test {
             SpanU8 span,
             Args&&... args) {
     Tokenizer tokenizer{span};
-    func(tokenizer, context, std::forward<Args>(args)...);
+    func(tokenizer, ctx, std::forward<Args>(args)...);
     ExpectError(error, errors, span);
     errors.Clear();
   }
@@ -82,42 +82,42 @@ class TextReadTest : public ::testing::Test {
             SpanU8 span,
             Args&&... args) {
     Tokenizer tokenizer{span};
-    func(tokenizer, context, std::forward<Args>(args)...);
+    func(tokenizer, ctx, std::forward<Args>(args)...);
     ExpectErrors(expected_errors, errors, span);
     errors.Clear();
   }
 
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
 };
 
 // Helpers for handling InstructionList functions.
 
-auto ReadBlockInstruction_ForTesting(Tokenizer& tokenizer, Context& context)
+auto ReadBlockInstruction_ForTesting(Tokenizer& tokenizer, ReadCtx& ctx)
     -> optional<InstructionList> {
   InstructionList result;
-  WASP_TRY(ReadBlockInstruction(tokenizer, context, result));
+  WASP_TRY(ReadBlockInstruction(tokenizer, ctx, result));
   return result;
 }
 
-auto ReadLetInstruction_ForTesting(Tokenizer& tokenizer, Context& context)
+auto ReadLetInstruction_ForTesting(Tokenizer& tokenizer, ReadCtx& ctx)
     -> optional<InstructionList> {
   InstructionList result;
-  WASP_TRY(ReadLetInstruction(tokenizer, context, result));
+  WASP_TRY(ReadLetInstruction(tokenizer, ctx, result));
   return result;
 }
 
-auto ReadInstructionList_ForTesting(Tokenizer& tokenizer, Context& context)
+auto ReadInstructionList_ForTesting(Tokenizer& tokenizer, ReadCtx& ctx)
     -> optional<InstructionList> {
   InstructionList result;
-  WASP_TRY(ReadInstructionList(tokenizer, context, result));
+  WASP_TRY(ReadInstructionList(tokenizer, ctx, result));
   return result;
 }
 
-auto ReadExpressionList_ForTesting(Tokenizer& tokenizer, Context& context)
+auto ReadExpressionList_ForTesting(Tokenizer& tokenizer, ReadCtx& ctx)
     -> optional<InstructionList> {
   InstructionList result;
-  WASP_TRY(ReadExpressionList(tokenizer, context, result));
+  WASP_TRY(ReadExpressionList(tokenizer, ctx, result));
   return result;
 }
 
@@ -179,30 +179,30 @@ TEST_F(TextReadTest, TextList) {
 }
 
 TEST_F(TextReadTest, HeapType) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   OK(ReadHeapType, HT_Func, "func"_su8);
 }
 
 TEST_F(TextReadTest, HeapType_reference_types) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
   OK(ReadHeapType, HT_Extern, "extern"_su8);
 }
 
 TEST_F(TextReadTest, HeapType_exceptions) {
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
   OK(ReadHeapType, HT_Exn, "exn"_su8);
 }
 
 TEST_F(TextReadTest, HeapType_gc) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
   OK(ReadHeapType, HT_Any, "any"_su8);
   OK(ReadHeapType, HT_I31, "i31"_su8);
   OK(ReadHeapType, HT_Eq, "eq"_su8);
 }
 
 TEST_F(TextReadTest, Rtt) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
   OK(ReadRtt, RTT_0_Func, "(rtt 0 func)"_su8);
   OK(ReadRtt, RTT_0_Extern, "(rtt 0 extern)"_su8);
   OK(ReadRtt, RTT_0_Eq, "(rtt 0 eq)"_su8);
@@ -233,23 +233,23 @@ TEST_F(TextReadTest, ValueType) {
 }
 
 TEST_F(TextReadTest, ValueType_simd) {
-  context.features.enable_simd();
+  ctx.features.enable_simd();
   OK(ReadValueType, VT_V128, "v128"_su8);
 }
 
 TEST_F(TextReadTest, ValueType_reference_types) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
   OK(ReadValueType, VT_Funcref, "funcref"_su8);
   OK(ReadValueType, VT_Externref, "externref"_su8);
 }
 
 TEST_F(TextReadTest, ValueType_exceptions) {
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
   OK(ReadValueType, VT_Exnref, "exnref"_su8);
 }
 
 TEST_F(TextReadTest, ValueType_function_references) {
-  context.features.enable_function_references();
+  ctx.features.enable_function_references();
   OK(ReadValueType, VT_Ref0, "(ref 0)"_su8);
   OK(ReadValueType, VT_RefNull0, "(ref null 0)"_su8);
   OK(ReadValueType, VT_RefT, "(ref $t)"_su8);
@@ -265,7 +265,7 @@ TEST_F(TextReadTest, ValueType_function_references) {
 }
 
 TEST_F(TextReadTest, ValueType_gc) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   // New reference types
   OK(ReadValueType, VT_Eqref, "eqref"_su8);
@@ -311,18 +311,18 @@ TEST_F(TextReadTest, ReferenceType) {
 }
 
 TEST_F(TextReadTest, ReferenceType_reference_types) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
   OK(ReadReferenceType, RT_Funcref, "funcref"_su8, AllowFuncref::Yes);
   OK(ReadReferenceType, RT_Externref, "externref"_su8, AllowFuncref::Yes);
 }
 
 TEST_F(TextReadTest, ReferenceType_exceptions) {
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
   OK(ReadReferenceType, RT_Exnref, "exnref"_su8, AllowFuncref::Yes);
 }
 
 TEST_F(TextReadTest, ReferenceType_function_references) {
-  context.features.enable_function_references();
+  ctx.features.enable_function_references();
 
   OK(ReadReferenceType, RT_Ref0, "(ref 0)"_su8, AllowFuncref::Yes);
   OK(ReadReferenceType, RT_RefNull0, "(ref null 0)"_su8, AllowFuncref::Yes);
@@ -339,7 +339,7 @@ TEST_F(TextReadTest, ReferenceType_function_references) {
 }
 
 TEST_F(TextReadTest, ReferenceType_gc) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
   OK(ReadReferenceType, RT_Eqref, "eqref"_su8, AllowFuncref::Yes);
   OK(ReadReferenceType, RT_I31ref, "i31ref"_su8, AllowFuncref::Yes);
   OK(ReadReferenceType, RT_Anyref, "anyref"_su8, AllowFuncref::Yes);
@@ -433,7 +433,7 @@ TEST_F(TextReadTest, InlineImport) {
 }
 
 TEST_F(TextReadTest, InlineImport_AfterNonImport) {
-  context.seen_non_import = true;
+  ctx.seen_non_import = true;
   Fail(ReadInlineImportOpt,
        {{1, "Imports must occur before all non-import definitions"}},
        "(import \"m\" \"n\")"_su8);
@@ -477,7 +477,7 @@ TEST_F(TextReadTest, FunctionType) {
 }
 
 TEST_F(TextReadTest, StorageType) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
   // Numeric type
   OK(ReadStorageType, StorageType{At{"i32"_su8, VT_I32}}, "i32"_su8);
 
@@ -491,7 +491,7 @@ TEST_F(TextReadTest, StorageType) {
 }
 
 TEST_F(TextReadTest, FieldType) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   // No name
   OK(ReadFieldType,
@@ -528,7 +528,7 @@ TEST_F(TextReadTest, FieldType) {
 }
 
 TEST_F(TextReadTest, FieldTypeList) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   // Single field
   OK(ReadFieldTypeList,
@@ -625,7 +625,7 @@ TEST_F(TextReadTest, DefinedType) {
 }
 
 TEST_F(TextReadTest, DefinedType_GC) {
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   // Empty struct
   OK(ReadDefinedType, DefinedType{nullopt, At{"(struct)"_su8, StructType{}}},
@@ -692,7 +692,7 @@ TEST_F(TextReadTest, Limits) {
 }
 
 TEST_F(TextReadTest, Limits_threads) {
-  context.features.enable_threads();
+  ctx.features.enable_threads();
 
   OK(ReadLimits,
      Limits{At{"0"_su8, 0u}, At{"20"_su8, 20u}, At{"shared"_su8, Shared::Yes}},
@@ -703,7 +703,7 @@ TEST_F(TextReadTest, Limits_memory64) {
   Fail(ReadLimits, {{0, "Expected a natural number, got NumericType"}},
        "i32 1"_su8, LimitsKind::Memory);
 
-  context.features.enable_memory64();
+  ctx.features.enable_memory64();
 
   OK(ReadLimits,
      Limits{At{"1"_su8, 1u}, nullopt, Shared::No,
@@ -727,8 +727,8 @@ TEST_F(TextReadTest, Limits_memory64) {
 }
 
 TEST_F(TextReadTest, Limits_No64BitShared) {
-  context.features.enable_threads();
-  context.features.enable_memory64();
+  ctx.features.enable_threads();
+  ctx.features.enable_memory64();
 
   Fail(ReadLimits, {{8, "limits cannot be shared and have i64 index"}},
        "i64 1 2 shared"_su8, LimitsKind::Memory);
@@ -826,7 +826,7 @@ TEST_F(TextReadTest, PlainInstruction_Var) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_BrOnExn) {
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
   OK(ReadPlainInstruction,
      I{At{"br_on_exn"_su8, O::BrOnExn},
        At{"$l $e"_su8, BrOnExnImmediate{At{"$l"_su8, Var{"$l"_sv}},
@@ -877,7 +877,7 @@ TEST_F(TextReadTest, PlainInstruction_CallIndirect) {
 TEST_F(TextReadTest, PlainInstruction_CallIndirect_reference_types) {
   // In the reference types proposal, the call_indirect instruction also allows
   // a table var first.
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   // call_indirect w/ table.
   OK(ReadPlainInstruction,
@@ -918,7 +918,7 @@ TEST_F(TextReadTest, PlainInstruction_Const) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_FuncBind) {
-  context.features.enable_function_references();
+  ctx.features.enable_function_references();
 
   // Bare func.bind
   OK(ReadPlainInstruction,
@@ -970,7 +970,7 @@ TEST_F(TextReadTest, PlainInstruction_Select) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_Select_reference_types) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   // select w/o types
   OK(ReadPlainInstruction,
@@ -995,7 +995,7 @@ TEST_F(TextReadTest, PlainInstruction_SimdConst) {
   Fail(ReadPlainInstruction, {{0, "v128.const instruction not allowed"}},
        "v128.const i32x4 0 0 0 0"_su8);
 
-  context.features.enable_simd();
+  ctx.features.enable_simd();
 
   // i8x16
   OK(ReadPlainInstruction,
@@ -1039,7 +1039,7 @@ TEST_F(TextReadTest, PlainInstruction_SimdLane) {
        {{0, "i8x16.extract_lane_s instruction not allowed"}},
        "i8x16.extract_lane_s 0"_su8);
 
-  context.features.enable_simd();
+  ctx.features.enable_simd();
 
   OK(ReadPlainInstruction,
      I{At{"i8x16.extract_lane_s"_su8, O::I8X16ExtractLaneS},
@@ -1060,7 +1060,7 @@ TEST_F(TextReadTest, PlainInstruction_Shuffle) {
   Fail(ReadPlainInstruction, {{0, "i8x16.shuffle instruction not allowed"}},
        "i8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"_su8);
 
-  context.features.enable_simd();
+  ctx.features.enable_simd();
 
   OK(ReadPlainInstruction,
      I{At{"i8x16.shuffle"_su8, O::I8X16Shuffle},
@@ -1073,7 +1073,7 @@ TEST_F(TextReadTest, PlainInstruction_MemoryCopy) {
        "memory.copy"_su8);
 
   // memory.copy w/o dst and src.
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
   OK(ReadPlainInstruction,
      I{At{"memory.copy"_su8, O::MemoryCopy}, At{CopyImmediate{}}},
      "memory.copy"_su8);
@@ -1083,7 +1083,7 @@ TEST_F(TextReadTest, PlainInstruction_MemoryInit) {
   Fail(ReadPlainInstruction, {{0, "memory.init instruction not allowed"}},
        "memory.init 0"_su8);
 
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // memory.init w/ just segment index.
   OK(ReadPlainInstruction,
@@ -1097,14 +1097,14 @@ TEST_F(TextReadTest, PlainInstruction_TableCopy) {
        "table.copy"_su8);
 
   // table.copy w/o dst and src.
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
   OK(ReadPlainInstruction,
      I{At{"table.copy"_su8, O::TableCopy}, At{""_su8, CopyImmediate{}}},
      "table.copy"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_TableCopy_reference_types) {
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   // table.copy w/o dst and src.
   OK(ReadPlainInstruction,
@@ -1123,7 +1123,7 @@ TEST_F(TextReadTest, PlainInstruction_TableInit) {
   Fail(ReadPlainInstruction, {{0, "table.init instruction not allowed"}},
        "table.init 0"_su8);
 
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // table.init w/ segment index and table index.
   OK(ReadPlainInstruction,
@@ -1143,7 +1143,7 @@ TEST_F(TextReadTest, PlainInstruction_RefNull) {
   Fail(ReadPlainInstruction, {{0, "ref.null instruction not allowed"}},
        "ref.null extern"_su8);
 
-  context.features.enable_reference_types();
+  ctx.features.enable_reference_types();
 
   OK(ReadPlainInstruction,
      I{At{"ref.null"_su8, O::RefNull}, At{"extern"_su8, HT_Extern}},
@@ -1155,7 +1155,7 @@ TEST_F(TextReadTest, PlainInstruction_BrOnCast) {
   Fail(ReadPlainInstruction, {{0, "br_on_cast instruction not allowed"}},
        "br_on_cast 0 0 0"_su8);
 
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(ReadPlainInstruction,
      I{At{"br_on_cast"_su8, O::BrOnCast},
@@ -1178,7 +1178,7 @@ TEST_F(TextReadTest, PlainInstruction_BrOnCast) {
   Fail(ReadPlainInstruction, {{0, "br_on_cast instruction not allowed"}},
        "br_on_cast 0"_su8);
 
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(ReadPlainInstruction,
      I{At{"br_on_cast"_su8, O::BrOnCast}, At{"0"_su8, Var{0u}}},
@@ -1195,7 +1195,7 @@ TEST_F(TextReadTest, PlainInstruction_HeapType2) {
   Fail(ReadPlainInstruction, {{0, "ref.test instruction not allowed"}},
        "ref.test 0 0"_su8);
 
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(ReadPlainInstruction,
      I{At{"ref.test"_su8, O::RefTest},
@@ -1214,7 +1214,7 @@ TEST_F(TextReadTest, PlainInstruction_RttSub) {
   Fail(ReadPlainInstruction, {{0, "rtt.sub instruction not allowed"}},
        "rtt.sub 0 0 0"_su8);
 
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(ReadPlainInstruction,
      I{At{"rtt.sub"_su8, O::RttSub},
@@ -1237,7 +1237,7 @@ TEST_F(TextReadTest, PlainInstruction_RttSub) {
   Fail(ReadPlainInstruction, {{0, "rtt.sub instruction not allowed"}},
        "rtt.sub 0"_su8);
 
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(ReadPlainInstruction, I{At{"rtt.sub"_su8, O::RttSub}, At{"0"_su8, HT_0}},
      "rtt.sub 0"_su8);
@@ -1251,7 +1251,7 @@ TEST_F(TextReadTest, PlainInstruction_StructField) {
   Fail(ReadPlainInstruction, {{0, "struct.get instruction not allowed"}},
        "struct.get 0 0"_su8);
 
-  context.features.enable_gc();
+  ctx.features.enable_gc();
 
   OK(ReadPlainInstruction,
      I{At{"struct.get"_su8, O::StructGet},
@@ -1462,7 +1462,7 @@ TEST_F(TextReadTest, BlockInstruction_Try) {
   Fail(ReadBlockInstruction_ForTesting, {{0, "try instruction not allowed"}},
        "try catch end"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   // try/catch.
   OKVector(ReadBlockInstruction_ForTesting,
@@ -1529,7 +1529,7 @@ TEST_F(TextReadTest, BlockInstruction_Try) {
 }
 
 TEST_F(TextReadTest, BlockInstruction_Try_MismatchedLabels) {
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   Fail(ReadBlockInstruction_ForTesting, {{14, "Unexpected label $l2"}},
        "try catch end $l2"_su8);
@@ -1657,10 +1657,10 @@ TEST_F(TextReadTest, Label_DuplicateNames) {
      "block $b block $b end end"_su8);
 }
 
-auto ReadExpression_ForTesting(Tokenizer& tokenizer, Context& context)
+auto ReadExpression_ForTesting(Tokenizer& tokenizer, ReadCtx& ctx)
     -> optional<InstructionList> {
   InstructionList result;
-  WASP_TRY(ReadExpression(tokenizer, context, result));
+  WASP_TRY(ReadExpression(tokenizer, ctx, result));
   return result;
 }
 
@@ -1752,7 +1752,7 @@ TEST_F(TextReadTest, Expression_Plain_exceptions) {
   Fail(ReadExpression_ForTesting, {{1, "br_on_exn instruction not allowed"}},
        "(br_on_exn 0 0)"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   // BrOnExn immediate.
   OKVector(
@@ -1770,7 +1770,7 @@ TEST_F(TextReadTest, Expression_Plain_simd) {
   Fail(ReadExpression_ForTesting, {{1, "v128.const instruction not allowed"}},
        "(v128.const i32x4 0 0 0 0)"_su8);
 
-  context.features.enable_simd();
+  ctx.features.enable_simd();
 
   // v128 immediate.
   OKVector(ReadExpression_ForTesting,
@@ -1795,7 +1795,7 @@ TEST_F(TextReadTest, Expression_Plain_bulk_memory) {
   Fail(ReadExpression_ForTesting, {{1, "table.init instruction not allowed"}},
        "(table.init 0)"_su8);
 
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // Init immediate.
   OKVector(ReadExpression_ForTesting,
@@ -1920,7 +1920,7 @@ TEST_F(TextReadTest, Expression_Try) {
   Fail(ReadExpression_ForTesting, {{1, "try instruction not allowed"}},
        "(try (catch))"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   // Try catch.
   OKVector(ReadExpression_ForTesting,
@@ -1947,7 +1947,7 @@ TEST_F(TextReadTest, Expression_Let) {
   Fail(ReadExpression_ForTesting, {{1, "let instruction not allowed"}},
        "(let)"_su8);
 
-  context.features.enable_function_references();
+  ctx.features.enable_function_references();
 
   // Empty Let.
   OKVector(ReadExpression_ForTesting,
@@ -1993,7 +1993,7 @@ TEST_F(TextReadTest, TableType) {
 }
 
 TEST_F(TextReadTest, TableType_memory64) {
-  context.features.enable_memory64();
+  ctx.features.enable_memory64();
 
   Fail(ReadTableType, {{0, "Expected a natural number, got NumericType"}},
        "i64 1 2 funcref"_su8);
@@ -2007,7 +2007,7 @@ TEST_F(TextReadTest, MemoryType) {
 }
 
 TEST_F(TextReadTest, MemoryType_memory64) {
-  context.features.enable_memory64();
+  ctx.features.enable_memory64();
 
   OK(ReadMemoryType,
      MemoryType{
@@ -2215,7 +2215,7 @@ TEST_F(TextReadTest, Table_bulk_memory) {
   Fail(ReadTable, {{21, "Expected Rpar, got Lpar"}},
        "(table funcref (elem (nop)))"_su8);
 
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // Inline element var list.
   OK(ReadTable,
@@ -2285,7 +2285,7 @@ TEST_F(TextReadTest, NumericData) {
 }
 
 TEST_F(TextReadTest, DataItem) {
-  context.features.enable_numeric_values();
+  ctx.features.enable_numeric_values();
 
   OK(ReadDataItem,
      DataItem{
@@ -2347,7 +2347,7 @@ TEST_F(TextReadTest, Memory_numeric_values) {
   Fail(ReadMemory, {{14, "Numeric values not allowed"}},
        "(memory (data (i32 1 2 3)))"_su8);
 
-  context.features.enable_numeric_values();
+  ctx.features.enable_numeric_values();
 
   OK(ReadMemory,
      Memory{MemoryDesc{{}, MemoryType{Limits{u32{12}, u32{12}}}},
@@ -2388,7 +2388,7 @@ TEST_F(TextReadTest, MemoryInlineImport) {
 }
 
 TEST_F(TextReadTest, Memory_memory64) {
-  context.features.enable_memory64();
+  ctx.features.enable_memory64();
 
   OK(ReadMemory,
      Memory{MemoryDesc{{},
@@ -2526,7 +2526,7 @@ TEST_F(TextReadTest, GlobalInlineImport) {
 TEST_F(TextReadTest, Event) {
   Fail(ReadEvent, {{0, "Events not allowed"}}, "(event)"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   // Simplest event.
   OK(ReadEvent, Event{}, "(event)"_su8);
@@ -2556,7 +2556,7 @@ TEST_F(TextReadTest, EventInlineImport) {
   Fail(ReadEvent, {{0, "Events not allowed"}},
        "(event (import \"m\" \"n\"))"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   // Inline import.
   OK(ReadEvent,
@@ -2616,7 +2616,7 @@ TEST_F(TextReadTest, Import) {
 }
 
 TEST_F(TextReadTest, Import_AfterNonImport) {
-  context.seen_non_import = true;
+  ctx.seen_non_import = true;
   Fail(ReadImport,
        {{1, "Imports must occur before all non-import definitions"}},
        "(import \"m\" \"n\" (func))"_su8);
@@ -2626,7 +2626,7 @@ TEST_F(TextReadTest, Import_exceptions) {
   Fail(ReadImport, {{17, "Events not allowed"}},
        "(import \"m\" \"n\" (event))"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   // Event.
   OK(ReadImport,
@@ -2665,7 +2665,7 @@ TEST_F(TextReadTest, Export_exceptions) {
   Fail(ReadExport, {{13, "Events not allowed"}},
        "(export \"m\" (event 0))"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   // Event.
   OK(ReadExport,
@@ -2679,12 +2679,12 @@ TEST_F(TextReadTest, Start) {
 }
 
 TEST_F(TextReadTest, Start_Multiple) {
-  context.seen_start = true;
+  ctx.seen_start = true;
   Fail(ReadStart, {{1, "Multiple start functions"}}, "(start 0)"_su8);
 }
 
 TEST_F(TextReadTest, ElementExpression) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // Item.
   OK(ReadElementExpression,
@@ -2713,7 +2713,7 @@ TEST_F(TextReadTest, OffsetExpression) {
 }
 
 TEST_F(TextReadTest, ElementExpressionList) {
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // Item list.
   OKVector(ReadElementExpressionList,
@@ -2785,7 +2785,7 @@ TEST_F(TextReadTest, ElementSegment_bulk_memory) {
   Fail(ReadElementSegment, {{6, "Expected offset expression, got Func"}},
        "(elem func)"_su8);
 
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // Passive, w/ expression list.
   OK(ReadElementSegment,
@@ -2961,7 +2961,7 @@ TEST_F(TextReadTest, DataSegment_bulk_memory) {
   Fail(ReadDataSegment, {{5, "Expected offset expression, got Rpar"}},
        "(data)"_su8);
 
-  context.features.enable_bulk_memory();
+  ctx.features.enable_bulk_memory();
 
   // Passive, w/ text list.
   OK(ReadDataSegment,
@@ -3008,7 +3008,7 @@ TEST_F(TextReadTest, DataSegment_numeric_values) {
   Fail(ReadDataSegment, {{12, "Numeric values not allowed"}},
        "(data (nop) (i8 1))"_su8);
 
-  context.features.enable_numeric_values();
+  ctx.features.enable_numeric_values();
 
   // No memory var, text list.
   OK(ReadDataSegment,
@@ -3106,7 +3106,7 @@ TEST_F(TextReadTest, ModuleItem) {
 TEST_F(TextReadTest, ModuleItem_exceptions) {
   Fail(ReadModuleItem, {{0, "Events not allowed"}}, "(event)"_su8);
 
-  context.features.enable_exceptions();
+  ctx.features.enable_exceptions();
 
   // Event.
   OK(ReadModuleItem,

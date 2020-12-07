@@ -32,19 +32,19 @@ using ModuleNameSubsection = optional<string_view>;
 using LazyFunctionNamesSubsection = LazySection<NameAssoc>;
 using LazyLocalNamesSubsection = LazySection<IndirectNameAssoc>;
 
-auto ReadNameSection(SpanU8, Context&) -> LazyNameSection;
-auto ReadNameSection(CustomSection, Context&) -> LazyNameSection;
+auto ReadNameSection(SpanU8, ReadCtx&) -> LazyNameSection;
+auto ReadNameSection(CustomSection, ReadCtx&) -> LazyNameSection;
 
-auto ReadModuleNameSubsection(SpanU8, Context&) -> ModuleNameSubsection;
-auto ReadModuleNameSubsection(NameSubsection, Context&) -> ModuleNameSubsection;
+auto ReadModuleNameSubsection(SpanU8, ReadCtx&) -> ModuleNameSubsection;
+auto ReadModuleNameSubsection(NameSubsection, ReadCtx&) -> ModuleNameSubsection;
 
-auto ReadFunctionNamesSubsection(SpanU8, Context&)
+auto ReadFunctionNamesSubsection(SpanU8, ReadCtx&)
     -> LazyFunctionNamesSubsection;
-auto ReadFunctionNamesSubsection(NameSubsection, Context&)
+auto ReadFunctionNamesSubsection(NameSubsection, ReadCtx&)
     -> LazyFunctionNamesSubsection;
 
-auto ReadLocalNamesSubsection(SpanU8, Context&) -> LazyLocalNamesSubsection;
-auto ReadLocalNamesSubsection(NameSubsection, Context&)
+auto ReadLocalNamesSubsection(SpanU8, ReadCtx&) -> LazyLocalNamesSubsection;
+auto ReadLocalNamesSubsection(NameSubsection, ReadCtx&)
     -> LazyLocalNamesSubsection;
 
 }  // namespace wasp::binary

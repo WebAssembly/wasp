@@ -25,21 +25,21 @@
 #include "wasp/base/string_view.h"
 #include "wasp/base/types.h"
 #include "wasp/binary/read.h"
-#include "wasp/binary/read/context.h"
 #include "wasp/binary/read/macros.h"
+#include "wasp/binary/read/read_ctx.h"
 
 namespace wasp::binary {
 
 template <typename T>
 optional<std::vector<At<T>>> ReadVector(SpanU8* data,
-                                        Context& context,
+                                        ReadCtx& ctx,
                                         string_view desc) {
-  ErrorsContextGuard guard{context.errors, *data, desc};
+  ErrorsContextGuard guard{ctx.errors, *data, desc};
   std::vector<At<T>> result;
-  WASP_TRY_READ(len, ReadCount(data, context));
+  WASP_TRY_READ(len, ReadCount(data, ctx));
   result.reserve(len);
   for (u32 i = 0; i < len; ++i) {
-    WASP_TRY_READ(elt, Read<T>(data, context));
+    WASP_TRY_READ(elt, Read<T>(data, ctx));
     result.emplace_back(std::move(elt));
   }
   return result;

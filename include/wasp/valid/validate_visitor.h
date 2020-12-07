@@ -18,7 +18,7 @@
 #define WASP_VALID_VALIDATE_VISITOR_H_
 
 #include "wasp/binary/visitor.h"
-#include "wasp/valid/context.h"
+#include "wasp/valid/valid_ctx.h"
 #include "wasp/valid/validate.h"
 
 namespace wasp {
@@ -49,7 +49,7 @@ struct ValidateVisitor : binary::visit::Visitor {
 
   auto FailUnless(bool) -> Result;
 
-  valid::Context context;
+  ValidCtx ctx;
   Features features;
   Errors& errors;
 };

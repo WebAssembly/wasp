@@ -15,17 +15,17 @@
 //
 
 #include "wasp/binary/lazy_expression.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 
 namespace wasp::binary {
 
-LazyExpression ReadExpression(SpanU8 data, Context& context) {
-  context.seen_final_end = false;
-  return LazyExpression{data, context};
+LazyExpression ReadExpression(SpanU8 data, ReadCtx& ctx) {
+  ctx.seen_final_end = false;
+  return LazyExpression{data, ctx};
 }
 
-LazyExpression ReadExpression(Expression expr, Context& context) {
-  return ReadExpression(expr.data, context);
+LazyExpression ReadExpression(Expression expr, ReadCtx& ctx) {
+  return ReadExpression(expr.data, ctx);
 }
 
 }  // namespace wasp::binary

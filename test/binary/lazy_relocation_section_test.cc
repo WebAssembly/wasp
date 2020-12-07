@@ -17,7 +17,7 @@
 #include "gtest/gtest.h"
 #include "test/test_utils.h"
 #include "wasp/binary/linking_section/sections.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
@@ -25,13 +25,13 @@ using namespace ::wasp::test;
 
 TEST(BinaryRelocationTest, Basic) {
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
   auto sec = ReadRelocationSection(
       "\x01\x03"  // Section index = 1, 3 relocations.
       "\x01\x02\x03"
       "\x04\x05\x06\x07"
       "\x08\x09\x0a\x0b"_su8,
-      context);
+      ctx);
 
   EXPECT_EQ(Index{1}, sec.section_index);
   EXPECT_EQ(Index{3}, sec.count);

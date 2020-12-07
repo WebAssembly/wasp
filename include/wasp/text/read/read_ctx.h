@@ -14,21 +14,31 @@
 // limitations under the License.
 //
 
-#include "wasp/binary/read/context.h"
+#ifndef WASP_TEXT_READ_CONTEXT_H_
+#define WASP_TEXT_READ_CONTEXT_H_
 
-namespace wasp::binary {
+#include "wasp/base/features.h"
 
-Context::Context(Errors& errors) : errors(errors) {}
+namespace wasp {
 
-Context::Context(const Features& features, Errors& errors)
-    : features(features), errors(errors) {}
+class Errors;
 
-void Context::Reset() {
-  last_section_id.reset();
-  defined_function_count = 0;
-  declared_data_count.reset();
-  code_count = 0;
-  data_count = 0;
-}
+namespace text {
 
-}  // namespace wasp::binary
+struct ReadCtx {
+  explicit ReadCtx(Errors&);
+  explicit ReadCtx(const Features&, Errors&);
+
+  void BeginModule();    // Reset all module-specific context.
+
+  Features features;
+  Errors& errors;
+
+  bool seen_non_import = false;
+  bool seen_start = false;
+};
+
+}  // namespace text
+}  // namespace wasp
+
+#endif  // WASP_TEXT_READ_CONTEXT_H_

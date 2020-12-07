@@ -23,198 +23,191 @@
 
 namespace wasp::convert {
 
-Context::Context(const Features& features) : features{features} {}
+BinCtx::BinCtx(const Features& features) : features{features} {}
 
-string_view Context::Add(std::string str) {
+string_view BinCtx::Add(std::string str) {
   strings.push_back(std::make_unique<std::string>(str));
   return string_view{*strings.back()};
 }
 
-SpanU8 Context::Add(Buffer buffer) {
+SpanU8 BinCtx::Add(Buffer buffer) {
   buffers.push_back(std::make_unique<Buffer>(std::move(buffer)));
   return SpanU8{*buffers.back()};
 }
 
-auto ToBinary(Context& context, const At<text::HeapType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::HeapType>& value)
     -> At<binary::HeapType> {
   if (value->is_heap_kind()) {
     return At{value.loc(), binary::HeapType{value->heap_kind()}};
   } else {
     assert(value->is_var());
-    return At{value.loc(), binary::HeapType{ToBinary(context, value->var())}};
+    return At{value.loc(), binary::HeapType{ToBinary(ctx, value->var())}};
   }
 }
 
-auto ToBinary(Context& context, const At<text::RefType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::RefType>& value)
     -> At<binary::RefType> {
   return At{value.loc(),
-            binary::RefType{ToBinary(context, value->heap_type), value->null}};
+            binary::RefType{ToBinary(ctx, value->heap_type), value->null}};
 }
 
-auto ToBinary(Context& context, const At<text::ReferenceType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::ReferenceType>& value)
     -> At<binary::ReferenceType> {
   if (value->is_reference_kind()) {
     return At{value.loc(), binary::ReferenceType{value->reference_kind()}};
   } else {
     assert(value->is_ref());
-    return At{value.loc(),
-              binary::ReferenceType{ToBinary(context, value->ref())}};
+    return At{value.loc(), binary::ReferenceType{ToBinary(ctx, value->ref())}};
   }
 }
 
-auto ToBinary(Context& context, const At<text::Rtt>& value) -> At<binary::Rtt> {
-  return At{value.loc(),
-            binary::Rtt{value->depth, ToBinary(context, value->type)}};
+auto ToBinary(BinCtx& ctx, const At<text::Rtt>& value) -> At<binary::Rtt> {
+  return At{value.loc(), binary::Rtt{value->depth, ToBinary(ctx, value->type)}};
 }
 
-auto ToBinary(Context& context, const At<text::ValueType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::ValueType>& value)
     -> At<binary::ValueType> {
   if (value->is_numeric_type()) {
     return At{value.loc(), binary::ValueType{value->numeric_type()}};
   } else if (value->is_reference_type()) {
     return At{value.loc(),
-              binary::ValueType{ToBinary(context, value->reference_type())}};
+              binary::ValueType{ToBinary(ctx, value->reference_type())}};
   } else {
     assert(value->is_rtt());
-    return At{value.loc(), binary::ValueType{ToBinary(context, value->rtt())}};
+    return At{value.loc(), binary::ValueType{ToBinary(ctx, value->rtt())}};
   }
 }
 
-auto ToBinary(Context& context, const text::ValueTypeList& values)
+auto ToBinary(BinCtx& ctx, const text::ValueTypeList& values)
     -> binary::ValueTypeList {
   binary::ValueTypeList result;
   for (auto& value : values) {
-    result.push_back(ToBinary(context, value));
+    result.push_back(ToBinary(ctx, value));
   }
   return result;
 }
 
-auto ToBinary(Context& context, const At<text::StorageType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::StorageType>& value)
     -> At<binary::StorageType> {
   if (value->is_value_type()) {
     return At{value.loc(),
-              binary::StorageType{ToBinary(context, value->value_type())}};
+              binary::StorageType{ToBinary(ctx, value->value_type())}};
   } else {
     assert(value->is_packed_type());
     return At{value.loc(), binary::StorageType{value->packed_type()}};
   }
 }
 
-auto ToBinary(Context& context, const At<text::Text>& value)
-    -> At<string_view> {
-  return At{value.loc(), context.Add(value->ToString())};
+auto ToBinary(BinCtx& ctx, const At<text::Text>& value) -> At<string_view> {
+  return At{value.loc(), ctx.Add(value->ToString())};
 }
 
-auto ToBinary(Context& context, const At<text::Var>& value) -> At<Index> {
+auto ToBinary(BinCtx& ctx, const At<text::Var>& value) -> At<Index> {
   assert(value->is_index());
   return At{value.loc(), value->index()};
 }
 
-auto ToBinary(Context& context, const OptAt<text::Var>& var) -> At<Index> {
+auto ToBinary(BinCtx& ctx, const OptAt<text::Var>& var) -> At<Index> {
   assert(var.has_value());
-  return ToBinary(context, var.value());
+  return ToBinary(ctx, var.value());
 }
 
-auto ToBinary(Context& context,
-              const OptAt<text::Var>& var,
-              Index default_index) -> At<Index> {
+auto ToBinary(BinCtx& ctx, const OptAt<text::Var>& var, Index default_index)
+    -> At<Index> {
   if (var.has_value()) {
-    return ToBinary(context, var.value());
+    return ToBinary(ctx, var.value());
   } else {
     return At{default_index};
   }
 }
 
-auto ToBinary(Context& context, const text::VarList& vars)
-    -> binary::IndexList {
+auto ToBinary(BinCtx& ctx, const text::VarList& vars) -> binary::IndexList {
   binary::IndexList result;
   for (auto var : vars) {
-    result.push_back(ToBinary(context, var));
+    result.push_back(ToBinary(ctx, var));
   }
   return result;
 }
 
 // Section 1: Type
-auto ToBinary(Context& context, const At<text::FunctionType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::FunctionType>& value)
     -> At<binary::FunctionType> {
-  return At{value.loc(),
-            binary::FunctionType{ToBinary(context, value->params),
-                                 ToBinary(context, value->results)}};
+  return At{value.loc(), binary::FunctionType{ToBinary(ctx, value->params),
+                                              ToBinary(ctx, value->results)}};
 }
 
-auto ToBinary(Context& context, const text::BoundValueTypeList& values)
+auto ToBinary(BinCtx& ctx, const text::BoundValueTypeList& values)
     -> binary::ValueTypeList {
   binary::ValueTypeList result;
   for (auto& value : values) {
-    result.push_back(ToBinary(context, value->type));
+    result.push_back(ToBinary(ctx, value->type));
   }
   return result;
 }
 
-auto ToBinary(Context& context, const At<text::FieldType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::FieldType>& value)
     -> At<binary::FieldType> {
   return At{value.loc(),
-            binary::FieldType{ToBinary(context, value->type), value->mut}};
+            binary::FieldType{ToBinary(ctx, value->type), value->mut}};
 }
 
-auto ToBinary(Context& context, const text::FieldTypeList& values)
+auto ToBinary(BinCtx& ctx, const text::FieldTypeList& values)
     -> binary::FieldTypeList {
   binary::FieldTypeList result;
   for (auto& value : values) {
-    result.push_back(ToBinary(context, value));
+    result.push_back(ToBinary(ctx, value));
   }
   return result;
 }
 
-auto ToBinary(Context& context, const At<text::StructType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::StructType>& value)
     -> At<binary::StructType> {
-  return At{value.loc(), binary::StructType{ToBinary(context, value->fields)}};
+  return At{value.loc(), binary::StructType{ToBinary(ctx, value->fields)}};
 }
 
-auto ToBinary(Context& context, const At<text::ArrayType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::ArrayType>& value)
     -> At<binary::ArrayType> {
-  return At{value.loc(), binary::ArrayType{ToBinary(context, value->field)}};
+  return At{value.loc(), binary::ArrayType{ToBinary(ctx, value->field)}};
 }
 
-auto ToBinary(Context& context, const At<text::DefinedType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::DefinedType>& value)
     -> At<binary::DefinedType> {
   if (value->is_function_type()) {
     return At{value.loc(),
               binary::DefinedType{
                   At{value->function_type().loc(),
                      binary::FunctionType{
-                         ToBinary(context, value->function_type()->params),
-                         ToBinary(context, value->function_type()->results)}}}};
+                         ToBinary(ctx, value->function_type()->params),
+                         ToBinary(ctx, value->function_type()->results)}}}};
   } else if (value->is_struct_type()) {
     return At{value.loc(),
-              binary::DefinedType{ToBinary(context, value->struct_type())}};
+              binary::DefinedType{ToBinary(ctx, value->struct_type())}};
   } else {
     assert(value->is_array_type());
     return At{value.loc(),
-              binary::DefinedType{ToBinary(context, value->array_type())}};
+              binary::DefinedType{ToBinary(ctx, value->array_type())}};
   }
 }
 
 // Section 2: Import
-auto ToBinary(Context& context, const At<text::Import>& value)
+auto ToBinary(BinCtx& ctx, const At<text::Import>& value)
     -> At<binary::Import> {
-  auto module = At{value->module.loc(), ToBinary(context, value->module)};
-  auto name = At{value->name.loc(), ToBinary(context, value->name)};
+  auto module = At{value->module.loc(), ToBinary(ctx, value->module)};
+  auto name = At{value->name.loc(), ToBinary(ctx, value->name)};
 
   switch (value->kind()) {
     case ExternalKind::Function: {
       auto& desc = value->function_desc();
-      return At{value.loc(),
-                binary::Import{module, name,
-                               At{desc.type_use->loc(),
-                                  ToBinary(context, desc.type_use)}}};
+      return At{value.loc(), binary::Import{module, name,
+                                            At{desc.type_use->loc(),
+                                               ToBinary(ctx, desc.type_use)}}};
     }
 
     case ExternalKind::Table: {
       auto& desc = value->table_desc();
-      return At{value.loc(), binary::Import{module, name,
-                                            At{desc.type.loc(),
-                                               ToBinary(context, desc.type)}}};
+      return At{value.loc(),
+                binary::Import{module, name,
+                               At{desc.type.loc(), ToBinary(ctx, desc.type)}}};
     }
 
     case ExternalKind::Memory: {
@@ -225,16 +218,16 @@ auto ToBinary(Context& context, const At<text::Import>& value)
 
     case ExternalKind::Global: {
       auto& desc = value->global_desc();
-      return At{value.loc(), binary::Import{module, name,
-                                            At{desc.type.loc(),
-                                               ToBinary(context, desc.type)}}};
+      return At{value.loc(),
+                binary::Import{module, name,
+                               At{desc.type.loc(), ToBinary(ctx, desc.type)}}};
     }
 
     case ExternalKind::Event: {
       auto& desc = value->event_desc();
-      return At{value.loc(), binary::Import{module, name,
-                                            At{desc.type.loc(),
-                                               ToBinary(context, desc.type)}}};
+      return At{value.loc(),
+                binary::Import{module, name,
+                               At{desc.type.loc(), ToBinary(ctx, desc.type)}}};
     }
 
     default:
@@ -243,32 +236,31 @@ auto ToBinary(Context& context, const At<text::Import>& value)
 }
 
 // Section 2: Function
-auto ToBinary(Context& context, const At<text::Function>& value)
+auto ToBinary(BinCtx& ctx, const At<text::Function>& value)
     -> OptAt<binary::Function> {
   if (value->import) {
     return nullopt;
   }
-  return At{value.loc(),
-            binary::Function{ToBinary(context, value->desc.type_use)}};
+  return At{value.loc(), binary::Function{ToBinary(ctx, value->desc.type_use)}};
 }
 
 // Section 4: Table
-auto ToBinary(Context& context, const At<text::TableType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::TableType>& value)
     -> At<binary::TableType> {
-  return At{value.loc(), binary::TableType{value->limits,
-                                           ToBinary(context, value->elemtype)}};
+  return At{value.loc(),
+            binary::TableType{value->limits, ToBinary(ctx, value->elemtype)}};
 }
 
-auto ToBinary(Context& context, const At<text::Table>& value)
+auto ToBinary(BinCtx& ctx, const At<text::Table>& value)
     -> OptAt<binary::Table> {
   if (value->import) {
     return nullopt;
   }
-  return At{value.loc(), binary::Table{ToBinary(context, value->desc.type)}};
+  return At{value.loc(), binary::Table{ToBinary(ctx, value->desc.type)}};
 }
 
 // Section 5: Memory
-auto ToBinary(Context& context, const At<text::Memory>& value)
+auto ToBinary(BinCtx& ctx, const At<text::Memory>& value)
     -> OptAt<binary::Memory> {
   if (value->import) {
     return nullopt;
@@ -277,160 +269,154 @@ auto ToBinary(Context& context, const At<text::Memory>& value)
 }
 
 // Section 6: Global
-auto ToBinary(Context& context, const At<text::GlobalType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::GlobalType>& value)
     -> At<binary::GlobalType> {
   return At{value.loc(),
-            binary::GlobalType{ToBinary(context, value->valtype), value->mut}};
+            binary::GlobalType{ToBinary(ctx, value->valtype), value->mut}};
 }
 
-auto ToBinary(Context& context, const At<text::ConstantExpression>& value)
+auto ToBinary(BinCtx& ctx, const At<text::ConstantExpression>& value)
     -> At<binary::ConstantExpression> {
   return At{value.loc(),
-            binary::ConstantExpression{ToBinary(context, value->instructions)}};
+            binary::ConstantExpression{ToBinary(ctx, value->instructions)}};
 }
 
-auto ToBinary(Context& context, const At<text::Global>& value)
+auto ToBinary(BinCtx& ctx, const At<text::Global>& value)
     -> OptAt<binary::Global> {
   if (value->import) {
     return nullopt;
   }
   assert(value->init.has_value());
-  return At{value.loc(), binary::Global{ToBinary(context, value->desc.type),
-                                        ToBinary(context, *value->init)}};
+  return At{value.loc(), binary::Global{ToBinary(ctx, value->desc.type),
+                                        ToBinary(ctx, *value->init)}};
 }
 
 // Section 7: Export
-auto ToBinary(Context& context, const At<text::Export>& value)
+auto ToBinary(BinCtx& ctx, const At<text::Export>& value)
     -> At<binary::Export> {
-  return At{value.loc(),
-            binary::Export{value->kind, ToBinary(context, value->name),
-                           ToBinary(context, value->var)}};
+  return At{value.loc(), binary::Export{value->kind, ToBinary(ctx, value->name),
+                                        ToBinary(ctx, value->var)}};
 }
 
 // Section 8: Start
-auto ToBinary(Context& context, const At<text::Start>& value)
-    -> At<binary::Start> {
-  return At{value.loc(), binary::Start{ToBinary(context, value->var)}};
+auto ToBinary(BinCtx& ctx, const At<text::Start>& value) -> At<binary::Start> {
+  return At{value.loc(), binary::Start{ToBinary(ctx, value->var)}};
 }
 
-auto ToBinary(Context& context, const At<text::ElementExpression>& value)
+auto ToBinary(BinCtx& ctx, const At<text::ElementExpression>& value)
     -> At<binary::ElementExpression> {
   return At{value.loc(),
-            binary::ElementExpression{ToBinary(context, value->instructions)}};
+            binary::ElementExpression{ToBinary(ctx, value->instructions)}};
 }
 
-auto ToBinary(Context& context, const text::ElementExpressionList& value)
+auto ToBinary(BinCtx& ctx, const text::ElementExpressionList& value)
     -> binary::ElementExpressionList {
   binary::ElementExpressionList result;
   for (auto&& elemexpr : value) {
-    result.push_back(ToBinary(context, elemexpr));
+    result.push_back(ToBinary(ctx, elemexpr));
   }
   return result;
 }
 
-auto ToBinary(Context& context, const text::ElementList& value)
+auto ToBinary(BinCtx& ctx, const text::ElementList& value)
     -> binary::ElementList {
   if (holds_alternative<text::ElementListWithExpressions>(value)) {
     auto&& elements = get<text::ElementListWithExpressions>(value);
-    return binary::ElementListWithExpressions{
-        ToBinary(context, elements.elemtype), ToBinary(context, elements.list)};
+    return binary::ElementListWithExpressions{ToBinary(ctx, elements.elemtype),
+                                              ToBinary(ctx, elements.list)};
   } else {
     auto&& elements = get<text::ElementListWithVars>(value);
     return binary::ElementListWithIndexes{elements.kind,
-                                          ToBinary(context, elements.list)};
+                                          ToBinary(ctx, elements.list)};
   }
 }
 
-auto ToBinary(Context& context, const At<text::ElementSegment>& value)
+auto ToBinary(BinCtx& ctx, const At<text::ElementSegment>& value)
     -> At<binary::ElementSegment> {
   if (value->type == SegmentType::Active) {
     return At{value.loc(),
-              binary::ElementSegment{ToBinary(context, value->table, 0),
-                                     ToBinary(context, *value->offset),
-                                     ToBinary(context, value->elements)}};
+              binary::ElementSegment{ToBinary(ctx, value->table, 0),
+                                     ToBinary(ctx, *value->offset),
+                                     ToBinary(ctx, value->elements)}};
   } else {
-    return At{value.loc(),
-              binary::ElementSegment{value->type,
-                                     ToBinary(context, value->elements)}};
+    return At{value.loc(), binary::ElementSegment{
+                               value->type, ToBinary(ctx, value->elements)}};
   }
 }
 
 // Section 10: Code
-auto ToBinary(Context& context, const At<text::BlockImmediate>& value)
+auto ToBinary(BinCtx& ctx, const At<text::BlockImmediate>& value)
     -> At<binary::BlockType> {
   if (value->type.IsInlineType()) {
     auto inline_type = value->type.GetInlineType();
     if (!inline_type) {
       return At{value.loc(), binary::BlockType{binary::VoidType{}}};
     }
-    return At{value.loc(), binary::BlockType{ToBinary(context, *inline_type)}};
+    return At{value.loc(), binary::BlockType{ToBinary(ctx, *inline_type)}};
   } else {
-    auto block_type_index = ToBinary(context, value->type.type_use);
+    auto block_type_index = ToBinary(ctx, value->type.type_use);
     assert(block_type_index < 0x8000'0000);
     return At{value.loc(), binary::BlockType{block_type_index}};
   }
 }
 
-auto ToBinary(Context& context, const At<text::BrOnCastImmediate>& value)
+auto ToBinary(BinCtx& ctx, const At<text::BrOnCastImmediate>& value)
     -> At<binary::BrOnCastImmediate> {
   return At{value.loc(),
-            binary::BrOnCastImmediate{ToBinary(context, value->target),
-                                      ToBinary(context, value->types)}};
+            binary::BrOnCastImmediate{ToBinary(ctx, value->target),
+                                      ToBinary(ctx, value->types)}};
 }
 
-auto ToBinary(Context& context, const At<text::BrOnExnImmediate>& value)
+auto ToBinary(BinCtx& ctx, const At<text::BrOnExnImmediate>& value)
     -> At<binary::BrOnExnImmediate> {
-  return At{value.loc(),
-            binary::BrOnExnImmediate{ToBinary(context, value->target),
-                                     ToBinary(context, value->event)}};
+  return At{value.loc(), binary::BrOnExnImmediate{ToBinary(ctx, value->target),
+                                                  ToBinary(ctx, value->event)}};
 }
 
-auto ToBinary(Context& context, const At<text::BrTableImmediate>& value)
+auto ToBinary(BinCtx& ctx, const At<text::BrTableImmediate>& value)
     -> At<binary::BrTableImmediate> {
   return At{value.loc(),
-            binary::BrTableImmediate{ToBinary(context, value->targets),
-                                     ToBinary(context, value->default_target)}};
+            binary::BrTableImmediate{ToBinary(ctx, value->targets),
+                                     ToBinary(ctx, value->default_target)}};
 }
 
-auto ToBinary(Context& context, const At<text::CallIndirectImmediate>& value)
+auto ToBinary(BinCtx& ctx, const At<text::CallIndirectImmediate>& value)
     -> At<binary::CallIndirectImmediate> {
-  return At{value.loc(), binary::CallIndirectImmediate{
-                             ToBinary(context, value->type.type_use),
-                             ToBinary(context, value->table, 0)}};
-}
-
-auto ToBinary(Context& context, const At<text::CopyImmediate>& value)
-    -> At<binary::CopyImmediate> {
   return At{value.loc(),
-            binary::CopyImmediate{ToBinary(context, value->dst, 0),
-                                  ToBinary(context, value->src, 0)}};
+            binary::CallIndirectImmediate{ToBinary(ctx, value->type.type_use),
+                                          ToBinary(ctx, value->table, 0)}};
 }
 
-auto ToBinary(Context& context, const At<text::FuncBindImmediate>& value)
+auto ToBinary(BinCtx& ctx, const At<text::CopyImmediate>& value)
+    -> At<binary::CopyImmediate> {
+  return At{value.loc(), binary::CopyImmediate{ToBinary(ctx, value->dst, 0),
+                                               ToBinary(ctx, value->src, 0)}};
+}
+
+auto ToBinary(BinCtx& ctx, const At<text::FuncBindImmediate>& value)
     -> At<binary::FuncBindImmediate> {
   return At{value.loc(),
-            binary::FuncBindImmediate{ToBinary(context, value->type_use)}};
+            binary::FuncBindImmediate{ToBinary(ctx, value->type_use)}};
 }
 
-auto ToBinary(Context& context, const At<text::HeapType2Immediate>& value)
+auto ToBinary(BinCtx& ctx, const At<text::HeapType2Immediate>& value)
     -> At<binary::HeapType2Immediate> {
   return At{value.loc(),
-            binary::HeapType2Immediate{ToBinary(context, value->parent),
-                                       ToBinary(context, value->child)}};
+            binary::HeapType2Immediate{ToBinary(ctx, value->parent),
+                                       ToBinary(ctx, value->child)}};
 }
 
-auto ToBinary(Context& context, const At<text::InitImmediate>& value)
+auto ToBinary(BinCtx& ctx, const At<text::InitImmediate>& value)
     -> At<binary::InitImmediate> {
-  return At{value.loc(),
-            binary::InitImmediate{ToBinary(context, value->segment),
-                                  ToBinary(context, value->dst, 0)}};
+  return At{value.loc(), binary::InitImmediate{ToBinary(ctx, value->segment),
+                                               ToBinary(ctx, value->dst, 0)}};
 }
 
-auto ToBinary(Context& context, const At<text::LetImmediate>& value)
+auto ToBinary(BinCtx& ctx, const At<text::LetImmediate>& value)
     -> At<binary::LetImmediate> {
   return At{value.loc(),
-            binary::LetImmediate{ToBinary(context, value->block),
-                                 ToBinaryLocalsList(context, value->locals)}};
+            binary::LetImmediate{ToBinary(ctx, value->block),
+                                 ToBinaryLocalsList(ctx, value->locals)}};
 }
 
 u32 GetNaturalAlignment(Opcode opcode) {
@@ -564,7 +550,7 @@ u32 GetAlignLog2(u32 align) {
   return align_log2 - 1;
 }
 
-auto ToBinary(Context& context,
+auto ToBinary(BinCtx& ctx,
               const At<text::MemArgImmediate>& value,
               u32 natural_align) -> At<binary::MemArgImmediate> {
   auto align = value->align
@@ -574,20 +560,20 @@ auto ToBinary(Context& context,
   return At{value.loc(), binary::MemArgImmediate{align, offset}};
 }
 
-auto ToBinary(Context& context, const At<text::RttSubImmediate>& value)
+auto ToBinary(BinCtx& ctx, const At<text::RttSubImmediate>& value)
     -> At<binary::RttSubImmediate> {
-  return At{value.loc(), binary::RttSubImmediate{
-                             value->depth, ToBinary(context, value->types)}};
+  return At{value.loc(),
+            binary::RttSubImmediate{value->depth, ToBinary(ctx, value->types)}};
 }
 
-auto ToBinary(Context& context, const At<text::StructFieldImmediate>& value)
+auto ToBinary(BinCtx& ctx, const At<text::StructFieldImmediate>& value)
     -> At<binary::StructFieldImmediate> {
   return At{value.loc(),
-            binary::StructFieldImmediate{ToBinary(context, value->struct_),
-                                         ToBinary(context, value->field)}};
+            binary::StructFieldImmediate{ToBinary(ctx, value->struct_),
+                                         ToBinary(ctx, value->field)}};
 }
 
-auto ToBinary(Context& context, const At<text::Instruction>& value)
+auto ToBinary(BinCtx& ctx, const At<text::Instruction>& value)
     -> At<binary::Instruction> {
   switch (value->kind()) {
     case text::InstructionKind::None:
@@ -616,65 +602,62 @@ auto ToBinary(Context& context, const At<text::Instruction>& value)
     case text::InstructionKind::Var:
       return At{value.loc(),
                 binary::Instruction{value->opcode,
-                                    ToBinary(context, value->var_immediate())}};
+                                    ToBinary(ctx, value->var_immediate())}};
 
     case text::InstructionKind::Block:
-      return At{value.loc(), binary::Instruction{
-                                 value->opcode,
-                                 ToBinary(context, value->block_immediate())}};
+      return At{value.loc(),
+                binary::Instruction{value->opcode,
+                                    ToBinary(ctx, value->block_immediate())}};
 
     case text::InstructionKind::BrOnExn:
-      return At{
-          value.loc(),
-          binary::Instruction{value->opcode,
-                              ToBinary(context, value->br_on_exn_immediate())}};
+      return At{value.loc(), binary::Instruction{
+                                 value->opcode,
+                                 ToBinary(ctx, value->br_on_exn_immediate())}};
 
     case text::InstructionKind::BrTable:
+      return At{value.loc(),
+                binary::Instruction{
+                    value->opcode, ToBinary(ctx, value->br_table_immediate())}};
+
+    case text::InstructionKind::CallIndirect:
       return At{
           value.loc(),
           binary::Instruction{value->opcode,
-                              ToBinary(context, value->br_table_immediate())}};
-
-    case text::InstructionKind::CallIndirect:
-      return At{value.loc(),
-                binary::Instruction{
-                    value->opcode,
-                    ToBinary(context, value->call_indirect_immediate())}};
+                              ToBinary(ctx, value->call_indirect_immediate())}};
 
     case text::InstructionKind::Copy:
       return At{value.loc(),
-                binary::Instruction{
-                    value->opcode, ToBinary(context, value->copy_immediate())}};
+                binary::Instruction{value->opcode,
+                                    ToBinary(ctx, value->copy_immediate())}};
 
     case text::InstructionKind::Init:
       return At{value.loc(),
-                binary::Instruction{
-                    value->opcode, ToBinary(context, value->init_immediate())}};
+                binary::Instruction{value->opcode,
+                                    ToBinary(ctx, value->init_immediate())}};
 
     case text::InstructionKind::Let:
       return At{value.loc(),
                 binary::Instruction{value->opcode,
-                                    ToBinary(context, value->let_immediate())}};
+                                    ToBinary(ctx, value->let_immediate())}};
 
     case text::InstructionKind::MemArg:
       return At{
           value.loc(),
           binary::Instruction{value->opcode,
-                              ToBinary(context, value->mem_arg_immediate(),
+                              ToBinary(ctx, value->mem_arg_immediate(),
                                        GetNaturalAlignment(*value->opcode))}};
 
     case text::InstructionKind::HeapType:
+      return At{value.loc(), binary::Instruction{
+                                 value->opcode,
+                                 ToBinary(ctx, value->heap_type_immediate())}};
+
+    case text::InstructionKind::Select:
       return At{
           value.loc(),
           binary::Instruction{value->opcode,
-                              ToBinary(context, value->heap_type_immediate())}};
-
-    case text::InstructionKind::Select:
-      return At{value.loc(),
-                binary::Instruction{
-                    value->opcode,
-                    At{value->select_immediate().loc(),
-                       ToBinary(context, *value->select_immediate())}}};
+                              At{value->select_immediate().loc(),
+                                 ToBinary(ctx, *value->select_immediate())}}};
 
     case text::InstructionKind::Shuffle:
       return At{value.loc(),
@@ -685,62 +668,58 @@ auto ToBinary(Context& context, const At<text::Instruction>& value)
                                                  value->simd_lane_immediate()}};
 
     case text::InstructionKind::FuncBind:
-      return At{
-          value.loc(),
-          binary::Instruction{value->opcode,
-                              ToBinary(context, value->func_bind_immediate())}};
+      return At{value.loc(), binary::Instruction{
+                                 value->opcode,
+                                 ToBinary(ctx, value->func_bind_immediate())}};
 
     case text::InstructionKind::BrOnCast:
-      return At{
-          value.loc(),
-          binary::Instruction{
-              value->opcode, ToBinary(context, value->br_on_cast_immediate())}};
+      return At{value.loc(), binary::Instruction{
+                                 value->opcode,
+                                 ToBinary(ctx, value->br_on_cast_immediate())}};
 
     case text::InstructionKind::HeapType2:
-      return At{value.loc(),
-                binary::Instruction{
-                    value->opcode,
-                    ToBinary(context, value->heap_type_2_immediate())}};
-
-    case text::InstructionKind::RttSub:
       return At{
           value.loc(),
           binary::Instruction{value->opcode,
-                              ToBinary(context, value->rtt_sub_immediate())}};
+                              ToBinary(ctx, value->heap_type_2_immediate())}};
+
+    case text::InstructionKind::RttSub:
+      return At{value.loc(),
+                binary::Instruction{value->opcode,
+                                    ToBinary(ctx, value->rtt_sub_immediate())}};
 
     case text::InstructionKind::StructField:
-      return At{value.loc(),
-                binary::Instruction{
-                    value->opcode,
-                    ToBinary(context, value->struct_field_immediate())}};
+      return At{
+          value.loc(),
+          binary::Instruction{value->opcode,
+                              ToBinary(ctx, value->struct_field_immediate())}};
 
     default:
       WASP_UNREACHABLE();
   }
 }
 
-auto ToBinary(Context& context, const text::InstructionList& value)
+auto ToBinary(BinCtx& ctx, const text::InstructionList& value)
     -> binary::InstructionList {
   binary::InstructionList result;
   for (auto&& instr : value) {
-    result.push_back(ToBinary(context, instr));
+    result.push_back(ToBinary(ctx, instr));
   }
   return result;
 }
 
-auto ToBinaryUnpackedExpression(Context& context,
+auto ToBinaryUnpackedExpression(BinCtx& ctx,
                                 const At<text::InstructionList>& value)
     -> At<binary::UnpackedExpression> {
-  return At{value.loc(), binary::UnpackedExpression{ToBinary(context, value)}};
+  return At{value.loc(), binary::UnpackedExpression{ToBinary(ctx, value)}};
 }
 
-auto ToBinaryLocalsList(Context& context,
-                        const At<text::BoundValueTypeList>& value)
+auto ToBinaryLocalsList(BinCtx& ctx, const At<text::BoundValueTypeList>& value)
     -> At<binary::LocalsList> {
   binary::LocalsList result;
   optional<binary::ValueType> local_type;
   for (auto&& bound_local : *value) {
-    auto bound_local_type = ToBinary(context, bound_local->type);
+    auto bound_local_type = ToBinary(ctx, bound_local->type);
     if (local_type && bound_local_type == *local_type) {
       assert(!result.empty());
       // TODO: Combine locations?
@@ -753,7 +732,7 @@ auto ToBinaryLocalsList(Context& context,
   return At{value.loc(), result};
 }
 
-auto ToBinaryCode(Context& context, const At<text::Function>& value)
+auto ToBinaryCode(BinCtx& ctx, const At<text::Function>& value)
     -> OptAt<binary::UnpackedCode> {
   if (value->import) {
     return nullopt;
@@ -761,51 +740,50 @@ auto ToBinaryCode(Context& context, const At<text::Function>& value)
 
   return At{value.loc(),
             binary::UnpackedCode{
-                ToBinaryLocalsList(context, value->locals),
-                ToBinaryUnpackedExpression(context, value->instructions)}};
+                ToBinaryLocalsList(ctx, value->locals),
+                ToBinaryUnpackedExpression(ctx, value->instructions)}};
 }
 
 // Section 11: Data
-auto ToBinary(Context& context, const At<text::DataItemList>& value) -> SpanU8 {
+auto ToBinary(BinCtx& ctx, const At<text::DataItemList>& value) -> SpanU8 {
   Buffer buffer;
   for (auto&& data_item : *value) {
     data_item->AppendToBuffer(buffer);
   }
-  return context.Add(buffer);
+  return ctx.Add(buffer);
 }
 
-auto ToBinary(Context& context, const At<text::DataSegment>& value)
+auto ToBinary(BinCtx& ctx, const At<text::DataSegment>& value)
     -> At<binary::DataSegment> {
   if (value->type == SegmentType::Active) {
-    return At{value.loc(),
-              binary::DataSegment{ToBinary(context, value->memory, 0),
-                                  ToBinary(context, *value->offset),
-                                  ToBinary(context, value->data)}};
+    return At{value.loc(), binary::DataSegment{ToBinary(ctx, value->memory, 0),
+                                               ToBinary(ctx, *value->offset),
+                                               ToBinary(ctx, value->data)}};
   } else {
-    return At{value.loc(), binary::DataSegment{ToBinary(context, value->data)}};
+    return At{value.loc(), binary::DataSegment{ToBinary(ctx, value->data)}};
   }
 }
 
 // Section 12: DataCount
 
 // Section 13: Event
-auto ToBinary(Context& context, const At<text::EventType>& value)
+auto ToBinary(BinCtx& ctx, const At<text::EventType>& value)
     -> At<binary::EventType> {
-  return At{value.loc(),
-            binary::EventType{value->attribute,
-                              ToBinary(context, value->type.type_use)}};
+  return At{
+      value.loc(),
+      binary::EventType{value->attribute, ToBinary(ctx, value->type.type_use)}};
 }
 
-auto ToBinary(Context& context, const At<text::Event>& value)
+auto ToBinary(BinCtx& ctx, const At<text::Event>& value)
     -> OptAt<binary::Event> {
   if (value->import) {
     return nullopt;
   }
-  return At{value.loc(), binary::Event{ToBinary(context, value->desc.type)}};
+  return At{value.loc(), binary::Event{ToBinary(ctx, value->desc.type)}};
 }
 
 // Module
-auto ToBinary(Context& context, const At<text::Module>& value)
+auto ToBinary(BinCtx& ctx, const At<text::Module>& value)
     -> At<binary::Module> {
   binary::Module result;
 
@@ -818,58 +796,58 @@ auto ToBinary(Context& context, const At<text::Module>& value)
   for (auto&& item : *value) {
     switch (item.kind()) {
       case text::ModuleItemKind::DefinedType:
-        result.types.push_back(ToBinary(context, item.defined_type()));
+        result.types.push_back(ToBinary(ctx, item.defined_type()));
         break;
 
       case text::ModuleItemKind::Import:
-        result.imports.push_back(ToBinary(context, item.import()));
+        result.imports.push_back(ToBinary(ctx, item.import()));
         break;
 
       case text::ModuleItemKind::Function: {
         auto&& function = item.function();
-        push_back_opt(result.functions, ToBinary(context, function));
-        push_back_opt(result.codes, ToBinaryCode(context, function));
+        push_back_opt(result.functions, ToBinary(ctx, function));
+        push_back_opt(result.codes, ToBinaryCode(ctx, function));
         break;
       }
 
       case text::ModuleItemKind::Table:
-        push_back_opt(result.tables, ToBinary(context, item.table()));
+        push_back_opt(result.tables, ToBinary(ctx, item.table()));
         break;
 
       case text::ModuleItemKind::Memory:
-        push_back_opt(result.memories, ToBinary(context, item.memory()));
+        push_back_opt(result.memories, ToBinary(ctx, item.memory()));
         break;
 
       case text::ModuleItemKind::Global:
-        push_back_opt(result.globals, ToBinary(context, item.global()));
+        push_back_opt(result.globals, ToBinary(ctx, item.global()));
         break;
 
       case text::ModuleItemKind::Export:
-        result.exports.push_back(ToBinary(context, item.export_()));
+        result.exports.push_back(ToBinary(ctx, item.export_()));
         break;
 
       case text::ModuleItemKind::Start:
         // This will overwrite an existing Start section, if any. That
         // shouldn't happen, since reading multiple start sections means the
         // text is malformed.
-        result.start = ToBinary(context, item.start());
+        result.start = ToBinary(ctx, item.start());
         break;
 
       case text::ModuleItemKind::ElementSegment:
         result.element_segments.push_back(
-            ToBinary(context, item.element_segment()));
+            ToBinary(ctx, item.element_segment()));
         break;
 
       case text::ModuleItemKind::DataSegment:
-        result.data_segments.push_back(ToBinary(context, item.data_segment()));
-        if (context.features.bulk_memory_enabled()) {
+        result.data_segments.push_back(ToBinary(ctx, item.data_segment()));
+        if (ctx.features.bulk_memory_enabled()) {
           result.data_count =
               binary::DataCount{Index(result.data_segments.size())};
         }
         break;
 
       case text::ModuleItemKind::Event:
-        push_back_opt(result.events, ToBinary(context, item.event()));
+        push_back_opt(result.events, ToBinary(ctx, item.event()));
         break;
     }
   }

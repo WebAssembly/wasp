@@ -35,7 +35,7 @@
 #include "wasp/base/optional.h"
 #include "wasp/base/string_view.h"
 #include "wasp/binary/formatters.h"
-#include "wasp/valid/context.h"
+#include "wasp/valid/valid_ctx.h"
 #include "wasp/valid/validate_visitor.h"
 
 namespace wasp {

@@ -20,7 +20,7 @@
 #include "test/binary/constants.h"
 #include "test/binary/test_utils.h"
 #include "test/test_utils.h"
-#include "wasp/binary/read/context.h"
+#include "wasp/binary/read/read_ctx.h"
 
 using namespace ::wasp;
 using namespace ::wasp::binary;
@@ -30,21 +30,21 @@ using namespace ::wasp::binary::test;
 class BinaryReadModuleTest : public ::testing::Test {
  protected:
   void OK(const Module& expected, SpanU8 data) {
-    auto actual = ReadModule(data, context);
+    auto actual = ReadModule(data, ctx);
     ExpectNoErrors(errors);
     ASSERT_TRUE(actual.has_value());
     EXPECT_EQ(expected, actual.value());
   }
 
   void Fail(const ExpectedError& error, SpanU8 data) {
-    auto actual = ReadModule(data, context);
+    auto actual = ReadModule(data, ctx);
     EXPECT_FALSE(actual.has_value());
     ExpectError(error, errors, data);
     errors.Clear();
   }
 
   TestErrors errors;
-  Context context{errors};
+  ReadCtx ctx{errors};
 };
 
 TEST_F(BinaryReadModuleTest, EmptyModule) {
