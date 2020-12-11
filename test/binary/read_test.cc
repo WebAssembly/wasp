@@ -3506,6 +3506,28 @@ TEST_F(BinaryReadTest, Section_PastEnd) {
        "\x01\x01"_su8);
 }
 
+TEST_F(BinaryReadTest, Section_OutOfOrder) {
+  ctx.features.enable_exceptions();
+  ctx.last_section_id = SectionId::Global;
+
+  // Can't use OK/Fail, since reading an out-of-order section produces a valid
+  // value, but also an error.
+  auto data = "\x0d\x01\x00"_su8;
+  auto orig_data = data;
+  auto expected = Section{
+         At{data, KnownSection{At{"\x0d"_su8, SectionId::Event}, "\x00"_su8}}};
+
+  auto actual = Read<Section>(&data, ctx);
+  EXPECT_EQ(0u, data.size());
+  EXPECT_NE(nullptr, actual->loc().data());
+  ASSERT_TRUE(actual.has_value());
+  EXPECT_EQ(expected, **actual);
+
+  ExpectError({{0, "section"},
+               {0, "Section out of order: event cannot occur after global"}},
+              errors, orig_data);
+}
+
 TEST_F(BinaryReadTest, Start) {
   OK(Read<Start>, Start{At{"\x80\x02"_su8, Index{256}}}, "\x80\x02"_su8);
 }
