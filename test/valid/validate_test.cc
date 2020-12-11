@@ -1322,3 +1322,22 @@ TEST(ValidateTest, Module) {
 
   EXPECT_TRUE(Validate(ctx, module));
 }
+
+TEST(ValidateTest, TypeIndexOOBAfterTypeSection) {
+  TestErrors errors;
+  ValidCtx ctx{errors};
+
+  // Declare two types, but don't define them. This could happen if the types
+  // aren't actually defined, or if they could not be parsed.
+  BeginTypeSection(ctx, 2);
+  EndTypeSection(ctx);
+
+  // Make sure that anything that references the type section will correctly
+  // fail to validate.
+  EXPECT_FALSE(Validate(
+      ctx, Import{"", "", EventType{EventAttribute::Exception, Index{0}}}));
+
+  EXPECT_FALSE(Validate(ctx, Function{0}));
+
+  EXPECT_FALSE(Validate(ctx, VT_Ref0));
+}

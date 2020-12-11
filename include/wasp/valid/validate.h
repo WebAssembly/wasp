@@ -30,6 +30,7 @@ enum class RequireDefaultable {
 struct ValidCtx;
 
 bool BeginTypeSection(ValidCtx&, Index type_count);
+bool EndTypeSection(ValidCtx&);
 bool BeginCode(ValidCtx&, Location loc);
 
 bool CheckDefaultable(ValidCtx&,
@@ -71,6 +72,12 @@ bool ValidateIndex(ValidCtx&,
                    const At<Index>& index,
                    Index max,
                    string_view desc);
+bool ValidateTypeIndex(ValidCtx&, const At<Index>& index);
+bool ValidateFunctionIndex(ValidCtx&, const At<Index>& index);
+bool ValidateMemoryIndex(ValidCtx&, const At<Index>& index);
+bool ValidateTableIndex(ValidCtx&, const At<Index>& index);
+bool ValidateGlobalIndex(ValidCtx&, const At<Index>& index);
+bool ValidateEventIndex(ValidCtx&, const At<Index>& index);
 bool Validate(ValidCtx&, const At<binary::Instruction>&);
 bool Validate(ValidCtx&, const At<Limits>&, Index max);
 bool Validate(ValidCtx&, const At<binary::Locals>&, RequireDefaultable);

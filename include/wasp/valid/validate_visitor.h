@@ -34,6 +34,7 @@ struct ValidateVisitor : binary::visit::Visitor {
 
   auto BeginTypeSection(binary::LazyTypeSection) -> Result;
   auto OnType(const At<binary::DefinedType>&) -> Result;
+  auto EndTypeSection(binary::LazyTypeSection) -> Result;
   auto OnImport(const At<binary::Import>&) -> Result;
   auto OnFunction(const At<binary::Function>&) -> Result;
   auto OnTable(const At<binary::Table>&) -> Result;

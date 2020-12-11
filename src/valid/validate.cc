@@ -38,6 +38,19 @@ bool BeginTypeSection(ValidCtx& ctx, Index type_count) {
   return true;
 }
 
+bool EndTypeSection(ValidCtx& ctx) {
+  // Update defined_type_count to the number of types that were actually
+  // defined (not just the number at the beginning of the type section.) We
+  // originally use the type section's count so that we can recursively define
+  // types, but after the type section is complete, there can no longer be
+  // recursive types.
+  // TODO: This will change when the module import feature is implemented,
+  // since it allows the type and import sections (among others) to be
+  // repeated.
+  ctx.defined_type_count = static_cast<Index>(ctx.types.size());
+  return true;
+}
+
 bool BeginCode(ValidCtx& ctx, Location loc) {
   Index func_index = ctx.imported_function_count + ctx.code_count;
   if (func_index >= ctx.functions.size()) {
@@ -52,7 +65,7 @@ bool BeginCode(ValidCtx& ctx, Location loc) {
   ctx.label_stack.clear();
   ctx.locals.Reset();
   // Don't validate the index, should have already been validated at this point.
-  if (function.type_index < ctx.defined_type_count) {
+  if (function.type_index < ctx.types.size()) {
     const auto& defined_type = ctx.types[function.type_index];
     if (!defined_type.is_function_type()) {
       ctx.errors->OnError(loc, concat("Function must have a function type."));
@@ -185,9 +198,7 @@ bool Validate(ValidCtx& ctx,
 
       case Opcode::RefFunc: {
         auto index = instruction->index_immediate();
-        if (!ValidateIndex(new_context, index,
-                           static_cast<Index>(new_context.functions.size()),
-                           "func index")) {
+        if (!ValidateFunctionIndex(new_context, index)) {
           return false;
         }
 
@@ -226,9 +237,7 @@ bool Validate(ValidCtx& ctx, const At<binary::DataSegment>& value) {
   ErrorsContextGuard guard{*ctx.errors, value.loc(), "data segment"};
   bool valid = true;
   if (value->memory_index) {
-    valid &=
-        ValidateIndex(ctx, *value->memory_index,
-                      static_cast<Index>(ctx.memories.size()), "memory index");
+    valid &= ValidateMemoryIndex(ctx, *value->memory_index);
   }
   if (value->offset) {
     valid &= Validate(ctx, *value->offset, binary::ValueType::I32_NoLocation(),
@@ -258,8 +267,7 @@ bool Validate(ValidCtx& ctx,
     case Opcode::RefFunc: {
       actual_type = binary::ReferenceType::Funcref_NoLocation();
       auto index = instruction->index_immediate();
-      if (!ValidateIndex(ctx, index, static_cast<Index>(ctx.functions.size()),
-                         "function index")) {
+      if (!ValidateFunctionIndex(ctx, index)) {
         valid = false;
       }
       ctx.declared_functions.insert(index);
@@ -283,9 +291,7 @@ bool Validate(ValidCtx& ctx, const At<binary::ElementSegment>& value) {
   ctx.element_segments.push_back(value->elemtype());
   bool valid = true;
   if (value->table_index) {
-    valid &=
-        ValidateIndex(ctx, *value->table_index,
-                      static_cast<Index>(ctx.tables.size()), "table index");
+    valid &= ValidateTableIndex(ctx, *value->table_index);
   }
   if (value->offset) {
     valid &= Validate(ctx, *value->offset, binary::ValueType::I32_NoLocation(),
@@ -344,28 +350,20 @@ bool Validate(ValidCtx& ctx, const At<binary::Export>& value) {
 
   switch (value->kind) {
     case ExternalKind::Function:
-      valid &= ValidateIndex(ctx, value->index,
-                             static_cast<Index>(ctx.functions.size()),
-                             "function index");
+      valid &= ValidateFunctionIndex(ctx, value->index);
       ctx.declared_functions.insert(value->index);
       break;
 
     case ExternalKind::Table:
-      valid &=
-          ValidateIndex(ctx, value->index,
-                        static_cast<Index>(ctx.tables.size()), "table index");
+      valid &= ValidateTableIndex(ctx, value->index);
       break;
 
     case ExternalKind::Memory:
-      valid &= ValidateIndex(ctx, value->index,
-                             static_cast<Index>(ctx.memories.size()),
-                             "memory index");
+      valid &= ValidateMemoryIndex(ctx, value->index);
       break;
 
     case ExternalKind::Global:
-      if (ValidateIndex(ctx, value->index,
-                        static_cast<Index>(ctx.globals.size()),
-                        "global index")) {
+      if (ValidateGlobalIndex(ctx, value->index)) {
         const auto& global = ctx.globals[value->index];
         if (global.mut == Mutability::Var &&
             !ctx.features.mutable_globals_enabled()) {
@@ -379,9 +377,7 @@ bool Validate(ValidCtx& ctx, const At<binary::Export>& value) {
       break;
 
     case ExternalKind::Event:
-      valid &=
-          ValidateIndex(ctx, value->index,
-                        static_cast<Index>(ctx.events.size()), "event index");
+      valid &= ValidateEventIndex(ctx, value->index);
       break;
 
     default:
@@ -398,11 +394,11 @@ bool Validate(ValidCtx& ctx, const At<binary::Event>& value) {
 bool Validate(ValidCtx& ctx, const At<binary::EventType>& value) {
   ErrorsContextGuard guard{*ctx.errors, value.loc(), "event type"};
   ctx.events.push_back(value);
-  if (!ValidateIndex(ctx, value->type_index, ctx.defined_type_count,
-                     "event type index")) {
+  if (!ValidateTypeIndex(ctx, value->type_index)) {
     return false;
   }
 
+  assert(value->type_index < ctx.types.size());
   const auto& defined_type = ctx.types[value->type_index];
   if (!defined_type.is_function_type()) {
     ctx.errors->OnError(value.loc(),
@@ -436,11 +432,11 @@ bool Validate(ValidCtx& ctx, const binary::FieldTypeList& values) {
 bool Validate(ValidCtx& ctx, const At<binary::Function>& value) {
   ErrorsContextGuard guard{*ctx.errors, value.loc(), "function"};
   ctx.functions.push_back(value);
-  if (!ValidateIndex(ctx, value->type_index, ctx.defined_type_count,
-                     "function type index")) {
+  if (!ValidateTypeIndex(ctx, value->type_index)) {
     return false;
   }
 
+  assert(value->type_index < ctx.types.size());
   const auto& defined_type = ctx.types[value->type_index];
   if (!defined_type.is_function_type()) {
     ctx.errors->OnError(value.loc(),
@@ -486,8 +482,7 @@ bool Validate(ValidCtx& ctx, const At<binary::GlobalType>& value) {
 bool Validate(ValidCtx& ctx, const At<binary::HeapType>& value) {
   ErrorsContextGuard guard{*ctx.errors, value.loc(), "heap type"};
   if (value->is_index()) {
-    return ValidateIndex(ctx, value->index(), ctx.defined_type_count,
-                         "heap type index");
+    return ValidateTypeIndex(ctx, value->index());
   }
   return true;
 }
@@ -543,6 +538,39 @@ bool ValidateIndex(ValidCtx& ctx,
     return false;
   }
   return true;
+}
+
+bool ValidateTypeIndex(ValidCtx& ctx, const At<Index>& index) {
+  // The defined_type_count is used here instead of ctx.types.size(), since the
+  // type section can reference type indexes that not have yet been defined.
+  // After the type section is finished, this value is updated to the final
+  // type count.
+  return ValidateIndex(ctx, index, ctx.defined_type_count, "type index");
+}
+
+bool ValidateFunctionIndex(ValidCtx& ctx, const At<Index>& index) {
+  return ValidateIndex(ctx, index, static_cast<Index>(ctx.functions.size()),
+                       "function index");
+}
+
+bool ValidateMemoryIndex(ValidCtx& ctx, const At<Index>& index) {
+  return ValidateIndex(ctx, index, static_cast<Index>(ctx.memories.size()),
+                       "memory index");
+}
+
+bool ValidateTableIndex(ValidCtx& ctx, const At<Index>& index) {
+  return ValidateIndex(ctx, index, static_cast<Index>(ctx.tables.size()),
+                       "table index");
+}
+
+bool ValidateGlobalIndex(ValidCtx& ctx, const At<Index>& index) {
+  return ValidateIndex(ctx, index, static_cast<Index>(ctx.globals.size()),
+                       "global index");
+}
+
+bool ValidateEventIndex(ValidCtx& ctx, const At<Index>& index) {
+  return ValidateIndex(ctx, index, static_cast<Index>(ctx.events.size()),
+                       "event index");
 }
 
 bool Validate(ValidCtx& ctx, const At<Limits>& value, Index max) {
@@ -630,15 +658,13 @@ bool Validate(ValidCtx& ctx, const At<binary::RefType>& value) {
 
 bool Validate(ValidCtx& ctx, const At<binary::Start>& value) {
   ErrorsContextGuard guard{*ctx.errors, value.loc(), "start"};
-  if (!ValidateIndex(ctx, value->func_index,
-                     static_cast<Index>(ctx.functions.size()),
-                     "function index")) {
+  if (!ValidateFunctionIndex(ctx, value->func_index)) {
     return false;
   }
 
   bool valid = true;
   auto function = ctx.functions[value->func_index];
-  if (function.type_index < ctx.defined_type_count) {
+  if (function.type_index < ctx.types.size()) {
     const auto& defined_type = ctx.types[function.type_index];
     if (!defined_type.is_function_type()) {
       ctx.errors->OnError(value.loc(),
@@ -765,6 +791,7 @@ bool Validate(ValidCtx& ctx, const binary::Module& value) {
   bool valid = true;
   valid &= BeginTypeSection(ctx, static_cast<Index>(value.types.size()));
   valid &= ValidateKnownSection(ctx, value.types);
+  valid &= EndTypeSection(ctx);
   valid &= ValidateKnownSection(ctx, value.imports);
   valid &= ValidateKnownSection(ctx, value.functions);
   valid &= ValidateKnownSection(ctx, value.tables);
