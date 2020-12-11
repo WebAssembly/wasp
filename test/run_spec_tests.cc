@@ -217,7 +217,7 @@ void Tool::OnScriptModuleCommand(const text::ScriptModule& script_module) {
   if (script_module.has_module()) {
     auto text_module = script_module.module();
     text::Desugar(text_module);
-    convert::BinCtx convert_context;
+    convert::BinCtx convert_context{features};
     auto binary_module = convert::ToBinary(convert_context, text_module);
     valid::ValidCtx valid_context{features, errors};
     Validate(valid_context, binary_module);
