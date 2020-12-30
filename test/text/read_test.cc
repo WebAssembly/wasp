@@ -964,18 +964,14 @@ TEST_F(TextReadTest, PlainInstruction_MemArg) {
 }
 
 TEST_F(TextReadTest, PlainInstruction_Select) {
-  OK(ReadPlainInstruction,
-     I{At{"select"_su8, O::Select}, At{""_su8, SelectImmediate{}}},
-     "select"_su8);
+  OK(ReadPlainInstruction, I{At{"select"_su8, O::Select}}, "select"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_Select_reference_types) {
   ctx.features.enable_reference_types();
 
   // select w/o types
-  OK(ReadPlainInstruction,
-     I{At{"select"_su8, O::Select}, At{""_su8, SelectImmediate{}}},
-     "select"_su8);
+  OK(ReadPlainInstruction, I{At{"select"_su8, O::Select}}, "select"_su8);
 
   // select w/ one type
   OK(ReadPlainInstruction,

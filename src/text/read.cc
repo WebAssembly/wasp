@@ -1716,17 +1716,18 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, ReadCtx& ctx)
       WASP_TRY(CheckOpcodeEnabled(token, ctx));
       tokenizer.Read();
       At<Opcode> opcode = token.opcode();
-      At<ValueTypeList> immediate;
       if (ctx.features.reference_types_enabled()) {
         LocationGuard immediate_guard{tokenizer};
         WASP_TRY_READ(value_type_list, ReadResultList(tokenizer, ctx));
-        immediate = At{immediate_guard.loc(), value_type_list};
+
         if (!value_type_list.empty()) {
           // Typed select has a different opcode.
-          opcode = At{opcode.loc(), Opcode::SelectT};
+          return At{guard.loc(),
+                    Instruction{At{opcode.loc(), Opcode::SelectT},
+                                At{immediate_guard.loc(), value_type_list}}};
         }
       }
-      return At{guard.loc(), Instruction{opcode, immediate}};
+      return At{guard.loc(), Instruction{opcode}};
     }
 
     case TokenType::SimdConstInstr: {
