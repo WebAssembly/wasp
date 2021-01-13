@@ -712,6 +712,16 @@ TEST(TextWriteTest, Function_DontOverDedent) {
       Function{{}, {}, InstructionList{I{O::End}, I{O::End}, I{O::End}}, {}});
 }
 
+TEST(TextWriteTest, Function_IndentLet) {
+  ExpectWrite("(func\n  let\n    nop\n  end)"_sv,
+              Function{{},
+                       {},
+                       InstructionList{I{O::Let, LetImmediate{}}, I{O::Nop},
+                                       I{O::End}, I{O::End}},
+                       {}});
+}
+
+
 TEST(TextWriteTest, ElementExpressionList) {
   ExpectWrite("(ref.null) (ref.func 0)"_sv,
               ElementExpressionList{

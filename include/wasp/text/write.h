@@ -567,8 +567,8 @@ Iterator WriteWithNewlines(WriteCtx& ctx,
 
     out = Write(ctx, instr, out);
 
-    if (instr->has_block_immediate() || opcode == Opcode::Else ||
-        opcode == Opcode::Catch) {
+    if (instr->has_block_immediate() || instr->has_let_immediate() ||
+        opcode == Opcode::Else || opcode == Opcode::Catch) {
       ctx.Indent();
     }
     ctx.Newline();

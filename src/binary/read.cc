@@ -1227,6 +1227,7 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, Tag<Instruction>) {
     // Let immediate.
     case Opcode::Let: {
       WASP_TRY_READ(immediate, Read<LetImmediate>(data, ctx));
+      ctx.open_blocks.push_back(opcode);
       return At{guard.range(data), Instruction{opcode, immediate}};
     }
 
