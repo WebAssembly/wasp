@@ -1041,7 +1041,8 @@ void Tool::Disassemble(SectionIndex section_index,
     }
     if (opcode == Opcode::Block || opcode == Opcode::If ||
         opcode == Opcode::Loop || opcode == Opcode::Else ||
-        opcode == Opcode::Catch || opcode == Opcode::Try) {
+        opcode == Opcode::Catch || opcode == Opcode::Try ||
+        opcode == Opcode::Let) {
       indent += 2;
     }
   }

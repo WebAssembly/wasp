@@ -1817,6 +1817,27 @@ TEST_F(BinaryReadTest, InstructionList_TryNoEnd) {
        "\x06\x40\07\x0b"_su8);
 }
 
+TEST_F(BinaryReadTest, InstructionList_LetEnd) {
+  ctx.features.enable_function_references();
+
+  OK(Read<InstructionList>,
+     InstructionList{
+         At{"\x17\x40\x00"_su8,
+            I{At{"\x17"_su8, O::Let},
+              At{"\x40\x00"_su8, LetImmediate{At{"\x40"_su8, BT_Void},
+                                              At{"\x00"_su8, LocalsList{}}}}}},
+         At{"\x0b"_su8, I{At{"\x0b"_su8, O::End}}},
+     },
+     "\x17\x40\x00\x0b\x0b"_su8);
+}
+
+TEST_F(BinaryReadTest, InstructionList_LetNoEnd) {
+  ctx.features.enable_function_references();
+
+  Fail(Read<InstructionList>, {{4, "opcode"}, {4, "Unable to read u8"}},
+       "\x17\x40\x00\x0b"_su8);
+}
+
 TEST_F(BinaryReadTest, Instruction_tail_call) {
   ctx.features.enable_tail_call();
 
