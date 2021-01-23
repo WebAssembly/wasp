@@ -78,7 +78,7 @@ class SameTypes {
 
 class MatchTypes {
  public:
-  void Reset(Index);
+  void Reset();
 
   auto Get(Index, Index) -> optional<bool>;
   void Assume(Index, Index);

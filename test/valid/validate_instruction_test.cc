@@ -66,7 +66,6 @@ class ValidateInstructionTest : public ::testing::Test {
   void IncrementDefinedTypeCount() {
     ctx.defined_type_count++;
     ctx.same_types.Reset(ctx.defined_type_count);
-    ctx.match_types.Reset(ctx.defined_type_count);
   }
 
   Index AddFunctionType(const FunctionType& function_type) {

@@ -109,7 +109,7 @@ void SameTypes::MaybeSwapIndexes(Index& lhs, Index& rhs) {
   }
 }
 
-void MatchTypes::Reset(Index size) {
+void MatchTypes::Reset() {
   assume_.clear();
 }
 
