@@ -109,12 +109,19 @@ void SameTypes::MaybeSwapIndexes(Index& lhs, Index& rhs) {
   }
 }
 
-void MatchTypes::Reset() {
+void MatchTypes::Reset(Index num_types) {
   assume_.clear();
+  num_types_ = num_types;
 }
 
 auto MatchTypes::Get(Index expected, Index actual) -> optional<bool> {
   auto iter = assume_.find({expected, actual});
+  if (expected >= num_types_ || actual >= num_types_) {
+    // If the indexes are invalid, then there's no point in checking whether
+    // they're equal.
+    return false;
+  }
+
   if (iter == assume_.end()) {
     return nullopt;
   }

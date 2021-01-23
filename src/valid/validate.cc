@@ -34,7 +34,7 @@ namespace wasp::valid {
 bool BeginTypeSection(ValidCtx& ctx, Index type_count) {
   ctx.defined_type_count = type_count;
   ctx.same_types.Reset(type_count);
-  ctx.match_types.Reset();
+  ctx.match_types.Reset(type_count);
   return true;
 }
 

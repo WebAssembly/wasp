@@ -78,7 +78,7 @@ class SameTypes {
 
 class MatchTypes {
  public:
-  void Reset();
+  void Reset(Index);
 
   auto Get(Index, Index) -> optional<bool>;
   void Assume(Index, Index);
@@ -86,6 +86,7 @@ class MatchTypes {
 
  private:
   std::map<std::pair<Index, Index>, bool> assume_;
+  Index num_types_ = 0;
 };
 
 struct ValidCtx {
