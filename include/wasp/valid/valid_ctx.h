@@ -61,7 +61,7 @@ struct Label {
   bool unreachable;
 };
 
-class TypeRelationSet {
+class SameTypes {
  public:
   void Reset(Index);
 
@@ -73,6 +73,18 @@ class TypeRelationSet {
   void MaybeSwapIndexes(Index&, Index&);
 
   DisjointSet disjoint_set_;
+  std::map<std::pair<Index, Index>, bool> assume_;
+};
+
+class MatchTypes {
+ public:
+  void Reset(Index);
+
+  auto Get(Index, Index) -> optional<bool>;
+  void Assume(Index, Index);
+  void Resolve(Index, Index, bool);
+
+ private:
   std::map<std::pair<Index, Index>, bool> assume_;
 };
 
@@ -109,8 +121,8 @@ struct ValidCtx {
   std::set<string_view> export_names;
   std::set<Index> declared_functions;
 
-  TypeRelationSet same_types;
-  TypeRelationSet match_types;
+  SameTypes same_types;
+  MatchTypes match_types;
 };
 
 }  // namespace wasp::valid
