@@ -604,10 +604,10 @@ TEST_F(TextReadTest, StructType) {
 TEST_F(TextReadTest, ArrayType) {
   OK(ReadArrayType,
      ArrayType{At{
-         "(field i32)"_su8,
+         "i32"_su8,
          FieldType{nullopt, At{"i32"_su8, StorageType{At{"i32"_su8, VT_I32}}},
                    Mutability::Const}}},
-     "(array (field i32))"_su8);
+     "(array i32)"_su8);
 }
 
 TEST_F(TextReadTest, DefinedType) {
@@ -635,13 +635,13 @@ TEST_F(TextReadTest, DefinedType_GC) {
   OK(ReadDefinedType,
      DefinedType{
          nullopt,
-         At{"(array (field i32))"_su8,
+         At{"(array i32)"_su8,
             ArrayType{
-                At{"(field i32)"_su8,
+                At{"i32"_su8,
                    FieldType{nullopt,
                              At{"i32"_su8, StorageType{At{"i32"_su8, VT_I32}}},
                              Mutability::Const}}}}},
-     "(type (array (field i32)))"_su8);
+     "(type (array i32))"_su8);
 
   // Recursive types
   OK(ReadDefinedType,
@@ -658,13 +658,13 @@ TEST_F(TextReadTest, DefinedType_GC) {
   OK(ReadDefinedType,
      DefinedType{
          At{"$t"_su8, "$t"_sv},
-         At{"(array (field (ref $t)))"_su8,
-            ArrayType{At{"(field (ref $t))"_su8,
+         At{"(array (ref $t))"_su8,
+            ArrayType{At{"(ref $t)"_su8,
                          FieldType{nullopt,
                                    At{"(ref $t)"_su8,
                                       StorageType{At{"(ref $t)"_su8, VT_RefT}}},
                                    Mutability::Const}}}}},
-     "(type $t (array (field (ref $t))))"_su8);
+     "(type $t (array (ref $t)))"_su8);
 }
 
 
