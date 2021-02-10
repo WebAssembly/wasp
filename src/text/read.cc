@@ -442,7 +442,7 @@ auto ReadStructType(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<StructType> {
 auto ReadArrayType(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<ArrayType> {
   LocationGuard guard{tokenizer};
   WASP_TRY(ExpectLpar(tokenizer, ctx, TokenType::Array));
-  WASP_TRY_READ(field, ReadFieldType(tokenizer, ctx));
+  WASP_TRY_READ(field, ReadFieldTypeContents(tokenizer, ctx));
   WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));
   return At{guard.loc(), ArrayType{field}};
 }
