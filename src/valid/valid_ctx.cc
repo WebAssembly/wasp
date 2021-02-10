@@ -61,12 +61,12 @@ bool ValidCtx::IsArrayType(Index index) const {
   return index < types.size() && types[index].is_array_type();
 }
 
-void TypeRelationSet::Reset(Index size) {
+void SameTypes::Reset(Index size) {
   disjoint_set_.Reset(size);
   assume_.clear();
 }
 
-auto TypeRelationSet::Get(Index expected, Index actual) -> optional<bool> {
+auto SameTypes::Get(Index expected, Index actual) -> optional<bool> {
   MaybeSwapIndexes(expected, actual);
   if (!(disjoint_set_.IsValid(expected) && disjoint_set_.IsValid(actual))) {
     // If the indexes are invalid, then there's no point in checking whether
@@ -86,12 +86,12 @@ auto TypeRelationSet::Get(Index expected, Index actual) -> optional<bool> {
   return iter->second;
 }
 
-void TypeRelationSet::Assume(Index expected, Index actual) {
+void SameTypes::Assume(Index expected, Index actual) {
   MaybeSwapIndexes(expected, actual);
   assume_.insert({{expected, actual}, true});
 }
 
-void TypeRelationSet::Resolve(Index expected, Index actual, bool is_same) {
+void SameTypes::Resolve(Index expected, Index actual, bool is_same) {
   MaybeSwapIndexes(expected, actual);
   auto iter = assume_.find({expected, actual});
   assert(iter != assume_.end());
@@ -103,9 +103,41 @@ void TypeRelationSet::Resolve(Index expected, Index actual, bool is_same) {
   }
 }
 
-void TypeRelationSet::MaybeSwapIndexes(Index& lhs, Index& rhs) {
+void SameTypes::MaybeSwapIndexes(Index& lhs, Index& rhs) {
   if (lhs > rhs) {
     std::swap(lhs, rhs);
+  }
+}
+
+void MatchTypes::Reset(Index num_types) {
+  assume_.clear();
+  num_types_ = num_types;
+}
+
+auto MatchTypes::Get(Index expected, Index actual) -> optional<bool> {
+  auto iter = assume_.find({expected, actual});
+  if (expected >= num_types_ || actual >= num_types_) {
+    // If the indexes are invalid, then there's no point in checking whether
+    // they're equal.
+    return false;
+  }
+
+  if (iter == assume_.end()) {
+    return nullopt;
+  }
+
+  return iter->second;
+}
+
+void MatchTypes::Assume(Index expected, Index actual) {
+  assume_.insert({{expected, actual}, true});
+}
+
+void MatchTypes::Resolve(Index expected, Index actual, bool is_same) {
+  auto iter = assume_.find({expected, actual});
+  assert(iter != assume_.end());
+  if (!is_same) {
+    iter->second = false;
   }
 }
 

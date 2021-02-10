@@ -53,14 +53,20 @@ class ValidMatchTest : public ::testing::Test {
   void PushFunctionType(const ValueTypeList& params,
                         const ValueTypeList& results) {
     ctx.types.push_back(DefinedType{FunctionType{params, results}});
+    ctx.same_types.Reset(ctx.types.size());
+    ctx.match_types.Reset(ctx.types.size());
   }
 
   void PushStructType(const StructType& struct_type) {
     ctx.types.push_back(DefinedType{struct_type});
+    ctx.same_types.Reset(ctx.types.size());
+    ctx.match_types.Reset(ctx.types.size());
   }
 
   void PushArrayType(const ArrayType& array_type) {
     ctx.types.push_back(DefinedType{array_type});
+    ctx.same_types.Reset(ctx.types.size());
+    ctx.match_types.Reset(ctx.types.size());
   }
 
   auto MakeDiagonalMatrix(size_t size) -> std::vector<Comparison>  {
@@ -265,7 +271,6 @@ TEST_F(ValidMatchTest, IsSame_ValueType_Simple) {
 }
 
 TEST_F(ValidMatchTest, IsSame_ValueType_Var) {
-  ctx.same_types.Reset(3);
   PushFunctionType({VT_F32}, {});  // 0
   PushFunctionType({VT_F32}, {});  // 1
   PushFunctionType({VT_I32}, {});  // 2
@@ -276,7 +281,6 @@ TEST_F(ValidMatchTest, IsSame_ValueType_Var) {
 }
 
 TEST_F(ValidMatchTest, IsSame_ValueType_VarRecursive) {
-  ctx.same_types.Reset(3);
   PushFunctionType({}, {VT_Ref0});        // 0
   PushFunctionType({}, {VT_Ref1});        // 1
   PushFunctionType({VT_I32}, {VT_Ref0});  // 2
@@ -287,7 +291,6 @@ TEST_F(ValidMatchTest, IsSame_ValueType_VarRecursive) {
 }
 
 TEST_F(ValidMatchTest, IsSame_ValueType_VarMutuallyRecursive) {
-  ctx.same_types.Reset(3);
   PushFunctionType({VT_I32}, {VT_Ref0});  // 0
   PushFunctionType({VT_I32}, {VT_Ref2});  // 1
   PushFunctionType({VT_I32}, {VT_Ref1});  // 2
@@ -702,4 +705,13 @@ TEST_F(ValidMatchTest, IsMatch_DefinedType) {
       DefinedType{ArrayType{FieldType{StorageType{VT_I32}, Mutability::Const}}},
   };
   IsMatchDistinct(types);
+}
+
+TEST_F(ValidMatchTest, IsMatch_HeapType_Ordering) {
+  PushStructType(StructType{});  // 0
+  PushStructType(StructType{
+      FieldTypeList{FieldType{StorageType{VT_I32}, Mutability::Const}}});  // 1
+
+  EXPECT_TRUE(IsMatch(ctx, HT_0, HT_1));
+  EXPECT_FALSE(IsMatch(ctx, HT_1, HT_0));
 }
