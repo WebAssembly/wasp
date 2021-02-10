@@ -54,16 +54,19 @@ class ValidMatchTest : public ::testing::Test {
                         const ValueTypeList& results) {
     ctx.types.push_back(DefinedType{FunctionType{params, results}});
     ctx.same_types.Reset(ctx.types.size());
+    ctx.match_types.Reset(ctx.types.size());
   }
 
   void PushStructType(const StructType& struct_type) {
     ctx.types.push_back(DefinedType{struct_type});
     ctx.same_types.Reset(ctx.types.size());
+    ctx.match_types.Reset(ctx.types.size());
   }
 
   void PushArrayType(const ArrayType& array_type) {
     ctx.types.push_back(DefinedType{array_type});
     ctx.same_types.Reset(ctx.types.size());
+    ctx.match_types.Reset(ctx.types.size());
   }
 
   auto MakeDiagonalMatrix(size_t size) -> std::vector<Comparison>  {
