@@ -350,13 +350,6 @@ Iterator Write(WriteCtx& ctx, const BrOnCastImmediate& value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteCtx& ctx, const BrOnExnImmediate& value, Iterator out) {
-  out = Write(ctx, *value.target, out);
-  out = Write(ctx, *value.event, out);
-  return out;
-}
-
-template <typename Iterator>
 Iterator Write(WriteCtx& ctx, const BrTableImmediate& value, Iterator out) {
   out = Write(ctx, value.targets, out);
   out = Write(ctx, *value.default_target, out);
@@ -482,10 +475,6 @@ Iterator Write(WriteCtx& ctx, const Instruction& value, Iterator out) {
 
     case InstructionKind::Block:
       out = Write(ctx, value.block_immediate(), out);
-      break;
-
-    case InstructionKind::BrOnExn:
-      out = Write(ctx, value.br_on_exn_immediate(), out);
       break;
 
     case InstructionKind::BrTable:

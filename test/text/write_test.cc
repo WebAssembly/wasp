@@ -76,7 +76,6 @@ TEST(TextWriteTest, TextList) {
 TEST(TextWriteTest, ReferenceType) {
   ExpectWrite("externref"_sv, RT_Externref);
   ExpectWrite("funcref"_sv, RT_Funcref);
-  ExpectWrite("exnref"_sv, RT_Exnref);
   ExpectWrite("eqref"_sv, RT_Eqref);
   ExpectWrite("i31ref"_sv, RT_I31ref);
   ExpectWrite("anyref"_sv, RT_Anyref);
@@ -84,8 +83,6 @@ TEST(TextWriteTest, ReferenceType) {
   ExpectWrite("(ref null func)"_sv, RT_RefNullFunc);
   ExpectWrite("(ref extern)"_sv, RT_RefExtern);
   ExpectWrite("(ref null extern)"_sv, RT_RefNullExtern);
-  ExpectWrite("(ref exn)"_sv, RT_RefExn);
-  ExpectWrite("(ref null exn)"_sv, RT_RefNullExn);
   ExpectWrite("(ref eq)"_sv, RT_RefEq);
   ExpectWrite("(ref null eq)"_sv, RT_RefNullEq);
   ExpectWrite("(ref i31)"_sv, RT_RefI31);
@@ -101,7 +98,6 @@ TEST(TextWriteTest, ReferenceType) {
 TEST(TextWriteTest, Rtt) {
   ExpectWrite("(rtt 0 func)"_sv, RTT_0_Func);
   ExpectWrite("(rtt 0 extern)"_sv, RTT_0_Extern);
-  ExpectWrite("(rtt 0 exn)"_sv, RTT_0_Exn);
   ExpectWrite("(rtt 0 eq)"_sv, RTT_0_Eq);
   ExpectWrite("(rtt 0 i31)"_sv, RTT_0_I31);
   ExpectWrite("(rtt 0 any)"_sv, RTT_0_Any);
@@ -118,7 +114,6 @@ TEST(TextWriteTest, ValueType) {
   // ReferenceType
   ExpectWrite("externref"_sv, VT_Externref);
   ExpectWrite("funcref"_sv, VT_Funcref);
-  ExpectWrite("exnref"_sv, VT_Exnref);
   ExpectWrite("eqref"_sv, VT_Eqref);
   ExpectWrite("i31ref"_sv, VT_I31ref);
   ExpectWrite("anyref"_sv, VT_Anyref);
@@ -126,8 +121,6 @@ TEST(TextWriteTest, ValueType) {
   ExpectWrite("(ref null func)"_sv, VT_RefNullFunc);
   ExpectWrite("(ref extern)"_sv, VT_RefExtern);
   ExpectWrite("(ref null extern)"_sv, VT_RefNullExtern);
-  ExpectWrite("(ref exn)"_sv, VT_RefExn);
-  ExpectWrite("(ref null exn)"_sv, VT_RefNullExn);
   ExpectWrite("(ref eq)"_sv, VT_RefEq);
   ExpectWrite("(ref null eq)"_sv, VT_RefNullEq);
   ExpectWrite("(ref i31)"_sv, VT_RefI31);
@@ -142,7 +135,6 @@ TEST(TextWriteTest, ValueType) {
   // Rtt
   ExpectWrite("(rtt 0 func)"_sv, VT_RTT_0_Func);
   ExpectWrite("(rtt 0 extern)"_sv, VT_RTT_0_Extern);
-  ExpectWrite("(rtt 0 exn)"_sv, VT_RTT_0_Exn);
   ExpectWrite("(rtt 0 eq)"_sv, VT_RTT_0_Eq);
   ExpectWrite("(rtt 0 i31)"_sv, VT_RTT_0_I31);
   ExpectWrite("(rtt 0 any)"_sv, VT_RTT_0_Any);
@@ -239,13 +231,6 @@ TEST(TextWriteTest, BrOnCastImmediate) {
   ExpectWrite(
       "$l func 0"_sv,
       BrOnCastImmediate{Var{"$l"_sv}, HeapType2Immediate{HT_Func, HT_0}});
-}
-
-TEST(TextWriteTest, BrOnExnImmediate) {
-  ExpectWrite("$l $e"_sv, BrOnExnImmediate{
-                              Var{"$l"_sv},
-                              Var{"$e"_sv},
-                          });
 }
 
 TEST(TextWriteTest, BrTableImmediate) {
@@ -360,10 +345,6 @@ TEST(TextWriteTest, Instruction) {
   // BrOnCastImmediate
   ExpectWrite("br_on_cast $l"_sv, I{O::BrOnCast, Var{"$l"_sv}});
 #endif
-
-  // BrOnExnImmediate
-  ExpectWrite("br_on_exn $l $e"_sv,
-              I{O::BrOnExn, BrOnExnImmediate{Var{"$l"_sv}, Var{"$e"_sv}}});
 
   // BrTableImmediate
   ExpectWrite(

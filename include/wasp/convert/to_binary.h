@@ -103,7 +103,6 @@ auto ToBinary(BinCtx&, const At<text::ElementSegment>&) -> At<binary::ElementSeg
 // Section 10: Code
 auto ToBinary(BinCtx&, const At<text::BlockImmediate>&) -> At<binary::BlockType>;
 auto ToBinary(BinCtx&, const At<text::BrOnCastImmediate>&) -> At<binary::BrOnCastImmediate>;
-auto ToBinary(BinCtx&, const At<text::BrOnExnImmediate>&) -> At<binary::BrOnExnImmediate>;
 auto ToBinary(BinCtx&, const At<text::BrTableImmediate>&) -> At<binary::BrTableImmediate>;
 auto ToBinary(BinCtx&, const At<text::CallIndirectImmediate>&) -> At<binary::CallIndirectImmediate>;
 auto ToBinary(BinCtx&, const At<text::CopyImmediate>&) -> At<binary::CopyImmediate>;

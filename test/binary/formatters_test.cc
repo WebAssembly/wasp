@@ -33,8 +33,6 @@ TEST(BinaryFormattersTest, RefType) {
   EXPECT_EQ(R"((ref null func))"_sv, concat(RefType_NullFunc));
   EXPECT_EQ(R"((ref extern))"_sv, concat(RefType_Extern));
   EXPECT_EQ(R"((ref null extern))"_sv, concat(RefType_NullExtern));
-  EXPECT_EQ(R"((ref exn))"_sv, concat(RefType_Exn));
-  EXPECT_EQ(R"((ref null exn))"_sv, concat(RefType_NullExn));
   EXPECT_EQ(R"((ref eq))"_sv, concat(RefType_Eq));
   EXPECT_EQ(R"((ref null eq))"_sv, concat(RefType_NullEq));
   EXPECT_EQ(R"((ref i31))"_sv, concat(RefType_I31));
@@ -50,7 +48,6 @@ TEST(BinaryFormattersTest, ReferenceType) {
   // ReferenceKind
   EXPECT_EQ(R"(externref)", concat(RT_Externref));
   EXPECT_EQ(R"(funcref)", concat(RT_Funcref));
-  EXPECT_EQ(R"(exnref)", concat(RT_Exnref));
   EXPECT_EQ(R"(eqref)", concat(RT_Eqref));
   EXPECT_EQ(R"(i31ref)", concat(RT_I31ref));
   EXPECT_EQ(R"(anyref)", concat(RT_Anyref));
@@ -89,7 +86,6 @@ TEST(BinaryFormattersTest, ValueType) {
   // ReferenceType
   EXPECT_EQ(R"(externref)", concat(VT_Externref));
   EXPECT_EQ(R"(funcref)", concat(VT_Funcref));
-  EXPECT_EQ(R"(exnref)", concat(VT_Exnref));
   EXPECT_EQ(R"(eqref)", concat(VT_Eqref));
   EXPECT_EQ(R"(i31ref)", concat(VT_I31ref));
   EXPECT_EQ(R"(anyref)", concat(VT_Anyref));
@@ -324,10 +320,6 @@ TEST(BinaryFormattersTest, BrOnCastImmediate) {
   EXPECT_EQ(R"(1 func 0)", concat(BrOnCastImmediate{1, {HT_Func, HT_0}}));
 }
 
-TEST(BinaryFormattersTest, BrOnExnImmediate) {
-  EXPECT_EQ(R"(0 100)", concat(BrOnExnImmediate{0, 100}));
-}
-
 TEST(BinaryFormattersTest, HeapType2Immediate) {
   EXPECT_EQ(R"(func 0)", concat(HeapType2Immediate{HT_Func, HT_0}));
 }
@@ -370,9 +362,6 @@ TEST(BinaryFormattersTest, Instruction) {
   EXPECT_EQ(R"(br_on_cast 1 func 0)",
             concat(Instruction{Opcode::BrOnCast,
                                BrOnCastImmediate{1, {HT_Func, HT_0}}}));
-  // br_on_exn 1 2
-  EXPECT_EQ(R"(br_on_exn 1 2)",
-            concat(Instruction{Opcode::BrOnExn, BrOnExnImmediate{1, 2}}));
   // memory.size (w/ a reserved value of 0)
   // TODO: Fix reserved byte output
 #if 0

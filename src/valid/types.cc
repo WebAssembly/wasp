@@ -80,11 +80,6 @@ StackType StackType::I31ref() {
   return StackType{binary::ValueType::I31ref_NoLocation()};
 }
 
-// static
-StackType StackType::Exnref() {
-  return StackType{binary::ValueType::Exnref_NoLocation()};
-}
-
 bool StackType::is_value_type() const {
   return holds_alternative<binary::ValueType>(type);
 }
@@ -190,10 +185,6 @@ auto Canonicalize(binary::ReferenceType type) -> binary::ReferenceType {
         // NOTE: i31ref is equivalent to (ref i31), not (ref null i31).
         return binary::ReferenceType{
             binary::RefType{binary::HeapType{HeapKind::I31}, Null::No}};
-
-      case ReferenceKind::Exnref:
-        return binary::ReferenceType{
-            binary::RefType{binary::HeapType{HeapKind::Exn}, Null::Yes}};
 
       default:
         WASP_UNREACHABLE();

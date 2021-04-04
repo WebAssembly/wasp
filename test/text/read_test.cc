@@ -191,11 +191,6 @@ TEST_F(TextReadTest, HeapType_reference_types) {
   OK(ReadHeapType, HT_Extern, "extern"_su8);
 }
 
-TEST_F(TextReadTest, HeapType_exceptions) {
-  ctx.features.enable_exceptions();
-  OK(ReadHeapType, HT_Exn, "exn"_su8);
-}
-
 TEST_F(TextReadTest, HeapType_gc) {
   ctx.features.enable_gc();
   OK(ReadHeapType, HT_Any, "any"_su8);
@@ -243,11 +238,6 @@ TEST_F(TextReadTest, ValueType_reference_types) {
   ctx.features.enable_reference_types();
   OK(ReadValueType, VT_Funcref, "funcref"_su8);
   OK(ReadValueType, VT_Externref, "externref"_su8);
-}
-
-TEST_F(TextReadTest, ValueType_exceptions) {
-  ctx.features.enable_exceptions();
-  OK(ReadValueType, VT_Exnref, "exnref"_su8);
 }
 
 TEST_F(TextReadTest, ValueType_function_references) {
@@ -316,11 +306,6 @@ TEST_F(TextReadTest, ReferenceType_reference_types) {
   ctx.features.enable_reference_types();
   OK(ReadReferenceType, RT_Funcref, "funcref"_su8, AllowFuncref::Yes);
   OK(ReadReferenceType, RT_Externref, "externref"_su8, AllowFuncref::Yes);
-}
-
-TEST_F(TextReadTest, ReferenceType_exceptions) {
-  ctx.features.enable_exceptions();
-  OK(ReadReferenceType, RT_Exnref, "exnref"_su8, AllowFuncref::Yes);
 }
 
 TEST_F(TextReadTest, ReferenceType_function_references) {
@@ -825,15 +810,6 @@ TEST_F(TextReadTest, PlainInstruction_Var) {
   OK(ReadPlainInstruction,
      I{At{"local.get"_su8, O::LocalGet}, At{"$x"_su8, Var{"$x"_sv}}},
      "local.get $x"_su8);
-}
-
-TEST_F(TextReadTest, PlainInstruction_BrOnExn) {
-  ctx.features.enable_exceptions();
-  OK(ReadPlainInstruction,
-     I{At{"br_on_exn"_su8, O::BrOnExn},
-       At{"$l $e"_su8, BrOnExnImmediate{At{"$l"_su8, Var{"$l"_sv}},
-                                        At{"$e"_su8, Var{"$e"_sv}}}}},
-     "br_on_exn $l $e"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_BrTable) {
@@ -1767,21 +1743,9 @@ TEST_F(TextReadTest, Expression_Plain) {
 }
 
 TEST_F(TextReadTest, Expression_Plain_exceptions) {
-  Fail(ReadExpression_ForTesting, {{1, "br_on_exn instruction not allowed"}},
-       "(br_on_exn 0 0)"_su8);
+  // TODO
 
   ctx.features.enable_exceptions();
-
-  // BrOnExn immediate.
-  OKVector(
-      ReadExpression_ForTesting,
-      InstructionList{
-          At{"br_on_exn 0 0"_su8,
-             I{At{"br_on_exn"_su8, O::BrOnExn},
-               At{"0 0"_su8, BrOnExnImmediate{At{"0"_su8, Var{Index{0}}},
-                                              At{"0"_su8, Var{Index{0}}}}}}},
-      },
-      "(br_on_exn 0 0)"_su8);
 }
 
 TEST_F(TextReadTest, Expression_Plain_simd) {

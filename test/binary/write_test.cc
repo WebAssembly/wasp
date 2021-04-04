@@ -110,10 +110,6 @@ TEST(BinaryWriteTest, BrOnCastImmediate) {
       BrOnCastImmediate{Index{0}, HeapType2Immediate{HT_Func, HT_Func}});
 }
 
-TEST(BinaryWriteTest, BrOnExnImmediate) {
-  ExpectWrite("\x00\x00"_su8, BrOnExnImmediate{0, 0});
-}
-
 TEST(BinaryWriteTest, BrTableImmediate) {
   ExpectWrite("\x00\x00"_su8, BrTableImmediate{{}, 0});
   ExpectWrite("\x02\x01\x02\x03"_su8, BrTableImmediate{{1, 2}, 3});
@@ -259,10 +255,6 @@ TEST(BinaryWriteTest, ReferenceType) {
 
 TEST(BinaryWriteTest, ReferenceType_reference_types) {
   ExpectWrite("\x6f"_su8, RT_Externref);
-}
-
-TEST(BinaryWriteTest, ReferenceType_exceptions) {
-  ExpectWrite("\x68"_su8, RT_Exnref);
 }
 
 TEST(BinaryWriteTest, ReferenceType_function_references) {
@@ -680,7 +672,6 @@ TEST(BinaryWriteTest, Instruction_exceptions) {
   ExpectWrite("\x07"_su8, I{O::Catch});
   ExpectWrite("\x08\x00"_su8, I{O::Throw, Index{0}});
   ExpectWrite("\x09"_su8, I{O::Rethrow});
-  ExpectWrite("\x0a\x01\x02"_su8, I{O::BrOnExn, BrOnExnImmediate{1, 2}});
 }
 
 TEST(BinaryWriteTest, Instruction_tail_call) {
@@ -1587,7 +1578,6 @@ TEST(BinaryWriteTest, Opcode_exceptions) {
   ExpectWrite("\x07"_su8, Opcode::Catch);
   ExpectWrite("\x08"_su8, Opcode::Throw);
   ExpectWrite("\x09"_su8, Opcode::Rethrow);
-  ExpectWrite("\x0a"_su8, Opcode::BrOnExn);
 }
 
 TEST(BinaryWriteTest, Opcode_tail_call) {
@@ -2121,10 +2111,6 @@ TEST(BinaryWriteTest, ValueType_simd) {
 TEST(BinaryWriteTest, ValueType_reference_types) {
   ExpectWrite("\x70"_su8, VT_Funcref);
   ExpectWrite("\x6f"_su8, VT_Externref);
-}
-
-TEST(BinaryWriteTest, ValueType_exceptions) {
-  ExpectWrite("\x68"_su8, VT_Exnref);
 }
 
 TEST(BinaryWriteTest, ValueType_function_references) {

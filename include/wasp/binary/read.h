@@ -82,7 +82,6 @@ auto Read(SpanU8*, ReadCtx&, Tag<ArrayType>) -> OptAt<ArrayType>;
 auto Read(SpanU8*, ReadCtx&, Tag<BlockType>) -> OptAt<BlockType>;
 auto Read(SpanU8*, ReadCtx&, Tag<BrOnCastImmediate>)
     -> OptAt<BrOnCastImmediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<BrOnExnImmediate>) -> OptAt<BrOnExnImmediate>;
 auto Read(SpanU8*, ReadCtx&, Tag<BrTableImmediate>) -> OptAt<BrTableImmediate>;
 auto Read(SpanU8*, ReadCtx&, Tag<CallIndirectImmediate>)
     -> OptAt<CallIndirectImmediate>;

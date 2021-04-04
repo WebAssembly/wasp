@@ -80,7 +80,6 @@ WASP_V(Type)               // "type"
 // Plain Instructions.
 WASP_V(BareInstr)            // "i32.add", etc.
 WASP_V(BrOnCastInstr)        // "br_on_cast"
-WASP_V(BrOnExnInstr)         // "br_on_exn"
 WASP_V(BrTableInstr)         // "br_table"
 WASP_V(CallIndirectInstr)    // "call_indirect", "return_call_indirect"
 WASP_V(F32ConstInstr)        // "f32.const"
@@ -106,7 +105,6 @@ WASP_V(StructFieldInstr)     // "struct.get", "struct.set", etc.
 WASP_V(TableCopyInstr)       // "table.copy"
 WASP_V(TableInitInstr)       // "table.init"
 WASP_V(VarInstr)             // "br", "table.get", "local.set", etc.
-
 WASP_V(BlockInstr)         // "block", "loop", etc.
 
 // .wast symbols

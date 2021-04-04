@@ -401,13 +401,6 @@ auto ToText(TextCtx& ctx, const At<binary::BrOnCastImmediate>& value)
                                                  ToText(ctx, value->types)}};
 }
 
-auto ToText(TextCtx& ctx, const At<binary::BrOnExnImmediate>& value)
-    -> At<text::BrOnExnImmediate> {
-  return At{value.loc(),
-            text::BrOnExnImmediate{ToText(ctx, value->target),
-                                   ToText(ctx, value->event_index)}};
-}
-
 auto ToText(TextCtx& ctx, const At<binary::BrTableImmediate>& value)
     -> At<text::BrTableImmediate> {
   return At{value.loc(),
@@ -518,11 +511,6 @@ auto ToText(TextCtx& ctx, const At<binary::Instruction>& value)
       return At{value.loc(),
                 text::Instruction{value->opcode,
                                   ToText(ctx, value->block_type_immediate())}};
-
-    case binary::InstructionKind::BrOnExn:
-      return At{value.loc(),
-                text::Instruction{value->opcode,
-                                  ToText(ctx, value->br_on_exn_immediate())}};
 
     case binary::InstructionKind::BrTable:
       return At{value.loc(),

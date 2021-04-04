@@ -75,16 +75,6 @@ OptAt<BrOnCastImmediate> Read(SpanU8* data,
   return At{guard.range(data), BrOnCastImmediate{target, types}};
 }
 
-OptAt<BrOnExnImmediate> Read(SpanU8* data,
-                             ReadCtx& ctx,
-                             Tag<BrOnExnImmediate>) {
-  ErrorsContextGuard error_guard{ctx.errors, *data, "br_on_exn"};
-  LocationGuard guard{data};
-  WASP_TRY_READ(target, ReadIndex(data, ctx, "target"));
-  WASP_TRY_READ(event_index, ReadIndex(data, ctx, "event index"));
-  return At{guard.range(data), BrOnExnImmediate{target, event_index}};
-}
-
 OptAt<BrTableImmediate> Read(SpanU8* data,
                              ReadCtx& ctx,
                              Tag<BrTableImmediate>) {
@@ -1034,12 +1024,6 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, Tag<Instruction>) {
     // FuncBind immediate.
     case Opcode::FuncBind: {
       WASP_TRY_READ(immediate, Read<FuncBindImmediate>(data, ctx));
-      return At{guard.range(data), Instruction{opcode, immediate}};
-    }
-
-    // Index, Index immediates.
-    case Opcode::BrOnExn: {
-      WASP_TRY_READ(immediate, Read<BrOnExnImmediate>(data, ctx));
       return At{guard.range(data), Instruction{opcode, immediate}};
     }
 

@@ -90,7 +90,6 @@ void Resolve(ResolveCtx&, ArrayType&);
 void Resolve(ResolveCtx&, DefinedType&);
 void Resolve(ResolveCtx&, BlockImmediate&);
 void Resolve(ResolveCtx&, BrOnCastImmediate&);
-void Resolve(ResolveCtx&, BrOnExnImmediate&);
 void Resolve(ResolveCtx&, BrTableImmediate&);
 void Resolve(ResolveCtx&, CallIndirectImmediate&);
 void Resolve(ResolveCtx&, CopyImmediate&, NameMap&);

@@ -274,11 +274,6 @@ std::ostream& operator<<(std::ostream& os,
 }
 
 std::ostream& operator<<(std::ostream& os,
-                         const ::wasp::binary::BrOnExnImmediate& self) {
-  return os << self.target << " " << self.event_index;
-}
-
-std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::HeapType2Immediate& self) {
   return os << self.parent << " " << self.child;
 }
@@ -326,7 +321,6 @@ std::ostream& operator<<(std::ostream& os,
     case InstructionKind::V128: os << " " << self.v128_immediate(); break;
     case InstructionKind::Index: os << " " << self.index_immediate(); break;
     case InstructionKind::BlockType: os << " " << self.block_type_immediate(); break;
-    case InstructionKind::BrOnExn: os << " " << self.br_on_exn_immediate(); break;
     case InstructionKind::BrTable: os << " " << self.br_table_immediate(); break;
     case InstructionKind::CallIndirect: os << " " << self.call_indirect_immediate(); break;
     case InstructionKind::Copy: os << " " << self.copy_immediate(); break;

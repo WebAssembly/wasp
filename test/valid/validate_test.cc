@@ -709,14 +709,12 @@ TEST_F(ValidateTest, GlobalType) {
       GlobalType{VT_V128, Mutability::Const},
       GlobalType{VT_Funcref, Mutability::Const},
       GlobalType{VT_Externref, Mutability::Const},
-      GlobalType{VT_Exnref, Mutability::Const},
       GlobalType{VT_I32, Mutability::Var},
       GlobalType{VT_I64, Mutability::Var},
       GlobalType{VT_F32, Mutability::Var},
       GlobalType{VT_F64, Mutability::Var},
       GlobalType{VT_Funcref, Mutability::Var},
       GlobalType{VT_Externref, Mutability::Var},
-      GlobalType{VT_Exnref, Mutability::Var},
   };
 
   for (const auto& global_type : tests) {

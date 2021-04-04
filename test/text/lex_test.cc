@@ -293,7 +293,6 @@ TEST(LexTest, PlainInstr) {
       {"array.set"_su8, TT::VarInstr, O::ArraySet, F::GC},
       {"br_if"_su8, TT::VarInstr, O::BrIf, 0},
       {"br_on_cast"_su8, TT::BrOnCastInstr, O::BrOnCast, F::GC},
-      {"br_on_exn"_su8, TT::BrOnExnInstr, O::BrOnExn, F::Exceptions},
       {"br_on_null"_su8, TT::VarInstr, O::BrOnNull, F::FunctionReferences},
       {"br_table"_su8, TT::BrTableInstr, O::BrTable, 0},
       {"br"_su8, TT::VarInstr, O::Br, 0},
@@ -1097,7 +1096,6 @@ TEST(LexTest, ReferenceType) {
       {"anyfunc"_su8, ReferenceKind::Funcref},
       {"anyref"_su8, ReferenceKind::Anyref},
       {"externref"_su8, ReferenceKind::Externref},
-      {"exnref"_su8, ReferenceKind::Exnref},
       {"eqref"_su8, ReferenceKind::Eqref},
       {"funcref"_su8, ReferenceKind::Funcref},
       {"i31ref"_su8, ReferenceKind::I31ref},
@@ -1118,7 +1116,6 @@ TEST(LexTest, HeapType) {
   } tests[] = {
       {"any"_su8, TokenType::HeapKind, HeapKind::Any},
       {"extern"_su8, TokenType::HeapKind, HeapKind::Extern},
-      {"exn"_su8, TokenType::HeapKind, HeapKind::Exn},
       {"eq"_su8, TokenType::HeapKind, HeapKind::Eq},
       {"func"_su8, TokenType::Func, HeapKind::Func},
       {"i31"_su8, TokenType::HeapKind, HeapKind::I31},

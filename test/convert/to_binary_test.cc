@@ -532,13 +532,6 @@ TEST_F(ConvertToBinaryTest, BrOnCastImmediate) {
 }
 #endif
 
-TEST_F(ConvertToBinaryTest, BrOnExnImmediate) {
-  OK(At{loc1,
-        binary::BrOnExnImmediate{At{loc2, Index{13}}, At{loc3, Index{14}}}},
-     At{loc1, text::BrOnExnImmediate{At{loc2, text::Var{Index{13}}},
-                                     At{loc3, text::Var{Index{14}}}}});
-}
-
 TEST_F(ConvertToBinaryTest, BrTableImmediate) {
   OK(At{loc1,
         binary::BrTableImmediate{{At{loc2, Index{13}}}, At{loc3, Index{14}}}},
@@ -714,18 +707,6 @@ TEST_F(ConvertToBinaryTest, Instruction) {
                       nullopt, text::FunctionTypeUse{
                                    text::Var{Index{13}},
                                    text::FunctionType{{tt::VT_I32}, {}}}}}});
-
-  // BrOnExnImmediate.
-  OK(At{loc1,
-        binary::Instruction{
-            At{loc2, Opcode::BrOnExn},
-            At{loc3, binary::BrOnExnImmediate{At{loc4, Index{13}},
-                                              At{loc5, Index{14}}}}}},
-     At{loc1,
-        text::Instruction{
-            At{loc2, Opcode::BrOnExn},
-            At{loc3, text::BrOnExnImmediate{At{loc4, text::Var{Index{13}}},
-                                            At{loc5, text::Var{Index{14}}}}}}});
 
   // BrTableImmediate.
   OK(At{loc1,

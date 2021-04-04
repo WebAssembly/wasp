@@ -1699,9 +1699,9 @@ switch (PeekChar(data, 2)) {
       default: return LexKeyword(data, "br_if", TokenType::VarInstr, Opcode::BrIf);
       case '_':
         switch (PeekChar(data, 9)) {
-          default: return LexKeyword(data, "br_on_exn", TokenType::BrOnExnInstr, Opcode::BrOnExn, Features::Exceptions);
           case 'l': return LexKeyword(data, "br_on_null", TokenType::VarInstr, Opcode::BrOnNull, Features::FunctionReferences);
           case 't': return LexKeyword(data, "br_on_cast", TokenType::BrOnCastInstr, Opcode::BrOnCast, Features::GC);
+          default: break;
         }
         break;
       case 'b': return LexKeyword(data, "br_table", TokenType::BrTableInstr, Opcode::BrTable);
@@ -1849,13 +1849,7 @@ switch (PeekChar(data, 2)) {
     break;
   case 'n':
     switch (PeekChar(data, 3)) {
-      default:
-        switch (PeekChar(data, 1)) {
-          case 'a': return LexKeyword(data, "nan", TokenType::Float, LiteralKind::Nan);
-          case 'x': return LexKeyword(data, "exn", TokenType::HeapKind, HeapKind::Exn);
-          default: break;
-        }
-        break;
+      default: return LexKeyword(data, "nan", TokenType::Float, LiteralKind::Nan);
       case ':':
         switch (PeekChar(data, 6)) {
           default: return LexNan(data);
@@ -1871,7 +1865,6 @@ switch (PeekChar(data, 2)) {
           case 'r': return LexKeyword(data, "funcref", ReferenceKind::Funcref);
         }
         break;
-      case 'r': return LexKeyword(data, "exnref", ReferenceKind::Exnref);
     }
     break;
   case 'o':

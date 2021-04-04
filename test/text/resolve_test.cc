@@ -130,7 +130,6 @@ TEST_F(TextResolveTest, Rtt) {
   // RTTs that don't need resolving.
   OK(RTT_0_Func, RTT_0_Func);
   OK(RTT_0_Extern, RTT_0_Extern);
-  OK(RTT_0_Exn, RTT_0_Exn);
   OK(RTT_0_Eq, RTT_0_Eq);
   OK(RTT_0_I31, RTT_0_I31);
   OK(RTT_0_Any, RTT_0_Any);
@@ -322,8 +321,8 @@ TEST_F(TextResolveTest, BlockImmediate_InlineType) {
   // An inline type can only be void, or a single result type.
   OK(BlockImmediate{nullopt, {}}, BlockImmediate{nullopt, {}});
 
-  for (auto value_type : {VT_I32, VT_I64, VT_F32, VT_F64, VT_V128, VT_Funcref,
-                          VT_Externref, VT_Exnref}) {
+  for (auto value_type :
+       {VT_I32, VT_I64, VT_F32, VT_F64, VT_V128, VT_Funcref, VT_Externref}) {
     OK(BlockImmediate{nullopt,
                       FunctionTypeUse{nullopt, FunctionType{{}, {value_type}}}},
        BlockImmediate{
@@ -358,15 +357,6 @@ TEST_F(TextResolveTest, BrOnCastImmediate) {
   OK(BrOnCastImmediate{Var{Index{0}},
                        HeapType2Immediate{Resolved_HT_0, Resolved_HT_0}},
      BrOnCastImmediate{Var{"$l"_sv}, HeapType2Immediate{HT_T, HT_T}});
-}
-
-TEST_F(TextResolveTest, BrOnExnImmediate) {
-  ctx.label_names.Push();
-  ctx.label_names.NewBound("$l");
-  ctx.event_names.NewBound("$e");
-
-  OK(BrOnExnImmediate{Var{Index{0}}, Var{Index{0}}},
-     BrOnExnImmediate{Var{"$l"_sv}, Var{"$e"_sv}});
 }
 
 TEST_F(TextResolveTest, BrTableImmediate) {
@@ -541,15 +531,6 @@ TEST_F(TextResolveTest, Instruction_BrOnCastImmediate) {
                          HeapType2Immediate{Resolved_HT_0, Resolved_HT_0}}},
      I{O::BrOnCast,
        BrOnCastImmediate{Var{"$l"_sv}, HeapType2Immediate{HT_T, HT_T}}});
-}
-
-TEST_F(TextResolveTest, Instruction_BrOnExnImmediate) {
-  ctx.label_names.Push();
-  ctx.label_names.NewBound("$l");
-  ctx.event_names.NewBound("$e");
-
-  OK(I{O::BrOnExn, BrOnExnImmediate{Var{Index{0}}, Var{Index{0}}}},
-     I{O::BrOnExn, BrOnExnImmediate{Var{"$l"_sv}, Var{"$e"_sv}}});
 }
 
 TEST_F(TextResolveTest, Instruction_BrTableImmediate) {

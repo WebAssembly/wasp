@@ -124,9 +124,6 @@ At<ReferenceType> ElementSegment::elemtype() const {
       case ExternalKind::Memory:
       case ExternalKind::Global:
         return ReferenceType{ReferenceKind::Externref};
-
-      case ExternalKind::Event:
-        return ReferenceType{ReferenceKind::Exnref};
     }
   } else {
     return expressions().elemtype;
@@ -298,9 +295,6 @@ Instruction::Instruction(At<Opcode> opcode, At<BlockType> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<BrOnCastImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
-Instruction::Instruction(At<Opcode> opcode, At<BrOnExnImmediate> immediate)
-    : opcode(opcode), immediate(immediate) {}
-
 Instruction::Instruction(At<Opcode> opcode, At<BrTableImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
@@ -403,10 +397,6 @@ bool Instruction::has_block_type_immediate() const {
 
 bool Instruction::has_br_on_cast_immediate() const {
   return holds_alternative<At<BrOnCastImmediate>>(immediate);
-}
-
-bool Instruction::has_br_on_exn_immediate() const {
-  return holds_alternative<At<BrOnExnImmediate>>(immediate);
 }
 
 bool Instruction::has_br_table_immediate() const {
@@ -532,14 +522,6 @@ At<BrOnCastImmediate>& Instruction::br_on_cast_immediate() {
 
 const At<BrOnCastImmediate>& Instruction::br_on_cast_immediate() const {
   return get<At<BrOnCastImmediate>>(immediate);
-}
-
-At<BrOnExnImmediate>& Instruction::br_on_exn_immediate() {
-  return get<At<BrOnExnImmediate>>(immediate);
-}
-
-const At<BrOnExnImmediate>& Instruction::br_on_exn_immediate() const {
-  return get<At<BrOnExnImmediate>>(immediate);
 }
 
 At<BrTableImmediate>& Instruction::br_table_immediate() {
@@ -721,11 +703,6 @@ ValueType ValueType::I31ref_NoLocation() {
 }
 
 // static
-ValueType ValueType::Exnref_NoLocation() {
-  return ValueType{ReferenceType::Exnref_NoLocation()};
-}
-
-// static
 bool ValueType::is_numeric_type() const {
   return holds_alternative<At<NumericType>>(type);
 }
@@ -817,11 +794,6 @@ ReferenceType ReferenceType::Eqref_NoLocation() {
 // static
 ReferenceType ReferenceType::I31ref_NoLocation() {
   return ReferenceType{ReferenceKind::I31ref};
-}
-
-// static
-ReferenceType ReferenceType::Exnref_NoLocation() {
-  return ReferenceType{ReferenceKind::Exnref};
 }
 
 bool ReferenceType::is_reference_kind() const {

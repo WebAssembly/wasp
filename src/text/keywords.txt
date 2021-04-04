@@ -18,7 +18,6 @@ assert_unlinkable, TokenType::AssertUnlinkable
 binary, TokenType::Binary
 block, TokenType::BlockInstr, Opcode::Block
 br_if, TokenType::VarInstr, Opcode::BrIf
-br_on_exn, TokenType::BrOnExnInstr, Opcode::BrOnExn, Features::Exceptions
 br_on_null, TokenType::VarInstr, Opcode::BrOnNull, Features::FunctionReferences
 br_table, TokenType::BrTableInstr, Opcode::BrTable
 br, TokenType::VarInstr, Opcode::Br
@@ -37,8 +36,6 @@ end, TokenType::End, Opcode::End
 eq, TokenType::HeapKind, HeapKind::Eq
 eqref, ReferenceKind::Eqref
 event, TokenType::Event
-exnref, ReferenceKind::Exnref
-exn, TokenType::HeapKind, HeapKind::Exn
 export, TokenType::Export
 externref, ReferenceKind::Externref
 extern, TokenType::HeapKind, HeapKind::Extern

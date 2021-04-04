@@ -96,7 +96,6 @@ auto ToText(TextCtx&, const At<binary::ElementSegment>&) -> At<text::ElementSegm
 // Section 10: Code
 auto ToText(TextCtx&, const At<binary::BlockType>&) -> At<text::BlockImmediate>;
 auto ToText(TextCtx&, const At<binary::BrOnCastImmediate>&) -> At<text::BrOnCastImmediate>;
-auto ToText(TextCtx&, const At<binary::BrOnExnImmediate>&) -> At<text::BrOnExnImmediate>;
 auto ToText(TextCtx&, const At<binary::BrTableImmediate>&) -> At<text::BrTableImmediate>;
 auto ToText(TextCtx&, const At<binary::CallIndirectImmediate>&) -> At<text::CallIndirectImmediate>;
 auto ToText(TextCtx&, const At<binary::CopyImmediate>&) -> At<text::CopyImmediate>;

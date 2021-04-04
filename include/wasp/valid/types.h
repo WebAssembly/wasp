@@ -43,7 +43,6 @@ struct StackType {
   static StackType Anyref();
   static StackType Eqref();
   static StackType I31ref();
-  static StackType Exnref();
 
   bool is_value_type() const;
   bool is_any() const;

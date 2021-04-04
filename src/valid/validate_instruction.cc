@@ -43,7 +43,6 @@ using namespace ::wasp::binary;
   V(f32, StackType::F32())                                             \
   V(f64, StackType::F64())                                             \
   V(v128, StackType::V128())                                           \
-  V(exnref, StackType::Exnref())                                       \
   V(i31ref, StackType::I31ref())                                       \
   V(i32_i32, StackType::I32(), StackType::I32())                       \
   V(i32_v128, StackType::I32(), StackType::V128())                     \
@@ -553,18 +552,8 @@ bool CheckTypeStackEmpty(ValidCtx& ctx, Location loc) {
 }
 
 bool Catch(ValidCtx& ctx, Location loc) {
-  auto& top_label = TopLabel(ctx);
-  if (top_label.label_type != LabelType::Try) {
-    ctx.errors->OnError(loc, "Got catch instruction without try");
-    return false;
-  }
-  bool valid = PopTypes(ctx, loc, top_label.result_types);
-  valid &= CheckTypeStackEmpty(ctx, loc);
-  ResetTypeStackToLimit(ctx);
-  PushTypes(ctx, span_exnref);
-  top_label.label_type = LabelType::Catch;
-  top_label.unreachable = false;
-  return valid;
+  // TODO
+  return false;
 }
 
 bool Else(ValidCtx& ctx, Location loc) {
@@ -1222,23 +1211,8 @@ bool Throw(ValidCtx& ctx, Location loc, At<Index> index) {
 }
 
 bool Rethrow(ValidCtx& ctx, Location loc) {
-  bool valid = PopTypes(ctx, loc, span_exnref);
-  SetUnreachable(ctx);
-  return valid;
-}
-
-bool BrOnExn(ValidCtx& ctx,
-             Location loc,
-             const At<BrOnExnImmediate>& immediate) {
-  auto event_type = GetEventType(ctx, immediate->event_index);
-  auto function_type =
-      GetFunctionType(ctx, MaybeDefault(event_type).type_index);
-  auto* label = GetLabel(ctx, immediate->target);
-  bool valid =
-      IsMatch(ctx, ToStackTypeList(MaybeDefault(function_type).param_types),
-              MaybeDefault(label).br_types());
-  valid &= PopAndPushTypes(ctx, loc, span_exnref, span_exnref);
-  return AllTrue(event_type, function_type, label, valid);
+  // TODO
+  return false;
 }
 
 bool BrOnNull(ValidCtx& ctx, Location loc, const At<Index>& depth) {
@@ -1873,9 +1847,6 @@ bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
 
     case Opcode::Rethrow:
       return Rethrow(ctx, loc);
-
-    case Opcode::BrOnExn:
-      return BrOnExn(ctx, loc, value->br_on_exn_immediate());
 
     case Opcode::Br:
       return Br(ctx, loc, value->index_immediate());

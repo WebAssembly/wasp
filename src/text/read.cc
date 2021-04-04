@@ -1495,7 +1495,6 @@ bool IsPlainInstruction(Token token) {
   switch (token.type) {
     case TokenType::BareInstr:
     case TokenType::BrOnCastInstr:
-    case TokenType::BrOnExnInstr:
     case TokenType::BrTableInstr:
     case TokenType::CallIndirectInstr:
     case TokenType::F32ConstInstr:
@@ -1595,17 +1594,6 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, ReadCtx& ctx)
 #else
       return At{guard.loc(), Instruction{token.opcode(), var}};
 #endif
-    }
-
-    case TokenType::BrOnExnInstr: {
-      WASP_TRY(CheckOpcodeEnabled(token, ctx));
-      tokenizer.Read();
-      LocationGuard immediate_guard{tokenizer};
-      WASP_TRY_READ(label_var, ReadVar(tokenizer, ctx));
-      WASP_TRY_READ(exn_var, ReadVar(tokenizer, ctx));
-      auto immediate =
-          At{immediate_guard.loc(), BrOnExnImmediate{label_var, exn_var}};
-      return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
     case TokenType::BrTableInstr: {

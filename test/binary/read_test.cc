@@ -221,21 +221,6 @@ TEST_F(BinaryReadTest, BrOnCastImmediate) {
      "\x00\x70\x70"_su8);
 }
 
-TEST_F(BinaryReadTest, BrOnExnImmediate) {
-  OK(Read<BrOnExnImmediate>,
-     BrOnExnImmediate{At{"\x00"_su8, Index{0}}, At{"\x00"_su8, Index{0}}},
-     "\x00\x00"_su8);
-}
-
-TEST_F(BinaryReadTest, BrOnExnImmediate_PastEnd) {
-  Fail(Read<BrOnExnImmediate>,
-       {{0, "br_on_exn"}, {0, "target"}, {0, "Unable to read u8"}}, ""_su8);
-
-  Fail(Read<BrOnExnImmediate>,
-       {{0, "br_on_exn"}, {1, "event index"}, {1, "Unable to read u8"}},
-       "\x00"_su8);
-}
-
 TEST_F(BinaryReadTest, BrTableImmediate) {
   OK(Read<BrTableImmediate>, BrTableImmediate{{}, At{"\x00"_su8, Index{0}}},
      "\x00\x00"_su8);
@@ -955,15 +940,6 @@ TEST_F(BinaryReadTest, ReferenceType_ReferenceTypes) {
   ctx.features.enable_reference_types();
 
   OK(Read<ReferenceType>, RT_Externref, "\x6f"_su8);
-}
-
-TEST_F(BinaryReadTest, ReferenceType_Exceptions) {
-  Fail(Read<ReferenceType>,
-       {{0, "reference type"}, {0, "Unknown reference type: 104"}}, "\x68"_su8);
-
-  ctx.features.enable_exceptions();
-
-  OK(Read<ReferenceType>, RT_Exnref, "\x68"_su8);
 }
 
 TEST_F(BinaryReadTest, ReferenceType_gc) {
@@ -1786,11 +1762,6 @@ TEST_F(BinaryReadTest, Instruction_exceptions) {
   OK(Read<I>, I{At{"\x08"_su8, O::Throw}, At{"\x00"_su8, Index{0}}},
      "\x08\x00"_su8);
   OK(Read<I>, I{At{"\x09"_su8, O::Rethrow}}, "\x09"_su8);
-  OK(Read<I>,
-     I{At{"\x0a"_su8, O::BrOnExn},
-       At{"\x01\x02"_su8, BrOnExnImmediate{At{"\x01"_su8, Index{1}},
-                                           At{"\x02"_su8, Index{2}}}}},
-     "\x0a\x01\x02"_su8);
 }
 
 TEST_F(BinaryReadTest, InstructionList_TryCatchEnd) {
@@ -2930,7 +2901,6 @@ TEST_F(BinaryReadTest, Opcode_exceptions) {
   OK(Read<Opcode>, Opcode::Catch, "\x07"_su8);
   OK(Read<Opcode>, Opcode::Throw, "\x08"_su8);
   OK(Read<Opcode>, Opcode::Rethrow, "\x09"_su8);
-  OK(Read<Opcode>, Opcode::BrOnExn, "\x0a"_su8);
 }
 
 TEST_F(BinaryReadTest, Opcode_tail_call) {
@@ -3832,17 +3802,6 @@ TEST_F(BinaryReadTest, ValueType_reference_types) {
   ctx.features.enable_reference_types();
   OK(Read<ValueType>, VT_Funcref, "\x70"_su8);
   OK(Read<ValueType>, VT_Externref, "\x6f"_su8);
-}
-
-TEST_F(BinaryReadTest, ValueType_exceptions) {
-  Fail(Read<ValueType>,
-       {{0, "value type"},
-        {0, "reference type"},
-        {0, "Unknown reference type: 104"}},
-       "\x68"_su8);
-
-  ctx.features.enable_exceptions();
-  OK(Read<ValueType>, VT_Exnref, "\x68"_su8);
 }
 
 TEST_F(BinaryReadTest, ValueType_gc) {

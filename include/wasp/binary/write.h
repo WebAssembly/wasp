@@ -219,13 +219,6 @@ Iterator Write(const BrOnCastImmediate& value, Iterator out) {
   return out;
 }
 
-template <typename Iterator>
-Iterator Write(const BrOnExnImmediate& value, Iterator out) {
-  out = WriteIndex(value.target, out);
-  out = WriteIndex(value.event_index, out);
-  return out;
-}
-
 template <typename InputIterator, typename OutputIterator>
 OutputIterator WriteVector(InputIterator in_begin,
                            InputIterator in_end,
@@ -584,9 +577,6 @@ Iterator Write(const Instruction& instr, Iterator out) {
 
     case InstructionKind::BlockType:
       return Write(instr.block_type_immediate(), out);
-
-    case InstructionKind::BrOnExn:
-      return Write(instr.br_on_exn_immediate(), out);
 
     case InstructionKind::BrTable:
       return Write(instr.br_table_immediate(), out);

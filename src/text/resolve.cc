@@ -427,11 +427,6 @@ void Resolve(ResolveCtx& ctx, BrOnCastImmediate& immediate) {
   Resolve(ctx, immediate.types);
 }
 
-void Resolve(ResolveCtx& ctx, BrOnExnImmediate& immediate) {
-  Resolve(ctx, immediate.target, ctx.label_names);
-  Resolve(ctx, immediate.event, ctx.event_names);
-}
-
 void Resolve(ResolveCtx& ctx, BrTableImmediate& immediate) {
   Resolve(ctx, immediate.targets, ctx.label_names);
   Resolve(ctx, immediate.default_target, ctx.label_names);
@@ -561,9 +556,6 @@ void Resolve(ResolveCtx& ctx, Instruction& instruction) {
     case InstructionKind::Block:
       ctx.BeginBlock(instruction.opcode);
       return Resolve(ctx, instruction.block_immediate().value());
-
-    case InstructionKind::BrOnExn:
-      return Resolve(ctx, instruction.br_on_exn_immediate().value());
 
     case InstructionKind::BrTable:
       return Resolve(ctx, instruction.br_table_immediate().value());

@@ -69,7 +69,6 @@ struct ReferenceType {
   explicit ReferenceType(At<RefType>);
   static ReferenceType Funcref_NoLocation();
   static ReferenceType Externref_NoLocation();
-  static ReferenceType Exnref_NoLocation();
 
   bool is_reference_kind() const;
   bool is_ref() const;
@@ -98,7 +97,6 @@ struct ValueType {
   static ValueType V128_NoLocation();
   static ValueType Funcref_NoLocation();
   static ValueType Externref_NoLocation();
-  static ValueType Exnref_NoLocation();
 
   bool is_numeric_type() const;
   bool is_reference_type() const;
@@ -164,11 +162,6 @@ struct HeapType2Immediate {
 struct BrOnCastImmediate {
   At<Var> target;
   HeapType2Immediate types;
-};
-
-struct BrOnExnImmediate {
-  At<Var> target;
-  At<Var> event;
 };
 
 struct BrTableImmediate {
@@ -238,7 +231,6 @@ enum class InstructionKind {
   V128,
   Var,
   Block,
-  BrOnExn,
   BrTable,
   CallIndirect,
   Copy,
@@ -267,7 +259,6 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<Var>);
   explicit Instruction(At<Opcode>, At<BlockImmediate>);
   explicit Instruction(At<Opcode>, At<BrOnCastImmediate>);
-  explicit Instruction(At<Opcode>, At<BrOnExnImmediate>);
   explicit Instruction(At<Opcode>, At<BrTableImmediate>);
   explicit Instruction(At<Opcode>, At<CallIndirectImmediate>);
   explicit Instruction(At<Opcode>, At<CopyImmediate>);
@@ -303,7 +294,6 @@ struct Instruction {
   bool has_var_immediate() const;
   bool has_block_immediate() const;
   bool has_br_on_cast_immediate() const;
-  bool has_br_on_exn_immediate() const;
   bool has_br_table_immediate() const;
   bool has_call_indirect_immediate() const;
   bool has_copy_immediate() const;
@@ -336,8 +326,6 @@ struct Instruction {
   auto block_immediate() const -> const At<BlockImmediate>&;
   auto br_on_cast_immediate() -> At<BrOnCastImmediate>&;
   auto br_on_cast_immediate() const -> const At<BrOnCastImmediate>&;
-  auto br_on_exn_immediate() -> At<BrOnExnImmediate>&;
-  auto br_on_exn_immediate() const -> const At<BrOnExnImmediate>&;
   auto br_table_immediate() -> At<BrTableImmediate>&;
   auto br_table_immediate() const -> const At<BrTableImmediate>&;
   auto call_indirect_immediate() -> At<CallIndirectImmediate>&;
@@ -378,7 +366,6 @@ struct Instruction {
           At<v128>,
           At<Var>,
           At<BlockImmediate>,
-          At<BrOnExnImmediate>,
           At<BrTableImmediate>,
           At<CallIndirectImmediate>,
           At<CopyImmediate>,
@@ -1079,7 +1066,6 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::BlockImmediate, 2, label, type)                           \
   WASP_V(text::HeapType2Immediate, 2, parent, child)                     \
   WASP_V(text::BrOnCastImmediate, 2, target, types)                      \
-  WASP_V(text::BrOnExnImmediate, 2, target, event)                       \
   WASP_V(text::BrTableImmediate, 2, targets, default_target)             \
   WASP_V(text::CallIndirectImmediate, 2, table, type)                    \
   WASP_V(text::CopyImmediate, 2, dst, src)                               \
