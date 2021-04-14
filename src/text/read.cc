@@ -1899,6 +1899,8 @@ bool ReadBlockInstruction(Tokenizer& tokenizer,
       At{guard.loc(), Instruction{token_opt->opcode(), block}});
   WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
 
+  bool allow_end = true;
+
   switch (token_opt->opcode()) {
     case Opcode::If:
       if (ReadOpcodeOpt(tokenizer, ctx, instructions, TokenType::Else)) {
@@ -1907,15 +1909,57 @@ bool ReadBlockInstruction(Tokenizer& tokenizer,
       }
       break;
 
-    case Opcode::Try:
+    case Opcode::Try: {
       if (!ctx.features.exceptions_enabled()) {
         ctx.errors.OnError(token_opt->loc, "try instruction not allowed");
         return false;
       }
-      WASP_TRY(ExpectOpcode(tokenizer, ctx, instructions, TokenType::Catch));
-      WASP_TRY(ReadEndLabelOpt(tokenizer, ctx, block->label));
-      WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
+
+      auto token = tokenizer.Peek();
+      switch (token.type) {
+        case TokenType::Catch:
+          // Read zero or more catch blocks
+          do {
+            LocationGuard guard{tokenizer};
+            auto token = tokenizer.Read();
+            WASP_TRY_READ(var, ReadVar(tokenizer, ctx));
+            instructions.push_back(
+                At{guard.loc(), Instruction{token.opcode(), var}});
+            WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
+          } while (tokenizer.Peek().type == TokenType::Catch);
+
+          // Allow optional trailing catch_all
+          if (ReadOpcodeOpt(tokenizer, ctx, instructions,
+                            TokenType::CatchAll)) {
+            WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
+          }
+          break;
+
+        case TokenType::CatchAll:
+          WASP_TRY(
+              ExpectOpcode(tokenizer, ctx, instructions, TokenType::CatchAll));
+          WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
+          break;
+
+        case TokenType::Delegate: {
+          LocationGuard guard{tokenizer};
+          auto token = tokenizer.Read();
+          WASP_TRY_READ(var, ReadVar(tokenizer, ctx));
+          instructions.push_back(
+              At{guard.loc(), Instruction{token.opcode(), var}});
+          allow_end = false;
+          break;
+        }
+
+        default:
+          ctx.errors.OnError(
+              token.loc,
+              concat("Expected 'catch', 'catch_all' or 'delegate', got ",
+                     token.type));
+          break;
+      }
       break;
+    }
 
     case Opcode::Block:
     case Opcode::Loop:
@@ -1925,8 +1969,10 @@ bool ReadBlockInstruction(Tokenizer& tokenizer,
       WASP_UNREACHABLE();
   }
 
-  WASP_TRY(ExpectOpcode(tokenizer, ctx, instructions, TokenType::End));
-  WASP_TRY(ReadEndLabelOpt(tokenizer, ctx, block->label));
+  if (allow_end) {
+    WASP_TRY(ExpectOpcode(tokenizer, ctx, instructions, TokenType::End));
+    WASP_TRY(ReadEndLabelOpt(tokenizer, ctx, block->label));
+  }
   return true;
 }
 
@@ -2011,6 +2057,7 @@ bool ReadExpression(Tokenizer& tokenizer,
       case Opcode::Loop:
         instructions.push_back(block_instr);
         WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
+        WASP_TRY(ReadRparAsEndInstruction(tokenizer, ctx, instructions));
         break;
 
       case Opcode::If:
@@ -2033,29 +2080,91 @@ bool ReadExpression(Tokenizer& tokenizer,
           WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
           WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));
         }
+        WASP_TRY(ReadRparAsEndInstruction(tokenizer, ctx, instructions));
         break;
 
-      case Opcode::Try:
+      case Opcode::Try: {
         if (!ctx.features.exceptions_enabled()) {
           ctx.errors.OnError(token.loc, "try instruction not allowed");
           return false;
         }
-        instructions.push_back(block_instr);
-        WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
 
-        // Read catch block.
-        WASP_TRY(Expect(tokenizer, ctx, TokenType::Lpar));
-        WASP_TRY(ExpectOpcode(tokenizer, ctx, instructions, TokenType::Catch));
-        WASP_TRY(ReadEndLabelOpt(tokenizer, ctx, block->label));
-        WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
-        WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));
+        instructions.push_back(block_instr);
+
+        if (tokenizer.Peek(0).type == TokenType::Lpar &&
+            tokenizer.Peek(1).type == TokenType::Do) {
+          WASP_TRY(ExpectLpar(tokenizer, ctx, TokenType::Do));
+          WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
+          WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));
+        }
+
+        if (tokenizer.Peek().type == TokenType::Lpar) {
+          auto token = tokenizer.Peek(1);
+          switch (token.type) {
+            case TokenType::Catch:
+              do {
+                WASP_TRY(Expect(tokenizer, ctx, TokenType::Lpar));
+                LocationGuard guard{tokenizer};
+                auto token = tokenizer.Read();
+                WASP_TRY_READ(var, ReadVar(tokenizer, ctx));
+                instructions.push_back(
+                    At{guard.loc(), Instruction{token.opcode(), var}});
+                WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
+                WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));
+              } while (tokenizer.Peek().type == TokenType::Lpar &&
+                       tokenizer.Peek(1).type == TokenType::Catch);
+
+              // Allow optional trailing catch_all
+              if (tokenizer.Peek().type == TokenType::Lpar &&
+                  tokenizer.Peek(1).type == TokenType::CatchAll) {
+                WASP_TRY(Expect(tokenizer, ctx, TokenType::Lpar));
+                WASP_TRY(ExpectOpcode(tokenizer, ctx, instructions,
+                                      TokenType::CatchAll));
+                WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
+                WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));
+              }
+              WASP_TRY(ReadRparAsEndInstruction(tokenizer, ctx, instructions));
+              break;
+
+            case TokenType::CatchAll:
+              WASP_TRY(Expect(tokenizer, ctx, TokenType::Lpar));
+              WASP_TRY(ExpectOpcode(tokenizer, ctx, instructions,
+                                    TokenType::CatchAll));
+              WASP_TRY(ReadInstructionList(tokenizer, ctx, instructions));
+              WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));
+              WASP_TRY(ReadRparAsEndInstruction(tokenizer, ctx, instructions));
+              break;
+
+            case TokenType::Delegate: {
+              // Read 'delegate <label>' instead of 'end'
+              WASP_TRY(Expect(tokenizer, ctx, TokenType::Lpar));
+              LocationGuard guard{tokenizer};
+              auto token = tokenizer.Read();
+              WASP_TRY_READ(var, ReadVar(tokenizer, ctx));
+              instructions.push_back(
+                  At{guard.loc(), Instruction{token.opcode(), var}});
+              WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));  // delegate
+              WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));  // try
+              break;
+            }
+
+            default:
+              ctx.errors.OnError(
+                  token.loc,
+                  concat("Expected 'catch', 'catch_all', or 'delegate', got ",
+                         token.type));
+              break;
+          }
+        } else {
+          // No '(' found, it should be closing the 'try' block.
+          WASP_TRY(ReadRparAsEndInstruction(tokenizer, ctx, instructions));
+        }
         break;
+      }
 
       default:
         WASP_UNREACHABLE();
     }
-
-    WASP_TRY(ReadRparAsEndInstruction(tokenizer, ctx, instructions));
   } else if (IsLetInstruction(token)) {
     LocationGuard guard{tokenizer};
     tokenizer.Read();

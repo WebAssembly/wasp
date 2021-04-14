@@ -697,6 +697,48 @@ TEST(TextWriteTest, Function_DontOverDedent) {
       Function{{}, {}, InstructionList{I{O::End}, I{O::End}, I{O::End}}, {}});
 }
 
+TEST(TextWriteTest, Function_TryCatch) {
+  ExpectWrite("(func\n  try\n    nop\n  catch 0\n    nop\n  end)"_sv,
+              Function{{},
+                       {},
+                       InstructionList{I{O::Try, BlockImmediate{}}, I{O::Nop},
+                                       I{O::Catch, Var{Index{0}}}, I{O::Nop},
+                                       I{O::End}, I{O::End}},
+                       {}});
+}
+
+TEST(TextWriteTest, Function_TryCatchAll) {
+  ExpectWrite("(func\n  try\n    nop\n  catch_all 0\n    nop\n  end)"_sv,
+              Function{{},
+                       {},
+                       InstructionList{I{O::Try, BlockImmediate{}}, I{O::Nop},
+                                       I{O::CatchAll, Var{Index{0}}}, I{O::Nop},
+                                       I{O::End}, I{O::End}},
+                       {}});
+}
+
+TEST(TextWriteTest, Function_TryCatchCatchAll) {
+  ExpectWrite(
+      "(func\n  try\n    nop\n  catch 0\n    nop\n  catch_all 0\n    nop\n  end)"_sv,
+      Function{{},
+               {},
+               InstructionList{I{O::Try, BlockImmediate{}}, I{O::Nop},
+                               I{O::Catch, Var{Index{0}}}, I{O::Nop},
+                               I{O::CatchAll, Var{Index{0}}}, I{O::Nop},
+                               I{O::End}, I{O::End}},
+               {}});
+}
+
+TEST(TextWriteTest, Function_TryDelegate) {
+  ExpectWrite("(func\n  try\n    nop\n  delegate 0\n  nop)"_sv,
+              Function{{},
+                       {},
+                       InstructionList{I{O::Try, BlockImmediate{}}, I{O::Nop},
+                                       I{O::Delegate, Var{Index{0}}}, I{O::Nop},
+                                       I{O::End}},
+                       {}});
+}
+
 TEST(TextWriteTest, Function_IndentLet) {
   ExpectWrite("(func\n  let\n    nop\n  end)"_sv,
               Function{{},

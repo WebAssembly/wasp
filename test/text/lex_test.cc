@@ -195,6 +195,7 @@ TEST(LexTest, Keyword) {
       {"binary"_su8, TT::Binary},
       {"data"_su8, TT::Data},
       {"declare"_su8, TT::Declare},
+      {"do"_su8, TT::Do},
       {"elem"_su8, TT::Elem},
       {"export"_su8, TT::Export},
       {"field"_su8, TT::Field},
@@ -245,13 +246,17 @@ TEST(LexTest, OpcodeKeywords) {
     SpanU8 span;
     TokenType type;
     Opcode opcode;
+    Features::Bits features = 0;
   } tests[] = {
-      {"catch"_su8, TT::Catch, Opcode::Catch},
+      {"catch"_su8, TT::Catch, Opcode::Catch, Features::Exceptions},
+      {"catch_all"_su8, TT::CatchAll, Opcode::CatchAll, Features::Exceptions},
+      {"delegate"_su8, TT::Delegate, Opcode::Delegate, Features::Exceptions},
       {"else"_su8, TT::Else, Opcode::Else},
       {"end"_su8, TT::End, Opcode::End},
   };
   for (auto test : tests) {
-    ExpectLex({test.span.size(), test.type, test.opcode}, test.span);
+    ExpectLex({test.span.size(), test.type, test.opcode, test.features},
+              test.span);
   }
 }
 
@@ -760,7 +765,7 @@ TEST(LexTest, PlainInstr) {
       {"ref.is_null"_su8, TT::BareInstr, O::RefIsNull, F::ReferenceTypes},
       {"ref.null"_su8, TT::RefNullInstr, O::RefNull, F::ReferenceTypes},
       {"ref.test"_su8, TT::HeapType2Instr, O::RefTest, F::GC},
-      {"rethrow"_su8, TT::BareInstr, O::Rethrow, F::Exceptions},
+      {"rethrow"_su8, TT::VarInstr, O::Rethrow, F::Exceptions},
       {"return_call_indirect"_su8, TT::CallIndirectInstr, O::ReturnCallIndirect, F::TailCall},
       {"return_call_ref"_su8, TT::BareInstr, O::ReturnCallRef, F::FunctionReferences},
       {"return_call"_su8, TT::VarInstr, O::ReturnCall, F::TailCall},

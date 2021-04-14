@@ -502,14 +502,16 @@ void SetUnreachable(ValidCtx& ctx) {
   ResetTypeStackToLimit(ctx);
 }
 
-Label* GetLabel(ValidCtx& ctx, At<Index> depth) {
-  if (depth >= ctx.label_stack.size()) {
+// `depth_offset` is used so we can offset the actual accessed depth, but
+// still print the value we want.
+Label* GetLabel(ValidCtx& ctx, At<Index> depth, Index depth_offset = 0) {
+  if (depth + depth_offset >= ctx.label_stack.size()) {
     ctx.errors->OnError(depth.loc(),
                         concat("Invalid label ", depth, ", must be less than ",
-                               ctx.label_stack.size()));
+                               ctx.label_stack.size() - depth_offset));
     return nullptr;
   }
-  return &ctx.label_stack[ctx.label_stack.size() - depth - 1];
+  return &ctx.label_stack[ctx.label_stack.size() - (depth + depth_offset) - 1];
 }
 
 Label* GetFunctionLabel(ValidCtx& ctx) {
@@ -551,9 +553,55 @@ bool CheckTypeStackEmpty(ValidCtx& ctx, Location loc) {
   return true;
 }
 
-bool Catch(ValidCtx& ctx, Location loc) {
-  // TODO
-  return false;
+bool Catch(ValidCtx& ctx, Location loc, At<Index> index) {
+  auto tag_type = GetTagType(ctx, index);
+  auto function_type = GetFunctionType(ctx, MaybeDefault(tag_type).type_index);
+  auto& top_label = TopLabel(ctx);
+  bool valid = true;
+  if (top_label.label_type != LabelType::Try &&
+      top_label.label_type != LabelType::Catch) {
+    ctx.errors->OnError(loc, "Got catch instruction without try");
+    return false;
+  }
+  valid &= PopTypes(ctx, loc, top_label.result_types);
+  valid &= CheckTypeStackEmpty(ctx, loc);
+  ResetTypeStackToLimit(ctx);
+  PushTypes(ctx, ToStackTypeList(MaybeDefault(function_type).param_types));
+  top_label.label_type = LabelType::Catch;
+  top_label.unreachable = false;
+  return valid;
+}
+
+bool CatchAll(ValidCtx& ctx, Location loc) {
+  auto& top_label = TopLabel(ctx);
+  bool valid = true;
+  if (top_label.label_type != LabelType::Try &&
+      top_label.label_type != LabelType::Catch) {
+    ctx.errors->OnError(loc, "Got catch_all instruction without try or catch");
+    return false;
+  }
+  valid &= PopTypes(ctx, loc, top_label.result_types);
+  valid &= CheckTypeStackEmpty(ctx, loc);
+  ResetTypeStackToLimit(ctx);
+  top_label.label_type = LabelType::CatchAll;
+  top_label.unreachable = false;
+  return valid;
+}
+
+bool Delegate(ValidCtx& ctx, Location loc, At<Index> depth) {
+  auto& top_label = TopLabel(ctx);
+  bool valid = true;
+  if (top_label.label_type != LabelType::Try) {
+    ctx.errors->OnError(loc, "Got delegate instruction without try");
+    return false;
+  }
+  const auto* label = GetLabel(ctx, depth, +1);  // + 1 to skip innermost try.
+  valid &= PopTypes(ctx, loc, top_label.result_types);
+  valid &= CheckTypeStackEmpty(ctx, loc);
+  ResetTypeStackToLimit(ctx);
+  PushTypes(ctx, top_label.result_types);
+  ctx.label_stack.pop_back();
+  return AllTrue(label, valid);
 }
 
 bool Else(ValidCtx& ctx, Location loc) {
@@ -1209,9 +1257,16 @@ bool Throw(ValidCtx& ctx, Location loc, At<Index> index) {
   return AllTrue(tag_type, function_type, valid);
 }
 
-bool Rethrow(ValidCtx& ctx, Location loc) {
-  // TODO
-  return false;
+bool Rethrow(ValidCtx& ctx, Location loc, At<Index> depth) {
+  const auto* label = GetLabel(ctx, depth);
+  bool valid = true;
+  if (label && label->label_type != LabelType::Catch &&
+      label->label_type != LabelType::CatchAll) {
+    ctx.errors->OnError(loc, concat("Can't rethrow exception at index ", depth));
+    valid = false;
+  }
+  SetUnreachable(ctx);
+  return AllTrue(valid, label);
 }
 
 bool BrOnNull(ValidCtx& ctx, Location loc, const At<Index>& depth) {
@@ -1839,13 +1894,19 @@ bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
       return PushLabel(ctx, loc, LabelType::Try, value->block_type_immediate());
 
     case Opcode::Catch:
-      return Catch(ctx, loc);
+      return Catch(ctx, loc, value->index_immediate());
 
     case Opcode::Throw:
       return Throw(ctx, loc, value->index_immediate());
 
     case Opcode::Rethrow:
-      return Rethrow(ctx, loc);
+      return Rethrow(ctx, loc, value->index_immediate());
+
+    case Opcode::Delegate:
+      return Delegate(ctx, loc, value->index_immediate());
+
+    case Opcode::CatchAll:
+      return CatchAll(ctx, loc);
 
     case Opcode::Br:
       return Br(ctx, loc, value->index_immediate());

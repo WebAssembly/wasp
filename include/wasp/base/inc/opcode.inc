@@ -192,6 +192,8 @@ WASP_FEATURE_V(0x00, 0x06, Try, "try", exceptions)
 WASP_FEATURE_V(0x00, 0x07, Catch, "catch", exceptions)
 WASP_FEATURE_V(0x00, 0x08, Throw, "throw", exceptions)
 WASP_FEATURE_V(0x00, 0x09, Rethrow, "rethrow", exceptions)
+WASP_FEATURE_V(0x00, 0x18, Delegate, "delegate", exceptions)
+WASP_FEATURE_V(0x00, 0x19, CatchAll, "catch_all", exceptions)
 
 // Tail call opcodes
 WASP_FEATURE_V(0x00, 0x12, ReturnCall, "return_call", tail_call)

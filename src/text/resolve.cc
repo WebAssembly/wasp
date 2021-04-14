@@ -518,6 +518,7 @@ void Resolve(ResolveCtx& ctx, Instruction& instruction) {
           return Resolve(ctx, immediate, ctx.global_names);
 
         // Tag.
+        case Opcode::Catch:
         case Opcode::Throw:
           return Resolve(ctx, immediate, ctx.tag_names);
 
@@ -539,6 +540,8 @@ void Resolve(ResolveCtx& ctx, Instruction& instruction) {
 #if 1
         case Opcode::BrOnCast:
 #endif
+        case Opcode::Delegate:
+        case Opcode::Rethrow:
           return Resolve(ctx, immediate, ctx.label_names);
 
         // Local.

@@ -667,9 +667,11 @@ TEST(BinaryWriteTest, Instruction) {
 
 TEST(BinaryWriteTest, Instruction_exceptions) {
   ExpectWrite("\x06\x40"_su8, I{O::Try, BT_Void});
-  ExpectWrite("\x07"_su8, I{O::Catch});
+  ExpectWrite("\x07\x00"_su8, I{O::Catch, Index{0}});
   ExpectWrite("\x08\x00"_su8, I{O::Throw, Index{0}});
-  ExpectWrite("\x09"_su8, I{O::Rethrow});
+  ExpectWrite("\x09\x00"_su8, I{O::Rethrow, Index{0}});
+  ExpectWrite("\x18\x00"_su8, I{O::Delegate, Index{0}});
+  ExpectWrite("\x19"_su8, I{O::CatchAll});
 }
 
 TEST(BinaryWriteTest, Instruction_tail_call) {
@@ -1576,6 +1578,8 @@ TEST(BinaryWriteTest, Opcode_exceptions) {
   ExpectWrite("\x07"_su8, Opcode::Catch);
   ExpectWrite("\x08"_su8, Opcode::Throw);
   ExpectWrite("\x09"_su8, Opcode::Rethrow);
+  ExpectWrite("\x18"_su8, Opcode::Delegate);
+  ExpectWrite("\x19"_su8, Opcode::CatchAll);
 }
 
 TEST(BinaryWriteTest, Opcode_tail_call) {

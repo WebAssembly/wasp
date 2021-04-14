@@ -1011,6 +1011,8 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::Catch:
     case Opcode::Throw:
     case Opcode::Rethrow:
+    case Opcode::Delegate:
+    case Opcode::CatchAll:
       // TODO
       assert(false);
       break;

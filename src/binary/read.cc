@@ -584,7 +584,6 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Instruction>) {
     // No immediates:
     case Opcode::Unreachable:
     case Opcode::Nop:
-    case Opcode::Rethrow:
     case Opcode::Return:
     case Opcode::Drop:
     case Opcode::Select:
@@ -938,8 +937,9 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Instruction>) {
       if (ctx.open_blocks.empty()) {
         ctx.seen_final_end = true;
       } else if (ctx.open_blocks.back() == Opcode::Try) {
-        ctx.errors.OnError(opcode.loc(),
-                           "Expected catch instruction in try block");
+        ctx.errors.OnError(
+            opcode.loc(),
+            "Expected catch or delegate instruction in try block");
         return nullopt;
       } else {
         ctx.open_blocks.pop_back();
@@ -956,16 +956,48 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Instruction>) {
       }
       return At{guard.range(data), Instruction{opcode}};
 
-    // No immediates, but only allowed if there's a matching try instruction.
-    case Opcode::Catch:
+    // Index immediate. Only allowed if there's a previous try/catch
+    // instruction.
+    case Opcode::Catch: {
+      if (ctx.open_blocks.empty() ||
+          (ctx.open_blocks.back().second != Opcode::Try &&
+           ctx.open_blocks.back().second != Opcode::Catch)) {
+        ctx.errors.OnError(opcode.loc(), concat("Unexpected catch instruction"));
+        return nullopt;
+      } else {
+        ctx.open_blocks.back() = opcode;
+      }
+      WASP_TRY_READ(index, ReadIndex(data, ctx, "index"));
+      return At{guard.range(data), Instruction{opcode, index}};
+    }
+
+    // Index immediate. Only allowed if there's a previous try instruction.
+    case Opcode::Delegate: {
       if (ctx.open_blocks.empty() ||
           ctx.open_blocks.back().second != Opcode::Try) {
-        ctx.errors.OnError(opcode.loc(), "Unexpected catch instruction");
+        ctx.errors.OnError(opcode.loc(),
+                           concat("Unexpected delegate instruction"));
+        return nullopt;
+      } else {
+        ctx.open_blocks.back() = opcode;
+      }
+      WASP_TRY_READ(index, ReadIndex(data, ctx, "index"));
+      return At{guard.range(data), Instruction{opcode, index}};
+    }
+
+    // No immediates, but only allowed if there's a previous try/catch
+    // instruction.
+    case Opcode::CatchAll: {
+      if (ctx.open_blocks.empty() ||
+          (ctx.open_blocks.back().second != Opcode::Try &&
+           ctx.open_blocks.back().second != Opcode::Catch)) {
+        ctx.errors.OnError(opcode.loc(), "Unexpected catch_all instruction");
         return nullopt;
       } else {
         ctx.open_blocks.back() = opcode;
       }
       return At{guard.range(data), Instruction{opcode}};
+    }
 
     // HeapType type immediate.
     case Opcode::RefNull:
@@ -993,6 +1025,7 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Instruction>) {
 
     // Index immediate.
     case Opcode::Throw:
+    case Opcode::Rethrow:
     case Opcode::Br:
     case Opcode::BrIf:
     case Opcode::Call:

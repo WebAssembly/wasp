@@ -1755,10 +1755,13 @@ TEST_F(BinaryReadTest, Instruction_exceptions) {
 
   OK(Read<I>, I{At{"\x06"_su8, O::Try}, At{"\x40"_su8, BT_Void}},
      "\x06\x40"_su8);
-  OK(Read<I>, I{At{"\x07"_su8, O::Catch}}, "\x07"_su8);
+  OK(Read<I>, I{At{"\x07"_su8, O::Catch}, At{"\x00"_su8, Index{0}}},
+     "\x07\x00"_su8);
   OK(Read<I>, I{At{"\x08"_su8, O::Throw}, At{"\x00"_su8, Index{0}}},
      "\x08\x00"_su8);
-  OK(Read<I>, I{At{"\x09"_su8, O::Rethrow}}, "\x09"_su8);
+  OK(Read<I>, I{At{"\x09"_su8, O::Rethrow}, At{"\x00"_su8, Index{0}}},
+     "\x09\x00"_su8);
+  OK(Read<I>, I{At{"\x19"_su8, O::CatchAll}}, "\x19"_su8);
 }
 
 TEST_F(BinaryReadTest, InstructionList_TryCatchEnd) {
@@ -1767,18 +1770,74 @@ TEST_F(BinaryReadTest, InstructionList_TryCatchEnd) {
   OK(Read<InstructionList>,
      InstructionList{
          At{"\x06\x40"_su8, I{At{"\x06"_su8, O::Try}, At{"\x40"_su8, BT_Void}}},
-         At{"\x07"_su8, I{At{"\x07"_su8, O::Catch}}},
+         At{"\x07\x00"_su8,
+            I{At{"\x07"_su8, O::Catch}, At{"\x00"_su8, Index{0}}}},
          At{"\x0b"_su8, I{At{"\x0b"_su8, O::End}}},
      },
-     "\x06\x40\x07\x0b\x0b"_su8);
+     "\x06\x40\x07\x00\x0b\x0b"_su8);
+}
+
+TEST_F(BinaryReadTest, InstructionList_TryCatchAll) {
+  ctx.features.enable_exceptions();
+
+  // Just CatchAll
+  OK(Read<InstructionList>,
+     InstructionList{
+         At{"\x06\x40"_su8, I{At{"\x06"_su8, O::Try}, At{"\x40"_su8, BT_Void}}},
+         At{"\x19"_su8, I{At{"\x19"_su8, O::CatchAll}}},
+         At{"\x0b"_su8, I{At{"\x0b"_su8, O::End}}},
+     },
+     "\x06\x40\x19\x0b\x0b"_su8);
+
+  // Catch then CatchAll
+  OK(Read<InstructionList>,
+     InstructionList{
+         At{"\x06\x40"_su8, I{At{"\x06"_su8, O::Try}, At{"\x40"_su8, BT_Void}}},
+         At{"\x07\x00"_su8,
+            I{At{"\x07"_su8, O::Catch}, At{"\x00"_su8, Index{0}}}},
+         At{"\x19"_su8, I{At{"\x19"_su8, O::CatchAll}}},
+         At{"\x0b"_su8, I{At{"\x0b"_su8, O::End}}},
+     },
+     "\x06\x40\x07\x00\x19\x0b\x0b"_su8);
+}
+
+TEST_F(BinaryReadTest, InstructionList_TryDelegate) {
+  ctx.features.enable_exceptions();
+
+  OK(Read<InstructionList>,
+     InstructionList{
+         At{"\x06\x40"_su8, I{At{"\x06"_su8, O::Try}, At{"\x40"_su8, BT_Void}}},
+         At{"\x18\x00"_su8,
+            I{At{"\x18"_su8, O::Delegate}, At{"\x00"_su8, Index{0}}}},
+         At{"\x0b"_su8, I{At{"\x0b"_su8, O::End}}},
+     },
+     "\x06\x40\x18\x00\x0b\x0b"_su8);
 }
 
 TEST_F(BinaryReadTest, InstructionList_TryNoCatch) {
   ctx.features.enable_exceptions();
 
-  Fail(Read<InstructionList>, {{2, "Expected catch instruction in try block"}},
+  Fail(Read<InstructionList>,
+       {{2, "Expected catch or delegate instruction in try block"}},
        "\x06\x40\x0b\x0b"_su8);
 }
+
+TEST_F(BinaryReadTest, InstructionList_CatchDelegate_OutOfOrder) {
+  ctx.features.enable_exceptions();
+
+  // Catch then delegate
+  Fail(Read<InstructionList>, {{4, "Unexpected delegate instruction"}},
+       "\x06\x40\x07\x00\x18\x00\x0b\x0b"_su8);
+
+  // Delegate then catch
+  Fail(Read<InstructionList>, {{4, "Unexpected catch instruction"}},
+       "\x06\x40\x18\x00\x07\x00\x0b\x0b"_su8);
+
+  // Delegate then catch_all
+  Fail(Read<InstructionList>, {{4, "Unexpected catch_all instruction"}},
+       "\x06\x40\x18\x00\x19\x0b\x0b"_su8);
+}
+
 
 TEST_F(BinaryReadTest, InstructionList_TryNoEnd) {
   ctx.features.enable_exceptions();
@@ -2898,6 +2957,8 @@ TEST_F(BinaryReadTest, Opcode_exceptions) {
   OK(Read<Opcode>, Opcode::Catch, "\x07"_su8);
   OK(Read<Opcode>, Opcode::Throw, "\x08"_su8);
   OK(Read<Opcode>, Opcode::Rethrow, "\x09"_su8);
+  OK(Read<Opcode>, Opcode::Delegate, "\x18"_su8);
+  OK(Read<Opcode>, Opcode::CatchAll, "\x19"_su8);
 }
 
 TEST_F(BinaryReadTest, Opcode_tail_call) {

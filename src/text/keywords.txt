@@ -24,10 +24,13 @@ br, TokenType::VarInstr, Opcode::Br
 call_indirect, TokenType::CallIndirectInstr, Opcode::CallIndirect
 call, TokenType::VarInstr, Opcode::Call
 call_ref, Opcode::CallRef, Features::FunctionReferences
-catch, TokenType::Catch, Opcode::Catch
+catch, TokenType::Catch, Opcode::Catch, Features::Exceptions
+catch_all, TokenType::CatchAll, Opcode::CatchAll, Features::Exceptions
 data.drop, TokenType::VarInstr, Opcode::DataDrop, Features::BulkMemory
 data, TokenType::Data
 declare, TokenType::Declare
+delegate, TokenType::Delegate, Opcode::Delegate, Features::Exceptions
+do, TokenType::Do
 drop, Opcode::Drop
 elem.drop, TokenType::VarInstr, Opcode::ElemDrop, Features::BulkMemory
 elem, TokenType::Elem
@@ -538,7 +541,7 @@ ref.null, TokenType::RefNullInstr, Opcode::RefNull, Features::ReferenceTypes
 ref.test, TokenType::HeapType2Instr, Opcode::RefTest, Features::GC
 register, TokenType::Register
 result, TokenType::Result
-rethrow, Opcode::Rethrow, Features::Exceptions
+rethrow, TokenType::VarInstr, Opcode::Rethrow, Features::Exceptions
 return_call_indirect, TokenType::CallIndirectInstr, Opcode::ReturnCallIndirect, Features::TailCall
 return_call, TokenType::VarInstr, Opcode::ReturnCall, Features::TailCall
 return_call_ref, Opcode::ReturnCallRef, Features::FunctionReferences

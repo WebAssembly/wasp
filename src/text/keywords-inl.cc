@@ -3,6 +3,7 @@ switch (PeekChar(data, 2)) {
     switch (PeekChar(data, 1)) {
       case '8': return LexKeyword(data, "i8", PackedType::I8);
       case 'f': return LexKeyword(data, "if", TokenType::BlockInstr, Opcode::If);
+      case 'o': return LexKeyword(data, "do", TokenType::Do);
       case 'q': return LexKeyword(data, "eq", TokenType::HeapKind, HeapKind::Eq);
       case 'r': return LexKeyword(data, "br", TokenType::VarInstr, Opcode::Br);
       default: break;
@@ -1826,6 +1827,7 @@ switch (PeekChar(data, 2)) {
         }
         break;
       case 'c': return LexKeyword(data, "select", TokenType::SelectInstr, Opcode::Select);
+      case 'g': return LexKeyword(data, "delegate", TokenType::Delegate, Opcode::Delegate, Features::Exceptions);
     }
     break;
   case 'm':
@@ -2032,14 +2034,19 @@ switch (PeekChar(data, 2)) {
           case '.': return LexKeyword(data, "data.drop", TokenType::VarInstr, Opcode::DataDrop, Features::BulkMemory);
         }
         break;
-      case 'c': return LexKeyword(data, "catch", TokenType::Catch, Opcode::Catch);
+      case 'c':
+        switch (PeekChar(data, 5)) {
+          default: return LexKeyword(data, "catch", TokenType::Catch, Opcode::Catch, Features::Exceptions);
+          case '_': return LexKeyword(data, "catch_all", TokenType::CatchAll, Opcode::CatchAll, Features::Exceptions);
+        }
+        break;
       case 'e':
         switch (PeekChar(data, 6)) {
           default: return LexKeyword(data, "extern", TokenType::HeapKind, HeapKind::Extern);
           case 'r': return LexKeyword(data, "externref", ReferenceKind::Externref);
         }
         break;
-      case 'h': return LexKeyword(data, "rethrow", Opcode::Rethrow, Features::Exceptions);
+      case 'h': return LexKeyword(data, "rethrow", TokenType::VarInstr, Opcode::Rethrow, Features::Exceptions);
       case 'u':
         switch (PeekChar(data, 6)) {
           default: return LexKeyword(data, "return", Opcode::Return);

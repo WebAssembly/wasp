@@ -35,6 +35,9 @@ using namespace ::wasp::binary::test;
 using namespace ::wasp::valid;
 using namespace ::wasp::valid::test;
 
+static const StackType ST_I32 = StackType::I32();
+static const StackType ST_F32 = StackType::F32();
+
 class ValidateInstructionTest : public ::testing::Test {
  protected:
   using I = Instruction;
@@ -132,47 +135,79 @@ class ValidateInstructionTest : public ::testing::Test {
     EXPECT_FALSE(Validate(ctx, instruction)) << instruction;
   }
 
+  Label& TopLabel(ValidCtx& ctx) {
+    assert(!ctx.label_stack.empty());
+    return ctx.label_stack.back();
+  }
+
+  void SetTypeStack(ValidCtx& ctx, const StackTypeList& types) {
+    const auto& top_label = TopLabel(ctx);
+    ctx.type_stack.resize(top_label.type_stack_limit);
+    ctx.type_stack.insert(ctx.type_stack.end(), types.begin(), types.end());
+  }
+
+  void CheckTypeStack(ValidCtx& ctx,
+                      const StackTypeList& expected,
+                      const Instruction& instruction) {
+    const auto& top_label = TopLabel(ctx);
+    StackTypeList actual(ctx.type_stack.begin() + top_label.type_stack_limit,
+                         ctx.type_stack.end());
+    EXPECT_TRUE(IsSame(ctx, expected, actual))
+        << concat(instruction, " expected ", expected, ", got ", actual);
+  }
+
   void OkWithTypeStack(const Instruction& instruction,
                        const StackTypeList& param_types,
                        const StackTypeList& result_types) {
-    TestErrors errors;
-    ValidCtx context_copy{ctx, errors};
-    context_copy.type_stack = param_types;
-    EXPECT_TRUE(Validate(context_copy, instruction))
+    SetTypeStack(ctx, param_types);
+    EXPECT_TRUE(Validate(ctx, instruction))
         << concat(instruction, " with stack ", param_types);
-    EXPECT_TRUE(IsSame(ctx, result_types, context_copy.type_stack))
-        << instruction;
     ExpectNoErrors(errors);
+    ClearErrors(errors);
+    CheckTypeStack(ctx, result_types, instruction);
   }
 
-  void OkWithUnreachableStack(const Instruction& instruction,
-                              const ValueTypeList& param_types,
-                              const ValueTypeList& result_types) {
+  // The test functions below will check the type signatures, but then reset
+  // the context.
+  void TestOkWithTypeStack(const Instruction& instruction,
+                           const StackTypeList& param_types,
+                           const StackTypeList& result_types) {
+    TestErrors errors;
+    ValidCtx context_copy{ctx, errors};
+    SetTypeStack(context_copy, param_types);
+    EXPECT_TRUE(Validate(context_copy, instruction))
+        << concat(instruction, " with stack ", param_types);
+    CheckTypeStack(context_copy, result_types, instruction);
+    ExpectNoErrors(errors);
+    ClearErrors(errors);
+  }
+
+  void TestOkWithUnreachableStack(const Instruction& instruction,
+                                  const ValueTypeList& param_types,
+                                  const ValueTypeList& result_types) {
     TestErrors errors;
     ValidCtx context_copy{ctx, errors};
     context_copy.label_stack.back().unreachable = true;
-    context_copy.type_stack = ToStackTypeList(param_types);
+    SetTypeStack(context_copy, ToStackTypeList(param_types));
     EXPECT_TRUE(Validate(context_copy, instruction)) << instruction;
-    EXPECT_TRUE(
-        IsSame(ctx, ToStackTypeList(result_types), context_copy.type_stack))
-        << instruction;
+    CheckTypeStack(context_copy, ToStackTypeList(result_types), instruction);
     ExpectNoErrors(errors);
+    ClearErrors(errors);
   }
 
-  void FailWithTypeStack(const Instruction& instruction,
-                         const StackTypeList& param_types) {
+  void TestFailWithTypeStack(const Instruction& instruction,
+                             const StackTypeList& param_types = {}) {
     ErrorsNop errors_nop;
     ValidCtx context_copy{ctx, errors_nop};
-    context_copy.type_stack = param_types;
+    SetTypeStack(context_copy, param_types);
     EXPECT_FALSE(Validate(context_copy, instruction))
         << concat(instruction, " with stack ", param_types);
   }
 
-  void FailWithTypeStack(const Instruction& instruction,
-                         const ValueTypeList& param_types) {
-    FailWithTypeStack(instruction, ToStackTypeList(param_types));
+  void TestFailWithTypeStack(const Instruction& instruction,
+                             const ValueTypeList& param_types) {
+    TestFailWithTypeStack(instruction, ToStackTypeList(param_types));
   }
-
 
   void TestSignatureNoUnreachable(const Instruction& instruction,
                                   const ValueTypeList& param_types,
@@ -186,10 +221,10 @@ class ValidateInstructionTest : public ::testing::Test {
       const StackTypeList stack_param_types_slice(stack_param_types.begin() + n,
                                                   stack_param_types.end());
       if (n == 0) {
-        OkWithTypeStack(instruction, stack_param_types_slice,
-                        stack_result_types);
+        TestOkWithTypeStack(instruction, stack_param_types_slice,
+                            stack_result_types);
       } else {
-        FailWithTypeStack(instruction, stack_param_types_slice);
+        TestFailWithTypeStack(instruction, stack_param_types_slice);
       }
     }
 
@@ -200,7 +235,7 @@ class ValidateInstructionTest : public ::testing::Test {
         stack_type =
             IsSame(ctx, stack_type, ST::I32()) ? ST::F64() : ST::I32();
       }
-      FailWithTypeStack(instruction, mismatch_types);
+      TestFailWithTypeStack(instruction, mismatch_types);
     }
   }
 
@@ -208,7 +243,7 @@ class ValidateInstructionTest : public ::testing::Test {
                      const ValueTypeList& param_types,
                      const ValueTypeList& result_types) {
     TestSignatureNoUnreachable(instruction, param_types, result_types);
-    OkWithUnreachableStack(instruction, {}, result_types);
+    TestOkWithUnreachableStack(instruction, {}, result_types);
   }
 
   TestErrors errors;
@@ -652,66 +687,128 @@ TEST_F(ValidateInstructionTest, Try_Param) {
               errors);
 }
 
-TEST_F(ValidateInstructionTest, DISABLED_Try_Catch_Void) {
+TEST_F(ValidateInstructionTest, Try_Catch) {
+  auto type_v = AddFunctionType(FunctionType{{}, {}});
+  auto type_i32 = AddFunctionType(FunctionType{{VT_I32}, {}});
+  auto type_i32_f32 = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {}});
+
+  auto result_i32_f32 = AddFunctionType(FunctionType{{}, {VT_I32, VT_F32}});
+
+  auto tag_v = AddTag(TagType{TagAttribute::Exception, type_v});
+  auto tag_i32 = AddTag(TagType{TagAttribute::Exception, type_i32});
+  auto tag_i32_f32 = AddTag(TagType{TagAttribute::Exception, type_i32_f32});
+
+  // try/catch/end
+  OkWithTypeStack(I{O::Try, BT_Void}, {}, {});
+  OkWithTypeStack(I{O::Catch, tag_v}, {}, {});
+  OkWithTypeStack(I{O::Catch, tag_i32}, {}, {ST_I32});
+  OkWithTypeStack(I{O::Catch, tag_i32_f32}, {}, {ST_I32, ST_F32});
+  TestOkWithTypeStack(I{O::CatchAll}, {}, {});
+  OkWithTypeStack(I{O::End}, {}, {});
+
+  // try (result i32)/catch/end
+  OkWithTypeStack(I{O::Try, BT_I32}, {}, {});
+  OkWithTypeStack(I{O::Catch, tag_v}, {ST_I32}, {});
+  OkWithTypeStack(I{O::Catch, tag_i32}, {ST_I32}, {ST_I32});
+  OkWithTypeStack(I{O::Catch, tag_i32_f32}, {ST_I32}, {ST_I32, ST_F32});
+  TestOkWithTypeStack(I{O::CatchAll}, {ST_I32}, {});
+  OkWithTypeStack(I{O::End}, {ST_I32}, {ST_I32});
+
+  // try (result i32 f32)/catch/end
+  OkWithTypeStack(I{O::Try, BlockType{result_i32_f32}}, {}, {});
+  OkWithTypeStack(I{O::Catch, tag_v}, {ST_I32, ST_F32}, {});
+  OkWithTypeStack(I{O::Catch, tag_i32}, {ST_I32, ST_F32}, {ST_I32});
+  OkWithTypeStack(I{O::Catch, tag_i32_f32}, {ST_I32, ST_F32}, {ST_I32, ST_F32});
+  TestOkWithTypeStack(I{O::CatchAll}, {ST_I32, ST_F32}, {});
+  OkWithTypeStack(I{O::End}, {ST_I32, ST_F32}, {ST_I32, ST_F32});
+
+  // try (param i32)/catch/end
+  OkWithTypeStack(I{O::Try, BlockType{type_i32}}, {ST_I32}, {ST_I32});
+  OkWithTypeStack(I{O::Catch, tag_v}, {}, {});
+  OkWithTypeStack(I{O::Catch, tag_i32}, {}, {ST_I32});
+  OkWithTypeStack(I{O::Catch, tag_i32_f32}, {}, {ST_I32, ST_F32});
+  TestOkWithTypeStack(I{O::CatchAll}, {}, {});
+  OkWithTypeStack(I{O::End}, {}, {});
+}
+
+TEST_F(ValidateInstructionTest, Try_Delegate) {
+  auto param_i32 = AddFunctionType(FunctionType{{VT_I32}, {}});
+  auto result_i32_f32 = AddFunctionType(FunctionType{{}, {VT_I32, VT_F32}});
+
+  // try/delegate
+  OkWithTypeStack(I{O::Try,      BT_Void}, {}, {});
+  OkWithTypeStack(I{O::Delegate, Index{0}}, {}, {});
+
+  // try (result i32)/delegate
+  OkWithTypeStack(I{O::Try,      BT_I32}, {}, {});
+  OkWithTypeStack(I{O::Delegate, Index{0}}, {ST_I32}, {ST_I32});
+
+  // try (result i32 f32)/delegate
+  OkWithTypeStack(I{O::Try,      BlockType{result_i32_f32}}, {}, {});
+  OkWithTypeStack(I{O::Delegate, Index{0}}, {ST_I32, ST_F32}, {ST_I32, ST_F32});
+
+  // try (param i32)/delegate
+  OkWithTypeStack(I{O::Try,      BlockType{param_i32}}, {ST_I32}, {ST_I32});
+  OkWithTypeStack(I{O::Delegate, Index{0}}, {}, {});
+}
+
+TEST_F(ValidateInstructionTest, Try_Delegate_Target) {
+  // try/delegate
+  Ok(I{O::Try,   BT_Void});  // $A
+  Ok(I{O::Block, BT_Void});  // $B
+  Ok(I{O::Try,   BT_Void});  // $C
+
+  Ok(I{O::Try,      BT_Void});
+  Ok(I{O::Delegate, Index{0}}); // Delegates to $C
+  Ok(I{O::Try,      BT_Void});
+  Ok(I{O::Delegate, Index{1}}); // Delegates to $A (skip $B, not a try)
+  Ok(I{O::Try,      BT_Void});
+  Ok(I{O::Delegate, Index{2}}); // Delegates to $A
+  Ok(I{O::Try,      BT_Void});
+  Ok(I{O::Delegate, Index{3}}); // Delegates to function
+  Ok(I{O::Try,      BT_Void});
+  Fail(I{O::Delegate, Index{4}});
+  ExpectError({"instruction", "Invalid label 4, must be less than 4"}, errors);
+}
+
+TEST_F(ValidateInstructionTest, Try_Ordering) {
+  auto type = AddFunctionType(FunctionType{{}, {}});
+  auto tag = AddTag(TagType{TagAttribute::Exception, type});
+
+  // catch/catch_all/delegate/end can follow try
   Ok(I{O::Try, BT_Void});
-}
+  TestOkWithTypeStack(I{O::Catch, Index{tag}}, {}, {});
+  TestOkWithTypeStack(I{O::CatchAll}, {}, {});
+  TestOkWithTypeStack(I{O::Delegate, Index{0}}, {}, {});
+  TestOkWithTypeStack(I{O::End}, {}, {});
 
-TEST_F(ValidateInstructionTest, DISABLED_Try_Catch_SingleResult) {
-  for (const auto& info : all_value_types) {
-    Ok(I{O::Try, info.block_type});
-    Ok(info.instruction);
-    Ok(I{O::Catch});
-    Ok(I{O::Drop});  // Drop the exception.
-    Ok(info.instruction);
-    Ok(I{O::End});
-    ExpectNoErrors(errors);
-  }
-}
+  // catch/catch_all/end can follow try/catch
+  Ok(I{O::Catch, Index{tag}});
+  TestOkWithTypeStack(I{O::Catch, Index{tag}}, {}, {});
+  TestOkWithTypeStack(I{O::CatchAll}, {}, {});
+  TestFailWithTypeStack(I{O::Delegate, Index{0}});
+  TestOkWithTypeStack(I{O::End}, {}, {});
 
-TEST_F(ValidateInstructionTest, DISABLED_Try_Catch_MultiResult) {
-  auto index = AddFunctionType(FunctionType{{}, {VT_I32, VT_F32}});
-  Ok(I{O::Try, BlockType(index)});
-  Ok(I{O::I32Const, s32{}});
-  Ok(I{O::F32Const, f32{}});
-  Ok(I{O::Catch});
-  Ok(I{O::Drop});  // Drop the exception.
-  Ok(I{O::I32Const, s32{}});
-  Ok(I{O::F32Const, f32{}});
-  Ok(I{O::End});
-  ExpectNoErrors(errors);
-}
-
-TEST_F(ValidateInstructionTest, DISABLED_Try_Catch_Param) {
-  auto index = AddFunctionType(FunctionType{{VT_I32}, {}});
-  Ok(I{O::I32Const, s32{}});
-  Ok(I{O::Try, BlockType(index)});
-  Ok(I{O::Drop});
-  Ok(I{O::Catch});
-  Ok(I{O::Drop});  // Drop the exception.
-  Ok(I{O::End});
-  ExpectNoErrors(errors);
-  Fail(I{O::Drop});  // Nothing left on the stack.
-  ExpectError({"instruction", "Expected stack to contain 1 value, got 0"},
-              errors);
+  // only end can follow try/catch/catch_all
+  Ok(I{O::CatchAll});
+  TestFailWithTypeStack(I{O::Catch, Index{tag}});
+  TestFailWithTypeStack(I{O::CatchAll});
+  TestFailWithTypeStack(I{O::Delegate, Index{0}});
+  TestOkWithTypeStack(I{O::End}, {}, {});
 }
 
 TEST_F(ValidateInstructionTest, Throw) {
-  auto type_index = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {}});
-  auto tag_index = AddTag(TagType{TagAttribute::Exception, type_index});
-  Ok(I{O::I32Const, s32{}});
-  Ok(I{O::F32Const, f32{}});
-  Ok(I{O::Throw, Index{tag_index}});
-  ExpectNoErrors(errors);
-}
+  auto type_v = AddFunctionType(FunctionType{{}, {}});
+  auto type_i32 = AddFunctionType(FunctionType{{VT_I32}, {}});
+  auto type_i32_f32 = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {}});
 
-TEST_F(ValidateInstructionTest, Throw_Unreachable) {
-  auto type_index = AddFunctionType(FunctionType{{VT_I32}, {}});
-  auto tag_index = AddTag(TagType{TagAttribute::Exception, type_index});
-  Ok(I{O::Block, BT_F32});
-  Ok(I{O::I32Const, s32{}});
-  Ok(I{O::Throw, Index{tag_index}});
-  Ok(I{O::End});
-  ExpectNoErrors(errors);
+  auto tag_v = AddTag(TagType{TagAttribute::Exception, type_v});
+  auto tag_i32 = AddTag(TagType{TagAttribute::Exception, type_i32});
+  auto tag_i32_f32 = AddTag(TagType{TagAttribute::Exception, type_i32_f32});
+
+  TestSignature(I{O::Throw, Index{tag_v}}, {}, {});
+  TestSignature(I{O::Throw, Index{tag_i32}}, {VT_I32}, {});
+  TestSignature(I{O::Throw, Index{tag_i32_f32}}, {VT_I32, VT_F32}, {});
 }
 
 TEST_F(ValidateInstructionTest, Throw_IndexOOB) {
@@ -723,24 +820,46 @@ TEST_F(ValidateInstructionTest, Throw_IndexOOB) {
 TEST_F(ValidateInstructionTest, Throw_TypeMismatch) {
   auto type_index = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {}});
   auto tag_index = AddTag(TagType{TagAttribute::Exception, type_index});
-  Ok(I{O::I64Const, s32{}});
+  Ok(I{O::I64Const, s64{}});
   Fail(I{O::Throw, Index{tag_index}});
   ExpectError({"instruction", "Expected stack to contain [i32 f32], got [i64]"},
               errors);
 }
 
 TEST_F(ValidateInstructionTest, Rethrow) {
-  // TODO
-  ExpectNoErrors(errors);
+  auto type_v = AddFunctionType(FunctionType{{}, {}});
+  auto type_i32 = AddFunctionType(FunctionType{{VT_I32}, {}});
+  auto type_i32_f32 = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {}});
+
+  auto tag_v = AddTag(TagType{TagAttribute::Exception, type_v});
+  auto tag_i32 = AddTag(TagType{TagAttribute::Exception, type_i32});
+  auto tag_i32_f32 = AddTag(TagType{TagAttribute::Exception, type_i32_f32});
+
+  Ok(I{O::Try,   BT_Void});              // $A
+  Ok(I{O::Catch, Index{tag_v}});         // catch for $A
+  Ok(I{O::Block, BT_Void});              // $B
+  Ok(I{O::Try,   BT_Void});              // $C
+  Ok(I{O::Catch, Index{tag_i32}});       // catch for $C
+  Ok(I{O::Try,   BT_Void});              // $D
+  Ok(I{O::Catch, Index{tag_i32_f32}});   // catch for $D
+
+  TestOkWithTypeStack(I{O::Rethrow, Index{0}}, {}, {});  // Rethrows $D exn
+  TestOkWithTypeStack(I{O::Rethrow, Index{1}}, {}, {});  // Rethrows $C exn
+  TestOkWithTypeStack(I{O::Rethrow, Index{3}}, {}, {});  // Rethrows $A exn
+  Fail(I{O::Rethrow, Index{2}});                         // No exn at $B
+  ExpectError({"instruction", "Can't rethrow exception at index 2"}, errors);
 }
 
-TEST_F(ValidateInstructionTest, DISABLED_Rethrow_Unreachable) {
-  Ok(I{O::Try, BT_I32});
-  Ok(I{O::I32Const, s32{}});
-  Ok(I{O::Catch});
-  Ok(I{O::Rethrow});
-  Ok(I{O::End});
-  ExpectNoErrors(errors);
+TEST_F(ValidateInstructionTest, Rethrow_CatchAll) {
+  Ok(I{O::Try, BT_Void});
+  Ok(I{O::CatchAll});
+  Ok(I{O::Rethrow, Index{0}});
+}
+
+TEST_F(ValidateInstructionTest, Rethrow_InvalidOOB) {
+  Ok(I{O::Try, BT_Void});
+  Fail(I{O::Rethrow, Index{0}});  // Can only rethrow from inside catch block
+  ExpectError({"instruction", "Can't rethrow exception at index 0"}, errors);
 }
 
 TEST_F(ValidateInstructionTest, Br_Void) {
@@ -1181,8 +1300,8 @@ TEST_F(ValidateInstructionTest, SelectT_RefType) {
 
 TEST_F(ValidateInstructionTest, SelectT_RefType_IndexOOB) {
   // Use index 1, since index 0 is always defined (see AddFunction above).
-  FailWithTypeStack(I{O::SelectT, SelectImmediate{VT_Ref1}},
-                    ValueTypeList{VT_Ref1, VT_Ref1, VT_I32});
+  TestFailWithTypeStack(I{O::SelectT, SelectImmediate{VT_Ref1}},
+                        ValueTypeList{VT_Ref1, VT_Ref1, VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, SelectT_EmptyStack) {
@@ -3142,7 +3261,7 @@ TEST_F(ValidateInstructionTest, CallRef) {
   // It's impossible to know the result types of call_ref with an unreachable
   // stack, since the signature depends on the typed function reference. So
   // it's fine to keep the type stack empty.
-  OkWithUnreachableStack(I{O::CallRef}, {}, {});
+  TestOkWithUnreachableStack(I{O::CallRef}, {}, {});
 }
 
 TEST_F(ValidateInstructionTest, CallRef_ParamTypeMismatch) {
@@ -3280,7 +3399,7 @@ TEST_F(ValidateInstructionTest, FuncBind_TypeMismatch) {
     ValueType VT_RefOld = MakeValueTypeRef(old_index, Null::No);
     ValueTypeList params = info.params;
     params.push_back(VT_RefOld);
-    FailWithTypeStack(I{O::FuncBind, FuncBindImmediate{new_index}}, params);
+    TestFailWithTypeStack(I{O::FuncBind, FuncBindImmediate{new_index}}, params);
     ClearErrors(errors);
   }
 }
@@ -3352,7 +3471,7 @@ TEST_F(ValidateInstructionTest, RttSub) {
   // It's impossible to know the result types of rtt.sub with an unreachable
   // stack, since the signature depends on the rtt on the stack. So it's fine
   // to keep the type stack empty.
-  OkWithUnreachableStack(I{O::RttSub, HT_Func}, {}, {});
+  TestOkWithUnreachableStack(I{O::RttSub, HT_Func}, {}, {});
 }
 
 TEST_F(ValidateInstructionTest, RefTest) {
@@ -3370,8 +3489,8 @@ TEST_F(ValidateInstructionTest, RefTest) {
 
 TEST_F(ValidateInstructionTest, RefTest_NotSubtype) {
   // extern is not a subtype of func
-  FailWithTypeStack(I{O::RefTest, HeapType2Immediate{HT_Func, HT_Extern}},
-                    {VT_Funcref, VT_RTT_1_Extern});
+  TestFailWithTypeStack(I{O::RefTest, HeapType2Immediate{HT_Func, HT_Extern}},
+                        {VT_Funcref, VT_RTT_1_Extern});
 }
 
 TEST_F(ValidateInstructionTest, RefCast) {
@@ -3390,8 +3509,8 @@ TEST_F(ValidateInstructionTest, RefCast) {
 
 TEST_F(ValidateInstructionTest, RefCast_NotSubtype) {
   // extern is not a subtype of func
-  FailWithTypeStack(I{O::RefCast, HeapType2Immediate{HT_Func, HT_Extern}},
-                    {VT_Funcref, VT_RTT_1_Extern});
+  TestFailWithTypeStack(I{O::RefCast, HeapType2Immediate{HT_Func, HT_Extern}},
+                        {VT_Funcref, VT_RTT_1_Extern});
 }
 
 TEST_F(ValidateInstructionTest, BrOnCast) {
@@ -3407,13 +3526,14 @@ TEST_F(ValidateInstructionTest, BrOnCast) {
   // It's impossible to know the result types of br_on_cast with an unreachable
   // stack, since the signature depends on the rtt on the stack. So it's fine
   // to keep the type stack empty.
-  OkWithUnreachableStack(I{O::BrOnCast, Index{0}}, {}, {});
-  OkWithUnreachableStack(I{O::BrOnCast, Index{0}}, {VT_RTT_1_Func}, {});
+  TestOkWithUnreachableStack(I{O::BrOnCast, Index{0}}, {}, {});
+  TestOkWithUnreachableStack(I{O::BrOnCast, Index{0}}, {VT_RTT_1_Func}, {});
 }
 
 TEST_F(ValidateInstructionTest, BrOnCast_NotSubtype) {
   // extern is not a subtype of func
-  FailWithTypeStack(I{O::BrOnCast, Index{0}}, {VT_Funcref, VT_RTT_1_Extern});
+  TestFailWithTypeStack(I{O::BrOnCast, Index{0}},
+                        {VT_Funcref, VT_RTT_1_Extern});
 }
 
 TEST_F(ValidateInstructionTest, StructNewWithRtt) {
@@ -3431,7 +3551,7 @@ TEST_F(ValidateInstructionTest, StructNewWithRtt) {
 TEST_F(ValidateInstructionTest, StructNewWithRtt_RttMismatch) {
   auto index = AddStructType({});
   ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
-  FailWithTypeStack(I{O::StructNewWithRtt, Index{999}}, {VT_RTT_1_index});
+  TestFailWithTypeStack(I{O::StructNewWithRtt, Index{999}}, {VT_RTT_1_index});
 }
 
 TEST_F(ValidateInstructionTest, StructNewDefaultWithRtt) {
@@ -3451,8 +3571,8 @@ TEST_F(ValidateInstructionTest, StructNewDefaultWithRtt) {
 TEST_F(ValidateInstructionTest, StructNewDefaultWithRtt_RttMismatch) {
   auto index = AddStructType({});
   ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
-  FailWithTypeStack(I{O::StructNewDefaultWithRtt, Index{999}},
-                    {VT_RTT_1_index});
+  TestFailWithTypeStack(I{O::StructNewDefaultWithRtt, Index{999}},
+                        {VT_RTT_1_index});
 }
 
 TEST_F(ValidateInstructionTest, StructNewDefaultWithRtt_NonDefaultable) {
@@ -3460,8 +3580,8 @@ TEST_F(ValidateInstructionTest, StructNewDefaultWithRtt_NonDefaultable) {
       FieldTypeList{FieldType{StorageType{VT_Ref0}, Mutability::Const}}});
 
   ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
-  FailWithTypeStack(I{O::StructNewDefaultWithRtt, Index{1}},
-                    {VT_RTT_1_index});
+  TestFailWithTypeStack(I{O::StructNewDefaultWithRtt, Index{1}},
+                        {VT_RTT_1_index});
 }
 
 TEST_F(ValidateInstructionTest, StructGet) {
@@ -3481,8 +3601,8 @@ TEST_F(ValidateInstructionTest, StructGet_FailPacked) {
       FieldTypeList{FieldType{StorageType{PackedType::I8}, Mutability::Const}}});
   ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
 
-  FailWithTypeStack(I{O::StructGet, StructFieldImmediate{index, Index{0}}},
-                    {VT_RefNull_index});
+  TestFailWithTypeStack(I{O::StructGet, StructFieldImmediate{index, Index{0}}},
+                        {VT_RefNull_index});
 }
 
 TEST_F(ValidateInstructionTest, StructGetPacked) {
@@ -3518,10 +3638,10 @@ TEST_F(ValidateInstructionTest, StructGetPacked_FailUnpacked) {
       FieldTypeList{FieldType{StorageType{VT_F32}, Mutability::Const}}});
   ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
 
-  FailWithTypeStack(I{O::StructGetS, StructFieldImmediate{index, Index{0}}},
-                    {VT_RefNull_index});
-  FailWithTypeStack(I{O::StructGetU, StructFieldImmediate{index, Index{0}}},
-                    {VT_RefNull_index});
+  TestFailWithTypeStack(I{O::StructGetS, StructFieldImmediate{index, Index{0}}},
+                        {VT_RefNull_index});
+  TestFailWithTypeStack(I{O::StructGetU, StructFieldImmediate{index, Index{0}}},
+                        {VT_RefNull_index});
 }
 
 TEST_F(ValidateInstructionTest, StructSet) {
@@ -3551,7 +3671,7 @@ TEST_F(ValidateInstructionTest, ArrayNewWithRtt_RttMismatch) {
   auto index = AddArrayType(
       ArrayType{FieldType{StorageType{VT_I64}, Mutability::Const}});
   ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
-  FailWithTypeStack(I{O::ArrayNewWithRtt, Index{999}}, {VT_RTT_1_index});
+  TestFailWithTypeStack(I{O::ArrayNewWithRtt, Index{999}}, {VT_RTT_1_index});
 }
 
 TEST_F(ValidateInstructionTest, ArrayNewDefaultWithRtt) {
@@ -3569,8 +3689,8 @@ TEST_F(ValidateInstructionTest, ArrayNewDefaultWithRtt_RttMismatch) {
   auto index = AddArrayType(
       ArrayType{FieldType{StorageType{VT_I64}, Mutability::Const}});
   ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
-  FailWithTypeStack(I{O::ArrayNewDefaultWithRtt, Index{999}},
-                    {VT_I32, VT_RTT_1_index});
+  TestFailWithTypeStack(I{O::ArrayNewDefaultWithRtt, Index{999}},
+                        {VT_I32, VT_RTT_1_index});
 }
 
 TEST_F(ValidateInstructionTest, ArrayNewDefaultWithRtt_NonDefaultable) {
@@ -3578,8 +3698,8 @@ TEST_F(ValidateInstructionTest, ArrayNewDefaultWithRtt_NonDefaultable) {
       ArrayType{FieldType{StorageType{VT_Ref0}, Mutability::Const}});
 
   ValueType VT_RTT_1_index{Rtt{1u, HeapType{index}}};
-  FailWithTypeStack(I{O::ArrayNewDefaultWithRtt, Index{1}},
-                    {VT_I32, VT_RTT_1_index});
+  TestFailWithTypeStack(I{O::ArrayNewDefaultWithRtt, Index{1}},
+                        {VT_I32, VT_RTT_1_index});
 }
 
 TEST_F(ValidateInstructionTest, ArrayGet) {
@@ -3597,7 +3717,7 @@ TEST_F(ValidateInstructionTest, ArrayGet_FailPacked) {
       ArrayType{FieldType{StorageType{PackedType::I8}, Mutability::Const}});
   ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
 
-  FailWithTypeStack(I{O::ArrayGet, index}, {VT_RefNull_index, VT_I32});
+  TestFailWithTypeStack(I{O::ArrayGet, index}, {VT_RefNull_index, VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, ArrayGetPacked) {
@@ -3620,8 +3740,8 @@ TEST_F(ValidateInstructionTest, ArrayGetPacked_FailUnpacked) {
       ArrayType{FieldType{StorageType{VT_F32}, Mutability::Const}});
   ValueType VT_RefNull_index = MakeValueTypeRef(index, Null::Yes);
 
-  FailWithTypeStack(I{O::ArrayGetS, index}, {VT_RefNull_index, VT_I32});
-  FailWithTypeStack(I{O::ArrayGetU, index}, {VT_RefNull_index, VT_I32});
+  TestFailWithTypeStack(I{O::ArrayGetS, index}, {VT_RefNull_index, VT_I32});
+  TestFailWithTypeStack(I{O::ArrayGetU, index}, {VT_RefNull_index, VT_I32});
 }
 
 TEST_F(ValidateInstructionTest, ArraySet) {

@@ -59,12 +59,12 @@ class TextReadTest : public ::testing::Test {
   void OKVector(Func&& func, const T& expected, SpanU8 span, Args&&... args) {
     Tokenizer tokenizer{span};
     auto actual = func(tokenizer, ctx, std::forward<Args>(args)...);
+    ExpectNoErrors(errors);
     ASSERT_TRUE(actual.has_value());
     ASSERT_EQ(expected.size(), actual->size());
     for (size_t i = 0; i < expected.size(); ++i) {
       EXPECT_EQ(expected[i], (*actual)[i]);
     }
-    ExpectNoErrors(errors);
   }
 
   template <typename Func, typename... Args>
@@ -1452,9 +1452,9 @@ TEST_F(TextReadTest, BlockInstruction_If_MismatchedLabels) {
        "if $l else $l2 end $l"_su8);
 }
 
-TEST_F(TextReadTest, BlockInstruction_Try) {
+TEST_F(TextReadTest, BlockInstruction_TryCatch) {
   Fail(ReadBlockInstruction_ForTesting, {{0, "try instruction not allowed"}},
-       "try catch end"_su8);
+       "try catch 0 end"_su8);
 
   ctx.features.enable_exceptions();
 
@@ -1462,10 +1462,23 @@ TEST_F(TextReadTest, BlockInstruction_Try) {
   OKVector(ReadBlockInstruction_ForTesting,
            InstructionList{
                At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
-               At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
+               At{"catch 0"_su8,
+                  I{At{"catch"_su8, O::Catch}, At{"0"_su8, Var{Index{0}}}}},
                At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
-           "try catch end"_su8);
+           "try catch 0 end"_su8);
+
+  // try/multiple catch.
+  OKVector(ReadBlockInstruction_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"catch 0"_su8,
+                  I{At{"catch"_su8, O::Catch}, At{"0"_su8, Var{Index{0}}}}},
+               At{"catch 1"_su8,
+                  I{At{"catch"_su8, O::Catch}, At{"1"_su8, Var{Index{1}}}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
+           },
+           "try catch 0 catch 1 end"_su8);
 
   // try/catch and non-empty blocks.
   OKVector(ReadBlockInstruction_ForTesting,
@@ -1473,12 +1486,13 @@ TEST_F(TextReadTest, BlockInstruction_Try) {
                At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
                At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
                At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
-               At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
+               At{"catch 0"_su8,
+                  I{At{"catch"_su8, O::Catch}, At{"0"_su8, Var{Index{0}}}}},
                At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
                At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
                At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
-           "try nop nop catch nop nop end"_su8);
+           "try nop nop catch 0 nop nop end"_su8);
 
   // try w/ label.
   OKVector(ReadBlockInstruction_ForTesting,
@@ -1487,11 +1501,12 @@ TEST_F(TextReadTest, BlockInstruction_Try) {
                   I{At{"try"_su8, O::Try},
                     At{"$l"_su8, BlockImmediate{At{"$l"_su8, "$l"_sv}, {}}}}},
                At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
-               At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
+               At{"catch 0"_su8,
+                  I{At{"catch"_su8, O::Catch}, At{"0"_su8, Var{Index{0}}}}},
                At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
                At{"end"_su8, I{At{"end"_su8, O::End}}},
            },
-           "try $l nop catch nop end"_su8);
+           "try $l nop catch 0 nop end"_su8);
 
   // try w/ label and matching end label.
   OKVector(
@@ -1501,40 +1516,64 @@ TEST_F(TextReadTest, BlockInstruction_Try) {
              I{At{"try"_su8, O::Try},
                At{"$l2"_su8, BlockImmediate{At{"$l2"_su8, "$l2"_sv}, {}}}}},
           At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
-          At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
+          At{"catch 0"_su8,
+             I{At{"catch"_su8, O::Catch}, At{"0"_su8, Var{Index{0}}}}},
           At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
           At{"end"_su8, I{At{"end"_su8, O::End}}},
       },
-      "try $l2 nop catch nop end $l2"_su8);
+      "try $l2 nop catch 0 nop end $l2"_su8);
+}
 
-  // try w/ label and matching catch and end labels.
-  OKVector(
-      ReadBlockInstruction_ForTesting,
-      InstructionList{
-          At{"try $l3"_su8,
-             I{At{"try"_su8, O::Try},
-               At{"$l3"_su8, BlockImmediate{At{"$l3"_su8, "$l3"_sv}, {}}}}},
-          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
-          At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
-          At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
-          At{"end"_su8, I{At{"end"_su8, O::End}}},
-      },
-      "try $l3 nop catch $l3 nop end $l3"_su8);
+TEST_F(TextReadTest, BlockInstruction_TryCatchAll) {
+  ctx.features.enable_exceptions();
+
+  // try/catch_all.
+  OKVector(ReadBlockInstruction_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"catch_all"_su8, I{At{"catch_all"_su8, O::CatchAll}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
+           },
+           "try nop catch_all nop end"_su8);
+
+  // try/catch/catch_all
+  OKVector(ReadBlockInstruction_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"catch 0"_su8,
+                  I{At{"catch"_su8, O::Catch}, At{"0"_su8, Var{Index{0}}}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"catch_all"_su8, I{At{"catch_all"_su8, O::CatchAll}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"end"_su8, I{At{"end"_su8, O::End}}},
+           },
+           "try nop catch 0 nop catch_all nop end"_su8);
+}
+
+TEST_F(TextReadTest, BlockInstruction_TryDelegate) {
+  ctx.features.enable_exceptions();
+
+  // try/delegate.
+  OKVector(ReadBlockInstruction_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"delegate 0"_su8, I{At{"delegate"_su8, O::Delegate},
+                                      At{"0"_su8, Var{Index{0}}}}},
+           },
+           "try nop delegate 0"_su8);
 }
 
 TEST_F(TextReadTest, BlockInstruction_Try_MismatchedLabels) {
   ctx.features.enable_exceptions();
 
-  Fail(ReadBlockInstruction_ForTesting, {{14, "Unexpected label $l2"}},
-       "try catch end $l2"_su8);
-  Fail(ReadBlockInstruction_ForTesting, {{10, "Unexpected label $l2"}},
-       "try catch $l2 end"_su8);
-  Fail(ReadBlockInstruction_ForTesting, {{17, "Expected label $l, got $l2"}},
-       "try $l catch end $l2"_su8);
-  Fail(ReadBlockInstruction_ForTesting, {{13, "Expected label $l, got $l2"}},
-       "try $l catch $l2 end $l2"_su8);
-  Fail(ReadBlockInstruction_ForTesting, {{13, "Expected label $l, got $l2"}},
-       "try $l catch $l2 end $l"_su8);
+  Fail(ReadBlockInstruction_ForTesting, {{16, "Unexpected label $l2"}},
+       "try catch 0 end $l2"_su8);
+  Fail(ReadBlockInstruction_ForTesting, {{19, "Expected label $l, got $l2"}},
+       "try $l catch 0 end $l2"_su8);
 }
 
 TEST_F(TextReadTest, LetInstruction) {
@@ -1898,31 +1937,128 @@ TEST_F(TextReadTest, Expression_IfBadElse) {
        "(if (nop) (then) (func))"_su8);
 }
 
-TEST_F(TextReadTest, Expression_Try) {
+TEST_F(TextReadTest, Expression_TryCatch) {
   Fail(ReadExpression_ForTesting, {{1, "try instruction not allowed"}},
-       "(try (catch))"_su8);
+       "(try (catch 0))"_su8);
 
   ctx.features.enable_exceptions();
 
-  // Try catch.
+  // try.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
                At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
-               At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
                At{")"_su8, I{At{")"_su8, O::End}}},
            },
-           "(try (catch))"_su8);
+           "(try)"_su8);
 
-  // Try catch w/ nops.
+  // try w/ nops.
   OKVector(ReadExpression_ForTesting,
            InstructionList{
                At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
                At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
-               At{"catch"_su8, I{At{"catch"_su8, O::Catch}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
+           },
+           "(try (do (nop)))"_su8);
+
+  // try/catch.
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"catch 0"_su8,
+                  I{At{"catch"_su8, O::Catch}, At{"0"_su8, Var{Index{0}}}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
+           },
+           "(try (catch 0))"_su8);
+
+  // try/multiple catch.
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"catch 0"_su8,
+                  I{At{"catch"_su8, O::Catch}, At{"0"_su8, Var{Index{0}}}}},
+               At{"catch 1"_su8,
+                  I{At{"catch"_su8, O::Catch}, At{"1"_su8, Var{Index{1}}}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
+           },
+           "(try (catch 0) (catch 1))"_su8);
+
+  // try/catch and non-empty blocks.
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"catch 0"_su8,
+                  I{At{"catch"_su8, O::Catch}, At{"0"_su8, Var{Index{0}}}}},
                At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
                At{")"_su8, I{At{")"_su8, O::End}}},
            },
-           "(try (nop) (catch (nop)))"_su8);
+           "(try (do (nop)) (catch 0 (nop)))"_su8);
+
+  // try w/ label.
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"try $l"_su8,
+                  I{At{"try"_su8, O::Try},
+                    At{"$l"_su8, BlockImmediate{At{"$l"_su8, "$l"_sv}, {}}}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"catch 0"_su8,
+                  I{At{"catch"_su8, O::Catch}, At{"0"_su8, Var{Index{0}}}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
+           },
+           "(try $l (do (nop)) (catch 0 (nop)))"_su8);
+}
+
+TEST_F(TextReadTest, Expression_TryCatchAll) {
+  ctx.features.enable_exceptions();
+
+  // try/catch_all.
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"catch_all"_su8, I{At{"catch_all"_su8, O::CatchAll}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
+           },
+           "(try (do (nop)) (catch_all (nop)))"_su8);
+
+  // try/catch/catch_all
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"catch 0"_su8,
+                  I{At{"catch"_su8, O::Catch}, At{"0"_su8, Var{Index{0}}}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"catch_all"_su8, I{At{"catch_all"_su8, O::CatchAll}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{")"_su8, I{At{")"_su8, O::End}}},
+           },
+           "(try (do (nop)) (catch 0 (nop)) (catch_all (nop)))"_su8);
+}
+
+TEST_F(TextReadTest, Expression_TryDelegate) {
+  ctx.features.enable_exceptions();
+
+  // try/delegate.
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"delegate 0"_su8, I{At{"delegate"_su8, O::Delegate},
+                                      At{"0"_su8, Var{Index{0}}}}},
+           },
+           "(try (delegate 0))"_su8);
+
+  // try/delegate with nops.
+  OKVector(ReadExpression_ForTesting,
+           InstructionList{
+               At{"try"_su8, I{At{"try"_su8, O::Try}, BlockImmediate{}}},
+               At{"nop"_su8, I{At{"nop"_su8, O::Nop}}},
+               At{"delegate 0"_su8, I{At{"delegate"_su8, O::Delegate},
+                                      At{"0"_su8, Var{Index{0}}}}},
+           },
+           "(try (do nop) (delegate 0))"_su8);
 }
 
 TEST_F(TextReadTest, Expression_Let) {

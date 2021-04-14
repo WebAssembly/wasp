@@ -562,7 +562,8 @@ Iterator WriteWithNewlines(WriteCtx& ctx,
   for (auto& instr : instrs) {
     auto opcode = instr->opcode;
     if (opcode == Opcode::End || opcode == Opcode::Else ||
-        opcode == Opcode::Catch) {
+        opcode == Opcode::Catch || opcode == Opcode::CatchAll ||
+        opcode == Opcode::Delegate) {
       ctx.DedentNoToplevel();
       ctx.Newline();
     }
@@ -570,7 +571,8 @@ Iterator WriteWithNewlines(WriteCtx& ctx,
     out = Write(ctx, instr, out);
 
     if (instr->has_block_immediate() || instr->has_let_immediate() ||
-        opcode == Opcode::Else || opcode == Opcode::Catch) {
+        opcode == Opcode::Else || opcode == Opcode::Catch ||
+        opcode == Opcode::CatchAll) {
       ctx.Indent();
     }
     ctx.Newline();

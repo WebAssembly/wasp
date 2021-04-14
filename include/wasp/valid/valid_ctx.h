@@ -41,6 +41,7 @@ enum class LabelType {
   Else,
   Try,
   Catch,
+  CatchAll,
   Let,
 };
 
