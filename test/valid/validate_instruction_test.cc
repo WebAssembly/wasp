@@ -1019,8 +1019,9 @@ TEST_F(ValidateInstructionTest, BrTable_ValueTypeMismatch) {
   Ok(I{O::F32Const, f32{}});
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrTable, BrTableImmediate{{0}, 0}});
-  ExpectError({"instruction", "Expected stack to contain [i32], got [f32]"},
-              errors);
+  ExpectErrors({{"instruction", "Expected stack to contain [i32], got [f32]"},
+                {"instruction", "Expected stack to contain [i32], got [f32]"}},
+               errors);
 }
 
 TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
@@ -1030,8 +1031,7 @@ TEST_F(ValidateInstructionTest, BrTable_InconsistentLabelSignature) {
   Ok(I{O::I32Const, s32{}});
   Fail(I{O::BrTable, BrTableImmediate{{1}, 0}});
   ExpectError({"instruction",
-               "br_table labels must have the same signature; expected "
-               "[i32], got []"},
+               "br_table labels must have the same arity; expected 1, got 0"},
               errors);
 }
 
@@ -2358,9 +2358,9 @@ TEST_F(ValidateInstructionTest, SimdExtractLanes_ValidLane) {
     Opcode opcode;
     SimdLaneImmediate max_valid_lane;
   } infos[] = {{O::I8X16ExtractLaneS, 15}, {O::I8X16ExtractLaneU, 15},
-               {O::I16X8ExtractLaneS, 7}, {O::I16X8ExtractLaneU, 7},
-               {O::I32X4ExtractLane, 3},  {O::I64X2ExtractLane, 1},
-               {O::F32X4ExtractLane, 3},  {O::F64X2ExtractLane, 1}};
+               {O::I16X8ExtractLaneS, 7},  {O::I16X8ExtractLaneU, 7},
+               {O::I32X4ExtractLane, 3},   {O::I64X2ExtractLane, 1},
+               {O::F32X4ExtractLane, 3},   {O::F64X2ExtractLane, 1}};
 
   for (const auto& info: infos) {
     // Test valid indexes.
@@ -3050,18 +3050,18 @@ TEST_F(ValidateInstructionTest, FuncBind_TypeMismatch) {
     FunctionType new_ft;
     ValueTypeList params;
   } infos[] = {
-    // Binding can't add new params.
-    {{{VT_I32}, {}}, {{VT_I32, VT_I32}, {}}, {}},
-    // Params must match.
-    {{{VT_F32}, {}}, {{VT_I32}, {}}, {}},
-    // Param types must be covariant.
-    {{{VT_RefNullFunc}, {}}, {{VT_RefFunc}, {}}, {}},
-    // Result types must match.
-    {{{}, {VT_I32}}, {{}, {VT_I32, VT_I32}}, {}},
-    // Result types must be contravariant.
-    {{{}, {VT_RefFunc}}, {{VT_RefNullFunc}, {}}, {}},
-    // Bound param types must be on operand stack.
-    {{{VT_I32, VT_F32}, {}}, {{VT_F32}, {}}, {VT_F32}},
+      // Binding can't add new params.
+      {{{VT_I32}, {}}, {{VT_I32, VT_I32}, {}}, {}},
+      // Params must match.
+      {{{VT_F32}, {}}, {{VT_I32}, {}}, {}},
+      // Param types must be covariant.
+      {{{VT_RefNullFunc}, {}}, {{VT_RefFunc}, {}}, {}},
+      // Result types must match.
+      {{{}, {VT_I32}}, {{}, {VT_I32, VT_I32}}, {}},
+      // Result types must be contravariant.
+      {{{}, {VT_RefFunc}}, {{VT_RefNullFunc}, {}}, {}},
+      // Bound param types must be on operand stack.
+      {{{VT_I32, VT_F32}, {}}, {{VT_F32}, {}}, {VT_F32}},
   };
 
   for (const auto& info: infos) {

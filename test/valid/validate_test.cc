@@ -293,7 +293,7 @@ TEST(ValidateTest, ElementExpression) {
   ctx.functions.push_back(Function{0});
 
   const Instruction tests[] = {
-      Instruction{Opcode::RefNull},
+      Instruction{Opcode::RefNull, HT_Func},
       Instruction{Opcode::RefFunc, Index{0}},
   };
 
@@ -365,7 +365,7 @@ TEST(ValidateTest, ElementSegment_Passive) {
           SegmentType::Passive,
           ElementListWithExpressions{
               RT_Funcref,
-              {ElementExpression{Instruction{Opcode::RefNull}},
+              {ElementExpression{Instruction{Opcode::RefNull, HT_Func}},
                ElementExpression{Instruction{Opcode::RefFunc, Index{0}}}}}},
   };
 

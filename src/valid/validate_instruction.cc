@@ -627,23 +627,14 @@ bool BrTable(ValidCtx& ctx,
   for (auto target : immediate->targets) {
     const auto* label = GetLabel(ctx, target);
     if (label) {
-      if (ctx.features.function_references_enabled()) {
-        if (br_types.size() != label->br_types().size()) {
-          ctx.errors->OnError(
-              target.loc(),
-              concat("br_table labels must have the same arity; expected ",
-                     br_types.size(), ", got ", label->br_types().size()));
-          valid = false;
-        }
-        valid &= CheckTypes(ctx, target.loc(), label->br_types());
-      } else {
-        if (br_types != label->br_types()) {
-          ctx.errors->OnError(
-              target.loc(),
-              concat("br_table labels must have the same signature; expected ",
-                     br_types, ", got ", label->br_types()));
-          valid = false;
-        }
+      if (br_types.size() != label->br_types().size()) {
+        ctx.errors->OnError(
+            target.loc(),
+            concat("br_table labels must have the same arity; expected ",
+                   br_types.size(), ", got ", label->br_types().size()));
+        valid = false;
+      } else if (!CheckTypes(ctx, target.loc(), label->br_types())) {
+        valid = false;
       }
     } else {
       valid = false;

@@ -261,7 +261,8 @@ bool Validate(ValidCtx& ctx,
   optional<binary::ReferenceType> actual_type;
   switch (instruction->opcode) {
     case Opcode::RefNull:
-      actual_type = binary::ReferenceType::Funcref_NoLocation();
+      actual_type = binary::ReferenceType{
+          binary::RefType{instruction->heap_type_immediate(), Null::Yes}};
       break;
 
     case Opcode::RefFunc: {
