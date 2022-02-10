@@ -16,7 +16,7 @@
 
 //     enum                  variable                 flag                       default
 
-WASP_V(BulkMemory,           bulk_memory,             "bulk-memory",             false)
+WASP_V(BulkMemory,           bulk_memory,             "bulk-memory",             true)
 WASP_V(Exceptions,           exceptions,              "exceptions",              false)
 WASP_V(FunctionReferences,   function_references,     "function-references",     false)
 WASP_V(GC,                   gc,                      "gc",                      false)
@@ -24,7 +24,7 @@ WASP_V(Memory64,             memory64,                "memory64",               
 WASP_V(MultiValue,           multi_value,             "multi-value",             false)
 WASP_V(MutableGlobals,       mutable_globals,         "mutable-globals",         true )
 WASP_V(NumericValues,        numeric_values,          "numeric-values",          false)
-WASP_V(ReferenceTypes,       reference_types,         "reference-types",         false)
+WASP_V(ReferenceTypes,       reference_types,         "reference-types",         true)
 WASP_V(SaturatingFloatToInt, saturating_float_to_int, "saturating-float-to-int", false)
 WASP_V(SignExtension,        sign_extension,          "sign-extension",          false)
 WASP_V(Simd,                 simd,                    "simd",                    true)

@@ -57,7 +57,6 @@ struct DirectoryInfo {
 };
 
 const std::vector<DirectoryInfo> directory_info_map = {
-    {"bulk-memory-operations", true, Features::BulkMemory},
     {"exception-handling", false, Features::Exceptions},
     {"extended-const", false, 0},
     {"function-references", false, Features::FunctionReferences},
@@ -65,7 +64,6 @@ const std::vector<DirectoryInfo> directory_info_map = {
     {"memory64", false, Features::Memory64},
     {"multi-memory", false, 0},
     {"mutable-global", true, Features::MutableGlobals},
-    {"reference-types", true, Features::ReferenceTypes},
     {"tail-call", false, Features::TailCall},
     {"threads", true, Features::Threads},
 };

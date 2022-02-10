@@ -30,6 +30,8 @@ namespace {
 
 class ConvertToBinaryTest : public ::testing::Test {
  protected:
+  void SetUp() { ctx.features.DisableAll(); }
+
   template <typename B, typename T, typename... Args>
   void OK(const B& expected, const T& input, Args&&... args) {
     auto actual = ToBinary(ctx, input, std::forward<Args>(args)...);
