@@ -63,7 +63,7 @@ const std::vector<DirectoryInfo> directory_info_map = {
     {"extended-const", false, 0},
     {"function-references", false, Features::FunctionReferences},
     {"gc", false, 0},
-    {"memory64", false, Features::Memory64},
+    {"memory64", true, Features::Memory64},
     {"multi-memory", false, 0},
     {"tail-call", true, default_features.bits() | Features::TailCall},
     {"threads", true, Features::Threads},
@@ -252,10 +252,14 @@ void Tool::OnAssertionCommand(text::Assertion& assertion) {
     } else if (assertion.kind == text::AssertionKind::Invalid) {
       if (script_module->kind == text::ScriptModuleKind::Binary) {
         OnAssertInvalidBinary(script_module.loc(),
-                              StrFormat("malformed_%d.wasm", assertion_count++),
+                              StrFormat("invalid_%d.wasm", assertion_count++),
                               buffer);
       } else {
-        errors.OnError(script_module.loc(), "assert_invalid with quote?");
+        // Treat assert_invalid w/ quote like assert_malformed (it probably was
+        // a mistake).
+        OnAssertMalformedText(script_module.loc(),
+                              StrFormat("invalid_%d.wat", assertion_count++),
+                              buffer);
       }
     }
   } else if (script_module->has_module()) {

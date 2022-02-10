@@ -236,11 +236,20 @@ bool Validate(ValidCtx& ctx, const At<binary::DataCount>& value) {
 bool Validate(ValidCtx& ctx, const At<binary::DataSegment>& value) {
   ErrorsContextGuard guard{*ctx.errors, value.loc(), "data segment"};
   bool valid = true;
+  optional<MemoryType> memory_type;
   if (value->memory_index) {
-    valid &= ValidateMemoryIndex(ctx, *value->memory_index);
+    if (ValidateMemoryIndex(ctx, *value->memory_index)) {
+      memory_type = ctx.memories[*value->memory_index];
+    } else {
+      valid = false;
+    }
   }
   if (value->offset) {
-    valid &= Validate(ctx, *value->offset, binary::ValueType::I32_NoLocation(),
+    const binary::ValueType index_type =
+        memory_type && memory_type->limits->index_type == IndexType::I64
+            ? binary::ValueType::I64_NoLocation()
+            : binary::ValueType::I32_NoLocation();
+    valid &= Validate(ctx, *value->offset, index_type,
                       static_cast<Index>(ctx.globals.size()));
   }
   return valid;

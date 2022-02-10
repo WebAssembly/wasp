@@ -939,6 +939,12 @@ auto Memory::ToDataSegment(Index this_index) const -> OptAt<DataSegment> {
   if (!data) {
     return nullopt;
   }
+  if (desc.type->limits->index_type == IndexType::I64) {
+    return DataSegment{
+        nullopt, Var{this_index},
+        At{ConstantExpression{Instruction{At{Opcode::I64Const}, At{s64{0}}}}},
+        *data};
+  }
   return DataSegment{
       nullopt, Var{this_index},
       At{ConstantExpression{Instruction{At{Opcode::I32Const}, At{s32{0}}}}},
