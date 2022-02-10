@@ -59,6 +59,7 @@ WASP_DEFINE_VARIANT_NAME(text::MemArgImmediate, "mem_arg")
 WASP_DEFINE_VARIANT_NAME(text::RttSubImmediate, "rtt.sub")
 WASP_DEFINE_VARIANT_NAME(text::SelectImmediate, "select")
 WASP_DEFINE_VARIANT_NAME(text::StructFieldImmediate, "struct_field")
+WASP_DEFINE_VARIANT_NAME(text::SimdMemoryLaneImmediate, "memory_lane")
 WASP_DEFINE_VARIANT_NAME(text::Var, "var")
 
 // Import.

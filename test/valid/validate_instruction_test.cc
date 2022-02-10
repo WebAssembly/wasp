@@ -2180,6 +2180,198 @@ TEST_F(ValidateInstructionTest, SimdStore_MemoryOOB) {
                errors);
 }
 
+TEST_F(ValidateInstructionTest, SimdLoadLane) {
+  const Opcode opcodes[] = {
+      O::V128Load8Lane,
+      O::V128Load16Lane,
+      O::V128Load32Lane,
+      O::V128Load64Lane,
+  };
+
+  AddMemory(MemoryType{Limits{0}});
+  for (const auto& opcode : opcodes) {
+    TestSignature(I{opcode, SimdMemoryLaneImmediate{MemArgImmediate{0, 0}, 0}},
+                  {VT_I32, VT_V128}, {VT_V128});
+  }
+}
+
+TEST_F(ValidateInstructionTest, SimdLoadLane_memory64) {
+  const Opcode opcodes[] = {
+      O::V128Load8Lane,
+      O::V128Load16Lane,
+      O::V128Load32Lane,
+      O::V128Load64Lane,
+  };
+
+  AddMemory64();
+  for (const auto& opcode : opcodes) {
+    TestSignature(I{opcode, SimdMemoryLaneImmediate{MemArgImmediate{0, 0}, 0}},
+                  {VT_I64, VT_V128}, {VT_V128});
+  }
+}
+
+TEST_F(ValidateInstructionTest, SimdLoadLane_Alignment) {
+  struct {
+    Opcode opcode;
+    u32 max_align;
+  } const infos[] = {
+      {O::V128Load8Lane, 0},
+      {O::V128Load16Lane, 1},
+      {O::V128Load32Lane, 2},
+      {O::V128Load64Lane, 3},
+  };
+
+  AddMemory(MemoryType{Limits{0}});
+  for (const auto& info : infos) {
+    Ok(I{O::I32Const, s32{}});
+    Ok(I{O::V128Const, v128{}});
+    Ok(I{info.opcode,
+         SimdMemoryLaneImmediate{MemArgImmediate{info.max_align, 0}, 0}});
+    Ok(I{O::I32Const, s32{}});
+    Ok(I{O::V128Const, v128{}});
+    Fail(I{info.opcode,
+           SimdMemoryLaneImmediate{MemArgImmediate{info.max_align + 1, 0}, 0}});
+    ExpectErrorSubstr({"instruction", "Invalid alignment"}, errors);
+  }
+}
+
+TEST_F(ValidateInstructionTest, SimdLoadLane_ValidLane) {
+  const struct {
+    Opcode opcode;
+    u8 max_valid_lane;
+  } infos[] = {{O::V128Load8Lane, 15},
+               {O::V128Load16Lane, 7},
+               {O::V128Load32Lane, 3},
+               {O::V128Load64Lane, 1}};
+
+  AddMemory(MemoryType{Limits{0}});
+  for (const auto& info: infos) {
+    // Test valid indexes.
+    for (u8 lane = 0; lane < info.max_valid_lane; ++lane) {
+      ctx.type_stack = StackTypeList{ST::I32(), ST::V128()};
+      Ok(I{info.opcode, SimdMemoryLaneImmediate{MemArgImmediate{0, 0}, lane}});
+    }
+
+    // Test invalid indexes.
+    ctx.type_stack = StackTypeList{ST::I32(), ST::V128()};
+    Fail(I{info.opcode, SimdMemoryLaneImmediate{MemArgImmediate{0, 0},
+                                                info.max_valid_lane + 1}});
+  }
+}
+
+TEST_F(ValidateInstructionTest, SimdLoadLane_MemoryOOB) {
+  const Opcode opcodes[] = {
+      O::V128Load8Lane,
+      O::V128Load16Lane,
+      O::V128Load32Lane,
+      O::V128Load64Lane,
+  };
+
+  for (const auto& opcode : opcodes) {
+    Ok(I{O::I32Const, s32{}});
+    Ok(I{O::V128Const, v128{}});
+    Fail(I{opcode, SimdMemoryLaneImmediate{MemArgImmediate{0, 0}, 0}});
+    ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+                 errors);
+  }
+}
+
+TEST_F(ValidateInstructionTest, SimdStoreLane) {
+  const Opcode opcodes[] = {
+      O::V128Store8Lane,
+      O::V128Store16Lane,
+      O::V128Store32Lane,
+      O::V128Store64Lane,
+  };
+
+  AddMemory(MemoryType{Limits{0}});
+  for (const auto& opcode : opcodes) {
+    TestSignature(I{opcode, SimdMemoryLaneImmediate{MemArgImmediate{0, 0}, 0}},
+                  {VT_I32, VT_V128}, {});
+  }
+}
+
+TEST_F(ValidateInstructionTest, SimdStoreLane_memory64) {
+  const Opcode opcodes[] = {
+      O::V128Store8Lane,
+      O::V128Store16Lane,
+      O::V128Store32Lane,
+      O::V128Store64Lane,
+  };
+
+  AddMemory64();
+  for (const auto& opcode : opcodes) {
+    TestSignature(I{opcode, SimdMemoryLaneImmediate{MemArgImmediate{0, 0}, 0}},
+                  {VT_I64, VT_V128}, {});
+  }
+}
+
+TEST_F(ValidateInstructionTest, SimdStoreLane_Alignment) {
+  struct {
+    Opcode opcode;
+    u32 max_align;
+  } const infos[] = {
+      {O::V128Store8Lane, 0},
+      {O::V128Store16Lane, 1},
+      {O::V128Store32Lane, 2},
+      {O::V128Store64Lane, 3},
+  };
+
+  AddMemory(MemoryType{Limits{0}});
+  for (const auto& info : infos) {
+    Ok(I{O::I32Const, s32{}});
+    Ok(I{O::V128Const, v128{}});
+    Ok(I{info.opcode,
+         SimdMemoryLaneImmediate{MemArgImmediate{info.max_align, 0}, 0}});
+    Ok(I{O::I32Const, s32{}});
+    Ok(I{O::V128Const, v128{}});
+    Fail(I{info.opcode,
+           SimdMemoryLaneImmediate{MemArgImmediate{info.max_align + 1, 0}, 0}});
+    ExpectErrorSubstr({"instruction", "Invalid alignment"}, errors);
+  }
+}
+
+TEST_F(ValidateInstructionTest, SimdStoreLane_ValidLane) {
+  const struct {
+    Opcode opcode;
+    u8 max_valid_lane;
+  } infos[] = {{O::V128Store8Lane, 15},
+               {O::V128Store16Lane, 7},
+               {O::V128Store32Lane, 3},
+               {O::V128Store64Lane, 1}};
+
+  AddMemory(MemoryType{Limits{0}});
+  for (const auto& info: infos) {
+    // Test valid indexes.
+    for (u8 lane = 0; lane < info.max_valid_lane; ++lane) {
+      ctx.type_stack = StackTypeList{ST::I32(), ST::V128()};
+      Ok(I{info.opcode, SimdMemoryLaneImmediate{MemArgImmediate{0, 0}, lane}});
+    }
+
+    // Test invalid indexes.
+    ctx.type_stack = StackTypeList{ST::I32(), ST::V128()};
+    Fail(I{info.opcode, SimdMemoryLaneImmediate{MemArgImmediate{0, 0},
+                                                info.max_valid_lane + 1}});
+  }
+}
+
+TEST_F(ValidateInstructionTest, SimdStoreLane_MemoryOOB) {
+  const Opcode opcodes[] = {
+      O::V128Store8Lane,
+      O::V128Store16Lane,
+      O::V128Store32Lane,
+      O::V128Store64Lane,
+  };
+
+  for (const auto& opcode : opcodes) {
+    Ok(I{O::I32Const, s32{}});
+    Ok(I{O::V128Const, v128{}});
+    Fail(I{opcode, SimdMemoryLaneImmediate{MemArgImmediate{0, 0}, 0}});
+    ExpectError({"instruction", "Invalid memory index 0, must be less than 0"},
+                 errors);
+  }
+}
+
 TEST_F(ValidateInstructionTest, SimdConst) {
   TestSignature(I{O::V128Const}, {}, {VT_V128});
 }
@@ -2191,39 +2383,55 @@ TEST_F(ValidateInstructionTest, SimdBitSelect) {
 TEST_F(ValidateInstructionTest, SimdUnary) {
   const Opcode opcodes[] = {
       O::V128Not,
+      O::F32X4DemoteF64X2Zero,
+      O::F64X2PromoteLowF32X4,
+      O::I8X16Abs,
       O::I8X16Neg,
-      O::I16X8Neg,
-      O::I32X4Neg,
-      O::I64X2Neg,
-      O::F32X4Abs,
-      O::F32X4Neg,
-      O::F32X4Sqrt,
+      O::I8X16Popcnt,
       O::F32X4Ceil,
       O::F32X4Floor,
       O::F32X4Trunc,
       O::F32X4Nearest,
-      O::F64X2Abs,
-      O::F64X2Neg,
-      O::F64X2Sqrt,
       O::F64X2Ceil,
       O::F64X2Floor,
       O::F64X2Trunc,
+      O::I16X8ExtaddPairwiseI8X16S,
+      O::I16X8ExtaddPairwiseI8X16U,
+      O::I32X4ExtaddPairwiseI16X8S,
+      O::I32X4ExtaddPairwiseI16X8U,
+      O::I16X8Abs,
+      O::I16X8Neg,
+      O::I16X8ExtendLowI8X16S,
+      O::I16X8ExtendHighI8X16S,
+      O::I16X8ExtendLowI8X16U,
+      O::I16X8ExtendHighI8X16U,
       O::F64X2Nearest,
+      O::I32X4Abs,
+      O::I32X4Neg,
+      O::I32X4ExtendLowI16X8S,
+      O::I32X4ExtendHighI16X8S,
+      O::I32X4ExtendLowI16X8U,
+      O::I32X4ExtendHighI16X8U,
+      O::I64X2Abs,
+      O::I64X2Neg,
+      O::I64X2ExtendLowI32X4S,
+      O::I64X2ExtendHighI32X4S,
+      O::I64X2ExtendLowI32X4U,
+      O::I64X2ExtendHighI32X4U,
+      O::F32X4Abs,
+      O::F32X4Neg,
+      O::F32X4Sqrt,
+      O::F64X2Abs,
+      O::F64X2Neg,
+      O::F64X2Sqrt,
       O::I32X4TruncSatF32X4S,
       O::I32X4TruncSatF32X4U,
       O::F32X4ConvertI32X4S,
       O::F32X4ConvertI32X4U,
-      O::I16X8WidenLowI8X16S,
-      O::I16X8WidenHighI8X16S,
-      O::I16X8WidenLowI8X16U,
-      O::I16X8WidenHighI8X16U,
-      O::I32X4WidenLowI16X8S,
-      O::I32X4WidenHighI16X8S,
-      O::I32X4WidenLowI16X8U,
-      O::I32X4WidenHighI16X8U,
-      O::I8X16Abs,
-      O::I16X8Abs,
-      O::I32X4Abs,
+      O::I32X4TruncSatF64X2SZero,
+      O::I32X4TruncSatF64X2UZero,
+      O::F64X2ConvertLowI32X4S,
+      O::F64X2ConvertLowI32X4U,
   };
 
   for (const auto& opcode: opcodes) {
@@ -2233,57 +2441,126 @@ TEST_F(ValidateInstructionTest, SimdUnary) {
 
 TEST_F(ValidateInstructionTest, SimdBinary) {
   const Opcode opcodes[] = {
-      O::I8X16Eq,           O::I8X16Ne,
-      O::I8X16LtS,          O::I8X16LtU,
-      O::I8X16GtS,          O::I8X16GtU,
-      O::I8X16LeS,          O::I8X16LeU,
-      O::I8X16GeS,          O::I8X16GeU,
-      O::I16X8Eq,           O::I16X8Ne,
-      O::I16X8LtS,          O::I16X8LtU,
-      O::I16X8GtS,          O::I16X8GtU,
-      O::I16X8LeS,          O::I16X8LeU,
-      O::I16X8GeS,          O::I16X8GeU,
-      O::I32X4Eq,           O::I32X4Ne,
-      O::I32X4LtS,          O::I32X4LtU,
-      O::I32X4GtS,          O::I32X4GtU,
-      O::I32X4LeS,          O::I32X4LeU,
-      O::I32X4GeS,          O::I32X4GeU,
-      O::F32X4Eq,           O::F32X4Ne,
-      O::F32X4Lt,           O::F32X4Gt,
-      O::F32X4Le,           O::F32X4Ge,
-      O::F64X2Eq,           O::F64X2Ne,
-      O::F64X2Lt,           O::F64X2Gt,
-      O::F64X2Le,           O::F64X2Ge,
-      O::V128And,           O::V128Or,
-      O::V128Xor,           O::I8X16Add,
-      O::I8X16AddSatS,      O::I8X16AddSatU,
-      O::I8X16Sub,          O::I8X16SubSatS,
-      O::I8X16SubSatU,      O::I8X16MinS,
-      O::I8X16MinU,         O::I8X16MaxS,
-      O::I8X16MaxU,         O::I16X8Add,
-      O::I16X8AddSatS,      O::I16X8AddSatU,
-      O::I16X8Sub,          O::I16X8SubSatS,
-      O::I16X8SubSatU,      O::I16X8Mul,
-      O::I16X8MinS,         O::I16X8MinU,
-      O::I16X8MaxS,         O::I16X8MaxU,
-      O::I32X4Add,          O::I32X4Sub,
-      O::I32X4Mul,          O::I32X4MinS,
-      O::I32X4MinU,         O::I32X4MaxS,
-      O::I32X4MaxU,         O::I32X4DotI16X8S,
-      O::I64X2Add,          O::I64X2Sub,
-      O::I64X2Mul,          O::F32X4Add,
-      O::F32X4Sub,          O::F32X4Mul,
-      O::F32X4Div,          O::F32X4Min,
-      O::F32X4Max,          O::F32X4Pmin,
-      O::F32X4Pmax,         O::F64X2Add,
-      O::F64X2Sub,          O::F64X2Mul,
-      O::F64X2Div,          O::F64X2Min,
-      O::F64X2Max,          O::F64X2Pmin,
-      O::F64X2Pmax,         O::I8X16Swizzle,
-      O::I8X16NarrowI16X8S, O::I8X16NarrowI16X8U,
-      O::I16X8NarrowI32X4S, O::I16X8NarrowI32X4U,
-      O::V128Andnot,        O::I8X16AvgrU,
+      O::I8X16Swizzle,
+      O::I8X16Eq,
+      O::I8X16Ne,
+      O::I8X16LtS,
+      O::I8X16LtU,
+      O::I8X16GtS,
+      O::I8X16GtU,
+      O::I8X16LeS,
+      O::I8X16LeU,
+      O::I8X16GeS,
+      O::I8X16GeU,
+      O::I16X8Eq,
+      O::I16X8Ne,
+      O::I16X8LtS,
+      O::I16X8LtU,
+      O::I16X8GtS,
+      O::I16X8GtU,
+      O::I16X8LeS,
+      O::I16X8LeU,
+      O::I16X8GeS,
+      O::I16X8GeU,
+      O::I32X4Eq,
+      O::I32X4Ne,
+      O::I32X4LtS,
+      O::I32X4LtU,
+      O::I32X4GtS,
+      O::I32X4GtU,
+      O::I32X4LeS,
+      O::I32X4LeU,
+      O::I32X4GeS,
+      O::I32X4GeU,
+      O::F32X4Eq,
+      O::F32X4Ne,
+      O::F32X4Lt,
+      O::F32X4Gt,
+      O::F32X4Le,
+      O::F32X4Ge,
+      O::F64X2Eq,
+      O::F64X2Ne,
+      O::F64X2Lt,
+      O::F64X2Gt,
+      O::F64X2Le,
+      O::F64X2Ge,
+      O::V128And,
+      O::V128Andnot,
+      O::V128Or,
+      O::V128Xor,
+      O::I8X16NarrowI16X8S,
+      O::I8X16NarrowI16X8U,
+      O::I8X16Add,
+      O::I8X16AddSatS,
+      O::I8X16AddSatU,
+      O::I8X16Sub,
+      O::I8X16SubSatS,
+      O::I8X16SubSatU,
+      O::I8X16MinS,
+      O::I8X16MinU,
+      O::I8X16MaxS,
+      O::I8X16MaxU,
+      O::I8X16AvgrU,
+      O::I16X8Q15mulrSatS,
+      O::I16X8NarrowI32X4S,
+      O::I16X8NarrowI32X4U,
+      O::I16X8Add,
+      O::I16X8AddSatS,
+      O::I16X8AddSatU,
+      O::I16X8Sub,
+      O::I16X8SubSatS,
+      O::I16X8SubSatU,
+      O::I16X8Mul,
+      O::I16X8MinS,
+      O::I16X8MinU,
+      O::I16X8MaxS,
+      O::I16X8MaxU,
       O::I16X8AvgrU,
+      O::I16X8ExtmulLowI8X16S,
+      O::I16X8ExtmulHighI8X16S,
+      O::I16X8ExtmulLowI8X16U,
+      O::I16X8ExtmulHighI8X16U,
+      O::I32X4Add,
+      O::I32X4Sub,
+      O::I32X4Mul,
+      O::I32X4MinS,
+      O::I32X4MinU,
+      O::I32X4MaxS,
+      O::I32X4MaxU,
+      O::I32X4DotI16X8S,
+      O::I32X4ExtmulLowI16X8S,
+      O::I32X4ExtmulHighI16X8S,
+      O::I32X4ExtmulLowI16X8U,
+      O::I32X4ExtmulHighI16X8U,
+      O::I64X2Add,
+      O::I64X2Sub,
+      O::I64X2Mul,
+      O::I64X2Eq,
+      O::I64X2Ne,
+      O::I64X2LtS,
+      O::I64X2GtS,
+      O::I64X2LeS,
+      O::I64X2GeS,
+      O::I64X2ExtmulLowI32X4S,
+      O::I64X2ExtmulHighI32X4S,
+      O::I64X2ExtmulLowI32X4U,
+      O::I64X2ExtmulHighI32X4U,
+      O::F32X4Add,
+      O::F32X4Sub,
+      O::F32X4Mul,
+      O::F32X4Div,
+      O::F32X4Min,
+      O::F32X4Max,
+      O::F32X4Pmin,
+      O::F32X4Pmax,
+      O::F64X2Add,
+      O::F64X2Sub,
+      O::F64X2Mul,
+      O::F64X2Div,
+      O::F64X2Min,
+      O::F64X2Max,
+      O::F64X2Pmin,
+      O::F64X2Pmax,
   };
 
   for (const auto& opcode: opcodes) {
@@ -2315,9 +2592,9 @@ TEST_F(ValidateInstructionTest, SimdShuffle_ValidLane) {
 
 TEST_F(ValidateInstructionTest, SimdBoolean) {
   const Opcode opcodes[] = {
-      O::I8X16AnyTrue, O::I8X16AllTrue, O::I8X16Bitmask,
-      O::I16X8AnyTrue, O::I16X8AllTrue, O::I16X8Bitmask,
-      O::I32X4AnyTrue, O::I32X4AllTrue, O::I32X4Bitmask,
+      O::V128AnyTrue,  O::I8X16AllTrue, O::I8X16Bitmask,
+      O::I16X8AllTrue, O::I16X8Bitmask, O::I32X4AllTrue,
+      O::I32X4Bitmask, O::I64X2AllTrue, O::I64X2Bitmask,
   };
 
   for (const auto& opcode : opcodes) {

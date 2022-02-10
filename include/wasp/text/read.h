@@ -157,6 +157,7 @@ auto ReadElementSegment(Tokenizer&, ReadCtx&) -> OptAt<ElementSegment>;
 auto ReadNameEqNatOpt(Tokenizer&, ReadCtx&, TokenType, u32) -> OptAt<u32>;
 auto ReadAlignOpt(Tokenizer&, ReadCtx&) -> OptAt<u32>;
 auto ReadOffsetOpt(Tokenizer&, ReadCtx&) -> OptAt<u32>;
+auto ReadMemArgImmediate(Tokenizer&, ReadCtx&) -> OptAt<MemArgImmediate>;
 
 auto ReadSimdLane(Tokenizer&, ReadCtx&) -> OptAt<u8>;
 auto ReadSimdShuffleImmediate(Tokenizer&, ReadCtx&) -> OptAt<ShuffleImmediate>;

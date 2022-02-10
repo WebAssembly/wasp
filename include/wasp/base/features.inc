@@ -27,6 +27,6 @@ WASP_V(NumericValues,        numeric_values,          "numeric-values",         
 WASP_V(ReferenceTypes,       reference_types,         "reference-types",         false)
 WASP_V(SaturatingFloatToInt, saturating_float_to_int, "saturating-float-to-int", false)
 WASP_V(SignExtension,        sign_extension,          "sign-extension",          false)
-WASP_V(Simd,                 simd,                    "simd",                    false)
+WASP_V(Simd,                 simd,                    "simd",                    true)
 WASP_V(TailCall,             tail_call,               "tail-call",               false)
 WASP_V(Threads,              threads,                 "threads",                 false)

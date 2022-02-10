@@ -114,6 +114,7 @@ auto ToBinary(BinCtx&, const At<text::LetImmediate>&) -> At<binary::LetImmediate
 auto ToBinary(BinCtx&, const At<text::MemArgImmediate>&, u32 natural_align) -> At<binary::MemArgImmediate>;
 auto ToBinary(BinCtx&, const At<text::RttSubImmediate>&) -> At<binary::RttSubImmediate>;
 auto ToBinary(BinCtx&, const At<text::StructFieldImmediate>&) -> At<binary::StructFieldImmediate>;
+auto ToBinary(BinCtx&, const At<text::SimdMemoryLaneImmediate>&, u32 natural_align) -> At<binary::SimdMemoryLaneImmediate>;
 auto ToBinary(BinCtx&, const At<text::Instruction>&) -> At<binary::Instruction>;
 auto ToBinary(BinCtx&, const text::InstructionList&) -> binary::InstructionList;
 

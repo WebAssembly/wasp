@@ -435,6 +435,15 @@ Iterator Write(WriteCtx& ctx, const StructFieldImmediate& value, Iterator out) {
 }
 
 template <typename Iterator>
+Iterator Write(WriteCtx& ctx,
+               const SimdMemoryLaneImmediate& value,
+               Iterator out) {
+  out = Write(ctx, value.memarg, out);
+  out = WriteNat(ctx, *value.lane, out);
+  return out;
+}
+
+template <typename Iterator>
 Iterator Write(WriteCtx& ctx, const Opcode& value, Iterator out) {
   return WriteFormat(ctx, value, out);
 }
@@ -517,6 +526,10 @@ Iterator Write(WriteCtx& ctx, const Instruction& value, Iterator out) {
 
     case InstructionKind::SimdLane:
       out = WriteNat(ctx, value.simd_lane_immediate(), out);
+      break;
+
+    case InstructionKind::SimdMemoryLane:
+      out = Write(ctx, value.simd_memory_lane_immediate(), out);
       break;
 
     case InstructionKind::FuncBind:

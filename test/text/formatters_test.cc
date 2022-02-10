@@ -326,6 +326,12 @@ TEST(TextFormattersTest, StructFieldImmediate) {
             concat(StructFieldImmediate{Var{"$s"_sv}, Var{"$f"_sv}}));
 }
 
+TEST(TextFormattersTest, SimdMemoryLaneImmediate) {
+  EXPECT_EQ(
+      R"({mem_arg {align 1, offset 2}, lane 3})",
+      concat(SimdMemoryLaneImmediate{MemArgImmediate{u32{1}, u32{2}}, 3}));
+}
+
 TEST(TextFormattersTest, Instruction) {
   EXPECT_EQ(R"({opcode nop, immediate empty})",
             concat(Instruction{Opcode::Nop}));
@@ -394,6 +400,11 @@ TEST(TextFormattersTest, Instruction) {
       R"({opcode struct.get, immediate struct_field {struct_ $s, field $f}})",
       concat(Instruction{Opcode::StructGet,
                          StructFieldImmediate{Var{"$s"_sv}, Var{"$f"_sv}}}));
+
+  EXPECT_EQ(
+      R"({opcode v128.load8_lane, immediate memory_lane {mem_arg {align none, offset none}, lane 1}})",
+      concat(Instruction{Opcode::V128Load8Lane,
+                         SimdMemoryLaneImmediate{MemArgImmediate{}, u8{1}}}));
 
   EXPECT_EQ(
       R"({opcode i8x16.shuffle, immediate shuffle [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]})",

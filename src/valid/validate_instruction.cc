@@ -46,7 +46,9 @@ using namespace ::wasp::binary;
   V(exnref, StackType::Exnref())                                       \
   V(i31ref, StackType::I31ref())                                       \
   V(i32_i32, StackType::I32(), StackType::I32())                       \
+  V(i32_v128, StackType::I32(), StackType::V128())                     \
   V(i64_i64, StackType::I64(), StackType::I64())                       \
+  V(i64_v128, StackType::I64(), StackType::V128())                     \
   V(f32_f32, StackType::F32(), StackType::F32())                       \
   V(f64_f64, StackType::F64(), StackType::F64())                       \
   V(v128_i32, StackType::V128(), StackType::I32())                     \
@@ -760,7 +762,16 @@ bool RefFunc(ValidCtx& ctx, Location loc, At<Index> index) {
 bool CheckAlignment(ValidCtx& ctx,
                     const At<Instruction>& instruction,
                     u32 max_align) {
-  if (instruction->mem_arg_immediate()->align_log2 > max_align) {
+  u32 align_log2;
+  if (instruction->has_mem_arg_immediate()) {
+    align_log2 = instruction->mem_arg_immediate()->align_log2;
+  } else if (instruction->has_simd_memory_lane_immediate()) {
+    align_log2 = instruction->simd_memory_lane_immediate()->memarg.align_log2;
+  } else {
+    return false;
+  }
+
+  if (align_log2 > max_align) {
     ctx.errors->OnError(instruction.loc(),
                         concat("Invalid alignment ", instruction));
     return false;
@@ -780,6 +791,14 @@ StackTypeSpan GetIndexTypeSpan(const optional<MemoryType>& memory_type) {
     return span_i64;
   }
   return span_i32;
+}
+
+StackTypeSpan GetLoadStoreLaneIndexTypeSpan(
+    const optional<MemoryType>& memory_type) {
+  if (memory_type && *memory_type->limits->index_type == IndexType::I64) {
+    return span_i64_v128;
+  }
+  return span_i32_v128;
 }
 
 bool Load(ValidCtx& ctx, Location loc, const At<Instruction>& instruction) {
@@ -846,6 +865,48 @@ bool Store(ValidCtx& ctx, Location loc, const At<Instruction>& instruction) {
   StackTypeList params{GetIndexType(memory_type), type};
   bool valid = CheckAlignment(ctx, instruction, max_align);
   return AllTrue(memory_type, valid, PopTypes(ctx, loc, params));
+}
+
+bool CheckMaxLanes(ValidCtx& ctx,
+                   const At<Instruction>& instruction,
+                   u8 lane,
+                   u8 max_lanes) {
+  if (lane >= max_lanes) {
+    ctx.errors->OnError(
+        instruction.loc(),
+        concat("Invalid lane immediate ", lane));
+    return false;
+  }
+  return true;
+}
+
+bool LoadStoreLane(ValidCtx& ctx,
+                   Location loc,
+                   const At<Instruction>& instruction) {
+  auto memory_type = GetMemoryType(ctx, 0);
+  auto in_span = GetLoadStoreLaneIndexTypeSpan(memory_type);
+  StackTypeSpan span;
+  u32 max_align;
+  u8 num_lanes;
+  switch (instruction->opcode) {
+    case Opcode::V128Load8Lane:   span = span_v128; max_align = 0; num_lanes = 16; break;
+    case Opcode::V128Store8Lane:                    max_align = 0; num_lanes = 16; break;
+    case Opcode::V128Load16Lane:  span = span_v128; max_align = 1; num_lanes = 8; break;
+    case Opcode::V128Store16Lane:                   max_align = 1; num_lanes = 8; break;
+    case Opcode::V128Load32Lane:  span = span_v128; max_align = 2; num_lanes = 4; break;
+    case Opcode::V128Store32Lane:                   max_align = 2; num_lanes = 4; break;
+    case Opcode::V128Load64Lane:  span = span_v128; max_align = 3; num_lanes = 2; break;
+    case Opcode::V128Store64Lane:                   max_align = 3; num_lanes = 2; break;
+    default:
+      WASP_UNREACHABLE();
+  }
+
+  bool valid = CheckAlignment(ctx, instruction, max_align);
+  valid &=
+      CheckMaxLanes(ctx, instruction,
+                    instruction->simd_memory_lane_immediate()->lane, num_lanes);
+  return AllTrue(memory_type, valid,
+                 PopAndPushTypes(ctx, loc, in_span, span));
 }
 
 bool MemorySize(ValidCtx& ctx) {
@@ -1369,13 +1430,8 @@ bool SimdLane(ValidCtx& ctx, Location loc, const At<Instruction>& instruction) {
       WASP_UNREACHABLE();
   }
 
-  bool valid = true;
-  if (instruction->simd_lane_immediate() >= num_lanes) {
-    ctx.errors->OnError(
-        instruction.loc(),
-        concat("Invalid lane immediate ", instruction->simd_lane_immediate()));
-    valid = false;
-  }
+  bool valid = CheckMaxLanes(ctx, instruction,
+                             instruction->simd_lane_immediate(), num_lanes);
   return AllTrue(valid, PopAndPushTypes(ctx, loc, params, results));
 }
 
@@ -1941,6 +1997,16 @@ bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
     case Opcode::V128Store:
       return Store(ctx, loc, value);
 
+    case Opcode::V128Load8Lane:
+    case Opcode::V128Load16Lane:
+    case Opcode::V128Load32Lane:
+    case Opcode::V128Load64Lane:
+    case Opcode::V128Store8Lane:
+    case Opcode::V128Store16Lane:
+    case Opcode::V128Store32Lane:
+    case Opcode::V128Store64Lane:
+      return LoadStoreLane(ctx, loc, value);
+
     case Opcode::MemorySize:
       return MemorySize(ctx);
 
@@ -2209,39 +2275,55 @@ bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
       return true;
 
     case Opcode::V128Not:
+    case Opcode::F32X4DemoteF64X2Zero:
+    case Opcode::F64X2PromoteLowF32X4:
+    case Opcode::I8X16Abs:
     case Opcode::I8X16Neg:
-    case Opcode::I16X8Neg:
-    case Opcode::I32X4Neg:
-    case Opcode::I64X2Neg:
-    case Opcode::F32X4Abs:
-    case Opcode::F32X4Neg:
-    case Opcode::F32X4Sqrt:
+    case Opcode::I8X16Popcnt:
     case Opcode::F32X4Ceil:
     case Opcode::F32X4Floor:
     case Opcode::F32X4Trunc:
     case Opcode::F32X4Nearest:
-    case Opcode::F64X2Abs:
-    case Opcode::F64X2Neg:
-    case Opcode::F64X2Sqrt:
     case Opcode::F64X2Ceil:
     case Opcode::F64X2Floor:
     case Opcode::F64X2Trunc:
+    case Opcode::I16X8ExtaddPairwiseI8X16S:
+    case Opcode::I16X8ExtaddPairwiseI8X16U:
+    case Opcode::I32X4ExtaddPairwiseI16X8S:
+    case Opcode::I32X4ExtaddPairwiseI16X8U:
+    case Opcode::I16X8Abs:
+    case Opcode::I16X8Neg:
+    case Opcode::I16X8ExtendLowI8X16S:
+    case Opcode::I16X8ExtendHighI8X16S:
+    case Opcode::I16X8ExtendLowI8X16U:
+    case Opcode::I16X8ExtendHighI8X16U:
     case Opcode::F64X2Nearest:
+    case Opcode::I32X4Abs:
+    case Opcode::I32X4Neg:
+    case Opcode::I32X4ExtendLowI16X8S:
+    case Opcode::I32X4ExtendHighI16X8S:
+    case Opcode::I32X4ExtendLowI16X8U:
+    case Opcode::I32X4ExtendHighI16X8U:
+    case Opcode::I64X2Abs:
+    case Opcode::I64X2Neg:
+    case Opcode::I64X2ExtendLowI32X4S:
+    case Opcode::I64X2ExtendHighI32X4S:
+    case Opcode::I64X2ExtendLowI32X4U:
+    case Opcode::I64X2ExtendHighI32X4U:
+    case Opcode::F32X4Abs:
+    case Opcode::F32X4Neg:
+    case Opcode::F32X4Sqrt:
+    case Opcode::F64X2Abs:
+    case Opcode::F64X2Neg:
+    case Opcode::F64X2Sqrt:
     case Opcode::I32X4TruncSatF32X4S:
     case Opcode::I32X4TruncSatF32X4U:
     case Opcode::F32X4ConvertI32X4S:
     case Opcode::F32X4ConvertI32X4U:
-    case Opcode::I16X8WidenLowI8X16S:
-    case Opcode::I16X8WidenHighI8X16S:
-    case Opcode::I16X8WidenLowI8X16U:
-    case Opcode::I16X8WidenHighI8X16U:
-    case Opcode::I32X4WidenLowI16X8S:
-    case Opcode::I32X4WidenHighI16X8S:
-    case Opcode::I32X4WidenLowI16X8U:
-    case Opcode::I32X4WidenHighI16X8U:
-    case Opcode::I8X16Abs:
-    case Opcode::I16X8Abs:
-    case Opcode::I32X4Abs:
+    case Opcode::I32X4TruncSatF64X2SZero:
+    case Opcode::I32X4TruncSatF64X2UZero:
+    case Opcode::F64X2ConvertLowI32X4S:
+    case Opcode::F64X2ConvertLowI32X4U:
       params = span_v128, results = span_v128;
       break;
 
@@ -2249,6 +2331,7 @@ bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
       params = span_v128_v128_v128, results = span_v128;
       break;
 
+    case Opcode::I8X16Swizzle:
     case Opcode::I8X16Eq:
     case Opcode::I8X16Ne:
     case Opcode::I8X16LtS:
@@ -2292,8 +2375,11 @@ bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
     case Opcode::F64X2Le:
     case Opcode::F64X2Ge:
     case Opcode::V128And:
+    case Opcode::V128Andnot:
     case Opcode::V128Or:
     case Opcode::V128Xor:
+    case Opcode::I8X16NarrowI16X8S:
+    case Opcode::I8X16NarrowI16X8U:
     case Opcode::I8X16Add:
     case Opcode::I8X16AddSatS:
     case Opcode::I8X16AddSatU:
@@ -2304,6 +2390,10 @@ bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
     case Opcode::I8X16MinU:
     case Opcode::I8X16MaxS:
     case Opcode::I8X16MaxU:
+    case Opcode::I8X16AvgrU:
+    case Opcode::I16X8Q15mulrSatS:
+    case Opcode::I16X8NarrowI32X4S:
+    case Opcode::I16X8NarrowI32X4U:
     case Opcode::I16X8Add:
     case Opcode::I16X8AddSatS:
     case Opcode::I16X8AddSatU:
@@ -2315,6 +2405,11 @@ bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
     case Opcode::I16X8MinU:
     case Opcode::I16X8MaxS:
     case Opcode::I16X8MaxU:
+    case Opcode::I16X8AvgrU:
+    case Opcode::I16X8ExtmulLowI8X16S:
+    case Opcode::I16X8ExtmulHighI8X16S:
+    case Opcode::I16X8ExtmulLowI8X16U:
+    case Opcode::I16X8ExtmulHighI8X16U:
     case Opcode::I32X4Add:
     case Opcode::I32X4Sub:
     case Opcode::I32X4Mul:
@@ -2323,9 +2418,23 @@ bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
     case Opcode::I32X4MaxS:
     case Opcode::I32X4MaxU:
     case Opcode::I32X4DotI16X8S:
+    case Opcode::I32X4ExtmulLowI16X8S:
+    case Opcode::I32X4ExtmulHighI16X8S:
+    case Opcode::I32X4ExtmulLowI16X8U:
+    case Opcode::I32X4ExtmulHighI16X8U:
     case Opcode::I64X2Add:
     case Opcode::I64X2Sub:
     case Opcode::I64X2Mul:
+    case Opcode::I64X2Eq:
+    case Opcode::I64X2Ne:
+    case Opcode::I64X2LtS:
+    case Opcode::I64X2GtS:
+    case Opcode::I64X2LeS:
+    case Opcode::I64X2GeS:
+    case Opcode::I64X2ExtmulLowI32X4S:
+    case Opcode::I64X2ExtmulHighI32X4S:
+    case Opcode::I64X2ExtmulLowI32X4U:
+    case Opcode::I64X2ExtmulHighI32X4U:
     case Opcode::F32X4Add:
     case Opcode::F32X4Sub:
     case Opcode::F32X4Mul:
@@ -2342,14 +2451,6 @@ bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
     case Opcode::F64X2Max:
     case Opcode::F64X2Pmin:
     case Opcode::F64X2Pmax:
-    case Opcode::I8X16Swizzle:
-    case Opcode::I8X16NarrowI16X8S:
-    case Opcode::I8X16NarrowI16X8U:
-    case Opcode::I16X8NarrowI32X4S:
-    case Opcode::I16X8NarrowI32X4U:
-    case Opcode::V128Andnot:
-    case Opcode::I8X16AvgrU:
-    case Opcode::I16X8AvgrU:
       params = span_v128_v128, results = span_v128;
       break;
 
@@ -2390,15 +2491,15 @@ bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
     case Opcode::F64X2ReplaceLane:
       return SimdLane(ctx, loc, value);
 
-    case Opcode::I8X16AnyTrue:
+    case Opcode::V128AnyTrue:
     case Opcode::I8X16AllTrue:
     case Opcode::I8X16Bitmask:
-    case Opcode::I16X8AnyTrue:
     case Opcode::I16X8AllTrue:
     case Opcode::I16X8Bitmask:
-    case Opcode::I32X4AnyTrue:
     case Opcode::I32X4AllTrue:
     case Opcode::I32X4Bitmask:
+    case Opcode::I64X2AllTrue:
+    case Opcode::I64X2Bitmask:
       params = span_v128, results = span_i32;
       break;
 

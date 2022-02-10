@@ -77,6 +77,7 @@ f32x4.add, Opcode::F32X4Add, Features::Simd
 f32x4.ceil, Opcode::F32X4Ceil, Features::Simd
 f32x4.convert_i32x4_s, Opcode::F32X4ConvertI32X4S, Features::Simd
 f32x4.convert_i32x4_u, Opcode::F32X4ConvertI32X4U, Features::Simd
+f32x4.demote_f64x2_zero, Opcode::F32X4DemoteF64X2Zero, Features::Simd
 f32x4.div, Opcode::F32X4Div, Features::Simd
 f32x4.eq, Opcode::F32X4Eq, Features::Simd
 f32x4.extract_lane, TokenType::SimdLaneInstr, Opcode::F32X4ExtractLane, Features::Simd
@@ -132,6 +133,8 @@ f64, NumericType::F64
 f64x2.abs, Opcode::F64X2Abs, Features::Simd
 f64x2.add, Opcode::F64X2Add, Features::Simd
 f64x2.ceil, Opcode::F64X2Ceil, Features::Simd
+f64x2.convert_low_i32x4_s, Opcode::F64X2ConvertLowI32X4S, Features::Simd
+f64x2.convert_low_i32x4_u, Opcode::F64X2ConvertLowI32X4U, Features::Simd
 f64x2.div, Opcode::F64X2Div, Features::Simd
 f64x2.eq, Opcode::F64X2Eq, Features::Simd
 f64x2.extract_lane, TokenType::SimdLaneInstr, Opcode::F64X2ExtractLane, Features::Simd
@@ -148,6 +151,7 @@ f64x2.neg, Opcode::F64X2Neg, Features::Simd
 f64x2.ne, Opcode::F64X2Ne, Features::Simd
 f64x2.pmax, Opcode::F64X2Pmax, Features::Simd
 f64x2.pmin, Opcode::F64X2Pmin, Features::Simd
+f64x2.promote_low_f32x4, Opcode::F64X2PromoteLowF32X4, Features::Simd
 f64x2.replace_lane, TokenType::SimdLaneInstr, Opcode::F64X2ReplaceLane, Features::Simd
 f64x2.splat, Opcode::F64X2Splat, Features::Simd
 f64x2.sqrt, Opcode::F64X2Sqrt, Features::Simd
@@ -164,14 +168,23 @@ global.set, TokenType::VarInstr, Opcode::GlobalSet
 global, TokenType::Global
 i16, PackedType::I16
 i16x8.abs, Opcode::I16X8Abs, Features::Simd
+i16x8.add, Opcode::I16X8Add, Features::Simd
 i16x8.add_sat_s, Opcode::I16X8AddSatS, Features::Simd
 i16x8.add_sat_u, Opcode::I16X8AddSatU, Features::Simd
-i16x8.add, Opcode::I16X8Add, Features::Simd
 i16x8.all_true, Opcode::I16X8AllTrue, Features::Simd
-i16x8.any_true, Opcode::I16X8AnyTrue, Features::Simd
 i16x8.avgr_u, Opcode::I16X8AvgrU, Features::Simd
 i16x8.bitmask, Opcode::I16X8Bitmask, Features::Simd
 i16x8.eq, Opcode::I16X8Eq, Features::Simd
+i16x8.extadd_pairwise_i8x16_s, Opcode::I16X8ExtaddPairwiseI8X16S, Features::Simd
+i16x8.extadd_pairwise_i8x16_u, Opcode::I16X8ExtaddPairwiseI8X16U, Features::Simd
+i16x8.extend_high_i8x16_s, Opcode::I16X8ExtendHighI8X16S, Features::Simd
+i16x8.extend_high_i8x16_u, Opcode::I16X8ExtendHighI8X16U, Features::Simd
+i16x8.extend_low_i8x16_s, Opcode::I16X8ExtendLowI8X16S, Features::Simd
+i16x8.extend_low_i8x16_u, Opcode::I16X8ExtendLowI8X16U, Features::Simd
+i16x8.extmul_high_i8x16_s, Opcode::I16X8ExtmulHighI8X16S, Features::Simd
+i16x8.extmul_high_i8x16_u, Opcode::I16X8ExtmulHighI8X16U, Features::Simd
+i16x8.extmul_low_i8x16_s, Opcode::I16X8ExtmulLowI8X16S, Features::Simd
+i16x8.extmul_low_i8x16_u, Opcode::I16X8ExtmulLowI8X16U, Features::Simd
 i16x8.extract_lane_s, TokenType::SimdLaneInstr, Opcode::I16X8ExtractLaneS, Features::Simd
 i16x8.extract_lane_u, TokenType::SimdLaneInstr, Opcode::I16X8ExtractLaneU, Features::Simd
 i16x8.ge_s, Opcode::I16X8GeS, Features::Simd
@@ -191,18 +204,15 @@ i16x8.narrow_i32x4_s, Opcode::I16X8NarrowI32X4S, Features::Simd
 i16x8.narrow_i32x4_u, Opcode::I16X8NarrowI32X4U, Features::Simd
 i16x8.neg, Opcode::I16X8Neg, Features::Simd
 i16x8.ne, Opcode::I16X8Ne, Features::Simd
+i16x8.q15mulr_sat_s, Opcode::I16X8Q15mulrSatS, Features::Simd
 i16x8.replace_lane, TokenType::SimdLaneInstr, Opcode::I16X8ReplaceLane, Features::Simd
 i16x8.shl, Opcode::I16X8Shl, Features::Simd
 i16x8.shr_s, Opcode::I16X8ShrS, Features::Simd
 i16x8.shr_u, Opcode::I16X8ShrU, Features::Simd
 i16x8.splat, Opcode::I16X8Splat, Features::Simd
+i16x8.sub, Opcode::I16X8Sub, Features::Simd
 i16x8.sub_sat_s, Opcode::I16X8SubSatS, Features::Simd
 i16x8.sub_sat_u, Opcode::I16X8SubSatU, Features::Simd
-i16x8.sub, Opcode::I16X8Sub, Features::Simd
-i16x8.widen_high_i8x16_s, Opcode::I16X8WidenHighI8X16S, Features::Simd
-i16x8.widen_high_i8x16_u, Opcode::I16X8WidenHighI8X16U, Features::Simd
-i16x8.widen_low_i8x16_s, Opcode::I16X8WidenLowI8X16S, Features::Simd
-i16x8.widen_low_i8x16_u, Opcode::I16X8WidenLowI8X16U, Features::Simd
 i16x8, SimdShape::I16X8
 i31, TokenType::HeapKind, HeapKind::I31
 i31ref, ReferenceKind::I31ref
@@ -289,10 +299,19 @@ i32.wrap_i64, Opcode::I32WrapI64
 i32x4.abs, Opcode::I32X4Abs, Features::Simd
 i32x4.add, Opcode::I32X4Add, Features::Simd
 i32x4.all_true, Opcode::I32X4AllTrue, Features::Simd
-i32x4.any_true, Opcode::I32X4AnyTrue, Features::Simd
 i32x4.bitmask, Opcode::I32X4Bitmask, Features::Simd
 i32x4.dot_i16x8_s, Opcode::I32X4DotI16X8S, Features::Simd
 i32x4.eq, Opcode::I32X4Eq, Features::Simd
+i32x4.extadd_pairwise_i16x8_s, Opcode::I32X4ExtaddPairwiseI16X8S, Features::Simd
+i32x4.extadd_pairwise_i16x8_u, Opcode::I32X4ExtaddPairwiseI16X8U, Features::Simd
+i32x4.extend_high_i16x8_s, Opcode::I32X4ExtendHighI16X8S, Features::Simd
+i32x4.extend_high_i16x8_u, Opcode::I32X4ExtendHighI16X8U, Features::Simd
+i32x4.extend_low_i16x8_s, Opcode::I32X4ExtendLowI16X8S, Features::Simd
+i32x4.extend_low_i16x8_u, Opcode::I32X4ExtendLowI16X8U, Features::Simd
+i32x4.extmul_high_i16x8_s, Opcode::I32X4ExtmulHighI16X8S, Features::Simd
+i32x4.extmul_high_i16x8_u, Opcode::I32X4ExtmulHighI16X8U, Features::Simd
+i32x4.extmul_low_i16x8_s, Opcode::I32X4ExtmulLowI16X8S, Features::Simd
+i32x4.extmul_low_i16x8_u, Opcode::I32X4ExtmulLowI16X8U, Features::Simd
 i32x4.extract_lane, TokenType::SimdLaneInstr, Opcode::I32X4ExtractLane, Features::Simd
 i32x4.ge_s, Opcode::I32X4GeS, Features::Simd
 i32x4.ge_u, Opcode::I32X4GeU, Features::Simd
@@ -317,10 +336,8 @@ i32x4.splat, Opcode::I32X4Splat, Features::Simd
 i32x4.sub, Opcode::I32X4Sub, Features::Simd
 i32x4.trunc_sat_f32x4_s, Opcode::I32X4TruncSatF32X4S, Features::Simd
 i32x4.trunc_sat_f32x4_u, Opcode::I32X4TruncSatF32X4U, Features::Simd
-i32x4.widen_high_i16x8_s, Opcode::I32X4WidenHighI16X8S, Features::Simd
-i32x4.widen_high_i16x8_u, Opcode::I32X4WidenHighI16X8U, Features::Simd
-i32x4.widen_low_i16x8_s, Opcode::I32X4WidenLowI16X8S, Features::Simd
-i32x4.widen_low_i16x8_u, Opcode::I32X4WidenLowI16X8U, Features::Simd
+i32x4.trunc_sat_f64x2_s_zero, Opcode::I32X4TruncSatF64X2SZero, Features::Simd
+i32x4.trunc_sat_f64x2_u_zero, Opcode::I32X4TruncSatF64X2UZero, Features::Simd
 i32x4, SimdShape::I32X4
 i32.xor, Opcode::I32Xor
 i64.add, Opcode::I64Add
@@ -414,10 +431,27 @@ i64.trunc_sat_f32_u, Opcode::I64TruncSatF32U, Features::SaturatingFloatToInt
 i64.trunc_sat_f64_s, Opcode::I64TruncSatF64S, Features::SaturatingFloatToInt
 i64.trunc_sat_f64_u, Opcode::I64TruncSatF64U, Features::SaturatingFloatToInt
 i64, NumericType::I64
+i64x2.abs, Opcode::I64X2Abs, Features::Simd
 i64x2.add, Opcode::I64X2Add, Features::Simd
+i64x2.all_true, Opcode::I64X2AllTrue, Features::Simd
+i64x2.bitmask, Opcode::I64X2Bitmask, Features::Simd
+i64x2.eq, Opcode::I64X2Eq, Features::Simd
+i64x2.extend_high_i32x4_s, Opcode::I64X2ExtendHighI32X4S, Features::Simd
+i64x2.extend_high_i32x4_u, Opcode::I64X2ExtendHighI32X4U, Features::Simd
+i64x2.extend_low_i32x4_s, Opcode::I64X2ExtendLowI32X4S, Features::Simd
+i64x2.extend_low_i32x4_u, Opcode::I64X2ExtendLowI32X4U, Features::Simd
+i64x2.extmul_high_i32x4_s, Opcode::I64X2ExtmulHighI32X4S, Features::Simd
+i64x2.extmul_high_i32x4_u, Opcode::I64X2ExtmulHighI32X4U, Features::Simd
+i64x2.extmul_low_i32x4_s, Opcode::I64X2ExtmulLowI32X4S, Features::Simd
+i64x2.extmul_low_i32x4_u, Opcode::I64X2ExtmulLowI32X4U, Features::Simd
 i64x2.extract_lane, TokenType::SimdLaneInstr, Opcode::I64X2ExtractLane, Features::Simd
+i64x2.ge_s, Opcode::I64X2GeS, Features::Simd
+i64x2.gt_s, Opcode::I64X2GtS, Features::Simd
+i64x2.le_s, Opcode::I64X2LeS, Features::Simd
+i64x2.lt_s, Opcode::I64X2LtS, Features::Simd
 i64x2.mul, Opcode::I64X2Mul, Features::Simd
 i64x2.neg, Opcode::I64X2Neg, Features::Simd
+i64x2.ne, Opcode::I64X2Ne, Features::Simd
 i64x2.replace_lane, TokenType::SimdLaneInstr, Opcode::I64X2ReplaceLane, Features::Simd
 i64x2.shl, Opcode::I64X2Shl, Features::Simd
 i64x2.shr_s, Opcode::I64X2ShrS, Features::Simd
@@ -428,11 +462,10 @@ i64x2, SimdShape::I64X2
 i64.xor, Opcode::I64Xor
 i8, PackedType::I8
 i8x16.abs, Opcode::I8X16Abs, Features::Simd
+i8x16.add, Opcode::I8X16Add, Features::Simd
 i8x16.add_sat_s, Opcode::I8X16AddSatS, Features::Simd
 i8x16.add_sat_u, Opcode::I8X16AddSatU, Features::Simd
-i8x16.add, Opcode::I8X16Add, Features::Simd
 i8x16.all_true, Opcode::I8X16AllTrue, Features::Simd
-i8x16.any_true, Opcode::I8X16AnyTrue, Features::Simd
 i8x16.avgr_u, Opcode::I8X16AvgrU, Features::Simd
 i8x16.bitmask, Opcode::I8X16Bitmask, Features::Simd
 i8x16.eq, Opcode::I8X16Eq, Features::Simd
@@ -454,6 +487,7 @@ i8x16.narrow_i16x8_s, Opcode::I8X16NarrowI16X8S, Features::Simd
 i8x16.narrow_i16x8_u, Opcode::I8X16NarrowI16X8U, Features::Simd
 i8x16.neg, Opcode::I8X16Neg, Features::Simd
 i8x16.ne, Opcode::I8X16Ne, Features::Simd
+i8x16.popcnt, Opcode::I8X16Popcnt, Features::Simd
 i8x16.replace_lane, TokenType::SimdLaneInstr, Opcode::I8X16ReplaceLane, Features::Simd
 i8x16.shl, Opcode::I8X16Shl, Features::Simd
 i8x16.shr_s, Opcode::I8X16ShrS, Features::Simd
@@ -542,26 +576,35 @@ type, TokenType::Type
 unreachable, Opcode::Unreachable
 v128.andnot, Opcode::V128Andnot, Features::Simd
 v128.and, Opcode::V128And, Features::Simd
+v128.any_true, Opcode::V128AnyTrue, Features::Simd
 v128.bitselect, Opcode::V128BitSelect, Features::Simd
 v128.const, TokenType::SimdConstInstr, Opcode::V128Const, Features::Simd
+v128.load16_lane, TokenType::SimdMemoryLaneInstr, Opcode::V128Load16Lane, Features::Simd
 v128.load16_splat, TokenType::MemoryInstr, Opcode::V128Load16Splat, Features::Simd
 v128.load16x4_s, TokenType::MemoryInstr, Opcode::V128Load16X4S, Features::Simd
 v128.load16x4_u, TokenType::MemoryInstr, Opcode::V128Load16X4U, Features::Simd
+v128.load32_lane, TokenType::SimdMemoryLaneInstr, Opcode::V128Load32Lane, Features::Simd
 v128.load32_splat, TokenType::MemoryInstr, Opcode::V128Load32Splat, Features::Simd
 v128.load32x2_s, TokenType::MemoryInstr, Opcode::V128Load32X2S, Features::Simd
 v128.load32x2_u, TokenType::MemoryInstr, Opcode::V128Load32X2U, Features::Simd
 v128.load32_zero, TokenType::MemoryInstr, Opcode::V128Load32Zero, Features::Simd
+v128.load64_lane, TokenType::SimdMemoryLaneInstr, Opcode::V128Load64Lane, Features::Simd
 v128.load64_splat, TokenType::MemoryInstr, Opcode::V128Load64Splat, Features::Simd
 v128.load64_zero, TokenType::MemoryInstr, Opcode::V128Load64Zero, Features::Simd
+v128.load8_lane, TokenType::SimdMemoryLaneInstr, Opcode::V128Load8Lane, Features::Simd
 v128.load8_splat, TokenType::MemoryInstr, Opcode::V128Load8Splat, Features::Simd
 v128.load8x8_s, TokenType::MemoryInstr, Opcode::V128Load8X8S, Features::Simd
 v128.load8x8_u, TokenType::MemoryInstr, Opcode::V128Load8X8U, Features::Simd
 v128.load, TokenType::MemoryInstr, Opcode::V128Load, Features::Simd
 v128.not, Opcode::V128Not, Features::Simd
-v128, NumericType::V128
-v128.or, Opcode::V128Or, Features::Simd
+v128.or, Opcode::V128Or,  Features::Simd
+v128.store16_lane, TokenType::SimdMemoryLaneInstr, Opcode::V128Store16Lane, Features::Simd
+v128.store32_lane, TokenType::SimdMemoryLaneInstr, Opcode::V128Store32Lane, Features::Simd
+v128.store64_lane, TokenType::SimdMemoryLaneInstr, Opcode::V128Store64Lane, Features::Simd
+v128.store8_lane, TokenType::SimdMemoryLaneInstr, Opcode::V128Store8Lane, Features::Simd
 v128.store, TokenType::MemoryInstr, Opcode::V128Store, Features::Simd
 v128.xor, Opcode::V128Xor, Features::Simd
+v128, NumericType::V128
 # Deprecated names.
 anyfunc, ReferenceKind::Funcref
 current_memory, Opcode::MemorySize

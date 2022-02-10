@@ -733,169 +733,204 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, Tag<Instruction>) {
     case Opcode::I64TruncSatF64S:
     case Opcode::I64TruncSatF64U:
     case Opcode::RefIsNull:
-    case Opcode::I8X16Add:
-    case Opcode::I16X8Add:
-    case Opcode::I32X4Add:
-    case Opcode::I64X2Add:
-    case Opcode::I8X16Sub:
-    case Opcode::I16X8Sub:
-    case Opcode::I32X4Sub:
-    case Opcode::I64X2Sub:
-    case Opcode::I16X8Mul:
-    case Opcode::I32X4Mul:
-    case Opcode::I64X2Mul:
-    case Opcode::I8X16AddSatS:
-    case Opcode::I8X16AddSatU:
-    case Opcode::I16X8AddSatS:
-    case Opcode::I16X8AddSatU:
-    case Opcode::I8X16SubSatS:
-    case Opcode::I8X16SubSatU:
-    case Opcode::I16X8SubSatS:
-    case Opcode::I16X8SubSatU:
-    case Opcode::I8X16MinS:
-    case Opcode::I8X16MinU:
-    case Opcode::I8X16MaxS:
-    case Opcode::I8X16MaxU:
-    case Opcode::I16X8MinS:
-    case Opcode::I16X8MinU:
-    case Opcode::I16X8MaxS:
-    case Opcode::I16X8MaxU:
-    case Opcode::I32X4MinS:
-    case Opcode::I32X4MinU:
-    case Opcode::I32X4MaxS:
-    case Opcode::I32X4MaxU:
-    case Opcode::I8X16Shl:
-    case Opcode::I16X8Shl:
-    case Opcode::I32X4Shl:
-    case Opcode::I64X2Shl:
-    case Opcode::I8X16ShrS:
-    case Opcode::I8X16ShrU:
-    case Opcode::I16X8ShrS:
-    case Opcode::I16X8ShrU:
-    case Opcode::I32X4ShrS:
-    case Opcode::I32X4ShrU:
-    case Opcode::I64X2ShrS:
-    case Opcode::I64X2ShrU:
-    case Opcode::V128And:
-    case Opcode::V128Or:
-    case Opcode::V128Xor:
-    case Opcode::F32X4Min:
-    case Opcode::F64X2Min:
-    case Opcode::F32X4Max:
-    case Opcode::F64X2Max:
-    case Opcode::F32X4Pmin:
-    case Opcode::F64X2Pmin:
-    case Opcode::F32X4Pmax:
-    case Opcode::F64X2Pmax:
-    case Opcode::F32X4Add:
-    case Opcode::F64X2Add:
-    case Opcode::F32X4Sub:
-    case Opcode::F64X2Sub:
-    case Opcode::F32X4Div:
-    case Opcode::F64X2Div:
-    case Opcode::F32X4Mul:
-    case Opcode::F64X2Mul:
-    case Opcode::I8X16Eq:
-    case Opcode::I16X8Eq:
-    case Opcode::I32X4Eq:
-    case Opcode::F32X4Eq:
-    case Opcode::F64X2Eq:
-    case Opcode::I8X16Ne:
-    case Opcode::I16X8Ne:
-    case Opcode::I32X4Ne:
-    case Opcode::F32X4Ne:
-    case Opcode::F64X2Ne:
-    case Opcode::I8X16LtS:
-    case Opcode::I8X16LtU:
-    case Opcode::I16X8LtS:
-    case Opcode::I16X8LtU:
-    case Opcode::I32X4LtS:
-    case Opcode::I32X4LtU:
-    case Opcode::F32X4Lt:
-    case Opcode::F64X2Lt:
-    case Opcode::I8X16LeS:
-    case Opcode::I8X16LeU:
-    case Opcode::I16X8LeS:
-    case Opcode::I16X8LeU:
-    case Opcode::I32X4LeS:
-    case Opcode::I32X4LeU:
-    case Opcode::F32X4Le:
-    case Opcode::F64X2Le:
-    case Opcode::I8X16GtS:
-    case Opcode::I8X16GtU:
-    case Opcode::I16X8GtS:
-    case Opcode::I16X8GtU:
-    case Opcode::I32X4GtS:
-    case Opcode::I32X4GtU:
-    case Opcode::F32X4Gt:
-    case Opcode::F64X2Gt:
-    case Opcode::I8X16GeS:
-    case Opcode::I8X16GeU:
-    case Opcode::I16X8GeS:
-    case Opcode::I16X8GeU:
-    case Opcode::I32X4GeS:
-    case Opcode::I32X4GeU:
-    case Opcode::F32X4Ge:
-    case Opcode::F64X2Ge:
+    case Opcode::I8X16Swizzle:
     case Opcode::I8X16Splat:
     case Opcode::I16X8Splat:
     case Opcode::I32X4Splat:
     case Opcode::I64X2Splat:
     case Opcode::F32X4Splat:
     case Opcode::F64X2Splat:
-    case Opcode::I8X16Neg:
-    case Opcode::I16X8Neg:
-    case Opcode::I32X4Neg:
-    case Opcode::I64X2Neg:
+    case Opcode::I8X16Eq:
+    case Opcode::I8X16Ne:
+    case Opcode::I8X16LtS:
+    case Opcode::I8X16LtU:
+    case Opcode::I8X16GtS:
+    case Opcode::I8X16GtU:
+    case Opcode::I8X16LeS:
+    case Opcode::I8X16LeU:
+    case Opcode::I8X16GeS:
+    case Opcode::I8X16GeU:
+    case Opcode::I16X8Eq:
+    case Opcode::I16X8Ne:
+    case Opcode::I16X8LtS:
+    case Opcode::I16X8LtU:
+    case Opcode::I16X8GtS:
+    case Opcode::I16X8GtU:
+    case Opcode::I16X8LeS:
+    case Opcode::I16X8LeU:
+    case Opcode::I16X8GeS:
+    case Opcode::I16X8GeU:
+    case Opcode::I32X4Eq:
+    case Opcode::I32X4Ne:
+    case Opcode::I32X4LtS:
+    case Opcode::I32X4LtU:
+    case Opcode::I32X4GtS:
+    case Opcode::I32X4GtU:
+    case Opcode::I32X4LeS:
+    case Opcode::I32X4LeU:
+    case Opcode::I32X4GeS:
+    case Opcode::I32X4GeU:
+    case Opcode::F32X4Eq:
+    case Opcode::F32X4Ne:
+    case Opcode::F32X4Lt:
+    case Opcode::F32X4Gt:
+    case Opcode::F32X4Le:
+    case Opcode::F32X4Ge:
+    case Opcode::F64X2Eq:
+    case Opcode::F64X2Ne:
+    case Opcode::F64X2Lt:
+    case Opcode::F64X2Gt:
+    case Opcode::F64X2Le:
+    case Opcode::F64X2Ge:
     case Opcode::V128Not:
-    case Opcode::I8X16AnyTrue:
-    case Opcode::I16X8AnyTrue:
-    case Opcode::I32X4AnyTrue:
+    case Opcode::V128And:
+    case Opcode::V128Andnot:
+    case Opcode::V128Or:
+    case Opcode::V128Xor:
+    case Opcode::V128BitSelect:
+    case Opcode::V128AnyTrue:
+    case Opcode::F32X4DemoteF64X2Zero:
+    case Opcode::F64X2PromoteLowF32X4:
+    case Opcode::I8X16Abs:
+    case Opcode::I8X16Neg:
+    case Opcode::I8X16Popcnt:
     case Opcode::I8X16AllTrue:
-    case Opcode::I16X8AllTrue:
-    case Opcode::I32X4AllTrue:
     case Opcode::I8X16Bitmask:
-    case Opcode::I16X8Bitmask:
-    case Opcode::I32X4Bitmask:
-    case Opcode::I32X4DotI16X8S:
-    case Opcode::F32X4Neg:
-    case Opcode::F64X2Neg:
-    case Opcode::F32X4Abs:
-    case Opcode::F64X2Abs:
-    case Opcode::F32X4Sqrt:
-    case Opcode::F64X2Sqrt:
+    case Opcode::I8X16NarrowI16X8S:
+    case Opcode::I8X16NarrowI16X8U:
     case Opcode::F32X4Ceil:
     case Opcode::F32X4Floor:
     case Opcode::F32X4Trunc:
     case Opcode::F32X4Nearest:
+    case Opcode::I8X16Shl:
+    case Opcode::I8X16ShrS:
+    case Opcode::I8X16ShrU:
+    case Opcode::I8X16Add:
+    case Opcode::I8X16AddSatS:
+    case Opcode::I8X16AddSatU:
+    case Opcode::I8X16Sub:
+    case Opcode::I8X16SubSatS:
+    case Opcode::I8X16SubSatU:
     case Opcode::F64X2Ceil:
     case Opcode::F64X2Floor:
+    case Opcode::I8X16MinS:
+    case Opcode::I8X16MinU:
+    case Opcode::I8X16MaxS:
+    case Opcode::I8X16MaxU:
     case Opcode::F64X2Trunc:
-    case Opcode::F64X2Nearest:
-    case Opcode::V128BitSelect:
-    case Opcode::F32X4ConvertI32X4S:
-    case Opcode::F32X4ConvertI32X4U:
-    case Opcode::I32X4TruncSatF32X4S:
-    case Opcode::I32X4TruncSatF32X4U:
-    case Opcode::I8X16Swizzle:
-    case Opcode::I8X16NarrowI16X8S:
-    case Opcode::I8X16NarrowI16X8U:
+    case Opcode::I8X16AvgrU:
+    case Opcode::I16X8ExtaddPairwiseI8X16S:
+    case Opcode::I16X8ExtaddPairwiseI8X16U:
+    case Opcode::I32X4ExtaddPairwiseI16X8S:
+    case Opcode::I32X4ExtaddPairwiseI16X8U:
+    case Opcode::I16X8Abs:
+    case Opcode::I16X8Neg:
+    case Opcode::I16X8Q15mulrSatS:
+    case Opcode::I16X8AllTrue:
+    case Opcode::I16X8Bitmask:
     case Opcode::I16X8NarrowI32X4S:
     case Opcode::I16X8NarrowI32X4U:
-    case Opcode::I16X8WidenLowI8X16S:
-    case Opcode::I16X8WidenHighI8X16S:
-    case Opcode::I16X8WidenLowI8X16U:
-    case Opcode::I16X8WidenHighI8X16U:
-    case Opcode::I32X4WidenLowI16X8S:
-    case Opcode::I32X4WidenHighI16X8S:
-    case Opcode::I32X4WidenLowI16X8U:
-    case Opcode::I32X4WidenHighI16X8U:
-    case Opcode::V128Andnot:
-    case Opcode::I8X16AvgrU:
+    case Opcode::I16X8ExtendLowI8X16S:
+    case Opcode::I16X8ExtendHighI8X16S:
+    case Opcode::I16X8ExtendLowI8X16U:
+    case Opcode::I16X8ExtendHighI8X16U:
+    case Opcode::I16X8Shl:
+    case Opcode::I16X8ShrS:
+    case Opcode::I16X8ShrU:
+    case Opcode::I16X8Add:
+    case Opcode::I16X8AddSatS:
+    case Opcode::I16X8AddSatU:
+    case Opcode::I16X8Sub:
+    case Opcode::I16X8SubSatS:
+    case Opcode::I16X8SubSatU:
+    case Opcode::F64X2Nearest:
+    case Opcode::I16X8Mul:
+    case Opcode::I16X8MinS:
+    case Opcode::I16X8MinU:
+    case Opcode::I16X8MaxS:
+    case Opcode::I16X8MaxU:
     case Opcode::I16X8AvgrU:
-    case Opcode::I8X16Abs:
-    case Opcode::I16X8Abs:
+    case Opcode::I16X8ExtmulLowI8X16S:
+    case Opcode::I16X8ExtmulHighI8X16S:
+    case Opcode::I16X8ExtmulLowI8X16U:
+    case Opcode::I16X8ExtmulHighI8X16U:
     case Opcode::I32X4Abs:
+    case Opcode::I32X4Neg:
+    case Opcode::I32X4AllTrue:
+    case Opcode::I32X4Bitmask:
+    case Opcode::I32X4ExtendLowI16X8S:
+    case Opcode::I32X4ExtendHighI16X8S:
+    case Opcode::I32X4ExtendLowI16X8U:
+    case Opcode::I32X4ExtendHighI16X8U:
+    case Opcode::I32X4Shl:
+    case Opcode::I32X4ShrS:
+    case Opcode::I32X4ShrU:
+    case Opcode::I32X4Add:
+    case Opcode::I32X4Sub:
+    case Opcode::I32X4Mul:
+    case Opcode::I32X4MinS:
+    case Opcode::I32X4MinU:
+    case Opcode::I32X4MaxS:
+    case Opcode::I32X4MaxU:
+    case Opcode::I32X4DotI16X8S:
+    case Opcode::I32X4ExtmulLowI16X8S:
+    case Opcode::I32X4ExtmulHighI16X8S:
+    case Opcode::I32X4ExtmulLowI16X8U:
+    case Opcode::I32X4ExtmulHighI16X8U:
+    case Opcode::I64X2Abs:
+    case Opcode::I64X2Neg:
+    case Opcode::I64X2AllTrue:
+    case Opcode::I64X2Bitmask:
+    case Opcode::I64X2ExtendLowI32X4S:
+    case Opcode::I64X2ExtendHighI32X4S:
+    case Opcode::I64X2ExtendLowI32X4U:
+    case Opcode::I64X2ExtendHighI32X4U:
+    case Opcode::I64X2Shl:
+    case Opcode::I64X2ShrS:
+    case Opcode::I64X2ShrU:
+    case Opcode::I64X2Add:
+    case Opcode::I64X2Sub:
+    case Opcode::I64X2Mul:
+    case Opcode::I64X2Eq:
+    case Opcode::I64X2Ne:
+    case Opcode::I64X2LtS:
+    case Opcode::I64X2GtS:
+    case Opcode::I64X2LeS:
+    case Opcode::I64X2GeS:
+    case Opcode::I64X2ExtmulLowI32X4S:
+    case Opcode::I64X2ExtmulHighI32X4S:
+    case Opcode::I64X2ExtmulLowI32X4U:
+    case Opcode::I64X2ExtmulHighI32X4U:
+    case Opcode::F32X4Abs:
+    case Opcode::F32X4Neg:
+    case Opcode::F32X4Sqrt:
+    case Opcode::F32X4Add:
+    case Opcode::F32X4Sub:
+    case Opcode::F32X4Mul:
+    case Opcode::F32X4Div:
+    case Opcode::F32X4Min:
+    case Opcode::F32X4Max:
+    case Opcode::F32X4Pmin:
+    case Opcode::F32X4Pmax:
+    case Opcode::F64X2Abs:
+    case Opcode::F64X2Neg:
+    case Opcode::F64X2Sqrt:
+    case Opcode::F64X2Add:
+    case Opcode::F64X2Sub:
+    case Opcode::F64X2Mul:
+    case Opcode::F64X2Div:
+    case Opcode::F64X2Min:
+    case Opcode::F64X2Max:
+    case Opcode::F64X2Pmin:
+    case Opcode::F64X2Pmax:
+    case Opcode::I32X4TruncSatF32X4S:
+    case Opcode::I32X4TruncSatF32X4U:
+    case Opcode::F32X4ConvertI32X4S:
+    case Opcode::F32X4ConvertI32X4U:
+    case Opcode::I32X4TruncSatF64X2SZero:
+    case Opcode::I32X4TruncSatF64X2UZero:
+    case Opcode::F64X2ConvertLowI32X4S:
+    case Opcode::F64X2ConvertLowI32X4U:
     case Opcode::RefAsNonNull:
     case Opcode::CallRef:
     case Opcode::ReturnCallRef:
@@ -1047,16 +1082,16 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, Tag<Instruction>) {
     case Opcode::I64Store16:
     case Opcode::I64Store32:
     case Opcode::V128Store:
-    case Opcode::V128Load8Splat:
-    case Opcode::V128Load16Splat:
-    case Opcode::V128Load32Splat:
-    case Opcode::V128Load64Splat:
     case Opcode::V128Load8X8S:
     case Opcode::V128Load8X8U:
     case Opcode::V128Load16X4S:
     case Opcode::V128Load16X4U:
     case Opcode::V128Load32X2S:
     case Opcode::V128Load32X2U:
+    case Opcode::V128Load8Splat:
+    case Opcode::V128Load16Splat:
+    case Opcode::V128Load32Splat:
+    case Opcode::V128Load64Splat:
     case Opcode::V128Load32Zero:
     case Opcode::V128Load64Zero:
     case Opcode::MemoryAtomicNotify:
@@ -1127,6 +1162,18 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, Tag<Instruction>) {
     case Opcode::I64AtomicRmw32CmpxchgU: {
       WASP_TRY_READ(memarg, Read<MemArgImmediate>(data, ctx));
       return At{guard.range(data), Instruction{opcode, memarg}};
+    }
+
+    case Opcode::V128Load8Lane:
+    case Opcode::V128Load16Lane:
+    case Opcode::V128Load32Lane:
+    case Opcode::V128Load64Lane:
+    case Opcode::V128Store8Lane:
+    case Opcode::V128Store16Lane:
+    case Opcode::V128Store32Lane:
+    case Opcode::V128Store64Lane: {
+      WASP_TRY_READ(immediate, Read<SimdMemoryLaneImmediate>(data, ctx));
+      return At{guard.range(data), Instruction{opcode, immediate}};
     }
 
     // Reserved immediates.
@@ -1465,6 +1512,17 @@ OptAt<ShuffleImmediate> Read(SpanU8* data,
     immediate[i] = byte;
   }
   return At{guard.range(data), immediate};
+}
+
+OptAt<SimdMemoryLaneImmediate> Read(SpanU8* data,
+                                    ReadCtx& ctx,
+                                    Tag<SimdMemoryLaneImmediate>) {
+  ErrorsContextGuard error_guard{ctx.errors, *data, "memory lane immediate"};
+  LocationGuard guard{data};
+  WASP_TRY_READ_CONTEXT(memarg, Read<MemArgImmediate>(data, ctx),
+                        "memory immediate");
+  WASP_TRY_READ_CONTEXT(lane, Read<u8>(data, ctx), "lane");
+  return At{guard.range(data), SimdMemoryLaneImmediate{memarg, lane}};
 }
 
 OptAt<Start> Read(SpanU8* data, ReadCtx& ctx, Tag<Start>) {

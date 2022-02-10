@@ -619,6 +619,9 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case InstructionKind::SimdLane:
       return Write(instr.simd_lane_immediate(), out);
 
+    case InstructionKind::SimdMemoryLane:
+      return Write(instr.simd_memory_lane_immediate(), out);
+
     case InstructionKind::FuncBind:
       return Write(instr.func_bind_immediate(), out);
 
@@ -690,6 +693,13 @@ Iterator Write(const StructFieldImmediate& value, Iterator out) {
 template <typename Iterator>
 Iterator Write(const StructType& value, Iterator out) {
   out = WriteVector(value.fields.begin(), value.fields.end(), out);
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(const SimdMemoryLaneImmediate& value, Iterator out) {
+  out = Write(value.memarg, out);
+  out = Write(value.lane, out);
   return out;
 }
 

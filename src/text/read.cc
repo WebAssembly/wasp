@@ -1444,6 +1444,14 @@ auto ReadOffsetOpt(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<u32> {
   return ReadNameEqNatOpt(tokenizer, ctx, TokenType::OffsetEqNat, 7);
 }
 
+auto ReadMemArgImmediate(Tokenizer& tokenizer, ReadCtx& ctx)
+    -> OptAt<MemArgImmediate> {
+  LocationGuard guard{tokenizer};
+  auto offset_opt = ReadOffsetOpt(tokenizer, ctx);
+  auto align_opt = ReadAlignOpt(tokenizer, ctx);
+  return At{guard.loc(), MemArgImmediate{align_opt, offset_opt}};
+}
+
 auto ReadSimdLane(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<u8> {
   return ReadNat<u8>(tokenizer, ctx);
 }
@@ -1506,6 +1514,7 @@ bool IsPlainInstruction(Token token) {
     case TokenType::SelectInstr:
     case TokenType::SimdConstInstr:
     case TokenType::SimdLaneInstr:
+    case TokenType::SimdMemoryLaneInstr:
     case TokenType::SimdShuffleInstr:
     case TokenType::StructFieldInstr:
     case TokenType::TableCopyInstr:
@@ -1672,11 +1681,7 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, ReadCtx& ctx)
     case TokenType::MemoryInstr: {
       WASP_TRY(CheckOpcodeEnabled(token, ctx));
       tokenizer.Read();
-      LocationGuard immediate_guard{tokenizer};
-      auto offset_opt = ReadOffsetOpt(tokenizer, ctx);
-      auto align_opt = ReadAlignOpt(tokenizer, ctx);
-      auto immediate =
-          At{immediate_guard.loc(), MemArgImmediate{align_opt, offset_opt}};
+      WASP_TRY_READ(immediate, ReadMemArgImmediate(tokenizer, ctx));
       return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
@@ -1741,6 +1746,17 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, ReadCtx& ctx)
       WASP_TRY(CheckOpcodeEnabled(token, ctx));
       tokenizer.Read();
       WASP_TRY_READ(immediate, ReadSimdLane(tokenizer, ctx));
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
+    }
+
+    case TokenType::SimdMemoryLaneInstr: {
+      WASP_TRY(CheckOpcodeEnabled(token, ctx));
+      tokenizer.Read();
+      LocationGuard immediate_guard{tokenizer};
+      WASP_TRY_READ(memarg, ReadMemArgImmediate(tokenizer, ctx));
+      WASP_TRY_READ(lane, ReadSimdLane(tokenizer, ctx));
+      auto immediate =
+          At{immediate_guard.loc(), SimdMemoryLaneImmediate{memarg, lane}};
       return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 

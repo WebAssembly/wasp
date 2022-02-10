@@ -66,7 +66,6 @@ const std::vector<DirectoryInfo> directory_info_map = {
     {"multi-memory", false, 0},
     {"mutable-global", true, Features::MutableGlobals},
     {"reference-types", true, Features::ReferenceTypes},
-    {"simd", false, Features::Simd},
     {"tail-call", false, Features::TailCall},
     {"threads", true, Features::Threads},
 };

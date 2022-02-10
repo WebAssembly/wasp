@@ -377,6 +377,9 @@ Instruction::Instruction(At<Opcode> opcode, At<ShuffleImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<SimdLaneImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
+Instruction::Instruction(At<Opcode> opcode, At<SimdMemoryLaneImmediate> immediate)
+    : opcode{opcode}, immediate{immediate} {}
+
 Instruction::Instruction(At<Opcode> opcode, At<StructFieldImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
@@ -489,6 +492,10 @@ bool Instruction::has_shuffle_immediate() const {
 
 bool Instruction::has_simd_lane_immediate() const {
   return holds_alternative<At<SimdLaneImmediate>>(immediate);
+}
+
+bool Instruction::has_simd_memory_lane_immediate() const {
+  return holds_alternative<At<SimdMemoryLaneImmediate>>(immediate);
 }
 
 bool Instruction::has_struct_field_immediate() const {
@@ -670,6 +677,15 @@ At<SimdLaneImmediate>& Instruction::simd_lane_immediate() {
 
 const At<SimdLaneImmediate>& Instruction::simd_lane_immediate() const {
   return get<At<SimdLaneImmediate>>(immediate);
+}
+
+At<SimdMemoryLaneImmediate>& Instruction::simd_memory_lane_immediate() {
+  return get<At<SimdMemoryLaneImmediate>>(immediate);
+}
+
+const At<SimdMemoryLaneImmediate>& Instruction::simd_memory_lane_immediate()
+    const {
+  return get<At<SimdMemoryLaneImmediate>>(immediate);
 }
 
 At<StructFieldImmediate>& Instruction::struct_field_immediate() {

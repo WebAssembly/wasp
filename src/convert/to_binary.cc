@@ -446,6 +446,8 @@ u32 GetNaturalAlignment(Opcode opcode) {
     case Opcode::I64Load8U:
     case Opcode::I64Store8:
     case Opcode::V128Load8Splat:
+    case Opcode::V128Load8Lane:
+    case Opcode::V128Store8Lane:
       return 1;
 
     case Opcode::I32AtomicLoad16U:
@@ -473,6 +475,8 @@ u32 GetNaturalAlignment(Opcode opcode) {
     case Opcode::I64Load16U:
     case Opcode::I64Store16:
     case Opcode::V128Load16Splat:
+    case Opcode::V128Load16Lane:
+    case Opcode::V128Store16Lane:
       return 2;
 
     case Opcode::F32Load:
@@ -504,6 +508,8 @@ u32 GetNaturalAlignment(Opcode opcode) {
     case Opcode::MemoryAtomicWait32:
     case Opcode::V128Load32Splat:
     case Opcode::V128Load32Zero:
+    case Opcode::V128Load32Lane:
+    case Opcode::V128Store32Lane:
       return 4;
 
     case Opcode::F64Load:
@@ -528,6 +534,8 @@ u32 GetNaturalAlignment(Opcode opcode) {
     case Opcode::V128Load64Zero:
     case Opcode::V128Load8X8S:
     case Opcode::V128Load8X8U:
+    case Opcode::V128Load64Lane:
+    case Opcode::V128Store64Lane:
       return 8;
 
     case Opcode::V128Load:
@@ -572,6 +580,14 @@ auto ToBinary(BinCtx& ctx, const At<text::StructFieldImmediate>& value)
   return At{value.loc(),
             binary::StructFieldImmediate{ToBinary(ctx, value->struct_),
                                          ToBinary(ctx, value->field)}};
+}
+
+auto ToBinary(BinCtx& ctx,
+              const At<text::SimdMemoryLaneImmediate>& value,
+              u32 natural_align) -> At<binary::SimdMemoryLaneImmediate> {
+  return At{value.loc(),
+            binary::SimdMemoryLaneImmediate{
+                ToBinary(ctx, value->memarg, natural_align), value->lane}};
 }
 
 auto ToBinary(BinCtx& ctx, const At<text::Instruction>& value)
@@ -667,6 +683,13 @@ auto ToBinary(BinCtx& ctx, const At<text::Instruction>& value)
     case text::InstructionKind::SimdLane:
       return At{value.loc(), binary::Instruction{value->opcode,
                                                  value->simd_lane_immediate()}};
+
+    case text::InstructionKind::SimdMemoryLane:
+      return At{
+          value.loc(),
+          binary::Instruction{value->opcode,
+                              ToBinary(ctx, value->simd_memory_lane_immediate(),
+                                       GetNaturalAlignment(*value->opcode))}};
 
     case text::InstructionKind::FuncBind:
       return At{value.loc(), binary::Instruction{

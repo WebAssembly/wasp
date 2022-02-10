@@ -36,6 +36,8 @@ class TextReadTest : public ::testing::Test {
   using I = Instruction;
   using O = Opcode;
 
+  void SetUp() { ctx.features.DisableAll(); }
+
   // Read without checking the expected result.
   template <typename Func, typename... Args>
   void Read(Func&& func, SpanU8 span, Args&&... args) {
@@ -1050,6 +1052,26 @@ TEST_F(TextReadTest, PlainInstruction_SimdLane) {
 TEST_F(TextReadTest, InvalidSimdLane) {
   Fail(ReadSimdLane, {{0, "Expected a natural number, got Int"}}, "-1"_su8);
   Fail(ReadSimdLane, {{0, "Invalid natural number, got Nat"}}, "256"_su8);
+}
+
+TEST_F(TextReadTest, PlainInstruction_SimdMemoryLane) {
+  Fail(ReadPlainInstruction, {{0, "v128.load8_lane instruction not allowed"}},
+       "v128.load8_lane 0"_su8);
+
+  ctx.features.enable_simd();
+
+  OK(ReadPlainInstruction,
+     I{At{"v128.load8_lane"_su8, O::V128Load8Lane},
+       At{"0"_su8,
+          SimdMemoryLaneImmediate{MemArgImmediate{}, At{"0"_su8, u8{0}}}}},
+     "v128.load8_lane 0"_su8);
+  OK(ReadPlainInstruction,
+     I{At{"v128.store16_lane"_su8, O::V128Store16Lane},
+       At{"offset=1 align=2 3"_su8,
+          SimdMemoryLaneImmediate{MemArgImmediate{At{"align=2"_su8, u32{2}},
+                                                  At{"offset=1"_su8, u32{1}}},
+                                  At{"3"_su8, u8{3}}}}},
+     "v128.store16_lane offset=1 align=2 3"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_Shuffle) {

@@ -609,6 +609,16 @@ TEST(ConvertToTextTest, StructFieldImmediate) {
                                            At{loc3, Index{14}}}});
 }
 
+TEST(ConvertToTextTest, SimdMemoryLaneImmediate) {
+  OK(At{loc1,
+        text::SimdMemoryLaneImmediate{
+            text::MemArgImmediate{At{loc2, u32{4}}, At{loc3, u32{13}}},
+            At{loc4, u8{0}}}},
+     At{loc1, binary::SimdMemoryLaneImmediate{
+                  binary::MemArgImmediate{At{loc2, u32{2}}, At{loc3, u32{13}}},
+                  At{loc4, u8{0}}}});
+}
+
 TEST(ConvertToTextTest, Instruction) {
   // Bare.
   OK(At{loc1, text::Instruction{At{loc2, Opcode::Nop}}},
@@ -809,6 +819,21 @@ TEST(ConvertToTextTest, Instruction) {
                   At{loc2, Opcode::StructGet},
                   At{loc3, binary::StructFieldImmediate{
                                At{loc4, Index{13}}, At{loc5, Index{14}}}}}});
+
+  // SimdMemoryLaneImmediate
+  OK(At{loc1,
+        text::Instruction{
+            At{loc2, Opcode::V128Load8Lane},
+            At{loc3,
+               text::SimdMemoryLaneImmediate{
+                   text::MemArgImmediate{At{loc4, u32{4}}, At{loc5, u32{13}}},
+                   At{loc6, u8{0}}}}}},
+     At{loc1, binary::Instruction{
+                  At{loc2, Opcode::V128Load8Lane},
+                  At{loc3, binary::SimdMemoryLaneImmediate{
+                               binary::MemArgImmediate{At{loc4, u32{2}},
+                                                       At{loc5, u32{13}}},
+                               At{loc6, u8{0}}}}}});
 }
 
 TEST(ConvertToTextTest, LocalsList) {

@@ -78,33 +78,34 @@ WASP_V(Then)               // "then"
 WASP_V(Type)               // "type"
 
 // Plain Instructions.
-WASP_V(BareInstr)          // "i32.add", etc.
-WASP_V(BrOnCastInstr)      // "br_on_cast"
-WASP_V(BrOnExnInstr)       // "br_on_exn"
-WASP_V(BrTableInstr)       // "br_table"
-WASP_V(CallIndirectInstr)  // "call_indirect", "return_call_indirect"
-WASP_V(F32ConstInstr)      // "f32.const"
-WASP_V(F64ConstInstr)      // "f64.const"
-WASP_V(FuncBindInstr)      // "func.bind"
-WASP_V(HeapTypeInstr)      // "rtt.canon", etc.
-WASP_V(HeapType2Instr)     // "rtt.test", "rtt.cast"
-WASP_V(I32ConstInstr)      // "i32.const"
-WASP_V(I64ConstInstr)      // "i64.const"
-WASP_V(LetInstr)           // "let"
-WASP_V(MemoryInstr)        // "i32.load", "i64.atomic.rmw8.add_u", etc.
-WASP_V(MemoryCopyInstr)    // "memory.copy"
-WASP_V(MemoryInitInstr)    // "memory.init"
-WASP_V(RefFuncInstr)       // "ref.func"
-WASP_V(RefNullInstr)       // "rtt.canon"
-WASP_V(RttSubInstr)        // "rtt.sub"
-WASP_V(SelectInstr)        // "select"
-WASP_V(SimdConstInstr)     // "v128.const"
-WASP_V(SimdLaneInstr)      // "i8x16.extract_lane_s", "f32.replace_lane", etc.
-WASP_V(SimdShuffleInstr)   // "v128.shuffle"
-WASP_V(StructFieldInstr)   // "struct.get", "struct.set", etc.
-WASP_V(TableCopyInstr)     // "table.copy"
-WASP_V(TableInitInstr)     // "table.init"
-WASP_V(VarInstr)           // "br", "table.get", "local.set", etc.
+WASP_V(BareInstr)            // "i32.add", etc.
+WASP_V(BrOnCastInstr)        // "br_on_cast"
+WASP_V(BrOnExnInstr)         // "br_on_exn"
+WASP_V(BrTableInstr)         // "br_table"
+WASP_V(CallIndirectInstr)    // "call_indirect", "return_call_indirect"
+WASP_V(F32ConstInstr)        // "f32.const"
+WASP_V(F64ConstInstr)        // "f64.const"
+WASP_V(FuncBindInstr)        // "func.bind"
+WASP_V(HeapTypeInstr)        // "rtt.canon", etc.
+WASP_V(HeapType2Instr)       // "rtt.test", "rtt.cast"
+WASP_V(I32ConstInstr)        // "i32.const"
+WASP_V(I64ConstInstr)        // "i64.const"
+WASP_V(LetInstr)             // "let"
+WASP_V(MemoryInstr)          // "i32.load", "i64.atomic.rmw8.add_u", etc.
+WASP_V(MemoryCopyInstr)      // "memory.copy"
+WASP_V(MemoryInitInstr)      // "memory.init"
+WASP_V(RefFuncInstr)         // "ref.func"
+WASP_V(RefNullInstr)         // "rtt.canon"
+WASP_V(RttSubInstr)          // "rtt.sub"
+WASP_V(SelectInstr)          // "select"
+WASP_V(SimdConstInstr)       // "v128.const"
+WASP_V(SimdLaneInstr)        // "i8x16.extract_lane_s", "f32.replace_lane", etc.
+WASP_V(SimdMemoryLaneInstr)  // "v128.load8_lane"
+WASP_V(SimdShuffleInstr)     // "v128.shuffle"
+WASP_V(StructFieldInstr)     // "struct.get", "struct.set", etc.
+WASP_V(TableCopyInstr)       // "table.copy"
+WASP_V(TableInitInstr)       // "table.init"
+WASP_V(VarInstr)             // "br", "table.get", "local.set", etc.
 
 WASP_V(BlockInstr)         // "block", "loop", etc.
 

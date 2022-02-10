@@ -653,6 +653,19 @@ TEST_F(ConvertToBinaryTest, StructFieldImmediate) {
                                          At{loc3, text::Var{Index{14}}}}});
 }
 
+TEST_F(ConvertToBinaryTest, SimdMemoryLaneImmediate) {
+  u32 natural_align = 4;
+  u32 natural_align_log2 = 2;
+  OK(At{loc1,
+        binary::SimdMemoryLaneImmediate{
+            binary::MemArgImmediate{natural_align_log2, At{loc3, u32{13}}},
+            At{loc4, u8{0}}}},
+     At{loc1, text::SimdMemoryLaneImmediate{text::MemArgImmediate{
+                                                nullopt, At{loc3, u32{13}}},
+                                            At{loc4, u8{0}}}},
+     natural_align);
+}
+
 TEST_F(ConvertToBinaryTest, Instruction) {
   // Bare.
   OK(At{loc1, binary::Instruction{At{loc2, Opcode::Nop}}},
@@ -889,6 +902,21 @@ TEST_F(ConvertToBinaryTest, Instruction) {
                           At{loc3, text::StructFieldImmediate{
                                        At{loc4, text::Var{Index{13}}},
                                        At{loc5, text::Var{Index{14}}}}}}});
+
+  // SimdMemoryLaneImmediate
+  OK(At{loc1,
+        binary::Instruction{
+            At{loc2, Opcode::V128Load8Lane},
+            At{loc3,
+               binary::SimdMemoryLaneImmediate{
+                   binary::MemArgImmediate{At{loc4, u32{2}}, At{loc5, u32{13}}},
+                   At{loc6, u8{0}}}}}},
+     At{loc1,
+        text::Instruction{At{loc2, Opcode::V128Load8Lane},
+                          At{loc3, text::SimdMemoryLaneImmediate{
+                                       text::MemArgImmediate{At{loc4, u32{4}},
+                                                             At{loc5, u32{13}}},
+                                       At{loc6, u8{0}}}}}});
 }
 
 TEST_F(ConvertToBinaryTest, OpcodeAlignment) {

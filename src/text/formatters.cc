@@ -328,4 +328,10 @@ std::ostream& operator<<(std::ostream& os,
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::text::SimdMemoryLaneImmediate& self) {
+  os << "{mem_arg " << self.memarg << ", lane " << u32{self.lane} << "}";
+  return os;
+}
+
 }  // namespace wasp::text

@@ -47,6 +47,7 @@ class Features {
   explicit Features(Bits);
 
   void EnableAll();
+  void DisableAll();
 
   bool HasFeatures(Features features) const {
     return (bits_ & features.bits_) == features.bits_;

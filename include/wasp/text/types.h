@@ -223,6 +223,11 @@ struct StructFieldImmediate {
   At<Var> field;
 };
 
+struct SimdMemoryLaneImmediate {
+  MemArgImmediate memarg;
+  At<u8> lane;
+};
+
 // NOTE this must be kept in sync with the Instruction variant below.
 enum class InstructionKind {
   None,
@@ -244,6 +249,7 @@ enum class InstructionKind {
   Select,
   Shuffle,
   SimdLane,
+  SimdMemoryLane,
   FuncBind,
   BrOnCast,
   HeapType2,
@@ -275,6 +281,7 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<SelectImmediate>);
   explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
   explicit Instruction(At<Opcode>, At<SimdLaneImmediate>);
+  explicit Instruction(At<Opcode>, At<SimdMemoryLaneImmediate>);
   explicit Instruction(At<Opcode>, At<StructFieldImmediate>);
 
   // Convenience constructors w/ no Location for numeric types (since the
@@ -310,6 +317,7 @@ struct Instruction {
   bool has_select_immediate() const;
   bool has_shuffle_immediate() const;
   bool has_simd_lane_immediate() const;
+  bool has_simd_memory_lane_immediate() const;
   bool has_struct_field_immediate() const;
 
   auto s32_immediate() -> At<s32>&;
@@ -356,6 +364,8 @@ struct Instruction {
   auto shuffle_immediate() const -> const At<ShuffleImmediate>&;
   auto simd_lane_immediate() -> At<SimdLaneImmediate>&;
   auto simd_lane_immediate() const -> const At<SimdLaneImmediate>&;
+  auto simd_memory_lane_immediate() -> At<SimdMemoryLaneImmediate>&;
+  auto simd_memory_lane_immediate() const -> const At<SimdMemoryLaneImmediate>&;
   auto struct_field_immediate() -> At<StructFieldImmediate>&;
   auto struct_field_immediate() const -> const At<StructFieldImmediate>&;
 
@@ -379,6 +389,7 @@ struct Instruction {
           At<SelectImmediate>,
           At<ShuffleImmediate>,
           At<SimdLaneImmediate>,
+          At<SimdMemoryLaneImmediate>,
           At<FuncBindImmediate>,
           At<BrOnCastImmediate>,
           At<HeapType2Immediate>,
@@ -1125,7 +1136,8 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::ValueType, 1, type)              \
   WASP_V(text::StorageType, 1, type)            \
   WASP_V(text::TableType, 2, limits, elemtype)  \
-  WASP_V(text::GlobalType, 2, valtype, mut)
+  WASP_V(text::GlobalType, 2, valtype, mut)     \
+  WASP_V(text::SimdMemoryLaneImmediate, 2, memarg, lane)
 
 #define WASP_TEXT_CONTAINERS(WASP_V)  \
   WASP_V(text::VarList)               \

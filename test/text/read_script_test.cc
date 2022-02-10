@@ -33,6 +33,8 @@ using namespace ::wasp::test;
 // TODO: copied from read-test.cc, share?
 class TextReadScriptTest : public ::testing::Test {
  protected:
+  void SetUp() { ctx.features.DisableAll(); }
+
   // Read without checking the expected result.
   template <typename Func, typename... Args>
   void Read(Func&& func, SpanU8 span, Args&&... args) {

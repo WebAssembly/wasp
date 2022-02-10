@@ -615,75 +615,91 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::I64TruncSatF64S:
     case Opcode::I64TruncSatF64U:
     case Opcode::V128Load:
-    case Opcode::I8X16Splat:
-    case Opcode::I8X16ExtractLaneS:
-    case Opcode::I8X16ExtractLaneU:
-    case Opcode::I16X8Splat:
-    case Opcode::I16X8ExtractLaneS:
-    case Opcode::I16X8ExtractLaneU:
-    case Opcode::I32X4Splat:
-    case Opcode::I32X4ExtractLane:
-    case Opcode::I64X2Splat:
-    case Opcode::I64X2ExtractLane:
-    case Opcode::F32X4Splat:
-    case Opcode::F32X4ExtractLane:
-    case Opcode::F64X2Splat:
-    case Opcode::F64X2ExtractLane:
-    case Opcode::V128Not:
-    case Opcode::I8X16Neg:
-    case Opcode::I8X16AnyTrue:
-    case Opcode::I8X16AllTrue:
-    case Opcode::I8X16Bitmask:
-    case Opcode::I16X8Neg:
-    case Opcode::I16X8AnyTrue:
-    case Opcode::I16X8AllTrue:
-    case Opcode::I16X8Bitmask:
-    case Opcode::I32X4Neg:
-    case Opcode::I32X4AnyTrue:
-    case Opcode::I32X4AllTrue:
-    case Opcode::I32X4Bitmask:
-    case Opcode::I64X2Neg:
-    case Opcode::F32X4Abs:
-    case Opcode::F32X4Neg:
-    case Opcode::F32X4Sqrt:
-    case Opcode::F32X4Ceil:
-    case Opcode::F32X4Floor:
-    case Opcode::F32X4Trunc:
-    case Opcode::F32X4Nearest:
-    case Opcode::F64X2Abs:
-    case Opcode::F64X2Neg:
-    case Opcode::F64X2Sqrt:
-    case Opcode::F64X2Ceil:
-    case Opcode::F64X2Floor:
-    case Opcode::F64X2Trunc:
-    case Opcode::F64X2Nearest:
-    case Opcode::I32X4TruncSatF32X4S:
-    case Opcode::I32X4TruncSatF32X4U:
-    case Opcode::F32X4ConvertI32X4S:
-    case Opcode::F32X4ConvertI32X4U:
-    case Opcode::V128Load8Splat:
-    case Opcode::V128Load16Splat:
-    case Opcode::V128Load32Splat:
-    case Opcode::V128Load64Splat:
-    case Opcode::V128Load32Zero:
-    case Opcode::V128Load64Zero:
-    case Opcode::I16X8WidenLowI8X16S:
-    case Opcode::I16X8WidenHighI8X16S:
-    case Opcode::I16X8WidenLowI8X16U:
-    case Opcode::I16X8WidenHighI8X16U:
-    case Opcode::I32X4WidenLowI16X8S:
-    case Opcode::I32X4WidenHighI16X8S:
-    case Opcode::I32X4WidenLowI16X8U:
-    case Opcode::I32X4WidenHighI16X8U:
     case Opcode::V128Load8X8S:
     case Opcode::V128Load8X8U:
     case Opcode::V128Load16X4S:
     case Opcode::V128Load16X4U:
     case Opcode::V128Load32X2S:
     case Opcode::V128Load32X2U:
+    case Opcode::V128Load8Splat:
+    case Opcode::V128Load16Splat:
+    case Opcode::V128Load32Splat:
+    case Opcode::V128Load64Splat:
+    case Opcode::I8X16Splat:
+    case Opcode::I16X8Splat:
+    case Opcode::I32X4Splat:
+    case Opcode::I64X2Splat:
+    case Opcode::F32X4Splat:
+    case Opcode::F64X2Splat:
+    case Opcode::V128Load32Zero:
+    case Opcode::V128Load64Zero:
+    case Opcode::I8X16ExtractLaneS:
+    case Opcode::I8X16ExtractLaneU:
+    case Opcode::I16X8ExtractLaneS:
+    case Opcode::I16X8ExtractLaneU:
+    case Opcode::I32X4ExtractLane:
+    case Opcode::I64X2ExtractLane:
+    case Opcode::F32X4ExtractLane:
+    case Opcode::F64X2ExtractLane:
+    case Opcode::V128Not:
+    case Opcode::F32X4DemoteF64X2Zero:
+    case Opcode::F64X2PromoteLowF32X4:
     case Opcode::I8X16Abs:
+    case Opcode::I8X16Neg:
+    case Opcode::I8X16Popcnt:
+    case Opcode::F32X4Ceil:
+    case Opcode::F32X4Floor:
+    case Opcode::F32X4Trunc:
+    case Opcode::F32X4Nearest:
+    case Opcode::F64X2Ceil:
+    case Opcode::F64X2Floor:
+    case Opcode::F64X2Trunc:
+    case Opcode::I16X8ExtaddPairwiseI8X16S:
+    case Opcode::I16X8ExtaddPairwiseI8X16U:
+    case Opcode::I32X4ExtaddPairwiseI16X8S:
+    case Opcode::I32X4ExtaddPairwiseI16X8U:
     case Opcode::I16X8Abs:
+    case Opcode::I16X8Neg:
+    case Opcode::I16X8ExtendLowI8X16S:
+    case Opcode::I16X8ExtendHighI8X16S:
+    case Opcode::I16X8ExtendLowI8X16U:
+    case Opcode::I16X8ExtendHighI8X16U:
+    case Opcode::F64X2Nearest:
     case Opcode::I32X4Abs:
+    case Opcode::I32X4Neg:
+    case Opcode::I32X4ExtendLowI16X8S:
+    case Opcode::I32X4ExtendHighI16X8S:
+    case Opcode::I32X4ExtendLowI16X8U:
+    case Opcode::I32X4ExtendHighI16X8U:
+    case Opcode::I64X2Abs:
+    case Opcode::I64X2Neg:
+    case Opcode::I64X2ExtendLowI32X4S:
+    case Opcode::I64X2ExtendHighI32X4S:
+    case Opcode::I64X2ExtendLowI32X4U:
+    case Opcode::I64X2ExtendHighI32X4U:
+    case Opcode::F32X4Abs:
+    case Opcode::F32X4Neg:
+    case Opcode::F32X4Sqrt:
+    case Opcode::F64X2Abs:
+    case Opcode::F64X2Neg:
+    case Opcode::F64X2Sqrt:
+    case Opcode::I32X4TruncSatF32X4S:
+    case Opcode::I32X4TruncSatF32X4U:
+    case Opcode::F32X4ConvertI32X4S:
+    case Opcode::F32X4ConvertI32X4U:
+    case Opcode::I32X4TruncSatF64X2SZero:
+    case Opcode::I32X4TruncSatF64X2UZero:
+    case Opcode::F64X2ConvertLowI32X4S:
+    case Opcode::F64X2ConvertLowI32X4U:
+    case Opcode::V128AnyTrue:
+    case Opcode::I8X16AllTrue:
+    case Opcode::I8X16Bitmask:
+    case Opcode::I16X8AllTrue:
+    case Opcode::I16X8Bitmask:
+    case Opcode::I32X4AllTrue:
+    case Opcode::I32X4Bitmask:
+    case Opcode::I64X2AllTrue:
+    case Opcode::I64X2Bitmask:
     case Opcode::I32AtomicLoad:
     case Opcode::I64AtomicLoad:
     case Opcode::I32AtomicLoad8U:
@@ -704,6 +720,10 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::I64Store16:
     case Opcode::I64Store32:
     case Opcode::V128Store:
+    case Opcode::V128Store8Lane:
+    case Opcode::V128Store16Lane:
+    case Opcode::V128Store32Lane:
+    case Opcode::V128Store64Lane:
     case Opcode::I32AtomicStore:
     case Opcode::I64AtomicStore:
     case Opcode::I32AtomicStore8:
@@ -798,6 +818,22 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::I64X2ReplaceLane:
     case Opcode::F32X4ReplaceLane:
     case Opcode::F64X2ReplaceLane:
+    case Opcode::I8X16Shl:
+    case Opcode::I8X16ShrS:
+    case Opcode::I8X16ShrU:
+    case Opcode::I16X8Shl:
+    case Opcode::I16X8ShrS:
+    case Opcode::I16X8ShrU:
+    case Opcode::I32X4Shl:
+    case Opcode::I32X4ShrS:
+    case Opcode::I32X4ShrU:
+    case Opcode::I64X2Shl:
+    case Opcode::I64X2ShrS:
+    case Opcode::I64X2ShrU:
+    case Opcode::V128Load8Lane:
+    case Opcode::V128Load16Lane:
+    case Opcode::V128Load32Lane:
+    case Opcode::V128Load64Lane:
     case Opcode::I8X16Eq:
     case Opcode::I8X16Ne:
     case Opcode::I8X16LtS:
@@ -841,11 +877,11 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::F64X2Le:
     case Opcode::F64X2Ge:
     case Opcode::V128And:
+    case Opcode::V128Andnot:
     case Opcode::V128Or:
     case Opcode::V128Xor:
-    case Opcode::I8X16Shl:
-    case Opcode::I8X16ShrS:
-    case Opcode::I8X16ShrU:
+    case Opcode::I8X16NarrowI16X8S:
+    case Opcode::I8X16NarrowI16X8U:
     case Opcode::I8X16Add:
     case Opcode::I8X16AddSatS:
     case Opcode::I8X16AddSatU:
@@ -856,9 +892,10 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::I8X16MinU:
     case Opcode::I8X16MaxS:
     case Opcode::I8X16MaxU:
-    case Opcode::I16X8Shl:
-    case Opcode::I16X8ShrS:
-    case Opcode::I16X8ShrU:
+    case Opcode::I8X16AvgrU:
+    case Opcode::I16X8Q15mulrSatS:
+    case Opcode::I16X8NarrowI32X4S:
+    case Opcode::I16X8NarrowI32X4U:
     case Opcode::I16X8Add:
     case Opcode::I16X8AddSatS:
     case Opcode::I16X8AddSatU:
@@ -870,9 +907,11 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::I16X8MinU:
     case Opcode::I16X8MaxS:
     case Opcode::I16X8MaxU:
-    case Opcode::I32X4Shl:
-    case Opcode::I32X4ShrS:
-    case Opcode::I32X4ShrU:
+    case Opcode::I16X8AvgrU:
+    case Opcode::I16X8ExtmulLowI8X16S:
+    case Opcode::I16X8ExtmulHighI8X16S:
+    case Opcode::I16X8ExtmulLowI8X16U:
+    case Opcode::I16X8ExtmulHighI8X16U:
     case Opcode::I32X4Add:
     case Opcode::I32X4Sub:
     case Opcode::I32X4Mul:
@@ -881,12 +920,23 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::I32X4MaxS:
     case Opcode::I32X4MaxU:
     case Opcode::I32X4DotI16X8S:
-    case Opcode::I64X2Shl:
-    case Opcode::I64X2ShrS:
-    case Opcode::I64X2ShrU:
+    case Opcode::I32X4ExtmulLowI16X8S:
+    case Opcode::I32X4ExtmulHighI16X8S:
+    case Opcode::I32X4ExtmulLowI16X8U:
+    case Opcode::I32X4ExtmulHighI16X8U:
     case Opcode::I64X2Add:
     case Opcode::I64X2Sub:
     case Opcode::I64X2Mul:
+    case Opcode::I64X2Eq:
+    case Opcode::I64X2Ne:
+    case Opcode::I64X2LtS:
+    case Opcode::I64X2GtS:
+    case Opcode::I64X2LeS:
+    case Opcode::I64X2GeS:
+    case Opcode::I64X2ExtmulLowI32X4S:
+    case Opcode::I64X2ExtmulHighI32X4S:
+    case Opcode::I64X2ExtmulLowI32X4U:
+    case Opcode::I64X2ExtmulHighI32X4U:
     case Opcode::F32X4Add:
     case Opcode::F32X4Sub:
     case Opcode::F32X4Mul:
@@ -903,13 +953,6 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::F64X2Max:
     case Opcode::F64X2Pmin:
     case Opcode::F64X2Pmax:
-    case Opcode::I8X16NarrowI16X8S:
-    case Opcode::I8X16NarrowI16X8U:
-    case Opcode::I16X8NarrowI32X4S:
-    case Opcode::I16X8NarrowI32X4U:
-    case Opcode::V128Andnot:
-    case Opcode::I8X16AvgrU:
-    case Opcode::I16X8AvgrU:
     case Opcode::MemoryAtomicNotify:
     case Opcode::I32AtomicRmwAdd:
     case Opcode::I64AtomicRmwAdd:

@@ -421,6 +421,11 @@ TEST(TextWriteTest, Instruction) {
       "struct.get $s $f"_sv,
       I{O::StructGet, StructFieldImmediate{Var{"$s"_sv}, Var{"$f"_sv}}});
 
+  // SimdMemoryLaneImmediate
+  ExpectWrite("v128.load8_lane offset=1 align=2 3"_sv,
+              I{O::V128Load8Lane, SimdMemoryLaneImmediate{
+                                      MemArgImmediate{u32{2}, u32{1}}, u8{3}}});
+
   // Var
   ExpectWrite("local.get $a"_sv, I{O::LocalGet, Var{"$a"_sv}});
 

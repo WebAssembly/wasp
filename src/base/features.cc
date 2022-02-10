@@ -37,6 +37,10 @@ void Features::EnableAll() {
 #undef WASP_V
 }
 
+void Features::DisableAll() {
+  bits_ = 0;
+}
+
 void Features::UpdateDependencies(){
   if (bits_ & GC) {
     bits_ |= FunctionReferences;
