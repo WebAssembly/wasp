@@ -56,6 +56,8 @@ struct DirectoryInfo {
   Features::Bits feature_bits;  // Features to enable for these tests.
 };
 
+const Features default_features;
+
 const std::vector<DirectoryInfo> directory_info_map = {
     {"exception-handling", false, Features::Exceptions},
     {"extended-const", false, 0},
@@ -63,8 +65,7 @@ const std::vector<DirectoryInfo> directory_info_map = {
     {"gc", false, 0},
     {"memory64", false, Features::Memory64},
     {"multi-memory", false, 0},
-    {"mutable-global", true, Features::MutableGlobals},
-    {"tail-call", false, Features::TailCall},
+    {"tail-call", true, default_features.bits() | Features::TailCall},
     {"threads", true, Features::Threads},
 };
 
