@@ -109,8 +109,8 @@ void Define(ResolveCtx& ctx, const GlobalDesc& desc) {
   Define(ctx, desc.name, ctx.global_names);
 }
 
-void Define(ResolveCtx& ctx, const EventDesc& desc) {
-  Define(ctx, desc.name, ctx.event_names);
+void Define(ResolveCtx& ctx, const TagDesc& desc) {
+  Define(ctx, desc.name, ctx.tag_names);
 }
 
 void Define(ResolveCtx& ctx, const Import& import) {
@@ -131,8 +131,8 @@ void Define(ResolveCtx& ctx, const Import& import) {
       Define(ctx, import.global_desc());
       break;
 
-    case ExternalKind::Event:
-      Define(ctx, import.event_desc());
+    case ExternalKind::Tag:
+      Define(ctx, import.tag_desc());
       break;
   }
 }
@@ -185,8 +185,8 @@ void Define(ResolveCtx& ctx, const ModuleItem& item) {
       Define(ctx, item.data_segment());
       break;
 
-    case ModuleItemKind::Event:
-      Define(ctx, item.event()->desc);
+    case ModuleItemKind::Tag:
+      Define(ctx, item.tag()->desc);
       break;
 
     case ModuleItemKind::Export:
@@ -517,9 +517,9 @@ void Resolve(ResolveCtx& ctx, Instruction& instruction) {
         case Opcode::GlobalSet:
           return Resolve(ctx, immediate, ctx.global_names);
 
-        // Event.
+        // Tag.
         case Opcode::Throw:
-          return Resolve(ctx, immediate, ctx.event_names);
+          return Resolve(ctx, immediate, ctx.tag_names);
 
         // Element Segment.
         case Opcode::ElemDrop:
@@ -645,11 +645,11 @@ void Resolve(ResolveCtx& ctx, GlobalDesc& desc) {
   Resolve(ctx, desc.type.value());
 }
 
-void Resolve(ResolveCtx& ctx, EventType& event_type) {
-  Resolve(ctx, event_type.type);
+void Resolve(ResolveCtx& ctx, TagType& tag_type) {
+  Resolve(ctx, tag_type.type);
 }
 
-void Resolve(ResolveCtx& ctx, EventDesc& desc) {
+void Resolve(ResolveCtx& ctx, TagDesc& desc) {
   Resolve(ctx, desc.type.value());
 }
 
@@ -664,8 +664,8 @@ void Resolve(ResolveCtx& ctx, Import& import) {
     case ExternalKind::Global:
       return Resolve(ctx, import.global_desc());
 
-    case ExternalKind::Event:
-      return Resolve(ctx, import.event_desc());
+    case ExternalKind::Tag:
+      return Resolve(ctx, import.tag_desc());
 
     default:
       break;
@@ -746,8 +746,8 @@ void Resolve(ResolveCtx& ctx, Export& export_) {
     case ExternalKind::Global:
       return Resolve(ctx, export_.var, ctx.global_names);
 
-    case ExternalKind::Event:
-      return Resolve(ctx, export_.var, ctx.event_names);
+    case ExternalKind::Tag:
+      return Resolve(ctx, export_.var, ctx.tag_names);
 
     default:
       break;
@@ -773,8 +773,8 @@ void Resolve(ResolveCtx& ctx, DataSegment& segment) {
   }
 }
 
-void Resolve(ResolveCtx& ctx, Event& event) {
-  Resolve(ctx, event.desc);
+void Resolve(ResolveCtx& ctx, Tag& tag) {
+  Resolve(ctx, tag.desc);
 }
 
 void Resolve(ResolveCtx& ctx, ModuleItem& item) {
@@ -806,8 +806,8 @@ void Resolve(ResolveCtx& ctx, ModuleItem& item) {
     case ModuleItemKind::DataSegment:
       return Resolve(ctx, *item.data_segment());
 
-    case ModuleItemKind::Event:
-      return Resolve(ctx, *item.event());
+    case ModuleItemKind::Tag:
+      return Resolve(ctx, *item.tag());
 
     default:
       break;

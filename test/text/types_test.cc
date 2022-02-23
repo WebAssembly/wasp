@@ -209,49 +209,49 @@ TEST(TextTypesTest, GlobalToExports) {
                 .ToExports(this_index));
 }
 
-TEST(TextTypesTest, EventToImport) {
+TEST(TextTypesTest, TagToImport) {
   auto module = At{"\"m\""_su8, Text{"\"m\"", 1}};
   auto name = At{"\"n\""_su8, Text{"\"n\"", 1}};
-  auto desc = EventDesc{
-      nullopt,
-      At{"(type 0)"_su8,
-         EventType{
-             EventAttribute::Exception,
-             At{"(type 0)"_su8,
-                FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}},
-         }}};
+  auto desc =
+      TagDesc{nullopt,
+              At{"(type 0)"_su8,
+                 TagType{
+                     TagAttribute::Exception,
+                     At{"(type 0)"_su8,
+                        FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}},
+                 }}};
 
   EXPECT_EQ((At{"(import \"m\" \"n\")"_su8, Import{module, name, desc}}),
-            (Event{desc,
-                   At{"(import \"m\" \"n\")"_su8, InlineImport{module, name}},
-                   {}})
+            (Tag{desc,
+                 At{"(import \"m\" \"n\")"_su8, InlineImport{module, name}},
+                 {}})
                 .ToImport());
 }
 
-TEST(TextTypesTest, EventToExports) {
+TEST(TextTypesTest, TagToExports) {
   auto name1 = At{"\"e1\""_su8, Text{"\"e1\"", 1}};
   auto name2 = At{"\"e2\""_su8, Text{"\"e2\"", 1}};
-  auto desc = EventDesc{
-      nullopt,
-      At{"(type 0)"_su8,
-         EventType{
-             EventAttribute::Exception,
-             At{"(type 0)"_su8,
-                FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}},
-         }}};
+  auto desc =
+      TagDesc{nullopt,
+              At{"(type 0)"_su8,
+                 TagType{
+                     TagAttribute::Exception,
+                     At{"(type 0)"_su8,
+                        FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}},
+                 }}};
   Index this_index = 13;
 
   EXPECT_EQ((ExportList{
                 At{"(export \"e1\")"_su8,
-                   Export{ExternalKind::Event, name1, Var{this_index}}},
+                   Export{ExternalKind::Tag, name1, Var{this_index}}},
                 At{"(export \"e2\")"_su8,
-                   Export{ExternalKind::Event, name2, Var{this_index}}},
+                   Export{ExternalKind::Tag, name2, Var{this_index}}},
             }),
-            (Event{desc,
-                   InlineExportList{
-                       At{"(export \"e1\")"_su8, InlineExport{name1}},
-                       At{"(export \"e2\")"_su8, InlineExport{name2}},
-                   }})
+            (Tag{desc,
+                 InlineExportList{
+                     At{"(export \"e1\")"_su8, InlineExport{name1}},
+                     At{"(export \"e2\")"_su8, InlineExport{name2}},
+                 }})
                 .ToExports(this_index));
 }
 

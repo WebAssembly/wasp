@@ -34,7 +34,6 @@ add_library(libwasp_base
   ../../include/wasp/base/formatters.h
   ../../include/wasp/base/hash.h
   ../../include/wasp/base/hashmap.h
-  ../../include/wasp/base/inc/event_attribute.inc
   ../../include/wasp/base/inc/external_kind.inc
   ../../include/wasp/base/inc/heap_kind.inc
   ../../include/wasp/base/inc/mutability.inc
@@ -42,6 +41,7 @@ add_library(libwasp_base
   ../../include/wasp/base/inc/opcode.inc
   ../../include/wasp/base/inc/packed_type.inc
   ../../include/wasp/base/inc/reference_kind.inc
+  ../../include/wasp/base/inc/tag_attribute.inc
   ../../include/wasp/base/macros.h
   ../../include/wasp/base/operator_eq_ne_macros.h
   ../../include/wasp/base/optional.h

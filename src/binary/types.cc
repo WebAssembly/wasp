@@ -186,7 +186,7 @@ Import::Import(At<string_view> module,
                At<GlobalType> desc)
     : module{module}, name{name}, desc{desc} {}
 
-Import::Import(At<string_view> module, At<string_view> name, At<EventType> desc)
+Import::Import(At<string_view> module, At<string_view> name, At<TagType> desc)
     : module{module}, name{name}, desc{desc} {}
 
 Import::Import(string_view module, string_view name, Index desc)
@@ -201,7 +201,7 @@ Import::Import(string_view module, string_view name, MemoryType desc)
 Import::Import(string_view module, string_view name, GlobalType desc)
     : module{module}, name{name}, desc{desc} {}
 
-Import::Import(string_view module, string_view name, EventType desc)
+Import::Import(string_view module, string_view name, TagType desc)
     : module{module}, name{name}, desc{desc} {}
 
 ExternalKind Import::kind() const {
@@ -224,8 +224,8 @@ bool Import::is_global() const {
   return kind() == ExternalKind::Global;
 }
 
-bool Import::is_event() const {
-  return kind() == ExternalKind::Event;
+bool Import::is_tag() const {
+  return kind() == ExternalKind::Tag;
 }
 
 At<Index>& Import::index() {
@@ -260,12 +260,12 @@ const At<GlobalType>& Import::global_type() const {
   return get<At<GlobalType>>(desc);
 }
 
-At<EventType>& Import::event_type() {
-  return get<At<EventType>>(desc);
+At<TagType>& Import::tag_type() {
+  return get<At<TagType>>(desc);
 }
 
-const At<EventType>& Import::event_type() const {
-  return get<At<EventType>>(desc);
+const At<TagType>& Import::tag_type() const {
+  return get<At<TagType>>(desc);
 }
 
 Instruction::Instruction(At<Opcode> opcode)
@@ -910,7 +910,7 @@ bool operator==(const Module& lhs, const Module& rhs) {
   return lhs.types == rhs.types && lhs.imports == rhs.imports &&
          lhs.functions == rhs.functions && lhs.tables == rhs.tables &&
          lhs.memories == rhs.memories && lhs.globals == rhs.globals &&
-         lhs.events == rhs.events && lhs.exports == rhs.exports &&
+         lhs.tags == rhs.tags && lhs.exports == rhs.exports &&
          lhs.start == rhs.start &&
          lhs.element_segments == rhs.element_segments &&
          lhs.data_count == rhs.data_count && lhs.codes == rhs.codes &&

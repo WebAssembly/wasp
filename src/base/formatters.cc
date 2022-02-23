@@ -153,14 +153,14 @@ std::ostream& operator<<(std::ostream& os, const ::wasp::ExternalKind& self) {
   return os << result;
 }
 
-std::ostream& operator<<(std::ostream& os, const ::wasp::EventAttribute& self) {
+std::ostream& operator<<(std::ostream& os, const ::wasp::TagAttribute& self) {
   string_view result;
   switch (self) {
 #define WASP_V(val, Name, str)       \
-  case ::wasp::EventAttribute::Name: \
+  case ::wasp::TagAttribute::Name: \
     result = str;                    \
     break;
-#include "wasp/base/inc/event_attribute.inc"
+#include "wasp/base/inc/tag_attribute.inc"
 #undef WASP_V
     default:
       WASP_UNREACHABLE();

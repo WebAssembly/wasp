@@ -1766,7 +1766,6 @@ switch (PeekChar(data, 2)) {
         }
         break;
       case 't': return LexKeyword(data, "item", TokenType::Item);
-      case 'v': return LexKeyword(data, "event", TokenType::Event);
       default: break;
     }
     break;
@@ -1804,7 +1803,12 @@ switch (PeekChar(data, 2)) {
         break;
     }
     break;
-  case 'g': return LexKeyword(data, "register", TokenType::Register);
+  case 'g':
+    switch (PeekChar(data, 3)) {
+      default: return LexKeyword(data, "tag", TokenType::Tag);
+      case 'i': return LexKeyword(data, "register", TokenType::Register);
+    }
+    break;
   case 'i': return LexNameEqNum(data, "align=", TokenType::AlignEqNat);
   case 'l':
     switch (PeekChar(data, 4)) {

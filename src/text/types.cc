@@ -691,8 +691,8 @@ bool Import::is_global() const {
   return holds_alternative<GlobalDesc>(desc);
 }
 
-bool Import::is_event() const {
-  return holds_alternative<EventDesc>(desc);
+bool Import::is_tag() const {
+  return holds_alternative<TagDesc>(desc);
 }
 
 
@@ -728,12 +728,12 @@ auto Import::global_desc() const -> const GlobalDesc& {
   return get<GlobalDesc>(desc);
 }
 
-auto Import::event_desc() -> EventDesc& {
-  return get<EventDesc>(desc);
+auto Import::tag_desc() -> TagDesc& {
+  return get<TagDesc>(desc);
 }
 
-auto Import::event_desc() const -> const EventDesc& {
-  return get<EventDesc>(desc);
+auto Import::tag_desc() const -> const TagDesc& {
+  return get<TagDesc>(desc);
 }
 
 
@@ -954,20 +954,20 @@ auto Global::ToExports(Index this_index) const -> ExportList {
   return MakeExportList(ExternalKind::Global, this_index, exports);
 }
 
-Event::Event(const EventDesc& desc, const InlineExportList& exports)
+Tag::Tag(const TagDesc& desc, const InlineExportList& exports)
     : desc{desc}, exports{exports} {}
 
-Event::Event(const EventDesc& desc,
-             const At<InlineImport>& import,
-             const InlineExportList& exports)
+Tag::Tag(const TagDesc& desc,
+         const At<InlineImport>& import,
+         const InlineExportList& exports)
     : desc{desc}, import{import}, exports{exports} {}
 
-Event::Event(const EventDesc& desc,
-             const OptAt<InlineImport>& import,
-             const InlineExportList& exports)
+Tag::Tag(const TagDesc& desc,
+         const OptAt<InlineImport>& import,
+         const InlineExportList& exports)
     : desc{desc}, import{import}, exports{exports} {}
 
-auto Event::ToImport() const -> OptAt<Import> {
+auto Tag::ToImport() const -> OptAt<Import> {
   if (!import) {
     return nullopt;
   }
@@ -975,8 +975,8 @@ auto Event::ToImport() const -> OptAt<Import> {
             Import{import->value().module, import->value().name, desc}};
 }
 
-auto Event::ToExports(Index this_index) const -> ExportList {
-  return MakeExportList(ExternalKind::Event, this_index, exports);
+auto Tag::ToExports(Index this_index) const -> ExportList {
+  return MakeExportList(ExternalKind::Tag, this_index, exports);
 }
 
 ElementExpression::ElementExpression(const At<Instruction>& instruction)
@@ -1057,8 +1057,8 @@ bool ModuleItem::is_data_segment() const {
   return holds_alternative<At<DataSegment>>(desc);
 }
 
-bool ModuleItem::is_event() const {
-  return holds_alternative<At<Event>>(desc);
+bool ModuleItem::is_tag() const {
+  return holds_alternative<At<Tag>>(desc);
 }
 
 auto ModuleItem::defined_type() -> At<DefinedType>& {
@@ -1141,12 +1141,12 @@ auto ModuleItem::data_segment() const -> const At<DataSegment>& {
   return get<At<DataSegment>>(desc);
 }
 
-auto ModuleItem::event() -> At<Event>& {
-  return get<At<Event>>(desc);
+auto ModuleItem::tag() -> At<Tag>& {
+  return get<At<Tag>>(desc);
 }
 
-auto ModuleItem::event() const -> const At<Event>& {
-  return get<At<Event>>(desc);
+auto ModuleItem::tag() const -> const At<Tag>& {
+  return get<At<Tag>>(desc);
 }
 
 bool ScriptModule::has_module() const {

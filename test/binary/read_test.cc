@@ -978,35 +978,33 @@ TEST_F(BinaryReadTest, ReferenceType_Unknown) {
        "\xf0\x7f"_su8);
 }
 
-TEST_F(BinaryReadTest, Event) {
-  OK(Read<Event>,
-     Event{
-         At{"\x00\x01"_su8, EventType{At{"\x00"_su8, EventAttribute::Exception},
-                                      At{"\x01"_su8, Index{1}}}}},
+TEST_F(BinaryReadTest, Tag) {
+  OK(Read<Tag>,
+     Tag{At{"\x00\x01"_su8, TagType{At{"\x00"_su8, TagAttribute::Exception},
+                                    At{"\x01"_su8, Index{1}}}}},
      "\x00\x01"_su8);
 }
 
-TEST_F(BinaryReadTest, Event_PastEnd) {
-  Fail(Read<Event>,
-       {{0, "event"},
-        {0, "event type"},
-        {0, "event attribute"},
+TEST_F(BinaryReadTest, Tag_PastEnd) {
+  Fail(Read<Tag>,
+       {{0, "tag"},
+        {0, "tag type"},
+        {0, "tag attribute"},
         {0, "u32"},
         {0, "Unable to read u8"}},
        ""_su8);
 
-  Fail(Read<Event>,
-       {{0, "event"},
-        {0, "event type"},
+  Fail(Read<Tag>,
+       {{0, "tag"},
+        {0, "tag type"},
         {1, "type index"},
         {1, "Unable to read u8"}},
        "\x00"_su8);
 }
 
-TEST_F(BinaryReadTest, EventType) {
-  OK(Read<EventType>,
-     EventType{At{"\x00"_su8, EventAttribute::Exception},
-               At{"\x01"_su8, Index{1}}},
+TEST_F(BinaryReadTest, TagType) {
+  OK(Read<TagType>,
+     TagType{At{"\x00"_su8, TagAttribute::Exception}, At{"\x01"_su8, Index{1}}},
      "\x00\x01"_su8);
 }
 
@@ -1049,7 +1047,7 @@ TEST_F(BinaryReadTest, Export_exceptions) {
 
   ctx.features.enable_exceptions();
   OK(Read<Export>,
-     Export{At{"\x04"_su8, ExternalKind::Event}, At{"\x01v"_su8, "v"_sv},
+     Export{At{"\x04"_su8, ExternalKind::Tag}, At{"\x01v"_su8, "v"_sv},
             At{"\x02"_su8, Index{2}}},
      "\x01v\x04\x02"_su8);
 }
@@ -1067,7 +1065,7 @@ TEST_F(BinaryReadTest, ExternalKind_exceptions) {
 
   ctx.features.enable_exceptions();
 
-  OK(Read<ExternalKind>, ExternalKind::Event, "\x04"_su8);
+  OK(Read<ExternalKind>, ExternalKind::Tag, "\x04"_su8);
 }
 
 TEST_F(BinaryReadTest, ExternalKind_Unknown) {
@@ -1309,16 +1307,15 @@ TEST_F(BinaryReadTest, Import) {
 
 TEST_F(BinaryReadTest, Import_exceptions) {
   Fail(Read<Import>,
-       {{0, "import"}, {9, "external kind"}, {9, "Unknown external kind: 4"}},
-       "\x01v\x06!event\x04\x00\x02"_su8);
+       {{0, "import"}, {7, "external kind"}, {7, "Unknown external kind: 4"}},
+       "\x01v\x04!tag\x04\x00\x02"_su8);
 
   ctx.features.enable_exceptions();
   OK(Read<Import>,
-     Import{
-         At{"\x01v"_su8, "v"_sv}, At{"\x06!event"_su8, "!event"_sv},
-         At{"\x00\x02"_su8, EventType{At{"\x00"_su8, EventAttribute::Exception},
-                                      At{"\x02"_su8, Index{2}}}}},
-     "\x01v\x06!event\x04\x00\x02"_su8);
+     Import{At{"\x01v"_su8, "v"_sv}, At{"\x04!tag"_su8, "!tag"_sv},
+            At{"\x00\x02"_su8, TagType{At{"\x00"_su8, TagAttribute::Exception},
+                                       At{"\x02"_su8, Index{2}}}}},
+     "\x01v\x04!tag\x04\x00\x02"_su8);
 }
 
 TEST_F(BinaryReadTest, ImportType_PastEnd) {
@@ -3524,7 +3521,7 @@ TEST_F(BinaryReadTest, SectionId_exceptions) {
 
   ctx.features.enable_exceptions();
 
-  OK(Read<SectionId>, SectionId::Event, "\x0d"_su8);
+  OK(Read<SectionId>, SectionId::Tag, "\x0d"_su8);
 }
 
 TEST_F(BinaryReadTest, SectionId_Unknown) {
@@ -3566,7 +3563,7 @@ TEST_F(BinaryReadTest, Section_OutOfOrder) {
   auto data = "\x0d\x01\x00"_su8;
   auto orig_data = data;
   auto expected = Section{
-         At{data, KnownSection{At{"\x0d"_su8, SectionId::Event}, "\x00"_su8}}};
+         At{data, KnownSection{At{"\x0d"_su8, SectionId::Tag}, "\x00"_su8}}};
 
   auto actual = Read<Section>(&data, ctx);
   EXPECT_EQ(0u, data.size());
@@ -3575,7 +3572,7 @@ TEST_F(BinaryReadTest, Section_OutOfOrder) {
   EXPECT_EQ(expected, **actual);
 
   ExpectError({{0, "section"},
-               {0, "Section out of order: event cannot occur after global"}},
+               {0, "Section out of order: tag cannot occur after global"}},
               errors, orig_data);
 }
 

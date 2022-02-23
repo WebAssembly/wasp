@@ -201,7 +201,7 @@ std::ostream& operator<<(std::ostream& os,
 }
 
 std::ostream& operator<<(std::ostream& os,
-                         const ::wasp::binary::EventType& self) {
+                         const ::wasp::binary::TagType& self) {
   return os << self.attribute << " " << self.type_index;
 }
 
@@ -227,8 +227,8 @@ std::ostream& operator<<(std::ostream& os,
       os << self.global_type();
       break;
 
-    case ::wasp::ExternalKind::Event:
-      os << self.event_type();
+    case ::wasp::ExternalKind::Tag:
+      os << self.tag_type();
       break;
 
     default:
@@ -444,8 +444,8 @@ std::ostream& operator<<(std::ostream& os,
 }
 
 std::ostream& operator<<(std::ostream& os,
-                         const ::wasp::binary::Event& self) {
-  return os << "{type " << self.event_type << "}";
+                         const ::wasp::binary::Tag& self) {
+  return os << "{type " << self.tag_type << "}";
 }
 
 std::ostream& operator<<(std::ostream& os,
@@ -467,7 +467,7 @@ std::ostream& operator<<(std::ostream& os,
   os << "  tables: " << self.tables << "\n";
   os << "  memories: " << self.memories << "\n";
   os << "  globals: " << self.globals << "\n";
-  os << "  events: " << self.events << "\n";
+  os << "  tags: " << self.tags << "\n";
   os << "  exports: " << self.exports << "\n";
   os << "  start: " << self.start << "\n";
   os << "  element_segments: " << self.element_segments << "\n";

@@ -323,8 +323,8 @@ bool Validate(ValidCtx& ctx, const At<binary::ElementSegment>& value) {
       case ExternalKind::Global:
         max_index = static_cast<Index>(ctx.globals.size());
         break;
-      case ExternalKind::Event:
-        max_index = static_cast<Index>(ctx.events.size());
+      case ExternalKind::Tag:
+        max_index = static_cast<Index>(ctx.tags.size());
         break;
       default:
         WASP_UNREACHABLE();
@@ -386,8 +386,8 @@ bool Validate(ValidCtx& ctx, const At<binary::Export>& value) {
       }
       break;
 
-    case ExternalKind::Event:
-      valid &= ValidateEventIndex(ctx, value->index);
+    case ExternalKind::Tag:
+      valid &= ValidateTagIndex(ctx, value->index);
       break;
 
     default:
@@ -396,14 +396,14 @@ bool Validate(ValidCtx& ctx, const At<binary::Export>& value) {
   return valid;
 }
 
-bool Validate(ValidCtx& ctx, const At<binary::Event>& value) {
-  ErrorsContextGuard guard{*ctx.errors, value.loc(), "event"};
-  return Validate(ctx, value->event_type);
+bool Validate(ValidCtx& ctx, const At<binary::Tag>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "tag"};
+  return Validate(ctx, value->tag_type);
 }
 
-bool Validate(ValidCtx& ctx, const At<binary::EventType>& value) {
-  ErrorsContextGuard guard{*ctx.errors, value.loc(), "event type"};
-  ctx.events.push_back(value);
+bool Validate(ValidCtx& ctx, const At<binary::TagType>& value) {
+  ErrorsContextGuard guard{*ctx.errors, value.loc(), "tag type"};
+  ctx.tags.push_back(value);
   if (!ValidateTypeIndex(ctx, value->type_index)) {
     return false;
   }
@@ -412,7 +412,7 @@ bool Validate(ValidCtx& ctx, const At<binary::EventType>& value) {
   const auto& defined_type = ctx.types[value->type_index];
   if (!defined_type.is_function_type()) {
     ctx.errors->OnError(value.loc(),
-                        concat("Event type must be a function type."));
+                        concat("Tag type must be a function type."));
     return false;
   }
 
@@ -527,8 +527,8 @@ bool Validate(ValidCtx& ctx, const At<binary::Import>& value) {
       }
       break;
 
-    case ExternalKind::Event:
-      valid &= Validate(ctx, binary::Event{value->event_type()});
+    case ExternalKind::Tag:
+      valid &= Validate(ctx, binary::Tag{value->tag_type()});
       break;
 
     default:
@@ -578,9 +578,9 @@ bool ValidateGlobalIndex(ValidCtx& ctx, const At<Index>& index) {
                        "global index");
 }
 
-bool ValidateEventIndex(ValidCtx& ctx, const At<Index>& index) {
-  return ValidateIndex(ctx, index, static_cast<Index>(ctx.events.size()),
-                       "event index");
+bool ValidateTagIndex(ValidCtx& ctx, const At<Index>& index) {
+  return ValidateIndex(ctx, index, static_cast<Index>(ctx.tags.size()),
+                       "tag index");
 }
 
 bool Validate(ValidCtx& ctx, const At<Limits>& value, Index max) {
@@ -807,7 +807,7 @@ bool Validate(ValidCtx& ctx, const binary::Module& value) {
   valid &= ValidateKnownSection(ctx, value.tables);
   valid &= ValidateKnownSection(ctx, value.memories);
   valid &= ValidateKnownSection(ctx, value.globals);
-  valid &= ValidateKnownSection(ctx, value.events);
+  valid &= ValidateKnownSection(ctx, value.tags);
   valid &= ValidateKnownSection(ctx, value.exports);
   valid &= ValidateKnownSection(ctx, value.start);
   valid &= ValidateKnownSection(ctx, value.element_segments);

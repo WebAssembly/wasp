@@ -28,7 +28,7 @@ struct DesugarCtx {
   Index table_count = 0;
   Index memory_count = 0;
   Index global_count = 0;
-  Index event_count = 0;
+  Index tag_count = 0;
   ModuleItemList new_items;
 };
 
@@ -58,7 +58,7 @@ void Desugar(Module& module) {
           case ExternalKind::Table: ctx.table_count++; break;
           case ExternalKind::Memory: ctx.memory_count++; break;
           case ExternalKind::Global: ctx.global_count++; break;
-          case ExternalKind::Event: ctx.event_count++; break;
+          case ExternalKind::Tag: ctx.tag_count++; break;
         }
         break;
       }
@@ -105,11 +105,11 @@ void Desugar(Module& module) {
         break;
       }
 
-      case ModuleItemKind::Event: {
-        auto& event = item.event();
-        AppendExports(ctx.new_items, event, ctx.event_count);
-        ReplaceImportOpt(item, event->ToImport());
-        ctx.event_count++;
+      case ModuleItemKind::Tag: {
+        auto& tag = item.tag();
+        AppendExports(ctx.new_items, tag, ctx.tag_count);
+        ReplaceImportOpt(item, tag->ToImport());
+        ctx.tag_count++;
         break;
       }
 

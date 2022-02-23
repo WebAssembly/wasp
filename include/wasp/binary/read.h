@@ -34,12 +34,12 @@ auto ReadModule(SpanU8, ReadCtx&) -> optional<Module>;
 
 
 template <typename T>
-struct Tag {};
+struct ReadTag {};
 
 // Generic Read function.
 template <typename T, typename... Args>
 auto Read(SpanU8* data, ReadCtx& ctx, Args&&... args) -> OptAt<T> {
-  return Read(data, ctx, Tag<T>{}, std::forward<Args>(args)...);
+  return Read(data, ctx, ReadTag<T>{}, std::forward<Args>(args)...);
 }
 
 // Read functions that return SpanU8.
@@ -78,74 +78,79 @@ enum class BulkImmediateKind { Memory, Table };
 enum class LimitsKind { Memory, Table };
 
 // Read functions for various binary types.
-auto Read(SpanU8*, ReadCtx&, Tag<ArrayType>) -> OptAt<ArrayType>;
-auto Read(SpanU8*, ReadCtx&, Tag<BlockType>) -> OptAt<BlockType>;
-auto Read(SpanU8*, ReadCtx&, Tag<BrOnCastImmediate>)
+auto Read(SpanU8*, ReadCtx&, ReadTag<ArrayType>) -> OptAt<ArrayType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<BlockType>) -> OptAt<BlockType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<BrOnCastImmediate>)
     -> OptAt<BrOnCastImmediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<BrTableImmediate>) -> OptAt<BrTableImmediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<CallIndirectImmediate>)
+auto Read(SpanU8*, ReadCtx&, ReadTag<BrTableImmediate>)
+    -> OptAt<BrTableImmediate>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<CallIndirectImmediate>)
     -> OptAt<CallIndirectImmediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<Code>) -> OptAt<Code>;
-auto Read(SpanU8*, ReadCtx&, Tag<ConstantExpression>)
+auto Read(SpanU8*, ReadCtx&, ReadTag<Code>) -> OptAt<Code>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<ConstantExpression>)
     -> OptAt<ConstantExpression>;
-auto Read(SpanU8*, ReadCtx&, Tag<CopyImmediate>, BulkImmediateKind)
+auto Read(SpanU8*, ReadCtx&, ReadTag<CopyImmediate>, BulkImmediateKind)
     -> OptAt<CopyImmediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<DataCount>) -> OptAt<DataCount>;
-auto Read(SpanU8*, ReadCtx&, Tag<DataSegment>) -> OptAt<DataSegment>;
-auto Read(SpanU8*, ReadCtx&, Tag<DefinedType>) -> OptAt<DefinedType>;
-auto Read(SpanU8*, ReadCtx&, Tag<ElementExpression>)
+auto Read(SpanU8*, ReadCtx&, ReadTag<DataCount>) -> OptAt<DataCount>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<DataSegment>) -> OptAt<DataSegment>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<DefinedType>) -> OptAt<DefinedType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<ElementExpression>)
     -> OptAt<ElementExpression>;
-auto Read(SpanU8*, ReadCtx&, Tag<ElementSegment>) -> OptAt<ElementSegment>;
-auto Read(SpanU8*, ReadCtx&, Tag<EventAttribute>) -> OptAt<EventAttribute>;
-auto Read(SpanU8*, ReadCtx&, Tag<Event>) -> OptAt<Event>;
-auto Read(SpanU8*, ReadCtx&, Tag<EventType>) -> OptAt<EventType>;
-auto Read(SpanU8*, ReadCtx&, Tag<Export>) -> OptAt<Export>;
-auto Read(SpanU8*, ReadCtx&, Tag<ExternalKind>) -> OptAt<ExternalKind>;
-auto Read(SpanU8*, ReadCtx&, Tag<f32>) -> OptAt<f32>;
-auto Read(SpanU8*, ReadCtx&, Tag<f64>) -> OptAt<f64>;
-auto Read(SpanU8*, ReadCtx&, Tag<FieldType>) -> OptAt<FieldType>;
-auto Read(SpanU8*, ReadCtx&, Tag<FuncBindImmediate>)
+auto Read(SpanU8*, ReadCtx&, ReadTag<ElementSegment>) -> OptAt<ElementSegment>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<TagAttribute>) -> OptAt<TagAttribute>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<Tag>) -> OptAt<Tag>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<TagType>) -> OptAt<TagType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<Export>) -> OptAt<Export>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<ExternalKind>) -> OptAt<ExternalKind>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<f32>) -> OptAt<f32>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<f64>) -> OptAt<f64>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<FieldType>) -> OptAt<FieldType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<FuncBindImmediate>)
     -> OptAt<FuncBindImmediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<Function>) -> OptAt<Function>;
-auto Read(SpanU8*, ReadCtx&, Tag<FunctionType>) -> OptAt<FunctionType>;
-auto Read(SpanU8*, ReadCtx&, Tag<Global>) -> OptAt<Global>;
-auto Read(SpanU8*, ReadCtx&, Tag<GlobalType>) -> OptAt<GlobalType>;
-auto Read(SpanU8*, ReadCtx&, Tag<HeapType>) -> OptAt<HeapType>;
-auto Read(SpanU8*, ReadCtx&, Tag<HeapType2Immediate>)
+auto Read(SpanU8*, ReadCtx&, ReadTag<Function>) -> OptAt<Function>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<FunctionType>) -> OptAt<FunctionType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<Global>) -> OptAt<Global>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<GlobalType>) -> OptAt<GlobalType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<HeapType>) -> OptAt<HeapType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<HeapType2Immediate>)
     -> OptAt<HeapType2Immediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<Import>) -> OptAt<Import>;
-auto Read(SpanU8*, ReadCtx&, Tag<InitImmediate>, BulkImmediateKind)
+auto Read(SpanU8*, ReadCtx&, ReadTag<Import>) -> OptAt<Import>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<InitImmediate>, BulkImmediateKind)
     -> OptAt<InitImmediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<Instruction>) -> OptAt<Instruction>;
-auto Read(SpanU8*, ReadCtx&, Tag<InstructionList>) -> OptAt<InstructionList>;
-auto Read(SpanU8*, ReadCtx&, Tag<LetImmediate>) -> OptAt<LetImmediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<Limits>, LimitsKind) -> OptAt<Limits>;
-auto Read(SpanU8*, ReadCtx&, Tag<Locals>) -> OptAt<Locals>;
-auto Read(SpanU8*, ReadCtx&, Tag<MemArgImmediate>) -> OptAt<MemArgImmediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<Memory>) -> OptAt<Memory>;
-auto Read(SpanU8*, ReadCtx&, Tag<MemoryType>) -> OptAt<MemoryType>;
-auto Read(SpanU8*, ReadCtx&, Tag<Mutability>) -> OptAt<Mutability>;
-auto Read(SpanU8*, ReadCtx&, Tag<Opcode>) -> OptAt<Opcode>;
-auto Read(SpanU8*, ReadCtx&, Tag<s32>) -> OptAt<s32>;
-auto Read(SpanU8*, ReadCtx&, Tag<s64>) -> OptAt<s64>;
-auto Read(SpanU8*, ReadCtx&, Tag<RefType>) -> OptAt<RefType>;
-auto Read(SpanU8*, ReadCtx&, Tag<ReferenceType>) -> OptAt<ReferenceType>;
-auto Read(SpanU8*, ReadCtx&, Tag<Rtt>) -> OptAt<Rtt>;
-auto Read(SpanU8*, ReadCtx&, Tag<RttSubImmediate>) -> OptAt<RttSubImmediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<SectionId>) -> OptAt<SectionId>;
-auto Read(SpanU8*, ReadCtx&, Tag<Section>) -> OptAt<Section>;
-auto Read(SpanU8*, ReadCtx&, Tag<ShuffleImmediate>) -> OptAt<ShuffleImmediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<Start>) -> OptAt<Start>;
-auto Read(SpanU8*, ReadCtx&, Tag<StorageType>) -> OptAt<StorageType>;
-auto Read(SpanU8*, ReadCtx&, Tag<StructType>) -> OptAt<StructType>;
-auto Read(SpanU8*, ReadCtx&, Tag<StructFieldImmediate>)
+auto Read(SpanU8*, ReadCtx&, ReadTag<Instruction>) -> OptAt<Instruction>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<InstructionList>)
+    -> OptAt<InstructionList>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<LetImmediate>) -> OptAt<LetImmediate>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<Limits>, LimitsKind) -> OptAt<Limits>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<Locals>) -> OptAt<Locals>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<MemArgImmediate>)
+    -> OptAt<MemArgImmediate>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<Memory>) -> OptAt<Memory>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<MemoryType>) -> OptAt<MemoryType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<Mutability>) -> OptAt<Mutability>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<Opcode>) -> OptAt<Opcode>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<s32>) -> OptAt<s32>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<s64>) -> OptAt<s64>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<RefType>) -> OptAt<RefType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<ReferenceType>) -> OptAt<ReferenceType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<Rtt>) -> OptAt<Rtt>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<RttSubImmediate>)
+    -> OptAt<RttSubImmediate>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<SectionId>) -> OptAt<SectionId>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<Section>) -> OptAt<Section>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<ShuffleImmediate>)
+    -> OptAt<ShuffleImmediate>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<Start>) -> OptAt<Start>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<StorageType>) -> OptAt<StorageType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<StructType>) -> OptAt<StructType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<StructFieldImmediate>)
     -> OptAt<StructFieldImmediate>;
-auto Read(SpanU8*, ReadCtx&, Tag<Table>) -> OptAt<Table>;
-auto Read(SpanU8*, ReadCtx&, Tag<TableType>) -> OptAt<TableType>;
-auto Read(SpanU8*, ReadCtx&, Tag<u32>) -> OptAt<u32>;
-auto Read(SpanU8*, ReadCtx&, Tag<u8>) -> OptAt<u8>;
-auto Read(SpanU8*, ReadCtx&, Tag<v128>) -> OptAt<v128>;
-auto Read(SpanU8*, ReadCtx&, Tag<ValueType>) -> OptAt<ValueType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<Table>) -> OptAt<Table>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<TableType>) -> OptAt<TableType>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<u32>) -> OptAt<u32>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<u8>) -> OptAt<u8>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<v128>) -> OptAt<v128>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<ValueType>) -> OptAt<ValueType>;
 
 bool EndCode(SpanU8, ReadCtx&);
 bool EndModule(SpanU8, ReadCtx&);

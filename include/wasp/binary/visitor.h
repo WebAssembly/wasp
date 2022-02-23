@@ -63,9 +63,9 @@ struct Visitor {
   Result EndGlobalSection(LazyGlobalSection) { return Result::Ok; }
 
   // Section 13.
-  Result BeginEventSection(LazyEventSection) { return Result::Ok; }
-  Result OnEvent(const At<Event>&) { return Result::Ok; }
-  Result EndEventSection(LazyEventSection) { return Result::Ok; }
+  Result BeginTagSection(LazyTagSection) { return Result::Ok; }
+  Result OnTag(const At<Tag>&) { return Result::Ok; }
+  Result EndTagSection(LazyTagSection) { return Result::Ok; }
 
   // Section 7.
   Result BeginExportSection(LazyExportSection) { return Result::Ok; }
@@ -110,7 +110,7 @@ struct SkipVisitor : Visitor {
   Result BeginTableSection(LazyTableSection) { return Result::Skip; }
   Result BeginMemorySection(LazyMemorySection) { return Result::Skip; }
   Result BeginGlobalSection(LazyGlobalSection) { return Result::Skip; }
-  Result BeginEventSection(LazyEventSection) { return Result::Skip; }
+  Result BeginTagSection(LazyTagSection) { return Result::Skip; }
   Result BeginExportSection(LazyExportSection) { return Result::Skip; }
   Result BeginStartSection(StartSection) { return Result::Skip; }
   Result BeginElementSection(LazyElementSection) { return Result::Skip; }
@@ -204,7 +204,7 @@ inline Result Visit(LazyModule& module, Visitor& visitor) {
         WASP_SECTION(Table)
         WASP_SECTION(Memory)
         WASP_SECTION(Global)
-        WASP_SECTION(Event)
+        WASP_SECTION(Tag)
         WASP_SECTION(Export)
         WASP_OPT_SECTION(Start)
         WASP_SECTION(Element)

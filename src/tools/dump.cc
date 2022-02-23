@@ -100,8 +100,8 @@ struct Tool {
     visit::Result OnMemory(const At<Memory>&);
     visit::Result BeginGlobalSection(LazyGlobalSection);
     visit::Result OnGlobal(const At<Global>&);
-    visit::Result BeginEventSection(LazyEventSection);
-    visit::Result OnEvent(const At<Event>&);
+    visit::Result BeginTagSection(LazyTagSection);
+    visit::Result OnTag(const At<Tag>&);
     visit::Result BeginExportSection(LazyExportSection);
     visit::Result OnExport(const At<Export>&);
     visit::Result BeginStartSection(StartSection);
@@ -123,7 +123,7 @@ struct Tool {
     Index table_count = 0;
     Index memory_count = 0;
     Index global_count = 0;
-    Index event_count = 0;
+    Index tag_count = 0;
   };
 
   void DoNameSection(Pass, SectionIndex, LazyNameSection);
@@ -196,7 +196,7 @@ struct Tool {
   Index imported_table_count = 0;
   Index imported_memory_count = 0;
   Index imported_global_count = 0;
-  Index imported_event_count = 0;
+  Index imported_tag_count = 0;
 };
 
 // static
@@ -330,8 +330,8 @@ void Tool::DoPrepass() {
                 InsertGlobalName(imported_global_count++, import->name);
                 break;
 
-              case ExternalKind::Event:
-                imported_event_count++;
+              case ExternalKind::Tag:
+                imported_tag_count++;
                 break;
 
               default:
@@ -562,7 +562,7 @@ visit::Result Tool::Visitor::BeginImportSection(LazyImportSection section) {
   table_count = 0;
   memory_count = 0;
   global_count = 0;
-  event_count = 0;
+  tag_count = 0;
   tool.DoCount(pass, section.count);
   return SkipUnless(tool.ShouldPrintDetails(pass));
 }
@@ -594,9 +594,9 @@ visit::Result Tool::Visitor::OnImport(const At<Import>& import) {
       break;
     }
 
-    case ExternalKind::Event: {
-      PrintF(" - event[%d] %s", event_count, concat(import->event_type()));
-      ++event_count;
+    case ExternalKind::Tag: {
+      PrintF(" - tag[%d] %s", tag_count, concat(import->tag_type()));
+      ++tag_count;
       break;
     }
   }
@@ -654,14 +654,14 @@ visit::Result Tool::Visitor::OnGlobal(const At<Global>& global) {
   return visit::Result::Ok;
 }
 
-visit::Result Tool::Visitor::BeginEventSection(LazyEventSection section) {
-  index = tool.imported_event_count;
+visit::Result Tool::Visitor::BeginTagSection(LazyTagSection section) {
+  index = tool.imported_tag_count;
   tool.DoCount(pass, section.count);
   return SkipUnless(tool.ShouldPrintDetails(pass));
 }
 
-visit::Result Tool::Visitor::OnEvent(const At<Event>& event) {
-  PrintF(" - event[%d] %s\n", index++, concat(event->event_type));
+visit::Result Tool::Visitor::OnTag(const At<Tag>& tag) {
+  PrintF(" - tag[%d] %s\n", index++, concat(tag->tag_type));
   return visit::Result::Ok;
 }
 
@@ -930,8 +930,8 @@ void Tool::DoLinkingSection(Pass pass,
 
               case SymbolInfoKind::Event: {
                 const auto& base = symbol.value->base();
-                // TODO GetEventName.
-                PrintF("  - %d: E <%s> event=%d", symbol.index,
+                // TODO GetTagName.
+                PrintF("  - %d: E <%s> tag=%d", symbol.index,
                        base.name.value_or(""_sv), base.index);
                 print_symbol_flags(symbol.value->flags);
                 break;

@@ -46,9 +46,9 @@ struct BlockType {
   static optional<::wasp::binary::BlockType> Decode(At<s32>, const Features&);
 };
 
-struct EventAttribute {
-  static u8 Encode(::wasp::EventAttribute);
-  static optional<::wasp::EventAttribute> Decode(u8);
+struct TagAttribute {
+  static u8 Encode(::wasp::TagAttribute);
+  static optional<::wasp::TagAttribute> Decode(u8);
 };
 
 struct ExternalKind {

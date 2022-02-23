@@ -59,8 +59,8 @@ struct EagerModuleVisitor : visit::Visitor {
     return Result::Ok;
   }
 
-  auto OnEvent(const At<Event>& event) -> Result {
-    module.events.push_back(event);
+  auto OnTag(const At<Tag>& tag) -> Result {
+    module.tags.push_back(tag);
     return Result::Ok;
   }
 

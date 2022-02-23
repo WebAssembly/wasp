@@ -77,9 +77,9 @@ enum class ExternalKind : u8 {
 #undef WASP_FEATURE_V
 };
 
-enum class EventAttribute : u8 {
+enum class TagAttribute : u8 {
 #define WASP_V(val, Name, str) Name = val,
-#include "wasp/base/inc/event_attribute.inc"
+#include "wasp/base/inc/tag_attribute.inc"
 #undef WASP_V
 };
 
@@ -135,7 +135,7 @@ using ShuffleImmediate = std::array<u8, 16>;
   WASP_V(ReferenceKind)              \
   WASP_V(HeapKind)                   \
   WASP_V(ExternalKind)               \
-  WASP_V(EventAttribute)             \
+  WASP_V(TagAttribute)               \
   WASP_V(Mutability)                 \
   WASP_V(SegmentType)                \
   WASP_V(Shared)                     \

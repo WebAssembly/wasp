@@ -36,14 +36,14 @@
 
 namespace wasp::binary {
 
-OptAt<ArrayType> Read(SpanU8* data, ReadCtx& ctx, Tag<ArrayType>) {
+OptAt<ArrayType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<ArrayType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "array type"};
   LocationGuard guard{data};
   WASP_TRY_READ(field, Read<FieldType>(data, ctx));
   return At{guard.range(data), ArrayType{field}};
 }
 
-OptAt<BlockType> Read(SpanU8* data, ReadCtx& ctx, Tag<BlockType>) {
+OptAt<BlockType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<BlockType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "block type"};
   LocationGuard guard{data};
 
@@ -67,7 +67,7 @@ OptAt<BlockType> Read(SpanU8* data, ReadCtx& ctx, Tag<BlockType>) {
 
 OptAt<BrOnCastImmediate> Read(SpanU8* data,
                               ReadCtx& ctx,
-                              Tag<BrOnCastImmediate>) {
+                              ReadTag<BrOnCastImmediate>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "br_on_cast"};
   LocationGuard guard{data};
   WASP_TRY_READ(target, ReadIndex(data, ctx, "target"));
@@ -77,7 +77,7 @@ OptAt<BrOnCastImmediate> Read(SpanU8* data,
 
 OptAt<BrTableImmediate> Read(SpanU8* data,
                              ReadCtx& ctx,
-                             Tag<BrTableImmediate>) {
+                             ReadTag<BrTableImmediate>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "br_table"};
   LocationGuard guard{data};
   WASP_TRY_READ(targets, ReadVector<Index>(data, ctx, "targets"));
@@ -115,7 +115,7 @@ OptAt<SpanU8> ReadBytesExpected(SpanU8* data,
 
 OptAt<CallIndirectImmediate> Read(SpanU8* data,
                                   ReadCtx& ctx,
-                                  Tag<CallIndirectImmediate>) {
+                                  ReadTag<CallIndirectImmediate>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "call_indirect"};
   LocationGuard guard{data};
   WASP_TRY_READ(index, ReadIndex(data, ctx, "type index"));
@@ -146,7 +146,7 @@ OptAt<Index> ReadCheckLength(SpanU8* data,
   return count;
 }
 
-OptAt<Code> Read(SpanU8* data, ReadCtx& ctx, Tag<Code>) {
+OptAt<Code> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Code>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "code"};
   LocationGuard guard{data};
   ctx.code_count++;
@@ -161,7 +161,7 @@ OptAt<Code> Read(SpanU8* data, ReadCtx& ctx, Tag<Code>) {
 
 OptAt<ConstantExpression> Read(SpanU8* data,
                                ReadCtx& ctx,
-                               Tag<ConstantExpression>) {
+                               ReadTag<ConstantExpression>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "constant expression"};
   WASP_TRY_READ(instrs, Read<InstructionList>(data, ctx));
   return At{instrs.loc(), ConstantExpression{*instrs}};
@@ -169,7 +169,7 @@ OptAt<ConstantExpression> Read(SpanU8* data,
 
 OptAt<CopyImmediate> Read(SpanU8* data,
                           ReadCtx& ctx,
-                          Tag<CopyImmediate>,
+                          ReadTag<CopyImmediate>,
                           BulkImmediateKind kind) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "copy immediate"};
   LocationGuard guard{data};
@@ -189,7 +189,7 @@ OptAt<Index> ReadCount(SpanU8* data, ReadCtx& ctx) {
   return ReadCheckLength(data, ctx, "count", "Count");
 }
 
-OptAt<DataCount> Read(SpanU8* data, ReadCtx& ctx, Tag<DataCount>) {
+OptAt<DataCount> Read(SpanU8* data, ReadCtx& ctx, ReadTag<DataCount>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "data count"};
   LocationGuard guard{data};
   WASP_TRY_READ(count, ReadIndex(data, ctx, "count"));
@@ -197,7 +197,7 @@ OptAt<DataCount> Read(SpanU8* data, ReadCtx& ctx, Tag<DataCount>) {
   return At{guard.range(data), DataCount{count}};
 }
 
-OptAt<DataSegment> Read(SpanU8* data, ReadCtx& ctx, Tag<DataSegment>) {
+OptAt<DataSegment> Read(SpanU8* data, ReadCtx& ctx, ReadTag<DataSegment>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "data segment"};
   LocationGuard guard{data};
   ctx.data_count++;
@@ -228,7 +228,7 @@ OptAt<DataSegment> Read(SpanU8* data, ReadCtx& ctx, Tag<DataSegment>) {
   }
 }
 
-OptAt<DefinedType> Read(SpanU8* data, ReadCtx& ctx, Tag<DefinedType>) {
+OptAt<DefinedType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<DefinedType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "defined type"};
   LocationGuard guard{data};
   WASP_TRY_READ_CONTEXT(form, Read<u8>(data, ctx), "form");
@@ -257,7 +257,7 @@ OptAt<DefinedType> Read(SpanU8* data, ReadCtx& ctx, Tag<DefinedType>) {
 
 OptAt<ElementExpression> Read(SpanU8* data,
                               ReadCtx& ctx,
-                              Tag<ElementExpression>) {
+                              ReadTag<ElementExpression>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "element expression"};
   // Element expressions were first added in the bulk memory proposal, so it
   // shouldn't be read (and this function shouldn't be called) if that feature
@@ -273,7 +273,7 @@ OptAt<ElementExpression> Read(SpanU8* data,
   return At{instrs.loc(), ElementExpression{*instrs}};
 }
 
-OptAt<ElementSegment> Read(SpanU8* data, ReadCtx& ctx, Tag<ElementSegment>) {
+OptAt<ElementSegment> Read(SpanU8* data, ReadCtx& ctx, ReadTag<ElementSegment>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "element segment"};
   LocationGuard guard{data};
   auto decoded = encoding::DecodedElemSegmentFlags::MVP();
@@ -330,7 +330,7 @@ OptAt<ElementSegment> Read(SpanU8* data, ReadCtx& ctx, Tag<ElementSegment>) {
   }
 }
 
-OptAt<RefType> Read(SpanU8* data, ReadCtx& ctx, Tag<RefType>) {
+OptAt<RefType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<RefType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "ref type"};
   LocationGuard guard{data};
   WASP_TRY_READ(val, Read<u8>(data, ctx));
@@ -339,7 +339,7 @@ OptAt<RefType> Read(SpanU8* data, ReadCtx& ctx, Tag<RefType>) {
   return At{guard.range(data), RefType{heap_type, null_}};
 }
 
-OptAt<ReferenceType> Read(SpanU8* data, ReadCtx& ctx, Tag<ReferenceType>) {
+OptAt<ReferenceType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<ReferenceType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "reference type"};
   LocationGuard guard{data};
   WASP_TRY_READ(val, PeekU8(data, ctx));
@@ -355,7 +355,7 @@ OptAt<ReferenceType> Read(SpanU8* data, ReadCtx& ctx, Tag<ReferenceType>) {
   }
 }
 
-OptAt<Rtt> Read(SpanU8* data, ReadCtx& ctx, Tag<Rtt>) {
+OptAt<Rtt> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Rtt>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "rtt"};
   LocationGuard guard{data};
   WASP_TRY_READ(val, Read<u8>(data, ctx));
@@ -369,7 +369,9 @@ OptAt<Rtt> Read(SpanU8* data, ReadCtx& ctx, Tag<Rtt>) {
   }
 }
 
-OptAt<RttSubImmediate> Read(SpanU8* data, ReadCtx& ctx, Tag<RttSubImmediate>) {
+OptAt<RttSubImmediate> Read(SpanU8* data,
+                            ReadCtx& ctx,
+                            ReadTag<RttSubImmediate>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "rtt sub immediate"};
   LocationGuard guard{data};
   WASP_TRY_READ(depth, ReadIndex(data, ctx, "depth"));
@@ -377,29 +379,29 @@ OptAt<RttSubImmediate> Read(SpanU8* data, ReadCtx& ctx, Tag<RttSubImmediate>) {
   return At{guard.range(data), RttSubImmediate{depth, types}};
 }
 
-OptAt<Event> Read(SpanU8* data, ReadCtx& ctx, Tag<Event>) {
-  ErrorsContextGuard error_guard{ctx.errors, *data, "event"};
+OptAt<Tag> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Tag>) {
+  ErrorsContextGuard error_guard{ctx.errors, *data, "tag"};
   LocationGuard guard{data};
-  WASP_TRY_READ(event_type, Read<EventType>(data, ctx));
-  return At{guard.range(data), Event{event_type}};
+  WASP_TRY_READ(tag_type, Read<TagType>(data, ctx));
+  return At{guard.range(data), Tag{tag_type}};
 }
 
-OptAt<EventAttribute> Read(SpanU8* data, ReadCtx& ctx, Tag<EventAttribute>) {
-  ErrorsContextGuard error_guard{ctx.errors, *data, "event attribute"};
+OptAt<TagAttribute> Read(SpanU8* data, ReadCtx& ctx, ReadTag<TagAttribute>) {
+  ErrorsContextGuard error_guard{ctx.errors, *data, "tag attribute"};
   WASP_TRY_READ(val, Read<u32>(data, ctx));
-  WASP_TRY_DECODE(decoded, val, EventAttribute, "event attribute");
+  WASP_TRY_DECODE(decoded, val, TagAttribute, "tag attribute");
   return decoded;
 }
 
-OptAt<EventType> Read(SpanU8* data, ReadCtx& ctx, Tag<EventType>) {
-  ErrorsContextGuard error_guard{ctx.errors, *data, "event type"};
+OptAt<TagType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<TagType>) {
+  ErrorsContextGuard error_guard{ctx.errors, *data, "tag type"};
   LocationGuard guard{data};
-  WASP_TRY_READ(attribute, Read<EventAttribute>(data, ctx));
+  WASP_TRY_READ(attribute, Read<TagAttribute>(data, ctx));
   WASP_TRY_READ(type_index, ReadIndex(data, ctx, "type index"));
-  return At{guard.range(data), EventType{attribute, type_index}};
+  return At{guard.range(data), TagType{attribute, type_index}};
 }
 
-OptAt<Export> Read(SpanU8* data, ReadCtx& ctx, Tag<Export>) {
+OptAt<Export> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Export>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "export"};
   LocationGuard guard{data};
   WASP_TRY_READ(name, ReadUtf8String(data, ctx, "name"));
@@ -408,7 +410,7 @@ OptAt<Export> Read(SpanU8* data, ReadCtx& ctx, Tag<Export>) {
   return At{guard.range(data), Export{kind, name, index}};
 }
 
-OptAt<ExternalKind> Read(SpanU8* data, ReadCtx& ctx, Tag<ExternalKind>) {
+OptAt<ExternalKind> Read(SpanU8* data, ReadCtx& ctx, ReadTag<ExternalKind>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "external kind"};
   WASP_TRY_READ(val, Read<u8>(data, ctx));
   WASP_TRY_DECODE_FEATURES(decoded, val, ExternalKind, "external kind",
@@ -416,7 +418,7 @@ OptAt<ExternalKind> Read(SpanU8* data, ReadCtx& ctx, Tag<ExternalKind>) {
   return decoded;
 }
 
-OptAt<f32> Read(SpanU8* data, ReadCtx& ctx, Tag<f32>) {
+OptAt<f32> Read(SpanU8* data, ReadCtx& ctx, ReadTag<f32>) {
   static_assert(sizeof(f32) == 4, "sizeof(f32) != 4");
   ErrorsContextGuard error_guard{ctx.errors, *data, "f32"};
   WASP_TRY_READ(bytes, ReadBytes(data, sizeof(f32), ctx));
@@ -425,7 +427,7 @@ OptAt<f32> Read(SpanU8* data, ReadCtx& ctx, Tag<f32>) {
   return At{bytes.loc(), result};
 }
 
-OptAt<f64> Read(SpanU8* data, ReadCtx& ctx, Tag<f64>) {
+OptAt<f64> Read(SpanU8* data, ReadCtx& ctx, ReadTag<f64>) {
   static_assert(sizeof(f64) == 8, "sizeof(f64) != 8");
   ErrorsContextGuard error_guard{ctx.errors, *data, "f64"};
   WASP_TRY_READ(bytes, ReadBytes(data, sizeof(f64), ctx));
@@ -434,7 +436,7 @@ OptAt<f64> Read(SpanU8* data, ReadCtx& ctx, Tag<f64>) {
   return At{bytes.loc(), result};
 }
 
-OptAt<FieldType> Read(SpanU8* data, ReadCtx& ctx, Tag<FieldType>) {
+OptAt<FieldType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<FieldType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "field_type"};
   LocationGuard guard{data};
   WASP_TRY_READ(type, Read<StorageType>(data, ctx));
@@ -444,13 +446,13 @@ OptAt<FieldType> Read(SpanU8* data, ReadCtx& ctx, Tag<FieldType>) {
 
 OptAt<FuncBindImmediate> Read(SpanU8* data,
                               ReadCtx& ctx,
-                              Tag<FuncBindImmediate>) {
+                              ReadTag<FuncBindImmediate>) {
   LocationGuard guard{data};
   WASP_TRY_READ(index, ReadIndex(data, ctx, "func index"));
   return At{guard.range(data), FuncBindImmediate{index}};
 }
 
-OptAt<Function> Read(SpanU8* data, ReadCtx& ctx, Tag<Function>) {
+OptAt<Function> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Function>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "function"};
   LocationGuard guard{data};
   ctx.defined_function_count++;
@@ -458,7 +460,7 @@ OptAt<Function> Read(SpanU8* data, ReadCtx& ctx, Tag<Function>) {
   return At{guard.range(data), Function{type_index}};
 }
 
-OptAt<FunctionType> Read(SpanU8* data, ReadCtx& ctx, Tag<FunctionType>) {
+OptAt<FunctionType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<FunctionType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "function type"};
   LocationGuard guard{data};
   WASP_TRY_READ(param_types, ReadVector<ValueType>(data, ctx, "param types"));
@@ -467,7 +469,7 @@ OptAt<FunctionType> Read(SpanU8* data, ReadCtx& ctx, Tag<FunctionType>) {
             FunctionType{std::move(param_types), std::move(result_types)}};
 }
 
-OptAt<Global> Read(SpanU8* data, ReadCtx& ctx, Tag<Global>) {
+OptAt<Global> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Global>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "global"};
   LocationGuard guard{data};
   WASP_TRY_READ(global_type, Read<GlobalType>(data, ctx));
@@ -475,7 +477,7 @@ OptAt<Global> Read(SpanU8* data, ReadCtx& ctx, Tag<Global>) {
   return At{guard.range(data), Global{global_type, std::move(init_expr)}};
 }
 
-OptAt<GlobalType> Read(SpanU8* data, ReadCtx& ctx, Tag<GlobalType>) {
+OptAt<GlobalType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<GlobalType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "global type"};
   LocationGuard guard{data};
   WASP_TRY_READ(type, Read<ValueType>(data, ctx));
@@ -483,7 +485,7 @@ OptAt<GlobalType> Read(SpanU8* data, ReadCtx& ctx, Tag<GlobalType>) {
   return At{guard.range(data), GlobalType{type, mut}};
 }
 
-OptAt<HeapType> Read(SpanU8* data, ReadCtx& ctx, Tag<HeapType>) {
+OptAt<HeapType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<HeapType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "heap type"};
   WASP_TRY_READ(val, PeekU8(data, ctx));
   if (encoding::HeapKind::Is(val)) {
@@ -498,7 +500,7 @@ OptAt<HeapType> Read(SpanU8* data, ReadCtx& ctx, Tag<HeapType>) {
 
 OptAt<HeapType2Immediate> Read(SpanU8* data,
                                ReadCtx& ctx,
-                               Tag<HeapType2Immediate>) {
+                               ReadTag<HeapType2Immediate>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "heap type 2"};
   LocationGuard guard{data};
   WASP_TRY_READ(parent, Read<HeapType>(data, ctx));
@@ -506,7 +508,7 @@ OptAt<HeapType2Immediate> Read(SpanU8* data,
   return At{guard.range(data), HeapType2Immediate{parent, child}};
 }
 
-OptAt<Import> Read(SpanU8* data, ReadCtx& ctx, Tag<Import>) {
+OptAt<Import> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Import>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "import"};
   LocationGuard guard{data};
   WASP_TRY_READ(module, ReadUtf8String(data, ctx, "module name"));
@@ -529,9 +531,9 @@ OptAt<Import> Read(SpanU8* data, ReadCtx& ctx, Tag<Import>) {
       WASP_TRY_READ(global_type, Read<GlobalType>(data, ctx));
       return At{guard.range(data), Import{module, name, global_type}};
     }
-    case ExternalKind::Event: {
-      WASP_TRY_READ(event_type, Read<EventType>(data, ctx));
-      return At{guard.range(data), Import{module, name, event_type}};
+    case ExternalKind::Tag: {
+      WASP_TRY_READ(tag_type, Read<TagType>(data, ctx));
+      return At{guard.range(data), Import{module, name, tag_type}};
     }
   }
   WASP_UNREACHABLE();
@@ -543,7 +545,7 @@ OptAt<Index> ReadIndex(SpanU8* data, ReadCtx& ctx, string_view desc) {
 
 OptAt<InitImmediate> Read(SpanU8* data,
                           ReadCtx& ctx,
-                          Tag<InitImmediate>,
+                          ReadTag<InitImmediate>,
                           BulkImmediateKind kind) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "init immediate"};
   LocationGuard guard{data};
@@ -568,7 +570,7 @@ bool RequireDataCountSection(ReadCtx& ctx, const At<Opcode>& opcode) {
   return true;
 }
 
-OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, Tag<Instruction>) {
+OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Instruction>) {
   LocationGuard guard{data};
   WASP_TRY_READ(opcode, Read<Opcode>(data, ctx));
 
@@ -1307,7 +1309,9 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, Tag<Instruction>) {
   WASP_UNREACHABLE();
 }
 
-OptAt<InstructionList> Read(SpanU8* data, ReadCtx& ctx, Tag<InstructionList>) {
+OptAt<InstructionList> Read(SpanU8* data,
+                            ReadCtx& ctx,
+                            ReadTag<InstructionList>) {
   LocationGuard guard{data};
   InstructionList instrs;
   ctx.seen_final_end = false;
@@ -1325,7 +1329,10 @@ OptAt<Index> ReadLength(SpanU8* data, ReadCtx& ctx) {
   return ReadCheckLength(data, ctx, "length", "Length");
 }
 
-OptAt<Limits> Read(SpanU8* data, ReadCtx& ctx, Tag<Limits>, LimitsKind kind) {
+OptAt<Limits> Read(SpanU8* data,
+                   ReadCtx& ctx,
+                   ReadTag<Limits>,
+                   LimitsKind kind) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "limits"};
   LocationGuard guard{data};
   WASP_TRY_READ_CONTEXT(flags, Read<u8>(data, ctx), "flags");
@@ -1356,7 +1363,7 @@ OptAt<Limits> Read(SpanU8* data, ReadCtx& ctx, Tag<Limits>, LimitsKind kind) {
                    At{flags.loc(), decoded->index_type}}};
 }
 
-OptAt<Locals> Read(SpanU8* data, ReadCtx& ctx, Tag<Locals>) {
+OptAt<Locals> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Locals>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "locals"};
   LocationGuard guard{data};
   WASP_TRY_READ(count, ReadIndex(data, ctx, "count"));
@@ -1372,40 +1379,42 @@ OptAt<Locals> Read(SpanU8* data, ReadCtx& ctx, Tag<Locals>) {
   return At{guard.range(data), Locals{count, type}};
 }
 
-OptAt<LetImmediate> Read(SpanU8* data, ReadCtx& ctx, Tag<LetImmediate>) {
+OptAt<LetImmediate> Read(SpanU8* data, ReadCtx& ctx, ReadTag<LetImmediate>) {
   LocationGuard guard{data};
   WASP_TRY_READ_CONTEXT(block_type, Read<BlockType>(data, ctx), "block_type");
   WASP_TRY_READ(locals, ReadVector<Locals>(data, ctx, "locals vector"));
   return At{guard.range(data), LetImmediate{block_type, locals}};
 }
 
-OptAt<MemArgImmediate> Read(SpanU8* data, ReadCtx& ctx, Tag<MemArgImmediate>) {
+OptAt<MemArgImmediate> Read(SpanU8* data,
+                            ReadCtx& ctx,
+                            ReadTag<MemArgImmediate>) {
   LocationGuard guard{data};
   WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, ctx), "align log2");
   WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, ctx), "offset");
   return At{guard.range(data), MemArgImmediate{align_log2, offset}};
 }
 
-OptAt<Memory> Read(SpanU8* data, ReadCtx& ctx, Tag<Memory>) {
+OptAt<Memory> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Memory>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "memory"};
   WASP_TRY_READ(memory_type, Read<MemoryType>(data, ctx));
   return At{memory_type.loc(), Memory{memory_type}};
 }
 
-OptAt<MemoryType> Read(SpanU8* data, ReadCtx& ctx, Tag<MemoryType>) {
+OptAt<MemoryType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<MemoryType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "memory type"};
   WASP_TRY_READ(limits, Read<Limits>(data, ctx, LimitsKind::Memory));
   return At{limits.loc(), MemoryType{limits}};
 }
 
-OptAt<Mutability> Read(SpanU8* data, ReadCtx& ctx, Tag<Mutability>) {
+OptAt<Mutability> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Mutability>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "mutability"};
   WASP_TRY_READ(val, Read<u8>(data, ctx));
   WASP_TRY_DECODE(decoded, val, Mutability, "mutability");
   return decoded;
 }
 
-OptAt<Opcode> Read(SpanU8* data, ReadCtx& ctx, Tag<Opcode>) {
+OptAt<Opcode> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Opcode>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "opcode"};
   LocationGuard guard{data};
   WASP_TRY_READ(val, Read<u8>(data, ctx));
@@ -1445,15 +1454,15 @@ OptAt<Index> ReadReservedIndex(SpanU8* data, ReadCtx& ctx) {
   return At{result_u8->loc(), Index(**result_u8)};
 }
 
-OptAt<s32> Read(SpanU8* data, ReadCtx& ctx, Tag<s32>) {
+OptAt<s32> Read(SpanU8* data, ReadCtx& ctx, ReadTag<s32>) {
   return ReadVarInt<s32>(data, ctx, "s32");
 }
 
-OptAt<s64> Read(SpanU8* data, ReadCtx& ctx, Tag<s64>) {
+OptAt<s64> Read(SpanU8* data, ReadCtx& ctx, ReadTag<s64>) {
   return ReadVarInt<s64>(data, ctx, "s64");
 }
 
-OptAt<Section> Read(SpanU8* data, ReadCtx& ctx, Tag<Section>) {
+OptAt<Section> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Section>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "section"};
   LocationGuard guard{data};
   WASP_TRY_READ(id, Read<SectionId>(data, ctx));
@@ -1478,7 +1487,7 @@ OptAt<Section> Read(SpanU8* data, ReadCtx& ctx, Tag<Section>) {
   }
 }
 
-OptAt<SectionId> Read(SpanU8* data, ReadCtx& ctx, Tag<SectionId>) {
+OptAt<SectionId> Read(SpanU8* data, ReadCtx& ctx, ReadTag<SectionId>) {
   ErrorsContextGuard guard{ctx.errors, *data, "section id"};
   WASP_TRY_READ(val, Read<u8>(data, ctx));
   WASP_TRY_DECODE_FEATURES(decoded, val, SectionId, "section id", ctx.features);
@@ -1487,7 +1496,7 @@ OptAt<SectionId> Read(SpanU8* data, ReadCtx& ctx, Tag<SectionId>) {
 
 OptAt<ShuffleImmediate> Read(SpanU8* data,
                              ReadCtx& ctx,
-                             Tag<ShuffleImmediate>) {
+                             ReadTag<ShuffleImmediate>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "shuffle immediate"};
   LocationGuard guard{data};
   ShuffleImmediate immediate;
@@ -1500,7 +1509,7 @@ OptAt<ShuffleImmediate> Read(SpanU8* data,
 
 OptAt<SimdMemoryLaneImmediate> Read(SpanU8* data,
                                     ReadCtx& ctx,
-                                    Tag<SimdMemoryLaneImmediate>) {
+                                    ReadTag<SimdMemoryLaneImmediate>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "memory lane immediate"};
   LocationGuard guard{data};
   WASP_TRY_READ_CONTEXT(memarg, Read<MemArgImmediate>(data, ctx),
@@ -1509,13 +1518,14 @@ OptAt<SimdMemoryLaneImmediate> Read(SpanU8* data,
   return At{guard.range(data), SimdMemoryLaneImmediate{memarg, lane}};
 }
 
-OptAt<Start> Read(SpanU8* data, ReadCtx& ctx, Tag<Start>) {
+OptAt<Start> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Start>) {
   ErrorsContextGuard guard{ctx.errors, *data, "start"};
   WASP_TRY_READ(index, ReadIndex(data, ctx, "function index"));
   return At{index.loc(), Start{index}};
 }
 
-auto Read(SpanU8* data, ReadCtx& ctx, Tag<StorageType>) -> OptAt<StorageType> {
+auto Read(SpanU8* data, ReadCtx& ctx, ReadTag<StorageType>)
+    -> OptAt<StorageType> {
   ErrorsContextGuard error_guard{ctx.errors, *data, "storage type"};
   LocationGuard guard{data};
 
@@ -1532,7 +1542,7 @@ auto Read(SpanU8* data, ReadCtx& ctx, Tag<StorageType>) -> OptAt<StorageType> {
   }
 }
 
-OptAt<StructType> Read(SpanU8* data, ReadCtx& ctx, Tag<StructType>) {
+OptAt<StructType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<StructType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "struct type"};
   LocationGuard guard{data};
   WASP_TRY_READ(fields, ReadVector<FieldType>(data, ctx, "fields"));
@@ -1541,7 +1551,7 @@ OptAt<StructType> Read(SpanU8* data, ReadCtx& ctx, Tag<StructType>) {
 
 OptAt<StructFieldImmediate> Read(SpanU8* data,
                                  ReadCtx& ctx,
-                                 Tag<StructFieldImmediate>) {
+                                 ReadTag<StructFieldImmediate>) {
   ErrorsContextGuard error_guard{ctx.errors, *data,
                                  "struct field immediate"};
   LocationGuard guard{data};
@@ -1570,13 +1580,13 @@ OptAt<string_view> ReadUtf8String(SpanU8* data,
   return string;
 }
 
-OptAt<Table> Read(SpanU8* data, ReadCtx& ctx, Tag<Table>) {
+OptAt<Table> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Table>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "table"};
   WASP_TRY_READ(table_type, Read<TableType>(data, ctx));
   return At{table_type.loc(), Table{table_type}};
 }
 
-OptAt<TableType> Read(SpanU8* data, ReadCtx& ctx, Tag<TableType>) {
+OptAt<TableType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<TableType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "table type"};
   LocationGuard guard{data};
   WASP_TRY_READ(elemtype, Read<ReferenceType>(data, ctx));
@@ -1584,7 +1594,7 @@ OptAt<TableType> Read(SpanU8* data, ReadCtx& ctx, Tag<TableType>) {
   return At{guard.range(data), TableType{std::move(limits), elemtype}};
 }
 
-OptAt<u32> Read(SpanU8* data, ReadCtx& ctx, Tag<u32>) {
+OptAt<u32> Read(SpanU8* data, ReadCtx& ctx, ReadTag<u32>) {
   return ReadVarInt<u32>(data, ctx, "u32");
 }
 
@@ -1599,7 +1609,7 @@ auto PeekU8(SpanU8* data, ReadCtx& ctx) -> OptAt<u8> {
   return At{loc, result};
 }
 
-OptAt<u8> Read(SpanU8* data, ReadCtx& ctx, Tag<u8>) {
+OptAt<u8> Read(SpanU8* data, ReadCtx& ctx, ReadTag<u8>) {
   auto result_opt = PeekU8(data, ctx);
   if (result_opt) {
     data->remove_prefix(1);
@@ -1607,7 +1617,7 @@ OptAt<u8> Read(SpanU8* data, ReadCtx& ctx, Tag<u8>) {
   return result_opt;
 }
 
-OptAt<v128> Read(SpanU8* data, ReadCtx& ctx, Tag<v128>) {
+OptAt<v128> Read(SpanU8* data, ReadCtx& ctx, ReadTag<v128>) {
   static_assert(sizeof(v128) == 16, "sizeof(v128) != 16");
   ErrorsContextGuard guard{ctx.errors, *data, "v128"};
   WASP_TRY_READ(bytes, ReadBytes(data, sizeof(v128), ctx));
@@ -1616,7 +1626,7 @@ OptAt<v128> Read(SpanU8* data, ReadCtx& ctx, Tag<v128>) {
   return At{bytes.loc(), result};
 }
 
-OptAt<ValueType> Read(SpanU8* data, ReadCtx& ctx, Tag<ValueType>) {
+OptAt<ValueType> Read(SpanU8* data, ReadCtx& ctx, ReadTag<ValueType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "value type"};
   LocationGuard guard{data};
   WASP_TRY_READ(val, PeekU8(data, ctx));

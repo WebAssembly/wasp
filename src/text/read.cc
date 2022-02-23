@@ -570,15 +570,15 @@ auto ReadImport(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<Import> {
       break;
     }
 
-    case TokenType::Event: {
+    case TokenType::Tag: {
       if (!ctx.features.exceptions_enabled()) {
-        ctx.errors.OnError(token.loc, "Events not allowed");
+        ctx.errors.OnError(token.loc, "Tags not allowed");
         return nullopt;
       }
       tokenizer.Read();
       auto name = ReadBindVarOpt(tokenizer, ctx);
-      WASP_TRY_READ(type, ReadEventType(tokenizer, ctx));
-      result.desc = EventDesc{name, type};
+      WASP_TRY_READ(type, ReadTagType(tokenizer, ctx));
+      result.desc = TagDesc{name, type};
       break;
     }
 
@@ -1199,12 +1199,12 @@ auto ReadExport(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<Export> {
       kind = At{token.loc, ExternalKind::Global};
       break;
 
-    case TokenType::Event:
+    case TokenType::Tag:
       if (!ctx.features.exceptions_enabled()) {
-        ctx.errors.OnError(token.loc, "Events not allowed");
+        ctx.errors.OnError(token.loc, "Tags not allowed");
         return nullopt;
       }
-      kind = At{token.loc, ExternalKind::Event};
+      kind = At{token.loc, ExternalKind::Tag};
       break;
 
     default:
@@ -2137,22 +2137,22 @@ auto ReadDataSegment(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<DataSegment> {
   }
 }
 
-// Section 13: Event
+// Section 13: Tag
 
-auto ReadEventType(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<EventType> {
+auto ReadTagType(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<TagType> {
   LocationGuard guard{tokenizer};
-  auto attribute = EventAttribute::Exception;
+  auto attribute = TagAttribute::Exception;
   WASP_TRY_READ(type, ReadFunctionTypeUse(tokenizer, ctx));
-  return At{guard.loc(), EventType{attribute, type}};
+  return At{guard.loc(), TagType{attribute, type}};
 }
 
-auto ReadEvent(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<Event> {
+auto ReadTag(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<Tag> {
   LocationGuard guard{tokenizer};
   auto token = tokenizer.Peek();
-  WASP_TRY(ExpectLpar(tokenizer, ctx, TokenType::Event));
+  WASP_TRY(ExpectLpar(tokenizer, ctx, TokenType::Tag));
 
   if (!ctx.features.exceptions_enabled()) {
-    ctx.errors.OnError(token.loc, "Events not allowed");
+    ctx.errors.OnError(token.loc, "Tags not allowed");
     return nullopt;
   }
 
@@ -2161,9 +2161,9 @@ auto ReadEvent(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<Event> {
   auto import_opt = ReadInlineImportOpt(tokenizer, ctx);
   ctx.seen_non_import |= !import_opt;
 
-  WASP_TRY_READ(type, ReadEventType(tokenizer, ctx));
+  WASP_TRY_READ(type, ReadTagType(tokenizer, ctx));
   WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));
-  return At{guard.loc(), Event{EventDesc{name, type}, import_opt, exports}};
+  return At{guard.loc(), Tag{TagDesc{name, type}, import_opt, exports}};
 }
 
 // Module
@@ -2179,7 +2179,7 @@ bool IsModuleItem(Tokenizer& tokenizer) {
          token.type == TokenType::Memory || token.type == TokenType::Global ||
          token.type == TokenType::Export || token.type == TokenType::Start ||
          token.type == TokenType::Elem || token.type == TokenType::Data ||
-         token.type == TokenType::Event;
+         token.type == TokenType::Tag;
 }
 
 auto ReadModuleItem(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<ModuleItem> {
@@ -2241,8 +2241,8 @@ auto ReadModuleItem(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<ModuleItem> {
       return At{item.loc(), ModuleItem{*item}};
     }
 
-    case TokenType::Event: {
-      WASP_TRY_READ(item, ReadEvent(tokenizer, ctx));
+    case TokenType::Tag: {
+      WASP_TRY_READ(item, ReadTag(tokenizer, ctx));
       return At{item.loc(), ModuleItem{*item}};
     }
 
@@ -2251,7 +2251,7 @@ auto ReadModuleItem(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<ModuleItem> {
           token.loc,
           concat(
               "Expected 'type', 'import', 'func', 'table', 'memory', 'global', "
-              "'export', 'start', 'elem', 'data', or 'event', got ",
+              "'export', 'start', 'elem', 'data', or 'tag', got ",
               token.type));
       return nullopt;
   }

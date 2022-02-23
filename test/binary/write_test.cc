@@ -278,14 +278,12 @@ TEST(BinaryWriteTest, ReferenceType_gc) {
   ExpectWrite("\x6c\x6a"_su8, RT_RefNullI31);
 }
 
-TEST(BinaryWriteTest, Event) {
-  ExpectWrite("\x00\x01"_su8,
-                     Event{EventType{EventAttribute::Exception, 1}});
+TEST(BinaryWriteTest, Tag) {
+  ExpectWrite("\x00\x01"_su8, Tag{TagType{TagAttribute::Exception, 1}});
 }
 
-TEST(BinaryWriteTest, EventType) {
-  ExpectWrite("\x00\x01"_su8,
-                         EventType{EventAttribute::Exception, 1});
+TEST(BinaryWriteTest, TagType) {
+  ExpectWrite("\x00\x01"_su8, TagType{TagAttribute::Exception, 1});
 }
 
 TEST(BinaryWriteTest, Export) {
@@ -293,7 +291,7 @@ TEST(BinaryWriteTest, Export) {
   ExpectWrite("\x00\x01\xe8\x07"_su8, Export{ExternalKind::Table, ""_sv, 1000});
   ExpectWrite("\x03mem\x02\x00"_su8, Export{ExternalKind::Memory, "mem"_sv, 0});
   ExpectWrite("\x01g\x03\x01"_su8, Export{ExternalKind::Global, "g"_sv, 1});
-  ExpectWrite("\x01v\x04\x02"_su8, Export{ExternalKind::Event, "v"_sv, 2});
+  ExpectWrite("\x01v\x04\x02"_su8, Export{ExternalKind::Tag, "v"_sv, 2});
 }
 
 TEST(BinaryWriteTest, ExternalKind) {
@@ -301,7 +299,7 @@ TEST(BinaryWriteTest, ExternalKind) {
   ExpectWrite("\x01"_su8, ExternalKind::Table);
   ExpectWrite("\x02"_su8, ExternalKind::Memory);
   ExpectWrite("\x03"_su8, ExternalKind::Global);
-  ExpectWrite("\x04"_su8, ExternalKind::Event);
+  ExpectWrite("\x04"_su8, ExternalKind::Tag);
 }
 
 TEST(BinaryWriteTest, F32) {
@@ -461,8 +459,8 @@ TEST(BinaryWriteTest, Import) {
       "\x01\x64\x06global\x03\x7f\x00"_su8,
       Import{"d", "global", GlobalType{VT_I32, Mutability::Const}});
 
-  ExpectWrite("\x01v\x06!event\x04\x00\x02"_su8,
-              Import{"v", "!event", EventType{EventAttribute::Exception, 2}});
+  ExpectWrite("\x01v\x04!tag\x04\x00\x02"_su8,
+              Import{"v", "!tag", TagType{TagAttribute::Exception, 2}});
 }
 
 TEST(BinaryWriteTest, HeapType_function_references) {
@@ -1266,18 +1264,18 @@ TEST(BinaryWriteTest, Module_Global) {
       module);
 }
 
-TEST(BinaryWriteTest, Module_Event) {
+TEST(BinaryWriteTest, Module_Tag) {
   Module module;
-  module.events.push_back(Event{EventType{EventAttribute::Exception, Index{1}}});
-  module.events.push_back(Event{EventType{EventAttribute::Exception, Index{2}}});
+  module.tags.push_back(Tag{TagType{TagAttribute::Exception, Index{1}}});
+  module.tags.push_back(Tag{TagType{TagAttribute::Exception, Index{2}}});
 
   ExpectWrite(
       "\x00\x61\x73\x6d\x01\x00\x00\x00"  // magic/version
-      "\x0d"                              // event section
+      "\x0d"                              // tag section
       "\x05"                              // section length
-      "\x02"                              // event count
-      "\x00\x01"                          // (event (func (type 1)))
-      "\x00\x02"_su8,                     // (event (func (type 2)))
+      "\x02"                              // tag count
+      "\x00\x01"                          // (tag (func (type 1)))
+      "\x00\x02"_su8,                     // (tag (func (type 2)))
       module);
 }
 
@@ -2029,7 +2027,7 @@ TEST(BinaryWriteTest, SectionId) {
   ExpectWrite("\x0a"_su8, SectionId::Code);
   ExpectWrite("\x0b"_su8, SectionId::Data);
   ExpectWrite("\x0c"_su8, SectionId::DataCount);
-  ExpectWrite("\x0d"_su8, SectionId::Event);
+  ExpectWrite("\x0d"_su8, SectionId::Tag);
 }
 
 TEST(BinaryWriteTest, ShuffleImmediate) {

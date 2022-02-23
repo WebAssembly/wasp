@@ -156,8 +156,8 @@ TEST(BinaryFormattersTest, ExternalKind) {
   EXPECT_EQ(R"(func)", concat(ExternalKind::Function));
 }
 
-TEST(BinaryFormattersTest, EventAttribute) {
-  EXPECT_EQ(R"(exception)", concat(EventAttribute::Exception));
+TEST(BinaryFormattersTest, TagAttribute) {
+  EXPECT_EQ(R"(exception)", concat(TagAttribute::Exception));
 }
 
 TEST(BinaryFormattersTest, Mutability) {
@@ -248,8 +248,8 @@ TEST(BinaryFormattersTest, GlobalType) {
   EXPECT_EQ(R"(var i32)", concat(GlobalType{VT_I32, Mutability::Var}));
 }
 
-TEST(BinaryFormattersTest, EventType) {
-  EXPECT_EQ(R"(exception 0)", concat(EventType{EventAttribute::Exception, 0}));
+TEST(BinaryFormattersTest, TagType) {
+  EXPECT_EQ(R"(exception 0)", concat(TagType{TagAttribute::Exception, 0}));
 }
 
 TEST(BinaryFormattersTest, Import) {
@@ -270,10 +270,10 @@ TEST(BinaryFormattersTest, Import) {
       R"({module "g", name "h", desc global var i32})",
       concat(Import{"g"_sv, "h"_sv, GlobalType{VT_I32, Mutability::Var}}));
 
-  // Event
+  // Tag
   EXPECT_EQ(
-      R"({module "i", name "j", desc event exception 0})",
-      concat(Import{"i"_sv, "j"_sv, EventType{EventAttribute::Exception, 0}}));
+      R"({module "i", name "j", desc tag exception 0})",
+      concat(Import{"i"_sv, "j"_sv, TagType{TagAttribute::Exception, 0}}));
 }
 
 TEST(BinaryFormattersTest, Export) {
@@ -285,8 +285,8 @@ TEST(BinaryFormattersTest, Export) {
             concat(Export{ExternalKind::Memory, "m"_sv, Index{2}}));
   EXPECT_EQ(R"({name "g", desc global 3})",
             concat(Export{ExternalKind::Global, "g"_sv, Index{3}}));
-  EXPECT_EQ(R"({name "e", desc event 4})",
-            concat(Export{ExternalKind::Event, "e"_sv, Index{4}}));
+  EXPECT_EQ(R"({name "e", desc tag 4})",
+            concat(Export{ExternalKind::Tag, "e"_sv, Index{4}}));
 }
 
 TEST(BinaryFormattersTest, Expression) {

@@ -466,17 +466,17 @@ TEST(TextFormattersTest, GlobalDesc) {
             concat(GlobalDesc{nullopt, GlobalType{VT_I32, Mutability::Const}}));
 }
 
-TEST(TextFormattersTest, EventType) {
+TEST(TextFormattersTest, TagType) {
   EXPECT_EQ(
       R"({attribute exception, type {type_use none, type {params [], results []}}})",
-      concat(EventType{EventAttribute::Exception, FunctionTypeUse{}}));
+      concat(TagType{TagAttribute::Exception, FunctionTypeUse{}}));
 }
 
-TEST(TextFormattersTest, EventDesc) {
+TEST(TextFormattersTest, TagDesc) {
   EXPECT_EQ(
       R"({name none, type {attribute exception, type {type_use none, type {params [], results []}}}})",
-      concat(EventDesc{
-          nullopt, EventType{EventAttribute::Exception, FunctionTypeUse{}}}));
+      concat(TagDesc{nullopt,
+                     TagType{TagAttribute::Exception, FunctionTypeUse{}}}));
 }
 
 TEST(TextFormattersTest, Import) {
@@ -503,12 +503,12 @@ TEST(TextFormattersTest, Import) {
       concat(
           Import{Text{"$a"_sv, 1}, Text{"$b"_sv, 1},
                  GlobalDesc{nullopt, GlobalType{VT_I32, Mutability::Const}}}));
-  // Event
+  // Tag
   EXPECT_EQ(
-      R"({module {text $a, byte_size 1}, name {text $b, byte_size 1}, desc event {name none, type {attribute exception, type {type_use none, type {params [], results []}}}}})",
+      R"({module {text $a, byte_size 1}, name {text $b, byte_size 1}, desc tag {name none, type {attribute exception, type {type_use none, type {params [], results []}}}}})",
       concat(Import{Text{"$a"_sv, 1}, Text{"$b"_sv, 1},
-                    EventDesc{nullopt, EventType{EventAttribute::Exception,
-                                                 FunctionTypeUse{}}}}));
+                    TagDesc{nullopt, TagType{TagAttribute::Exception,
+                                             FunctionTypeUse{}}}}));
 }
 
 TEST(TextFormattersTest, InlineImport) {
@@ -595,12 +595,12 @@ TEST(TextFormattersTest, DataSegment) {
             concat(DataSegment{nullopt, {}}));
 }
 
-TEST(TextFormattersTest, Event) {
+TEST(TextFormattersTest, Tag) {
   EXPECT_EQ(
       R"({desc {name none, type {attribute exception, type {type_use none, type {params [], results []}}}}, import none, exports []})",
-      concat(Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
-                                                FunctionTypeUse{}}},
-                   {}}));
+      concat(Tag{
+          TagDesc{nullopt, TagType{TagAttribute::Exception, FunctionTypeUse{}}},
+          {}}));
 }
 
 TEST(TextFormattersTest, ModuleItem) {
@@ -657,12 +657,11 @@ TEST(TextFormattersTest, ModuleItem) {
       R"(data {name none, type passive, memory none, offset none, data []})",
       concat(ModuleItem{DataSegment{nullopt, {}}}));
 
-  // Event
+  // Tag
   EXPECT_EQ(
-      R"(event {desc {name none, type {attribute exception, type {type_use none, type {params [], results []}}}}, import none, exports []})",
-      concat(ModuleItem{Event{
-          EventDesc{nullopt,
-                    EventType{EventAttribute::Exception, FunctionTypeUse{}}},
+      R"(tag {desc {name none, type {attribute exception, type {type_use none, type {params [], results []}}}}, import none, exports []})",
+      concat(ModuleItem{Tag{
+          TagDesc{nullopt, TagType{TagAttribute::Exception, FunctionTypeUse{}}},
           {}}}));
 }
 

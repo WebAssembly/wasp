@@ -218,12 +218,12 @@ optional<GlobalType> GetGlobalType(ValidCtx& ctx, At<Index> index) {
   return ctx.globals[index];
 }
 
-optional<EventType> GetEventType(ValidCtx& ctx, At<Index> index) {
-  if (!ValidateIndex(ctx, index, static_cast<Index>(ctx.events.size()),
-                     "event index")) {
+optional<TagType> GetTagType(ValidCtx& ctx, At<Index> index) {
+  if (!ValidateIndex(ctx, index, static_cast<Index>(ctx.tags.size()),
+                     "tag index")) {
     return nullopt;
   }
-  return ctx.events[index];
+  return ctx.tags[index];
 }
 
 optional<ReferenceType> GetElementSegmentType(ValidCtx& ctx, At<Index> index) {
@@ -273,8 +273,8 @@ GlobalType MaybeDefault(optional<GlobalType> value) {
       GlobalType{ValueType::I32_NoLocation(), Mutability::Const});
 }
 
-EventType MaybeDefault(optional<EventType> value) {
-  return value.value_or(EventType{EventAttribute::Exception, 0});
+TagType MaybeDefault(optional<TagType> value) {
+  return value.value_or(TagType{TagAttribute::Exception, 0});
 }
 
 ReferenceType MaybeDefault(optional<ReferenceType> value) {
@@ -1201,13 +1201,12 @@ bool ReturnCallIndirect(ValidCtx& ctx,
 }
 
 bool Throw(ValidCtx& ctx, Location loc, At<Index> index) {
-  auto event_type = GetEventType(ctx, index);
-  auto function_type =
-      GetFunctionType(ctx, MaybeDefault(event_type).type_index);
+  auto tag_type = GetTagType(ctx, index);
+  auto function_type = GetFunctionType(ctx, MaybeDefault(tag_type).type_index);
   bool valid = PopTypes(
       ctx, loc, ToStackTypeList(MaybeDefault(function_type).param_types));
   SetUnreachable(ctx);
-  return AllTrue(event_type, function_type, valid);
+  return AllTrue(tag_type, function_type, valid);
 }
 
 bool Rethrow(ValidCtx& ctx, Location loc) {

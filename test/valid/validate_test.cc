@@ -437,14 +437,14 @@ TEST_F(ValidateTest, Export) {
   ctx.tables.push_back(TableType{Limits{1}, RT_Funcref});
   ctx.memories.push_back(MemoryType{Limits{1}});
   ctx.globals.push_back(GlobalType{VT_I32, Mutability::Const});
-  ctx.events.push_back(EventType{EventAttribute::Exception, Index{0}});
+  ctx.tags.push_back(TagType{TagAttribute::Exception, Index{0}});
 
   const Export tests[] = {
       Export{ExternalKind::Function, "f", 0},
       Export{ExternalKind::Table, "t", 0},
       Export{ExternalKind::Memory, "m", 0},
       Export{ExternalKind::Global, "g", 0},
-      Export{ExternalKind::Event, "e", 0},
+      Export{ExternalKind::Tag, "e", 0},
   };
 
   for (const auto& export_ : tests) {
@@ -461,7 +461,7 @@ TEST_F(ValidateTest, Export_IndexOOB) {
       Export{ExternalKind::Table, "", 0},
       Export{ExternalKind::Memory, "", 0},
       Export{ExternalKind::Global, "", 0},
-      Export{ExternalKind::Event, "", 0},
+      Export{ExternalKind::Tag, "", 0},
   };
 
   for (const auto& export_ : tests) {
@@ -487,18 +487,16 @@ TEST_F(ValidateTest, Export_Duplicate) {
   EXPECT_FALSE(Validate(ctx, Export{ExternalKind::Function, "hi", 0}));
 }
 
-TEST_F(ValidateTest, Event) {
+TEST_F(ValidateTest, Tag) {
   ctx.types.push_back(DefinedType{FunctionType{}});
   ctx.defined_type_count = 1;
-  EXPECT_TRUE(
-      Validate(ctx, Event{EventType{EventAttribute::Exception, Index{0}}}));
+  EXPECT_TRUE(Validate(ctx, Tag{TagType{TagAttribute::Exception, Index{0}}}));
 }
 
-TEST_F(ValidateTest, Event_InvalidType) {
+TEST_F(ValidateTest, Tag_InvalidType) {
   ctx.types.push_back(DefinedType{StructType{}});
   ctx.defined_type_count = 1;
-  EXPECT_FALSE(
-      Validate(ctx, Event{EventType{EventAttribute::Exception, Index{0}}}));
+  EXPECT_FALSE(Validate(ctx, Tag{TagType{TagAttribute::Exception, Index{0}}}));
 }
 
 TEST_F(ValidateTest, FieldType) {
@@ -517,20 +515,20 @@ TEST_F(ValidateTest, FieldTypeList) {
                     FieldType{StorageType{PackedType::I8}, Mutability::Var}}));
 }
 
-TEST_F(ValidateTest, EventType) {
+TEST_F(ValidateTest, TagType) {
   ctx.types.push_back(DefinedType{FunctionType{{VT_I32}, {}}});
   ctx.defined_type_count = 1;
-  EXPECT_TRUE(Validate(ctx, EventType{EventAttribute::Exception, Index{0}}));
+  EXPECT_TRUE(Validate(ctx, TagType{TagAttribute::Exception, Index{0}}));
 }
 
-TEST_F(ValidateTest, EventType_IndexOOB) {
-  EXPECT_FALSE(Validate(ctx, EventType{EventAttribute::Exception, Index{0}}));
+TEST_F(ValidateTest, TagType_IndexOOB) {
+  EXPECT_FALSE(Validate(ctx, TagType{TagAttribute::Exception, Index{0}}));
 }
 
-TEST_F(ValidateTest, EventType_NonEmptyResult) {
+TEST_F(ValidateTest, TagType_NonEmptyResult) {
   ctx.types.push_back(DefinedType{FunctionType{{}, {VT_I32}}});
   ctx.defined_type_count = 1;
-  EXPECT_FALSE(Validate(ctx, EventType{EventAttribute::Exception, Index{0}}));
+  EXPECT_FALSE(Validate(ctx, TagType{TagAttribute::Exception, Index{0}}));
 }
 
 TEST_F(ValidateTest, Function) {
@@ -756,7 +754,7 @@ TEST_F(ValidateTest, Import) {
       Import{"", "", TableType{Limits{0}, RT_Funcref}},
       Import{"", "", MemoryType{Limits{0}}},
       Import{"", "", GlobalType{VT_I32, Mutability::Const}},
-      Import{"", "", EventType{EventAttribute::Exception, Index{0}}},
+      Import{"", "", TagType{TagAttribute::Exception, Index{0}}},
   };
 
   for (const auto& import : tests) {
@@ -793,16 +791,16 @@ TEST_F(ValidateTest, Import_GlobalMutVar_MutableGlobals) {
       Validate(ctx, Import{"", "", GlobalType{VT_I32, Mutability::Var}}));
 }
 
-TEST_F(ValidateTest, Import_Event_IndexOOB) {
+TEST_F(ValidateTest, Import_Tag_IndexOOB) {
   EXPECT_FALSE(Validate(
-      ctx, Import{"", "", EventType{EventAttribute::Exception, Index{0}}}));
+      ctx, Import{"", "", TagType{TagAttribute::Exception, Index{0}}}));
 }
 
-TEST_F(ValidateTest, Import_Event_NonEmptyResult) {
+TEST_F(ValidateTest, Import_Tag_NonEmptyResult) {
   ctx.types.push_back(DefinedType{FunctionType{{}, {VT_F32}}});
   ctx.defined_type_count = 1;
   EXPECT_FALSE(Validate(
-      ctx, Import{"", "", EventType{EventAttribute::Exception, Index{0}}}));
+      ctx, Import{"", "", TagType{TagAttribute::Exception, Index{0}}}));
 }
 
 TEST_F(ValidateTest, Index) {
@@ -1099,8 +1097,7 @@ TEST_F(ValidateTest, Module) {
   module.globals.push_back(
       Global{GlobalType{VT_I32, Mutability::Const},
              ConstantExpression{Instruction{Opcode::I32Const, s32{0}}}});
-  module.events.push_back(
-      Event{EventType{EventAttribute::Exception, Index{0}}});
+  module.tags.push_back(Tag{TagType{TagAttribute::Exception, Index{0}}});
   module.exports.push_back(Export{ExternalKind::Function, "c"_sv, 0});
   module.start = Start{Index{0}};
   module.element_segments.push_back(ElementSegment{
@@ -1125,7 +1122,7 @@ TEST_F(ValidateTest, TypeIndexOOBAfterTypeSection) {
   // Make sure that anything that references the type section will correctly
   // fail to validate.
   EXPECT_FALSE(Validate(
-      ctx, Import{"", "", EventType{EventAttribute::Exception, Index{0}}}));
+      ctx, Import{"", "", TagType{TagAttribute::Exception, Index{0}}}));
 
   EXPECT_FALSE(Validate(ctx, Function{0}));
 

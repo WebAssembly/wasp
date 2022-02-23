@@ -485,8 +485,8 @@ struct GlobalType {
   At<Mutability> mut;
 };
 
-struct EventType {
-  At<EventAttribute> attribute;
+struct TagType {
+  At<TagAttribute> attribute;
   At<Index> type_index;
 };
 
@@ -495,21 +495,21 @@ struct Import {
   explicit Import(At<string_view> module, At<string_view> name, At<TableType>);
   explicit Import(At<string_view> module, At<string_view> name, At<MemoryType>);
   explicit Import(At<string_view> module, At<string_view> name, At<GlobalType>);
-  explicit Import(At<string_view> module, At<string_view> name, At<EventType>);
+  explicit Import(At<string_view> module, At<string_view> name, At<TagType>);
 
   // Convenience constructors w/ no Location.
   explicit Import(string_view module, string_view name, Index);
   explicit Import(string_view module, string_view name, TableType);
   explicit Import(string_view module, string_view name, MemoryType);
   explicit Import(string_view module, string_view name, GlobalType);
-  explicit Import(string_view module, string_view name, EventType);
+  explicit Import(string_view module, string_view name, TagType);
 
   ExternalKind kind() const;
   bool is_function() const;
   bool is_table() const;
   bool is_memory() const;
   bool is_global() const;
-  bool is_event() const;
+  bool is_tag() const;
 
   auto index() -> At<Index>&;
   auto index() const -> const At<Index>&;
@@ -519,8 +519,8 @@ struct Import {
   auto memory_type() const -> const At<MemoryType>&;
   auto global_type() -> At<GlobalType>&;
   auto global_type() const -> const At<GlobalType>&;
-  auto event_type() -> At<EventType>&;
-  auto event_type() const -> const At<EventType>&;
+  auto tag_type() -> At<TagType>&;
+  auto tag_type() const -> const At<TagType>&;
 
   At<string_view> module;
   At<string_view> name;
@@ -528,7 +528,7 @@ struct Import {
           At<TableType>,
           At<MemoryType>,
           At<GlobalType>,
-          At<EventType>>
+          At<TagType>>
       desc;
 };
 
@@ -676,10 +676,10 @@ struct DataCount {
   At<Index> count;
 };
 
-// Section 13: Event
+// Section 13: Tag
 
-struct Event {
-  At<EventType> event_type;
+struct Tag {
+  At<TagType> tag_type;
 };
 
 // Module
@@ -693,7 +693,7 @@ struct Module {
   std::vector<At<Table>> tables;
   std::vector<At<Memory>> memories;
   std::vector<At<Global>> globals;
-  std::vector<At<Event>> events;
+  std::vector<At<Tag>> tags;
   std::vector<At<Export>> exports;
   optional<At<Start>> start;
   std::vector<At<ElementSegment>> element_segments;
@@ -722,8 +722,8 @@ struct Module {
   WASP_V(binary::ElementSegment, 4, type, table_index, offset, elements) \
   WASP_V(binary::ElementListWithIndexes, 2, kind, list)                  \
   WASP_V(binary::ElementListWithExpressions, 2, elemtype, list)          \
-  WASP_V(binary::Event, 1, event_type)                                   \
-  WASP_V(binary::EventType, 2, attribute, type_index)                    \
+  WASP_V(binary::Tag, 1, tag_type)                                       \
+  WASP_V(binary::TagType, 2, attribute, type_index)                      \
   WASP_V(binary::Export, 3, kind, name, index)                           \
   WASP_V(binary::Expression, 1, data)                                    \
   WASP_V(binary::FieldType, 2, type, mut)                                \

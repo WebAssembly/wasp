@@ -46,7 +46,7 @@ WASP_DEFINE_VARIANT_NAME(binary::StructType, "struct")
 WASP_DEFINE_VARIANT_NAME(binary::ArrayType, "array")
 WASP_DEFINE_VARIANT_NAME(binary::TableType, "table")
 WASP_DEFINE_VARIANT_NAME(binary::GlobalType, "global")
-WASP_DEFINE_VARIANT_NAME(binary::EventType, "event")
+WASP_DEFINE_VARIANT_NAME(binary::TagType, "tag")
 WASP_DEFINE_VARIANT_NAME(binary::ElementListWithIndexes, "index")
 WASP_DEFINE_VARIANT_NAME(binary::ElementListWithExpressions, "expression")
 

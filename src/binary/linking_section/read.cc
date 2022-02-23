@@ -28,7 +28,7 @@
 
 namespace wasp::binary {
 
-OptAt<Comdat> Read(SpanU8* data, ReadCtx& ctx, Tag<Comdat>) {
+OptAt<Comdat> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Comdat>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "comdat"};
   LocationGuard guard{data};
   WASP_TRY_READ(name, ReadString(data, ctx, "name"));
@@ -38,7 +38,7 @@ OptAt<Comdat> Read(SpanU8* data, ReadCtx& ctx, Tag<Comdat>) {
   return At{guard.range(data), Comdat{name, flags, std::move(symbols)}};
 }
 
-OptAt<ComdatSymbol> Read(SpanU8* data, ReadCtx& ctx, Tag<ComdatSymbol>) {
+OptAt<ComdatSymbol> Read(SpanU8* data, ReadCtx& ctx, ReadTag<ComdatSymbol>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "comdat symbol"};
   LocationGuard guard{data};
   WASP_TRY_READ(kind, Read<ComdatSymbolKind>(data, ctx));
@@ -48,7 +48,7 @@ OptAt<ComdatSymbol> Read(SpanU8* data, ReadCtx& ctx, Tag<ComdatSymbol>) {
 
 OptAt<ComdatSymbolKind> Read(SpanU8* data,
                              ReadCtx& ctx,
-                             Tag<ComdatSymbolKind>) {
+                             ReadTag<ComdatSymbolKind>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "comdat symbol kind"};
   LocationGuard guard{data};
   WASP_TRY_READ(val, Read<u8>(data, ctx));
@@ -56,7 +56,7 @@ OptAt<ComdatSymbolKind> Read(SpanU8* data,
   return decoded;
 }
 
-OptAt<InitFunction> Read(SpanU8* data, ReadCtx& ctx, Tag<InitFunction>) {
+OptAt<InitFunction> Read(SpanU8* data, ReadCtx& ctx, ReadTag<InitFunction>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "init function"};
   LocationGuard guard{data};
   WASP_TRY_READ(priority, Read<u32>(data, ctx));
@@ -66,7 +66,7 @@ OptAt<InitFunction> Read(SpanU8* data, ReadCtx& ctx, Tag<InitFunction>) {
 
 OptAt<LinkingSubsection> Read(SpanU8* data,
                               ReadCtx& ctx,
-                              Tag<LinkingSubsection>) {
+                              ReadTag<LinkingSubsection>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "linking subsection"};
   LocationGuard guard{data};
   WASP_TRY_READ(id, Read<LinkingSubsectionId>(data, ctx));
@@ -77,14 +77,16 @@ OptAt<LinkingSubsection> Read(SpanU8* data,
 
 OptAt<LinkingSubsectionId> Read(SpanU8* data,
                                 ReadCtx& ctx,
-                                Tag<LinkingSubsectionId>) {
+                                ReadTag<LinkingSubsectionId>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "linking subsection id"};
   WASP_TRY_READ(val, Read<u8>(data, ctx));
   WASP_TRY_DECODE(decoded, val, LinkingSubsectionId, "linking subsection id");
   return decoded;
 }
 
-OptAt<RelocationEntry> Read(SpanU8* data, ReadCtx& ctx, Tag<RelocationEntry>) {
+OptAt<RelocationEntry> Read(SpanU8* data,
+                            ReadCtx& ctx,
+                            ReadTag<RelocationEntry>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "relocation entry"};
   LocationGuard guard{data};
   WASP_TRY_READ(type, Read<RelocationType>(data, ctx));
@@ -107,14 +109,16 @@ OptAt<RelocationEntry> Read(SpanU8* data, ReadCtx& ctx, Tag<RelocationEntry>) {
   }
 }
 
-OptAt<RelocationType> Read(SpanU8* data, ReadCtx& ctx, Tag<RelocationType>) {
+OptAt<RelocationType> Read(SpanU8* data,
+                           ReadCtx& ctx,
+                           ReadTag<RelocationType>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "relocation type"};
   WASP_TRY_READ(val, Read<u8>(data, ctx));
   WASP_TRY_DECODE(decoded, val, RelocationType, "relocation type");
   return decoded;
 }
 
-OptAt<SegmentInfo> Read(SpanU8* data, ReadCtx& ctx, Tag<SegmentInfo>) {
+OptAt<SegmentInfo> Read(SpanU8* data, ReadCtx& ctx, ReadTag<SegmentInfo>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "segment info"};
   LocationGuard guard{data};
   WASP_TRY_READ(name, ReadString(data, ctx, "name"));
@@ -123,7 +127,7 @@ OptAt<SegmentInfo> Read(SpanU8* data, ReadCtx& ctx, Tag<SegmentInfo>) {
   return At{guard.range(data), SegmentInfo{name, align_log2, flags}};
 }
 
-OptAt<SymbolInfo> Read(SpanU8* data, ReadCtx& ctx, Tag<SymbolInfo>) {
+OptAt<SymbolInfo> Read(SpanU8* data, ReadCtx& ctx, ReadTag<SymbolInfo>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "symbol info"};
   LocationGuard guard{data};
   WASP_TRY_READ(kind, Read<SymbolInfoKind>(data, ctx));
@@ -165,7 +169,9 @@ OptAt<SymbolInfo> Read(SpanU8* data, ReadCtx& ctx, Tag<SymbolInfo>) {
   WASP_UNREACHABLE();
 }
 
-OptAt<SymbolInfoKind> Read(SpanU8* data, ReadCtx& ctx, Tag<SymbolInfoKind>) {
+OptAt<SymbolInfoKind> Read(SpanU8* data,
+                           ReadCtx& ctx,
+                           ReadTag<SymbolInfoKind>) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "symbol info kind"};
   WASP_TRY_READ(val, Read<u8>(data, ctx));
   WASP_TRY_DECODE(decoded, val, SymbolInfoKind, "symbol info kind");

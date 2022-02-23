@@ -128,9 +128,9 @@ auto ToBinary(BinCtx&, const At<text::DataSegment>&) -> At<binary::DataSegment>;
 
 // Section 12: DataCount
 
-// Section 13: Event
-auto ToBinary(BinCtx&, const At<text::EventType>&) -> At<binary::EventType>;
-auto ToBinary(BinCtx&, const At<text::Event>&) -> OptAt<binary::Event>;
+// Section 13: Tag
+auto ToBinary(BinCtx&, const At<text::TagType>&) -> At<binary::TagType>;
+auto ToBinary(BinCtx&, const At<text::Tag>&) -> OptAt<binary::Tag>;
 
 // Module
 auto ToBinary(BinCtx&, const At<text::Module>&) -> At<binary::Module>;

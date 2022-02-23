@@ -57,8 +57,8 @@ auto ValidateVisitor::OnGlobal(const At<binary::Global>& global) -> Result {
   return FailUnless(Validate(ctx, global));
 }
 
-auto ValidateVisitor::OnEvent(const At<binary::Event>& event) -> Result {
-  return FailUnless(Validate(ctx, event));
+auto ValidateVisitor::OnTag(const At<binary::Tag>& tag) -> Result {
+  return FailUnless(Validate(ctx, tag));
 }
 
 auto ValidateVisitor::OnExport(const At<binary::Export>& export_) -> Result {

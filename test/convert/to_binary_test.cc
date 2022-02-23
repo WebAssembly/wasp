@@ -307,22 +307,22 @@ TEST_F(ConvertToBinaryTest, Import) {
                                                    Mutability::Const,
                                                }}}}});
 
-  // Event
+  // Tag
   OK(At{loc1, binary::Import{At{loc2, "m"_sv}, At{loc3, "n"_sv},
                              At{loc4,
-                                binary::EventType{
-                                    EventAttribute::Exception,
+                                binary::TagType{
+                                    TagAttribute::Exception,
                                     At{loc5, Index{0}},
                                 }}}},
      At{loc1,
         text::Import{
             At{loc2, text::Text{"\"m\"", 1}}, At{loc3, text::Text{"\"n\"", 1}},
-            text::EventDesc{
+            text::TagDesc{
                 nullopt,
                 At{loc4,
-                   text::EventType{EventAttribute::Exception,
-                                   text::FunctionTypeUse{
-                                       At{loc5, text::Var{Index{0}}}, {}}}}}}});
+                   text::TagType{TagAttribute::Exception,
+                                 text::FunctionTypeUse{
+                                     At{loc5, text::Var{Index{0}}}, {}}}}}}});
 }
 
 TEST_F(ConvertToBinaryTest, Function) {
@@ -1123,14 +1123,14 @@ TEST_F(ConvertToBinaryTest, DataSegment_numeric_values) {
                 ToBuffer("\x68\x65\x6c\x6c\x6f\x00"_su8)}}}}});
 }
 
-TEST_F(ConvertToBinaryTest, EventType) {
+TEST_F(ConvertToBinaryTest, TagType) {
   OK(At{loc1,
-        binary::EventType{
-            EventAttribute::Exception,
+        binary::TagType{
+            TagAttribute::Exception,
             At{loc2, Index{0}},
         }},
-     At{loc1, text::EventType{
-                  EventAttribute::Exception,
+     At{loc1, text::TagType{
+                  TagAttribute::Exception,
                   text::FunctionTypeUse{
                       At{loc2, text::Var{Index{0}}},
                       {},
@@ -1138,23 +1138,24 @@ TEST_F(ConvertToBinaryTest, EventType) {
               }});
 }
 
-TEST_F(ConvertToBinaryTest, Event) {
-  OK(At{loc1, binary::Event{At{loc2,
-                               binary::EventType{
-                                   EventAttribute::Exception,
-                                   At{loc3, Index{0}},
-                               }}}},
-     At{loc1,
-        text::Event{text::EventDesc{
-                        nullopt, At{loc2,
-                                    text::EventType{
-                                        EventAttribute::Exception,
-                                        text::FunctionTypeUse{
-                                            At{loc3, text::Var{Index{0}}},
-                                            {},
-                                        },
-                                    }}},
-                    {}}});
+TEST_F(ConvertToBinaryTest, Tag) {
+  OK(
+      At{loc1, binary::Tag{At{loc2,
+                              binary::TagType{
+                                  TagAttribute::Exception,
+                                  At{loc3, Index{0}},
+                              }}}},
+      At{loc1,
+         text::Tag{
+             text::TagDesc{nullopt, At{loc2,
+                                       text::TagType{
+                                           TagAttribute::Exception,
+                                           text::FunctionTypeUse{
+                                               At{loc3, text::Var{Index{0}}},
+                                               {},
+                                           },
+                                       }}},
+             {}}});
 }
 
 TEST_F(ConvertToBinaryTest, Module) {
@@ -1231,10 +1232,10 @@ TEST_F(ConvertToBinaryTest, Module) {
             // globals
             {At{loc11, binary::Global{binary_global_type,
                                       binary_constant_expression}}},
-            // events
-            {At{loc12, binary::Event{At{
-                           loc13, binary::EventType{EventAttribute::Exception,
-                                                    At{loc14, Index{0}}}}}}},
+            // tags
+            {At{loc12,
+                binary::Tag{At{loc13, binary::TagType{TagAttribute::Exception,
+                                                      At{loc14, Index{0}}}}}}},
             // exports
             {At{loc15, binary::Export{external_kind, At{loc16, "e"_sv},
                                       At{loc17, Index{0}}}}},
@@ -1273,18 +1274,17 @@ TEST_F(ConvertToBinaryTest, Module) {
                              At{loc5, text::Text{"\"n\"", 1}},
                              text::FunctionDesc{
                                  nullopt, At{loc6, text::Var{Index{0}}}, {}}}}},
-            // (event)
-            text::ModuleItem{
-                At{loc12,
-                   text::Event{
-                       text::EventDesc{
-                           nullopt,
-                           At{loc13,
-                              text::EventType{
-                                  EventAttribute::Exception,
-                                  text::FunctionTypeUse{
-                                      At{loc14, text::Var{Index{0}}}, {}}}}},
-                       {}}}},
+            // (tag)
+            text::ModuleItem{At{
+                loc12,
+                text::Tag{text::TagDesc{
+                              nullopt,
+                              At{loc13,
+                                 text::TagType{
+                                     TagAttribute::Exception,
+                                     text::FunctionTypeUse{
+                                         At{loc14, text::Var{Index{0}}}, {}}}}},
+                          {}}}},
             // (global i32 i32.const 0)
             text::ModuleItem{At{
                 loc11, text::Global{text::GlobalDesc{nullopt, text_global_type},
@@ -1351,7 +1351,7 @@ TEST_F(ConvertToBinaryTest, DataCount_BulkMemory) {
             {},
             // globals
             {},
-            // events
+            // tags
             {},
             // exports
             {},

@@ -563,18 +563,17 @@ TEST(TextWriteTest, GlobalDesc) {
               GlobalDesc{"$g"_sv, GlobalType{VT_F32, Mutability::Var}});
 }
 
-TEST(TextWriteTest, EventType) {
-  ExpectWrite(""_sv, EventType{});
-  ExpectWrite("(type 0)"_sv, EventType{EventAttribute::Exception,
-                                       FunctionTypeUse{Var{Index{0}}, {}}});
+TEST(TextWriteTest, TagType) {
+  ExpectWrite(""_sv, TagType{});
+  ExpectWrite("(type 0)"_sv, TagType{TagAttribute::Exception,
+                                     FunctionTypeUse{Var{Index{0}}, {}}});
 }
 
-TEST(TextWriteTest, EventDesc) {
-  ExpectWrite("event"_sv, EventDesc{nullopt, EventType{}});
-  ExpectWrite(
-      "event $e (type 0)"_sv,
-      EventDesc{"$e"_sv, EventType{EventAttribute::Exception,
-                                   FunctionTypeUse{Var{Index{0}}, {}}}});
+TEST(TextWriteTest, TagDesc) {
+  ExpectWrite("tag"_sv, TagDesc{nullopt, TagType{}});
+  ExpectWrite("tag $e (type 0)"_sv,
+              TagDesc{"$e"_sv, TagType{TagAttribute::Exception,
+                                       FunctionTypeUse{Var{Index{0}}, {}}}});
 }
 
 TEST(TextWriteTest, Import) {
@@ -598,11 +597,11 @@ TEST(TextWriteTest, Import) {
       Import{Text{"\"a\"", 1}, Text{"\"b\"", 1},
              GlobalDesc{nullopt, GlobalType{VT_I32, Mutability::Const}}});
 
-  // Event
-  ExpectWrite("(import \"a\" \"b\" (event))"_sv,
+  // Tag
+  ExpectWrite("(import \"a\" \"b\" (tag))"_sv,
               Import{Text{"\"a\"", 1}, Text{"\"b\"", 1},
-                     EventDesc{nullopt, EventType{EventAttribute::Exception,
-                                                  FunctionTypeUse{}}}});
+                     TagDesc{nullopt, TagType{TagAttribute::Exception,
+                                              FunctionTypeUse{}}}});
 }
 
 TEST(TextWriteTest, InlineImport) {
@@ -943,9 +942,9 @@ TEST(TextWriteTest, Export) {
   ExpectWrite("(export \"m\" (global 0))"_sv,
               Export{ExternalKind::Global, Text{"\"m\""_sv, 1}, Var{Index{0}}});
 
-  // Event.
-  ExpectWrite("(export \"m\" (event 0))"_sv,
-              Export{ExternalKind::Event, Text{"\"m\""_sv, 1}, Var{Index{0}}});
+  // Tag.
+  ExpectWrite("(export \"m\" (tag 0))"_sv,
+              Export{ExternalKind::Tag, Text{"\"m\""_sv, 1}, Var{Index{0}}});
 }
 
 TEST(TextWriteTest, Start) {
@@ -1110,22 +1109,22 @@ TEST(TextWriteTest, DataSegment) {
       DataSegment{"$d2"_sv, nullopt, ConstantExpression{I{O::Nop}}, {}});
 }
 
-TEST(TextWriteTest, Event) {
-  // Simplest event.
-  ExpectWrite("(event)"_sv, Event{});
+TEST(TextWriteTest, Tag) {
+  // Simplest tag.
+  ExpectWrite("(tag)"_sv, Tag{});
 
   // Name.
-  ExpectWrite("(event $e)"_sv, Event{EventDesc{"$e"_sv, {}}, {}});
+  ExpectWrite("(tag $e)"_sv, Tag{TagDesc{"$e"_sv, {}}, {}});
 
   // Inline export.
   ExpectWrite(
-      "(event (export \"m\"))"_sv,
-      Event{EventDesc{}, InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
+      "(tag (export \"m\"))"_sv,
+      Tag{TagDesc{}, InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 
   // Name and inline export.
-  ExpectWrite("(event $e2 (export \"m\"))"_sv,
-              Event{EventDesc{"$e2"_sv, {}},
-                    InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
+  ExpectWrite("(tag $e2 (export \"m\"))"_sv,
+              Tag{TagDesc{"$e2"_sv, {}},
+                  InlineExportList{InlineExport{Text{"\"m\""_sv, 1}}}});
 }
 
 TEST(TextWriteTest, ModuleItem) {
@@ -1181,12 +1180,12 @@ TEST(TextWriteTest, ModuleItem) {
       ModuleItem{DataSegment{
           nullopt, nullopt, ConstantExpression{Instruction{Opcode::Nop}}, {}}});
 
-  // Event.
-  ExpectWrite("(event)"_sv,
-              ModuleItem{Event{
-                  EventDesc{nullopt, EventType{EventAttribute::Exception,
-                                               FunctionTypeUse{nullopt, {}}}},
-                  {}}});
+  // Tag.
+  ExpectWrite(
+      "(tag)"_sv,
+      ModuleItem{Tag{TagDesc{nullopt, TagType{TagAttribute::Exception,
+                                              FunctionTypeUse{nullopt, {}}}},
+                     {}}});
 }
 
 TEST(TextWriteTest, Module) {

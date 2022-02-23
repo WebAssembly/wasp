@@ -223,8 +223,8 @@ auto ToBinary(BinCtx& ctx, const At<text::Import>& value)
                                At{desc.type.loc(), ToBinary(ctx, desc.type)}}};
     }
 
-    case ExternalKind::Event: {
-      auto& desc = value->event_desc();
+    case ExternalKind::Tag: {
+      auto& desc = value->tag_desc();
       return At{value.loc(),
                 binary::Import{module, name,
                                At{desc.type.loc(), ToBinary(ctx, desc.type)}}};
@@ -779,20 +779,20 @@ auto ToBinary(BinCtx& ctx, const At<text::DataSegment>& value)
 
 // Section 12: DataCount
 
-// Section 13: Event
-auto ToBinary(BinCtx& ctx, const At<text::EventType>& value)
-    -> At<binary::EventType> {
+// Section 13: Tag
+auto ToBinary(BinCtx& ctx, const At<text::TagType>& value)
+    -> At<binary::TagType> {
   return At{
       value.loc(),
-      binary::EventType{value->attribute, ToBinary(ctx, value->type.type_use)}};
+      binary::TagType{value->attribute, ToBinary(ctx, value->type.type_use)}};
 }
 
-auto ToBinary(BinCtx& ctx, const At<text::Event>& value)
-    -> OptAt<binary::Event> {
+auto ToBinary(BinCtx& ctx, const At<text::Tag>& value)
+    -> OptAt<binary::Tag> {
   if (value->import) {
     return nullopt;
   }
-  return At{value.loc(), binary::Event{ToBinary(ctx, value->desc.type)}};
+  return At{value.loc(), binary::Tag{ToBinary(ctx, value->desc.type)}};
 }
 
 // Module
@@ -859,8 +859,8 @@ auto ToBinary(BinCtx& ctx, const At<text::Module>& value)
         }
         break;
 
-      case text::ModuleItemKind::Event:
-        push_back_opt(result.events, ToBinary(ctx, item.event()));
+      case text::ModuleItemKind::Tag:
+        push_back_opt(result.tags, ToBinary(ctx, item.tag()));
         break;
     }
   }

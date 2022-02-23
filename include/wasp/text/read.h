@@ -196,10 +196,10 @@ auto ReadDataSegment(Tokenizer&, ReadCtx&) -> OptAt<DataSegment>;
 
 // Section 12: DataCount
 
-// Section 13: Event
+// Section 13: Tag
 
-auto ReadEventType(Tokenizer&, ReadCtx&) -> OptAt<EventType>;
-auto ReadEvent(Tokenizer&, ReadCtx&) -> OptAt<Event>;
+auto ReadTagType(Tokenizer&, ReadCtx&) -> OptAt<TagType>;
+auto ReadTag(Tokenizer&, ReadCtx&) -> OptAt<Tag>;
 
 // Module
 

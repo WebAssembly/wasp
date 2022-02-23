@@ -2009,14 +2009,14 @@ TEST_F(TextReadTest, GlobalType) {
      "(mut i32)"_su8);
 }
 
-TEST_F(TextReadTest, EventType) {
-  // Empty event type.
-  OK(ReadEventType, EventType{EventAttribute::Exception, {}}, ""_su8);
+TEST_F(TextReadTest, TagType) {
+  // Empty tag type.
+  OK(ReadTagType, TagType{TagAttribute::Exception, {}}, ""_su8);
 
   // Function type use.
-  OK(ReadEventType,
-     EventType{EventAttribute::Exception,
-               FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}},
+  OK(ReadTagType,
+     TagType{TagAttribute::Exception,
+             FunctionTypeUse{At{"(type 0)"_su8, Var{Index{0}}}, {}}},
      "(type 0)"_su8);
 }
 
@@ -2505,60 +2505,57 @@ TEST_F(TextReadTest, GlobalInlineImport) {
      "(global $g (export \"m\") (import \"a\" \"b\") i32)"_su8);
 }
 
-TEST_F(TextReadTest, Event) {
-  Fail(ReadEvent, {{0, "Events not allowed"}}, "(event)"_su8);
+TEST_F(TextReadTest, Tag) {
+  Fail(ReadTag, {{0, "Tags not allowed"}}, "(tag)"_su8);
 
   ctx.features.enable_exceptions();
 
-  // Simplest event.
-  OK(ReadEvent, Event{}, "(event)"_su8);
+  // Simplest tag.
+  OK(ReadTag, Tag{}, "(tag)"_su8);
 
   // Name.
-  OK(ReadEvent, Event{EventDesc{At{"$e"_su8, "$e"_sv}, {}}, {}},
-     "(event $e)"_su8);
+  OK(ReadTag, Tag{TagDesc{At{"$e"_su8, "$e"_sv}, {}}, {}}, "(tag $e)"_su8);
 
   // Inline export.
-  OK(ReadEvent,
-     Event{EventDesc{},
-           InlineExportList{
-               At{"(export \"m\")"_su8,
-                  InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
-     "(event (export \"m\"))"_su8);
+  OK(ReadTag,
+     Tag{TagDesc{}, InlineExportList{At{
+                        "(export \"m\")"_su8,
+                        InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
+     "(tag (export \"m\"))"_su8);
 
   // Name and inline export.
-  OK(ReadEvent,
-     Event{EventDesc{At{"$e2"_su8, "$e2"_sv}, {}},
-           InlineExportList{
-               At{"(export \"m\")"_su8,
-                  InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
-     "(event $e2 (export \"m\"))"_su8);
+  OK(ReadTag,
+     Tag{TagDesc{At{"$e2"_su8, "$e2"_sv}, {}},
+         InlineExportList{
+             At{"(export \"m\")"_su8,
+                InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
+     "(tag $e2 (export \"m\"))"_su8);
 }
 
-TEST_F(TextReadTest, EventInlineImport) {
-  Fail(ReadEvent, {{0, "Events not allowed"}},
-       "(event (import \"m\" \"n\"))"_su8);
+TEST_F(TextReadTest, TagInlineImport) {
+  Fail(ReadTag, {{0, "Tags not allowed"}}, "(tag (import \"m\" \"n\"))"_su8);
 
   ctx.features.enable_exceptions();
 
   // Inline import.
-  OK(ReadEvent,
-     Event{EventDesc{},
-           At{"(import \"m\" \"n\")"_su8,
-              InlineImport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
-                           At{"\"n\""_su8, Text{"\"n\""_sv, 1}}}},
-           {}},
-     "(event (import \"m\" \"n\"))"_su8);
+  OK(ReadTag,
+     Tag{TagDesc{},
+         At{"(import \"m\" \"n\")"_su8,
+            InlineImport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+                         At{"\"n\""_su8, Text{"\"n\""_sv, 1}}}},
+         {}},
+     "(tag (import \"m\" \"n\"))"_su8);
 
-  // Everything for event import.
-  OK(ReadEvent,
-     Event{EventDesc{At{"$e"_su8, "$e"_sv}, {}},
-           At{"(import \"a\" \"b\")"_su8,
-              InlineImport{At{"\"a\""_su8, Text{"\"a\""_sv, 1}},
-                           At{"\"b\""_su8, Text{"\"b\""_sv, 1}}}},
-           InlineExportList{
-               At{"(export \"m\")"_su8,
-                  InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
-     "(event $e (export \"m\") (import \"a\" \"b\"))"_su8);
+  // Everything for tag import.
+  OK(ReadTag,
+     Tag{TagDesc{At{"$e"_su8, "$e"_sv}, {}},
+         At{"(import \"a\" \"b\")"_su8,
+            InlineImport{At{"\"a\""_su8, Text{"\"a\""_sv, 1}},
+                         At{"\"b\""_su8, Text{"\"b\""_sv, 1}}}},
+         InlineExportList{
+             At{"(export \"m\")"_su8,
+                InlineExport{At{"\"m\""_su8, Text{"\"m\""_sv, 1}}}}}},
+     "(tag $e (export \"m\") (import \"a\" \"b\"))"_su8);
 }
 
 TEST_F(TextReadTest, Import) {
@@ -2605,16 +2602,16 @@ TEST_F(TextReadTest, Import_AfterNonImport) {
 }
 
 TEST_F(TextReadTest, Import_exceptions) {
-  Fail(ReadImport, {{17, "Events not allowed"}},
-       "(import \"m\" \"n\" (event))"_su8);
+  Fail(ReadImport, {{17, "Tags not allowed"}},
+       "(import \"m\" \"n\" (tag))"_su8);
 
   ctx.features.enable_exceptions();
 
-  // Event.
+  // Tag.
   OK(ReadImport,
      Import{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
-            At{"\"n\""_su8, Text{"\"n\""_sv, 1}}, EventDesc{}},
-     "(import \"m\" \"n\" (event))"_su8);
+            At{"\"n\""_su8, Text{"\"n\""_sv, 1}}, TagDesc{}},
+     "(import \"m\" \"n\" (tag))"_su8);
 }
 
 TEST_F(TextReadTest, Export) {
@@ -2644,16 +2641,15 @@ TEST_F(TextReadTest, Export) {
 }
 
 TEST_F(TextReadTest, Export_exceptions) {
-  Fail(ReadExport, {{13, "Events not allowed"}},
-       "(export \"m\" (event 0))"_su8);
+  Fail(ReadExport, {{13, "Tags not allowed"}}, "(export \"m\" (tag 0))"_su8);
 
   ctx.features.enable_exceptions();
 
-  // Event.
+  // Tag.
   OK(ReadExport,
-     Export{At{"event"_su8, ExternalKind::Event},
+     Export{At{"tag"_su8, ExternalKind::Tag},
             At{"\"m\""_su8, Text{"\"m\""_sv, 1}}, At{"0"_su8, Var{Index{0}}}},
-     "(export \"m\" (event 0))"_su8);
+     "(export \"m\" (tag 0))"_su8);
 }
 
 TEST_F(TextReadTest, Start) {
@@ -3086,17 +3082,16 @@ TEST_F(TextReadTest, ModuleItem) {
 }
 
 TEST_F(TextReadTest, ModuleItem_exceptions) {
-  Fail(ReadModuleItem, {{0, "Events not allowed"}}, "(event)"_su8);
+  Fail(ReadModuleItem, {{0, "Tags not allowed"}}, "(tag)"_su8);
 
   ctx.features.enable_exceptions();
 
-  // Event.
+  // Tag.
   OK(ReadModuleItem,
-     ModuleItem{
-         Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
-                                            FunctionTypeUse{nullopt, {}}}},
-               {}}},
-     "(event)"_su8);
+     ModuleItem{Tag{TagDesc{nullopt, TagType{TagAttribute::Exception,
+                                             FunctionTypeUse{nullopt, {}}}},
+                    {}}},
+     "(tag)"_su8);
 }
 
 TEST_F(TextReadTest, Module) {

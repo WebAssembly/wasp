@@ -40,7 +40,7 @@ struct ValidateVisitor : binary::visit::Visitor {
   auto OnTable(const At<binary::Table>&) -> Result;
   auto OnMemory(const At<binary::Memory>&) -> Result;
   auto OnGlobal(const At<binary::Global>&) -> Result;
-  auto OnEvent(const At<binary::Event>&) -> Result;
+  auto OnTag(const At<binary::Tag>&) -> Result;
   auto OnExport(const At<binary::Export>&) -> Result;
   auto OnStart(const At<binary::Start>&) -> Result;
   auto OnElement(const At<binary::ElementSegment>&) -> Result;

@@ -46,7 +46,7 @@ class TextDesugarTest : public ::testing::Test {
   const TableDesc table_desc{nullopt, TableType{Limits{0}, RT_Funcref}};
   const MemoryDesc memory_desc{nullopt, MemoryType{Limits{0}}};
   const GlobalDesc global_desc{nullopt, GlobalType{VT_I32, Mutability::Const}};
-  const EventDesc event_desc{nullopt, EventType{EventAttribute::Exception, {}}};
+  const TagDesc tag_desc{nullopt, TagType{TagAttribute::Exception, {}}};
 
   const ConstantExpression constant_expression{
       Instruction{Opcode::I32Const, s32{0}}};
@@ -282,50 +282,50 @@ TEST_F(TextDesugarTest, Global_ImportExport) {
       });
 }
 
-TEST_F(TextDesugarTest, Event_Defined) {
+TEST_F(TextDesugarTest, Tag_Defined) {
   OK(
       Module{
-          ModuleItem{At{loc1, Event{event_desc, {}}}},
+          ModuleItem{At{loc1, Tag{tag_desc, {}}}},
       },
       Module{
-          ModuleItem{At{loc1, Event{event_desc, {}}}},
+          ModuleItem{At{loc1, Tag{tag_desc, {}}}},
       });
 }
 
-TEST_F(TextDesugarTest, Event_DefinedExport) {
+TEST_F(TextDesugarTest, Tag_DefinedExport) {
   OK(
       Module{
-          ModuleItem{At{loc1, Event{event_desc, {}}}},
-          ModuleItem{At{export1_loc,
-                        Export{ExternalKind::Event, name3, Var{Index{0}}}}},
-          ModuleItem{At{export2_loc,
-                        Export{ExternalKind::Event, name4, Var{Index{0}}}}},
+          ModuleItem{At{loc1, Tag{tag_desc, {}}}},
+          ModuleItem{
+              At{export1_loc, Export{ExternalKind::Tag, name3, Var{Index{0}}}}},
+          ModuleItem{
+              At{export2_loc, Export{ExternalKind::Tag, name4, Var{Index{0}}}}},
       },
       Module{
-          ModuleItem{At{loc1, Event{event_desc, {export1, export2}}}},
+          ModuleItem{At{loc1, Tag{tag_desc, {export1, export2}}}},
       });
 }
 
-TEST_F(TextDesugarTest, Event_Import) {
+TEST_F(TextDesugarTest, Tag_Import) {
   OK(
       Module{
-          ModuleItem{At{import_loc, Import{name1, name2, event_desc}}},
+          ModuleItem{At{import_loc, Import{name1, name2, tag_desc}}},
       },
       Module{
-          ModuleItem{At{loc1, Event{event_desc, import, {}}}},
+          ModuleItem{At{loc1, Tag{tag_desc, import, {}}}},
       });
 }
 
-TEST_F(TextDesugarTest, Event_ImportExport) {
+TEST_F(TextDesugarTest, Tag_ImportExport) {
   OK(
       Module{
-          ModuleItem{At{import_loc, Import{name1, name2, event_desc}}},
-          ModuleItem{At{export1_loc,
-                        Export{ExternalKind::Event, name3, Var{Index{0}}}}},
-          ModuleItem{At{export2_loc,
-                        Export{ExternalKind::Event, name4, Var{Index{0}}}}},
+          ModuleItem{At{import_loc, Import{name1, name2, tag_desc}}},
+          ModuleItem{
+              At{export1_loc, Export{ExternalKind::Tag, name3, Var{Index{0}}}}},
+          ModuleItem{
+              At{export2_loc, Export{ExternalKind::Tag, name4, Var{Index{0}}}}},
       },
       Module{
-          ModuleItem{At{loc1, Event{event_desc, import, {export1, export2}}}},
+          ModuleItem{At{loc1, Tag{tag_desc, import, {export1, export2}}}},
       });
 }

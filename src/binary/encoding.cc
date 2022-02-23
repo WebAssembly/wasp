@@ -70,17 +70,17 @@ optional<::wasp::binary::BlockType> BlockType::Decode(
 }
 
 // static
-u8 EventAttribute::Encode(::wasp::EventAttribute decoded) {
+u8 TagAttribute::Encode(::wasp::TagAttribute decoded) {
   return u8(decoded);
 }
 
 // static
-optional<::wasp::EventAttribute> EventAttribute::Decode(u8 val) {
+optional<::wasp::TagAttribute> TagAttribute::Decode(u8 val) {
   switch (val) {
 #define WASP_V(val, Name, str) \
   case val:                    \
-    return ::wasp::EventAttribute::Name;
-#include "wasp/base/inc/event_attribute.inc"
+    return ::wasp::TagAttribute::Name;
+#include "wasp/base/inc/tag_attribute.inc"
 #undef WASP_V
     default:
       return nullopt;

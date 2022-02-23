@@ -120,9 +120,9 @@ auto ToText(TextCtx&, const At<binary::DataSegment>&) -> At<text::DataSegment>;
 
 // Section 12: DataCount
 
-// Section 13: Event
-auto ToText(TextCtx&, const At<binary::EventType>&) -> At<text::EventType>;
-auto ToText(TextCtx&, const At<binary::Event>&) -> At<text::Event>;
+// Section 13: Tag
+auto ToText(TextCtx&, const At<binary::TagType>&) -> At<text::TagType>;
+auto ToText(TextCtx&, const At<binary::Tag>&) -> At<text::Tag>;
 
 // Module
 auto ToText(TextCtx&, const At<binary::Module>&) -> At<text::Module>;

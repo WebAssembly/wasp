@@ -316,19 +316,19 @@ TEST(ConvertToTextTest, Import) {
                                           Mutability::Const,
                                       }}}});
 
-  // Event
+  // Tag
   OK(At{loc1,
         text::Import{
             At{loc2, text::Text{"\"m\"", 1}}, At{loc3, text::Text{"\"n\"", 1}},
-            text::EventDesc{
+            text::TagDesc{
                 nullopt,
-                At{loc4, text::EventType{EventAttribute::Exception,
-                                         text::FunctionTypeUse{
-                                             At{loc5, text::Var{Index{0}}},
-                                             {}}}}}}},
+                At{loc4,
+                   text::TagType{TagAttribute::Exception,
+                                 text::FunctionTypeUse{
+                                     At{loc5, text::Var{Index{0}}}, {}}}}}}},
      At{loc1, binary::Import{At{loc2, "m"_sv}, At{loc3, "n"_sv},
-                             At{loc4, binary::EventType{
-                                          EventAttribute::Exception,
+                             At{loc4, binary::TagType{
+                                          TagAttribute::Exception,
                                           At{loc5, Index{0}},
                                       }}}});
 }
@@ -846,37 +846,38 @@ TEST(ConvertToTextTest, DataSegment) {
             "hello\x00"_su8}});
 }
 
-TEST(ConvertToTextTest, EventType) {
+TEST(ConvertToTextTest, TagType) {
   OK(At{loc1,
-        text::EventType{
-            EventAttribute::Exception,
+        text::TagType{
+            TagAttribute::Exception,
             text::FunctionTypeUse{
                 At{loc2, text::Var{Index{0}}},
                 {},
             },
         }},
-     At{loc1, binary::EventType{
-                  EventAttribute::Exception,
+     At{loc1, binary::TagType{
+                  TagAttribute::Exception,
                   At{loc2, Index{0}},
               }});
 }
 
-TEST(ConvertToTextTest, Event) {
-  OK(At{loc1,
-        text::Event{text::EventDesc{
-                        nullopt, At{loc2,
-                                    text::EventType{
-                                        EventAttribute::Exception,
-                                        text::FunctionTypeUse{
-                                            At{loc3, text::Var{Index{0}}},
-                                            {},
-                                        },
-                                    }}},
-                    {}}},
-     At{loc1, binary::Event{At{loc2, binary::EventType{
-                                         EventAttribute::Exception,
-                                         At{loc3, Index{0}},
-                                     }}}});
+TEST(ConvertToTextTest, Tag) {
+  OK(
+      At{loc1,
+         text::Tag{
+             text::TagDesc{nullopt, At{loc2,
+                                       text::TagType{
+                                           TagAttribute::Exception,
+                                           text::FunctionTypeUse{
+                                               At{loc3, text::Var{Index{0}}},
+                                               {},
+                                           },
+                                       }}},
+             {}}},
+      At{loc1, binary::Tag{At{loc2, binary::TagType{
+                                        TagAttribute::Exception,
+                                        At{loc3, Index{0}},
+                                    }}}});
 }
 
 TEST(ConvertToTextTest, Module) {
@@ -962,18 +963,17 @@ TEST(ConvertToTextTest, Module) {
                 loc11, text::Global{text::GlobalDesc{nullopt, text_global_type},
                                     text_constant_expression,
                                     {}}}},
-            // (event)
-            text::ModuleItem{
-                At{loc12,
-                   text::Event{
-                       text::EventDesc{
-                           nullopt,
-                           At{loc13,
-                              text::EventType{
-                                  EventAttribute::Exception,
-                                  text::FunctionTypeUse{
-                                      At{loc14, text::Var{Index{0}}}, {}}}}},
-                       {}}}},
+            // (tag)
+            text::ModuleItem{At{
+                loc12,
+                text::Tag{text::TagDesc{
+                              nullopt,
+                              At{loc13,
+                                 text::TagType{
+                                     TagAttribute::Exception,
+                                     text::FunctionTypeUse{
+                                         At{loc14, text::Var{Index{0}}}, {}}}}},
+                          {}}}},
             // (export "e" (func 0))
             text::ModuleItem{
                 At{loc15, text::Export{external_kind,
@@ -1024,10 +1024,10 @@ TEST(ConvertToTextTest, Module) {
             // globals
             {At{loc11, binary::Global{binary_global_type,
                                       binary_constant_expression}}},
-            // events
-            {At{loc12, binary::Event{At{
-                           loc13, binary::EventType{EventAttribute::Exception,
-                                                    At{loc14, Index{0}}}}}}},
+            // tags
+            {At{loc12,
+                binary::Tag{At{loc13, binary::TagType{TagAttribute::Exception,
+                                                      At{loc14, Index{0}}}}}}},
             // exports
             {At{loc15, binary::Export{external_kind, At{loc16, "e"_sv},
                                       At{loc17, Index{0}}}}},

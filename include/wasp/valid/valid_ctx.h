@@ -109,7 +109,7 @@ struct ValidCtx {
   std::vector<binary::TableType> tables;
   std::vector<MemoryType> memories;
   std::vector<binary::GlobalType> globals;
-  std::vector<binary::EventType> events;
+  std::vector<binary::TagType> tags;
   std::vector<binary::ReferenceType> element_segments;
   Index defined_type_count = 0;
   Index imported_function_count = 0;

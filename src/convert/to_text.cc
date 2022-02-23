@@ -244,12 +244,11 @@ auto ToText(TextCtx& ctx, const At<binary::Import>& value)
                        text::GlobalDesc{nullopt,  // TODO(name)
                                         ToText(ctx, value->global_type())}}};
 
-    case ExternalKind::Event:
-      return At{
-          value.loc(),
-          text::Import{module, name,
-                       text::EventDesc{nullopt,  // TODO(name)
-                                       ToText(ctx, value->event_type())}}};
+    case ExternalKind::Tag:
+      return At{value.loc(),
+                text::Import{module, name,
+                             text::TagDesc{nullopt,  // TODO(name)
+                                           ToText(ctx, value->tag_type())}}};
 
     default:
       WASP_UNREACHABLE();
@@ -655,21 +654,21 @@ auto ToText(TextCtx& ctx, const At<binary::DataSegment>& value)
 
 // Section 12: DataCount
 
-// Section 13: Event
-auto ToText(TextCtx& ctx, const At<binary::EventType>& value)
-    -> At<text::EventType> {
-  return At{value.loc(),
-            text::EventType{
-                value->attribute,
-                text::FunctionTypeUse{ToText(ctx, value->type_index), {}}}};
+// Section 13: Tag
+auto ToText(TextCtx& ctx, const At<binary::TagType>& value)
+    -> At<text::TagType> {
+  return At{
+      value.loc(),
+      text::TagType{value->attribute,
+                    text::FunctionTypeUse{ToText(ctx, value->type_index), {}}}};
 }
 
-auto ToText(TextCtx& ctx, const At<binary::Event>& value) -> At<text::Event> {
+auto ToText(TextCtx& ctx, const At<binary::Tag>& value) -> At<text::Tag> {
   return At{value.loc(),
-            text::Event{text::EventDesc{nullopt,  // TODO(name)
-                                        ToText(ctx, value->event_type)},
-                        nullopt,
-                        {}}};
+            text::Tag{text::TagDesc{nullopt,  // TODO(name)
+                                    ToText(ctx, value->tag_type)},
+                      nullopt,
+                      {}}};
 }
 
 // Module
@@ -693,7 +692,7 @@ auto ToText(TextCtx& ctx, const At<binary::Module>& value) -> At<text::Module> {
   do_vector(value->tables);
   do_vector(value->memories);
   do_vector(value->globals);
-  do_vector(value->events);
+  do_vector(value->tags);
   do_vector(value->exports);
   do_optional(value->start);
   do_vector(value->element_segments);

@@ -35,7 +35,6 @@ else, TokenType::Else, Opcode::Else
 end, TokenType::End, Opcode::End
 eq, TokenType::HeapKind, HeapKind::Eq
 eqref, ReferenceKind::Eqref
-event, TokenType::Event
 export, TokenType::Export
 externref, ReferenceKind::Externref
 extern, TokenType::HeapKind, HeapKind::Extern
@@ -566,6 +565,7 @@ table.init, TokenType::TableInitInstr, Opcode::TableInit, Features::BulkMemory
 table.set, TokenType::VarInstr, Opcode::TableSet, Features::ReferenceTypes
 table.size, TokenType::VarInstr, Opcode::TableSize, Features::ReferenceTypes
 table, TokenType::Table
+tag, TokenType::Tag
 then, TokenType::Then
 throw, TokenType::VarInstr, Opcode::Throw, Features::Exceptions
 try, TokenType::BlockInstr, Opcode::Try, Features::Exceptions

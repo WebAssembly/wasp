@@ -66,7 +66,7 @@ WASP_DEFINE_VARIANT_NAME(text::FunctionDesc, "func")
 WASP_DEFINE_VARIANT_NAME(text::TableDesc, "table")
 WASP_DEFINE_VARIANT_NAME(text::MemoryDesc, "memory")
 WASP_DEFINE_VARIANT_NAME(text::GlobalDesc, "global")
-WASP_DEFINE_VARIANT_NAME(text::EventDesc, "event")
+WASP_DEFINE_VARIANT_NAME(text::TagDesc, "tag")
 
 // ElementList.
 WASP_DEFINE_VARIANT_NAME(text::ElementListWithExpressions, "expression")
@@ -86,7 +86,7 @@ WASP_DEFINE_VARIANT_NAME(text::Export, "export")
 WASP_DEFINE_VARIANT_NAME(text::Start, "start")
 WASP_DEFINE_VARIANT_NAME(text::ElementSegment, "elem")
 WASP_DEFINE_VARIANT_NAME(text::DataSegment, "data")
-WASP_DEFINE_VARIANT_NAME(text::Event, "event")
+WASP_DEFINE_VARIANT_NAME(text::Tag, "tag")
 
 // ScriptModule.
 WASP_DEFINE_VARIANT_NAME(text::Module, "module")

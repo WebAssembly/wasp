@@ -163,8 +163,8 @@ Iterator Write(ExternalKind value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(const EventAttribute& value, Iterator out) {
-  return Write(encoding::EventAttribute::Encode(value), out);
+Iterator Write(const TagAttribute& value, Iterator out) {
+  return Write(encoding::TagAttribute::Encode(value), out);
 }
 
 template <typename Iterator>
@@ -392,14 +392,14 @@ Iterator Write(const ElementSegment& value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(const EventType& value, Iterator out) {
+Iterator Write(const TagType& value, Iterator out) {
   out = Write(value.attribute, out);
   return Write(value.type_index, out);
 }
 
 template <typename Iterator>
-Iterator Write(const Event& value, Iterator out) {
-  out = Write(value.event_type, out);
+Iterator Write(const Tag& value, Iterator out) {
+  out = Write(value.tag_type, out);
   return out;
 }
 
@@ -514,8 +514,8 @@ Iterator Write(const Import& value, Iterator out) {
     case ExternalKind::Global:
       return Write(value.global_type(), out);
 
-    case ExternalKind::Event:
-      return Write(value.event_type(), out);
+    case ExternalKind::Tag:
+      return Write(value.tag_type(), out);
 
     default:
       WASP_UNREACHABLE();
@@ -766,7 +766,7 @@ Iterator Write(const Module& value, Iterator out) {
   out = WriteNonEmptyKnownSection(SectionId::Table, value.tables, out);
   out = WriteNonEmptyKnownSection(SectionId::Memory, value.memories, out);
   out = WriteNonEmptyKnownSection(SectionId::Global, value.globals, out);
-  out = WriteNonEmptyKnownSection(SectionId::Event, value.events, out);
+  out = WriteNonEmptyKnownSection(SectionId::Tag, value.tags, out);
   out = WriteNonEmptyKnownSection(SectionId::Export, value.exports, out);
   out = WriteNonEmptyKnownSection(SectionId::Start, value.start, out);
   out = WriteNonEmptyKnownSection(SectionId::Element, value.element_segments, out);

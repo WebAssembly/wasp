@@ -666,8 +666,8 @@ TEST_F(TextResolveTest, Instruction_Var_Global) {
   OK(I{O::GlobalSet, Var{Index{0}}}, I{O::GlobalSet, Var{"$t"_sv}});
 }
 
-TEST_F(TextResolveTest, Instruction_Var_Event) {
-  ctx.event_names.NewBound("$e");
+TEST_F(TextResolveTest, Instruction_Var_Tag) {
+  ctx.tag_names.NewBound("$e");
 
   OK(I{O::Throw, Var{Index{0}}}, I{O::Throw, Var{"$e"_sv}});
 }
@@ -1005,45 +1005,43 @@ TEST_F(TextResolveTest, GlobalDesc) {
      GlobalDesc{nullopt, GlobalType{VT_RefT, Mutability::Const}});
 }
 
-TEST_F(TextResolveTest, EventType) {
+TEST_F(TextResolveTest, TagType) {
   ctx.type_names.NewBound("$a");
-  ctx.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
+  ctx.function_type_map.Define(BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
 
-  OK(EventType{EventAttribute::Exception,
-               FunctionTypeUse{Var{Index{0}}, FunctionType{{VT_I32}, {}}}},
-     EventType{EventAttribute::Exception, FunctionTypeUse{Var{"$a"_sv}, {}}});
+  OK(TagType{TagAttribute::Exception,
+             FunctionTypeUse{Var{Index{0}}, FunctionType{{VT_I32}, {}}}},
+     TagType{TagAttribute::Exception, FunctionTypeUse{Var{"$a"_sv}, {}}});
 
   // Populate the type use.
-  OK(EventType{EventAttribute::Exception,
-               FunctionTypeUse{Var{Index{0}}, FunctionType{{VT_I32}, {}}}},
-     EventType{EventAttribute::Exception,
-               FunctionTypeUse{nullopt, FunctionType{{VT_I32}, {}}}});
+  OK(TagType{TagAttribute::Exception,
+             FunctionTypeUse{Var{Index{0}}, FunctionType{{VT_I32}, {}}}},
+     TagType{TagAttribute::Exception,
+             FunctionTypeUse{nullopt, FunctionType{{VT_I32}, {}}}});
 }
 
-TEST_F(TextResolveTest, EventType_RefType) {
+TEST_F(TextResolveTest, TagType_RefType) {
   ctx.type_names.NewBound("$t");
   ctx.function_type_map.Define(BoundFunctionType{});
 
   OK(  // type (type 1) (param (ref 0))
-      EventType{
-          EventAttribute::Exception,
+      TagType{
+          TagAttribute::Exception,
           FunctionTypeUse{Var{Index{1}}, FunctionType{{Resolved_VT_Ref0}, {}}}},
       // type (param (ref $t))
-      EventType{EventAttribute::Exception,
-                FunctionTypeUse{nullopt, FunctionType{{VT_RefT}, {}}}});
+      TagType{TagAttribute::Exception,
+              FunctionTypeUse{nullopt, FunctionType{{VT_RefT}, {}}}});
 }
 
-TEST_F(TextResolveTest, EventDesc) {
+TEST_F(TextResolveTest, TagDesc) {
   ctx.type_names.NewBound("$a");
-  ctx.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
+  ctx.function_type_map.Define(BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
 
-  OK(EventDesc{nullopt, EventType{EventAttribute::Exception,
-                                  FunctionTypeUse{Var{Index{0}},
-                                                  FunctionType{{VT_I32}, {}}}}},
-     EventDesc{nullopt, EventType{EventAttribute::Exception,
-                                  FunctionTypeUse{Var{"$a"_sv}, {}}}});
+  OK(TagDesc{nullopt, TagType{TagAttribute::Exception,
+                              FunctionTypeUse{Var{Index{0}},
+                                              FunctionType{{VT_I32}, {}}}}},
+     TagDesc{nullopt, TagType{TagAttribute::Exception,
+                              FunctionTypeUse{Var{"$a"_sv}, {}}}});
 }
 
 TEST_F(TextResolveTest, Import_Function) {
@@ -1117,39 +1115,38 @@ TEST_F(TextResolveTest, Import_Global_RefType) {
             GlobalDesc{nullopt, GlobalType{VT_RefT, Mutability::Const}}});
 }
 
-TEST_F(TextResolveTest, Import_Event) {
+TEST_F(TextResolveTest, Import_Tag) {
   ctx.type_names.NewBound("$a"_sv);
-  ctx.function_type_map.Define(
-      BoundFunctionType{{BVT{"$p"_sv, VT_I32}}, {}});
+  ctx.function_type_map.Define(BoundFunctionType{{BVT{"$p"_sv, VT_I32}}, {}});
 
   // $p param name is not copied.
   OK(Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-            EventDesc{nullopt,
-                      EventType{EventAttribute::Exception,
-                                FunctionTypeUse{Var{Index{0}},
-                                                FunctionType{{VT_I32}, {}}}}}},
+            TagDesc{nullopt,
+                    TagType{TagAttribute::Exception,
+                            FunctionTypeUse{Var{Index{0}},
+                                            FunctionType{{VT_I32}, {}}}}}},
      Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-            EventDesc{nullopt, EventType{EventAttribute::Exception,
-                                         FunctionTypeUse{Var{"$a"_sv}, {}}}}});
+            TagDesc{nullopt, TagType{TagAttribute::Exception,
+                                     FunctionTypeUse{Var{"$a"_sv}, {}}}}});
 }
 
-TEST_F(TextResolveTest, Import_Event_RefType) {
+TEST_F(TextResolveTest, Import_Tag_RefType) {
   ctx.type_names.NewBound("$t"_sv);
   ctx.function_type_map.Define(BoundFunctionType{});
 
-  OK(  // import "m" "n" (event (type 1) (param (ref 0)))
+  OK(  // import "m" "n" (tag (type 1) (param (ref 0)))
+      Import{
+          Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
+          TagDesc{nullopt, TagType{TagAttribute::Exception,
+                                   FunctionTypeUse{
+                                       Var{Index{1}},
+                                       FunctionType{{Resolved_VT_Ref0}, {}}}}}},
+      // import "m" "n" (tag (func (param (ref $t)))
       Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-             EventDesc{nullopt,
-                       EventType{EventAttribute::Exception,
-                                 FunctionTypeUse{
-                                     Var{Index{1}},
-                                     FunctionType{{Resolved_VT_Ref0}, {}}}}}},
-      // import "m" "n" (event (func (param (ref $t)))
-      Import{Text{"\"m\""_sv, 1}, Text{"\"n\""_sv, 1},
-             EventDesc{nullopt,
-                       EventType{EventAttribute::Exception,
-                                 FunctionTypeUse{
-                                     nullopt, FunctionType{{VT_RefT}, {}}}}}});
+             TagDesc{nullopt,
+                     TagType{TagAttribute::Exception,
+                             FunctionTypeUse{nullopt,
+                                             FunctionType{{VT_RefT}, {}}}}}});
 }
 
 TEST_F(TextResolveTest, Function) {
@@ -1387,11 +1384,11 @@ TEST_F(TextResolveTest, Export) {
   ctx.global_names.NewUnbound();
   ctx.global_names.NewUnbound();
   ctx.global_names.NewBound("$g"_sv);  // 3
-  ctx.event_names.NewUnbound();
-  ctx.event_names.NewUnbound();
-  ctx.event_names.NewUnbound();
-  ctx.event_names.NewUnbound();
-  ctx.event_names.NewBound("$e"_sv);  // 4
+  ctx.tag_names.NewUnbound();
+  ctx.tag_names.NewUnbound();
+  ctx.tag_names.NewUnbound();
+  ctx.tag_names.NewUnbound();
+  ctx.tag_names.NewBound("$e"_sv);  // 4
 
   OK(Export{ExternalKind::Function, Text{"\"f\"", 1}, Var{Index{0}}},
      Export{ExternalKind::Function, Text{"\"f\"", 1}, Var{"$f"_sv}});
@@ -1405,8 +1402,8 @@ TEST_F(TextResolveTest, Export) {
   OK(Export{ExternalKind::Global, Text{"\"g\"", 1}, Var{Index{3}}},
      Export{ExternalKind::Global, Text{"\"g\"", 1}, Var{"$g"_sv}});
 
-  OK(Export{ExternalKind::Event, Text{"\"e\"", 1}, Var{Index{4}}},
-     Export{ExternalKind::Event, Text{"\"e\"", 1}, Var{"$e"_sv}});
+  OK(Export{ExternalKind::Tag, Text{"\"e\"", 1}, Var{Index{4}}},
+     Export{ExternalKind::Tag, Text{"\"e\"", 1}, Var{"$e"_sv}});
 }
 
 TEST_F(TextResolveTest, Start) {
@@ -1459,27 +1456,25 @@ TEST_F(TextResolveTest, DataSegment_DuplicateName) {
              DataSegment{At{loc1, "$d"_sv}, nullopt, ConstantExpression{}, {}});
 }
 
-TEST_F(TextResolveTest, Event) {
+TEST_F(TextResolveTest, Tag) {
   ctx.type_names.NewBound("$a");
-  ctx.function_type_map.Define(
-      BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
+  ctx.function_type_map.Define(BoundFunctionType{{BVT{nullopt, VT_I32}}, {}});
 
-  OK(Event{EventDesc{nullopt,
-                     EventType{EventAttribute::Exception,
-                               FunctionTypeUse{Var{Index{0}},
-                                               FunctionType{{VT_I32}, {}}}}},
-           {}},
-     Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
-                                        FunctionTypeUse{Var{"$a"_sv}, {}}}},
-           {}});
+  OK(Tag{TagDesc{nullopt, TagType{TagAttribute::Exception,
+                                  FunctionTypeUse{Var{Index{0}},
+                                                  FunctionType{{VT_I32}, {}}}}},
+         {}},
+     Tag{TagDesc{nullopt, TagType{TagAttribute::Exception,
+                                  FunctionTypeUse{Var{"$a"_sv}, {}}}},
+         {}});
 }
 
-TEST_F(TextResolveTest, Event_DuplicateName) {
-  ctx.event_names.NewBound("$e"_sv);
+TEST_F(TextResolveTest, Tag_DuplicateName) {
+  ctx.tag_names.NewBound("$e"_sv);
 
   FailDefine({{loc1, "Variable $e is already bound to index 0"}},
-             EventDesc{At{loc1, "$e"_sv}, EventType{EventAttribute::Exception,
-                                                    FunctionTypeUse{}}});
+             TagDesc{At{loc1, "$e"_sv},
+                     TagType{TagAttribute::Exception, FunctionTypeUse{}}});
 }
 
 TEST_F(TextResolveTest, ModuleItem) {
@@ -1579,17 +1574,16 @@ TEST_F(TextResolveTest, ModuleItem) {
                             ConstantExpression{I{O::GlobalGet, Var{"$g"_sv}}},
                             {}}});
 
-  // Event.
-  OK(ModuleItem{Event{
-         EventDesc{nullopt,
-                   EventType{EventAttribute::Exception,
-                             FunctionTypeUse{Var{Index{0}},
-                                             FunctionType{{VT_I32}, {}}}}},
+  // Tag.
+  OK(ModuleItem{Tag{
+         TagDesc{nullopt, TagType{TagAttribute::Exception,
+                                  FunctionTypeUse{Var{Index{0}},
+                                                  FunctionType{{VT_I32}, {}}}}},
          {}}},
      ModuleItem{
-         Event{EventDesc{nullopt, EventType{EventAttribute::Exception,
-                                            FunctionTypeUse{Var{"$a"_sv}, {}}}},
-               {}}});
+         Tag{TagDesc{nullopt, TagType{TagAttribute::Exception,
+                                      FunctionTypeUse{Var{"$a"_sv}, {}}}},
+             {}}});
 }
 
 TEST_F(TextResolveTest, ModuleWithDeferredTypes) {

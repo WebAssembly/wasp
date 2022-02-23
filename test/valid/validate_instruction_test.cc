@@ -105,8 +105,8 @@ class ValidateInstructionTest : public ::testing::Test {
     return AddItem(ctx.globals, global_type);
   }
 
-  Index AddEvent(const EventType& event_type) {
-    return AddItem(ctx.events, event_type);
+  Index AddTag(const TagType& tag_type) {
+    return AddItem(ctx.tags, tag_type);
   }
 
   Index AddElementSegment(ReferenceType elem_type) {
@@ -654,10 +654,6 @@ TEST_F(ValidateInstructionTest, Try_Param) {
 
 TEST_F(ValidateInstructionTest, DISABLED_Try_Catch_Void) {
   Ok(I{O::Try, BT_Void});
-  Ok(I{O::Catch});
-  Ok(I{O::Drop});  // Drop the exception.
-  Ok(I{O::End});
-  ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, DISABLED_Try_Catch_SingleResult) {
@@ -701,34 +697,34 @@ TEST_F(ValidateInstructionTest, DISABLED_Try_Catch_Param) {
 
 TEST_F(ValidateInstructionTest, Throw) {
   auto type_index = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {}});
-  auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
+  auto tag_index = AddTag(TagType{TagAttribute::Exception, type_index});
   Ok(I{O::I32Const, s32{}});
   Ok(I{O::F32Const, f32{}});
-  Ok(I{O::Throw, Index{event_index}});
+  Ok(I{O::Throw, Index{tag_index}});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Throw_Unreachable) {
   auto type_index = AddFunctionType(FunctionType{{VT_I32}, {}});
-  auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
+  auto tag_index = AddTag(TagType{TagAttribute::Exception, type_index});
   Ok(I{O::Block, BT_F32});
   Ok(I{O::I32Const, s32{}});
-  Ok(I{O::Throw, Index{event_index}});
+  Ok(I{O::Throw, Index{tag_index}});
   Ok(I{O::End});
   ExpectNoErrors(errors);
 }
 
 TEST_F(ValidateInstructionTest, Throw_IndexOOB) {
   Fail(I{O::Throw, Index{0}});
-  ExpectError({"instruction", "Invalid event index 0, must be less than 0"},
+  ExpectError({"instruction", "Invalid tag index 0, must be less than 0"},
               errors);
 }
 
 TEST_F(ValidateInstructionTest, Throw_TypeMismatch) {
   auto type_index = AddFunctionType(FunctionType{{VT_I32, VT_F32}, {}});
-  auto event_index = AddEvent(EventType{EventAttribute::Exception, type_index});
+  auto tag_index = AddTag(TagType{TagAttribute::Exception, type_index});
   Ok(I{O::I64Const, s32{}});
-  Fail(I{O::Throw, Index{event_index}});
+  Fail(I{O::Throw, Index{tag_index}});
   ExpectError({"instruction", "Expected stack to contain [i32 f32], got [i64]"},
               errors);
 }

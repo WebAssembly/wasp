@@ -467,14 +467,14 @@ struct GlobalDesc {
   At<GlobalType> type;
 };
 
-struct EventType {
-  EventAttribute attribute;
+struct TagType {
+  TagAttribute attribute;
   FunctionTypeUse type;
 };
 
-struct EventDesc {
+struct TagDesc {
   OptAt<BindVar> name;
-  At<EventType> type;
+  At<TagType> type;
 };
 
 struct Import {
@@ -486,7 +486,7 @@ struct Import {
   bool is_table() const;
   bool is_memory() const;
   bool is_global() const;
-  bool is_event() const;
+  bool is_tag() const;
 
   auto function_desc() -> FunctionDesc&;
   auto function_desc() const -> const FunctionDesc&;
@@ -496,11 +496,11 @@ struct Import {
   auto memory_desc() const -> const MemoryDesc&;
   auto global_desc() -> GlobalDesc&;
   auto global_desc() const -> const GlobalDesc&;
-  auto event_desc() -> EventDesc&;
-  auto event_desc() const -> const EventDesc&;
+  auto tag_desc() -> TagDesc&;
+  auto tag_desc() const -> const TagDesc&;
 
   // NOTE: variant order must be kept in sync with ExternalKind enum.
-  variant<FunctionDesc, TableDesc, MemoryDesc, GlobalDesc, EventDesc> desc;
+  variant<FunctionDesc, TableDesc, MemoryDesc, GlobalDesc, TagDesc> desc;
 };
 
 struct InlineImport {
@@ -750,29 +750,29 @@ struct DataSegment {
 
 // Section 12: DataCount
 
-// Section 13: Event
+// Section 13: Tag
 
-struct Event {
-  // Empty event.
-  explicit Event() = default;
+struct Tag {
+  // Empty tag.
+  explicit Tag() = default;
 
-  // Defined event.
-  explicit Event(const EventDesc&, const InlineExportList&);
+  // Defined tag.
+  explicit Tag(const TagDesc&, const InlineExportList&);
 
-  // Imported event.
-  explicit Event(const EventDesc&,
-                 const At<InlineImport>&,
-                 const InlineExportList&);
+  // Imported tag.
+  explicit Tag(const TagDesc&,
+               const At<InlineImport>&,
+               const InlineExportList&);
 
   // Imported or defined.
-  explicit Event(const EventDesc&,
-                 const OptAt<InlineImport>&,
-                 const InlineExportList&);
+  explicit Tag(const TagDesc&,
+               const OptAt<InlineImport>&,
+               const InlineExportList&);
 
   auto ToImport() const -> OptAt<Import>;
   auto ToExports(Index this_index) const -> ExportList;
 
-  EventDesc desc;
+  TagDesc desc;
   OptAt<InlineImport> import;
   InlineExportList exports;
 };
@@ -791,7 +791,7 @@ enum class ModuleItemKind {
   Start,
   ElementSegment,
   DataSegment,
-  Event
+  Tag
 };
 
 struct ModuleItem {
@@ -806,7 +806,7 @@ struct ModuleItem {
   bool is_start() const;
   bool is_element_segment() const;
   bool is_data_segment() const;
-  bool is_event() const;
+  bool is_tag() const;
 
   auto defined_type() -> At<DefinedType>&;
   auto defined_type() const -> const At<DefinedType>&;
@@ -828,8 +828,8 @@ struct ModuleItem {
   auto element_segment() const -> const At<ElementSegment>&;
   auto data_segment() -> At<DataSegment>&;
   auto data_segment() const -> const At<DataSegment>&;
-  auto event() -> At<Event>&;
-  auto event() const -> const At<Event>&;
+  auto tag() -> At<Tag>&;
+  auto tag() const -> const At<Tag>&;
 
   variant<At<DefinedType>,
           At<Import>,
@@ -841,7 +841,7 @@ struct ModuleItem {
           At<Start>,
           At<ElementSegment>,
           At<DataSegment>,
-          At<Event>> desc;
+          At<Tag>> desc;
 };
 
 using Module = std::vector<ModuleItem>;
@@ -1077,8 +1077,8 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::TableDesc, 2, name, type)                                 \
   WASP_V(text::MemoryDesc, 2, name, type)                                \
   WASP_V(text::GlobalDesc, 2, name, type)                                \
-  WASP_V(text::EventType, 2, attribute, type)                            \
-  WASP_V(text::EventDesc, 2, name, type)                                 \
+  WASP_V(text::TagType, 2, attribute, type)                              \
+  WASP_V(text::TagDesc, 2, name, type)                                   \
   WASP_V(text::InlineImport, 2, module, name)                            \
   WASP_V(text::InlineExport, 1, name)                                    \
   WASP_V(text::Function, 5, desc, locals, instructions, import, exports) \
@@ -1088,7 +1088,7 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::Memory, 4, desc, import, exports, data)                   \
   WASP_V(text::ConstantExpression, 1, instructions)                      \
   WASP_V(text::Global, 4, desc, init, import, exports)                   \
-  WASP_V(text::Event, 3, desc, import, exports)                          \
+  WASP_V(text::Tag, 3, desc, import, exports)                            \
   WASP_V(text::Import, 3, module, name, desc)                            \
   WASP_V(text::Export, 3, kind, name, var)                               \
   WASP_V(text::Start, 1, var)                                            \

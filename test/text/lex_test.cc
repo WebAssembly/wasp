@@ -196,7 +196,6 @@ TEST(LexTest, Keyword) {
       {"data"_su8, TT::Data},
       {"declare"_su8, TT::Declare},
       {"elem"_su8, TT::Elem},
-      {"event"_su8, TT::Event},
       {"export"_su8, TT::Export},
       {"field"_su8, TT::Field},
       {"global"_su8, TT::Global},
@@ -217,6 +216,7 @@ TEST(LexTest, Keyword) {
       {"start"_su8, TT::Start},
       {"struct"_su8, TT::Struct},
       {"table"_su8, TT::Table},
+      {"tag"_su8, TT::Tag},
       {"then"_su8, TT::Then},
       {"type"_su8, TT::Type},
 

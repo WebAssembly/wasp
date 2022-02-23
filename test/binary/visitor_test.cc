@@ -85,9 +85,9 @@ struct VisitorMock {
   MOCK_METHOD1(BeginGlobalSection, visit::Result(LazyGlobalSection));
   MOCK_METHOD1(OnGlobal, visit::Result(const At<Global>&));
   MOCK_METHOD1(EndGlobalSection, visit::Result(LazyGlobalSection));
-  MOCK_METHOD1(BeginEventSection, visit::Result(LazyEventSection));
-  MOCK_METHOD1(OnEvent, visit::Result(const At<Event>&));
-  MOCK_METHOD1(EndEventSection, visit::Result(LazyEventSection));
+  MOCK_METHOD1(BeginTagSection, visit::Result(LazyTagSection));
+  MOCK_METHOD1(OnTag, visit::Result(const At<Tag>&));
+  MOCK_METHOD1(EndTagSection, visit::Result(LazyTagSection));
   MOCK_METHOD1(BeginExportSection, visit::Result(LazyExportSection));
   MOCK_METHOD1(OnExport, visit::Result(const At<Export>&));
   MOCK_METHOD1(EndExportSection, visit::Result(LazyExportSection));

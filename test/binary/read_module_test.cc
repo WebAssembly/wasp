@@ -62,7 +62,7 @@ TEST_F(BinaryReadModuleTest, EmptyModule) {
           {},
           // globals
           {},
-          // events
+          // tags
           {},
           // exports
           {},
@@ -97,7 +97,7 @@ TEST_F(BinaryReadModuleTest, SimpleModule) {
           {},
           // globals
           {},
-          // events
+          // tags
           {},
           // exports
           {},

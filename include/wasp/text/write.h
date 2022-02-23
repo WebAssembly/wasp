@@ -731,14 +731,14 @@ Iterator Write(WriteCtx& ctx, const GlobalDesc& value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteCtx& ctx, const EventType& value, Iterator out) {
+Iterator Write(WriteCtx& ctx, const TagType& value, Iterator out) {
   out = Write(ctx, value.type, out);
   return out;
 }
 
 template <typename Iterator>
-Iterator Write(WriteCtx& ctx, const EventDesc& value, Iterator out) {
-  out = Write(ctx, "event"_sv, out);
+Iterator Write(WriteCtx& ctx, const TagDesc& value, Iterator out) {
+  out = Write(ctx, "tag"_sv, out);
   out = Write(ctx, value.name, out);
   out = Write(ctx, value.type, out);
   return out;
@@ -767,8 +767,8 @@ Iterator Write(WriteCtx& ctx, const Import& value, Iterator out) {
       out = Write(ctx, value.global_desc(), out);
       break;
 
-    case ExternalKind::Event:
-      out = Write(ctx, value.event_desc(), out);
+    case ExternalKind::Tag:
+      out = Write(ctx, value.tag_desc(), out);
       break;
   }
   out = WriteRpar(ctx, out);
@@ -1127,10 +1127,10 @@ Iterator Write(WriteCtx& ctx, const DataSegment& value, Iterator out) {
 }
 
 template <typename Iterator>
-Iterator Write(WriteCtx& ctx, const Event& value, Iterator out) {
-  out = WriteLpar(ctx, "event", out);
+Iterator Write(WriteCtx& ctx, const Tag& value, Iterator out) {
+  out = WriteLpar(ctx, "tag", out);
 
-  // Can't write EventDesc directly, since inline imports/exports occur after
+  // Can't write TagDesc directly, since inline imports/exports occur after
   // the bind var.
   out = Write(ctx, value.desc.name, out);
   out = Write(ctx, value.exports, out);
@@ -1189,8 +1189,8 @@ Iterator Write(WriteCtx& ctx, const ModuleItem& value, Iterator out) {
       out = Write(ctx, value.data_segment(), out);
       break;
 
-    case ModuleItemKind::Event:
-      out = Write(ctx, value.event(), out);
+    case ModuleItemKind::Tag:
+      out = Write(ctx, value.tag(), out);
       break;
   }
   ctx.Newline();

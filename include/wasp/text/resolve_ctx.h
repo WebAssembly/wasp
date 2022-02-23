@@ -97,7 +97,7 @@ struct ResolveCtx {
   NameMap table_names;
   NameMap memory_names;
   NameMap global_names;
-  NameMap event_names;
+  NameMap tag_names;
   NameMap element_segment_names;
   NameMap data_segment_names;
   FunctionTypeMap function_type_map;

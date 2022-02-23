@@ -33,7 +33,7 @@ void ResolveCtx::BeginModule() {
   table_names.Reset();
   memory_names.Reset();
   global_names.Reset();
-  event_names.Reset();
+  tag_names.Reset();
   element_segment_names.Reset();
   data_segment_names.Reset();
   function_type_map.BeginModule();

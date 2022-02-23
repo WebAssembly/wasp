@@ -24,11 +24,12 @@ namespace wasp::binary {
 
 struct ReadCtx;
 
-auto Read(SpanU8*, ReadCtx&, Tag<IndirectNameAssoc>)
+auto Read(SpanU8*, ReadCtx&, ReadTag<IndirectNameAssoc>)
     -> OptAt<IndirectNameAssoc>;
-auto Read(SpanU8*, ReadCtx&, Tag<NameAssoc>) -> OptAt<NameAssoc>;
-auto Read(SpanU8*, ReadCtx&, Tag<NameSubsection>) -> OptAt<NameSubsection>;
-auto Read(SpanU8*, ReadCtx&, Tag<NameSubsectionId>) -> OptAt<NameSubsectionId>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<NameAssoc>) -> OptAt<NameAssoc>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<NameSubsection>) -> OptAt<NameSubsection>;
+auto Read(SpanU8*, ReadCtx&, ReadTag<NameSubsectionId>)
+    -> OptAt<NameSubsectionId>;
 
 }  // namespace wasp::binary
 

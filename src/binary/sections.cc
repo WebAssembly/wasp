@@ -54,12 +54,12 @@ auto ReadElementSection(KnownSection sec, ReadCtx& ctx) -> LazyElementSection {
   return ReadElementSection(sec.data, ctx);
 }
 
-auto ReadEventSection(SpanU8 data, ReadCtx& ctx) -> LazyEventSection {
-  return LazyEventSection{data, "event section", ctx};
+auto ReadTagSection(SpanU8 data, ReadCtx& ctx) -> LazyTagSection {
+  return LazyTagSection{data, "tag section", ctx};
 }
 
-auto ReadEventSection(KnownSection sec, ReadCtx& ctx) -> LazyEventSection {
-  return ReadEventSection(sec.data, ctx);
+auto ReadTagSection(KnownSection sec, ReadCtx& ctx) -> LazyTagSection {
+  return ReadTagSection(sec.data, ctx);
 }
 
 auto ReadExportSection(SpanU8 data, ReadCtx& ctx) -> LazyExportSection {
