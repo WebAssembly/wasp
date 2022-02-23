@@ -59,7 +59,7 @@ struct DirectoryInfo {
 const Features default_features;
 
 const std::vector<DirectoryInfo> directory_info_map = {
-    {"exception-handling", false, Features::Exceptions},
+    {"exception-handling", true, Features::Exceptions},
     {"extended-const", false, 0},
     {"function-references", false, Features::FunctionReferences},
     {"gc", false, 0},
