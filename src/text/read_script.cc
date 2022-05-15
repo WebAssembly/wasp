@@ -380,9 +380,14 @@ auto ReadReturnResult(Tokenizer& tokenizer, ReadCtx& ctx)
         return nullopt;
       }
       tokenizer.Read();
-      WASP_TRY_READ(type, ReadHeapType(tokenizer, ctx));
-      WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));
-      return At{guard.loc(), ReturnResult{RefNullConst{type}}};
+      if (tokenizer.Peek().type != TokenType::Rpar) {
+        WASP_TRY_READ(type, ReadHeapType(tokenizer, ctx));
+        WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));
+        return At{guard.loc(), ReturnResult{RefNullConst{type}}};
+      } else {
+        WASP_TRY(Expect(tokenizer, ctx, TokenType::Rpar));
+        return At{guard.loc(), ReturnResult{RefNullResult{}}};
+      }
     }
 
     case TokenType::RefExtern:

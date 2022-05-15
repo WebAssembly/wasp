@@ -222,6 +222,30 @@ bool IsNullableType(StackType type) {
          (type.is_value_type() && IsNullableType(type.value_type()));
 }
 
+auto AsNullableType(binary::RefType type) -> binary::RefType {
+  return binary::RefType{type.heap_type, Null::Yes};
+}
+
+auto AsNullableType(binary::ReferenceType type) -> binary::ReferenceType {
+  type = Canonicalize(type);
+  assert(type.is_ref());
+  return binary::ReferenceType{AsNullableType(type.ref())};
+}
+
+auto AsNullableType(binary::ValueType type) -> binary::ValueType {
+  assert(IsNullableType(type));
+  return binary::ValueType{AsNullableType(type.reference_type())};
+}
+
+auto AsNullableType(StackType type) -> StackType {
+  assert(IsNullableType(type));
+  if (type.is_any()) {
+    return type;
+  } else {
+    return StackType{AsNullableType(type.value_type())};
+  }
+}
+
 auto AsNonNullableType(binary::RefType type) -> binary::RefType {
   return binary::RefType{type.heap_type, Null::No};
 }

@@ -1700,6 +1700,7 @@ switch (PeekChar(data, 2)) {
       default: return LexKeyword(data, "br_if", TokenType::VarInstr, Opcode::BrIf);
       case '_':
         switch (PeekChar(data, 9)) {
+          case '_': return LexKeyword(data, "br_on_non_null", TokenType::VarInstr, Opcode::BrOnNonNull, Features::FunctionReferences);
           case 'l': return LexKeyword(data, "br_on_null", TokenType::VarInstr, Opcode::BrOnNull, Features::FunctionReferences);
           case 't': return LexKeyword(data, "br_on_cast", TokenType::BrOnCastInstr, Opcode::BrOnCast, Features::GC);
           default: break;

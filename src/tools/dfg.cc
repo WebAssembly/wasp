@@ -1032,6 +1032,7 @@ void Tool::DoInstruction(const Instruction& instr) {
     case Opcode::Let:
     case Opcode::RefAsNonNull:
     case Opcode::BrOnNull:
+    case Opcode::BrOnNonNull:
     case Opcode::RefEq:
     case Opcode::StructNewWithRtt:
     case Opcode::StructNewDefaultWithRtt:

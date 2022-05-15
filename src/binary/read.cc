@@ -1043,6 +1043,7 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Instruction>) {
     case Opcode::TableSize:
     case Opcode::TableFill:
     case Opcode::BrOnNull:
+    case Opcode::BrOnNonNull:
     case Opcode::StructNewWithRtt:
     case Opcode::StructNewDefaultWithRtt:
     case Opcode::ArrayNewWithRtt:

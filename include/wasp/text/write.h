@@ -1350,58 +1350,63 @@ Iterator Write(WriteCtx& ctx,
 template <typename Iterator>
 Iterator Write(WriteCtx& ctx, const ReturnResult& value, Iterator out) {
   out = WriteLpar(ctx, out);
-  switch (value.index()) {
-    case 0: // u32
+  switch (static_cast<ReturnResultKind>(value.index())) {
+    case ReturnResultKind::U32:
       out = Write(ctx, Opcode::I32Const, out);
       out = WriteInt(ctx, get<u32>(value), out);
       break;
 
-    case 1: // u64
+    case ReturnResultKind::U64:
       out = Write(ctx, Opcode::I64Const, out);
       out = WriteInt(ctx, get<u64>(value), out);
       break;
 
-    case 2: // v128
+    case ReturnResultKind::V128:
       out = Write(ctx, Opcode::V128Const, out);
       out = Write(ctx, get<v128>(value), out);
       break;
 
-    case 3: // F32Result
+    case ReturnResultKind::F32Result:
       out = Write(ctx, Opcode::F32Const, out);
       out = Write(ctx, get<F32Result>(value), out);
       break;
 
-    case 4: // F64Result
+    case ReturnResultKind::F64Result:
       out = Write(ctx, Opcode::F64Const, out);
       out = Write(ctx, get<F64Result>(value), out);
       break;
 
-    case 5: // F32x4Result
+    case ReturnResultKind::F32x4Result:
       out = Write(ctx, Opcode::V128Const, out);
       out = Write(ctx, "f32x4"_sv, out);
       out = Write(ctx, get<F32x4Result>(value), out);
       break;
 
-    case 6: // F64x2Result
+    case ReturnResultKind::F64x2Result:
       out = Write(ctx, Opcode::V128Const, out);
       out = Write(ctx, "f64x2"_sv, out);
       out = Write(ctx, get<F64x2Result>(value), out);
       break;
 
-    case 7: // RefNullConst
+    case ReturnResultKind::RefNullConst:
+      out = Write(ctx, Opcode::RefNull, out);
+      out = Write(ctx, *get<RefNullConst>(value).type, out);
+      break;
+
+    case ReturnResultKind::RefNullResult:
       out = Write(ctx, Opcode::RefNull, out);
       break;
 
-    case 8: // RefExternConst
+    case ReturnResultKind::RefExternConst:
       out = Write(ctx, "ref.extern"_sv, out);
       out = WriteNat(ctx, *get<RefExternConst>(value).var, out);
       break;
 
-    case 9: // RefExternResult
+    case ReturnResultKind::RefExternResult:
       out = Write(ctx, "ref.extern"_sv, out);
       break;
 
-    case 10: // RefFuncResult
+    case ReturnResultKind::RefFuncResult:
       out = Write(ctx, "ref.func"_sv, out);
       break;
   }

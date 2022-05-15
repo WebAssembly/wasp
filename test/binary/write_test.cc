@@ -709,6 +709,7 @@ TEST(BinaryWriteTest, Instruction_function_references) {
               I{O::Let, LetImmediate{BT_Void, {Locals{Index{2}, VT_I32}}}});
   ExpectWrite("\xd3"_su8, I{O::RefAsNonNull});
   ExpectWrite("\xd4\x00"_su8, I{O::BrOnNull, Index{0}});
+  ExpectWrite("\xd6\x00"_su8, I{O::BrOnNonNull, Index{0}});
 }
 
 TEST(BinaryWriteTest, Instruction_saturating_float_to_int) {
@@ -1614,6 +1615,7 @@ TEST(BinaryWriteTest, Opcode_function_references) {
   ExpectWrite("\x17"_su8, O::Let);
   ExpectWrite("\xd3"_su8, O::RefAsNonNull);
   ExpectWrite("\xd4"_su8, O::BrOnNull);
+  ExpectWrite("\xd6"_su8, O::BrOnNonNull);
 }
 
 TEST(BinaryWriteTest, Opcode_saturating_float_to_int) {

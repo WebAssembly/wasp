@@ -81,6 +81,11 @@ bool IsDefaultableType(binary::StorageType);
 bool IsNullableType(binary::ValueType);
 bool IsNullableType(StackType);
 
+auto AsNullableType(binary::RefType) -> binary::RefType;
+auto AsNullableType(binary::ReferenceType) -> binary::ReferenceType;
+auto AsNullableType(binary::ValueType) -> binary::ValueType;
+auto AsNullableType(StackType) -> StackType;
+
 auto AsNonNullableType(binary::RefType) -> binary::RefType;
 auto AsNonNullableType(binary::ReferenceType) -> binary::ReferenceType;
 auto AsNonNullableType(binary::ValueType) -> binary::ValueType;

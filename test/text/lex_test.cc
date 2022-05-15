@@ -299,6 +299,7 @@ TEST(LexTest, PlainInstr) {
       {"br_if"_su8, TT::VarInstr, O::BrIf, 0},
       {"br_on_cast"_su8, TT::BrOnCastInstr, O::BrOnCast, F::GC},
       {"br_on_null"_su8, TT::VarInstr, O::BrOnNull, F::FunctionReferences},
+      {"br_on_non_null"_su8, TT::VarInstr, O::BrOnNonNull, F::FunctionReferences},
       {"br_table"_su8, TT::BrTableInstr, O::BrTable, 0},
       {"br"_su8, TT::VarInstr, O::Br, 0},
       {"call_indirect"_su8, TT::CallIndirectInstr, O::CallIndirect, 0},

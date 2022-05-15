@@ -1287,6 +1287,39 @@ bool BrOnNull(ValidCtx& ctx, Location loc, const At<Index>& depth) {
   return AllTrue(valid, type_opt, label);
 }
 
+bool BrOnNonNull(ValidCtx& ctx, Location loc, const At<Index>& depth) {
+  bool valid = true;
+
+  const auto* label = GetLabel(ctx, depth);
+  auto label_ = MaybeDefault(label);
+  auto& label_types = label_.br_types();
+
+  // BrOnNonNull is [t* (ref null ht)] => [t*],
+  //   where label is [t* (ref ht)]
+  if (label_types.size() > 0) {
+    auto& last_type = label_types[label_types.size() - 1];
+    if (IsReferenceTypeOrAny(last_type)) {
+      if (IsNullableType(last_type)) {
+        StackTypeSpan push_types{label_types.data(), label_types.size() - 1};
+        StackTypeList pop_types{push_types.begin(), push_types.end()};
+        pop_types.push_back(AsNullableType(last_type));
+
+        valid &= PopAndPushTypes(ctx, loc, pop_types, push_types);
+      } else {
+        ctx.errors->OnError(
+            loc, concat("Expected nullable reference type, got ", last_type));
+        valid = false;
+      }
+    } else {
+      ctx.errors->OnError(loc,
+                          concat("Expected reference type, got ", last_type));
+      valid = false;
+    }
+  }
+
+  return AllTrue(valid, label);
+}
+
 bool RefAsNonNull(ValidCtx& ctx, Location loc) {
   bool valid = true;
   auto type_opt = PopReferenceType(ctx, loc);
@@ -1971,6 +2004,9 @@ bool Validate(ValidCtx& ctx, const At<Instruction>& value) {
 
     case Opcode::BrOnNull:
       return BrOnNull(ctx, loc, value->index_immediate());
+
+    case Opcode::BrOnNonNull:
+      return BrOnNonNull(ctx, loc, value->index_immediate());
 
     case Opcode::RefAsNonNull:
       return RefAsNonNull(ctx, loc);

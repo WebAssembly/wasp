@@ -535,6 +535,7 @@ void Resolve(ResolveCtx& ctx, Instruction& instruction) {
         case Opcode::BrIf:
         case Opcode::Br:
         case Opcode::BrOnNull:
+        case Opcode::BrOnNonNull:
           // TODO: Keep if br_on_cast continues to use var immediate instead of
           // BrOnExnImmediate.
 #if 1

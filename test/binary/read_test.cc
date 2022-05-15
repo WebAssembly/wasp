@@ -2436,6 +2436,8 @@ TEST_F(BinaryReadTest, Instruction_function_references) {
   OK(Read<I>, I{At{"\xd3"_su8, O::RefAsNonNull}}, "\xd3"_su8);
   OK(Read<I>, I{At{"\xd4"_su8, O::BrOnNull}, At{"\x00"_su8, Index{0}}},
      "\xd4\x00"_su8);
+  OK(Read<I>, I{At{"\xd6"_su8, O::BrOnNonNull}, At{"\x00"_su8, Index{0}}},
+     "\xd6\x00"_su8);
 }
 
 TEST_F(BinaryReadTest, Instruction_gc) {
@@ -3414,6 +3416,7 @@ TEST_F(BinaryReadTest, Opcode_function_references) {
   OK(Read<O>, At{"\x17"_su8, O::Let}, "\x17"_su8);
   OK(Read<O>, At{"\xd3"_su8, O::RefAsNonNull}, "\xd3"_su8);
   OK(Read<O>, At{"\xd4"_su8, O::BrOnNull}, "\xd4"_su8);
+  OK(Read<O>, At{"\xd6"_su8, O::BrOnNonNull}, "\xd6"_su8);
 }
 
 TEST_F(BinaryReadTest, Opcode_gc) {

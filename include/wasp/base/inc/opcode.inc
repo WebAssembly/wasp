@@ -206,6 +206,7 @@ WASP_FEATURE_V(0x00, 0x16, FuncBind, "func.bind", function_references)
 WASP_FEATURE_V(0x00, 0x17, Let, "let", function_references)
 WASP_FEATURE_V(0x00, 0xd3, RefAsNonNull, "ref.as_non_null", function_references)
 WASP_FEATURE_V(0x00, 0xd4, BrOnNull, "br_on_null", function_references)
+WASP_FEATURE_V(0x00, 0xd6, BrOnNonNull, "br_on_non_null", function_references)
 
 // Reference type opcodes
 WASP_FEATURE_V(0x00, 0x1c, SelectT, "select", reference_types)

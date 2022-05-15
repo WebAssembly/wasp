@@ -18,6 +18,7 @@ assert_unlinkable, TokenType::AssertUnlinkable
 binary, TokenType::Binary
 block, TokenType::BlockInstr, Opcode::Block
 br_if, TokenType::VarInstr, Opcode::BrIf
+br_on_non_null, TokenType::VarInstr, Opcode::BrOnNonNull, Features::FunctionReferences
 br_on_null, TokenType::VarInstr, Opcode::BrOnNull, Features::FunctionReferences
 br_table, TokenType::BrTableInstr, Opcode::BrTable
 br, TokenType::VarInstr, Opcode::Br

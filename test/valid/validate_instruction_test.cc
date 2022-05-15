@@ -3240,6 +3240,24 @@ TEST_F(ValidateInstructionTest, BrOnNull_MultiResult) {
                 {VT_I32, VT_F32, VT_RefFunc});
 }
 
+TEST_F(ValidateInstructionTest, BrOnNonNull_SingleResult) {
+  Ok(I{O::Block, BT_RefFunc});
+
+  // Should be valid with nullable and non-nullable types.
+  TestSignature(I{O::BrOnNonNull, Index{0}}, {VT_RefNullFunc}, {});
+  TestSignature(I{O::BrOnNonNull, Index{0}}, {VT_RefFunc}, {});
+}
+
+TEST_F(ValidateInstructionTest, BrOnNonNull_MultiResult) {
+  auto v_if = AddFunctionType(FunctionType{{}, {VT_I32, VT_RefFunc}});
+  Ok(I{O::Block, BlockType(v_if)});
+
+  // Should be valid with nullable and non-nullable types.
+  TestSignature(I{O::BrOnNonNull, Index{0}}, {VT_I32, VT_RefNullFunc},
+                {VT_I32});
+  TestSignature(I{O::BrOnNonNull, Index{0}}, {VT_I32, VT_RefFunc}, {VT_I32});
+}
+
 TEST_F(ValidateInstructionTest, RefAsNonNull) {
   TestSignature(I{O::RefAsNonNull}, {VT_RefNullFunc}, {VT_RefFunc});
   TestSignature(I{O::RefAsNonNull}, {VT_RefFunc}, {VT_RefFunc});

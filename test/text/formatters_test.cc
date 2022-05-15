@@ -696,7 +696,7 @@ TEST(TextFormattersTest, ScriptModule) {
 }
 
 TEST(TextFormattersTest, RefNullConst) {
-  EXPECT_EQ(R"({})", concat(RefNullConst{HT_Func}));
+  EXPECT_EQ(R"({type func})", concat(RefNullConst{HT_Func}));
 }
 
 TEST(TextFormattersTest, RefExternConst) {
@@ -720,7 +720,7 @@ TEST(TextFormattersTest, Const) {
   EXPECT_EQ(R"(v128 0x0 0x0 0x0 0x0)", concat(Const{v128{}}));
 
   // RefNullConst
-  EXPECT_EQ(R"(ref.null {})", concat(Const{RefNullConst{HT_Func}}));
+  EXPECT_EQ(R"(ref.null {type func})", concat(Const{RefNullConst{HT_Func}}));
 
   // RefExternConst
   EXPECT_EQ(R"(ref.extern {var 0})", concat(Const{RefExternConst{u32{}}}));
@@ -811,6 +811,10 @@ TEST(TextFormattersTest, F64x2Result) {
             concat(F64x2Result{f64{}, NanKind::Arithmetic}));
 }
 
+TEST(TextFormattersTest, RefNullResult) {
+  EXPECT_EQ(R"({})", concat(RefNullResult{}));
+}
+
 TEST(TextFormattersTest, RefExternResult) {
   EXPECT_EQ(R"({})", concat(RefExternResult{}));
 }
@@ -841,6 +845,17 @@ TEST(TextFormattersTest, ReturnResult) {
 
   // F64x2Result
   EXPECT_EQ(R"(f64x2 [f64 0 f64 0])", concat(ReturnResult{F64x2Result{}}));
+
+  // RefNullConst
+  EXPECT_EQ(R"(ref.null {type func})",
+            concat(ReturnResult{RefNullConst{HT_Func}}));
+
+  // RefNullResult
+  EXPECT_EQ(R"(ref.null {})", concat(ReturnResult{RefNullResult{}}));
+
+  // RefExternConst
+  EXPECT_EQ(R"(ref.extern {var 0})",
+            concat(ReturnResult{RefExternConst{s32{0}}}));
 
   // RefExternResult
   EXPECT_EQ(R"(ref.extern {})", concat(ReturnResult{RefExternResult{}}));

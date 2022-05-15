@@ -964,8 +964,25 @@ using F64Result = FloatResult<f64>;
 using F32x4Result = std::array<F32Result, 4>;
 using F64x2Result = std::array<F64Result, 2>;
 
+struct RefNullResult {};
 struct RefExternResult {};
 struct RefFuncResult {};
+
+// NOTE this must be kept in sync with the ReturnResult variant below.
+enum class ReturnResultKind {
+  U32,
+  U64,
+  V128,
+  F32Result,
+  F64Result,
+  F32x4Result,
+  F64x2Result,
+  RefNullConst,
+  RefNullResult,
+  RefExternConst,
+  RefExternResult,
+  RefFuncResult,
+};
 
 // TODO: u32 and u64 here seem to cause conversion warnings in win32
 using ReturnResult = variant<u32,
@@ -976,6 +993,7 @@ using ReturnResult = variant<u32,
                              F32x4Result,
                              F64x2Result,
                              RefNullConst,
+                             RefNullResult,
                              RefExternConst,
                              RefExternResult,
                              RefFuncResult>;
@@ -1098,12 +1116,13 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::ElementSegment, 5, name, type, table, offset, elements)   \
   WASP_V(text::DataSegment, 5, name, type, memory, offset, data)         \
   WASP_V(text::ScriptModule, 3, name, kind, contents)                    \
-  WASP_V(text::RefNullConst, 0)                                          \
+  WASP_V(text::RefNullConst, 1, type)                                    \
   WASP_V(text::RefExternConst, 1, var)                                   \
   WASP_V(text::InvokeAction, 3, module, name, consts)                    \
   WASP_V(text::GetAction, 2, module, name)                               \
   WASP_V(text::ModuleAssertion, 2, module, message)                      \
   WASP_V(text::ActionAssertion, 2, action, message)                      \
+  WASP_V(text::RefNullResult, 0)                                         \
   WASP_V(text::RefExternResult, 0)                                       \
   WASP_V(text::RefFuncResult, 0)                                         \
   WASP_V(text::ReturnAssertion, 2, action, results)                      \

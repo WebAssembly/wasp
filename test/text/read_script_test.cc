@@ -160,8 +160,10 @@ TEST_F(TextReadScriptTest, Const_reference_types) {
 
   ctx.features.enable_reference_types();
 
-  OK(ReadConst, Const{RefNullConst{HT_Func}}, "(ref.null func)"_su8);
-  OK(ReadConst, Const{RefNullConst{HT_Extern}}, "(ref.null extern)"_su8);
+  OK(ReadConst, Const{RefNullConst{At{"func"_su8, HT_Func}}},
+     "(ref.null func)"_su8);
+  OK(ReadConst, Const{RefNullConst{At{"extern"_su8, HT_Extern}}},
+     "(ref.null extern)"_su8);
   OK(ReadConst, Const{RefExternConst{At{"0"_su8, u32{0}}}},
      "(ref.extern 0)"_su8);
 }
@@ -347,12 +349,13 @@ TEST_F(TextReadScriptTest, ReturnResult_reference_types) {
 
   ctx.features.enable_reference_types();
 
-  OK(ReadReturnResult, ReturnResult{RefNullConst{HT_Func}},
+  OK(ReadReturnResult, ReturnResult{RefNullConst{At{"func"_su8, HT_Func}}},
      "(ref.null func)"_su8);
-  OK(ReadReturnResult, ReturnResult{RefNullConst{HT_Extern}},
+  OK(ReadReturnResult, ReturnResult{RefNullConst{At{"extern"_su8, HT_Extern}}},
      "(ref.null extern)"_su8);
   OK(ReadReturnResult, ReturnResult{RefExternConst{At{"0"_su8, u32{0}}}},
      "(ref.extern 0)"_su8);
+  OK(ReadReturnResult, ReturnResult{RefNullResult{}}, "(ref.null)"_su8);
   OK(ReadReturnResult, ReturnResult{RefExternResult{}}, "(ref.extern)"_su8);
   OK(ReadReturnResult, ReturnResult{RefFuncResult{}}, "(ref.func)"_su8);
 }

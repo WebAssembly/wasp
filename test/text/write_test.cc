@@ -1425,7 +1425,8 @@ TEST(TextWriteTest, ReturnResult) {
               }});
 
   // reference-types
-  ExpectWrite("(ref.null)"_sv, ReturnResult{RefNullConst{HT_Func}});
+  ExpectWrite("(ref.null func)"_sv, ReturnResult{RefNullConst{HT_Func}});
+  ExpectWrite("(ref.null)"_sv, ReturnResult{RefNullResult{}});
   ExpectWrite("(ref.extern 0)"_sv, ReturnResult{RefExternConst{u32{0}}});
   ExpectWrite("(ref.extern)"_sv, ReturnResult{RefExternResult{}});
   ExpectWrite("(ref.func)"_sv, ReturnResult{RefFuncResult{}});
