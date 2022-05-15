@@ -222,6 +222,70 @@ TEST_F(ValidateTest, ConstantExpression_Funcref) {
   EXPECT_EQ(1u, ctx.declared_functions.size());
 }
 
+TEST_F(ValidateTest, ConstantExpression_ExtendedConst) {
+  using I = Instruction;
+  using O = Opcode;
+  using CE = ConstantExpression;
+
+  ctx.globals.push_back(GlobalType{VT_I32, Mutability::Const});
+  ctx.globals.push_back(GlobalType{VT_I64, Mutability::Const});
+  auto max = ctx.globals.size();
+
+  struct {
+    ConstantExpression expr;
+    ValueType type;
+  } const tests[] = {
+      // Basic add/sub/mul
+      {CE{{I{O::I32Const, s32{0}}, I{O::I32Const, s32{1}}, I{O::I32Add}}},
+       VT_I32},
+      {CE{{I{O::I32Const, s32{0}}, I{O::I32Const, s32{1}}, I{O::I32Sub}}},
+       VT_I32},
+      {CE{{I{O::I32Const, s32{0}}, I{O::I32Const, s32{1}}, I{O::I32Mul}}},
+       VT_I32},
+      {CE{{I{O::I64Const, s64{0}}, I{O::I64Const, s64{1}}, I{O::I64Add}}},
+       VT_I64},
+      {CE{{I{O::I64Const, s64{0}}, I{O::I64Const, s64{1}}, I{O::I64Sub}}},
+       VT_I64},
+      {CE{{I{O::I64Const, s64{0}}, I{O::I64Const, s64{1}}, I{O::I64Mul}}},
+       VT_I64},
+
+      // op w/ global
+      {CE{{I{O::GlobalGet, Index{0}}, I{O::I32Const, s32{1}}, I{O::I32Add}}},
+       VT_I32},
+      {CE{{I{O::GlobalGet, Index{0}}, I{O::I32Const, s32{1}}, I{O::I32Sub}}},
+       VT_I32},
+      {CE{{I{O::GlobalGet, Index{0}}, I{O::I32Const, s32{1}}, I{O::I32Mul}}},
+       VT_I32},
+      {CE{{I{O::GlobalGet, Index{1}}, I{O::I64Const, s64{1}}, I{O::I64Add}}},
+       VT_I64},
+      {CE{{I{O::GlobalGet, Index{1}}, I{O::I64Const, s64{1}}, I{O::I64Sub}}},
+       VT_I64},
+      {CE{{I{O::GlobalGet, Index{1}}, I{O::I64Const, s64{1}},
+           Instruction{O::I64Mul}}},
+       VT_I64},
+
+      // Longer expression
+      {CE{{
+           I{O::I32Const, s32{0}},
+           I{O::I32Const, s32{1}},
+           I{O::I32Mul},
+           I{O::I32Const, s32{2}},
+           I{O::I32Const, s32{3}},
+           I{O::I32Sub},
+           I{O::I32Add},
+       }},
+       VT_I32},
+  };
+
+  for (const auto& test: tests) {
+    ctx.features.disable_extended_const();
+    EXPECT_FALSE(Validate(ctx, test.expr, test.type, max)) << test.expr;
+
+    ctx.features.enable_extended_const();
+    EXPECT_TRUE(Validate(ctx, test.expr, test.type, max)) << test.expr;
+  }
+}
+
 TEST_F(ValidateTest, DataCount) {
   EXPECT_TRUE(Validate(ctx, DataCount{1}));
   ASSERT_TRUE(ctx.declared_data_count);

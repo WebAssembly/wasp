@@ -60,7 +60,7 @@ const Features default_features;
 
 const std::vector<DirectoryInfo> directory_info_map = {
     {"exception-handling", true, Features::Exceptions},
-    {"extended-const", false, 0},
+    {"extended-const", true, default_features.bits() | Features::ExtendedConst},
     {"function-references", false, Features::FunctionReferences},
     {"gc", false, 0},
     {"memory64", true, Features::Memory64},

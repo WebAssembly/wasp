@@ -145,7 +145,8 @@ bool Validate(ValidCtx& ctx,
               binary::ValueType expected_type,
               Index max_global_index) {
   ErrorsContextGuard guard{*ctx.errors, value.loc(), "constant_expression"};
-  if (value->instructions.size() != 1 && !ctx.features.gc_enabled()) {
+  if (value->instructions.size() != 1 &&
+      !(ctx.features.gc_enabled() || ctx.features.extended_const_enabled())) {
     ctx.errors->OnError(value.loc(),
                         "A constant expression must be a single instruction");
     return false;
@@ -175,6 +176,18 @@ bool Validate(ValidCtx& ctx,
       case Opcode::RefNull:
       case Opcode::RttCanon:
       case Opcode::RttSub:
+        // Validate normally.
+        break;
+
+      case Opcode::I32Add:
+      case Opcode::I32Sub:
+      case Opcode::I32Mul:
+      case Opcode::I64Add:
+      case Opcode::I64Sub:
+      case Opcode::I64Mul:
+        if (!ctx.features.extended_const_enabled()) {
+          goto not_allowed;
+        }
         // Validate normally.
         break;
 
@@ -209,6 +222,7 @@ bool Validate(ValidCtx& ctx,
         break;
       }
 
+      not_allowed:
       default:
         ctx.errors->OnError(
             instruction.loc(),

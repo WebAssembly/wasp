@@ -18,6 +18,7 @@
 
 WASP_V(BulkMemory,           bulk_memory,             "bulk-memory",             true)
 WASP_V(Exceptions,           exceptions,              "exceptions",              false)
+WASP_V(ExtendedConst,        extended_const,          "extended-const",          false)
 WASP_V(FunctionReferences,   function_references,     "function-references",     false)
 WASP_V(GC,                   gc,                      "gc",                      false)
 WASP_V(Memory64,             memory64,                "memory64",                false)
