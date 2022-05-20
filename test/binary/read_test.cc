@@ -62,6 +62,7 @@ class BinaryReadTest : public ::testing::Test {
     EXPECT_FALSE(actual.has_value());
     ExpectError(error, errors, orig_data);
     errors.Clear();
+    ctx.Reset();
   }
 
   void FailUnknownOpcode(u8 code) {
@@ -1850,9 +1851,8 @@ TEST_F(BinaryReadTest, InstructionList_TryDelegate) {
          At{"\x06\x40"_su8, I{At{"\x06"_su8, O::Try}, At{"\x40"_su8, BT_Void}}},
          At{"\x18\x00"_su8,
             I{At{"\x18"_su8, O::Delegate}, At{"\x00"_su8, Index{0}}}},
-         At{"\x0b"_su8, I{At{"\x0b"_su8, O::End}}},
      },
-     "\x06\x40\x18\x00\x0b\x0b"_su8);
+     "\x06\x40\x18\x00\x0b"_su8);
 }
 
 TEST_F(BinaryReadTest, InstructionList_TryNoCatch) {
@@ -1868,15 +1868,15 @@ TEST_F(BinaryReadTest, InstructionList_CatchDelegate_OutOfOrder) {
 
   // Catch then delegate
   Fail(Read<InstructionList>, {{4, "Unexpected delegate instruction"}},
-       "\x06\x40\x07\x00\x18\x00\x0b\x0b"_su8);
+       "\x06\x40\x07\x00\x18\x00\x0b"_su8);
 
   // Delegate then catch
   Fail(Read<InstructionList>, {{4, "Unexpected catch instruction"}},
-       "\x06\x40\x18\x00\x07\x00\x0b\x0b"_su8);
+       "\x06\x40\x18\x00\x07\x00\x0b"_su8);
 
   // Delegate then catch_all
   Fail(Read<InstructionList>, {{4, "Unexpected catch_all instruction"}},
-       "\x06\x40\x18\x00\x19\x0b\x0b"_su8);
+       "\x06\x40\x18\x00\x19\x0b"_su8);
 }
 
 

@@ -985,7 +985,7 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Instruction>) {
                            concat("Unexpected delegate instruction"));
         return nullopt;
       } else {
-        ctx.open_blocks.back() = opcode;
+        ctx.open_blocks.pop_back();
       }
       WASP_TRY_READ(index, ReadIndex(data, ctx, "index"));
       return At{guard.range(data), Instruction{opcode, index}};

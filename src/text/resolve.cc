@@ -557,8 +557,11 @@ void Resolve(ResolveCtx& ctx, Instruction& instruction) {
 #if 1
         case Opcode::BrOnCast:
 #endif
-        case Opcode::Delegate:
         case Opcode::Rethrow:
+          return Resolve(ctx, immediate, ctx.label_names);
+
+        case Opcode::Delegate:
+          ctx.EndBlock();
           return Resolve(ctx, immediate, ctx.label_names);
 
         // Local.

@@ -1029,7 +1029,8 @@ void Tool::Disassemble(SectionIndex section_index,
     const auto& instr = *it;
     auto opcode = instr->opcode;
     if (opcode == Opcode::Else || opcode == Opcode::Catch ||
-        opcode == Opcode::End) {
+        opcode == Opcode::End || opcode == Opcode::Delegate ||
+        opcode == Opcode::CatchAll) {
       indent = std::max(indent - 2, 0);
     }
     PrintInstruction(instr, last_data, it.data(), indent);
@@ -1042,7 +1043,7 @@ void Tool::Disassemble(SectionIndex section_index,
     if (opcode == Opcode::Block || opcode == Opcode::If ||
         opcode == Opcode::Loop || opcode == Opcode::Else ||
         opcode == Opcode::Catch || opcode == Opcode::Try ||
-        opcode == Opcode::Let) {
+        opcode == Opcode::Let || opcode == Opcode::CatchAll) {
       indent += 2;
     }
   }

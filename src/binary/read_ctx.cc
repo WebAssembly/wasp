@@ -29,6 +29,9 @@ void ReadCtx::Reset() {
   declared_data_count.reset();
   code_count = 0;
   data_count = 0;
+  local_count = 0;
+  open_blocks.clear();
+  seen_final_end = false;
 }
 
 }  // namespace wasp::binary
