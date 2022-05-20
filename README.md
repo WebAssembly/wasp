@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/WebAssembly/wasp.svg?style=svg)](https://circleci.com/gh/WebAssembly/wasp)
+[![Github CI Status](https://github.com/WebAssembly/wasp/workflows/CI/badge.svg)](https://github.com/WebAssembly/wasp)
 
 # wasp
 
