@@ -123,6 +123,7 @@ At<ReferenceType> ElementSegment::elemtype() const {
       case ExternalKind::Table:
       case ExternalKind::Memory:
       case ExternalKind::Global:
+      case ExternalKind::Tag:
         return ReferenceType{ReferenceKind::Externref};
     }
   } else {
