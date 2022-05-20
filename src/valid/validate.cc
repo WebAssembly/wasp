@@ -32,7 +32,18 @@
 namespace wasp::valid {
 
 bool BeginTypeSection(ValidCtx& ctx, Index type_count) {
-  ctx.defined_type_count = type_count;
+  // The gc proposal allows for recursive types, which means that a type index
+  // can be used before it is defined.
+  //
+  // The reference-types proposal, on the other hand, requires that all types
+  // only reference previous indexes. To implement that, the
+  // `defined_type_count` is incremented after a type is defined, instead of at
+  // the beginning of the type section.
+  if (ctx.features.gc_enabled()) {
+    ctx.defined_type_count = type_count;
+  } else {
+    ctx.defined_type_count = 0;
+  }
   ctx.same_types.Reset(type_count);
   ctx.match_types.Reset(type_count);
   return true;
@@ -754,16 +765,26 @@ bool Validate(ValidCtx& ctx, const At<binary::TableType>& value) {
 
 bool Validate(ValidCtx& ctx, const At<binary::DefinedType>& value) {
   ErrorsContextGuard guard{*ctx.errors, value.loc(), "defined type"};
+
   ctx.types.push_back(value);
 
+  bool result;
   if (value->is_function_type()) {
-    return Validate(ctx, value->function_type());
+    result = Validate(ctx, value->function_type());
   } else if (value->is_struct_type()) {
-    return Validate(ctx, value->struct_type());
+    result = Validate(ctx, value->struct_type());
   } else {
     assert(value->is_array_type());
-    return Validate(ctx, value->array_type());
+    result = Validate(ctx, value->array_type());
   }
+
+  if (!ctx.features.gc_enabled()) {
+    // See the comment in BeginTypeSection() above. The gc proposal allows for
+    // recursive types, but in the function references proposal, we only allow
+    // type indexes less than the currently defined index.
+    ctx.defined_type_count++;
+  }
+  return result;
 }
 
 bool Validate(ValidCtx& ctx, const At<binary::ValueType>& value) {

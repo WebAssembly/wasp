@@ -1091,6 +1091,12 @@ TEST_F(ValidateTest, DefinedType) {
   EXPECT_TRUE(Validate(ctx, DefinedType{FunctionType{}}));
 }
 
+TEST_F(ValidateTest, DefinedType_function_references) {
+  ctx.defined_type_count = 0;
+  // Invalid, since it references a type that has not yet been defined.
+  EXPECT_FALSE(Validate(ctx, DefinedType{FunctionType{{}, {VT_Ref0}}}));
+}
+
 TEST_F(ValidateTest, DefinedType_gc) {
   EXPECT_TRUE(Validate(ctx, DefinedType{ArrayType{FieldType{
                                 StorageType{VT_I32}, Mutability::Const}}}));
