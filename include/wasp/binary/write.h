@@ -596,6 +596,9 @@ Iterator Write(const Instruction& instr, Iterator out) {
     case InstructionKind::MemArg:
       return Write(instr.mem_arg_immediate(), out);
 
+    case InstructionKind::MemOpt:
+      return Write(instr.mem_opt_immediate(), out);
+
     case InstructionKind::HeapType:
       return Write(instr.heap_type_immediate(), out);
 
@@ -646,8 +649,22 @@ Iterator Write(const LetImmediate& immediate, Iterator out) {
 
 template <typename Iterator>
 Iterator Write(const MemArgImmediate& immediate, Iterator out) {
-  out = Write(immediate.align_log2, out);
+  encoding::MemArgFlags flags = {immediate.memory_index
+                                     ? encoding::HasMemoryIndex::Yes
+                                     : encoding::HasMemoryIndex::No,
+                                 immediate.align_log2};
+  auto encoded = encoding::MemArgAlignment::Encode(flags);
+  out = Write(encoded, out);
   out = Write(immediate.offset, out);
+  if (immediate.memory_index) {
+    out = Write(*immediate.memory_index, out);
+  }
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(const MemOptImmediate& immediate, Iterator out) {
+  out = Write(*immediate.memory_index, out);
   return out;
 }
 

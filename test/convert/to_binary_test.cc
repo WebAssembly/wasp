@@ -612,6 +612,7 @@ TEST_F(ConvertToBinaryTest, MemArgImmediate) {
   u32 align = 8;
   u32 align_log2 = 3;
   u32 offset = 5;
+  Index memory_index = 7;
 
   // align and offset defined.
   OK(At{loc1, binary::MemArgImmediate{At{loc2, align_log2}, At{loc3, offset}}},
@@ -625,6 +626,18 @@ TEST_F(ConvertToBinaryTest, MemArgImmediate) {
   // align and offset are nullopt.
   OK(At{loc1, binary::MemArgImmediate{natural_align_log2, u32{0}}},
      At{loc1, text::MemArgImmediate{nullopt, nullopt}}, natural_align);
+
+  // memory defined.
+  OK(At{loc1, binary::MemArgImmediate{At{loc2, align_log2}, At{loc3, offset},
+                                      At{loc4, memory_index}}},
+     At{loc1, text::MemArgImmediate{At{loc2, align}, At{loc3, offset},
+                                    At{loc4, text::Var{memory_index}}}},
+     natural_align);
+}
+
+TEST_F(ConvertToBinaryTest, MemOptImmediate) {
+  OK(At{loc1, binary::MemOptImmediate{At{loc2, Index{1}}}},
+     At{loc1, text::MemOptImmediate{At{loc2, text::Var{Index{1}}}}});
 }
 
 #if 0
@@ -798,6 +811,14 @@ TEST_F(ConvertToBinaryTest, Instruction) {
         text::Instruction{At{loc2, Opcode::I32Load},
                           At{loc3, text::MemArgImmediate{At{loc4, u32{4}},
                                                          At{loc5, u32{13}}}}}});
+
+  // MemOptImmediate.
+  OK(At{loc1, binary::Instruction{At{loc2, Opcode::MemorySize},
+                                  At{loc3, binary::MemOptImmediate{At{
+                                               loc4, Index{0}}}}}},
+     At{loc1, text::Instruction{At{loc2, Opcode::MemorySize},
+                                At{loc3, text::MemOptImmediate{
+                                             At{loc4, text::Var{Index{0}}}}}}});
 
   // HeapType.
   OK(At{loc1,

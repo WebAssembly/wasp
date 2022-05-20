@@ -287,6 +287,16 @@ TEST(TextWriteTest, MemArgImmediate) {
   ExpectWrite("align=4"_sv, MemArgImmediate{u32{4}, nullopt});
   ExpectWrite("offset=10"_sv, MemArgImmediate{nullopt, u32{10}});
   ExpectWrite("offset=10 align=4"_sv, MemArgImmediate{u32{4}, u32{10}});
+
+  // Multi-memory.
+  ExpectWrite("$foo offset=10 align=4"_sv,
+              MemArgImmediate{u32{4}, u32{10}, Var{"$foo"_sv}});
+}
+
+TEST(TextWriteTest, MemOptImmediate) {
+  ExpectWrite(""_sv, MemOptImmediate{nullopt});
+  ExpectWrite("$foo"_sv, MemOptImmediate{Var{"$foo"_sv}});
+  ExpectWrite("1"_sv, MemOptImmediate{Var{Index{1}}});
 }
 
 TEST(TextWriteTest, RttSubImmediate) {
@@ -379,6 +389,10 @@ TEST(TextWriteTest, Instruction) {
   // MemArgImmediate
   ExpectWrite("i32.load offset=10 align=4"_sv,
               I{O::I32Load, MemArgImmediate{u32{4}, u32{10}}});
+
+  // MemOptImmediate
+  ExpectWrite("memory.size $foo"_sv,
+              I{O::MemorySize, MemOptImmediate{Var{"$foo"_sv}}});
 
 #if 0
   // RttSubImmediate

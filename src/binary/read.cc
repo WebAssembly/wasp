@@ -173,8 +173,10 @@ OptAt<CopyImmediate> Read(SpanU8* data,
                           BulkImmediateKind kind) {
   ErrorsContextGuard error_guard{ctx.errors, *data, "copy immediate"};
   LocationGuard guard{data};
-  if (kind == BulkImmediateKind::Table &&
-      ctx.features.reference_types_enabled()) {
+  if ((kind == BulkImmediateKind::Table &&
+       ctx.features.reference_types_enabled()) ||
+      (kind == BulkImmediateKind::Memory &&
+       ctx.features.multi_memory_enabled())) {
     WASP_TRY_READ(dst_index, ReadIndex(data, ctx, "dst index"));
     WASP_TRY_READ(src_index, ReadIndex(data, ctx, "src index"));
     return At{guard.range(data), CopyImmediate{dst_index, src_index}};
@@ -553,6 +555,10 @@ OptAt<InitImmediate> Read(SpanU8* data,
   if (kind == BulkImmediateKind::Table &&
       ctx.features.reference_types_enabled()) {
     WASP_TRY_READ(dst_index, ReadIndex(data, ctx, "table index"));
+    return At{guard.range(data), InitImmediate{segment_index, dst_index}};
+  } else if (kind == BulkImmediateKind::Memory &&
+             ctx.features.multi_memory_enabled()) {
+    WASP_TRY_READ(dst_index, ReadIndex(data, ctx, "memory index"));
     return At{guard.range(data), InitImmediate{segment_index, dst_index}};
   } else {
     WASP_TRY_READ(reserved, ReadReservedIndex(data, ctx));
@@ -1196,12 +1202,12 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Instruction>) {
       return At{guard.range(data), Instruction{opcode, immediate}};
     }
 
-    // Reserved immediates.
+    // MemOpt immediates.
     case Opcode::MemorySize:
     case Opcode::MemoryGrow:
     case Opcode::MemoryFill: {
-      WASP_TRY_READ(reserved, ReadReserved(data, ctx));
-      return At{guard.range(data), Instruction{opcode, reserved}};
+      WASP_TRY_READ(immediate, Read<MemOptImmediate>(data, ctx));
+      return At{guard.range(data), Instruction{opcode, immediate}};
     }
 
     // Const immediates.
@@ -1230,7 +1236,7 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Instruction>) {
       return At{guard.range(data), Instruction{opcode, value}};
     }
 
-    // Reserved, Index immediates.
+    // Init immediates.
     case Opcode::MemoryInit: {
       WASP_TRY_READ(immediate,
                     Read<InitImmediate>(data, ctx, BulkImmediateKind::Memory));
@@ -1245,7 +1251,7 @@ OptAt<Instruction> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Instruction>) {
       return At{guard.range(data), Instruction{opcode, immediate}};
     }
 
-    // Reserved, reserved immediates.
+    // Copy immediates.
     case Opcode::MemoryCopy: {
       WASP_TRY_READ(immediate,
                     Read<CopyImmediate>(data, ctx, BulkImmediateKind::Memory));
@@ -1424,9 +1430,33 @@ OptAt<MemArgImmediate> Read(SpanU8* data,
                             ReadCtx& ctx,
                             ReadTag<MemArgImmediate>) {
   LocationGuard guard{data};
-  WASP_TRY_READ_CONTEXT(align_log2, Read<u32>(data, ctx), "align log2");
+  WASP_TRY_READ_CONTEXT(value, Read<u32>(data, ctx), "align log2");
+  WASP_TRY_DECODE_FEATURES(decoded, value, MemArgAlignment, "flags",
+                           ctx.features);
+  auto align_log2 = At{decoded.loc(), decoded->align_log2};
+
   WASP_TRY_READ_CONTEXT(offset, Read<u32>(data, ctx), "offset");
-  return At{guard.range(data), MemArgImmediate{align_log2, offset}};
+
+  if (decoded->has_memory_index == encoding::HasMemoryIndex::Yes) {
+    WASP_TRY_READ(memory_index, ReadIndex(data, ctx, "memory index"));
+    return At{guard.range(data),
+              MemArgImmediate{align_log2, offset, memory_index}};
+  } else {
+    return At{guard.range(data), MemArgImmediate{align_log2, offset}};
+  }
+}
+
+OptAt<MemOptImmediate> Read(SpanU8* data,
+                            ReadCtx& ctx,
+                            ReadTag<MemOptImmediate>) {
+  LocationGuard guard{data};
+  if (ctx.features.multi_memory_enabled()) {
+    WASP_TRY_READ(index, ReadIndex(data, ctx, "memory index"));
+    return At{guard.range(data), MemOptImmediate{index}};
+  } else {
+    WASP_TRY_READ(reserved, ReadReservedIndex(data, ctx));
+    return At{guard.range(data), MemOptImmediate{reserved}};
+  }
 }
 
 OptAt<Memory> Read(SpanU8* data, ReadCtx& ctx, ReadTag<Memory>) {

@@ -243,8 +243,15 @@ struct LetImmediate {
 };
 
 struct MemArgImmediate {
+  MemArgImmediate(At<u32> align_log2, At<u32> offset, OptAt<Index> = nullopt);
+
   At<u32> align_log2;
   At<u32> offset;
+  OptAt<Index> memory_index;
+};
+
+struct MemOptImmediate {
+  At<Index> memory_index;
 };
 
 struct RttSubImmediate {
@@ -281,6 +288,7 @@ enum class InstructionKind {
   Init,
   Let,
   MemArg,
+  MemOpt,
   HeapType,
   Select,
   Shuffle,
@@ -312,6 +320,7 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<InitImmediate>);
   explicit Instruction(At<Opcode>, At<LetImmediate>);
   explicit Instruction(At<Opcode>, At<MemArgImmediate>);
+  explicit Instruction(At<Opcode>, At<MemOptImmediate>);
   explicit Instruction(At<Opcode>, At<RttSubImmediate>);
   explicit Instruction(At<Opcode>, At<SelectImmediate>);
   explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
@@ -348,6 +357,7 @@ struct Instruction {
   bool has_init_immediate() const;
   bool has_let_immediate() const;
   bool has_mem_arg_immediate() const;
+  bool has_mem_opt_immediate() const;
   bool has_rtt_sub_immediate() const;
   bool has_select_immediate() const;
   bool has_shuffle_immediate() const;
@@ -389,6 +399,8 @@ struct Instruction {
   auto let_immediate() const -> const At<LetImmediate>&;
   auto mem_arg_immediate() -> At<MemArgImmediate>&;
   auto mem_arg_immediate() const -> const At<MemArgImmediate>&;
+  auto mem_opt_immediate() -> At<MemOptImmediate>&;
+  auto mem_opt_immediate() const -> const At<MemOptImmediate>&;
   auto rtt_sub_immediate() -> At<RttSubImmediate>&;
   auto rtt_sub_immediate() const -> const At<RttSubImmediate>&;
   auto select_immediate() -> At<SelectImmediate>&;
@@ -417,6 +429,7 @@ struct Instruction {
           At<InitImmediate>,
           At<LetImmediate>,
           At<MemArgImmediate>,
+          At<MemOptImmediate>,
           At<HeapType>,
           At<SelectImmediate>,
           At<ShuffleImmediate>,
@@ -740,7 +753,8 @@ struct Module {
   WASP_V(binary::KnownSection, 2, id, data)                              \
   WASP_V(binary::LetImmediate, 2, block_type, locals)                    \
   WASP_V(binary::Locals, 2, count, type)                                 \
-  WASP_V(binary::MemArgImmediate, 2, align_log2, offset)                 \
+  WASP_V(binary::MemArgImmediate, 3, align_log2, offset, memory_index)   \
+  WASP_V(binary::MemOptImmediate, 1, memory_index)                       \
   WASP_V(binary::Memory, 1, memory_type)                                 \
   WASP_V(binary::RefType, 2, heap_type, null)                            \
   WASP_V(binary::ReferenceType, 1, type)                                 \

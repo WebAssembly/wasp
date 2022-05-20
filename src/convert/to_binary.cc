@@ -560,7 +560,16 @@ auto ToBinary(BinCtx& ctx,
                    ? At{value->align->loc(), GetAlignLog2(*value->align)}
                    : At{GetAlignLog2(natural_align)};
   auto offset = value->offset ? *value->offset : At{u32{0}};
-  return At{value.loc(), binary::MemArgImmediate{align, offset}};
+  OptAt<Index> memory_index =
+      value->memory ? OptAt<Index>{ToBinary(ctx, *value->memory)} : nullopt;
+  return At{value.loc(), binary::MemArgImmediate{align, offset, memory_index}};
+}
+
+auto ToBinary(BinCtx& ctx, const At<text::MemOptImmediate>& value)
+    -> At<binary::MemOptImmediate> {
+  At<Index> memory_index =
+      value->memory ? ToBinary(ctx, *value->memory) : At{Index{0}};
+  return At{value.loc(), binary::MemOptImmediate{memory_index}};
 }
 
 auto ToBinary(BinCtx& ctx, const At<text::RttSubImmediate>& value)
@@ -652,6 +661,11 @@ auto ToBinary(BinCtx& ctx, const At<text::Instruction>& value)
           binary::Instruction{value->opcode,
                               ToBinary(ctx, value->mem_arg_immediate(),
                                        GetNaturalAlignment(*value->opcode))}};
+
+    case text::InstructionKind::MemOpt:
+      return At{value.loc(),
+                binary::Instruction{value->opcode,
+                                    ToBinary(ctx, value->mem_opt_immediate())}};
 
     case text::InstructionKind::HeapType:
       return At{value.loc(), binary::Instruction{

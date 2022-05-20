@@ -461,8 +461,24 @@ void Resolve(ResolveCtx& ctx, LetImmediate& immediate) {
   Resolve(ctx, immediate.locals);
 }
 
+void Resolve(ResolveCtx& ctx, MemArgImmediate& immediate) {
+  if (immediate.memory) {
+    Resolve(ctx, *immediate.memory, ctx.memory_names);
+  }
+}
+
+void Resolve(ResolveCtx& ctx, MemOptImmediate& immediate) {
+  if (immediate.memory) {
+    Resolve(ctx, *immediate.memory, ctx.memory_names);
+  }
+}
+
 void Resolve(ResolveCtx& ctx, RttSubImmediate& immediate) {
   Resolve(ctx, immediate.types);
+}
+
+void Resolve(ResolveCtx& ctx, SimdMemoryLaneImmediate& immediate) {
+  Resolve(ctx, immediate.memarg);
 }
 
 void Resolve(ResolveCtx& ctx, StructFieldImmediate& immediate) {
@@ -592,6 +608,12 @@ void Resolve(ResolveCtx& ctx, Instruction& instruction) {
       ctx.BeginBlock(instruction.opcode);
       return Resolve(ctx, instruction.let_immediate().value());
 
+    case InstructionKind::MemArg:
+      return Resolve(ctx, instruction.mem_arg_immediate().value());
+
+    case InstructionKind::MemOpt:
+      return Resolve(ctx, instruction.mem_opt_immediate().value());
+
     case InstructionKind::HeapType: {
       auto& immediate = instruction.heap_type_immediate();
       if (immediate->is_var()) {
@@ -614,6 +636,9 @@ void Resolve(ResolveCtx& ctx, Instruction& instruction) {
 
     case InstructionKind::RttSub:
       return Resolve(ctx, instruction.rtt_sub_immediate().value());
+
+    case InstructionKind::SimdMemoryLane:
+      return Resolve(ctx, instruction.simd_memory_lane_immediate().value());
 
     case InstructionKind::StructField:
       return Resolve(ctx, instruction.struct_field_immediate().value());

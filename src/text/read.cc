@@ -1447,9 +1447,13 @@ auto ReadOffsetOpt(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<u32> {
 auto ReadMemArgImmediate(Tokenizer& tokenizer, ReadCtx& ctx)
     -> OptAt<MemArgImmediate> {
   LocationGuard guard{tokenizer};
+  OptAt<Var> memory_opt;
+  if (ctx.features.multi_memory_enabled()) {
+    memory_opt = ReadVarOpt(tokenizer, ctx);
+  }
   auto offset_opt = ReadOffsetOpt(tokenizer, ctx);
   auto align_opt = ReadAlignOpt(tokenizer, ctx);
-  return At{guard.loc(), MemArgImmediate{align_opt, offset_opt}};
+  return At{guard.loc(), MemArgImmediate{align_opt, offset_opt, memory_opt}};
 }
 
 auto ReadSimdLane(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<u8> {
@@ -1507,6 +1511,7 @@ bool IsPlainInstruction(Token token) {
     case TokenType::MemoryInstr:
     case TokenType::MemoryCopyInstr:
     case TokenType::MemoryInitInstr:
+    case TokenType::MemoryOptInstr:
     case TokenType::RefFuncInstr:
     case TokenType::RefNullInstr:
     case TokenType::RttSubInstr:
@@ -1673,18 +1678,51 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, ReadCtx& ctx)
       return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
-    case TokenType::MemoryCopyInstr:
+    case TokenType::MemoryCopyInstr: {
       CheckOpcodeEnabled(token, ctx);
       tokenizer.Read();
-      return At{guard.loc(), Instruction{token.opcode(), CopyImmediate{}}};
+      LocationGuard immediate_guard{tokenizer};
+      At<CopyImmediate> immediate;
+      if (ctx.features.multi_memory_enabled()) {
+        auto dst_var = ReadVarOpt(tokenizer, ctx);
+        auto src_var = ReadVarOpt(tokenizer, ctx);
+        immediate = At{immediate_guard.loc(), CopyImmediate{dst_var, src_var}};
+      } else {
+        immediate = At{immediate_guard.loc(), CopyImmediate{}};
+      }
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
+    }
 
     case TokenType::MemoryInitInstr: {
       CheckOpcodeEnabled(token, ctx);
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
       WASP_TRY_READ(segment_var, ReadVar(tokenizer, ctx));
-      auto immediate =
-          At{immediate_guard.loc(), InitImmediate{segment_var, nullopt}};
+      auto memory_var_opt = ReadVarOpt(tokenizer, ctx);
+      At<InitImmediate> immediate;
+      if (memory_var_opt) {
+        // memory.init $memory $elem ; so vars need to be swapped.
+        immediate = At{immediate_guard.loc(),
+                       InitImmediate{*memory_var_opt, segment_var}};
+      } else {
+        // memory.init $elem
+        immediate =
+            At{immediate_guard.loc(), InitImmediate{segment_var, nullopt}};
+      }
+      return At{guard.loc(), Instruction{token.opcode(), immediate}};
+    }
+
+    case TokenType::MemoryOptInstr: {
+      CheckOpcodeEnabled(token, ctx);
+      tokenizer.Read();
+      LocationGuard immediate_guard{tokenizer};
+      At<MemOptImmediate> immediate;
+      if (ctx.features.multi_memory_enabled()) {
+        auto memory_var_opt = ReadVarOpt(tokenizer, ctx);
+        immediate = At{immediate_guard.loc(), MemOptImmediate{memory_var_opt}};
+      } else {
+        immediate = At{immediate_guard.loc(), MemOptImmediate{nullopt}};
+      }
       return At{guard.loc(), Instruction{token.opcode(), immediate}};
     }
 
@@ -1741,7 +1779,19 @@ auto ReadPlainInstruction(Tokenizer& tokenizer, ReadCtx& ctx)
       WASP_TRY(CheckOpcodeEnabled(token, ctx));
       tokenizer.Read();
       LocationGuard immediate_guard{tokenizer};
-      WASP_TRY_READ(memarg, ReadMemArgImmediate(tokenizer, ctx));
+      auto peek0 = tokenizer.Peek();
+      auto peek1 = tokenizer.Peek(1);
+      At<MemArgImmediate> memarg;
+      if ((peek0.type == TokenType::Nat &&
+           (peek1.type == TokenType::Nat ||           // <mem:nat> <lane:nat>
+            peek1.type == TokenType::OffsetEqNat ||   // <mem:nat> offset=<nat>
+            peek1.type == TokenType::AlignEqNat)) ||  // <mem:nat> align=<nat>
+          peek0.type == TokenType::Id ||              // <mem:id>
+          peek0.type == TokenType::OffsetEqNat ||     // offset=<nat>
+          peek0.type == TokenType::AlignEqNat) {      // align=<nat>
+        WASP_TRY_READ(memarg_, ReadMemArgImmediate(tokenizer, ctx));
+        memarg = memarg_;
+      }
       WASP_TRY_READ(lane, ReadSimdLane(tokenizer, ctx));
       auto immediate =
           At{immediate_guard.loc(), SimdMemoryLaneImmediate{memarg, lane}};

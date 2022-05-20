@@ -475,9 +475,6 @@ TEST_F(TextResolveTest, Instruction_NoOp) {
   // v128 Immediate.
   OK(I{O::V128Const, v128{}}, I{O::V128Const, v128{}});
 
-  // MemArg Immediate.
-  OK(I{O::I32Load, MemArgImmediate{}}, I{O::I32Load, MemArgImmediate{}});
-
   // Select Immediate.
   OK(I{O::Select, SelectImmediate{}}, I{O::Select, SelectImmediate{}});
 
@@ -723,6 +720,20 @@ TEST_F(TextResolveTest, Instruction_LetImmediate) {
            {BVT{nullopt, VT_RefT}}}});
 }
 
+TEST_F(TextResolveTest, Instruction_MemArgImmediate) {
+  ctx.memory_names.NewBound("$m"_sv);
+
+  OK(I{O::I32Load, MemArgImmediate{nullopt, nullopt, Var{Index{0}}}},
+     I{O::I32Load, MemArgImmediate{nullopt, nullopt, Var{"$m"_sv}}});
+}
+
+TEST_F(TextResolveTest, Instruction_MemOptImmediate) {
+  ctx.memory_names.NewBound("$m"_sv);
+
+  OK(I{O::MemorySize, MemOptImmediate{Var{Index{0}}}},
+     I{O::MemorySize, MemOptImmediate{Var{"$m"_sv}}});
+}
+
 TEST_F(TextResolveTest, Instruction_RttSubImmediate) {
   ctx.type_names.NewBound("$t");
 
@@ -736,6 +747,17 @@ TEST_F(TextResolveTest, Instruction_SelectImmediate) {
 
   OK(I{O::SelectT, SelectImmediate{VT_I32, Resolved_VT_Ref0}},
      I{O::SelectT, SelectImmediate{VT_I32, VT_RefT}});
+}
+
+TEST_F(TextResolveTest, Instruction_SimdMemoryLaneImmediate) {
+  ctx.memory_names.NewBound("$m"_sv);
+
+  OK(I{O::V128Load8Lane,
+       SimdMemoryLaneImmediate{MemArgImmediate{nullopt, nullopt, Var{Index{0}}},
+                               0}},
+     I{O::V128Load8Lane,
+       SimdMemoryLaneImmediate{MemArgImmediate{nullopt, nullopt, Var{"$m"_sv}},
+                               0}});
 }
 
 TEST_F(TextResolveTest, Instruction_StructFieldImmediate) {

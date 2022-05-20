@@ -188,6 +188,8 @@ TEST(BinaryFormattersTest, LetImmediate) {
 
 TEST(BinaryFormattersTest, MemArgImmediate) {
   EXPECT_EQ(R"({align 1, offset 2})", concat(MemArgImmediate{1, 2}));
+  EXPECT_EQ(R"({align 1, offset 2, memory_index 3})",
+            concat(MemArgImmediate{1, 2, 3}));
 }
 
 TEST(BinaryFormattersTest, Limits) {

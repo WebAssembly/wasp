@@ -303,8 +303,12 @@ TEST(TextFormattersTest, LetImmediate) {
 }
 
 TEST(TextFormattersTest, MemArgImmediate) {
-  EXPECT_EQ(R"({align none, offset none})", concat(MemArgImmediate{}));
-  EXPECT_EQ(R"({align 4, offset 0})", concat(MemArgImmediate{u32{4}, u32{0}}));
+  EXPECT_EQ(R"({align none, offset none})",
+            concat(MemArgImmediate{}));
+  EXPECT_EQ(R"({align 4, offset 0})",
+            concat(MemArgImmediate{u32{4}, u32{0}}));
+  EXPECT_EQ(R"({align 4, offset 0, memory 2})",
+            concat(MemArgImmediate{u32{4}, u32{0}, Var{Index{2}}}));
 }
 
 TEST(TextFormattersTest, RttSubImmediate) {

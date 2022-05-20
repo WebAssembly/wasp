@@ -199,8 +199,17 @@ struct LetImmediate {
 };
 
 struct MemArgImmediate {
+  MemArgImmediate(OptAt<u32> align = nullopt,
+                  OptAt<u32> offset = nullopt,
+                  OptAt<Var> memory = nullopt);
+
   OptAt<u32> align;
   OptAt<u32> offset;
+  OptAt<Var> memory;
+};
+
+struct MemOptImmediate {
+  OptAt<Var> memory;
 };
 
 struct RttSubImmediate {
@@ -237,6 +246,7 @@ enum class InstructionKind {
   Init,
   Let,
   MemArg,
+  MemOpt,
   HeapType,
   Select,
   Shuffle,
@@ -268,6 +278,7 @@ struct Instruction {
   explicit Instruction(At<Opcode>, At<InitImmediate>);
   explicit Instruction(At<Opcode>, At<LetImmediate>);
   explicit Instruction(At<Opcode>, At<MemArgImmediate>);
+  explicit Instruction(At<Opcode>, At<MemOptImmediate>);
   explicit Instruction(At<Opcode>, At<RttSubImmediate>);
   explicit Instruction(At<Opcode>, At<SelectImmediate>);
   explicit Instruction(At<Opcode>, At<ShuffleImmediate>);
@@ -303,6 +314,7 @@ struct Instruction {
   bool has_init_immediate() const;
   bool has_let_immediate() const;
   bool has_mem_arg_immediate() const;
+  bool has_mem_opt_immediate() const;
   bool has_rtt_sub_immediate() const;
   bool has_select_immediate() const;
   bool has_shuffle_immediate() const;
@@ -344,6 +356,8 @@ struct Instruction {
   auto let_immediate() const -> const At<LetImmediate>&;
   auto mem_arg_immediate() -> At<MemArgImmediate>&;
   auto mem_arg_immediate() const -> const At<MemArgImmediate>&;
+  auto mem_opt_immediate() -> At<MemOptImmediate>&;
+  auto mem_opt_immediate() const -> const At<MemOptImmediate>&;
   auto rtt_sub_immediate() -> At<RttSubImmediate>&;
   auto rtt_sub_immediate() const -> const At<RttSubImmediate>&;
   auto select_immediate() -> At<SelectImmediate>&;
@@ -372,6 +386,7 @@ struct Instruction {
           At<InitImmediate>,
           At<LetImmediate>,
           At<MemArgImmediate>,
+          At<MemOptImmediate>,
           At<HeapType>,
           At<SelectImmediate>,
           At<ShuffleImmediate>,
@@ -1089,7 +1104,7 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::CopyImmediate, 2, dst, src)                               \
   WASP_V(text::InitImmediate, 2, segment, dst)                           \
   WASP_V(text::LetImmediate, 2, block, locals)                           \
-  WASP_V(text::MemArgImmediate, 2, align, offset)                        \
+  WASP_V(text::MemOptImmediate, 1, memory)                               \
   WASP_V(text::RttSubImmediate, 2, depth, types)                         \
   WASP_V(text::StructFieldImmediate, 2, struct_, field)                  \
   WASP_V(text::TableDesc, 2, name, type)                                 \
@@ -1129,19 +1144,20 @@ using Script = std::vector<At<Command>>;
   WASP_V(text::Assertion, 2, kind, desc)                                 \
   WASP_V(text::Register, 2, name, module)
 
-#define WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_V) \
-  WASP_V(text::Var, 1, desc)                    \
-  WASP_V(text::ModuleItem, 1, desc)             \
-  WASP_V(text::Const, 1, value)                 \
-  WASP_V(text::Command, 1, contents)            \
-  WASP_V(text::HeapType, 1, type)               \
-  WASP_V(text::RefType, 2, heap_type, null)     \
-  WASP_V(text::Rtt, 2, depth, type)             \
-  WASP_V(text::ReferenceType, 1, type)          \
-  WASP_V(text::ValueType, 1, type)              \
-  WASP_V(text::StorageType, 1, type)            \
-  WASP_V(text::TableType, 2, limits, elemtype)  \
-  WASP_V(text::GlobalType, 2, valtype, mut)     \
+#define WASP_TEXT_STRUCTS_CUSTOM_FORMAT(WASP_V)           \
+  WASP_V(text::Var, 1, desc)                              \
+  WASP_V(text::ModuleItem, 1, desc)                       \
+  WASP_V(text::Const, 1, value)                           \
+  WASP_V(text::Command, 1, contents)                      \
+  WASP_V(text::HeapType, 1, type)                         \
+  WASP_V(text::MemArgImmediate, 3, align, offset, memory) \
+  WASP_V(text::RefType, 2, heap_type, null)               \
+  WASP_V(text::Rtt, 2, depth, type)                       \
+  WASP_V(text::ReferenceType, 1, type)                    \
+  WASP_V(text::ValueType, 1, type)                        \
+  WASP_V(text::StorageType, 1, type)                      \
+  WASP_V(text::TableType, 2, limits, elemtype)            \
+  WASP_V(text::GlobalType, 2, valtype, mut)               \
   WASP_V(text::SimdMemoryLaneImmediate, 2, memarg, lane)
 
 #define WASP_TEXT_CONTAINERS(WASP_V)  \

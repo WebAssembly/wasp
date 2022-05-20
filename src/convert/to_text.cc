@@ -453,8 +453,15 @@ auto GetAlignPow2(At<u32> align_log2) -> At<u32> {
 
 auto ToText(TextCtx& ctx, const At<binary::MemArgImmediate>& value)
     -> At<text::MemArgImmediate> {
-  return At{value.loc(), text::MemArgImmediate{GetAlignPow2(value->align_log2),
-                                               value->offset}};
+  return At{value.loc(), text::MemArgImmediate{
+                             GetAlignPow2(value->align_log2), value->offset,
+                             ToText(ctx, value->memory_index)}};
+}
+
+auto ToText(TextCtx& ctx, const At<binary::MemOptImmediate>& value)
+    -> At<text::MemOptImmediate> {
+  return At{value.loc(),
+            text::MemOptImmediate{ToText(ctx, value->memory_index)}};
 }
 
 auto ToText(TextCtx& ctx, const At<binary::RttSubImmediate>& value)
@@ -541,6 +548,11 @@ auto ToText(TextCtx& ctx, const At<binary::Instruction>& value)
       return At{value.loc(),
                 text::Instruction{value->opcode,
                                   ToText(ctx, value->mem_arg_immediate())}};
+
+    case binary::InstructionKind::MemOpt:
+      return At{value.loc(),
+                text::Instruction{value->opcode,
+                                  ToText(ctx, value->mem_opt_immediate())}};
 
     case binary::InstructionKind::HeapType:
       return At{value.loc(),

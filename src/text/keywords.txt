@@ -514,10 +514,10 @@ memory.atomic.notify, TokenType::MemoryInstr, Opcode::MemoryAtomicNotify, Featur
 memory.atomic.wait32, TokenType::MemoryInstr, Opcode::MemoryAtomicWait32, Features::Threads
 memory.atomic.wait64, TokenType::MemoryInstr, Opcode::MemoryAtomicWait64, Features::Threads
 memory.copy, TokenType::MemoryCopyInstr, Opcode::MemoryCopy, Features::BulkMemory
-memory.fill, Opcode::MemoryFill, Features::BulkMemory
-memory.grow, Opcode::MemoryGrow
+memory.fill, TokenType::MemoryOptInstr, Opcode::MemoryFill, Features::BulkMemory
+memory.grow, TokenType::MemoryOptInstr, Opcode::MemoryGrow
 memory.init, TokenType::MemoryInitInstr, Opcode::MemoryInit, Features::BulkMemory
-memory.size, Opcode::MemorySize
+memory.size, TokenType::MemoryOptInstr, Opcode::MemorySize
 memory, TokenType::Memory
 module, TokenType::Module
 mut, TokenType::Mut

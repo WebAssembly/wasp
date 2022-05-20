@@ -269,6 +269,17 @@ std::ostream& operator<<(std::ostream& os, const ::wasp::text::HeapType& self) {
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::text::MemArgImmediate& self) {
+  if (self.memory) {
+    os << "{align " << self.align << ", offset " << self.offset << ", memory "
+       << self.memory << "}";
+  } else {
+    os << "{align " << self.align << ", offset " << self.offset << "}";
+  }
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const ::wasp::text::RefType& self) {
   os << "(ref ";
   if (self.null == ::wasp::Null::Yes) {

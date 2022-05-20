@@ -111,6 +111,7 @@ auto ToBinary(BinCtx&, const At<text::HeapType2Immediate>&) -> At<binary::HeapTy
 auto ToBinary(BinCtx&, const At<text::InitImmediate>&) -> At<binary::InitImmediate>;
 auto ToBinary(BinCtx&, const At<text::LetImmediate>&) -> At<binary::LetImmediate>;
 auto ToBinary(BinCtx&, const At<text::MemArgImmediate>&, u32 natural_align) -> At<binary::MemArgImmediate>;
+auto ToBinary(BinCtx&, const At<text::MemOptImmediate>&) -> At<binary::MemOptImmediate>;
 auto ToBinary(BinCtx&, const At<text::RttSubImmediate>&) -> At<binary::RttSubImmediate>;
 auto ToBinary(BinCtx&, const At<text::StructFieldImmediate>&) -> At<binary::StructFieldImmediate>;
 auto ToBinary(BinCtx&, const At<text::SimdMemoryLaneImmediate>&, u32 natural_align) -> At<binary::SimdMemoryLaneImmediate>;

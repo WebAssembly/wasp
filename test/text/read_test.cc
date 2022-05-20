@@ -941,6 +941,73 @@ TEST_F(TextReadTest, PlainInstruction_MemArg) {
      "f64.store offset=123 align=32"_su8);
 }
 
+TEST_F(TextReadTest, PlainInstruction_MemArg_multi_memory) {
+  ctx.features.enable_multi_memory();
+
+  struct {
+    SpanU8 text;
+    Instruction instr;
+  } const tests[] = {
+      // No memory
+      {"i32.load"_su8, I{At{"i32.load"_su8, O::I32Load},
+                         At{""_su8, MemArgImmediate{nullopt, nullopt}}}},
+      {"f32.load offset=12"_su8,
+       I{At{"f32.load"_su8, O::F32Load},
+         At{"offset=12"_su8,
+            MemArgImmediate{nullopt, At{"offset=12"_su8, u32{12}}}}}},
+      {"i32.load8_u align=16"_su8,
+       I{At{"i32.load8_u"_su8, O::I32Load8U},
+         At{"align=16"_su8,
+            MemArgImmediate{At{"align=16"_su8, u32{16}}, nullopt}}}},
+      {"f64.store offset=123 align=32"_su8,
+       I{At{"f64.store"_su8, O::F64Store},
+         At{"offset=123 align=32"_su8,
+            MemArgImmediate{At{"align=32"_su8, u32{32}},
+                            At{"offset=123"_su8, u32{123}}}}}},
+
+      // Memory $m
+      {"i32.load $m"_su8,
+       I{At{"i32.load"_su8, O::I32Load},
+         At{"$m"_su8,
+            MemArgImmediate{nullopt, nullopt, At{"$m"_su8, Var{"$m"_sv}}}}}},
+      {"f32.load $m offset=12"_su8,
+       I{At{"f32.load"_su8, O::F32Load},
+         At{"$m offset=12"_su8,
+            MemArgImmediate{nullopt, At{"offset=12"_su8, u32{12}},
+                            At{"$m"_su8, Var{"$m"_sv}}}}}},
+      {"i32.load8_u $m align=16"_su8,
+       I{At{"i32.load8_u"_su8, O::I32Load8U},
+         At{"$m align=16"_su8,
+            MemArgImmediate{At{"align=16"_su8, u32{16}}, nullopt,
+                            At{"$m"_su8, Var{"$m"_sv}}}}}},
+      {"f64.store $m offset=123 align=32"_su8,
+       I{At{"f64.store"_su8, O::F64Store},
+         At{"$m offset=123 align=32"_su8,
+            MemArgImmediate{At{"align=32"_su8, u32{32}},
+                            At{"offset=123"_su8, u32{123}},
+                            At{"$m"_su8, Var{"$m"_sv}}}}}},
+  };
+
+  for (const auto& test: tests) {
+    OK(ReadPlainInstruction, test.instr, test.text);
+  }
+}
+
+TEST_F(TextReadTest, PlainInstruction_MemOpt_multi_memory) {
+  ctx.features.enable_multi_memory();
+
+  // memory.size w/o memory index
+  OK(ReadPlainInstruction,
+     I{At{"memory.size"_su8, O::MemorySize}, At{MemOptImmediate{nullopt}}},
+     "memory.size"_su8);
+
+  // memory.size w/ memory index
+  OK(ReadPlainInstruction,
+     I{At{"memory.size"_su8, O::MemorySize},
+       At{"$m"_su8, MemOptImmediate{At{"$m"_su8, Var{"$m"_sv}}}}},
+     "memory.size $m"_su8);
+}
+
 TEST_F(TextReadTest, PlainInstruction_Select) {
   OK(ReadPlainInstruction, I{At{"select"_su8, O::Select}}, "select"_su8);
 }
@@ -1073,6 +1140,23 @@ TEST_F(TextReadTest, PlainInstruction_MemoryCopy) {
      "memory.copy"_su8);
 }
 
+TEST_F(TextReadTest, PlainInstruction_MemoryCopy_multi_memory) {
+  ctx.features.enable_bulk_memory();
+  ctx.features.enable_multi_memory();
+
+  // memory.copy w/o dst and src.
+  OK(ReadPlainInstruction,
+     I{At{"memory.copy"_su8, O::MemoryCopy}, At{CopyImmediate{}}},
+     "memory.copy"_su8);
+
+  // memory.copy w/ dst and src.
+  OK(ReadPlainInstruction,
+     I{At{"memory.copy"_su8, O::MemoryCopy},
+       At{"1 2"_su8, CopyImmediate{At{"1"_su8, Var{Index{1}}},
+                                   At{"2"_su8, Var{Index{2}}}}}},
+     "memory.copy 1 2"_su8);
+}
+
 TEST_F(TextReadTest, PlainInstruction_MemoryInit) {
   Fail(ReadPlainInstruction, {{0, "memory.init instruction not allowed"}},
        "memory.init 0"_su8);
@@ -1084,6 +1168,24 @@ TEST_F(TextReadTest, PlainInstruction_MemoryInit) {
      I{At{"memory.init"_su8, O::MemoryInit},
        At{"2"_su8, InitImmediate{At{"2"_su8, Var{Index{2}}}, nullopt}}},
      "memory.init 2"_su8);
+}
+
+TEST_F(TextReadTest, PlainInstruction_MemoryInit_multi_memory) {
+  ctx.features.enable_bulk_memory();
+  ctx.features.enable_multi_memory();
+
+  // memory.init w/ just segment index.
+  OK(ReadPlainInstruction,
+     I{At{"memory.init"_su8, O::MemoryInit},
+       At{"2"_su8, InitImmediate{At{"2"_su8, Var{Index{2}}}, nullopt}}},
+     "memory.init 2"_su8);
+
+  // memory.init w/ segment index and memory index.
+  OK(ReadPlainInstruction,
+     I{At{"memory.init"_su8, O::MemoryInit},
+       At{"1 2"_su8, InitImmediate{At{"2"_su8, Var{Index{2}}},
+                                   At{"1"_su8, Var{Index{1}}}}}},
+     "memory.init 1 2"_su8);
 }
 
 TEST_F(TextReadTest, PlainInstruction_TableCopy) {

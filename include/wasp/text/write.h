@@ -391,6 +391,10 @@ Iterator Write(WriteCtx& ctx, const LetImmediate& value, Iterator out) {
 
 template <typename Iterator>
 Iterator Write(WriteCtx& ctx, const MemArgImmediate& value, Iterator out) {
+  if (value.memory) {
+    out = Write(ctx, *value.memory, out);
+  }
+
   if (value.offset) {
     out = Write(ctx, "offset="_sv, out);
     ctx.ClearSeparator();
@@ -401,6 +405,14 @@ Iterator Write(WriteCtx& ctx, const MemArgImmediate& value, Iterator out) {
     out = Write(ctx, "align="_sv, out);
     ctx.ClearSeparator();
     out = WriteNat(ctx, value.align->value(), out);
+  }
+  return out;
+}
+
+template <typename Iterator>
+Iterator Write(WriteCtx& ctx, const MemOptImmediate& value, Iterator out) {
+  if (value.memory) {
+    out = Write(ctx, *value.memory, out);
   }
   return out;
 }
@@ -499,6 +511,10 @@ Iterator Write(WriteCtx& ctx, const Instruction& value, Iterator out) {
 
     case InstructionKind::MemArg:
       out = Write(ctx, value.mem_arg_immediate(), out);
+      break;
+
+    case InstructionKind::MemOpt:
+      out = Write(ctx, value.mem_opt_immediate(), out);
       break;
 
     case InstructionKind::HeapType:

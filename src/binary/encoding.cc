@@ -218,6 +218,29 @@ optional<DecodedLimitsFlags> LimitsFlags::Decode(u8 flags,
 }
 
 // static
+u32 MemArgAlignment::Encode(const MemArgFlags& flags) {
+  assert(flags.align_log2 < MaxAlignment);
+  return (flags.has_memory_index == HasMemoryIndex::Yes ? HasMemoryIndexBit
+                                                        : 0) |
+         (flags.align_log2 & AlignmentMask);
+}
+
+// static
+optional<MemArgFlags> MemArgAlignment::Decode(u32 value,
+                                              const Features& features) {
+  if (features.multi_memory_enabled()) {
+    if (value >= MaxAlignment) {
+      return nullopt;
+    }
+    auto has_memory_index =
+        value & HasMemoryIndexBit ? HasMemoryIndex::Yes : HasMemoryIndex::No;
+    return {{has_memory_index, value & AlignmentMask}};
+  } else {
+    return {{HasMemoryIndex::No, value}};
+  }
+}
+
+// static
 u8 Mutability::Encode(::wasp::Mutability decoded) {
   return u8(decoded);
 }

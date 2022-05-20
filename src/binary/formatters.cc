@@ -126,8 +126,18 @@ std::ostream& operator<<(std::ostream& os,
 
 std::ostream& operator<<(std::ostream& os,
                          const ::wasp::binary::MemArgImmediate& self) {
-  return os << "{align " << self.align_log2 << ", offset " << self.offset
-            << "}";
+  if (self.memory_index) {
+    return os << "{align " << self.align_log2 << ", offset " << self.offset
+              << ", memory_index " << *self.memory_index << "}";
+  } else {
+    return os << "{align " << self.align_log2 << ", offset " << self.offset
+              << "}";
+  }
+}
+
+std::ostream& operator<<(std::ostream& os,
+                         const ::wasp::binary::MemOptImmediate& self) {
+  return os << *self.memory_index;
 }
 
 std::ostream& operator<<(std::ostream& os,
@@ -327,6 +337,7 @@ std::ostream& operator<<(std::ostream& os,
     case InstructionKind::Init: os << " " << self.init_immediate(); break;
     case InstructionKind::Let: os << " " << self.let_immediate(); break;
     case InstructionKind::MemArg: os << " " << self.mem_arg_immediate(); break;
+    case InstructionKind::MemOpt: os << " " << self.mem_opt_immediate(); break;
     case InstructionKind::HeapType: os << " " << self.heap_type_immediate(); break;
     case InstructionKind::Select: os << " " << self.select_immediate(); break;
     case InstructionKind::Shuffle: os << " " << self.shuffle_immediate(); break;

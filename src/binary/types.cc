@@ -322,6 +322,9 @@ Instruction::Instruction(At<Opcode> opcode, At<LetImmediate> immediate)
 Instruction::Instruction(At<Opcode> opcode, At<MemArgImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
+Instruction::Instruction(At<Opcode> opcode, At<MemOptImmediate> immediate)
+    : opcode(opcode), immediate(immediate) {}
+
 Instruction::Instruction(At<Opcode> opcode, At<RttSubImmediate> immediate)
     : opcode(opcode), immediate(immediate) {}
 
@@ -433,6 +436,10 @@ bool Instruction::has_let_immediate() const {
 
 bool Instruction::has_mem_arg_immediate() const {
   return holds_alternative<At<MemArgImmediate>>(immediate);
+}
+
+bool Instruction::has_mem_opt_immediate() const {
+  return holds_alternative<At<MemOptImmediate>>(immediate);
 }
 
 bool Instruction::has_rtt_sub_immediate() const {
@@ -597,6 +604,14 @@ const At<MemArgImmediate>& Instruction::mem_arg_immediate() const {
   return get<At<MemArgImmediate>>(immediate);
 }
 
+At<MemOptImmediate>& Instruction::mem_opt_immediate() {
+  return get<At<MemOptImmediate>>(immediate);
+}
+
+const At<MemOptImmediate>& Instruction::mem_opt_immediate() const {
+  return get<At<MemOptImmediate>>(immediate);
+}
+
 At<RttSubImmediate>& Instruction::rtt_sub_immediate() {
   return get<At<RttSubImmediate>>(immediate);
 }
@@ -645,6 +660,11 @@ At<StructFieldImmediate>& Instruction::struct_field_immediate() {
 const At<StructFieldImmediate>& Instruction::struct_field_immediate() const {
   return get<At<StructFieldImmediate>>(immediate);
 }
+
+MemArgImmediate::MemArgImmediate(At<u32> align_log2,
+                                 At<u32> offset,
+                                 OptAt<Index> memory_index)
+    : align_log2{align_log2}, offset{offset}, memory_index{memory_index} {}
 
 ValueType::ValueType(At<NumericType> type) : type{type} {}
 

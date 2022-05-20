@@ -64,7 +64,7 @@ const std::vector<DirectoryInfo> directory_info_map = {
     {"function-references", true, Features::FunctionReferences},
     {"gc", false, 0},
     {"memory64", true, Features::Memory64},
-    {"multi-memory", false, 0},
+    {"multi-memory", true, default_features.bits() | Features::MultiMemory},
     {"tail-call", true, default_features.bits() | Features::TailCall},
     {"threads", true, Features::Threads},
 };

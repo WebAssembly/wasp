@@ -1836,8 +1836,8 @@ switch (PeekChar(data, 2)) {
       default: return LexKeyword(data, "memory", TokenType::Memory);
       case '.':
         switch (PeekChar(data, 10)) {
-          case 'e': return LexKeyword(data, "memory.size", Opcode::MemorySize);
-          case 'l': return LexKeyword(data, "memory.fill", Opcode::MemoryFill, Features::BulkMemory);
+          case 'e': return LexKeyword(data, "memory.size", TokenType::MemoryOptInstr, Opcode::MemorySize);
+          case 'l': return LexKeyword(data, "memory.fill", TokenType::MemoryOptInstr, Opcode::MemoryFill, Features::BulkMemory);
           case 'm':
             switch (PeekChar(data, 19)) {
               case '2': return LexKeyword(data, "memory.atomic.wait32", TokenType::MemoryInstr, Opcode::MemoryAtomicWait32, Features::Threads);
@@ -1847,7 +1847,7 @@ switch (PeekChar(data, 2)) {
             }
             break;
           case 't': return LexKeyword(data, "memory.init", TokenType::MemoryInitInstr, Opcode::MemoryInit, Features::BulkMemory);
-          case 'w': return LexKeyword(data, "memory.grow", Opcode::MemoryGrow);
+          case 'w': return LexKeyword(data, "memory.grow", TokenType::MemoryOptInstr, Opcode::MemoryGrow);
           case 'y': return LexKeyword(data, "memory.copy", TokenType::MemoryCopyInstr, Opcode::MemoryCopy, Features::BulkMemory);
           default: break;
         }

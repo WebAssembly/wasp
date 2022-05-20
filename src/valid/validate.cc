@@ -627,7 +627,7 @@ bool Validate(ValidCtx& ctx, const At<binary::Memory>& value) {
   ErrorsContextGuard guard{*ctx.errors, value.loc(), "memory"};
   ctx.memories.push_back(value->memory_type);
   bool valid = Validate(ctx, value->memory_type);
-  if (ctx.memories.size() > 1) {
+  if (ctx.memories.size() > 1 && !ctx.features.multi_memory_enabled()) {
     ctx.errors->OnError(value.loc(), "Too many memories, must be 1 or fewer");
     valid = false;
   }

@@ -589,10 +589,22 @@ TEST(ConvertToTextTest, MemArgImmediate) {
   u32 align = 8;
   u32 align_log2 = 3;
   u32 offset = 5;
+  u32 memory_index = 7;
 
   // align and offset defined.
   OK(At{loc1, text::MemArgImmediate{At{loc2, align}, At{loc3, offset}}},
      At{loc1, binary::MemArgImmediate{At{loc2, align_log2}, At{loc3, offset}}});
+
+  // align, offset, and memory_index defined.
+  OK(At{loc1, text::MemArgImmediate{At{loc2, align}, At{loc3, offset},
+                                    At{loc4, text::Var{memory_index}}}},
+     At{loc1, binary::MemArgImmediate{At{loc2, align_log2}, At{loc3, offset},
+                                      At{loc4, memory_index}}});
+}
+
+TEST(ConvertToTextTest, MemOptImmediate) {
+  OK(At{loc1, text::MemOptImmediate{At{loc2, text::Var{Index{1}}}}},
+     At{loc1, binary::MemOptImmediate{At{loc2, Index{1}}}});
 }
 
 TEST(ConvertToTextTest, StructFieldImmediate) {
@@ -753,6 +765,14 @@ TEST(ConvertToTextTest, Instruction) {
                   At{loc2, Opcode::I32Load},
                   At{loc3, binary::MemArgImmediate{At{loc4, u32{2}},
                                                    At{loc5, u32{13}}}}}});
+
+  // MemOptImmediate.
+  OK(At{loc1, text::Instruction{At{loc2, Opcode::MemorySize},
+                                At{loc3, text::MemOptImmediate{At{
+                                             loc4, text::Var{Index{1}}}}}}},
+     At{loc1, binary::Instruction{
+                  At{loc2, Opcode::MemorySize},
+                  At{loc3, binary::MemOptImmediate{At{loc4, Index{1}}}}}});
 
   // HeapType.
   OK(At{loc1, text::Instruction{At{loc2, Opcode::RefNull}, At{loc3, THT_Func}}},

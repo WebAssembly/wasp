@@ -104,6 +104,7 @@ auto ToText(TextCtx&, const At<binary::HeapType2Immediate>&) -> At<text::HeapTyp
 auto ToText(TextCtx&, const At<binary::InitImmediate>&) -> At<text::InitImmediate>;
 auto ToText(TextCtx&, const At<binary::LetImmediate>&) -> At<text::LetImmediate>;
 auto ToText(TextCtx&, const At<binary::MemArgImmediate>&) -> At<text::MemArgImmediate>;
+auto ToText(TextCtx&, const At<binary::MemOptImmediate>&) -> At<text::MemOptImmediate>;
 auto ToText(TextCtx&, const At<binary::RttSubImmediate>&) -> At<text::RttSubImmediate>;
 auto ToText(TextCtx&, const At<binary::StructFieldImmediate>&) -> At<text::StructFieldImmediate>;
 auto ToText(TextCtx&, const At<binary::SimdMemoryLaneImmediate>&) -> At<text::SimdMemoryLaneImmediate>;

@@ -82,6 +82,22 @@ struct LimitsFlags {
   static optional<DecodedLimitsFlags> Decode(u8, const Features&);
 };
 
+enum class HasMemoryIndex { No, Yes };
+
+struct MemArgFlags {
+  HasMemoryIndex has_memory_index;
+  u32 align_log2;
+};
+
+struct MemArgAlignment {
+  static constexpr u32 AlignmentMask = 0x3f;
+  static constexpr u32 HasMemoryIndexBit = 0x40;
+  static constexpr u32 MaxAlignment = 0x80;
+
+  static u32 Encode(const MemArgFlags&);
+  static optional<MemArgFlags> Decode(u32, const Features&);
+};
+
 struct Mutability {
   static u8 Encode(::wasp::Mutability);
   static optional<::wasp::Mutability> Decode(u8);

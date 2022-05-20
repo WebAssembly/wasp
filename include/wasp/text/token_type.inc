@@ -96,6 +96,7 @@ WASP_V(LetInstr)             // "let"
 WASP_V(MemoryInstr)          // "i32.load", "i64.atomic.rmw8.add_u", etc.
 WASP_V(MemoryCopyInstr)      // "memory.copy"
 WASP_V(MemoryInitInstr)      // "memory.init"
+WASP_V(MemoryOptInstr)       // "memory.size", "memory.grow", "memory.fill"
 WASP_V(RefFuncInstr)         // "ref.func"
 WASP_V(RefNullInstr)         // "rtt.canon"
 WASP_V(RttSubInstr)          // "rtt.sub"

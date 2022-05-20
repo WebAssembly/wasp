@@ -283,6 +283,11 @@ OptAt<ValueType> FunctionTypeUse::GetInlineType() const {
   return type->results[0];
 }
 
+MemArgImmediate::MemArgImmediate(OptAt<u32> align,
+                                 OptAt<u32> offset,
+                                 OptAt<Var> memory)
+    : align{align}, offset{offset}, memory{memory} {}
+
 FunctionType ToFunctionType(BoundFunctionType bound_type) {
   ValueTypeList unbound_params;
   for (auto param : bound_type.params) {
@@ -350,6 +355,9 @@ Instruction::Instruction(At<Opcode> opcode, At<LetImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
 Instruction::Instruction(At<Opcode> opcode, At<MemArgImmediate> immediate)
+    : opcode{opcode}, immediate{immediate} {}
+
+Instruction::Instruction(At<Opcode> opcode, At<MemOptImmediate> immediate)
     : opcode{opcode}, immediate{immediate} {}
 
 Instruction::Instruction(At<Opcode> opcode, At<RttSubImmediate> immediate)
@@ -459,6 +467,10 @@ bool Instruction::has_let_immediate() const {
 
 bool Instruction::has_mem_arg_immediate() const {
   return holds_alternative<At<MemArgImmediate>>(immediate);
+}
+
+bool Instruction::has_mem_opt_immediate() const {
+  return holds_alternative<At<MemOptImmediate>>(immediate);
 }
 
 bool Instruction::has_rtt_sub_immediate() const {
@@ -620,6 +632,14 @@ At<MemArgImmediate>& Instruction::mem_arg_immediate() {
 
 const At<MemArgImmediate>& Instruction::mem_arg_immediate() const {
   return get<At<MemArgImmediate>>(immediate);
+}
+
+At<MemOptImmediate>& Instruction::mem_opt_immediate() {
+  return get<At<MemOptImmediate>>(immediate);
+}
+
+const At<MemOptImmediate>& Instruction::mem_opt_immediate() const {
+  return get<At<MemOptImmediate>>(immediate);
 }
 
 At<RttSubImmediate>& Instruction::rtt_sub_immediate() {

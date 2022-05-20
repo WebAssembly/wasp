@@ -22,6 +22,7 @@ WASP_V(ExtendedConst,        extended_const,          "extended-const",         
 WASP_V(FunctionReferences,   function_references,     "function-references",     false)
 WASP_V(GC,                   gc,                      "gc",                      false)
 WASP_V(Memory64,             memory64,                "memory64",                false)
+WASP_V(MultiMemory,          multi_memory,            "multi-memory",            false)
 WASP_V(MultiValue,           multi_value,             "multi-value",             false)
 WASP_V(MutableGlobals,       mutable_globals,         "mutable-globals",         true )
 WASP_V(NumericValues,        numeric_values,          "numeric-values",          false)

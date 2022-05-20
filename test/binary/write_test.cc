@@ -533,8 +533,8 @@ TEST(BinaryWriteTest, Instruction) {
   ExpectWrite("\x3c\x32\x33"_su8, I{O::I64Store8, MemArg{50, 51}});
   ExpectWrite("\x3d\x34\x35"_su8, I{O::I64Store16, MemArg{52, 53}});
   ExpectWrite("\x3e\x36\x37"_su8, I{O::I64Store32, MemArg{54, 55}});
-  ExpectWrite("\x3f\x00"_su8, I{O::MemorySize, u8{0}});
-  ExpectWrite("\x40\x00"_su8, I{O::MemoryGrow, u8{0}});
+  ExpectWrite("\x3f\x00"_su8, I{O::MemorySize, Index{0}});
+  ExpectWrite("\x40\x00"_su8, I{O::MemoryGrow, Index{0}});
   ExpectWrite("\x41\x00"_su8, I{O::I32Const, s32{0}});
   ExpectWrite("\x42\x00"_su8, I{O::I64Const, s64{0}});
   ExpectWrite("\x43\x00\x00\x00\x00"_su8, I{O::F32Const, f32{0}});
@@ -727,7 +727,7 @@ TEST(BinaryWriteTest, Instruction_bulk_memory) {
   ExpectWrite("\xfc\x08\x01\x00"_su8, I{O::MemoryInit, InitImmediate{1, 0}});
   ExpectWrite("\xfc\x09\x02"_su8, I{O::DataDrop, Index{2}});
   ExpectWrite("\xfc\x0a\x00\x00"_su8, I{O::MemoryCopy, CopyImmediate{0, 0}});
-  ExpectWrite("\xfc\x0b\x00"_su8, I{O::MemoryFill, u8{0}});
+  ExpectWrite("\xfc\x0b\x00"_su8, I{O::MemoryFill, Index{0}});
   ExpectWrite("\xfc\x0c\x03\x00"_su8, I{O::TableInit, InitImmediate{3, 0}});
   ExpectWrite("\xfc\x0d\x04"_su8, I{O::ElemDrop, Index{4}});
   ExpectWrite("\xfc\x0e\x00\x00"_su8, I{O::TableCopy, CopyImmediate{0, 0}});
@@ -1087,6 +1087,14 @@ TEST(BinaryWriteTest, Instruction_gc) {
         BrOnCastImmediate{Index{1}, HeapType2Immediate{HT_Func, HT_Extern}}});
 }
 
+TEST(BinaryWriteTest, Instruction_multi_memory) {
+  ExpectWrite("\x3f\x01"_su8, I{O::MemorySize, Index{1}});
+  ExpectWrite("\x40\x01"_su8, I{O::MemoryGrow, Index{1}});
+  ExpectWrite("\xfc\x08\x01\x02"_su8, I{O::MemoryInit, InitImmediate{1, 2}});
+  ExpectWrite("\xfc\x0a\x00\x01"_su8, I{O::MemoryCopy, CopyImmediate{1, 0}});
+  ExpectWrite("\xfc\x0b\x01"_su8, I{O::MemoryFill, Index{1}});
+}
+
 TEST(BinaryWriteTest, KnownSection_Vector) {
   std::vector<DefinedType> types{
       DefinedType{FunctionType{{VT_I32, VT_I64}, {}}},
@@ -1159,6 +1167,11 @@ TEST(BinaryWriteTest, LetImmediate) {
 TEST(BinaryWriteTest, MemArgImmediate) {
   ExpectWrite("\x00\x00"_su8, MemArgImmediate{0, 0});
   ExpectWrite("\x01\x80\x02"_su8, MemArgImmediate{1, 256});
+}
+
+TEST(BinaryWriteTest, MemArgImmediate_multi_memory) {
+  ExpectWrite("\x40\x00\x00"_su8, MemArgImmediate{0, 0, 0});
+  ExpectWrite("\x41\x80\x02\x03"_su8, MemArgImmediate{1, 256, 3});
 }
 
 TEST(BinaryWriteTest, Memory) {

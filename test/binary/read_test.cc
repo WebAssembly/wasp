@@ -561,6 +561,18 @@ TEST_F(BinaryReadTest, CopyImmediate_Memory_reference_types) {
        "\x01\x80\x01"_su8);
 }
 
+TEST_F(BinaryReadTest, CopyImmediate_Memory_multi_memory) {
+  ctx.features.enable_multi_memory();
+
+  OK(ReadMemoryCopyImmediate_ForTesting,
+     CopyImmediate{At{"\x80\x01"_su8, Index{128}}, At{"\x01"_su8, Index{1}}},
+     "\x80\x01\x01"_su8);
+
+  OK(ReadMemoryCopyImmediate_ForTesting,
+     CopyImmediate{At{"\x01"_su8, Index{1}}, At{"\x80\x01"_su8, Index{128}}},
+     "\x01\x80\x01"_su8);
+}
+
 TEST_F(BinaryReadTest, FuncBindImmediate) {
   OK(Read<FuncBindImmediate>, FuncBindImmediate{At{"\x00"_su8, Index{0}}},
      "\x00"_su8);
@@ -1485,6 +1497,18 @@ TEST_F(BinaryReadTest, InitImmediate_Memory_reference_types) {
        "\x80\x01\x80\x01"_su8);
 }
 
+TEST_F(BinaryReadTest, InitImmediate_Memory_multi_memory) {
+  ctx.features.enable_multi_memory();
+
+  OK(ReadMemoryInitImmediate_ForTesting,
+     InitImmediate{At{"\x01"_su8, Index{1}}, At{"\x01"_su8, Index{1}}},
+     "\x01\x01"_su8);
+  OK(ReadMemoryInitImmediate_ForTesting,
+     InitImmediate{At{"\x80\x01"_su8, Index{128}},
+                   At{"\x80\x01"_su8, Index{128}}},
+     "\x80\x01\x80\x01"_su8);
+}
+
 TEST_F(BinaryReadTest, PlainInstruction) {
   using MemArg = MemArgImmediate;
 
@@ -1547,9 +1571,13 @@ TEST_F(BinaryReadTest, PlainInstruction) {
   OK(Read<I>, I{At{"\x3c"_su8, O::I64Store8}, memarg}, "\x3c\x01\x02"_su8);
   OK(Read<I>, I{At{"\x3d"_su8, O::I64Store16}, memarg}, "\x3d\x01\x02"_su8);
   OK(Read<I>, I{At{"\x3e"_su8, O::I64Store32}, memarg}, "\x3e\x01\x02"_su8);
-  OK(Read<I>, I{At{"\x3f"_su8, O::MemorySize}, At{"\x00"_su8, u8{0}}},
+  OK(Read<I>,
+     I{At{"\x3f"_su8, O::MemorySize},
+       At{"\x00"_su8, MemOptImmediate{At{"\x00"_su8, Index{0}}}}},
      "\x3f\x00"_su8);
-  OK(Read<I>, I{At{"\x40"_su8, O::MemoryGrow}, At{"\x00"_su8, u8{0}}},
+  OK(Read<I>,
+     I{At{"\x40"_su8, O::MemoryGrow},
+       At{"\x00"_su8, MemOptImmediate{At{"\x00"_su8, Index{0}}}}},
      "\x40\x00"_su8);
   OK(Read<I>, I{At{"\x41"_su8, O::I32Const}, At{"\x00"_su8, s32{0}}},
      "\x41\x00"_su8);
@@ -1694,6 +1722,19 @@ TEST_F(BinaryReadTest, Instruction_BadMemoryReserved) {
   Fail(Read<Instruction>,
        {{1, "reserved"}, {1, "Expected reserved byte 0, got 1"}},
        "\x40\x01"_su8);
+}
+
+TEST_F(BinaryReadTest, Instruction_multi_memory) {
+  ctx.features.enable_multi_memory();
+
+  OK(Read<I>,
+     I{At{"\x3f"_su8, O::MemorySize},
+       At{"\x01"_su8, MemOptImmediate{At{"\x01"_su8, Index{1}}}}},
+     "\x3f\x01"_su8);
+  OK(Read<I>,
+     I{At{"\x40"_su8, O::MemoryGrow},
+       At{"\x01"_su8, MemOptImmediate{At{"\x01"_su8, Index{1}}}}},
+     "\x40\x01"_su8);
 }
 
 TEST_F(BinaryReadTest, InstructionList_BlockEnd) {
@@ -1953,7 +1994,9 @@ TEST_F(BinaryReadTest, Instruction_bulk_memory) {
        At{"\x00\x00"_su8,
           CopyImmediate{At{"\x00"_su8, Index{0}}, At{"\x00"_su8, Index{0}}}}},
      "\xfc\x0a\x00\x00"_su8);
-  OK(Read<I>, I{At{"\xfc\x0b"_su8, O::MemoryFill}, At{"\x00"_su8, u8{0}}},
+  OK(Read<I>,
+     I{At{"\xfc\x0b"_su8, O::MemoryFill},
+       At{"\x00"_su8, MemOptImmediate{At{"\x00"_su8, Index{0}}}}},
      "\xfc\x0b\x00"_su8);
   OK(Read<I>,
      I{At{"\xfc\x0c"_su8, O::TableInit},
@@ -1982,6 +2025,27 @@ TEST_F(BinaryReadTest, Instruction_BadReserved_bulk_memory) {
         {3, "reserved"},
         {3, "Expected reserved byte 0, got 1"}},
        "\xfc\x0e\x00\x01"_su8);
+}
+
+TEST_F(BinaryReadTest, Instruction_multi_memory_bulk_memory) {
+  ctx.features.enable_bulk_memory();
+  ctx.features.enable_multi_memory();
+  ctx.declared_data_count = 1;
+
+  OK(Read<I>,
+     I{At{"\xfc\x08"_su8, O::MemoryInit},
+       At{"\x01\x02"_su8,
+          InitImmediate{At{"\x01"_su8, Index{1}}, At{"\x02"_su8, Index{2}}}}},
+     "\xfc\x08\x01\x02"_su8);
+  OK(Read<I>,
+     I{At{"\xfc\x0a"_su8, O::MemoryCopy},
+       At{"\x01\x02"_su8,
+          CopyImmediate{At{"\x01"_su8, Index{1}}, At{"\x02"_su8, Index{2}}}}},
+     "\xfc\x0a\x01\x02"_su8);
+  OK(Read<I>,
+     I{At{"\xfc\x0b"_su8, O::MemoryFill},
+       At{"\x01"_su8, MemOptImmediate{At{"\x01"_su8, Index{1}}}}},
+     "\xfc\x0b\x01"_su8);
 }
 
 TEST_F(BinaryReadTest, Instruction_NoDataCount_bulk_memory) {
@@ -2630,6 +2694,25 @@ TEST_F(BinaryReadTest, MemArgImmediate) {
      MemArgImmediate{At{"\x01"_su8, u32{1}}, At{"\x80\x02"_su8, u32{256}}},
      "\x01\x80\x02"_su8);
 }
+
+TEST_F(BinaryReadTest, MemArgImmediate_multi_memory) {
+  // Multi-memory makes the alignment into a flags field instead, where 0x40 bit
+  // is set when there is a memory index. This is backward compatible because
+  // 0x40 as an alignment would have always failed validation, because it is
+  // too large.
+  OK(Read<MemArgImmediate>,
+     MemArgImmediate{At{"\x41"_su8, u32{0x41}}, At{"\x42"_su8, u32{0x42}}},
+     "\x41\x42"_su8);
+
+  ctx.features.enable_multi_memory();
+
+  // Now the alignment is 1 (not 0x41), and the memarg has a memory index.
+  OK(Read<MemArgImmediate>,
+     MemArgImmediate{At{"\x41"_su8, u32{1}}, At{"\x42"_su8, u32{0x42}},
+                     At{"\x43"_su8, Index{0x43}}},
+     "\x41\x42\x43"_su8);
+}
+
 
 TEST_F(BinaryReadTest, Memory) {
   OK(Read<Memory>,
