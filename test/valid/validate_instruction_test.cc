@@ -2303,8 +2303,9 @@ TEST_F(ValidateInstructionTest, SimdLoadLane_ValidLane) {
 
     // Test invalid indexes.
     ctx.type_stack = StackTypeList{ST::I32(), ST::V128()};
-    Fail(I{info.opcode, SimdMemoryLaneImmediate{MemArgImmediate{0, 0},
-                                                info.max_valid_lane + 1}});
+    Fail(I{info.opcode,
+           SimdMemoryLaneImmediate{MemArgImmediate{0, 0},
+                                   static_cast<u8>(info.max_valid_lane + 1)}});
   }
 }
 
@@ -2399,8 +2400,9 @@ TEST_F(ValidateInstructionTest, SimdStoreLane_ValidLane) {
 
     // Test invalid indexes.
     ctx.type_stack = StackTypeList{ST::I32(), ST::V128()};
-    Fail(I{info.opcode, SimdMemoryLaneImmediate{MemArgImmediate{0, 0},
-                                                info.max_valid_lane + 1}});
+    Fail(I{info.opcode,
+           SimdMemoryLaneImmediate{MemArgImmediate{0, 0},
+                                   static_cast<u8>(info.max_valid_lane + 1)}});
   }
 }
 
