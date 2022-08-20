@@ -78,6 +78,5 @@ target_include_directories(libwasp_base
 
 target_link_libraries(libwasp_base
   absl::base
-  absl::container
   absl::hash
 )
