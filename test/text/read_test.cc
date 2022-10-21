@@ -3239,83 +3239,100 @@ TEST_F(TextReadTest, DataSegment_numeric_values) {
 
 TEST_F(TextReadTest, ModuleItem) {
   // Type.
-  OK(ReadModuleItem, ModuleItem{DefinedType{nullopt, BoundFunctionType{}}},
+  OK(ReadModuleItem,
+     ModuleItem{
+         At{"(type (func))"_su8, DefinedType{nullopt, BoundFunctionType{}}}},
      "(type (func))"_su8);
 
   // Import.
   OK(ReadModuleItem,
-     ModuleItem{Import{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
-                       At{"\"n\""_su8, Text{"\"n\""_sv, 1}}, FunctionDesc{}}},
+     ModuleItem{
+         At{"(import \"m\" \"n\" (func))"_su8,
+            Import{At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+                   At{"\"n\""_su8, Text{"\"n\""_sv, 1}}, FunctionDesc{}}}},
      "(import \"m\" \"n\" (func))"_su8);
 
   // Func.
   OK(ReadModuleItem,
-     ModuleItem{Function{{}, {}, {At{")"_su8, I{At{")"_su8, O::End}}}}, {}}},
+     ModuleItem{
+         At{"(func)"_su8,
+            Function{{}, {}, {At{")"_su8, I{At{")"_su8, O::End}}}}, {}}}},
      "(func)"_su8);
 
   // Table.
   OK(ReadModuleItem,
-     ModuleItem{
+     ModuleItem{At{
+         "(table 0 funcref)"_su8,
          Table{TableDesc{nullopt,
                          At{"0 funcref"_su8,
                             TableType{At{"0"_su8, Limits{At{"0"_su8, u32{0}}}},
                                       At{"funcref"_su8, RT_Funcref}}}},
-               {}}},
+               {}}}},
      "(table 0 funcref)"_su8);
 
   // Memory.
   OK(ReadModuleItem,
-     ModuleItem{Memory{
-         MemoryDesc{
-             nullopt,
-             At{"0"_su8, MemoryType{At{"0"_su8, Limits{At{"0"_su8, u32{0}}}}}}},
-         {}}},
+     ModuleItem{At{
+         "(memory 0)"_su8,
+         Memory{MemoryDesc{
+                    nullopt,
+                    At{"0"_su8,
+                       MemoryType{At{"0"_su8, Limits{At{"0"_su8, u32{0}}}}}}},
+                {}}}},
      "(memory 0)"_su8);
 
   // Global.
   OK(ReadModuleItem,
-     ModuleItem{Global{
-         GlobalDesc{nullopt, At{"i32"_su8, GlobalType{At{"i32"_su8, VT_I32},
-                                                      Mutability::Const}}},
-         At{"(nop)"_su8,
-            ConstantExpression{
-                At{"nop"_su8, Instruction{At{"nop"_su8, Opcode::Nop}}}}},
-         {}}},
+     ModuleItem{At{
+         "(global i32 (nop))"_su8,
+         Global{
+             GlobalDesc{nullopt, At{"i32"_su8, GlobalType{At{"i32"_su8, VT_I32},
+                                                          Mutability::Const}}},
+             At{"(nop)"_su8,
+                ConstantExpression{
+                    At{"nop"_su8, Instruction{At{"nop"_su8, Opcode::Nop}}}}},
+             {}}}},
      "(global i32 (nop))"_su8);
 
   // Export.
   OK(ReadModuleItem,
-     ModuleItem{Export{
-         At{"func"_su8, ExternalKind::Function},
-         At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
-         At{"0"_su8, Var{Index{0}}},
-     }},
+     ModuleItem{At{"(export \"m\" (func 0))"_su8,
+                   Export{
+                       At{"func"_su8, ExternalKind::Function},
+                       At{"\"m\""_su8, Text{"\"m\""_sv, 1}},
+                       At{"0"_su8, Var{Index{0}}},
+                   }}},
      "(export \"m\" (func 0))"_su8);
 
   // Start.
-  OK(ReadModuleItem, ModuleItem{Start{At{"0"_su8, Var{Index{0}}}}},
+  OK(ReadModuleItem,
+     ModuleItem{At{"(start 0)"_su8, Start{At{"0"_su8, Var{Index{0}}}}}},
      "(start 0)"_su8);
 
   // Elem.
   OK(ReadModuleItem,
-     ModuleItem{ElementSegment{
-         nullopt,
-         nullopt,
-         At{"(nop)"_su8,
-            ConstantExpression{
-                At{"nop"_su8, Instruction{At{"nop"_su8, Opcode::Nop}}}}},
-         {}}},
+     ModuleItem{
+         At{"(elem (nop))"_su8,
+            ElementSegment{
+                nullopt,
+                nullopt,
+                At{"(nop)"_su8,
+                   ConstantExpression{
+                       At{"nop"_su8, Instruction{At{"nop"_su8, Opcode::Nop}}}}},
+                {}}}},
      "(elem (nop))"_su8);
 
   // Data.
   OK(ReadModuleItem,
-     ModuleItem{DataSegment{
-         nullopt,
-         nullopt,
-         At{"(nop)"_su8,
-            ConstantExpression{
-                At{"nop"_su8, Instruction{At{"nop"_su8, Opcode::Nop}}}}},
-         {}}},
+     ModuleItem{
+         At{"(data (nop))"_su8,
+            DataSegment{
+                nullopt,
+                nullopt,
+                At{"(nop)"_su8,
+                   ConstantExpression{
+                       At{"nop"_su8, Instruction{At{"nop"_su8, Opcode::Nop}}}}},
+                {}}}},
      "(data (nop))"_su8);
 }
 
@@ -3326,28 +3343,34 @@ TEST_F(TextReadTest, ModuleItem_exceptions) {
 
   // Tag.
   OK(ReadModuleItem,
-     ModuleItem{Tag{TagDesc{nullopt, TagType{TagAttribute::Exception,
-                                             FunctionTypeUse{nullopt, {}}}},
-                    {}}},
+     ModuleItem{At{"(tag)"_su8,
+                   Tag{TagDesc{nullopt, TagType{TagAttribute::Exception,
+                                                FunctionTypeUse{nullopt, {}}}},
+                       {}}}},
      "(tag)"_su8);
 }
 
 TEST_F(TextReadTest, Module) {
   OK(ReadModule,
      Module{At{"(type (func))"_su8,
-               ModuleItem{DefinedType{nullopt, BoundFunctionType{}}}},
+               ModuleItem{At{"(type (func))"_su8,
+                             DefinedType{nullopt, BoundFunctionType{}}}}},
             At{"(func nop)"_su8,
-               ModuleItem{Function{
-                   FunctionDesc{},
-                   {},
-                   InstructionList{
-                       At{"nop"_su8, Instruction{At{"nop"_su8, Opcode::Nop}}},
-                       At{")"_su8, I{At{")"_su8, O::End}}},
-                   },
-                   {}
+               ModuleItem{
+                   At{"(func nop)"_su8,
+                      Function{FunctionDesc{},
+                               {},
+                               InstructionList{
+                                   At{"nop"_su8,
+                                      Instruction{At{"nop"_su8, Opcode::Nop}}},
+                                   At{")"_su8, I{At{")"_su8, O::End}}},
+                               },
+                               {}
 
-               }}},
-            At{"(start 0)"_su8, ModuleItem{Start{At{"0"_su8, Var{Index{0}}}}}}},
+                      }}}},
+            At{"(start 0)"_su8,
+               ModuleItem{
+                   At{"(start 0)"_su8, Start{At{"0"_su8, Var{Index{0}}}}}}}},
      "(type (func)) (func nop) (start 0)"_su8);
 }
 
@@ -3366,7 +3389,8 @@ TEST_F(TextReadTest, SingleModule) {
   // module keyword can be omitted.
   OK(ReadSingleModule,
      Module{
-         At{"(start 0)"_su8, ModuleItem{Start{At{"0"_su8, Var{Index{0}}}}}},
+         At{"(start 0)"_su8,
+            ModuleItem{At{"(start 0)"_su8, Start{At{"0"_su8, Var{Index{0}}}}}}},
      },
      "(start 0)"_su8);
 }
