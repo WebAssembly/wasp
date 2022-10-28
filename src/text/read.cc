@@ -2352,57 +2352,57 @@ auto ReadModuleItem(Tokenizer& tokenizer, ReadCtx& ctx) -> OptAt<ModuleItem> {
   switch (token.type) {
     case TokenType::Type: {
       WASP_TRY_READ(item, ReadDefinedType(tokenizer, ctx));
-      return At{item.loc(), ModuleItem{*item}};
+      return At{item.loc(), ModuleItem{item}};
     }
 
     case TokenType::Import: {
       WASP_TRY_READ(item, ReadImport(tokenizer, ctx));
-      return At{item.loc(), ModuleItem{*item}};
+      return At{item.loc(), ModuleItem{item}};
     }
 
     case TokenType::Func: {
       WASP_TRY_READ(item, ReadFunction(tokenizer, ctx));
-      return At{item.loc(), ModuleItem{*item}};
+      return At{item.loc(), ModuleItem{item}};
     }
 
     case TokenType::Table: {
       WASP_TRY_READ(item, ReadTable(tokenizer, ctx));
-      return At{item.loc(), ModuleItem{*item}};
+      return At{item.loc(), ModuleItem{item}};
     }
 
     case TokenType::Memory: {
       WASP_TRY_READ(item, ReadMemory(tokenizer, ctx));
-      return At{item.loc(), ModuleItem{*item}};
+      return At{item.loc(), ModuleItem{item}};
     }
 
     case TokenType::Global: {
       WASP_TRY_READ(item, ReadGlobal(tokenizer, ctx));
-      return At{item.loc(), ModuleItem{*item}};
+      return At{item.loc(), ModuleItem{item}};
     }
 
     case TokenType::Export: {
       WASP_TRY_READ(item, ReadExport(tokenizer, ctx));
-      return At{item.loc(), ModuleItem{*item}};
+      return At{item.loc(), ModuleItem{item}};
     }
 
     case TokenType::Start: {
       WASP_TRY_READ(item, ReadStart(tokenizer, ctx));
-      return At{item.loc(), ModuleItem{*item}};
+      return At{item.loc(), ModuleItem{item}};
     }
 
     case TokenType::Elem: {
       WASP_TRY_READ(item, ReadElementSegment(tokenizer, ctx));
-      return At{item.loc(), ModuleItem{*item}};
+      return At{item.loc(), ModuleItem{item}};
     }
 
     case TokenType::Data: {
       WASP_TRY_READ(item, ReadDataSegment(tokenizer, ctx));
-      return At{item.loc(), ModuleItem{*item}};
+      return At{item.loc(), ModuleItem{item}};
     }
 
     case TokenType::Tag: {
       WASP_TRY_READ(item, ReadTag(tokenizer, ctx));
-      return At{item.loc(), ModuleItem{*item}};
+      return At{item.loc(), ModuleItem{item}};
     }
 
     default:
